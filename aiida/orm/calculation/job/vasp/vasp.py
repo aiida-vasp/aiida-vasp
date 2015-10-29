@@ -5,6 +5,8 @@ from aiida.common.datastructures import CalcInfo
 from aiida.common.utils import classproperty
 #~ from aiida.orm.data.vasp import VaspStructureData, VaspPotentialData, VaspKPointData
 
+__copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
+
 class VaspCalculation(JobCalculation):
     '''
     Perform a calculation with VASP
