@@ -42,13 +42,26 @@ class VaspParser(Parser):
             self.logger.error('OUTCAR not found - probably something went wrong while reading the input files!')
             return False, ()
         new_nodes_list = []
-        makepar = lambda f, p : self._make_param_data(out_folder, f, p)
+        def makepar(f, p, lname=None):
+            return self._make_param_data(out_folder, f, p, lname)
         new_nodes_list.append(makepar('CONTCAR', vasp.Poscar.from_file))
         new_nodes_list.append(makepar('OSZICAR', vasp.Oszicar))
         new_nodes_list.append(makepar('OUTCAR', vasp.Outcar))
         new_nodes_list.append(makepar('vasprun.xml', vasp.Vasprun, lname='vasprun'))
         # TODO as single files: chg, chgcar (additional), doscar, eigenval, pcdat,
         # procar, wavecar, xdatcar
+        def makesf(f, lname=None):
+            return self._make_single_file(out_folder, f, lname)
+        new_nodes_list.append(makesf('CHG'))
+        new_nodes_list.append(makesf('CHGCAR'))
+        new_nodes_list.append(makesf('DOSCAR'))
+        new_nodes_list.append(makesf('EIGENVAL'))
+        new_nodes_list.append(makesf('PCDAT'))
+        new_nodes_list.append(makesf('PROCAR'))
+        new_nodes_list.append(makesf('WAVECAR'))
+        new_nodes_list.append(makesf('XDATCAR'))
+
+        return True, new_nodes_list
 
     def _make_param_data(self, out_folder, filename, pmgparser, lname=None):
         ParameterData = DataFactory('parameter')
@@ -59,4 +72,11 @@ class VaspParser(Parser):
         outf = pmgparser(getf(filename))
         outf_ln = lname or filename.lower()
         outf_dt = ParameterData(dict=outf.as_dict())
+        return (outf_ln, outf_dt)
+
+    def _make_single_file(self, out_folder, filename, lname=None):
+        SinglefileData = DataFactory('singlefile')
+        outf_n = getf(filename)
+        outf_ln = lname or filename.lower()
+        outf_dt = SinglefileData(file=outf_n)
         return (outf_ln, outf_dt)

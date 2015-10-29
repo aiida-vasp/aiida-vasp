@@ -1,6 +1,6 @@
 #encoding: utf-8
 from aiida.orm import JobCalculation
-from aiida.orm.data.parameter import ParameterData
+from aiida.orm.data.parameter import ParameterData, SinglefileData
 from aiida.common.datastructures import CalcInfo
 from aiida.common.utils import classproperty
 #~ from aiida.orm.data.vasp import VaspStructureData, VaspPotentialData, VaspKPointData
@@ -36,7 +36,7 @@ class VaspCalculation(JobCalculation):
                 'docstring': 'Structure Data as in POSCAR file',
             },
             'potentials': {
-                'valid_types': ParameterData,
+                'valid_types': SinglefileData,
                 'additional_parameter': None,
                 'linkname': 'potentials_in',
                 'docstring': 'Potentials as in POTCAR file',
@@ -67,13 +67,15 @@ class VaspCalculation(JobCalculation):
         poscar_object.write_file(poscar_file)
 
         potcar_file = tempfolder.get_abs_path('POTCAR')
-        potcar_data = inputdict['potentials_in']
-        potcar_object = pmg.io.vasp.Incar.from_dict(potcar_data.get_dict())
-        potcar_object.write_file(potcar_file)
+        potcar_data = inputdict['potentials_in'].get_abs_path()
+        #~ potcar_object = pmg.io.vasp.Potcar.from_dict(potcar_data.get_dict())
+        #~ potcar_object.write_file(potcar_file)
+        with open(potcar_data) as potcar_in and open(potcar_file) as potcar_out:
+            potcar_out.write(potcar_int.read())
 
         kpoints_file = tempfolder.get_abs_path('KPOINTS')
         kpoints_data = inputdict['kpoints_in']
-        kpoints_object = pmg.io.vasp.Incar.from_dict(kpoints_data.get_dict())
+        kpoints_object = pmg.io.vasp.Kpoints.from_dict(kpoints_data.get_dict())
         kpoints_object.write_file(kpoints_file)
 
         calcinfo = CalcInfo()

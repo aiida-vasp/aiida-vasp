@@ -2,11 +2,15 @@ from aiida.orm.calculation.job.vasp.vasp import VaspCalculation
 from aiida.orm import DataFactory, Code
 from aiida.common.folders import Folder
 import pymatgen as pmg
+import sys
 
 #~ vc = VaspCalculation()
 
-incar = {'A': 0}
-poscar = pmg.io.vasp.Poscar.from_file('/Users/ricoh/Documents/ETH/msc/InAs-vasp/selfconsist/POSCAR').to_dict
+incar = {'SYSTEM': 'TestSystem',
+         'ediff': 1E-5,
+         'GGA_COMPAT': False,
+         }
+poscar = pmg.io.vasp.Poscar.from_file(sys.argv[1]).as_dict()
 potcar = {}
 kpoints = {}
 
@@ -27,5 +31,5 @@ vc.set_withmpi(True)
 vc.set_resources({'num_machines':2, 'num_mpiprocs_per_machine':12})
 vc.set_queue_name('bogus_queue_to_prevent_accidental_queuing')
 
-fldr = Folder('/Users/ricoh/Documents/ETH/msc/submit_test')
+fldr = Folder(sys.argv[2])
 vc.submit_test(fldr)
