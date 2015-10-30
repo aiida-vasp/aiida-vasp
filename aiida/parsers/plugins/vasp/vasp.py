@@ -1,8 +1,9 @@
 #encoding: utf-8
-from aiida.orm.calculation.job.vasp import VaspCalculation
+from aiida.orm.calculation.job.vasp.vasp import VaspCalculation
 from aiida.orm import DataFactory
 from aiida.parsers.parser import Parser
-from aiida.parsers.exceptions import OutputParsingError, InvalidOperation
+from aiida.parsers.exceptions import OutputParsingError
+from aiida.common.exceptions import InvalidOperation
 from aiida.common.datastructures import calc_states
 from pymatgen.io import vasp
 

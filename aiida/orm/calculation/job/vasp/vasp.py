@@ -1,9 +1,12 @@
 #encoding: utf-8
-from aiida.orm import JobCalculation
-from aiida.orm.data.parameter import ParameterData, SinglefileData
+from aiida.orm import JobCalculation, DataFactory
+#~ from aiida.orm.data.parameter import ParameterData, SinglefileData
 from aiida.common.datastructures import CalcInfo
 from aiida.common.utils import classproperty
 #~ from aiida.orm.data.vasp import VaspStructureData, VaspPotentialData, VaspKPointData
+
+ParameterData = DataFactory('parameter')
+SinglefileData = DataFactory('singlefile')
 
 __copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
 
@@ -67,11 +70,12 @@ class VaspCalculation(JobCalculation):
         poscar_object.write_file(poscar_file)
 
         potcar_file = tempfolder.get_abs_path('POTCAR')
-        potcar_data = inputdict['potentials_in'].get_abs_path()
+        potcar_data = inputdict['potentials_in'].get_file_abs_path()
         #~ potcar_object = pmg.io.vasp.Potcar.from_dict(potcar_data.get_dict())
         #~ potcar_object.write_file(potcar_file)
-        with open(potcar_data) as potcar_in and open(potcar_file) as potcar_out:
-            potcar_out.write(potcar_int.read())
+        with open(potcar_data) as potcar_in:
+            with open(potcar_file, 'w') as potcar_out:
+                potcar_out.write(potcar_in.read())
 
         kpoints_file = tempfolder.get_abs_path('KPOINTS')
         kpoints_data = inputdict['kpoints_in']

@@ -28,7 +28,9 @@ coords = [[0,0,0],[.25,.25,.25]]
 structure = Structure(lattice, species, coords, coords_are_cartesian=False)
 poscar = Poscar(structure, 'fcc InAs').as_dict()
 
-potcar = Potcar.from_file(sys.argv[2]).as_dict()
+#~ potcar = Potcar.from_file(sys.argv[2]).as_dict()
+from os.path import abspath
+potcar = abspath(sys.argv[2])
 
 kpoints = {
     'comment': 'fcc InAs - selfconsistent',
@@ -41,9 +43,11 @@ code = Code.get_from_string('vasp')
 calc = code.new_calc()
 
 ParameterData = DataFactory('parameter')
+SinglefileData = DataFactory('singlefile')
 calc.use_settings(ParameterData(dict=incar))
 calc.use_structure(ParameterData(dict=poscar))
-calc.use_potentials(ParameterData(dict=potcar))
+#~ calc.use_potentials(ParameterData(dict=potcar))
+calc.use_potentials(SinglefileData(file=potcar))
 calc.use_kpoints(ParameterData(dict=kpoints))
 
 calc.label = 'Vasp Selfconsistent Test Run'
