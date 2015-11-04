@@ -1,5 +1,5 @@
 #encoding: utf-8
-from aiida.orm.calculation.job.vasp.vasp import VaspCalculation
+from aiida.orm.calculation.job.vasp.asevasp import AsevaspCalculation
 from aiida.orm import DataFactory
 from aiida.parsers.parser import Parser
 from aiida.parsers.exceptions import OutputParsingError
@@ -9,7 +9,7 @@ from pymatgen.io import vasp
 
 __copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
 
-class VaspParser(Parser):
+class AsevaspParser(Parser):
     '''
     Parses the output files of a Vasp run.
     '''
@@ -17,8 +17,8 @@ class VaspParser(Parser):
         '''
         initializes with a Calculation object
         '''
-        super(VaspParser, self).__init__(calculation)
-        if not isinstance(calculation, VaspCalculation):
+        super(AsevaspParser, self).__init__(calculation)
+        if not isinstance(calculation, AsevaspCalculation):
             raise OutputParsingError('Input calculation must be a VaspCalculation')
         self._calc = calculation
 
@@ -64,7 +64,7 @@ class VaspParser(Parser):
         new_nodes_list.append(makesf('WAVECAR'))
         new_nodes_list.append(makesf('XDATCAR'))
 
-        logger.error(new_nodes_list)
+        self.logger.message(new_nodes_list)
 
         return True, new_nodes_list
 
