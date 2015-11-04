@@ -64,7 +64,7 @@ class AsevaspParser(Parser):
         new_nodes_list.append(makesf('WAVECAR'))
         new_nodes_list.append(makesf('XDATCAR'))
 
-        self.logger.message(new_nodes_list)
+        self.logger.debug(new_nodes_list)
 
         return True, new_nodes_list
 
