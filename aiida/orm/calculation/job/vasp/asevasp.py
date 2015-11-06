@@ -55,6 +55,12 @@ class AsevaspCalculation(JobCalculation):
                 'linkname': 'kpoints_in',
                 'docstring': 'k points as in KPOINTS file',
             },
+            'chgcar': {
+                'valid_types': (None, SinglefileData),
+                'additional_parameter': None,
+                'linkname': 'chgcar_in,
+                'docstring': 'CHGCAR file from a selfconsistent run (only used in non-SC runs)'
+            }
         })
         return retdict
 
@@ -69,6 +75,7 @@ class AsevaspCalculation(JobCalculation):
         poscar_data = inputdict['structure_in']
         potcar_data = inputdict['potentials_in']
         kpoints_data = inputdict['kpoints_in']
+        chgcar_data = inputdict['chgcar_in']
 
         # ---------- set up an ase Vasp calculation ----------
         from ase.calculators.vasp import Vasp as AseVasp
@@ -93,7 +100,16 @@ class AsevaspCalculation(JobCalculation):
         # check wether potcar is parameter
         if isinstance(potcar_data, ParameterData):
             potcar_dict = potcar_data.get_dict()
-            os.environ['VASP_PP_PATH'] = potcar_dict['potpaw_path']
+            if potcar_dict.get('potpaw_path'):
+                os.environ['VASP_PP_PATH'] = potcar_dict['potpaw_path']
+            else:
+                if not os.environ['VASP_PP_PATH']:
+                    raise InputValidationError(
+                        'No VASP_PP_PATH env variable is set. '+\
+                        'Please provide a potpaw_path parameter with the path containing '+\
+                        'your potpaw_XXX directory in the ParameterData passed to '+\
+                        'use_potentials or export VASP_PP_PATH=<path containing potpaw> '+\
+                        'or consider passing a POTCAR in a SinglefileData instance.')
             asevasp.set(setups=potcar_dict['special_symbols'])
 
         # push structure info
@@ -108,36 +124,43 @@ class AsevaspCalculation(JobCalculation):
         asevasp.write_incar(asevasp.atoms)
         asevasp.write_kpoints()
 
-        #~ incar_file = tempfolder.get_abs_path('INCAR')
-        #~ incar_object = pmg.io.vasp.Incar.from_dict(incar_data.get_dict())
-        #~ incar_object.write_file(incar_file)
-
-
-        #~ poscar_file = tempfolder.get_abs_path('POSCAR')
-        #~ poscar_object = pmg.io.vasp.Poscar.from_dict(poscar_data.get_dict())
-        #~ poscar_object.write_file(poscar_file)
-
-        #~ potcar_file = tempfolder.get_abs_path('POTCAR')
-        #~ potcar_object = pmg.io.vasp.Potcar.from_dict(potcar_data.get_dict())
-        #~ potcar_object.write_file(potcar_file)
         if isinstance(potcar_data, ParameterData):
             asevasp.write_potcar()
         else:
-            with open(potcar_data.get_file_abs_path()) as potcar_in:
-                with open(potcar_file, 'w') as potcar_out:
-                    potcar_out.write(potcar_in.read())
+            import shutil
+            potcar_src = potcar_data.get_file_abs_path()
+            potcar_dst = tempfolder.get_abs_path('POTCAR')
+            shutil.copy(potcar_src, potcar_dst)
+            #~ with open(potcar_data.get_file_abs_path()) as potcar_in:
+                #~ with open(potcar_file, 'w') as potcar_out:
+                    #~ potcar_out.write(potcar_in.read())
 
-        #~ kpoints_file = tempfolder.get_abs_path('KPOINTS')
-        #~ kpoints_object = pmg.io.vasp.Kpoints.from_dict(kpoints_data.get_dict())
-        #~ kpoints_object.write_file(kpoints_file)
+        icharg = incar_data.get_dict().get('icharg')
+        if not icharg:
+            icharg = incar_data.get_dict().get('ICHARG')
+        if icharg < 10:
+            if chgcar_data:
+                self.logger.warn('ICHARG tag in INCAR file is {}, input CHGCAR not used!'.format(icharg))
+        elif icharg >= 10:
+            if not chgcar_data:
+                raise InputValidationError('ICHARG tag in INCAR file is {}, you must give a CHGCAR file!'.format(icharg))
+            else:
+                import shutil
+                chgcar_src = chgcar_data.get_file_abs_path()
+                chgcar_dst = tempfolder.get_abs_path('CHGCAR')
+                shutil.copy(chgcar_src, chgcar_dst)
+                #~ with open(chgcar_data.get_file_abs_path()) as chgcar_in:
+                    #~ with open(chgcar_file, 'w') as chgcar_out:
+                        #~ chgcar_out.write(chgcar_in.read())
 
+        # ---------- set up and return calcinfo ----------
         calcinfo = CalcInfo()
         calcinfo.uuid = self.uuid
         calcinfo.local_copy_list = []
         calcinfo.remote_copy_list = []
         #~ calcinfo.stdin_name = self._INPUT_FILE_NAME
         #~ calcinfo.stdout_name = self._OUTPUT_FILE_NAME
-        calcinfo.retrieve_list = ['CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR',
+        calcinfo.retrieve_list = ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR',
                                   'EIGENVAL', 'OSZICAR', 'OUTCAR', 'PCDAT',
                                   'PROCAR', 'WAVECAR', 'XDATCAR', 'vasprun.xml']
         return calcinfo
