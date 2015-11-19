@@ -32,5 +32,5 @@ class Bandstructure(Workflow):
         params = self.get_parameters()
         calc = get_vasp_calc(sc=True)
         incar = params['incar'].copy()
-        incar.remove(
+        incar.remove()
         calc.use_settings(params['incar'])

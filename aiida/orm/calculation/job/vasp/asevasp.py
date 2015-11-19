@@ -56,9 +56,9 @@ class AsevaspCalculation(JobCalculation):
                 'docstring': 'k points as in KPOINTS file',
             },
             'chgcar': {
-                'valid_types': (None, SinglefileData),
+                'valid_types': (ParameterData, SinglefileData),
                 'additional_parameter': None,
-                'linkname': 'chgcar_in,
+                'linkname': 'chgcar_in',
                 'docstring': 'CHGCAR file from a selfconsistent run (only used in non-SC runs)'
             }
         })
@@ -140,7 +140,7 @@ class AsevaspCalculation(JobCalculation):
             icharg = incar_data.get_dict().get('ICHARG')
         if icharg < 10:
             if chgcar_data:
-                self.logger.warn('ICHARG tag in INCAR file is {}, input CHGCAR not used!'.format(icharg))
+                self.logger.warning('ICHARG tag in INCAR file is {}, input CHGCAR not used!'.format(icharg))
         elif icharg >= 10:
             if not chgcar_data:
                 raise InputValidationError('ICHARG tag in INCAR file is {}, you must give a CHGCAR file!'.format(icharg))
