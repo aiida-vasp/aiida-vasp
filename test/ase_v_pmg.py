@@ -68,6 +68,7 @@ calc.use_structure(structure)
 #~ calc.use_potentials(ParameterData(dict=potcar))
 calc.use_potentials(potcar)
 calc.use_kpoints(kpoints)
+calc.use_chgcar(ParameterData(dict={}))
 
 calc.label = 'Vasp Selfconsistent Test Run'
 calc.description = 'Test the Vasp Plugin with a simple selfconsistent run for fcc InAs'
