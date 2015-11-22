@@ -58,7 +58,7 @@ class AsevaspCalculation(JobCalculation):
             'chgcar': {
                 'valid_types': (None, SinglefileData),
                 'additional_parameter': None,
-                'linkname': 'chgcar_in,
+                'linkname': 'chgcar_in',
                 'docstring': 'CHGCAR file from a selfconsistent run (only used in non-SC runs)'
             }
         })
