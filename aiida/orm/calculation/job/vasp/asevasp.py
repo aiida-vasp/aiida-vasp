@@ -8,6 +8,7 @@ import numpy as np
 import os
 import pymatgen as pmg
 from aiida.orm.calculation.job.vasp.incar import _incarify
+from kpoints import write_kpoints
 
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
@@ -92,6 +93,8 @@ class AsevaspCalculation(JobCalculation):
         kpoints_dict = kpoints_data.get_dict()
         if kpoints_dict.get('generation_style') == 'Gamma':
             asevasp.set(gamma=True)
+        else:
+            asevasp.set(gamma=False)
         kp = np.array(kpoints_dict['kpoints'])
         if len(kp.flatten()) == 3:
             kp = kp.flatten()
@@ -122,7 +125,7 @@ class AsevaspCalculation(JobCalculation):
         from ase.io import vasp as vio
         vio.write_vasp('POSCAR', asevasp.atoms, direct=True, vasp5=True)
         asevasp.write_incar(asevasp.atoms)
-        asevasp.write_kpoints()
+        write_kpoints(kpoints_dict)
 
         if isinstance(potcar_data, ParameterData):
             asevasp.write_potcar()
