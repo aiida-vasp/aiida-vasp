@@ -95,7 +95,7 @@ class Bandstructure(Workflow):
         # set up band structure step
         calc = self.get_vasp_calc(sc=False)
 
-        incar = params['incar'].get_dict()
+        incar = load_node(params['incar']).get_dict()
         incar['icharg'] = 11
         settings = ParameterData(dict=incar)
         calc.use_settings(settings)
@@ -125,5 +125,5 @@ class Bandstructure(Workflow):
         self.append_to_report('{}: starting band structure run, PK={}, uuid={}'.format(
             params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'bsstep': {'pk': calc.pk, 'uuid': calc.uuid}})
-        self.set_result('band_run', calc)
+        self.add_result('band_run', calc)
         self.next(self.exit)
