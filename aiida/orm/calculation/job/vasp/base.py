@@ -5,16 +5,19 @@ def make_use_methods(inputs):
     @classproperty
     def _use_methods(cls):
         retdict = JobCalculation._use_methods
+        for inp, dct in inputs.iteritems():
+            ln = dct['linkname']
+            if isinstance(ln, classmethod):
+                dct['linkname'] = getattr(cls, ln.__func__.__name__)
         retdict.update(inputs)
         return retdict
     return _use_methods
 
 def make_init_internal(cls, **kwargs):
-    def _init_internal_params(self):
-        self._super()._init_internal_params()
+    def _update_internal_params(self):
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
-    return _init_internal_params
+    return _update_internal_params
 
 def sequencify(argname):
     def wrapper(func):
@@ -38,19 +41,15 @@ def input(valid_types = [], additional_parameter = None,
         else:
             vt.append(DataFactory(t))
     inp = {
-        'valid_types': vt,
+        'valid_types': tuple(vt),
         'additional_parameter': additional_parameter,
         'linkname': linkname,
         'docstring': docstring
     }
     return inp
 
-def _super(self):
-    return super(self.__class__, self)
-
 class CalcMeta(JobCalculation.__metaclass__):
     def __new__(cls, name, bases, classdict):
-        classdict['_super'] = _super
         inputs = {}
         internals = {}
         delete = []
@@ -75,7 +74,7 @@ class CalcMeta(JobCalculation.__metaclass__):
         for k in delete:
             classdict.pop(k)
         classdict['_use_methods'] = make_use_methods(inputs)
-        classdict['_init_internal_params'] = make_init_internal(cls, **internals)
+        classdict['_update_internal_params'] = make_init_internal(cls, **internals)
         Calc = super(CalcMeta, cls).__new__(cls, name, bases, classdict)
         #setattr(Calc, '_init_internale_params', make_init_internal(**internals))
         return Calc
@@ -129,38 +128,91 @@ class VaspCalcBase(JobCalculation):
 
         return calcinfo
 
+    def _init_internal_params(self):
+        super(VaspCalcBase, self)._init_internal_params()
+        self._update_internal_params()
+
+# only implements gamma centered monkhorst
+# no expert mode with manual basis vectors
+# no fully automatic mode
+# no original monkhorst (equivalent to 0.5 shift though)
+kpmtemp = '''\
+Automatic mesh
+0
+Gamma
+{N[0]} {N[1]} {N[2]}
+{s[0]} {s[1]} {s[2]}\
+'''
+
+# only implements direct explicit list with weights
+# no cartesian
+# no tetrahedron method
+# no bandstructure lines
+kpltemp = '''\
+Explicit list
+{N}
+Direct
+{klist}\
+'''
+kplitemp = '''\
+k[0] k[1] k[2] w\
+'''
+
 class TentativeVaspCalc(VaspCalcBase):
     '''vasp 3.5.3 calc with nice hopefully interface'''
     incar = input(valid_types='parameter', docstring='input parameters')
     poscar = input(valid_types='structure', docstring='aiida structure')
-    potcar = input(valid_types='parameter', docstring='paw symbols or files')
+    potcar = input(valid_types='parameter', docstring='paw symbols or files',
+                   additional_parameter='kind')
     kpcar = input(valid_types='array.kpoints', docstring='kpoints array or mesh')
     default_parser = 'vasp.tentative'
 
+    def _init_internal_params(self):
+        super(TentativeVaspCalc, self)._init_internal_params()
+        self._update_internal_params()
+
     def write_incar(self, inputdict, dst):
         from incar import dict_to_incar
-        with open(dst) as incar:
+        with open(dst, 'w') as incar:
             incar.write(dict_to_incar(inputdict['incar']))
 
+    @classmethod
+    def _get_potcar_linkname(cls, kind):
+        return 'paw_{}'.format(kind)
+
     def write_potcar(self, inputdict, dst):
+        import subprocess32 as sp
         structure = inputdict['poscar']
         symbols = inputdict['potcar']
-        sym = []
+        catcom = ['cat']
         # order the symbols according to order given in structure
         for kind in structure.get_kind_names():
-            sym.append(symbols[kind])
-        # find or create singlefile nodes for each symbol
-        TODO()
-        # concatenate
-        TODO()
-        ##
-        ## Or actually it might be better to have a PAW node for each
-        ## Kind and provide an external function to retrieve a PAW
-        ## for a given symbol from the data bank
-        ## That'd be back to additional paramter for potcar inp
-        # then find all the linknames
-        # and cat them in the right order
-        ##
+            paw = inputdict[self._get_potcar_linkname(kind)]
+            catcom.append(paw.get_file_abs_path())
+        # cat the pawdata nodes into the file
+        with open(dst, 'w') as pc:
+            sp.check_call(catcom, stdout=pc)
+
+    def write_poscar(self, inputdict, dst):
+        from ase.io.vasp import write_vasp
+        structure = inputdict['poscar']
+        with open(dst, 'w') as poscar:
+            write_vasp(poscar, structure, vasp5=True)
+
+    def write_kpoints(self, inputdict, dst):
+        kp = inputdict['kpcar']
+        try:
+            mesh, offset = kp.get_kpoints_mesh()
+            with open(dst, 'w') as kpoints:
+                kps = kptemp.format(N=mesh, s=offset)
+                kpoints.write(kps)
+        except AttributeError:
+            kpl, weights = kp.get_kpoints(also_weights=True)
+            kw = zip(kpl, weights):
+            with open(dst, 'w') as kpoints:
+                kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
+                kps = kpltemp.format(N=len(kw), klist=kpls)
+                kpoints.write(kps)
 
 class TestVC(VaspCalcBase):
     test_input = input(valid_types='parameter', docstring='bla')
