@@ -1,4 +1,4 @@
-from aiida.orm import JobCalculation, DataFactory
+from aiida.orm import JobCalculation, DataFactory, Node
 from aiida.common.utils import classproperty
 
 def make_use_methods(inputs):
@@ -16,11 +16,29 @@ def make_init_internal(cls, **kwargs):
             setattr(self, k, v)
     return _init_internal_params
 
+def sequencify(argname):
+    def wrapper(func):
+        def new_func(*args, **kwargs):
+            tlf = kwargs[argname]
+            if isinstance(tlf, list) or isinstance(tlf, tuple):
+                return func(*args, **kwargs)
+            else:
+                kwargs[argname] = [tlf]
+                return func(*args, **kwargs)
+        return new_func
+    return wrapper
+
+@sequencify('valid_types')
 def input(valid_types = [], additional_parameter = None,
           linkname = None, docstring = ''):
-    if not isinstance(valid_types, str):
+    vt = []
+    for t in valid_types:
+        if isinstance(t, Node):
+            vt.append(t)
+        else:
+            vt.append(DataFactory(t))
     inp = {
-        'valid_types': DataFactory(valid_types),
+        'valid_types': vt,
         'additional_parameter': additional_parameter,
         'linkname': linkname,
         'docstring': docstring
@@ -33,7 +51,6 @@ def _super(self):
 class CalcMeta(JobCalculation.__metaclass__):
     def __new__(cls, name, bases, classdict):
         classdict['_super'] = _super
-        print name
         inputs = {}
         internals = {}
         delete = []
@@ -42,6 +59,8 @@ class CalcMeta(JobCalculation.__metaclass__):
                 if 'valid_types' in v:
                     if not v['linkname'] and not v['additional_parameter']:
                         v['linkname'] = k
+                    elif not v['linkname'] and v['additional_parameter']:
+                        v['linkname'] = classdict['_get_{}_linkname'.format(k)]
                     inputs.update({k: v})
                     delete.append(k)
             elif k == 'default_parser':
@@ -114,7 +133,8 @@ class TentativeVaspCalc(VaspCalcBase):
     '''vasp 3.5.3 calc with nice hopefully interface'''
     incar = input(valid_types='parameter', docstring='input parameters')
     poscar = input(valid_types='structure', docstring='aiida structure')
-    potcar = input(valid_types=('parameter, singlefile')
+    potcar = input(valid_types='parameter', docstring='paw symbols or files')
+    kpcar = input(valid_types='array.kpoints', docstring='kpoints array or mesh')
     default_parser = 'vasp.tentative'
 
     def write_incar(self, inputdict, dst):
@@ -122,7 +142,25 @@ class TentativeVaspCalc(VaspCalcBase):
         with open(dst) as incar:
             incar.write(dict_to_incar(inputdict['incar']))
 
-    def write_poscar
+    def write_potcar(self, inputdict, dst):
+        structure = inputdict['poscar']
+        symbols = inputdict['potcar']
+        sym = []
+        # order the symbols according to order given in structure
+        for kind in structure.get_kind_names():
+            sym.append(symbols[kind])
+        # find or create singlefile nodes for each symbol
+        TODO()
+        # concatenate
+        TODO()
+        ##
+        ## Or actually it might be better to have a PAW node for each
+        ## Kind and provide an external function to retrieve a PAW
+        ## for a given symbol from the data bank
+        ## That'd be back to additional paramter for potcar inp
+        # then find all the linknames
+        # and cat them in the right order
+        ##
 
 class TestVC(VaspCalcBase):
     test_input = input(valid_types='parameter', docstring='bla')
