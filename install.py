@@ -18,7 +18,7 @@ parser.add_argument(
     help='location of the aiida root directory \
     (usually called "aiida_core" or "aiida_epfl*"')
 parser.add_argument(
-    'name', default=None, metavar='[name]',
+    'name', nargs='?', default=None, metavar='[name]',
     help='the name of the plugin package (defaults \
     to "vasp", especially helpful if multiple version \
     should be kept around.')
@@ -26,10 +26,11 @@ parser.add_argument(
 plugin_root = os.path.dirname(os.path.abspath(__file__))
 
 
-def srcdest(path, aiida_root, name):
-    src = os.path.join(plugin_root, 'aiida', path)
-    dst = os.path.join(aiida_root, 'aiida', os.path.dirname(path),
-                       name or os.path.basename(path))
+def srcdest(paths, aiida_root, name):
+    spth, dpth = paths
+    src = os.path.join(plugin_root, 'aiida', spth)
+    dst = os.path.join(aiida_root, 'aiida', os.path.dirname(dpth),
+                       name or os.path.basename(dpth))
     return src, dst
 
 
@@ -40,10 +41,11 @@ def cpdir(src, dst):
 def lndir(src, dst):
     os.symlink(src, dst)
 
-install_paths = ['orm/calculation/job/vasp',
-                 'parsers/plugins/vasp',
-                 'orm/data/vasp',
-                 'workflows/vasp']
+install_paths = [('orm.calc.job.vasp', 'orm/calculation/job/vasp'),
+                 ('parsers.plugins.vasp', 'parsers/plugins/vasp'),
+                 ('orm.data.vasp', 'orm/data/vasp'),
+                 ('workflows.vasp', 'workflows/vasp'),
+                 ('tools.codespc.vasp', 'tools/codespecific/vasp')]
 
 colors = {'ok': '\033[92m',
           'info': '\033[91m',
@@ -57,15 +59,22 @@ if __name__ == '__main__':
     for p in install_paths:
         i += 1
         src, dest = srcdest(p, os.path.abspath(args.aiida_root), args.name)
-        print('{info}[{i}/{N}] {ok}installing:{end} {src} -> {tgt}'.format(
-            src=src, tgt=dest, i=i, N=N, **colors))
+        if not os.path.exists(dest):
+            print('{info}[{i}/{N}] {ok}installing:{end} {src} -> {tgt}'.format(
+                src=src, tgt=dest, i=i, N=N, **colors))
+        else:
+            print('{info}skipping {tgt}.'.format(tgt=dest, **colors))
         if not os.path.exists(src):
-            print('{info}something went wrong with the installer: ' +
-                  'source dir does not exist{end}'.format(**colors))
+            print(('{info}something went wrong with the installer: ' +
+                  'source dir does not exist{end}').format(**colors))
             sys.exit()
         elif not os.path.exists(os.path.dirname(dest)):
-            print('{info}it seems that the targeted aiida_root does ' +
-                  'not hold an aiida distribution{end}'.format(**colors))
+            print(
+                ('{info}it seems that the targeted aiida_root does ' +
+                 'not hold an aiida distribution{end}: ' +
+                 'it does not contain folder {destdir}').format(
+                     destdir=os.path.dirname(dest), **colors))
             sys.exit()
-        install_cmd(src, dest)
-        print(' {ok}-> OK{end}'.format(**colors))
+        if not os.path.exists(dest):
+            install_cmd(src, dest)
+            print(' {ok}-> OK{end}'.format(**colors))
