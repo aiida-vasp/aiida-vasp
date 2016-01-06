@@ -42,6 +42,7 @@ def lndir(src, dst):
 
 install_paths = ['orm/calculation/job/vasp',
                  'parsers/plugins/vasp',
+                 'orm/data/vasp',
                  'workflows/vasp']
 
 colors = {'ok': '\033[92m',
