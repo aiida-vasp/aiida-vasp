@@ -1,5 +1,4 @@
 import os
-from aiida.orm.data.singlefile import SinglefileData
 from aiida.orm import Data
 from aiida.orm.querytool import QueryTool
 
@@ -9,8 +8,8 @@ def import_family(folder):
     for pawf in os.listdir(fp):
         ap = os.path.join(fp, pawf)
         if os.path.isdir(ap):
+            paw = PotpawData.from_folder(ap)
             if not PotpawData.load_paw(family=paw.family, symbol=paw.symbol):
-                paw = PotpawData.from_folder(ap)
                 paw.store_all()
 
 
@@ -18,6 +17,7 @@ class PotpawData(Data):
     @property
     def symbol(self):
         return self.get_attr('symbol')
+
     @symbol.setter
     def symbol(self, value):
         self._set_attr('symbol', value)
@@ -25,6 +25,7 @@ class PotpawData(Data):
     @property
     def kind(self):
         return self.get_attr('kind')
+
     @kind.setter
     def kind(self, value):
         self._set_attr('kind', value)
@@ -32,6 +33,7 @@ class PotpawData(Data):
     @property
     def potcar(self):
         return self.get_attr('potcar')
+
     @potcar.setter
     def potcar(self, value):
         #~ name = 'POTCAR'.format(self.get_attr('symbol'))
@@ -42,6 +44,7 @@ class PotpawData(Data):
     @property
     def psctr(self):
         return self.get_attr('psctr')
+
     @psctr.setter
     def psctr(self, value):
         #~ name = 'PSCTR_{}'.format(self.get_attr('symbol'))
@@ -52,6 +55,7 @@ class PotpawData(Data):
     @property
     def family(self):
         return self.get_attr('family')
+
     @family.setter
     def family(self, value):
         self._set_attr('family', value)
@@ -62,7 +66,7 @@ class PotpawData(Data):
         ap = os.path.abspath(pawpath)
         p = pawpath.split(os.path.sep)
         symbol = p[-1]
-        family = p[-2]
+        family = p[-2].replace('potpaw_', '')
         kind = symbol.split('_')[0]
         res.kind = kind
         res.symbol = symbol
@@ -80,9 +84,16 @@ class PotpawData(Data):
         return list(q.run_query())
 
     def __repr__(self):
+        try:
+            fam = self.get_attr('family')
+        except AttributeError:
+            fam = '<family: (unset)>'
+        try:
+            sym = self.get_attr('symbol')
+        except AttributeError:
+            sym = '<symbol: (unset)>'
         return '<PotpawData: {f}/{s} uuid: {u} (pk: {p})>'.format(
-                f=self.get_attr('family'),
-                s=self.get_attr('symbol'),
-                u=self.uuid,
-                p=self.pk
-                )
+            f=fam,
+            s=sym,
+            u=self.uuid,
+            p=self.pk)

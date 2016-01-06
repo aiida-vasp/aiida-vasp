@@ -29,7 +29,7 @@ def filter_cifs_for_structure(cif_seq, structure):
     Str = DataFactory('structure')
     Cif = DataFactory('cif')
     ase = None
-    if hasattr(structure, get_ase):
+    if hasattr(structure, 'get_ase'):
         ase = structure.get_ase()
     else:
         ase = structure

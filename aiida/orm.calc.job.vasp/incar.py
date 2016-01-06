@@ -33,6 +33,7 @@ def dict_to_incar(incar_dict):
     incar_content = ''
     for k, v in incar_dict.iteritems():
         incar_content += _incar_item(k, v) + '\n'
+    return incar_content
 
 
 def par_to_incar(incar_pardat):
