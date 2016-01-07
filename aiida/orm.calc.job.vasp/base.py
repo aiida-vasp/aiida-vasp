@@ -107,6 +107,7 @@ class VaspCalcBase(JobCalculation):
         potcar = tempfolder.get_abs_path('POTCAR')
         kpoints = tempfolder.get_abs_path('KPOINTS')
 
+        self.verify_inputs(inputdict)
         self.write_incar(inputdict, incar)
         self.write_poscar(inputdict, poscar)
         self.write_potcar(inputdict, potcar)
@@ -139,6 +140,9 @@ class VaspCalcBase(JobCalculation):
     def _init_internal_params(self):
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
+
+    def verify_inputs(self):
+        pass
 
 
 # only implements gamma centered monkhorst
@@ -182,6 +186,23 @@ class TentativeVaspCalc(VaspCalcBase):
         super(TentativeVaspCalc, self)._init_internal_params()
         self._update_internal_params()
 
+    def verify_inputs(self, inputdict):
+        incar = inputdict['incar'].get_dict()
+        keys = map(lambda k: k.lower(), incar.keys())
+        need_kp = True
+        if 'kspacing' in keys and 'kgamma' in keys:
+            need_kp = False
+        self.use_kp = True
+        kp = inputdict.get('kpcar')
+        if not need_kp:
+            msg = 'INCAR contains KSPACING and KGAMMA: '
+            if not kp:
+                msg += 'KPOINTS omitted'
+                self.use_kp = False
+            else:
+                msg += 'KPOINTS still used' 
+            self.logger.info(msg)
+
     def write_incar(self, inputdict, dst):
         from incar import dict_to_incar
         with open(dst, 'w') as incar:
@@ -211,19 +232,19 @@ class TentativeVaspCalc(VaspCalcBase):
             write_vasp(poscar, structure.get_ase(), vasp5=True)
 
     def write_kpoints(self, inputdict, dst):
-        kp = inputdict['kpcar']
-        try:
-            mesh, offset = kp.get_kpoints_mesh()
-            with open(dst, 'w') as kpoints:
-                kps = kpmtemp.format(N=mesh, s=offset)
-                kpoints.write(kps)
-        except AttributeError:
-            kpl, weights = kp.get_kpoints(also_weights=True)
-            kw = zip(kpl, weights)
-            with open(dst, 'w') as kpoints:
-                kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
-                kps = kpltemp.format(N=len(kw), klist=kpls)
-                kpoints.write(kps)
+        if self.use_kp:
+            try:
+                mesh, offset = kp.get_kpoints_mesh()
+                with open(dst, 'w') as kpoints:
+                    kps = kpmtemp.format(N=mesh, s=offset)
+                    kpoints.write(kps)
+            except AttributeError:
+                kpl, weights = kp.get_kpoints(also_weights=True)
+                kw = zip(kpl, weights)
+                with open(dst, 'w') as kpoints:
+                    kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
+                    kps = kpltemp.format(N=len(kw), klist=kpls)
+                    kpoints.write(kps)
 
     @property
     def elements(self):
