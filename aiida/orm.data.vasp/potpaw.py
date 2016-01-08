@@ -1,6 +1,7 @@
 import os
 from aiida.orm import Data
 from aiida.orm.querytool import QueryTool
+from aiida.tools.codespecific.vasp.io.potcar import parser as pcparser
 
 
 def import_family(folder):
@@ -18,17 +19,9 @@ class PotpawData(Data):
     def symbol(self):
         return self.get_attr('symbol')
 
-    @symbol.setter
-    def symbol(self, value):
-        self._set_attr('symbol', value)
-
     @property
-    def kind(self):
-        return self.get_attr('kind')
-
-    @kind.setter
-    def kind(self, value):
-        self._set_attr('kind', value)
+    def element(self):
+        return self.get_attr('element')
 
     @property
     def potcar(self):
@@ -36,10 +29,12 @@ class PotpawData(Data):
 
     @potcar.setter
     def potcar(self, value):
-        #~ name = 'POTCAR'.format(self.get_attr('symbol'))
         name = 'POTCAR'
         self.folder.insert_path(value, 'path/'+name)
         self._set_attr('potcar', self.get_abs_path(name))
+        attr_dict = pcparser.parse_potcar(value)
+        for k, v in attr_dict.iteritems():
+            self._set_attr(k, v)
 
     @property
     def psctr(self):
@@ -47,7 +42,6 @@ class PotpawData(Data):
 
     @psctr.setter
     def psctr(self, value):
-        #~ name = 'PSCTR_{}'.format(self.get_attr('symbol'))
         name = 'PSCTR'
         self.folder.insert_path(value, 'path/'+name)
         self._set_attr('psctr', self.get_abs_path(name))
@@ -56,21 +50,26 @@ class PotpawData(Data):
     def family(self):
         return self.get_attr('family')
 
-    @family.setter
-    def family(self, value):
-        self._set_attr('family', value)
+    @property
+    def valence(self):
+        return self.get_attr('valence')
+
+    @property
+    def mass(self):
+        return self.get_attr('mass')
+
+    @property
+    def paw_date(self):
+        return self.get_attr('paw_date')
+
+    @property
+    def xc_type(self):
+        return self.get_attr('xc_type')
 
     @classmethod
     def from_folder(cls, pawpath):
         res = cls()
         ap = os.path.abspath(pawpath)
-        p = pawpath.split(os.path.sep)
-        symbol = p[-1]
-        family = p[-2].replace('potpaw_', '')
-        kind = symbol.split('_')[0]
-        res.kind = kind
-        res.symbol = symbol
-        res.family = family
         res.potcar = os.path.join(ap, 'POTCAR')
         res.psctr = os.path.join(ap, 'PSCTR')
         return res

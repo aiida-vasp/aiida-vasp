@@ -3,7 +3,7 @@ load_dbenv()
 
 from aiida.orm import CalculationFactory, DataFactory, Code, Computer
 from aiida.common.folders import Folder
-from aiida.orm.calculation.job.vasp import cif
+from aiida.tools.codespecific.vasp.io import cif
 import sys
 import os
 
@@ -22,7 +22,7 @@ if equivalent_cifs:
     cifnode = equivalent_cifs[0]
 
 kp = Kp()
-kp.set_kpoints_mesh([4,4,4])
+kp.set_kpoints_mesh([4, 4, 4])
 
 paw_in = Paw.load_paw(family='LDA', symbol='In_d')[0]
 paw_as = Paw.load_paw(family='LDA', symbol='As')[0]
