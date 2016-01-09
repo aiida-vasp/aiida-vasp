@@ -1,4 +1,4 @@
-from aiida.orm import JobCalculation, DataFactory, Node
+from aiida.orm import JobCalculation
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 
@@ -23,60 +23,100 @@ def make_init_internal(cls, **kwargs):
     return _update_internal_params
 
 
-def sequencify(argname):
-    def wrapper(func):
-        def new_func(*args, **kwargs):
-            tlf = kwargs[argname]
-            if isinstance(tlf, list) or isinstance(tlf, tuple):
-                return func(*args, **kwargs)
-            else:
-                kwargs[argname] = [tlf]
-                return func(*args, **kwargs)
-        return new_func
-    return wrapper
+def seqify(seq_arg):
+    if not isinstance(seq_arg, list) and not isinstance(seq_arg, tuple):
+        seq_arg = (seq_arg)
+    return seq_arg
 
 
-@sequencify('valid_types')
-def input(valid_types=[], additional_parameter=None,
-          linkname=None, docstring=''):
-    vt = []
-    for t in valid_types:
-        if isinstance(t, Node):
-            vt.append(t)
-        else:
-            vt.append(DataFactory(t))
-    inp = {
-        'valid_types': tuple(vt),
-        'additional_parameter': additional_parameter,
-        'linkname': linkname,
-        'docstring': docstring
+class Input(object):
+    '''
+    Utility class that handles mapping between CalcMeta's and Calculation's
+    interfaces for defining input nodes
+    '''
+    def __init__(self, types, param=None, ln=None, doc=''):
+        self.types = seqify(types)
+        self.param = param
+        self._ln = ln
+        self.doc = ''
+
+    def set_ln(self, value):
+        if not self._ln:
+            self._ln = value
+
+    def get_dict(self):
+        ret = {
+            'valid_types': self.types,
+            'additional_parameter': self.param,
+            'linkname': self._ln,
+            'docstring': self.doc
+        }
+        return ret
+
+    @classmethod
+    def it_filter(cls, item):
+        return isinstance(item[1], Input)
+
+    @classmethod
+    def filter_classdict(cls, classdict):
+        return filter(cls.it_filter, classdict.iteritems())
+
+
+class IntParam(object):
+    '''
+    Utility class that handles mapping between CalcMeta's and Calculation's
+    internal parameter interfaces
+    '''
+
+    pmap = {
+        'default_parser': '_default_parser',
+        'input_file_name': '_INPUT_FILE_NAME',
+        'output_file_name': '_OUTPUT_FILE_NAME'
     }
-    return inp
+
+    @classmethod
+    def it_filter(cls, item):
+        return item[0] in cls.pmap
+
+    @classmethod
+    def filter_classdict(cls, classdict):
+        return filter(cls.it_filter, classdict.iteritems())
+
+    @classmethod
+    def map_param(cls, item):
+        k, v = item
+        return (cls.pmap[k], v)
+
+    @classmethod
+    def map_params(cls, classdict):
+        return map(cls.map_param, cls.filter_classdict(classdict))
+
+    @classmethod
+    def k_filter(cls, key):
+        return key in cls.pmap
+
+    @classmethod
+    def get_keylist(cls, classdict):
+        return filter(cls.k_filter, classdict)
 
 
 class CalcMeta(JobCalculation.__metaclass__):
+    '''
+    Metaclass responsible to simplify routine Calculation setup
+    '''
     def __new__(cls, name, bases, classdict):
         inputs = {}
-        internals = {}
         delete = []
-        for k, v in classdict.iteritems():
-            if isinstance(v, dict):
-                if 'valid_types' in v:
-                    if not v['linkname'] and not v['additional_parameter']:
-                        v['linkname'] = k
-                    elif not v['linkname'] and v['additional_parameter']:
-                        v['linkname'] = classdict['_get_{}_linkname'.format(k)]
-                    inputs.update({k: v})
-                    delete.append(k)
-            elif k == 'default_parser':
-                internals['_default_parser'] = v
-                delete.append(k)
-            elif k == 'input_file_name':
-                internals['_INPUT_FILE_NAME'] = v
-                delete.append(k)
-            elif k == 'output_file_name':
-                internals['_OUTPUT_FILE_NAME'] = v
-                delete.append(k)
+        inputobj = Input.filter_classdict(classdict)
+        for k, v in inputobj:
+            if not v.param:
+                v.set_ln(k)
+            else:
+                v.set_ln(classdict['_get_{}_linkname'.format(k)])
+            inputs[k] = v.get_dict()
+            delete.append(k)
+        internals = dict(IntParam.map_params(classdict))
+        delete.extend(IntParam.get_keylist(classdict))
         for k in delete:
             classdict.pop(k)
         classdict['_use_methods'] = make_use_methods(inputs)
@@ -103,14 +143,14 @@ class VaspCalcBase(JobCalculation):
         '''
         # write input files
         incar = tempfolder.get_abs_path('INCAR')
-        poscar = tempfolder.get_abs_path('POSCAR')
-        potcar = tempfolder.get_abs_path('POTCAR')
+        structure = tempfolder.get_abs_path('POSCAR')
+        paw = tempfolder.get_abs_path('POTCAR')
         kpoints = tempfolder.get_abs_path('KPOINTS')
 
         self.verify_inputs(inputdict)
         self.write_incar(inputdict, incar)
-        self.write_poscar(inputdict, poscar)
-        self.write_potcar(inputdict, potcar)
+        self.write_structure(inputdict, structure)
+        self.write_paw(inputdict, paw)
         self.write_kpoints(inputdict, kpoints)
 
         # calcinfo
@@ -174,12 +214,10 @@ k[0] k[1] k[2] w\
 
 class TentativeVaspCalc(VaspCalcBase):
     '''vasp 3.5.3 calc with nice hopefully interface'''
-    incar = input(valid_types='parameter', docstring='input parameters')
-    poscar = input(valid_types='structure', docstring='aiida structure')
-    potcar = input(valid_types='vasp.potpaw', docstring='paw symbols or files',
-                   additional_parameter='kind')
-    kpcar = input(valid_types='array.kpoints',
-                  docstring='kpoints array or mesh')
+    incar = Input(types='parameter', doc='input parameters')
+    structure = Input(types='structure', doc='aiida structure')
+    paw = Input(types='vasp.potpaw', doc='paw symbols or files', param='kind')
+    kpoints = Input(types='array.kpoints', doc='kpoints array or mesh')
     default_parser = 'vasp.tentative'
 
     def _init_internal_params(self):
@@ -193,14 +231,14 @@ class TentativeVaspCalc(VaspCalcBase):
         if 'kspacing' in keys and 'kgamma' in keys:
             need_kp = False
         self.use_kp = True
-        kp = inputdict.get('kpcar')
+        kp = inputdict.get('kpoints')
         if not need_kp:
             msg = 'INCAR contains KSPACING and KGAMMA: '
             if not kp:
                 msg += 'KPOINTS omitted'
                 self.use_kp = False
             else:
-                msg += 'KPOINTS still used' 
+                msg += 'KPOINTS still used'
             self.logger.info(msg)
 
     def write_incar(self, inputdict, dst):
@@ -209,30 +247,31 @@ class TentativeVaspCalc(VaspCalcBase):
             incar.write(dict_to_incar(inputdict['incar'].get_dict()))
 
     @classmethod
-    def _get_potcar_linkname(cls, kind):
+    def _get_paw_linkname(cls, kind):
         return 'paw_{}'.format(kind)
 
-    def write_potcar(self, inputdict, dst):
+    def write_paw(self, inputdict, dst):
         import subprocess32 as sp
-        structure = inputdict['poscar']
+        structure = inputdict['structure']
         catcom = ['cat']
         # order the symbols according to order given in structure
         for kind in structure.get_kind_names():
-            paw = inputdict[self._get_potcar_linkname(kind)]
+            paw = inputdict[self._get_paw_linkname(kind)]
             catcom.append(paw.get_abs_path('POTCAR'))
         # cat the pawdata nodes into the file
         with open(dst, 'w') as pc:
             sp.check_call(catcom, stdout=pc)
 
-    def write_poscar(self, inputdict, dst):
+    def write_structure(self, inputdict, dst):
         from ase.io.vasp import write_vasp
-        structure = inputdict['poscar']
+        structure = inputdict['structure']
         self.elements = structure.get_kind_names()
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, structure.get_ase(), vasp5=True)
+        with open(dst, 'w') as structure:
+            write_vasp(structure, structure.get_ase(), vasp5=True)
 
     def write_kpoints(self, inputdict, dst):
         if self.use_kp:
+            kp = inputdict['kpoints']
             try:
                 mesh, offset = kp.get_kpoints_mesh()
                 with open(dst, 'w') as kpoints:
@@ -254,6 +293,7 @@ class TentativeVaspCalc(VaspCalcBase):
     def elements(self, value):
         self._set_attr('elements', value)
 
+
 class TestVC(VaspCalcBase):
-    test_input = input(valid_types='parameter', docstring='bla')
+    test_input = Input(types='parameter', doc='bla')
     default_parser = 'vasp.vasp'
