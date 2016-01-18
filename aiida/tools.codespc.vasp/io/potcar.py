@@ -3,7 +3,7 @@ This module contains tools to read PotpawData attributes from POTCAR files.
 '''
 import re
 import datetime as dt
-from parser import BaseParser
+from parser import KeyValueParser
 
 
 class PotParser(KeyValueParser):

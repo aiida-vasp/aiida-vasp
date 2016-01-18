@@ -1,7 +1,7 @@
 import os
 from aiida.orm import Data
 from aiida.orm.querytool import QueryTool
-from aiida.tools.codespecific.vasp.io.potcar import parser as pcparser
+from aiida.tools.codespecific.vasp.io.potcar import PotParser as pcparser
 
 
 def import_family(folder):

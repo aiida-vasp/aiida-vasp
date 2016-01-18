@@ -3,8 +3,30 @@ This module contains the base class for other vasp parsers.
 '''
 import re
 
+
 class BaseParser(object):
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
+
+    @classmethod
+    def line(cls, fobj_or_str, dt=str):
+        if isinstance(fobj_or_str, str):
+            line = fobj_or_str
+        else:
+            line = fobj_or_str.readline()
+        res = map(dt, line.split())
+        if len(res) == 1:
+            return res[0]
+        else:
+            return res
+
+    @classmethod
+    def splitlines(cls, fobj_or_str, dt=float):
+        if isinstance(fobj_or_str, str):
+            lines = fobj_or_str
+        else:
+            lines = fobj_or_str.readlines()
+        return map(lambda l: cls.line(l, dt), lines)
+
 
 class KeyValueParser(BaseParser):
     '''
