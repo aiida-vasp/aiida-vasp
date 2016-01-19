@@ -23,11 +23,11 @@ class BaseParser(Parser):
             self.logger.error('No retrieved folder found')
             return None
 
-    def result(self, success, new_nodes=()):
+    def result(self, success):
         if success:
-            return True, new_nodes
+            return True, self._new_nodes.items()
         else:
-            return False, new_nodes
+            return False, self._new_nodes.items()
 
     def get_file(self, fname):
         try:

@@ -26,7 +26,6 @@ class EigParser(BaseParser):
             l2 = cls.line(eig, float)      # "
             coord_type = cls.line(eig)     # "
             name = cls.line(eig)           # read name line (can be empty)
-            print l0, l1, l2, coord_type, name
             p1, nkp, nb = cls.line(eig, int)  # read: ? #kp #bands
             data = eig.read()               # rest is data
         ni, na, p00, p01 = l0

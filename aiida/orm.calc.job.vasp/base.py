@@ -169,10 +169,16 @@ class VaspCalcBase(JobCalculation):
             'CONTCAR',
             'DOSCAR',
             'EIGENVAL',
+            'ELFCAR',
+            'IBZKPT',
+            'LOCPOT',
             'OSZICAR',
             'OUTCAR',
             'PCDAT',
             'PROCAR',
+            'PROOUT',
+            'STOPCAR',
+            'TMPCAR',
             'WAVECAR',
             'XDATCAR',
             'vasprun.xml'
@@ -188,7 +194,21 @@ class VaspCalcBase(JobCalculation):
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
-    def verify_inputs(self):
+    def verify_inputs(self, inputdict, *args, **kwargs):
+        self.check_input(inputdict, 'code')
+
+    def check_input(self, inputdict, linkname, check_fn=lambda: True):
+        notset_msg = 'input not set: %s'
+        if check_fn():
+            if not linkname in inputdict:
+                raise ValueError(notset_msg % linkname)
+
+
+    def store(self):
+        self._prestore()
+        super(VaspCalcBase, self).store()
+
+    def _prestore(self):
         pass
 
 
@@ -248,6 +268,9 @@ class TentativeVaspCalc(VaspCalcBase):
                 msg += 'KPOINTS still used'
             self.logger.info(msg)
 
+    def prestore(self):
+        self.elements = self.inp.structure.get_kind_names()
+
     def write_incar(self, inputdict, dst):
         from incar import dict_to_incar
         with open(dst, 'w') as incar:
@@ -272,7 +295,6 @@ class TentativeVaspCalc(VaspCalcBase):
     def write_structure(self, inputdict, dst):
         from ase.io.vasp import write_vasp
         structure = inputdict['structure']
-        self.elements = structure.get_kind_names()
         with open(dst, 'w') as poscar:
             write_vasp(poscar, structure.get_ase(), vasp5=True)
 

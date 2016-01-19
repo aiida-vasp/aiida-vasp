@@ -3,13 +3,15 @@ from aiida.tools.codespecific.vasp.io.eigenval import EigParser
 from aiida.tools.codespecific.vasp.io.vasprun import VasprunParser
 from aiida.tools.codespecific.vasp.io.doscar import DosParser
 from aiida.orm import DataFactory
+import numpy as np
+import ase
 
 
 class Vasp5Parser(BaseParser):
     '''
     Parses all Vasp 5 calculations.
     '''
-    def parser_with_retrieved(self, retrieved):
+    def parse_with_retrieved(self, retrieved):
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
         if not self.out_folder:
@@ -23,25 +25,13 @@ class Vasp5Parser(BaseParser):
 
         self.vrp = self.read_run()
 
-        bands, kpout = self.read_eigenval()
-
-        structure = None  # get output structure if not static
-        if self.vrp.is_md or self.vrp.is_relaxation:
-            structure = self.read_cont()
-
-        if self.vrp.is_md:  # set cell from input or output structure
-            cellst = structure
-        else:
-            cellst = self._calc.inp.structure
-        bands.set_cell_from_structure(cellst)
-        kpout.set_cell_from_structure(cellst)
+        bands, kpout, structure = self.read_eigenval()
 
         self.dcp = self.read_dos()
         dosnode = self.get_dos_node(self.vrp, self.dcp)
 
         self.set_bands(bands)  # append output nodes
-        if not self._calc.inp.kpoints:
-            self.set_kpoints(kpout)
+        self.set_kpoints(kpout)
         if structure:
             self.set_structure(structure)
 
@@ -49,9 +39,12 @@ class Vasp5Parser(BaseParser):
             chgnode = self.get_chgcar()
             self.set_chgcar(chgnode)
 
+        self.add_node('results', self.get_output())
+
         self.set_dos(dosnode)
 
-        return self.new_nodes
+        print self.new_nodes
+        return self.result(success=True)
 
     def read_run(self):
         '''Read vasprun.xml'''
@@ -74,6 +67,7 @@ class Vasp5Parser(BaseParser):
         takes VasprunParser and DosParser objects
         and returns a doscar array node
         '''
+        import numpy as np
         dosnode = DataFactory('array')()
         pdos = vrp.pdos.copy()
         for i, name in enumerate(vrp.pdos.dtype.names[1:]):
@@ -88,8 +82,8 @@ class Vasp5Parser(BaseParser):
         tdos = vrp.tdos[:ns, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
             cur = dcp.tdos[:,i+1:i+1+ns].transpose()
-            cond = vrp.tdos[name] < 0.1
-            tdos[name] = np.where(cond, cur, vrp.tdos[name])
+            cond = vrp.tdos[:ns, :][name] < 0.1
+            tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
         dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
         return dosnode
@@ -122,20 +116,36 @@ class Vasp5Parser(BaseParser):
             return None, None
         header, kp, bs = EigParser.parse_eigenval(eig)
         bsnode = DataFactory('array.bands')()
-        bsnode.set_bands(bs, occupations=self.vrp.occupations)
         kpout = DataFactory('array.kpoints')()
+
+        structure = None  # get output structure if not static
+        if self.vrp.is_md or self.vrp.is_relaxation:
+            structure = self.read_cont()
+
+        if self.vrp.is_md:  # set cell from input or output structure
+            cellst = structure
+        else:
+            cellst = self._calc.inp.structure
+        bsnode.set_cell_from_structure(cellst)
+        kpout.set_cell_from_structure(cellst)
+
+        bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=header['cartesian'])
+        bsnode.set_bands(bs, occupations=self.vrp.occupations[0])
         kpout.set_kpoints(kp[:, :3], weights=kp[:, 3],
                           cartesian=header['cartesian'])
-        return bsnode, kpout
+        return bsnode, kpout, structure
 
     def get_chgcar(self):
         chgc = self.get_file('CHGCAR')
-        chgnode = DataFactory('singlefile')
+        chgnode = DataFactory('singlefile')()
         chgnode.set_file(chgc)
         return chgnode
 
-    def get_ouptput(self):
+    def get_output(self):
         output = DataFactory('parameter')()
+        output.update_dict({
+            'efermi': self.vrp.efermi
+        })
         return output
 
     def set_bands(self, node):

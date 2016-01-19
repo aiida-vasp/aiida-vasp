@@ -52,6 +52,11 @@ class VasprunParser(object):
         return self._i('efermi')
 
     @property
+    def is_static(self):
+        ibrion = self.param('IBRION')
+        return ibrion == -1
+
+    @property
     def is_md(self):
         ibrion = self.param('IBRION')
         return ibrion not in [-1, 1, 2]
