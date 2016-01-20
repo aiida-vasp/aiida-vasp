@@ -45,7 +45,8 @@ install_paths = [('orm.calc.job.vasp', 'orm/calculation/job/vasp'),
                  ('parsers.plugins.vasp', 'parsers/plugins/vasp'),
                  ('orm.data.vasp', 'orm/data/vasp'),
                  ('workflows.vasp', 'workflows/vasp'),
-                 ('tools.codespc.vasp', 'tools/codespecific/vasp')]
+                 ('tools.codespc.vasp', 'tools/codespecific/vasp'),
+                 ('djsite.db.subtests.vasp', 'djsite/db/subtests/vasp')]
 
 colors = {'ok': '\033[92m',
           'info': '\033[91m',

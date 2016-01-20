@@ -44,7 +44,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def retval(cls, *args, **kwargs):
-        ret = args
+        ret = list(args)
         if cls.comments:
             ret.append(kwargs.get('comment', ''))
         return tuple(ret)

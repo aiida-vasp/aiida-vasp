@@ -156,8 +156,8 @@ class VaspCalcBase(JobCalculation):
 
         self.verify_inputs(inputdict)
         self.write_incar(inputdict, incar)
-        self.write_structure(inputdict, structure)
-        self.write_paw(inputdict, paw)
+        self.write_poscar(inputdict, structure)
+        self.write_potcar(inputdict, paw)
         self.write_kpoints(inputdict, kpoints)
 
         # calcinfo
@@ -204,9 +204,9 @@ class VaspCalcBase(JobCalculation):
                 raise ValueError(notset_msg % linkname)
 
 
-    def store(self):
+    def store(self, *args, **kwargs):
         self._prestore()
-        super(VaspCalcBase, self).store()
+        super(VaspCalcBase, self).store(*args, **kwargs)
 
     def _prestore(self):
         pass
@@ -280,7 +280,7 @@ class TentativeVaspCalc(VaspCalcBase):
     def _get_paw_linkname(cls, kind):
         return 'paw_{}'.format(kind)
 
-    def write_paw(self, inputdict, dst):
+    def write_potcar(self, inputdict, dst):
         import subprocess32 as sp
         structure = inputdict['structure']
         catcom = ['cat']
@@ -292,7 +292,7 @@ class TentativeVaspCalc(VaspCalcBase):
         with open(dst, 'w') as pc:
             sp.check_call(catcom, stdout=pc)
 
-    def write_structure(self, inputdict, dst):
+    def write_poscar(self, inputdict, dst):
         from ase.io.vasp import write_vasp
         structure = inputdict['structure']
         with open(dst, 'w') as poscar:

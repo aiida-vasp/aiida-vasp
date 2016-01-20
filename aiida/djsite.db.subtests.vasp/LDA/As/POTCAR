@@ -1,0 +1,24 @@
+  PAW As 15Mar2012                       
+   5.00000000000000     
+ parameters from PSCTR are:
+   VRHFIN =As: s2p3
+   LEXCH  = CA
+   EATOM  =   171.6694 eV,   12.6173 Ry
+
+   TITEL  = PAW As 15Mar2012
+   LULTRA =        F    use ultrasoft PP ?
+   IUNSCR =        1    unscreen: 0-lin 1-nonlin 2-no
+   RPACOR =    1.900    partial core radius
+   POMASS =   74.922; ZVAL   =    5.000    mass and valenz
+   RCORE  =    2.100    outmost cutoff radius
+   RWIGS  =    2.300; RWIGS  =    1.217    wigner-seitz radius (au A)
+   ENMAX  =  208.870; ENMIN  =  156.653 eV
+   ICORE  =        3    local potential
+   LCOR   =        T    correct aug charges
+   LPAW   =        T    paw PP
+   EAUG   =  462.758
+   DEXC   =    0.000
+   RMAX   =    2.144    core radius for proj-oper
+   RAUG   =    1.300    factor for augmentation sphere
+   RDEP   =    2.140    radius for radial grids
+   RDEPT  =    1.941    core radius for aug-charge

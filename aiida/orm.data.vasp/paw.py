@@ -4,15 +4,6 @@ from aiida.orm.querytool import QueryTool
 from aiida.tools.codespecific.vasp.io.potcar import PawParser as pcparser
 
 
-def import_family(folder):
-    fp = os.path.abspath(folder)
-    for pawf in os.listdir(fp):
-        ap = os.path.join(fp, pawf)
-        if os.path.isdir(ap):
-            paw = PawData.from_folder(ap)
-            if not PawData.load_paw(family=paw.family, symbol=paw.symbol):
-                paw.store_all()
-
 
 class PawData(Data):
     @property
@@ -25,26 +16,27 @@ class PawData(Data):
 
     @property
     def potcar(self):
-        return self.get_attr('potcar')
+        return self.get_abs_path('POTCAR')
 
     @potcar.setter
     def potcar(self, value):
         name = 'POTCAR'
         self.folder.insert_path(value, 'path/'+name)
-        self._set_attr('potcar', self.get_abs_path(name))
         attr_dict = pcparser.parse_potcar(value)
         for k, v in attr_dict.iteritems():
-            self._set_attr(k, v)
+            if k=='paw_date':
+                self._set_attr(k, v.strftime('%Y-%m-%d'))
+            else:
+                self._set_attr(k, v)
 
     @property
     def psctr(self):
-        return self.get_attr('psctr')
+        return self.get_abs_path('PSCTR')
 
     @psctr.setter
     def psctr(self, value):
         name = 'PSCTR'
         self.folder.insert_path(value, 'path/'+name)
-        self._set_attr('psctr', self.get_abs_path(name))
 
     @property
     def family(self):
@@ -62,9 +54,21 @@ class PawData(Data):
     def paw_date(self):
         return self.get_attr('paw_date')
 
-    @property
-    def xc_type(self):
-        return self.get_attr('xc_type')
+    @classmethod
+    def import_family(cls, folder, family_override=None):
+        fp = os.path.abspath(folder)
+        ffname = os.path.basename(os.path.dirname(folder)).replace('potpaw_', '')
+        famname = family_override or ffname
+        for pawf in os.listdir(fp):
+            ap = os.path.join(fp, pawf)
+            if os.path.isdir(ap):
+                paw = cls.from_folder(ap)
+                paw._set_attr('family', famname)
+                if not cls.load_paw(family=famname, symbol=paw.symbol):
+                    paw.store_all()
+        @property
+        def xc_type(self):
+            return self.get_attr('xc_type')
 
     @classmethod
     def from_folder(cls, pawpath):

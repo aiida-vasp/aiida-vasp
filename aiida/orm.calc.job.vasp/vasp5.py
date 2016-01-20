@@ -1,4 +1,6 @@
 from base import VaspCalcBase, Input
+from aiida.orm import DataFactory
+from aiida.common.utils import classproperty
 
 
 class Vasp5Calculation(VaspCalcBase):
@@ -15,7 +17,7 @@ class Vasp5Calculation(VaspCalcBase):
                 param='kind')
     kpoints = Input(types='array.kpoints', doc='aiida kpoints node: '+
                     'will be written to KPOINTS file')
-    charge_densitiy = Input(types='vasp.chargedensty',
+    charge_density = Input(types='vasp.chargedensity',
                             doc='chargedensity node: should be obtained from the\n'+
                             'output of a selfconsistent Vasp5Calculation (written to CHGCAR)')
     wavefunctions = Input(types='vasp.wavefun',
@@ -34,7 +36,7 @@ class Vasp5Calculation(VaspCalcBase):
         with open(dst, 'w') as incar:
             incar.write(dict_to_incar(self.inp.settings.get_dict()))
 
-    def write_structure(self, inputdict, dst):
+    def write_poscar(self, inputdict, dst):
         '''
         converts from structures node (StructureData) to POSCAR format
         and writes to dst
@@ -46,7 +48,7 @@ class Vasp5Calculation(VaspCalcBase):
         with open(dst, 'w') as poscar:
             write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
 
-    def write_paw(self, inputdict, dst):
+    def write_potcar(self, inputdict, dst):
         '''
         concatenatest multiple paw files into a POTCAR
         :param
@@ -55,8 +57,10 @@ class Vasp5Calculation(VaspCalcBase):
         '''
         import subprocess32 as sp
         catcom = ['cat']
+        #~ structure = inputdict['structure']
+        structure = self.inp.structure
         # order the symbols according to order given in structure
-        for kind in self.inp.structure.get_kind_names():
+        for kind in structure.get_kind_names():
             paw = inputdict[self._get_paw_linkname(kind)]
             catcom.append(paw.get_abs_path('POTCAR'))
         # cat the pawdata nodes into the file
@@ -103,7 +107,7 @@ class Vasp5Calculation(VaspCalcBase):
         return 'paw_%s' % kind
 
     @property
-    def settings(self):
+    def _settings(self):
         return {k.lower(): v for k,v in self.inp.settings.get_dict().iteritems()}
 
     def _prestore(self):
@@ -124,7 +128,7 @@ class Vasp5Calculation(VaspCalcBase):
             False otherwise
         needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
         '''
-        if 'kspacing' in self.settings and 'kgamma' in self.settings:
+        if 'kspacing' in self._settings and 'kgamma' in self._settings:
             return False
         else:
             return True
@@ -138,7 +142,7 @@ class Vasp5Calculation(VaspCalcBase):
         needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
-        icharg = self.settings.get('icharg', ichrg_d)
+        icharg = self._settings.get('icharg', ichrg_d)
         if icharg in [1, 11]:
             return True
         else:
@@ -152,20 +156,60 @@ class Vasp5Calculation(VaspCalcBase):
             False otherwise
         needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
         '''
-        nsw = self.settings.get('nsw', 0)
+        nsw = self._settings.get('nsw', 0)
         ibrion_d = nsw in [0, 1] and -1 or 0
-        ibrion = self.settings.get('ibrion', ibrion_d)
+        ibrion = self._settings.get('ibrion', ibrion_d)
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
-        istart = self.settings.get('istart', istrt_d)
-        if istart in [1, 2]:
+        istart = self._settings.get('istart', istrt_d)
+        if istart in [1, 2, 3]:
             return True
         else:
             return False
 
-    def
+    @classmethod
+    def new_settings(self, **kwargs):
+        return DataFactory('parameter')(**kwargs)
+
+    @classmethod
+    def new_structure(self, **kwargs):
+        return DataFactory('structure')(**kwargs)
+
+    @classmethod
+    def new_kpoints(self, **kwargs):
+        return DataFactory('array.kpoints')(**kwargs)
+
+    @classmethod
+    def new_charge_density(self, **kwargs):
+        return DataFactory('vasp.chargedensity')(**kwargs)
+
+    @classmethod
+    def new_wavefunctions(self, **kwargs):
+        return DataFactory('vasp.wavefun')(**kwargs)
+
+    @classmethod
+    def load_paw(self, *args, **kwargs):
+        return self.Paw.load_paw(*args, **kwargs)[0]
+
+    @classproperty
+    def Paw(self):
+        return DataFactory('vasp.paw')
+
     @property
     def input_kp_used(self):
         return self.get_attr('input_kp_used')
+
+    @property
+    def input_charge_density_used(self):
+        return self.get_attr('input_chgd_used')
+
+    @property
+    def input_wavefunctions_used(self):
+        return self.get_attr('input_wfn_used')
+
+    @property
+    def elements(self):
+        return self.get_attr('elements')
+
     def _init_internal_params(self):
         '''
         let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta pick up internal parameters from the class body
