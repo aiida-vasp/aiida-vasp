@@ -24,10 +24,7 @@ class PawData(Data):
         self.folder.insert_path(value, 'path/'+name)
         attr_dict = pcparser.parse_potcar(value)
         for k, v in attr_dict.iteritems():
-            if k=='paw_date':
-                self._set_attr(k, v.strftime('%Y-%m-%d'))
-            else:
-                self._set_attr(k, v)
+            self._set_attr(k, v)
 
     @property
     def psctr(self):
@@ -63,7 +60,10 @@ class PawData(Data):
             ap = os.path.join(fp, pawf)
             if os.path.isdir(ap):
                 paw = cls.from_folder(ap)
-                paw._set_attr('family', famname)
+                if family_override:
+                    paw._set_attr('family', family_override)
+                elif paw.family == 'none':
+                    paw._set_attr('family', ffname)
                 if not cls.load_paw(family=famname, symbol=paw.symbol):
                     paw.store_all()
         @property

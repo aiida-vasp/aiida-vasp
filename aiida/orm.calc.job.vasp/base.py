@@ -268,7 +268,8 @@ class TentativeVaspCalc(VaspCalcBase):
                 msg += 'KPOINTS still used'
             self.logger.info(msg)
 
-    def prestore(self):
+    def _prestore(self):
+        super(TentativeVaspCalc, self)._prestore()
         self.elements = self.inp.structure.get_kind_names()
 
     def write_incar(self, inputdict, dst):

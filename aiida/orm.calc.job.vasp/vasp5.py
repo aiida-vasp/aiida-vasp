@@ -9,7 +9,7 @@ class Vasp5Calculation(VaspCalcBase):
     '''
     settings = Input(types='parameter',
                      doc='parameter node: parameters to be written to the INCAR file')
-    structure = Input(types='structure',
+    structure = Input(types=['structure', 'cif'],
                       doc='aiida structure node: will be converted to POSCAR')
     paw = Input(types='vasp.paw',
                 doc='PAW nodes for each kind of element in the material\n'+

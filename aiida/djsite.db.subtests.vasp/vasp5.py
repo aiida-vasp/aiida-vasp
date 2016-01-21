@@ -14,6 +14,7 @@ class Vasp5CalcTest(AiidaTestCase):
         self.calc = CalculationFactory('vasp.vasp5')()
         DataFactory('vasp.paw').import_family(
             realpath(join(dirname(__file__), 'LDA')), family_override='TEST')
+
         larray = np.array([[0, .5, .5],
                            [.5, 0, .5],
                            [.5, .5, 0]])
@@ -22,6 +23,8 @@ class Vasp5CalcTest(AiidaTestCase):
         self.structure.append_atom(position=[0, 0, 0], symbols='In')
         self.structure.append_atom(position=[.25, .25, .25], symbols='As')
 
+        cifpath = realpath(join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
+        self.cif = DataFactory('cif').get_or_create(cifpath)[0]
     def test_inputs(self):
         self.assertTrue(hasattr(self.calc, 'use_code'))
         self.assertTrue(hasattr(self.calc, 'use_settings'))
@@ -77,6 +80,17 @@ class Vasp5CalcTest(AiidaTestCase):
         check for nonemptiness of the file
         '''
         self.calc.use_structure(self.structure)
+        dst = tempfile.mkstemp()[1]
+        self.calc.write_poscar({}, dst)
+        with open(dst, 'r') as poscar:
+            self.assertTrue(poscar.read())
+
+    def test_write_poscar_cif(self):
+        '''
+        feed a cif file into calc and write it to a POSCAR temp file
+        make sure the file is not empty
+        '''
+        self.calc.use_structure(self.cif)
         dst = tempfile.mkstemp()[1]
         self.calc.write_poscar({}, dst)
         with open(dst, 'r') as poscar:

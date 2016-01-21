@@ -32,9 +32,9 @@ class PotParser(KeyValueParser):
 
     @classmethod
     def vrhfin(cls, vrhfin):
-        vl = vrhfin.split()
-        element = vl[0].strip(':')
-        spconf = vl[1]
+        vl = vrhfin.split(':')
+        element = vl.pop(0).strip()
+        spconf = vl and vl.pop(0).strip()
         return element, spconf
 
     @classmethod
@@ -43,7 +43,7 @@ class PotParser(KeyValueParser):
         if not cls.single(kv_list):
             raise ValueError('not parsing concatenated POTCAR files')
         kv_dict = cls.kv_dict(kv_list)
-        is_paw, cmt = cls.bool(kv_dict['LPAW'])
+        is_paw, cmt = cls.bool(kv_dict.get('LPAW', 1))
         is_ultrasoft, cmt = cls.bool(kv_dict['LULTRA'])
         if not is_paw:
             raise ValueError('POTCAR contains non-PAW potential')
@@ -77,7 +77,7 @@ class PotParser(KeyValueParser):
 class PawParser(KeyValueParser):
     '''
     contains regex and functions to find grammar elements
-    for POTCAR files
+    in POTCAR files in PAW libraries
     '''
     assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
     comments = True
@@ -93,16 +93,17 @@ class PawParser(KeyValueParser):
     @classmethod
     def title(cls, title):
         tl = title.split()
-        fam = tl[0].replace('PAW_', '')
-        sym = tl[1]
-        date = dt.datetime.strptime(tl[2], '%d%b%Y').date()
+        fam = len(tl) > 1 and tl.pop(0).replace('PAW_', '') or 'none'
+        fam = fam.replace('PAW', 'none')
+        sym = tl and tl.pop(0) or ''
+        date = tl and tl.pop(0) or 'none'
         return fam, sym, date
 
     @classmethod
     def vrhfin(cls, vrhfin):
-        vl = vrhfin.split()
-        element = vl[0].strip(':')
-        spconf = vl[1]
+        vl = vrhfin.split(':')
+        element = vl and vl.pop(0).strip() or ''
+        spconf = vl and vl.pop(0).strip() or ''
         return element, spconf
 
     @classmethod
@@ -111,8 +112,8 @@ class PawParser(KeyValueParser):
         if not cls.single(kv_list):
             raise ValueError('not parsing concatenated POTCAR files')
         kv_dict = cls.kv_dict(kv_list)
-        is_paw, cmt = cls.bool(kv_dict['LPAW'])
-        is_ultrasoft, cmt = cls.bool(kv_dict['LULTRA'])
+        is_paw, cmt = cls.bool(kv_dict.get('LPAW', 'T'))
+        is_ultrasoft, cmt = cls.bool(kv_dict.get('LULTRA', 'F'))
         if not is_paw:
             raise ValueError('POTCAR contains non-PAW potential')
         if is_ultrasoft:
