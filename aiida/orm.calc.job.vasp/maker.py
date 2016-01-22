@@ -17,22 +17,34 @@ class VaspMaker(object):
         self._computer = kwargs.get('computer')
         self._code = kwargs.get('code')
         self._settings = kwargs.get('settings', self.calc_cls.new_settings())
-        self._structure = kwargs.get('structure', self.calc_cls.new_structure())
+        self._set_default_structure(kwargs.get('structure'))
         self._paws = {}
         self._set_default_lda_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
+        self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
         self._wavefunctions = kwargs.get('wavefunctions', None)
         self._recipe = None
         self._queue = None
 
+    def _set_default_structure(self, structure):
+        if isinstance(structure, str):
+            self._structure = DataFactory('cif').get_or_create(structure)[0]
+        elif not structure:
+            self._structure = self.calc_cls.new_structure()
+        else:
+            self._structure = structure
+
     def new(self):
         calc = self.calc_cls()
         calc.use_code(self._code)
         calc.use_structure(self._structure)
+        for k in self.elements:
+            calc.use_paw(self._paws[k], kind=k)
         calc.use_settings(self._settings)
         calc.use_kpoints(self._kpoints)
-        calc.use_computer(self._computer)
+        calc.set_computer(self._computer)
+        calc.set_queue_name(self._queue)
         if self._charge_density:
             calc.use_charge_density(self._charge_density)
         if self._wavefunctions:
@@ -48,7 +60,7 @@ class VaspMaker(object):
     def structure(self, val):
         self._structure = val
         self._set_default_lda_paws()
-        self._kpoints.set_cell_from_structure(self._structure)
+        self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     @property
     def settings(self):
@@ -61,7 +73,7 @@ class VaspMaker(object):
     @kpoints.setter
     def kpoints(self, kp):
         self._kpoints = kp
-        self._kpoints.set_cell_from_structure(self._structure)
+        self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     @property
     def code(self):
@@ -84,13 +96,13 @@ class VaspMaker(object):
         return self._queue
 
     @queue.setter
-    def queque(self, val):
+    def queue(self, val):
         self._queue = val
 
     def add_settings(self, **kwargs):
         for k, v in kwargs.iteritems():
             if k not in self.settings:
-                self._settings.update_dict({k, v})
+                self._settings.update_dict({k: v})
 
     def rewrite_settings(self, **kwargs):
             self._settings.update_dict(kwargs)

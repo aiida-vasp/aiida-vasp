@@ -126,8 +126,8 @@ class Vasp5Parser(BaseParser):
             cellst = structure
         else:
             cellst = self._calc.inp.structure
-        bsnode.set_cell_from_structure(cellst)
-        kpout.set_cell_from_structure(cellst)
+        bsnode.set_cell(cellst.get_ase().get_cell())
+        kpout.set_cell(cellst.get_ase().get_cell())
 
         bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=header['cartesian'])
         bsnode.set_bands(bs, occupations=self.vrp.occupations[0])

@@ -60,7 +60,9 @@ class Vasp5Calculation(VaspCalcBase):
         #~ structure = inputdict['structure']
         structure = self.inp.structure
         # order the symbols according to order given in structure
-        for kind in structure.get_kind_names():
+        if not 'elements' in self.attrs():
+            self._prestore()
+        for kind in self.elements:
             paw = inputdict[self._get_paw_linkname(kind)]
             catcom.append(paw.get_abs_path('POTCAR'))
         # cat the pawdata nodes into the file
@@ -93,10 +95,12 @@ class Vasp5Calculation(VaspCalcBase):
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         notset_msg = 'input not set: %s'
-        super(Vasp5Calculation, self).verify_inputs(self, inputdict, *args, **kwargs)
+        super(Vasp5Calculation, self).verify_inputs(inputdict, *args, **kwargs)
         self.check_input(inputdict, 'settings')
         self.check_input(inputdict, 'structure')
-        for kind in self.inp.structure.get_kind_names():
+        if not 'elements' in self.attrs():
+            self._prestore()
+        for kind in self.elements:
             self.check_input(inputdict, self._get_paw_linkname(kind))
         self.check_input(inputdict, 'kpoints', self._need_kp)
         self.check_input(inputdict, 'charge_density', self._need_chgd)
@@ -118,7 +122,7 @@ class Vasp5Calculation(VaspCalcBase):
         self._set_attr('input_kp_used', self._need_kp())
         self._set_attr('input_chgd_used', self._need_chgd())
         self._set_attr('input_wfn_used', self._need_wfn())
-        self._set_attr('elements', self.inp.structure.get_kind_names())
+        self._set_attr('elements', list(set(self.inp.structure.get_ase().get_chemical_symbols())))
 
     def _need_kp(self):
         '''
