@@ -4,7 +4,6 @@ from aiida.tools.codespecific.vasp.io.vasprun import VasprunParser
 from aiida.tools.codespecific.vasp.io.doscar import DosParser
 from aiida.orm import DataFactory
 import numpy as np
-import ase
 
 
 class Vasp5Parser(BaseParser):
@@ -39,6 +38,9 @@ class Vasp5Parser(BaseParser):
             chgnode = self.get_chgcar()
             self.set_chgcar(chgnode)
 
+        if self.vrp.is_sc:
+            self.set_wavecar(self.get_wavecar())
+
         self.add_node('results', self.get_output())
 
         self.set_dos(dosnode)
@@ -67,13 +69,12 @@ class Vasp5Parser(BaseParser):
         takes VasprunParser and DosParser objects
         and returns a doscar array node
         '''
-        import numpy as np
         dosnode = DataFactory('array')()
         pdos = vrp.pdos.copy()
         for i, name in enumerate(vrp.pdos.dtype.names[1:]):
             ns = vrp.pdos.shape[1]
             # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-            cur = dcp.pdos[:, :, i+1:i+1+ns].transpose(0,2,1)
+            cur = dcp.pdos[:, :, i+1:i+1+ns].transpose(0, 2, 1)
             cond = vrp.pdos[name] < 0.1
             pdos[name] = np.where(cond, cur, vrp.pdos[name])
         ns = 1
@@ -81,7 +82,7 @@ class Vasp5Parser(BaseParser):
             ns = 2
         tdos = vrp.tdos[:ns, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
-            cur = dcp.tdos[:,i+1:i+1+ns].transpose()
+            cur = dcp.tdos[:, i+1:i+1+ns].transpose()
             cond = vrp.tdos[:ns, :][name] < 0.1
             tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
         dosnode.set_array('pdos', pdos)
@@ -129,7 +130,8 @@ class Vasp5Parser(BaseParser):
         bsnode.set_cell(cellst.get_ase().get_cell())
         kpout.set_cell(cellst.get_ase().get_cell())
 
-        bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=header['cartesian'])
+        bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
+                           cartesian=header['cartesian'])
         bsnode.set_bands(bs, occupations=self.vrp.occupations[0])
         kpout.set_kpoints(kp[:, :3], weights=kp[:, 3],
                           cartesian=header['cartesian'])
@@ -137,9 +139,15 @@ class Vasp5Parser(BaseParser):
 
     def get_chgcar(self):
         chgc = self.get_file('CHGCAR')
-        chgnode = DataFactory('singlefile')()
+        chgnode = DataFactory('vasp.chargedensity')()
         chgnode.set_file(chgc)
         return chgnode
+
+    def get_wavcar(self):
+        wfn = self.get_file('WAVECAR')
+        wfnode = DataFactory('vasp.wavefun')()
+        wfnode.set_file(wfn)
+        return wfnode
 
     def get_output(self):
         output = DataFactory('parameter')()
@@ -155,7 +163,10 @@ class Vasp5Parser(BaseParser):
         self.add_node('kpoints', node)
 
     def set_chgcar(self, node):
-        self.add_node('chgcar', node)
+        self.add_node('charge_density', node)
+
+    def set_wavcar(self, node):
+        self.add_node('wavefunctions', node)
 
     def set_structure(self, node):
         self.add_node('structure', node)

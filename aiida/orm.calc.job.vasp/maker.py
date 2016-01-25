@@ -1,6 +1,7 @@
 from aiida.orm import CalculationFactory, DataFactory
 from aiida.tools.codespecific.vasp.default_paws import lda
 
+
 class VaspMaker(object):
     '''
     py:class:VaspMaker:
@@ -9,6 +10,8 @@ class VaspMaker(object):
     '''
     def __init__(self, *args, **kwargs):
         self._init_defaults(*args, **kwargs)
+        if 'continue_from' in kwargs:
+            self._init_from(kwargs['continue_from'])
 
     def _init_defaults(self, *args, **kwargs):
         calcname = kwargs.get('calc', 'vasp.vasp5')
@@ -22,8 +25,10 @@ class VaspMaker(object):
         self._set_default_lda_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
         self.kpoints = self._kpoints
-        self._charge_density = kwargs.get('charge_density', None)
-        self._wavefunctions = kwargs.get('wavefunctions', None)
+        self._charge_density = kwargs.get('charge_density',
+                                          self.calc_cls.new_charge_density())
+        self._wavefunctions = kwargs.get('wavefunctions',
+                                         self.calc_cls.new_wavefunctions())
         self._recipe = None
         self._queue = None
 
@@ -34,6 +39,16 @@ class VaspMaker(object):
             self._structure = self.calc_cls.new_structure()
         else:
             self._structure = structure
+
+    def _init_from(self, prev):
+        if 'structure' in prev.get_outputs_dict():
+            self.structure = prev.out.structure
+        else:
+            self.structure = prev.inp.structure
+        self.add_settings(prev.inp.settings.get_dict())
+        self.rewrite_settings(istart=1, icharg=11)
+        self.wavefunctions = prev.out.wavefunctions
+        self.charge_density = prev.out.charge_density
 
     def new(self):
         calc = self.calc_cls()
@@ -75,6 +90,31 @@ class VaspMaker(object):
         self._kpoints = kp
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
+    def set_kpoints_path(self, value=None, weights=None, **kwargs):
+        self._kpoints.set_kpoints_path(value=value, **kwargs)
+        if 'weights' not in kwargs:
+            kpl = self._kpoints.get_kpoints()
+            wl = [1. for i in kpl]
+            self._kpoints.set_kpoints(kpl, weights=wl)
+
+    @property
+    def wavefunctions(self):
+        return self._wavefunctions
+
+    @wavefunctions.setter
+    def wavefunctions(self, val):
+        self._wavefunctions = val
+        self.add_settings(istart=1)
+
+    @property
+    def charge_density(self):
+        return self._charge_density
+
+    @charge_density.setter
+    def charge_density(self, val):
+        self._charge_density = val
+        self.add_settings(icharg=11)
+
     @property
     def code(self):
         return self._code
@@ -110,7 +150,8 @@ class VaspMaker(object):
     def _set_default_lda_paws(self):
         for k in self.elements:
             if k not in self._paws:
-                paw = self.calc_cls.Paw.load_paw(family='LDA', symbol=lda[k])[0]
+                paw = self.calc_cls.Paw.load_paw(
+                    family='LDA', symbol=lda[k])[0]
                 self._paws[k] = paw
 
     @property
@@ -200,7 +241,7 @@ class VaspMaker(object):
 
     @recipe.setter
     def recipe(self, val):
-        if self._recipe and self._recipe != recipe:
+        if self._recipe and self._recipe != val:
             raise ValueError('recipe is already set to something else')
         self._init_recipe(val)
         self._recipe = val
@@ -213,10 +254,10 @@ class VaspMaker(object):
 
     def _init_recipe_test_sc(self):
         self.add_settings(
-            gga = 'PE',
-            gga_compat = False,
-            ismear = 0,
-            lorbit = 11,
-            lsorbit = True,
-            sigma = 0.05,
+            gga='PE',
+            gga_compat=False,
+            ismear=0,
+            lorbit=11,
+            lsorbit=True,
+            sigma=0.05,
         )
