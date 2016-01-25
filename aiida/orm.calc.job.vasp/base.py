@@ -235,7 +235,7 @@ Direct
 {klist}\
 '''
 kplitemp = '''\
-k[0] k[1] k[2] w\
+{k[0]} {k[1]} {k[2]} {w}\
 '''
 
 

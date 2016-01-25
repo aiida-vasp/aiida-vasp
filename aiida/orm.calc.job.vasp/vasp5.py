@@ -89,7 +89,7 @@ class Vasp5Calculation(VaspCalcBase):
                 kpl, weights = kp.get_kpoints(also_weights=True)
                 kw = zip(kpl, weights)
                 with open(dst, 'w') as kpoints:
-                    kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
+                    kpls = '\n'.join([kplitemp.format(k=k[0], w=k[1]) for k in kw])
                     kps = kpltemp.format(N=len(kw), klist=kpls)
                     kpoints.write(kps)
 
