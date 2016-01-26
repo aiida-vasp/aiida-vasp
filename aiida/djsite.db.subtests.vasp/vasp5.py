@@ -23,8 +23,10 @@ class Vasp5CalcTest(AiidaTestCase):
         self.structure.append_atom(position=[0, 0, 0], symbols='In')
         self.structure.append_atom(position=[.25, .25, .25], symbols='As')
 
-        cifpath = realpath(join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
+        cifpath = realpath(join(dirname(__file__),
+                                'data', 'EntryWithCollCode43360.cif'))
         self.cif = DataFactory('cif').get_or_create(cifpath)[0]
+
     def test_inputs(self):
         self.assertTrue(hasattr(self.calc, 'use_code'))
         self.assertTrue(hasattr(self.calc, 'use_settings'))
@@ -109,6 +111,7 @@ class Vasp5CalcTest(AiidaTestCase):
         self.calc.write_kpoints(self.calc.get_inputs_dict(), dst)
         with open(dst, 'r') as kpoints:
             self.assertTrue(kpoints.read())
+
     def test_need_kp_false(self):
         self.calc.use_settings(
             self.calc.new_settings(dict={'kspacing': 0.5, 'kgamma': True}))

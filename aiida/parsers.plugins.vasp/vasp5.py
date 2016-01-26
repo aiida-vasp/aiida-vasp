@@ -143,7 +143,7 @@ class Vasp5Parser(BaseParser):
         chgnode.set_file(chgc)
         return chgnode
 
-    def get_wavcar(self):
+    def get_wavecar(self):
         wfn = self.get_file('WAVECAR')
         wfnode = DataFactory('vasp.wavefun')()
         wfnode.set_file(wfn)
@@ -165,7 +165,7 @@ class Vasp5Parser(BaseParser):
     def set_chgcar(self, node):
         self.add_node('charge_density', node)
 
-    def set_wavcar(self, node):
+    def set_wavecar(self, node):
         self.add_node('wavefunctions', node)
 
     def set_structure(self, node):

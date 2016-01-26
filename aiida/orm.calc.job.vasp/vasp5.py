@@ -93,6 +93,21 @@ class Vasp5Calculation(VaspCalcBase):
                     kps = kpltemp.format(N=len(kw), klist=kpls)
                     kpoints.write(kps)
 
+    def write_additional(self, tempfolder, inputdict):
+        if self._need_chgd():
+            chgcar = tempfolder.get_abs_path('CHGCAR')
+            self.write_chgcar(inputdict, chgcar)
+        if self._need_wfn():
+            wavecar = tempfolder.get_abs_path('WAVECAR')
+            self.write_wavecar(inputdict, wavecar)
+
+    def write_chgcar(self, inputdict, dst):
+        import shutil
+        shutil.copyfile(self.inp.charge_density.get_file_abs_path(), dst)
+
+    def write_wavecar(self, inputdict, dst):
+        import shutil
+        shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
     def verify_inputs(self, inputdict, *args, **kwargs):
         notset_msg = 'input not set: %s'
         super(Vasp5Calculation, self).verify_inputs(inputdict, *args, **kwargs)

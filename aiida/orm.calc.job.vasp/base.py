@@ -159,6 +159,7 @@ class VaspCalcBase(JobCalculation):
         self.write_poscar(inputdict, structure)
         self.write_potcar(inputdict, paw)
         self.write_kpoints(inputdict, kpoints)
+        self.write_additional(tempfolder, inputdict)
 
         # calcinfo
         calcinfo = CalcInfo()
@@ -190,6 +191,9 @@ class VaspCalcBase(JobCalculation):
 
         return calcinfo
 
+    def write_additional(self, inputdict):
+        pass
+
     def _init_internal_params(self):
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
@@ -200,9 +204,8 @@ class VaspCalcBase(JobCalculation):
     def check_input(self, inputdict, linkname, check_fn=lambda: True):
         notset_msg = 'input not set: %s'
         if check_fn():
-            if not linkname in inputdict:
+            if linkname not in inputdict:
                 raise ValueError(notset_msg % linkname)
-
 
     def store(self, *args, **kwargs):
         self._prestore()
@@ -336,6 +339,7 @@ class TentativeVaspCalc(VaspCalcBase):
                 self.structure = structure
                 self.potcars = potcars
                 self.kpoints = kpoints
+
             def get_calc(self, cls=TentativeVaspCalc):
                 calc = cls()
                 calc.label = self.label
@@ -355,7 +359,7 @@ class TentativeVaspCalc(VaspCalcBase):
         structure = cif.cif_to_structure(cifnode=cifnode)
         for kn in structure.get_kind_names():
             if not paw.get(kn):
-                paw[kn] = cls.Paw().load_paw(family = 'LDA', symbol=lda[kn])[0]
+                paw[kn] = cls.Paw().load_paw(family='LDA', symbol=lda[kn])[0]
         inc = cls._new_incar()
         inc.set_dict(incar)
         kpt = cls._new_kp()
@@ -383,6 +387,7 @@ class TentativeVaspCalc(VaspCalcBase):
     @classmethod
     def _new_kp(cls):
         return DataFactory('array.kpoints')()
+
 
 class TestVC(VaspCalcBase):
     test_input = Input(types='parameter', doc='bla')

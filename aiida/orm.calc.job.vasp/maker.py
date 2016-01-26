@@ -25,15 +25,13 @@ class VaspMaker(object):
         self._set_default_lda_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
         self.kpoints = self._kpoints
-        self._charge_density = kwargs.get('charge_density',
-                                          self.calc_cls.new_charge_density())
-        self._wavefunctions = kwargs.get('wavefunctions',
-                                         self.calc_cls.new_wavefunctions())
+        self._charge_density = kwargs.get('charge_density', None)
+        self._wavefunctions = kwargs.get('wavefunctions', None)
         self._recipe = None
         self._queue = None
 
     def _set_default_structure(self, structure):
-        if isinstance(structure, str):
+        if isinstance(structure, (str, unicode)):
             self._structure = DataFactory('cif').get_or_create(structure)[0]
         elif not structure:
             self._structure = self.calc_cls.new_structure()
@@ -45,7 +43,7 @@ class VaspMaker(object):
             self.structure = prev.out.structure
         else:
             self.structure = prev.inp.structure
-        self.add_settings(prev.inp.settings.get_dict())
+        self.add_settings(**prev.inp.settings.get_dict())
         self.rewrite_settings(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
@@ -122,6 +120,7 @@ class VaspMaker(object):
     @code.setter
     def code(self, val):
         self._code = val
+        self._computer = val.get_computer()
 
     @property
     def computer(self):
