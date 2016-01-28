@@ -28,18 +28,18 @@ class EigParser(BaseParser):
             name = cls.line(eig)           # read name line (can be empty)
             p1, nkp, nb = cls.line(eig, int)  # read: ? #kp #bands
             data = eig.read()               # rest is data
-        ni, na, p00, p01 = l0
+        ni, na, p00, ns = l0
         data = re.split(cls.empty_line, data)       # list of data blocks
         data = map(lambda s: s.splitlines(), data)  # list of list of lines
         data = map(lambda s: map(lambda ss: ss.split(), s), data)  # 3d list of numbers
         kp = np.zeros((nkp, 4))
-        bs = np.zeros((nkp, nb))
+        bs = np.zeros((ns, nkp, nb))
         for k, field in enumerate(data):    # iterate over data blocks
             kpbs = filter(None, field)      # throw away empty lines
             kpi = map(float, kpbs.pop(0))   # first line of block is kpoints -> pop
             kp[k] = kpi
             for p in kpbs:                  # rest are band energies
-                bs[k, int(p[0])-1] = p[1]   # place energy value in bs[kp, nb] (BandstrucureData format)
+                bs[:, k, int(p[0])-1] = p[1:ns+1]   # place energy value in bs[kp, nb] (BandstrucureData format)
         header = {}                         # build header dict
         header[0] = l0
         header[1] = l1
@@ -47,7 +47,7 @@ class EigParser(BaseParser):
         header['n_ions'] = ni
         header['n_atoms'] = na
         header['p00'] = p00
-        header['p01'] = p01
+        header['nspin'] = ns
         header['cartesian'] = coord_type.startswith(('c', 'C'))
         header['name'] = name
         header['some_num'] = p1

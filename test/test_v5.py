@@ -24,7 +24,7 @@ v5 = mkcalc.new()
 v5.set_resources({
     'num_machines': 8,
     'num_mpiprocs_per_machine': 2})
-#~ v5.set_max_memory_kb(8000000)
+# ~ v5.set_max_memory_kb(8000000)
 
 tag = sys.argv[2]
 q = QueryTool()

@@ -86,12 +86,15 @@ class Vasp5Calculation(VaspCalcBase):
                     kps = kpmtemp.format(N=mesh, s=offset)
                     kpoints.write(kps)
             except AttributeError:
-                kpl, weights = kp.get_kpoints(also_weights=True)
-                kw = zip(kpl, weights)
-                with open(dst, 'w') as kpoints:
-                    kpls = '\n'.join([kplitemp.format(k=k[0], w=k[1]) for k in kw])
-                    kps = kpltemp.format(N=len(kw), klist=kpls)
-                    kpoints.write(kps)
+                try:
+                    kpl, weights = kp.get_kpoints(also_weights=True)
+                    kw = zip(kpl, weights)
+                    with open(dst, 'w') as kpoints:
+                        kpls = '\n'.join([kplitemp.format(k=k[0], w=k[1]) for k in kw])
+                        kps = kpltemp.format(N=len(kw), klist=kpls)
+                        kpoints.write(kps)
+                except AttributeError:
+                    raise AttributeError('you supplied an empty kpoints node')
 
     def write_additional(self, tempfolder, inputdict):
         if self._need_chgd():

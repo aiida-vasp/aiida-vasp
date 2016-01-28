@@ -93,7 +93,14 @@ class Bandstructure(Workflow):
 
     @Workflow.step
     def get_results(self):
+        params = self.get_parameters()
         prev = self.get_step_calculations(self.bandrun)
         bandcalc = prev.get(uuid=self.get_attribute('bsstep')['uuid'])
+        self.add_to_report(
+            '{}: calculations done, gathering results'.format(
+                params.get('name')))
+        efermi = bandcalc.out.results.get_dict()['efermi']
+        self.add_to_report(
+            '{}: E_fermi = {}'.format(params.get('name'), efermi))
         self.add_result('efermi', bandcalc.out.results.get_dict()['efermi'])
         self.next(self.exit)

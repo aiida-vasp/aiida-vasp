@@ -78,7 +78,7 @@ class Vasp5Parser(BaseParser):
             cond = vrp.pdos[name] < 0.1
             pdos[name] = np.where(cond, cur, vrp.pdos[name])
         ns = 1
-        if dcp.tdos.shape == 5:
+        if dcp.tdos.shape[1] == 5:
             ns = 2
         tdos = vrp.tdos[:ns, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
@@ -132,7 +132,7 @@ class Vasp5Parser(BaseParser):
 
         bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
                            cartesian=header['cartesian'])
-        bsnode.set_bands(bs, occupations=self.vrp.occupations[0])
+        bsnode.set_bands(bs, occupations=self.vrp.occupations)
         kpout.set_kpoints(kp[:, :3], weights=kp[:, 3],
                           cartesian=header['cartesian'])
         return bsnode, kpout, structure
