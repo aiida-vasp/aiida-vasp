@@ -3,7 +3,7 @@ from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 
 
-def make_use_methods(inputs):
+def make_use_methods(inputs, bases):
     @classproperty
     def _use_methods(cls):
         retdict = JobCalculation._use_methods
@@ -12,6 +12,8 @@ def make_use_methods(inputs):
             if isinstance(ln, classmethod):
                 dct['linkname'] = getattr(cls, ln.__func__.__name__)
         retdict.update(inputs)
+        for b in bases:
+            retdict.update(b._use_methods)
         return retdict
     return _use_methods
 
@@ -124,7 +126,7 @@ class CalcMeta(JobCalculation.__metaclass__):
             delete.append(k)
         internals = dict(IntParam.map_params(classdict))
         delete.extend(IntParam.get_keylist(classdict))
-        classdict['_use_methods'] = make_use_methods(inputs)
+        classdict['_use_methods'] = make_use_methods(inputs, bases)
         classdict['_update_internal_params'] = make_init_internal(
             cls, **internals)
         for k in delete:
@@ -182,6 +184,16 @@ class VaspCalcBase(JobCalculation):
             'TMPCAR',
             'WAVECAR',
             'XDATCAR',
+            'wannier90.win',
+            'wannier90.mmn',
+            'wannier90.eig',
+            'wannier90.amn',
+            'wannier90.UNK*',
+            'wannier90.wout',
+            'wannier90.chk',
+            'wannier90_*',
+            'wannier90.*',
+            'wannier.werr',
             'vasprun.xml'
         ]
         codeinfo = CodeInfo()

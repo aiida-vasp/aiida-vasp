@@ -12,6 +12,8 @@ class VaspMaker(object):
         self._init_defaults(*args, **kwargs)
         if 'continue_from' in kwargs:
             self._init_from(kwargs['continue_from'])
+        if 'copy_from' in kwargs:
+            self._copy_from(kwargs['copy_from'])
 
     def _init_defaults(self, *args, **kwargs):
         calcname = kwargs.get('calc', 'vasp.vasp5')
@@ -29,6 +31,24 @@ class VaspMaker(object):
         self._wavefunctions = kwargs.get('wavefunctions', None)
         self._recipe = None
         self._queue = None
+        self._resources = kwargs.get('resources')
+
+    def _copy_from(self, calc):
+        ins = calc.get_inputs_dict()
+        self.calc_cls = calc.__class__
+        self.label = calc.label + '_copy'
+        self._computer = calc.get_computer()
+        self._code = calc.get_code()
+        self._settings = ins.get('settings')
+        self._structure = ins.get('structure')
+        self._paws = {}
+        for paw in filter(lambda i: 'paw' in i[0], ins.iteritems()):
+            self._paws[paw[0].replace('paw_', '')] = paw[1]
+        self._kpoints = ins.get('kpoints')
+        self._charge_density = ins.get('charge_density')
+        self._wavefunctions = ins.get('wavefunctions')
+        self._queue = calc.get_queue_name()
+        self._resources = calc.get_resources()
 
     def _set_default_structure(self, structure):
         if isinstance(structure, (str, unicode)):
@@ -63,6 +83,7 @@ class VaspMaker(object):
         if self._wavefunctions:
             calc.use_wavefunctions(self._wavefunctions)
         calc.label = self.label
+        calc.set_resources(self._resources)
         return calc
 
     @property
@@ -89,11 +110,18 @@ class VaspMaker(object):
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     def set_kpoints_path(self, value=None, weights=None, **kwargs):
+        if self._kpoints.pk:
+            self.kpoints = self._kpoints.copy()
         self._kpoints.set_kpoints_path(value=value, **kwargs)
         if 'weights' not in kwargs:
             kpl = self._kpoints.get_kpoints()
             wl = [1. for i in kpl]
             self._kpoints.set_kpoints(kpl, weights=wl)
+
+    def set_kpoints_mesh(self, *args, **kwargs):
+        if self._kpoints.pk:
+            self.kpoints = self.calc_cls.new_kpoints()
+        self._kpoints.set_kpoints_mesh(*args, **kwargs)
 
     @property
     def wavefunctions(self):
@@ -139,12 +167,16 @@ class VaspMaker(object):
         self._queue = val
 
     def add_settings(self, **kwargs):
+        if self._settings.pk:
+            self._settings = self._settings.copy()
         for k, v in kwargs.iteritems():
             if k not in self.settings:
                 self._settings.update_dict({k: v})
 
     def rewrite_settings(self, **kwargs):
-            self._settings.update_dict(kwargs)
+        if self._settings.pk:
+            self._settings = self._settings.copy()
+        self._settings.update_dict(kwargs)
 
     def _set_default_lda_paws(self):
         for k in self.elements:
