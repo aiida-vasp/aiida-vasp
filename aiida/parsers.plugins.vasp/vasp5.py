@@ -45,7 +45,6 @@ class Vasp5Parser(BaseParser):
 
         self.set_dos(dosnode)
 
-        print self.new_nodes
         return self.result(success=True)
 
     def read_run(self):

@@ -11,7 +11,14 @@ class dict_to_win(object):
 
     @classmethod
     def _seq(cls, val):
-        return map(' '.join, map(cls._value, val))
+        res = []
+        for i in val:
+            if not isinstance(i, (list, tuple)):
+                line = cls._value(i)
+            else:
+                line = ' '.join(map(cls._value, i))
+            res.append(' ' + line)
+        return res
 
     @classmethod
     def _block(cls, name, val):
@@ -53,6 +60,7 @@ class dict_to_win(object):
 class Vasp2W90Calculation(Vasp5Calculation):
     '''Calculation for using vasp 5.3 with the vasp2wannier90 interface.'''
 
+    default_parser = 'vasp.vasp2w90'
     wannier_settings = Input(types=['parameter'],
                              doc='parameter node: settings for the ' +
                              'wannier interface')
@@ -61,12 +69,14 @@ class Vasp2W90Calculation(Vasp5Calculation):
         '''convert dict to wannier input and write to file'''
         if 'wannier_settings' in inputdict:
             with open(dst, 'w') as win:
-                win.write(dict_to_win.parse(self.inp.wannier_settings.get_dict()))
+                win.write(
+                    dict_to_win.parse(self.inp.wannier_settings.get_dict()))
 
     def new_wannier(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     def write_additional(self, tempfolder, inputdict):
-        super(Vasp2W90Calculation, self).write_additional(tempfolder, inputdict)
+        super(Vasp2W90Calculation, self).write_additional(
+            tempfolder, inputdict)
         win = tempfolder.get_abs_path('wannier90.win')
         self.write_wannier(inputdict, win)

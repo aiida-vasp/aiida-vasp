@@ -8,20 +8,23 @@ class Vasp5Calculation(VaspCalcBase):
     Calculation written and tested for vasp 5.3.5
     '''
     settings = Input(types='parameter',
-                     doc='parameter node: parameters to be written to the INCAR file')
+                     doc='parameter node: parameters to be written to ' +
+                     'the INCAR file')
     structure = Input(types=['structure', 'cif'],
                       doc='aiida structure node: will be converted to POSCAR')
     paw = Input(types='vasp.paw',
-                doc='PAW nodes for each kind of element in the material\n'+
+                doc='PAW nodes for each kind of element in the material\n' +
                 'will be concatenated into POTCAR',
                 param='kind')
-    kpoints = Input(types='array.kpoints', doc='aiida kpoints node: '+
+    kpoints = Input(types='array.kpoints', doc='aiida kpoints node: ' +
                     'will be written to KPOINTS file')
     charge_density = Input(types='vasp.chargedensity',
-                            doc='chargedensity node: should be obtained from the\n'+
-                            'output of a selfconsistent Vasp5Calculation (written to CHGCAR)')
+                           doc='chargedensity node: should be obtained \n' +
+                           'from the output of a selfconsistent ' +
+                           'Vasp5Calculation (written to CHGCAR)')
     wavefunctions = Input(types='vasp.wavefun',
-                          doc='wavefunction node: to speed up convergence for continuation jobs')
+                          doc='wavefunction node: to speed up convergence ' +
+                          'for continuation jobs')
     default_parser = 'vasp.vasp5'
 
     def write_incar(self, inputdict, dst):
@@ -57,10 +60,10 @@ class Vasp5Calculation(VaspCalcBase):
         '''
         import subprocess32 as sp
         catcom = ['cat']
-        #~ structure = inputdict['structure']
-        structure = self.inp.structure
+        # ~ structure = inputdict['structure']
+        # ~ structure = self.inp.structure
         # order the symbols according to order given in structure
-        if not 'elements' in self.attrs():
+        if 'elements' not in self.attrs():
             self._prestore()
         for kind in self.elements:
             paw = inputdict[self._get_paw_linkname(kind)]
@@ -90,13 +93,16 @@ class Vasp5Calculation(VaspCalcBase):
                     kpl, weights = kp.get_kpoints(also_weights=True)
                     kw = zip(kpl, weights)
                     with open(dst, 'w') as kpoints:
-                        kpls = '\n'.join([kplitemp.format(k=k[0], w=k[1]) for k in kw])
+                        kpls = '\n'.join(
+                            [kplitemp.format(k=k[0], w=k[1]) for k in kw])
                         kps = kpltemp.format(N=len(kw), klist=kpls)
                         kpoints.write(kps)
                 except AttributeError:
                     raise AttributeError('you supplied an empty kpoints node')
 
     def write_additional(self, tempfolder, inputdict):
+        super(Vasp5Calculation, self).write_additional(
+            tempfolder, inputdict)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
             self.write_chgcar(inputdict, chgcar)
@@ -111,12 +117,13 @@ class Vasp5Calculation(VaspCalcBase):
     def write_wavecar(self, inputdict, dst):
         import shutil
         shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
+
     def verify_inputs(self, inputdict, *args, **kwargs):
-        notset_msg = 'input not set: %s'
+        # ~ notset_msg = 'input not set: %s'
         super(Vasp5Calculation, self).verify_inputs(inputdict, *args, **kwargs)
         self.check_input(inputdict, 'settings')
         self.check_input(inputdict, 'structure')
-        if not 'elements' in self.attrs():
+        if 'elements' not in self.attrs():
             self._prestore()
         for kind in self.elements:
             self.check_input(inputdict, self._get_paw_linkname(kind))
@@ -130,7 +137,8 @@ class Vasp5Calculation(VaspCalcBase):
 
     @property
     def _settings(self):
-        return {k.lower(): v for k,v in self.inp.settings.get_dict().iteritems()}
+        return {k.lower(): v for
+                k, v in self.inp.settings.get_dict().iteritems()}
 
     def _prestore(self):
         '''
@@ -140,7 +148,8 @@ class Vasp5Calculation(VaspCalcBase):
         self._set_attr('input_kp_used', self._need_kp())
         self._set_attr('input_chgd_used', self._need_chgd())
         self._set_attr('input_wfn_used', self._need_wfn())
-        self._set_attr('elements', list(set(self.inp.structure.get_ase().get_chemical_symbols())))
+        self._set_attr('elements', list(set(
+            self.inp.structure.get_ase().get_chemical_symbols())))
 
     def _need_kp(self):
         '''

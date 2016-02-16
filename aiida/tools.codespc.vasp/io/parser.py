@@ -22,7 +22,7 @@ class BaseParser(object):
     @classmethod
     def splitlines(cls, fobj_or_str, dt=float):
         if isinstance(fobj_or_str, str):
-            lines = fobj_or_str
+            lines = fobj_or_str.split('\n')
         else:
             lines = fobj_or_str.readlines()
         return map(lambda l: cls.line(l, dt), lines)
@@ -33,7 +33,7 @@ class KeyValueParser(BaseParser):
     contains regex and functions to find grammar elements
     in vasp input and output files
     '''
-    assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
+    assignment = re.compile(r'(\w*)\s*=\s*([^;\n]*);?')
     comments = True
 
     @classmethod
