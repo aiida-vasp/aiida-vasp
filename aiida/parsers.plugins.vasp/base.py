@@ -13,7 +13,8 @@ class BaseParser(Parser):
 
     def check_state(self):
         if self._calc.get_state() != cstat.PARSING:
-            raise InvalidOperation('Calculation not in parsing state')
+            self.logger.error('Calculation not in parsing state')
+            # ~ raise InvalidOperation('Calculation not in parsing state')
 
     def get_folder(self, retrieved):
         try:

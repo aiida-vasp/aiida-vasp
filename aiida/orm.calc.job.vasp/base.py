@@ -203,7 +203,7 @@ class VaspCalcBase(JobCalculation):
 
         return calcinfo
 
-    def write_additional(self, inputdict):
+    def write_additional(self, tempfolder, inputdict):
         pass
 
     def _init_internal_params(self):

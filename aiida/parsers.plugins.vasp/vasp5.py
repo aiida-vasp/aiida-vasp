@@ -2,6 +2,7 @@ from aiida.parsers.plugins.vasp.base import BaseParser
 from aiida.tools.codespecific.vasp.io.eigenval import EigParser
 from aiida.tools.codespecific.vasp.io.vasprun import VasprunParser
 from aiida.tools.codespecific.vasp.io.doscar import DosParser
+from aiida.tools.codespecific.vasp.io.kpoints import KpParser
 from aiida.orm import DataFactory
 import numpy as np
 
@@ -29,21 +30,30 @@ class Vasp5Parser(BaseParser):
         self.dcp = self.read_dos()
         dosnode = self.get_dos_node(self.vrp, self.dcp)
 
-        self.set_bands(bands)  # append output nodes
-        self.set_kpoints(kpout)
+        if bands:
+            self.set_bands(bands)  # append output nodes
+
+        if not kpout:
+            kpout = self.read_ibzkpt()
+
+        if kpout:
+            self.set_kpoints(kpout)
+
         if structure:
             self.set_structure(structure)
 
-        if self.vrp.is_sc:  # add chgcar ouput node if selfconsistent run
-            chgnode = self.get_chgcar()
-            self.set_chgcar(chgnode)
+        if self.vrp:
+            if self.vrp.is_sc:  # add chgcar ouput node if selfconsistent run
+                chgnode = self.get_chgcar()
+                self.set_chgcar(chgnode)
 
-        if self.vrp.is_sc:
-            self.set_wavecar(self.get_wavecar())
+            if self.vrp.is_sc:
+                self.set_wavecar(self.get_wavecar())
 
         self.add_node('results', self.get_output())
 
-        self.set_dos(dosnode)
+        if dosnode:
+            self.set_dos(dosnode)
 
         return self.result(success=True)
 
@@ -68,6 +78,8 @@ class Vasp5Parser(BaseParser):
         takes VasprunParser and DosParser objects
         and returns a doscar array node
         '''
+        if not vrp or not dcp:
+            return None
         dosnode = DataFactory('array')()
         pdos = vrp.pdos.copy()
         for i, name in enumerate(vrp.pdos.dtype.names[1:]):
@@ -87,7 +99,6 @@ class Vasp5Parser(BaseParser):
         dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
         return dosnode
-
     def read_cont(self):
         '''read CONTCAR for output structure'''
         from ase.io.vasp import read_vasp
@@ -113,7 +124,7 @@ class Vasp5Parser(BaseParser):
         eig = self.get_file('EIGENVAL')
         if not eig:
             self.logger.warning('EIGENVAL not found')
-            return None, None
+            return None, None, None
         header, kp, bs = EigParser.parse_eigenval(eig)
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
@@ -136,6 +147,16 @@ class Vasp5Parser(BaseParser):
                           cartesian=header['cartesian'])
         return bsnode, kpout, structure
 
+    def read_ibzkpt(self):
+        ibz = self.get_file('IBZKPT')
+        if not ibz:
+            self.logger.warning('IBZKPT not found')
+            return None
+        kpp = KpParser(ibz)
+        kpout = DataFactory('array.kpoints')()
+        kpout.set_kpoints(kpp.kpoints, weights=kpp.weights,
+                          cartesian=kpp.cartesian)
+        return kpout
     def get_chgcar(self):
         chgc = self.get_file('CHGCAR')
         chgnode = DataFactory('vasp.chargedensity')()

@@ -57,7 +57,7 @@ class dict_to_win(object):
         return '\n'.join(res)
 
 
-class Vasp2W90Calculation(Vasp5Calculation):
+class Vasp2w90Calculation(Vasp5Calculation):
     '''Calculation for using vasp 5.3 with the vasp2wannier90 interface.'''
 
     default_parser = 'vasp.vasp2w90'
@@ -72,11 +72,19 @@ class Vasp2W90Calculation(Vasp5Calculation):
                 win.write(
                     dict_to_win.parse(self.inp.wannier_settings.get_dict()))
 
-    def new_wannier(self, **kwargs):
+    def new_wannier_settings(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
+    def new_wannier_data(self, **kwargs):
+        return DataFactory('vasp.archive')(**kwargs)
+
     def write_additional(self, tempfolder, inputdict):
-        super(Vasp2W90Calculation, self).write_additional(
+        super(Vasp2w90Calculation, self).write_additional(
             tempfolder, inputdict)
         win = tempfolder.get_abs_path('wannier90.win')
         self.write_wannier(inputdict, win)
+
+
+class Vasp2W90Calculation(Vasp2w90Calculation):
+    '''Calculation for using vasp 5.3 with the vasp2wannier90 interface.'''
+    pass
