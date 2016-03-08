@@ -15,12 +15,14 @@ class Vasp2w90Parser(Vasp5Parser):
         if self._calc.get_inputs_dict().get('wannier_settings'):
             return None
         win = self.get_file('wannier90.win')
+        if not win:
+            return None
         wp = WinParser(win)
         winnode = self._calc.new_wannier_settings(dict=wp.result)
         return winnode
 
     def get_wdat_node(self):
-        if self._calc.get_inputs_dict.get('wannier_settings'):
+        if self._calc.get_inputs_dict().get('wannier_settings'):
             return None
         wdatnode = self._calc.new_wannier_data()
         for ext in ['mmn', 'amn', 'eig']:

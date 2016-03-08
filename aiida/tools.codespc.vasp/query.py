@@ -1,5 +1,6 @@
 from aiida.orm.querytool import QueryTool
 from aiida.orm.calculation.job import JobCalculation
+from aiida.orm.calculation.job.vasp.base import VaspCalcBase
 
 class VaspFinder(object):
     _vaspclass = ['vasp.vasp', 'vasp.asevasp', 'vasp.vasp5', 'vasp.vasp2w90', 'vasp.vasp2w90.Vasp2W90Calculation']
@@ -53,6 +54,13 @@ class VaspFinder(object):
         return '\n'.join([line.format(**c) for c in tab])
 
     @classmethod
+    def cstate(cls, calc):
+        if hasattr(calc, 'get_state'):
+            return calc.get_state()
+        else:
+            return 'N/A'
+
+    @classmethod
     def history(cls, last=0, vaspclass=None):
         q = QueryTool()
         q.set_class(JobCalculation)
@@ -61,4 +69,15 @@ class VaspFinder(object):
         res = l[-last:]
         res.reverse()
         tab = [cls.table_element(c) for c in res]
+        print cls.str_table(tab)
+
+    @classmethod
+    def status(cls, vaspclass=None):
+        q = QueryTool()
+        q.set_class(JobCalculation)
+        st = ['TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING', 'RETRIEVING']
+        l = filter(lambda c: cls.cstate(c) in st, q.run_query())
+        l.sort(cls.cmp_ctime)
+        l.reverse()
+        tab = [cls.table_element(c) for c in l]
         print cls.str_table(tab)

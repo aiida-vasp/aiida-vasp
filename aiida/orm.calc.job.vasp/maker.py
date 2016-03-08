@@ -10,13 +10,14 @@ class VaspMaker(object):
     '''
     def __init__(self, *args, **kwargs):
         self._init_defaults(*args, **kwargs)
+        self._calcname = kwargs.get('calc_cls')
         if 'continue_from' in kwargs:
             self._init_from(kwargs['continue_from'])
         if 'copy_from' in kwargs:
             self._copy_from(kwargs['copy_from'])
 
     def _init_defaults(self, *args, **kwargs):
-        calcname = kwargs.get('calc', 'vasp.vasp5')
+        calcname = kwargs.get('calc_cls', 'vasp.vasp5')
         self.calc_cls = CalculationFactory(calcname)
         self.label = kwargs.get('label', 'unlabeled')
         self._computer = kwargs.get('computer')
@@ -35,7 +36,8 @@ class VaspMaker(object):
 
     def _copy_from(self, calc):
         ins = calc.get_inputs_dict()
-        self.calc_cls = calc.__class__
+        if not self._calcname:
+            self.calc_cls = calc.__class__
         self.label = calc.label + '_copy'
         self._computer = calc.get_computer()
         self._code = calc.get_code()
@@ -59,11 +61,9 @@ class VaspMaker(object):
             self._structure = structure
 
     def _init_from(self, prev):
+        self._copy_from(prev)
         if 'structure' in prev.get_outputs_dict():
             self.structure = prev.out.structure
-        else:
-            self.structure = prev.inp.structure
-        self.add_settings(**prev.inp.settings.get_dict())
         self.rewrite_settings(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
@@ -94,6 +94,8 @@ class VaspMaker(object):
     def structure(self, val):
         self._structure = val
         self._set_default_lda_paws()
+        if self._kpoints.pk:
+            self._kpoints = self._kpoints.copy()
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     @property

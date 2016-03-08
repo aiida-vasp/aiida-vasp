@@ -1,23 +1,12 @@
-from base import VaspCalcBase, Input
+from base import BasicCalculation, Input
 from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
 
-class NscfCalculation(VaspCalcBase):
+class NscfCalculation(BasicCalculation):
     '''
     Calculation written and tested for vasp 5.3.5
     '''
-    settings = Input(types='parameter',
-                     doc='parameter node: parameters to be written to ' +
-                     'the INCAR file')
-    structure = Input(types=['structure', 'cif'],
-                      doc='aiida structure node: will be converted to POSCAR')
-    paw = Input(types='vasp.paw',
-                doc='PAW nodes for each kind of element in the material\n' +
-                'will be concatenated into POTCAR',
-                param='kind')
-    kpoints = Input(types='array.kpoints', doc='aiida kpoints node: ' +
-                    'will be written to KPOINTS file')
     charge_density = Input(types='vasp.chargedensity',
                            doc='chargedensity node: should be obtained \n' +
                            'from the output of a selfconsistent ' +
@@ -32,72 +21,12 @@ class NscfCalculation(VaspCalcBase):
         to continue with nonscf runs'''
         calcinfo = super(NscfCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
-        calcinfo.retrieve_list = [
-            'EIGENVAL', 'DOSCAR', 'OUTCAR', 'vasprun.xml', 'wannier90*']
+        calcinfo.retrieve_list.extend([ 'EIGENVAL', 'DOSCAR'])
+        calcinfo.retrieve_list.extend(['wannier90.win',
+                                       'wannier90.mmn',
+                                       'wannier90.amn',
+                                       'wannier90.eig'])
         return calcinfo
-
-    def write_incar(self, inputdict, dst):
-        '''
-        converts from settings node (ParameterData) to INCAR format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(self.inp.settings.get_dict()))
-
-    def write_poscar(self, inputdict, dst):
-        '''
-        converts from structures node (StructureData) to POSCAR format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
-
-    def write_potcar(self, inputdict, dst):
-        '''
-        concatenatest multiple paw files into a POTCAR
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        import subprocess32 as sp
-        catcom = ['cat']
-        # ~ structure = inputdict['structure']
-        # ~ structure = self.inp.structure
-        # order the symbols according to order given in structure
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            paw = inputdict[self._get_paw_linkname(kind)]
-            catcom.append(paw.get_abs_path('POTCAR'))
-        # cat the pawdata nodes into the file
-        with open(dst, 'w') as pc:
-            sp.check_call(catcom, stdout=pc)
-
-    def write_kpoints(self, inputdict, dst):
-        '''
-        converts from kpoints node (KpointsData) to KPOINTS format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from base import kplitemp, kpltemp
-        kp = self.inp.kpoints
-        kpl, weights = kp.get_kpoints(also_weights=True)
-        kw = zip(kpl, weights)
-        with open(dst, 'w') as kpoints:
-            kpls = '\n'.join(
-                [kplitemp.format(k=k[0], w=k[1]) for k in kw])
-            kps = kpltemp.format(N=len(kw), klist=kpls)
-            kpoints.write(kps)
 
     def write_additional(self, tempfolder, inputdict):
         super(NscfCalculation, self).write_additional(
@@ -117,34 +46,6 @@ class NscfCalculation(VaspCalcBase):
         import shutil
         shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
 
-    def verify_inputs(self, inputdict, *args, **kwargs):
-        # ~ notset_msg = 'input not set: %s'
-        super(NscfCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'settings')
-        self.check_input(inputdict, 'structure')
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            self.check_input(inputdict, self._get_paw_linkname(kind))
-        self.check_input(inputdict, 'kpoints', self._need_kp)
-        self.check_input(inputdict, 'charge_density', self._need_chgd)
-        self.check_input(inputdict, 'wavefunctions', self._need_wfn)
-        kpoints = inputdict['kpoints']
-        try:
-            kp, w = kpoints.get_kpoints(also_weights=True)
-        except AttributeError as e:
-            print 'NscfCalculation needs a list of kpoints (not a mesh)!'
-            raise e
-
-    @classmethod
-    def _get_paw_linkname(cls, kind):
-        return 'paw_%s' % kind
-
-    @property
-    def _settings(self):
-        return {k.lower(): v for
-                k, v in self.inp.settings.get_dict().iteritems()}
-
     def _prestore(self):
         '''
         set attributes prior to storing
@@ -153,8 +54,6 @@ class NscfCalculation(VaspCalcBase):
         self._set_attr('input_kp_used', self._need_kp())
         self._set_attr('input_chgd_used', self._need_chgd())
         self._set_attr('input_wfn_used', self._need_wfn())
-        self._set_attr('elements', list(set(
-            self.inp.structure.get_ase().get_chemical_symbols())))
 
     def _need_kp(self):
         return True
@@ -193,18 +92,6 @@ class NscfCalculation(VaspCalcBase):
             return False
 
     @classmethod
-    def new_settings(self, **kwargs):
-        return DataFactory('parameter')(**kwargs)
-
-    @classmethod
-    def new_structure(self, **kwargs):
-        return DataFactory('structure')(**kwargs)
-
-    @classmethod
-    def new_kpoints(self, **kwargs):
-        return DataFactory('array.kpoints')(**kwargs)
-
-    @classmethod
     def new_charge_density(self, **kwargs):
         return DataFactory('vasp.chargedensity')(**kwargs)
 
@@ -218,14 +105,6 @@ class NscfCalculation(VaspCalcBase):
     def new_wannier_data(self, **kwargs):
         return DataFactory('vasp.archive')(**kwargs)
 
-    @classmethod
-    def load_paw(self, *args, **kwargs):
-        return self.Paw.load_paw(*args, **kwargs)[0]
-
-    @classproperty
-    def Paw(self):
-        return DataFactory('vasp.paw')
-
     @property
     def input_kp_used(self):
         return self.get_attr('input_kp_used')
@@ -237,10 +116,6 @@ class NscfCalculation(VaspCalcBase):
     @property
     def input_wavefunctions_used(self):
         return self.get_attr('input_wfn_used')
-
-    @property
-    def elements(self):
-        return self.get_attr('elements')
 
     def _init_internal_params(self):
         '''

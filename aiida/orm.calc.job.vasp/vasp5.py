@@ -1,4 +1,4 @@
-from base import VaspCalcBase, Input
+from base import VaspCalcBase, Input, ordered_unique_list
 from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
@@ -148,7 +148,7 @@ class Vasp5Calculation(VaspCalcBase):
         self._set_attr('input_kp_used', self._need_kp())
         self._set_attr('input_chgd_used', self._need_chgd())
         self._set_attr('input_wfn_used', self._need_wfn())
-        self._set_attr('elements', list(set(
+        self._set_attr('elements', list(ordered_unique_list(
             self.inp.structure.get_ase().get_chemical_symbols())))
 
     def _need_kp(self):
