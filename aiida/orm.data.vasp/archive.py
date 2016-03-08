@@ -1,16 +1,24 @@
-import tempfile
+# ~ import tempfile
 import tarfile
-from aiida.orm.data.singlefile import SinglefileData
+from aiida.orm.data import Data
 import os
-import shutil
+import StringIO
 
 
-class ArchiveData(SinglefileData):
-    def __init__(self):
-        super(ArchiveData, self).__init__()
-        with tempfile.NamedTemporaryFile() as tmp:
-            self.add_path(tmp.name, dst_filename='archive.tar.gz')
+class ArchiveData(Data):
+    def __init__(self, *args, **kwargs):
+        super(ArchiveData, self).__init__(*args, **kwargs)
         self._filelist = []
+
+    def get_archive_abs_path(self):
+        return self.get_abs_path('archive.tar.gz')
+
+    def get_archive(self):
+        return tarfile.open(self.get_archive_abs_path(), mode='r')
+
+    def get_archive_list(self):
+        ar = get_archive()
+        ar.list()
 
     def add_file(self, src_abs, dst_filename=None):
         if not dst_filename:
@@ -18,18 +26,18 @@ class ArchiveData(SinglefileData):
         self._filelist.append((src_abs, dst_filename))
 
     def _make_archive(self):
-        # ~ with tarfile.open(fileobj=tmp, mode='w:gz') as ar:
-            # ~ for src, dstn in self._filelist:
-                # ~ ar.add(src, arcname=dstn)
-        # ~ mytemp = os.path.expanduser('~/tmp/archive.tar.gz')
-        # ~ shutil.copy(tmp.name, mytemp)
-        # ~ self.add_path(mytemp)
-        ar = tarfile.open(self.get_file_abs_path(), mode='w:gz')
+        self.folder.create_file_from_filelike(
+            StringIO.StringIO(), 'path/archive.tar.gz')
+        ar = tarfile.open(self.get_archive_abs_path(), mode='w:gz')
         for src, dstn in self._filelist:
             ar.add(src, arcname=dstn)
         ar.close()
 
-    def store(self):
+    def store(self, *args, **kwargs):
         self._make_archive()
         del(self._filelist)
-        super(ArchiveData, self).store()
+        super(ArchiveData, self).store(*args, **kwargs)
+
+    @property
+    def archive(self):
+        return self.get_archive()
