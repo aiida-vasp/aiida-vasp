@@ -84,11 +84,27 @@ class PawData(Data):
 
     @classmethod
     def load_paw(cls, **kwargs):
+        '''
+        py:method:: load_paw([family=None][, element=None][, symbol=None])
+        Load PawData nodes from the databank. Use kwargs to filter.
+
+        :return: a list of PawData instances
+        :rtype: list
+        :key str family: Filter by family
+        :key str element: Filter by chemical symbol
+        :key str symbol: Filter by PAW symbol (example: As vs. As_d)
+        :raises ValueError: if no PAWs are found
+        '''
+        usage_msg = 'use import_family or from_folder to import PAWs'
+        error_msg = 'no PAWs found for the given kwargs!\n'+usage_msg
         q = QueryTool()
         q.set_class(cls)
         for k, v in kwargs.iteritems():
             q.add_attr_filter(k, '=', v)
-        return list(q.run_query())
+        res = list(q.run_query())
+        if not res:
+            raise ValueError(error_msg)
+        return res
 
     def __repr__(self):
         try:
