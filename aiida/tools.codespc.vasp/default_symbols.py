@@ -2,8 +2,8 @@ from lxml import html
 import requests
 
 version = {
-        'latest': { 
-            'version': '5.2', 
+        'latest': {
+            'version': '5.2',
             'url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_PAW_potentials_DFT_calculations_using_vasp_5_2.html',
             'gw-url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_GW_PAW_potentials_vasp_5_2.html'
             }
@@ -63,5 +63,5 @@ if __name__ == '__main__':
         defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in defpaw.iteritems()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in defgw.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '') for k, v in defgw.iteritems()])
         defaults.write('}\n\n')
