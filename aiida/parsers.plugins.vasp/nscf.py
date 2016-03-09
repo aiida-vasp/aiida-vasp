@@ -16,8 +16,10 @@ class NscfParser(Vasp2w90Parser):
 
         self.vrp = self.read_run()
         self.dcp = self.read_dos()
-        self.set_bands(self.read_eigenval()[0])
-        self.set_dos(self.get_dos_node(self.vrp, self.dcp))
+        if self.get_file('EIGENVAL'):
+            self.set_bands(self.read_eigenval()[0])
+        if self.get_file('DOSCAR')
+            self.set_dos(self.get_dos_node(self.vrp, self.dcp))
         self.set_win(self.get_win_node())
         self.set_wdat(self.get_wdat_node())
         self.add_node('results', self.get_output())
