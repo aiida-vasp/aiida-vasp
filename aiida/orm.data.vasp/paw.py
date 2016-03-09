@@ -4,7 +4,6 @@ from aiida.orm.querytool import QueryTool
 from aiida.tools.codespecific.vasp.io.potcar import PawParser as pcparser
 
 
-
 class PawData(Data):
     @property
     def symbol(self):
@@ -52,20 +51,25 @@ class PawData(Data):
         return self.get_attr('paw_date')
 
     @classmethod
-    def import_family(cls, folder, family_override=None):
+    def import_family(cls, folder, familyname=None, store=True):
         fp = os.path.abspath(folder)
-        ffname = os.path.basename(os.path.dirname(folder)).replace('potpaw_', '')
-        famname = family_override or ffname
+        ffname = os.path.basename(
+            os.path.dirname(folder)).replace('potpaw_', '')
+        famname = familyname or ffname
         for pawf in os.listdir(fp):
             ap = os.path.join(fp, pawf)
             if os.path.isdir(ap):
                 paw = cls.from_folder(ap)
-                if family_override:
-                    paw._set_attr('family', family_override)
+                if familyname:
+                    paw._set_attr('family', famname)
                 elif paw.family == 'none':
                     paw._set_attr('family', ffname)
                 if not cls.load_paw(family=famname, symbol=paw.symbol):
-                    paw.store_all()
+                    if store:
+                        paw.store_all()
+                    else:
+                        print repr(paw)
+
         @property
         def xc_type(self):
             return self.get_attr('xc_type')

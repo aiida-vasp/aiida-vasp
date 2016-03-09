@@ -1,5 +1,5 @@
 from aiida.orm import CalculationFactory, DataFactory
-from aiida.tools.codespecific.vasp.default_paws import lda
+from aiida.tools.codespecific.vasp.default_paws import lda, gw
 
 
 class VaspMaker(object):
@@ -24,8 +24,10 @@ class VaspMaker(object):
         self._code = kwargs.get('code')
         self._settings = kwargs.get('settings', self.calc_cls.new_settings())
         self._set_default_structure(kwargs.get('structure'))
+        self._paw_fam = kwargs.get('paw_family', 'PBE')
+        self._paw_def = kwargs.get('paw_defaults')
         self._paws = {}
-        self._set_default_lda_paws()
+        self._set_default_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
         self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
@@ -180,11 +182,23 @@ class VaspMaker(object):
             self._settings = self._settings.copy()
         self._settings.update_dict(kwargs)
 
-    def _set_default_lda_paws(self):
+    def _set_default_paws(self, overwrite=False):
+        if self._paw_fam.lower() == 'lda':
+            defaults = self._paw_def or lda
+        elif self._paw_fam.lower() in ['pbe', 'gw']:
+            defaults = self._paw_def or gw
+        else:
+            if not self._paw_def:
+                print 'keyword paw_family was not LDA or PBE'
+                print 'and no paw_defaults keyword was given!'
+                print 'manual paw initialization required'
+                return None
+            else:
+                defaults = self._paw_def
         for k in self.elements:
-            if k not in self._paws:
+            if k not in self._paws or overwrite:
                 paw = self.calc_cls.Paw.load_paw(
-                    family='LDA', symbol=lda[k])[0]
+                    family=self._paw_fam, symbol=defaults[k])[0]
                 self._paws[k] = paw
 
     @property
