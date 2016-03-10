@@ -57,22 +57,28 @@ class PawData(Data):
             os.path.dirname(folder)).replace('potpaw_', '')
         famname = familyname or ffname
         for pawf in os.listdir(fp):
-            ap = os.path.join(fp, pawf)
-            if os.path.isdir(ap):
-                paw = cls.from_folder(ap)
-                if familyname:
-                    paw._set_attr('family', famname)
-                elif paw.family == 'none':
-                    paw._set_attr('family', ffname)
-                if not cls.load_paw(family=famname, symbol=paw.symbol):
-                    if store:
-                        paw.store_all()
-                    else:
-                        print repr(paw)
+            try:
+                ap = os.path.join(fp, pawf)
+                if os.path.isdir(ap):
+                    paw = cls.from_folder(ap)
+                    if familyname:
+                        paw._set_attr('family', famname)
+                    elif paw.family == 'none':
+                        paw._set_attr('family', ffname)
+                    if not cls.load_paw(family=famname, symbol=paw.symbol):
+                        if store:
+                            paw.store_all()
+                        else:
+                            print repr(paw)
+            except:
+                import sys
+                e = sys.exc_info()[1]
+                print 'WARNING: skipping ' + os.path.abspath(pawf)
+                print '  ' + e.__class__.__name__ + ': ' + e.message
 
-        @property
-        def xc_type(self):
-            return self.get_attr('xc_type')
+    @property
+    def xc_type(self):
+        return self.get_attr('xc_type')
 
     @classmethod
     def from_folder(cls, pawpath):

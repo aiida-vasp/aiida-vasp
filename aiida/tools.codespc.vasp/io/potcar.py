@@ -4,6 +4,7 @@ This module contains tools to read PotpawData attributes from POTCAR files.
 import re
 import datetime as dt
 from parser import KeyValueParser
+import os
 
 
 class PotParser(KeyValueParser):
@@ -120,24 +121,35 @@ class PawParser(KeyValueParser):
             raise ValueError('POTCAR contains ultrasoft PP')
 
         attr_dict = {}
-        fam, sym, date = cls.title(kv_dict['TITEL'])
-        attr_dict['family'] = fam
-        attr_dict['symbol'] = sym
-        attr_dict['paw_date'] = date
-        enmin, enmin_u, cmt = cls.float_unit(kv_dict['ENMIN'])
-        attr_dict['enmin'] = enmin
-        attr_dict['enmin_unit'] = enmin_u
-        enmax, enmax_u, cmt = cls.float_unit(kv_dict['ENMAX'])
-        attr_dict['enmax'] = enmax
-        attr_dict['enmax_unit'] = enmax_u
-        elem, spconf = cls.vrhfin(kv_dict['VRHFIN'])
-        attr_dict['element'] = elem
-        attr_dict['atomic_conf'] = spconf
-        mass, cmt = cls.float(kv_dict['POMASS'])
-        attr_dict['mass'] = mass
-        val, cmt = cls.float(kv_dict['ZVAL'])
-        attr_dict['valence'] = val
-        xc_type, cmt = cls.string(kv_dict['LEXCH'])
-        attr_dict['xc_type'] = xc_type
+        try:
+            fam, sym, date = cls.title(kv_dict['TITEL'])
+            attr_dict['family'] = fam
+            attr_dict['symbol'] = sym
+            attr_dict['paw_date'] = date
+            enmin, enmin_u, cmt = cls.float_unit(kv_dict['ENMIN'])
+            attr_dict['enmin'] = enmin
+            attr_dict['enmin_unit'] = enmin_u
+            enmax, enmax_u, cmt = cls.float_unit(kv_dict['ENMAX'])
+            attr_dict['enmax'] = enmax
+            attr_dict['enmax_unit'] = enmax_u
+            elem, spconf = cls.vrhfin(kv_dict['VRHFIN'])
+            attr_dict['element'] = elem
+            attr_dict['atomic_conf'] = spconf
+            mass, cmt = cls.float(kv_dict['POMASS'])
+            attr_dict['mass'] = mass
+            val, cmt = cls.float(kv_dict['ZVAL'])
+            attr_dict['valence'] = val
+            xc_type, cmt = cls.string(kv_dict['LEXCH'])
+            attr_dict['xc_type'] = xc_type
+        except KeyError as e:
+            msg = 'missing or misspelled keyword "' + e.message
+            msg += '" in ' + os.path.abspath(filename)
+            raise KeyError(msg)
+        except:
+            import sys
+            e = sys.exc_info()[1]
+            msg = e.message
+            msg += ' in file: '+os.path.abspath(filename)
+            raise e.__class__(msg)
 
         return attr_dict
