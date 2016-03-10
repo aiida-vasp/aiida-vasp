@@ -1,5 +1,6 @@
 from aiida.orm import CalculationFactory, DataFactory
 from aiida.tools.codespecific.vasp.default_paws import lda, gw
+import os
 
 
 class VaspMaker(object):
@@ -55,10 +56,20 @@ class VaspMaker(object):
         self._resources = calc.get_resources()
 
     def _set_default_structure(self, structure):
-        if isinstance(structure, (str, unicode)):
-            self._structure = DataFactory('cif').get_or_create(structure)[0]
-        elif not structure:
+        if not structure:
             self._structure = self.calc_cls.new_structure()
+        elif isinstance(structure, (str, unicode)):
+            structure = os.path.abspath(structure)
+            if os.path.splitext(structure)[1] == '.cif':
+                self._structure = DataFactory('cif').get_or_create(structure)[0]
+            elif os.path.basename(structure) == 'POSCAR':
+                from ase.io.vasp import read_vasp
+                pwd = os.path.abspath(os.curdir)
+                os.chdir(os.path.dirname(structure))
+                atoms = read_vasp('POSCAR')
+                os.chdir(pwd)
+                self._structure = self.calc_cls.new_structure()
+                self._structure.set_ase(atoms)
         else:
             self._structure = structure
 
