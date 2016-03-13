@@ -219,13 +219,28 @@ class VaspCalcBase(JobCalculation):
         self._update_internal_params()
 
     def verify_inputs(self, inputdict, *args, **kwargs):
+        '''
+        Hook to be extended by subclasses with checks for input nodes.
+        Is called once before submission.
+        '''
         self.check_input(inputdict, 'code')
 
     def check_input(self, inputdict, linkname, check_fn=lambda: True):
+        '''
+        :py:method: check_input(inputdict, linkname[, check_fn])
+        check wether the given linkname is in the inputdict.
+
+        This is meant to be called prior to submission and will raise an
+        Exception if no input node is found for the linkname.
+
+        :param function check_fn: A function that returns True if the
+        check should be performed or False if not.
+        '''
         notset_msg = 'input not set: %s'
         if check_fn():
             if linkname not in inputdict:
                 raise ValueError(notset_msg % linkname)
+        return True
 
     def store(self, *args, **kwargs):
         self._prestore()

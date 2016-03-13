@@ -13,7 +13,7 @@ class Vasp5CalcTest(AiidaTestCase):
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp5')()
         DataFactory('vasp.paw').import_family(
-            realpath(join(dirname(__file__), 'LDA')), family_override='TEST')
+            realpath(join(dirname(__file__), 'LDA')), familyname='TEST')
 
         larray = np.array([[0, .5, .5],
                            [.5, 0, .5],
