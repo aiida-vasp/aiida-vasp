@@ -1,6 +1,4 @@
 from base import BasicCalculation
-from aiida.common.utils import classproperty
-from aiida.orm import DataFactory
 
 
 class ScfCalculation(BasicCalculation):
@@ -11,8 +9,13 @@ class ScfCalculation(BasicCalculation):
     default_parser = 'vasp.scf'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''changes the retrieve_list to retrieve only files needed to continue with nonscf runs'''
-        calcinfo = super(ScfCalculation, self)._prepare_for_submission(tempfolder, inputdict)
+        '''
+        changes the retrieve_list to retrieve only
+        files needed to continue with nonscf runs
+        '''
+        calcinfo = super(
+            ScfCalculation, self)._prepare_for_submission(
+                tempfolder, inputdict)
         calcinfo.retrieve_list.extend(['CHGCAR', 'WAVECAR', 'IBZKPT'])
         return calcinfo
 
@@ -25,11 +28,14 @@ class ScfCalculation(BasicCalculation):
         super(ScfCalculation, self).verify_inputs(inputdict, *args, **kwargs)
         kpa = inputdict['kpoints'].get_attrs()
         if 'mesh' not in kpa:
-            raise AttributeError('ScfCalculation can only be used with kpoints mesh')
+            raise AttributeError(
+                'ScfCalculation can only be used with kpoints mesh')
+        return True
 
     def _init_internal_params(self):
         '''
-        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta pick up internal parameters from the class body
+        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta`
+        ref CalcMeta pick up internal parameters from the class body
         and insert them
         '''
         super(ScfCalculation, self)._init_internal_params()

@@ -29,6 +29,14 @@ class Common(object):
             realpath(join(dirname(__file__), 'LDA')), familyname='TEST')
 
     @classmethod
+    def paw_in(cls):
+        return DataFactory('vasp.paw').load_paw(element='In')[0]
+
+    @classmethod
+    def paw_as(cls):
+        return DataFactory('vasp.paw').load_paw(element='As')[0]
+
+    @classmethod
     def kpoints_mesh(cls):
         kp = DataFactory('array.kpoints')()
         kp.set_kpoints_mesh([2, 2, 2])
