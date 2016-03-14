@@ -224,6 +224,7 @@ class VaspCalcBase(JobCalculation):
         Is called once before submission.
         '''
         self.check_input(inputdict, 'code')
+        return True
 
     def check_input(self, inputdict, linkname, check_fn=lambda: True):
         '''
@@ -296,11 +297,11 @@ class BasicCalculation(VaspCalcBase):
 
     def write_incar(self, inputdict, dst):
         '''
+        :py:method: write_incar(inputdict, dst)
         converts from settings node (ParameterData) to INCAR format
         and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
+        :param inputdict: required by baseclass
+        :param dst: absolute path of the file to write to
         '''
         from incar import dict_to_incar
         with open(dst, 'w') as incar:

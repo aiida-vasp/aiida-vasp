@@ -61,11 +61,8 @@ class PawData(Data):
                 ap = os.path.join(fp, pawf)
                 if os.path.isdir(ap):
                     paw = cls.from_folder(ap)
-                    if familyname:
-                        paw._set_attr('family', famname)
-                    elif paw.family == 'none':
-                        paw._set_attr('family', ffname)
-                    if not cls.load_paw(family=famname, symbol=paw.symbol):
+                    paw._set_attr('family', famname)
+                    if not cls.load_paw(family=famname, symbol=paw.symbol, silent=True):
                         if store:
                             paw.store_all()
                         else:
@@ -108,7 +105,7 @@ class PawData(Data):
         for k, v in kwargs.iteritems():
             q.add_attr_filter(k, '=', v)
         res = list(q.run_query())
-        if not res:
+        if not res and not kwargs.get('silent'):
             raise ValueError(error_msg)
         return res
 

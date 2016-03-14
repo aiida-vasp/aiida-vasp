@@ -1,5 +1,6 @@
 from aiida.orm import DataFactory
 from os.path import dirname, realpath, join
+import numpy as np
 
 
 class Common(object):
@@ -9,9 +10,9 @@ class Common(object):
                            [.5, 0, .5],
                            [.5, .5, 0]])
         alat = 6.058
-        self.structure = DataFactory('structure')(cell=larray*alat)
-        self.structure.append_atom(position=[0, 0, 0], symbols='In')
-        self.structure.append_atom(position=[.25, .25, .25], symbols='As')
+        structure = DataFactory('structure')(cell=larray*alat)
+        structure.append_atom(position=[0, 0, 0], symbols='In')
+        structure.append_atom(position=[.25, .25, .25], symbols='As')
 
         return structure
 
@@ -19,8 +20,8 @@ class Common(object):
     def cif(cls):
         cifpath = realpath(join(dirname(__file__),
                                 'data', 'EntryWithCollCode43360.cif'))
-        self.cif = DataFactory('cif').get_or_create(cifpath)[0]
-        reurn cif
+        cif = DataFactory('cif').get_or_create(cifpath)[0]
+        return cif
 
     @classmethod
     def import_paw(cls):
@@ -30,12 +31,14 @@ class Common(object):
     @classmethod
     def kpoints_mesh(cls):
         kp = DataFactory('array.kpoints')()
-        kp.set_kpoints_mesh([4,4,4])
+        kp.set_kpoints_mesh([4, 4, 4])
+        return kp
 
     @classmethod
     def kpoints_list(cls):
         kp = DataFactory('array.kpoints')()
         kp.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
+        return kp
 
     @classmethod
     def settings(cls):
