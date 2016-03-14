@@ -7,7 +7,10 @@ class KpParser(BaseParser):
     def __init__(self, fname):
         self.header, res = self.parse_kp_file(fname)
         self.kpoints = res[:, :3]
-        self.weights = res[:, 3]
+        if res.shape[1] == 4:
+            self.weights = res[:, 3]
+        else:
+            self.weights = None
         self.cartesian = self.header['cartesian']
 
     @classmethod

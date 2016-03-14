@@ -31,14 +31,25 @@ class Common(object):
     @classmethod
     def kpoints_mesh(cls):
         kp = DataFactory('array.kpoints')()
-        kp.set_kpoints_mesh([4, 4, 4])
+        kp.set_kpoints_mesh([2, 2, 2])
         return kp
+
+    @classmethod
+    def kpoints_mesh_res(cls):
+        res = np.array([[2., 2., 2.], [0., 0., 0.]])
+        return res
 
     @classmethod
     def kpoints_list(cls):
         kp = DataFactory('array.kpoints')()
         kp.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
         return kp
+
+    @classmethod
+    def kpoints_list_res(cls):
+        kres = np.array([[0., 0., 0.], [0., 0., .5]])
+        wres = np.array([1., 1.])
+        return (kres, wres)
 
     @classmethod
     def settings(cls):

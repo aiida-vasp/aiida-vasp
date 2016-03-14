@@ -3,6 +3,7 @@ from aiida.djsite.db.testbase import AiidaTestCase
 from aiida.tools.codespecific.vasp.io.incar import IncarParser
 from common import Common
 import tempfile
+import os
 
 
 class VaspCalcBaseTest(AiidaTestCase):
@@ -15,8 +16,6 @@ class VaspCalcBaseTest(AiidaTestCase):
         self.code.set_remote_computer_exec((self.computer, '/bin/foo'))
         self.paw_in = Paw.load_paw(element='In')[0]
         self.paw_as = Paw.load_paw(element='As')[0]
-        self.calc = self._get_calc('c', 'm')
-        self.inp = self.calc.get_inputs_dict()
         self.tmp, self.tmpf = tempfile.mkstemp()
 
     def tearDown(self):
@@ -27,7 +26,7 @@ class VaspCalcBaseTest(AiidaTestCase):
         calc = self.calc_cls()
         calc.use_code(self.code)
         calc.set_computer(self.computer)
-        calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine':1})
+        calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         calc.use_settings(Common.settings())
         if stype == 's':
             calc.use_structure(Common.structure())
@@ -42,7 +41,7 @@ class VaspCalcBaseTest(AiidaTestCase):
         return calc
 
     def test_store(self):
-        c_sm= self._get_calc('s', 'm')
+        c_sm = self._get_calc('s', 'm')
         c_sm.store_all()
         self.assertIsNotNone(c_sm.pk)
 
@@ -59,7 +58,63 @@ class VaspCalcBaseTest(AiidaTestCase):
         self.assertIsNotNone(c_cm.pk)
 
     def test_write_incar(self):
-        self.calc.write_incar(self.inp, self.tmpf)
+        calc = self._get_calc('s', 'm')
+        inp = calc.get_inputs_dict()
+        calc.write_incar(inp, self.tmpf)
         icp = IncarParser(self.tmpf)
-        for k, v in self.calc.inp.settings.get_dict().iteritems():
+        for k, v in calc.inp.settings.get_dict().iteritems():
             self.assertIn(str(v), icp.result[k])
+
+    def test_write_poscar_structure(self):
+        calc = self._get_calc('s', 'm')
+        inp = calc.get_inputs_dict()
+        from ase.io.vasp import read_vasp
+        calc.write_poscar(inp, self.tmpf)
+        wd = os.getcwd()
+        os.chdir(os.path.dirname(self.tmpf))
+        poscar = None
+        poscar = read_vasp(self.tmpf)
+        os.chdir(os.path.dirname(wd))
+        self.assertIsNotNone(poscar)
+
+    def test_write_poscar_cif(self):
+        calc = self._get_calc('c', 'm')
+        inp = calc.get_inputs_dict()
+        from ase.io.vasp import read_vasp
+        calc.write_poscar(inp, self.tmpf)
+        wd = os.getcwd()
+        os.chdir(os.path.dirname(self.tmpf))
+        poscar = None
+        poscar = read_vasp(self.tmpf)
+        os.chdir(os.path.dirname(wd))
+        self.assertIsNotNone(poscar)
+
+    def test_write_kpoints_mesh(self):
+        from aiida.tools.codespecific.vasp.io.kpoints import KpParser
+        calc = self._get_calc('c', 'm')
+        inp = calc.get_inputs_dict()
+        calc.write_kpoints(inp, self.tmpf)
+        kpp = KpParser(self.tmpf)
+        self.assertTrue((kpp.kpoints == Common.kpoints_mesh_res()).all())
+
+    def test_write_kpoints_list(self):
+        from aiida.tools.codespecific.vasp.io.kpoints import KpParser
+        calc = self._get_calc('c', 'l')
+        inp = calc.get_inputs_dict()
+        calc.write_kpoints(inp, self.tmpf)
+        kpp = KpParser(self.tmpf)
+        kres, wres = Common.kpoints_list_res()
+        self.assertTrue((kpp.kpoints == kres).all())
+        self.assertTrue((kpp.weights == wres).all())
+
+    def test_write_potcar(self):
+        calc = self._get_calc('c', 'm')
+        inp = calc.get_inputa_dict()
+        calc.write_potcar(inp, self.tmpf)
+        with open(self.tmpf, 'r') as pcf:
+            pcs = pcf.read()
+        self.assertIn('In_d', pcs)
+        self.assertIn('As', pcs)
+        self.assertEquals(pcs.count('End of Dataset'), 2)
+
+

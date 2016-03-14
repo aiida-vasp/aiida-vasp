@@ -368,7 +368,7 @@ class BasicCalculation(VaspCalcBase):
         kp = self.inp.kpoints
         if kp.get_attrs().get('mesh'):
             self._write_kpoints_mesh(dst)
-        elif kp.get_attrs().get('array'):
+        elif kp.get_attrs().get('array|kpoints'):
             self._write_kpoints_list(dst)
         else:
             raise AttributeError('you supplied an empty kpoints node')
