@@ -22,3 +22,7 @@
    RAUG   =    1.300    factor for augmentation sphere
    RDEP   =    2.630    radius for radial grids
    RDEPT  =    2.023    core radius for aug-charge
+
+ ... DATA ...
+
+ End of Dataset

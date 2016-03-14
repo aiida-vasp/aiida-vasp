@@ -109,12 +109,35 @@ class VaspCalcBaseTest(AiidaTestCase):
 
     def test_write_potcar(self):
         calc = self._get_calc('c', 'm')
-        inp = calc.get_inputa_dict()
+        inp = calc.get_inputs_dict()
         calc.write_potcar(inp, self.tmpf)
         with open(self.tmpf, 'r') as pcf:
             pcs = pcf.read()
+        with open(os.path.expanduser('~/tmp/potcar'), 'w') as tpc:
+            tpc.write(pcs)
         self.assertIn('In_d', pcs)
         self.assertIn('As', pcs)
         self.assertEquals(pcs.count('End of Dataset'), 2)
 
+    def test_elements(self):
+        calc = self._get_calc('c', 'm')
+        self.assertRaises(AttributeError, calc.get_attr, 'elements')
+        calc._prestore()
+        self.assertEquals(['In', 'As'], calc.elements)
 
+    def test_new_settings(self):
+        calc = self.calc_cls()
+        calc.use_settings(calc.new_settings(dict={'bla': 3}))
+        self.assertEquals(calc.inp.settings.get_dict().get('bla'), 3)
+
+    def test_new_structure(self):
+        calc = self.calc_cls()
+        calc.use_structure(calc.new_structure())
+
+    def test_new_kpoints(self):
+        calc = self.calc_cls()
+        calc.use_kpoints(calc.new_kpoints())
+
+    def test_load_paw(self):
+        calc = self.calc_cls()
+        calc.use_paw(calc.load_paw(symbol=self.paw_in.symbol, family=self.paw_in.family), kind='test')

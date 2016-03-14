@@ -388,8 +388,8 @@ class BasicCalculation(VaspCalcBase):
             self.check_input(inputdict, self._get_paw_linkname(kind))
         self.check_input(inputdict, 'kpoints')
         kpa = inputdict['kpoints'].get_attrs()
-        if 'mesh' not in kpa and 'array' not in kpa:
-            raise AttributeError('BasicCalculation can only be used with empty kpoints node')
+        if 'mesh' not in kpa and 'array|kpoints' not in kpa:
+            raise AttributeError('BasicCalculation can not be submitted with empty kpoints node')
 
     @classmethod
     def _get_paw_linkname(cls, kind):
