@@ -25,10 +25,13 @@ class NscfCalcTest(AiidaTestCase):
         calc.use_code(self.code)
         calc.set_computer(self.computer)
         calc.use_settings(Common.settings())
+        calc.inp.settings.update_dict({'icharg': 11})
         calc.use_structure(Common.cif())
         calc.use_kpoints(kp)
         calc.use_paw(Common.paw_in(), kind='In')
         calc.use_paw(Common.paw_as(), kind='As')
+        calc.use_charge_density(Common.charge_density())
+        calc.use_wavefunctions(Common.wavefunctions())
         return calc, calc.get_inputs_dict()
 
     def test_verify(self):
@@ -37,14 +40,57 @@ class NscfCalcTest(AiidaTestCase):
         calc.use_kpoints(Common.kpoints_mesh())
         inp = calc.get_inputs_dict()
         calc.verify_inputs(inp)
+        calc.use_settings(Common.settings())
+        inp = calc.get_inputs_dict()
+        calc.verify_inputs(inp)
 
     def test_prepare(self):
         calc, inp = self._get_calc()
         with SandboxFolder() as sf:
             ci = calc._prepare_for_submission(sf, inp)
+            il = sf.get_content_list()
+        self.assertEquals(set(il),
+                            {'INCAR', 'KPOINTS', 'POSCAR',
+                            'POTCAR', 'CHGCAR', 'WAVECAR'})
         self.assertIn('EIGENVAL', ci.retrieve_list)
         self.assertIn('DOSCAR', ci.retrieve_list)
         self.assertIn('wannier90.win', ci.retrieve_list)
         self.assertIn('wannier90.mmn', ci.retrieve_list)
         self.assertIn('wannier90.amn', ci.retrieve_list)
         self.assertIn('wannier90.eig', ci.retrieve_list)
+        calc.use_settings(Common.settings())
+        inp = calc.get_inputs_dict()
+        calc.verify_inputs(inp)
+        with SandboxFolder() as sf:
+            calc._prepare_for_submission(sf, inp)
+            il = sf.get_content_list()
+        self.assertEquals(set(il),
+                            {'INCAR', 'KPOINTS', 'POSCAR',
+                            'POTCAR', 'WAVECAR'})
+
+    def test_write_chgcar(self):
+        calc, inp = self._get_calc()
+        calc.write_chgcar(inp, self.tmpf)
+        with open(self.tmpf, 'r') as chg:
+            res = chg.read()
+        self.assertEquals(res, Common.charge_density_res())
+
+    def test_write_wavecar(self):
+        calc, inp = self._get_calc()
+        calc.write_wavecar(inp, self.tmpf)
+        with open(self.tmpf, 'r') as wav:
+            res = wav.read()
+        self.assertEquals(res, Common.wavefunctions_res())
+
+    def test_parse_with_retrieved(self):
+        calc, inpt = self._get_calc()
+        pars = calc.get_parserclass()(calc)
+        ok, outs = pars.parse_with_retrieved({
+            'retrieved': Common.retrieved_nscf()
+        })
+        outs = dict(outs)
+        self.assertIn('bands', outs)
+        self.assertIn('dos', outs)
+        self.assertIn('wannier_settings', outs)
+        self.assertIn('wannier_data', outs)
+        self.assertIn('results', outs)

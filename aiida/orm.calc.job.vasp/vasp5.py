@@ -145,9 +145,10 @@ class Vasp5Calculation(VaspCalcBase):
         set attributes prior to storing
         '''
         super(Vasp5Calculation, self)._prestore()
-        self._set_attr('input_kp_used', self._need_kp())
-        self._set_attr('input_chgd_used', self._need_chgd())
-        self._set_attr('input_wfn_used', self._need_wfn())
+        if self.get_inputs_dict().get('settings'):
+            self._set_attr('input_kp_used', self._need_kp())
+            self._set_attr('input_chgd_used', self._need_chgd())
+            self._set_attr('input_wfn_used', self._need_wfn())
         self._set_attr('elements', list(ordered_unique_list(
             self.inp.structure.get_ase().get_chemical_symbols())))
 

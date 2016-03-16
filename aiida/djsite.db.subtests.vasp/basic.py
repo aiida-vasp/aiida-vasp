@@ -6,7 +6,7 @@ import tempfile
 import os
 
 
-class VaspCalcBaseTest(AiidaTestCase):
+class BasicCalcTest(AiidaTestCase):
     def setUp(self):
         self.calc_cls = CalculationFactory('vasp.base.BasicCalculation')
         Common.import_paw()
@@ -140,4 +140,6 @@ class VaspCalcBaseTest(AiidaTestCase):
 
     def test_load_paw(self):
         calc = self.calc_cls()
-        calc.use_paw(calc.load_paw(symbol=self.paw_in.symbol, family=self.paw_in.family), kind='test')
+        calc.use_paw(calc.load_paw(
+            symbol=self.paw_in.symbol,
+            family=self.paw_in.family), kind='test')

@@ -1,6 +1,11 @@
 from aiida.orm import DataFactory
+import os
 from os.path import dirname, realpath, join
 import numpy as np
+
+
+def subpath(*args):
+    return realpath(join(dirname(__file__), *args))
 
 
 class Common(object):
@@ -26,7 +31,7 @@ class Common(object):
     @classmethod
     def import_paw(cls):
         DataFactory('vasp.paw').import_family(
-            realpath(join(dirname(__file__), 'LDA')), familyname='TEST')
+            subpath('LDA'), familyname='TEST')
 
     @classmethod
     def paw_in(cls):
@@ -68,3 +73,34 @@ class Common(object):
             'sigma': .05
         }
         return DataFactory('parameter')(dict=settings)
+
+    @classmethod
+    def charge_density(cls):
+        return DataFactory('vasp.chargedensity')(
+            file=subpath('data', 'CHGCAR')
+        )
+
+    @classmethod
+    def charge_density_res(cls):
+        with open(subpath('data', 'CHGCAR'), 'r') as chg:
+            res = chg.read()
+        return res
+
+    @classmethod
+    def wavefunctions(cls):
+        return DataFactory('vasp.wavefun')(
+            file=subpath('data', 'WAVECAR')
+        )
+
+    @classmethod
+    def wavefunctions_res(cls):
+        with open(subpath('data', 'WAVECAR'), 'r') as wav:
+            res = wav.read()
+        return res
+
+    @classmethod
+    def retrieved_nscf(cls):
+        ret = DataFactory('folder')()
+        for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
+            ret.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
+        return ret

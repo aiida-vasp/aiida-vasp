@@ -16,6 +16,17 @@ class NscfCalculation(BasicCalculation):
                           'for continuation jobs')
     default_parser = 'vasp.nscf'
 
+    def verify_inputs(self, inputdict):
+        super(NscfCalculation, self).verify_inputs(inputdict)
+        self.check_input(inputdict, 'charge_density', self._need_chgd)
+        self.check_input(inputdict, 'wavefunctions', self._need_wfn)
+        if not self._need_chgd() and inputdict.get('charge_density'):
+            msg = 'charge_density node given but '
+            msg += '"icharg" key in settings not set '
+            msg += 'to either 1 o 11. charge_density node not used --> .'
+            msg += 'CHGCAR not written'
+            self.logger.warning(msg)
+
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''changes the retrieve_list to retrieve only files needed
         to continue with nonscf runs'''
