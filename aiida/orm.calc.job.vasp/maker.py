@@ -1,5 +1,6 @@
 from aiida.orm import CalculationFactory, DataFactory
 from aiida.tools.codespecific.vasp.default_paws import lda, gw
+from base import ordered_unique_list
 import os
 
 
@@ -180,8 +181,8 @@ class VaspMaker(object):
 
     @structure.setter
     def structure(self, val):
-        self._structure = val
-        self._set_default_lda_paws()
+        self._set_default_structure(val)
+        self._set_default_paws()
         if self._kpoints.pk:
             self._kpoints = self._kpoints.copy()
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
@@ -314,7 +315,7 @@ class VaspMaker(object):
 
     @property
     def elements(self):
-        return set(self._structure.get_ase().get_chemical_symbols())
+        return ordered_unique_list(self._structure.get_ase().get_chemical_symbols())
 
     def pkcmp(self, nodeA, nodeB):
         if nodeA.pk < nodeB.pk:
@@ -324,26 +325,30 @@ class VaspMaker(object):
         else:
             return 0
 
-    def verify_incar(self):
-        if not self.struct:
+    def verify_settings(self):
+        if not self._structure:
             raise ValueError('need structure,')
-        magmom = self.incar.get('magmom', [])
-        lsorb = self.incar.get('lsorbit', False)
-        lnonc = self.incar.get('lnoncollinear', False)
+        magmom = self.settings.get('magmom', [])
+        lsorb = self.settings.get('lsorbit', False)
+        lnonc = self.settings.get('lnoncollinear', False)
         ok = True
+        msg = 'Everything ok'
         nmag = len(magmom)
-        nsit = len(self.struct.sites)
+        nsit = self.n_ions
         if lsorb:
             if lnonc:
                 if magmom and not nmag == 3*nsit:
                     ok = False
+                    msg = 'magmom has wrong dimension'
             else:
-                if not nmag == nsit:
+                if magmom and not nmag == nsit:
                     ok = False
+                    msg = 'magmom has wrong dimension'
         else:
-            if not nmag == nsit:
+            if magmom and not nmag == nsit:
                 ok = False
-        return ok
+                msg = 'magmom has wrong dimension'
+        return ok, msg
 
     def check_magmom(self):
         magmom = self.settings.get('magmom', [])
@@ -354,6 +359,8 @@ class VaspMaker(object):
         mm = len(magmom)
         if magmom and st_magmom:
             return s_mm == mm
+        else:
+            return True
 
     def set_magmom_1(self, val):
         magmom = [val]
@@ -363,7 +370,7 @@ class VaspMaker(object):
 
     @property
     def nbands(self):
-        return self.n_ions * 3 * self.noncol and 3 or 1
+        return self.n_ions * 3 * (self.noncol and 3 or 1)
 
     @property
     def n_ions(self):
@@ -384,7 +391,7 @@ class VaspMaker(object):
 
     @property
     def icharg(self):
-        return self.settings['icharg']
+        return self.settings.get('icharg', 'default')
 
     @icharg.setter
     def icharg(self, value):

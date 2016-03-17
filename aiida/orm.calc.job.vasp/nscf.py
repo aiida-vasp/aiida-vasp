@@ -1,6 +1,5 @@
 from base import BasicCalculation, Input
 from aiida.orm import DataFactory
-from aiida.common.utils import classproperty
 
 
 class NscfCalculation(BasicCalculation):
@@ -32,11 +31,8 @@ class NscfCalculation(BasicCalculation):
         to continue with nonscf runs'''
         calcinfo = super(NscfCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
-        calcinfo.retrieve_list.extend([ 'EIGENVAL', 'DOSCAR'])
-        calcinfo.retrieve_list.extend(['wannier90.win',
-                                       'wannier90.mmn',
-                                       'wannier90.amn',
-                                       'wannier90.eig'])
+        calcinfo.retrieve_list.extend(['EIGENVAL', 'DOSCAR'])
+        calcinfo.retrieve_list.append(['wannier90*', '.', 0])
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
@@ -73,9 +69,11 @@ class NscfCalculation(BasicCalculation):
         '''
         Test wether an charge_densities input is needed or not.
         :return output:
-            True if a chgcar file must be used (py:method::NscfCalculation.use_charge_densities),
+            True if a chgcar file must be used
+            (py:method::NscfCalculation.use_charge_densities),
             False otherwise
-        needs 'settings' input to be set (py:method::NscfCalculation.use_settings)
+        needs 'settings' input to be set
+        (py:method::NscfCalculation.use_settings)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
         icharg = self._settings.get('icharg', ichrg_d)
@@ -88,9 +86,11 @@ class NscfCalculation(BasicCalculation):
         '''
         Test wether a wavefunctions input is needed or not.
         :return output:
-            True if a wavecar file must be used(py:method::NscfCalculation.use_wavefunctions),
+            True if a wavecar file must be
+            used (py:method::NscfCalculation.use_wavefunctions),
             False otherwise
-        needs 'settings' input to be set (py:method::NscfCalculation.use_settings)
+        needs 'settings' input to be set
+        (py:method::NscfCalculation.use_settings)
         '''
         # ~ nsw = self._settings.get('nsw', 0)
         # ~ ibrion_d = nsw in [0, 1] and -1 or 0
@@ -130,7 +130,9 @@ class NscfCalculation(BasicCalculation):
 
     def _init_internal_params(self):
         '''
-        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta
+        let the metaclass
+        py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta`
+        ref CalcMeta
         pick up internal parameters from the class body and insert them
         '''
         super(NscfCalculation, self)._init_internal_params()

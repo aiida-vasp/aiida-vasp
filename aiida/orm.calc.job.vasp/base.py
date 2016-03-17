@@ -192,16 +192,7 @@ class VaspCalcBase(JobCalculation):
             'TMPCAR',
             'WAVECAR',
             'XDATCAR',
-            'wannier90.win',
-            'wannier90.mmn',
-            'wannier90.eig',
-            'wannier90.amn',
-            'wannier90.UNK*',
-            'wannier90.wout',
-            'wannier90.chk',
-            'wannier90_*',
-            'wannier90.*',
-            'wannier.werr',
+            ['wannier90*', '.', 0],
             'vasprun.xml'
         ]
         codeinfo = CodeInfo()
@@ -290,8 +281,11 @@ class BasicCalculation(VaspCalcBase):
     default_parser = 'vasp.scf'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''changes the retrieve_list to retrieve only files needed to continue with nonscf runs'''
-        calcinfo = super(BasicCalculation, self)._prepare_for_submission(tempfolder, inputdict)
+        '''changes the retrieve_list to retrieve only files needed
+        to continue with nonscf runs'''
+        calcinfo = super(
+            BasicCalculation, self)._prepare_for_submission(
+                tempfolder, inputdict)
         calcinfo.retrieve_list = ['OUTCAR', 'vasprun.xml']
         return calcinfo
 
@@ -389,7 +383,9 @@ class BasicCalculation(VaspCalcBase):
         self.check_input(inputdict, 'kpoints')
         kpa = inputdict['kpoints'].get_attrs()
         if 'mesh' not in kpa and 'array|kpoints' not in kpa:
-            raise AttributeError('BasicCalculation can not be submitted with empty kpoints node')
+            msg = 'BasicCalculation can not be '
+            msg += 'submitted with empty kpoints node'
+            raise AttributeError(msg)
 
     @classmethod
     def _get_paw_linkname(cls, kind):
@@ -434,7 +430,9 @@ class BasicCalculation(VaspCalcBase):
 
     def _init_internal_params(self):
         '''
-        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta pick up internal parameters from the class body
+        let the metaclass
+        py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta`
+        ref CalcMeta pick up internal parameters from the class body
         and insert them
         '''
         super(BasicCalculation, self)._init_internal_params()
@@ -524,52 +522,6 @@ class TentativeVaspCalc(VaspCalcBase):
     @elements.setter
     def elements(self, value):
         self._set_attr('elements', value)
-
-    @classmethod
-    def make_new(cls, label, cifname, incar={}, kp={}, paw={}):
-        from aiida.tools.codespecific.vasp.io import cif
-        from aiida.tools.codespecific.vasp.default_paws import lda
-        import os
-
-        class Inputs(object):
-            def __init__(self, label, incar, structure, potcars, kpoints):
-                self.label = label
-                self.incar = incar
-                self.structure = structure
-                self.potcars = potcars
-                self.kpoints = kpoints
-
-            def get_calc(self, cls=TentativeVaspCalc):
-                calc = cls()
-                calc.label = self.label
-                calc.use_incar(self.incar)
-                calc.use_structure(self.structure)
-                for k, p in self.potcars.iteritems():
-                    calc.use_paw(p, kind=k)
-                calc.use_kpoints(self.kpoints)
-                calc.set_computer
-                return calc
-
-        cifnode = cif.cif_from_file(cifname)
-        namecifs = cif.get_cifs_with_name(os.path.basename(cifname))
-        eqcifs = cif.filter_cifs_for_structure(namecifs, cifnode.get_ase())
-        if eqcifs:
-            cifnode = eqcifs[0]
-        structure = cif.cif_to_structure(cifnode=cifnode)
-        for kn in structure.get_kind_names():
-            if not paw.get(kn):
-                paw[kn] = cls.Paw().load_paw(family='LDA', symbol=lda[kn])[0]
-        inc = cls._new_incar()
-        inc.set_dict(incar)
-        kpt = cls._new_kp()
-        kpt.set_cell_from_structure(structure)
-        if 'mesh' in kp:
-            kpt.set_kpoints_mesh(kp['mesh'])
-        elif 'list' in kp:
-            kpt.set_kpoints(kp['list'])
-        elif 'path' in kp:
-            kpt.set_kpoints(kp['path'])
-        return Inputs(label, inc, structure, paw, kpt)
 
     @classmethod
     def _new_incar(cls):
