@@ -110,7 +110,7 @@ class VaspMaker(object):
         self._wavefunctions = kwargs.get('wavefunctions', None)
         self._recipe = None
         self._queue = kwargs.get('queue')
-        self._resources = kwargs.get('resources')
+        self._resources = kwargs.get('resources', {})
 
     def _copy_from(self, calc):
         ins = calc.get_inputs_dict()
@@ -276,6 +276,10 @@ class VaspMaker(object):
     @queue.setter
     def queue(self, val):
         self._queue = val
+
+    @property
+    def resources(self):
+        return self._resources
 
     def add_settings(self, **kwargs):
         if self._settings.pk:
