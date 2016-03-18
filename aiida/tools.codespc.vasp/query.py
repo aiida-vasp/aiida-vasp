@@ -49,7 +49,7 @@ class VaspFinder(object):
             'state': 'AiiDA-State',
             'pk': 'PK'
         }
-        line = '{pk:>5} {creation_time:18} {state:20} {successful:>6} {experiment:20} {exp_run:>4} {type}'
+        line = '{pk:>5} {creation_time:18} {state:20} {successful:>6} {experiment:20} {exp_run:>7} {class} {type}'
         tab.insert(0, header)
         return '\n'.join([line.format(**c) for c in tab])
 

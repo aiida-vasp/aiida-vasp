@@ -32,7 +32,7 @@ if __name__ == '__main__':
     mkr.set_kpoints_mesh([2, 2, 2])
     mkr.queue = 'dphys_compute'
     mkr.resources['num_machines'] = 2
-    mkr.resources['num_mpiprocs_per_machine'] = 16
+    mkr.resources['num_mpiprocs_per_machine'] = 4
     mkr.code = Code.get_from_string(sys.argv[1])
     mkr.label = 'scf_example'
     calc = mkr.new()
