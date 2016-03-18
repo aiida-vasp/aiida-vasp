@@ -6,11 +6,12 @@ import sys
 
 usage = '''runaiida scf_example.py <code@comp> <cif/POSCAR file>'''
 
+
 def add_to_group(node):
     try:
         g = Group.get_from_string('examples')
     except NotExistent:
-        g = Group('examples')
+        g = Group(name='examples')
         g.store()
     g.add_nodes(node)
 
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     if not len(sys.argv) == 3:
         print usage
         sys.exit()
-    mkr = VaspMaker(structure=sys.argv[2])
+    mkr = VaspMaker(structure=sys.argv[2], calc_cls='vasp.scf')
     mkr.add_settings(
         gga='PE',
         gga_compat=False,
@@ -28,7 +29,7 @@ if __name__ == '__main__':
         sigma=.05,
         encut=280
     )
-    mkr.set_kpoints_mesh([2,2,2])
+    mkr.set_kpoints_mesh([2, 2, 2])
     mkr.queue = 'dphys_compute'
     mkr.resources['num_machines'] = 2
     mkr.resources['num_mpiprocs_per_machine'] = 16
