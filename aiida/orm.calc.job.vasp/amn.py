@@ -60,7 +60,7 @@ class dict_to_win(object):
 class AmnCalculation(NscfCalculation):
     '''Calculation for using vasp 5.3 with the vasp2wannier90 interface.'''
 
-    default_parser = 'vasp.vasp2w90'
+    default_parser = 'vasp.amn'
     wannier_settings = Input(types=['parameter'],
                              doc='parameter node: settings for the ' +
                              'wannier interface')
@@ -69,7 +69,7 @@ class AmnCalculation(NscfCalculation):
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''changes the retrieve_list to retrieve only files needed
         to continue with nonscf runs'''
-        calcinfo = super(NscfCalculation, self)._prepare_for_submission(
+        calcinfo = super(AmnCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list.remove('EIGENVAL')
         calcinfo.retrieve_list.remove('DOSCAR')
@@ -93,9 +93,9 @@ class AmnCalculation(NscfCalculation):
         return DataFactory('vasp.archive')(**kwargs)
 
     def write_additional(self, tempfolder, inputdict):
-        super(Vasp2w90Calculation, self).write_additional(
+        super(AmnCalculation, self).write_additional(
             tempfolder, inputdict)
         win = tempfolder.get_abs_path('wannier90.win')
         self.write_wannier(inputdict, win)
         path = tempfolder.get_abs_path('')
-        self.write_wannier(inputdict, path)
+        self.write_wdat(inputdict, path)

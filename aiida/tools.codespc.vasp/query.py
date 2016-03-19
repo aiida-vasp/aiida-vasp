@@ -1,9 +1,10 @@
 from aiida.orm.querytool import QueryTool
 from aiida.orm.calculation.job import JobCalculation
-from aiida.orm.calculation.job.vasp.base import VaspCalcBase
+
 
 class VaspFinder(object):
-    _vaspclass = ['vasp.vasp', 'vasp.asevasp', 'vasp.vasp5', 'vasp.vasp2w90', 'vasp.vasp2w90.Vasp2W90Calculation']
+    _vaspclass = ['vasp.vasp', 'vasp.asevasp', 'vasp.vasp5',
+                  'vasp.vasp2w90', 'vasp.vasp2w90.Vasp2W90Calculation']
 
     @classmethod
     def cmp_ctime(cls, calc1, calc2):
@@ -49,7 +50,8 @@ class VaspFinder(object):
             'state': 'AiiDA-State',
             'pk': 'PK'
         }
-        line = '{pk:>5} {creation_time:18} {state:20} {successful:>6} {experiment:20} {exp_run:>7} {class} {type}'
+        line = '{pk:>5} {creation_time:18} {state:20} {successful:>6} '
+        line += '{experiment:20} {exp_run:>7} {class} {type}'
         tab.insert(0, header)
         return '\n'.join([line.format(**c) for c in tab])
 
@@ -75,7 +77,8 @@ class VaspFinder(object):
     def status(cls, vaspclass=None):
         q = QueryTool()
         q.set_class(JobCalculation)
-        st = ['TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING', 'RETRIEVING']
+        st = ['TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER',
+              'COMPUTED', 'PARSING', 'RETRIEVING']
         l = filter(lambda c: cls.cstate(c) in st, q.run_query())
         l.sort(cls.cmp_ctime)
         l.reverse()

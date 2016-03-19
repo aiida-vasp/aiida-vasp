@@ -15,7 +15,8 @@ class VaspMaker(object):
         :type structure: str or StructureData
         a new empty structure node recieved from calc_cls.
 
-        :keyword calc_cls: the class that VaspMaker will use when creating Calculation nodes.
+        :keyword calc_cls: the class that VaspMaker will use when creating
+        Calculation nodes.
         defaults to 'vasp.vasp5'.
         if a string is given, it will be passed to aiida's CalculationFactory
         :type calc_cls: str or vasp.BasicCalculation subclass
@@ -25,28 +26,36 @@ class VaspMaker(object):
         start with those as inputs.
         :type continue_from: vasp calculation node
 
-        :keyword copy_from: A vasp calculation. It's inputs will be used as defaults
-        for the created calculations.
+        :keyword copy_from: A vasp calculation. It's inputs will be used as
+        defaults for the created calculations.
         :type copy_from: vasp calculation node
 
-        :keyword charge_density: chargedensity node from a previously run calculation
+        :keyword charge_density: chargedensity node from a previously run
+        calculation
         :type charge_density: ChargedensityData
-        :keyword wavefunctions: wavefunctions node from a previously run calculation
+        :keyword wavefunctions: wavefunctions node from a previously run
+        calculation
         :type wavefunctions: WavefunData
         :keyword array.KpointsData kpoints: kpoints node to use for input
         :keyword str paw_family: The name of a PAW family stored in the db
-        :keyword str paw_defaults: A dictionary mapping element symbols -> PAW symbols
+        :keyword str paw_defaults: A dictionary mapping element symbols -> PAW
+        symbols
         :keyword str label: value for the calculation label
-        :keyword str computer: computer name, defaults to code's if code is given
-        :keyword str code: code name, if any Calculations are given, defaults to their code
+        :keyword str computer: computer name, defaults to code's if code is
+        given
+        :keyword str code: code name, if any Calculations are given, defaults
+        to their code
         :keyword str resources: defaults to copy_from.get_resources() or None
-        :keyword str queue: defaults to queue from given calculation, if any, or None
+        :keyword str queue: defaults to queue from given calculation, if any,
+        or None
 
         py:method:: new()
-        :returns: an instance of :py:attr:calc_cls, initialized with the data held by the VaspMaker
+        :returns: an instance of :py:attr:calc_cls, initialized with the data
+        held by the VaspMaker
 
         py:method:: add_settings(**kwargs)
-        Adds keys to the settings (INCAR keywords), if settings is already stored, makes a copy.
+        Adds keys to the settings (INCAR keywords), if settings is already
+        stored, makes a copy.
         Does not overwrite previously set keywords.
 
         py:method:: rewrite_settings(**kwargs)
@@ -57,7 +66,8 @@ class VaspMaker(object):
         py:method:: set_kpoints_path
 
         py:attribute:: structure
-        Used to initialize the created calculations as well as other nodes (like kpoints).
+        Used to initialize the created calculations as well as other nodes
+        (like kpoints).
         When changed, can trigger changes in other data nodes.
 
         py:attribute:: calc_cls
@@ -73,7 +83,8 @@ class VaspMaker(object):
         A readonly shortcut to the contents of the settings node
 
         py:attribute:: kpoints
-        The kpoints node to be used, may be copied to have py:func:set_cell called.
+        The kpoints node to be used, may be copied to have py:func:set_cell
+        called.
 
         py:attribute:: wavefunction
 
@@ -137,7 +148,8 @@ class VaspMaker(object):
         elif isinstance(structure, (str, unicode)):
             structure = os.path.abspath(structure)
             if os.path.splitext(structure)[1] == '.cif':
-                self._structure = DataFactory('cif').get_or_create(structure)[0]
+                self._structure = DataFactory(
+                    'cif').get_or_create(structure)[0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
                 pwd = os.path.abspath(os.curdir)
@@ -171,6 +183,10 @@ class VaspMaker(object):
             calc.use_charge_density(self._charge_density)
         if self._wavefunctions:
             calc.use_wavefunctions(self._wavefunctions)
+        if self._wannier_settings:
+            calc.use_wannier_settings(self._wannier_settings)
+        if self._wannier_data:
+            calc.use_wannier_data(self._wannier_data)
         calc.label = self.label
         calc.set_resources(self._resources)
         return calc
@@ -204,7 +220,8 @@ class VaspMaker(object):
         '''
         py:method:: set_kpoints_path([value=None][, weights=None], **kwargs)
 
-        Calls kpoints' set_kpoints_path method with value, automatically adds weights.
+        Calls kpoints' set_kpoints_path method with value, automatically adds
+        weights.
         Copies the kpoints node if it's already stored.
         '''
         if self._kpoints.pk:
@@ -219,7 +236,8 @@ class VaspMaker(object):
         '''
         py:method:: set_kpoints_mesh(*args, **kwargs)
 
-        Passes arguments on to kpoints.set_kpoints_mesh, copies if it was already stored.
+        Passes arguments on to kpoints.set_kpoints_mesh, copies if it was
+        already stored.
         '''
         if self._kpoints.pk:
             self.kpoints = self.calc_cls.new_kpoints()
@@ -229,7 +247,8 @@ class VaspMaker(object):
         '''
         py:method:: set_kpoints_list(*args, **kwargs)
 
-        Passes arguments on to kpoints.set_kpoints, copies if it was already stored.
+        Passes arguments on to kpoints.set_kpoints, copies if it was already
+        stored.
         '''
         if self._kpoints.pk:
             self.kpoints = self.calc_cls.new_kpoints()
@@ -252,6 +271,24 @@ class VaspMaker(object):
     def charge_density(self, val):
         self._charge_density = val
         self.add_settings(icharg=11)
+
+    @property
+    def wannier_settings(self):
+        return self._wannier_settings
+
+    @wannier_settings.setter
+    def wannier_settings(self, val):
+        self._wannier_settings = val
+        if 'lwannier90' not in self.settings:
+            self.add_settings(lwannier90=True)
+
+    @property
+    def wannier_data(self):
+        return self._wannier_data
+
+    @wannier_data.setter
+    def wannier_data(self, val):
+        self._wannier_data = val
 
     @property
     def code(self):
@@ -315,7 +352,8 @@ class VaspMaker(object):
 
     @property
     def elements(self):
-        return ordered_unique_list(self._structure.get_ase().get_chemical_symbols())
+        return ordered_unique_list(
+            self._structure.get_ase().get_chemical_symbols())
 
     def pkcmp(self, nodeA, nodeB):
         if nodeA.pk < nodeB.pk:

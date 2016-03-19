@@ -99,6 +99,14 @@ class Common(object):
         return res
 
     @classmethod
+    def win(cls):
+        return DataFactory('parameter')(dict={'Test': True})
+
+    @classmethod
+    def wdat(cls):
+        return DataFactory('vasp.archive')()
+
+    @classmethod
     def retrieved_nscf(cls):
         ret = DataFactory('folder')()
         for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):

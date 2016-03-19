@@ -6,14 +6,18 @@ import tempfile
 import os
 
 
-class NscfCalcTest(AiidaTestCase):
+class AmnCalcTest(AiidaTestCase):
     def setUp(self):
-        self.calc_cls = CalculationFactory('vasp.nscf')
+        self.calc_cls = CalculationFactory('vasp.amn')
         self.code = Code()
         self.code.set_computer(self.computer)
         self.code.set_remote_computer_exec((self.computer, '/bin/foo'))
         Common.import_paw()
         self.tmpd, self.tmpf = tempfile.mkstemp()
+        self.wdat = Common.wdat()
+        self.wdat.add_file(self.tmpf, 'test1')
+        self.wdat.add_file(self.tmpf, 'test2')
+        self.wdat._make_archive()
 
     def tearDown(self):
         os.remove(self.tmpf)
@@ -32,6 +36,8 @@ class NscfCalcTest(AiidaTestCase):
         calc.use_paw(Common.paw_as(), kind='As')
         calc.use_charge_density(Common.charge_density())
         calc.use_wavefunctions(Common.wavefunctions())
+        calc.use_wannier_settings(Common.win())
+        calc.use_wannier_data(self.wdat)
         return calc, calc.get_inputs_dict()
 
     def test_verify(self):
@@ -50,10 +56,9 @@ class NscfCalcTest(AiidaTestCase):
             ci = calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
         self.assertEquals(set(il),
-                            {'INCAR', 'KPOINTS', 'POSCAR',
-                            'POTCAR', 'CHGCAR', 'WAVECAR'})
-        self.assertIn('EIGENVAL', ci.retrieve_list)
-        self.assertIn('DOSCAR', ci.retrieve_list)
+                          {'INCAR', 'KPOINTS', 'POSCAR',
+                           'POTCAR', 'CHGCAR', 'WAVECAR', 'wannier90.win',
+                           'test1', 'test2'})
         self.assertIn(['wannier90*', '.', 0], ci.retrieve_list)
         calc.use_settings(Common.settings())
         inp = calc.get_inputs_dict()
@@ -62,8 +67,9 @@ class NscfCalcTest(AiidaTestCase):
             calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
         self.assertEquals(set(il),
-                            {'INCAR', 'KPOINTS', 'POSCAR',
-                            'POTCAR', 'WAVECAR'})
+                          {'INCAR', 'KPOINTS', 'POSCAR',
+                           'POTCAR', 'WAVECAR', 'wannier90.win',
+                           'test1', 'test2'})
 
     def test_write_chgcar(self):
         calc, inp = self._get_calc()
@@ -86,8 +92,4 @@ class NscfCalcTest(AiidaTestCase):
             'retrieved': Common.retrieved_nscf()
         })
         outs = dict(outs)
-        self.assertIn('bands', outs)
-        self.assertIn('dos', outs)
-        self.assertIn('wannier_settings', outs)
         self.assertIn('wannier_data', outs)
-        self.assertIn('results', outs)
