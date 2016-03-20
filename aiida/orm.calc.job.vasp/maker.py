@@ -120,6 +120,8 @@ class VaspMaker(object):
         self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
         self._wavefunctions = kwargs.get('wavefunctions', None)
+        self._wannier_settings = kwargs.get('wannier_settings', None)
+        self._wannier_data = kwargs.get('wannier_data', None)
         self._recipe = None
         self._queue = kwargs.get('queue')
         self._resources = kwargs.get('resources', {})
@@ -224,8 +226,8 @@ class VaspMaker(object):
         weights.
         Copies the kpoints node if it's already stored.
         '''
-        if self._kpoints.pk:
-            self.kpoints = self._kpoints.copy()
+        if self._kpoints._is_stored:
+            self.kpoints = self.calc_cls.new_kpoints()
         self._kpoints.set_kpoints_path(value=value, **kwargs)
         if 'weights' not in kwargs:
             kpl = self._kpoints.get_kpoints()
@@ -338,9 +340,10 @@ class VaspMaker(object):
             defaults = self._paw_def or gw
         else:
             if not self._paw_def:
-                print 'keyword paw_family was not LDA or PBE'
-                print 'and no paw_defaults keyword was given!'
-                print 'manual paw initialization required'
+                msg = 'keyword paw_family was not LDA or PBE'
+                msg += 'and no paw_defaults keyword was given!'
+                msg += 'manual paw initialization required'
+                print(msg)
                 return None
             else:
                 defaults = self._paw_def
