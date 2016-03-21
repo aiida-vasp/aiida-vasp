@@ -141,6 +141,8 @@ class VaspMaker(object):
         self._kpoints = ins.get('kpoints')
         self._charge_density = ins.get('charge_density')
         self._wavefunctions = ins.get('wavefunctions')
+        self._wannier_settings = ins.get('wannier_settings')
+        self._wannier_data = ins.get('wannier_data')
         self._queue = calc.get_queue_name()
         self._resources = calc.get_resources()
 
@@ -164,12 +166,16 @@ class VaspMaker(object):
             self._structure = structure
 
     def _init_from(self, prev):
+        out = prev.get_outputs_dict()
         self._copy_from(prev)
-        if 'structure' in prev.get_outputs_dict():
+        if 'structure' in out:
             self.structure = prev.out.structure
         self.rewrite_settings(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
+        self._wannier_settings = out.get('wannier_settings',
+                                         self._wannier_settings)
+        self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
         calc = self.calc_cls()
