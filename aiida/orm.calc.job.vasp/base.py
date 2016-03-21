@@ -21,7 +21,8 @@ def make_use_methods(inputs, bases):
                 dct['linkname'] = getattr(cls, ln.__func__.__name__)
         retdict.update(inputs)
         for b in bases:
-            retdict.update(b._use_methods)
+            if hasattr(b, '_use_methods'):
+                retdict.update(b._use_methods)
         return retdict
     return _use_methods
 
