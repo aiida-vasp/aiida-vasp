@@ -3,7 +3,7 @@ import numpy as np
 
 def _incarify(value):
     result = None
-    if isinstance(value, str):
+    if isinstance(value, (str, unicode)):
         result = value
     elif not np.isscalar(value):
         value_array = np.array(value)

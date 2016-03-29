@@ -103,6 +103,10 @@ class Common(object):
         return DataFactory('parameter')(dict={'Test': True})
 
     @classmethod
+    def win_res(cls):
+        return 'Test = T'
+
+    @classmethod
     def wdat(cls):
         return DataFactory('vasp.archive')()
 

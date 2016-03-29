@@ -1,6 +1,6 @@
 from aiida.parsers.parser import Parser
 from aiida.common.datastructures import calc_states as cstat
-from aiida.common.exceptions import InvalidOperation
+# ~ from aiida.common.exceptions import InvalidOperation
 
 
 class BaseParser(Parser):
@@ -10,6 +10,10 @@ class BaseParser(Parser):
     def __init__(self, calc):
         self._new_nodes = {}
         super(BaseParser, self).__init__(calc)
+
+    def parse_with_retrieved(self, retrieved):
+        # ~ super(BaseParser, self).parse_with_retrieved(retrieved)
+        return self.result(success=True)
 
     def check_state(self):
         if self._calc.get_state() != cstat.PARSING:

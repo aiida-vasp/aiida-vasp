@@ -85,7 +85,7 @@ class WannierCalculation(JobCalculation, WannierBase):
     __metaclass__ = CalcMeta
     imput_file_name = 'wannier90.win'
     output_file_name = 'wannier90.wout'
-    win = Input(types='parameter')
+    settings = Input(types='parameter')
     data = Input(types='vasp.archive')
     default_parser = 'vasp.wannier'
 
@@ -96,8 +96,8 @@ class WannierCalculation(JobCalculation, WannierBase):
         # check inputs
         self.verify_inputs(inputdict)
         # write inputs
-        self.write_win(win_dst)
-        self.write_data(fpath)
+        self.write_win(inputdict, win_dst)
+        self.write_wdat(inputdict, fpath)
         # create and return calcinfo
         calcinfo = CalcInfo()
         calcinfo.uuid = self.uuid
@@ -105,6 +105,7 @@ class WannierCalculation(JobCalculation, WannierBase):
         codeinfo = CodeInfo()
         codeinfo.code_uuid = self.get_code().uuid
         codeinfo.code_pk = self.get_code().pk
+        codeinfo.cmdline_params = ['wannier90']
         calcinfo.codes_info = [codeinfo]
         return calcinfo
 
