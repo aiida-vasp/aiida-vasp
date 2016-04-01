@@ -1,7 +1,6 @@
 from base import Input
 from wannier import WannierBase
 from nscf import NscfCalculation
-from aiida.orm import DataFactory
 
 
 class AmnCalculation(WannierBase, NscfCalculation):
@@ -27,8 +26,9 @@ class AmnCalculation(WannierBase, NscfCalculation):
             tempfolder, inputdict)
         windst = tempfolder.get_abs_path('wannier90.win')
         self.write_win(inputdict, windst)
-        path = tempfolder.get_abs_path('')
-        self.write_wdat(inputdict, path)
+        if inputdict.get('wannier_data'):
+            path = tempfolder.get_abs_path('')
+            self.write_wdat(inputdict, path)
 
     def _win_lname(self):
         return 'wannier_settings'

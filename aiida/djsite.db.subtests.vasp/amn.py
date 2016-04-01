@@ -22,7 +22,7 @@ class AmnCalcTest(AiidaTestCase):
     def tearDown(self):
         os.remove(self.tmpf)
 
-    def _get_calc(self, kp=None):
+    def _get_calc(self, kp=None, no_wdat=False):
         if not kp:
             kp = Common.kpoints_mesh()
         calc = self.calc_cls()
@@ -37,7 +37,8 @@ class AmnCalcTest(AiidaTestCase):
         calc.use_charge_density(Common.charge_density())
         calc.use_wavefunctions(Common.wavefunctions())
         calc.use_wannier_settings(Common.win())
-        calc.use_wannier_data(self.wdat)
+        if not no_wdat:
+            calc.use_wannier_data(self.wdat)
         return calc, calc.get_inputs_dict()
 
     def test_verify(self):
@@ -70,6 +71,13 @@ class AmnCalcTest(AiidaTestCase):
                           {'INCAR', 'KPOINTS', 'POSCAR',
                            'POTCAR', 'WAVECAR', 'wannier90.win',
                            'test1', 'test2'})
+        calc, inp = self._get_calc(no_wdat=True)
+        with SandboxFolder() as sf:
+            ci = calc._prepare_for_submission(sf, inp)
+            il = sf.get_content_list()
+        self.assertEquals(set(il),
+                          {'INCAR', 'KPOINTS', 'POSCAR',
+                           'POTCAR', 'CHGCAR', 'WAVECAR', 'wannier90.win'})
 
     def test_write_chgcar(self):
         calc, inp = self._get_calc()

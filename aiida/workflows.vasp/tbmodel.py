@@ -116,7 +116,9 @@ class TbmodelWorkflow(Workflow):
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
         maker.wannier_settings = wincalc.out.wannier_settings.copy()
-        maker.wannier_data = wincalc.out.wannier_data
+        # ~ maker.wannier_data = wincalc.out.wannier_data
+        num_bands = maker.wannier_settings.get_dict()['num_wann']
+        maker.wannier_settings.update_dict({'num_bands': num_bands})
         maker.wannier_settings.update_dict(params['win'])
         maker.label = params.get('name') + ': amn run'
         calc = maker.new()
@@ -143,9 +145,10 @@ class TbmodelWorkflow(Workflow):
             '{}: retrieved amn calculation'.format(
                 params.get('name')))
 
-        calc = CalculationFactory('vasp.wannier')
-        calc.use_code = Code.get_from_string(params['wannier_x'])
-        calc.set_computer(calc.inp.code.get_computer())
+        calc = CalculationFactory('vasp.wannier')()
+        code = Code.get_from_string(params['wannier_x'])
+        calc.use_code(code)
+        calc.set_computer(code.get_computer())
         calc.use_settings(amncalc.inp.wannier_settings)
         calc.use_data(amncalc.out.wannier_data)
         calc.label = params.get('name') + ': wannier run'

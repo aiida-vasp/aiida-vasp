@@ -1,5 +1,9 @@
 from aiida.parsers.plugins.vasp.base import BaseParser
 from aiida.tools.codespecific.vasp.io.win import WinParser
+from aiida.tools.codespecific.vasp.io import parser
+from aiida.orm import DataFactory
+import re
+import numpy as np
 
 
 class WannierBase(BaseParser):
@@ -37,7 +41,55 @@ class WannierBase(BaseParser):
             self.add_node('wannier_data', node)
 
 
-class WannierParser(WannierBase):
+class WannierParser(WannierBase, parser.BaseParser):
     def parse_with_retrieved(self, retrieved):
         super(WannierBase, self).parse_with_retrieved(retrieved)
+        self.add_node('bands', self.get_bands_node())
         return self.result(success=True)
+
+    def get_bands_plot(self):
+        b = self.get_file('wannier90_band.dat')
+        bkp = self.get_file('wannier90_band.kpt')
+        bgnu = self.get_file('wannier90_band.gnu')
+        return b, bkp, bgnu
+
+    def get_bands_node(self):
+        bnode = DataFactory('array.bands')()
+        bdat, bkp, bgnu = self.get_bands_plot()
+        if not (bdat and bkp):
+            return None
+        with open(bkp) as bk:
+            nkp = self.line(bk)
+            kp = re.split(self.empty_line, bk.read())
+            kp = filter(None, kp)
+            kp = map(self.splitlines, kp)
+            kp = filter(None, kp[0])
+            kp = np.array(kp)
+            bnode.set_kpoints(kp[:, :3], weights=kp[:, 3])
+        with open(bdat) as bd:
+            data = re.split(self.empty_line, bd.read())
+            data = filter(None, data)
+            data = map(self.splitlines, data)
+            data = np.array(data)
+        bnode.set_bands(data[:, :, 1].transpose())
+        kppath = self._calc.inp.settings.get_dict().get('kpoint_path')
+        kpl = [[kpp[0], kpp[1:4]] for kpp in kppath]
+        kpl.append([kppath[-1][4], kppath[-1][5:8]])
+        counter = {i[0]:0 for i in kpl}
+        kplab = []
+        for kpi in kpl:
+            ci = counter[kpi[0]]
+            idx = self._find_special_kpoint(kp[:, :3], kpi[1], num=ci)
+            kplab.append((idx, kpi[0]))
+            counter[kpi[0]]+=1
+        bnode.labels = kplab
+        return bnode
+
+    def _find_special_kpoint(self, kp, sp, num=0):
+        res = []
+        ix, iy = np.where(kp == sp)
+        for i in range(len(ix)-2):
+            if ix[i] == ix[i + 1] == ix[i + 2]:
+                if np.all(iy[i:i+3] == [0, 1, 2]):
+                    res.append(ix[i])
+        return res[num]

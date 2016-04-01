@@ -99,6 +99,7 @@ class Vasp5Parser(BaseParser):
         dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
         return dosnode
+
     def read_cont(self):
         '''read CONTCAR for output structure'''
         from ase.io.vasp import read_vasp
@@ -140,6 +141,8 @@ class Vasp5Parser(BaseParser):
         bsnode.set_cell(cellst.get_ase().get_cell())
         kpout.set_cell(cellst.get_ase().get_cell())
 
+        if self._calc.inp.kpoints.get_attrs().get('array|kpoints'):
+            bsnode.set_kpointsdata(self._calc.inp.kpoints)
         bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
                            cartesian=header['cartesian'])
         bsnode.set_bands(bs, occupations=self.vrp.occupations)
@@ -157,6 +160,7 @@ class Vasp5Parser(BaseParser):
         kpout.set_kpoints(kpp.kpoints, weights=kpp.weights,
                           cartesian=kpp.cartesian)
         return kpout
+
     def get_chgcar(self):
         chgc = self.get_file('CHGCAR')
         chgnode = DataFactory('vasp.chargedensity')()

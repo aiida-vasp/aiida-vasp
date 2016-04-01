@@ -1,104 +1,14 @@
-from base import VaspCalcBase, Input, ordered_unique_list
+from nscf import NscfCalculation
+from wannier import WannierBase
 from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
 
-class Vasp5Calculation(VaspCalcBase):
+class Vasp5Calculation(NscfCalculation, WannierBase):
     '''
     Calculation written and tested for vasp 5.3.5
     '''
-    settings = Input(types='parameter',
-                     doc='parameter node: parameters to be written to ' +
-                     'the INCAR file')
-    structure = Input(types=['structure', 'cif'],
-                      doc='aiida structure node: will be converted to POSCAR')
-    paw = Input(types='vasp.paw',
-                doc='PAW nodes for each kind of element in the material\n' +
-                'will be concatenated into POTCAR',
-                param='kind')
-    kpoints = Input(types='array.kpoints', doc='aiida kpoints node: ' +
-                    'will be written to KPOINTS file')
-    charge_density = Input(types='vasp.chargedensity',
-                           doc='chargedensity node: should be obtained \n' +
-                           'from the output of a selfconsistent ' +
-                           'Vasp5Calculation (written to CHGCAR)')
-    wavefunctions = Input(types='vasp.wavefun',
-                          doc='wavefunction node: to speed up convergence ' +
-                          'for continuation jobs')
     default_parser = 'vasp.vasp5'
-
-    def write_incar(self, inputdict, dst):
-        '''
-        converts from settings node (ParameterData) to INCAR format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(self.inp.settings.get_dict()))
-
-    def write_poscar(self, inputdict, dst):
-        '''
-        converts from structures node (StructureData) to POSCAR format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
-
-    def write_potcar(self, inputdict, dst):
-        '''
-        concatenatest multiple paw files into a POTCAR
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        import subprocess32 as sp
-        catcom = ['cat']
-        # ~ structure = inputdict['structure']
-        # ~ structure = self.inp.structure
-        # order the symbols according to order given in structure
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            paw = inputdict[self._get_paw_linkname(kind)]
-            catcom.append(paw.get_abs_path('POTCAR'))
-        # cat the pawdata nodes into the file
-        with open(dst, 'w') as pc:
-            sp.check_call(catcom, stdout=pc)
-
-    def write_kpoints(self, inputdict, dst):
-        '''
-        converts from kpoints node (KpointsData) to KPOINTS format
-        and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
-        '''
-        from base import kpmtemp, kplitemp, kpltemp
-        if self._need_kp():
-            kp = self.inp.kpoints
-            try:
-                mesh, offset = kp.get_kpoints_mesh()
-                with open(dst, 'w') as kpoints:
-                    kps = kpmtemp.format(N=mesh, s=offset)
-                    kpoints.write(kps)
-            except AttributeError:
-                try:
-                    kpl, weights = kp.get_kpoints(also_weights=True)
-                    kw = zip(kpl, weights)
-                    with open(dst, 'w') as kpoints:
-                        kpls = '\n'.join(
-                            [kplitemp.format(k=k[0], w=k[1]) for k in kw])
-                        kps = kpltemp.format(N=len(kw), klist=kpls)
-                        kpoints.write(kps)
-                except AttributeError:
-                    raise AttributeError('you supplied an empty kpoints node')
 
     def write_additional(self, tempfolder, inputdict):
         super(Vasp5Calculation, self).write_additional(
@@ -109,14 +19,6 @@ class Vasp5Calculation(VaspCalcBase):
         if self._need_wfn():
             wavecar = tempfolder.get_abs_path('WAVECAR')
             self.write_wavecar(inputdict, wavecar)
-
-    def write_chgcar(self, inputdict, dst):
-        import shutil
-        shutil.copyfile(self.inp.charge_density.get_file_abs_path(), dst)
-
-    def write_wavecar(self, inputdict, dst):
-        import shutil
-        shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         # ~ notset_msg = 'input not set: %s'
@@ -145,20 +47,16 @@ class Vasp5Calculation(VaspCalcBase):
         set attributes prior to storing
         '''
         super(Vasp5Calculation, self)._prestore()
-        if self.get_inputs_dict().get('settings'):
-            self._set_attr('input_kp_used', self._need_kp())
-            self._set_attr('input_chgd_used', self._need_chgd())
-            self._set_attr('input_wfn_used', self._need_wfn())
-        self._set_attr('elements', list(ordered_unique_list(
-            self.inp.structure.get_ase().get_chemical_symbols())))
 
     def _need_kp(self):
         '''
         return wether an input kpoints node is needed or not.
         :return output:
-            True if input kpoints node is needed (py:method::Vasp5Calculation.use_kpoints),
+            True if input kpoints node is needed
+            (py:method::Vasp5Calculation.use_kpoints),
             False otherwise
-        needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
+        needs 'settings' input to be set
+        (py:method::Vasp5Calculation.use_settings)
         '''
         if 'kspacing' in self._settings and 'kgamma' in self._settings:
             return False
@@ -169,9 +67,11 @@ class Vasp5Calculation(VaspCalcBase):
         '''
         Test wether an charge_densities input is needed or not.
         :return output:
-            True if a chgcar file must be used (py:method::Vasp5Calculation.use_charge_densities),
+            True if a chgcar file must be used
+            (py:method::Vasp5Calculation.use_charge_densities),
             False otherwise
-        needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
+        needs 'settings' input to be set
+        (py:method::Vasp5Calculation.use_settings)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
         icharg = self._settings.get('icharg', ichrg_d)
@@ -184,13 +84,12 @@ class Vasp5Calculation(VaspCalcBase):
         '''
         Test wether a wavefunctions input is needed or not.
         :return output:
-            True if a wavecar file must be used(py:method::Vasp5Calculation.use_wavefunctions),
+            True if a wavecar file must be used
+            (py:method::Vasp5Calculation.use_wavefunctions),
             False otherwise
-        needs 'settings' input to be set (py:method::Vasp5Calculation.use_settings)
+        needs 'settings' input to be set
+        (py:method::Vasp5Calculation.use_settings)
         '''
-        nsw = self._settings.get('nsw', 0)
-        ibrion_d = nsw in [0, 1] and -1 or 0
-        ibrion = self._settings.get('ibrion', ibrion_d)
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
         istart = self._settings.get('istart', istrt_d)
         if istart in [1, 2, 3]:
@@ -244,9 +143,10 @@ class Vasp5Calculation(VaspCalcBase):
 
     def _init_internal_params(self):
         '''
-        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta pick up internal parameters from the class body
+        let the metaclass
+        py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta
+        pick up internal parameters from the class body
         and insert them
         '''
         super(Vasp5Calculation, self)._init_internal_params()
         self._update_internal_params()
-

@@ -13,6 +13,7 @@ class BaseParser(Parser):
 
     def parse_with_retrieved(self, retrieved):
         # ~ super(BaseParser, self).parse_with_retrieved(retrieved)
+        self.out_folder = self.get_folder(retrieved)
         return self.result(success=True)
 
     def check_state(self):
