@@ -152,7 +152,7 @@ class TbmodelWorkflow(Workflow):
         calc.use_settings(amncalc.inp.wannier_settings)
         calc.use_data(amncalc.out.wannier_data)
         calc.label = params.get('name') + ': wannier run'
-        calc.set_resources(amnstep.get_resources())
+        calc.set_resources({'num_machines': 1})
         calc.set_queue_name(amncalc.get_queue_name())
         calc.description = calc.label
 

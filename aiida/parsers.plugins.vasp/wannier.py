@@ -45,7 +45,16 @@ class WannierParser(WannierBase, parser.BaseParser):
     def parse_with_retrieved(self, retrieved):
         super(WannierBase, self).parse_with_retrieved(retrieved)
         self.add_node('bands', self.get_bands_node())
+        self.add_node('tb_model', self.get_hr_node())
         return self.result(success=True)
+
+    def get_hr_node(self):
+        dat = self.get_file('wannier90_hr.dat')
+        if not dat:
+            return None
+        hnode = DataFactory('singlefile')()
+        hnode.add_path(dat)
+        return hnode
 
     def get_bands_plot(self):
         b = self.get_file('wannier90_band.dat')
@@ -59,7 +68,7 @@ class WannierParser(WannierBase, parser.BaseParser):
         if not (bdat and bkp):
             return None
         with open(bkp) as bk:
-            nkp = self.line(bk)
+            self.line(bk)  # contains num kpoints
             kp = re.split(self.empty_line, bk.read())
             kp = filter(None, kp)
             kp = map(self.splitlines, kp)
@@ -75,13 +84,13 @@ class WannierParser(WannierBase, parser.BaseParser):
         kppath = self._calc.inp.settings.get_dict().get('kpoint_path')
         kpl = [[kpp[0], kpp[1:4]] for kpp in kppath]
         kpl.append([kppath[-1][4], kppath[-1][5:8]])
-        counter = {i[0]:0 for i in kpl}
+        counter = {i[0]: 0 for i in kpl}
         kplab = []
         for kpi in kpl:
             ci = counter[kpi[0]]
             idx = self._find_special_kpoint(kp[:, :3], kpi[1], num=ci)
             kplab.append((idx, kpi[0]))
-            counter[kpi[0]]+=1
+            counter[kpi[0]] += 1
         bnode.labels = kplab
         return bnode
 

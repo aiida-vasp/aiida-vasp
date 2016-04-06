@@ -106,6 +106,7 @@ class WannierCalculation(JobCalculation, WannierBase):
         codeinfo.code_uuid = self.get_code().uuid
         codeinfo.code_pk = self.get_code().pk
         codeinfo.cmdline_params = ['wannier90']
+        codeinfo.withmpi = False
         calcinfo.codes_info = [codeinfo]
         return calcinfo
 

@@ -28,9 +28,10 @@ plugin_root = os.path.dirname(os.path.abspath(__file__))
 
 def srcdest(paths, aiida_root, name):
     spth, dpth = paths
-    src = os.path.join(plugin_root, 'aiida', spth)
-    dst = os.path.join(aiida_root, 'aiida', os.path.dirname(dpth),
-                       name or os.path.basename(dpth))
+    src = os.path.abspath(os.path.join(plugin_root, 'aiida', spth))
+    dst = os.path.abspath(
+        os.path.join(aiida_root, 'aiida', os.path.dirname(dpth),
+                     name or os.path.basename(dpth)))
     return src, dst
 
 
@@ -46,7 +47,8 @@ install_paths = [('orm.calc.job.vasp', 'orm/calculation/job/vasp'),
                  ('orm.data.vasp', 'orm/data/vasp'),
                  ('workflows.vasp', 'workflows/vasp'),
                  ('tools.codespc.vasp', 'tools/codespecific/vasp'),
-                 ('djsite.db.subtests.vasp', 'djsite/db/subtests/vasp')]
+                 ('djsite.db.subtests.vasp', 'djsite/db/subtests/vasp'),
+                 ('../doc', '../docs/source/plugins/vasp')]
 
 colors = {'ok': '\033[92m',
           'info': '\033[91m',
