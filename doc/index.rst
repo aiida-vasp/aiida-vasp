@@ -17,34 +17,32 @@ about using VASP take a look at the `documentation page`_ or the `wiki`_
 Plugins
 ^^^^^^^
 
-General Purpose
-===============
-These are calculation plugins which aim to expose the full flexibility
-of the associated programs and will retrieve all output files, making
-no assumption about which output will be needed.
-This comes at the cost that potentially big files that won't be used
-in analysis will be retrieved and permanently stored in your data base.
-Therefore it is recommended to use these only where no special purpose
-calculation is available for the task.
+.. toctree::
+   :maxdepth: 4
+
+   General Purpose <calcs/general>
+   Special Purpose <calcs/special>
+
+Workflows
+^^^^^^^^^
 
 .. toctree::
    :maxdepth: 4
 
-   Vasp5Caclculation <vasp5>
-   WannierCalculation <wannier>
+   Band Structure <wf/bands>
+   Tight-binding Model <wf/tbmodel>
 
-Special Purpose
-===============                            
-These calculations are used for specific use cases, like generating
-CHGCAR and WAVECAR files or band structures, DOS, or getting input files
-for wannier90.x calculations.
+Using the Plugins
+^^^^^^^^^^^^^^^^^
 
-They are mostly designed to be used in conjunction with other calculations
-in a workflow.
+General Principles
+==================
 
-.. toctree::
-   :maxdepth: 4
+Example Calculation
+===================
 
-   ScfCalculation - Selfconsisten Run <scf>
-   NscfCalculcation - Nonselfconsisten Run <nscf>
-   AmnCalculation - Vasp2Wannier90 Projections <amn>
+Example Workflow
+================
+
+Building High Throughput Experiments
+====================================

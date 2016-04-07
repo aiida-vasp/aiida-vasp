@@ -14,6 +14,7 @@ def get_group():
     except NotExistent:
         g = Group(name='examples')
         g.store()
+    return g
 
 def add_to_group(node):
     g = get_group()

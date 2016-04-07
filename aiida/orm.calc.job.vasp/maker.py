@@ -327,6 +327,11 @@ class VaspMaker(object):
     def resources(self):
         return self._resources
 
+    @resources.setter
+    def resources(self, val):
+        self._resources['num_machines'] = val[0]
+        self._resources['num_mpiprocs_per_machine'] = val[1]
+
     def add_settings(self, **kwargs):
         if self._settings.pk:
             self._settings = self._settings.copy()
