@@ -1,2 +1,5 @@
+ase
 pymatgen
 lxml
+subprocess32
+matplotlib
