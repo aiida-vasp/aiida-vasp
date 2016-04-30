@@ -3,6 +3,7 @@ from aiida.djsite.db.testbase import AiidaTestCase
 import numpy as np
 import tempfile
 from os.path import dirname, realpath, join
+from common import Common
 
 
 class Vasp5CalcTest(AiidaTestCase):
@@ -12,8 +13,7 @@ class Vasp5CalcTest(AiidaTestCase):
     '''
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp5')()
-        DataFactory('vasp.paw').import_family(
-            realpath(join(dirname(__file__), 'LDA')), familyname='TEST')
+        Common.import_paw()
 
         larray = np.array([[0, .5, .5],
                            [.5, 0, .5],

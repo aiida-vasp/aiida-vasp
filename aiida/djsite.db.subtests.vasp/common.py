@@ -31,7 +31,8 @@ class Common(object):
     @classmethod
     def import_paw(cls):
         DataFactory('vasp.paw').import_family(
-            subpath('LDA'), familyname='TEST')
+            subpath('LDA'), familyname='TEST', family_desc='stub '
+            'Potpaw Family for testing purposes')
 
     @classmethod
     def paw_in(cls):
