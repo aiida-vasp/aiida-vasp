@@ -2,17 +2,22 @@ import argparse
 import os
 import shutil
 import sys
+import subprocess32 as sp
 
 parser = argparse.ArgumentParser(
     description='install the plugin files into the \
     given aiida folder, defaults to symlinking but \
     copy can be used instead.')
-parser.add_argument(
-    '--copy',
-    action='store_true',
-    help='instead of symlinking into aiida, copy \
-    the plugin files. helpful during development \
-    to keep a stable version around')
+# ~ parser.add_argument(
+    # ~ '--copy',
+    # ~ action='store_true',
+    # ~ help='instead of symlinking into aiida, copy \
+    # ~ the plugin files. helpful during development \
+    # ~ to keep a stable version around')
+parser.add_argument('--patch', nargs=1, default=[None],
+    metavar='AIIDA_VERSION_NR',
+    help='apply patches for cli subcommands, tests and '
+    'docs')
 parser.add_argument(
     'aiida_root',
     help='location of the aiida root directory \
@@ -57,7 +62,8 @@ colors = {'ok': '\033[92m',
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    install_cmd = args.copy and cpdir or lndir
+    #install_cmd = args.copy and cpdir or lndir
+    install_cmd = lndir
     i = 0
     N = len(install_paths)
     for p in install_paths:
@@ -82,3 +88,16 @@ if __name__ == '__main__':
         if not os.path.exists(dest):
             install_cmd(src, dest)
             print(' {ok}-> OK{end}'.format(**colors))
+
+    if args.patch[0] == '0.5.0':
+        patch_cmd = ['patch', '-d', args.aiida_root, '-b', '-p1']
+        print('{ok}-> Applying CLI patch{end}'.format(**colors))
+        with open(os.path.join(plugin_root, 'epfl_0.5.0.patch')) as pfile:
+            try:
+                sp.check_call(patch_cmd, stdin=pfile)
+            except Exception as e:
+                print(' {info} something went terribly wrong '
+                      'while applying patches. "patch" has made backups, '
+                      'but you will have to restore the originals manually. ')
+                print >> stderr,  e.msg
+        print(' {ok}-> OK{end}'.format(**colors))
