@@ -57,9 +57,22 @@ class PawData(Data):
 
     @classmethod
     def get_famgroup(cls, famname):
-        '''Returns a PAW family group if it exists, otherwise raises an exception'''
+        '''Returns a PAW family group if it exists, otherwise
+        raises an exception'''
         from aiida.orm import Group
         return Group.get(name=famname, type_string=cls.group_type)
+
+    @classmethod
+    def check_family(cls, name):
+        ''':py:method: checks wether a PAW family exists.
+            :returns: True if exists, False otherwise'''
+        exists = False
+        try:
+            group = cls.get_famgroup(name)
+            exists = bool(group)
+        except NotExistent:
+            exists = False
+        return exists
 
     @classmethod
     def get_or_create_famgroup(cls, famname):
@@ -73,7 +86,7 @@ class PawData(Data):
             group_created = False
         except NotExistent:
             group = Group(name=famname, type_string=cls.group_type,
-                            user=get_automatic_user())
+                          user=get_automatic_user())
             group_created = True
 
         if group.user != get_automatic_user():
@@ -94,6 +107,8 @@ class PawData(Data):
                   }
         if user:
             params['user'] = user
+        else:
+            params['user'] = get_automatic_user()
 
         res = Group.query(**params)
         groups = [(g.name, g) for g in res]
@@ -113,9 +128,9 @@ class PawData(Data):
         fupl = []
         paw_list = []
         fp = os.path.abspath(folder)
-        ffname = os.path.basename(
-            os.path.dirname(folder)).replace('potpaw_', '')
-        famname = familyname or ffname
+        # ~ ffname = os.path.basename(
+            # ~ os.path.dirname(folder)).replace('potpaw_', '')
+        # ~ famname = familyname or ffname
 
         group, group_created = cls.get_or_create_famgroup(familyname)
 
@@ -134,20 +149,23 @@ class PawData(Data):
                     # enforce group-wise uniqueness of symbols
                     in_group = False
                     if not group_created:
-                        in_group = bool(cls.load_paw(group=group, symbol=paw.symbol,
-                                        silent=True))
+                        in_group = bool(cls.load_paw(group=group,
+                                        symbol=paw.symbol, silent=True))
                     if not in_group:
                         paw_list.append((paw, paw_created, pawf))
             except:
                 import sys
                 e = sys.exc_info()[1]
-                print 'WARNING: skipping ' + os.path.abspath(os.path.join(fp, pawf))
+                print 'WARNING: skipping ' + os.path.abspath(
+                    os.path.join(fp, pawf))
                 print '  ' + e.__class__.__name__ + ': ' + e.message
 
         if stop_if_existing:
             for pawinfo in paw_list:
                 if not pawinfo[1]:
-                    raise ValueError("A PAW with identical MD5 to " + pawinfo[2] + " cannot be added with stop_if_existing")
+                    raise ValueError("A PAW with identical MD5 to "
+                                     '' + pawinfo[2] + " cannot be added with "
+                                     "stop_if_existing")
 
         for pawinfo in paw_list:
             paw = pawinfo[0]
@@ -187,7 +205,8 @@ class PawData(Data):
             pp = pawpath
             isdir = False
         md5new = md5_file(pp)
-        paw = cls.query(dbattributes__key='md5', dbattributes__tval=md5new).first()
+        paw = cls.query(dbattributes__key='md5',
+                        dbattributes__tval=md5new).first()
         created = False
         if not paw:
             if isdir:
@@ -271,10 +290,6 @@ class PawData(Data):
         return res
 
     def __repr__(self):
-        try:
-            fam = self.get_attr('family')
-        except AttributeError:
-            fam = '<family: (unset)>'
         try:
             sym = self.get_attr('symbol')
         except AttributeError:

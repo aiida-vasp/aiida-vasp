@@ -38,7 +38,7 @@ class VaspMaker(object):
         :type wavefunctions: WavefunData
         :keyword array.KpointsData kpoints: kpoints node to use for input
         :keyword str paw_family: The name of a PAW family stored in the db
-        :keyword str paw_defaults: A dictionary mapping element symbols -> PAW
+        :keyword str paw_map: A dictionary mapping element symbols -> PAW
         symbols
         :keyword str label: value for the calculation label
         :keyword str computer: computer name, defaults to code's if code is
@@ -113,7 +113,7 @@ class VaspMaker(object):
         self._settings = kwargs.get('settings', self.calc_cls.new_settings())
         self._set_default_structure(kwargs.get('structure'))
         self._paw_fam = kwargs.get('paw_family', 'PBE')
-        self._paw_def = kwargs.get('paw_defaults')
+        self._paw_def = kwargs.get('paw_map')
         self._paws = {}
         self._set_default_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
@@ -345,14 +345,14 @@ class VaspMaker(object):
         self._settings.update_dict(kwargs)
 
     def _set_default_paws(self, overwrite=False):
-        if self._paw_fam.lower() == 'lda':
+        if self._paw_fam.lower() == 'LDA':
             defaults = self._paw_def or lda
-        elif self._paw_fam.lower() in ['pbe', 'gw']:
+        elif self._paw_fam.lower() in ['PBE', 'GW']:
             defaults = self._paw_def or gw
         else:
             if not self._paw_def:
                 msg = 'keyword paw_family was not LDA or PBE'
-                msg += 'and no paw_defaults keyword was given!'
+                msg += 'and no paw_map keyword was given!'
                 msg += 'manual paw initialization required'
                 print(msg)
                 return None

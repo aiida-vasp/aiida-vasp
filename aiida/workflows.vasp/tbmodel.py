@@ -38,7 +38,7 @@ class TbmodelWorkflow(Workflow):
         maker = VaspMaker(structure=params['structure'])
         maker.add_settings(icharg=0, istart=0, lorbit=11, lsorbit=True,
                            sigma=0.05, ismear=0, gga='PE', gga_compat=False)
-        maker.code = Code.get_from_string(params['code'])
+        maker.code = Code.get_from_string(params['vasp'])
         # ~ maker.computer = maker.code.get_computer()
         maker.label = params.get('name')
         return maker
