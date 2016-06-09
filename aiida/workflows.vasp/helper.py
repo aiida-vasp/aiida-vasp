@@ -1,19 +1,18 @@
-from aiida.orm.workflow import Workflow
+# ~ from aiida.orm.workflow import Workflow
 import sys
 
 
-# ~ class WorkflowBase(Workflow):
-class WorkflowBase(object):
+# ~ class WorkflowHelper(Workflow):
+class WorkflowHelper(object):
     '''Base Class for AiiDA-VASP workflows'''
     def __init__(self, **kwargs):
-        # ~ super(WorkflowBase, self).__init__(**kwargs)
+        # ~ super(WorkflowHelper, self).__init__(**kwargs)
         self.parent = kwargs['parent']
 
     def get_parameters(self):
         return self.parent.get_parameters()
 
     def _get_calc_maker(self, calc_type, **kwargs):
-    # ~ def _get_calc_maker(self, calc_type, params, **kwargs):
         from aiida.orm import Code
         from aiida.orm.calculation.job.vasp.maker import VaspMaker
         params = self.get_parameters()
@@ -22,7 +21,8 @@ class WorkflowBase(object):
         good_init |= bool(kwargs.get('structure'))
         if not good_init:
             kwargs['structure'] = params['structure']
-            kwargs['paw_family'] = kwargs.get('paw_family') or params['paw_family']
+            kwargs['paw_family'] = kwargs.get('paw_family',
+                                              params['paw_family'])
             kwargs['paw_map'] = kwargs.get('paw_map') or params['paw_map']
         maker = VaspMaker(calc_cls=calc_type, **kwargs)
         if params.get('settings'):
@@ -30,13 +30,15 @@ class WorkflowBase(object):
 
         kpoints = params.get('kpoints')
         kp_valid, log = self._verify_kpoints(params)
-        if kp_valid:
+        if kpoints and kp_valid:
             if kpoints.get('mesh'):
                 maker.set_kpoints_mesh(kpoints['mesh'])
             elif kpoints.get('list'):
                 maker.set_kpoints_list(kpoints['list'])
             elif kpoints.get('path'):
                 maker.set_kpoints_path(kpoints['path'])
+        elif kwargs.get('continue_from') and kp_valid:
+            pass
         else:
             raise ValueError(log)
 
@@ -59,13 +61,13 @@ class WorkflowBase(object):
     def _calc_invalid_outs_msg(self, calc, links):
         msg = ('Calculation {} does not have all required output nodes. '
                'The required outputs are: {}')
-        msg.format(calc.pk, links)
+        return msg.format(calc.pk, links)
 
     def _get_first_step_calc(self, step):
         step_calcs = self.parent.get_step_calculations(step)
         if not bool(step_calcs):
-            self.parent.append_to_report('no calculation found for step {}'.format(
-                step.__name__))
+            self.parent.append_to_report(
+                'no calculation found for step {}'.format(step.__name__))
             return None
         first_calc = step_calcs[0]
         return first_calc
@@ -83,20 +85,22 @@ class WorkflowBase(object):
         # ~ self._verify_params(params)
         # ~ self.parent.set_params(params, **kwargs)
 
-    def _verify_params(self, params):
+    def _verify_params(self, params, silent=False):
         valid = True
         log = []
 
-        kp = self._verify_kpoints(params)
-        valid &= kp[0]
-        log.append(kp[1])
+        par_dict = self.parent.__class__.__dict__
+        verify_funcs = {k: v for k, v in par_dict.iteritems()
+                        if '_verify_param_' in k}
 
-        paw = self._verify_paws(params)
-        valid &= paw[0]
-        log.append(paw[1])
+        for name, func in verify_funcs.iteritems():
+            valid_i, log_i = func(self.parent, params)
+            valid &= valid_i
+            log.append(log_i)
 
-        print >> sys.stderr, '\n'.join(log)
-        return valid
+        log = '\n'.join(log)
+        print >> sys.stderr, log
+        return valid, log
 
     def _verify_kpoints(self, params):
         log = ''
@@ -106,7 +110,7 @@ class WorkflowBase(object):
                 valid = False
                 log += ('{}: parameters: kpoints dict must '
                         'contain exactly one item').format(
-                            self.__class__.__name__)
+                            self.parent.__class__.__name__)
             else:
                 valid = bool(kpoints.get('mesh'))
                 valid |= bool(kpoints.get('list'))
@@ -115,14 +119,14 @@ class WorkflowBase(object):
                     log += ('{}: parameters: kpoints dict must '
                             'contain one of the keys '
                             '"mesh", "list" or "path"').format(
-                                self.__class__.__name__)
+                                self.parent.__class__.__name__)
 
         elif params.get('continue_from'):
             valid = True
         else:
             log += ('{}: parameters: kpoints dict must be set, if '
                     'not continuing from a finished calculation').format(
-                        self.__class__.__name__)
+                        self.parent.__class__.__name__)
             valid = False
         return valid, log
 
@@ -140,39 +144,36 @@ class WorkflowBase(object):
                         'to the name of a PAW family containing '
                         'PAWs necessary for this calculation, if '
                         'not continuing from a finished calculation').format(
-                        self.__class__.__name__)
+                    self.parent.__class__.__name__)
                 valid = False
             map_given = bool(paw_map)
             if not map_given:
                 log += ('{}: parameters: paw_map must be a dict '
                         'containing a 1 to 1 mapping of elements '
                         'to symbols, if not continuing from a finished '
-                        'calculation.').format(self.__class__.__name__)
+                        'calculation.').format(self.parent.__class__.__name__)
                 valid = False
         return valid, log
 
-    @classmethod
     def get_params_template(cls, continuation=False):
-        # ~ item = lambda desc, typ, req: '[{req}] ({type}) {desc}'.format(
-            # ~ desc=desc, type=typ, req=req)
-        # ~ required = 'required'
-        # ~ optional = 'optional'
-        # ~ req_if_cont = continuation and required, optional
-        # ~ req_if_orig = continuation and optional, required
         tmpl = {}
-        tmpl['vasp_code'] = 'code in the db that runs vasp'
+        tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
-        tmpl['resources'] = 'aiida style resource dict'
+        tmpl['resources'] = {'num_machines': 'int',
+                             'num_mpiprocs_per_machine': 'int'}
         tmpl['kpoints'] = {'mesh | list | path': ['...']}
-        tmpl['label'] = 'optional: override default label'
-        tmpl['description'] = 'optional: override default description'
-        tmpl['extras'] = {'explanation': ('dict with extra attributes you want to give '
-                          'to all calcs run by this workflow.')}
+        tmpl['label'] = 'optional label for calculations'
+        tmpl['description'] = 'optional description for calculations'
+        tmpl['extras'] = {'explanation': ('dict with extra attributes you '
+                          'want to give to all calcs run by this workflow.')}
+        tmpl['settings'] = {'explanation': ('incar keys for the calculation')}
         if continuation:
             tmpl['continue_from'] = 'uuid of a finished calculation'
-            tmpl['kpoints'] += ' (default: same as previous calc)'
+            tmpl['kpoints'] = ['default: same as previous calc)']
+            tmpl['settings'] = {'explanation': ('additional / override incar keys')}
         else:
-            tmpl['paw_family'] = 'name of a PAW family as imported from the commandline'
+            tmpl['paw_family'] = ('name of a PAW family as imported from the '
+                                  'commandline')
             tmpl['paw_map'] = {'Element': 'Symbol'}
             tmpl['structure'] = 'POSCAR or CIF file'
         return tmpl
@@ -190,4 +191,5 @@ class WorkflowBase(object):
                     json.dump(tpl_dict, input_tpl, indent=4, sort_keys=True)
                 result = path
         else:
-            return json.dumps(tpl_dict)
+            result = json.dumps(tpl_dict, indent=2, sort_keys=True)
+        return result

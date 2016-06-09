@@ -115,7 +115,7 @@ class VaspMaker(object):
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
         self._paws = {}
-        self._set_default_paws()
+        self._set_default_paws(silent=True)
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
         self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
@@ -329,8 +329,11 @@ class VaspMaker(object):
 
     @resources.setter
     def resources(self, val):
-        self._resources['num_machines'] = val[0]
-        self._resources['num_mpiprocs_per_machine'] = val[1]
+        if isinstance(val, dict):
+            self._resources.update(val)
+        else:
+            self._resources['num_machines'] = val[0]
+            self._resources['num_mpiprocs_per_machine'] = val[1]
 
     def add_settings(self, **kwargs):
         if self._settings.pk:
@@ -340,17 +343,24 @@ class VaspMaker(object):
                 self._settings.update_dict({k: v})
 
     def rewrite_settings(self, **kwargs):
-        if self._settings.pk:
-            self._settings = self._settings.copy()
-        self._settings.update_dict(kwargs)
+        if self._settings_conflict(kwargs):
+            if self._settings.pk:
+                self._settings = self._settings.copy()
+            self._settings.update_dict(kwargs)
 
-    def _set_default_paws(self, overwrite=False):
+    def _settings_conflict(self, settings):
+        conflict = False
+        for k, v in settings.iteritems():
+            conflict |= (settings.get(k) != v)
+        return conflict
+
+    def _set_default_paws(self, overwrite=False, silent=False):
         if self._paw_fam.lower() == 'LDA':
             defaults = self._paw_def or lda
         elif self._paw_fam.lower() in ['PBE', 'GW']:
             defaults = self._paw_def or gw
         else:
-            if not self._paw_def:
+            if not self._paw_def and not silent:
                 msg = 'keyword paw_family was not LDA or PBE'
                 msg += 'and no paw_map keyword was given!'
                 msg += 'manual paw initialization required'

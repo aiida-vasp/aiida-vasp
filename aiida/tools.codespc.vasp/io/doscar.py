@@ -25,10 +25,11 @@ class DosParser(BaseParser):
             sys = cls.line(dos)
             l2 = cls.line(dos, float)
             emax, emin, ndos, efermi, weight = l2
+            ndos = int(ndos)
             raw = cls.splitlines(dos)
 
         # either (e tot intd) or (e tot^ tot_ intd^ intd_)
-        tdos = np.array(raw[:301])
+        tdos = np.array(raw[:ndos])
         # either (e s (p) (d)) -> 10
         # or (e s^ s_ (p^ p_) (d^ d_)) -> 19
         # or (e s[m] (p[m]) (d[m]) -> 37
@@ -36,10 +37,11 @@ class DosParser(BaseParser):
         # probably format later with vasprun or PROCAR info?
         # from vasprun: pdos[i][1+j::n_spin] <-> vrunpdos[i][j][1:]
         pdos = []
-        for i in range(ni):
-            start = raw.index(l2) + 1
-            pdos += [raw[start:start+301]]
-        pdos = np.array(pdos)
+        if l2 in raw:
+            for i in range(ni):
+                start = raw.index(l2) + 1
+                pdos += [raw[start:start+ndos]]
+            pdos = np.array(pdos)
 
         header = {}
         header[0] = l0

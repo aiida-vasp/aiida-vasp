@@ -81,13 +81,15 @@ class Vasp5Parser(BaseParser):
         if not vrp or not dcp:
             return None
         dosnode = DataFactory('array')()
-        pdos = vrp.pdos.copy()
-        for i, name in enumerate(vrp.pdos.dtype.names[1:]):
-            ns = vrp.pdos.shape[1]
-            # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-            cur = dcp.pdos[:, :, i+1:i+1+ns].transpose(0, 2, 1)
-            cond = vrp.pdos[name] < 0.1
-            pdos[name] = np.where(cond, cur, vrp.pdos[name])
+        if len(vrp.pdos):
+            pdos = vrp.pdos.copy()
+            for i, name in enumerate(vrp.pdos.dtype.names[1:]):
+                ns = vrp.pdos.shape[1]
+                # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
+                cur = dcp.pdos[:, :, i+1:i+1+ns].transpose(0, 2, 1)
+                cond = vrp.pdos[name] < 0.1
+                pdos[name] = np.where(cond, cur, vrp.pdos[name])
+            dosnode.set_array('pdos', pdos)
         ns = 1
         if dcp.tdos.shape[1] == 5:
             ns = 2
@@ -96,7 +98,6 @@ class Vasp5Parser(BaseParser):
             cur = dcp.tdos[:, i+1:i+1+ns].transpose()
             cond = vrp.tdos[:ns, :][name] < 0.1
             tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
-        dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
         return dosnode
 

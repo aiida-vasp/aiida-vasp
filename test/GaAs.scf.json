@@ -1,0 +1,24 @@
+{
+    "description": "Comparison test for ScfWorkflow to TbmodelWorkflow", 
+    "extras": {"experiment": "ScfWorkflow Test"}, 
+    "kpoints": {
+        "mesh": [4, 4, 4]
+    }, 
+    "label": "ScfWorkflow Comparison Test", 
+    "paw_family": "PBE", 
+    "paw_map": {"Ga": "Ga_d", "As": "As"}, 
+    "queue": "dphys_compute", 
+    "resources": {"num_machines": 2, "num_mpiprocs_per_machine": 8}, 
+    "vasp_code": "vasp-w90@monch",
+    "structure": "../../../GaAsTB/POSCAR",
+    "settings": {
+	"ediff": 1e-5,
+	"encut": 280.00,
+	"gga": "PE",
+	"gga_compat": false,
+	"ismear": 0,
+	"lorbit": 11,
+	"nbands": 24,
+	"sigma": 0.5
+    }
+}

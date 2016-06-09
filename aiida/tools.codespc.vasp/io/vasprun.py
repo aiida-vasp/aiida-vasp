@@ -97,7 +97,11 @@ class VasprunParser(object):
 
     @property
     def pdos(self):
-        return self._array(parent='dos/partial')
+        try:
+            dos = self._array(parent='dos/partial')
+        except:
+            dos = np.array([])
+        return dos
 
     def param(self, key):
         path = '/parameters//'
