@@ -12,7 +12,8 @@ class NscfWorkflow(Workflow):
     :key str queue: the name of the queue to run calculations in.
     :key dict resources: the aiida style resources specification. example:
         {'num_machines': 4, 'num_mpiprocs_per_machine': 16}
-    :key dict kpoints: a dict containing one of the keys ['mesh', 'list', 'path']
+    :key dict kpoints: a dict containing one of the keys
+        ['mesh', 'list', 'path']
         The value of that key must be suitable to create a KpointsData node.
     :key bool use_wannier: default=False, if True LWANNIER90 is used and the
         wannier input/output are retrieved as well.
@@ -27,14 +28,16 @@ class NscfWorkflow(Workflow):
         calculation.
     :key dict continue_from: uuid of the scf calculation to continue from
     '''
+    Helper = WorkflowHelper
     def __init__(self, **kwargs):
-        self.helper = WorkflowHelper(parent=self)
+        self.helper = self.Helper(parent=self)
         super(NscfWorkflow, self).__init__(**kwargs)
 
     def get_calc_maker(self):
         params = self.get_parameters()
         maker = self.helper._get_calc_maker(
-            'vasp.nscf', continue_from=Calculation.query(uuid=params['continue_from'])[0])
+            'vasp.nscf', continue_from=Calculation.query(
+                uuid=params['continue_from'])[0])
         nscf_settings = {'lwannier90': params['use_wannier'],
                          'icharg': 11}
         maker.rewrite_settings(**nscf_settings)
@@ -43,11 +46,13 @@ class NscfWorkflow(Workflow):
     @Workflow.step
     def start(self):
         params = self.get_parameters()
+        self.append_to_report(self.helper._wf_start_msg())
         maker = self.get_calc_maker()
         calc = maker.new()
 
         calc.description = params.get('desc', maker.label)
         calc.store_all()
+        calc.set_extras(params.get('extras'))
 
         self.attach_calculation(calc)
         self.append_to_report(
@@ -84,11 +89,13 @@ class NscfWorkflow(Workflow):
         self.helper._verify_params(params)
         super(NscfWorkflow, self).set_params(params)
 
-    def get_params_template(self):
-        tmpl = self.helper.get_params_template(continuation=True)
+    @classmethod
+    def get_params_template(cls):
+        tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['use_wannier'] = ('True | False (if true, vasp_code must be '
-                              'compiled with wannier interface')
+                               'compiled with wannier interface')
         return tmpl
 
-    def get_template(self, *args, **kwargs):
-        return self.helper.get_template(*args, **kwargs)
+    @classmethod
+    def get_template(cls, *args, **kwargs):
+        return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

@@ -128,10 +128,12 @@ def plot_bstr(bands_node, kpoints_node=None, title=None,
         plt.yticks(list(plt.yticks()[0]) + [efermi],
                    [str(l) for l in plt.yticks()[0]] + [r'$E_{fermi}$'])
 
-    if kpoints_node:
+    try:
         kpx, kpl = get_kp_labels(bands_node, kpoints_node)
         plt.xticks(kpx, kpl)
         plt.vlines(kpx, plt.ylim()[0], plt.ylim()[1])
+    except:
+        pass
 
     plt.ylabel('Dispersion')
     plt.suptitle(title)

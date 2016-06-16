@@ -1,0 +1,27 @@
+{
+    "continue_from": "9e33d3c1-6d23-4ab6-9fdf-c4e190843884", 
+    "description": "Testing ProjectionsWorkflow with result from GaAs NscfWorkflow continuation test",
+    "extras": {
+        "experiment": "ProjectionWorkflowTest"
+    }, 
+    "#kpoints": {
+        "mesh": [8, 8, 8]
+    }, 
+    "label": "ProjTest-nband", 
+    "projections": [
+        "Ga : s; px; py; pz", 
+        "As : s; px; py; pz"
+    ], 
+    "queue": "dphys_compute", 
+    "resources": {
+        "num_machines": 2, 
+        "num_mpiprocs_per_machine": 8
+    }, 
+    "settings": {
+    }, 
+    "vasp_code": "vasp-w90@monch", 
+    "wannier_settings": {
+        "num_wann": 8, 
+        "use_bloch_phases": false
+    }
+}

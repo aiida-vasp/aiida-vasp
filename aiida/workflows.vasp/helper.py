@@ -1,12 +1,9 @@
-# ~ from aiida.orm.workflow import Workflow
 import sys
 
 
-# ~ class WorkflowHelper(Workflow):
 class WorkflowHelper(object):
     '''Base Class for AiiDA-VASP workflows'''
     def __init__(self, **kwargs):
-        # ~ super(WorkflowHelper, self).__init__(**kwargs)
         self.parent = kwargs['parent']
 
     def get_parameters(self):
@@ -35,9 +32,10 @@ class WorkflowHelper(object):
                 maker.set_kpoints_mesh(kpoints['mesh'])
             elif kpoints.get('list'):
                 maker.set_kpoints_list(kpoints['list'])
+                maker.kpoints.label = params.get('kpoint_labels', '')
             elif kpoints.get('path'):
                 maker.set_kpoints_path(kpoints['path'])
-        elif kwargs.get('continue_from') and kp_valid:
+        elif kp_valid:
             pass
         else:
             raise ValueError(log)
@@ -57,6 +55,17 @@ class WorkflowHelper(object):
     def _calc_start_msg(self, name, calc):
         msg = 'Calculation started: {name}, PK={calc.pk}, uuid={calc.uuid}'
         return msg.format(name=name, calc=calc)
+
+    def _subwf_start_msg(self, name, wf):
+        msg = 'Workflow started: {name}, PK={wf.pk}, uuid={wf.uuid}'
+        return msg.format(name=name, wf=wf)
+
+    def _wf_start_msg(self):
+        params = self.get_parameters()
+        msg = 'Workflow started: {wf_class} **{wf_label}**'
+        wfclass = self.parent.__class__.__name__
+        wflabel = self.parent.label or params.get('label', 'unlabeled')
+        return msg.format(wf_class=wfclass, wf_label=wflabel)
 
     def _calc_invalid_outs_msg(self, calc, links):
         msg = ('Calculation {} does not have all required output nodes. '
@@ -94,12 +103,38 @@ class WorkflowHelper(object):
                         if '_verify_param_' in k}
 
         for name, func in verify_funcs.iteritems():
+            if isinstance(func, classmethod):
+                func = func.__func__
             valid_i, log_i = func(self.parent, params)
             valid &= valid_i
             log.append(log_i)
 
+        log = filter(None, log)
         log = '\n'.join(log)
-        print >> sys.stderr, log
+        if not silent:
+            if any(log):
+                raise ValueError(log)
+        return valid, log
+
+    @classmethod
+    def _verify_params_cls(cls, wf_cls, params):
+        valid = True
+        log = []
+
+        par_dict = self.parent.__class__.__dict__
+        verify_funcs = {k: v for k, v in par_dict.iteritems()
+                        if '_verify_param_' in k and isinstance(v, classmethod)}
+
+        for name, func in verify_funcs.iteritems():
+            valid_i, log_i = func.__func__(wf_cls, params)
+            valid &= valid_i
+            log.append(log_i)
+
+        log = filter(None, log)
+        log = '\n'.join(log)
+        if not silent:
+            if any(log):
+                raise ValueError(log)
         return valid, log
 
     def _verify_kpoints(self, params):
@@ -155,6 +190,7 @@ class WorkflowHelper(object):
                 valid = False
         return valid, log
 
+    @classmethod
     def get_params_template(cls, continuation=False):
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
@@ -170,7 +206,8 @@ class WorkflowHelper(object):
         if continuation:
             tmpl['continue_from'] = 'uuid of a finished calculation'
             tmpl['kpoints'] = ['default: same as previous calc)']
-            tmpl['settings'] = {'explanation': ('additional / override incar keys')}
+            tmpl['settings'] = {'explanation': ('additional / '
+                                                'override incar keys')}
         else:
             tmpl['paw_family'] = ('name of a PAW family as imported from the '
                                   'commandline')
@@ -178,15 +215,23 @@ class WorkflowHelper(object):
             tmpl['structure'] = 'POSCAR or CIF file'
         return tmpl
 
-    # ~ @classmethod
-    def get_template(self, path=None):
+    @classmethod
+    def get_template(cls, wf_class=None, path=None):
         import json
         from os.path import abspath, expanduser, exists
         result = None
-        tpl_dict = self.parent.get_params_template()
+        wf_class = wf_class or cls
+        tpl_dict = wf_class.get_params_template()
         if path:
-            if not exists(path):
-                path = abspath(expanduser(path))
+            path = abspath(expanduser(path))
+            write = True
+            if exists(path):
+                overwrite = raw_input(path + ' exists! Overwrite? [y/N]: ')
+                if overwrite.lower() in ['y', 'yes']:
+                    write = True
+                else:
+                    write = False
+            if write:
                 with open(path, 'w') as input_tpl:
                     json.dump(tpl_dict, input_tpl, indent=4, sort_keys=True)
                 result = path

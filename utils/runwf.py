@@ -6,8 +6,11 @@ import argparse
 parser = argparse.ArgumentParser(
     description=('Run a vasp workflow reading parameters '
                  'from a json file'))
-parser.add_argument('--store-template', action='store_true', help=('store an input template '
-                    'in <input file> instead of running the workflow'))
+parser.add_argument('--store-template', action='store_true',
+                    help=('store an input template '
+                          'in <input file> instead of running the workflow'))
+# ~ parser.add_argument('-g', '--group', required=False,
+                    # ~ help=('aiida group to store the wf in'))
 parser.add_argument('workflow', help=('a valid string to load '
                     'a workflow using WorkflowFactory'))
 parser.add_argument('input_file', help=('a .json file containing '
@@ -27,8 +30,10 @@ if __name__ == '__main__':
             params = json.load(inputf)
             wf = WorkflowClass(params=params)
             wf.label = params.get('label')
-            valid, log = wf.helper._verify_params(wf.get_parameters(), silent=True)
+            valid, log = wf.helper._verify_params(wf.get_parameters(),
+                                                  silent=True)
             if not valid:
                 raise IOError('invalid input:\n' + log)
             # ~ wf.store()
             wf.start()
+            print '\n'.join(wf.get_report())

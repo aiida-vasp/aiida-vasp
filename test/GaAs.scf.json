@@ -12,13 +12,13 @@
     "vasp_code": "vasp-w90@monch",
     "structure": "../../../GaAsTB/POSCAR",
     "settings": {
-	"ediff": 1e-5,
-	"encut": 280.00,
-	"gga": "PE",
-	"gga_compat": false,
-	"ismear": 0,
-	"lorbit": 11,
-	"nbands": 24,
-	"sigma": 0.5
+        "ediff": 1e-5,
+        "encut": 280.00,
+        "gga": "PE",
+        "gga_compat": false,
+        "ismear": 0,
+        "lorbit": 11,
+        "nbands": 24,
+        "sigma": 0.5
     }
 }

@@ -251,16 +251,19 @@ class VaspMaker(object):
             self.kpoints = self.calc_cls.new_kpoints()
         self._kpoints.set_kpoints_mesh(*args, **kwargs)
 
-    def set_kpoints_list(self, *args, **kwargs):
+    def set_kpoints_list(self, kpoints, weights=None, **kwargs):
         '''
         py:method:: set_kpoints_list(*args, **kwargs)
 
         Passes arguments on to kpoints.set_kpoints, copies if it was already
         stored.
         '''
+        import numpy as np
         if self._kpoints.pk:
             self.kpoints = self.calc_cls.new_kpoints()
-        self._kpoints.set_kpoints(*args, **kwargs)
+        if not weights:
+            weights = np.ones(len(kpoints), dtype=float)
+        self._kpoints.set_kpoints(kpoints, weights=weights, **kwargs)
 
     @property
     def wavefunctions(self):
@@ -351,7 +354,7 @@ class VaspMaker(object):
     def _settings_conflict(self, settings):
         conflict = False
         for k, v in settings.iteritems():
-            conflict |= (settings.get(k) != v)
+            conflict |= (self.settings.get(k) != v)
         return conflict
 
     def _set_default_paws(self, overwrite=False, silent=False):
