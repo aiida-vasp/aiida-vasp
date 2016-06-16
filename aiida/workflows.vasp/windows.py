@@ -160,7 +160,7 @@ class WindowsWorkflow(Workflow):
     def make_results(self):
         self.append_to_report('retrieving and compiling results')
         wannier_wf_list = self.get_step(
-            self.tbmodel).get_sub_workflows()
+            self.get_tbmodel).get_sub_workflows()
         band_wf = self.get_step(
             self.get_reference_bands).get_sub_workflows()[0]
         self.add_result(
