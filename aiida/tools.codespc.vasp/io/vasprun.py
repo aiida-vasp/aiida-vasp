@@ -113,7 +113,7 @@ class VasprunParser(object):
 
     def _varray(self, key, path='//'):
         tag = self.tag('varray', key, path)
-        if not tag:
+        if tag is None:
             return None
 
         def split(s):
@@ -136,7 +136,7 @@ class VasprunParser(object):
         shape = []
         subset = tag.find('set')
         for d in range(ndim-1):
-            if subset.find('set'):
+            if subset.find('set') is not None:
                 shape.append(len(subset.findall('set')))
                 subset = subset.find('set')
         ldim = subset.findall('r')
@@ -158,7 +158,7 @@ class VasprunParser(object):
     def _i(self, key, path='//'):
         tag = self.tag('i', key, path)
         res = None
-        if tag:
+        if tag is not None:
             if tag.attrib.get('type') == 'logical':
                 res = 'T' in tag.text
             elif isinstance(tag.pyval, str):
@@ -169,7 +169,7 @@ class VasprunParser(object):
 
     def _v(self, key, path='//'):
         tag = self.tag('v', key, path)
-        if tag:
+        if tag is not None:
             dtype = tag.attrib.get('type', float)
             return np.array(tag.text.split(), dtype=dtype)
         else:
