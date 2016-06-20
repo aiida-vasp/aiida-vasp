@@ -2,7 +2,11 @@ __doc__ = '''
 Tools for parsing vasprun.xml files
 '''
 
-from lxml import objectify
+try:
+    from lxml.objectify import parse
+except:
+    from xml.etree.ElementTree import parse
+
 import datetime as dt
 import numpy as np
 
@@ -14,7 +18,7 @@ class VasprunParser(object):
     '''
     def __init__(self, fname):
         super(VasprunParser, self).__init__()
-        self.tree = objectify.parse(fname)
+        self.tree = parse(fname)
 
     @property
     def program(self):
