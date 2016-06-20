@@ -123,7 +123,7 @@ class VasprunParser(object):
     def _array(self, parent, key=None, path='//'):
         pred = key and '[@name="%s"]' % key or ''
         tag = self.tree.find(path+parent+'/array%s' % pred)
-        dims = [i.text for i in list(tag.dimension)]
+        dims = [i.text for i in tag.findall('dimension')]
 
         def getdtf(field):
             dt = field.attrib.get('type', float)
