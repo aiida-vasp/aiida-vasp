@@ -161,10 +161,18 @@ class VasprunParser(object):
         if tag is not None:
             if tag.attrib.get('type') == 'logical':
                 res = 'T' in tag.text
-            elif isinstance(tag.pyval, str):
+            elif tag.attrib.get('type') == 'int':
+                res = int(tag.text)
+            elif tag.attrib.get('type') == 'string':
                 res = tag.text.strip()
             else:
-                res = tag.pyval
+                try:
+                    res = int(tag.text)
+                except ValueError:
+                    try:
+                        res = float(tag.text)
+                    except ValueError:
+                        res = tag.text.strip()
         return res
 
     def _v(self, key, path='//'):
