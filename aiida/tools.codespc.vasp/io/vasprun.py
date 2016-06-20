@@ -139,12 +139,12 @@ class VasprunParser(object):
             if subset.find('set'):
                 shape.append(len(subset.findall('set')))
                 subset = subset.find('set')
-        ldim = subset.find('r')
+        ldim = subset.findall('r')
         mode = 'r'
         if not ldim:
-            subset.find('rc')
+            ldim = subset.findall('rc')
             mode = 'rc'
-        shape.append(len(subset.find(mode)))
+        shape.append(len(ldim))
 
         def split(s):
             if mode == 'r':
