@@ -57,17 +57,17 @@ class VasprunParser(object):
 
     @property
     def is_static(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion == -1
 
     @property
     def is_md(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion not in [-1, 1, 2]
 
     @property
     def is_relaxation(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion in [1, 2]
 
     @property
@@ -107,9 +107,9 @@ class VasprunParser(object):
             dos = np.array([])
         return dos
 
-    def param(self, key):
+    def param(self, key, default=None):
         path = '/parameters//'
-        return self._i(key, path=path) or self._v(key, path=path)
+        return self._i(key, path=path) or self._v(key, path=path) or default
 
     def _varray(self, key, path='//'):
         tag = self.tag('varray', key, path)
