@@ -30,7 +30,7 @@ class WorkflowHelper(object):
                 maker.set_kpoints_mesh(kpoints['mesh'])
             elif kpoints.get('list'):
                 maker.set_kpoints_list(kpoints['list'])
-                maker.kpoints.label = params.get('kpoint_labels', '')
+                maker.kpoints.labels = params.get('kpoint_labels', '')
             elif kpoints.get('path'):
                 maker.set_kpoints_path(kpoints['path'])
         elif kp_valid:
