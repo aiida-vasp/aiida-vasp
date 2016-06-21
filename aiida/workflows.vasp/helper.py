@@ -1,8 +1,6 @@
-import sys
-
-
 class WorkflowHelper(object):
-    '''Base Class for AiiDA-VASP workflows'''
+    '''Helper Class for AiiDA-VASP workflows'''
+
     def __init__(self, **kwargs):
         self.parent = kwargs['parent']
 
@@ -117,13 +115,16 @@ class WorkflowHelper(object):
         return valid, log
 
     @classmethod
-    def _verify_params_cls(cls, wf_cls, params):
+    def _verify_params_cls(cls, wf_cls, params, silent=False):
         valid = True
         log = []
 
-        par_dict = self.parent.__class__.__dict__
-        verify_funcs = {k: v for k, v in par_dict.iteritems()
-                        if '_verify_param_' in k and isinstance(v, classmethod)}
+        par_dict = wf_cls.__class__.__dict__
+        verify_funcs = {
+            k: v for k,
+            v in par_dict.iteritems() if '_verify_param_' in k and isinstance(
+                v,
+                classmethod)}
 
         for name, func in verify_funcs.iteritems():
             valid_i, log_i = func.__func__(wf_cls, params)
@@ -145,7 +146,7 @@ class WorkflowHelper(object):
                 valid = False
                 log += ('{}: parameters: kpoints dict must '
                         'contain exactly one item').format(
-                            self.parent.__class__.__name__)
+                    self.parent.__class__.__name__)
             else:
                 valid = bool(kpoints.get('mesh'))
                 valid |= bool(kpoints.get('list'))
@@ -154,14 +155,14 @@ class WorkflowHelper(object):
                     log += ('{}: parameters: kpoints dict must '
                             'contain one of the keys '
                             '"mesh", "list" or "path"').format(
-                                self.parent.__class__.__name__)
+                        self.parent.__class__.__name__)
 
         elif params.get('continue_from'):
             valid = True
         else:
             log += ('{}: parameters: kpoints dict must be set, if '
                     'not continuing from a finished calculation').format(
-                        self.parent.__class__.__name__)
+                self.parent.__class__.__name__)
             valid = False
         return valid, log
 

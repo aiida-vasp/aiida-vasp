@@ -144,11 +144,13 @@ class Vasp5Parser(BaseParser):
 
         if self._calc.inp.kpoints.get_attrs().get('array|kpoints'):
             bsnode.set_kpointsdata(self._calc.inp.kpoints)
-        bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
-                           cartesian=header['cartesian'])
+            bsnode.labels = self._calc.inp.kpoints.labels
+        else:
+            bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
+                               cartesian=False)
         bsnode.set_bands(bs, occupations=self.vrp.occupations)
         kpout.set_kpoints(kp[:, :3], weights=kp[:, 3],
-                          cartesian=header['cartesian'])
+                          cartesian=False)
         return bsnode, kpout, structure
 
     def read_ibzkpt(self):
