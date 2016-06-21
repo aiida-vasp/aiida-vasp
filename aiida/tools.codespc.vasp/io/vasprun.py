@@ -2,7 +2,11 @@ __doc__ = '''
 Tools for parsing vasprun.xml files
 '''
 
-from lxml import objectify
+try:
+    from lxml.objectify import parse
+except:
+    from xml.etree.ElementTree import parse
+
 import datetime as dt
 import numpy as np
 
@@ -14,7 +18,7 @@ class VasprunParser(object):
     '''
     def __init__(self, fname):
         super(VasprunParser, self).__init__()
-        self.tree = objectify.parse(fname)
+        self.tree = parse(fname)
 
     @property
     def program(self):
@@ -53,17 +57,17 @@ class VasprunParser(object):
 
     @property
     def is_static(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion == -1
 
     @property
     def is_md(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion not in [-1, 1, 2]
 
     @property
     def is_relaxation(self):
-        ibrion = self.param('IBRION')
+        ibrion = self.param('IBRION', default=-1)
         return ibrion in [1, 2]
 
     @property
@@ -103,13 +107,13 @@ class VasprunParser(object):
             dos = np.array([])
         return dos
 
-    def param(self, key):
+    def param(self, key, default=None):
         path = '/parameters//'
-        return self._i(key, path=path) or self._v(key, path=path)
+        return self._i(key, path=path) or self._v(key, path=path) or default
 
     def _varray(self, key, path='//'):
         tag = self.tag('varray', key, path)
-        if not tag:
+        if tag is None:
             return None
 
         def split(s):
@@ -119,7 +123,7 @@ class VasprunParser(object):
     def _array(self, parent, key=None, path='//'):
         pred = key and '[@name="%s"]' % key or ''
         tag = self.tree.find(path+parent+'/array%s' % pred)
-        dims = [i.text for i in list(tag.dimension)]
+        dims = [i.text for i in tag.findall('dimension')]
 
         def getdtf(field):
             dt = field.attrib.get('type', float)
@@ -132,15 +136,15 @@ class VasprunParser(object):
         shape = []
         subset = tag.find('set')
         for d in range(ndim-1):
-            if subset.find('set'):
+            if subset.find('set') is not None:
                 shape.append(len(subset.findall('set')))
                 subset = subset.find('set')
-        ldim = subset.find('r')
+        ldim = subset.findall('r')
         mode = 'r'
         if not ldim:
-            subset.find('rc')
+            ldim = subset.findall('rc')
             mode = 'rc'
-        shape.append(len(subset.find(mode)))
+        shape.append(len(ldim))
 
         def split(s):
             if mode == 'r':
@@ -154,18 +158,26 @@ class VasprunParser(object):
     def _i(self, key, path='//'):
         tag = self.tag('i', key, path)
         res = None
-        if tag:
+        if tag is not None:
             if tag.attrib.get('type') == 'logical':
                 res = 'T' in tag.text
-            elif isinstance(tag.pyval, str):
+            elif tag.attrib.get('type') == 'int':
+                res = int(tag.text)
+            elif tag.attrib.get('type') == 'string':
                 res = tag.text.strip()
             else:
-                res = tag.pyval
+                try:
+                    res = int(tag.text)
+                except ValueError:
+                    try:
+                        res = float(tag.text)
+                    except ValueError:
+                        res = tag.text.strip()
         return res
 
     def _v(self, key, path='//'):
         tag = self.tag('v', key, path)
-        if tag:
+        if tag is not None:
             dtype = tag.attrib.get('type', float)
             return np.array(tag.text.split(), dtype=dtype)
         else:
