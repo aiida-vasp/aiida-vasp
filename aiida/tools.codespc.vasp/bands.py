@@ -78,7 +78,7 @@ def get_kp_node(calc):
 
 
 def plot_bstr(bands_node, kpoints_node=None, title=None,
-              use_parent_calc=False):
+              use_parent_calc=False, **kwargs):
     '''
     py:function:: plot_bstr(bands_node[, kpoints_node=None])
 
@@ -138,3 +138,31 @@ def plot_bstr(bands_node, kpoints_node=None, title=None,
     plt.ylabel('Dispersion')
     plt.suptitle(title)
     return fig
+
+
+def plot_bands(bands_node, **kwargs):
+    import numpy as np
+
+    try:
+        import matplotlib
+        matplotlib.use('TKAgg')
+        from matplotlib import pyplot as plt
+    except:
+        raise Exception('Error: matplotlib must be '
+                        + 'installed to use this functionality')
+
+    bands = bands_node.get_bands()
+    nbands, nkp, nspin = get_bs_dims(bands)
+    if nspin > 0:
+        allbands = np.empty((nkp, nbands*nspin))
+        for i in range(nspin):
+            allbands[:, i*nbands:(i+1)*nbands] = bands[i]
+        bands = allbands
+
+    if kwargs.has_key('colors'):
+        import itertools
+        colors = itertools.cycle(kwargs.pop('colors'))
+        for b_idx in range(bands.shape[1]):
+            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)
+    else:
+        plt.plot(bands, **kwargs)
