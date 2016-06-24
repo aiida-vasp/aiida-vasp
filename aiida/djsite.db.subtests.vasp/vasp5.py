@@ -60,6 +60,7 @@ class Vasp5CalcTest(AiidaTestCase):
         concatenate two paws into a tmp POTCAR and check wether
         each is contained in the result
         '''
+        self.calc.use_settings(self.calc.new_settings(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
         self.calc.use_paw(
             self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
