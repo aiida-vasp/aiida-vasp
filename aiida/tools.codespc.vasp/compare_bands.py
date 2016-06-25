@@ -1,13 +1,13 @@
-from aiida.orm.calculation.inline import make_inline
+from aiida.orm.calculation.inline import optional_inline
 from aiida.orm import DataFactory
 
 
 BandsData = DataFactory('array.bands')
-ArrayData = DataFactory('array')
+# ~ ArrayData = DataFactory('array')
 
 
-@make_inline
-def make_refrerence_bands(wannier_bands, vasp_bands, efermi=None):
+@optional_inline
+def make_refrerence_bands_inline(wannier_bands, vasp_bands, efermi=None):
     '''
     Compare bandstructure results from wannier and vasp.
     Takes two input array.bands nodes, stores them if they're not already
