@@ -1,3 +1,11 @@
+try:
+    import matplotlib
+    matplotlib.use('TKAgg')
+    from matplotlib import pyplot as plt
+except:
+    raise Exception('Error: matplotlib must be '
+                    + 'installed to use this functionality')
+
 def get_bs_dims(bands_array):
     '''
     py:function:: get_bs_dims(bands_array)
@@ -96,14 +104,6 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None,
     :return: the matplotlib figure containing the plot
     '''
 
-    try:
-        import matplotlib
-        matplotlib.use('TKAgg')
-        from matplotlib import pyplot as plt
-    except:
-        raise Exception('Error: matplotlib must be '
-                        + 'installed to use this functionality')
-
     fig = plt.figure()
     title = title or 'Band Structure (pk=%s)' % bands_node.pk
     bands = bands_node.get_bands()
@@ -143,14 +143,6 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None,
 
 def plot_bands(bands_node, **kwargs):
     import numpy as np
-
-    try:
-        import matplotlib
-        matplotlib.use('TKAgg')
-        from matplotlib import pyplot as plt
-    except:
-        raise Exception('Error: matplotlib must be '
-                        + 'installed to use this functionality')
 
     bands = bands_node.get_bands()
     nbands, nkp, nspin = get_bs_dims(bands)

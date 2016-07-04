@@ -6,6 +6,13 @@ BandsData = DataFactory('array.bands')
 # ~ ArrayData = DataFactory('array')
 
 
+def _firstspin(bands):
+    if bands.ndim not in [2, 3]:
+        raise ValueError('invalid input')
+    if bands.ndim == 3:
+        bands = bands[0]
+    return bands
+
 @optional_inline
 def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     '''
@@ -39,20 +46,17 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
 
     # grab the vbands within the outer_window
     # find wich bands within the window match
-    # by filling up from the bottom (as w90 seems to do so)
+    # by searching for the best fit using the sum of square errors
     vbands_window = np.empty(wbands.shape)
     vocc_window = np.empty(wbands.shape)
     w_nbands = wbands.shape[1]
     ref_nbands = vbands.shape[1]
     count = 0
-    for b in range(ref_nbands):
-        if count < w_nbands:
-            band = vbands[:, b]
-            occ = vocc[:, b]
-            if band.min() >= owindow[0] and band.max() <= owindow[1]:
-                vbands_window[:, count] = band
-                vocc_window[:, count] = occ
-                count += 1
+    for b in range(w_nbands):
+        errs = [band_error(wbands[:, b], vbands[:, i]) for i in range(ref_nbands)]
+        minerr = np.argmin(errs)
+        vbands_window[:, b] = vbands[:, minerr]
+        vocc_window[:, b] = vocc[:, minerr]
 
     # TODO: find each band's index (s, px, py, ...)
     # TODO: store the legend with the comparison node
@@ -161,6 +165,9 @@ def band_gap(bands, occ, efermi=None):
     result['vector'] = [(gap_lower_k, gap_lower), (gap_upper_k, gap_upper)]
     return result
 
+def band_error(band1, band2):
+    import numpy as np
+    return np.square(band1 - band2).sum()
 
 def bands_error(bands1, bands2):
     '''
@@ -181,7 +188,7 @@ def bands_error(bands1, bands2):
     return err
 
 
-def compare_bands(vasp_bands, wannier_bands_list, plot=False, folder=''):
+def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     import numpy as np
     import bands as btool
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
@@ -191,6 +198,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot=False, folder=''):
     for wannier_bands in wannier_bands_list:
         owindow = get_outer_window(wannier_bands)
         reference = ref_bands[owindow]['bands']
+        refinfo = ref_bands[owindow]['info'].get_dict()
         wannier_calc = wannier_bands.inp.bands
         wannier_param = wannier_calc.inp.settings.get_dict()
         iwindow = [
@@ -198,7 +206,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot=False, folder=''):
             wannier_param['dis_froz_max']
         ]
         wannier_gap = band_gap(wannier_bands.get_bands(), reference.get_array('occupations'))
-        ref_gap = ref_bands[owindow]['info'].get_dict()['bandgap']
+        ref_gap = refinfo['bandgap']
         if wannier_gap['vector']:
             wannier_k_gap = np.array([wannier_gap['vector'][0][0],
                                     wannier_gap['vector'][1][0]])
@@ -216,14 +224,19 @@ def compare_bands(vasp_bands, wannier_bands_list, plot=False, folder=''):
             'error_direct': wannier_gap['direct'] != ref_gap['direct'],
             'error_k_gap': error_k_gap
         }
-        if plot:
+        if plot_folder:
             import os
             colors = ['r', 'b', 'g', 'm', 'c', 'y', 'k']
             title = 'Vasp-Wannier comparison for window {}'.format([owindow, iwindow])
             fig = btool.plot_bstr(
-                reference, efermi=ref_bands[owindow]['info'].get_dict()['efermi'], colors=colors, title=title)
-            btool.plot_bands(wannier_bands, colors=colors, figure=fig, ls='-.')
-            pdf = os.path.join(folder, 'comparison_%s.pdf' % wannier_calc.pk)
+                reference, efermi=refinfo['efermi'], colors=colors, title=title)
+            btool.plot_bands(wannier_bands, colors=colors, figure=fig, ls=':')
+            xlim = btool.plt.xlim()
+            btool.plt.hlines(iwindow, xlim[0], xlim[1], color='k')
+            btool.plt.hlines(refinfo['efermi'], xlim[0], xlim[1], color='k', linestyles='dashed')
+            btool.plt.yticks(list(btool.plt.yticks()[0]) + [refinfo['efermi']],
+                    [str(l) for l in btool.plt.yticks()[0]] + [r'$E_{fermi}$'])
+            pdf = os.path.join(plot_folder, 'comparison_%s.pdf' % wannier_calc.pk)
             fig.savefig(pdf)
             info[wannier_bands.pk]['plot'] =  pdf
 
