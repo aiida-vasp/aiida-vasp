@@ -77,7 +77,7 @@ def get_kp_node(calc):
     return kpoints_node
 
 
-def plot_bstr(bands_node, kpoints_node=None, title=None,
+def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None,
               use_parent_calc=False, **kwargs):
     '''
     py:function:: plot_bstr(bands_node[, kpoints_node=None])
@@ -108,12 +108,13 @@ def plot_bstr(bands_node, kpoints_node=None, title=None,
     title = title or 'Band Structure (pk=%s)' % bands_node.pk
     bands = bands_node.get_bands()
     nbands, nkp, nspin = get_bs_dims(bands)
-    for iband in range(nbands):
-        if nspin > 0:
-            for ispin in range(nspin):
-                plt.plot(bands[ispin, :, iband])
-        else:
-            plt.plot(bands[:, iband])
+    # ~ for iband in range(nbands):
+    # ~  if nspin > 0:
+    # ~      for ispin in range(nspin):
+    # ~          plt.plot(bands[ispin, :, iband])
+    # ~  else:
+    # ~      plt.plot(bands[:, iband])
+    plot_bands(bands_node, **kwargs)
 
     parent_calc = None
     if use_parent_calc:
@@ -159,7 +160,7 @@ def plot_bands(bands_node, **kwargs):
             allbands[:, i*nbands:(i+1)*nbands] = bands[i]
         bands = allbands
 
-    if kwargs.has_key('colors'):
+    if 'colors' in kwargs:
         import itertools
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
