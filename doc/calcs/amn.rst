@@ -19,3 +19,21 @@ Inputs
 * :ref:`chargedensities <vasp-input-chargedens>`
 * :ref:`wavefunctions <vasp-input-wavefunctions>`
 * :ref:`wannier_settings <vasp-input-wannier_settings>`
+
+*******
+Outputs
+*******
+* :ref:`results <vasp-output-results>`
+* :ref:`wannier_data <vasp-output-wannier_data>`
+
+*********
+Reference
+*********
+Superclasses:
+
+* :py:class:`NscfCalculation <aiida.orm.calculation.job.vasp.nscf.NscfCalculation>`
+* :py:class:`WannierBase <aiida.orm.calculation.job.vasp.wannier.WannierBase>`
+
+.. autoclass:: aiida.orm.calculation.job.vasp.amn.AmnCalculation
+   :members: verify_inputs, _prepare_for_submission
+   :undoc-members:
