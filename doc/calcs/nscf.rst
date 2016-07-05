@@ -16,7 +16,7 @@ This behaviour is consistent with running VASP manually, while being slightly mo
 Inputs
 ******
 * :ref:`settings <vasp-input-settings>`
-* :ref:`kpoints <vasp-input-kpoints>`, kpoints must be set via :py:meth:`set_kpoints_mesh <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_mesh>`
+* :ref:`kpoints <vasp-input-kpoints>`, to run with LWANNIER90, kpoints must be set via :py:meth:`set_kpoints_mesh <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_mesh>`. Otherwise all methods of setting kpoints are allowed.
 * :ref:`structure <vasp-input-structure>`
 * :ref:`paw <vasp-input-paw>`, one per element in the structure.
 * :ref:`chargedensities <vasp-input-chargedens>`, not necessary for certain values of ICHARG
