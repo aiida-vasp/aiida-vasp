@@ -108,7 +108,7 @@ class AutowindowsWorkflow(Workflow):
         bandpar = self.get_vasp_params(params)
         bandpar['continue_from'] = scf_calc.uuid
         bandpar['kpoints'] = {
-            'path': params['kpoinst']['path']
+            'path': params['kpoints']['path']
         }
         bandpar['use_wannier'] = False
 
@@ -120,7 +120,7 @@ class AutowindowsWorkflow(Workflow):
             self.helper._subwf_start_msg('Preview-Bands', wf)
         )
 
-        self.next(self.get_windows)
+        self.next(self.make_windows)
 
     @Workflow.step
     def make_windows(self):
@@ -163,7 +163,7 @@ class AutowindowsWorkflow(Workflow):
             for j in range(params['num_iwindows']):
                 iw_offset = j * params['iwindows-increment']
                 iwindow = [iw_min - iw_offset, iw_max + iw_offset]
-                windows.append({'outer': owindow, 'innter': iwindow})
+                windows.append({'outer': owindow, 'inner': iwindow})
 
         self.add_attribute('windows', windows)
 
@@ -248,7 +248,7 @@ class AutowindowsWorkflow(Workflow):
             try:
                 calc = wf.get_result('calc')
                 bands = wf.get_result('bands')
-                wbands_list.append(bands)
+                wbands_list.append(bands.uuid)
                 self.add_result('bands_{}'.format(calc.pk), bands)
             except Exception as e:
                 wset = wf.get_parameters()['settings']

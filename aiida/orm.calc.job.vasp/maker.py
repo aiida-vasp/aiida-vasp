@@ -199,6 +199,23 @@ class VaspMaker(object):
         calc.set_resources(self._resources)
         return calc
 
+    # ~ def new_or_stored(self):
+    # ~     # start building the query
+    # ~     query_set = self.calc_cls.query()
+
+    # ~     # filter for calcs that use the same code
+    # ~     query_set = query_set.filter(inputs=self._code.pk)
+
+    # ~     # settings must be the same
+    # ~     for calc in query_set:
+    # ~         if calc.inp.settings.get_dict() != self._settings.get_dict():
+
+    # ~     # TODO: check structure.get_ase() / cif
+    # ~     # TODO: check paws
+    # ~     # TODO: check kpoints
+    # ~     # TODO: check WAVECAR / CHGCAR if applicable
+    # ~     # TODO: check wannier_settings if applicable
+
     @property
     def structure(self):
         return self._structure

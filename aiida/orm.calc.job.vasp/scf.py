@@ -24,7 +24,9 @@ class ScfCalculation(BasicCalculation):
             tempfolder, inputdict)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
-        # ~ notset_msg = 'input not set: %s'
+        '''
+        make sure k-points are given as a mesh
+        '''
         super(ScfCalculation, self).verify_inputs(inputdict, *args, **kwargs)
         kpa = inputdict['kpoints'].get_attrs()
         if 'mesh' not in kpa:

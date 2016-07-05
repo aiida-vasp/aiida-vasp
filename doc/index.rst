@@ -1,8 +1,10 @@
+####
 VASP
-----
+####
 
+************
 Description
-^^^^^^^^^^^
+************
 `VASP`_ (Vienna Ab initio Simulation Package) is a computer program for 
 atomic scale materials modelling, e.g. electronic structure calculations 
 and quantum-mechanical molecular dynamics, from first principles.
@@ -14,26 +16,31 @@ about using VASP take a look at the `documentation page`_ or the `wiki`_
 .. _documentation page: https://www.vasp.at/index.php/documentation
 .. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
 
+*******
 Plugins
-^^^^^^^
+*******
 
 .. toctree::
    :maxdepth: 4
 
-   General Purpose <calcs/general>
-   Special Purpose <calcs/special>
+   VASP5 <calcs/vasp>
+   Wannier90 <calcs/wannier>
 
+*********
 Workflows
-^^^^^^^^^
+*********
 
 .. toctree::
    :maxdepth: 4
 
    Band Structure <wf/bands>
    Tight-binding Model <wf/tbmodel>
+   Windows
+   Autowindows
 
+*****************
 Using the Plugins
-^^^^^^^^^^^^^^^^^
+*****************
 
 General Principles
 ==================

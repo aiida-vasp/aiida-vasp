@@ -279,7 +279,7 @@ class BasicCalculation(VaspCalcBase):
     structure = Input(types=['structure', 'cif'])
     paw = Input(types='vasp.paw', param='kind')
     kpoints = Input(types='array.kpoints')
-    default_parser = 'vasp.scf'
+    default_parser = 'vasp.basic'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''changes the retrieve_list to retrieve only files needed
@@ -344,7 +344,11 @@ class BasicCalculation(VaspCalcBase):
 
     def _write_kpoints_list(self, dst):
         kp = self.inp.kpoints
-        kpl, weights = kp.get_kpoints(also_weights=True)
+        if 'array|weights' in kp.get_attrs():
+            kpl, weights = kp.get_kpoints(also_weights=True)
+        else:
+            kpl = kp.get_kpoints()
+            weights = [1.] * kpl.shape[0]
         kw = zip(kpl, weights)
         with open(dst, 'w') as kpoints:
             kpls = '\n'.join(
