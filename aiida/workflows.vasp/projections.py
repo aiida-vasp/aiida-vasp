@@ -3,6 +3,7 @@ from aiida.orm import Workflow
 
 
 class ProjectionsWorkflow(Workflow):
+
     '''
     AiiDA-VASP Workflow for continuing from an NSCF Calculation to get
     all the data necessary to run a wannier calculation.
@@ -10,6 +11,7 @@ class ProjectionsWorkflow(Workflow):
     see py:func:get_params_template() for a list of parameters.
     '''
     Helper = WorkflowHelper
+
     def __init__(self, **kwargs):
         self.helper = self.Helper(parent=self)
         super(ProjectionsWorkflow, self).__init__(**kwargs)
@@ -31,7 +33,11 @@ class ProjectionsWorkflow(Workflow):
 
         cout = cont.get_outputs_dict()
         cinp = cont.get_inputs_dict()
-        maker.wannier_settings = cout.get('wannier_settings', cinp.get('wannier_settings', {}))
+        maker.wannier_settings = cout.get(
+            'wannier_settings',
+            cinp.get(
+                'wannier_settings',
+                {}))
         return maker
 
     @Workflow.step
@@ -51,7 +57,8 @@ class ProjectionsWorkflow(Workflow):
             mod_win['num_bands'] = nbands
         ParameterData = DataFactory('parameter')
         mod_win = ParameterData(dict=mod_win)
-        mod_c, mod_d = modify_wannier_settings_inline(original=old_win, modifications=mod_win)
+        mod_c, mod_d = modify_wannier_settings_inline(
+            original=old_win, modifications=mod_win)
         msg = ('added projections and overrides to wannier settings.')
         self.append_to_report(msg)
         self.add_attribute('modify_wannier_settings_uuid', mod_c.uuid)
@@ -70,7 +77,6 @@ class ProjectionsWorkflow(Workflow):
 
     @Workflow.step
     def end(self):
-        params = self.get_parameters()
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['wannier_data']
         valid = self.helper._verify_calc_output(calc, output_links)
@@ -98,7 +104,8 @@ class ProjectionsWorkflow(Workflow):
         if required.issubset(names):
             valid = True
         else:
-            log += ('the retrieved wannier_data node does not contain a .amn file. '
+            log += ('the retrieved wannier_data node does not contain a .amn'
+                    'file. '
                     'something must have gone wrong, no output produced.')
         return valid, log
 
@@ -113,16 +120,21 @@ class ProjectionsWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow.'''
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
-        tmpl['wannier_settings'] = {'#_explanation':
-                                    ('overrides the settings taken from continue_from '
-                                     'keys starting with # are ignored'),
-                                    '#num_wann': 'int',
-                                    '#use_bloch_phases': 'false | true',
-                                    }
+        tmpl['wannier_settings'] = {
+            '#_explanation': (
+                'overrides the settings taken from continue_from '
+                'keys starting with # are ignored'),
+            '#num_wann': 'int',
+            '#use_bloch_phases': 'false | true',
+            }
         return tmpl
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that can be stored to a file,
+        edited, loaded and used to run this Workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

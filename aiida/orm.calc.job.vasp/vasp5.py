@@ -7,7 +7,10 @@ from aiida.common.utils import classproperty
 
 class Vasp5Calculation(NscfCalculation, WannierBase):
     '''
-    Calculation written and tested for vasp 5.3.5
+    General purpose VASP calculation, retrieves everything,
+    so if storage space is a concern, consider deriving from it
+    and overriding the retrieve_list in the subclass so only
+    the necessary files are retrieved from the server.
     '''
     default_parser = 'vasp.vasp5'
 

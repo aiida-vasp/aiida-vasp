@@ -21,7 +21,7 @@ Plugins
 *******
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    VASP5 <calcs/vasp>
    Wannier90 <calcs/wannier>
@@ -33,10 +33,9 @@ Workflows
 .. toctree::
    :maxdepth: 4
 
-   Band Structure <wf/bands>
-   Tight-binding Model <wf/tbmodel>
-   Windows
-   Autowindows
+   Autowindows <wf/autowindow>
+   Windows <wf/windows>
+   Single-Calc <wf/singlecalc>
 
 *****************
 Using the Plugins

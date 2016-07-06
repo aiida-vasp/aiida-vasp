@@ -3,32 +3,13 @@ from aiida.orm import Workflow, Calculation
 
 
 class NscfWorkflow(Workflow):
+
     '''
-    AiiDA-VASP Workflow for continuing from an SCF Calculation
-    parameters are given using :py:func:set_params(parameter_dict).
-    See below for a list of keys to use in parameter_dict.
-    :key str vasp_code: the identifier for your vasp code,
-        example: "code@computer"
-    :key str queue: the name of the queue to run calculations in.
-    :key dict resources: the aiida style resources specification. example:
-        {'num_machines': 4, 'num_mpiprocs_per_machine': 16}
-    :key dict kpoints: a dict containing one of the keys
-        ['mesh', 'list', 'path']
-        The value of that key must be suitable to create a KpointsData node.
-    :key bool use_wannier: default=False, if True LWANNIER90 is used and the
-        wannier input/output are retrieved as well.
-        This requires the vasp code to be compiled with the VASP2WANNIER90
-        flag.
-    :key dict settings: optional, a dict with incar keys, overriding the ones
-        of the original scf calc. Note: by default ICHARG is set to 11,
-        LWANNIER90 depending on the 'use_wannier' key.
-    :key str label: optional, overrides the default label given to the
-        calculation.
-    :key desc: optional, overrides the default description given to the
-        calculation.
-    :key dict continue_from: uuid of the scf calculation to continue from
+    AiiDA-VASP Workflow for continuing from an SCF Calculation.
+    Can be used with or without the vasp2wannier90 interface.
     '''
     Helper = WorkflowHelper
+
     def __init__(self, **kwargs):
         self.helper = self.Helper(parent=self)
         super(NscfWorkflow, self).__init__(**kwargs)
@@ -91,6 +72,8 @@ class NscfWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow.'''
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['use_wannier'] = ('True | False (if true, vasp_code must be '
                                'compiled with wannier interface')
@@ -98,4 +81,6 @@ class NscfWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that can be stored to a file,
+        edited, loaded and used to run this Workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

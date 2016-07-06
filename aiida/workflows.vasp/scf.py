@@ -1,14 +1,17 @@
 from helper import WorkflowHelper
 from aiida.orm import Workflow
 from aiida.common import aiidalogger
+from aiida.common.utils import classproperty
 
 logger = aiidalogger.getChild('ScfWorkflow')
 
 
 class ScfWorkflow(Workflow):
+
     '''AiiDA workflow to run a VASP scf calculation
-    to reuse WAVECAR and CHGCAR'''
+    the resulting WAVECAR and CHGCAR can then be reused in further workflows.'''
     Helper = WorkflowHelper
+
     def __init__(self, **kwargs):
         self.helper = self.Helper(parent=self)
         super(ScfWorkflow, self).__init__(**kwargs)
@@ -52,7 +55,13 @@ class ScfWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary with the necessary keys to
+        run this workflow and explanations to each key as values'''
         return cls.Helper.get_params_template(continuation=False)
 
+    @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that could be stored
+        in a file, edited, loaded and used as parameters to run
+        this workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

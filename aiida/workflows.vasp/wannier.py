@@ -3,17 +3,14 @@ from helper import WorkflowHelper
 
 
 class WannierWorkflow(Workflow):
+
     '''AiiDA workflow to run a wannier90 calculation, continuing from
     a vasp.amn calc'''
     Helper = WorkflowHelper
+
     def __init__(self, **kwargs):
         self.helper = self.Helper(parent=self)
         super(WannierWorkflow, self).__init__(**kwargs)
-
-    # ~ def get_calc_maker(self):
-        # ~ params = self.get_parameters()
-        # ~ cont = params.get('continue_from')
-        # ~ maker = self._get_calc_maker(self, 'vasp.amn', continue_from=cont)
 
     def get_wannier_calc(self, win, wdat):
         from aiida.orm import CalculationFactory, Code
@@ -82,6 +79,8 @@ class WannierWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow.'''
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl.pop('vasp_code')
         tmpl.pop('kpoints')
@@ -106,4 +105,6 @@ class WannierWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that can be stored to a file,
+        edited, loaded and used to run this Workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

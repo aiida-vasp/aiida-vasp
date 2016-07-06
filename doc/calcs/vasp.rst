@@ -16,9 +16,12 @@ Tested with VASP 5.3.3 and 5.3.5.
 Versions prior to 5.3.x might behave slightly differently for the same input parameters and output might be formatted differently than
 the parsers expect. Some input parameters do not exist in older VASP versions. Therefore interoperability with versions prior to VASP 5.3.x is not guaranteed.
 
+**************
+Plugin Details
+**************
+
 .. toctree::
    :maxdepth: 4
-   :caption: Plugin Details
    
    Scf <scf>
    Nscf <nscf>
