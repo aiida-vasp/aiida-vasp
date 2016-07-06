@@ -4,7 +4,8 @@ from nscf import NscfCalculation
 
 
 class AmnCalculation(WannierBase, NscfCalculation):
-    '''Calculation for using vasp 5.3 with the vasp2wannier90 interface.'''
+    '''Calculation for using vasp 5 with the vasp2wannier90 interface with
+    wannier90 input parameters.'''
 
     default_parser = 'vasp.amn'
     wannier_settings = Input(types=['parameter'],
@@ -13,8 +14,8 @@ class AmnCalculation(WannierBase, NscfCalculation):
     wannier_data = Input(types=['vasp.archive'])
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''changes the retrieve_list to retrieve only files needed
-        to continue with nonscf runs'''
+        '''remove EIGENVAL and DOSCAR from retrieve_list, so only basc output and
+        wannier90 output files are retrieved'''
         calcinfo = super(AmnCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list.remove('EIGENVAL')

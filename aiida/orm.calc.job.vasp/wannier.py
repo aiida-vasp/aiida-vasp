@@ -90,6 +90,7 @@ class WannierCalculation(JobCalculation, WannierBase):
     default_parser = 'vasp.wannier'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
+        ''' write input files, set retrieve_list to all files starting with wannier90'''
         # inputfile destinations
         win_dst = tempfolder.get_abs_path('wannier90.win')
         fpath = tempfolder.get_abs_path('')
@@ -115,6 +116,7 @@ class WannierCalculation(JobCalculation, WannierBase):
         self._update_internal_params()
 
     def verify_inputs(self, inputdict):
+        '''make sure settings and data nodes were given'''
         msg = 'input not set: %s'
         if not inputdict.get('settings'):
             raise ValueError(msg % 'settings')

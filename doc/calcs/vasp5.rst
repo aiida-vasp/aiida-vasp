@@ -1,8 +1,10 @@
+################
 Vasp5Calculation
-----------------
+################
 
-Applications
-++++++++++++
+***********
+Description
+***********
 
 This calculation retrieves and stores all possible output files it finds after the run, including files obtained using the
 Vasp2Wannier90 interface. Therefore it should only be used if every single file is needed for later steps or
@@ -13,20 +15,32 @@ Therefore it may be necessary to write an InlineCalculation to take the "retriev
 output data nodes for files that will be used later on. Otherwise the data proveniency chain connecting input parameters,
 codes, outpus and analyzed data will be broken.
 
-I/O
-+++
+******
+Inputs
+******
 
-Inputs:
+* :ref:`settings <vasp-input-settings>`
+* :ref:`kpoints <vasp-input-kpoints>`
+* :ref:`structure <vasp-input-structure>`
+* :ref:`paw <vasp-input-paw>`
+* :ref:`chargedensities <vasp-input-chargedens>`
+* :ref:`wavefunctions <vasp-input-wavefunctions>`
 
-* settings: :py:class:`ParameterData <aiida.orm.data.structure.StructureData>`, see :ref:`vasp-settings`.
-* kpoints: :py:class:`KpointsData <aiida.orm.data.array.kpoints.KpointsData>`, see :ref:`vasp-kpoints`.
-* structure: :py:class:`StructureData <aiida.orm.data.structure.KpointsData>` or :py:class:`CifData <aiida.orm.data.cif.CifData>`, 
-see :ref:`vasp-structure`, see :ref:`vasp-structure`.
-* paw: :py:class:`PawData <aiida.orm.data.vasp.PawData>`, see :ref:`vasp-paw`.
+*******
+Outputs
+*******
 
-Default Parser: :py:class:`Vasp5Parser <aiida.parsers.plugins.vasp.vasp5.Vasp5Parser>`.
+* :ref:`results <vasp-output-results>`
+* :ref:`bands <vasp-output-bands>`
+* :ref:`dos <vasp-output-dos>`
+* :ref:`wannier_settings <vasp-output-wannier_settings>`
+* :ref:`wannier_data <vasp-output-wannier_data>`
 
-Retrieved Files:
+***************
+Retrieved Files
+***************
+
+See `Files used by VASP <http://cms.mpi.univie.ac.at/vasp/Files_used_by_VASp.html>` for reference on VASP files, as well as `wannier90 User Guide <http://www.wannier.org/doc/user_guide.pdf>` for explanations about wannier90 files.
 
 * CHG
 * CHGCAR
@@ -46,3 +60,15 @@ Retrieved Files:
 * XDATACAR
 * vasprun.xml
 * wannier90* (all files starting with "wannier90")
+
+*********
+Reference
+*********
+Superclasses:
+
+* :py:class:`NscfCalculation <aiida.orm.calculation.job.vasp.nscf.NscfCalculation>`
+* :py:class:`WannierBase <aiida.orm.calculation.job.vasp.wannier.WannierBase>`
+
+.. autoclass:: aiida.orm.calculation.job.vasp.vasp5.Vasp5Calculation
+   :members: verify_inputs, _prepare_for_submission
+   :undoc-members:

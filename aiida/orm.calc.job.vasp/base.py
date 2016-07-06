@@ -149,6 +149,31 @@ class VaspCalcBase(JobCalculation):
     input_file_name = 'INCAR'
     output_file_name = 'OUTCAR'
 
+    @classmethod
+    def max_retrieve_list(cls):
+        retrieve_list = [
+            'CHG',
+            'CHGCAR',
+            'CONTCAR',
+            'DOSCAR',
+            'EIGENVAL',
+            'ELFCAR',
+            'IBZKPT',
+            'LOCPOT',
+            'OSZICAR',
+            'OUTCAR',
+            'PCDAT',
+            'PROCAR',
+            'PROOUT',
+            'STOPCAR',
+            'TMPCAR',
+            'WAVECAR',
+            'XDATCAR',
+            ['wannier90*', '.', 0],
+            'vasprun.xml'
+        ]
+        return retrieve_list
+
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''
         Writes the four minimum output files,
@@ -175,27 +200,7 @@ class VaspCalcBase(JobCalculation):
         # calcinfo
         calcinfo = CalcInfo()
         calcinfo.uuid = self.uuid
-        calcinfo.retrieve_list = [
-            'CHG',
-            'CHGCAR',
-            'CONTCAR',
-            'DOSCAR',
-            'EIGENVAL',
-            'ELFCAR',
-            'IBZKPT',
-            'LOCPOT',
-            'OSZICAR',
-            'OUTCAR',
-            'PCDAT',
-            'PROCAR',
-            'PROOUT',
-            'STOPCAR',
-            'TMPCAR',
-            'WAVECAR',
-            'XDATCAR',
-            ['wannier90*', '.', 0],
-            'vasprun.xml'
-        ]
+        calcinfo.retrieve_list = self.max_retrieve_list()
         codeinfo = CodeInfo()
         codeinfo.code_uuid = self.get_code().uuid
         codeinfo.code_pk = self.get_code().pk
@@ -282,8 +287,7 @@ class BasicCalculation(VaspCalcBase):
     default_parser = 'vasp.basic'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''changes the retrieve_list to retrieve only files needed
-        to continue with nonscf runs'''
+        '''retrieve only OUTCAR and vasprun.xml'''
         calcinfo = super(
             BasicCalculation, self)._prepare_for_submission(
                 tempfolder, inputdict)

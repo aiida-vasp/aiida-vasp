@@ -11,7 +11,8 @@ class ScfCalculation(BasicCalculation):
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''
         changes the retrieve_list to retrieve only
-        files needed to continue with nonscf runs
+        files needed to continue with nonscf runs,
+        CHGCAR, WAVECAR, IBZKPT
         '''
         calcinfo = super(
             ScfCalculation, self)._prepare_for_submission(
@@ -36,7 +37,7 @@ class ScfCalculation(BasicCalculation):
 
     def _init_internal_params(self):
         '''
-        let the metaclass py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta`
+        let the metaclass py:class:`aiida.orm.calculation.job.vasp.base.CalcMeta`
         ref CalcMeta pick up internal parameters from the class body
         and insert them
         '''

@@ -4,7 +4,8 @@ from aiida.orm import DataFactory
 
 class NscfCalculation(BasicCalculation):
     '''
-    Calculation written and tested for vasp 5.3.5
+    Runs VASP with precalculated (from scf run) wave functions and charge densities.
+    Used to obtain bandstructures, DOS and wannier90 input files.
     '''
     charge_density = Input(types='vasp.chargedensity',
                            doc='chargedensity node: should be obtained \n' +
@@ -27,8 +28,8 @@ class NscfCalculation(BasicCalculation):
             self.logger.warning(msg)
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''changes the retrieve_list to retrieve only files needed
-        to continue with nonscf runs'''
+        '''add EIGENVAL, DOSCAR, and all files starting with wannier90 to
+        the list of files to be retrieved.'''
         calcinfo = super(NscfCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list.extend(['EIGENVAL', 'DOSCAR'])
@@ -36,6 +37,7 @@ class NscfCalculation(BasicCalculation):
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
+        '''write CHGAR and WAVECAR files if needed'''
         super(NscfCalculation, self).write_additional(
             tempfolder, inputdict)
         if self._need_chgd():

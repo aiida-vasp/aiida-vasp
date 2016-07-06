@@ -1,3 +1,4 @@
+from base import VaspCalcBase
 from nscf import NscfCalculation
 from wannier import WannierBase
 from aiida.orm import DataFactory
@@ -10,15 +11,12 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
     '''
     default_parser = 'vasp.vasp5'
 
-    def write_additional(self, tempfolder, inputdict):
-        super(Vasp5Calculation, self).write_additional(
+    def _prepare_for_submission(self, tempfolder, inputdict):
+        '''retrieve all output files potentially created by VASP'''
+        calcinfo = super(Vasp5Calculation, self)._prepare_for_submission(
             tempfolder, inputdict)
-        if self._need_chgd():
-            chgcar = tempfolder.get_abs_path('CHGCAR')
-            self.write_chgcar(inputdict, chgcar)
-        if self._need_wfn():
-            wavecar = tempfolder.get_abs_path('WAVECAR')
-            self.write_wavecar(inputdict, wavecar)
+        calcinfo.retrieve_list = VaspCalcBase.max_retrieve_list()
+        return calcinfo
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         # ~ notset_msg = 'input not set: %s'
