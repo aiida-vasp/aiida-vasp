@@ -1,0 +1,117 @@
+###############
+WindowsWorkflos
+###############
+
+***********
+Description
+***********
+
+Runs all the steps required to get a bandstructure and hopping terms from wannier90 as well as an
+ab inition Bandstructure from VASP that can be used to compare.
+The window parameters for vasp90 are given manually at the start. Several sets of parameters can be given, for each a wannier workflow is run.
+
+::
+
+   User Input (given at the start)
+      |
+      |-------+------------------------------+-------------+
+      |       |                              |             |
+      v       v                              v             v
+   Scf ---> Nscf -> (wannier_settings) ---> Projections ---> Wannier ---> Nscf
+                                                   |----> Wannier       |
+                                                             |          +---> Bands, DOS
+                                                             v
+                                                    Bands, wannier90_hr.dat
+
+minimal example::
+
+   WindowsWorkflow = WorkflowFactory('vasp.windows')
+
+   num_nodes = 2
+   num_ppn = 6
+   nbands = 24
+   assert(nbands % (num_nodes * num_ppn) == 0) # avoid getting more bands than asking for
+
+   parameters = {
+      "kpoints": {
+         "mesh": [4, 4, 4],
+         "path": [
+            ["X", [0., .5, .5], "G", [0., 0., 0.]]
+         ]
+      },
+      "paw_family": "<name>",
+      "paw_map": {"In": "In_d", "As": "As"},
+      "resources": {
+         "num_machines": num_nodes, 
+         "num_mpiprocs_per_machine": num_ppn
+      },
+      "wannier_resources": {
+         "num_machines": 1,
+         "num_mpiprocs_per_machine": 1
+      }
+      "queue": "<computing queue name>",
+      "vasp_code": "<vasp-code@computer>",
+      "wannier_code": "<wannier-code@computer>",
+      "structure": "<path to cif or poscar file for InAs>",
+      "settings": {
+         "nbands": nbands,
+         "ediff": 1e-5,
+         "gga": "PE",
+         "gga_compat": false,
+      }
+      "wannier_settings": {
+         "bands_plot": True,
+         "hr_plot": True,
+         "num_wann": 8,
+         "use_bloch_phases": False
+      }
+      "projections": [
+         "In : s; px; py; pz",
+         "As : s; px; py; py"
+      ]
+      "windows": [
+         {"inner": [<min>, <max>], "outer": [<min>, <max>]},
+         ...
+      ]
+   }
+
+   wf = ScfWorkflow(params=parameters)
+   wf.start() 
+ 
+**********
+Parameters
+**********
+
+Most of the parameters have the same semantics as for the :ref:`single calculation workflows <stepwf-parameters>`
+
+* settings
+* wannier_settings
+* structure
+* paw_family
+* paw_map
+* resources
+* queue
+* vasp_code
+* wannier_code
+* description
+* extras
+* label
+
+The following parameters are specific to this calculation or have changed semantics versus the single calculation workflow parameters.
+
+* kpoints: dict, like for single calculation workflows, except containing a mesh as well as a path specification.
+* projections:, list as it would be set in wannier_settings
+* windows: list of dicts, each dict follows the format {'outer': [min, max], 'inner': [min, max]}
+* wannier_resources: overrides resources for wannier calculations
+* wannier_queue: overrides queue for wannier calculations (it's possible to have VASP and wannier on separate computers)
+
+*********
+Reference
+*********
+
+.. automodule:: aiida.workflows.vasp.windows
+
+   .. autoclass:: WindowsWorkflow
+      :members: get_params_template, get_template
+
+      .. automethod:: start

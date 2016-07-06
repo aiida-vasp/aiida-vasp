@@ -29,9 +29,70 @@ It can then be loaded and fed to a workflow::
    wf = ScfWorkflow(params=parameters)
    wf.start()
 
+For working examples for all workflows, take a look in the vasp plugin repository in
+the "examples" folder.
+
+A minimal example::
+   
+   ScfWorkflow = WorkflowFactory('vasp.scf')
+
+   num_nodes = 2
+   num_ppn = 6
+   nbands = 24
+   assert(nbands % (num_nodes * num_ppn) == 0) # avoid getting more bands than asking for
+
+   parameters = {
+      "kpoints": {"mesh": [4, 4, 4]},
+      "paw_family": "<name>",
+      "paw_map": {"In": "In_d", "As": "As"},
+      "resources": {
+         "num_machines": num_nodes, 
+         "num_mpiprocs_per_machine": num_ppn
+      },
+      "queue": "<computing queue name>",
+      "vasp_code": "<code@computer>",
+      "structure": "<path to cif or poscar file for InAs>",
+      "settings": {
+         "nbands": nbands,
+         "ediff": 1e-5,
+         "gga": "PE",
+         "gga_compat": false,
+      }
+   }
+
+   wf = ScfWorkflow(params=parameters)
+   wf.start()
+
+.. _stepwf-parameters:
+ 
 **********
 Parameters
 **********
+
+* continue_from: string, uuid of an appropriate calculation to continue from.
+* settings: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
+* wannier_settings: dict, analog to settings for the wannier_settings input parameter.
+* structure: path to a .cif or POSCAR file. Ignored when continuing from a previous calculation.
+* kpoints: dict, containing one and only one of the following keys
+   - mesh: list with #kpoints in each direction
+   - list: list of kpoints, where each kpoint is a list of coordinates
+   - path: list, according to :py:meth:`KpointsData.set_kpoints_path <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_path>`
+* paw_family: string, name of a PAW family. Ignored if continuing.
+* paw_map: dict, mapping chemical element to PAW symbol. Ignored if continuing.
+* queue: string, same as for :py:meth:`JobCalculation.set_queue_name <aiida.orm.calculation.job.JobCalculation.set_queue_name>`, optional when continuing.
+* resources: dict, num_machines and num_mpiprocs_per_machine keys as for :py:meth:`JobCalculation.set_resources <aiida.orm.calculation.job.JobCalculation.set_resources>`, optional when continuing.
+* vasp_code or wannier_code: string, like for invoking :py:meth:`Code.get_from_string <aiida.orm.code.Code.get_from_string>`.
+
+The following set of parameters can be used to label and categorize the calculations run by the workflow:
+* description: string, used to set the description of the calculation.
+* extras: dict, passed to :py:meth:`Node.set_extras <aiida.orm.node.Node.set_extras>` of the caclculation.
+* label: string, used to set the calculation's label
+
+These properties can be used to filter queries for calculations and therefore to make it easier to find them later in the database.
+ 
+*********
+Workflows
+*********
 
 * :py:class:`ScfWorkflow <aiida.workflows.vasp.scf.ScfWorkflow>`, runs a :doc:`ScfCalculation <../calcs/scf>`
 * :py:class:`NscfWorkflow <aiida.workflows.vasp.nscf.NscfWorkflow>`, runs a :doc:`NscfCalculation <../calcs/nscf>`
@@ -92,6 +153,7 @@ Reference
          node to the results.
 
 .. automodule:: aiida.workflows.vasp.wannier
+
    .. autoclass:: WannierWorkflow
       :members: get_params_template, get_template
 
