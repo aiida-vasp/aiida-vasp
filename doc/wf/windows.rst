@@ -1,5 +1,5 @@
 ###############
-WindowsWorkflos
+WindowsWorkflow
 ###############
 
 ***********
@@ -57,13 +57,11 @@ minimal example::
          "nbands": nbands,
          "ediff": 1e-5,
          "gga": "PE",
-         "gga_compat": false,
+         "gga_compat": False,
       }
       "wannier_settings": {
-         "bands_plot": True,
-         "hr_plot": True,
-         "num_wann": 8,
-         "use_bloch_phases": False
+         "dis_num_iter": 100,
+         "num_iter": 100
       }
       "projections": [
          "In : s; px; py; pz",
@@ -75,9 +73,13 @@ minimal example::
       ]
    }
 
-   wf = ScfWorkflow(params=parameters)
+   wf = WindowsWorkflow(params=parameters)
    wf.start() 
- 
+
+The k-point path for wannier interpolation as well as for the ab-initio band structure
+are both set in the key "kpoints". Any kpoint path set in "wannier_settings" would be overwritten.
+Obvious input parameters like LWANNIER90 for VASP or bands_plot for wannier90 are set automatically.
+
 **********
 Parameters
 **********
@@ -112,6 +114,34 @@ Reference
 .. automodule:: aiida.workflows.vasp.windows
 
    .. autoclass:: WindowsWorkflow
-      :members: get_params_template, get_template
+      :members: get_params_template, get_template, Helper
 
       .. automethod:: start
+
+         runs an ScfWorkflow, passing on the relevant parameters.
+
+      .. automethod:: get_win
+
+         runs an NscfWorkflow continuing from the previous step's ScfCalculation.
+         sets use_wannier automatically.'
+
+      .. automethod:: get_projections
+         
+         runs an AmnWorkflow with the results of the previoust step
+         to get the wannier projections file.
+         sets some wannier_settings keys automatically.
+
+      .. automethod:: get_tbmodel
+
+         loops over the given windows parameters and starts a WannierWorkflow
+         for each set.
+
+      .. automethod:: get_reference_bands
+
+         starts another NscfWorkflow to get a band structure for the same
+         path as the wannier interpolations.
+         Can be compared kpoint for kpoint to the wannier interpolated bands.
+
+      .. automethod:: make_results
+         
+         adds all obtained bands nodes to the workflow's results.

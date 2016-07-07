@@ -33,7 +33,7 @@ Workflows
 .. toctree::
    :maxdepth: 4
 
-   Autowindows <wf/autowindow>
+   Autowindows <wf/autowindows>
    Windows <wf/windows>
    Single-Calc <wf/singlecalc>
 

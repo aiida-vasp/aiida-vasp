@@ -71,6 +71,7 @@ Parameters
 
 * continue_from: string, uuid of an appropriate calculation to continue from.
 * settings: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
+* use_wannier: bool, switches on LWANNIER90 as well as checking for wannier output files in results.
 * wannier_settings: dict, analog to settings for the wannier_settings input parameter.
 * structure: path to a .cif or POSCAR file. Ignored when continuing from a previous calculation.
 * kpoints: dict, containing one and only one of the following keys

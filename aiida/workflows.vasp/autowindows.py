@@ -265,7 +265,6 @@ class AutowindowsWorkflow(Workflow):
                         pk=wf.pk, window=window, error=repr(e))
                 )
 
-        self.add_attribute('refbands', band_wf.get_result('calc').out.bands)
         self.add_attribute('wbands_list', wbands_list)
 
         self.next(exit)
@@ -303,10 +302,15 @@ class AutowindowsWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that could be stored
+        in a file, edited, loaded and used as parameters to run
+        this workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary with the necessary keys to
+        run this workflow and explanations to each key as values'''
         tmpl = cls.Helper.get_params_template()
         wtpl = cls.WannierWf.get_params_template()
         ptpl = cls.ProjWf.get_params_template()

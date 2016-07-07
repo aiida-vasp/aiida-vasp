@@ -4,7 +4,7 @@ from helper import WorkflowHelper
 
 class WindowsWorkflow(Workflow):
 
-    '''Try different inner and outer windows with wannier'''
+    '''Try different inner and outer windows with wannier90'''
     Helper = WorkflowHelper
     ScfWf = WorkflowFactory('vasp.scf')
     NscfWf = WorkflowFactory('vasp.nscf')
@@ -92,7 +92,8 @@ class WindowsWorkflow(Workflow):
         wannier_kpp = []
         for segment in kppath:
             # flatten the segment list
-            wannier_kpp.append(list(itertools.chain.from_iterable(segment[:4])))
+            wannier_kpp.append(
+                list(itertools.chain.from_iterable(segment[:4])))
         return wannier_kpp
 
     @Workflow.step
@@ -123,7 +124,8 @@ class WindowsWorkflow(Workflow):
             wfpk.append(wf.pk)
 
         self.append_to_report('running tbmodels for {} windows'.format(count))
-        self.append_to_report('tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
+        self.append_to_report(
+            'tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
 
         self.next(self.get_reference_bands)
 
@@ -223,10 +225,15 @@ class WindowsWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        '''returns a JSON formatted string that could be stored
+        in a file, edited, loaded and used as parameters to run
+        this workflow.'''
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)
 
     @classmethod
     def get_params_template(cls):
+        '''returns a dictionary with the necessary keys to
+        run this workflow and explanations to each key as values'''
         tmpl = cls.Helper.get_params_template()
         wtpl = cls.WannierWf.get_params_template()
         ptpl = cls.ProjWf.get_params_template()
@@ -251,7 +258,8 @@ class WindowsWorkflow(Workflow):
             nproc = res['num_machines'] * res['num_mpiprocs_per_machine']
             if (nbands % nproc) != 0:
                 valid = False
-                log += 'nbands is not divisible by num_machines * num_mpiprocs_per_machine'
+                log += ('nbands is not divisible by num_machines * '
+                        'num_mpiprocs_per_machine')
         return valid, log
 
     def set_params(self, params):
