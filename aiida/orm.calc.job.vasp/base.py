@@ -12,22 +12,31 @@ def ordered_unique_list(in_list):
 
 
 def make_use_methods(inputs, bases):
+    '''
+    creates the _use_methods classproperty from a list of
+    base classes as well as :py:class:`Input` instances. For use
+    in :py:class:`CalcMeta` during class creation.
+    '''
     @classproperty
     def _use_methods(cls):
         retdict = JobCalculation._use_methods
+        for b in bases:
+            if hasattr(b, '_use_methods'):
+                retdict.update(b._use_methods)
         for inp, dct in inputs.iteritems():
             ln = dct['linkname']
             if isinstance(ln, classmethod):
                 dct['linkname'] = getattr(cls, ln.__func__.__name__)
         retdict.update(inputs)
-        for b in bases:
-            if hasattr(b, '_use_methods'):
-                retdict.update(b._use_methods)
         return retdict
     return _use_methods
 
 
 def make_init_internal(cls, **kwargs):
+    '''
+    returns a _update internal_params method, required in class creation
+    by :py:class:`CalcMeta`
+    '''
     def _update_internal_params(self):
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
@@ -120,7 +129,11 @@ class IntParam(object):
 
 class CalcMeta(JobCalculation.__metaclass__):
     '''
-    Metaclass responsible to simplify routine Calculation setup
+    Metaclass that allows simpler and clearer Calculation class writing.
+    Takes :py:class:`Input` instances from the class and converts it to
+    the correct entries in the finished class's _use_methods classproperty.
+    finds class attributes corresponding to 'internal parameters'
+    and creates the finished class's _update_internal_params method.
     '''
     def __new__(cls, name, bases, classdict):
         inputs = {}
@@ -145,12 +158,23 @@ class CalcMeta(JobCalculation.__metaclass__):
 
 
 class VaspCalcBase(JobCalculation):
+    '''
+    Base class of all calculations utilizing VASP.
+
+    * sets :py:class:`CalcMeta` as it's __metaclass__
+    * Defines internal parameters common to all vasp calculations.
+    * provides a basic, extendable implementation of _prepare_for_submission
+    * provides hooks, so subclasses can extend the behaviour without
+
+    having to reimplement common functionality
+    '''
     __metaclass__ = CalcMeta
     input_file_name = 'INCAR'
     output_file_name = 'OUTCAR'
 
     @classmethod
     def max_retrieve_list(cls):
+        '''returns a list of all possible output files from a VASP run'''
         retrieve_list = [
             'CHG',
             'CHGCAR',
@@ -209,9 +233,13 @@ class VaspCalcBase(JobCalculation):
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
+        '''Subclass hook for writing other input files than the basic four
+        (INCAR, KPOINTS, POSCAR, POTCAR)'''
         pass
 
     def _init_internal_params(self):
+        '''must be present on all JobCalculation subclasses, that
+        set internal parameters'''
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
@@ -225,14 +253,16 @@ class VaspCalcBase(JobCalculation):
 
     def check_input(self, inputdict, linkname, check_fn=lambda: True):
         '''
-        :py:method: check_input(inputdict, linkname[, check_fn])
+        :py:classmethod:: check_input(inputdict, linkname[, check_fn])
+
         check wether the given linkname is in the inputdict.
 
         This is meant to be called prior to submission and will raise an
         Exception if no input node is found for the linkname.
 
         :param function check_fn: A function that returns True if the
-        check should be performed or False if not.
+            check should be performed or False if not.
+
         '''
         notset_msg = 'input not set: %s'
         if check_fn():
@@ -241,10 +271,13 @@ class VaspCalcBase(JobCalculation):
         return True
 
     def store(self, *args, **kwargs):
+        '''adds a _prestore subclass hook for operations that
+        should be done just before storing'''
         self._prestore()
         super(VaspCalcBase, self).store(*args, **kwargs)
 
     def _prestore(self):
+        '''Subclass hook for updating attributes etc, just before storing'''
         pass
 
 
@@ -287,7 +320,8 @@ class BasicCalculation(VaspCalcBase):
     default_parser = 'vasp.basic'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''retrieve only OUTCAR and vasprun.xml'''
+        '''retrieve only OUTCAR and vasprun.xml, extend in
+        subclasses for production to retrieve more output data'''
         calcinfo = super(
             BasicCalculation, self)._prepare_for_submission(
                 tempfolder, inputdict)
@@ -296,9 +330,9 @@ class BasicCalculation(VaspCalcBase):
 
     def write_incar(self, inputdict, dst):
         '''
-        :py:method: write_incar(inputdict, dst)
         converts from settings node (ParameterData) to INCAR format
         and writes to dst
+
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         '''
@@ -310,9 +344,9 @@ class BasicCalculation(VaspCalcBase):
         '''
         converts from structures node (StructureData) to POSCAR format
         and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
+
+        :param inputdict: required by baseclass
+        :param dst: absolute path of the file to write to
         '''
         from ase.io.vasp import write_vasp
         with open(dst, 'w') as poscar:
@@ -321,9 +355,9 @@ class BasicCalculation(VaspCalcBase):
     def write_potcar(self, inputdict, dst):
         '''
         concatenatest multiple paw files into a POTCAR
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
+
+        :param inputdict: required by baseclass
+        :param dst: absolute path of the file to write to
         '''
         import subprocess32 as sp
         catcom = ['cat']
@@ -364,9 +398,9 @@ class BasicCalculation(VaspCalcBase):
         '''
         converts from kpoints node (KpointsData) to KPOINTS format
         and writes to dst
-        :param
-            inputdict: required by baseclass
-            dst: absolute path of the file to write to
+
+        :param inputdict: required by baseclass
+        :param dst: absolute path of the file to write to
         '''
         kp = self.inp.kpoints
         if kp.get_attrs().get('mesh'):
@@ -381,6 +415,7 @@ class BasicCalculation(VaspCalcBase):
             tempfolder, inputdict)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
+        '''check for the presence of the required inputs'''
         # ~ notset_msg = 'input not set: %s'
         super(BasicCalculation, self).verify_inputs(inputdict, *args, **kwargs)
         self.check_input(inputdict, 'settings')
@@ -390,7 +425,11 @@ class BasicCalculation(VaspCalcBase):
         for kind in self.elements:
             self.check_input(inputdict, self._get_paw_linkname(kind))
         self.check_input(inputdict, 'kpoints')
-        kpa = inputdict['kpoints'].get_attrs()
+        self.check_kpoints(inputdict['kpoints'])
+
+    def check_kpoints(self, kpoints):
+        '''check for nonemptiness of the input kpoints node'''
+        kpa = kpoints.get_attrs()
         if 'mesh' not in kpa and 'array|kpoints' not in kpa:
             msg = 'BasicCalculation can not be '
             msg += 'submitted with empty kpoints node'
@@ -398,6 +437,7 @@ class BasicCalculation(VaspCalcBase):
 
     @classmethod
     def _get_paw_linkname(cls, kind):
+        '''required for storing multiple input paw nodes'''
         return 'paw_%s' % kind
 
     def _prestore(self):
@@ -439,8 +479,7 @@ class BasicCalculation(VaspCalcBase):
 
     def _init_internal_params(self):
         '''
-        let the metaclass
-        py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta`
+        let the metaclass :py:class:`CalcMeta`
         ref CalcMeta pick up internal parameters from the class body
         and insert them
         '''
@@ -448,106 +487,106 @@ class BasicCalculation(VaspCalcBase):
         self._update_internal_params()
 
 
-class TentativeVaspCalc(VaspCalcBase):
-    '''vasp 3.5.3 calc with nice hopefully interface'''
-    incar = Input(types='parameter', doc='input parameters')
-    structure = Input(types='structure', doc='aiida structure')
-    paw = Input(types='vasp.potpaw', doc='paw symbols or files', param='kind')
-    kpoints = Input(types='array.kpoints', doc='kpoints array or mesh')
-    default_parser = 'vasp.tentative'
-
-    def _init_internal_params(self):
-        super(TentativeVaspCalc, self)._init_internal_params()
-        self._update_internal_params()
-
-    def verify_inputs(self, inputdict):
-        incar = inputdict['incar'].get_dict()
-        keys = map(lambda k: k.lower(), incar.keys())
-        need_kp = True
-        if 'kspacing' in keys and 'kgamma' in keys:
-            need_kp = False
-        self.use_kp = True
-        kp = inputdict.get('kpoints')
-        if not need_kp:
-            msg = 'INCAR contains KSPACING and KGAMMA: '
-            if not kp:
-                msg += 'KPOINTS omitted'
-                self.use_kp = False
-            else:
-                msg += 'KPOINTS still used'
-            self.logger.info(msg)
-
-    def _prestore(self):
-        super(TentativeVaspCalc, self)._prestore()
-        self.elements = self.inp.structure.get_kind_names()
-
-    def write_incar(self, inputdict, dst):
-        from incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(inputdict['incar'].get_dict()))
-
-    @classmethod
-    def _get_paw_linkname(cls, kind):
-        return 'paw_{}'.format(kind)
-
-    def write_potcar(self, inputdict, dst):
-        import subprocess32 as sp
-        structure = inputdict['structure']
-        catcom = ['cat']
-        # order the symbols according to order given in structure
-        for kind in structure.get_kind_names():
-            paw = inputdict[self._get_paw_linkname(kind)]
-            catcom.append(paw.get_abs_path('POTCAR'))
-        # cat the pawdata nodes into the file
-        with open(dst, 'w') as pc:
-            sp.check_call(catcom, stdout=pc)
-
-    def write_poscar(self, inputdict, dst):
-        from ase.io.vasp import write_vasp
-        structure = inputdict['structure']
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, structure.get_ase(), vasp5=True)
-
-    def write_kpoints(self, inputdict, dst):
-        if self.use_kp:
-            kp = inputdict['kpoints']
-            try:
-                mesh, offset = kp.get_kpoints_mesh()
-                with open(dst, 'w') as kpoints:
-                    kps = kpmtemp.format(N=mesh, s=offset)
-                    kpoints.write(kps)
-            except AttributeError:
-                kpl, weights = kp.get_kpoints(also_weights=True)
-                kw = zip(kpl, weights)
-                with open(dst, 'w') as kpoints:
-                    kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
-                    kps = kpltemp.format(N=len(kw), klist=kpls)
-                    kpoints.write(kps)
-
-    @property
-    def elements(self):
-        return self.get_attr('elements')
-
-    @elements.setter
-    def elements(self, value):
-        self._set_attr('elements', value)
-
-    @classmethod
-    def _new_incar(cls):
-        return DataFactory('parameter')()
-
-    @classmethod
-    def _new_structure(cls):
-        return DataFactory('structure')()
-
-    @classmethod
-    def Paw(cls):
-        return DataFactory('vasp.potpaw')
-
-    @classmethod
-    def _new_kp(cls):
-        return DataFactory('array.kpoints')()
-
+#class TentativeVaspCalc(VaspCalcBase):
+#    '''vasp 3.5.3 calc with nice hopefully interface'''
+#    incar = Input(types='parameter', doc='input parameters')
+#    structure = Input(types='structure', doc='aiida structure')
+#    paw = Input(types='vasp.potpaw', doc='paw symbols or files', param='kind')
+#    kpoints = Input(types='array.kpoints', doc='kpoints array or mesh')
+#    default_parser = 'vasp.tentative'
+#
+#    def _init_internal_params(self):
+#        super(TentativeVaspCalc, self)._init_internal_params()
+#        self._update_internal_params()
+#
+#    def verify_inputs(self, inputdict):
+#        incar = inputdict['incar'].get_dict()
+#        keys = map(lambda k: k.lower(), incar.keys())
+#        need_kp = True
+#        if 'kspacing' in keys and 'kgamma' in keys:
+#            need_kp = False
+#        self.use_kp = True
+#        kp = inputdict.get('kpoints')
+#        if not need_kp:
+#            msg = 'INCAR contains KSPACING and KGAMMA: '
+#            if not kp:
+#                msg += 'KPOINTS omitted'
+#                self.use_kp = False
+#            else:
+#                msg += 'KPOINTS still used'
+#            self.logger.info(msg)
+#
+#    def _prestore(self):
+#        super(TentativeVaspCalc, self)._prestore()
+#        self.elements = self.inp.structure.get_kind_names()
+#
+#    def write_incar(self, inputdict, dst):
+#        from incar import dict_to_incar
+#        with open(dst, 'w') as incar:
+#            incar.write(dict_to_incar(inputdict['incar'].get_dict()))
+#
+#    @classmethod
+#    def _get_paw_linkname(cls, kind):
+#        return 'paw_{}'.format(kind)
+#
+#    def write_potcar(self, inputdict, dst):
+#        import subprocess32 as sp
+#        structure = inputdict['structure']
+#        catcom = ['cat']
+#        # order the symbols according to order given in structure
+#        for kind in structure.get_kind_names():
+#            paw = inputdict[self._get_paw_linkname(kind)]
+#            catcom.append(paw.get_abs_path('POTCAR'))
+#        # cat the pawdata nodes into the file
+#        with open(dst, 'w') as pc:
+#            sp.check_call(catcom, stdout=pc)
+#
+#    def write_poscar(self, inputdict, dst):
+#        from ase.io.vasp import write_vasp
+#        structure = inputdict['structure']
+#        with open(dst, 'w') as poscar:
+#            write_vasp(poscar, structure.get_ase(), vasp5=True)
+#
+#    def write_kpoints(self, inputdict, dst):
+#        if self.use_kp:
+#            kp = inputdict['kpoints']
+#            try:
+#                mesh, offset = kp.get_kpoints_mesh()
+#                with open(dst, 'w') as kpoints:
+#                    kps = kpmtemp.format(N=mesh, s=offset)
+#                    kpoints.write(kps)
+#            except AttributeError:
+#                kpl, weights = kp.get_kpoints(also_weights=True)
+#                kw = zip(kpl, weights)
+#                with open(dst, 'w') as kpoints:
+#                    kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
+#                    kps = kpltemp.format(N=len(kw), klist=kpls)
+#                    kpoints.write(kps)
+#
+#    @property
+#    def elements(self):
+#        return self.get_attr('elements')
+#
+#    @elements.setter
+#    def elements(self, value):
+#        self._set_attr('elements', value)
+#
+#    @classmethod
+#    def _new_incar(cls):
+#        return DataFactory('parameter')()
+#
+#    @classmethod
+#    def _new_structure(cls):
+#        return DataFactory('structure')()
+#
+#    @classmethod
+#    def Paw(cls):
+#        return DataFactory('vasp.potpaw')
+#
+#    @classmethod
+#    def _new_kp(cls):
+#        return DataFactory('array.kpoints')()
+#
 
 class TestVC(VaspCalcBase):
     test_input = Input(types='parameter', doc='bla')

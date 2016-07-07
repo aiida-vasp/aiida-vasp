@@ -8,6 +8,10 @@ class WorkflowHelper(object):
         return self.parent.get_parameters()
 
     def _get_calc_maker(self, calc_type, **kwargs):
+        '''
+        Instatiate a :py:class:`VaspMaker <aiida.orm.calculation.job.vasp.maker.VaspMaker>`
+        and feed it the common input parameters for all vasp workflows.
+        '''
         from aiida.orm import Code
         from aiida.orm.calculation.job.vasp.maker import VaspMaker
         params = self.get_parameters()
@@ -45,20 +49,23 @@ class WorkflowHelper(object):
         return maker
 
     def _default_label(self, structure):
-        label = '[{}]: VASP scf run for {}'
-        label = label.format(self.__class__.__name__,
+        label = '[{}]: Calculation for {}'
+        label = label.format(self.parent.__class__.__name__,
                              structure.get_formula())
         return label
 
     def _calc_start_msg(self, name, calc):
+        '''returns a message that the calculation was started'''
         msg = 'Calculation started: {name}, PK={calc.pk}, uuid={calc.uuid}'
         return msg.format(name=name, calc=calc)
 
     def _subwf_start_msg(self, name, wf):
+        '''returns a message that the subworkflow was started'''
         msg = 'Workflow started: {name}, PK={wf.pk}, uuid={wf.uuid}'
         return msg.format(name=name, wf=wf)
 
     def _wf_start_msg(self):
+        '''returns a message that the workflow was started'''
         params = self.get_parameters()
         msg = 'Workflow started: {wf_class} **{wf_label}**'
         wfclass = self.parent.__class__.__name__
@@ -71,6 +78,8 @@ class WorkflowHelper(object):
         return msg.format(calc.pk, links)
 
     def _get_first_step_calc(self, step):
+        '''return either the first calculation for a step or
+        None, if there isn't any'''
         step_calcs = self.parent.get_step_calculations(step)
         if not bool(step_calcs):
             self.parent.append_to_report(
@@ -80,6 +89,8 @@ class WorkflowHelper(object):
         return first_calc
 
     def _verify_calc_output(self, calc, output_keys):
+        '''returns True only if all output link names given in
+        output_keys are present on calc'''
         if not bool(calc):
             return False
         out = calc.get_outputs_dict()
@@ -93,6 +104,8 @@ class WorkflowHelper(object):
         # ~ self.parent.set_params(params, **kwargs)
 
     def _verify_params(self, params, silent=False):
+        '''finds _verify_param_* methods on the parent instance
+        and loops through them to check parameter consistency'''
         valid = True
         log = []
 
@@ -116,6 +129,8 @@ class WorkflowHelper(object):
 
     @classmethod
     def _verify_params_cls(cls, wf_cls, params, silent=False):
+        '''same as _verify_params, but looks for classmethods on
+        the given workflow class'''
         valid = True
         log = []
 
@@ -139,6 +154,7 @@ class WorkflowHelper(object):
         return valid, log
 
     def _verify_kpoints(self, params):
+        '''common kpoints parameter consistency check'''
         log = ''
         kpoints = params.get('kpoints')
         if kpoints:
@@ -167,6 +183,8 @@ class WorkflowHelper(object):
         return valid, log
 
     def _verify_paws(self, params):
+        '''check the paw input parameter for availability of the indicated
+        paw nodes in the database.'''
         from aiida.orm import DataFactory
         PawData = DataFactory('vasp.paw')
         log = ''
@@ -193,6 +211,7 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_params_template(cls, continuation=False):
+        '''returns a dictionary with some common keys and explanations'''
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
@@ -218,6 +237,8 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_template(cls, wf_class=None, path=None):
+        '''stores the output of the parent's get_params_template method
+        in a JSON file'''
         import json
         from os.path import abspath, expanduser, exists
         result = None

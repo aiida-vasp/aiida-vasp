@@ -6,91 +6,103 @@ import os
 
 class VaspMaker(object):
     '''
-    py:class:: VaspMaker(*args, **kwargs)
-        simplifies the task of creating a Vasp5Calculation from scratch
-        further simplifies creating certain often used types of calculations
+    simplifies creating a Scf, Nscf or AmnCalculation from scratch interactively or
+    as a copy or continuation of a previous calculation
+    further simplifies creating certain often used types of calculations
 
-        :keyword structure: A StructureData node or a
+    Most of the required information can be given as keyword arguments to
+    the constructor or set via properties later on.
+
+    The input information is stored in the instance and the calculation
+    is only built in the :py:meth:`new` method. This also makes it possible
+    to create a set of similar calculations in an interactive setting very
+    quickly.
+
+    :param structure: A StructureData node or a
         (relative) path to either a .cif file or a POSCAR file. Defaults to
-        :type structure: str or StructureData
         a new empty structure node recieved from calc_cls.
+    :type structure: str or StructureData
 
-        :keyword calc_cls: the class that VaspMaker will use when creating
+    :keyword calc_cls: the class that VaspMaker will use when creating
         Calculation nodes.
         defaults to 'vasp.vasp5'.
         if a string is given, it will be passed to aiida's CalculationFactory
-        :type calc_cls: str or vasp.BasicCalculation subclass
+    :type calc_cls: str or vasp.BasicCalculation subclass
 
-        :keyword continue_from: A vasp calculation node with charge_density and
+    :keyword continue_from: A vasp calculation node with charge_density and
         wavefunction output links. VaspMaker will create calculations that
         start with those as inputs.
-        :type continue_from: vasp calculation node
+    :type continue_from: vasp calculation node
 
-        :keyword copy_from: A vasp calculation. It's inputs will be used as
+    :keyword copy_from: A vasp calculation. It's inputs will be used as
         defaults for the created calculations.
-        :type copy_from: vasp calculation node
+    :type copy_from: vasp calculation node
 
-        :keyword charge_density: chargedensity node from a previously run
+    :keyword charge_density: chargedensity node from a previously run
         calculation
-        :type charge_density: ChargedensityData
-        :keyword wavefunctions: wavefunctions node from a previously run
+    :type charge_density: ChargedensityData
+    :keyword wavefunctions: wavefunctions node from a previously run
         calculation
-        :type wavefunctions: WavefunData
-        :keyword array.KpointsData kpoints: kpoints node to use for input
-        :keyword str paw_family: The name of a PAW family stored in the db
-        :keyword str paw_map: A dictionary mapping element symbols -> PAW
+    :type wavefunctions: WavefunData
+    :keyword array.KpointsData kpoints: kpoints node to use for input
+    :keyword str paw_family: The name of a PAW family stored in the db
+    :keyword str paw_map: A dictionary mapping element symbols -> PAW
         symbols
-        :keyword str label: value for the calculation label
-        :keyword str computer: computer name, defaults to code's if code is
+    :keyword str label: value for the calculation label
+    :keyword str computer: computer name, defaults to code's if code is
         given
-        :keyword str code: code name, if any Calculations are given, defaults
+    :keyword str code: code name, if any Calculations are given, defaults
         to their code
-        :keyword str resources: defaults to copy_from.get_resources() or None
-        :keyword str queue: defaults to queue from given calculation, if any,
+    :keyword str resources: defaults to copy_from.get_resources() or None
+    :keyword str queue: defaults to queue from given calculation, if any,
         or None
 
-        py:method:: new()
-        :returns: an instance of :py:attr:calc_cls, initialized with the data
+    .. py:method:: new()
+
+        :returns: an instance of :py:attr:`calc_cls`, initialized with the data
         held by the VaspMaker
 
-        py:method:: add_settings(**kwargs)
+    .. py:method:: add_settings(**kwargs)
+
         Adds keys to the settings (INCAR keywords), if settings is already
         stored, makes a copy.
         Does not overwrite previously set keywords.
 
-        py:method:: rewrite_settings(**kwargs)
-        Same as :py:meth:add_settings, but also overwrites keywords.
+    .. py:method:: rewrite_settings(**kwargs)
 
-        py:method:: set_kpoints_mesh
+        Same as :py:meth:`add_settings`, but also overwrites keywords.
 
-        py:method:: set_kpoints_path
+    .. py:attribute:: structure
 
-        py:attribute:: structure
         Used to initialize the created calculations as well as other nodes
         (like kpoints).
         When changed, can trigger changes in other data nodes.
 
-        py:attribute:: calc_cls
-        Vasp calculation class to be used in :py:meth:new
+    .. py:attribute:: calc_cls
 
-        py:attribute:: computer
+        Vasp calculation class to be used in :py:meth:`new`
 
-        py:attribute:: code
+    .. py:attribute:: computer
 
-        py:attribute:: queue
+    .. py:attribute:: code
 
-        py:attribute:: settings
+    .. py:attribute:: queue
+
+    .. py:attribute:: settings
+
         A readonly shortcut to the contents of the settings node
 
-        py:attribute:: kpoints
+    .. py:attribute:: kpoints
+
         The kpoints node to be used, may be copied to have py:func:set_cell
         called.
 
-        py:attribute:: wavefunction
+    .. py:attribute:: wavefunction
 
-        py:attribute:: charge_density
+    .. py:attribute:: charge_density
 
-        py:attribute:: elements
+    .. py:attribute:: elements
+
         Chemical symbols of the elements contained in py:attr:structure
     '''
     def __init__(self, *args, **kwargs):
@@ -243,8 +255,6 @@ class VaspMaker(object):
 
     def set_kpoints_path(self, value=None, weights=None, **kwargs):
         '''
-        py:method:: set_kpoints_path([value=None][, weights=None], **kwargs)
-
         Calls kpoints' set_kpoints_path method with value, automatically adds
         weights.
         Copies the kpoints node if it's already stored.
@@ -259,8 +269,6 @@ class VaspMaker(object):
 
     def set_kpoints_mesh(self, *args, **kwargs):
         '''
-        py:method:: set_kpoints_mesh(*args, **kwargs)
-
         Passes arguments on to kpoints.set_kpoints_mesh, copies if it was
         already stored.
         '''
@@ -270,8 +278,6 @@ class VaspMaker(object):
 
     def set_kpoints_list(self, kpoints, weights=None, **kwargs):
         '''
-        py:method:: set_kpoints_list(*args, **kwargs)
-
         Passes arguments on to kpoints.set_kpoints, copies if it was already
         stored.
         '''
