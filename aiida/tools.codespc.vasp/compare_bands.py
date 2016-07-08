@@ -171,7 +171,7 @@ def band_error(band1, band2):
 
 def bands_error(bands1, bands2):
     '''
-    band for band error |B1_i - B2_i|^2 where BX_i is the i-th band of
+    band for band rms error sqrt((|B1_i - B2_i|^2)/n) where BX_i is the i-th band of
     Band Structure Node X.
     Only works for BandsData nodes with 2d band arrays.
     '''
@@ -184,7 +184,9 @@ def bands_error(bands1, bands2):
     for bi in range(nbands):
         b1_i = b1[:, bi]
         b2_i = b2[:, bi]
-        err[bi] = np.square(b1_i - b2_i).sum()
+        sq_err = np.square(b1_i - b2_i)
+        m_err = sq_err.sum() / len(sq_err)
+        err[bi] = np.sqrt(m_err)
     return err
 
 
@@ -246,3 +248,28 @@ def compare_from_window_wf(wf, **kwargs):
     wblist = [v for k, v in wf.get_results().iteritems() if 'bands_' in k]
     vbands = wf.get_result('reference_bands')
     return compare_bands(vasp_bands=vbands, wannier_bands_list=wblist, **kwargs)
+
+def plot_errors_vs_iwsize(comparison_info):
+    import numpy as np
+    import bands as btool
+    ows = []
+    iws = []
+    data = []
+    for k, v in comparison_info.iteritems():
+        ow = v['outer_window']
+        ows.append(ow[1] - ow[0])
+        iw = v['inner_window']
+        iws.append(iw[1] - iw[0])
+        err = v['error_per_band'].sum()
+        data.append(err)
+    ows_i = np.sort(list(set(ows))).tolist()
+    iws_i = np.sort(list(set(iws))).tolist()
+    plot_data = np.empty((len(iws_i), len(ows_i)))
+    for i in range(len(data)):
+        owi = ows_i.index(ows[i])
+        iwi = iws_i.index(iws[i])
+        plot_data[iwi, owi] = data[i]
+    fig = btool.plt.figure()
+    lines = btool.plt.plot(iws_i, plot_data, figure = fig)
+    btool.plt.legend(lines, ows_i)
+    return fig, iws_i, ows_i
