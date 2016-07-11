@@ -272,4 +272,4 @@ def plot_errors_vs_iwsize(comparison_info):
     fig = btool.plt.figure()
     lines = btool.plt.plot(iws_i, plot_data, figure = fig)
     btool.plt.legend(lines, ows_i)
-    return fig, iws_i, ows_i
+    return fig, zip(ows, iws, data)
