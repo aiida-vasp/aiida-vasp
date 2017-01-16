@@ -1,6 +1,6 @@
 from aiida.parsers.plugins.vasp.base import BaseParser
-from aiida.tools.codespecific.vasp.io.win import WinParser
-from aiida.tools.codespecific.vasp.io import parser
+from aiida_vasp.utils.io.win import WinParser
+from aiida_vasp.utils.io import parser
 from aiida.orm import DataFactory
 import re
 import numpy as np

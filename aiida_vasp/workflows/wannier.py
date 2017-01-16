@@ -31,7 +31,7 @@ class WannierWorkflow(Workflow):
     @Workflow.step
     def start(self):
         from aiida.orm import Calculation, DataFactory, load_node
-        from aiida.tools.codespecific.vasp.win import modify_wannier_settings_inline
+        from aiida_vasp.utils.win import modify_wannier_settings_inline
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         cont = params['continue_from']

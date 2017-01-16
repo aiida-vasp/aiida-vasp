@@ -1,13 +1,16 @@
+"""Test TentativeVaspCalculation: test used in development, this is now outdated."""
+
+import sys
+import os
+
 from aiida import load_dbenv
 load_dbenv()
 
 from aiida.orm import CalculationFactory, DataFactory, Code, Computer
 from aiida.orm.querytool import QueryTool
 from aiida.common.folders import Folder
-from aiida.tools.codespecific.vasp.io import cif
-from aiida.tools.codespecific.vasp.default_paws import lda
-import sys
-import os
+from aiida_vasp.utils.io import cif
+from aiida_vasp.utils.default_paws import lda
 
 Tvc = CalculationFactory('vasp.base.TentativeVaspCalc')
 Par = DataFactory('parameter')

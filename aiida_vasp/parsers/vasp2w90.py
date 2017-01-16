@@ -1,5 +1,5 @@
 from aiida.parsers.plugins.vasp.vasp5 import Vasp5Parser
-from aiida.tools.codespecific.vasp.io.win import WinParser
+from aiida_vasp.utils.io.win import WinParser
 
 
 class Vasp2w90Parser(Vasp5Parser):

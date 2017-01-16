@@ -1,5 +1,5 @@
 from aiida.orm import CalculationFactory, DataFactory
-from aiida.tools.codespecific.vasp.default_paws import lda, gw
+from aiida_vasp.utils.default_paws import lda, gw
 from base import ordered_unique_list
 import os
 

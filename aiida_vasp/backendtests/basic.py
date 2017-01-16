@@ -1,6 +1,6 @@
 from aiida.orm import CalculationFactory, Code, DataFactory
 from aiida.djsite.db.testbase import AiidaTestCase
-from aiida.tools.codespecific.vasp.io.incar import IncarParser
+from aiida_vasp.utils.io.incar import IncarParser
 from common import Common
 import tempfile
 import os
@@ -90,7 +90,7 @@ class BasicCalcTest(AiidaTestCase):
         self.assertIsNotNone(poscar)
 
     def test_write_kpoints_mesh(self):
-        from aiida.tools.codespecific.vasp.io.kpoints import KpParser
+        from aiida_vasp.utils.io.kpoints import KpParser
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
@@ -98,7 +98,7 @@ class BasicCalcTest(AiidaTestCase):
         self.assertTrue((kpp.kpoints == Common.kpoints_mesh_res()).all())
 
     def test_write_kpoints_list(self):
-        from aiida.tools.codespecific.vasp.io.kpoints import KpParser
+        from aiida_vasp.utils.io.kpoints import KpParser
         calc = self._get_calc('c', 'l')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)

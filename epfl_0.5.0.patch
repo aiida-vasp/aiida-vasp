@@ -97,7 +97,7 @@ index b4551bb..917c035 100644
 +        '''
 +        Export a .pdf file with a default plot of the band structure (printed to stdout)
 +        '''
-+        from aiida.tools.codespecific.vasp.bands import plot_bstr
++        from aiida_vasp.utils.bands import plot_bstr
 +        from StringIO import StringIO
 +        sio = StringIO()
 +        fig = plot_bstr(node, use_parent_calc=True)
@@ -126,7 +126,7 @@ index b4551bb..917c035 100644
 +        '''
 +        import matplotlib
 +        matplotlib.use('TKAgg')
-+        from aiida.tools.codespecific.vasp.bands import plot_bstr
++        from aiida_vasp.utils.bands import plot_bstr
 +        for band in list_bands:
 +            fig = plot_bstr(band, use_parent_calc=True)
 +            fig.show()

@@ -1,6 +1,6 @@
 from aiida.orm import Workflow, WorkflowFactory
 from helper import WorkflowHelper
-from aiida.tools.codespecific.vasp import compare_bands as bcp
+from aiida_vasp.utils import compare_bands as bcp
 
 
 class AutowindowsWorkflow(Workflow):

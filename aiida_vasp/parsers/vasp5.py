@@ -1,8 +1,8 @@
 from aiida.parsers.plugins.vasp.base import BaseParser
-from aiida.tools.codespecific.vasp.io.eigenval import EigParser
-from aiida.tools.codespecific.vasp.io.vasprun import VasprunParser
-from aiida.tools.codespecific.vasp.io.doscar import DosParser
-from aiida.tools.codespecific.vasp.io.kpoints import KpParser
+from aiida_vasp.utils.io.eigenval import EigParser
+from aiida_vasp.utils.io.vasprun import VasprunParser
+from aiida_vasp.utils.io.doscar import DosParser
+from aiida_vasp.utils.io.kpoints import KpParser
 from aiida.orm import DataFactory
 import numpy as np
 

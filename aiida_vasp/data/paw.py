@@ -1,7 +1,7 @@
 import os
 from aiida.orm import Data
 from aiida.orm.querytool import QueryTool
-from aiida.tools.codespecific.vasp.io.potcar import PawParser as pcparser
+from aiida_vasp.utils.io.potcar import PawParser as pcparser
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
 

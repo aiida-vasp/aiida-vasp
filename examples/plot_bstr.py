@@ -1,6 +1,6 @@
 #!runaiida
 from aiida.orm import load_node
-from aiida.tools.codespecific.vasp.bands import *
+from aiida_vasp.utils.bands import *
 from matplotlib import pyplot as plt
 import sys
 

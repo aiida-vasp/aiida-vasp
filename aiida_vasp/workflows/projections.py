@@ -42,7 +42,7 @@ class ProjectionsWorkflow(Workflow):
 
     @Workflow.step
     def start(self):
-        from aiida.tools.codespecific.vasp.win import modify_wannier_settings_inline
+        from aiida_vasp.utils.win import modify_wannier_settings_inline
         from aiida.orm import DataFactory
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
