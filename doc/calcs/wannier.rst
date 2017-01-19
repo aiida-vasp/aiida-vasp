@@ -34,8 +34,8 @@ Reference
 *********
 Superclasses:
 
-* :py:class:`WannierBase <aiida.orm.calculation.job.vasp.wannier.WannierBase>`
+* :py:class:`WannierBase <aiida_vasp.calcs.wannier.WannierBase>`
 
-.. autoclass:: aiida.orm.calculation.job.vasp.wannier.WannierCalculation
+.. autoclass:: aiida_vasp.calcs.wannier.WannierCalculation
    :members: verify_inputs, _prepare_for_submission
    :undoc-members:

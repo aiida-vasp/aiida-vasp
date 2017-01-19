@@ -66,9 +66,9 @@ Reference
 *********
 Superclasses:
 
-* :py:class:`NscfCalculation <aiida.orm.calculation.job.vasp.nscf.NscfCalculation>`
-* :py:class:`WannierBase <aiida.orm.calculation.job.vasp.wannier.WannierBase>`
+* :py:class:`NscfCalculation <aiida_vasp.calcs.nscf.NscfCalculation>`
+* :py:class:`WannierBase <aiida_vasp.calcs.wannier.WannierBase>`
 
-.. autoclass:: aiida.orm.calculation.job.vasp.vasp5.Vasp5Calculation
+.. autoclass:: aiida_vasp.calcs.vasp5.Vasp5Calculation
    :members: verify_inputs, _prepare_for_submission
    :undoc-members:

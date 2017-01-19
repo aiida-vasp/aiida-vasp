@@ -3,7 +3,7 @@ based on a single CIF file. Intended to test as many
 types of VASP simulations and how well the plugin deals
 with the variation in output files and formats.'''
 
-# ~ from aiida.orm.calculation.job.vasp.maker import VaspMaker
+# ~ from aiida_vasp.calcs.maker import VaspMaker
 # ~ from aiida.orm import Code
 # ~ from sys import argv
 

@@ -9,11 +9,11 @@ class WorkflowHelper(object):
 
     def _get_calc_maker(self, calc_type, **kwargs):
         '''
-        Instatiate a :py:class:`VaspMaker <aiida.orm.calculation.job.vasp.maker.VaspMaker>`
+        Instatiate a :py:class:`VaspMaker <aiida_vasp.calcs.maker.VaspMaker>`
         and feed it the common input parameters for all vasp workflows.
         '''
         from aiida.orm import Code
-        from aiida.orm.calculation.job.vasp.maker import VaspMaker
+        from aiida_vasp.calcs.maker import VaspMaker
         params = self.get_parameters()
         good_init = bool(kwargs.get('continue_from'))
         good_init |= bool(kwargs.get('copy_from'))

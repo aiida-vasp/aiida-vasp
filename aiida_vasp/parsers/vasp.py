@@ -1,5 +1,5 @@
 #encoding: utf-8
-from aiida.orm.calculation.job.vasp.vasp import VaspCalculation
+from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida.orm import DataFactory
 from aiida.parsers.parser import Parser
 from aiida.parsers.exceptions import OutputParsingError

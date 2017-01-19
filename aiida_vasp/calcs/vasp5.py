@@ -145,7 +145,7 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
     def _init_internal_params(self):
         '''
         let the metaclass
-        py:class:`~aiida.orm.calculation.job.vasp.base.CalcMeta` ref CalcMeta
+        py:class:`~aiida_vasp.calcs.base.CalcMeta` ref CalcMeta
         pick up internal parameters from the class body
         and insert them
         '''

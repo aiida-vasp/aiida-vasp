@@ -3,7 +3,7 @@ from aiida.common import aiidalogger
 from aiida.common.exceptions import NotExistent
 from aiida.orm.workflow import Workflow
 from aiida.orm import DataFactory, Group, CalculationFactory, Code
-from aiida.orm.calculation.job.vasp.maker import VaspMaker
+from aiida_vasp.calcs.maker import VaspMaker
 
 logger = aiidalogger.getChild('Tbmodel')
 ParameterData = DataFactory('parameter')

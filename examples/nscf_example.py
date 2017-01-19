@@ -1,6 +1,6 @@
 #!runaiida
 from aiida.orm import Code, Group, load_node
-from aiida.orm.calculation.job.vasp.maker import VaspMaker
+from aiida_vasp.calcs.maker import VaspMaker
 from aiida.common.exceptions import NotExistent
 import sys
 

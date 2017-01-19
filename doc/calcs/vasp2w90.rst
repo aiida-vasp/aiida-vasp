@@ -61,8 +61,8 @@ Reference
 *********
 Superclasses:
 
-* :py:class:`Vasp5Calculation <aiida.orm.calculation.job.vasp.vasp5.Vasp5Calculation>`
+* :py:class:`Vasp5Calculation <aiida_vasp.calcs.vasp5.Vasp5Calculation>`
 
-.. autoclass:: aiida.orm.calculation.job.vasp.vasp2w90.Vasp2w90Calculation
+.. autoclass:: aiida_vasp.calcs.vasp2w90.Vasp2w90Calculation
    :members: verify_inputs, _prepare_for_submission
    :undoc-members:

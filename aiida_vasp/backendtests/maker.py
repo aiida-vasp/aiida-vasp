@@ -1,5 +1,5 @@
 from aiida.djsite.db.testbase import AiidaTestCase
-from aiida.orm.calculation.job.vasp.maker import VaspMaker
+from aiida_vasp.calcs.maker import VaspMaker
 
 
 class VaspMakerTest(AiidaTestCase):

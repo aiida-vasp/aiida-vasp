@@ -59,7 +59,8 @@ if __name__ == '__main__':
                 'vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow',
                 'vasp.nscf = aiida_vasp.workflows.nscf:NscfWorkflow',
                 'vasp.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow',
-                'vasp.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow'
+                'vasp.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow',
+                'vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow'
             ],
             'aiida.cmdline': [
                 'vasp.paw = aiida_vasp.commands.paw:_Paw'

@@ -3,7 +3,7 @@ load_dbenv()
 
 from aiida.orm import Code, Computer
 from aiida.orm.querytool import QueryTool
-from aiida.orm.calculation.job.vasp.maker import VaspMaker
+from aiida_vasp.calcs.maker import VaspMaker
 import sys
 
 

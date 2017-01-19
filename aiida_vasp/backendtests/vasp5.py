@@ -9,7 +9,7 @@ from common import Common
 class Vasp5CalcTest(AiidaTestCase):
     '''
     Test Case for
-    py:class:`~aiida.orm.calculation.job.vasp.vasp5.Vasp5Calculation`
+    py:class:`~aiida_vasp.calcs.vasp5.Vasp5Calculation`
     '''
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp5')()

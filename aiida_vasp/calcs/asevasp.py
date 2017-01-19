@@ -7,7 +7,7 @@ from aiida.common.utils import classproperty
 import numpy as np
 import os
 import pymatgen as pmg
-from aiida.orm.calculation.job.vasp.incar import _incarify
+from aiida_vasp.calcs.incar import _incarify
 from kpoints import write_kpoints
 
 ParameterData = DataFactory('parameter')

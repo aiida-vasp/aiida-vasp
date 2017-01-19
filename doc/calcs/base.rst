@@ -6,7 +6,7 @@ Base Classes for Calculations Reference
 Calculation Base Classes
 ************************
 
-.. automodule:: aiida.orm.calculation.job.vasp.base
+.. automodule:: aiida_vasp.calcs.base
    :members:
    :private-members:
 

@@ -2,7 +2,7 @@
 from aiida.common import aiidalogger
 from aiida.orm.workflow import Workflow
 from aiida.orm import DataFactory
-from aiida.orm.calculation.job.vasp.maker import VaspMaker
+from aiida_vasp.calcs.maker import VaspMaker
 
 logger = aiidalogger.getChild('Bandstructure')
 ParameterData = DataFactory('parameter')

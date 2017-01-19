@@ -118,9 +118,9 @@ familiar with the following parts of the official aiida documentation:
 
 The VASP plugin provides some base and helper classes for convenience and to aid with rapid development and / or testing.
 
-* :py:class:`CalcMeta <aiida.orm.calculation.job.vasp.base.CalcMeta>`, a metaclass that allows writing calculations in a slightly less verbose yet more clear way.
-* :py:class:`VaspCalcBase <aiida.orm.calculation.job.vasp.base.VaspCalcBase>`, takes over common tasks for vasp calculations while providing flexibility using hooks for subclasses.
-* :py:class:`BasicCalculation <aiida.orm.calculation.job.vasp.base.BasicCalculation>`, with functions for writing the basic, common input files.
+* :py:class:`CalcMeta <aiida_vasp.calcs.base.CalcMeta>`, a metaclass that allows writing calculations in a slightly less verbose yet more clear way.
+* :py:class:`VaspCalcBase <aiida_vasp.calcs.base.VaspCalcBase>`, takes over common tasks for vasp calculations while providing flexibility using hooks for subclasses.
+* :py:class:`BasicCalculation <aiida_vasp.calcs.base.BasicCalculation>`, with functions for writing the basic, common input files.
 * :py:class:`BaseParser <aiida.orm.parsers.plugins.vasp.base.BaseParser>`
 * :py:class:`Vasp5Parser <aiida.orm.parsers.plugins.vasp.vasp5.Vasp5Parser>`
 * :py:class:`WorkflowHelper <aiida.workflows.vasp.helper.WorkflowHelper>`, with common convenienct functionality for workflows
@@ -135,7 +135,7 @@ Calculations
 For demonstrating how easy small changes are, here is how to implement a Calculation plugin, which takes a ParameterData node for kpoints input to run VASP calculations with path type KPOINTS files.
 The first step is to write a new calculation, deriving from BasicCalculation::
    
-   from aiida.orm.calculation.job.vasp.base import BasicCalculation, Input
+   from aiida_vasp.calcs.base import BasicCalculation, Input
 
    class KppathCalculation(BasicCalculation):
       kpoints = Input(types='parameter')
@@ -160,7 +160,7 @@ The line ::
 
    kpoints = Input(types='parameter')
 
-is automatically converted by :py:class:`CalcMeta <aiida.orm.calculation.job.vasp.base.CalcMeta>`
+is automatically converted by :py:class:`CalcMeta <aiida_vasp.calcs.base.CalcMeta>`
 into an entry in the classes _use_methods classproperty, overriding the one of BasicCalculation.
 
 The classes write_kpoints method ::
@@ -176,7 +176,7 @@ ParameterData node and converting it's contents to an appropriate KPOINTS file.
 However, there are two problems with this. First of all, it does not take chargedensities or wavefunctions as inputs and second, BasicCalculation's default parser does nothing except verify that an OUTCAR file was created. both can be fixed by simply changing the class so it derives from NscfCalculation::
 
    ...
-   from aiida.orm.calculation.job.vasp.nscf import NscfCalculation
+   from aiida_vasp.calcs.nscf import NscfCalculation
 
    class KppathCalculation(NscfCalculation):
    ...

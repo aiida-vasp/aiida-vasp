@@ -34,8 +34,8 @@ Outputs
 *********
 Reference
 *********
-Derived from :py:class:`BasicCalculation <aiida.orm.calculation.job.vasp.base.BasicCalculation>`
+Derived from :py:class:`BasicCalculation <aiida_vasp.calcs.base.BasicCalculation>`
 
-.. autoclass:: aiida.orm.calculation.job.vasp.nscf.NscfCalculation
+.. autoclass:: aiida_vasp.calcs.nscf.NscfCalculation
    :members: verify_inputs, _prepare_for_submission, write_chgcar, write_wavecar
    :undoc-members:

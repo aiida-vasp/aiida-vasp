@@ -12,5 +12,5 @@ WorkflowHelper Reference
 VaspMaker Reference
 ###################
 
-.. automodule:: aiida.orm.calculation.job.vasp.maker
+.. automodule:: aiida_vasp.calcs.maker
    :members:

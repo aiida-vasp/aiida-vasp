@@ -1,4 +1,4 @@
-from aiida.orm.calculation.job.vasp.base import BasicCalculation, Input
+from aiida_vasp.calcs.base import BasicCalculation, Input
 
 
 class KppathCalculation(BasicCalculation):

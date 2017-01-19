@@ -1,4 +1,4 @@
-from aiida.orm.calculation.job.vasp.vasp import VaspCalculation
+from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida.orm import DataFactory, Code
 from aiida.common.folders import Folder
 import pymatgen as pmg

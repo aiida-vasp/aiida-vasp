@@ -26,8 +26,8 @@ Outputs
 *********
 Reference
 *********
-Derived from :py:class:`BasicCalculation <aiida.orm.calculation.job.vasp.base.BasicCalculation>`
+Derived from :py:class:`BasicCalculation <aiida_vasp.calcs.base.BasicCalculation>`
 
-.. autoclass:: aiida.orm.calculation.job.vasp.scf.ScfCalculation
+.. autoclass:: aiida_vasp.calcs.scf.ScfCalculation
    :members: verify_inputs, _prepare_for_submission
    :undoc-members:
