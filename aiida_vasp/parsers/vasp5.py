@@ -1,4 +1,4 @@
-from aiida.parsers.plugins.vasp.base import BaseParser
+from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.io.eigenval import EigParser
 from aiida_vasp.utils.io.vasprun import VasprunParser
 from aiida_vasp.utils.io.doscar import DosParser

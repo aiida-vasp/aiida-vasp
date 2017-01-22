@@ -1,4 +1,4 @@
-from aiida.parsers.plugins.vasp.base import BaseParser
+from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.io.win import WinParser
 from aiida_vasp.utils.io import parser
 from aiida.orm import DataFactory

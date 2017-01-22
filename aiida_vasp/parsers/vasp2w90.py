@@ -1,4 +1,4 @@
-from aiida.parsers.plugins.vasp.vasp5 import Vasp5Parser
+from aiida_vasp.parsers.vasp5 import Vasp5Parser
 from aiida_vasp.utils.io.win import WinParser
 
 

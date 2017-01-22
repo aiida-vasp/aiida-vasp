@@ -162,7 +162,7 @@ class VaspMaker(object):
         if not structure:
             self._structure = self.calc_cls.new_structure()
         elif isinstance(structure, (str, unicode)):
-            structure = os.path.abspath(structure)
+            structure = os.path.abspath(os.path.expanduser(structure))
             if os.path.splitext(structure)[1] == '.cif':
                 self._structure = DataFactory(
                     'cif').get_or_create(structure)[0]

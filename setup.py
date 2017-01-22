@@ -29,10 +29,12 @@ if __name__ == '__main__':
         install_requires=[
             'aiida[ssh]',
             'ase',
-            'pymatgen'
+            'pymatgen',
+            'subprocess32'
         ],
         extras_require={
             'graphs': ['matplotlib']
+            'regen_default_paws': ['lxml']
         },
         entry_points={
             'aiida.calculations': [
@@ -60,7 +62,8 @@ if __name__ == '__main__':
                 'vasp.nscf = aiida_vasp.workflows.nscf:NscfWorkflow',
                 'vasp.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow',
                 'vasp.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow',
-                'vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow'
+                'vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow',
+                'vasp.windows= aiida_vasp.workflows.windows:WindowsWorkflow',
             ],
             'aiida.cmdline': [
                 'vasp.paw = aiida_vasp.commands.paw:_Paw'

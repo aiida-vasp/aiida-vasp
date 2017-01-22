@@ -232,7 +232,7 @@ if none of the current parsers can deal with the additionally retrieved files.
 Here's a parser class that delivers the behaviour of the nscf parser used in the above example
 but also deals with the PROJCAR file::
 
-   from aiida.parsers.plugins.vasp.nscf import NscfParser
+   from aiida_vasp.parsers.nscf import NscfParser
    from aiida.orm import DataFactory
 
    class KppathParser(NscfParser):
@@ -245,7 +245,7 @@ but also deals with the PROJCAR file::
 
          return self.result(success=True)
 
-This class makes use of some :py:class:`BaseParser <aiida.parsers.plugins.vasp.base.BaseParser>`
+This class makes use of some :py:class:`BaseParser <aiida_vasp.parsers.base.BaseParser>`
 convenience functions:
 
 * the superclass keeps a record of all the parsed output nodes added by add_node

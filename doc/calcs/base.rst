@@ -14,5 +14,5 @@ Calculation Base Classes
 Parser Base Class
 *****************
 
-.. automodule:: aiida.parsers.plugins.vasp.base
+.. automodule:: aiida_vasp.parsers.base
    :members:
