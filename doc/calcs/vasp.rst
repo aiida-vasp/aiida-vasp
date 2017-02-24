@@ -22,7 +22,7 @@ Plugin Details
 
 .. toctree::
    :maxdepth: 4
-   
+
    Scf <scf>
    Nscf <nscf>
    Amn <amn>
@@ -41,7 +41,7 @@ settings
 ========
 :py:class:`ParameterData <aiida.orm.data.structure.StructureData>`,
 containing keys-value pairs that would be given in an INCAR file when running VASP manually. Example::
-   
+
    settings = ParameterData(dict={
       'system': 'System Name',
       'nbands': 24,
@@ -73,7 +73,7 @@ leads to the following KPOINTS::
    Gamma
    4 4 4
    0 0 0
-   
+
 Whereas::
 
    my_kpoints = [
@@ -130,6 +130,8 @@ Use ASE or Pymatgen python packages to convert POSCAR files into structure data:
    structure = self.calc_cls.new_structure()
    structure.set_ase(atoms)
 
+.. note:: When using the POSCAR file, the first line must contain the atom symbols, separated by spaces. The number and order of atomic symbols must be consistent with the positions. 
+
 .. _vasp-input-paw:
 
 paw
@@ -149,14 +151,14 @@ The calculations take responsibility for ordering the elements consistently betw
 
 charge_density
 ==============
-:py:class:`ChargedensityData <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing a CHGCAR file from a previous (selfconsistent) run. 
+:py:class:`ChargedensityData <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing a CHGCAR file from a previous (selfconsistent) run.
 This input only applies to :py:class:`NscfCalculations <aiida.orm.calculation.job.vasp.NscfCalculation` and derivates.
 
 .. _vasp-input-wavefunctions:
 
 wavefunctions
 ==============
-:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (selfconsistent) run. 
+:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (selfconsistent) run.
 This input only applies to :py:class:`NscfCalculations <aiida.orm.calculation.job.vasp.NscfCalculation` and derivates.
 
 .. _vasp-input-wannier_settings:
@@ -235,7 +237,7 @@ Applies to:
 
 wavefunctions
 =============
-:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (selfconsistent) run. 
+:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (selfconsistent) run.
 This input only applies to :py:class:`NscfCalculations <aiida.orm.calculation.job.vasp.NscfCalculation` and derivates.
 
 Applies to:

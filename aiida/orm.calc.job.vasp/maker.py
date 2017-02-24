@@ -1,5 +1,4 @@
 from aiida.orm import CalculationFactory, DataFactory
-from aiida.tools.codespecific.vasp.default_paws import lda, gw
 from base import ordered_unique_list
 import os
 
@@ -127,7 +126,7 @@ class VaspMaker(object):
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
         self._paws = {}
-        self._set_default_paws(silent=True)
+        self._set_default_paws()
         self._kpoints = kwargs.get('kpoints', self.calc_cls.new_kpoints())
         self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
@@ -259,7 +258,7 @@ class VaspMaker(object):
         weights.
         Copies the kpoints node if it's already stored.
         '''
-        if self._kpoints._is_stored:
+        if self._kpoints.is_stored:
             self.kpoints = self.calc_cls.new_kpoints()
         self._kpoints.set_kpoints_path(value=value, **kwargs)
         if 'weights' not in kwargs:
@@ -380,24 +379,16 @@ class VaspMaker(object):
             conflict |= (self.settings.get(k) != v)
         return conflict
 
-    def _set_default_paws(self, overwrite=False, silent=False):
-        if self._paw_fam.lower() == 'LDA':
-            defaults = self._paw_def or lda
-        elif self._paw_fam.lower() in ['PBE', 'GW']:
-            defaults = self._paw_def or gw
-        else:
-            if not self._paw_def and not silent:
-                msg = 'keyword paw_family was not LDA or PBE'
-                msg += 'and no paw_map keyword was given!'
-                msg += 'manual paw initialization required'
-                print(msg)
-                return None
-            else:
-                defaults = self._paw_def
+    def _set_default_paws(self):
         for k in self.elements:
-            if k not in self._paws or overwrite:
-                paw = self.calc_cls.Paw.load_paw(
-                    family=self._paw_fam, symbol=defaults[k])[0]
+            if k not in self._paws:
+                if self._paw_def is None:
+                    raise ValueError("The 'paw_map' keyword is required. Pre-defined potential mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.".format(k))
+                try:
+                    paw = self.calc_cls.Paw.load_paw(
+                        family=self._paw_fam, symbol=self._paw_def[k])[0]
+                except KeyError:
+                    raise ValueError("The given 'paw_map' does not contain a mapping for element '{}'".format(k))
                 self._paws[k] = paw
 
     @property
