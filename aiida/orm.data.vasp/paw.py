@@ -78,7 +78,7 @@ class PawData(Data):
     def get_or_create_famgroup(cls, famname):
         '''Returns a PAW family group, creates it if it didn't exists'''
         from aiida.orm import Group
-        from aiida.djsite.utils import get_automatic_user
+        from aiida.backends.djsite.utils import get_automatic_user
 
         # TODO: maybe replace with Group.get_or_create?
         try:
@@ -99,7 +99,7 @@ class PawData(Data):
     @classmethod
     def get_paw_groups(cls, elements=set(), symbols=set(), user=None):
         from aiida.orm import Group
-        from aiida.djsite.utils import get_automatic_user
+        from aiida.backends.djsite.utils import get_automatic_user
         params = {'type_string': cls.group_type,
                   'node_attributes': {
                       'element': elements,
