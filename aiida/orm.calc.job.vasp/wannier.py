@@ -8,7 +8,7 @@ class dict_to_win(object):
 
     @classmethod
     def _bool(cls, val):
-        return val and 'T' or 'F'
+        return 'T' if val else 'F'
 
     @classmethod
     def _seq(cls, val):
