@@ -33,7 +33,7 @@ if __name__ == '__main__':
             'subprocess32'
         ],
         extras_require={
-            'graphs': ['matplotlib']
+            'graphs': ['matplotlib'],
             'regen_default_paws': ['lxml']
         },
         entry_points={
@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 'vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow',
                 'vasp.windows= aiida_vasp.workflows.windows:WindowsWorkflow',
             ],
-            'aiida.cmdline': [
+            'aiida.cmdline.data': [
                 'vasp.paw = aiida_vasp.commands.paw:_Paw'
             ]
         },
