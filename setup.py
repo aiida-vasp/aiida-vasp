@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 if __name__ == '__main__':
     setup(
-        name='aiida_vasp',
+        name='aiida-vasp',
         version='0.9.0a1',
         description='AiiDA Plugin for running VASP -> Wannier workflows',
         url='https://github.com/DropD/aiida-vasp',
@@ -26,11 +26,16 @@ if __name__ == '__main__':
         keywords='vasp aiida wannier90 workflows',
         packages=find_packages(),
         include_package_data=True,
+        setup_requires=[
+            'sparkplug'
+        ],
+        spark_register=True,
         install_requires=[
-            'aiida[ssh]',
+            'aiida-core',
             'ase',
             'pymatgen',
-            'subprocess32'
+            'subprocess32',
+            'click'
         ],
         extras_require={
             'graphs': ['matplotlib'],

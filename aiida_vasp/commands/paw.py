@@ -1,5 +1,6 @@
 from aiida.cmdline.baseclass import VerdiCommandWithSubcommands
 from aiida.cmdline.commands.data import Importable
+import click
 import sys
 
 
@@ -175,4 +176,3 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
                     pass
             else:
                 print isfile_msg.format(os.path.join(paw.symbol, 'PSCTR'))
-
