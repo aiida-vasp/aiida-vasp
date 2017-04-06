@@ -1,6 +1,6 @@
 import os
 from aiida.orm import Data
-from aiida.orm.querytool import QueryTool
+from aiida.orm.querybuilder import QueryBuilder
 from aiida_vasp.utils.io.potcar import PawParser as pcparser
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
@@ -264,11 +264,13 @@ class PawData(Data):
         family = kwargs.pop('family', None)
         silent = kwargs.pop('silent', None)
         if not (group or family):
-            q = QueryTool()
-            q.set_class(cls)
+            qb = QueryBuilder()
+            qb.append(cls=cls)
+            filters = {}
             for k, v in kwargs.iteritems():
-                q.add_attr_filter(k, '=', v)
-            res = list(q.run_query())
+                filters[k] = {'=': v}
+            qb.append(filters=filters)
+            res = list(q.iterall())
         else:
             if family:
                 group, created = cls.get_or_create_famgroup(family)

@@ -24,12 +24,12 @@ if __name__ == '__main__':
             'Topic :: Scientific/Engineering :: Physics'
         ],
         keywords='vasp aiida wannier90 workflows',
-        packages=find_packages(),
+        packages=find_packages(exclude=['aiida']),
         include_package_data=True,
         setup_requires=[
-            'sparkplug'
+            'reentry'
         ],
-        spark_register=True,
+        reentry_register=True,
         install_requires=[
             'aiida-core',
             'ase',
