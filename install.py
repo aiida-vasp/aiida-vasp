@@ -8,12 +8,12 @@ parser = argparse.ArgumentParser(
     description='install the plugin files into the \
     given aiida folder, defaults to symlinking but \
     copy can be used instead.')
-# ~ parser.add_argument(
-    # ~ '--copy',
-    # ~ action='store_true',
-    # ~ help='instead of symlinking into aiida, copy \
-    # ~ the plugin files. helpful during development \
-    # ~ to keep a stable version around')
+parser.add_argument(
+    '--copy',
+    action='store_true',
+    help='instead of symlinking into aiida, copy \
+    the plugin files. helpful during development \
+    to keep a stable version around')
 parser.add_argument('--patch', nargs=1, default=[None],
     metavar='AIIDA_VERSION_NR',
     help='apply patches for cli subcommands, tests and '
@@ -62,8 +62,8 @@ colors = {'ok': '\033[92m',
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    #install_cmd = args.copy and cpdir or lndir
-    install_cmd = lndir
+    install_cmd = args.copy and cpdir or lndir
+    # install_cmd = lndir
     i = 0
     N = len(install_paths)
     for p in install_paths:

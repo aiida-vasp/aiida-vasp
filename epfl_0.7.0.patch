@@ -1,0 +1,151 @@
+From 9945eb926e4a6aa79757bd4748ed23d95d02f68c Mon Sep 17 00:00:00 2001
+From: Dominik Gresch <greschd@gmx.ch>
+Date: Fri, 24 Feb 2017 14:32:58 +0100
+Subject: [PATCH 1/2] adding first part of patches
+
+---
+ aiida/cmdline/commands/data.py | 21 +++++++++++++++------
+ 1 file changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/aiida/cmdline/commands/data.py b/aiida/cmdline/commands/data.py
+index 7079ad1..e3993c7 100644
+--- a/aiida/cmdline/commands/data.py
++++ b/aiida/cmdline/commands/data.py
+@@ -7,6 +7,7 @@ from aiida.cmdline.baseclass import (
+     VerdiCommandRouter, VerdiCommandWithSubcommands)
+ from aiida.cmdline.commands.node import _Label, _Description
+ from aiida.common.exceptions import MultipleObjectsError
++from aiida.cmdline.vasp.paw import _Paw
+ 
+ __copyright__ = u"Copyright (c), This file is part of the AiiDA platform. For further information please visit http://www.aiida.net/. All rights reserved"
+ __license__ = "Non-Commercial, End-User Software License Agreement, see LICENSE.txt file."
+@@ -29,6 +30,7 @@ class Data(VerdiCommandRouter):
+         ## Add here the classes to be supported.
+         self.routed_subcommands = {
+             'upf': _Upf,
++            'paw': _Paw,
+             'structure': _Structure,
+             'bands': _Bands,
+             'cif': _Cif,
+@@ -276,7 +278,7 @@ class Visualizable(object):
+ 
+         if format is None:
+             print >> sys.stderr, (
+-                "Default format is not defined, please specify.\n" 
++                "Default format is not defined, please specify.\n"
+                   "Valid formats are:")
+             for i in self.get_show_plugins().keys():
+                 print >> sys.stderr, "  {}".format(i)
+@@ -384,7 +386,7 @@ class Exportable(object):
+ 
+         if format is None:
+             print >> sys.stderr, (
+-                "Default format is not defined, please specify.\n" 
++                "Default format is not defined, please specify.\n"
+                   "Valid formats are:")
+             for i in self.get_export_plugins().keys():
+                 print >> sys.stderr, "  {}".format(i)
+@@ -474,7 +476,7 @@ class Importable(object):
+ 
+         if format is None:
+             print >> sys.stderr, (
+-                "Default format is not defined, please specify.\n" 
++                "Default format is not defined, please specify.\n"
+                   "Valid formats are:")
+             for i in self.get_import_plugins().keys():
+                 print >> sys.stderr, "  {}".format(i)
+@@ -1003,6 +1005,16 @@ class _Bands(VerdiCommandWithSubcommands, Listable, Visualizable, Exportable):
+             else:
+                 raise
+ 
++    def _export_matplotlib_pdf(self, node):
++        '''
++        Export a .pdf file with a default plot of the band structure (printed to stdout)
++        '''
++        from aiida.tools.codespecific.vasp.bands import plot_bstr
++        from StringIO import StringIO
++        sio = StringIO()
++        fig = plot_bstr(node, use_parent_calc=True)
++        fig.savefig(sio, format='pdf')
++        print sio.getvalue()
+ 
+ class _Structure(VerdiCommandWithSubcommands,
+                  Listable,
+@@ -1753,6 +1765,3 @@ class _Array(VerdiCommandWithSubcommands, Visualizable):
+             for arrayname in node.arraynames():
+                 the_dict[arrayname] = node.get_array(arrayname).tolist()
+             print_dictionary(the_dict, 'json+date')
+-
+-
+-
+-- 
+2.7.4
+
+
+From b29e8c6e6d1bc60375bce9367cf76d4547594524 Mon Sep 17 00:00:00 2001
+From: Dominik Gresch <greschd@gmx.ch>
+Date: Fri, 24 Feb 2017 14:37:44 +0100
+Subject: [PATCH 2/2] added all patches (as they were in 0.5.0)
+
+---
+ aiida/backends/djsite/db/testbase.py |  1 +
+ aiida/cmdline/commands/data.py       | 12 ++++++++++++
+ docs/source/plugins/index.rst        |  5 ++---
+ 3 files changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/aiida/backends/djsite/db/testbase.py b/aiida/backends/djsite/db/testbase.py
+index eb23350..af8ee84 100644
+--- a/aiida/backends/djsite/db/testbase.py
++++ b/aiida/backends/djsite/db/testbase.py
+@@ -32,6 +32,7 @@ db_test_list = {
+     'qepwimmigrant': ['aiida.backends.djsite.db.subtests.quantumespressopwimmigrant'],
+     'tcodexporter': ['aiida.backends.djsite.db.subtests.tcodexporter'],
+     'workflows': ['aiida.backends.djsite.db.subtests.workflows'],
++    'vasp': ['aiida.backends.djsite.db.subtests.vasp']
+     'query': ['aiida.backends.djsite.db.subtests.query'],
+     'backup': ['aiida.backends.djsite.db.subtests.backup_script',
+                'aiida.backends.djsite.db.subtests.backup_setup_script'],
+diff --git a/aiida/cmdline/commands/data.py b/aiida/cmdline/commands/data.py
+index e3993c7..a67626b 100644
+--- a/aiida/cmdline/commands/data.py
++++ b/aiida/cmdline/commands/data.py
+@@ -1016,6 +1016,18 @@ class _Bands(VerdiCommandWithSubcommands, Listable, Visualizable, Exportable):
+         fig.savefig(sio, format='pdf')
+         print sio.getvalue()
+ 
++    def _show_matplotlib(self, exec_name, list_bands):
++        '''
++        Show the band structure using matplotlib
++        '''
++        import matplotlib
++        matplotlib.use('TKAgg')
++        from aiida.tools.codespecific.vasp.bands import plot_bstr
++        for band in list_bands:
++            fig = plot_bstr(band, use_parent_calc=True)
++            fig.show()
++
++
+ class _Structure(VerdiCommandWithSubcommands,
+                  Listable,
+                  Visualizable,
+diff --git a/docs/source/plugins/index.rst b/docs/source/plugins/index.rst
+index 2659038..4b3f910 100644
+--- a/docs/source/plugins/index.rst
++++ b/docs/source/plugins/index.rst
+@@ -9,11 +9,10 @@ Available plugins
+ 
+ .. toctree::
+    :maxdepth: 4
+- 
++
+    quantumespresso/index
+    codtools/index
+    ase/index
+    wannier90/index
+    nwchem/index
+-
+-
++   vasp/index
+-- 
+2.7.4
+
