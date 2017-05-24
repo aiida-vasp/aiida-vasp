@@ -5,8 +5,8 @@ VASP
 ************
 Description
 ************
-`VASP`_ (Vienna Ab initio Simulation Package) is a computer program for 
-atomic scale materials modelling, e.g. electronic structure calculations 
+`VASP`_ (Vienna Ab initio Simulation Package) is a computer program for
+atomic scale materials modelling, e.g. electronic structure calculations
 and quantum-mechanical molecular dynamics, from first principles.
 For more info and a list of features look `here`_. For detailed documentaion
 about using VASP take a look at the `documentation page`_ or the `wiki`_
@@ -47,7 +47,7 @@ Quickstart
 ==========
 
 For maximum ease of use the python program 'runwf.py' is provided in the aiida_vasp plugin
-repository. 
+repository.
 
 ::
 
@@ -97,7 +97,7 @@ and use those to run workflows.
 Adapting and Extending
 **********************
 
-When developping calculation plugins it should be kept in mind, that
+When developing calculation plugins it should be kept in mind, that
 for calculations run with them to be successfully shared with other researchers,
 those other researchers will need to have access to the calculation plugin as well.
 This means that any calculation should be contributed to the aiida_vasp plugin repository.
@@ -109,12 +109,12 @@ The same applies in a lesser degree to workflows, as they are not exported from 
 together with the calculation and data nodes. However, care must be taken not to mislead users
 by changing the behaviour of a public workflow.
 
-In order to adapt and / or extend the plugin's workflows and calculations, one should be 
+In order to adapt and / or extend the plugin's workflows and calculations, one should be
 familiar with the following parts of the official aiida documentation:
 
-* :doc:`Developping Calculations </developer_guide/devel_tutorial/code_plugin_int_sum>`
-* :doc:`Developping Data Nodes </developer_guide/devel_tutorial/code_plugin_float_sum>`
-* :doc:`Developping Workflows </developer_guide/workflows>`
+* :doc:`Developing Calculations </developer_guide/devel_tutorial/code_plugin_int_sum>`
+* :doc:`Developing Data Nodes </developer_guide/devel_tutorial/code_plugin_float_sum>`
+* :doc:`Developing Workflows </developer_guide/workflows>`
 
 The VASP plugin provides some base and helper classes for convenience and to aid with rapid development and / or testing.
 
@@ -134,7 +134,7 @@ Calculations
 
 For demonstrating how easy small changes are, here is how to implement a Calculation plugin, which takes a ParameterData node for kpoints input to run VASP calculations with path type KPOINTS files.
 The first step is to write a new calculation, deriving from BasicCalculation::
-   
+
    from aiida.orm.calculation.job.vasp.base import BasicCalculation, Input
 
    class KppathCalculation(BasicCalculation):
@@ -148,14 +148,14 @@ The first step is to write a new calculation, deriving from BasicCalculation::
          # KPOINTS_file_content = ...
          # create a string that matches VASP's format
          # for kpoints paths
-         return KPOINTS_file_content 
+         return KPOINTS_file_content
 
       def check_kpoints(self, kpoints):
          path_spec = kpoints.get_dict()
          # check that the path_spec is in order,
          # raise error otherwise
 
-That's all. 
+That's all.
 The line ::
 
    kpoints = Input(types='parameter')
@@ -253,12 +253,12 @@ convenience functions:
   and all the nodes parsed by classes in between are returned as well.
 * the get_file call is a convenience function that returns a path to the downloaded (retrieved) file
 
-Naturally in most cases one would not simply like to wrap the output file into a SinglefileData node, but create an array from it, archive it in compressed form, or put it into a datastructure specifically developped for it, however that is documented in :doc:`Developping Data Nodes </developer_guide/devel_tutorial/code_plugin_float_sum>`.
+Naturally in most cases one would not simply like to wrap the output file into a SinglefileData node, but create an array from it, archive it in compressed form, or put it into a datastructure specifically developed for it, however that is documented in :doc:`Developing Data Nodes </developer_guide/devel_tutorial/code_plugin_float_sum>`.
 
 Workflows
 ---------
 
-Writing workflows is quite straightforward and explained in detail in :doc:`Developping Workflows </developer_guide/workflows>`.
+Writing workflows is quite straightforward and explained in detail in :doc:`Developing Workflows </developer_guide/workflows>`.
 There is no base class provided, since all workflows must be derived directly from aiida's Workflow class.
 
 However there is :py:class:`WorkflowHelper <aiida.workflows.vasp.helper.WorkflowHelper>`.
