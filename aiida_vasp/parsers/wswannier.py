@@ -1,5 +1,6 @@
-from aiida.parsers.plugins.vasp.wannier import WannierParser
 from aiida.orm import DataFactory
+
+from .wannier import WannierParser
 
 class WswannierParser(WannierParser):
     def get_hr_node(self):
