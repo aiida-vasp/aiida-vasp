@@ -43,8 +43,10 @@ class WannierBase(BaseParser):
 
 class WannierParser(WannierBase, parser.BaseParser):
     def parse_with_retrieved(self, retrieved):
-        super(WannierBase, self).parse_with_retrieved(retrieved)
-        self.add_node('bands', self.get_bands_node())
+        super(WannierParser, self).parse_with_retrieved(retrieved)
+        bands_node = self.get_bands_node()
+        if bands_node:
+            self.add_node('bands', bands_node)
         self.add_node('tb_model', self.get_hr_node())
         return self.result(success=True)
 
