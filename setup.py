@@ -46,8 +46,6 @@ if __name__ == '__main__':
                 'vasp.scf = aiida_vasp.calcs.scf:ScfCalculation',
                 'vasp.nscf = aiida_vasp.calcs.nscf:NscfCalculation',
                 'vasp.amn = aiida_vasp.calcs.amn:AmnCalculation',
-                'vasp.wannier = aiida_vasp.calcs.wannier:WannierCalculation',
-                'vasp.wswannier = aiida_vasp.calcs.wswannier:WswannierCalculation',
                 'vasp.vasp5 = aiida_vasp.calcs.vasp5:Vasp5Calculation'
             ],
             'aiida.data': [
@@ -60,8 +58,6 @@ if __name__ == '__main__':
                 'vasp.scf = aiida_vasp.parsers.scf:ScfParser',
                 'vasp.nscf = aiida_vasp.parsers.nscf:NscfParser',
                 'vasp.amn = aiida_vasp.parsers.amn:AmnParsaer',
-                'vasp.wannier = aiida_vasp.parsers.wannier:WannierParser',
-                'vasp.wswannier = aiida_vasp.parsers.wswannier:WswannierParser',
                 'vasp.vasp5 = aiida_vasp.parsers.vasp5:Vasp5Parser'
             ],
             'aiida.workflows': [
