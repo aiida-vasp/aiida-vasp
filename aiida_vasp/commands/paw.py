@@ -3,6 +3,15 @@ from aiida.cmdline.commands.data import Importable
 import click
 import sys
 
+def _try_load_dbenv():
+    """
+    Run `load_dbenv` unless the dbenv has already been loaded.
+    """
+    from aiida import load_dbenv, is_dbenv_loaded 
+    if not is_dbenv_loaded():
+        load_dbenv(*argc, **argv)
+        return True
+    return False
 
 class _Paw(VerdiCommandWithSubcommands, Importable):
     '''
@@ -11,7 +20,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
     def __init__(self):
         '''setup and register subcommands'''
-        from aiida.orm.data.vasp.paw import PawData
+        from aiida_vasp.data.paw import PawData
 
         self.dataclass = PawData
         self.valid_subcommands = {
@@ -23,7 +32,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
     def uploadfamily(self, *args):
         '''Upload a new PAW pseudopotential family.'''
-        from aiida import load_dbenv
         import os.path
         import argparse as arp
 
@@ -50,7 +58,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
             print >> sys.stderrm, 'Cannot find directory: ' + folder
             sys.exit(1)
 
-        load_dbenv()
+        _try_load_dbenv()
         from aiida.orm import DataFactory
         Paw = DataFactory('vasp.paw')
         files_found, files_uploaded = Paw.import_family(folder,
@@ -61,7 +69,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         print "POTCAR files found in subfolders: {}. New files uploaded from: {}".format(files_found, files_uploaded)
 
     def listfamilies(self, *args):
-        from aiida import load_dbenv
         import argparse
 
         parser = argparse.ArgumentParser(
@@ -80,7 +87,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
         params = parser.parse_args(args)
 
-        load_dbenv()
+        _try_load_dbenv()
         from aiida.orm import DataFactory
         Paw = DataFactory('vasp.paw')
         groups = Paw.get_paw_groups(elements=list(params.element),
@@ -125,7 +132,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
     def exportfamily(self, *args):
         '''Export a PAW potential family into a folder'''
-        from aiida import load_dbenv
         from aiida.orm import DataFactory
         from aiida.common.exceptions import NotExistent
         import argparse
@@ -145,7 +151,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         params = parser.parse_args(args)
         folder = abspath(expanduser(params.folder))
 
-        load_dbenv()
+        _try_load_dbenv()
         Paw = DataFactory('vasp.paw')
         try:
             group = Paw.get_famgroup(params.family_name)

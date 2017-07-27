@@ -21,3 +21,9 @@ codes:
     remote_computer: monch
     remote_abspath: /users/greschd/software/vasp/vasp.5.3.5.noncol
     prepend_text: source /users/greschd/software/vasp/load_modules.sh
+
+pseudo_families:
+  - command_name: aiida_vasp.commands.paw._Paw
+    folder: /home/greschd/software/VASP-5.4.1/potpaw_PBE.54
+    group_name: pbe
+    group_description: VASP 5.4 potpaw_PBE 
