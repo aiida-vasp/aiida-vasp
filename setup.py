@@ -40,7 +40,8 @@ if __name__ == '__main__':
         ],
         extras_require={
             'graphs': ['matplotlib'],
-            'regen_default_paws': ['lxml']
+            'regen_default_paws': ['lxml'],
+            'test': ['aiida-pytest'],
         },
         entry_points={
             'aiida.calculations': [
