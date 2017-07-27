@@ -4,3 +4,4 @@
 .vimprj
 .ropeproject
 *.egg*
+.cache

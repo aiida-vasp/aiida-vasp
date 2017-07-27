@@ -35,7 +35,8 @@ if __name__ == '__main__':
             'ase',
             'pymatgen',
             'subprocess32',
-            'click'
+            'click',
+            'aiida-wannier90'
         ],
         extras_require={
             'graphs': ['matplotlib'],

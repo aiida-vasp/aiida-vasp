@@ -1,0 +1,23 @@
+computers:
+  - name: localhost
+    hostname: localhost
+    description: localhost
+    transport: local
+    scheduler: direct
+    work_directory: /tmp/test_aiida_wannier90_run
+
+  - name: monch
+    hostname: monch.cscs.ch
+    description: monch cluster
+    transport: ssh
+    scheduler: slurm
+    work_directory: /mnt/lnec/{username}/test_aiida_tbextraction_run/
+    num_cpus: 20
+
+codes:
+  - label: vasp
+    description: VASP
+    default_plugin: vasp.vasp5
+    remote_computer: monch
+    remote_abspath: /users/greschd/software/vasp/vasp.5.3.5.noncol
+    prepend_text: source /users/greschd/software/vasp/load_modules.sh
