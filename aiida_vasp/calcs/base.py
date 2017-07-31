@@ -8,14 +8,6 @@ from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 
 
-def ordered_unique_list(in_list):
-    out_list = []
-    for i in in_list:
-        if i not in out_list:
-            out_list.append(i)
-    return out_list
-
-
 def make_use_methods(inputs, bases):
     '''
     creates the _use_methods classproperty from a list of
@@ -198,7 +190,7 @@ class VaspCalcBase(JobCalculation):
             'TMPCAR',
             'WAVECAR',
             'XDATCAR',
-            ['wannier90*', '.', 0],
+            ('wannier90*', '.', 0),
             'vasprun.xml'
         ]
         return retrieve_list
@@ -236,11 +228,6 @@ class VaspCalcBase(JobCalculation):
         calcinfo.codes_info = [codeinfo]
 
         return calcinfo
-
-    def write_additional(self, tempfolder, inputdict):
-        '''Subclass hook for writing other input files than the basic four
-        (INCAR, KPOINTS, POSCAR, POTCAR)'''
-        pass
 
     def _init_internal_params(self):
         '''must be present on all JobCalculation subclasses, that
@@ -285,219 +272,8 @@ class VaspCalcBase(JobCalculation):
         '''Subclass hook for updating attributes etc, just before storing'''
         pass
 
-
-# only implements gamma centered monkhorst
-# no expert mode with manual basis vectors
-# no fully automatic mode
-# no original monkhorst (equivalent to 0.5 shift though)
-kpmtemp = '''\
-Automatic mesh
-0
-Gamma
-{N[0]} {N[1]} {N[2]}
-{s[0]} {s[1]} {s[2]}\
-'''
-
-# only implements direct explicit list with weights
-# no cartesian
-# no tetrahedron method
-# no bandstructure lines
-kpltemp = '''\
-Explicit list
-{N}
-Direct
-{klist}\
-'''
-kplitemp = '''\
-{k[0]} {k[1]} {k[2]} {w}\
-'''
-
-
-class BasicCalculation(VaspCalcBase):
-    '''
-    Limited VASP calculation, can only take kpoints grid,
-    returns only OUTCAR and vasprun.xml
-    '''
-    parameters = Input(types='parameter', doc='VASP INCAR parameters.')
-    structure = Input(types=['structure', 'cif'])
-    paw = Input(types='vasp.paw', param='kind')
-    kpoints = Input(types='array.kpoints')
-    settings = Input(types='parameter', doc='Additional settings for the calculation.')
-    default_parser = 'vasp.basic'
-    _DEFAULT_PARAMETERS = {}
-
-    def _prepare_for_submission(self, tempfolder, inputdict):
-        '''retrieve only OUTCAR and vasprun.xml, extend in
-        subclasses for production to retrieve more output data'''
-        calcinfo = super(
-            BasicCalculation, self)._prepare_for_submission(
-                tempfolder, inputdict)
-        try:
-            additional_retrieve_list = inputdict['settings'].get_attr('ADDITIONAL_RETRIEVE_LIST')
-        except KeyError, AttributeError:
-            additional_retrieve_list = []
-        calcinfo.retrieve_list = list(set(
-            ['OUTCAR', 'vasprun.xml'] + additional_retrieve_list
-        ))
-        return calcinfo
-
-    def write_incar(self, inputdict, dst):
-        '''
-        Converts from parameters node (ParameterData) to INCAR format and writes to dst. Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        '''
-        from incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(
-                ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
-            ))
-
-    def write_poscar(self, inputdict, dst):
-        '''
-        converts from structures node (StructureData) to POSCAR format
-        and writes to dst
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        '''
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
-
-    def write_potcar(self, inputdict, dst):
-        '''
-        concatenatest multiple paw files into a POTCAR
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        '''
-        import subprocess32 as sp
-        catcom = ['cat']
-        # ~ structure = inputdict['structure']
-        # ~ structure = self.inp.structure
-        # order the symbols according to order given in structure
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            paw = inputdict[self._get_paw_linkname(kind)]
-            catcom.append(paw.get_abs_path('POTCAR'))
-        # cat the pawdata nodes into the file
-        with open(dst, 'w') as pc:
-            sp.check_call(catcom, stdout=pc)
-
-    def _write_kpoints_mesh(self, dst):
-        kp = self.inp.kpoints
-        mesh, offset = kp.get_kpoints_mesh()
-        with open(dst, 'w') as kpoints:
-            kps = kpmtemp.format(N=mesh, s=offset)
-            kpoints.write(kps)
-
-    def _write_kpoints_list(self, dst):
-        kp = self.inp.kpoints
-        if 'array|weights' in kp.get_attrs():
-            kpl, weights = kp.get_kpoints(also_weights=True)
-        else:
-            kpl = kp.get_kpoints()
-            weights = [1.] * kpl.shape[0]
-        kw = zip(kpl, weights)
-        with open(dst, 'w') as kpoints:
-            kpls = '\n'.join(
-                [kplitemp.format(k=k[0], w=k[1]) for k in kw])
-            kps = kpltemp.format(N=len(kw), klist=kpls)
-            kpoints.write(kps)
-
-    def write_kpoints(self, inputdict, dst):
-        '''
-        converts from kpoints node (KpointsData) to KPOINTS format
-        and writes to dst
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        '''
-        kp = self.inp.kpoints
-        if kp.get_attrs().get('mesh'):
-            self._write_kpoints_mesh(dst)
-        elif kp.get_attrs().get('array|kpoints'):
-            self._write_kpoints_list(dst)
-        else:
-            raise AttributeError('you supplied an empty kpoints node')
-
     def write_additional(self, tempfolder, inputdict):
-        super(BasicCalculation, self).write_additional(
-            tempfolder, inputdict)
-
-    def verify_inputs(self, inputdict, *args, **kwargs):
-        '''check for the presence of the required inputs'''
-        # ~ notset_msg = 'input not set: %s'
-        super(BasicCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'parameters')
-        self.check_input(inputdict, 'structure')
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            self.check_input(inputdict, self._get_paw_linkname(kind))
-        self.check_input(inputdict, 'kpoints')
-        self.check_kpoints(inputdict['kpoints'])
-
-    def check_kpoints(self, kpoints):
-        '''check for nonemptiness of the input kpoints node'''
-        kpa = kpoints.get_attrs()
-        if 'mesh' not in kpa and 'array|kpoints' not in kpa:
-            msg = 'BasicCalculation can not be '
-            msg += 'submitted with empty kpoints node'
-            raise AttributeError(msg)
-
-    @classmethod
-    def _get_paw_linkname(cls, kind):
-        '''required for storing multiple input paw nodes'''
-        return 'paw_%s' % kind
-
-    def _prestore(self):
-        '''
-        set attributes prior to storing
-        '''
-        super(BasicCalculation, self)._prestore()
-        self._set_attr('elements', list(ordered_unique_list(
-            self.inp.structure.get_ase().get_chemical_symbols())))
-
-    @property
-    def _parameters(self):
-        all_parameters = ChainMap(
-            self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS
-        )
-        return {k.lower(): v for k, v in all_parameters.items()}
-
-    @classmethod
-    def new_parameters(self, **kwargs):
-        return DataFactory('parameter')(**kwargs)
-
-    @classmethod
-    def new_structure(self, **kwargs):
-        return DataFactory('structure')(**kwargs)
-
-    @classmethod
-    def new_kpoints(self, **kwargs):
-        return DataFactory('array.kpoints')(**kwargs)
-
-    @classmethod
-    def load_paw(self, *args, **kwargs):
-        return self.Paw.load_paw(*args, **kwargs)[0]
-
-    @classproperty
-    def Paw(self):
-        return DataFactory('vasp.paw')
-
-    @property
-    def elements(self):
-        return self.get_attr('elements')
-
-    def _init_internal_params(self):
-        '''
-        let the metaclass :py:class:`CalcMeta`
-        ref CalcMeta pick up internal parameters from the class body
-        and insert them
-        '''
-        super(BasicCalculation, self)._init_internal_params()
-        self._update_internal_params()
+        """
+        Subclass hook to write additional input files.
+        """
+        pass

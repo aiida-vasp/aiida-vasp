@@ -1,5 +1,7 @@
-from aiida_vasp.parsers.vasp import VaspParser
-from aiida_vasp.utils.io.win import WinParser
+from aiida.orm import DataFactory
+
+from .vasp import VaspParser
+from ..utils.io.win import WinParser
 
 
 class Vasp2w90Parser(VaspParser):
@@ -18,11 +20,11 @@ class Vasp2w90Parser(VaspParser):
         if not win:
             return False, None
         wp = WinParser(win)
-        winnode = self._calc.new_wannier_parameters(dict=wp.result)
+        winnode = DataFactory('parameter')(dict=wp.result)
         return True, winnode
 
     def get_wdat_node(self):
-        wdatnode = self._calc.new_wannier_data()
+        wdatnode = DataFactory('vasp.archive')()
         success = True
         for ext in ['mmn', 'amn', 'eig']:
             wfile = self.get_file('wannier90.' + ext)

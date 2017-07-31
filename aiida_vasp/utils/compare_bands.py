@@ -3,8 +3,6 @@ from aiida.orm import DataFactory
 
 
 BandsData = DataFactory('array.bands')
-# ~ ArrayData = DataFactory('array')
-
 
 def _firstspin(bands):
     if bands.ndim not in [2, 3]:
