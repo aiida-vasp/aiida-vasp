@@ -332,9 +332,12 @@ class BasicCalculation(VaspCalcBase):
         calcinfo = super(
             BasicCalculation, self)._prepare_for_submission(
                 tempfolder, inputdict)
+        try:
+            additional_retrieve_list = inputdict['settings'].get_attr('ADDITIONAL_RETRIEVE_LIST')
+        except KeyError, AttributeError:
+            additional_retrieve_list = []
         calcinfo.retrieve_list = list(set(
-            ['OUTCAR', 'vasprun.xml'] +
-            inputdict.get('settings', {}).pop('ADDITIONAL_RETRIEVE_LIST', [])
+            ['OUTCAR', 'vasprun.xml'] + additional_retrieve_list
         ))
         return calcinfo
 
