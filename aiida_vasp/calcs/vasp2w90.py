@@ -16,14 +16,16 @@ class Vasp2w90Calculation(VaspCalculation):
         types=['orbital', List],
         doc='Projections to be defined in the Wannier90 input file.'
     )
-    _DEFAULT_PARAMETERS = {'lwannier90': True}
+    _DEFAULT_PARAMETERS = {
+        'lwannier90': True, 'ncore': 1, 'isym': -1, 'icharg': 11, 'lpead': False,
+        'lwave': False
+    }
 
     def write_win(self, inputdict, dst):
         '''Write Wannier90 input file'''
         write_win(
             filename=dst,
             parameters=inputdict.get('wannier90_parameters', {}),
-            structure=inputdict.get('structure', None),
             projections=inputdict.get('projections', None)
         )
 

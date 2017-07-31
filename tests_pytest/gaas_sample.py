@@ -1,9 +1,14 @@
+try:
+    from collections import ChainMap
+except ImportError:
+    from chainmap import ChainMap
+
 import pytest
 from ase.io.vasp import read_vasp
 
 @pytest.fixture
 def get_gaas_process_inputs(configure, get_process_inputs, sample):
-    def inner(calculation_string):
+    def inner(calculation_string, parameters={}):
         from aiida.orm import DataFactory
 
         process, inputs = get_process_inputs(
@@ -24,19 +29,25 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):
         kpoints.set_kpoints_mesh([8, 8, 8])
         inputs.kpoints = kpoints
 
-        parameters = DataFactory('parameter')(dict=dict(
-            npar=8,
-            gga='PE',
-            gga_compat=False,
-            ismear=0,
-            lorbit=11,
-            lsorbit=True,
-            sigma=0.05,
-        ))
-        inputs.parameters = parameters
+
+        parameters_input = DataFactory('parameter')(dict=
+            ChainMap(
+                parameters,
+                dict(
+                    nbands=24,
+                    gga='PE',
+                    gga_compat=False,
+                    ismear=0,
+                    lorbit=11,
+                    lsorbit=True,
+                    sigma=0.05,
+                )
+            )
+        )
+        inputs.parameters = parameters_input
         inputs._options.resources = {
             'num_machines': 1,
-            'num_mpiprocs_per_machine': 16
+            'num_mpiprocs_per_machine': 12
         }
         inputs._options.withmpi = True
         inputs._options.queue_name = 'dphys_compute'

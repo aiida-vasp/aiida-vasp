@@ -25,8 +25,9 @@ class WinParser(KeyValueParser):
             content = fobj_or_str.read()
         comments = re.findall(cls.comment, content)
         content = re.sub(cls.comment, '', content)
-        kvd = dict(re.findall(cls.assignment, content))
         blocks = re.findall(cls.block, content)
+        content = re.sub(cls.block, '', content)
+        kvd = dict(re.findall(cls.assignment, content))
         bld = {}
         for i in blocks:
             lineslist = cls.splitlines(i[1], dt=str)

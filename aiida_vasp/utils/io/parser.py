@@ -33,7 +33,7 @@ class KeyValueParser(BaseParser):
     contains regex and functions to find grammar elements
     in vasp input and output files
     '''
-    assignment = re.compile(r'(\w*)\s*[=: ]\s*([^;\n]*);?')
+    assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     comments = True
 
     @classmethod

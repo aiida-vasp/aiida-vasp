@@ -316,7 +316,7 @@ kplitemp = '''\
 class BasicCalculation(VaspCalcBase):
     '''
     Limited VASP calculation, can only take kpoints grid,
-    returns only CHGCAR and WAVECAR
+    returns only OUTCAR and vasprun.xml
     '''
     parameters = Input(types='parameter', doc='VASP INCAR parameters.')
     structure = Input(types=['structure', 'cif'])
