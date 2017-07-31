@@ -140,7 +140,7 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         '''
-        from incar import dict_to_incar
+        from ..utils.io.incar import dict_to_incar
         with open(dst, 'w') as incar:
             incar.write(dict_to_incar(
                 ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)

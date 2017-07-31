@@ -1,6 +1,8 @@
-from parser import KeyValueParser
 import re
 
+from ..parser import KeyValueParser
+
+__all__ = ['IncarParser']
 
 class IncarParser(KeyValueParser):
     '''
