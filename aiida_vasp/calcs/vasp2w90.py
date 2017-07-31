@@ -70,6 +70,7 @@ class Vasp2w90Calculation(Vasp5Calculation):
         '''convert dict to wannier input and write to file'''
         if 'wannier_settings' in inputdict:
             super(Vasp2w90Calculation, self).write_win(inputdict, dst)
+
     def new_wannier_settings(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 

@@ -1,11 +1,10 @@
 from base import VaspCalcBase
 from nscf import NscfCalculation
-from wannier import WannierBase
 from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
 
-class Vasp5Calculation(NscfCalculation, WannierBase):
+class Vasp5Calculation(NscfCalculation):
     '''
     General purpose VASP calculation, retrieves everything,
     so if storage space is a concern, consider deriving from it
