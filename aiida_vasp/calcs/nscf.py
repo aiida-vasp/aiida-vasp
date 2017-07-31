@@ -33,7 +33,8 @@ class NscfCalculation(BasicCalculation):
         calcinfo = super(NscfCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list.extend(['EIGENVAL', 'DOSCAR'])
-        calcinfo.retrieve_list.append(['wannier90*', '.', 0])
+        calcinfo.retrieve_list.append(('wannier90*', '.', 0))
+        calcinfo.retrieve_list = list(set(calcinfo.retrieve_list))
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
@@ -94,9 +95,6 @@ class NscfCalculation(BasicCalculation):
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
         '''
-        # ~ nsw = self._parameters.get('nsw', 0)
-        # ~ ibrion_d = nsw in [0, 1] and -1 or 0
-        # ~ ibrion = self._parameters.get('ibrion', ibrion_d)
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
         istart = self._parameters.get('istart', istrt_d)
         if istart in [1, 2, 3]:
@@ -129,13 +127,3 @@ class NscfCalculation(BasicCalculation):
     @property
     def input_wavefunctions_used(self):
         return self.get_attr('input_wfn_used')
-
-    def _init_internal_params(self):
-        '''
-        let the metaclass
-        py:class:`~aiida_vasp.calcs.base.CalcMeta`
-        ref CalcMeta
-        pick up internal parameters from the class body and insert them
-        '''
-        super(NscfCalculation, self)._init_internal_params()
-        self._update_internal_params()

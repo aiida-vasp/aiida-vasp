@@ -36,7 +36,8 @@ if __name__ == '__main__':
             'pymatgen',
             'subprocess32',
             'click',
-            'aiida-wannier90'
+            'aiida-wannier90',
+            'chainmap'
         ],
         extras_require={
             'graphs': ['matplotlib'],
@@ -47,7 +48,7 @@ if __name__ == '__main__':
             'aiida.calculations': [
                 'vasp.scf = aiida_vasp.calcs.scf:ScfCalculation',
                 'vasp.nscf = aiida_vasp.calcs.nscf:NscfCalculation',
-                'vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation'
+                'vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation',
                 'vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation'
             ],
             'aiida.data': [
@@ -59,8 +60,8 @@ if __name__ == '__main__':
             'aiida.parsers': [
                 'vasp.scf = aiida_vasp.parsers.scf:ScfParser',
                 'vasp.nscf = aiida_vasp.parsers.nscf:NscfParser',
-                'vasp.vasp = aiida_vasp.parsers.vasp:VaspParser'
-                'vasp.vasp2w90 = aiida_vasp.parsers.vasp:Vasp2w90Parser'
+                'vasp.vasp = aiida_vasp.parsers.vasp:VaspParser',
+                'vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser'
             ],
             'aiida.workflows': [
                 'vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow',

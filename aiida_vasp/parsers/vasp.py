@@ -9,7 +9,7 @@ import numpy as np
 
 class VaspParser(BaseParser):
     '''
-    Parses all Vasp 5 calculations.
+    Parses all Vasp calculations.
     '''
     def parse_with_retrieved(self, retrieved):
         self.check_state()
@@ -167,12 +167,16 @@ class VaspParser(BaseParser):
 
     def get_chgcar(self):
         chgc = self.get_file('CHGCAR')
+        if chgc is None:
+            return None
         chgnode = DataFactory('vasp.chargedensity')()
         chgnode.set_file(chgc)
         return chgnode
 
     def get_wavecar(self):
         wfn = self.get_file('WAVECAR')
+        if wfn is None:
+            return None
         wfnode = DataFactory('vasp.wavefun')()
         wfnode.set_file(wfn)
         return wfnode
@@ -191,10 +195,12 @@ class VaspParser(BaseParser):
         self.add_node('kpoints', node)
 
     def set_chgcar(self, node):
-        self.add_node('charge_density', node)
+        if node is not None:
+            self.add_node('charge_density', node)
 
     def set_wavecar(self, node):
-        self.add_node('wavefunctions', node)
+        if node is not None:
+            self.add_node('wavefunctions', node)
 
     def set_structure(self, node):
         self.add_node('structure', node)

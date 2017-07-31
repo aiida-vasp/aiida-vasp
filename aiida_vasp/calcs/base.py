@@ -1,3 +1,8 @@
+try:
+    from collections import ChainMap
+except ImportError:
+    from chainmap import ChainMap
+
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
@@ -313,11 +318,13 @@ class BasicCalculation(VaspCalcBase):
     Limited VASP calculation, can only take kpoints grid,
     returns only CHGCAR and WAVECAR
     '''
-    parameters = Input(types='parameter')
+    parameters = Input(types='parameter', doc='VASP INCAR parameters.')
     structure = Input(types=['structure', 'cif'])
     paw = Input(types='vasp.paw', param='kind')
     kpoints = Input(types='array.kpoints')
+    settings = Input(types='parameter', doc='Additional settings for the calculation.')
     default_parser = 'vasp.basic'
+    _DEFAULT_PARAMETERS = {}
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''retrieve only OUTCAR and vasprun.xml, extend in
@@ -325,20 +332,24 @@ class BasicCalculation(VaspCalcBase):
         calcinfo = super(
             BasicCalculation, self)._prepare_for_submission(
                 tempfolder, inputdict)
-        calcinfo.retrieve_list = ['OUTCAR', 'vasprun.xml']
+        calcinfo.retrieve_list = list(set(
+            ['OUTCAR', 'vasprun.xml'] +
+            inputdict.get('settings', {}).pop('ADDITIONAL_RETRIEVE_LIST', [])
+        ))
         return calcinfo
 
     def write_incar(self, inputdict, dst):
         '''
-        converts from parameters node (ParameterData) to INCAR format
-        and writes to dst
+        Converts from parameters node (ParameterData) to INCAR format and writes to dst. Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
 
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         '''
         from incar import dict_to_incar
         with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(self.inp.parameters.get_dict()))
+            incar.write(dict_to_incar(
+                ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
+            ))
 
     def write_poscar(self, inputdict, dst):
         '''
@@ -450,8 +461,10 @@ class BasicCalculation(VaspCalcBase):
 
     @property
     def _parameters(self):
-        return {k.lower(): v for
-                k, v in self.inp.parameters.get_dict().iteritems()}
+        all_parameters = ChainMap(
+            self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS
+        )
+        return {k.lower(): v for k, v in all_parameters.items()}
 
     @classmethod
     def new_parameters(self, **kwargs):
