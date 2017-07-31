@@ -1,7 +1,7 @@
-from vasp5 import Vasp5Parser
+from vasp import VaspParser
 
 
-class BasicParser(Vasp5Parser):
+class BasicParser(VaspParser):
     def parse_with_retrieved(self, retrieved):
         self.check_state()
         self.out_folder = self.get_folder(retrieved)

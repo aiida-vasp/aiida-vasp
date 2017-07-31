@@ -1,8 +1,8 @@
-from aiida_vasp.parsers.vasp5 import Vasp5Parser
+from aiida_vasp.parsers.vasp import VaspParser
 from aiida_vasp.utils.io.win import WinParser
 
 
-class Vasp2w90Parser(Vasp5Parser):
+class Vasp2w90Parser(VaspParser):
     def parse_with_retrieved(self, retrieved):
         super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)
 

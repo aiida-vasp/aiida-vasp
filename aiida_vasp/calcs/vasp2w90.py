@@ -1,5 +1,5 @@
 from base import Input
-from vasp5 import Vasp5Calculation
+from vasp import VaspCalculation
 from aiida.orm import DataFactory
 
 
@@ -57,9 +57,9 @@ class dict_to_win(object):
         return '\n'.join(res)
 
 
-class Vasp2w90Calculation(Vasp5Calculation):
+class Vasp2w90Calculation(VaspCalculation):
     '''General purpose Calculation for using vasp with the vasp2wannier90 interface.
-    Same data storage space concerns apply as with :py:class:`Vasp5Calculation`.'''
+    Same data storage space concerns apply as with :py:class:`VaspCalculation`.'''
 
     default_parser = 'vasp.vasp2w90'
     wannier_settings = Input(types=['parameter'],

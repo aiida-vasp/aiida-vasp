@@ -6,7 +6,7 @@ Vasp2w90Calculation
 Description
 ***********
 
-Works exactly the same as :doc:`Vasp5Calculation <vasp5>`, from which it is derived, with the difference
+Works exactly the same as :doc:`VaspCalculation <vasp>`, from which it is derived, with the difference
 that it takes a wannier_settings input as well, so it covers every possible use case of VASP with LWANNIER90=True.
 
 ******
@@ -61,7 +61,7 @@ Reference
 *********
 Superclasses:
 
-* :py:class:`Vasp5Calculation <aiida_vasp.calcs.vasp5.Vasp5Calculation>`
+* :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 
 .. autoclass:: aiida_vasp.calcs.vasp2w90.Vasp2w90Calculation
    :members: verify_inputs, _prepare_for_submission

@@ -17,7 +17,7 @@ computers:
 codes:
   - label: vasp
     description: VASP
-    default_plugin: vasp.vasp5
+    default_plugin: vasp.vasp
     remote_computer: monch
     remote_abspath: /users/greschd/software/vasp/vasp.5.3.5.noncol
     prepend_text: source /users/greschd/software/vasp/load_modules.sh

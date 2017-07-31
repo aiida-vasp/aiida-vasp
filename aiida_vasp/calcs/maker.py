@@ -24,7 +24,7 @@ class VaspMaker(object):
 
     :keyword calc_cls: the class that VaspMaker will use when creating
         Calculation nodes.
-        defaults to 'vasp.vasp5'.
+        defaults to 'vasp.vasp'.
         if a string is given, it will be passed to aiida's CalculationFactory
     :type calc_cls: str or vasp.BasicCalculation subclass
 
@@ -113,7 +113,7 @@ class VaspMaker(object):
             self._copy_from(kwargs['copy_from'])
 
     def _init_defaults(self, *args, **kwargs):
-        calcname = kwargs.get('calc_cls', 'vasp.vasp5')
+        calcname = kwargs.get('calc_cls', 'vasp.vasp')
         if isinstance(calcname, (str, unicode)):
             self.calc_cls = CalculationFactory(calcname)
         else:

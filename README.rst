@@ -40,7 +40,7 @@ To test wether the installation was successful use::
    * vasp.amn
    * vasp.scf
    * vasp.nscf
-   * vasp.vasp5
+   * vasp.vasp
    * vasp.wannier
 
 You should see vasp.* in the list

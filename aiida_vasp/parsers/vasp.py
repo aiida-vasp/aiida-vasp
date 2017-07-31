@@ -7,7 +7,7 @@ from aiida.orm import DataFactory
 import numpy as np
 
 
-class Vasp5Parser(BaseParser):
+class VaspParser(BaseParser):
     '''
     Parses all Vasp 5 calculations.
     '''

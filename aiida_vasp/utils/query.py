@@ -3,7 +3,7 @@ from aiida.orm.calculation.job import JobCalculation
 
 
 class VaspFinder(object):
-    _vaspclass = ['vasp.vasp', 'vasp.asevasp', 'vasp.vasp5',
+    _vaspclass = ['vasp.vasp', 'vasp.asevasp', 'vasp.vasp',
                   'vasp.vasp2w90', 'vasp.vasp2w90.Vasp2W90Calculation']
 
     @classmethod

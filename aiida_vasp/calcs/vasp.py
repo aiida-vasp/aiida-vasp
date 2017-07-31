@@ -4,25 +4,25 @@ from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
 
-class Vasp5Calculation(NscfCalculation):
+class VaspCalculation(NscfCalculation):
     '''
     General purpose VASP calculation, retrieves everything,
     so if storage space is a concern, consider deriving from it
     and overriding the retrieve_list in the subclass so only
     the necessary files are retrieved from the server.
     '''
-    default_parser = 'vasp.vasp5'
+    default_parser = 'vasp.vasp'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''retrieve all output files potentially created by VASP'''
-        calcinfo = super(Vasp5Calculation, self)._prepare_for_submission(
+        calcinfo = super(VaspCalculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list = VaspCalcBase.max_retrieve_list()
         return calcinfo
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         # ~ notset_msg = 'input not set: %s'
-        super(Vasp5Calculation, self).verify_inputs(inputdict, *args, **kwargs)
+        super(VaspCalculation, self).verify_inputs(inputdict, *args, **kwargs)
         self.check_input(inputdict, 'settings')
         self.check_input(inputdict, 'structure')
         if 'elements' not in self.attrs():
@@ -47,10 +47,10 @@ class Vasp5Calculation(NscfCalculation):
         return wether an input kpoints node is needed or not.
         :return output:
             True if input kpoints node is needed
-            (py:method::Vasp5Calculation.use_kpoints),
+            (py:method::VaspCalculation.use_kpoints),
             False otherwise
         needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        (py:method::VaspCalculation.use_settings)
         '''
         if 'kspacing' in self._settings and 'kgamma' in self._settings:
             return False
@@ -62,10 +62,10 @@ class Vasp5Calculation(NscfCalculation):
         Test wether an charge_densities input is needed or not.
         :return output:
             True if a chgcar file must be used
-            (py:method::Vasp5Calculation.use_charge_densities),
+            (py:method::VaspCalculation.use_charge_densities),
             False otherwise
         needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        (py:method::VaspCalculation.use_settings)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
         icharg = self._settings.get('icharg', ichrg_d)
@@ -79,10 +79,10 @@ class Vasp5Calculation(NscfCalculation):
         Test wether a wavefunctions input is needed or not.
         :return output:
             True if a wavecar file must be used
-            (py:method::Vasp5Calculation.use_wavefunctions),
+            (py:method::VaspCalculation.use_wavefunctions),
             False otherwise
         needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        (py:method::VaspCalculation.use_settings)
         '''
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
         istart = self._settings.get('istart', istrt_d)
@@ -142,5 +142,5 @@ class Vasp5Calculation(NscfCalculation):
         pick up internal parameters from the class body
         and insert them
         '''
-        super(Vasp5Calculation, self)._init_internal_params()
+        super(VaspCalculation, self)._init_internal_params()
         self._update_internal_params()
