@@ -26,7 +26,7 @@ class Vasp2w90Parser(Vasp5Parser):
             return None
         wdatnode = self._calc.new_wannier_data()
         for ext in ['mmn', 'amn', 'eig']:
-            wfile = self.get_file('wannier90.'+ext)
+            wfile = self.get_file('wannier90.' + ext)
             if wfile:
                 wdatnode.add_file(wfile)
         return wdatnode

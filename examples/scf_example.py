@@ -19,7 +19,12 @@ if __name__ == '__main__':
     if not len(sys.argv) == 3:
         print usage
         sys.exit()
-    mkr = VaspMaker(structure=sys.argv[2], calc_cls='vasp.scf')
+    mkr = VaspMaker(
+        structure=sys.argv[2],
+        calc_cls='vasp.scf',
+        paw_map={'Ga': 'Ga', 'As': 'As'},
+        paw_family='pbe',
+    )
     mkr.add_settings(
         gga='PE',
         gga_compat=False,

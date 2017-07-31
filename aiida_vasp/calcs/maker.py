@@ -167,10 +167,7 @@ class VaspMaker(object):
                     'cif').get_or_create(structure)[0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
-                pwd = os.path.abspath(os.curdir)
-                os.chdir(os.path.dirname(structure))
-                atoms = read_vasp('POSCAR')
-                os.chdir(pwd)
+                atoms = read_vasp(os.path.abspath(structure))
                 self._structure = self.calc_cls.new_structure()
                 self._structure.set_ase(atoms)
         else:

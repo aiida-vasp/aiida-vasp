@@ -35,11 +35,13 @@ if __name__ == '__main__':
             'ase',
             'pymatgen',
             'subprocess32',
-            'click'
+            'click',
+            'aiida-wannier90'
         ],
         extras_require={
             'graphs': ['matplotlib'],
-            'regen_default_paws': ['lxml']
+            'regen_default_paws': ['lxml'],
+            'test': ['aiida-pytest'],
         },
         entry_points={
             'aiida.calculations': [
