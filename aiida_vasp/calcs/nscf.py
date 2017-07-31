@@ -22,7 +22,7 @@ class NscfCalculation(BasicCalculation):
         self.check_input(inputdict, 'wavefunctions', self._need_wfn)
         if not self._need_chgd() and inputdict.get('charge_density'):
             msg = 'charge_density node given but '
-            msg += '"icharg" key in settings not set '
+            msg += '"icharg" key in parameters not set '
             msg += 'to either 1 o 11. charge_density node not used --> .'
             msg += 'CHGCAR not written'
             self.logger.warning(msg)
@@ -74,11 +74,11 @@ class NscfCalculation(BasicCalculation):
             True if a chgcar file must be used
             (py:method::NscfCalculation.use_charge_densities),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::NscfCalculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::NscfCalculation.use_parameters)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
-        icharg = self._settings.get('icharg', ichrg_d)
+        icharg = self._parameters.get('icharg', ichrg_d)
         if icharg in [1, 11]:
             return True
         else:
@@ -91,14 +91,14 @@ class NscfCalculation(BasicCalculation):
             True if a wavecar file must be
             used (py:method::NscfCalculation.use_wavefunctions),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::NscfCalculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::NscfCalculation.use_parameters)
         '''
-        # ~ nsw = self._settings.get('nsw', 0)
+        # ~ nsw = self._parameters.get('nsw', 0)
         # ~ ibrion_d = nsw in [0, 1] and -1 or 0
-        # ~ ibrion = self._settings.get('ibrion', ibrion_d)
+        # ~ ibrion = self._parameters.get('ibrion', ibrion_d)
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
-        istart = self._settings.get('istart', istrt_d)
+        istart = self._parameters.get('istart', istrt_d)
         if istart in [1, 2, 3]:
             return True
         else:
@@ -112,7 +112,7 @@ class NscfCalculation(BasicCalculation):
     def new_wavefunctions(self, **kwargs):
         return DataFactory('vasp.wavefun')(**kwargs)
 
-    def new_wannier_settings(self, **kwargs):
+    def new_wannier_parameters(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     def new_wannier_data(self, **kwargs):

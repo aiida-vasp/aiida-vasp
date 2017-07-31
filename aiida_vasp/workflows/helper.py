@@ -24,8 +24,8 @@ class WorkflowHelper(object):
                                               params['paw_family'])
             kwargs['paw_map'] = kwargs.get('paw_map') or params['paw_map']
         maker = VaspMaker(calc_cls=calc_type, **kwargs)
-        if params.get('settings'):
-            maker.rewrite_settings(**params['settings'])
+        if params.get('parameters'):
+            maker.rewrite_parameters(**params['parameters'])
 
         kpoints = params.get('kpoints')
         kp_valid, log = self._verify_kpoints(params)
@@ -222,11 +222,11 @@ class WorkflowHelper(object):
         tmpl['description'] = 'optional description for calculations'
         tmpl['extras'] = {'explanation': ('dict with extra attributes you '
                           'want to give to all calcs run by this workflow.')}
-        tmpl['settings'] = {'explanation': ('incar keys for the calculation')}
+        tmpl['parameters'] = {'explanation': ('incar keys for the calculation')}
         if continuation:
             tmpl['continue_from'] = 'uuid of a finished calculation'
             tmpl['kpoints'] = ['default: same as previous calc)']
-            tmpl['settings'] = {'explanation': ('additional / '
+            tmpl['parameters'] = {'explanation': ('additional / '
                                                 'override incar keys')}
         else:
             tmpl['paw_family'] = ('name of a PAW family as imported from the '

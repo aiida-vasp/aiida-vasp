@@ -25,7 +25,7 @@ if __name__ == '__main__':
         paw_map={'Ga': 'Ga', 'As': 'As'},
         paw_family='pbe',
     )
-    mkr.add_settings(
+    mkr.add_parameters(
         gga='PE',
         gga_compat=False,
         ediff=1e-5,

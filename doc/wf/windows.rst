@@ -17,7 +17,7 @@ The window parameters for vasp90 are given manually at the start. Several sets o
       |-------+------------------------------+-------------+
       |       |                              |             |
       v       v                              v             v
-   Scf ---> Nscf -> (wannier_settings) ---> Projections ---> Wannier ---> Nscf
+   Scf ---> Nscf -> (wannier_parameters) ---> Projections ---> Wannier ---> Nscf
                                                    |----> Wannier       |
                                                              |          +---> Bands, DOS
                                                              v
@@ -42,7 +42,7 @@ minimal example::
       "paw_family": "<name>",
       "paw_map": {"In": "In_d", "As": "As"},
       "resources": {
-         "num_machines": num_nodes, 
+         "num_machines": num_nodes,
          "num_mpiprocs_per_machine": num_ppn
       },
       "wannier_resources": {
@@ -53,13 +53,13 @@ minimal example::
       "vasp_code": "<vasp-code@computer>",
       "wannier_code": "<wannier-code@computer>",
       "structure": "<path to cif or poscar file for InAs>",
-      "settings": {
+      "parameters": {
          "nbands": nbands,
          "ediff": 1e-5,
          "gga": "PE",
          "gga_compat": False,
       }
-      "wannier_settings": {
+      "wannier_parameters": {
          "dis_num_iter": 100,
          "num_iter": 100
       }
@@ -74,10 +74,10 @@ minimal example::
    }
 
    wf = WindowsWorkflow(params=parameters)
-   wf.start() 
+   wf.start()
 
 The k-point path for wannier interpolation as well as for the ab-initio band structure
-are both set in the key "kpoints". Any kpoint path set in "wannier_settings" would be overwritten.
+are both set in the key "kpoints". Any kpoint path set in "wannier_parameters" would be overwritten.
 Obvious input parameters like LWANNIER90 for VASP or bands_plot for wannier90 are set automatically.
 
 **********
@@ -86,8 +86,8 @@ Parameters
 
 Most of the parameters have the same semantics as for the :ref:`single calculation workflows <stepwf-parameters>`
 
-* settings
-* wannier_settings
+* parameters
+* wannier_parameters
 * structure
 * paw_family
 * paw_map
@@ -102,7 +102,7 @@ Most of the parameters have the same semantics as for the :ref:`single calculati
 The following parameters are specific to this calculation or have changed semantics versus the single calculation workflow parameters.
 
 * kpoints: dict, like for single calculation workflows, except containing a mesh as well as a path specification.
-* projections:, list as it would be set in wannier_settings
+* projections:, list as it would be set in wannier_parameters
 * windows: list of dicts, each dict follows the format {'outer': [min, max], 'inner': [min, max]}
 * wannier_resources: overrides resources for wannier calculations
 * wannier_queue: overrides queue for wannier calculations (it's possible to have VASP and wannier on separate computers)
@@ -126,10 +126,10 @@ Reference
          sets use_wannier automatically.'
 
       .. automethod:: get_projections
-         
+
          runs an AmnWorkflow with the results of the previoust step
          to get the wannier projections file.
-         sets some wannier_settings keys automatically.
+         sets some wannier_parameters keys automatically.
 
       .. automethod:: get_tbmodel
 
@@ -143,5 +143,5 @@ Reference
          Can be compared kpoint for kpoint to the wannier interpolated bands.
 
       .. automethod:: make_results
-         
+
          adds all obtained bands nodes to the workflow's results.

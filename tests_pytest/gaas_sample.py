@@ -24,7 +24,7 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):
         kpoints.set_kpoints_mesh([8, 8, 8])
         inputs.kpoints = kpoints
 
-        settings = DataFactory('parameter')(dict=dict(
+        parameters = DataFactory('parameter')(dict=dict(
             npar=8,
             gga='PE',
             gga_compat=False,
@@ -33,7 +33,7 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):
             lsorbit=True,
             sigma=0.05,
         ))
-        inputs.settings = settings
+        inputs.parameters = parameters
         inputs._options.resources = {
             'num_machines': 1,
             'num_mpiprocs_per_machine': 16

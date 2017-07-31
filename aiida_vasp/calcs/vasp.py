@@ -6,7 +6,7 @@ from aiida.common.utils import classproperty
 
 class VaspCalculation(NscfCalculation):
     '''
-    General purpose VASP calculation, retrieves everything,
+    General-purpose VASP calculation, retrieves everything,
     so if storage space is a concern, consider deriving from it
     and overriding the retrieve_list in the subclass so only
     the necessary files are retrieved from the server.
@@ -23,7 +23,7 @@ class VaspCalculation(NscfCalculation):
     def verify_inputs(self, inputdict, *args, **kwargs):
         # ~ notset_msg = 'input not set: %s'
         super(VaspCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'settings')
+        self.check_input(inputdict, 'parameters')
         self.check_input(inputdict, 'structure')
         if 'elements' not in self.attrs():
             self._prestore()
@@ -38,9 +38,9 @@ class VaspCalculation(NscfCalculation):
         return 'paw_%s' % kind
 
     @property
-    def _settings(self):
+    def _parameters(self):
         return {k.lower(): v for
-                k, v in self.inp.settings.get_dict().iteritems()}
+                k, v in self.inp.parameters.get_dict().iteritems()}
 
     def _need_kp(self):
         '''
@@ -49,10 +49,10 @@ class VaspCalculation(NscfCalculation):
             True if input kpoints node is needed
             (py:method::VaspCalculation.use_kpoints),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::VaspCalculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::VaspCalculation.use_parameters)
         '''
-        if 'kspacing' in self._settings and 'kgamma' in self._settings:
+        if 'kspacing' in self._parameters and 'kgamma' in self._parameters:
             return False
         else:
             return True
@@ -64,11 +64,11 @@ class VaspCalculation(NscfCalculation):
             True if a chgcar file must be used
             (py:method::VaspCalculation.use_charge_densities),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::VaspCalculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::VaspCalculation.use_parameters)
         '''
         ichrg_d = self._need_wfn() and 0 or 2
-        icharg = self._settings.get('icharg', ichrg_d)
+        icharg = self._parameters.get('icharg', ichrg_d)
         if icharg in [1, 11]:
             return True
         else:
@@ -81,18 +81,18 @@ class VaspCalculation(NscfCalculation):
             True if a wavecar file must be used
             (py:method::VaspCalculation.use_wavefunctions),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::VaspCalculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::VaspCalculation.use_parameters)
         '''
         istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
-        istart = self._settings.get('istart', istrt_d)
+        istart = self._parameters.get('istart', istrt_d)
         if istart in [1, 2, 3]:
             return True
         else:
             return False
 
     @classmethod
-    def new_settings(self, **kwargs):
+    def new_parameters(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     @classmethod

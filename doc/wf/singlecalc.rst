@@ -33,7 +33,7 @@ For working examples for all workflows, take a look in the vasp plugin repositor
 the "examples" folder.
 
 A minimal example::
-   
+
    ScfWorkflow = WorkflowFactory('vasp.scf')
 
    num_nodes = 2
@@ -46,13 +46,13 @@ A minimal example::
       "paw_family": "<name>",
       "paw_map": {"In": "In_d", "As": "As"},
       "resources": {
-         "num_machines": num_nodes, 
+         "num_machines": num_nodes,
          "num_mpiprocs_per_machine": num_ppn
       },
       "queue": "<computing queue name>",
       "vasp_code": "<code@computer>",
       "structure": "<path to cif or poscar file for InAs>",
-      "settings": {
+      "parameters": {
          "nbands": nbands,
          "ediff": 1e-5,
          "gga": "PE",
@@ -64,15 +64,15 @@ A minimal example::
    wf.start()
 
 .. _stepwf-parameters:
- 
+
 **********
 Parameters
 **********
 
 * continue_from: string, uuid of an appropriate calculation to continue from.
-* settings: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
+* parameters: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
 * use_wannier: bool, switches on LWANNIER90 as well as checking for wannier output files in results.
-* wannier_settings: dict, analog to settings for the wannier_settings input parameter.
+* wannier_parameters: dict, analog to parameters for the wannier_parameters input parameter.
 * structure: path to a .cif or POSCAR file. Ignored when continuing from a previous calculation.
 * kpoints: dict, containing one and only one of the following keys
    - mesh: list with #kpoints in each direction
@@ -90,7 +90,7 @@ The following set of parameters can be used to label and categorize the calculat
 * label: string, used to set the calculation's label
 
 These properties can be used to filter queries for calculations and therefore to make it easier to find them later in the database.
- 
+
 *********
 Workflows
 *********
@@ -137,14 +137,14 @@ Reference
          node to the results.
 
 .. automodule:: aiida.workflows.vasp.projections
-   
+
    .. autoclass:: ProjectionsWorkflow
       :members: get_params_template, get_template
 
       .. automethod:: start
 
-         Runs an AmnCalculation using the given uuid of a 
-         NscfCalculation. Modifies wannier_settings from the nscf calculation
+         Runs an AmnCalculation using the given uuid of a
+         NscfCalculation. Modifies wannier_parameters from the nscf calculation
          it continues from transparently using an InlineCalculation.
 
       .. automethod:: end
@@ -160,8 +160,8 @@ Reference
 
       .. automethod:: start
 
-         Runs a WannierCalculation using the given uuid of a 
-         AmnCalculation. Modifies wannier_settings from the amn calculation
+         Runs a WannierCalculation using the given uuid of a
+         AmnCalculation. Modifies wannier_parameters from the amn calculation
          it continues from transparently using an InlineCalculation, if necessary.
 
       .. automethod:: end

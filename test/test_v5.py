@@ -12,7 +12,7 @@ cifname = sys.argv[1]
 mkcalc = VaspMaker(structure=cifname)
 mkcalc.code = Code.get_from_string('asevasp@monch')
 mkcalc.kpoints.set_kpoints_mesh([8, 8, 8])
-mkcalc.add_settings(
+mkcalc.add_parameters(
     system=mkcalc.structure.filename,
     npar=8
 )

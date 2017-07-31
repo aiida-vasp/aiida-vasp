@@ -18,7 +18,7 @@ class ScfWorkflow(Workflow):
 
     def get_calc_maker(self):
         maker = self.helper._get_calc_maker('vasp.scf')
-        maker.add_settings(icharg=0, istart=0)
+        maker.add_parameters(icharg=0, istart=0)
         return maker
 
     @Workflow.step

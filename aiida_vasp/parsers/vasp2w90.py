@@ -18,7 +18,7 @@ class Vasp2w90Parser(VaspParser):
         if not win:
             return False, None
         wp = WinParser(win)
-        winnode = self._calc.new_wannier_settings(dict=wp.result)
+        winnode = self._calc.new_wannier_parameters(dict=wp.result)
         return True, winnode
 
     def get_wdat_node(self):
@@ -34,7 +34,7 @@ class Vasp2w90Parser(VaspParser):
 
     def set_win(self, node):
         if node:
-            self.add_node('wannier_settings', node)
+            self.add_node('wannier_parameters', node)
 
     def set_wdat(self, node):
         if node:
