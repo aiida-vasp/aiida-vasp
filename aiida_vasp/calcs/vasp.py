@@ -3,10 +3,8 @@ try:
 except ImportError:
     from chainmap import ChainMap
 
-from base import VaspCalcBase
 from nscf import NscfCalculation
 from aiida.orm import DataFactory
-from aiida.common.utils import classproperty
 
 
 class VaspCalculation(NscfCalculation):
@@ -16,14 +14,7 @@ class VaspCalculation(NscfCalculation):
     default_parser = 'vasp.vasp'
 
     def verify_inputs(self, inputdict, *args, **kwargs):
-        # ~ notset_msg = 'input not set: %s'
         super(VaspCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'parameters')
-        self.check_input(inputdict, 'structure')
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            self.check_input(inputdict, self._get_paw_linkname(kind))
         self.check_input(inputdict, 'kpoints', self._need_kp)
 
     def _need_kp(self):
