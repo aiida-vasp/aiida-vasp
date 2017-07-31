@@ -36,7 +36,7 @@ class TbmodelWorkflow(Workflow):
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_settings(icharg=0, istart=0, lorbit=11, lsorbit=True,
+        maker.add_parameters(icharg=0, istart=0, lorbit=11, lsorbit=True,
                            sigma=0.05, ismear=0, gga='PE', gga_compat=False)
         maker.code = Code.get_from_string(params['vasp'])
         # ~ maker.computer = maker.code.get_computer()
@@ -51,7 +51,7 @@ class TbmodelWorkflow(Workflow):
         '''
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'], calc_cls='vasp.scf')
-        maker.rewrite_settings(**params['settings'])
+        maker.rewrite_parameters(**params['parameters'])
         kp = params['kpmesh']
         maker.kpoints.set_kpoints_mesh(kp)
         maker.code = Code.get_from_string(params['vasp'])
@@ -88,7 +88,7 @@ class TbmodelWorkflow(Workflow):
 
         # set up band structure step
         maker = VaspMaker(calc_cls='vasp.nscf', continue_from=sccalc)
-        maker.add_settings(lwannier90=True, icharg=11)
+        maker.add_parameters(lwannier90=True, icharg=11)
         maker.label = params.get('name') + ': win run'
         calc = maker.new()
 
@@ -115,11 +115,11 @@ class TbmodelWorkflow(Workflow):
                 params.get('name')))
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
-        maker.wannier_settings = wincalc.out.wannier_settings.copy()
+        maker.wannier_parameters = wincalc.out.wannier_parameters.copy()
         # ~ maker.wannier_data = wincalc.out.wannier_data
-        num_bands = maker.wannier_settings.get_dict()['num_wann']
-        maker.wannier_settings.update_dict({'num_bands': num_bands})
-        maker.wannier_settings.update_dict(params['win'])
+        num_bands = maker.wannier_parameters.get_dict()['num_wann']
+        maker.wannier_parameters.update_dict({'num_bands': num_bands})
+        maker.wannier_parameters.update_dict(params['win'])
         maker.label = params.get('name') + ': amn run'
         calc = maker.new()
 
@@ -149,7 +149,7 @@ class TbmodelWorkflow(Workflow):
         code = Code.get_from_string(params['wannier_x'])
         calc.use_code(code)
         calc.set_computer(code.get_computer())
-        calc.use_settings(amncalc.inp.wannier_settings)
+        calc.use_parameters(amncalc.inp.wannier_parameters)
         calc.use_data(amncalc.out.wannier_data)
         calc.label = params.get('name') + ': wannier run'
         calc.set_resources({'num_machines': 1})

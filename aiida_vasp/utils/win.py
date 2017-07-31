@@ -3,10 +3,10 @@ from aiida.orm import DataFactory
 
 
 @make_inline
-def modify_wannier_settings_inline(original, modifications):
-    '''InlineCalculation for modifying wannier settings ('.win' file).
-    :key ParameterData original: base settings, can be overridden.
-    :key ParameterData modifications: additional settings and overrides.
+def modify_wannier_parameters_inline(original, modifications):
+    '''InlineCalculation for modifying wannier parameters ('.win' file).
+    :key ParameterData original: base parameters, can be overridden.
+    :key ParameterData modifications: additional parameters and overrides.
     if original comes from a VASP2WANNIER setup and num_wann is overriden,
     num_bands will automatically be set accordingly.
     No consistency checks are performed.'''
@@ -22,4 +22,4 @@ def modify_wannier_settings_inline(original, modifications):
 
     result.set_dict(orig_dict)
     result.update_dict(mod_dict)
-    return {'wannier_settings': result}
+    return {'wannier_parameters': result}

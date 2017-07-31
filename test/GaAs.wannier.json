@@ -1,29 +1,29 @@
 {
-    "continue_from": "53b74118-48e1-4ffe-a1ee-78a35efb59fd", 
-    "description": "Test the WannierWorkflow with an AmnCalculation from a TbmodelWorkflow", 
+    "continue_from": "53b74118-48e1-4ffe-a1ee-78a35efb59fd",
+    "description": "Test the WannierWorkflow with an AmnCalculation from a TbmodelWorkflow",
     "extras": {
         "experiment": "WannierWorkflowTest"
-    }, 
-    "label": "WannierWorkflowCompTest", 
-    "queue": "dphys_compute", 
+    },
+    "label": "WannierWorkflowCompTest",
+    "queue": "dphys_compute",
     "resources": {
         "num_machines": 1,
         "num_mpiprocs_per_machine": 1
-    }, 
-    "settings": {
-        "bands_plot": true, 
-        "dis_froz_min": 0, 
-        "dis_froz_max": 5, 
-        "dis_num_iter": 100, 
-        "dis_win_max": 25, 
+    },
+    "parameters": {
+        "bands_plot": true,
+        "dis_froz_min": 0,
+        "dis_froz_max": 5,
+        "dis_num_iter": 100,
+        "dis_win_max": 25,
         "dis_win_min": -10, 
-        "hr_plot": true, 
+        "hr_plot": true,
         "kpoint_path": [
             ["X", 0.0, 0.5, 0.5, "G", 0.0, 0.0, 0.0],
             ["G", 0.0, 0.0, 0.0, "L", 0.5, 0.5, 0.5]
-        ], 
+        ],
         "iprint": 2,
         "num_iter": 100
-    }, 
+    },
     "wannier_code": "wannier90.x@monch"
 }

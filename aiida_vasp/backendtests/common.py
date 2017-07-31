@@ -66,14 +66,14 @@ class Common(object):
         return (kres, wres)
 
     @classmethod
-    def settings(cls):
-        settings = {
+    def parameters(cls):
+        parameters = {
             'gga': 'PE',
             'gga_compat': False,
             'lorbit': 11,
             'sigma': .05
         }
-        return DataFactory('parameter')(dict=settings)
+        return DataFactory('parameter')(dict=parameters)
 
     @classmethod
     def charge_density(cls):

@@ -1,5 +1,6 @@
-from aiida import load_dbenv
-load_dbenv()
+from aiida import load_dbenv, is_dbenv_loaded
+if not is_dbenv_loaded():
+    load_dbenv()
 
 from aiida.orm import Code, Computer
 from aiida.orm.querytool import QueryTool
@@ -11,7 +12,7 @@ cifname = sys.argv[1]
 mkcalc = VaspMaker(structure=cifname)
 mkcalc.code = Code.get_from_string('asevasp@monch')
 mkcalc.kpoints.set_kpoints_mesh([8, 8, 8])
-mkcalc.add_settings(
+mkcalc.add_parameters(
     system=mkcalc.structure.filename,
     npar=8
 )

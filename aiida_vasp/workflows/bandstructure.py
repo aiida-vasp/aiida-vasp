@@ -27,7 +27,7 @@ class Bandstructure(Workflow):
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_settings(icharg=0, istart=0, lorbit=11, lsorbit=True,
+        maker.add_parameters(icharg=0, istart=0, lorbit=11, lsorbit=True,
                            sigma=0.05, ismear=0, gga='PE', gga_compat=False)
         maker.code = Code.get_from_string(params['code'])
         # ~ maker.computer = maker.code.get_computer()

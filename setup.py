@@ -35,20 +35,21 @@ if __name__ == '__main__':
             'ase',
             'pymatgen',
             'subprocess32',
-            'click'
+            'click',
+            'aiida-wannier90',
+            'chainmap'
         ],
         extras_require={
             'graphs': ['matplotlib'],
-            'regen_default_paws': ['lxml']
+            'regen_default_paws': ['lxml'],
+            'test': ['aiida-pytest'],
         },
         entry_points={
             'aiida.calculations': [
                 'vasp.scf = aiida_vasp.calcs.scf:ScfCalculation',
                 'vasp.nscf = aiida_vasp.calcs.nscf:NscfCalculation',
-                'vasp.amn = aiida_vasp.calcs.amn:AmnCalculation',
-                'vasp.wannier = aiida_vasp.calcs.wannier:WannierCalculation',
-                'vasp.wswannier = aiida_vasp.calcs.wswannier:WswannierCalculation',
-                'vasp.vasp5 = aiida_vasp.calcs.vasp5:Vasp5Calculation'
+                'vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation',
+                'vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation'
             ],
             'aiida.data': [
                 'vasp.archive = aiida_vasp.data.archive:ArchiveData',
@@ -59,10 +60,8 @@ if __name__ == '__main__':
             'aiida.parsers': [
                 'vasp.scf = aiida_vasp.parsers.scf:ScfParser',
                 'vasp.nscf = aiida_vasp.parsers.nscf:NscfParser',
-                'vasp.amn = aiida_vasp.parsers.amn:AmnParsaer',
-                'vasp.wannier = aiida_vasp.parsers.wannier:WannierParser',
-                'vasp.wswannier = aiida_vasp.parsers.wswannier:WswannierParser',
-                'vasp.vasp5 = aiida_vasp.parsers.vasp5:Vasp5Parser'
+                'vasp.vasp = aiida_vasp.parsers.vasp:VaspParser',
+                'vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser'
             ],
             'aiida.workflows': [
                 'vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow',

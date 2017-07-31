@@ -21,7 +21,7 @@ class ScfCalcTest(AiidaTestCase):
         calc = self.calc_cls()
         calc.use_code(self.code)
         calc.set_computer(self.computer)
-        calc.use_settings(Common.settings())
+        calc.use_parameters(Common.parameters())
         calc.use_structure(Common.cif())
         calc.use_kpoints(kp)
         calc.use_paw(Common.paw_in(), kind='In')
