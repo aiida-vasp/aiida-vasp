@@ -42,12 +42,6 @@ class Vasp5Calculation(NscfCalculation):
         return {k.lower(): v for
                 k, v in self.inp.settings.get_dict().iteritems()}
 
-    def _prestore(self):
-        '''
-        set attributes prior to storing
-        '''
-        super(Vasp5Calculation, self)._prestore()
-
     def _need_kp(self):
         '''
         return wether an input kpoints node is needed or not.

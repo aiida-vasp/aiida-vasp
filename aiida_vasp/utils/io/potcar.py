@@ -1,5 +1,5 @@
 __doc__ = '''
-This module contains tools to read PotpawData attributes from POTCAR files.
+This module contains tools to read PawData attributes from POTCAR files.
 '''
 import re
 import datetime as dt
