@@ -12,9 +12,8 @@ class Vasp2w90Parser(VaspParser):
         super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)
 
         has_win, win_node = self.get_win_node()
-        has_full_dat, dat_node = self.get_wdat_node()
+        has_full_dat = self.has_full_dat()
         self.set_win(win_node)
-        self.set_wdat(dat_node)
 
         return self.result(success=has_win and has_full_dat)
 
@@ -27,22 +26,11 @@ class Vasp2w90Parser(VaspParser):
         winnode = DataFactory('parameter')(dict=win_parser.result)
         return True, winnode
 
-    def get_wdat_node(self):
-        """Create the wannier90 data output node comprised of the .mmn, .amn, .eig files"""
-        wdatnode = DataFactory('vasp.archive')()
-        success = True
-        for ext in ['mmn', 'amn', 'eig']:
-            wfile = self.get_file('wannier90.' + ext)
-            if wfile:
-                wdatnode.add_file(wfile)
-            else:
-                success = False
-        return success, wdatnode
+    def has_full_dat(self):
+        success = all(
+            self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
+        return success
 
     def set_win(self, node):
         if node:
             self.add_node('wannier_parameters', node)
-
-    def set_wdat(self, node):
-        if node:
-            self.add_node('wannier_data', node)
