@@ -11,26 +11,49 @@ class Vasp2w90Parser(VaspParser):
     def parse_with_retrieved(self, retrieved):
         super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)
 
-        has_win, win_node = self.get_win_node()
+        win_success, kpoints_node, param_node = self.parse_win()
+        self.set_wannier_parameters(param_node)
+        self.set_wannier_kpoints(kpoints_node)
+
         has_full_dat = self.has_full_dat()
-        self.set_win(win_node)
 
-        return self.result(success=has_win and has_full_dat)
+        return self.result(success=win_success and has_full_dat)
 
-    def get_win_node(self):
-        """Create the wannier90 .win file output node"""
+    def parse_win(self):
+        """Create the wannier90 .win file and kpoints output nodes."""
         win = self.get_file('wannier90.win')
         if not win:
-            return False, None
+            return False, None, None
         win_parser = WinParser(win)
-        winnode = DataFactory('parameter')(dict=win_parser.result)
-        return True, winnode
+        result = win_parser.result
+
+        # remove kpoints block from parameters
+        kpoints = result.pop('kpoints', None)
+        success, kpoints_node = self.convert_kpoints(kpoints)
+
+        param_node = DataFactory('parameter')(dict=result)
+        return success, kpoints_node, param_node
+
+    @staticmethod
+    def convert_kpoints(kpoints):
+        """Convert the k-points output from string to float."""
+        if kpoints is None:
+            return False, None
+        kpoints_node = DataFactory('array.kpoints')()
+        kpoints_node.set_kpoints([[float(x) for x in k] for k in kpoints])
+        return True, kpoints_node
+
+    def set_wannier_parameters(self, node):
+        """Add the Wannier parameters node."""
+        if node:
+            self.add_node('wannier_parameters', node)
+
+    def set_wannier_kpoints(self, node):
+        """Add the kpoints output node."""
+        if node:
+            self.add_node('wannier_kpoints', node)
 
     def has_full_dat(self):
         success = all(
             self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
         return success
-
-    def set_win(self, node):
-        if node:
-            self.add_node('wannier_parameters', node)

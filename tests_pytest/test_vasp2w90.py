@@ -19,7 +19,11 @@ def test_vasp2w90(
     charge_density.set_file(sample('GaAs/CHGCAR'))
     inputs.charge_density = charge_density
     output, pid = run(process, _return_pid=True, **inputs)
-    assert all(
-        key in output
-        for key in ['wannier_parameters', 'retrieved', 'kpoints', 'retrieved'])
+    assert all(key in output
+               for key in [
+                   'retrieved',
+                   'kpoints',
+                   'wannier_parameters',
+                   'wannier_kpoints',
+               ])
     assert_finished(pid)

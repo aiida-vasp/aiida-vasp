@@ -51,6 +51,7 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: d
         }
         inputs._options.withmpi = True
         inputs._options.queue_name = 'dphys_compute'
+        inputs._options.max_wallclock_seconds = 600
 
         return process, inputs
 
