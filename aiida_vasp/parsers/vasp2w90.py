@@ -31,6 +31,10 @@ class Vasp2w90Parser(VaspParser):
         kpoints = result.pop('kpoints', None)
         success, kpoints_node = self.convert_kpoints(kpoints)
 
+        # remove structure (cannot be given in parameters)
+        result.pop('unit_cell_cart', None)
+        result.pop('atoms_cart', None)
+
         param_node = DataFactory('parameter')(dict=result)
         return success, kpoints_node, param_node
 
