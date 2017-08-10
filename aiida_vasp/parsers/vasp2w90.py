@@ -44,7 +44,8 @@ class Vasp2w90Parser(VaspParser):
         if kpoints is None:
             return False, None
         kpoints_node = DataFactory('array.kpoints')()
-        kpoints_node.set_kpoints([[float(x) for x in k] for k in kpoints])
+        kpoints_node.set_kpoints([[float(x) for x in k.split()]
+                                  for k in kpoints])
         return True, kpoints_node
 
     def set_wannier_parameters(self, node):
