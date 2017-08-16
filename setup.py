@@ -3,13 +3,19 @@
 setup: usage: pip install -e .[graphs]
 """
 
+import re
 from setuptools import setup, find_packages
+
+# Get the version number
+with open('./aiida_vasp/__init__.py') as f:
+    match_expr = "__version__[^'\"]+(['\"])([^'\"]+)"
+    version = re.search(match_expr, f.read()).group(2).strip()
 
 if __name__ == '__main__':
     setup(
         name='aiida-vasp',
-        version='0.9.0a1',
-        description='AiiDA Plugin for running VASP -> Wannier workflows',
+        version=version,
+        description='AiiDA Plugin for running VASP calculations.',
         url='https://github.com/DropD/aiida-vasp',
         author='Rico Häuselmann',
         author_email='haeuselm@epfl.ch',
