@@ -1,0 +1,7 @@
+ignore-paths:
+    - docs/*
+    - examples
+    - test/*
+
+pylint:
+    max-line-length: 140

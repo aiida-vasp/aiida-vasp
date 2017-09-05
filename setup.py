@@ -15,10 +15,8 @@ if __name__ == '__main__':
         author_email='haeuselm@epfl.ch',
         license='MIT License, see LICENSE.txt file.',
         classifiers=[
-            'Development Status :: 3 - Alpha',
-            'Environment :: Plugins',
-            'Framework :: AiiDA',
-            'Intended Audience :: Science/Research',
+            'Development Status :: 3 - Alpha', 'Environment :: Plugins',
+            'Framework :: AiiDA', 'Intended Audience :: Science/Research',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 2.7',
             'Topic :: Scientific/Engineering :: Physics'
@@ -26,16 +24,10 @@ if __name__ == '__main__':
         keywords='vasp aiida wannier90 workflows',
         packages=find_packages(exclude=['aiida']),
         include_package_data=True,
-        setup_requires=[
-            'reentry'
-        ],
+        setup_requires=['reentry'],
         reentry_register=True,
         install_requires=[
-            'aiida-core',
-            'ase',
-            'pymatgen',
-            'subprocess32',
-            'click'
+            'aiida-core', 'ase', 'pymatgen', 'subprocess32', 'click'
         ],
         extras_require={
             'graphs': ['matplotlib'],
@@ -72,9 +64,6 @@ if __name__ == '__main__':
                 'vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow',
                 'vasp.windows= aiida_vasp.workflows.windows:WindowsWorkflow',
             ],
-            'aiida.cmdline.data': [
-                'vasp.paw = aiida_vasp.commands.paw:_Paw'
-            ]
+            'aiida.cmdline.data': ['vasp.paw = aiida_vasp.commands.paw:_Paw']
         },
-        scripts=['utils/runwf.py']
-    )
+        scripts=['utils/runwf.py'])

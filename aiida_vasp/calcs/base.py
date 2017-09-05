@@ -1,9 +1,13 @@
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about Node not implementing query
+"""Base and meta classes for VASP calculations"""
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 
 
 def ordered_unique_list(in_list):
+    """Create a list of unique items in the input sequence, retaining item order"""
     out_list = []
     for i in in_list:
         if i not in out_list:
@@ -17,29 +21,34 @@ def make_use_methods(inputs, bases):
     base classes as well as :py:class:`Input` instances. For use
     in :py:class:`CalcMeta` during class creation.
     '''
+
     @classproperty
+    # pylint: disable=protected-access
     def _use_methods(cls):
         retdict = JobCalculation._use_methods
-        for b in bases:
-            if hasattr(b, '_use_methods'):
-                retdict.update(b._use_methods)
-        for inp, dct in inputs.iteritems():
-            ln = dct['linkname']
-            if isinstance(ln, classmethod):
-                dct['linkname'] = getattr(cls, ln.__func__.__name__)
+        for base_class in bases:
+            if hasattr(base_class, '_use_methods'):
+                retdict.update(base_class._use_methods)
+        for _, dct in inputs.iteritems():
+            link_name = dct['linkname']
+            if isinstance(link_name, classmethod):
+                dct['linkname'] = getattr(cls, link_name.__func__.__name__)
         retdict.update(inputs)
         return retdict
+
     return _use_methods
 
 
-def make_init_internal(cls, **kwargs):
+def make_init_internal(cls, **kwargs):  # pylint: disable=unused-argument
     '''
     returns a _update internal_params method, required in class creation
     by :py:class:`CalcMeta`
     '''
+
     def _update_internal_params(self):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
     return _update_internal_params
 
 
@@ -52,8 +61,7 @@ def seqify(seq_arg):
 def datify(type_or_str):
     if isinstance(type_or_str, str):
         return DataFactory(type_or_str)
-    else:
-        return type_or_str
+    return type_or_str
 
 
 class Input(object):
@@ -61,6 +69,7 @@ class Input(object):
     Utility class that handles mapping between CalcMeta's and Calculation's
     interfaces for defining input nodes
     '''
+
     def __init__(self, types, param=None, ln=None, doc=''):
         self.types = tuple(map(datify, seqify(types)))
         self.param = param
@@ -72,6 +81,7 @@ class Input(object):
             self._ln = value
 
     def get_dict(self):
+        """Create a dictionary representation of this input"""
         ret = {
             'valid_types': self.types,
             'additional_parameter': self.param,
@@ -111,8 +121,8 @@ class IntParam(object):
 
     @classmethod
     def map_param(cls, item):
-        k, v = item
-        return (cls.pmap[k], v)
+        key, value = item
+        return (cls.pmap[key], value)
 
     @classmethod
     def map_params(cls, classdict):
@@ -135,26 +145,27 @@ class CalcMeta(JobCalculation.__metaclass__):
     finds class attributes corresponding to 'internal parameters'
     and creates the finished class's _update_internal_params method.
     '''
-    def __new__(cls, name, bases, classdict):
+
+    def __new__(mcs, name, bases, classdict):
         inputs = {}
         delete = []
         inputobj = Input.filter_classdict(classdict)
-        for k, v in inputobj:
-            if not v.param:
-                v.set_ln(k)
+        for key, value in inputobj:
+            if not value.param:
+                value.set_ln(key)
             else:
-                v.set_ln(classdict['_get_{}_linkname'.format(k)])
-            inputs[k] = v.get_dict()
-            delete.append(k)
+                value.set_ln(classdict['_get_{}_linkname'.format(key)])
+            inputs[key] = value.get_dict()
+            delete.append(key)
         internals = dict(IntParam.map_params(classdict))
         delete.extend(IntParam.get_keylist(classdict))
         classdict['_use_methods'] = make_use_methods(inputs, bases)
         classdict['_update_internal_params'] = make_init_internal(
-            cls, **internals)
-        for k in delete:
-            classdict.pop(k)
-        Calc = super(CalcMeta, cls).__new__(cls, name, bases, classdict)
-        return Calc
+            mcs, **internals)
+        for key in delete:
+            classdict.pop(key)
+        calc_cls = super(CalcMeta, mcs).__new__(mcs, name, bases, classdict)
+        return calc_cls
 
 
 class VaspCalcBase(JobCalculation):
@@ -176,25 +187,10 @@ class VaspCalcBase(JobCalculation):
     def max_retrieve_list(cls):
         '''returns a list of all possible output files from a VASP run'''
         retrieve_list = [
-            'CHG',
-            'CHGCAR',
-            'CONTCAR',
-            'DOSCAR',
-            'EIGENVAL',
-            'ELFCAR',
-            'IBZKPT',
-            'LOCPOT',
-            'OSZICAR',
-            'OUTCAR',
-            'PCDAT',
-            'PROCAR',
-            'PROOUT',
-            'STOPCAR',
-            'TMPCAR',
-            'WAVECAR',
-            'XDATCAR',
-            ['wannier90*', '.', 0],
-            'vasprun.xml'
+            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR',
+            'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
+            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR',
+            ['wannier90*', '.', 0], 'vasprun.xml'
         ]
         return retrieve_list
 
@@ -243,7 +239,7 @@ class VaspCalcBase(JobCalculation):
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
-    def verify_inputs(self, inputdict, *args, **kwargs):
+    def verify_inputs(self, inputdict, *args, **kwargs):  # pylint: disable=unused-argument
         '''
         Hook to be extended by subclasses with checks for input nodes.
         Is called once before submission.
@@ -251,7 +247,8 @@ class VaspCalcBase(JobCalculation):
         self.check_input(inputdict, 'code')
         return True
 
-    def check_input(self, inputdict, linkname, check_fn=lambda: True):
+    @staticmethod
+    def check_input(inputdict, linkname, check_fn=lambda: True):
         '''
         :py:classmethod:: check_input(inputdict, linkname[, check_fn])
 
@@ -285,7 +282,7 @@ class VaspCalcBase(JobCalculation):
 # no expert mode with manual basis vectors
 # no fully automatic mode
 # no original monkhorst (equivalent to 0.5 shift though)
-kpmtemp = '''\
+KP_MESH_TPL = '''\
 Automatic mesh
 0
 Gamma
@@ -297,13 +294,13 @@ Gamma
 # no cartesian
 # no tetrahedron method
 # no bandstructure lines
-kpltemp = '''\
+KP_LIST_TPL = '''\
 Explicit list
 {N}
 Direct
 {klist}\
 '''
-kplitemp = '''\
+KP_LIST_ITEM_TPL = '''\
 {k[0]} {k[1]} {k[2]} {w}\
 '''
 
@@ -319,16 +316,20 @@ class BasicCalculation(VaspCalcBase):
     kpoints = Input(types='array.kpoints')
     default_parser = 'vasp.basic'
 
+    PAW_CLS = DataFactory('vasp.paw')
+    KPOINTS_CLS = DataFactory('array.kpoints')
+    STRUCTURE_CLS = DataFactory('structure')
+    PARAMETER_CLS = DataFactory('parameter')
+
     def _prepare_for_submission(self, tempfolder, inputdict):
         '''retrieve only OUTCAR and vasprun.xml, extend in
         subclasses for production to retrieve more output data'''
-        calcinfo = super(
-            BasicCalculation, self)._prepare_for_submission(
-                tempfolder, inputdict)
+        calcinfo = super(BasicCalculation, self)._prepare_for_submission(
+            tempfolder, inputdict)
         calcinfo.retrieve_list = ['OUTCAR', 'vasprun.xml']
         return calcinfo
 
-    def write_incar(self, inputdict, dst):
+    def write_incar(self, inputdict, dst):  # pylint: disable=unused-argument
         '''
         converts from settings node (ParameterData) to INCAR format
         and writes to dst
@@ -336,11 +337,11 @@ class BasicCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         '''
-        from incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(dict_to_incar(self.inp.settings.get_dict()))
+        from aiida_vasp.calcs.incar import dict_to_incar
+        with open(dst, 'w') as incar_file:
+            incar_file.write(dict_to_incar(self.inp.settings.get_dict()))
 
-    def write_poscar(self, inputdict, dst):
+    def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         '''
         converts from structures node (StructureData) to POSCAR format
         and writes to dst
@@ -370,31 +371,34 @@ class BasicCalculation(VaspCalcBase):
             paw = inputdict[self._get_paw_linkname(kind)]
             catcom.append(paw.get_abs_path('POTCAR'))
         # cat the pawdata nodes into the file
-        with open(dst, 'w') as pc:
-            sp.check_call(catcom, stdout=pc)
+        with open(dst, 'w') as potcar_file:
+            sp.check_call(catcom, stdout=potcar_file)
 
     def _write_kpoints_mesh(self, dst):
-        kp = self.inp.kpoints
-        mesh, offset = kp.get_kpoints_mesh()
+        input_kpoints = self.inp.kpoints
+        mesh, offset = input_kpoints.get_kpoints_mesh()
         with open(dst, 'w') as kpoints:
-            kps = kpmtemp.format(N=mesh, s=offset)
+            kps = KP_MESH_TPL.format(N=mesh, s=offset)
             kpoints.write(kps)
 
     def _write_kpoints_list(self, dst):
-        kp = self.inp.kpoints
-        if 'array|weights' in kp.get_attrs():
-            kpl, weights = kp.get_kpoints(also_weights=True)
+        input_kpoints = self.inp.kpoints
+        if 'array|weights' in input_kpoints.get_attrs():
+            kp_list, weights = input_kpoints.get_kpoints(also_weights=True)
         else:
-            kpl = kp.get_kpoints()
-            weights = [1.] * kpl.shape[0]
-        kw = zip(kpl, weights)
+            kp_list = input_kpoints.get_kpoints()
+            weights = [1.] * kp_list.shape[0]
+        kpoints_weights = zip(kp_list, weights)
         with open(dst, 'w') as kpoints:
-            kpls = '\n'.join(
-                [kplitemp.format(k=k[0], w=k[1]) for k in kw])
-            kps = kpltemp.format(N=len(kw), klist=kpls)
-            kpoints.write(kps)
+            out_kp_list = '\n'.join([
+                KP_LIST_ITEM_TPL.format(k=k[0], w=k[1])
+                for k in kpoints_weights
+            ])
+            output = KP_LIST_TPL.format(
+                N=len(kpoints_weights), klist=out_kp_list)
+            kpoints.write(output)
 
-    def write_kpoints(self, inputdict, dst):
+    def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
         '''
         converts from kpoints node (KpointsData) to KPOINTS format
         and writes to dst
@@ -402,17 +406,13 @@ class BasicCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         '''
-        kp = self.inp.kpoints
-        if kp.get_attrs().get('mesh'):
+        input_kpoints = self.inp.kpoints
+        if input_kpoints.get_attrs().get('mesh'):
             self._write_kpoints_mesh(dst)
-        elif kp.get_attrs().get('array|kpoints'):
+        elif input_kpoints.get_attrs().get('array|kpoints'):
             self._write_kpoints_list(dst)
         else:
             raise AttributeError('you supplied an empty kpoints node')
-
-    def write_additional(self, tempfolder, inputdict):
-        super(BasicCalculation, self).write_additional(
-            tempfolder, inputdict)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         '''check for the presence of the required inputs'''
@@ -427,7 +427,8 @@ class BasicCalculation(VaspCalcBase):
         self.check_input(inputdict, 'kpoints')
         self.check_kpoints(inputdict['kpoints'])
 
-    def check_kpoints(self, kpoints):
+    @staticmethod
+    def check_kpoints(kpoints):
         '''check for nonemptiness of the input kpoints node'''
         kpa = kpoints.get_attrs()
         if 'mesh' not in kpa and 'array|kpoints' not in kpa:
@@ -445,33 +446,33 @@ class BasicCalculation(VaspCalcBase):
         set attributes prior to storing
         '''
         super(BasicCalculation, self)._prestore()
-        self._set_attr('elements', list(ordered_unique_list(
-            self.inp.structure.get_ase().get_chemical_symbols())))
+        self._set_attr('elements',
+                       list(
+                           ordered_unique_list(self.inp.structure.get_ase()
+                                               .get_chemical_symbols())))
 
     @property
     def _settings(self):
-        return {k.lower(): v for
-                k, v in self.inp.settings.get_dict().iteritems()}
+        return {
+            k.lower(): v
+            for k, v in self.inp.settings.get_dict().iteritems()
+        }
 
     @classmethod
-    def new_settings(self, **kwargs):
-        return DataFactory('parameter')(**kwargs)
+    def new_settings(cls, **kwargs):
+        return cls.PARAMETER_CLS(**kwargs)
 
     @classmethod
-    def new_structure(self, **kwargs):
-        return DataFactory('structure')(**kwargs)
+    def new_structure(cls, **kwargs):
+        return cls.STRUCTURE_CLS(**kwargs)
 
     @classmethod
-    def new_kpoints(self, **kwargs):
-        return DataFactory('array.kpoints')(**kwargs)
+    def new_kpoints(cls, **kwargs):
+        return cls.KPOINTS_CLS(**kwargs)
 
     @classmethod
-    def load_paw(self, *args, **kwargs):
-        return self.Paw.load_paw(*args, **kwargs)[0]
-
-    @classproperty
-    def Paw(self):
-        return DataFactory('vasp.paw')
+    def load_paw(cls, *args, **kwargs):
+        return cls.PAW_CLS.load_paw(*args, **kwargs)[0]
 
     @property
     def elements(self):
@@ -486,107 +487,6 @@ class BasicCalculation(VaspCalcBase):
         super(BasicCalculation, self)._init_internal_params()
         self._update_internal_params()
 
-
-#class TentativeVaspCalc(VaspCalcBase):
-#    '''vasp 3.5.3 calc with nice hopefully interface'''
-#    incar = Input(types='parameter', doc='input parameters')
-#    structure = Input(types='structure', doc='aiida structure')
-#    paw = Input(types='vasp.potpaw', doc='paw symbols or files', param='kind')
-#    kpoints = Input(types='array.kpoints', doc='kpoints array or mesh')
-#    default_parser = 'vasp.tentative'
-#
-#    def _init_internal_params(self):
-#        super(TentativeVaspCalc, self)._init_internal_params()
-#        self._update_internal_params()
-#
-#    def verify_inputs(self, inputdict):
-#        incar = inputdict['incar'].get_dict()
-#        keys = map(lambda k: k.lower(), incar.keys())
-#        need_kp = True
-#        if 'kspacing' in keys and 'kgamma' in keys:
-#            need_kp = False
-#        self.use_kp = True
-#        kp = inputdict.get('kpoints')
-#        if not need_kp:
-#            msg = 'INCAR contains KSPACING and KGAMMA: '
-#            if not kp:
-#                msg += 'KPOINTS omitted'
-#                self.use_kp = False
-#            else:
-#                msg += 'KPOINTS still used'
-#            self.logger.info(msg)
-#
-#    def _prestore(self):
-#        super(TentativeVaspCalc, self)._prestore()
-#        self.elements = self.inp.structure.get_kind_names()
-#
-#    def write_incar(self, inputdict, dst):
-#        from incar import dict_to_incar
-#        with open(dst, 'w') as incar:
-#            incar.write(dict_to_incar(inputdict['incar'].get_dict()))
-#
-#    @classmethod
-#    def _get_paw_linkname(cls, kind):
-#        return 'paw_{}'.format(kind)
-#
-#    def write_potcar(self, inputdict, dst):
-#        import subprocess32 as sp
-#        structure = inputdict['structure']
-#        catcom = ['cat']
-#        # order the symbols according to order given in structure
-#        for kind in structure.get_kind_names():
-#            paw = inputdict[self._get_paw_linkname(kind)]
-#            catcom.append(paw.get_abs_path('POTCAR'))
-#        # cat the pawdata nodes into the file
-#        with open(dst, 'w') as pc:
-#            sp.check_call(catcom, stdout=pc)
-#
-#    def write_poscar(self, inputdict, dst):
-#        from ase.io.vasp import write_vasp
-#        structure = inputdict['structure']
-#        with open(dst, 'w') as poscar:
-#            write_vasp(poscar, structure.get_ase(), vasp5=True)
-#
-#    def write_kpoints(self, inputdict, dst):
-#        if self.use_kp:
-#            kp = inputdict['kpoints']
-#            try:
-#                mesh, offset = kp.get_kpoints_mesh()
-#                with open(dst, 'w') as kpoints:
-#                    kps = kpmtemp.format(N=mesh, s=offset)
-#                    kpoints.write(kps)
-#            except AttributeError:
-#                kpl, weights = kp.get_kpoints(also_weights=True)
-#                kw = zip(kpl, weights)
-#                with open(dst, 'w') as kpoints:
-#                    kpls = '\n'.join([kplitemp.format(k[0], k[1]) for k in kw])
-#                    kps = kpltemp.format(N=len(kw), klist=kpls)
-#                    kpoints.write(kps)
-#
-#    @property
-#    def elements(self):
-#        return self.get_attr('elements')
-#
-#    @elements.setter
-#    def elements(self, value):
-#        self._set_attr('elements', value)
-#
-#    @classmethod
-#    def _new_incar(cls):
-#        return DataFactory('parameter')()
-#
-#    @classmethod
-#    def _new_structure(cls):
-#        return DataFactory('structure')()
-#
-#    @classmethod
-#    def Paw(cls):
-#        return DataFactory('vasp.potpaw')
-#
-#    @classmethod
-#    def _new_kp(cls):
-#        return DataFactory('array.kpoints')()
-#
 
 class TestVC(VaspCalcBase):
     test_input = Input(types='parameter', doc='bla')

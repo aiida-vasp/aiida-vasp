@@ -1,6 +1,9 @@
-from base import Input
-from wannier import WannierBase
-from nscf import NscfCalculation
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""Vasp2Wannier90 Calculation: win & mmn -> amn"""
+from aiida_vasp.calcs.base import Input
+from aiida_vasp.calcs.wannier import WannierBase
+from aiida_vasp.calcs.nscf import NscfCalculation
 
 
 class AmnCalculation(WannierBase, NscfCalculation):
@@ -8,9 +11,9 @@ class AmnCalculation(WannierBase, NscfCalculation):
     wannier90 input parameters.'''
 
     default_parser = 'vasp.amn'
-    wannier_settings = Input(types=['parameter'],
-                             doc='parameter node: settings for the ' +
-                             'wannier interface')
+    wannier_settings = Input(
+        types=['parameter'],
+        doc='parameter node: settings for the ' + 'wannier interface')
     wannier_data = Input(types=['vasp.archive'])
 
     def _prepare_for_submission(self, tempfolder, inputdict):
@@ -23,8 +26,7 @@ class AmnCalculation(WannierBase, NscfCalculation):
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
-        super(AmnCalculation, self).write_additional(
-            tempfolder, inputdict)
+        super(AmnCalculation, self).write_additional(tempfolder, inputdict)
         windst = tempfolder.get_abs_path('wannier90.win')
         self.write_win(inputdict, windst)
         if inputdict.get('wannier_data'):
