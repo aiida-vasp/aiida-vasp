@@ -149,7 +149,7 @@ class PawParser(KeyValueParser):
             import sys
             e = sys.exc_info()[1]
             msg = e.message
-            msg += ' in file: '+os.path.abspath(filename)
+            msg += ' in file: ' + os.path.abspath(filename)
             raise e.__class__(msg)
 
         return attr_dict

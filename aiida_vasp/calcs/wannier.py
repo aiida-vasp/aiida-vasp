@@ -5,7 +5,6 @@ from aiida.orm import JobCalculation, DataFactory
 
 
 class dict_to_win(object):
-
     @classmethod
     def _bool(cls, val):
         return 'T' if val else 'F'
@@ -23,9 +22,9 @@ class dict_to_win(object):
 
     @classmethod
     def _block(cls, name, val):
-        res = ['begin '+name]
+        res = ['begin ' + name]
         res += cls._value(val)
-        res += ['end '+name]
+        res += ['end ' + name]
         return res
 
     @classmethod
@@ -62,8 +61,7 @@ class WannierBase(object):
     def write_win(self, inputdict, dst):
         with open(dst, 'w') as win:
             win.write(
-                dict_to_win.parse(inputdict[self._win_lname()].get_dict())
-            )
+                dict_to_win.parse(inputdict[self._win_lname()].get_dict()))
 
     def new_wannier_settings(self, *args, **kwargs):
         return DataFactory('parameter')(*args, **kwargs)

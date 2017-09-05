@@ -27,7 +27,7 @@ class WannierBase(BaseParser):
             return None
         wdatnode = self._calc.new_wannier_data()
         for ext in ['mmn', 'amn', 'eig']:
-            wfile = self.get_file('wannier90.'+ext)
+            wfile = self.get_file('wannier90.' + ext)
             if wfile:
                 wdatnode.add_file(wfile)
         return wdatnode
@@ -99,8 +99,8 @@ class WannierParser(WannierBase, parser.BaseParser):
     def _find_special_kpoint(self, kp, sp, num=0):
         res = []
         ix, iy = np.where(kp == sp)
-        for i in range(len(ix)-2):
+        for i in range(len(ix) - 2):
             if ix[i] == ix[i + 1] == ix[i + 2]:
-                if np.all(iy[i:i+3] == [0, 1, 2]):
+                if np.all(iy[i:i + 3] == [0, 1, 2]):
                     res.append(ix[i])
         return res[num]

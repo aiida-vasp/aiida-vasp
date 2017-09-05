@@ -36,9 +36,17 @@ spinpol = dict(ispin=2)
 hy_pbe0 = dict(lhfcalc=True, gga='PE', precfock='Fast')
 hy_hse03 = dict(lhfcalc=True, hfscreen=0.3, gga='PE', precfock='Fast')
 hy_hse06 = dict(lhfcalc=True, hfscreen=0.2, gga='PE', precfock='Fast')
-hy_b3lyp = dict(lhfcalc=True, hfscreen=0.2, gga='B3', aexx=0.2,
-                aggax=0.72, aggac=0.81, aldac=0.19, precfock='Fast')
+hy_b3lyp = dict(
+    lhfcalc=True,
+    hfscreen=0.2,
+    gga='B3',
+    aexx=0.2,
+    aggax=0.72,
+    aggac=0.81,
+    aldac=0.19,
+    precfock='Fast')
 hy_hf = dict(lhfcalc=True, aexx=1.0, aggac=0.0, aldac=0.0, precfock='Fast')
+
 # ~ funcs = [dict(), hy_hse06, hy_b3lyp, hy_hf]
 
 
@@ -48,9 +56,10 @@ def build_settings(*args):
         settings.update(arg)
     return settings
 
+
 # ~
 # ~ if __name__ == '__main__':
-    # ~ mkr = VaspMaker(structure=argv[0])
-    # ~ mkr.kpoints.set_kpoints_mesh([2, 2, 2])
-    # ~ mkr.code = Code.get_from_string('asevasp')
-    # ~ mkr.queue = 'dphys_compute'
+# ~ mkr = VaspMaker(structure=argv[0])
+# ~ mkr.kpoints.set_kpoints_mesh([2, 2, 2])
+# ~ mkr.code = Code.get_from_string('asevasp')
+# ~ mkr.queue = 'dphys_compute'

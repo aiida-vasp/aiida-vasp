@@ -40,8 +40,10 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
 
     @property
     def _settings(self):
-        return {k.lower(): v for
-                k, v in self.inp.settings.get_dict().iteritems()}
+        return {
+            k.lower(): v
+            for k, v in self.inp.settings.get_dict().iteritems()
+        }
 
     def _prestore(self):
         '''
@@ -120,10 +122,10 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
 
     @classmethod
     def load_paw(self, *args, **kwargs):
-        return self.Paw.load_paw(*args, **kwargs)[0]
+        return self.paw_cls.load_paw(*args, **kwargs)[0]
 
     @classproperty
-    def Paw(self):
+    def paw_cls(self):
         return DataFactory('vasp.paw')
 
     @property

@@ -56,10 +56,11 @@ class AmnCalcTest(AiidaTestCase):
         with SandboxFolder() as sf:
             ci = calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                          {'INCAR', 'KPOINTS', 'POSCAR',
-                           'POTCAR', 'CHGCAR', 'WAVECAR', 'wannier90.win',
-                           'test1', 'test2'})
+        self.assertEquals(
+            set(il), {
+                'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR',
+                'wannier90.win', 'test1', 'test2'
+            })
         self.assertIn(['wannier90*', '.', 0], ci.retrieve_list)
         calc.use_settings(Common.settings())
         inp = calc.get_inputs_dict()
@@ -67,17 +68,20 @@ class AmnCalcTest(AiidaTestCase):
         with SandboxFolder() as sf:
             calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                          {'INCAR', 'KPOINTS', 'POSCAR',
-                           'POTCAR', 'WAVECAR', 'wannier90.win',
-                           'test1', 'test2'})
+        self.assertEquals(
+            set(il), {
+                'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR',
+                'wannier90.win', 'test1', 'test2'
+            })
         calc, inp = self._get_calc(no_wdat=True)
         with SandboxFolder() as sf:
             ci = calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                          {'INCAR', 'KPOINTS', 'POSCAR',
-                           'POTCAR', 'CHGCAR', 'WAVECAR', 'wannier90.win'})
+        self.assertEquals(
+            set(il), {
+                'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR',
+                'wannier90.win'
+            })
 
     def test_write_chgcar(self):
         calc, inp = self._get_calc()
@@ -97,7 +101,8 @@ class AmnCalcTest(AiidaTestCase):
         calc, inpt = self._get_calc()
         pars = calc.get_parserclass()(calc)
         ok, outs = pars.parse_with_retrieved({
-            'retrieved': Common.retrieved_nscf()
+            'retrieved':
+            Common.retrieved_nscf()
         })
         outs = dict(outs)
         self.assertIn('wannier_data', outs)

@@ -10,10 +10,12 @@ SinglefileData = DataFactory('singlefile')
 
 __copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
 
+
 class VaspCalculation(JobCalculation):
     '''
     Perform a calculation with VASP
     '''
+
     def _init_internal_params(self):
         super(VaspCalculation, self)._init_internal_params()
         self._default_parser = 'vasp.vasp'
@@ -88,7 +90,8 @@ class VaspCalculation(JobCalculation):
         calcinfo.remote_copy_list = []
         #~ calcinfo.stdin_name = self._INPUT_FILE_NAME
         #~ calcinfo.stdout_name = self._OUTPUT_FILE_NAME
-        calcinfo.retrieve_list = ['CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR',
-                                  'EIGENVAL', 'OSZICAR', 'OUTCAR', 'PCDAT',
-                                  'PROCAR', 'WAVECAR', 'XDATCAR', 'vasprun.xml']
+        calcinfo.retrieve_list = [
+            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'OSZICAR',
+            'OUTCAR', 'PCDAT', 'PROCAR', 'WAVECAR', 'XDATCAR', 'vasprun.xml'
+        ]
         return calcinfo

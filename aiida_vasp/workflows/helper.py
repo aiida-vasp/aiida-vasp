@@ -100,8 +100,8 @@ class WorkflowHelper(object):
         return valid_out
 
     # ~ def set_params(self, params, **kwargs):
-        # ~ self._verify_params(params)
-        # ~ self.parent.set_params(params, **kwargs)
+    # ~ self._verify_params(params)
+    # ~ self.parent.set_params(params, **kwargs)
 
     def _verify_params(self, params, silent=False):
         '''finds _verify_param_* methods on the parent instance
@@ -110,8 +110,10 @@ class WorkflowHelper(object):
         log = []
 
         par_dict = self.parent.__class__.__dict__
-        verify_funcs = {k: v for k, v in par_dict.iteritems()
-                        if '_verify_param_' in k}
+        verify_funcs = {
+            k: v
+            for k, v in par_dict.iteritems() if '_verify_param_' in k
+        }
 
         for name, func in verify_funcs.iteritems():
             if isinstance(func, classmethod):
@@ -136,10 +138,10 @@ class WorkflowHelper(object):
 
         par_dict = wf_cls.__class__.__dict__
         verify_funcs = {
-            k: v for k,
-            v in par_dict.iteritems() if '_verify_param_' in k and isinstance(
-                v,
-                classmethod)}
+            k: v
+            for k, v in par_dict.iteritems()
+            if '_verify_param_' in k and isinstance(v, classmethod)
+        }
 
         for name, func in verify_funcs.iteritems():
             valid_i, log_i = func.__func__(wf_cls, params)
@@ -161,8 +163,8 @@ class WorkflowHelper(object):
             if len(kpoints) != 1:
                 valid = False
                 log += ('{}: parameters: kpoints dict must '
-                        'contain exactly one item').format(
-                    self.parent.__class__.__name__)
+                        'contain exactly one item'
+                        ).format(self.parent.__class__.__name__)
             else:
                 valid = bool(kpoints.get('mesh'))
                 valid |= bool(kpoints.get('list'))
@@ -170,15 +172,15 @@ class WorkflowHelper(object):
                 if not valid:
                     log += ('{}: parameters: kpoints dict must '
                             'contain one of the keys '
-                            '"mesh", "list" or "path"').format(
-                        self.parent.__class__.__name__)
+                            '"mesh", "list" or "path"'
+                            ).format(self.parent.__class__.__name__)
 
         elif params.get('continue_from'):
             valid = True
         else:
             log += ('{}: parameters: kpoints dict must be set, if '
-                    'not continuing from a finished calculation').format(
-                self.parent.__class__.__name__)
+                    'not continuing from a finished calculation'
+                    ).format(self.parent.__class__.__name__)
             valid = False
         return valid, log
 
@@ -197,8 +199,8 @@ class WorkflowHelper(object):
                 log += ('{}: parameters: paw_family must be set '
                         'to the name of a PAW family containing '
                         'PAWs necessary for this calculation, if '
-                        'not continuing from a finished calculation').format(
-                    self.parent.__class__.__name__)
+                        'not continuing from a finished calculation'
+                        ).format(self.parent.__class__.__name__)
                 valid = False
             map_given = bool(paw_map)
             if not map_given:
@@ -215,19 +217,25 @@ class WorkflowHelper(object):
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
-        tmpl['resources'] = {'num_machines': 'int',
-                             'num_mpiprocs_per_machine': 'int'}
+        tmpl['resources'] = {
+            'num_machines': 'int',
+            'num_mpiprocs_per_machine': 'int'
+        }
         tmpl['kpoints'] = {'mesh | list | path': ['...']}
         tmpl['label'] = 'optional label for calculations'
         tmpl['description'] = 'optional description for calculations'
-        tmpl['extras'] = {'explanation': ('dict with extra attributes you '
-                          'want to give to all calcs run by this workflow.')}
+        tmpl['extras'] = {
+            'explanation': ('dict with extra attributes you '
+                            'want to give to all calcs run by this workflow.')
+        }
         tmpl['settings'] = {'explanation': ('incar keys for the calculation')}
         if continuation:
             tmpl['continue_from'] = 'uuid of a finished calculation'
             tmpl['kpoints'] = ['default: same as previous calc)']
-            tmpl['settings'] = {'explanation': ('additional / '
-                                                'override incar keys')}
+            tmpl['settings'] = {
+                'explanation': ('additional / '
+                                'override incar keys')
+            }
         else:
             tmpl['paw_family'] = ('name of a PAW family as imported from the '
                                   'commandline')

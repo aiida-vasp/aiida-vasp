@@ -21,8 +21,7 @@ Kp = DataFactory('array.kpoints')
 cifname = sys.argv[1]
 cifnode = cif.cif_from_file(cifname)
 equivalent_cifs = cif.filter_cifs_for_structure(
-    cif.get_cifs_with_name(os.path.basename(cifname)),
-    cifnode.get_ase())
+    cif.get_cifs_with_name(os.path.basename(cifname)), cifnode.get_ase())
 if equivalent_cifs:
     cifnode = equivalent_cifs[0]
 
@@ -36,23 +35,24 @@ tvc = Tvc()
 tvc.use_code(Code.get_from_string('asevasp@monch'))
 
 nions = len(structure.sites)
-nbands = 9*nions+8
+nbands = 9 * nions + 8
 if nbands % 8:
     nbands += 8 - (nbands % 8)
-tvc.use_incar(Par(dict={
-    'gga':          'PE',
-    'gga_compat':   False,
-    'encut':        280,
-    'ediff':        1e-5,
-    'ismear':       0,
-    'lorbit':       11,
-    'magmom':       3*nions*[0.],
-    'lsorbit':      True,
-    'nbands':       nbands,
-    'sigma':        0.05,
-    'system':       os.path.basename(cifname),
-    'npar':         8,
-}))
+tvc.use_incar(
+    Par(dict={
+        'gga': 'PE',
+        'gga_compat': False,
+        'encut': 280,
+        'ediff': 1e-5,
+        'ismear': 0,
+        'lorbit': 11,
+        'magmom': 3 * nions * [0.],
+        'lsorbit': True,
+        'nbands': nbands,
+        'sigma': 0.05,
+        'system': os.path.basename(cifname),
+        'npar': 8,
+    }))
 tvc.use_structure(structure)
 
 for kind in structure.get_kind_names():
@@ -62,13 +62,10 @@ tvc.use_kpoints(kp)
 
 tvc.set_computer(Computer.get('monch'))
 tvc.set_queue_name('dphys_compute')
-tvc.set_resources({
-    'num_machines': nbands/8,
-    'num_mpiprocs_per_machine': 8})
+tvc.set_resources({'num_machines': nbands / 8, 'num_mpiprocs_per_machine': 8})
 tvc.set_max_memory_kb(16000000)
 
 tvc.set_parser_name('vasp.vasp5')
-
 
 tag = sys.argv[2]
 q = QueryTool()
@@ -80,6 +77,6 @@ last_tn = max(ql)
 
 tvc.store_all()
 
-tvc.set_extras({'tag': tag, 'test-nr': last_tn+1})
-print 'pk: {}, test-nr: {}'.format(tvc.pk, last_tn+1)
+tvc.set_extras({'tag': tag, 'test-nr': last_tn + 1})
+print 'pk: {}, test-nr: {}'.format(tvc.pk, last_tn + 1)
 tvc.submit()

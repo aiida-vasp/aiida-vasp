@@ -3,7 +3,6 @@ from aiida.orm import Workflow, Calculation
 
 
 class NscfWorkflow(Workflow):
-
     '''
     AiiDA-VASP Workflow for continuing from an SCF Calculation.
     Can be used with or without the vasp2wannier90 interface.
@@ -17,10 +16,9 @@ class NscfWorkflow(Workflow):
     def get_calc_maker(self):
         params = self.get_parameters()
         maker = self.helper._get_calc_maker(
-            'vasp.nscf', continue_from=Calculation.query(
-                uuid=params['continue_from'])[0])
-        nscf_settings = {'lwannier90': params['use_wannier'],
-                         'icharg': 11}
+            'vasp.nscf',
+            continue_from=Calculation.query(uuid=params['continue_from'])[0])
+        nscf_settings = {'lwannier90': params['use_wannier'], 'icharg': 11}
         maker.rewrite_settings(**nscf_settings)
         return maker
 
@@ -50,8 +48,7 @@ class NscfWorkflow(Workflow):
         valid = self.helper._verify_calc_output(calc, output_links)
         if valid:
             self.add_result('calc', calc)
-            self.append_to_report(
-                'Added the nscf calculation as a result')
+            self.append_to_report('Added the nscf calculation as a result')
         else:
             self.append_to_report(
                 self.helper._calc_invalid_outs_msg(calc, output_links))

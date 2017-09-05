@@ -4,7 +4,6 @@ from aiida_vasp.utils import compare_bands as bcp
 
 
 class AutowindowsWorkflow(Workflow):
-
     '''Try different inner and outer windows with wannier,
     compare them and choose the best one according to simplistic criteria'''
     Helper = WorkflowHelper
@@ -34,9 +33,7 @@ class AutowindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Scf', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Scf', wf))
 
         self.next(self.get_win)
 
@@ -55,9 +52,7 @@ class AutowindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Win', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Win', wf))
         self.next(self.get_projections)
 
     @Workflow.step
@@ -83,9 +78,7 @@ class AutowindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Proj', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Proj', wf))
         self.next(self.get_bands_preview)
 
     @classmethod
@@ -107,9 +100,7 @@ class AutowindowsWorkflow(Workflow):
 
         bandpar = self.get_vasp_params(params)
         bandpar['continue_from'] = scf_calc.uuid
-        bandpar['kpoints'] = {
-            'path': params['kpoints']['path']
-        }
+        bandpar['kpoints'] = {'path': params['kpoints']['path']}
         bandpar['use_wannier'] = False
 
         wf = self.NscfWf(params=bandpar)
@@ -117,8 +108,7 @@ class AutowindowsWorkflow(Workflow):
         wf.start()
         self.attach_workflow(wf)
         self.append_to_report(
-            self.helper._subwf_start_msg('Preview-Bands', wf)
-        )
+            self.helper._subwf_start_msg('Preview-Bands', wf))
 
         self.next(self.make_windows)
 
@@ -151,10 +141,10 @@ class AutowindowsWorkflow(Workflow):
 
         lower_max = [i for i in bmax if i < ef]
         lower_max.sort(reverse=True)
-        ow_min = math.floor(bmin[bmax.index(lower_max[n-1])])
+        ow_min = math.floor(bmin[bmax.index(lower_max[n - 1])])
 
         upper_min = sorted([i for i in bmin if i > ef])
-        ow_max = math.ceil(bmax[bmin.index(upper_min[n-1])])
+        ow_max = math.ceil(bmax[bmin.index(upper_min[n - 1])])
 
         windows = []
         for i in range(params['num_owindows']):
@@ -197,8 +187,8 @@ class AutowindowsWorkflow(Workflow):
             wfpk.append(wf.pk)
 
         self.append_to_report('running tbmodels for {} windows'.format(count))
-        self.append_to_report('tbmodels pk-range: {} - {}'.format(
-            wfpk[0], wfpk[-1]))
+        self.append_to_report(
+            'tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
 
         self.next(self.get_reference_bands)
 
@@ -215,9 +205,7 @@ class AutowindowsWorkflow(Workflow):
 
         bandpar = self.get_vasp_params(params)
         bandpar['continue_from'] = scf_calc.uuid
-        bandpar['kpoints'] = {
-            'list': kplist
-        }
+        bandpar['kpoints'] = {'list': kplist}
         bandpar['kpoint_labels'] = kplabels
         bandpar['use_wannier'] = False
 
@@ -225,22 +213,18 @@ class AutowindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Ref-Bands', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Ref-Bands', wf))
 
         self.next(self.gather_results)
 
     @Workflow.step
     def gather_results(self):
         self.append_to_report('retrieving and compiling results')
-        wannier_wf_list = self.get_step(
-            self.get_tbmodel).get_sub_workflows()
+        wannier_wf_list = self.get_step(self.get_tbmodel).get_sub_workflows()
         band_wf = self.get_step(
             self.get_reference_bands).get_sub_workflows()[0]
-        self.add_result(
-            'reference_bands',
-            band_wf.get_result('calc').out.bands)
+        self.add_result('reference_bands',
+                        band_wf.get_result('calc').out.bands)
         self.add_result('reference_calc', band_wf.get_result('calc'))
 
         wbands_list = []
@@ -253,17 +237,14 @@ class AutowindowsWorkflow(Workflow):
             except Exception as e:
                 wset = wf.get_parameters()['settings']
                 window = 'inner: {}-{}, outer: {}-{}'.format(
-                    wset['dis_froz_min'],
-                    wset['dis_froz_max'],
-                    wset['dis_win_min'],
-                    wset['dis_win_max']
-                )
-                self.append_to_report(
-                    ('workflow {pk} with window {window} '
-                     'did not yield the expected results: \n'
-                     '{error}').format(
-                        pk=wf.pk, window=window, error=repr(e))
-                )
+                    wset['dis_froz_min'], wset['dis_froz_max'],
+                    wset['dis_win_min'], wset['dis_win_max'])
+                self.append_to_report(('workflow {pk} with window {window} '
+                                       'did not yield the expected results: \n'
+                                       '{error}').format(
+                                           pk=wf.pk,
+                                           window=window,
+                                           error=repr(e)))
 
         self.add_attribute('wbands_list', wbands_list)
 
@@ -320,9 +301,8 @@ class AutowindowsWorkflow(Workflow):
         tmpl['iwindows-increment'] = ('eV increment between '
                                       'different inner windows')
         tmpl['num_iwindows'] = 'number of inner windows to try'
-        tmpl[
-            'owindows-increment'] = ('eV increment between '
-                                     'different outer windows')
+        tmpl['owindows-increment'] = ('eV increment between '
+                                      'different outer windows')
         tmpl['num_owindows'] = 'number of outer windows to try'
         tmpl['kpoints'] = {'mesh': [], 'path': []}
         tmpl['#kpoints'] = (

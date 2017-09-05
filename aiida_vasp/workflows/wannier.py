@@ -3,7 +3,6 @@ from helper import WorkflowHelper
 
 
 class WannierWorkflow(Workflow):
-
     '''AiiDA workflow to run a wannier90 calculation, continuing from
     a vasp.amn calc'''
     Helper = WorkflowHelper
@@ -84,23 +83,35 @@ class WannierWorkflow(Workflow):
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl.pop('vasp_code')
         tmpl.pop('kpoints')
-        tmpl['continue_from'] = ('finished calculation, with a wannier_data link'
-                                 'in the output and a wannier_settings link in input\n'
-                                 'or a dict with keys [settings, data], and uuids for values')
-        tmpl['wannier_code'] = 'code in the database for running the wannier.x program'
-        tmpl['settings'] = {'#comment': ('dict with wannier90.win keys, used to update '
-                                         'the original wannier_settings keys, see examples'),
-                            '#bands_plot': 'True | False',
-                            '#hr_plot': 'True | False',
-                            '#dis_win_min': 'int',
-                            '#dis_win_max': 'int',
-                            '#dis_froz_min': 'int',
-                            '#dis_froz_max': 'int',
-                            '#dis_num_iter': 'int',
-                            '#kpoint_path': [[]],
-                            '#projections': 'DO NOT SET?, use an ProjectionsWorkflow for that',
-                            '#use_bloch_phases': 'False | True'
-                            }
+        tmpl['continue_from'] = (
+            'finished calculation, with a wannier_data link'
+            'in the output and a wannier_settings link in input\n'
+            'or a dict with keys [settings, data], and uuids for values')
+        tmpl[
+            'wannier_code'] = 'code in the database for running the wannier.x program'
+        tmpl['settings'] = {
+            '#comment': ('dict with wannier90.win keys, used to update '
+                         'the original wannier_settings keys, see examples'),
+            '#bands_plot':
+            'True | False',
+            '#hr_plot':
+            'True | False',
+            '#dis_win_min':
+            'int',
+            '#dis_win_max':
+            'int',
+            '#dis_froz_min':
+            'int',
+            '#dis_froz_max':
+            'int',
+            '#dis_num_iter':
+            'int',
+            '#kpoint_path': [[]],
+            '#projections':
+            'DO NOT SET?, use an ProjectionsWorkflow for that',
+            '#use_bloch_phases':
+            'False | True'
+        }
         return tmpl
 
     @classmethod

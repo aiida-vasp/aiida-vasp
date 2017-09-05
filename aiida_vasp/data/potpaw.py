@@ -30,7 +30,7 @@ class PotpawData(Data):
     @potcar.setter
     def potcar(self, value):
         name = 'POTCAR'
-        self.folder.insert_path(value, 'path/'+name)
+        self.folder.insert_path(value, 'path/' + name)
         self._set_attr('potcar', self.get_abs_path(name))
         attr_dict = pcparser.parse_potcar(value)
         for k, v in attr_dict.iteritems():
@@ -43,7 +43,7 @@ class PotpawData(Data):
     @psctr.setter
     def psctr(self, value):
         name = 'PSCTR'
-        self.folder.insert_path(value, 'path/'+name)
+        self.folder.insert_path(value, 'path/' + name)
         self._set_attr('psctr', self.get_abs_path(name))
 
     @property
@@ -92,7 +92,4 @@ class PotpawData(Data):
         except AttributeError:
             sym = '<symbol: (unset)>'
         return '<PotpawData: {f}/{s} uuid: {u} (pk: {p})>'.format(
-            f=fam,
-            s=sym,
-            u=self.uuid,
-            p=self.pk)
+            f=fam, s=sym, u=self.uuid, p=self.pk)

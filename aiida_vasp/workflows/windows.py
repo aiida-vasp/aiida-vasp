@@ -3,7 +3,6 @@ from helper import WorkflowHelper
 
 
 class WindowsWorkflow(Workflow):
-
     '''Try different inner and outer windows with wannier90'''
     Helper = WorkflowHelper
     ScfWf = WorkflowFactory('vasp.scf')
@@ -32,9 +31,7 @@ class WindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Scf', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Scf', wf))
 
         self.next(self.get_win)
 
@@ -53,9 +50,7 @@ class WindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Win', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Win', wf))
         self.next(self.get_projections)
 
     @Workflow.step
@@ -81,9 +76,7 @@ class WindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Proj', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Proj', wf))
         self.next(self.get_tbmodel)
 
     @classmethod
@@ -142,9 +135,7 @@ class WindowsWorkflow(Workflow):
 
         bandpar = self.get_vasp_params(params)
         bandpar['continue_from'] = scf_calc.uuid
-        bandpar['kpoints'] = {
-            'list': kplist
-        }
+        bandpar['kpoints'] = {'list': kplist}
         bandpar['kpoint_labels'] = kplabels
         bandpar['use_wannier'] = False
 
@@ -152,22 +143,18 @@ class WindowsWorkflow(Workflow):
         wf.label = params.get('label')
         wf.start()
         self.attach_workflow(wf)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Ref-Bands', wf)
-        )
+        self.append_to_report(self.helper._subwf_start_msg('Ref-Bands', wf))
 
         self.next(self.make_results)
 
     @Workflow.step
     def make_results(self):
         self.append_to_report('retrieving and compiling results')
-        wannier_wf_list = self.get_step(
-            self.get_tbmodel).get_sub_workflows()
+        wannier_wf_list = self.get_step(self.get_tbmodel).get_sub_workflows()
         band_wf = self.get_step(
             self.get_reference_bands).get_sub_workflows()[0]
-        self.add_result(
-            'reference_bands',
-            band_wf.get_result('calc').out.bands)
+        self.add_result('reference_bands',
+                        band_wf.get_result('calc').out.bands)
         self.add_result('reference_calc', band_wf.get_result('calc'))
 
         for wf in wannier_wf_list:
@@ -178,17 +165,14 @@ class WindowsWorkflow(Workflow):
             except Exception as e:
                 wset = wf.get_parameters()['settings']
                 window = 'inner: {}-{}, outer: {}-{}'.format(
-                    wset['dis_froz_min'],
-                    wset['dis_froz_max'],
-                    wset['dis_win_min'],
-                    wset['dis_win_max']
-                )
-                self.append_to_report(
-                    ('workflow {pk} with window {window} '
-                     'did not yield the expected results: \n'
-                     '{error}').format(
-                         pk=wf.pk, window=window, error=repr(e))
-                )
+                    wset['dis_froz_min'], wset['dis_froz_max'],
+                    wset['dis_win_min'], wset['dis_win_max'])
+                self.append_to_report(('workflow {pk} with window {window} '
+                                       'did not yield the expected results: \n'
+                                       '{error}').format(
+                                           pk=wf.pk,
+                                           window=window,
+                                           error=repr(e)))
 
         self.next(self.exit)
 

@@ -16,6 +16,7 @@ class VasprunParser(object):
     parse xml into objecttree, provide convenience methods
     for parsing
     '''
+
     def __init__(self, fname):
         super(VasprunParser, self).__init__()
         self.tree = parse(fname)
@@ -118,11 +119,12 @@ class VasprunParser(object):
 
         def split(s):
             return s.text.split()
+
         return np.array(map(split, tag.v), dtype=float)
 
     def _array(self, parent, key=None, path='//'):
         pred = key and '[@name="%s"]' % key or ''
-        tag = self.tree.find(path+parent+'/array%s' % pred)
+        tag = self.tree.find(path + parent + '/array%s' % pred)
         dims = [i.text for i in tag.findall('dimension')]
 
         def getdtf(field):
@@ -135,7 +137,7 @@ class VasprunParser(object):
         ndim = len(dims)
         shape = []
         subset = tag.find('set')
-        for d in range(ndim-1):
+        for d in range(ndim - 1):
             if subset.find('set') is not None:
                 shape.append(len(subset.findall('set')))
                 subset = subset.find('set')

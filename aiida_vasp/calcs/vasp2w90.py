@@ -4,7 +4,6 @@ from aiida.orm import DataFactory
 
 
 class dict_to_win(object):
-
     @classmethod
     def _bool(cls, val):
         return val and 'T' or 'F'
@@ -22,9 +21,9 @@ class dict_to_win(object):
 
     @classmethod
     def _block(cls, name, val):
-        res = ['begin '+name]
+        res = ['begin ' + name]
         res += cls._value(val)
-        res += ['end '+name]
+        res += ['end ' + name]
         return res
 
     @classmethod
@@ -62,14 +61,15 @@ class Vasp2w90Calculation(Vasp5Calculation):
     Same data storage space concerns apply as with :py:class:`Vasp5Calculation`.'''
 
     default_parser = 'vasp.vasp2w90'
-    wannier_settings = Input(types=['parameter'],
-                             doc='parameter node: settings for the ' +
-                             'wannier interface')
+    wannier_settings = Input(
+        types=['parameter'],
+        doc='parameter node: settings for the ' + 'wannier interface')
 
     def write_win(self, inputdict, dst):
         '''convert dict to wannier input and write to file'''
         if 'wannier_settings' in inputdict:
             super(Vasp2w90Calculation, self).write_win(inputdict, dst)
+
     def new_wannier_settings(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 

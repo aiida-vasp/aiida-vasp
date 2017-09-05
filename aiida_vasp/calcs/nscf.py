@@ -7,13 +7,15 @@ class NscfCalculation(BasicCalculation):
     Runs VASP with precalculated (from scf run) wave functions and charge densities.
     Used to obtain bandstructures, DOS and wannier90 input files.
     '''
-    charge_density = Input(types='vasp.chargedensity',
-                           doc='chargedensity node: should be obtained \n' +
-                           'from the output of a selfconsistent ' +
-                           'NscfCalculation (written to CHGCAR)')
-    wavefunctions = Input(types='vasp.wavefun',
-                          doc='wavefunction node: to speed up convergence ' +
-                          'for continuation jobs')
+    charge_density = Input(
+        types='vasp.chargedensity',
+        doc='chargedensity node: should be obtained \n' +
+        'from the output of a selfconsistent ' +
+        'NscfCalculation (written to CHGCAR)')
+    wavefunctions = Input(
+        types='vasp.wavefun',
+        doc='wavefunction node: to speed up convergence ' +
+        'for continuation jobs')
     default_parser = 'vasp.nscf'
 
     def verify_inputs(self, inputdict):
@@ -38,8 +40,7 @@ class NscfCalculation(BasicCalculation):
 
     def write_additional(self, tempfolder, inputdict):
         '''write CHGAR and WAVECAR files if needed'''
-        super(NscfCalculation, self).write_additional(
-            tempfolder, inputdict)
+        super(NscfCalculation, self).write_additional(tempfolder, inputdict)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
             self.write_chgcar(inputdict, chgcar)

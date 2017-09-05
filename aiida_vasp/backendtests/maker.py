@@ -7,5 +7,6 @@ class VaspMakerTest(AiidaTestCase):
     py:class:VaspMakerTest:
         tests for VaspMaker
     '''
+
     def setUp(self):
         self.tm = VaspMaker()

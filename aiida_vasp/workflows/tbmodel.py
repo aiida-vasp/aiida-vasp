@@ -20,6 +20,7 @@ class TbmodelWorkflow(Workflow):
         * lwannier90 run with projections block
         * wannier.x run with hr_plot = True
     '''
+
     def __init__(self, **kwargs):
         super(TbmodelWorkflow, self).__init__(**kwargs)
         self.group = None
@@ -36,8 +37,15 @@ class TbmodelWorkflow(Workflow):
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_settings(icharg=0, istart=0, lorbit=11, lsorbit=True,
-                           sigma=0.05, ismear=0, gga='PE', gga_compat=False)
+        maker.add_settings(
+            icharg=0,
+            istart=0,
+            lorbit=11,
+            lsorbit=True,
+            sigma=0.05,
+            ismear=0,
+            gga='PE',
+            gga_compat=False)
         maker.code = Code.get_from_string(params['vasp'])
         # ~ maker.computer = maker.code.get_computer()
         maker.label = params.get('name')
@@ -83,8 +91,7 @@ class TbmodelWorkflow(Workflow):
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
         self.append_to_report(
-            '{}: retrieved sc step calculation'.format(
-                params.get('name')))
+            '{}: retrieved sc step calculation'.format(params.get('name')))
 
         # set up band structure step
         maker = VaspMaker(calc_cls='vasp.nscf', continue_from=sccalc)
@@ -98,9 +105,8 @@ class TbmodelWorkflow(Workflow):
 
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
-        self.append_to_report(
-            '{}: starting win run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting win run, PK={}, uuid={}'.format(
+            params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'winstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.amnrun)
 
@@ -111,8 +117,7 @@ class TbmodelWorkflow(Workflow):
         prev = self.get_step_calculations(self.winrun)
         wincalc = prev.get(uuid=winstep['uuid'])
         self.append_to_report(
-            '{}: retrieved nscf calculation'.format(
-                params.get('name')))
+            '{}: retrieved nscf calculation'.format(params.get('name')))
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
         maker.wannier_settings = wincalc.out.wannier_settings.copy()
@@ -129,9 +134,8 @@ class TbmodelWorkflow(Workflow):
 
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
-        self.append_to_report(
-            '{}: starting amn run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting amn run, PK={}, uuid={}'.format(
+            params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'amnstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.wannrun)
 
@@ -142,8 +146,7 @@ class TbmodelWorkflow(Workflow):
         prev = self.get_step_calculations(self.amnrun)
         amncalc = prev.get(uuid=amnstep['uuid'])
         self.append_to_report(
-            '{}: retrieved amn calculation'.format(
-                params.get('name')))
+            '{}: retrieved amn calculation'.format(params.get('name')))
 
         calc = CalculationFactory('vasp.wannier')()
         code = Code.get_from_string(params['wannier_x'])
@@ -162,8 +165,7 @@ class TbmodelWorkflow(Workflow):
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
         self.add_result('wannier_run', calc)
-        self.append_to_report(
-            '{}: starting wannier run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting wannier run, PK={}, uuid={}'.
+                              format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'wannstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.exit)

@@ -14,15 +14,13 @@ class ScfCalculation(BasicCalculation):
         files needed to continue with nonscf runs,
         CHGCAR, WAVECAR, IBZKPT
         '''
-        calcinfo = super(
-            ScfCalculation, self)._prepare_for_submission(
-                tempfolder, inputdict)
+        calcinfo = super(ScfCalculation, self)._prepare_for_submission(
+            tempfolder, inputdict)
         calcinfo.retrieve_list.extend(['CHGCAR', 'WAVECAR', 'IBZKPT'])
         return calcinfo
 
     def write_additional(self, tempfolder, inputdict):
-        super(ScfCalculation, self).write_additional(
-            tempfolder, inputdict)
+        super(ScfCalculation, self).write_additional(tempfolder, inputdict)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         '''
