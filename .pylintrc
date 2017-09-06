@@ -151,7 +151,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 method-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct method names
-method-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+method-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*)|(setUp)|(tearDown))$
 
 # Naming hint for module names
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
@@ -165,7 +165,7 @@ name-group=
 
 # Regular expression which should only match function or class names that do
 # not require a docstring.
-no-docstring-rgx=^_
+no-docstring-rgx=^_,setUp,tearDown
 
 # List of decorators that produce properties, such as abc.abstractproperty. Add
 # to this list to register other decorators that produce valid properties.

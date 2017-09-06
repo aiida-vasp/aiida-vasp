@@ -1,28 +1,34 @@
-from aiida.orm import CalculationFactory, Code, DataFactory
-from aiida.djsite.db.testbase import AiidaTestCase
-from aiida_vasp.utils.io.incar import IncarParser
-from common import Common
+"""Test Creation and preparation of BasicCalculation"""
 import tempfile
 import os
 
+from aiida.backends.testbase import AiidaTestCase
+from aiida.orm import CalculationFactory, Code, DataFactory
+from aiida_vasp.utils.io.incar import IncarParser
+
+from .common import Common
+
 
 class BasicCalcTest(AiidaTestCase):
+    """Test Creation and preparation of BasicCalculation"""
+
     def setUp(self):
+        """Set up test environment"""
         self.calc_cls = CalculationFactory('vasp.base.BasicCalculation')
         Common.import_paw()
-        Paw = DataFactory('vasp.paw')
+        paw_cls = DataFactory('vasp.paw')
         self.code = Code()
         self.code.set_computer(self.computer)
         self.code.set_remote_computer_exec((self.computer, '/bin/foo'))
-        self.paw_in = Paw.load_paw(element='In')[0]
-        self.paw_as = Paw.load_paw(element='As')[0]
+        self.paw_in = paw_cls.load_paw(element='In')[0]
+        self.paw_as = paw_cls.load_paw(element='As')[0]
         self.tmp, self.tmpf = tempfile.mkstemp()
 
     def tearDown(self):
-        import os
         os.remove(self.tmpf)
 
     def _get_calc(self, stype, ktype):
+        """Create a calculation"""
         calc = self.calc_cls()
         calc.use_code(self.code)
         calc.set_computer(self.computer)
@@ -41,6 +47,7 @@ class BasicCalcTest(AiidaTestCase):
         return calc
 
     def test_store(self):
+        """Test that the calculation node is stored"""
         c_sm = self._get_calc('s', 'm')
         c_sm.store_all()
         self.assertIsNotNone(c_sm.pk)
@@ -58,38 +65,42 @@ class BasicCalcTest(AiidaTestCase):
         self.assertIsNotNone(c_cm.pk)
 
     def test_write_incar(self):
+        """Check that INCAR is written correctly"""
         calc = self._get_calc('s', 'm')
         inp = calc.get_inputs_dict()
         calc.write_incar(inp, self.tmpf)
         icp = IncarParser(self.tmpf)
-        for k, v in calc.inp.settings.get_dict().iteritems():
-            self.assertIn(str(v), icp.result[k])
+        for key, value in calc.inp.settings.get_dict().iteritems():
+            self.assertIn(str(value), icp.result[key])
 
     def test_write_poscar_structure(self):
+        """Check that POSCAR is written when the input is a structure node"""
         calc = self._get_calc('s', 'm')
         inp = calc.get_inputs_dict()
         from ase.io.vasp import read_vasp
         calc.write_poscar(inp, self.tmpf)
-        wd = os.getcwd()
+        working_dir = os.getcwd()
         os.chdir(os.path.dirname(self.tmpf))
         poscar = None
         poscar = read_vasp(self.tmpf)
-        os.chdir(os.path.dirname(wd))
+        os.chdir(os.path.dirname(working_dir))
         self.assertIsNotNone(poscar)
 
     def test_write_poscar_cif(self):
+        """Check that POSCAR is written when the input is a .cif file"""
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         from ase.io.vasp import read_vasp
         calc.write_poscar(inp, self.tmpf)
-        wd = os.getcwd()
+        working_dir = os.getcwd()
         os.chdir(os.path.dirname(self.tmpf))
         poscar = None
         poscar = read_vasp(self.tmpf)
-        os.chdir(os.path.dirname(wd))
+        os.chdir(os.path.dirname(working_dir))
         self.assertIsNotNone(poscar)
 
     def test_write_kpoints_mesh(self):
+        """Check that KPOINTS in mesh format is written correctly"""
         from aiida_vasp.utils.io.kpoints import KpParser
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
@@ -98,6 +109,7 @@ class BasicCalcTest(AiidaTestCase):
         self.assertTrue((kpp.kpoints == Common.kpoints_mesh_res()).all())
 
     def test_write_kpoints_list(self):
+        """Check that KPOINTS in list format is written correctly"""
         from aiida_vasp.utils.io.kpoints import KpParser
         calc = self._get_calc('c', 'l')
         inp = calc.get_inputs_dict()
@@ -108,6 +120,7 @@ class BasicCalcTest(AiidaTestCase):
         self.assertTrue((kpp.weights == wres).all())
 
     def test_write_potcar(self):
+        """Check that POTCAR is written correctly"""
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         calc.write_potcar(inp, self.tmpf)
@@ -119,6 +132,7 @@ class BasicCalcTest(AiidaTestCase):
         self.assertIn('As', pcs)
         self.assertEquals(pcs.count('End of Dataset'), 2)
 
+    # pylint: disable=protected-access
     def test_elements(self):
         calc = self._get_calc('c', 'm')
         self.assertRaises(AttributeError, calc.get_attr, 'elements')
