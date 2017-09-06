@@ -2,6 +2,9 @@
 AiiDA Vasp Plugin
 =================
 
+.. image:: https://travis-ci.org/DropD/aiida-vasp.svg?branch=develop
+    :target: https://travis-ci.org/DropD/aiida-vasp
+
 Install and usage:
 ------------------
 
