@@ -1,4 +1,5 @@
-from base import BasicCalculation
+"""VASP - Calculation: Run without using output from a prior VASP calculation"""
+from aiida_vasp.calcs.base import BasicCalculation
 
 
 class ScfCalculation(BasicCalculation):
@@ -18,9 +19,6 @@ class ScfCalculation(BasicCalculation):
             tempfolder, inputdict)
         calcinfo.retrieve_list.extend(['CHGCAR', 'WAVECAR', 'IBZKPT'])
         return calcinfo
-
-    def write_additional(self, tempfolder, inputdict):
-        super(ScfCalculation, self).write_additional(tempfolder, inputdict)
 
     def verify_inputs(self, inputdict, *args, **kwargs):
         '''

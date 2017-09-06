@@ -1,20 +1,23 @@
 #encoding: utf-8
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""VASP - Calculation: Generic run using pymatgen for file preparation"""
 from aiida.orm import JobCalculation, DataFactory
 #~ from aiida.orm.data.parameter import ParameterData, SinglefileData
 from aiida.common.datastructures import CalcInfo
 from aiida.common.utils import classproperty
 #~ from aiida.orm.data.vasp import VaspStructureData, VaspPotentialData, VaspKPointData
 
-ParameterData = DataFactory('parameter')
-SinglefileData = DataFactory('singlefile')
+PARAMETER_CLS = DataFactory('parameter')
+SINGLEFILE_CLS = DataFactory('singlefile')
 
 __copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
 
 
 class VaspCalculation(JobCalculation):
-    '''
+    """
     Perform a calculation with VASP
-    '''
+    """
 
     def _init_internal_params(self):
         super(VaspCalculation, self)._init_internal_params()
@@ -25,29 +28,29 @@ class VaspCalculation(JobCalculation):
         self._DEFAULT_INPUT_FILE = self._INPUT_FILE_NAME
 
     @classproperty
-    def _use_methods(cls):
+    def _use_methods(self):
         retdict = JobCalculation._use_methods
         retdict.update({
             'settings': {
-                'valid_types': ParameterData,
+                'valid_types': PARAMETER_CLS,
                 'additional_parameter': None,
                 'linkname': 'settings',
                 'docstring': 'Settings that go into the INCAR file for vasp',
             },
             'structure': {
-                'valid_types': ParameterData,
+                'valid_types': PARAMETER_CLS,
                 'additional_parameter': None,
                 'linkname': 'structure_in',
                 'docstring': 'Structure Data as in POSCAR file',
             },
             'potentials': {
-                'valid_types': SinglefileData,
+                'valid_types': SINGLEFILE_CLS,
                 'additional_parameter': None,
                 'linkname': 'potentials_in',
                 'docstring': 'Potentials as in POTCAR file',
             },
             'kpoints': {
-                'valid_types': ParameterData,
+                'valid_types': PARAMETER_CLS,
                 'additional_parameter': None,
                 'linkname': 'kpoints_in',
                 'docstring': 'k points as in KPOINTS file',
@@ -55,10 +58,11 @@ class VaspCalculation(JobCalculation):
         })
         return retdict
 
+    # pylint: disable=too-many-locals
     def _prepare_for_submission(self, tempfolder, inputdict):
         try:
             import pymatgen as pmg
-        except:
+        except ImportError:
             print 'import pymatgen as pmg failed'
 
         incar_file = tempfolder.get_abs_path('INCAR')

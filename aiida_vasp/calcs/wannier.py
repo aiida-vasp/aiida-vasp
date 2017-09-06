@@ -1,85 +1,42 @@
-from base import CalcMeta, Input
-# ~ from vasp2w90 import dict_to_win
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""Wannier90 - Calculation: Generic"""
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.orm import JobCalculation, DataFactory
 
-
-class dict_to_win(object):
-    @classmethod
-    def _bool(cls, val):
-        return 'T' if val else 'F'
-
-    @classmethod
-    def _seq(cls, val):
-        res = []
-        for i in val:
-            if not isinstance(i, (list, tuple)):
-                line = cls._value(i)
-            else:
-                line = ' '.join(map(cls._value, i))
-            res.append(' ' + line)
-        return res
-
-    @classmethod
-    def _block(cls, name, val):
-        res = ['begin ' + name]
-        res += cls._value(val)
-        res += ['end ' + name]
-        return res
-
-    @classmethod
-    def _assign(cls, key, val):
-        return '{} = {}'.format(key, val)
-
-    @classmethod
-    def _value(cls, val):
-        if isinstance(val, (str, unicode)):
-            return val
-        elif isinstance(val, bool):
-            return cls._bool(val)
-        elif isinstance(val, (list, tuple)):
-            return cls._seq(val)
-        else:
-            return str(val)
-
-    @classmethod
-    def _item(cls, key, val):
-        if isinstance(val, (list, tuple)):
-            return cls._block(key, val)
-        else:
-            return [cls._assign(key, cls._value(val))]
-
-    @classmethod
-    def parse(cls, in_dict):
-        res = []
-        for k, v in in_dict.iteritems():
-            res += cls._item(k, v)
-        return '\n'.join(res)
+from aiida_vasp.calcs.base import CalcMeta, Input
+from aiida_vasp.calcs.w90win import DictToWin
 
 
 class WannierBase(object):
+    """Base class for Wannier calculations"""
+
     def write_win(self, inputdict, dst):
         with open(dst, 'w') as win:
-            win.write(
-                dict_to_win.parse(inputdict[self._win_lname()].get_dict()))
+            win.write(DictToWin.parse(inputdict[self._win_lname()].get_dict()))
 
-    def new_wannier_settings(self, *args, **kwargs):
+    @staticmethod
+    def new_wannier_settings(*args, **kwargs):
         return DataFactory('parameter')(*args, **kwargs)
 
-    def new_wannier_data(self, *args, **kwargs):
+    @staticmethod
+    def new_wannier_data(*args, **kwargs):
         return DataFactory('vasp.archive')(*args, **kwargs)
 
     def write_wdat(self, inputdict, path):
         inputdict[self._wdat_lname()].archive.extractall(path)
 
-    def _win_lname(self):
+    @staticmethod
+    def _win_lname():
         return 'settings'
 
-    def _wdat_lname(self):
+    @staticmethod
+    def _wdat_lname():
         return 'data'
 
 
-class WannierCalculation(JobCalculation, WannierBase):
+class WannierCalculation(JobCalculation, WannierBase):  # pylint: disable=invalid-metaclass
+    """Generic Wannier90 calculation, deprecated - to be replaced by aiidateam/aiida-wannier"""
     __metaclass__ = CalcMeta
     imput_file_name = 'wannier90.win'
     output_file_name = 'wannier90.wout'
@@ -113,7 +70,7 @@ class WannierCalculation(JobCalculation, WannierBase):
         super(WannierCalculation, self)._init_internal_params()
         self._update_internal_params()
 
-    def verify_inputs(self, inputdict):
+    def verify_inputs(self, inputdict):  # pylint: disable=no-self-use
         '''make sure settings and data nodes were given'''
         msg = 'input not set: %s'
         if not inputdict.get('settings'):

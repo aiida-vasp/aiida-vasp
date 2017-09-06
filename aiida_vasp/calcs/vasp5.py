@@ -1,21 +1,25 @@
-from base import VaspCalcBase
-from nscf import NscfCalculation
-from wannier import WannierBase
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""VASP - Calculation: Generic VASP5 calculation not relying on third party packages for preparing files"""
 from aiida.orm import DataFactory
 from aiida.common.utils import classproperty
 
+from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.calcs.nscf import NscfCalculation
+from aiida_vasp.calcs.wannier import WannierBase
+
 
 class Vasp5Calculation(NscfCalculation, WannierBase):
-    '''
+    """
     General purpose VASP calculation, retrieves everything,
     so if storage space is a concern, consider deriving from it
     and overriding the retrieve_list in the subclass so only
     the necessary files are retrieved from the server.
-    '''
+    """
     default_parser = 'vasp.vasp5'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''retrieve all output files potentially created by VASP'''
+        """retrieve all output files potentially created by VASP"""
         calcinfo = super(Vasp5Calculation, self)._prepare_for_submission(
             tempfolder, inputdict)
         calcinfo.retrieve_list = VaspCalcBase.max_retrieve_list()
@@ -45,14 +49,8 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             for k, v in self.inp.settings.get_dict().iteritems()
         }
 
-    def _prestore(self):
-        '''
-        set attributes prior to storing
-        '''
-        super(Vasp5Calculation, self)._prestore()
-
     def _need_kp(self):
-        '''
+        """
         return wether an input kpoints node is needed or not.
         :return output:
             True if input kpoints node is needed
@@ -60,14 +58,12 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             False otherwise
         needs 'settings' input to be set
         (py:method::Vasp5Calculation.use_settings)
-        '''
-        if 'kspacing' in self._settings and 'kgamma' in self._settings:
-            return False
-        else:
-            return True
+        """
+        return bool('kspacing' in self._settings
+                    and 'kgamma' in self._settings)
 
     def _need_chgd(self):
-        '''
+        """
         Test wether an charge_densities input is needed or not.
         :return output:
             True if a chgcar file must be used
@@ -75,16 +71,13 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             False otherwise
         needs 'settings' input to be set
         (py:method::Vasp5Calculation.use_settings)
-        '''
-        ichrg_d = self._need_wfn() and 0 or 2
+        """
+        ichrg_d = 0 if self._need_wfn() else 2
         icharg = self._settings.get('icharg', ichrg_d)
-        if icharg in [1, 11]:
-            return True
-        else:
-            return False
+        return bool(icharg in [1, 11])
 
     def _need_wfn(self):
-        '''
+        """
         Test wether a wavefunctions input is needed or not.
         :return output:
             True if a wavecar file must be used
@@ -92,40 +85,37 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             False otherwise
         needs 'settings' input to be set
         (py:method::Vasp5Calculation.use_settings)
-        '''
-        istrt_d = self.get_inputs_dict().get('wavefunctions') and 1 or 0
+        """
+        istrt_d = 1 if self.get_inputs_dict().get('wavefunctions') else 0
         istart = self._settings.get('istart', istrt_d)
-        if istart in [1, 2, 3]:
-            return True
-        else:
-            return False
+        return bool(istart in [1, 2, 3])
 
     @classmethod
-    def new_settings(self, **kwargs):
+    def new_settings(cls, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     @classmethod
-    def new_structure(self, **kwargs):
+    def new_structure(cls, **kwargs):
         return DataFactory('structure')(**kwargs)
 
     @classmethod
-    def new_kpoints(self, **kwargs):
+    def new_kpoints(cls, **kwargs):
         return DataFactory('array.kpoints')(**kwargs)
 
     @classmethod
-    def new_charge_density(self, **kwargs):
+    def new_charge_density(cls, **kwargs):
         return DataFactory('vasp.chargedensity')(**kwargs)
 
     @classmethod
-    def new_wavefunctions(self, **kwargs):
+    def new_wavefunctions(cls, **kwargs):
         return DataFactory('vasp.wavefun')(**kwargs)
 
     @classmethod
-    def load_paw(self, *args, **kwargs):
-        return self.paw_cls.load_paw(*args, **kwargs)[0]
+    def load_paw(cls, *args, **kwargs):
+        return cls.PAW_CLS.load_paw(*args, **kwargs)[0]
 
     @classproperty
-    def paw_cls(self):
+    def paw_cls(self):  # pylint: disable=no-self-use
         return DataFactory('vasp.paw')
 
     @property
@@ -145,11 +135,11 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
         return self.get_attr('elements')
 
     def _init_internal_params(self):
-        '''
+        """
         let the metaclass
         py:class:`~aiida_vasp.calcs.base.CalcMeta` ref CalcMeta
         pick up internal parameters from the class body
         and insert them
-        '''
+        """
         super(Vasp5Calculation, self)._init_internal_params()
         self._update_internal_params()
