@@ -1,7 +1,10 @@
-from vasp5 import Vasp5Parser
+"""AiiDA Parser for BasicVaspCalculation"""
+from .vasp5 import Vasp5Parser
 
 
 class BasicParser(Vasp5Parser):
+    """Parse finished BasicVaspCalculation"""
+
     def parse_with_retrieved(self, retrieved):
         self.check_state()
         self.out_folder = self.get_folder(retrieved)

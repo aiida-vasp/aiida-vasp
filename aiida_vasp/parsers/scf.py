@@ -1,7 +1,10 @@
-from basic import BasicParser
+"""AiiDA Parser for aiida_vasp.BasicCalculation"""
+from .basic import BasicParser
 
 
 class ScfParser(BasicParser):
+    """Parse a finished aiida_vasp.BasicCalculation"""
+
     def parse_with_retrieved(self, retrieved):
         super(ScfParser, self).parse_with_retrieved(retrieved)
 

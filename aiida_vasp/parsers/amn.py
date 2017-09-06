@@ -1,7 +1,10 @@
-from vasp2w90 import Vasp2w90Parser
+"""Parser for Vasp2Wannier90 calculations that result in a .amn file"""
+from .vasp2w90 import Vasp2w90Parser
 
 
 class AmnParser(Vasp2w90Parser):
+    """Extend Vasp2w90Parser to take .amn file into account"""
+
     def parse_with_retrieved(self, retrieved):
         super(AmnParser, self).parse_with_retrieved(retrieved)
 

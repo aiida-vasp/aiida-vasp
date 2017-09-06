@@ -1,8 +1,11 @@
+"""AiiDA Parser for aiida_vasp.Vasp5Calculation"""
 from aiida_vasp.parsers.vasp5 import Vasp5Parser
 from aiida_vasp.utils.io.win import WinParser
 
 
 class Vasp2w90Parser(Vasp5Parser):
+    """Parse a finished aiida_vasp.Vasp5Calculation"""
+
     def parse_with_retrieved(self, retrieved):
         super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)
 
@@ -12,16 +15,18 @@ class Vasp2w90Parser(Vasp5Parser):
         return self.result(success=True)
 
     def get_win_node(self):
+        """Create the wannier90 .win file output node"""
         if self._calc.get_inputs_dict().get('wannier_settings'):
             return None
         win = self.get_file('wannier90.win')
         if not win:
             return None
-        wp = WinParser(win)
-        winnode = self._calc.new_wannier_settings(dict=wp.result)
+        win_parser = WinParser(win)
+        winnode = self._calc.new_wannier_settings(dict=win_parser.result)
         return winnode
 
     def get_wdat_node(self):
+        """Create the wannier90 data output node comprised of the .mmn, .amn, .eig files"""
         if self._calc.get_inputs_dict().get('wannier_settings'):
             return None
         wdatnode = self._calc.new_wannier_data()

@@ -1,9 +1,12 @@
+"""AiiDA Parser for aiida_vasp.WswannierCalculation"""
 from aiida.orm import DataFactory
 
 from .wannier import WannierParser
 
 
 class WswannierParser(WannierParser):
+    """Parse a finished aiida_vasp.WswannierCalculation"""
+
     def get_hr_node(self):
         hr_filename = 'wannier90_hr.dat'
         hr_dat = self.get_file(hr_filename)

@@ -1,16 +1,23 @@
+"""AiiDA Parser for aiida_vasp.Vasp5Calculation"""
+import numpy as np
+from aiida.orm import DataFactory
+
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.io.eigenval import EigParser
 from aiida_vasp.utils.io.vasprun import VasprunParser
 from aiida_vasp.utils.io.doscar import DosParser
 from aiida_vasp.utils.io.kpoints import KpParser
-from aiida.orm import DataFactory
-import numpy as np
 
 
 class Vasp5Parser(BaseParser):
-    '''
+    """
     Parses all Vasp 5 calculations.
-    '''
+    """
+
+    def __init__(self, calc):
+        super(Vasp5Parser, self).__init__(calc)
+        self.vrp = None
+        self.dcp = None
 
     def parse_with_retrieved(self, retrieved):
         self.check_state()
@@ -59,7 +66,7 @@ class Vasp5Parser(BaseParser):
         return self.result(success=True)
 
     def read_run(self):
-        '''Read vasprun.xml'''
+        """Read vasprun.xml"""
         vasprun = self.get_file('vasprun.xml')
         if not vasprun:
             self.logger.warning('no vasprun.xml found')
@@ -67,43 +74,45 @@ class Vasp5Parser(BaseParser):
         return VasprunParser(vasprun)
 
     def read_dos(self):
-        '''read DOSCAR for more accurate tdos and pdos'''
+        """read DOSCAR for more accurate tdos and pdos"""
         doscar = self.get_file('DOSCAR')
         if not doscar:
             self.logger.warning('no DOSCAR found')
             return None
         return DosParser(doscar)
 
-    def get_dos_node(self, vrp, dcp):
-        '''
+    @staticmethod
+    def get_dos_node(vrp, dcp):
+        """
         takes VasprunParser and DosParser objects
         and returns a doscar array node
-        '''
+        """
         if not vrp or not dcp:
             return None
         dosnode = DataFactory('array')()
-        if len(vrp.pdos):
+        if vrp.pdos:
             pdos = vrp.pdos.copy()
             for i, name in enumerate(vrp.pdos.dtype.names[1:]):
-                ns = vrp.pdos.shape[1]
+                num_spins = vrp.pdos.shape[1]
                 # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-                cur = dcp.pdos[:, :, i + 1:i + 1 + ns].transpose(0, 2, 1)
+                cur = dcp.pdos[:, :, i + 1:i + 1 + num_spins].transpose(
+                    0, 2, 1)
                 cond = vrp.pdos[name] < 0.1
                 pdos[name] = np.where(cond, cur, vrp.pdos[name])
             dosnode.set_array('pdos', pdos)
-        ns = 1
+        num_spins = 1
         if dcp.tdos.shape[1] == 5:
-            ns = 2
-        tdos = vrp.tdos[:ns, :].copy()
+            num_spins = 2
+        tdos = vrp.tdos[:num_spins, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
-            cur = dcp.tdos[:, i + 1:i + 1 + ns].transpose()
-            cond = vrp.tdos[:ns, :][name] < 0.1
-            tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
+            cur = dcp.tdos[:, i + 1:i + 1 + num_spins].transpose()
+            cond = vrp.tdos[:num_spins, :][name] < 0.1
+            tdos[name] = np.where(cond, cur, vrp.tdos[:num_spins, :][name])
         dosnode.set_array('tdos', tdos)
         return dosnode
 
     def read_cont(self):
-        '''read CONTCAR for output structure'''
+        """read CONTCAR for output structure"""
         from ase.io.vasp import read_vasp
         structure = DataFactory('structure')()
         cont = self.get_file('CONTCAR')
@@ -114,7 +123,7 @@ class Vasp5Parser(BaseParser):
         return structure
 
     def read_eigenval(self):
-        '''
+        """
         Create a bands and a kpoints node from values in eigenvalue.
 
         returns: bsnode, kpout
@@ -123,12 +132,12 @@ class Vasp5Parser(BaseParser):
         - kpout: KpointsData containing kpoints from EIGENVAL,
 
         both bsnode as well as kpnode come with cell unset
-        '''
+        """
         eig = self.get_file('EIGENVAL')
         if not eig:
             self.logger.warning('EIGENVAL not found')
             return None, None, None
-        header, kp, bs = EigParser.parse_eigenval(eig)
+        _, kpoints, bands = EigParser.parse_eigenval(eig)
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
 
@@ -148,12 +157,15 @@ class Vasp5Parser(BaseParser):
         if self._calc.inp.kpoints.labels:
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
-            bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
-        bsnode.set_bands(bs, occupations=self.vrp.occupations)
-        kpout.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
+            bsnode.set_kpoints(
+                kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+        bsnode.set_bands(bands, occupations=self.vrp.occupations)
+        kpout.set_kpoints(
+            kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         return bsnode, kpout, structure
 
     def read_ibzkpt(self):
+        """Reads the IBZKPT output file of VASP"""
         ibz = self.get_file('IBZKPT')
         if not ibz:
             self.logger.warning('IBZKPT not found')

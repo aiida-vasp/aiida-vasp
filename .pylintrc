@@ -409,7 +409,7 @@ defining-attr-methods=__init__,__new__,setUp
 
 # List of member names, which should be excluded from the protected access
 # warning.
-exclude-protected=_asdict,_fields,_replace,_source,_make
+exclude-protected=_asdict,_fields,_replace,_source,_make,_get_linkname_retrieved
 
 # List of valid names for the first argument in a class method.
 valid-classmethod-first-arg=cls

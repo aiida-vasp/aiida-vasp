@@ -1,7 +1,15 @@
-from vasp2w90 import Vasp2w90Parser
+"""AiiDA Parser for vasp.NscfCalculation"""
+from .vasp2w90 import Vasp2w90Parser
 
 
 class NscfParser(Vasp2w90Parser):
+    """Parse a finished NscfCalculation"""
+
+    def __init__(self, calc):
+        super(NscfParser, self).__init__(calc)
+        self.vrp = None
+        self.dcp = None
+
     def parse_with_retrieved(self, retrieved):
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
