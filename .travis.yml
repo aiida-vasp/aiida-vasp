@@ -4,6 +4,8 @@ cache: pip
 install:
     - pip install -e .
     - pip install -r requirements-dev.txt
+    - pip uninstall pylint astroid enum34
+    - pip install pylint
 jobs:
     include:
         - stage: compliance
