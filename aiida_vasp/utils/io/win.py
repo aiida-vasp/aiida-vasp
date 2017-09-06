@@ -1,11 +1,13 @@
-from parser import KeyValueParser
+"""Utils to work with Wannier90 .win format"""
 import re
+
+from .parser import KeyValueParser
 
 
 class WinParser(KeyValueParser):
-    '''
+    """
     parses wannier90.win files
-    '''
+    """
     block = re.compile(
         r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
@@ -20,6 +22,7 @@ class WinParser(KeyValueParser):
 
     @classmethod
     def parse_win(cls, fobj_or_str):
+        """Parse a wannier90 .win file"""
         if isinstance(fobj_or_str, str):
             content = fobj_or_str
         else:
@@ -30,6 +33,6 @@ class WinParser(KeyValueParser):
         blocks = re.findall(cls.block, content)
         bld = {}
         for i in blocks:
-            lineslist = cls.splitlines(i[1], dt=str)
+            lineslist = cls.splitlines(i[1], d_type=str)
             bld[i[0]] = lineslist
         return kvd, bld, comments

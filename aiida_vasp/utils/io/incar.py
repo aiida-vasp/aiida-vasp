@@ -1,11 +1,13 @@
-from parser import KeyValueParser
+"""Utils for parsing VASP INCAR format"""
 import re
+
+from .parser import KeyValueParser
 
 
 class IncarParser(KeyValueParser):
-    '''
-    parses INCAR files
-    '''
+    """
+    parses VASP INCAR files
+    """
 
     def __init__(self, filename):
         self.result = {}
@@ -14,6 +16,7 @@ class IncarParser(KeyValueParser):
 
     @classmethod
     def parse_incar(cls, fobj_or_str):
+        """Read key/value pairs from INCAR file into a dictionary"""
         if isinstance(fobj_or_str, str):
             content = fobj_or_str
         else:

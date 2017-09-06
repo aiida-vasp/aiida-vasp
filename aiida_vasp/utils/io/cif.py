@@ -1,28 +1,31 @@
+"""Cif data utilities"""
+import os
+
 from aiida.orm.calculation.inline import optional_inline
 from aiida.orm.querytool import QueryTool
 from aiida.orm import DataFactory
-import os
 
 
-def cif_from_file(ciffile):
-    cifabs = os.path.abspath(ciffile)
-    Cif = DataFactory('cif')
-    cif = Cif()
+def cif_from_file(cif_file):
+    """Create a CifData node from a cif file"""
+    cifabs = os.path.abspath(cif_file)
+    cif_cls = DataFactory('cif')
+    cif = cif_cls()
     cif.set_file(cifabs)
     return cif
 
 
 def cif_to_structure(cifnode=None):
-    Structure = DataFactory('structure')
-    structure = Structure()
+    structure_cls = DataFactory('structure')
+    structure = structure_cls()
     structure.set_ase(cifnode.get_ase())
     return structure
 
 
 @optional_inline
 def cif_to_structure_inline(cif=None):
-    Structure = DataFactory('structure')
-    structure = Structure()
+    structure_cls = DataFactory('structure')
+    structure = structure_cls()
     structure.set_ase(cif.ase)
     return {'structure': structure}
 
@@ -34,25 +37,26 @@ def get_or_create_structure(cif=None, use_first=False):
     elif len(cts) == 1:
         return cts[0].out.structure
     else:
-        return cif_to_structure_inline(cif=cif, store=True)['structure']
+        return cif_to_structure_inline(cif=cif, store=True)['structure']  # pylint: disable=unexpected-keyword-arg
 
 
 def cts_filter(node):
-    fn = node.get_attr('function_name', None)
-    return fn == 'cif_to_structure_inline'
+    function_name = node.get_attr('function_name', None)
+    return function_name == 'cif_to_structure_inline'
 
 
 def get_cifs_with_name(filename):
-    q = QueryTool()
-    q.set_class(DataFactory('cif'))
-    q.add_attr_filter('filename', '=', filename)
-    return q.run_query()
+    query_tool = QueryTool()
+    query_tool.set_class(DataFactory('cif'))
+    query_tool.add_attr_filter('filename', '=', filename)
+    return query_tool.run_query()
 
 
 def filter_cifs_for_structure(cif_seq, structure):
+    """return all cif files in the sequence which match the given structure"""
     ase = None
     if hasattr(structure, 'get_ase'):
         ase = structure.get_ase()
     else:
         ase = structure
-    return filter(lambda s: s.get_ase() == ase, cif_seq)
+    return [s for s in cif_seq if s.get_ase() == ase]

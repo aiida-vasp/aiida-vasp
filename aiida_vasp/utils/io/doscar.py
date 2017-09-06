@@ -1,31 +1,32 @@
-from parser import BaseParser
+"""DOSCAR (VASP format) utilities"""
 import numpy as np
+
+from .parser import BaseParser
 
 
 class DosParser(BaseParser):
-    '''
+    """
     parse a DOSCAR file from a vasp run
-    '''
+    """
 
     def __init__(self, filename, **kwargs):
         self.ispin = kwargs.get('ispin')
         self.lorbit = kwargs.get('lorbit')
         self.rwigs = kwargs.get('rwigs')
-        h, t, p = self.parse_doscar(filename)
-        self.header = h
-        self.tdos = t
-        self.pdos = p
+        self.header, self.tdos, self.pdos = self.parse_doscar(filename)
 
     @classmethod
+    # pylint: disable=too-many-locals
     def parse_doscar(cls, filename):
+        """Read a VASP DOSCAR file and extract metadata and a density of states data array"""
         with open(filename) as dos:
-            ni, na, p00, p01 = cls.line(dos, int)
-            l0 = cls.line(dos, float)
-            l1 = cls.line(dos, float)
+            num_ions, num_atoms, p00, p01 = cls.line(dos, int)
+            line_0 = cls.line(dos, float)
+            line_1 = cls.line(dos, float)
             coord_type = cls.line(dos)
             sys = cls.line(dos)
-            l2 = cls.line(dos, float)
-            emax, emin, ndos, efermi, weight = l2
+            line_2 = cls.line(dos, float)
+            emax, emin, ndos, efermi, weight = line_2
             ndos = int(ndos)
             raw = cls.splitlines(dos)
 
@@ -38,18 +39,18 @@ class DosParser(BaseParser):
         # probably format later with vasprun or PROCAR info?
         # from vasprun: pdos[i][1+j::n_spin] <-> vrunpdos[i][j][1:]
         pdos = []
-        if l2 in raw:
-            for i in range(ni):
-                start = raw.index(l2) + 1
+        if line_2 in raw:
+            for _ in range(num_ions):
+                start = raw.index(line_2) + 1
                 pdos += [raw[start:start + ndos]]
             pdos = np.array(pdos)
 
         header = {}
-        header[0] = l0
-        header[1] = l1
-        header[2] = l2
-        header['n_ions'] = ni
-        header['n_atoms'] = na
+        header[0] = line_0
+        header[1] = line_1
+        header[2] = line_2
+        header['n_ions'] = num_ions
+        header['n_atoms'] = num_atoms
         header['p00'] = p00
         header['p01'] = p01
         header['cartesian'] = coord_type.startswith(('c', 'C'))

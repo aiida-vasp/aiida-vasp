@@ -1,21 +1,20 @@
-__doc__ = '''
+"""
 Tools for parsing vasprun.xml files
-'''
+"""
 
 try:
     from lxml.objectify import parse
-except:
+except ImportError:
     from xml.etree.ElementTree import parse
-
 import datetime as dt
 import numpy as np
 
 
 class VasprunParser(object):
-    '''
+    """
     parse xml into objecttree, provide convenience methods
     for parsing
-    '''
+    """
 
     def __init__(self, fname):
         super(VasprunParser, self).__init__()
@@ -102,9 +101,10 @@ class VasprunParser(object):
 
     @property
     def pdos(self):
+        """The partial DOS array"""
         try:
             dos = self._array(parent='dos/partial')
-        except:
+        except Exception:  # pylint: disable=broad-except
             dos = np.array([])
         return dos
 
@@ -113,31 +113,33 @@ class VasprunParser(object):
         return self._i(key, path=path) or self._v(key, path=path) or default
 
     def _varray(self, key, path='//'):
+        """Extract a <varray> tag"""
         tag = self.tag('varray', key, path)
         if tag is None:
             return None
 
-        def split(s):
-            return s.text.split()
+        def split(string_):
+            return string_.text.split()
 
         return np.array(map(split, tag.v), dtype=float)
 
     def _array(self, parent, key=None, path='//'):
-        pred = key and '[@name="%s"]' % key or ''
+        """extract an <array> tag"""
+        pred = '[@name="%s"]' % key if key else ''
         tag = self.tree.find(path + parent + '/array%s' % pred)
         dims = [i.text for i in tag.findall('dimension')]
 
         def getdtf(field):
-            dt = field.attrib.get('type', float)
-            if dt == 'string':
-                dt = 'S128'
-            return (field.text.strip(), dt)
+            d_type = field.attrib.get('type', float)
+            if d_type == 'string':
+                d_type = 'S128'
+            return (field.text.strip(), d_type)
 
         dtyp = np.dtype([getdtf(f) for f in tag.findall('field')])
         ndim = len(dims)
         shape = []
         subset = tag.find('set')
-        for d in range(ndim - 1):
+        for _ in range(ndim - 1):
             if subset.find('set') is not None:
                 shape.append(len(subset.findall('set')))
                 subset = subset.find('set')
@@ -148,16 +150,17 @@ class VasprunParser(object):
             mode = 'rc'
         shape.append(len(ldim))
 
-        def split(s):
+        def split(string_):
             if mode == 'r':
-                return tuple(s.text.split())
+                return tuple(string_.text.split())
             elif mode == 'rc':
-                return tuple(map(lambda x: x.text.strip(), s.c))
+                return tuple([x.text.strip() for x in string_.c])
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)
 
     def _i(self, key, path='//'):
+        """Extract an <i> tag"""
         tag = self.tag('i', key, path)
         res = None
         if tag is not None:
@@ -178,14 +181,15 @@ class VasprunParser(object):
         return res
 
     def _v(self, key, path='//'):
+        """Extract an <v> tag"""
         tag = self.tag('v', key, path)
         if tag is not None:
             dtype = tag.attrib.get('type', float)
             return np.array(tag.text.split(), dtype=dtype)
-        else:
-            return None
+        return None
 
-    def _fppath(self):
+    @staticmethod
+    def _fppath():
         return '//structure[@name="finalpos"]//'
 
     def tag(self, tag, key, path='//'):
