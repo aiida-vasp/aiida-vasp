@@ -1,7 +1,8 @@
 ignore-paths:
-    - docs/*
+    - doc
     - examples
-    - test/*
+    - test
+    - utils
 
 pylint:
     max-line-length: 140
