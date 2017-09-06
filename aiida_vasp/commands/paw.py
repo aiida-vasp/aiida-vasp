@@ -1,17 +1,18 @@
+"""AiiDA Command plugin to work with .paw pseudopotential files and families"""
+import sys
+
 from aiida.cmdline.baseclass import VerdiCommandWithSubcommands
 from aiida.cmdline.commands.data import Importable
-import click
-import sys
 
 
 class _Paw(VerdiCommandWithSubcommands, Importable):
-    '''
+    """
     Setup and manage paw pseudopotentials and families
-    '''
+    """
 
     def __init__(self):
-        '''setup and register subcommands'''
-        from aiida.orm.data.vasp.paw import PawData
+        """setup and register subcommands"""
+        from aiida_vasp.data.paw import PawData
 
         self.dataclass = PawData
         self.valid_subcommands = {
@@ -22,7 +23,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         }
 
     def uploadfamily(self, *args):
-        '''Upload a new PAW pseudopotential family.'''
+        """Upload a new PAW pseudopotential family."""
         from aiida import load_dbenv
         import os.path
         import argparse as arp
@@ -49,13 +50,13 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         stop_if_existing = params.stop_if_existing
 
         if not os.path.isdir(folder):
-            print >> sys.stderrm, 'Cannot find directory: ' + folder
+            print >> sys.stderr, 'Cannot find directory: ' + folder
             sys.exit(1)
 
         load_dbenv()
         from aiida.orm import DataFactory
-        Paw = DataFactory('vasp.paw')
-        files_found, files_uploaded = Paw.import_family(
+        paw_cls = DataFactory('vasp.paw')
+        files_found, files_uploaded = paw_cls.import_family(
             folder,
             familyname=group_name,
             family_desc=group_description,
@@ -65,6 +66,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
             files_found, files_uploaded)
 
     def listfamilies(self, *args):
+        """Subcommand to list AiiDA PAW families present in the DB"""
         from aiida import load_dbenv
         import argparse
 
@@ -99,23 +101,25 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
         load_dbenv()
         from aiida.orm import DataFactory
-        Paw = DataFactory('vasp.paw')
-        groups = Paw.get_paw_groups(
+        paw_cls = DataFactory('vasp.paw')
+        groups = paw_cls.get_paw_groups(
             elements=list(params.element), symbols=list(params.symbol))
 
         if groups:
-            for g in groups:
-                paws = Paw.query(dbgroups=g.dbgroup).distinct()
+            for group in groups:
+                paws = paw_cls.query(dbgroups=group.dbgroup).distinct()
                 num_paws = paws.count()
                 description_string = ''
                 if params.with_description:
-                    description_string = ': {}'.format(g.description)
+                    description_string = ': {}'.format(group.description)
                 groupitem = '* {} [{} pseudos]{}'
-                print groupitem.format(g.name, num_paws, description_string)
+                print groupitem.format(group.name, num_paws,
+                                       description_string)
         else:
             print 'No PAW pseudopotential family found.'
 
-    def _import_paw_parameters(self, parser):
+    @staticmethod
+    def _import_paw_parameters(parser):
         parser.add_argument(
             '--psctr',
             nargs=1,
@@ -125,7 +129,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
             'to store it and you are not passing a folder which contains it.')
 
     def _import_paw(self, filename, **kwargs):
-        '''Import a PAW potential.'''
+        """Import a PAW potential."""
         from os.path import expanduser
 
         # ~ parser.add_argument('path', help='path to a file or a folder. '
@@ -133,26 +137,28 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         # ~ 'folder: must contain one POTCAR and optionally a PSCTR file')
         path = expanduser(filename)
         psctr = kwargs.get('psctr')
-        psctr = psctr and expanduser(psctr[0]) or None
+        psctr = expanduser(psctr[0]) if psctr else None
         try:
             node, created = self.dataclass.get_or_create(
                 path, psctr=psctr, store=True)
             print repr(node)
             if not created:
                 print 'part of the following families:'
-                for g in node.dbnode.dbgroups.all():
-                    print ' * {}'.format(g.name)
-        except ValueError as e:
-            print e
+                for group in node.dbnode.dbgroups.all():
+                    print ' * {}'.format(group.name)
+        except ValueError as err:
+            print err
 
+    # pylint: disable=too-many-locals
     def exportfamily(self, *args):
-        '''Export a PAW potential family into a folder'''
-        from aiida import load_dbenv
-        from aiida.orm import DataFactory
-        from aiida.common.exceptions import NotExistent
+        """Export a PAW potential family into a folder"""
         import argparse
         import os
         from os.path import abspath, expanduser
+
+        from aiida import load_dbenv
+        from aiida.orm import DataFactory
+        from aiida.common.exceptions import NotExistent
 
         parser = argparse.ArgumentParser(
             prog=self.get_full_command_name(),
@@ -174,33 +180,33 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         folder = abspath(expanduser(params.folder))
 
         load_dbenv()
-        Paw = DataFactory('vasp.paw')
+        paw_cls = DataFactory('vasp.paw')
         try:
-            group = Paw.get_famgroup(params.family_name)
+            group = paw_cls.get_famgroup(params.family_name)
         except NotExistent:
             print >> sys.stderr, (
                 'paw family {} not found'.format(params.family_name))
 
         #create folder
-        potpaw = params.name and params.name[0] or os.path.join(
+        potpaw = params.name[0] if params.name else os.path.join(
             folder, 'potpaw_%s' % params.family_name)
         for paw in group.nodes:
             pawf = os.path.join(potpaw, paw.symbol)
             if not os.path.exists(pawf):
                 os.makedirs(pawf)
-            pp = os.path.join(pawf, 'POTCAR')
-            cp = os.path.join(pawf, 'PSCTR')
+            potcar_path = os.path.join(pawf, 'POTCAR')
+            psctr_path = os.path.join(pawf, 'PSCTR')
             isfile_msg = 'file {} is already present in the destination folder.'
-            if not os.path.isfile(pp):
-                with open(pp, 'w') as dest:
+            if not os.path.isfile(potcar_path):
+                with open(potcar_path, 'w') as dest:
                     with open(paw.potcar) as src:
                         dest.write(src.read())
             else:
                 print isfile_msg.format(os.path.join(paw.symbol, 'POTCAR'))
-            if not os.path.isfile(cp):
+            if not os.path.isfile(psctr_path):
                 try:
                     with open(paw.psctr) as src:
-                        with open(cp, 'w') as dest:
+                        with open(psctr_path, 'w') as dest:
                             dest.write(src.read())
                 except OSError:
                     pass
