@@ -1,8 +1,19 @@
+"""
+Utils to query for Vasp calculations
+
+THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core
+"""
 from aiida.orm.querytool import QueryTool
 from aiida.orm.calculation.job import JobCalculation
 
 
 class VaspFinder(object):
+    """
+    Utility class to query for Vasp calculations
+
+    THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core
+    """
+
     _vaspclass = [
         'vasp.vasp', 'vasp.asevasp', 'vasp.vasp5', 'vasp.vasp2w90',
         'vasp.vasp2w90.Vasp2W90Calculation'
@@ -10,28 +21,29 @@ class VaspFinder(object):
 
     @classmethod
     def cmp_ctime(cls, calc1, calc2):
-        t1 = calc1.ctime
-        t2 = calc2.ctime
-        if t1 < t2:
+        """Compare calculations by creation time"""
+        time_1 = calc1.ctime
+        time_2 = calc2.ctime
+        if time_1 < time_2:
             return -1
-        elif t1 > t2:
+        elif time_1 > time_2:
             return 1
-        else:
-            return 0
+        return 0
 
     @classmethod
     def table_element(cls, calc):
+        """Create a table element from a calculation"""
         ex = calc.get_extras()
-        s = ex.get('success')
-        if isinstance(s, (bool, int)):
-            ok = s and 'yes' or 'no'
+        success = ex.get('success')
+        if isinstance(success, (bool, int)):
+            success_str = 'yes' if success else 'no'
         else:
-            ok = s
+            success_str = success
         element = {
             'creation_time': calc.ctime.strftime(format='%Y-%m-%d %H:%M'),
             'ctime': calc.ctime,
             'class': calc.__class__.__name__,
-            'successful': ok and ok or 'N/A',
+            'successful': success_str and success_str or 'N/A',
             'experiment': ex.get('experiment', 'N/A'),
             'exp_run': ex.get('run', 'N/A'),
             'type': ex.get('type', 'N/A'),
@@ -42,6 +54,7 @@ class VaspFinder(object):
 
     @classmethod
     def str_table(cls, tab):
+        """Convert a table of calculations to a string"""
         header = {
             'creation_time': 'Creation Time',
             'class': 'Class',
@@ -61,30 +74,41 @@ class VaspFinder(object):
     def cstate(cls, calc):
         if hasattr(calc, 'get_state'):
             return calc.get_state()
-        else:
-            return 'N/A'
+        return 'N/A'
 
     @classmethod
-    def history(cls, last=0, vaspclass=None):
-        q = QueryTool()
-        q.set_class(JobCalculation)
-        l = filter(lambda c: 'vasp' in str(c.__class__), q.run_query())
-        l.sort(cls.cmp_ctime)
-        res = l[-last:]
+    def history(cls, last=0):
+        """
+        Print a history of the most recent calculations
+
+        :param last: int, show this many calculations
+        """
+        query_tool = QueryTool()
+        query_tool.set_class(JobCalculation)
+        calc_list = [
+            calc for calc in query_tool.run_query()
+            if 'vasp' in str(calc.__class__)
+        ]
+        calc_list.sort(cls.cmp_ctime)
+        res = calc_list[-last:]
         res.reverse()
         tab = [cls.table_element(c) for c in res]
         print cls.str_table(tab)
 
     @classmethod
-    def status(cls, vaspclass=None):
-        q = QueryTool()
-        q.set_class(JobCalculation)
-        st = [
+    def status(cls):
+        """Print a table of calculations with the state they are in"""
+        query_tool = QueryTool()
+        query_tool.set_class(JobCalculation)
+        states = [
             'TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING',
             'RETRIEVING'
         ]
-        l = filter(lambda c: cls.cstate(c) in st, q.run_query())
-        l.sort(cls.cmp_ctime)
-        l.reverse()
-        tab = [cls.table_element(c) for c in l]
+        res_list = [
+            calc for calc in query_tool.run_query()
+            if cls.cstate(calc) in states
+        ]
+        res_list.sort(cls.cmp_ctime)
+        res_list.reverse()
+        tab = [cls.table_element(c) for c in res_list]
         print cls.str_table(tab)

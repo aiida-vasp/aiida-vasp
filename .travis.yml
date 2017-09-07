@@ -2,7 +2,7 @@ language: python
 python: 2.7
 cache: pip
 install:
-    - pip install -e .
+    - pip install -e .[regen_default_paws,graphs]
     - pip install -r requirements-dev.txt
     - pip install --upgrade enum34
 jobs:

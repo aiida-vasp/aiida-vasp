@@ -10,7 +10,7 @@ from aiida.orm import CalculationFactory, DataFactory, Code, Computer
 from aiida.orm.querytool import QueryTool
 from aiida.common.folders import Folder
 from aiida_vasp.utils.io import cif
-from aiida_vasp.utils.default_paws import lda
+from aiida_vasp.utils.default_paws import DEFAULT_LDA
 
 Tvc = CalculationFactory('vasp.base.TentativeVaspCalc')
 Par = DataFactory('parameter')

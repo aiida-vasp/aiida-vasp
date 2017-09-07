@@ -9,4 +9,4 @@
   hooks:
   - id: prospector
     language: system
-    exclude: '^(test/)|(utils/)|(examples/)'
+    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)'

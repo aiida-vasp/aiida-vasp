@@ -1,10 +1,11 @@
+"""Utilities for working with band structures"""
 try:
     import matplotlib
     matplotlib.use('TKAgg')
     from matplotlib import pyplot as plt
-except:
-    raise Exception('Error: matplotlib must be ' +
-                    'installed to use this functionality')
+except ImportError:
+    raise ImportError('Error: matplotlib must be ' +
+                      'installed to use this functionality')
 
 
 def get_bs_dims(bands_array):
@@ -57,21 +58,22 @@ def get_kp_labels(bands_node, kpoints_node=None):
     kpl = []
     try:
         kplabs = bands_node.labels
-    except AttributeError as e:
+    except AttributeError as err:
         if kpoints_node:
             kplabs = kpoints_node.labels
         else:
-            raise e
+            raise err
     if kplabs:
         kpx = [i[0] for i in kplabs]
         kpl = [i[1] for i in kplabs]
-        for i, kp in enumerate(kpl):
-            if kp == 'G':
+        for i, kpoints in enumerate(kpl):
+            if kpoints == 'G':
                 kpl[i] = r'$\Gamma$'
     return kpx, kpl
 
 
 def get_efermi(calc):
+    """Get the fermi energy from a finished calculation"""
     efermi = None
     if calc:
         p_res = calc.get_outputs_dict().get('results')
@@ -112,19 +114,13 @@ def plot_bstr(bands_node,
     fig = plt.figure()
     title = title or 'Band Structure (pk=%s)' % bands_node.pk
     bands = bands_node.get_bands()
-    nbands, nkp, nspin = get_bs_dims(bands)
-    # ~ for iband in range(nbands):
-    # ~  if nspin > 0:
-    # ~      for ispin in range(nspin):
-    # ~          plt.plot(bands[ispin, :, iband])
-    # ~  else:
-    # ~      plt.plot(bands[:, iband])
+    _, nkp, _ = get_bs_dims(bands)
     plot_bands(bands_node, **kwargs)
 
     parent_calc = None
     if use_parent_calc:
         inputs = bands_node.get_inputs()
-        parent_calc = inputs and inputs[0] or None
+        parent_calc = inputs[0] if inputs else None
 
     efermi = get_efermi(parent_calc)
     kpoints_node = get_kp_node(parent_calc)
@@ -139,7 +135,7 @@ def plot_bstr(bands_node,
         kpx, kpl = get_kp_labels(bands_node, kpoints_node)
         plt.xticks(kpx, kpl)
         plt.vlines(kpx, plt.ylim()[0], plt.ylim()[1])
-    except:
+    except Exception:  # pylint: disable=broad-except
         pass
 
     plt.ylabel('Dispersion')
@@ -148,6 +144,7 @@ def plot_bstr(bands_node,
 
 
 def plot_bands(bands_node, **kwargs):
+    """Plot a bandstructure node using matplotlib"""
     import numpy as np
 
     bands = bands_node.get_bands()
