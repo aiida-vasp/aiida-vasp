@@ -20,9 +20,9 @@ __copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
 
 
 class AsevaspCalculation(JobCalculation):
-    '''
+    """
     Perform a calculation with VASP
-    '''
+    """
 
     # pylint: disable
     def _init_internal_params(self):
@@ -95,6 +95,7 @@ class AsevaspCalculation(JobCalculation):
         return calcinfo
 
     def _write_input_files(self, asevasp, inputdict, kpoints_dict, tempfolder):
+        """Use ASE to write input files"""
         try:
             from ase.io import vasp as vio
         except ImportError:
@@ -144,6 +145,7 @@ class AsevaspCalculation(JobCalculation):
 
     @staticmethod
     def _create_ase_vasp_calc(inputdict):
+        """Create the ASE calculation"""
         try:
             from ase.calculators.vasp import Vasp as AseVasp
         except ImportError:

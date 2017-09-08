@@ -10,6 +10,7 @@ class DictToWin(object):
 
     @classmethod
     def _seq(cls, val):
+        """String format a sequence"""
         res = []
         for i in val:
             if not isinstance(i, (list, tuple)):
@@ -32,6 +33,7 @@ class DictToWin(object):
 
     @classmethod
     def _value(cls, val):
+        """String format a value of any compatible scalar type"""
         if isinstance(val, (str, unicode)):
             return val
         elif isinstance(val, bool):

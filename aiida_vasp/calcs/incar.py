@@ -3,6 +3,7 @@ import numpy as np
 
 
 def _incarify(value):
+    """Format value of any compatible type into the string forat appropriate for INCAR files"""
     result = None
     if isinstance(value, (str, unicode)):
         result = value
