@@ -1,30 +1,28 @@
-# ~ import aiida.common
+"""AiiDA - Workflow to get bandstructure of a material using VASP"""
 from aiida.common import aiidalogger
 from aiida.orm.workflow import Workflow
 from aiida.orm import DataFactory
+
 from aiida_vasp.calcs.maker import VaspMaker
 
-logger = aiidalogger.getChild('Bandstructure')
-ParameterData = DataFactory('parameter')
+LOGGER = aiidalogger.getChild('Bandstructure')
+PARAMETER_CLS = DataFactory('parameter')
 
 
 class Bandstructure(Workflow):
-    '''
+    """
     AiiDA workflow to get bandstructure of a material using VASP.
 
     Necessary steps are:
         * selfconsistent run with few kpoints
         * nonselfconsistent run with more kpoints and CHGCAR from
           selfconsistent run
-    '''
-
-    def __init__(self, **kwargs):
-        super(Bandstructure, self).__init__(**kwargs)
+    """
 
     def get_calc_maker(self):
-        '''
+        """
         return an VaspMaker instance.
-        '''
+        """
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
@@ -45,10 +43,10 @@ class Bandstructure(Workflow):
 
     @Workflow.step
     def start(self):
-        '''
+        """
         prepare, store and attach the selfconsistent run
         to get the charge density.
-        '''
+        """
         params = self.get_parameters()
         maker = self.get_calc_maker()
 
@@ -67,10 +65,10 @@ class Bandstructure(Workflow):
 
     @Workflow.step
     def bandrun(self):
-        '''
+        """
         prepare, store and attach the non-selfconsistent run
         to get the band structure.
-        '''
+        """
         params = self.get_parameters()
         # get chgcar from previous step
         scstep = self.get_attributes()['scstep']
@@ -81,7 +79,7 @@ class Bandstructure(Workflow):
 
         # set up band structure step
         maker = self.get_calc_maker()
-        maker._init_from(sccalc)
+        maker._init_from(sccalc)  # pylint: disable=protected-access
         maker.set_kpoints_path(value=params.get('kp_path'))
         maker.label += ': bands run'
         calc = maker.new()

@@ -1,5 +1,8 @@
+"""Common code for all workflows"""
+
+
 class WorkflowHelper(object):
-    '''Helper Class for AiiDA-VASP workflows'''
+    """Helper Class for AiiDA-VASP workflows"""
 
     def __init__(self, **kwargs):
         self.parent = kwargs['parent']
@@ -8,10 +11,10 @@ class WorkflowHelper(object):
         return self.parent.get_parameters()
 
     def _get_calc_maker(self, calc_type, **kwargs):
-        '''
+        """
         Instatiate a :py:class:`VaspMaker <aiida_vasp.calcs.maker.VaspMaker>`
         and feed it the common input parameters for all vasp workflows.
-        '''
+        """
         from aiida.orm import Code
         from aiida_vasp.calcs.maker import VaspMaker
         params = self.get_parameters()
@@ -54,32 +57,35 @@ class WorkflowHelper(object):
                              structure.get_formula())
         return label
 
-    def _calc_start_msg(self, name, calc):
-        '''returns a message that the calculation was started'''
+    @staticmethod
+    def _calc_start_msg(name, calc):
+        """returns a message that the calculation was started"""
         msg = 'Calculation started: {name}, PK={calc.pk}, uuid={calc.uuid}'
         return msg.format(name=name, calc=calc)
 
-    def _subwf_start_msg(self, name, wf):
-        '''returns a message that the subworkflow was started'''
+    @staticmethod
+    def _subwf_start_msg(name, workflow):
+        """returns a message that the subworkflow was started"""
         msg = 'Workflow started: {name}, PK={wf.pk}, uuid={wf.uuid}'
-        return msg.format(name=name, wf=wf)
+        return msg.format(name=name, wf=workflow)
 
     def _wf_start_msg(self):
-        '''returns a message that the workflow was started'''
+        """returns a message that the workflow was started"""
         params = self.get_parameters()
         msg = 'Workflow started: {wf_class} **{wf_label}**'
         wfclass = self.parent.__class__.__name__
         wflabel = self.parent.label or params.get('label', 'unlabeled')
         return msg.format(wf_class=wfclass, wf_label=wflabel)
 
-    def _calc_invalid_outs_msg(self, calc, links):
+    @staticmethod
+    def _calc_invalid_outs_msg(calc, links):
         msg = ('Calculation {} does not have all required output nodes. '
                'The required outputs are: {}')
         return msg.format(calc.pk, links)
 
     def _get_first_step_calc(self, step):
-        '''return either the first calculation for a step or
-        None, if there isn't any'''
+        """return either the first calculation for a step or
+        None, if there isn't any"""
         step_calcs = self.parent.get_step_calculations(step)
         if not bool(step_calcs):
             self.parent.append_to_report(
@@ -88,9 +94,10 @@ class WorkflowHelper(object):
         first_calc = step_calcs[0]
         return first_calc
 
-    def _verify_calc_output(self, calc, output_keys):
-        '''returns True only if all output link names given in
-        output_keys are present on calc'''
+    @staticmethod
+    def _verify_calc_output(calc, output_keys):
+        """returns True only if all output link names given in
+        output_keys are present on calc"""
         if not bool(calc):
             return False
         out = calc.get_outputs_dict()
@@ -104,8 +111,8 @@ class WorkflowHelper(object):
     # ~ self.parent.set_params(params, **kwargs)
 
     def _verify_params(self, params, silent=False):
-        '''finds _verify_param_* methods on the parent instance
-        and loops through them to check parameter consistency'''
+        """finds _verify_param_* methods on the parent instance
+        and loops through them to check parameter consistency"""
         valid = True
         log = []
 
@@ -115,7 +122,7 @@ class WorkflowHelper(object):
             for k, v in par_dict.iteritems() if '_verify_param_' in k
         }
 
-        for name, func in verify_funcs.iteritems():
+        for _, func in verify_funcs.iteritems():
             if isinstance(func, classmethod):
                 func = func.__func__
             valid_i, log_i = func(self.parent, params)
@@ -131,8 +138,8 @@ class WorkflowHelper(object):
 
     @classmethod
     def _verify_params_cls(cls, wf_cls, params, silent=False):
-        '''same as _verify_params, but looks for classmethods on
-        the given workflow class'''
+        """same as _verify_params, but looks for classmethods on
+        the given workflow class"""
         valid = True
         log = []
 
@@ -143,7 +150,7 @@ class WorkflowHelper(object):
             if '_verify_param_' in k and isinstance(v, classmethod)
         }
 
-        for name, func in verify_funcs.iteritems():
+        for _, func in verify_funcs.iteritems():
             valid_i, log_i = func.__func__(wf_cls, params)
             valid &= valid_i
             log.append(log_i)
@@ -156,51 +163,55 @@ class WorkflowHelper(object):
         return valid, log
 
     def _verify_kpoints(self, params):
-        '''common kpoints parameter consistency check'''
+        """common kpoints parameter consistency check"""
         log = ''
         kpoints = params.get('kpoints')
         if kpoints:
             if len(kpoints) != 1:
                 valid = False
-                log += ('{}: parameters: kpoints dict must '
-                        'contain exactly one item'
-                        ).format(self.parent.__class__.__name__)
+                log += (
+                    '{}: parameters: kpoints dict must '
+                    'contain exactly one item'
+                    ).format(self.parent.__class__.__name__)  # yapf: disable
             else:
                 valid = bool(kpoints.get('mesh'))
                 valid |= bool(kpoints.get('list'))
                 valid |= bool(kpoints.get('path'))
                 if not valid:
-                    log += ('{}: parameters: kpoints dict must '
-                            'contain one of the keys '
-                            '"mesh", "list" or "path"'
-                            ).format(self.parent.__class__.__name__)
+                    log += (
+                        '{}: parameters: kpoints dict must '
+                        'contain one of the keys '
+                        '"mesh", "list" or "path"'
+                        ).format(self.parent.__class__.__name__)  # yapf: disable
 
         elif params.get('continue_from'):
             valid = True
         else:
-            log += ('{}: parameters: kpoints dict must be set, if '
-                    'not continuing from a finished calculation'
-                    ).format(self.parent.__class__.__name__)
+            log += (
+                '{}: parameters: kpoints dict must be set, if '
+                'not continuing from a finished calculation'
+                ).format(self.parent.__class__.__name__)  # yapf: disable
             valid = False
         return valid, log
 
     def _verify_paws(self, params):
-        '''check the paw input parameter for availability of the indicated
-        paw nodes in the database.'''
+        """check the paw input parameter for availability of the indicated
+        paw nodes in the database."""
         from aiida.orm import DataFactory
-        PawData = DataFactory('vasp.paw')
+        paw_cls = DataFactory('vasp.paw')
         log = ''
         valid = True
         if not params.get('continue_from'):
             paw_fam = params.get('paw_family')
             paw_map = params.get('paw_map')
-            fam_valid = bool(paw_fam) and PawData.check_family(paw_fam)
+            fam_valid = bool(paw_fam) and paw_cls.check_family(paw_fam)
             if not fam_valid:
-                log += ('{}: parameters: paw_family must be set '
-                        'to the name of a PAW family containing '
-                        'PAWs necessary for this calculation, if '
-                        'not continuing from a finished calculation'
-                        ).format(self.parent.__class__.__name__)
+                log += (
+                    '{}: parameters: paw_family must be set '
+                    'to the name of a PAW family containing '
+                    'PAWs necessary for this calculation, if '
+                    'not continuing from a finished calculation'
+                    ).format(self.parent.__class__.__name__)  # yapf: disable
                 valid = False
             map_given = bool(paw_map)
             if not map_given:
@@ -213,7 +224,7 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_params_template(cls, continuation=False):
-        '''returns a dictionary with some common keys and explanations'''
+        """returns a dictionary with some common keys and explanations"""
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
@@ -245,8 +256,10 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_template(cls, wf_class=None, path=None):
-        '''stores the output of the parent's get_params_template method
-        in a JSON file'''
+        """
+        Stores the output of the parent's get_params_template method
+        in a JSON file
+        """
         import json
         from os.path import abspath, expanduser, exists
         result = None
@@ -257,10 +270,7 @@ class WorkflowHelper(object):
             write = True
             if exists(path):
                 overwrite = raw_input(path + ' exists! Overwrite? [y/N]: ')
-                if overwrite.lower() in ['y', 'yes']:
-                    write = True
-                else:
-                    write = False
+                return bool(overwrite.lower() in ['y', 'yes'])
             if write:
                 with open(path, 'w') as input_tpl:
                     json.dump(tpl_dict, input_tpl, indent=4, sort_keys=True)

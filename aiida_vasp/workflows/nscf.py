@@ -1,12 +1,14 @@
-from helper import WorkflowHelper
+"""AiiDA - VASP Workflow for continuing from an SCF Calculation"""
 from aiida.orm import Workflow, Calculation
+
+from .helper import WorkflowHelper
 
 
 class NscfWorkflow(Workflow):
-    '''
+    """
     AiiDA-VASP Workflow for continuing from an SCF Calculation.
     Can be used with or without the vasp2wannier90 interface.
-    '''
+    """
     Helper = WorkflowHelper
 
     def __init__(self, **kwargs):
@@ -14,8 +16,9 @@ class NscfWorkflow(Workflow):
         super(NscfWorkflow, self).__init__(**kwargs)
 
     def get_calc_maker(self):
+        """Initialize a calculation builder instance"""
         params = self.get_parameters()
-        maker = self.helper._get_calc_maker(
+        maker = self.helper._get_calc_maker(  # pylint: disable=protected-access
             'vasp.nscf',
             continue_from=Calculation.query(uuid=params['continue_from'])[0])
         nscf_settings = {'lwannier90': params['use_wannier'], 'icharg': 11}
@@ -23,7 +26,9 @@ class NscfWorkflow(Workflow):
         return maker
 
     @Workflow.step
+    # pylint: disable=protected-access
     def start(self):
+        """Submit the calculation"""
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         maker = self.get_calc_maker()
@@ -39,7 +44,9 @@ class NscfWorkflow(Workflow):
         self.next(self.end)
 
     @Workflow.step
+    # pylint: disable=protected-access
     def end(self):
+        """Set calculation node as result"""
         params = self.get_parameters()
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['bands', 'dos']
@@ -55,7 +62,8 @@ class NscfWorkflow(Workflow):
         self.next(self.exit)
 
     def _verify_param_kpoints(self, params):
-        valid, log = self.helper._verify_kpoints(params)
+        """Make sure kpoints are given in the right format"""
+        valid, log = self.helper._verify_kpoints(params)  # pylint: disable=protected-access
         if params.get('use_wannier') and params.get('kpoints'):
             if not params['kpoints'].get('mesh'):
                 log += ('{}: parameters: kpoints may only be given as a mesh '
@@ -63,14 +71,14 @@ class NscfWorkflow(Workflow):
                 valid = False
         return valid, log
 
-    def set_params(self, params):
-        self.helper._verify_params(params)
-        super(NscfWorkflow, self).set_params(params)
+    def set_params(self, params, force=False):
+        self.helper._verify_params(params)  # pylint: disable=protected-access
+        super(NscfWorkflow, self).set_params(params, force=force)
 
     @classmethod
     def get_params_template(cls):
-        '''returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow.'''
+        """returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['use_wannier'] = ('True | False (if true, vasp_code must be '
                                'compiled with wannier interface')
@@ -78,6 +86,6 @@ class NscfWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        '''returns a JSON formatted string that can be stored to a file,
-        edited, loaded and used to run this Workflow.'''
+        """returns a JSON formatted string that can be stored to a file,
+        edited, loaded and used to run this Workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

@@ -1,10 +1,11 @@
+"""AiiDA - Wannier90 workflow continuing from a vasp.amn calc"""
 from aiida.orm import Workflow
-from helper import WorkflowHelper
+
+from .helper import WorkflowHelper
 
 
 class WannierWorkflow(Workflow):
-    '''AiiDA workflow to run a wannier90 calculation, continuing from
-    a vasp.amn calc'''
+    """AiiDA workflow to run a wannier90 calculation, continuing from a vasp.amn calc"""
     Helper = WorkflowHelper
 
     def __init__(self, **kwargs):
@@ -12,6 +13,7 @@ class WannierWorkflow(Workflow):
         super(WannierWorkflow, self).__init__(**kwargs)
 
     def get_wannier_calc(self, win, wdat):
+        """Initialize a Wannier90 calculation"""
         from aiida.orm import CalculationFactory, Code
         params = self.get_parameters()
         calc = CalculationFactory('vasp.wannier')()
@@ -28,7 +30,9 @@ class WannierWorkflow(Workflow):
         return calc
 
     @Workflow.step
+    #pylint: disable=protected-access
     def start(self):
+        """Prepare and launch the Wannier90 calculation"""
         from aiida.orm import Calculation, DataFactory, load_node
         from aiida_vasp.utils.win import modify_wannier_settings_inline
         params = self.get_parameters()
@@ -42,9 +46,9 @@ class WannierWorkflow(Workflow):
             old_win = cont.inp.wannier_settings
             wdat = cont.out.wannier_data
 
-        ParamData = DataFactory('parameter')
-        mods = ParamData(dict=params['settings'])
-        mod_c, mod_d = modify_wannier_settings_inline(
+        param_cls = DataFactory('parameter')
+        mods = param_cls(dict=params['settings'])
+        _, mod_d = modify_wannier_settings_inline(
             original=old_win, modifications=mods)
         win = mod_d['wannier_settings']
         calc = self.get_wannier_calc(win, wdat)
@@ -57,9 +61,9 @@ class WannierWorkflow(Workflow):
         self.next(self.end)
 
     @Workflow.step
+    #pylint: disable=protected-access
     def end(self):
-        params = self.get_parameters()
-        wset = params['settings']
+        """Set results"""
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['bands', 'tb_model']
         valid = self.helper._verify_calc_output(calc, output_links)
@@ -78,8 +82,8 @@ class WannierWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        '''returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow.'''
+        """returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl.pop('vasp_code')
         tmpl.pop('kpoints')
@@ -116,6 +120,5 @@ class WannierWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        '''returns a JSON formatted string that can be stored to a file,
-        edited, loaded and used to run this Workflow.'''
+        """Returns a JSON formatted string that can be stored to a file, edited, loaded and used to run this Workflow"""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)
