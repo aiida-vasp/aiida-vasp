@@ -1,12 +1,18 @@
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""PAW Pseudopotential data node"""
 import os
+
 from aiida.orm import Data
 from aiida.orm.querybuilder import QueryBuilder
-from aiida_vasp.utils.io.potcar import PawParser as pcparser
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
 
+from aiida_vasp.utils.io.potcar import PawParser as pcparser
+
 
 class PawData(Data):
+    """Holds the files and metadata that make up a VASP PAW format pseudopotential"""
     group_type = 'data.vasp.paw.family'
 
     @property
@@ -27,8 +33,8 @@ class PawData(Data):
         self.folder.insert_path(value, 'path/' + name)
         attr_dict = pcparser.parse_potcar(value)
         self._set_attr('md5', md5_file(value))
-        for k, v in attr_dict.iteritems():
-            self._set_attr(k, v)
+        for key, val in attr_dict.iteritems():
+            self._set_attr(key, val)
 
     @property
     def psctr(self):
@@ -57,15 +63,15 @@ class PawData(Data):
 
     @classmethod
     def get_famgroup(cls, famname):
-        '''Returns a PAW family group if it exists, otherwise
-        raises an exception'''
+        """Returns a PAW family group if it exists, otherwise
+        raises an exception"""
         from aiida.orm import Group
         return Group.get(name=famname, type_string=cls.group_type)
 
     @classmethod
     def check_family(cls, name):
-        ''':py:method: checks wether a PAW family exists.
-            :returns: True if exists, False otherwise'''
+        """:py:method: checks wether a PAW family exists.
+            :returns: True if exists, False otherwise"""
         exists = False
         try:
             group = cls.get_famgroup(name)
@@ -76,20 +82,12 @@ class PawData(Data):
 
     @classmethod
     def get_or_create_famgroup(cls, famname):
-        '''Returns a PAW family group, creates it if it didn't exists'''
+        """Returns a PAW family group, creates it if it didn't exists"""
         from aiida.orm import Group
         from aiida.backends.utils import get_automatic_user
 
-        # TODO: maybe replace with Group.get_or_create?
-        try:
-            group = Group.get(name=famname, type_string=cls.group_type)
-            group_created = False
-        except NotExistent:
-            group = Group(
-                name=famname,
-                type_string=cls.group_type,
-                user=get_automatic_user())
-            group_created = True
+        group, group_created = Group.get_or_create(
+            name=famname, type_string=cls.group_type)
 
         if group.user != get_automatic_user():
             raise UniquenessError("There is already a UpfFamily group "
@@ -99,7 +97,8 @@ class PawData(Data):
         return group, group_created
 
     @classmethod
-    def get_paw_groups(cls, elements=set(), symbols=set(), user=None):
+    def get_paw_groups(cls, elements=None, symbols=None, user=None):
+        """Find all paw groups containing potentials with the given attributes"""
         from aiida.orm import Group
         from aiida.backends.utils import get_automatic_user
         params = {
@@ -128,14 +127,13 @@ class PawData(Data):
                       family_desc=None,
                       store=True,
                       stop_if_existing=False):
-        '''Import a family from a folder like the ones distributed with VASP,
-        usually named potpaw_XXX'''
+        """Import a family from a folder like the ones distributed with VASP,
+        usually named potpaw_XXX"""
         from aiida.common import aiidalogger
 
         ffound = []
         fupl = []
-        paw_list = []
-        fp = os.path.abspath(folder)
+        family_path = os.path.abspath(folder)
         # ~ ffname = os.path.basename(
         # ~ os.path.dirname(folder)).replace('potpaw_', '')
         # ~ famname = familyname or ffname
@@ -145,29 +143,7 @@ class PawData(Data):
         # Always update description, even if the group already existed
         group.description = family_desc
 
-        for pawf in os.listdir(fp):
-            try:
-                ap = os.path.join(fp, pawf)
-                pp = os.path.join(ap, 'POTCAR')
-                if os.path.isdir(ap) and os.path.exists(pp):
-                    ffound.append(pawf)
-                    paw, paw_created = cls.get_or_create(ap)
-                    # ~ paw._set_attr('family', famname)
-                    # ~ upload = paw_created
-                    # enforce group-wise uniqueness of symbols
-                    in_group = False
-                    if not group_created:
-                        in_group = bool(
-                            cls.load_paw(
-                                group=group, symbol=paw.symbol, silent=True))
-                    if not in_group:
-                        paw_list.append((paw, paw_created, pawf))
-            except:
-                import sys
-                e = sys.exc_info()[1]
-                print 'WARNING: skipping ' + os.path.abspath(
-                    os.path.join(fp, pawf))
-                print '  ' + e.__class__.__name__ + ': ' + e.message
+        paw_list = cls._find_paws(family_path, ffound, group, group_created)
 
         if stop_if_existing:
             for pawinfo in paw_list:
@@ -183,23 +159,52 @@ class PawData(Data):
             if store:
                 if created:
                     paw.store_all()
-                    aiidalogger.debug("New node {} created for file {}".format(
-                        paw.uuid, path))
+                    aiidalogger.debug("New node %s created for file %s",
+                                      paw.uuid, path)
                     fupl.append(path)
                 else:
-                    aiidalogger.debug(
-                        "Reusing node {} for file {}".format(paw.uuid, path))
+                    aiidalogger.debug("Reusing node %s for file %s", paw.uuid,
+                                      path)
 
         if store:
             if group_created:
                 group.store()
-                aiidalogger.debug(
-                    "New PAW family goup {} created".format(group.uuid))
+                aiidalogger.debug("New PAW family goup %s created", group.uuid)
             group.add_nodes(i[0] for i in paw_list)
         else:
             print map(repr, [i[0] for i in paw_list])
 
         return ffound, fupl
+
+    @classmethod
+    def _find_paws(cls, family_path, ffound, group, group_created):
+        """Go through a directory containing a family of paws and collect individual pseudopotentials"""
+        paw_list = []
+        for pawf in os.listdir(family_path):
+            try:
+                subfolder_path = os.path.join(family_path, pawf)
+                potcar_path = os.path.join(subfolder_path, 'POTCAR')
+                if os.path.isdir(subfolder_path) and os.path.exists(
+                        potcar_path):
+                    ffound.append(pawf)
+                    paw, paw_created = cls.get_or_create(subfolder_path)
+                    # ~ paw._set_attr('family', famname)
+                    # ~ upload = paw_created
+                    # enforce group-wise uniqueness of symbols
+                    in_group = False
+                    if not group_created:
+                        in_group = bool(
+                            cls.load_paw(
+                                group=group, symbol=paw.symbol, silent=True))
+                    if not in_group:
+                        paw_list.append((paw, paw_created, pawf))
+            except Exception:  # pylint: disable=broad-except
+                import sys
+                err = sys.exc_info()[1]
+                print 'WARNING: skipping ' + os.path.abspath(
+                    os.path.join(family_path, pawf))
+                print '  ' + err.__class__.__name__ + ': ' + err.message
+        return paw_list
 
     @property
     def xc_type(self):
@@ -207,13 +212,14 @@ class PawData(Data):
 
     @classmethod
     def get_or_create(cls, pawpath, store=False, psctr=None):
+        """Fetch a paw data node from the DB if it exists, else create it"""
         if os.path.isdir(pawpath):
-            pp = os.path.join(pawpath, 'POTCAR')
+            potcar_path = os.path.join(pawpath, 'POTCAR')
             isdir = True
         else:
-            pp = pawpath
+            potcar_path = pawpath
             isdir = False
-        md5new = md5_file(pp)
+        md5new = md5_file(potcar_path)
         paw = cls.query(
             dbattributes__key='md5', dbattributes__tval=md5new).first()
         created = False
@@ -229,6 +235,7 @@ class PawData(Data):
 
     @classmethod
     def from_potcar(cls, potpath, ctrpath=None):
+        """Create a paw data node from a POTCAR file and optionally a PSCTR file"""
         res = cls()
         res.potcar = potpath
         if ctrpath:
@@ -237,19 +244,26 @@ class PawData(Data):
 
     @classmethod
     def from_folder(cls, pawpath):
+        """Create a paw data node from a directory"""
         res = cls()
-        ap = os.path.abspath(pawpath)
-        cp = os.path.join(ap, 'PSCTR')
-        res.potcar = os.path.join(ap, 'POTCAR')
-        if os.path.isfile(cp):
-            res.psctr = cp
+        abs_path = os.path.abspath(pawpath)
+        psctr_path = os.path.join(abs_path, 'PSCTR')
+        res.potcar = os.path.join(abs_path, 'POTCAR')
+        if os.path.isfile(psctr_path):
+            res.psctr = psctr_path
         return res
 
     @classmethod
     def _node_filter(cls, **kwargs):
+        """
+        Create and return a node filtering function
+
+        :return: True if all kwargs match node attributes
+        """
+
         def node_filter(node):
-            for k, v in kwargs.iteritems():
-                if not (node.get_attr(k) == v):
+            for key, value in kwargs.iteritems():
+                if not node.get_attr(key) == value:
                     return False
             return True
 
@@ -257,7 +271,7 @@ class PawData(Data):
 
     @classmethod
     def load_paw(cls, **kwargs):
-        '''
+        """
         py:method:: load_paw([family=None][, element=None][, symbol=None])
         Load PawData nodes from the databank. Use kwargs to filter.
 
@@ -267,35 +281,35 @@ class PawData(Data):
         :key str element: Filter by chemical symbol
         :key str symbol: Filter by PAW symbol (example: As vs. As_d)
         :raises ValueError: if no PAWs are found
-        '''
+        """
         usage_msg = 'use import_family or from_folder to import PAWs'
         error_msg = 'no PAWs found for the given kwargs!\n' + usage_msg
         group = kwargs.pop('group', None)
         family = kwargs.pop('family', None)
         silent = kwargs.pop('silent', None)
         if not (group or family):
-            qb = QueryBuilder()
-            qb.append(cls=cls)
+            query_builder = QueryBuilder()
+            query_builder.append(cls=cls)
             filters = {}
-            for k, v in kwargs.iteritems():
-                filters[k] = {'=': v}
-            qb.append(filters=filters)
-            res = list(q.iterall())
+            for key, value in kwargs.iteritems():
+                filters[key] = {'=': value}
+            query_builder.append(filters=filters)
+            res = list(query_builder.iterall())
         else:
             if family:
                 group, created = cls.get_or_create_famgroup(family)
             elif group:
-                created = not group._is_stored
+                created = not group._is_stored  # pylint: disable=protected-access
             try:
                 paw_filter = cls._node_filter(**kwargs)
                 res = filter(paw_filter, group.nodes)
-            except ValueError as e:
+            except ValueError as err:
                 if silent:
                     res = []
                 elif created:
                     raise NotExistent('No family with that name exists')
                 else:
-                    raise e
+                    raise err
 
         if not res and not silent:
             raise ValueError(error_msg)

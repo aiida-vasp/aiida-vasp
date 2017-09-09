@@ -1,10 +1,16 @@
-from aiida.orm import CalculationFactory, DataFactory
-from base import ordered_unique_list
+"""
+A utility class to simplify creating VASP-Calculations, loosely follows the builder design pattern
+"""
 import os
+
+from aiida.orm import CalculationFactory, DataFactory
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
+from aiida_vasp.calcs.vasp import ordered_unique_list
 
 
 class VaspMaker(object):
-    '''
+    """
     simplifies creating a Scf, Nscf or AmnCalculation from scratch interactively or
     as a copy or continuation of a previous calculation
     further simplifies creating certain often used types of calculations
@@ -103,9 +109,21 @@ class VaspMaker(object):
     .. py:attribute:: elements
 
         Chemical symbols of the elements contained in py:attr:structure
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
+        self._recipe = None
+        self._parameters = None
+        self._queue = None
+        self._computer = None
+        self._code = None
+        self._wannier_data = None
+        self._charge_density = None
+        self._wavefunctions = None
+        self._wannier_parameters = None
+        self._kpoints = None
+        self._structure = None
+
         self._init_defaults(*args, **kwargs)
         self._calcname = kwargs.get('calc_cls')
         if 'continue_from' in kwargs:
@@ -113,7 +131,8 @@ class VaspMaker(object):
         if 'copy_from' in kwargs:
             self._copy_from(kwargs['copy_from'])
 
-    def _init_defaults(self, *args, **kwargs):
+    def _init_defaults(self, *args, **kwargs):  # pylint: disable=unused-argument
+        """Set default values"""
         calcname = kwargs.get('calc_cls', 'vasp.vasp')
         if isinstance(calcname, (str, unicode)):
             self.calc_cls = CalculationFactory(calcname)
@@ -140,6 +159,7 @@ class VaspMaker(object):
         self._resources = kwargs.get('resources', {})
 
     def _copy_from(self, calc):
+        """Copy data links from another calculation"""
         ins = calc.get_inputs_dict()
         if not self._calcname:
             self.calc_cls = calc.__class__
@@ -149,7 +169,7 @@ class VaspMaker(object):
         self._parameters = ins.get('parameters')
         self._structure = ins.get('structure')
         self._paws = {}
-        for paw in filter(lambda i: 'paw' in i[0], ins.iteritems()):
+        for paw in [i for i in ins.iteritems() if 'paw' in i[0]]:
             self._paws[paw[0].replace('paw_', '')] = paw[1]
         self._kpoints = ins.get('kpoints')
         self._charge_density = ins.get('charge_density')
@@ -160,6 +180,7 @@ class VaspMaker(object):
         self._resources = calc.get_resources()
 
     def _set_default_structure(self, structure):
+        """Set a structure depending on what was given, empty if nothing was given"""
         if not structure:
             self._structure = self.calc_cls.new_structure()
         elif isinstance(structure, (str, unicode)):
@@ -176,6 +197,7 @@ class VaspMaker(object):
             self._structure = structure
 
     def _init_from(self, prev):
+        """Initialize from an already run calculation"""
         out = prev.get_outputs_dict()
         self._copy_from(prev)
         if 'structure' in out:
@@ -188,6 +210,7 @@ class VaspMaker(object):
         self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
+        """Create a new (unstored) Calculation node from previously set properties"""
         calc = self.calc_cls()
         calc.use_code(self._code)
         calc.use_structure(self._structure)
@@ -208,12 +231,6 @@ class VaspMaker(object):
         calc.label = self.label
         calc.set_resources(self._resources)
         return calc
-
-    # ~     # TODO: check structure.get_ase() / cif
-    # ~     # TODO: check paws
-    # ~     # TODO: check kpoints
-    # ~     # TODO: check WAVECAR / CHGCAR if applicable
-    # ~     # TODO: check wannier_parameters if applicable
 
     @property
     def structure(self):
@@ -236,8 +253,8 @@ class VaspMaker(object):
         return self._kpoints
 
     @kpoints.setter
-    def kpoints(self, kp):
-        self._kpoints = kp
+    def kpoints(self, kpoints):
+        self._kpoints = kpoints
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     def set_kpoints_path(self, value=None, weights=None, **kwargs):
@@ -249,10 +266,10 @@ class VaspMaker(object):
         if self._kpoints.is_stored:
             self.kpoints = self.calc_cls.new_kpoints()
         self._kpoints.set_kpoints_path(value=value, **kwargs)
-        if 'weights' not in kwargs:
-            kpl = self._kpoints.get_kpoints()
-            wl = [1. for i in kpl]
-            self._kpoints.set_kpoints(kpl, weights=wl)
+        if not weights:
+            kp_list = self._kpoints.get_kpoints()
+            weights = [1. for _ in kp_list]
+            self._kpoints.set_kpoints(kp_list, weights=weights)
 
     def set_kpoints_mesh(self, *args, **kwargs):
         '''
@@ -351,9 +368,9 @@ class VaspMaker(object):
     def add_parameters(self, **kwargs):
         if self._parameters.pk:
             self._parameters = self._parameters.copy()
-        for k, v in kwargs.iteritems():
-            if k not in self.parameters:
-                self._parameters.update_dict({k: v})
+        for key, value in kwargs.iteritems():
+            if key not in self.parameters:
+                self._parameters.update_dict({key: value})
 
     def rewrite_parameters(self, **kwargs):
         if self._parameters_conflict(kwargs):
@@ -363,75 +380,82 @@ class VaspMaker(object):
 
     def _parameters_conflict(self, parameters):
         conflict = False
-        for k, v in parameters.iteritems():
-            conflict |= (self.parameters.get(k) != v)
+        for key, value in parameters.iteritems():
+            conflict |= (self.parameters.get(key) != value)
         return conflict
 
     def _set_default_paws(self):
-        for k in self.elements:
-            if k not in self._paws:
+        for key in self.elements:
+            if key not in self._paws:
                 if self._paw_def is None:
                     raise ValueError(
-                        "The 'paw_map' keyword is required. Pre-defined potential mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.".
-                        format(k))
+                        "The 'paw_map' keyword is required. Pre-defined potential "
+                        "mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'."
+                    )
                 try:
                     paw = self.calc_cls.Paw.load_paw(
-                        family=self._paw_fam, symbol=self._paw_def[k])[0]
+                        family=self._paw_fam, symbol=self._paw_def[key])[0]
                 except KeyError:
                     raise ValueError(
                         "The given 'paw_map' does not contain a mapping for element '{}'".
-                        format(k))
-                self._paws[k] = paw
+                        format(key))
+                self._paws[key] = paw
 
     @property
     def elements(self):
         return ordered_unique_list(
             self._structure.get_ase().get_chemical_symbols())
 
-    def pkcmp(self, nodeA, nodeB):
-        if nodeA.pk < nodeB.pk:
+    @staticmethod
+    def compare_pk(node_a, node_b):
+        """Compare two nodes by primary key"""
+        if node_a.pk < node_b.pk:
             return -1
-        elif nodeA.pk > nodeB.pk:
+        elif node_a.pk > node_b.pk:
             return 1
-        else:
-            return 0
+        return 0
 
     def verify_parameters(self):
+        """
+        Verify input parameters
+
+        :return: (bool, string) success, message
+        """
         if not self._structure:
             raise ValueError('need structure,')
         magmom = self.parameters.get('magmom', [])
         lsorb = self.parameters.get('lsorbit', False)
         lnonc = self.parameters.get('lnoncollinear', False)
-        ok = True
+        parameters_ok = True
         msg = 'Everything ok'
         nmag = len(magmom)
         nsit = self.n_ions
         if lsorb:
             if lnonc:
                 if magmom and not nmag == 3 * nsit:
-                    ok = False
+                    parameters_ok = False
                     msg = 'magmom has wrong dimension'
             else:
                 if magmom and not nmag == nsit:
-                    ok = False
+                    parameters_ok = False
                     msg = 'magmom has wrong dimension'
         else:
             if magmom and not nmag == nsit:
-                ok = False
+                parameters_ok = False
                 msg = 'magmom has wrong dimension'
-        return ok, msg
+        return parameters_ok, msg
 
     def check_magmom(self):
-        magmom = self.parameters.get('magmom', [])
-        st_magmom = self._structure.get_ase().get_initial_magnetic_moments()
-        lsf = self.noncol and 3 or 1
+        """Check that the magnetic moment given in parameters matches the one of the structure"""
+        magnetic_moment = self.parameters.get('magmom', [])
+        structure_mm = self._structure.get_ase().get_initial_magnetic_moments()
+        lsf = 3 if self.noncol else 1
         nio = self.n_ions
-        s_mm = nio * lsf
-        mm = len(magmom)
-        if magmom and st_magmom:
-            return s_mm == mm
-        else:
-            return True
+        structure_mm_dim = nio * lsf
+        magnetic_moment_dim = len(magnetic_moment)
+        if magnetic_moment and structure_mm:
+            return structure_mm_dim == magnetic_moment_dim
+        return True
 
     def set_magmom_1(self, val):
         magmom = [val]

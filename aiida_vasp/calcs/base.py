@@ -1,7 +1,6 @@
-try:
-    from collections import ChainMap
-except ImportError:
-    from chainmap import ChainMap
+# pylint: disable=abstract-method,invalid-metaclass
+# explanation: pylint wrongly complains about Node not implementing query
+"""Base and meta classes for VASP calculations"""
 
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
@@ -9,37 +8,39 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 
 
 def make_use_methods(inputs, bases):
-    '''
+    """
     creates the _use_methods classproperty from a list of
     base classes as well as :py:class:`Input` instances. For use
     in :py:class:`CalcMeta` during class creation.
-    '''
+    """
 
     @classproperty
+    # pylint: disable=protected-access
     def _use_methods(cls):
+        """automatically generated _use_methods function"""
         retdict = JobCalculation._use_methods
-        for b in bases:
-            if hasattr(b, '_use_methods'):
-                retdict.update(b._use_methods)
-        for inp, dct in inputs.iteritems():
-            ln = dct['linkname']
-            if isinstance(ln, classmethod):
-                dct['linkname'] = getattr(cls, ln.__func__.__name__)
+        for base_class in bases:
+            if hasattr(base_class, '_use_methods'):
+                retdict.update(base_class._use_methods)
+        for _, dct in inputs.iteritems():
+            link_name = dct['linkname']
+            if isinstance(link_name, classmethod):
+                dct['linkname'] = getattr(cls, link_name.__func__.__name__)
         retdict.update(inputs)
         return retdict
 
     return _use_methods
 
 
-def make_init_internal(cls, **kwargs):
-    '''
+def make_init_internal(cls, **kwargs):  # pylint: disable=unused-argument
+    """
     returns a _update internal_params method, required in class creation
     by :py:class:`CalcMeta`
-    '''
+    """
 
     def _update_internal_params(self):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
 
     return _update_internal_params
 
@@ -53,15 +54,14 @@ def seqify(seq_arg):
 def datify(type_or_str):
     if isinstance(type_or_str, str):
         return DataFactory(type_or_str)
-    else:
-        return type_or_str
+    return type_or_str
 
 
 class Input(object):
-    '''
+    """
     Utility class that handles mapping between CalcMeta's and Calculation's
     interfaces for defining input nodes
-    '''
+    """
 
     def __init__(self, types, param=None, ln=None, doc=''):
         self.types = tuple(map(datify, seqify(types)))
@@ -74,6 +74,7 @@ class Input(object):
             self._ln = value
 
     def get_dict(self):
+        """Create a dictionary representation of this input"""
         ret = {
             'valid_types': self.types,
             'additional_parameter': self.param,
@@ -92,10 +93,10 @@ class Input(object):
 
 
 class IntParam(object):
-    '''
+    """
     Utility class that handles mapping between CalcMeta's and Calculation's
     internal parameter interfaces
-    '''
+    """
 
     pmap = {
         'default_parser': '_default_parser',
@@ -113,8 +114,8 @@ class IntParam(object):
 
     @classmethod
     def map_param(cls, item):
-        k, v = item
-        return (cls.pmap[k], v)
+        key, value = item
+        return (cls.pmap[key], value)
 
     @classmethod
     def map_params(cls, classdict):
@@ -130,38 +131,38 @@ class IntParam(object):
 
 
 class CalcMeta(JobCalculation.__metaclass__):
-    '''
+    """
     Metaclass that allows simpler and clearer Calculation class writing.
     Takes :py:class:`Input` instances from the class and converts it to
     the correct entries in the finished class's _use_methods classproperty.
     finds class attributes corresponding to 'internal parameters'
     and creates the finished class's _update_internal_params method.
-    '''
+    """
 
-    def __new__(cls, name, bases, classdict):
+    def __new__(mcs, name, bases, classdict):
         inputs = {}
         delete = []
         inputobj = Input.filter_classdict(classdict)
-        for k, v in inputobj:
-            if not v.param:
-                v.set_ln(k)
+        for key, value in inputobj:
+            if not value.param:
+                value.set_ln(key)
             else:
-                v.set_ln(classdict['_get_{}_linkname'.format(k)])
-            inputs[k] = v.get_dict()
-            delete.append(k)
+                value.set_ln(classdict['_get_{}_linkname'.format(key)])
+            inputs[key] = value.get_dict()
+            delete.append(key)
         internals = dict(IntParam.map_params(classdict))
         delete.extend(IntParam.get_keylist(classdict))
         classdict['_use_methods'] = make_use_methods(inputs, bases)
         classdict['_update_internal_params'] = make_init_internal(
-            cls, **internals)
-        for k in delete:
-            classdict.pop(k)
-        Calc = super(CalcMeta, cls).__new__(cls, name, bases, classdict)
-        return Calc
+            mcs, **internals)
+        for key in delete:
+            classdict.pop(key)
+        calc_cls = super(CalcMeta, mcs).__new__(mcs, name, bases, classdict)
+        return calc_cls
 
 
 class VaspCalcBase(JobCalculation):
-    '''
+    """
     Base class of all calculations utilizing VASP.
 
     * sets :py:class:`CalcMeta` as it's __metaclass__
@@ -170,24 +171,24 @@ class VaspCalcBase(JobCalculation):
     * provides hooks, so subclasses can extend the behaviour without
 
     having to reimplement common functionality
-    '''
+    """
     __metaclass__ = CalcMeta
     input_file_name = 'INCAR'
     output_file_name = 'OUTCAR'
 
     @classmethod
     def max_retrieve_list(cls):
-        '''returns a list of all possible output files from a VASP run'''
+        """returns a list of all possible output files from a VASP run"""
         retrieve_list = [
             'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR',
             'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
             'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR',
-            ('wannier90*', '.', 0), 'vasprun.xml'
+            ['wannier90*', '.', 0], 'vasprun.xml'
         ]
         return retrieve_list
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        '''
+        """
         Writes the four minimum output files,
         INCAR, POSCAR, POTCAR, KPOINTS. Delegates the
         construction and writing / copying to write_<file> methods.
@@ -195,7 +196,7 @@ class VaspCalcBase(JobCalculation):
         have to implement the write_xxx method accordingly.
         Subclasses can extend by calling the super method and if neccessary
         modifying it's output CalcInfo before returning it.
-        '''
+        """
         # write input files
         incar = tempfolder.get_abs_path('INCAR')
         structure = tempfolder.get_abs_path('POSCAR')
@@ -221,21 +222,22 @@ class VaspCalcBase(JobCalculation):
         return calcinfo
 
     def _init_internal_params(self):
-        '''must be present on all JobCalculation subclasses, that
-        set internal parameters'''
+        """must be present on all JobCalculation subclasses, that
+        set internal parameters"""
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
-    def verify_inputs(self, inputdict, *args, **kwargs):
-        '''
+    def verify_inputs(self, inputdict, *args, **kwargs):  # pylint: disable=unused-argument
+        """
         Hook to be extended by subclasses with checks for input nodes.
         Is called once before submission.
-        '''
+        """
         self.check_input(inputdict, 'code')
         return True
 
-    def check_input(self, inputdict, linkname, check_fn=lambda: True):
-        '''
+    @staticmethod
+    def check_input(inputdict, linkname, check_fn=lambda: True):
+        """
         :py:classmethod:: check_input(inputdict, linkname[, check_fn])
 
         check wether the given linkname is in the inputdict.
@@ -246,7 +248,7 @@ class VaspCalcBase(JobCalculation):
         :param function check_fn: A function that returns True if the
             check should be performed or False if not.
 
-        '''
+        """
         notset_msg = 'input not set: %s'
         if check_fn():
             if linkname not in inputdict:
@@ -254,13 +256,13 @@ class VaspCalcBase(JobCalculation):
         return True
 
     def store(self, *args, **kwargs):
-        '''adds a _prestore subclass hook for operations that
-        should be done just before storing'''
+        """adds a _prestore subclass hook for operations that
+        should be done just before storing"""
         self._prestore()
         super(VaspCalcBase, self).store(*args, **kwargs)
 
     def _prestore(self):
-        '''Subclass hook for updating attributes etc, just before storing'''
+        """Subclass hook for updating attributes etc, just before storing"""
         pass
 
     def write_additional(self, tempfolder, inputdict):

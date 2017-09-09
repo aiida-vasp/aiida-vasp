@@ -1,45 +1,47 @@
-__doc__ = '''
+"""
 This module contains the base class for other vasp parsers.
-'''
+"""
 import re
 
 
 class BaseParser(object):
+    """Common codebase for all parser utilities"""
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
     @classmethod
-    def line(cls, fobj_or_str, dt=str):
+    def line(cls, fobj_or_str, d_type=str):
+        """Grab a line from a file object or string and convert it to d_type (default: str)"""
         if isinstance(fobj_or_str, str):
             line = fobj_or_str
         else:
             line = fobj_or_str.readline()
-        res = map(dt, line.split())
+        res = map(d_type, line.split())
         if len(res) == 1:
             return res[0]
-        else:
-            return res
+        return res
 
     @classmethod
-    def splitlines(cls, fobj_or_str, dt=float):
+    def splitlines(cls, fobj_or_str, d_type=float):
+        """split a chunk of text into a list of lines and convert each line to d_type (default: float)"""
         if isinstance(fobj_or_str, str):
             lines = fobj_or_str.split('\n')
         else:
             lines = fobj_or_str.readlines()
-        return map(lambda l: cls.line(l, dt), lines)
+        return [cls.line(l, d_type) for l in lines]
 
 
 class KeyValueParser(BaseParser):
-    '''
+    """
     contains regex and functions to find grammar elements
     in vasp input and output files
-    '''
+    """
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     comments = True
 
     @classmethod
     def get_lines(cls, filename):
-        with open(filename) as f:
-            lines = f.read().splitlines()
+        with open(filename) as input_file:
+            lines = input_file.read().splitlines()
         return lines
 
     @classmethod
@@ -66,9 +68,10 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def float_unit(cls, string_):
+        """Parse string into a float number with attached unit"""
         vals = string_.split()
         value = float(vals.pop(0))
-        unit = vals and vals.pop(0) or ''
+        unit = vals.pop(0) if vals else ''
         comment = ' '.join(vals)
         return cls.retval(value, unit, comment=comment)
 
@@ -81,6 +84,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def bool(cls, string_):
+        """Parse string into a boolean value"""
         vals = string_.split()
         bool_str = vals.pop(0)
         if bool_str == 'T':

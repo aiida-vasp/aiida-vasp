@@ -1,29 +1,32 @@
-from helper import WorkflowHelper
+"""AiiDA - VASP Workflow for continuing from an NSCF Calculation to get wannier90 projections"""
 from aiida.orm import Workflow
+
+from .helper import WorkflowHelper
 
 
 class ProjectionsWorkflow(Workflow):
-    '''
+    """
     AiiDA-VASP Workflow for continuing from an NSCF Calculation to get
     all the data necessary to run a wannier calculation.
     parameters are given using :py:func:set_params(parameter_dict).
     see py:func:get_params_template() for a list of parameters.
-    '''
+    """
     Helper = WorkflowHelper
 
     def __init__(self, **kwargs):
         self.helper = self.Helper(parent=self)
         super(ProjectionsWorkflow, self).__init__(**kwargs)
 
-    def set_params(self, params):
-        self.helper._verify_params(params)
-        super(ProjectionsWorkflow, self).set_params(params)
+    def set_params(self, params, force=False):
+        self.helper._verify_params(params)  # pylint: disable=protected-access
+        super(ProjectionsWorkflow, self).set_params(params, force=force)
 
     def get_calc_maker(self):
+        """Initialize a calculation builder instance"""
         from aiida.orm import Calculation
         params = self.get_parameters()
         cont = Calculation.query(uuid=params['continue_from'])[0]
-        maker = self.helper._get_calc_maker('vasp.amn', copy_from=cont)
+        maker = self.helper._get_calc_maker('vasp.amn', copy_from=cont)  # pylint: disable=protected-access
 
         nscf_parameters = {'lwannier90': True, 'icharg': 11}
         maker.rewrite_parameters(**nscf_parameters)
@@ -35,7 +38,9 @@ class ProjectionsWorkflow(Workflow):
         return maker
 
     @Workflow.step
+    # pylint: disable=protected-access
     def start(self):
+        """Submit the calculation"""
         from aiida_vasp.utils.win import modify_wannier_parameters_inline
         from aiida.orm import DataFactory
         params = self.get_parameters()
@@ -49,8 +54,8 @@ class ProjectionsWorkflow(Workflow):
         nbands = maker.parameters.get('nbands')
         if nbands:
             mod_win['num_bands'] = nbands
-        ParameterData = DataFactory('parameter')
-        mod_win = ParameterData(dict=mod_win)
+        parameter_cls = DataFactory('parameter')
+        mod_win = parameter_cls(dict=mod_win)
         mod_c, mod_d = modify_wannier_parameters_inline(
             original=old_win, modifications=mod_win)
         msg = ('added projections and overrides to wannier parameters.')
@@ -70,7 +75,9 @@ class ProjectionsWorkflow(Workflow):
         self.next(self.end)
 
     @Workflow.step
+    # pylint: disable=protected-access
     def end(self):
+        """Add results after successful run"""
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['wannier_data']
         valid = self.helper._verify_calc_output(calc, output_links)
@@ -87,7 +94,9 @@ class ProjectionsWorkflow(Workflow):
                 self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
-    def _verify_wannier_data(self, wdat):
+    @staticmethod
+    def _verify_wannier_data(wdat):
+        """Make sure the wannier data node contains all necessary files"""
         valid = False
         log = ''
         names = set(wdat.archive.getnames())
@@ -101,7 +110,8 @@ class ProjectionsWorkflow(Workflow):
         return valid, log
 
     def _verify_param_kpoints(self, params):
-        valid, log = self.helper._verify_kpoints(params)
+        """Make sure the kpoints are given in the right format"""
+        valid, log = self.helper._verify_kpoints(params)  # pylint: disable=protected-access
         if params.get('use_wannier'):
             if not params['kpoints'].get('mesh'):
                 log += ('{}: parameters: kpoints may only be given as a mesh '
@@ -111,8 +121,8 @@ class ProjectionsWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        '''returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow.'''
+        """returns a dictionary of keys and explanations how they
+        can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
         tmpl['wannier_parameters'] = {
@@ -128,6 +138,6 @@ class ProjectionsWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        '''returns a JSON formatted string that can be stored to a file,
-        edited, loaded and used to run this Workflow.'''
+        """returns a JSON formatted string that can be stored to a file,
+        edited, loaded and used to run this Workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

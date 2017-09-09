@@ -1,4 +1,11 @@
-lda = {
+"""
+Provides dictionaries with mappings element -> default potential
+
+For the following pseudopotential types
+* LDA
+* GW
+"""
+DEFAULT_LDA = {
     "Ru": "Ru_pv",
     "Re": "Re",
     "Ra": "Ra_sv",
@@ -97,7 +104,7 @@ lda = {
     "In": "In_d",
 }
 
-gw = {
+DEFAULT_GW = {
     "Ni": "Ni_sv",
     "Pd": "Pd_sv",
     "Pt": "Pt",

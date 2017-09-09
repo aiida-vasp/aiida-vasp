@@ -1,16 +1,26 @@
+#encoding: utf-8
+"""AiiDA Parser for a aiida_vasp.VaspCalculation"""
+import numpy as np
+
+from aiida.orm import DataFactory
+
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.io.eigenval import EigParser
 from aiida_vasp.utils.io.vasprun import VasprunParser
 from aiida_vasp.utils.io.doscar import DosParser
 from aiida_vasp.utils.io.kpoints import KpParser
-from aiida.orm import DataFactory
-import numpy as np
 
 
 class VaspParser(BaseParser):
-    '''
+    """
     Parses all Vasp calculations.
-    '''
+    """
+
+    def __init__(self, calc):
+        super(VaspParser, self).__init__(calc)
+        self.out_folder = None
+        self.vrp = None
+        self.dcp = None
 
     def parse_with_retrieved(self, retrieved):
         self.check_state()
@@ -74,31 +84,33 @@ class VaspParser(BaseParser):
             return None
         return DosParser(doscar)
 
-    def get_dos_node(self, vrp, dcp):
-        '''
+    @staticmethod
+    def get_dos_node(vrp, dcp):
+        """
         takes VasprunParser and DosParser objects
         and returns a doscar array node
-        '''
+        """
         if not vrp or not dcp:
             return None
         dosnode = DataFactory('array')()
-        if len(vrp.pdos):
+        if vrp.pdos:
             pdos = vrp.pdos.copy()
             for i, name in enumerate(vrp.pdos.dtype.names[1:]):
-                ns = vrp.pdos.shape[1]
+                num_spins = vrp.pdos.shape[1]
                 # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-                cur = dcp.pdos[:, :, i + 1:i + 1 + ns].transpose(0, 2, 1)
+                cur = dcp.pdos[:, :, i + 1:i + 1 + num_spins].transpose(
+                    0, 2, 1)
                 cond = vrp.pdos[name] < 0.1
                 pdos[name] = np.where(cond, cur, vrp.pdos[name])
             dosnode.set_array('pdos', pdos)
-        ns = 1
+        num_spins = 1
         if dcp.tdos.shape[1] == 5:
-            ns = 2
-        tdos = vrp.tdos[:ns, :].copy()
+            num_spins = 2
+        tdos = vrp.tdos[:num_spins, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
-            cur = dcp.tdos[:, i + 1:i + 1 + ns].transpose()
-            cond = vrp.tdos[:ns, :][name] < 0.1
-            tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
+            cur = dcp.tdos[:, i + 1:i + 1 + num_spins].transpose()
+            cond = vrp.tdos[:num_spins, :][name] < 0.1
+            tdos[name] = np.where(cond, cur, vrp.tdos[:num_spins, :][name])
         dosnode.set_array('tdos', tdos)
         return dosnode
 
@@ -128,7 +140,7 @@ class VaspParser(BaseParser):
         if not eig:
             self.logger.warning('EIGENVAL not found')
             return None, None, None
-        header, kp, bs = EigParser.parse_eigenval(eig)
+        _, kpoints, bands = EigParser.parse_eigenval(eig)
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
 
@@ -148,12 +160,15 @@ class VaspParser(BaseParser):
         if self._calc.inp.kpoints.labels:
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
-            bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
-        bsnode.set_bands(bs, occupations=self.vrp.occupations)
-        kpout.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
+            bsnode.set_kpoints(
+                kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+        bsnode.set_bands(bands, occupations=self.vrp.occupations)
+        kpout.set_kpoints(
+            kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         return bsnode, kpout, structure
 
     def read_ibzkpt(self):
+        """Create a DB Node for the IBZKPT file"""
         ibz = self.get_file('IBZKPT')
         if not ibz:
             self.logger.warning('IBZKPT not found')
@@ -165,6 +180,7 @@ class VaspParser(BaseParser):
         return kpout
 
     def get_chgcar(self):
+        """Create a DB Node for the CHGCAR file"""
         chgc = self.get_file('CHGCAR')
         if chgc is None:
             return None
@@ -173,6 +189,7 @@ class VaspParser(BaseParser):
         return chgnode
 
     def get_wavecar(self):
+        """Create a DB Node for the WAVECAR file"""
         wfn = self.get_file('WAVECAR')
         if wfn is None:
             return None

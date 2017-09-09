@@ -1,12 +1,16 @@
-from base import Input
-from vasp import VaspCalculation
+# pylint: disable=abstract-method
+# explanation: pylint wrongly complains about (aiida) Node not implementing query
+"""VASP2Wannier90 - Calculation"""
 from aiida.orm import DataFactory
 from aiida.orm.data.base import List
 from aiida_wannier90.io import write_win
 
+from aiida_vasp.calcs.base import Input
+from aiida_vasp.calcs.vasp import VaspCalculation
+
 
 class Vasp2w90Calculation(VaspCalculation):
-    '''General purpose Calculation for using vasp with the vasp2wannier90 interface.'''
+    """General purpose Calculation for using vasp with the vasp2wannier90 interface."""
 
     default_parser = 'vasp.vasp2w90'
     wannier_parameters = Input(
@@ -24,14 +28,16 @@ class Vasp2w90Calculation(VaspCalculation):
         'lwave': False
     }
 
-    def write_win(self, inputdict, dst):
-        '''Write Wannier90 input file'''
+    @staticmethod
+    def write_win(inputdict, dst):
+        """Write Wannier90 input file"""
         write_win(
             filename=dst,
             parameters=inputdict.get('wannier90_parameters', {}),
             projections=inputdict.get('projections', None))
 
-    def new_wannier_parameters(self, **kwargs):
+    @staticmethod
+    def new_wannier_parameters(**kwargs):
         return DataFactory('parameter')(**kwargs)
 
     def write_additional(self, tempfolder, inputdict):

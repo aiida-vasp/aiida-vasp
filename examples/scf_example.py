@@ -15,6 +15,7 @@ def add_to_group(node):
         g.store()
     g.add_nodes(node)
 
+
 if __name__ == '__main__':
     if not len(sys.argv) == 3:
         print usage
@@ -22,9 +23,9 @@ if __name__ == '__main__':
     mkr = VaspMaker(
         structure=sys.argv[2],
         calc_cls='vasp.scf',
-        paw_map={'Ga': 'Ga', 'As': 'As'},
-        paw_family='pbe',
-    )
+        paw_map={'Ga': 'Ga',
+                 'As': 'As'},
+        paw_family='pbe', )
     mkr.add_parameters(
         gga='PE',
         gga_compat=False,
@@ -32,8 +33,7 @@ if __name__ == '__main__':
         lorbit=11,
         ismear=0,
         sigma=.05,
-        encut=280
-    )
+        encut=280)
     mkr.set_kpoints_mesh([2, 2, 2])
     mkr.queue = 'dphys_compute'
     mkr.resources['num_machines'] = 2

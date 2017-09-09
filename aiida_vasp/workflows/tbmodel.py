@@ -1,16 +1,17 @@
-# ~ import aiida.common
+"""AiiDA - VASP workflow to get tight binding model of a material using VASP and wannier90"""
 from aiida.common import aiidalogger
 from aiida.common.exceptions import NotExistent
-from aiida.orm.workflow import Workflow
 from aiida.orm import DataFactory, Group, CalculationFactory, Code
+from aiida.orm.workflow import Workflow
+
 from aiida_vasp.calcs.maker import VaspMaker
 
-logger = aiidalogger.getChild('Tbmodel')
-ParameterData = DataFactory('parameter')
+LOGGER = aiidalogger.getChild('Tbmodel')
+PARAMETER_CLS = DataFactory('parameter')
 
 
 class TbmodelWorkflow(Workflow):
-    '''
+    """
     AiiDA workflow to get tight binding model of a material using VASP and
     wannier90.
 
@@ -19,7 +20,7 @@ class TbmodelWorkflow(Workflow):
         * nonselfconsistent run with lwannier90
         * lwannier90 run with projections block
         * wannier.x run with hr_plot = True
-    '''
+    """
 
     def __init__(self, **kwargs):
         super(TbmodelWorkflow, self).__init__(**kwargs)
@@ -31,10 +32,7 @@ class TbmodelWorkflow(Workflow):
             self.group.store()
 
     def get_calc_maker(self):
-        '''
-        return an VaspMaker instance.
-        '''
-        from aiida.orm import Code
+        """Return an VaspMaker instance."""
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
         maker.add_parameters(
@@ -47,21 +45,17 @@ class TbmodelWorkflow(Workflow):
             gga='PE',
             gga_compat=False)
         maker.code = Code.get_from_string(params['vasp'])
-        # ~ maker.computer = maker.code.get_computer()
         maker.label = params.get('name')
         return maker
 
     @Workflow.step
     def start(self):
-        '''
-        prepare, store and attach the selfconsistent run
-        to get the charge density.
-        '''
+        """Prepare, store and attach the selfconsistent run to get the charge density."""
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'], calc_cls='vasp.scf')
         maker.rewrite_parameters(**params['parameters'])
-        kp = params['kpmesh']
-        maker.kpoints.set_kpoints_mesh(kp)
+        kpoints = params['kpmesh']
+        maker.kpoints.set_kpoints_mesh(kpoints)
         maker.code = Code.get_from_string(params['vasp'])
         maker.queue = params['queue']
         maker.resources['num_machines'] = 4
@@ -81,10 +75,7 @@ class TbmodelWorkflow(Workflow):
 
     @Workflow.step
     def winrun(self):
-        '''
-        prepare, store and attach the non-selfconsistent run
-        to get the wannier input file
-        '''
+        """Prepare, store and attach the non-selfconsistent run to get the wannier input file"""
         params = self.get_parameters()
         # get chgcar from previous step
         scstep = self.get_attributes()['scstep']
@@ -112,6 +103,7 @@ class TbmodelWorkflow(Workflow):
 
     @Workflow.step
     def amnrun(self):
+        """Launch the Vasp2Wannier calculation to get the .amn file"""
         params = self.get_parameters()
         winstep = self.get_attributes()['winstep']
         prev = self.get_step_calculations(self.winrun)
@@ -121,7 +113,6 @@ class TbmodelWorkflow(Workflow):
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
         maker.wannier_parameters = wincalc.out.wannier_parameters.copy()
-        # ~ maker.wannier_data = wincalc.out.wannier_data
         num_bands = maker.wannier_parameters.get_dict()['num_wann']
         maker.wannier_parameters.update_dict({'num_bands': num_bands})
         maker.wannier_parameters.update_dict(params['win'])
@@ -141,6 +132,7 @@ class TbmodelWorkflow(Workflow):
 
     @Workflow.step
     def wannrun(self):
+        """Launch the Wannier90 calculation that returns the final tight-binding model and set results"""
         params = self.get_parameters()
         amnstep = self.get_attributes()['amnstep']
         prev = self.get_step_calculations(self.amnrun)

@@ -1,16 +1,20 @@
-from aiida.orm import CalculationFactory, DataFactory
-from aiida.djsite.db.testbase import AiidaTestCase
-import numpy as np
+"""Test creation and preparation of Vasp5Calculation"""
 import tempfile
 from os.path import dirname, realpath, join
-from common import Common
+
+import numpy as np
+from aiida.backends.testbase import AiidaTestCase
+from aiida.orm import CalculationFactory, DataFactory
+
+from .common import Common
 
 
+# pylint: disable=protected-access,too-many-public-methods
 class VaspCalcTest(AiidaTestCase):
-    '''
+    """
     Test Case for
     py:class:`~aiida_vasp.calcs.vasp.VaspCalculation`
-    '''
+    """
 
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp')()
@@ -27,6 +31,7 @@ class VaspCalcTest(AiidaTestCase):
         self.cif = DataFactory('cif').get_or_create(cifpath)[0]
 
     def test_inputs(self):
+        """Check that the use_<input> methods are available"""
         self.assertTrue(hasattr(self.calc, 'use_code'))
         self.assertTrue(hasattr(self.calc, 'use_parameters'))
         self.assertTrue(hasattr(self.calc, 'use_structure'))
@@ -43,10 +48,10 @@ class VaspCalcTest(AiidaTestCase):
         self.assertEqual(self.calc._parameters, {'a': 0})
 
     def test_write_incar(self):
-        '''
+        """
         write out an INCAR tag to a tempfile and check wether
         it was written correctly
-        '''
+        """
         inc = self.calc.new_parameters(dict={'system': 'InAs'})
         dst = tempfile.mkstemp()[1]
         self.calc.use_parameters(inc)
@@ -55,10 +60,10 @@ class VaspCalcTest(AiidaTestCase):
             self.assertEqual(incar.read().strip(), 'SYSTEM = InAs')
 
     def test_write_potcar(self):
-        '''
+        """
         concatenate two paws into a tmp POTCAR and check wether
         each is contained in the result
-        '''
+        """
         self.calc.use_parameters(
             self.calc.new_parameters(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
@@ -69,19 +74,19 @@ class VaspCalcTest(AiidaTestCase):
         dst = tempfile.mkstemp()[1]
         self.calc.write_potcar(self.calc.get_inputs_dict(), dst)
         with open(dst, 'r') as potcar:
-            x = potcar.read()
-            with open(self.calc.inp.paw_In.potcar, 'r') as paw_In:
-                a = paw_In.read()
-                self.assertIn(a, x)
-            with open(self.calc.inp.paw_As.potcar, 'r') as paw_As:
-                b = paw_As.read()
-                self.assertIn(b, x)
+            potcar_content = potcar.read()
+            with open(self.calc.inp.paw_In.potcar, 'r') as paw_in:
+                data = paw_in.read()
+                self.assertIn(data, potcar_content)
+            with open(self.calc.inp.paw_As.potcar, 'r') as paw_as:
+                data = paw_as.read()
+                self.assertIn(data, potcar_content)
 
     def test_write_poscar(self):
-        '''
+        """
         feed a structure into calc and write it to a POSCAR temp file
         check for nonemptiness of the file
-        '''
+        """
         self.calc.use_structure(self.structure)
         dst = tempfile.mkstemp()[1]
         self.calc.write_poscar({}, dst)
@@ -89,10 +94,10 @@ class VaspCalcTest(AiidaTestCase):
             self.assertTrue(poscar.read())
 
     def test_write_poscar_cif(self):
-        '''
+        """
         feed a cif file into calc and write it to a POSCAR temp file
         make sure the file is not empty
-        '''
+        """
         self.calc.use_structure(self.cif)
         dst = tempfile.mkstemp()[1]
         self.calc.write_poscar({}, dst)
@@ -100,18 +105,18 @@ class VaspCalcTest(AiidaTestCase):
             self.assertTrue(poscar.read())
 
     def test_write_kpoints(self):
-        '''
+        """
         feed kpoints into calc and write to KPOINTS temp file
         verify the file is not empty
-        '''
-        kp = self.calc.new_kpoints()
-        kp.set_kpoints_mesh([4, 4, 4])
-        self.calc.use_kpoints(kp)
+        """
+        kpoints = self.calc.new_kpoints()
+        kpoints.set_kpoints_mesh([4, 4, 4])
+        self.calc.use_kpoints(kpoints)
         self.calc.use_parameters(self.calc.new_parameters())
         dst = tempfile.mkstemp()[1]
         self.calc.write_kpoints(self.calc.get_inputs_dict(), dst)
-        with open(dst, 'r') as kpoints:
-            self.assertTrue(kpoints.read())
+        with open(dst, 'r') as kpoints_f:
+            self.assertTrue(kpoints_f.read())
 
     def test_need_kp_false(self):
         self.calc.use_parameters(
@@ -128,6 +133,7 @@ class VaspCalcTest(AiidaTestCase):
         self.assertFalse(self.calc._need_chgd())
 
     def test_need_chgd_icharg(self):
+        """Check ICHARG input parameter should be set"""
         for i in [0, 2, 4, 10, 12]:
             self.calc.use_parameters(
                 self.calc.new_parameters(dict={'icharg': i}))
@@ -156,13 +162,13 @@ class VaspCalcTest(AiidaTestCase):
     def test_get_paw_linkname(self):
         self.assertEqual(self.calc._get_paw_linkname('In'), 'paw_In')
 
-    def test_Paw(self):
+    def test_paw(self):
         self.assertIs(self.calc.Paw, DataFactory('vasp.paw'))
 
     def test_load_paw(self):
-        paw_A = self.calc.load_paw(family='TEST', symbol='As')
-        paw_B = self.calc.Paw.load_paw(family='TEST', symbol='As')[0]
-        self.assertEqual(paw_A.pk, paw_B.pk)
+        paw_a = self.calc.load_paw(family='TEST', symbol='As')
+        paw_b = self.calc.Paw.load_paw(family='TEST', symbol='As')[0]
+        self.assertEqual(paw_a.pk, paw_b.pk)
 
     def test_new_setting(self):
         self.assertIsInstance(self.calc.new_parameters(),

@@ -1,14 +1,18 @@
-from helper import WorkflowHelper
-from aiida.orm import Workflow
+"""AiiDA - VASP workflow to run a VASP scf calculation"""
 from aiida.common import aiidalogger
-from aiida.common.utils import classproperty
+from aiida.orm import Workflow
 
-logger = aiidalogger.getChild('ScfWorkflow')
+from .helper import WorkflowHelper
+
+LOGGER = aiidalogger.getChild('ScfWorkflow')
 
 
 class ScfWorkflow(Workflow):
-    '''AiiDA workflow to run a VASP scf calculation
-    the resulting WAVECAR and CHGCAR can then be reused in further workflows.'''
+    """
+    AiiDA workflow to run a VASP scf calculation
+
+    the resulting WAVECAR and CHGCAR can then be reused in further workflows.
+    """
     Helper = WorkflowHelper
 
     def __init__(self, **kwargs):
@@ -16,12 +20,14 @@ class ScfWorkflow(Workflow):
         super(ScfWorkflow, self).__init__(**kwargs)
 
     def get_calc_maker(self):
-        maker = self.helper._get_calc_maker('vasp.scf')
+        maker = self.helper._get_calc_maker('vasp.scf')  # pylint: disable=protected-access
         maker.add_parameters(icharg=0, istart=0)
         return maker
 
     @Workflow.step
+    # pylint: disable=protected-access
     def start(self):
+        """Submit the calculation"""
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         maker = self.get_calc_maker()
@@ -35,7 +41,9 @@ class ScfWorkflow(Workflow):
         self.next(self.end)
 
     @Workflow.step
+    # pylint: disable=protected-access
     def end(self):
+        """Set results"""
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['charge_density', 'wavefunctions']
         valid_out = self.helper._verify_calc_output(calc, output_links)
@@ -47,19 +55,19 @@ class ScfWorkflow(Workflow):
                 self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
-    def set_params(self, params, **kwargs):
-        self.helper._verify_params(params)
-        super(ScfWorkflow, self).set_params(params, **kwargs)
+    def set_params(self, params, force=False):
+        self.helper._verify_params(params)  # pylint: disable=protected-access
+        super(ScfWorkflow, self).set_params(params, force=force)
 
     @classmethod
     def get_params_template(cls):
-        '''returns a dictionary with the necessary keys to
-        run this workflow and explanations to each key as values'''
+        """returns a dictionary with the necessary keys to
+        run this workflow and explanations to each key as values"""
         return cls.Helper.get_params_template(continuation=False)
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        '''returns a JSON formatted string that could be stored
+        """returns a JSON formatted string that could be stored
         in a file, edited, loaded and used as parameters to run
-        this workflow.'''
+        this workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

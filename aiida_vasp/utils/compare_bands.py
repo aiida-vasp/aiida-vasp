@@ -1,10 +1,12 @@
+"""Utilities for comparing band structures"""
 from aiida.orm.calculation.inline import optional_inline
 from aiida.orm import DataFactory
 
-BandsData = DataFactory('array.bands')
+BANDS_CLS = DataFactory('array.bands')
 
 
 def _firstspin(bands):
+    """Get only the bands for the first spin if multiple are contained"""
     if bands.ndim not in [2, 3]:
         raise ValueError('invalid input')
     if bands.ndim == 3:
@@ -13,8 +15,9 @@ def _firstspin(bands):
 
 
 @optional_inline
+# pylint: disable=too-many-locals
 def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
-    '''
+    """
     Compare bandstructure results from wannier and vasp.
     Takes two input array.bands nodes, stores them if they're not already
     stored.
@@ -22,16 +25,16 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     them in a node with linkname 'bandcmp'.
     Also returns a parameter data node with linkname 'bandinfo' containing
     fermi energy, bandgap etc of the reference bandstructure.
-    '''
+    """
     import numpy as np
-    assert (isinstance(wannier_bands, BandsData))
-    assert (isinstance(vasp_bands, BandsData))
-    assert (hasattr(wannier_bands, 'labels'))
-    assert (hasattr(vasp_bands, 'labels'))
+    assert isinstance(wannier_bands, BANDS_CLS)
+    assert isinstance(vasp_bands, BANDS_CLS)
+    assert hasattr(wannier_bands, 'labels')
+    assert hasattr(vasp_bands, 'labels')
     if vasp_bands.labels:
-        assert (vasp_bands.labels == wannier_bands.labels)
+        assert vasp_bands.labels == wannier_bands.labels
     kpcomp = vasp_bands.get_kpoints() == wannier_bands.get_kpoints()
-    assert (kpcomp.all(), 'kpoints may not differ')
+    assert kpcomp.all(), 'kpoints may not differ'
 
     owindow = get_outer_window(wannier_bands)
 
@@ -50,23 +53,24 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     vocc_window = np.empty(wbands.shape)
     w_nbands = wbands.shape[1]
     ref_nbands = vbands.shape[1]
-    count = 0
-    for b in range(w_nbands):
+    for band_idx in range(w_nbands):
         errs = [
-            band_error(wbands[:, b], vbands[:, i]) for i in range(ref_nbands)
+            band_error(wbands[:, band_idx], vbands[:, i])
+            for i in range(ref_nbands)
         ]
         minerr = np.argmin(errs)
-        vbands_window[:, b] = vbands[:, minerr]
-        vocc_window[:, b] = vocc[:, minerr]
+        vbands_window[:, band_idx] = vbands[:, minerr]
+        vocc_window[:, band_idx] = vocc[:, minerr]
 
-    # TODO: find each band's index (s, px, py, ...)
-    # TODO: store the legend with the comparison node
+    # For the future:
+    # * find each band's index (s, px, py, ...)
+    # * store the legend with the comparison node
 
     # find fermi energy from vasp_bands parent or work without it
     if not efermi:
         try:
             efermi = vasp_bands.inp.bands.out.results.get_dict()['efermi']
-        except:
+        except Exception:  # pylint: disable=broad-except
             pass
 
     ref_gap_info = band_gap(vbands_window, vocc_window, efermi)
@@ -83,12 +87,12 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
 
 
 def get_outer_window(bands_node, silent=False):
-    '''
+    """
     Check if bands_node is a child of a calculation and that calculation
     has a parameter data input node with linkname parameters and that
     node has the keys 'dis_win_min' and 'dis_win_max'.
     If that is the case, output outer_window = (min, max).
-    '''
+    """
     owindow = None
     try:
         calc = bands_node.inp.bands
@@ -98,21 +102,21 @@ def get_outer_window(bands_node, silent=False):
         # ~     wset['dis_froz_min'],
         # ~     wset['dis_froz_max']
         # ~ )
-    except KeyError as e:
+    except KeyError as err:
         if not silent:
             msg = ('Missing window parameters in input to '
-                   'parent calculation:\n') + e.message
+                   'parent calculation:\n') + err.message
             raise KeyError(msg)
-    except AttributeError as e:
+    except AttributeError as err:
         if not silent:
             msg = ('bands_node is not an output of an appropriate calc node.' +
-                   e.message)
+                   err.message)
             raise AttributeError(msg)
     return owindow
 
 
 def band_gap(bands, occ, efermi=None):
-    '''
+    """
     find the band gap in a bandstructure
     :param numpy.array bands:
         2D bands array (as from BandsData.get_bands())
@@ -127,14 +131,14 @@ def band_gap(bands, occ, efermi=None):
          band gap as an arrow in the bandstructure plot.
          the points consist of (k, Dispersion) coordinates
          }
-    '''
-    assert (bands.shape == occ.shape)
+    """
+    assert bands.shape == occ.shape
     result = {'gap': None, 'direct': None, 'vector': []}
     nbands = bands.shape[1]
     occupied = [i for i in range(nbands) if occ[:, i].any()]
     unoccupied = [i for i in range(nbands) if not occ[:, i].any()]
     # if either homo or lumo is not included, no info can be given
-    if len(occupied) == 0 or len(unoccupied) == 0:
+    if not occupied or not unoccupied:  # if any of them is empty
         return result
     # highest band with any occupation
     homo = bands[:, max(occupied)]
@@ -170,29 +174,38 @@ def band_error(band1, band2):
 
 
 def bands_error(bands1, bands2):
-    '''
+    """
     band for band rms error sqrt((|B1_i - B2_i|^2)/n) where BX_i is the i-th band of
     Band Structure Node X.
     Only works for BandsData nodes with 2d band arrays.
-    '''
+    """
     import numpy as np
-    b1 = bands1.get_bands()
-    b2 = bands2.get_bands()
-    assert (b1.shape == b2.shape)
-    nbands = b1.shape[1]
+    bands_1 = bands1.get_bands()
+    bands_2 = bands2.get_bands()
+    assert bands_1.shape == bands_2.shape
+    nbands = bands_1.shape[1]
     err = np.empty(nbands)
-    for bi in range(nbands):
-        b1_i = b1[:, bi]
-        b2_i = b2[:, bi]
+    for band_idx in range(nbands):
+        b1_i = bands_1[:, band_idx]
+        b2_i = bands_2[:, band_idx]
         sq_err = np.square(b1_i - b2_i)
         m_err = sq_err.sum() / len(sq_err)
-        err[bi] = np.sqrt(m_err)
+        err[band_idx] = np.sqrt(m_err)
     return err
 
 
+# pylint: disable=too-many-locals
 def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
+    """
+    Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters
+
+    :param vasp_bands: band structure output node from vasp calculation
+    :param wannier_bands_list: list of band structure output nodes from wannier90 calculations
+    :param plot_folder: if given, create a plot for each comparison in that folder
+    :return:
+    """
     import numpy as np
-    import bands as btool
+    import aiida_vasp.utils.bands as btool
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
     ref_bands = {
         k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands)
@@ -265,33 +278,37 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     return info
 
 
-def compare_from_window_wf(wf, **kwargs):
-    wblist = [v for k, v in wf.get_results().iteritems() if 'bands_' in k]
-    vbands = wf.get_result('reference_bands')
+def compare_from_window_wf(workflow, **kwargs):
+    """Find the relevant bands in the window workflow and compare them"""
+    wblist = [
+        v for k, v in workflow.get_results().iteritems() if 'bands_' in k
+    ]
+    vbands = workflow.get_result('reference_bands')
     return compare_bands(
         vasp_bands=vbands, wannier_bands_list=wblist, **kwargs)
 
 
 def plot_errors_vs_iwsize(comparison_info):
+    """Plot Band structure errors versus size of the inner window parameter for wannier90"""
     import numpy as np
-    import bands as btool
+    import aiida_vasp.utils.bands as btool
     ows = []
     iws = []
     data = []
-    for k, v in comparison_info.iteritems():
-        ow = v['outer_window']
-        ows.append(ow[1] - ow[0])
-        iw = v['inner_window']
-        iws.append(iw[1] - iw[0])
-        err = v['error_per_band'].sum()
+    for value in comparison_info.values():
+        outer_window = value['outer_window']
+        ows.append(outer_window[1] - outer_window[0])
+        inner_window = value['inner_window']
+        iws.append(inner_window[1] - inner_window[0])
+        err = value['error_per_band'].sum()
         data.append(err)
     ows_i = np.sort(list(set(ows))).tolist()
     iws_i = np.sort(list(set(iws))).tolist()
     plot_data = np.empty((len(iws_i), len(ows_i)))
-    for i in range(len(data)):
+    for data_i, i in enumerate(data):
         owi = ows_i.index(ows[i])
         iwi = iws_i.index(iws[i])
-        plot_data[iwi, owi] = data[i]
+        plot_data[iwi, owi] = data_i
     fig = btool.plt.figure()
     lines = btool.plt.plot(iws_i, plot_data, figure=fig)
     btool.plt.legend(lines, ows_i)

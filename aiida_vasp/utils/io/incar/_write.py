@@ -1,7 +1,9 @@
+"""Utilities for preparing VASP - INCAR files"""
 import numpy as np
 
 
 def _incarify(value):
+    """Format value of any compatible type into the string forat appropriate for INCAR files"""
     result = None
     if isinstance(value, (str, unicode)):
         result = value
@@ -18,7 +20,7 @@ def _incarify(value):
                             'than 2-dimensional array to VASP.' +
                             'Not sure what to do...')
     elif isinstance(value, bool):
-        result = value and '.True.' or '.False.'
+        result = '.True.' if value else '.False.'
     elif np.isreal(value):
         result = '{}'.format(value)
     return result
@@ -33,6 +35,6 @@ _incar_item.tpl = '{key} = {value}'
 
 def dict_to_incar(incar_dict):
     incar_content = ''
-    for k, v in incar_dict.iteritems():
-        incar_content += _incar_item(k, v) + '\n'
+    for key, value in incar_dict.iteritems():
+        incar_content += _incar_item(key, value) + '\n'
     return incar_content
