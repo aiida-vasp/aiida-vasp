@@ -49,9 +49,9 @@ class NscfCalcTest(AiidaTestCase):
         with SandboxFolder() as sf:
             ci = calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                            {'INCAR', 'KPOINTS', 'POSCAR',
-                            'POTCAR', 'CHGCAR', 'WAVECAR'})
+        self.assertEquals(
+            set(il),
+            {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR'})
         self.assertIn('EIGENVAL', ci.retrieve_list)
         self.assertIn('DOSCAR', ci.retrieve_list)
         self.assertIn(['wannier90*', '.', 0], ci.retrieve_list)
@@ -61,9 +61,8 @@ class NscfCalcTest(AiidaTestCase):
         with SandboxFolder() as sf:
             calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                            {'INCAR', 'KPOINTS', 'POSCAR',
-                            'POTCAR', 'WAVECAR'})
+        self.assertEquals(
+            set(il), {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'})
 
     def test_write_chgcar(self):
         calc, inp = self._get_calc()
@@ -83,7 +82,8 @@ class NscfCalcTest(AiidaTestCase):
         calc, inpt = self._get_calc()
         pars = calc.get_parserclass()(calc)
         ok, outs = pars.parse_with_retrieved({
-            'retrieved': Common.retrieved_nscf()
+            'retrieved':
+            Common.retrieved_nscf()
         })
         outs = dict(outs)
         self.assertIn('bands', outs)

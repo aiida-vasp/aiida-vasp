@@ -76,8 +76,10 @@ class VaspFinder(object):
     def status(cls, vaspclass=None):
         q = QueryTool()
         q.set_class(JobCalculation)
-        st = ['TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER',
-              'COMPUTED', 'PARSING', 'RETRIEVING']
+        st = [
+            'TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING',
+            'RETRIEVING'
+        ]
         l = filter(lambda c: cls.cstate(c) in st, q.run_query())
         l.sort(cls.cmp_ctime)
         l.reverse()

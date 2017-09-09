@@ -104,6 +104,7 @@ class VaspMaker(object):
 
         Chemical symbols of the elements contained in py:attr:structure
     '''
+
     def __init__(self, *args, **kwargs):
         self._init_defaults(*args, **kwargs)
         self._calcname = kwargs.get('calc_cls')
@@ -121,7 +122,8 @@ class VaspMaker(object):
         self.label = kwargs.get('label', 'unlabeled')
         self._computer = kwargs.get('computer')
         self._code = kwargs.get('code')
-        self._parameters = kwargs.get('parameters', self.calc_cls.new_parameters())
+        self._parameters = kwargs.get('parameters',
+                                      self.calc_cls.new_parameters())
         self._set_default_structure(kwargs.get('structure'))
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
@@ -163,8 +165,8 @@ class VaspMaker(object):
         elif isinstance(structure, (str, unicode)):
             structure = os.path.abspath(os.path.expanduser(structure))
             if os.path.splitext(structure)[1] == '.cif':
-                self._structure = DataFactory(
-                    'cif').get_or_create(structure)[0]
+                self._structure = DataFactory('cif').get_or_create(structure)[
+                    0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
                 atoms = read_vasp(os.path.abspath(structure))
@@ -182,7 +184,7 @@ class VaspMaker(object):
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
         self._wannier_parameters = out.get('wannier_parameters',
-                                         self._wannier_parameters)
+                                           self._wannier_parameters)
         self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
@@ -206,7 +208,6 @@ class VaspMaker(object):
         calc.label = self.label
         calc.set_resources(self._resources)
         return calc
-
 
     # ~     # TODO: check structure.get_ase() / cif
     # ~     # TODO: check paws
@@ -370,12 +371,16 @@ class VaspMaker(object):
         for k in self.elements:
             if k not in self._paws:
                 if self._paw_def is None:
-                    raise ValueError("The 'paw_map' keyword is required. Pre-defined potential mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.".format(k))
+                    raise ValueError(
+                        "The 'paw_map' keyword is required. Pre-defined potential mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.".
+                        format(k))
                 try:
                     paw = self.calc_cls.Paw.load_paw(
                         family=self._paw_fam, symbol=self._paw_def[k])[0]
                 except KeyError:
-                    raise ValueError("The given 'paw_map' does not contain a mapping for element '{}'".format(k))
+                    raise ValueError(
+                        "The given 'paw_map' does not contain a mapping for element '{}'".
+                        format(k))
                 self._paws[k] = paw
 
     @property
@@ -403,7 +408,7 @@ class VaspMaker(object):
         nsit = self.n_ions
         if lsorb:
             if lnonc:
-                if magmom and not nmag == 3*nsit:
+                if magmom and not nmag == 3 * nsit:
                     ok = False
                     msg = 'magmom has wrong dimension'
             else:
@@ -490,5 +495,4 @@ class VaspMaker(object):
             ismear=0,
             lorbit=11,
             lsorbit=True,
-            sigma=0.05,
-        )
+            sigma=0.05, )

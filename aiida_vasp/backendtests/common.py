@@ -11,11 +11,9 @@ def subpath(*args):
 class Common(object):
     @classmethod
     def structure(cls):
-        larray = np.array([[0, .5, .5],
-                           [.5, 0, .5],
-                           [.5, .5, 0]])
+        larray = np.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
         alat = 6.058
-        structure = DataFactory('structure')(cell=larray*alat)
+        structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
 
@@ -23,15 +21,17 @@ class Common(object):
 
     @classmethod
     def cif(cls):
-        cifpath = realpath(join(dirname(__file__),
-                                'data', 'EntryWithCollCode43360.cif'))
+        cifpath = realpath(
+            join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
         cif = DataFactory('cif').get_or_create(cifpath)[0]
         return cif
 
     @classmethod
     def import_paw(cls):
         DataFactory('vasp.paw').import_family(
-            subpath('LDA'), familyname='TEST', family_desc='stub '
+            subpath('LDA'),
+            familyname='TEST',
+            family_desc='stub '
             'Potpaw Family for testing purposes')
 
     @classmethod
@@ -77,9 +77,8 @@ class Common(object):
 
     @classmethod
     def charge_density(cls):
-        return DataFactory('vasp.chargedensity')(
-            file=subpath('data', 'CHGCAR')
-        )
+        return DataFactory('vasp.chargedensity')(file=subpath(
+            'data', 'CHGCAR'))
 
     @classmethod
     def charge_density_res(cls):
@@ -89,9 +88,7 @@ class Common(object):
 
     @classmethod
     def wavefunctions(cls):
-        return DataFactory('vasp.wavefun')(
-            file=subpath('data', 'WAVECAR')
-        )
+        return DataFactory('vasp.wavefun')(file=subpath('data', 'WAVECAR'))
 
     @classmethod
     def wavefunctions_res(cls):

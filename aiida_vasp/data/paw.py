@@ -24,7 +24,7 @@ class PawData(Data):
     @potcar.setter
     def potcar(self, value):
         name = 'POTCAR'
-        self.folder.insert_path(value, 'path/'+name)
+        self.folder.insert_path(value, 'path/' + name)
         attr_dict = pcparser.parse_potcar(value)
         self._set_attr('md5', md5_file(value))
         for k, v in attr_dict.iteritems():
@@ -37,7 +37,7 @@ class PawData(Data):
     @psctr.setter
     def psctr(self, value):
         name = 'PSCTR'
-        self.folder.insert_path(value, 'path/'+name)
+        self.folder.insert_path(value, 'path/' + name)
 
     @property
     def family(self):
@@ -85,8 +85,10 @@ class PawData(Data):
             group = Group.get(name=famname, type_string=cls.group_type)
             group_created = False
         except NotExistent:
-            group = Group(name=famname, type_string=cls.group_type,
-                          user=get_automatic_user())
+            group = Group(
+                name=famname,
+                type_string=cls.group_type,
+                user=get_automatic_user())
             group_created = True
 
         if group.user != get_automatic_user():
@@ -100,11 +102,13 @@ class PawData(Data):
     def get_paw_groups(cls, elements=set(), symbols=set(), user=None):
         from aiida.orm import Group
         from aiida.backends.utils import get_automatic_user
-        params = {'type_string': cls.group_type,
-                  'node_attributes': {
-                      'element': elements,
-                      'symbol': symbols}
-                  }
+        params = {
+            'type_string': cls.group_type,
+            'node_attributes': {
+                'element': elements,
+                'symbol': symbols
+            }
+        }
         if user:
             params['user'] = user
         else:
@@ -118,8 +122,12 @@ class PawData(Data):
         return [i[1] for i in groups]
 
     @classmethod
-    def import_family(cls, folder, familyname=None,
-                      family_desc=None, store=True, stop_if_existing=False):
+    def import_family(cls,
+                      folder,
+                      familyname=None,
+                      family_desc=None,
+                      store=True,
+                      stop_if_existing=False):
         '''Import a family from a folder like the ones distributed with VASP,
         usually named potpaw_XXX'''
         from aiida.common import aiidalogger
@@ -129,7 +137,7 @@ class PawData(Data):
         paw_list = []
         fp = os.path.abspath(folder)
         # ~ ffname = os.path.basename(
-            # ~ os.path.dirname(folder)).replace('potpaw_', '')
+        # ~ os.path.dirname(folder)).replace('potpaw_', '')
         # ~ famname = familyname or ffname
 
         group, group_created = cls.get_or_create_famgroup(familyname)
@@ -149,8 +157,9 @@ class PawData(Data):
                     # enforce group-wise uniqueness of symbols
                     in_group = False
                     if not group_created:
-                        in_group = bool(cls.load_paw(group=group,
-                                        symbol=paw.symbol, silent=True))
+                        in_group = bool(
+                            cls.load_paw(
+                                group=group, symbol=paw.symbol, silent=True))
                     if not in_group:
                         paw_list.append((paw, paw_created, pawf))
             except:
@@ -178,14 +187,14 @@ class PawData(Data):
                         paw.uuid, path))
                     fupl.append(path)
                 else:
-                    aiidalogger.debug("Reusing node {} for file {}".format(
-                        paw.uuid, path))
+                    aiidalogger.debug(
+                        "Reusing node {} for file {}".format(paw.uuid, path))
 
         if store:
             if group_created:
                 group.store()
-                aiidalogger.debug("New PAW family goup {} created".format(
-                    group.uuid))
+                aiidalogger.debug(
+                    "New PAW family goup {} created".format(group.uuid))
             group.add_nodes(i[0] for i in paw_list)
         else:
             print map(repr, [i[0] for i in paw_list])
@@ -205,8 +214,8 @@ class PawData(Data):
             pp = pawpath
             isdir = False
         md5new = md5_file(pp)
-        paw = cls.query(dbattributes__key='md5',
-                        dbattributes__tval=md5new).first()
+        paw = cls.query(
+            dbattributes__key='md5', dbattributes__tval=md5new).first()
         created = False
         if not paw:
             if isdir:
@@ -243,6 +252,7 @@ class PawData(Data):
                 if not (node.get_attr(k) == v):
                     return False
             return True
+
         return node_filter
 
     @classmethod
@@ -259,7 +269,7 @@ class PawData(Data):
         :raises ValueError: if no PAWs are found
         '''
         usage_msg = 'use import_family or from_folder to import PAWs'
-        error_msg = 'no PAWs found for the given kwargs!\n'+usage_msg
+        error_msg = 'no PAWs found for the given kwargs!\n' + usage_msg
         group = kwargs.pop('group', None)
         family = kwargs.pop('family', None)
         silent = kwargs.pop('silent', None)
@@ -297,6 +307,4 @@ class PawData(Data):
         except AttributeError:
             sym = '<symbol: (unset)>'
         return '<PawData: {s} uuid: {u} (pk: {p})>'.format(
-            s=sym,
-            u=self.uuid,
-            p=self.pk)
+            s=sym, u=self.uuid, p=self.pk)

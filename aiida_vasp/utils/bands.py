@@ -3,8 +3,9 @@ try:
     matplotlib.use('TKAgg')
     from matplotlib import pyplot as plt
 except:
-    raise Exception('Error: matplotlib must be '
-                    + 'installed to use this functionality')
+    raise Exception('Error: matplotlib must be ' +
+                    'installed to use this functionality')
+
 
 def get_bs_dims(bands_array):
     '''
@@ -85,8 +86,12 @@ def get_kp_node(calc):
     return kpoints_node
 
 
-def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None,
-              use_parent_calc=False, **kwargs):
+def plot_bstr(bands_node,
+              kpoints_node=None,
+              title=None,
+              efermi=None,
+              use_parent_calc=False,
+              **kwargs):
     '''
     py:function:: plot_bstr(bands_node[, kpoints_node=None])
 
@@ -125,9 +130,10 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None,
     kpoints_node = get_kp_node(parent_calc)
 
     if efermi:
-        plt.hlines(efermi, plt.xlim()[0], nkp-1, linestyles='dashed')
-        plt.yticks(list(plt.yticks()[0]) + [efermi],
-                   [str(l) for l in plt.yticks()[0]] + [r'$E_{fermi}$'])
+        plt.hlines(efermi, plt.xlim()[0], nkp - 1, linestyles='dashed')
+        plt.yticks(
+            list(plt.yticks()[0]) + [efermi],
+            [str(l) for l in plt.yticks()[0]] + [r'$E_{fermi}$'])
 
     try:
         kpx, kpl = get_kp_labels(bands_node, kpoints_node)
@@ -147,9 +153,9 @@ def plot_bands(bands_node, **kwargs):
     bands = bands_node.get_bands()
     nbands, nkp, nspin = get_bs_dims(bands)
     if nspin > 0:
-        allbands = np.empty((nkp, nbands*nspin))
+        allbands = np.empty((nkp, nbands * nspin))
         for i in range(nspin):
-            allbands[:, i*nbands:(i+1)*nbands] = bands[i]
+            allbands[:, i * nbands:(i + 1) * nbands] = bands[i]
         bands = allbands
 
     if 'colors' in kwargs:

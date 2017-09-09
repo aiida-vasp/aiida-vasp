@@ -14,6 +14,7 @@ def make_use_methods(inputs, bases):
     base classes as well as :py:class:`Input` instances. For use
     in :py:class:`CalcMeta` during class creation.
     '''
+
     @classproperty
     def _use_methods(cls):
         retdict = JobCalculation._use_methods
@@ -26,6 +27,7 @@ def make_use_methods(inputs, bases):
                 dct['linkname'] = getattr(cls, ln.__func__.__name__)
         retdict.update(inputs)
         return retdict
+
     return _use_methods
 
 
@@ -34,9 +36,11 @@ def make_init_internal(cls, **kwargs):
     returns a _update internal_params method, required in class creation
     by :py:class:`CalcMeta`
     '''
+
     def _update_internal_params(self):
         for k, v in kwargs.iteritems():
             setattr(self, k, v)
+
     return _update_internal_params
 
 
@@ -58,6 +62,7 @@ class Input(object):
     Utility class that handles mapping between CalcMeta's and Calculation's
     interfaces for defining input nodes
     '''
+
     def __init__(self, types, param=None, ln=None, doc=''):
         self.types = tuple(map(datify, seqify(types)))
         self.param = param
@@ -132,6 +137,7 @@ class CalcMeta(JobCalculation.__metaclass__):
     finds class attributes corresponding to 'internal parameters'
     and creates the finished class's _update_internal_params method.
     '''
+
     def __new__(cls, name, bases, classdict):
         inputs = {}
         delete = []
@@ -173,25 +179,10 @@ class VaspCalcBase(JobCalculation):
     def max_retrieve_list(cls):
         '''returns a list of all possible output files from a VASP run'''
         retrieve_list = [
-            'CHG',
-            'CHGCAR',
-            'CONTCAR',
-            'DOSCAR',
-            'EIGENVAL',
-            'ELFCAR',
-            'IBZKPT',
-            'LOCPOT',
-            'OSZICAR',
-            'OUTCAR',
-            'PCDAT',
-            'PROCAR',
-            'PROOUT',
-            'STOPCAR',
-            'TMPCAR',
-            'WAVECAR',
-            'XDATCAR',
-            ('wannier90*', '.', 0),
-            'vasprun.xml'
+            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR',
+            'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
+            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR',
+            ('wannier90*', '.', 0), 'vasprun.xml'
         ]
         return retrieve_list
 

@@ -55,5 +55,4 @@ def filter_cifs_for_structure(cif_seq, structure):
         ase = structure.get_ase()
     else:
         ase = structure
-    return filter(lambda s: s.get_ase() == ase,
-                  cif_seq)
+    return filter(lambda s: s.get_ase() == ase, cif_seq)

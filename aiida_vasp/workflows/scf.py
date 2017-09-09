@@ -7,7 +7,6 @@ logger = aiidalogger.getChild('ScfWorkflow')
 
 
 class ScfWorkflow(Workflow):
-
     '''AiiDA workflow to run a VASP scf calculation
     the resulting WAVECAR and CHGCAR can then be reused in further workflows.'''
     Helper = WorkflowHelper
@@ -42,8 +41,7 @@ class ScfWorkflow(Workflow):
         valid_out = self.helper._verify_calc_output(calc, output_links)
         if valid_out:
             self.add_result('calc', calc)
-            self.append_to_report(
-                'Added the scf calculation as a result')
+            self.append_to_report('Added the scf calculation as a result')
         else:
             self.append_to_report(
                 self.helper._calc_invalid_outs_msg(calc, output_links))

@@ -3,7 +3,6 @@ import numpy as np
 
 
 class KpParser(BaseParser):
-
     def __init__(self, fname):
         self.header, res = self.parse_kp_file(fname)
         self.kpoints = res[:, :3]

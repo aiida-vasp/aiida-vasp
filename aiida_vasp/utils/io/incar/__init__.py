@@ -1,2 +1,2 @@
 from ._read import *
-from ._write import * 
+from ._write import *

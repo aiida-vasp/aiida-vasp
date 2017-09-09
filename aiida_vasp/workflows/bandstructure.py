@@ -17,6 +17,7 @@ class Bandstructure(Workflow):
         * nonselfconsistent run with more kpoints and CHGCAR from
           selfconsistent run
     '''
+
     def __init__(self, **kwargs):
         super(Bandstructure, self).__init__(**kwargs)
 
@@ -27,8 +28,15 @@ class Bandstructure(Workflow):
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_parameters(icharg=0, istart=0, lorbit=11, lsorbit=True,
-                           sigma=0.05, ismear=0, gga='PE', gga_compat=False)
+        maker.add_parameters(
+            icharg=0,
+            istart=0,
+            lorbit=11,
+            lsorbit=True,
+            sigma=0.05,
+            ismear=0,
+            gga='PE',
+            gga_compat=False)
         maker.code = Code.get_from_string(params['code'])
         # ~ maker.computer = maker.code.get_computer()
         maker.label = params.get('name')
@@ -69,8 +77,7 @@ class Bandstructure(Workflow):
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
         self.append_to_report(
-            '{}: retrieved sc step calculation'.format(
-                params.get('name')))
+            '{}: retrieved sc step calculation'.format(params.get('name')))
 
         # set up band structure step
         maker = self.get_calc_maker()
@@ -96,9 +103,8 @@ class Bandstructure(Workflow):
         params = self.get_parameters()
         prev = self.get_step_calculations(self.bandrun)
         bandcalc = prev.get(uuid=self.get_attribute('bsstep')['uuid'])
-        self.add_to_report(
-            '{}: calculations done, gathering results'.format(
-                params.get('name')))
+        self.add_to_report('{}: calculations done, gathering results'.format(
+            params.get('name')))
         efermi = bandcalc.out.results.get_dict()['efermi']
         self.add_to_report(
             '{}: E_fermi = {}'.format(params.get('name'), efermi))

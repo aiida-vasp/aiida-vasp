@@ -6,6 +6,7 @@ class DosParser(BaseParser):
     '''
     parse a DOSCAR file from a vasp run
     '''
+
     def __init__(self, filename, **kwargs):
         self.ispin = kwargs.get('ispin')
         self.lorbit = kwargs.get('lorbit')
@@ -40,7 +41,7 @@ class DosParser(BaseParser):
         if l2 in raw:
             for i in range(ni):
                 start = raw.index(l2) + 1
-                pdos += [raw[start:start+ndos]]
+                pdos += [raw[start:start + ndos]]
             pdos = np.array(pdos)
 
         header = {}

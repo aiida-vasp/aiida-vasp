@@ -11,20 +11,19 @@ class VaspCalcTest(AiidaTestCase):
     Test Case for
     py:class:`~aiida_vasp.calcs.vasp.VaspCalculation`
     '''
+
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp')()
         Common.import_paw()
 
-        larray = np.array([[0, .5, .5],
-                           [.5, 0, .5],
-                           [.5, .5, 0]])
+        larray = np.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
         alat = 6.058
-        self.structure = DataFactory('structure')(cell=larray*alat)
+        self.structure = DataFactory('structure')(cell=larray * alat)
         self.structure.append_atom(position=[0, 0, 0], symbols='In')
         self.structure.append_atom(position=[.25, .25, .25], symbols='As')
 
-        cifpath = realpath(join(dirname(__file__),
-                                'data', 'EntryWithCollCode43360.cif'))
+        cifpath = realpath(
+            join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
         self.cif = DataFactory('cif').get_or_create(cifpath)[0]
 
     def test_inputs(self):
@@ -60,7 +59,8 @@ class VaspCalcTest(AiidaTestCase):
         concatenate two paws into a tmp POTCAR and check wether
         each is contained in the result
         '''
-        self.calc.use_parameters(self.calc.new_parameters(dict={'System': 'Test'}))
+        self.calc.use_parameters(
+            self.calc.new_parameters(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
         self.calc.use_paw(
             self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
@@ -115,7 +115,8 @@ class VaspCalcTest(AiidaTestCase):
 
     def test_need_kp_false(self):
         self.calc.use_parameters(
-            self.calc.new_parameters(dict={'kspacing': 0.5, 'kgamma': True}))
+            self.calc.new_parameters(dict={'kspacing': 0.5,
+                                           'kgamma': True}))
         self.assertFalse(self.calc._need_kp())
 
     def test_need_kp_true(self):
@@ -143,14 +144,14 @@ class VaspCalcTest(AiidaTestCase):
         self.assertTrue(self.calc._need_wfn())
 
     def test_need_wfn_istart(self):
-        self.calc.use_parameters(
-            self.calc.new_parameters(dict={'istart': 0}))
+        self.calc.use_parameters(self.calc.new_parameters(dict={'istart': 0}))
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:
             self.calc.use_parameters(
                 self.calc.new_parameters(dict={'istart': i}))
-            self.assertTrue(self.calc._need_wfn(),
-                            msg='_need_wfn not True for istart=%s' % i)
+            self.assertTrue(
+                self.calc._need_wfn(),
+                msg='_need_wfn not True for istart=%s' % i)
 
     def test_get_paw_linkname(self):
         self.assertEqual(self.calc._get_paw_linkname('In'), 'paw_In')

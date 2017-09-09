@@ -26,8 +26,8 @@ class ArchiveData(Data):
         self._filelist.append((src_abs, dst_filename))
 
     def _make_archive(self):
-        self.folder.create_file_from_filelike(
-            StringIO.StringIO(), 'path/archive.tar.gz')
+        self.folder.create_file_from_filelike(StringIO.StringIO(),
+                                              'path/archive.tar.gz')
         ar = tarfile.open(self.get_archive_abs_path(), mode='w:gz')
         for src, dstn in self._filelist:
             ar.add(src, arcname=dstn)
@@ -35,7 +35,7 @@ class ArchiveData(Data):
 
     def store(self, *args, **kwargs):
         self._make_archive()
-        del(self._filelist)
+        del (self._filelist)
         super(ArchiveData, self).store(*args, **kwargs)
 
     @property

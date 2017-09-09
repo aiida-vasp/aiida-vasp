@@ -23,9 +23,13 @@ def _incarify(value):
         result = '{}'.format(value)
     return result
 
+
 def _incar_item(key, value):
     return _incar_item.tpl.format(key=key.upper(), value=_incarify(value))
+
+
 _incar_item.tpl = '{key} = {value}'
+
 
 def dict_to_incar(incar_dict):
     incar_content = ''

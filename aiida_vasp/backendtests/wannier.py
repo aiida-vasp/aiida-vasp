@@ -40,8 +40,7 @@ class WannierCalcTest(AiidaTestCase):
         with SandboxFolder() as sf:
             ci = calc._prepare_for_submission(sf, inp)
             il = sf.get_content_list()
-        self.assertEquals(set(il),
-                          {'wannier90.win', 'test1', 'test2'})
+        self.assertEquals(set(il), {'wannier90.win', 'test1', 'test2'})
         self.assertIn(['wannier90*', '.', 0], ci.retrieve_list)
 
     def test_write_win(self):
@@ -56,6 +55,7 @@ class WannierCalcTest(AiidaTestCase):
         calc, inpt = self._get_calc()
         pars = calc.get_parserclass()(calc)
         ok, outs = pars.parse_with_retrieved({
-            'retrieved': Common.retrieved_nscf()
+            'retrieved':
+            Common.retrieved_nscf()
         })
         outs = dict(outs)

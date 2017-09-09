@@ -3,7 +3,6 @@ from aiida.orm import Workflow
 
 
 class ProjectionsWorkflow(Workflow):
-
     '''
     AiiDA-VASP Workflow for continuing from an NSCF Calculation to get
     all the data necessary to run a wannier calculation.
@@ -24,20 +23,15 @@ class ProjectionsWorkflow(Workflow):
         from aiida.orm import Calculation
         params = self.get_parameters()
         cont = Calculation.query(uuid=params['continue_from'])[0]
-        maker = self.helper._get_calc_maker(
-            'vasp.amn', copy_from=cont)
+        maker = self.helper._get_calc_maker('vasp.amn', copy_from=cont)
 
-        nscf_parameters = {'lwannier90': True,
-                         'icharg': 11}
+        nscf_parameters = {'lwannier90': True, 'icharg': 11}
         maker.rewrite_parameters(**nscf_parameters)
 
         cout = cont.get_outputs_dict()
         cinp = cont.get_inputs_dict()
-        maker.wannier_parameters = cout.get(
-            'wannier_parameters',
-            cinp.get(
-                'wannier_parameters',
-                {}))
+        maker.wannier_parameters = cout.get('wannier_parameters',
+                                            cinp.get('wannier_parameters', {}))
         return maker
 
     @Workflow.step
@@ -85,8 +79,7 @@ class ProjectionsWorkflow(Workflow):
             self.add_result('calc', calc)
             self.add_result('wannier_parameters', calc.inp.wannier_parameters)
             self.add_result('wannier_data', calc.out.wannier_data)
-            self.append_to_report(
-                'Added the nscf calculation as a result')
+            self.append_to_report('Added the nscf calculation as a result')
         elif not wdat_valid:
             self.append_to_report(wdat_log)
         else:
@@ -98,9 +91,7 @@ class ProjectionsWorkflow(Workflow):
         valid = False
         log = ''
         names = set(wdat.archive.getnames())
-        required = {'wannier90.mmn',
-                    'wannier90.eig',
-                    'wannier90.amn'}
+        required = {'wannier90.mmn', 'wannier90.eig', 'wannier90.amn'}
         if required.issubset(names):
             valid = True
         else:
@@ -125,12 +116,14 @@ class ProjectionsWorkflow(Workflow):
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
         tmpl['wannier_parameters'] = {
-            '#_explanation': (
-                'overrides the parameters taken from continue_from '
-                'keys starting with # are ignored'),
-            '#num_wann': 'int',
-            '#use_bloch_phases': 'false | true',
-            }
+            '#_explanation':
+            ('overrides the parameters taken from continue_from '
+             'keys starting with # are ignored'),
+            '#num_wann':
+            'int',
+            '#use_bloch_phases':
+            'false | true',
+        }
         return tmpl
 
     @classmethod

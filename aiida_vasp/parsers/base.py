@@ -1,5 +1,6 @@
 from aiida.parsers.parser import Parser
 from aiida.common.datastructures import calc_states as cstat
+
 # ~ from aiida.common.exceptions import InvalidOperation
 
 
@@ -8,6 +9,7 @@ class BaseParser(Parser):
     Does common tasks all parsers carry out and provides
     convenience methods.
     '''
+
     def __init__(self, calc):
         self._new_nodes = {}
         super(BaseParser, self).__init__(calc)
@@ -57,7 +59,7 @@ class BaseParser(Parser):
             ofname = self.out_folder.get_abs_path(fname)
             return ofname
         except OSError:
-            self.logger.warning(fname+' not found in retrieved')
+            self.logger.warning(fname + ' not found in retrieved')
             return None
 
     def add_node(self, linkname, node):

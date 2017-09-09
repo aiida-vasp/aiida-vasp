@@ -1,6 +1,8 @@
 import numpy as np
 
 __doc__ = 'provides write_kpoints(argdict), modified from ase.calculators.vasp to accomodate Line Mode'
+
+
 def write_kpoints(argdict):
     """Writes the KPOINTS file. Modified from ase version to allow using Line Mode for band structure calculation."""
     p = argdict

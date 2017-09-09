@@ -11,6 +11,7 @@ class VaspParser(BaseParser):
     '''
     Parses all Vasp calculations.
     '''
+
     def parse_with_retrieved(self, retrieved):
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
@@ -86,7 +87,7 @@ class VaspParser(BaseParser):
             for i, name in enumerate(vrp.pdos.dtype.names[1:]):
                 ns = vrp.pdos.shape[1]
                 # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-                cur = dcp.pdos[:, :, i+1:i+1+ns].transpose(0, 2, 1)
+                cur = dcp.pdos[:, :, i + 1:i + 1 + ns].transpose(0, 2, 1)
                 cond = vrp.pdos[name] < 0.1
                 pdos[name] = np.where(cond, cur, vrp.pdos[name])
             dosnode.set_array('pdos', pdos)
@@ -95,7 +96,7 @@ class VaspParser(BaseParser):
             ns = 2
         tdos = vrp.tdos[:ns, :].copy()
         for i, name in enumerate(vrp.tdos.dtype.names[1:]):
-            cur = dcp.tdos[:, i+1:i+1+ns].transpose()
+            cur = dcp.tdos[:, i + 1:i + 1 + ns].transpose()
             cond = vrp.tdos[:ns, :][name] < 0.1
             tdos[name] = np.where(cond, cur, vrp.tdos[:ns, :][name])
         dosnode.set_array('tdos', tdos)
@@ -147,11 +148,9 @@ class VaspParser(BaseParser):
         if self._calc.inp.kpoints.labels:
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
-            bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3],
-                               cartesian=False)
+            bsnode.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
         bsnode.set_bands(bs, occupations=self.vrp.occupations)
-        kpout.set_kpoints(kp[:, :3], weights=kp[:, 3],
-                          cartesian=False)
+        kpout.set_kpoints(kp[:, :3], weights=kp[:, 3], cartesian=False)
         return bsnode, kpout, structure
 
     def read_ibzkpt(self):
@@ -161,8 +160,8 @@ class VaspParser(BaseParser):
             return None
         kpp = KpParser(ibz)
         kpout = DataFactory('array.kpoints')()
-        kpout.set_kpoints(kpp.kpoints, weights=kpp.weights,
-                          cartesian=kpp.cartesian)
+        kpout.set_kpoints(
+            kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
         return kpout
 
     def get_chgcar(self):
@@ -183,9 +182,7 @@ class VaspParser(BaseParser):
 
     def get_output(self):
         output = DataFactory('parameter')()
-        output.update_dict({
-            'efermi': self.vrp.efermi
-        })
+        output.update_dict({'efermi': self.vrp.efermi})
         return output
 
     def set_bands(self, node):

@@ -12,6 +12,7 @@ class EigParser(BaseParser):
     contains regex and functions to find grammar elements
     in EIGENVALUE files
     '''
+
     def __init__(self, filename):
         res = self.parse_eigenval(filename)
         self.header = res[0]
@@ -21,26 +22,30 @@ class EigParser(BaseParser):
     @classmethod
     def parse_eigenval(cls, filename):
         with open(filename) as eig:
-            l0 = cls.line(eig, int)        # read header
-            l1 = cls.line(eig, float)      # "
-            l2 = cls.line(eig, float)      # "
-            coord_type = cls.line(eig)     # "
-            name = cls.line(eig)           # read name line (can be empty)
+            l0 = cls.line(eig, int)  # read header
+            l1 = cls.line(eig, float)  # "
+            l2 = cls.line(eig, float)  # "
+            coord_type = cls.line(eig)  # "
+            name = cls.line(eig)  # read name line (can be empty)
             p1, nkp, nb = cls.line(eig, int)  # read: ? #kp #bands
-            data = eig.read()               # rest is data
+            data = eig.read()  # rest is data
         ni, na, p00, ns = l0
-        data = re.split(cls.empty_line, data)       # list of data blocks
+        data = re.split(cls.empty_line, data)  # list of data blocks
         data = map(lambda s: s.splitlines(), data)  # list of list of lines
-        data = map(lambda s: map(lambda ss: ss.split(), s), data)  # 3d list of numbers
+        data = map(lambda s: map(lambda ss: ss.split(), s),
+                   data)  # 3d list of numbers
         kp = np.zeros((nkp, 4))
         bs = np.zeros((ns, nkp, nb))
-        for k, field in enumerate(data):    # iterate over data blocks
-            kpbs = filter(None, field)      # throw away empty lines
-            kpi = map(float, kpbs.pop(0))   # first line of block is kpoints -> pop
+        for k, field in enumerate(data):  # iterate over data blocks
+            kpbs = filter(None, field)  # throw away empty lines
+            kpi = map(float,
+                      kpbs.pop(0))  # first line of block is kpoints -> pop
             kp[k] = kpi
-            for p in kpbs:                  # rest are band energies
-                bs[:, k, int(p[0])-1] = p[1:ns+1]   # place energy value in bs[kp, nb] (BandstrucureData format)
-        header = {}                         # build header dict
+            for p in kpbs:  # rest are band energies
+                bs[:, k, int(p[0]) - 1] = p[
+                    1:ns +
+                    1]  # place energy value in bs[kp, nb] (BandstrucureData format)
+        header = {}  # build header dict
         header[0] = l0
         header[1] = l1
         header[2] = l2

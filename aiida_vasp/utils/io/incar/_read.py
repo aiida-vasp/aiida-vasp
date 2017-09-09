@@ -4,6 +4,7 @@ from ..parser import KeyValueParser
 
 __all__ = ['IncarParser']
 
+
 class IncarParser(KeyValueParser):
     '''
     parses INCAR files
