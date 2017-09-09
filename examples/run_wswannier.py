@@ -47,7 +47,7 @@ def run_wswannier():
     calc.set_queue_name('express_compute')
     calc.use_data(input_archive)
     # hard-code parameters for InSb test
-    calc.use_settings(
+    calc.use_parameters(
         ParameterData(dict=dict(
             num_wann=14,
             num_bands=36,

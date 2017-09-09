@@ -20,7 +20,7 @@ code = Code.get_from_string('vasp')
 
 vc = code.new_calc()
 
-vc.use_settings(ParameterData(dict=incar))
+vc.use_parameters(ParameterData(dict=incar))
 vc.use_structure(ParameterData(dict=poscar))
 vc.use_potentials(ParameterData(dict=potcar))
 vc.use_kpoints(ParameterData(dict=kpoints))

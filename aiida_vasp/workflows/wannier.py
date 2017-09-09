@@ -23,7 +23,7 @@ class WannierWorkflow(Workflow):
         calc.set_resources(params['resources'])
         queue = params.get('queue') or params.get('queue')
         calc.set_queue_name(queue)
-        calc.use_settings(win)
+        calc.use_parameters(win)
         calc.use_data(wdat)
         calc.label = params.get('label')
         calc.description = params.get('description')
@@ -34,23 +34,23 @@ class WannierWorkflow(Workflow):
     def start(self):
         """Prepare and launch the Wannier90 calculation"""
         from aiida.orm import Calculation, DataFactory, load_node
-        from aiida_vasp.utils.win import modify_wannier_settings_inline
+        from aiida_vasp.utils.win import modify_wannier_parameters_inline
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         cont = params['continue_from']
         if isinstance(cont, dict):
-            old_win = load_node(uuid=cont['settings'])
+            old_win = load_node(uuid=cont['parameters'])
             wdat = load_node(uuid=cont['data'])
         else:
             cont = Calculation.query(uuid=cont)[0]
-            old_win = cont.inp.wannier_settings
+            old_win = cont.inp.wannier_parameters
             wdat = cont.out.wannier_data
 
         param_cls = DataFactory('parameter')
-        mods = param_cls(dict=params['settings'])
-        _, mod_d = modify_wannier_settings_inline(
+        mods = param_cls(dict=params['parameters'])
+        _, mod_d = modify_wannier_parameters_inline(
             original=old_win, modifications=mods)
-        win = mod_d['wannier_settings']
+        win = mod_d['wannier_parameters']
         calc = self.get_wannier_calc(win, wdat)
 
         calc.store_all()
@@ -89,13 +89,13 @@ class WannierWorkflow(Workflow):
         tmpl.pop('kpoints')
         tmpl['continue_from'] = (
             'finished calculation, with a wannier_data link'
-            'in the output and a wannier_settings link in input\n'
-            'or a dict with keys [settings, data], and uuids for values')
+            'in the output and a wannier_parameters link in input\n'
+            'or a dict with keys [parameters, data], and uuids for values')
         tmpl[
             'wannier_code'] = 'code in the database for running the wannier.x program'
-        tmpl['settings'] = {
+        tmpl['parameters'] = {
             '#comment': ('dict with wannier90.win keys, used to update '
-                         'the original wannier_settings keys, see examples'),
+                         'the original wannier_parameters keys, see examples'),
             '#bands_plot':
             'True | False',
             '#hr_plot':

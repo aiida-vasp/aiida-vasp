@@ -18,19 +18,19 @@ class WannierBase(BaseParser):
         return self.result(success=True)
 
     def get_win_node(self):
-        """Create the output settings node"""
-        if self._calc.get_inputs_dict().get('wannier_settings'):
+        """Create the output parameters node"""
+        if self._calc.get_inputs_dict().get('wannier_parameters'):
             return None
         win = self.get_file('wannier90.win')
         if not win:
             return None
         win_parser = WinParser(win)
-        winnode = self._calc.new_wannier_settings(dict=win_parser.result)
+        winnode = self._calc.new_wannier_parameters(dict=win_parser.result)
         return winnode
 
     def get_wdat_node(self):
         """Create the wannier data output node comprised of .mmn, .amn, .eig files"""
-        if self._calc.get_inputs_dict().get('wannier_settings'):
+        if self._calc.get_inputs_dict().get('wannier_parameters'):
             return None
         wdatnode = self._calc.new_wannier_data()
         for ext in ['mmn', 'amn', 'eig']:
@@ -41,7 +41,7 @@ class WannierBase(BaseParser):
 
     def set_win(self, node):
         if node:
-            self.add_node('wannier_settings', node)
+            self.add_node('wannier_parameters', node)
 
     def set_wdat(self, node):
         if node:
@@ -94,7 +94,7 @@ class WannierParser(WannierBase, parser.BaseParser):
             data = map(self.splitlines, data)
             data = np.array(data)
         bands_node.set_bands(data[:, :, 1].transpose())
-        kppath = self._calc.inp.settings.get_dict().get('kpoint_path')
+        kppath = self._calc.inp.parameters.get_dict().get('kpoint_path')
         kpl = [[kpp[0], kpp[1:4]] for kpp in kppath]
         kpl.append([kppath[-1][4], kppath[-1][5:8]])
         counter = {i[0]: 0 for i in kpl}

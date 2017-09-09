@@ -16,7 +16,7 @@ class WannierBase(object):
             win.write(DictToWin.parse(inputdict[self._win_lname()].get_dict()))
 
     @staticmethod
-    def new_wannier_settings(*args, **kwargs):
+    def new_wannier_parameters(*args, **kwargs):
         return DataFactory('parameter')(*args, **kwargs)
 
     @staticmethod
@@ -28,7 +28,7 @@ class WannierBase(object):
 
     @staticmethod
     def _win_lname():
-        return 'settings'
+        return 'parameters'
 
     @staticmethod
     def _wdat_lname():
@@ -40,7 +40,7 @@ class WannierCalculation(JobCalculation, WannierBase):  # pylint: disable=invali
     __metaclass__ = CalcMeta
     imput_file_name = 'wannier90.win'
     output_file_name = 'wannier90.wout'
-    settings = Input(types='parameter')
+    parameters = Input(types='parameter')
     data = Input(types='vasp.archive')
     default_parser = 'vasp.wannier'
 
@@ -71,10 +71,10 @@ class WannierCalculation(JobCalculation, WannierBase):  # pylint: disable=invali
         self._update_internal_params()
 
     def verify_inputs(self, inputdict):  # pylint: disable=no-self-use
-        '''make sure settings and data nodes were given'''
+        '''make sure parameters and data nodes were given'''
         msg = 'input not set: %s'
-        if not inputdict.get('settings'):
-            raise ValueError(msg % 'settings')
+        if not inputdict.get('parameters'):
+            raise ValueError(msg % 'parameters')
         elif not inputdict.get('data'):
             raise ValueError(msg % 'data')
         return True

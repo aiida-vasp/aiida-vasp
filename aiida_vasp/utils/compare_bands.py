@@ -89,14 +89,14 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
 def get_outer_window(bands_node, silent=False):
     """
     Check if bands_node is a child of a calculation and that calculation
-    has a parameter data input node with linkname settings and that
+    has a parameter data input node with linkname parameters and that
     node has the keys 'dis_win_min' and 'dis_win_max'.
     If that is the case, output outer_window = (min, max).
     """
     owindow = None
     try:
         calc = bands_node.inp.bands
-        wset = calc.inp.settings.get_dict()
+        wset = calc.inp.parameters.get_dict()
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
         # ~ iwindow = (
         # ~     wset['dis_froz_min'],
@@ -217,7 +217,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
         reference = ref_bands[owindow]['bands']
         refinfo = ref_bands[owindow]['info'].get_dict()
         wannier_calc = wannier_bands.inp.bands
-        wannier_param = wannier_calc.inp.settings.get_dict()
+        wannier_param = wannier_calc.inp.parameters.get_dict()
         iwindow = [
             wannier_param['dis_froz_min'], wannier_param['dis_froz_max']
         ]

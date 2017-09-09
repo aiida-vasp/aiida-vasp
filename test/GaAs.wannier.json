@@ -10,7 +10,7 @@
         "num_machines": 1,
         "num_mpiprocs_per_machine": 1
     }, 
-    "settings": {
+    "parameters": {
         "bands_plot": true, 
         "dis_froz_min": 0, 
         "dis_froz_max": 5, 

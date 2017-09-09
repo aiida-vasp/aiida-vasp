@@ -32,7 +32,7 @@
         "num_machines": 1,
         "num_mpiprocs_per_machine": 1
     },
-    "settings": {
+    "parameters": {
         "ediff": 1e-5,
         "encut": 280.00,
         "gga": "PE",
@@ -42,13 +42,13 @@
         "nbands": 24,
         "sigma": 0.05
     }, 
-    "#settings - not working with lwannier90?": {
+    "#parameters - not working with lwannier90?": {
         "npar": 6
     },
     "structure": "./GaAsTB/POSCAR", 
     "vasp_code": "vasp-w90@monch", 
     "wannier_code": "wannier90.x@monch", 
-    "wannier_settings": {
+    "wannier_parameters": {
         "bands_plot": true,
         "hr_plot": true, 
         "num_wann": 8,

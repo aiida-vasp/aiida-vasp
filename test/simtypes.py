@@ -28,7 +28,7 @@ lmprocar_phase = dict(lorbit=12)
 # different combos should be different DOSCAR ouputs
 noncol = dict(lsorbit=True, gga_compat=False)
 spinpol = dict(ispin=2)
-# ~ spins = [dict(), noncol, spinpol, build_settings(noncol, spinpol)]
+# ~ spins = [dict(), noncol, spinpol, build_parameters(noncol, spinpol)]
 
 # should be continuations from standard dft, should not
 # be able to do manual kpoint strings but only meshes
@@ -50,11 +50,11 @@ hy_hf = dict(lhfcalc=True, aexx=1.0, aggac=0.0, aldac=0.0, precfock='Fast')
 # ~ funcs = [dict(), hy_hse06, hy_b3lyp, hy_hf]
 
 
-def build_settings(*args):
-    settings = {}
+def build_parameters(*args):
+    parameters = {}
     for arg in args:
-        settings.update(arg)
-    return settings
+        parameters.update(arg)
+    return parameters
 
 
 # ~

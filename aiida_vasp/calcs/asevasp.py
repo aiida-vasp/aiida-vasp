@@ -37,11 +37,11 @@ class AsevaspCalculation(JobCalculation):
     def _use_methods(self):
         retdict = JobCalculation._use_methods
         retdict.update({
-            'settings': {
+            'parameters': {
                 'valid_types': PARAMETER_CLS,
                 'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': 'Settings that go into the INCAR file for vasp',
+                'linkname': 'parameters',
+                'docstring': 'parameters that go into the INCAR file for vasp',
             },
             'structure': {
                 'valid_types': STRUCTURE_CLS,
@@ -101,7 +101,7 @@ class AsevaspCalculation(JobCalculation):
         except ImportError:
             print 'ase needs to be installed'
 
-        incar_data = inputdict['settings']
+        incar_data = inputdict['parameters']
         chgcar_data = inputdict['chgcar_in']
         potcar_data = inputdict['potentials_in']
 
@@ -151,7 +151,7 @@ class AsevaspCalculation(JobCalculation):
         except ImportError:
             print 'ase needs to be installed'
 
-        incar_data = inputdict['settings']
+        incar_data = inputdict['parameters']
         poscar_data = inputdict['structure_in']
         potcar_data = inputdict['potentials_in']
         kpoints_data = inputdict['kpoints_in']

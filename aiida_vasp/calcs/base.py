@@ -311,7 +311,7 @@ class BasicCalculation(VaspCalcBase):
     Limited VASP calculation, can only take kpoints grid,
     returns only CHGCAR and WAVECAR
     """
-    settings = Input(types='parameter')
+    parameters = Input(types='parameter')
     structure = Input(types=['structure', 'cif'])
     paw = Input(types='vasp.paw', param='kind')
     kpoints = Input(types='array.kpoints')
@@ -332,7 +332,7 @@ class BasicCalculation(VaspCalcBase):
 
     def write_incar(self, inputdict, dst):  # pylint: disable=unused-argument
         """
-        converts from settings node (ParameterData) to INCAR format
+        converts from parameters node (ParameterData) to INCAR format
         and writes to dst
 
         :param inputdict: required by baseclass
@@ -340,7 +340,7 @@ class BasicCalculation(VaspCalcBase):
         """
         from aiida_vasp.calcs.incar import dict_to_incar
         with open(dst, 'w') as incar_file:
-            incar_file.write(dict_to_incar(self.inp.settings.get_dict()))
+            incar_file.write(dict_to_incar(self.inp.parameters.get_dict()))
 
     def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         """
@@ -420,7 +420,7 @@ class BasicCalculation(VaspCalcBase):
         """check for the presence of the required inputs"""
         # ~ notset_msg = 'input not set: %s'
         super(BasicCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'settings')
+        self.check_input(inputdict, 'parameters')
         self.check_input(inputdict, 'structure')
         if 'elements' not in self.attrs():
             self._prestore()
@@ -454,14 +454,14 @@ class BasicCalculation(VaspCalcBase):
                                                .get_chemical_symbols())))
 
     @property
-    def _settings(self):
+    def _parameters(self):
         return {
             k.lower(): v
-            for k, v in self.inp.settings.get_dict().iteritems()
+            for k, v in self.inp.parameters.get_dict().iteritems()
         }
 
     @classmethod
-    def new_settings(cls, **kwargs):
+    def new_parameters(cls, **kwargs):
         return cls.PARAMETER_CLS(**kwargs)
 
     @classmethod

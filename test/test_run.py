@@ -42,7 +42,7 @@ calc = code.new_calc()
 
 ParameterData = DataFactory('parameter')
 SinglefileData = DataFactory('singlefile')
-calc.use_settings(ParameterData(dict=incar))
+calc.use_parameters(ParameterData(dict=incar))
 calc.use_structure(ParameterData(dict=poscar))
 #~ calc.use_potentials(ParameterData(dict=potcar))
 calc.use_potentials(SinglefileData(file=potcar))

@@ -33,7 +33,7 @@ class BasicCalcTest(AiidaTestCase):
         calc.use_code(self.code)
         calc.set_computer(self.computer)
         calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-        calc.use_settings(Common.settings())
+        calc.use_parameters(Common.parameters())
         if stype == 's':
             calc.use_structure(Common.structure())
         else:
@@ -70,7 +70,7 @@ class BasicCalcTest(AiidaTestCase):
         inp = calc.get_inputs_dict()
         calc.write_incar(inp, self.tmpf)
         icp = IncarParser(self.tmpf)
-        for key, value in calc.inp.settings.get_dict().iteritems():
+        for key, value in calc.inp.parameters.get_dict().iteritems():
             self.assertIn(str(value), icp.result[key])
 
     def test_write_poscar_structure(self):
@@ -139,10 +139,10 @@ class BasicCalcTest(AiidaTestCase):
         calc._prestore()
         self.assertEquals(['In', 'As'], calc.elements)
 
-    def test_new_settings(self):
+    def test_new_parameters(self):
         calc = self.calc_cls()
-        calc.use_settings(calc.new_settings(dict={'bla': 3}))
-        self.assertEquals(calc.inp.settings.get_dict().get('bla'), 3)
+        calc.use_parameters(calc.new_parameters(dict={'bla': 3}))
+        self.assertEquals(calc.inp.parameters.get_dict().get('bla'), 3)
 
     def test_new_structure(self):
         calc = self.calc_cls()

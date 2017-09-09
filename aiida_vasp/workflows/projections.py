@@ -28,41 +28,41 @@ class ProjectionsWorkflow(Workflow):
         cont = Calculation.query(uuid=params['continue_from'])[0]
         maker = self.helper._get_calc_maker('vasp.amn', copy_from=cont)  # pylint: disable=protected-access
 
-        nscf_settings = {'lwannier90': True, 'icharg': 11}
-        maker.rewrite_settings(**nscf_settings)
+        nscf_parameters = {'lwannier90': True, 'icharg': 11}
+        maker.rewrite_parameters(**nscf_parameters)
 
         cout = cont.get_outputs_dict()
         cinp = cont.get_inputs_dict()
-        maker.wannier_settings = cout.get('wannier_settings',
-                                          cinp.get('wannier_settings', {}))
+        maker.wannier_parameters = cout.get('wannier_parameters',
+                                            cinp.get('wannier_parameters', {}))
         return maker
 
     @Workflow.step
     # pylint: disable=protected-access
     def start(self):
         """Submit the calculation"""
-        from aiida_vasp.utils.win import modify_wannier_settings_inline
+        from aiida_vasp.utils.win import modify_wannier_parameters_inline
         from aiida.orm import DataFactory
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         maker = self.get_calc_maker()
 
-        old_win = maker.wannier_settings or {}
-        mod_win = params.get('wannier_settings', {})
+        old_win = maker.wannier_parameters or {}
+        mod_win = params.get('wannier_parameters', {})
         mod_win['projections'] = params['projections']
 
-        nbands = maker.settings.get('nbands')
+        nbands = maker.parameters.get('nbands')
         if nbands:
             mod_win['num_bands'] = nbands
         parameter_cls = DataFactory('parameter')
         mod_win = parameter_cls(dict=mod_win)
-        mod_c, mod_d = modify_wannier_settings_inline(
+        mod_c, mod_d = modify_wannier_parameters_inline(
             original=old_win, modifications=mod_win)
-        msg = ('added projections and overrides to wannier settings.')
+        msg = ('added projections and overrides to wannier parameters.')
         self.append_to_report(msg)
-        self.add_attribute('modify_wannier_settings_uuid', mod_c.uuid)
+        self.add_attribute('modify_wannier_parameters_uuid', mod_c.uuid)
 
-        maker.wannier_settings = mod_d['wannier_settings']
+        maker.wannier_parameters = mod_d['wannier_parameters']
 
         calc = maker.new()
         calc.description = params.get('desc', maker.label)
@@ -84,7 +84,7 @@ class ProjectionsWorkflow(Workflow):
         wdat_valid, wdat_log = self._verify_wannier_data(calc.out.wannier_data)
         if valid and wdat_valid:
             self.add_result('calc', calc)
-            self.add_result('wannier_settings', calc.inp.wannier_settings)
+            self.add_result('wannier_parameters', calc.inp.wannier_parameters)
             self.add_result('wannier_data', calc.out.wannier_data)
             self.append_to_report('Added the nscf calculation as a result')
         elif not wdat_valid:
@@ -125,9 +125,9 @@ class ProjectionsWorkflow(Workflow):
         can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
-        tmpl['wannier_settings'] = {
+        tmpl['wannier_parameters'] = {
             '#_explanation':
-            ('overrides the settings taken from continue_from '
+            ('overrides the parameters taken from continue_from '
              'keys starting with # are ignored'),
             '#num_wann':
             'int',

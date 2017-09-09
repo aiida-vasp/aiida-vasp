@@ -19,7 +19,7 @@ codes, outpus and analyzed data will be broken.
 Inputs
 ******
 
-* :ref:`settings <vasp-input-settings>`
+* :ref:`parameters <vasp-input-parameters>`
 * :ref:`kpoints <vasp-input-kpoints>`
 * :ref:`structure <vasp-input-structure>`
 * :ref:`paw <vasp-input-paw>`
@@ -33,7 +33,7 @@ Outputs
 * :ref:`results <vasp-output-results>`
 * :ref:`bands <vasp-output-bands>`
 * :ref:`dos <vasp-output-dos>`
-* :ref:`wannier_settings <vasp-output-wannier_settings>`
+* :ref:`wannier_parameters <vasp-output-wannier_parameters>`
 * :ref:`wannier_data <vasp-output-wannier_data>`
 
 ***************

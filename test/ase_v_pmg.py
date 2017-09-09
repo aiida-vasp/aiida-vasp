@@ -67,7 +67,7 @@ code = Code.get_from_string('asevasp')
 calc = code.new_calc()
 
 # ---------- set inputs ----------
-calc.use_settings(incar)
+calc.use_parameters(incar)
 calc.use_structure(structure)
 #~ calc.use_potentials(ParameterData(dict=potcar))
 calc.use_potentials(potcar)

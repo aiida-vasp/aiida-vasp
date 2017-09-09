@@ -7,19 +7,19 @@ Description
 ***********
 
 Works exactly the same as :doc:`Vasp5Calculation <vasp5>`, from which it is derived, with the difference
-that it takes a wannier_settings input as well, so it covers every possible use case of VASP with LWANNIER90=True.
+that it takes a wannier_parameters input as well, so it covers every possible use case of VASP with LWANNIER90=True.
 
 ******
 Inputs
 ******
 
-* :ref:`settings <vasp-input-settings>`
+* :ref:`parameters <vasp-input-parameters>`
 * :ref:`kpoints <vasp-input-kpoints>`
 * :ref:`structure <vasp-input-structure>`
 * :ref:`paw <vasp-input-paw>`
 * :ref:`chargedensities <vasp-input-chargedens>`
 * :ref:`wavefunctions <vasp-input-wavefunctions>`
-* :ref:`wannier_settings <vasp-input-wannier_settings>`
+* :ref:`wannier_parameters <vasp-input-wannier_parameters>`
 
 *******
 Outputs
@@ -28,7 +28,7 @@ Outputs
 * :ref:`results <vasp-output-results>`
 * :ref:`bands <vasp-output-bands>`
 * :ref:`dos <vasp-output-dos>`
-* :ref:`wannier_settings <vasp-output-wannier_settings>`
+* :ref:`wannier_parameters <vasp-output-wannier_parameters>`
 * :ref:`wannier_data <vasp-output-wannier_data>`
 
 ***************

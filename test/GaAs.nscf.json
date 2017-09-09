@@ -12,7 +12,7 @@
     }, 
     "use_wannier": true, 
     "vasp_code": "vasp-w90@monch",
-    "settings": {
+    "parameters": {
 	"icharg": 11
     }
 }

@@ -16,18 +16,18 @@ class Vasp2w90Parser(Vasp5Parser):
 
     def get_win_node(self):
         """Create the wannier90 .win file output node"""
-        if self._calc.get_inputs_dict().get('wannier_settings'):
+        if self._calc.get_inputs_dict().get('wannier_parameters'):
             return None
         win = self.get_file('wannier90.win')
         if not win:
             return None
         win_parser = WinParser(win)
-        winnode = self._calc.new_wannier_settings(dict=win_parser.result)
+        winnode = self._calc.new_wannier_parameters(dict=win_parser.result)
         return winnode
 
     def get_wdat_node(self):
         """Create the wannier90 data output node comprised of the .mmn, .amn, .eig files"""
-        if self._calc.get_inputs_dict().get('wannier_settings'):
+        if self._calc.get_inputs_dict().get('wannier_parameters'):
             return None
         wdatnode = self._calc.new_wannier_data()
         for ext in ['mmn', 'amn', 'eig']:
@@ -38,7 +38,7 @@ class Vasp2w90Parser(Vasp5Parser):
 
     def set_win(self, node):
         if node:
-            self.add_node('wannier_settings', node)
+            self.add_node('wannier_parameters', node)
 
     def set_wdat(self, node):
         if node:

@@ -21,8 +21,8 @@ class NscfWorkflow(Workflow):
         maker = self.helper._get_calc_maker(  # pylint: disable=protected-access
             'vasp.nscf',
             continue_from=Calculation.query(uuid=params['continue_from'])[0])
-        nscf_settings = {'lwannier90': params['use_wannier'], 'icharg': 11}
-        maker.rewrite_settings(**nscf_settings)
+        nscf_parameters = {'lwannier90': params['use_wannier'], 'icharg': 11}
+        maker.rewrite_parameters(**nscf_parameters)
         return maker
 
     @Workflow.step
@@ -51,7 +51,7 @@ class NscfWorkflow(Workflow):
         calc = self.helper._get_first_step_calc(self.start)
         output_links = ['bands', 'dos']
         if params.get('use_wannier'):
-            output_links += ['wannier_settings']
+            output_links += ['wannier_parameters']
         valid = self.helper._verify_calc_output(calc, output_links)
         if valid:
             self.add_result('calc', calc)

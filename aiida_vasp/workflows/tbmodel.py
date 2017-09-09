@@ -35,7 +35,7 @@ class TbmodelWorkflow(Workflow):
         """Return an VaspMaker instance."""
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_settings(
+        maker.add_parameters(
             icharg=0,
             istart=0,
             lorbit=11,
@@ -53,7 +53,7 @@ class TbmodelWorkflow(Workflow):
         """Prepare, store and attach the selfconsistent run to get the charge density."""
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'], calc_cls='vasp.scf')
-        maker.rewrite_settings(**params['settings'])
+        maker.rewrite_parameters(**params['parameters'])
         kpoints = params['kpmesh']
         maker.kpoints.set_kpoints_mesh(kpoints)
         maker.code = Code.get_from_string(params['vasp'])
@@ -86,7 +86,7 @@ class TbmodelWorkflow(Workflow):
 
         # set up band structure step
         maker = VaspMaker(calc_cls='vasp.nscf', continue_from=sccalc)
-        maker.add_settings(lwannier90=True, icharg=11)
+        maker.add_parameters(lwannier90=True, icharg=11)
         maker.label = params.get('name') + ': win run'
         calc = maker.new()
 
@@ -112,10 +112,10 @@ class TbmodelWorkflow(Workflow):
             '{}: retrieved nscf calculation'.format(params.get('name')))
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
-        maker.wannier_settings = wincalc.out.wannier_settings.copy()
-        num_bands = maker.wannier_settings.get_dict()['num_wann']
-        maker.wannier_settings.update_dict({'num_bands': num_bands})
-        maker.wannier_settings.update_dict(params['win'])
+        maker.wannier_parameters = wincalc.out.wannier_parameters.copy()
+        num_bands = maker.wannier_parameters.get_dict()['num_wann']
+        maker.wannier_parameters.update_dict({'num_bands': num_bands})
+        maker.wannier_parameters.update_dict(params['win'])
         maker.label = params.get('name') + ': amn run'
         calc = maker.new()
 
@@ -144,7 +144,7 @@ class TbmodelWorkflow(Workflow):
         code = Code.get_from_string(params['wannier_x'])
         calc.use_code(code)
         calc.set_computer(code.get_computer())
-        calc.use_settings(amncalc.inp.wannier_settings)
+        calc.use_parameters(amncalc.inp.wannier_parameters)
         calc.use_data(amncalc.out.wannier_data)
         calc.label = params.get('name') + ': wannier run'
         calc.set_resources({'num_machines': 1})

@@ -33,7 +33,7 @@ class Vasp5CalcTest(AiidaTestCase):
     def test_inputs(self):
         """Check that the use_<input> methods are available"""
         self.assertTrue(hasattr(self.calc, 'use_code'))
-        self.assertTrue(hasattr(self.calc, 'use_settings'))
+        self.assertTrue(hasattr(self.calc, 'use_parameters'))
         self.assertTrue(hasattr(self.calc, 'use_structure'))
         self.assertTrue(hasattr(self.calc, 'use_paw'))
         self.assertTrue(hasattr(self.calc, 'use_kpoints'))
@@ -43,18 +43,18 @@ class Vasp5CalcTest(AiidaTestCase):
     def test_internal_params(self):
         self.assertTrue(self.calc.get_parser_name())
 
-    def test_settings_property(self):
-        self.calc.use_settings(self.calc.new_settings(dict={'A': 0}))
-        self.assertEqual(self.calc._settings, {'a': 0})
+    def test_parameters_property(self):
+        self.calc.use_parameters(self.calc.new_parameters(dict={'A': 0}))
+        self.assertEqual(self.calc._parameters, {'a': 0})
 
     def test_write_incar(self):
         """
         write out an INCAR tag to a tempfile and check wether
         it was written correctly
         """
-        inc = self.calc.new_settings(dict={'system': 'InAs'})
+        inc = self.calc.new_parameters(dict={'system': 'InAs'})
         dst = tempfile.mkstemp()[1]
-        self.calc.use_settings(inc)
+        self.calc.use_parameters(inc)
         self.calc.write_incar({}, dst)
         with open(dst, 'r') as incar:
             self.assertEqual(incar.read().strip(), 'SYSTEM = InAs')
@@ -64,7 +64,8 @@ class Vasp5CalcTest(AiidaTestCase):
         concatenate two paws into a tmp POTCAR and check wether
         each is contained in the result
         """
-        self.calc.use_settings(self.calc.new_settings(dict={'System': 'Test'}))
+        self.calc.use_parameters(
+            self.calc.new_parameters(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
         self.calc.use_paw(
             self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
@@ -111,45 +112,49 @@ class Vasp5CalcTest(AiidaTestCase):
         kpoints = self.calc.new_kpoints()
         kpoints.set_kpoints_mesh([4, 4, 4])
         self.calc.use_kpoints(kpoints)
-        self.calc.use_settings(self.calc.new_settings())
+        self.calc.use_parameters(self.calc.new_parameters())
         dst = tempfile.mkstemp()[1]
         self.calc.write_kpoints(self.calc.get_inputs_dict(), dst)
         with open(dst, 'r') as kpoints_f:
             self.assertTrue(kpoints_f.read())
 
     def test_need_kp_false(self):
-        self.calc.use_settings(
-            self.calc.new_settings(dict={'kspacing': 0.5,
-                                         'kgamma': True}))
+        self.calc.use_parameters(
+            self.calc.new_parameters(dict={'kspacing': 0.5,
+                                           'kgamma': True}))
         self.assertFalse(self.calc._need_kp())
 
     def test_need_kp_true(self):
-        self.calc.use_settings(self.calc.new_settings())
+        self.calc.use_parameters(self.calc.new_parameters())
         self.assertTrue(self.calc._need_kp())
 
     def test_need_chgd_none(self):
-        self.calc.use_settings(self.calc.new_settings())
+        self.calc.use_parameters(self.calc.new_parameters())
         self.assertFalse(self.calc._need_chgd())
 
     def test_need_chgd_icharg(self):
+        """Check ICHARG input parameter should be set"""
         for i in [0, 2, 4, 10, 12]:
-            self.calc.use_settings(self.calc.new_settings(dict={'icharg': i}))
+            self.calc.use_parameters(
+                self.calc.new_parameters(dict={'icharg': i}))
             self.assertFalse(self.calc._need_chgd())
         for i in [1, 11]:
-            self.calc.use_settings(self.calc.new_settings(dict={'icharg': i}))
+            self.calc.use_parameters(
+                self.calc.new_parameters(dict={'icharg': i}))
             self.assertTrue(self.calc._need_chgd())
 
     def test_need_wfn_none(self):
-        self.calc.use_settings(self.calc.new_settings())
+        self.calc.use_parameters(self.calc.new_parameters())
         self.assertFalse(self.calc._need_wfn())
         self.calc.use_wavefunctions(self.calc.new_wavefunctions())
         self.assertTrue(self.calc._need_wfn())
 
     def test_need_wfn_istart(self):
-        self.calc.use_settings(self.calc.new_settings(dict={'istart': 0}))
+        self.calc.use_parameters(self.calc.new_parameters(dict={'istart': 0}))
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:
-            self.calc.use_settings(self.calc.new_settings(dict={'istart': i}))
+            self.calc.use_parameters(
+                self.calc.new_parameters(dict={'istart': i}))
             self.assertTrue(
                 self.calc._need_wfn(),
                 msg='_need_wfn not True for istart=%s' % i)
@@ -166,7 +171,7 @@ class Vasp5CalcTest(AiidaTestCase):
         self.assertEqual(paw_a.pk, paw_b.pk)
 
     def test_new_setting(self):
-        self.assertIsInstance(self.calc.new_settings(),
+        self.assertIsInstance(self.calc.new_parameters(),
                               DataFactory('parameter'))
 
     def test_new_structure(self):

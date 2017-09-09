@@ -71,15 +71,15 @@ class Common(object):
         return (kres, wres)
 
     @staticmethod
-    def settings():
-        """Create ParameterData object with common settings"""
-        settings = {
+    def parameters():
+        """Create ParameterData object with common parameters"""
+        parameters = {
             'gga': 'PE',
             'gga_compat': False,
             'lorbit': 11,
             'sigma': .05
         }
-        return DataFactory('parameter')(dict=settings)
+        return DataFactory('parameter')(dict=parameters)
 
     @staticmethod
     def charge_density():

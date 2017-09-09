@@ -38,15 +38,15 @@ class AmnCalcTest(AiidaTestCase):
         calc = self.calc_cls()
         calc.use_code(self.code)
         calc.set_computer(self.computer)
-        calc.use_settings(Common.settings())
-        calc.inp.settings.update_dict({'icharg': 11})
+        calc.use_parameters(Common.parameters())
+        calc.inp.parameters.update_dict({'icharg': 11})
         calc.use_structure(Common.cif())
         calc.use_kpoints(kpoints)
         calc.use_paw(Common.paw_in(), kind='In')
         calc.use_paw(Common.paw_as(), kind='As')
         calc.use_charge_density(Common.charge_density())
         calc.use_wavefunctions(Common.wavefunctions())
-        calc.use_wannier_settings(Common.win())
+        calc.use_wannier_parameters(Common.win())
         if not no_wdat:
             calc.use_wannier_data(self.wdat)
         return calc, calc.get_inputs_dict()
@@ -58,7 +58,7 @@ class AmnCalcTest(AiidaTestCase):
         calc.use_kpoints(Common.kpoints_mesh())
         inp = calc.get_inputs_dict()
         calc.verify_inputs(inp)
-        calc.use_settings(Common.settings())
+        calc.use_parameters(Common.parameters())
         inp = calc.get_inputs_dict()
         calc.verify_inputs(inp)
 
@@ -75,7 +75,7 @@ class AmnCalcTest(AiidaTestCase):
                 'wannier90.win', 'test1', 'test2'
             })
         self.assertIn(['wannier90*', '.', 0], calc_info.retrieve_list)
-        calc.use_settings(Common.settings())
+        calc.use_parameters(Common.parameters())
         inp = calc.get_inputs_dict()
         calc.verify_inputs(inp)
         with SandboxFolder() as sandbox_f:

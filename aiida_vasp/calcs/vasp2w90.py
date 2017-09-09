@@ -12,16 +12,16 @@ class Vasp2w90Calculation(Vasp5Calculation):
     Same data storage space concerns apply as with :py:class:`Vasp5Calculation`.'''
 
     default_parser = 'vasp.vasp2w90'
-    wannier_settings = Input(
+    wannier_parameters = Input(
         types=['parameter'],
-        doc='parameter node: settings for the ' + 'wannier interface')
+        doc='parameter node: parameters for the ' + 'wannier interface')
 
     def write_win(self, inputdict, dst):
         '''convert dict to wannier input and write to file'''
-        if 'wannier_settings' in inputdict:
+        if 'wannier_parameters' in inputdict:
             super(Vasp2w90Calculation, self).write_win(inputdict, dst)
 
-    def new_wannier_settings(self, **kwargs):
+    def new_wannier_parameters(self, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     def new_wannier_data(self, **kwargs):

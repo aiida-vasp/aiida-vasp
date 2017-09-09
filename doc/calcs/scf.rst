@@ -10,7 +10,7 @@ This Calculation plugin runs a self-consistent VASP calculation and retrieves th
 ******
 Inputs
 ******
-* :ref:`settings <vasp-input-settings>`
+* :ref:`parameters <vasp-input-parameters>`
 * :ref:`kpoints <vasp-input-kpoints>`, kpoints must be set via :py:meth:`set_kpoints_mesh <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_mesh>`
 * :ref:`structure <vasp-input-structure>`
 * :ref:`paw <vasp-input-paw>`, one per element in the structure.

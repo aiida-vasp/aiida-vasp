@@ -34,8 +34,8 @@ class WannierCalcTest(AiidaTestCase):
         calc = self.calc_cls()
         calc.use_code(self.code)
         calc.set_computer(self.computer)
-        calc.use_settings(Common.win())
-        calc.inp.settings.update_dict({'hr_plot': True})
+        calc.use_parameters(Common.win())
+        calc.inp.parameters.update_dict({'hr_plot': True})
         calc.use_data(self.wdat)
         return calc, calc.get_inputs_dict()
 

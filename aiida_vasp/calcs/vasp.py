@@ -31,11 +31,11 @@ class VaspCalculation(JobCalculation):
     def _use_methods(self):
         retdict = JobCalculation._use_methods
         retdict.update({
-            'settings': {
+            'parameters': {
                 'valid_types': PARAMETER_CLS,
                 'additional_parameter': None,
-                'linkname': 'settings',
-                'docstring': 'Settings that go into the INCAR file for vasp',
+                'linkname': 'parameters',
+                'docstring': 'parameters that go into the INCAR file for vasp',
             },
             'structure': {
                 'valid_types': PARAMETER_CLS,
@@ -66,7 +66,7 @@ class VaspCalculation(JobCalculation):
             print 'import pymatgen as pmg failed'
 
         incar_file = tempfolder.get_abs_path('INCAR')
-        incar_data = inputdict['settings']
+        incar_data = inputdict['parameters']
         incar_object = pmg.io.vasp.Incar.from_dict(incar_data.get_dict())
         incar_object.write_file(incar_file)
 

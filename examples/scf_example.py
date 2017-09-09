@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print usage
         sys.exit()
     mkr = VaspMaker(structure=sys.argv[2], calc_cls='vasp.scf')
-    mkr.add_settings(
+    mkr.add_parameters(
         gga='PE',
         gga_compat=False,
         ediff=1e-5,

@@ -12,7 +12,7 @@
     }, 
     "use_wannier": false, 
     "vasp_code": "vasp-w90@monch",
-    "settings": {},
+    "parameters": {},
     "kpoints":{
         "path": [
             [

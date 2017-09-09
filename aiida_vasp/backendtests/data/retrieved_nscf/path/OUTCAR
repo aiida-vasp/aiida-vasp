@@ -666,7 +666,7 @@ Space group operators:
  WARNING: aliasing errors must be expected set NGX to  34 to avoid them
  WARNING: aliasing errors must be expected set NGY to  34 to avoid them
  WARNING: aliasing errors must be expected set NGZ to  34 to avoid them
- aliasing errors are usually negligible using standard VASP settings
+ aliasing errors are usually negligible using standard VASP parameters
  and one can safely disregard these warnings
 
  serial   3D FFT for wavefunctions

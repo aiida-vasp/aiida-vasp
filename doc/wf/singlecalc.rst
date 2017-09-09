@@ -52,7 +52,7 @@ A minimal example::
       "queue": "<computing queue name>",
       "vasp_code": "<code@computer>",
       "structure": "<path to cif or poscar file for InAs>",
-      "settings": {
+      "parameters": {
          "nbands": nbands,
          "ediff": 1e-5,
          "gga": "PE",
@@ -70,9 +70,9 @@ Parameters
 **********
 
 * continue_from: string, uuid of an appropriate calculation to continue from.
-* settings: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
+* parameters: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
 * use_wannier: bool, switches on LWANNIER90 as well as checking for wannier output files in results.
-* wannier_settings: dict, analog to settings for the wannier_settings input parameter.
+* wannier_parameters: dict, analog to parameters for the wannier_parameters input parameter.
 * structure: path to a .cif or POSCAR file. Ignored when continuing from a previous calculation.
 * kpoints: dict, containing one and only one of the following keys
    - mesh: list with #kpoints in each direction
@@ -144,7 +144,7 @@ Reference
       .. automethod:: start
 
          Runs an AmnCalculation using the given uuid of a 
-         NscfCalculation. Modifies wannier_settings from the nscf calculation
+         NscfCalculation. Modifies wannier_parameters from the nscf calculation
          it continues from transparently using an InlineCalculation.
 
       .. automethod:: end
@@ -161,7 +161,7 @@ Reference
       .. automethod:: start
 
          Runs a WannierCalculation using the given uuid of a 
-         AmnCalculation. Modifies wannier_settings from the amn calculation
+         AmnCalculation. Modifies wannier_parameters from the amn calculation
          it continues from transparently using an InlineCalculation, if necessary.
 
       .. automethod:: end

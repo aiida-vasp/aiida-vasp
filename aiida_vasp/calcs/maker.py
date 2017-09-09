@@ -66,15 +66,15 @@ class VaspMaker(object):
         :returns: an instance of :py:attr:`calc_cls`, initialized with the data
         held by the VaspMaker
 
-    .. py:method:: add_settings(**kwargs)
+    .. py:method:: add_parameters(**kwargs)
 
-        Adds keys to the settings (INCAR keywords), if settings is already
+        Adds keys to the parameters (INCAR keywords), if parameters is already
         stored, makes a copy.
         Does not overwrite previously set keywords.
 
-    .. py:method:: rewrite_settings(**kwargs)
+    .. py:method:: rewrite_parameters(**kwargs)
 
-        Same as :py:meth:`add_settings`, but also overwrites keywords.
+        Same as :py:meth:`add_parameters`, but also overwrites keywords.
 
     .. py:attribute:: structure
 
@@ -92,9 +92,9 @@ class VaspMaker(object):
 
     .. py:attribute:: queue
 
-    .. py:attribute:: settings
+    .. py:attribute:: parameters
 
-        A readonly shortcut to the contents of the settings node
+        A readonly shortcut to the contents of the parameters node
 
     .. py:attribute:: kpoints
 
@@ -112,14 +112,14 @@ class VaspMaker(object):
 
     def __init__(self, *args, **kwargs):
         self._recipe = None
-        self._settings = None
+        self._parameters = None
         self._queue = None
         self._computer = None
         self._code = None
         self._wannier_data = None
         self._charge_density = None
         self._wavefunctions = None
-        self._wannier_settings = None
+        self._wannier_parameters = None
         self._kpoints = None
         self._structure = None
 
@@ -140,7 +140,8 @@ class VaspMaker(object):
         self.label = kwargs.get('label', 'unlabeled')
         self._computer = kwargs.get('computer')
         self._code = kwargs.get('code')
-        self._settings = kwargs.get('settings', self.calc_cls.new_settings())
+        self._parameters = kwargs.get('parameters',
+                                      self.calc_cls.new_parameters())
         self._set_default_structure(kwargs.get('structure'))
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
@@ -150,7 +151,7 @@ class VaspMaker(object):
         self.kpoints = self._kpoints
         self._charge_density = kwargs.get('charge_density', None)
         self._wavefunctions = kwargs.get('wavefunctions', None)
-        self._wannier_settings = kwargs.get('wannier_settings', None)
+        self._wannier_parameters = kwargs.get('wannier_parameters', None)
         self._wannier_data = kwargs.get('wannier_data', None)
         self._recipe = None
         self._queue = kwargs.get('queue')
@@ -164,7 +165,7 @@ class VaspMaker(object):
         self.label = calc.label + '_copy'
         self._computer = calc.get_computer()
         self._code = calc.get_code()
-        self._settings = ins.get('settings')
+        self._parameters = ins.get('parameters')
         self._structure = ins.get('structure')
         self._paws = {}
         for paw in [i for i in ins.iteritems() if 'paw' in i[0]]:
@@ -172,7 +173,7 @@ class VaspMaker(object):
         self._kpoints = ins.get('kpoints')
         self._charge_density = ins.get('charge_density')
         self._wavefunctions = ins.get('wavefunctions')
-        self._wannier_settings = ins.get('wannier_settings')
+        self._wannier_parameters = ins.get('wannier_parameters')
         self._wannier_data = ins.get('wannier_data')
         self._queue = calc.get_queue_name()
         self._resources = calc.get_resources()
@@ -203,11 +204,11 @@ class VaspMaker(object):
         self._copy_from(prev)
         if 'structure' in out:
             self.structure = prev.out.structure
-        self.rewrite_settings(istart=1, icharg=11)
+        self.rewrite_parameters(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
-        self._wannier_settings = out.get('wannier_settings',
-                                         self._wannier_settings)
+        self._wannier_parameters = out.get('wannier_parameters',
+                                           self._wannier_parameters)
         self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
@@ -217,7 +218,7 @@ class VaspMaker(object):
         calc.use_structure(self._structure)
         for k in self.elements:
             calc.use_paw(self._paws[k], kind=k)
-        calc.use_settings(self._settings)
+        calc.use_parameters(self._parameters)
         calc.use_kpoints(self._kpoints)
         calc.set_computer(self._computer)
         calc.set_queue_name(self._queue)
@@ -225,8 +226,8 @@ class VaspMaker(object):
             calc.use_charge_density(self._charge_density)
         if self._wavefunctions:
             calc.use_wavefunctions(self._wavefunctions)
-        if self._wannier_settings:
-            calc.use_wannier_settings(self._wannier_settings)
+        if self._wannier_parameters:
+            calc.use_wannier_parameters(self._wannier_parameters)
         if self._wannier_data:
             calc.use_wannier_data(self._wannier_data)
         calc.label = self.label
@@ -246,8 +247,8 @@ class VaspMaker(object):
         self._kpoints.set_cell(self._structure.get_ase().get_cell())
 
     @property
-    def settings(self):
-        return self._settings.get_dict()
+    def parameters(self):
+        return self._parameters.get_dict()
 
     @property
     def kpoints(self):
@@ -300,7 +301,7 @@ class VaspMaker(object):
     @wavefunctions.setter
     def wavefunctions(self, val):
         self._wavefunctions = val
-        self.add_settings(istart=1)
+        self.add_parameters(istart=1)
 
     @property
     def charge_density(self):
@@ -309,17 +310,17 @@ class VaspMaker(object):
     @charge_density.setter
     def charge_density(self, val):
         self._charge_density = val
-        self.add_settings(icharg=11)
+        self.add_parameters(icharg=11)
 
     @property
-    def wannier_settings(self):
-        return self._wannier_settings
+    def wannier_parameters(self):
+        return self._wannier_parameters
 
-    @wannier_settings.setter
-    def wannier_settings(self, val):
-        self._wannier_settings = val
-        if 'lwannier90' not in self.settings:
-            self.add_settings(lwannier90=True)
+    @wannier_parameters.setter
+    def wannier_parameters(self, val):
+        self._wannier_parameters = val
+        if 'lwannier90' not in self.parameters:
+            self.add_parameters(lwannier90=True)
 
     @property
     def wannier_data(self):
@@ -366,23 +367,23 @@ class VaspMaker(object):
             self._resources['num_machines'] = val[0]
             self._resources['num_mpiprocs_per_machine'] = val[1]
 
-    def add_settings(self, **kwargs):
-        if self._settings.pk:
-            self._settings = self._settings.copy()
+    def add_parameters(self, **kwargs):
+        if self._parameters.pk:
+            self._parameters = self._parameters.copy()
         for key, value in kwargs.iteritems():
-            if key not in self.settings:
-                self._settings.update_dict({key: value})
+            if key not in self.parameters:
+                self._parameters.update_dict({key: value})
 
-    def rewrite_settings(self, **kwargs):
-        if self._settings_conflict(kwargs):
-            if self._settings.pk:
-                self._settings = self._settings.copy()
-            self._settings.update_dict(kwargs)
+    def rewrite_parameters(self, **kwargs):
+        if self._parameters_conflict(kwargs):
+            if self._parameters.pk:
+                self._parameters = self._parameters.copy()
+            self._parameters.update_dict(kwargs)
 
-    def _settings_conflict(self, settings):
+    def _parameters_conflict(self, parameters):
         conflict = False
-        for key, value in settings.iteritems():
-            conflict |= (self.settings.get(key) != value)
+        for key, value in parameters.iteritems():
+            conflict |= (self.parameters.get(key) != value)
         return conflict
 
     def _set_default_paws(self):
@@ -416,39 +417,39 @@ class VaspMaker(object):
             return 1
         return 0
 
-    def verify_settings(self):
+    def verify_parameters(self):
         """
-        Verify input settings
+        Verify input parameters
 
         :return: (bool, string) success, message
         """
         if not self._structure:
             raise ValueError('need structure,')
-        magmom = self.settings.get('magmom', [])
-        lsorb = self.settings.get('lsorbit', False)
-        lnonc = self.settings.get('lnoncollinear', False)
-        settings_ok = True
+        magmom = self.parameters.get('magmom', [])
+        lsorb = self.parameters.get('lsorbit', False)
+        lnonc = self.parameters.get('lnoncollinear', False)
+        parameters_ok = True
         msg = 'Everything ok'
         nmag = len(magmom)
         nsit = self.n_ions
         if lsorb:
             if lnonc:
                 if magmom and not nmag == 3 * nsit:
-                    settings_ok = False
+                    parameters_ok = False
                     msg = 'magmom has wrong dimension'
             else:
                 if magmom and not nmag == nsit:
-                    settings_ok = False
+                    parameters_ok = False
                     msg = 'magmom has wrong dimension'
         else:
             if magmom and not nmag == nsit:
-                settings_ok = False
+                parameters_ok = False
                 msg = 'magmom has wrong dimension'
-        return settings_ok, msg
+        return parameters_ok, msg
 
     def check_magmom(self):
-        """Check that the magnetic moment given in settings matches the one of the structure"""
-        magnetic_moment = self.settings.get('magmom', [])
+        """Check that the magnetic moment given in parameters matches the one of the structure"""
+        magnetic_moment = self.parameters.get('magmom', [])
         structure_mm = self._structure.get_ase().get_initial_magnetic_moments()
         lsf = 3 if self.noncol else 1
         nio = self.n_ions
@@ -462,7 +463,7 @@ class VaspMaker(object):
         magmom = [val]
         magmom *= self.n_ions
         magmom *= self.noncol and 3 or 1
-        self.rewrite_settings(magmom=magmom)
+        self.rewrite_parameters(magmom=magmom)
 
     @property
     def nbands(self):
@@ -481,20 +482,20 @@ class VaspMaker(object):
 
     @property
     def noncol(self):
-        lsorb = self.settings.get('lsorbit', False)
-        lnonc = self.settings.get('lnoncollinear', False)
+        lsorb = self.parameters.get('lsorbit', False)
+        lnonc = self.parameters.get('lnoncollinear', False)
         return lsorb or lnonc
 
     @property
     def icharg(self):
-        return self.settings.get('icharg', 'default')
+        return self.parameters.get('icharg', 'default')
 
     @icharg.setter
     def icharg(self, value):
         if value not in [0, 1, 2, 4, 10, 11, 12]:
             raise ValueError('invalid ICHARG value for vasp 5.3.5')
         else:
-            self.settings['icharg'] = value
+            self.parameters['icharg'] = value
 
     @property
     def recipe(self):
@@ -514,7 +515,7 @@ class VaspMaker(object):
             raise ValueError('recipe not recognized')
 
     def _init_recipe_test_sc(self):
-        self.add_settings(
+        self.add_parameters(
             gga='PE',
             gga_compat=False,
             ismear=0,

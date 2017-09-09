@@ -11,9 +11,9 @@ class AmnCalculation(WannierBase, NscfCalculation):
     wannier90 input parameters.'''
 
     default_parser = 'vasp.amn'
-    wannier_settings = Input(
+    wannier_parameters = Input(
         types=['parameter'],
-        doc='parameter node: settings for the ' + 'wannier interface')
+        doc='parameter node: parameters for the ' + 'wannier interface')
     wannier_data = Input(types=['vasp.archive'])
 
     def _prepare_for_submission(self, tempfolder, inputdict):
@@ -34,7 +34,7 @@ class AmnCalculation(WannierBase, NscfCalculation):
             self.write_wdat(inputdict, path)
 
     def _win_lname(self):
-        return 'wannier_settings'
+        return 'wannier_parameters'
 
     def _wdat_lname(self):
         return 'wannier_data'

@@ -71,7 +71,7 @@ If using more than 64 MPI processes with python set MV2_ON_DEMAND_THRESHOLD to n
 
 *** 5 LOG MESSAGES:
 +-> WARNING at 2016-06-08 16:01:10.876680+00:00
-|   charge_density node given but "icharg" key in settings not set to either 1 o 11. charge_density node not used --> .CHGCAR not written
+|   charge_density node given but "icharg" key in parameters not set to either 1 o 11. charge_density node not used --> .CHGCAR not written
 +-> WARNING at 2016-06-08 16:07:12.748349+00:00
 |   wannier90.win not found in retrieved
 +-> WARNING at 2016-06-08 16:07:12.762292+00:00

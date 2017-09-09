@@ -44,13 +44,13 @@ minimal example::
       "vasp_code": "<vasp-code@computer>",
       "wannier_code": "<wannier-code@computer>",
       "structure": "<path to cif or poscar file for InAs>",
-      "settings": {
+      "parameters": {
          "nbands": nbands,
          "ediff": 1e-5,
          "gga": "PE",
          "gga_compat": False,
       }
-      "wannier_settings": {
+      "wannier_parameters": {
          "dis_num_iter": 100,
          "num_iter": 100
       }

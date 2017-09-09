@@ -57,7 +57,7 @@ if __name__ == '__main__':
         sys.exit()
     mkr = VaspMaker(
         continue_from=load_node(pk=sys.argv[2]), calc_cls='vasp.nscf')
-    mkr.add_settings(icharg=11)
+    mkr.add_parameters(icharg=11)
     mkr.set_kpoints_path()
     mkr.resources['num_machines'] = 2
     mkr.resources['num_mpiprocs_per_machine'] = 4

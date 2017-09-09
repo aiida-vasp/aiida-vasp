@@ -25,7 +25,7 @@ class WindowsWorkflow(Workflow):
         kpoints = params['kpoints']
 
         scfpar = self.get_vasp_params(params)
-        scfpar['settings'] = params['settings']
+        scfpar['parameters'] = params['parameters']
         scfpar['structure'] = params['structure']
         scfpar['kpoints'] = {'mesh': kpoints['mesh']}
         scfpar['paw_family'] = params['paw_family']
@@ -71,8 +71,8 @@ class WindowsWorkflow(Workflow):
         projpar = self.get_vasp_params(params)
         projpar['continue_from'] = win_calc.uuid
         projpar['projections'] = params['projections']
-        projpar['wannier_settings'] = {
-            'num_wann': params['wannier_settings']['num_wann'],
+        projpar['wannier_parameters'] = {
+            'num_wann': params['wannier_parameters']['num_wann'],
             'use_bloch_phases': False,
             'bands_plot': True,
             'hr_plot': True,
@@ -108,15 +108,15 @@ class WindowsWorkflow(Workflow):
         count = 0
         wpar = self.get_wannier_params(params)
         wpar['continue_from'] = proj_calc.uuid
-        wpar['settings']['bands_plot'] = True
-        wpar['settings']['hr_plot'] = True
+        wpar['parameters']['bands_plot'] = True
+        wpar['parameters']['hr_plot'] = True
 
         wfpk = []
         for window in params['windows']:
-            wpar['settings']['dis_win_min'] = window['outer'][0]
-            wpar['settings']['dis_win_max'] = window['outer'][1]
-            wpar['settings']['dis_froz_min'] = window['inner'][0]
-            wpar['settings']['dis_froz_max'] = window['inner'][1]
+            wpar['parameters']['dis_win_min'] = window['outer'][0]
+            wpar['parameters']['dis_win_max'] = window['outer'][1]
+            wpar['parameters']['dis_froz_min'] = window['inner'][0]
+            wpar['parameters']['dis_froz_max'] = window['inner'][1]
 
             workflow = self.WannierWf(params=wpar)
             workflow.label = params.get('label')
@@ -175,7 +175,7 @@ class WindowsWorkflow(Workflow):
                 bands = workflow.get_result('bands')
                 self.add_result('bands_{}'.format(calc.pk), bands)
             except Exception as err:  # pylint: disable=broad-except
-                wset = workflow.get_parameters()['settings']
+                wset = workflow.get_parameters()['parameters']
                 window = 'inner: {}-{}, outer: {}-{}'.format(
                     wset['dis_froz_min'], wset['dis_froz_max'],
                     wset['dis_win_min'], wset['dis_win_max'])
@@ -216,8 +216,8 @@ class WindowsWorkflow(Workflow):
 
         wpar = cls.get_general_params(params)
         wpar['wannier_code'] = params['wannier_code']
-        wpar['settings'] = params['wannier_settings'].copy()
-        wpar['settings']['kpoint_path'] = kppath
+        wpar['parameters'] = params['wannier_parameters'].copy()
+        wpar['parameters']['kpoint_path'] = kppath
         wpar['resources'] = resources
         wpar['queue'] = queue
         return wpar
@@ -237,7 +237,7 @@ class WindowsWorkflow(Workflow):
         tmpl = cls.Helper.get_params_template()
         wtpl = cls.WannierWf.get_params_template()
         ptpl = cls.ProjWf.get_params_template()
-        tmpl['wannier_settings'] = {'num_wann': 'int', 'hr_plot': True}
+        tmpl['wannier_parameters'] = {'num_wann': 'int', 'hr_plot': True}
         tmpl['wannier_code'] = wtpl['wannier_code']
         tmpl['projections'] = ptpl['projections']
         tmpl['windows'] = [{'inner': ['min', 'max'], 'outer': ['min', 'max']}]
@@ -253,7 +253,7 @@ class WindowsWorkflow(Workflow):
         """Make sure resources params match nbands parameter"""
         valid = True
         log = ''
-        nbands = params['settings'].get('nbands')
+        nbands = params['parameters'].get('nbands')
         if nbands:
             res = params['resources']
             nproc = res['num_machines'] * res['num_mpiprocs_per_machine']

@@ -28,7 +28,7 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
     def verify_inputs(self, inputdict, *args, **kwargs):
         # ~ notset_msg = 'input not set: %s'
         super(Vasp5Calculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'settings')
+        self.check_input(inputdict, 'parameters')
         self.check_input(inputdict, 'structure')
         if 'elements' not in self.attrs():
             self._prestore()
@@ -43,10 +43,10 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
         return 'paw_%s' % kind
 
     @property
-    def _settings(self):
+    def _parameters(self):
         return {
             k.lower(): v
-            for k, v in self.inp.settings.get_dict().iteritems()
+            for k, v in self.inp.parameters.get_dict().iteritems()
         }
 
     def _need_kp(self):
@@ -56,11 +56,11 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             True if input kpoints node is needed
             (py:method::Vasp5Calculation.use_kpoints),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::Vasp5Calculation.use_parameters)
         """
-        return bool('kspacing' in self._settings
-                    and 'kgamma' in self._settings)
+        return bool('kspacing' in self._parameters
+                    and 'kgamma' in self._parameters)
 
     def _need_chgd(self):
         """
@@ -69,11 +69,11 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             True if a chgcar file must be used
             (py:method::Vasp5Calculation.use_charge_densities),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::Vasp5Calculation.use_parameters)
         """
         ichrg_d = 0 if self._need_wfn() else 2
-        icharg = self._settings.get('icharg', ichrg_d)
+        icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
     def _need_wfn(self):
@@ -83,15 +83,15 @@ class Vasp5Calculation(NscfCalculation, WannierBase):
             True if a wavecar file must be used
             (py:method::Vasp5Calculation.use_wavefunctions),
             False otherwise
-        needs 'settings' input to be set
-        (py:method::Vasp5Calculation.use_settings)
+        needs 'parameters' input to be set
+        (py:method::Vasp5Calculation.use_parameters)
         """
         istrt_d = 1 if self.get_inputs_dict().get('wavefunctions') else 0
-        istart = self._settings.get('istart', istrt_d)
+        istart = self._parameters.get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
     @classmethod
-    def new_settings(cls, **kwargs):
+    def new_parameters(cls, **kwargs):
         return DataFactory('parameter')(**kwargs)
 
     @classmethod
