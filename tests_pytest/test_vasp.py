@@ -1,7 +1,8 @@
 """Vasp calculation integration test"""
+from gaas_sample import get_gaas_process_inputs  # pylint: disable=unused-import
 
 
-def test_vasp(get_gaas_process_inputs, assert_finished):
+def test_vasp(configure_with_daemon, get_gaas_process_inputs, assert_finished):  # pylint: disable=unused-argument,redefined-outer-name
     """Vasp calculation integration test"""
 
     from aiida.work.run import run

@@ -10,7 +10,7 @@ from ase.io.vasp import read_vasp
 
 @pytest.fixture
 # pylint: disable=protected-access
-def get_gaas_process_inputs(get_process_inputs, sample):
+def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: disable=unused-argument
     """Test fixture: sets up a calculation to be tested"""
 
     def inner(calculation_string, parameters=None):  # pylint: disable=missing-docstring

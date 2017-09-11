@@ -6,6 +6,7 @@ import json
 import operator
 
 import pytest
+from aiida_pytest import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def test_name(request):
 
 
 @pytest.fixture
-def compare_data(request, test_name_):
+def compare_data(request, test_name, scope="session"):  # pylint: disable=unused-argument,redefined-outer-name
     """
     Returns a function which either saves some data to a file or (if that file exists already)
 
@@ -24,7 +25,7 @@ def compare_data(request, test_name_):
     """
 
     def inner(compare_fct, data, tag=None):
-        full_name = test_name_ + (tag or '')
+        full_name = test_name + (tag or '')
         val = request.config.cache.get(full_name, None)
         if val is None:
             request.config.cache.set(full_name, json.loads(json.dumps(data)))
@@ -37,5 +38,5 @@ def compare_data(request, test_name_):
 
 
 @pytest.fixture
-def compare_equal(compare_data_):
-    return lambda data, tag=None: compare_data_(operator.eq, data, tag)
+def compare_equal(compare_data):  # pylint: disable=redefined-outer-name
+    return lambda data, tag=None: compare_data(operator.eq, data, tag)
