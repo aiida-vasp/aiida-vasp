@@ -42,7 +42,7 @@ minimal example::
       "paw_family": "<name>",
       "paw_map": {"In": "In_d", "As": "As"},
       "resources": {
-         "num_machines": num_nodes, 
+         "num_machines": num_nodes,
          "num_mpiprocs_per_machine": num_ppn
       },
       "wannier_resources": {
@@ -74,7 +74,7 @@ minimal example::
    }
 
    wf = WindowsWorkflow(params=parameters)
-   wf.start() 
+   wf.start()
 
 The k-point path for wannier interpolation as well as for the ab-initio band structure
 are both set in the key "kpoints". Any kpoint path set in "wannier_parameters" would be overwritten.
@@ -126,7 +126,7 @@ Reference
          sets use_wannier automatically.'
 
       .. automethod:: get_projections
-         
+
          runs an AmnWorkflow with the results of the previoust step
          to get the wannier projections file.
          sets some wannier_parameters keys automatically.
@@ -143,5 +143,5 @@ Reference
          Can be compared kpoint for kpoint to the wannier interpolated bands.
 
       .. automethod:: make_results
-         
+
          adds all obtained bands nodes to the workflow's results.

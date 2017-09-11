@@ -33,7 +33,7 @@ For working examples for all workflows, take a look in the vasp plugin repositor
 the "examples" folder.
 
 A minimal example::
-   
+
    ScfWorkflow = WorkflowFactory('vasp.scf')
 
    num_nodes = 2
@@ -46,7 +46,7 @@ A minimal example::
       "paw_family": "<name>",
       "paw_map": {"In": "In_d", "As": "As"},
       "resources": {
-         "num_machines": num_nodes, 
+         "num_machines": num_nodes,
          "num_mpiprocs_per_machine": num_ppn
       },
       "queue": "<computing queue name>",
@@ -64,7 +64,7 @@ A minimal example::
    wf.start()
 
 .. _stepwf-parameters:
- 
+
 **********
 Parameters
 **********
@@ -90,7 +90,7 @@ The following set of parameters can be used to label and categorize the calculat
 * label: string, used to set the calculation's label
 
 These properties can be used to filter queries for calculations and therefore to make it easier to find them later in the database.
- 
+
 *********
 Workflows
 *********
@@ -137,13 +137,13 @@ Reference
          node to the results.
 
 .. automodule:: aiida.workflows.vasp.projections
-   
+
    .. autoclass:: ProjectionsWorkflow
       :members: get_params_template, get_template
 
       .. automethod:: start
 
-         Runs an AmnCalculation using the given uuid of a 
+         Runs an AmnCalculation using the given uuid of a
          NscfCalculation. Modifies wannier_parameters from the nscf calculation
          it continues from transparently using an InlineCalculation.
 
@@ -160,7 +160,7 @@ Reference
 
       .. automethod:: start
 
-         Runs a WannierCalculation using the given uuid of a 
+         Runs a WannierCalculation using the given uuid of a
          AmnCalculation. Modifies wannier_parameters from the amn calculation
          it continues from transparently using an InlineCalculation, if necessary.
 

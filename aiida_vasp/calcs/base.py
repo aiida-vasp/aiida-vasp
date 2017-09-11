@@ -1,18 +1,10 @@
 # pylint: disable=abstract-method,invalid-metaclass
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
+
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
-
-
-def ordered_unique_list(in_list):
-    """Create a list of unique items in the input sequence, retaining item order"""
-    out_list = []
-    for i in in_list:
-        if i not in out_list:
-            out_list.append(i)
-    return out_list
 
 
 def make_use_methods(inputs, bases):
@@ -229,11 +221,6 @@ class VaspCalcBase(JobCalculation):
 
         return calcinfo
 
-    def write_additional(self, tempfolder, inputdict):
-        """Subclass hook for writing other input files than the basic four
-        (INCAR, KPOINTS, POSCAR, POTCAR)"""
-        pass
-
     def _init_internal_params(self):
         """must be present on all JobCalculation subclasses, that
         set internal parameters"""
@@ -278,218 +265,8 @@ class VaspCalcBase(JobCalculation):
         """Subclass hook for updating attributes etc, just before storing"""
         pass
 
-
-# only implements gamma centered monkhorst
-# no expert mode with manual basis vectors
-# no fully automatic mode
-# no original monkhorst (equivalent to 0.5 shift though)
-KP_MESH_TPL = """\
-Automatic mesh
-0
-Gamma
-{N[0]} {N[1]} {N[2]}
-{s[0]} {s[1]} {s[2]}\
-"""
-
-# only implements direct explicit list with weights
-# no cartesian
-# no tetrahedron method
-# no bandstructure lines
-KP_LIST_TPL = """\
-Explicit list
-{N}
-Direct
-{klist}\
-"""
-KP_LIST_ITEM_TPL = """\
-{k[0]} {k[1]} {k[2]} {w}\
-"""
-
-
-class BasicCalculation(VaspCalcBase):
-    """
-    Limited VASP calculation, can only take kpoints grid,
-    returns only CHGCAR and WAVECAR
-    """
-    parameters = Input(types='parameter')
-    structure = Input(types=['structure', 'cif'])
-    paw = Input(types='vasp.paw', param='kind')
-    kpoints = Input(types='array.kpoints')
-    default_parser = 'vasp.basic'
-
-    PAW_CLS = DataFactory('vasp.paw')
-    KPOINTS_CLS = DataFactory('array.kpoints')
-    STRUCTURE_CLS = DataFactory('structure')
-    PARAMETER_CLS = DataFactory('parameter')
-
-    def _prepare_for_submission(self, tempfolder, inputdict):
-        """retrieve only OUTCAR and vasprun.xml, extend in
-        subclasses for production to retrieve more output data"""
-        calcinfo = super(BasicCalculation, self)._prepare_for_submission(
-            tempfolder, inputdict)
-        calcinfo.retrieve_list = ['OUTCAR', 'vasprun.xml']
-        return calcinfo
-
-    def write_incar(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_additional(self, tempfolder, inputdict):
         """
-        converts from parameters node (ParameterData) to INCAR format
-        and writes to dst
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
+        Subclass hook to write additional input files.
         """
-        from aiida_vasp.calcs.incar import dict_to_incar
-        with open(dst, 'w') as incar_file:
-            incar_file.write(dict_to_incar(self.inp.parameters.get_dict()))
-
-    def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
-        """
-        converts from structures node (StructureData) to POSCAR format
-        and writes to dst
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        """
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
-
-    def write_potcar(self, inputdict, dst):
-        """
-        concatenatest multiple paw files into a POTCAR
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        """
-        import subprocess32 as sp
-        catcom = ['cat']
-        # ~ structure = inputdict['structure']
-        # ~ structure = self.inp.structure
-        # order the symbols according to order given in structure
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            paw = inputdict[self._get_paw_linkname(kind)]
-            catcom.append(paw.get_abs_path('POTCAR'))
-        # cat the pawdata nodes into the file
-        with open(dst, 'w') as potcar_file:
-            sp.check_call(catcom, stdout=potcar_file)
-
-    def _write_kpoints_mesh(self, dst):
-        input_kpoints = self.inp.kpoints
-        mesh, offset = input_kpoints.get_kpoints_mesh()
-        with open(dst, 'w') as kpoints:
-            kps = KP_MESH_TPL.format(N=mesh, s=offset)
-            kpoints.write(kps)
-
-    def _write_kpoints_list(self, dst):
-        """Write a list of kpoints into the file ``dst`` file"""
-        input_kpoints = self.inp.kpoints
-        if 'array|weights' in input_kpoints.get_attrs():
-            kp_list, weights = input_kpoints.get_kpoints(also_weights=True)
-        else:
-            kp_list = input_kpoints.get_kpoints()
-            weights = [1.] * kp_list.shape[0]
-        kpoints_weights = zip(kp_list, weights)
-        with open(dst, 'w') as kpoints:
-            out_kp_list = '\n'.join([
-                KP_LIST_ITEM_TPL.format(k=k[0], w=k[1])
-                for k in kpoints_weights
-            ])
-            output = KP_LIST_TPL.format(
-                N=len(kpoints_weights), klist=out_kp_list)
-            kpoints.write(output)
-
-    def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
-        """
-        converts from kpoints node (KpointsData) to KPOINTS format
-        and writes to dst
-
-        :param inputdict: required by baseclass
-        :param dst: absolute path of the file to write to
-        """
-        input_kpoints = self.inp.kpoints
-        if input_kpoints.get_attrs().get('mesh'):
-            self._write_kpoints_mesh(dst)
-        elif input_kpoints.get_attrs().get('array|kpoints'):
-            self._write_kpoints_list(dst)
-        else:
-            raise AttributeError('you supplied an empty kpoints node')
-
-    def verify_inputs(self, inputdict, *args, **kwargs):
-        """check for the presence of the required inputs"""
-        # ~ notset_msg = 'input not set: %s'
-        super(BasicCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'parameters')
-        self.check_input(inputdict, 'structure')
-        if 'elements' not in self.attrs():
-            self._prestore()
-        for kind in self.elements:
-            self.check_input(inputdict, self._get_paw_linkname(kind))
-        self.check_input(inputdict, 'kpoints')
-        self.check_kpoints(inputdict['kpoints'])
-
-    @staticmethod
-    def check_kpoints(kpoints):
-        """check for nonemptiness of the input kpoints node"""
-        kpa = kpoints.get_attrs()
-        if 'mesh' not in kpa and 'array|kpoints' not in kpa:
-            msg = 'BasicCalculation can not be '
-            msg += 'submitted with empty kpoints node'
-            raise AttributeError(msg)
-
-    @classmethod
-    def _get_paw_linkname(cls, kind):
-        """required for storing multiple input paw nodes"""
-        return 'paw_%s' % kind
-
-    def _prestore(self):
-        """
-        set attributes prior to storing
-        """
-        super(BasicCalculation, self)._prestore()
-        self._set_attr('elements',
-                       list(
-                           ordered_unique_list(self.inp.structure.get_ase()
-                                               .get_chemical_symbols())))
-
-    @property
-    def _parameters(self):
-        return {
-            k.lower(): v
-            for k, v in self.inp.parameters.get_dict().iteritems()
-        }
-
-    @classmethod
-    def new_parameters(cls, **kwargs):
-        return cls.PARAMETER_CLS(**kwargs)
-
-    @classmethod
-    def new_structure(cls, **kwargs):
-        return cls.STRUCTURE_CLS(**kwargs)
-
-    @classmethod
-    def new_kpoints(cls, **kwargs):
-        return cls.KPOINTS_CLS(**kwargs)
-
-    @classmethod
-    def load_paw(cls, *args, **kwargs):
-        return cls.PAW_CLS.load_paw(*args, **kwargs)[0]
-
-    @property
-    def elements(self):
-        return self.get_attr('elements')
-
-    def _init_internal_params(self):
-        """
-        let the metaclass :py:class:`CalcMeta`
-        ref CalcMeta pick up internal parameters from the class body
-        and insert them
-        """
-        super(BasicCalculation, self)._init_internal_params()
-        self._update_internal_params()
-
-
-class TestVC(VaspCalcBase):
-    test_input = Input(types='parameter', doc='bla')
-    default_parser = 'vasp.vasp'
+        pass

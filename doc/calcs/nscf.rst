@@ -8,7 +8,7 @@ Description
 The NscfCalculation is used to calculate bandstructures, DOS, as well as obtain wannier90 input files.
 
 Technically the NscfCalculation is more flexible than that and will accept any values for ICHARG in the parameters node, not only values > 10.
-If a chargedensity node is given the ICHARG value is not set or set to a value other than 1 or 11, no 
+If a chargedensity node is given the ICHARG value is not set or set to a value other than 1 or 11, no
 CHGCAR file will be used in the calculation, because VASP would not read from it, and a warning is written to the calculation's log.
 This behaviour is consistent with running VASP manually, while being slightly more clear about what is actually happening.
 

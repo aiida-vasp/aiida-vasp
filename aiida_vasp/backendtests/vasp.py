@@ -10,14 +10,14 @@ from .common import Common
 
 
 # pylint: disable=protected-access,too-many-public-methods
-class Vasp5CalcTest(AiidaTestCase):
+class VaspCalcTest(AiidaTestCase):
     """
     Test Case for
-    py:class:`~aiida_vasp.calcs.vasp5.Vasp5Calculation`
+    py:class:`~aiida_vasp.calcs.vasp.VaspCalculation`
     """
 
     def setUp(self):
-        self.calc = CalculationFactory('vasp.vasp5')()
+        self.calc = CalculationFactory('vasp.vasp')()
         Common.import_paw()
 
         larray = np.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])

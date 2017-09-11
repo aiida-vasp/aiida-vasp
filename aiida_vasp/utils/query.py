@@ -14,10 +14,7 @@ class VaspFinder(object):
     THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core
     """
 
-    _vaspclass = [
-        'vasp.vasp', 'vasp.asevasp', 'vasp.vasp5', 'vasp.vasp2w90',
-        'vasp.vasp2w90.Vasp2W90Calculation'
-    ]
+    _vaspclass = ['vasp.vasp', 'vasp.vasp2w90']
 
     @classmethod
     def cmp_ctime(cls, calc1, calc2):

@@ -1,16 +1,16 @@
 {
     "continue_from": "e76cc204-c325-43d8-9d51-d005d9a1479b",
-    "description": "Testing the NscfWorkflow, continuing from a TbmodelWorkflow scf step", 
+    "description": "Testing the NscfWorkflow, continuing from a TbmodelWorkflow scf step",
     "extras": {
 	"experiment": "NscfWorkflowTest"
-    }, 
-    "label": "NscfWorkflow Comparison Test Bands", 
-    "queue": "dphys_compute", 
+    },
+    "label": "NscfWorkflow Comparison Test Bands",
+    "queue": "dphys_compute",
     "resources": {
-        "num_machines": "2", 
+        "num_machines": "2",
         "num_mpiprocs_per_machine": "8"
-    }, 
-    "use_wannier": false, 
+    },
+    "use_wannier": false,
     "vasp_code": "vasp-w90@monch",
     "parameters": {},
     "kpoints":{

@@ -7,13 +7,13 @@ module load fftw/3.3.3
  running on   16 total cores
  distrk:  each k-point on   16 cores,    1 groups
  distr:  one band on    1 cores,   16 groups
- using from now: INCAR     
- vasp.5.3.3 18Dez12 (build Feb  4 2016 02:40:37) complex                        
-  
+ using from now: INCAR
+ vasp.5.3.3 18Dez12 (build Feb  4 2016 02:40:37) complex
+
  POSCAR found type information on POSCAR  Ga As
  POSCAR found :  2 types and       2 ions
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
 |           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
@@ -32,7 +32,7 @@ module load fftw/3.3.3
 |      Unfortunately you need to use the default for hybrid, GW and RPA       |
 |      calculations.                                                          |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
  LDA part: xc-table for Ceperly-Alder, standard interpolation
  POSCAR, INCAR and KPOINTS ok, starting setup

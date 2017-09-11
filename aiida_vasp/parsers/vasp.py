@@ -1,100 +1,223 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
-from pymatgen.io import vasp
+import numpy as np
+
 from aiida.orm import DataFactory
-from aiida.parsers.parser import Parser
-from aiida.parsers.exceptions import OutputParsingError
-from aiida.common.exceptions import InvalidOperation
-from aiida.common.datastructures import calc_states
 
-from aiida_vasp.calcs.vasp import VaspCalculation
-
-__copyright__ = u'Copyright (c), 2015, Rico Häuselmann'
+from aiida_vasp.parsers.base import BaseParser
+from aiida_vasp.utils.io.eigenval import EigParser
+from aiida_vasp.utils.io.vasprun import VasprunParser
+from aiida_vasp.utils.io.doscar import DosParser
+from aiida_vasp.utils.io.kpoints import KpParser
 
 
-class VaspParser(Parser):
+class VaspParser(BaseParser):
     """
-    Parses the output files of a Vasp run.
+    Parses all Vasp calculations.
     """
 
-    def __init__(self, calculation):
-        """
-        initializes with a Calculation object
-        """
-        super(VaspParser, self).__init__(calculation)
-        if not isinstance(calculation, VaspCalculation):
-            raise OutputParsingError(
-                'Input calculation must be a VaspCalculation')
-        self._calc = calculation
+    def __init__(self, calc):
+        super(VaspParser, self).__init__(calc)
+        self.out_folder = None
+        self.vrp = None
+        self.dcp = None
 
     def parse_with_retrieved(self, retrieved):
-        """
-        parses the datafolder into results that then get stored in AiiDA.
-        """
-        # check status
-        state = self._calc.get_state()
-        if state != calc_states.PARSING:
-            raise InvalidOperation(
-                "Calculation not in {} state".format(calc_states.PARSING))
-        # get the retrieved folder if exists
-        try:
-            out_folder = retrieved[self._calc._get_linkname_retrieved()]
-        except KeyError:
-            self.logger.error('No retrieved folder found')
-            return False, ()
-        # ls retrieved
-        list_of_files = out_folder.get_folder_list()
-        # check for OUTCAR presence
-        if self._calc._OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
+        self.check_state()
+        self.out_folder = self.get_folder(retrieved)
+        if not self.out_folder:
+            return self.result(success=False)
+        outcar = self.get_file('OUTCAR')
+        if not outcar:
             self.logger.error(
-                'OUTCAR not found - probably something went wrong while reading the input files!'
-            )
-            return False, ()
-        new_nodes_list = []
+                'OUTCAR not found, ' +
+                'look at the scheduler output for troubleshooting')
+            return self.result(success=False)
 
-        def makepar(filename, pmgparser, lname=None):
-            return self._make_param_data(out_folder, filename, pmgparser,
-                                         lname)
+        self.vrp = self.read_run()
 
-        new_nodes_list.append(makepar('CONTCAR', vasp.Poscar.from_file))
-        new_nodes_list.append(makepar('OSZICAR', vasp.Oszicar))
-        new_nodes_list.append(makepar('OUTCAR', vasp.Outcar))
-        new_nodes_list.append(
-            makepar('vasprun.xml', vasp.Vasprun, lname='vasprun'))
+        bands, kpout, structure = self.read_eigenval()
 
-        # procar, wavecar, xdatcar
-        def makesf(filename, lname=None):
-            return self._make_single_file(out_folder, filename, lname)
+        self.dcp = self.read_dos()
+        dosnode = self.get_dos_node(self.vrp, self.dcp)
 
-        new_nodes_list.append(makesf('CHG'))
-        new_nodes_list.append(makesf('CHGCAR'))
-        new_nodes_list.append(makesf('DOSCAR'))
-        new_nodes_list.append(makesf('EIGENVAL'))
-        new_nodes_list.append(makesf('PCDAT'))
-        new_nodes_list.append(makesf('PROCAR'))
-        new_nodes_list.append(makesf('WAVECAR'))
-        new_nodes_list.append(makesf('XDATCAR'))
+        if bands:
+            self.set_bands(bands)  # append output nodes
 
-        self.logger.error(new_nodes_list)
+        if not kpout:
+            kpout = self.read_ibzkpt()
 
-        return True, new_nodes_list
+        if kpout:
+            self.set_kpoints(kpout)
 
-    def _make_param_data(self, out_folder, filename, pmgparser, lname=None):
-        """Create a parameter data node"""
-        parameter_cls = DataFactory('parameter')
-        list_of_files = out_folder.get_folder_list()
-        if filename not in list_of_files:
-            self.logger.error('{} not found')
-        outf = pmgparser(out_folder.get_abs_path(filename))
-        outf_ln = lname or filename.lower()
-        outf_dt = parameter_cls(dict=outf.as_dict())
-        return (outf_ln, outf_dt)
+        if structure:
+            self.set_structure(structure)
+
+        if self.vrp:
+            if self.vrp.is_sc:  # add chgcar ouput node if selfconsistent run
+                chgnode = self.get_chgcar()
+                self.set_chgcar(chgnode)
+
+            if self.vrp.is_sc:
+                self.set_wavecar(self.get_wavecar())
+
+        self.add_node('results', self.get_output())
+
+        if dosnode:
+            self.set_dos(dosnode)
+
+        return self.result(success=True)
+
+    def read_run(self):
+        '''Read vasprun.xml'''
+        vasprun = self.get_file('vasprun.xml')
+        if not vasprun:
+            self.logger.warning('no vasprun.xml found')
+            return None
+        return VasprunParser(vasprun)
+
+    def read_dos(self):
+        '''read DOSCAR for more accurate tdos and pdos'''
+        doscar = self.get_file('DOSCAR')
+        if not doscar:
+            self.logger.warning('no DOSCAR found')
+            return None
+        return DosParser(doscar)
 
     @staticmethod
-    def _make_single_file(out_folder, filename, lname=None):
-        """Create a singlefile data node"""
-        singlefile_cls = DataFactory('singlefile')
-        outf_n = out_folder.get_abs_path(filename)
-        outf_ln = lname or filename.lower()
-        outf_dt = singlefile_cls(file=outf_n)
-        return (outf_ln, outf_dt)
+    def get_dos_node(vrp, dcp):
+        """
+        takes VasprunParser and DosParser objects
+        and returns a doscar array node
+        """
+        if not vrp or not dcp:
+            return None
+        dosnode = DataFactory('array')()
+        if vrp.pdos:
+            pdos = vrp.pdos.copy()
+            for i, name in enumerate(vrp.pdos.dtype.names[1:]):
+                num_spins = vrp.pdos.shape[1]
+                # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
+                cur = dcp.pdos[:, :, i + 1:i + 1 + num_spins].transpose(
+                    0, 2, 1)
+                cond = vrp.pdos[name] < 0.1
+                pdos[name] = np.where(cond, cur, vrp.pdos[name])
+            dosnode.set_array('pdos', pdos)
+        num_spins = 1
+        if dcp.tdos.shape[1] == 5:
+            num_spins = 2
+        tdos = vrp.tdos[:num_spins, :].copy()
+        for i, name in enumerate(vrp.tdos.dtype.names[1:]):
+            cur = dcp.tdos[:, i + 1:i + 1 + num_spins].transpose()
+            cond = vrp.tdos[:num_spins, :][name] < 0.1
+            tdos[name] = np.where(cond, cur, vrp.tdos[:num_spins, :][name])
+        dosnode.set_array('tdos', tdos)
+        return dosnode
+
+    def read_cont(self):
+        '''read CONTCAR for output structure'''
+        from ase.io.vasp import read_vasp
+        structure = DataFactory('structure')()
+        cont = self.get_file('CONTCAR')
+        if not cont:
+            self.logger.info('CONTCAR not found!')
+            return None
+        structure.set_ase(read_vasp(cont))
+        return structure
+
+    def read_eigenval(self):
+        '''
+        Create a bands and a kpoints node from values in eigenvalue.
+
+        returns: bsnode, kpout
+        - bsnode: BandsData containing eigenvalues from EIGENVAL
+                and occupations from vasprun.xml
+        - kpout: KpointsData containing kpoints from EIGENVAL,
+
+        both bsnode as well as kpnode come with cell unset
+        '''
+        eig = self.get_file('EIGENVAL')
+        if not eig:
+            self.logger.warning('EIGENVAL not found')
+            return None, None, None
+        _, kpoints, bands = EigParser.parse_eigenval(eig)
+        bsnode = DataFactory('array.bands')()
+        kpout = DataFactory('array.kpoints')()
+
+        structure = None  # get output structure if not static
+        if self.vrp.is_md or self.vrp.is_relaxation:
+            structure = self.read_cont()
+
+        if self.vrp.is_md:  # set cell from input or output structure
+            cellst = structure
+        else:
+            cellst = self._calc.inp.structure
+        bsnode.set_cell(cellst.get_ase().get_cell())
+        kpout.set_cell(cellst.get_ase().get_cell())
+
+        if self._calc.inp.kpoints.get_attrs().get('array|kpoints'):
+            bsnode.set_kpointsdata(self._calc.inp.kpoints)
+        if self._calc.inp.kpoints.labels:
+            bsnode.labels = self._calc.inp.kpoints.labels
+        else:
+            bsnode.set_kpoints(
+                kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+        bsnode.set_bands(bands, occupations=self.vrp.occupations)
+        kpout.set_kpoints(
+            kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+        return bsnode, kpout, structure
+
+    def read_ibzkpt(self):
+        """Create a DB Node for the IBZKPT file"""
+        ibz = self.get_file('IBZKPT')
+        if not ibz:
+            self.logger.warning('IBZKPT not found')
+            return None
+        kpp = KpParser(ibz)
+        kpout = DataFactory('array.kpoints')()
+        kpout.set_kpoints(
+            kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
+        return kpout
+
+    def get_chgcar(self):
+        """Create a DB Node for the CHGCAR file"""
+        chgc = self.get_file('CHGCAR')
+        if chgc is None:
+            return None
+        chgnode = DataFactory('vasp.chargedensity')()
+        chgnode.set_file(chgc)
+        return chgnode
+
+    def get_wavecar(self):
+        """Create a DB Node for the WAVECAR file"""
+        wfn = self.get_file('WAVECAR')
+        if wfn is None:
+            return None
+        wfnode = DataFactory('vasp.wavefun')()
+        wfnode.set_file(wfn)
+        return wfnode
+
+    def get_output(self):
+        output = DataFactory('parameter')()
+        output.update_dict({'efermi': self.vrp.efermi})
+        return output
+
+    def set_bands(self, node):
+        self.add_node('bands', node)
+
+    def set_kpoints(self, node):
+        self.add_node('kpoints', node)
+
+    def set_chgcar(self, node):
+        if node is not None:
+            self.add_node('charge_density', node)
+
+    def set_wavecar(self, node):
+        if node is not None:
+            self.add_node('wavefunctions', node)
+
+    def set_structure(self, node):
+        self.add_node('structure', node)
+
+    def set_dos(self, node):
+        self.add_node('dos', node)

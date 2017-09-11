@@ -38,8 +38,3 @@ def dict_to_incar(incar_dict):
     for key, value in incar_dict.iteritems():
         incar_content += _incar_item(key, value) + '\n'
     return incar_content
-
-
-def par_to_incar(incar_pardat):
-    incar_dict = incar_pardat.get_dict()
-    return dict_to_incar(incar_dict)

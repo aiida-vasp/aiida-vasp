@@ -1,7 +1,9 @@
 """Utils for parsing VASP INCAR format"""
 import re
 
-from .parser import KeyValueParser
+from ..parser import KeyValueParser
+
+__all__ = ['IncarParser']
 
 
 class IncarParser(KeyValueParser):

@@ -33,7 +33,7 @@ minimal example::
       "paw_family": "<name>",
       "paw_map": {"In": "In_d", "As": "As"},
       "resources": {
-         "num_machines": num_nodes, 
+         "num_machines": num_nodes,
          "num_mpiprocs_per_machine": num_ppn
       },
       "wannier_resources": {
@@ -65,8 +65,8 @@ minimal example::
    }
 
    wf = AutowindowsWorkflow(params=parameters)
-   wf.start() 
- 
+   wf.start()
+
 **********
 Parameters
 **********
@@ -84,7 +84,7 @@ Reference
 *********
 
 .. automodule:: aiida.workflows.vasp.autowindows
-   
+
    .. autoclass:: AutowindowsWorkflow
       :members: get_params_template, get_template, Helper
 
@@ -124,4 +124,3 @@ Reference
       .. automethod:: gather_results
 
          adds links to the calculated bandstructures to the workflow's results.
-         

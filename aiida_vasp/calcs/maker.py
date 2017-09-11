@@ -4,10 +4,11 @@ A utility class to simplify creating VASP-Calculations, loosely follows the buil
 import os
 
 from aiida.orm import CalculationFactory, DataFactory
-from aiida_vasp.calcs.base import ordered_unique_list
-
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
+from aiida_vasp.calcs.vasp import ordered_unique_list
+
+
 class VaspMaker(object):
     """
     simplifies creating a Scf, Nscf or AmnCalculation from scratch interactively or
@@ -29,7 +30,7 @@ class VaspMaker(object):
 
     :keyword calc_cls: the class that VaspMaker will use when creating
         Calculation nodes.
-        defaults to 'vasp.vasp5'.
+        defaults to 'vasp.vasp'.
         if a string is given, it will be passed to aiida's CalculationFactory
     :type calc_cls: str or vasp.BasicCalculation subclass
 
@@ -132,7 +133,7 @@ class VaspMaker(object):
 
     def _init_defaults(self, *args, **kwargs):  # pylint: disable=unused-argument
         """Set default values"""
-        calcname = kwargs.get('calc_cls', 'vasp.vasp5')
+        calcname = kwargs.get('calc_cls', 'vasp.vasp')
         if isinstance(calcname, (str, unicode)):
             self.calc_cls = CalculationFactory(calcname)
         else:
@@ -189,10 +190,7 @@ class VaspMaker(object):
                     0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
-                pwd = os.path.abspath(os.curdir)
-                os.chdir(os.path.dirname(structure))
-                atoms = read_vasp('POSCAR')
-                os.chdir(pwd)
+                atoms = read_vasp(os.path.abspath(structure))
                 self._structure = self.calc_cls.new_structure()
                 self._structure.set_ase(atoms)
         else:

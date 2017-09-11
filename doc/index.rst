@@ -122,7 +122,7 @@ The VASP plugin provides some base and helper classes for convenience and to aid
 * :py:class:`VaspCalcBase <aiida_vasp.calcs.base.VaspCalcBase>`, takes over common tasks for vasp calculations while providing flexibility using hooks for subclasses.
 * :py:class:`BasicCalculation <aiida_vasp.calcs.base.BasicCalculation>`, with functions for writing the basic, common input files.
 * :py:class:`BaseParser <aiida.orm.parsers.plugins.vasp.base.BaseParser>`
-* :py:class:`Vasp5Parser <aiida.orm.parsers.plugins.vasp.vasp5.Vasp5Parser>`
+* :py:class:`VaspParser <aiida.orm.parsers.plugins.vasp.vasp.VaspParser>`
 * :py:class:`WorkflowHelper <aiida.workflows.vasp.helper.WorkflowHelper>`, with common convenienct functionality for workflows
 
 There is no base class for workflows, because aiida only recognizes direct subclasses of

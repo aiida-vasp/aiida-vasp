@@ -2,6 +2,8 @@ language: python
 python: 2.7
 cache: pip
 install:
+    - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
+    - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
     - pip install -e .[regen_default_paws,graphs]
     - pip install -r requirements-dev.txt
     - pip install --upgrade enum34

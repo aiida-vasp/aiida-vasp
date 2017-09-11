@@ -5,6 +5,17 @@ from aiida.cmdline.baseclass import VerdiCommandWithSubcommands
 from aiida.cmdline.commands.data import Importable
 
 
+def _try_load_dbenv():
+    """
+    Run `load_dbenv` unless the dbenv has already been loaded.
+    """
+    from aiida import load_dbenv, is_dbenv_loaded
+    if not is_dbenv_loaded():
+        load_dbenv()
+        return True
+    return False
+
+
 class _Paw(VerdiCommandWithSubcommands, Importable):
     """
     Setup and manage paw pseudopotentials and families
@@ -24,7 +35,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
     def uploadfamily(self, *args):
         """Upload a new PAW pseudopotential family."""
-        from aiida import load_dbenv
         import os.path
         import argparse as arp
 
@@ -53,7 +63,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
             print >> sys.stderr, 'Cannot find directory: ' + folder
             sys.exit(1)
 
-        load_dbenv()
+        _try_load_dbenv()
         from aiida.orm import DataFactory
         paw_cls = DataFactory('vasp.paw')
         files_found, files_uploaded = paw_cls.import_family(
@@ -67,7 +77,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
     def listfamilies(self, *args):
         """Subcommand to list AiiDA PAW families present in the DB"""
-        from aiida import load_dbenv
         import argparse
 
         parser = argparse.ArgumentParser(
@@ -99,7 +108,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
 
         params = parser.parse_args(args)
 
-        load_dbenv()
+        _try_load_dbenv()
         from aiida.orm import DataFactory
         paw_cls = DataFactory('vasp.paw')
         groups = paw_cls.get_paw_groups(
@@ -156,7 +165,6 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         import os
         from os.path import abspath, expanduser
 
-        from aiida import load_dbenv
         from aiida.orm import DataFactory
         from aiida.common.exceptions import NotExistent
 
@@ -179,7 +187,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         params = parser.parse_args(args)
         folder = abspath(expanduser(params.folder))
 
-        load_dbenv()
+        _try_load_dbenv()
         paw_cls = DataFactory('vasp.paw')
         try:
             group = paw_cls.get_famgroup(params.family_name)
