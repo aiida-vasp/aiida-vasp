@@ -37,8 +37,6 @@ if __name__ == '__main__':
         },
         entry_points={
             'aiida.calculations': [
-                'vasp.scf = aiida_vasp.calcs.scf:ScfCalculation',
-                'vasp.nscf = aiida_vasp.calcs.nscf:NscfCalculation',
                 'vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation',
                 'vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation'
             ],
@@ -49,8 +47,6 @@ if __name__ == '__main__':
                 'vasp.wavefun = aiida_vasp.data.wavefun:WavefunData'
             ],
             'aiida.parsers': [
-                'vasp.scf = aiida_vasp.parsers.scf:ScfParser',
-                'vasp.nscf = aiida_vasp.parsers.nscf:NscfParser',
                 'vasp.vasp = aiida_vasp.parsers.vasp:VaspParser',
                 'vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser'
             ],
