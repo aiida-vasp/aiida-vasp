@@ -28,12 +28,13 @@ if __name__ == '__main__':
         reentry_register=True,
         install_requires=[
             'aiida-core', 'ase', 'pymatgen', 'subprocess32', 'click',
-            'aiida-wannier90', 'chainmap'
+            'chainmap'
         ],
         extras_require={
             'graphs': ['matplotlib'],
             'regen_default_paws': ['lxml'],
             'test': ['aiida-pytest'],
+            'wannier': ['aiida-wannier90']
         },
         entry_points={
             'aiida.calculations': [
