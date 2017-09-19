@@ -11,3 +11,5 @@ jobs:
     include:
         - stage: compliance
           script: pre-commit run --all-files
+        - stage: test
+          script: coverage run pytest --ignore=test --ignore=tests_pytest && coverage report
