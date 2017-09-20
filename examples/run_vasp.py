@@ -6,7 +6,9 @@ import numpy
 @click.option('--paw-family', type=str, default='vasp-test')
 @click.option('--import-from', type=click.Path(), default='.')
 @click.option('--queue', type=str, default='')
-def test_vasp(paw_family, import_from, queue):
+@click.argument('code', type=str)
+@click.argument('computer', type=str)
+def test_vasp(paw_family, import_from, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
     if import_from:
@@ -22,7 +24,7 @@ def test_vasp(paw_family, import_from, queue):
     vasp_calc.use_structure(create_structure())
     vasp_calc.use_kpoints(create_kpoints())
     vasp_calc.use_parameters(create_params())
-    code = Code.get_from_string('vasp@monch')
+    code = Code.get_from_string('{}@{}'.format(code, computer))
     vasp_calc.use_code(code)
     vasp_calc.use_paw(paw_in, 'In')
     vasp_calc.use_paw(paw_as, 'As')
