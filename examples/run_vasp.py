@@ -3,20 +3,36 @@ import numpy
 
 
 @click.command()
-def test_vasp():
+@click.option('--paw-family', type=str, default='vasp-test')
+@click.option('--import-from', type=click.Path(), default='.')
+@click.option('--queue', type=str, default='')
+def test_vasp(paw_family, import_from, queue):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
+    if import_from:
+        import_paws(import_from, paw_family)
+    try:
+        paw_in, paw_as = get_paws(paw_family)
+    except ValueError as err:
+        click.echo(err.msg, err=True)
+        raise ValueError(
+            'give a valid family or import a new one (run with --help)')
+
     vasp_calc = CalculationFactory('vasp.vasp')()
     vasp_calc.use_structure(create_structure())
     vasp_calc.use_kpoints(create_kpoints())
     vasp_calc.use_parameters(create_params())
     code = Code.get_from_string('vasp@monch')
     vasp_calc.use_code(code)
+    vasp_calc.use_paw(paw_in, 'In')
+    vasp_calc.use_paw(paw_as, 'As')
     vasp_calc.set_computer(code.get_computer())
+    vasp_calc.set_queue_name(queue)
     vasp_calc.set_resources({
         'num_machines': 1,
         'num_mpiprocs_per_machine': 20
     })
+    vasp_calc.label = 'Test VASP run'
     vasp_calc.store_all()
     vasp_calc.submit()
 
@@ -62,6 +78,23 @@ def create_params():
         'MAGMOM': '6*0.0',
         'NBANDS': 24,
     })
+
+
+def import_paws(folder_path, family_name):
+    load_dbenv_if_not_loaded()
+    from aiida.orm import DataFactory
+    paw_cls = DataFactory('vasp.paw')
+    paw_cls.import_family(
+        folder_path, familyname=family_name, family_desc='Test family')
+
+
+def get_paws(family_name):
+    load_dbenv_if_not_loaded()
+    from aiida.orm import DataFactory
+    paw_cls = DataFactory('vasp.paw')
+    paw_in = paw_cls.load_paw(family=family_name, symbol='In')[0]
+    paw_as = paw_cls.load_paw(family=family_name, symbol='As')[0]
+    return paw_in, paw_as
 
 
 if __name__ == '__main__':
