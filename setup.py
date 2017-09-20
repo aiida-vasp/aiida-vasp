@@ -8,13 +8,13 @@ from setuptools import setup, find_packages
 
 # Get the version number
 with open('./aiida_vasp/__init__.py') as f:
-    match_expr = "__version__[^'\"]+(['\"])([^'\"]+)"
-    version = re.search(match_expr, f.read()).group(2).strip()
+    MATCH_EXPR = "__version__[^'\"]+(['\"])([^'\"]+)"
+    VERSION = re.search(MATCH_EXPR, f.read()).group(2).strip()
 
 if __name__ == '__main__':
     setup(
         name='aiida-vasp',
-        version=version,
+        version=VERSION,
         description='AiiDA Plugin for running VASP calculations.',
         url='https://github.com/DropD/aiida-vasp',
         author='Rico Häuselmann',
