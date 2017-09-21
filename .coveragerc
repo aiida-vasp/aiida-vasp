@@ -1,0 +1,6 @@
+[run]
+source = aiida_vasp
+omit = *test*
+
+[html]
+directory = coverage/html
