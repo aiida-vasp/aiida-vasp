@@ -6,9 +6,13 @@ install:
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
     - pip install -e .[regen_default_paws,graphs,dev]
     - pip install --upgrade enum34
-jobs:
-    include:
-        - stage: compliance
-          script: pre-commit run --all-files
-        - stage: test
-          script: coverage run pytest --ignore=test --ignore=tests_pytest && coverage report
+env:
+    - TEST_TYPE="pre-commit"
+    - TEST_TYPE="unittests"
+script: "./run_ci_tests"
+#jobs:
+#    include:
+#        - stage: compliance
+#          script: pre-commit run --all-files
+#        - stage: test
+#          script: coverage run pytest --ignore=test --ignore=tests_pytest && coverage report
