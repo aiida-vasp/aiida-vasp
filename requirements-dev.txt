@@ -3,3 +3,4 @@ prospector
 pylint
 flake8
 yapf
+coverage
