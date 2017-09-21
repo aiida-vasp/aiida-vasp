@@ -58,4 +58,15 @@ in order to use this plugin.
 Using this plugin
 ~~~~~~~~~~~~~~~~~
 
-This section is still in construction
+For a tryout session, use the script ``run_vasp.py`` in the examples folder. Assuming you have already set up a code and computer, usage is as follows::
+
+   $ python run_vasp.py --help  # shows help message
+   $ # first time you need to import the potentials
+   $ python run_vasp.py --import-from=<path-to-potentials-folder> --queue=<your-compute-queue> <code> <computer>
+     ... will take a while the first time due to importing potentials
+   $ # from  now on you can simply run
+   $ # python run_vasp.py --queue=<queue> <code> <computer>
+   $ verdi calculation list
+     .. should contain a vasp calculation
+
+
