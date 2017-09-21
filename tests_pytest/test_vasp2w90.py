@@ -10,7 +10,11 @@ def test_vasp2w90(sample, get_gaas_process_inputs, assert_finished):  # pylint: 
     from aiida.orm import DataFactory
 
     process, inputs = get_gaas_process_inputs(
-        calculation_string='vasp.vasp2w90')
+        calculation_string='vasp.vasp2w90',
+        parameters={'ncore': 1,
+                    'isym': -1,
+                    'icharg': 11,
+                    'lwave': False})
     charge_density = DataFactory('vasp.chargedensity')()
     charge_density.set_file(sample('GaAs/CHGCAR'))
     inputs.charge_density = charge_density
