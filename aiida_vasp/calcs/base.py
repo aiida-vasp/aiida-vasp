@@ -61,6 +61,13 @@ class Input(object):
     """
     Utility class that handles mapping between CalcMeta's and Calculation's
     interfaces for defining input nodes
+
+    Examples::
+
+        parameters = Input(types='parameter', doc='input parameters.')
+        structure = Input(types=['structure', 'cif'], doc='input structure')
+        paw = Input(types='vasp.paw', param='kind')
+
     """
 
     def __init__(self, types, param=None, ln=None, doc=''):
