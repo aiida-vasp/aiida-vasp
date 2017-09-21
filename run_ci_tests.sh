@@ -1,8 +1,8 @@
 case "$TEST_TYPE" in 
     unittests)
-        echo "coverage run $(command -v pytest) --ignore=test --ignore=tests_pytest && coverage report"
-        coverage run $(command -v pytest) --ignore=test --ignore=tests_pytest && coverage report
-        ;;
+         echo "pytest --cov-report=term-missing --cov=aiida_vasp --ignore=test --ignore=tests_pytest"
+         pytest --cov-report=term-missing --cov=aiida_vasp --ignore=test --ignore=tests_pytest
+         ;;
     pre-commit)
         echo "pre-commit run --all-files"
         pre-commit run --all-files
