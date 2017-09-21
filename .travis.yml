@@ -9,7 +9,7 @@ install:
 env:
     - TEST_TYPE="pre-commit"
     - TEST_TYPE="unittests"
-script: "./run_ci_tests"
+script: "./run_ci_tests.sh"
 #jobs:
 #    include:
 #        - stage: compliance
