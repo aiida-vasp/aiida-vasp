@@ -40,7 +40,11 @@ if __name__ == '__main__':
             'graphs': ['matplotlib'],
             'regen_default_paws': ['lxml'],
             'test': ['aiida-pytest'],
-            'wannier': ['aiida-wannier90']
+            'wannier': ['aiida-wannier90'],
+            'dev': [
+                'pre-commit', 'prospector', 'pylint', 'flake8', 'yapf',
+                'coverage', 'pytest', 'pytest-cov', 'pgtest'
+            ]
         },
         entry_points={
             'aiida.calculations': [

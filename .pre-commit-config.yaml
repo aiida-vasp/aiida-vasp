@@ -9,4 +9,13 @@
   hooks:
   - id: prospector
     language: system
-    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)'
+    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)|(conftest.py)'
+
+- repo: local
+  hooks:
+  - id: travis-linter
+    name: travis
+    entry: travis lint
+    files: .travis.yml
+    language: ruby
+    additional_dependencies: ['travis']

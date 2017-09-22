@@ -1,6 +1,7 @@
 """Unit tests for aiida_vasp.calcs.base"""
 # pylint: disable=redefined-outer-name,unused-argument
 import pytest
+from aiida.utils.fixtures import FixtureManager
 
 TYPE = 'parameter'
 DOC = 'input_parameters'
@@ -18,7 +19,14 @@ def load_dbenv():
 
 
 @pytest.fixture
-def input_obj(load_dbenv):
+def create_aiida_env():
+    manager = FixtureManager()
+    manager.create_aiida_db()
+    manager.create_profile()
+
+
+@pytest.fixture
+def input_obj(create_aiida_env):
     from aiida_vasp.calcs.base import Input
 
     return Input(types=TYPE, doc=DOC, param=PARAM, ln=linkname)
