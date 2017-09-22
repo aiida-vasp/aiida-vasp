@@ -1,11 +1,13 @@
 case "$TEST_TYPE" in 
     unittests)
-         echo "pytest --cov-report=term-missing --cov=aiida_vasp --ignore=test --ignore=tests_pytest"
-         pytest --cov-report=term-missing --cov=aiida_vasp --ignore=tests_pytest
-         ;;
+        set -x
+        pytest --cov-report=term-missing --cov=aiida_vasp --ignore=tests_pytest/
+        set +x
+        ;;
     pre-commit)
-        echo "pre-commit run --all-files"
+        set -x
         pre-commit run --all-files
+        set +x
         ;;
     *)
         echo "Invalid value for TEST_TYPE env variable."
