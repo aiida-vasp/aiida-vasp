@@ -43,7 +43,7 @@ if __name__ == '__main__':
             'wannier': ['aiida-wannier90'],
             'dev': [
                 'pre-commit', 'prospector', 'pylint', 'flake8', 'yapf',
-                'coverage', 'pytest', 'pytest-cov'
+                'coverage', 'pytest', 'pytest-cov', 'pgtest'
             ]
         },
         entry_points={
