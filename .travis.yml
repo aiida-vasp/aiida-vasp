@@ -4,6 +4,7 @@ cache: pip
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
+    - pip install -e git+https://github.com/DropD/aiida_core@plugin-fixtures#egg=aiida-core
     - pip install -e .[regen_default_paws,graphs,dev]
     - pip install --upgrade enum34
 env:
