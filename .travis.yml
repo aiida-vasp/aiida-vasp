@@ -1,5 +1,7 @@
 language: python
 python: 2.7
+services:
+    - postgresql
 cache: pip
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
