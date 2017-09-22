@@ -1,13 +1,27 @@
 language: python
 python: 2.7
+services:
+    - postgresql
 cache: pip
+before_install:  # copied from pgtest's travis.yml
+    - sudo apt-get install locate
+    - sudo service postgresql stop
+    - sudo apt-get remove postgresql
+    - sudo apt-get install postgresql
+    - sudo updatedb
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
-    - pip install -e .[regen_default_paws,graphs]
-    - pip install -r requirements-dev.txt
+    - pip install -e git+https://github.com/DropD/aiida_core@plugin-fixtures#egg=aiida-core
+    - pip install -e .[regen_default_paws,graphs,dev]
     - pip install --upgrade enum34
-jobs:
-    include:
-        - stage: compliance
-          script: pre-commit run --all-files
+env:
+    - TEST_TYPE="pre-commit"
+    - TEST_TYPE="unittests"
+script: "./run_ci_tests.sh"
+#jobs:
+#    include:
+#        - stage: compliance
+#          script: pre-commit run --all-files
+#        - stage: test
+#          script: coverage run pytest --ignore=test --ignore=tests_pytest && coverage report
