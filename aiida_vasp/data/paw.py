@@ -299,7 +299,7 @@ class PawData(Data):
             if family:
                 group, created = cls.get_or_create_famgroup(family)
             elif group:
-                created = not group._is_stored  # pylint: disable=protected-access
+                created = not group.is_stored  # pylint: disable=protected-access
             try:
                 paw_filter = cls._node_filter(**kwargs)
                 res = filter(paw_filter, group.nodes)
