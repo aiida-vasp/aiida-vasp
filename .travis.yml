@@ -3,6 +3,12 @@ python: 2.7
 services:
     - postgresql
 cache: pip
+before_install:  # copied from pgtest's travis.yml
+    - sudo apt-get install locate
+    - sudo service postgresql stop
+    - sudo apt-get remove postgresql
+    - sudo apt-get install postgresql
+    - sudo updatedb
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest

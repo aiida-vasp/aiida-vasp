@@ -1,11 +1,9 @@
-set -e
+set -ev
 case "$TEST_TYPE" in 
     unittests)
-        set -x
         pytest --cov-report=term-missing --cov=aiida_vasp
         ;;
     pre-commit)
-        set -x
         pre-commit run --all-files
         ;;
     *)
