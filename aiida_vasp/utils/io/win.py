@@ -33,7 +33,7 @@ class WinParser(KeyValueParser):
         content = re.sub(cls.block, '', content)
         kvd = dict(re.findall(cls.assignment, content))
         bld = {}
-        for i in blocks:
-            lineslist = cls.splitlines(i[1], d_type=str)
-            bld[i[0]] = lineslist
+        for keyword, value in blocks:
+            # do not split individual lines
+            bld[keyword] = [line.strip() for line in value.split('\n')]
         return kvd, bld, comments

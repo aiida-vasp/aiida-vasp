@@ -93,7 +93,8 @@ class VaspParser(BaseParser):
         if not vrp or not dcp:
             return None
         dosnode = DataFactory('array')()
-        if vrp.pdos:
+        # vrp.pdos is a numpy array, and thus not directly bool-convertible
+        if vrp.pdos.size > 0:
             pdos = vrp.pdos.copy()
             for i, name in enumerate(vrp.pdos.dtype.names[1:]):
                 num_spins = vrp.pdos.shape[1]
