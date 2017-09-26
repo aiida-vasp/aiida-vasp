@@ -1,7 +1,8 @@
 """Unit tests for aiida_vasp.calcs.base"""
-# pylint: disable=redefined-outer-name,unused-argument
+# pylint: disable=unused-import
 import pytest
-from aiida.utils.fixtures import plugin_fixture
+
+from aiida_vasp.utils.fixtures import aiida_env
 
 TYPE = 'parameter'
 DOC = 'input_parameters'
@@ -12,30 +13,13 @@ def linkname(param):
     return 'linkname_{}'.format(param)
 
 
-@pytest.fixture
-def load_dbenv():
-    from aiida import load_dbenv
-    load_dbenv()
-
-
-@pytest.fixture(scope='module')
-def create_aiida_env(request):
-    with plugin_fixture() as manager:
-        manager.create_aiida_db()
-        manager.create_profile()
-        yield manager
-
-
-@pytest.fixture
-def input_obj(create_aiida_env):
-    from aiida_vasp.calcs.base import Input
-
-    return Input(types=TYPE, doc=DOC, param=PARAM, ln=linkname)
-
-
-def test_input_get_dict(input_obj):
+@pytest.mark.usefixtures('aiida_env')
+def test_input_get_dict():
     """get_dict must have same format as documented for _use_methods item"""
     from aiida.orm import DataFactory
+    from aiida_vasp.calcs.base import Input
+
+    input_obj = Input(types=TYPE, doc=DOC, param=PARAM, ln=linkname)
     use_spec = input_obj.get_dict()
     assert use_spec['valid_types'] == (DataFactory(TYPE), )
     assert use_spec['additional_parameter'] == PARAM
@@ -43,6 +27,7 @@ def test_input_get_dict(input_obj):
     assert use_spec['docstring'] == DOC
 
 
+@pytest.mark.usefixtures('aiida_env')
 def test_input_type_seq():
     """make sure sequence of type strings is correctly converted"""
     from aiida.orm import DataFactory
