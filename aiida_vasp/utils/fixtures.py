@@ -5,7 +5,7 @@ import pytest
 from aiida.utils.fixtures import FixtureManager
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def aiida_env():
     manager = FixtureManager()
     manager.create_profile()
@@ -15,5 +15,5 @@ def aiida_env():
 
 @pytest.fixture(scope='function')
 def fresh_aiida_env(aiida_env):
-    aiida_env.reset_db()
     yield
+    aiida_env.reset_db()
