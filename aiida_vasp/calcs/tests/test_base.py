@@ -2,7 +2,7 @@
 # pylint: disable=unused-import
 import pytest
 
-from aiida_vasp.utils.fixtures import aiida_env
+from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env
 
 TYPE = 'parameter'
 DOC = 'input_parameters'
@@ -13,7 +13,7 @@ def linkname(param):
     return 'linkname_{}'.format(param)
 
 
-@pytest.mark.usefixtures('aiida_env')
+@pytest.mark.usefixtures('fresh_aiida_env')
 def test_input_get_dict():
     """get_dict must have same format as documented for _use_methods item"""
     from aiida.orm import DataFactory
@@ -27,7 +27,7 @@ def test_input_get_dict():
     assert use_spec['docstring'] == DOC
 
 
-@pytest.mark.usefixtures('aiida_env')
+@pytest.mark.usefixtures('fresh_aiida_env')
 def test_input_type_seq():
     """make sure sequence of type strings is correctly converted"""
     from aiida.orm import DataFactory
