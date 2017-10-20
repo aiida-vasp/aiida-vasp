@@ -16,7 +16,7 @@ def test_vasp(paw_family, import_from, queue, code, computer):
     try:
         paw_in, paw_as = get_paws(paw_family)
     except ValueError as err:
-        click.echo(err.msg, err=True)
+        click.echo(repr(err), err=True)
         raise ValueError(
             'give a valid family or import a new one (run with --help)')
 
