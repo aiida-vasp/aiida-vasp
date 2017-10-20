@@ -1,5 +1,5 @@
 """Unit tests for aiida_vasp.calcs.base"""
-# pylint: disable=unused-import
+# pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
 from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env
@@ -38,3 +38,23 @@ def test_input_type_seq():
     type_1_cls = DataFactory(type_1)
     type_2_cls = DataFactory(type_2)
     assert input_obj.types == (type_1_cls, type_2_cls)
+
+
+@pytest.fixture()
+def base_calc():
+    from aiida_vasp.calcs.base import VaspCalcBase
+    return VaspCalcBase()
+
+
+def test_check_inputs_fail(fresh_aiida_env, base_calc):
+    with pytest.raises(ValueError):
+        base_calc.check_input(base_calc.get_inputs_dict(), 'code')
+    with pytest.raises(ValueError):
+        base_calc.verify_inputs(base_calc.get_inputs_dict())
+
+
+def test_check_inputs_success(fresh_aiida_env, base_calc):
+    from aiida.orm import Code
+    base_calc.use_code(Code())
+    assert base_calc.check_input(base_calc.get_inputs_dict(), 'code')
+    assert base_calc.verify_inputs(base_calc.get_inputs_dict())
