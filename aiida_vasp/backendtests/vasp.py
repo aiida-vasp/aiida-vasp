@@ -65,7 +65,9 @@ class VaspCalcTest(AiidaTestCase):
         each is contained in the result
         """
         self.calc.use_parameters(
-            self.calc.new_parameters(dict={'System': 'Test'}))
+            self.calc.new_parameters(dict={
+                'System': 'Test'
+            }))
         self.calc.use_structure(self.structure)
         self.calc.use_paw(
             self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
@@ -119,9 +121,12 @@ class VaspCalcTest(AiidaTestCase):
             self.assertTrue(kpoints_f.read())
 
     def test_need_kp_false(self):
+        """Test a case where kpoints input node is not required"""
         self.calc.use_parameters(
-            self.calc.new_parameters(dict={'kspacing': 0.5,
-                                           'kgamma': True}))
+            self.calc.new_parameters(dict={
+                'kspacing': 0.5,
+                'kgamma': True
+            }))
         self.assertFalse(self.calc._need_kp())
 
     def test_need_kp_true(self):
@@ -136,11 +141,15 @@ class VaspCalcTest(AiidaTestCase):
         """Check ICHARG input parameter should be set"""
         for i in [0, 2, 4, 10, 12]:
             self.calc.use_parameters(
-                self.calc.new_parameters(dict={'icharg': i}))
+                self.calc.new_parameters(dict={
+                    'icharg': i
+                }))
             self.assertFalse(self.calc._need_chgd())
         for i in [1, 11]:
             self.calc.use_parameters(
-                self.calc.new_parameters(dict={'icharg': i}))
+                self.calc.new_parameters(dict={
+                    'icharg': i
+                }))
             self.assertTrue(self.calc._need_chgd())
 
     def test_need_wfn_none(self):
@@ -154,7 +163,9 @@ class VaspCalcTest(AiidaTestCase):
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:
             self.calc.use_parameters(
-                self.calc.new_parameters(dict={'istart': i}))
+                self.calc.new_parameters(dict={
+                    'istart': i
+                }))
             self.assertTrue(
                 self.calc._need_wfn(),
                 msg='_need_wfn not True for istart=%s' % i)

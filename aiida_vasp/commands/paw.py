@@ -192,8 +192,8 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         try:
             group = paw_cls.get_famgroup(params.family_name)
         except NotExistent:
-            print >> sys.stderr, (
-                'paw family {} not found'.format(params.family_name))
+            print >> sys.stderr, ('paw family {} not found'.format(
+                params.family_name))
 
         #create folder
         potpaw = params.name[0] if params.name else os.path.join(

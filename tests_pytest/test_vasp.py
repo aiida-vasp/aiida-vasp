@@ -9,7 +9,9 @@ def test_vasp(configure_with_daemon, get_gaas_process_inputs, assert_finished): 
     from aiida.orm import DataFactory
 
     process, inputs = get_gaas_process_inputs(
-        calculation_string='vasp.vasp', parameters={'ncore': 4})
+        calculation_string='vasp.vasp', parameters={
+            'ncore': 4
+        })
     inputs.settings = DataFactory('parameter')(dict={
         'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR']
     })

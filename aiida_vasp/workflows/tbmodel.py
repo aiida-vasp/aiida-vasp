@@ -81,8 +81,8 @@ class TbmodelWorkflow(Workflow):
         scstep = self.get_attributes()['scstep']
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
-        self.append_to_report(
-            '{}: retrieved sc step calculation'.format(params.get('name')))
+        self.append_to_report('{}: retrieved sc step calculation'.format(
+            params.get('name')))
 
         # set up band structure step
         maker = VaspMaker(calc_cls='vasp.nscf', continue_from=sccalc)
@@ -108,8 +108,8 @@ class TbmodelWorkflow(Workflow):
         winstep = self.get_attributes()['winstep']
         prev = self.get_step_calculations(self.winrun)
         wincalc = prev.get(uuid=winstep['uuid'])
-        self.append_to_report(
-            '{}: retrieved nscf calculation'.format(params.get('name')))
+        self.append_to_report('{}: retrieved nscf calculation'.format(
+            params.get('name')))
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
         maker.wannier_parameters = wincalc.out.wannier_parameters.copy()
@@ -137,8 +137,8 @@ class TbmodelWorkflow(Workflow):
         amnstep = self.get_attributes()['amnstep']
         prev = self.get_step_calculations(self.amnrun)
         amncalc = prev.get(uuid=amnstep['uuid'])
-        self.append_to_report(
-            '{}: retrieved amn calculation'.format(params.get('name')))
+        self.append_to_report('{}: retrieved amn calculation'.format(
+            params.get('name')))
 
         calc = CalculationFactory('vasp.wannier')()
         code = Code.get_from_string(params['wannier_x'])
@@ -157,7 +157,8 @@ class TbmodelWorkflow(Workflow):
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
         self.add_result('wannier_run', calc)
-        self.append_to_report('{}: starting wannier run, PK={}, uuid={}'.
-                              format(params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report(
+            '{}: starting wannier run, PK={}, uuid={}'.format(
+                params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'wannstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.exit)

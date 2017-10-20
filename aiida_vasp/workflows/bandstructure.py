@@ -74,8 +74,8 @@ class Bandstructure(Workflow):
         scstep = self.get_attributes()['scstep']
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
-        self.append_to_report(
-            '{}: retrieved sc step calculation'.format(params.get('name')))
+        self.append_to_report('{}: retrieved sc step calculation'.format(
+            params.get('name')))
 
         # set up band structure step
         maker = self.get_calc_maker()
@@ -104,7 +104,7 @@ class Bandstructure(Workflow):
         self.add_to_report('{}: calculations done, gathering results'.format(
             params.get('name')))
         efermi = bandcalc.out.results.get_dict()['efermi']
-        self.add_to_report(
-            '{}: E_fermi = {}'.format(params.get('name'), efermi))
+        self.add_to_report('{}: E_fermi = {}'.format(
+            params.get('name'), efermi))
         self.add_result('efermi', bandcalc.out.results.get_dict()['efermi'])
         self.next(self.exit)

@@ -83,8 +83,8 @@ class Common(object):
 
     @staticmethod
     def charge_density():
-        return DataFactory('vasp.chargedensity')(file=subpath(
-            'data', 'CHGCAR'))
+        return DataFactory('vasp.chargedensity')(
+            file=subpath('data', 'CHGCAR'))
 
     @staticmethod
     def charge_density_res():

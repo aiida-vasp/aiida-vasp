@@ -16,10 +16,12 @@ def test_vasp2w90(
 
     process, inputs = get_gaas_process_inputs(
         calculation_string='vasp.vasp2w90',
-        parameters={'ncore': 1,
-                    'isym': -1,
-                    'icharg': 11,
-                    'lwave': False})
+        parameters={
+            'ncore': 1,
+            'isym': -1,
+            'icharg': 11,
+            'lwave': False
+        })
     charge_density = DataFactory('vasp.chargedensity')()
     charge_density.set_file(sample('GaAs/CHGCAR'))
     inputs.charge_density = charge_density
@@ -29,7 +31,8 @@ def test_vasp2w90(
         num_bands=24,
         num_iter=0,
         num_wann=14,
-        spinors=True, ))
+        spinors=True,
+    ))
     inputs.wannier_parameters = wannier_parameters
 
     wannier_projections = List()

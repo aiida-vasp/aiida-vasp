@@ -519,4 +519,5 @@ class VaspMaker(object):
             ismear=0,
             lorbit=11,
             lsorbit=True,
-            sigma=0.05, )
+            sigma=0.05,
+        )

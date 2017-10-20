@@ -201,8 +201,8 @@ class AutowindowsWorkflow(Workflow):
             wfpk.append(workflow.pk)
 
         self.append_to_report('running tbmodels for {} windows'.format(count))
-        self.append_to_report(
-            'tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
+        self.append_to_report('tbmodels pk-range: {} - {}'.format(
+            wfpk[0], wfpk[-1]))
 
         self.next(self.get_reference_bands)
 

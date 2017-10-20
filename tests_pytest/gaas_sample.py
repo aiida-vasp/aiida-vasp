@@ -34,16 +34,17 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: d
         kpoints.set_kpoints_mesh([8, 8, 8])
         inputs.kpoints = kpoints
 
-        parameters_input = DataFactory('parameter')(dict=ChainMap(
-            parameters,
-            dict(
-                nbands=24,
-                gga='PE',
-                gga_compat=False,
-                ismear=0,
-                lorbit=11,
-                lsorbit=True,
-                sigma=0.05, )))
+        parameters_input = DataFactory('parameter')(
+            dict=ChainMap(parameters,
+                          dict(
+                              nbands=24,
+                              gga='PE',
+                              gga_compat=False,
+                              ismear=0,
+                              lorbit=11,
+                              lsorbit=True,
+                              sigma=0.05,
+                          )))
         inputs.parameters = parameters_input
         inputs._options.resources = {
             'num_machines': 1,
