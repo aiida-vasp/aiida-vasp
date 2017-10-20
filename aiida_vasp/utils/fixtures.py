@@ -5,12 +5,12 @@ import pytest
 from aiida.utils.fixtures import plugin_fixture
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def aiida_env():
     with plugin_fixture() as manager:
-        manager.create_aiida_db()
         manager.create_profile()
         yield manager
+        manager.destroy_all()
 
 
 @pytest.fixture(scope='function')
