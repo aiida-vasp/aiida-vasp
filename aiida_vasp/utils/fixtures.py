@@ -2,15 +2,15 @@
 # pylint: disable=unused-argument,redefined-outer-name
 import pytest
 
-from aiida.utils.fixtures import plugin_fixture
+from aiida.utils.fixtures import FixtureManager
 
 
 @pytest.fixture(scope='module')
 def aiida_env():
-    with plugin_fixture() as manager:
-        manager.create_profile()
-        yield manager
-        manager.destroy_all()
+    manager = FixtureManager()
+    manager.create_profile()
+    yield manager
+    manager.destroy_all()
 
 
 @pytest.fixture(scope='function')
