@@ -4,7 +4,9 @@ import tempfile
 import shutil
 from collections import OrderedDict
 
+import numpy
 import pytest
+
 from aiida.utils.fixtures import fixture_manager
 
 
@@ -71,10 +73,30 @@ def cif_structure(aiida_env):
 
 
 @pytest.fixture()
+def aiida_structure(aiida_env):
+    """Fixture for an aiida StructureData"""
+    from aiida.orm import DataFactory
+    larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
+    alat = 6.058
+    structure = DataFactory('structure')(cell=larray * alat)
+    structure.append_atom(position=[0, 0, 0], symbols='In')
+    structure.append_atom(position=[.25, .25, .25], symbols='As')
+    return structure
+
+
+@pytest.fixture()
 def kpoints_mesh(aiida_env):
     from aiida.orm import DataFactory
     kpoints = DataFactory('array.kpoints')()
     kpoints.set_kpoints_mesh([2, 2, 2])
+    return kpoints
+
+
+@pytest.fixture()
+def kpoints_list(aiida_env):
+    from aiida.orm import DataFactory
+    kpoints = DataFactory('array.kpoints')()
+    kpoints.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
     return kpoints
 
 
@@ -89,3 +111,10 @@ def vasp_code(localhost, fresh_aiida_env):
     code.set_remote_computer_exec((localhost, '/usr/local/bin/vasp'))
     code.set_input_plugin_name('vasp.vasp')
     return code
+
+
+@pytest.fixture()
+def ref_incar():
+    from aiida_vasp.backendtests.common import subpath
+    with open(subpath('data/INCAR'), 'r') as reference_incar_fo:
+        yield reference_incar_fo.read()
