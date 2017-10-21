@@ -289,12 +289,12 @@ class PawData(Data):
         silent = kwargs.pop('silent', None)
         if not (group or family):
             query_builder = QueryBuilder()
-            query_builder.append(cls=cls)
+            query_builder.append(cls, tag='paw')
             filters = {}
             for key, value in kwargs.iteritems():
-                filters[key] = {'=': value}
-            query_builder.append(filters=filters)
-            res = list(query_builder.iterall())
+                filters['attributes.{}'.format(key)] = {'==': value}
+            query_builder.add_filter('paw', filters)
+            res = [i[0] for i in query_builder.all()]
         else:
             if family:
                 group, created = cls.get_or_create_famgroup(family)
