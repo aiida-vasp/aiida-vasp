@@ -33,8 +33,8 @@ if __name__ == '__main__':
         setup_requires=['reentry'],
         reentry_register=True,
         install_requires=[
-            'aiida-core', 'ase', 'pymatgen', 'subprocess32', 'click',
-            'chainmap'
+            'aiida-core[atomic_tools]', 'ase', 'pymatgen', 'subprocess32',
+            'click', 'chainmap'
         ],
         extras_require={
             'graphs': ['matplotlib'],

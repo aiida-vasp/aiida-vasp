@@ -35,6 +35,6 @@ _incar_item.tpl = '{key} = {value}'
 
 def dict_to_incar(incar_dict):
     incar_content = ''
-    for key, value in incar_dict.iteritems():
+    for key, value in sorted(incar_dict.iteritems(), key=lambda t: t):
         incar_content += _incar_item(key, value) + '\n'
     return incar_content

@@ -2,6 +2,7 @@
 # pylint: disable=unused-argument,redefined-outer-name
 import tempfile
 import shutil
+from collections import OrderedDict
 
 import pytest
 from aiida.utils.fixtures import fixture_manager
@@ -40,12 +41,8 @@ def localhost(aiida_env):
 def vasp_params(aiida_env):
     from aiida.orm import DataFactory
 
-    return DataFactory('parameter')(dict={
-        'gga': 'PE',
-        'gga_compat': False,
-        'lorbit': 11,
-        'sigma': 0.5
-    })
+    return DataFactory('parameter')(dict=OrderedDict([('gga', 'PE'), (
+        'gga_compat', False), ('lorbit', 11), ('sigma', 0.5)]))
 
 
 @pytest.fixture()
@@ -82,7 +79,7 @@ def kpoints_mesh(aiida_env):
 
 
 @pytest.fixture()
-def vasp_code(localhost):
+def vasp_code(localhost, fresh_aiida_env):
     """Fixture for a vasp code, the executable it points to does not exist"""
     from aiida.orm import Code
     localhost.store()
