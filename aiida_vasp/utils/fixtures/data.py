@@ -54,7 +54,7 @@ def paws(aiida_env):
     from aiida.orm import DataFactory
     from aiida_vasp.backendtests.common import subpath
     DataFactory('vasp.paw').import_family(
-        subpath('../backendtests/LDA'),
+        subpath('..', 'backendtests', 'LDA'),
         familyname='TEST',
         family_desc='test data',
     )
@@ -71,7 +71,7 @@ def vasp_structure(request, aiida_env):
     from aiida_vasp.backendtests.common import subpath
     from aiida.orm import DataFactory
     if request.param == 'cif':
-        cif_path = subpath('data/EntryWithCollCode43360.cif')
+        cif_path = subpath('data', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
         larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
@@ -111,21 +111,45 @@ def vasp_code(localhost):
 
 
 @pytest.fixture()
+def vasp_chgcar(aiida_env):
+    """CHGCAR node and reference fixture"""
+    from aiida.orm import DataFactory
+    from aiida_vasp.backendtests.common import subpath
+    chgcar_path = subpath('data', 'CHGCAR')
+    chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
+    with open(chgcar_path, 'r') as ref_chgcar_fo:
+        ref_chgcar = ref_chgcar_fo.read()
+    return chgcar, ref_chgcar
+
+
+@pytest.fixture()
+def vasp_wavecar(aiida_env):
+    """WAVECAR node and reference fixture"""
+    from aiida.orm import DataFactory
+    from aiida_vasp.backendtests.common import subpath
+    wavecar_path = subpath('data', 'WAVECAR')
+    wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
+    with open(wavecar_path, 'r') as ref_wavecar_fo:
+        ref_wavecar = ref_wavecar_fo.read()
+    return wavecar, ref_wavecar
+
+
+@pytest.fixture()
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data/INCAR'), 'r') as reference_incar_fo:
+    with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read()
 
 
 def _ref_kp_list():
     from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data/KPOINTS.list'), 'r') as reference_kpoints_fo:
+    with open(subpath('data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
     from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data/KPOINTS.mesh'), 'r') as reference_kpoints_fo:
+    with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list

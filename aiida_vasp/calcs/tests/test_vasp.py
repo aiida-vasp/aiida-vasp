@@ -7,7 +7,8 @@ import numpy
 import pytest
 
 from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env, localhost, vasp_params, \
-    paws, vasp_structure, vasp_kpoints, vasp_code, ref_incar, localhost_dir
+    paws, vasp_structure, vasp_kpoints, vasp_code, ref_incar, localhost_dir, vasp_chgcar, \
+    vasp_wavecar
 
 
 @pytest.fixture()
@@ -88,6 +89,34 @@ def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
         assert 'In_d' in result_potcar
         assert 'As' in result_potcar
         assert result_potcar.count('End of Dataset') == 2
+
+
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+def test_write_chgcar(fresh_aiida_env, vasp_calc_and_ref, vasp_chgcar):
+    """Test that CHGAR file is written correctly"""
+    vasp_calc, _ = vasp_calc_and_ref
+    chgcar, ref_chgcar = vasp_chgcar
+    vasp_calc.use_charge_density(chgcar)
+    inp = vasp_calc.get_inputs_dict()
+    with managed_temp_file() as temp_file:
+        vasp_calc.write_chgcar(inp, temp_file)
+        with open(temp_file, 'r') as result_chgcar_fo:
+            assert result_chgcar_fo.read() == ref_chgcar
+
+
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+def test_write_wavecar(fresh_aiida_env, vasp_calc_and_ref, vasp_wavecar):
+    """Test that CHGAR file is written correctly"""
+    vasp_calc, _ = vasp_calc_and_ref
+    wavecar, ref_wavecar = vasp_wavecar
+    vasp_calc.use_wavefunctions(wavecar)
+    inp = vasp_calc.get_inputs_dict()
+    with managed_temp_file() as temp_file:
+        vasp_calc.write_wavecar(inp, temp_file)
+        with open(temp_file, 'r') as result_wavecar_fo:
+            assert result_wavecar_fo.read() == ref_wavecar
 
 
 @contextlib.contextmanager
