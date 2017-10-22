@@ -7,11 +7,12 @@ import numpy
 import pytest
 
 from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env, localhost, vasp_params, \
-    paws, cif_structure, kpoints_mesh, vasp_code, aiida_structure, kpoints_list, ref_incar
+    paws, vasp_structure, vasp_kpoints, vasp_code, ref_incar, localhost_dir
 
 
 @pytest.fixture()
-def vasp_calc_s1(vasp_code, vasp_params, paws):
+def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints,
+                      vasp_structure, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
     calc = VaspCalculation()
@@ -21,47 +22,37 @@ def vasp_calc_s1(vasp_code, vasp_params, paws):
     calc.use_parameters(vasp_params)
     calc.use_paw(paws['In'], kind='In')
     calc.use_paw(paws['As'], kind='As')
-    return calc
+    calc.use_structure(vasp_structure)
+    kpoints, ref_kpoints = vasp_kpoints
+    calc.use_kpoints(kpoints)
+    return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
 
 
-@pytest.fixture()
-def vasp_calc_cif(vasp_calc_s1, cif_structure, kpoints_mesh):
-    """Fixture for a vasp calculation with a cif structure input and mesh kpoints"""
-    vasp_calc_s1.use_structure(cif_structure)
-    vasp_calc_s1.use_kpoints(kpoints_mesh)
-    return vasp_calc_s1
-
-
-@pytest.fixture()
-def vasp_calc_str(vasp_calc_s1, aiida_structure, kpoints_list):
-    """Fixture for a vasp calculation with a aiida structure input and list kpoints"""
-    vasp_calc_s1.use_structure(aiida_structure)
-    vasp_calc_s1.use_kpoints(kpoints_list)
-    return vasp_calc_s1
-
-
-@pytest.fixture(params=['cif', 'str'])
-def vasp_calc(request, vasp_calc_cif, vasp_calc_str):
-    if request.param == 'cif':
-        return vasp_calc_cif
-    return vasp_calc_str
-
-
-def test_store(vasp_calc):
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')],
+    indirect=True)
+def test_store(vasp_calc_and_ref):
+    vasp_calc, _ = vasp_calc_and_ref
     vasp_calc.store_all()
     assert vasp_calc.pk is not None
 
 
-def test_write_incar(vasp_calc_cif, ref_incar):
-    inp = vasp_calc_cif.get_inputs_dict()
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
+    vasp_calc, reference = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
-        vasp_calc_cif.write_incar(inp, temp_file)
+        vasp_calc.write_incar(inp, temp_file)
         with open(temp_file, 'r') as result_incar_fo:
-            assert result_incar_fo.read() == ref_incar
+            assert result_incar_fo.read() == reference['incar']
 
 
-def test_write_poscar(vasp_calc):
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref):
     from ase.io.vasp import read_vasp
+    vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
         vasp_calc.write_poscar(inp, temp_file)
@@ -72,6 +63,16 @@ def test_write_poscar(vasp_calc):
                 result_ase.get_cell(), ref_ase.get_cell(), atol=1e-16, rtol=0)
             assert result_ase.get_chemical_formula(
             ) == ref_ase.get_chemical_formula()
+
+
+def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
+    vasp_calc, reference = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    print inp['kpoints'].get_attrs(), reference['kpoints']
+    with managed_temp_file() as temp_file:
+        vasp_calc.write_kpoints(inp, temp_file)
+        with open(temp_file, 'r') as result_kpoints_fo:
+            assert result_kpoints_fo.read() == reference['kpoints']
 
 
 @contextlib.contextmanager
