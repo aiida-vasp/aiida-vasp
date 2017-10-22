@@ -1,5 +1,6 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
+import os
 import shutil
 
 import numpy
@@ -139,6 +140,18 @@ def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read()
+
+
+@pytest.fixture()
+def ref_retrieved_nscf():
+    """Fixture: retrieved directory from an NSCF vasp run"""
+    from aiida.orm import DataFactory
+    from aiida_vasp.backendtests.common import subpath
+    retrieved = DataFactory('folder')()
+    for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
+        retrieved.add_path(
+            subpath('data', 'retrieved_nscf', 'path', fname), '')
+    return retrieved
 
 
 def _ref_kp_list():
