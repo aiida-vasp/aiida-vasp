@@ -75,6 +75,21 @@ def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
             assert result_kpoints_fo.read() == reference['kpoints']
 
 
+@pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
+    """Check that POTCAR is written correctly"""
+    vasp_calc, _ = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    with managed_temp_file() as temp_file:
+        vasp_calc.write_potcar(inp, temp_file)
+        with open(temp_file, 'r') as potcar_fo:
+            result_potcar = potcar_fo.read()
+        assert 'In_d' in result_potcar
+        assert 'As' in result_potcar
+        assert result_potcar.count('End of Dataset') == 2
+
+
 @contextlib.contextmanager
 def managed_temp_file():
     import tempfile
