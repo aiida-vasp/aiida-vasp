@@ -6,6 +6,7 @@ import contextlib
 import numpy
 import pytest
 from aiida.common.folders import SandboxFolder
+from aiida.common.exceptions import ValidationError
 
 from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env, localhost, vasp_params, \
     paws, vasp_structure, vasp_kpoints, vasp_code, ref_incar, localhost_dir, vasp_chgcar, \
@@ -172,6 +173,22 @@ def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     assert 'bands' in outputs
     assert 'dos' in outputs
     assert 'results' in outputs
+
+
+def test_verify_success(vasp_calc_and_ref):
+    """Check that correct inputs are successfully verified"""
+    vasp_calc, _ = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    vasp_calc.verify_inputs(inp)
+
+
+def test_verify_fail(vasp_calc_and_ref):
+    """Check that incorrect inputs are not verified"""
+    vasp_calc, _ = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    inp.pop('kpoints')
+    with pytest.raises(ValidationError):
+        vasp_calc.verify_inputs(inp)
 
 
 @contextlib.contextmanager

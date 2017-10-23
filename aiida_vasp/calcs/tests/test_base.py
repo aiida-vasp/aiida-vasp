@@ -1,6 +1,7 @@
 """Unit tests for aiida_vasp.calcs.base"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
+from aiida.common.exceptions import ValidationError
 
 from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env
 
@@ -47,9 +48,9 @@ def base_calc():
 
 
 def test_check_inputs_fail(fresh_aiida_env, base_calc):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         base_calc.check_input(base_calc.get_inputs_dict(), 'code')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         base_calc.verify_inputs(base_calc.get_inputs_dict())
 
 

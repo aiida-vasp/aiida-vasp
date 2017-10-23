@@ -5,6 +5,7 @@
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
+from aiida.common.exceptions import ValidationError
 
 
 def make_use_methods(inputs, bases):
@@ -259,7 +260,7 @@ class VaspCalcBase(JobCalculation):
         notset_msg = 'input not set: %s'
         if check_fn():
             if linkname not in inputdict:
-                raise ValueError(notset_msg % linkname)
+                raise ValidationError(notset_msg % linkname)
         return True
 
     def store(self, *args, **kwargs):
