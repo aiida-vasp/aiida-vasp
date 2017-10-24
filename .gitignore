@@ -12,3 +12,4 @@
 *_LOCAL_*
 *_REMOTE_*
 .coverage
+.tox
