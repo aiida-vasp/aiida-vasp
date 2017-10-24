@@ -25,6 +25,7 @@ def file_input(*args, **kwargs):
 
 class VersionUpdater(object):
     """Version number synchronisation interface"""
+    version_pat = re.compile(r'\d+.\d+.\d+')
 
     def __init__(self):
         self.top_level_init = subpath('aiida_vasp', '__init__.py')
@@ -47,10 +48,11 @@ class VersionUpdater(object):
         with open(self.setup_json, 'w') as setup_fo:
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
-    @staticmethod
-    def get_version():
-        version_byte_string = subprocess.check_output(['git', 'describe'])
-        return version.parse(version_byte_string)
+    def get_version(self):
+        describe_byte_string = subprocess.check_output(
+            ['git', 'describe', '--match', 'v*.*.*'])
+        version_string = re.findall(self.version_pat, describe_byte_string)[0]
+        return version.parse(version_string)
 
     def sync(self):
         self.write_to_init()
