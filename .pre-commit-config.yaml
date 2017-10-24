@@ -19,3 +19,8 @@
     files: .travis.yml
     language: ruby
     additional_dependencies: ['travis']
+  - id: version-updater
+    name: version
+    language: system
+    entry: python ops/update_version.py
+    always_run: true
