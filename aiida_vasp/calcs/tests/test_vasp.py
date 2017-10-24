@@ -1,48 +1,15 @@
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
 """Unittests for VaspCalculation"""
-import os
+# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import contextlib
+import os
 
 import numpy
 import pytest
-from aiida.common.folders import SandboxFolder
 from aiida.common.exceptions import ValidationError
+from aiida.common.folders import SandboxFolder
 
-from aiida_vasp.utils.fixtures import aiida_env, fresh_aiida_env, localhost, vasp_params, \
-    paws, vasp_structure, vasp_kpoints, vasp_code, ref_incar, localhost_dir, vasp_chgcar, \
-    vasp_wavecar, ref_retrieved_nscf
-
-
-@pytest.fixture()
-def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints,
-                      vasp_structure, ref_incar):
-    """Fixture for non varying setup of a vasp calculation"""
-    from aiida_vasp.calcs.vasp import VaspCalculation
-    calc = VaspCalculation()
-    calc.use_code(vasp_code)
-    calc.set_computer(vasp_code.get_computer())
-    calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-    calc.use_parameters(vasp_params)
-    calc.use_paw(paws['In'], kind='In')
-    calc.use_paw(paws['As'], kind='As')
-    calc.use_structure(vasp_structure)
-    kpoints, ref_kpoints = vasp_kpoints
-    calc.use_kpoints(kpoints)
-    return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
-
-
-@pytest.fixture()
-def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
-    """Fixture: vasp calc with chgcar and wavecar given"""
-    calc, ref = vasp_calc_and_ref
-    chgcar, ref_chgcar = vasp_chgcar
-    wavecar, ref_wavecar = vasp_wavecar
-    calc.use_charge_density(chgcar)
-    calc.use_wavefunctions(wavecar)
-    calc.inp.parameters.update_dict({'icharg': 11})
-    ref['chgcar'] = ref_chgcar
-    ref['wavecar'] = ref_wavecar
-    return calc, ref
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 
 
 @pytest.mark.parametrize(
@@ -54,8 +21,7 @@ def test_store(vasp_calc_and_ref):
     assert vasp_calc.pk is not None
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
     vasp_calc, reference = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
@@ -65,8 +31,7 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
             assert result_incar_fo.read() == reference['incar']
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref):
     from ase.io.vasp import read_vasp
     vasp_calc, _ = vasp_calc_and_ref
@@ -92,8 +57,7 @@ def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
             assert result_kpoints_fo.read() == reference['kpoints']
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
     """Check that POTCAR is written correctly"""
     vasp_calc, _ = vasp_calc_and_ref
@@ -107,8 +71,7 @@ def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
         assert result_potcar.count('End of Dataset') == 2
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_write_chgcar(fresh_aiida_env, vasp_calc_and_ref, vasp_chgcar):
     """Test that CHGAR file is written correctly"""
     vasp_calc, _ = vasp_calc_and_ref
@@ -121,8 +84,7 @@ def test_write_chgcar(fresh_aiida_env, vasp_calc_and_ref, vasp_chgcar):
             assert result_chgcar_fo.read() == ref_chgcar
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_write_wavecar(fresh_aiida_env, vasp_calc_and_ref, vasp_wavecar):
     """Test that CHGAR file is written correctly"""
     vasp_calc, _ = vasp_calc_and_ref
@@ -158,8 +120,7 @@ def test_prepare(vasp_nscf_and_ref):
     assert set(inputs) == {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'}
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+@ONLY_ONE_CALC
 def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     """Check that parsing is successful and creates the right output links"""
     vasp_calc, _ = vasp_nscf_and_ref
