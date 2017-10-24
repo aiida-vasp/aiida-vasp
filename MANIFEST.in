@@ -1,0 +1,2 @@
+recursive-include aiida_vasp/backendtests/data *
+recursive-include aiida_vasp/backendtests/LDA *
