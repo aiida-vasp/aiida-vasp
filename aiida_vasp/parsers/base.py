@@ -20,7 +20,7 @@ class BaseParser(Parser):
         """
         # ~ super(BaseParser, self).parse_with_retrieved(retrieved)
         self.out_folder = self.get_folder(retrieved)
-        return self.result(success=True)
+        return self.result(success=bool(self.out_folder is not None))
 
     def check_state(self):
         """
