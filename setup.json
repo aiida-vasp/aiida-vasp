@@ -48,7 +48,8 @@
             "coverage", 
             "pytest", 
             "pytest-cov", 
-            "pgtest"
+            "pgtest >= 1.1.0", 
+            "packaging"
         ], 
         "graphs": [
             "matplotlib"
@@ -67,6 +68,7 @@
     "install_requires": [
         "aiida-core[atomic_tools]", 
         "ase", 
+        "scipy < 1.0.0", 
         "pymatgen", 
         "subprocess32", 
         "click", 
