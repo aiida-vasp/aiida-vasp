@@ -68,6 +68,7 @@
     "install_requires": [
         "aiida-core[atomic_tools]", 
         "ase", 
+        "scipy < 1.0.0", 
         "pymatgen", 
         "subprocess32", 
         "click", 
