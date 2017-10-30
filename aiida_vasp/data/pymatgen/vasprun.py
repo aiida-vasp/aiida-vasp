@@ -25,7 +25,7 @@ class VasprunToAiida(object):
         The structure at the last recorded ionic step
         """
         return get_data_node(
-            'structure', pymatgen=self.vasprun_obj.ionic_steps['structure'])
+            'structure', pymatgen=self.vasprun_obj.structures[-1])
 
 
 @dbenv

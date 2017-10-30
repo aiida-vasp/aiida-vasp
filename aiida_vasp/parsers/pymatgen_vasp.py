@@ -37,11 +37,11 @@ class PymatgenParser(BaseParser):
     def parse_with_retrieved(self, retrieved):
         """Parse the calculation"""
         self.check_state()
-        super_result = super(PymatgenParser,
-                             self).parse_with_retrieved(retrieved)
+        success, _ = super(PymatgenParser,
+                           self).parse_with_retrieved(retrieved)
 
-        if not super_result[0]:
-            return super_result
+        if not success:
+            return self.result(success)
 
         vasprun_path = self.get_file('vasprun.xml')
         parsed_vasprun = Vasprun(vasprun_path, **self.get_vasprun_options())
@@ -50,8 +50,10 @@ class PymatgenParser(BaseParser):
         self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
 
+        return self.result(success)
+
     def get_vasprun_options(self):
-        settings_input = self._calc.get_inputs_dic().get('settings')
+        settings_input = self._calc.get_inputs_dict().get('settings')
         if not settings_input:
             return {}
         return settings_input.get_dict().get('pymatgen_parser', {})
