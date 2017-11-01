@@ -39,6 +39,8 @@ class PymatgenParser(BaseParser):
         calc.submit()
     """
 
+    _linkname_outparams = 'output_parameters'
+
     def __init__(self, calc):
         super(PymatgenParser, self).__init__(calc)
         self.vasprun_adapter = None
@@ -58,6 +60,8 @@ class PymatgenParser(BaseParser):
         self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
         self.add_node('forces', self.vasprun_adapter.forces)
+        self.add_node('output_parameters',
+                      self.vasprun_adapter.output_parameters)
 
         return self.result(success)
 
