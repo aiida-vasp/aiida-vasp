@@ -11,11 +11,18 @@ class PymatgenParser(BaseParser):
     """
     Use pymatgen to parse vasp output.
 
-    * Translate pymatgen Vasprun class into output nodes
+    * Translate ``pymatgen`` ``Vasprun`` class into output nodes
     * can read broken ``vasprun.xml`` files
 
     Parameters can be passed to the ``pymatgen.io.vasp.outputs.Vasprun``
     constructor via the settings input node for VaspCalculation (see example).
+
+    :note: on broken ``vasprun.xml``
+
+        VASP needs to have completed at least one ionic step and must have written
+        the corresponding <calculation>...</calculation> tag to the vasprun.xml output
+        or the parser will still fail. This is a limitation of the ``pymatgen``'s ``Vasprun``
+        class.
 
     Example Usage::
 
@@ -50,9 +57,22 @@ class PymatgenParser(BaseParser):
             parsed_vasprun = Vasprun(vasprun_path,
                                      **self.get_vasprun_options())
         except (xml.etree.ElementTree.ParseError,
-                xml.etree.cElementTree.ParseError, IndexError):
+                xml.etree.cElementTree.ParseError):
+            msg_tpl = '{problem}, {solution}'
+            problem = 'vasprun.xml contains invalid xml'
+            solution_tpl = 'try parsing it anyway using\n{example}'
+            example = '\n'.join([
+                '', 'vasp_calc.use_settings(ParameterData(dict={',
+                '    "pymatgen_parser": {',
+                '        "exception_on_bad_xml": False', '    }', '}))', ''
+            ])
+            msg = msg_tpl.format(
+                problem=problem, solution=solution_tpl.format(example=example))
+            raise AiidaParsingError(msg)
+        except IndexError:
             raise AiidaParsingError(
-                'Could not parse vasprun.xml, probably malformed xml')
+                'vasprun.xml must contain at least one complete ionic step (<calculation> tag)'
+            )
 
         self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
 

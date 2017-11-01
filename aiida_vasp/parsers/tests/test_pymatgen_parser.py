@@ -74,9 +74,9 @@ def test_structure_result(parse_result):
 
 
 @pytest.mark.parametrize(
-    ['vasprun_path', 'parse_result'], [(2331, None)], indirect=True)
-def test_broken_vasprun(parse_result, recwarn):
-    """Test that slightly truncated vasp run can be read and warnings are emitted"""
+    ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
+def test_slightly_broken_vasprun(parse_result, recwarn):
+    """Test that truncated vasprun (after one ionic step) can be read and warnings are emitted"""
     success, nodes = parse_result()
     nodes = dict(nodes)
     assert success
