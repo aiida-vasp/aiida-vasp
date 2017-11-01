@@ -20,7 +20,7 @@ class BaseParser(Parser):
         """
         # ~ super(BaseParser, self).parse_with_retrieved(retrieved)
         self.out_folder = self.get_folder(retrieved)
-        return self.result(success=True)
+        return self.result(success=bool(self.out_folder is not None))
 
     def check_state(self):
         """
@@ -47,7 +47,7 @@ class BaseParser(Parser):
         :param bool success: wether the parsing was successful
         :return: (sucess, new_nodes), the expected return values of a parser
         """
-        return bool(success), self._new_nodes.items()
+        return bool(success), self.new_nodes.items()
 
     def get_file(self, fname):
         """
@@ -68,5 +68,5 @@ class BaseParser(Parser):
 
     @property
     def new_nodes(self):
-        """holds a list of parsed output nodes"""
-        return self._new_nodes.items()
+        """returns a dict of parsed output nodes"""
+        return self._new_nodes

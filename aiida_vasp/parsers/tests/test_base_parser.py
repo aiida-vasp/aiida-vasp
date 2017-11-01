@@ -38,7 +38,7 @@ def test_result(base_parser):
 @ONLY_ONE_CALC
 def test_add_node(base_parser):
     base_parser.add_node('test', 'result')
-    assert base_parser.new_nodes == [('test', 'result')]
+    assert base_parser.new_nodes['test'] == 'result'
 
 
 @ONLY_ONE_CALC

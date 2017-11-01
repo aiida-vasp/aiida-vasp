@@ -1,0 +1,118 @@
+Sender: LSF System <lsfadmin@cs-0049>
+Subject: Job 825273: <mp-30311-disp-001> in cluster <kclusterf> Done
+
+Job <mp-30311-disp-001> was submitted from host <wi-0002> by user <b32945> in cluster <kclusterf>.
+Job was executed on host(s) <20*cs-0049>, in queue <gr10260f>, as user <b32945> in cluster <kclusterf>.
+</home/b/b32945> was used as the home directory.
+</home/b/b32945/coguetmp/ph-0201-0300-lsf/c01131> was used as the working directory.
+Started at Sat Apr 30 04:40:52 2016
+Results reported on Sat Apr 30 04:52:25 2016
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#QSUB -q gr10260f
+#QSUB -W 24:00
+#QSUB -A p=20:t=1:c=1:m=3072M
+#QSUB -rn
+#QSUB -J mp-30311-disp-001
+#QSUB -e err.log
+#QSUB -o std.log
+
+mpirun ~/vasp541mpi
+sleep 60
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :               12653.52 sec.
+    Max Memory :             2765 MB
+    Average Memory :         2547.94 MB
+    Total Requested Memory : -
+    Delta Memory :           -
+    (Delta: the difference between Total Requested Memory and Max Memory.)
+    Max Swap :               12136 MB
+    Max Processes :          25
+    Max Threads :            87
+
+The output (if any) follows:
+
+ running on   20 total cores
+ distrk:  each k-point on   20 cores,    1 groups
+ distr:  one band on    5 cores,    4 groups
+ using from now: INCAR     
+ vasp.5.4.1 05Feb16 (build Apr 29 2016 10:46:48) complex                        
+  
+ POSCAR found type information on POSCAR  P  S  Zn
+ POSCAR found :  3 types and     104 ions
+ scaLAPACK will be used
+
+ ----------------------------------------------------------------------------- 
+|                                                                             |
+|  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
+|                                                                             |
+|      You have a (more or less) 'large supercell' and for larger cells       |
+|      it might be more efficient to use real space projection opertators     |
+|      So try LREAL= Auto  in the INCAR   file.                               |
+|      Mind: At the moment your POTCAR file does not contain real space       |
+|       projectors, and has to be modified,  BUT if you                       |
+|      want to do an extremely  accurate calculation you might also keep the  |
+|      reciprocal projection scheme          (i.e. LREAL=.FALSE.)             |
+|                                                                             |
+ ----------------------------------------------------------------------------- 
+
+
+ ----------------------------------------------------------------------------- 
+|                                                                             |
+|  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
+|                                                                             |
+|      You enforced a specific xc-type in the INCAR file,                     |
+|      a different type was found on the POTCAR file                          |
+|          I HOPE YOU KNOW, WHAT YOU ARE  DOING                               |
+|                                                                             |
+ ----------------------------------------------------------------------------- 
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.568932151960E+04    0.56893E+04   -0.25684E+05  1808   0.130E+03
+DAV:   2     0.504619171464E+03   -0.51847E+04   -0.49444E+04  1912   0.339E+02
+DAV:   3    -0.415489334328E+03   -0.92011E+03   -0.89435E+03  1992   0.149E+02
+DAV:   4    -0.475927918358E+03   -0.60439E+02   -0.59371E+02  2112   0.407E+01
+DAV:   5    -0.478441195550E+03   -0.25133E+01   -0.24969E+01  2216   0.776E+00    0.735E+01
+DAV:   6    -0.460231956897E+03    0.18209E+02   -0.36637E+01  2648   0.497E+01    0.505E+01
+DAV:   7    -0.461727119619E+03   -0.14952E+01   -0.66391E+01  2064   0.105E+01    0.996E+00
+DAV:   8    -0.460021183665E+03    0.17059E+01   -0.74162E+00  2424   0.720E+00    0.560E+00
+DAV:   9    -0.459882822959E+03    0.13836E+00   -0.14018E+00  2480   0.331E+00    0.333E+00
+DAV:  10    -0.459881410055E+03    0.14129E-02   -0.19162E-01  2464   0.251E+00    0.150E+00
+DAV:  11    -0.459874729711E+03    0.66803E-02   -0.53671E-02  2440   0.167E+00    0.529E-01
+DAV:  12    -0.459876398102E+03   -0.16684E-02   -0.32045E-02  2152   0.350E-01    0.353E-01
+DAV:  13    -0.459876203583E+03    0.19452E-03   -0.45486E-03  2496   0.405E-01    0.186E-01
+DAV:  14    -0.459876127243E+03    0.76341E-04   -0.15971E-03  2432   0.249E-01    0.106E-01
+DAV:  15    -0.459876126921E+03    0.32110E-06   -0.38857E-04  2424   0.117E-01    0.660E-02
+DAV:  16    -0.459876134432E+03   -0.75105E-05   -0.11273E-04  2368   0.345E-02    0.348E-02
+DAV:  17    -0.459876139185E+03   -0.47535E-05   -0.18930E-05  2448   0.112E-02    0.113E-02
+DAV:  18    -0.459876140849E+03   -0.16632E-05   -0.28147E-06  2424   0.102E-02    0.534E-03
+DAV:  19    -0.459876141175E+03   -0.32617E-06   -0.18211E-06  2088   0.392E-03    0.384E-03
+DAV:  20    -0.459876141231E+03   -0.56018E-07   -0.19002E-07  2224   0.243E-03    0.179E-03
+DAV:  21    -0.459876141246E+03   -0.15265E-07   -0.13167E-07  2104   0.197E-03    0.955E-04
+DAV:  22    -0.459876141312E+03   -0.66189E-07   -0.74218E-08  1640   0.853E-04    0.911E-04
+DAV:  23    -0.459876141345E+03   -0.32487E-07   -0.14481E-08  1072   0.616E-04    0.612E-04
+DAV:  24    -0.459876141357E+03   -0.12100E-07   -0.46808E-09  1048   0.240E-04    0.477E-04
+DAV:  25    -0.459876141315E+03    0.41677E-07   -0.20810E-09  1048   0.179E-04    0.423E-04
+DAV:  26    -0.459876141304E+03    0.11343E-07   -0.14824E-09  1048   0.181E-04    0.409E-04
+DAV:  27    -0.459876141304E+03   -0.61846E-09   -0.43685E-10  1008   0.733E-05
+   1 F= -.45987614E+03 E0= -.45987614E+03  d E =-.271431E-40
+
+
+PS:
+
+Read file <err.log> for stderr output of this job.
+
