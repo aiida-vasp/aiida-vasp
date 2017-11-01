@@ -52,6 +52,21 @@ class PymatgenParser(BaseParser):
         if not success:
             return self.result(success)
 
+        parsed_vasprun = self.try_parse_vasprun()
+        self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
+
+        self.add_node('structure', self.vasprun_adapter.last_structure)
+        self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
+        self.add_node('forces', self.vasprun_adapter.forces)
+
+        return self.result(success)
+
+    def try_parse_vasprun(self):
+        """
+        Try to parse the vasprun file
+
+        and give helpful error messages in case something goes wrong
+        """
         vasprun_path = self.get_file('vasprun.xml')
         try:
             parsed_vasprun = Vasprun(vasprun_path,
@@ -73,14 +88,7 @@ class PymatgenParser(BaseParser):
             raise AiidaParsingError(
                 'vasprun.xml must contain at least one complete ionic step (<calculation> tag)'
             )
-
-        self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
-
-        if self.vasprun_adapter.last_structure:
-            self.add_node('structure', self.vasprun_adapter.last_structure)
-        self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
-
-        return self.result(success)
+        return parsed_vasprun
 
     def get_vasprun_options(self):
         settings_input = self._calc.get_inputs_dict().get('settings')

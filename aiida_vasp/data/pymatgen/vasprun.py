@@ -1,4 +1,6 @@
 """pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation"""
+from numpy import array
+
 from aiida_vasp.utils.aiida_utils import dbenv
 
 
@@ -11,7 +13,7 @@ class VasprunToAiida(object):
     @property
     def actual_kpoints(self):
         """
-        A kpoints node representing what was used in a portable way.
+        List of actually used kpoints as KpointsData
         """
         kpoints = get_data_node('array.kpoints')
         kpoints.set_kpoints(
@@ -22,7 +24,7 @@ class VasprunToAiida(object):
     @property
     def last_structure(self):
         """
-        The structure at the last recorded ionic step
+        The structure after or at the last recorded ionic step as StructureData
         """
         last_structure = self.vasprun_obj.structures[-1]
         return self.final_structure or get_data_node(
@@ -31,12 +33,21 @@ class VasprunToAiida(object):
     @property
     def final_structure(self):
         """
-        The final structure after all calculations
+        The final structure after all calculations as StructureData
         """
         final_structure = getattr(self.vasprun_obj, 'final_structure', None)
         if not final_structure:
             return None
         return get_data_node('structure', pymatgen=final_structure)
+
+    @property
+    def forces(self):
+        """Forces in the last ioni step as ArrayData"""
+        forces_array = get_data_node('array')
+        forces_array.set_array('forces',
+                               array(
+                                   self.vasprun_obj.ionic_steps[-1]['forces']))
+        return forces_array
 
 
 @dbenv
