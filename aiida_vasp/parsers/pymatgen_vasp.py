@@ -55,8 +55,7 @@ class PymatgenParser(BaseParser):
         parsed_vasprun = self.try_parse_vasprun()
         self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
 
-        if self.vasprun_adapter.last_structure:
-            self.add_node('structure', self.vasprun_adapter.last_structure)
+        self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
 
         return self.result(success)
