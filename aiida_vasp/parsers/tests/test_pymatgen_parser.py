@@ -86,6 +86,16 @@ def test_forces_result(parse_result):
         [-0.00300438, 0.00453998, 0.00066599]))
 
 
+def test_res(parse_result):
+    """Check that the results manager can find scalar / low dim results"""
+    _, nodes = parse_result()
+    nodes = dict(nodes)
+    output_data = nodes['output_parameters'].get_dict()
+    assert output_data['energy'] == -459.8761413
+    assert output_data['efermi'] == 2.96801422
+    assert 'stress' in output_data
+
+
 @pytest.mark.parametrize(
     ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
 def test_slightly_broken_vasprun(parse_result, recwarn):
