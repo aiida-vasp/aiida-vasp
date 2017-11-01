@@ -1,5 +1,7 @@
 """A pymatgen based VaspCalculation parser"""
+import xml
 from pymatgen.io.vasp.outputs import Vasprun
+from aiida.common.exceptions import ParsingError as AiidaParsingError
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.data.pymatgen.vasprun import VasprunToAiida
@@ -44,10 +46,18 @@ class PymatgenParser(BaseParser):
             return self.result(success)
 
         vasprun_path = self.get_file('vasprun.xml')
-        parsed_vasprun = Vasprun(vasprun_path, **self.get_vasprun_options())
+        try:
+            parsed_vasprun = Vasprun(vasprun_path,
+                                     **self.get_vasprun_options())
+        except (xml.etree.ElementTree.ParseError,
+                xml.etree.cElementTree.ParseError, IndexError):
+            raise AiidaParsingError(
+                'Could not parse vasprun.xml, probably malformed xml')
+
         self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
 
-        self.add_node('structure', self.vasprun_adapter.last_structure)
+        if self.vasprun_adapter.last_structure:
+            self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
 
         return self.result(success)
