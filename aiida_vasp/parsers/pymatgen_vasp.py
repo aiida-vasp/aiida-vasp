@@ -57,6 +57,7 @@ class PymatgenParser(BaseParser):
 
         self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
+        self.add_node('forces', self.vasprun_adapter.forces)
 
         return self.result(success)
 

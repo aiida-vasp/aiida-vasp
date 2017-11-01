@@ -2,6 +2,7 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import os
 
+import numpy
 import pytest
 from aiida.common.exceptions import ParsingError
 
@@ -71,6 +72,18 @@ def test_structure_result(parse_result):
     _, nodes = parse_result()
     nodes = dict(nodes)
     assert isinstance(nodes['structure'], DataFactory('structure'))
+
+
+def test_forces_result(parse_result):
+    """Check the parsed forces result node"""
+    from aiida.orm import DataFactory
+    _, nodes = parse_result()
+    nodes = dict(nodes)
+    assert isinstance(nodes['forces'], DataFactory('array'))
+    assert numpy.all(nodes['forces'].get_array('forces')[0] == numpy.array(
+        [-0.23272115, -0.01115905, 0.03449686]))
+    assert numpy.all(nodes['forces'].get_array('forces')[-1] == numpy.array(
+        [-0.00300438, 0.00453998, 0.00066599]))
 
 
 @pytest.mark.parametrize(
