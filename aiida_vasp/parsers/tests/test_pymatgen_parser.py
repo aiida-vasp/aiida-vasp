@@ -98,6 +98,14 @@ def test_res(parse_result):
     assert 'stress' in output_data
 
 
+def test_bands(parse_result):
+    """Check that bands are parsed and have the right shape."""
+    _, nodes = parse_result()
+    nodes = dict(nodes)
+    bands = nodes['bands']
+    assert bands.get_bands().shape == (1, 2, 452)
+
+
 @pytest.mark.parametrize(
     ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
 def test_slightly_broken_vasprun(parse_result, recwarn):

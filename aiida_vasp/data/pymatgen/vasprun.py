@@ -1,20 +1,20 @@
-"""pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation"""
+"""Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
 from numpy import array
+from pymatgen.electronic_structure.bandstructure import Spin
 
 from aiida_vasp.utils.aiida_utils import dbenv
 
 
 class VasprunToAiida(object):
-    """Adapter from Vasprun object to AiiDA nodes"""
+    """Adapt from Vasprun object to AiiDA nodes."""
 
-    def __init__(self, vasprun_obj):
+    def __init__(self, vasprun_obj, logger=None):
         self.vasprun_obj = vasprun_obj
+        self.logger = logger
 
     @property
     def actual_kpoints(self):
-        """
-        List of actually used kpoints as KpointsData
-        """
+        """List actually used kpoints as KpointsData."""
         kpoints = get_data_node('array.kpoints')
         kpoints.set_kpoints(
             self.vasprun_obj.actual_kpoints,
@@ -23,18 +23,14 @@ class VasprunToAiida(object):
 
     @property
     def last_structure(self):
-        """
-        The structure after or at the last recorded ionic step as StructureData
-        """
+        """Give the structure after or at the last recorded ionic step as StructureData."""
         last_structure = self.vasprun_obj.structures[-1]
         return self.final_structure or get_data_node(
             'structure', pymatgen=last_structure)
 
     @property
     def final_structure(self):
-        """
-        The final structure after all calculations as StructureData
-        """
+        """Give the final structure after all calculations as StructureData."""
         final_structure = getattr(self.vasprun_obj, 'final_structure', None)
         if not final_structure:
             return None
@@ -42,7 +38,7 @@ class VasprunToAiida(object):
 
     @property
     def forces(self):
-        """Forces in the last ioni step as ArrayData"""
+        """Give forces in the last ioni step as ArrayData."""
         forces_array = get_data_node('array')
         forces_array.set_array('forces',
                                array(
@@ -51,7 +47,7 @@ class VasprunToAiida(object):
 
     @property
     def output_parameters(self):
-        """Collect scalars and small arrays into a results ParameterData node"""
+        """Collect scalars and small arrays into a results ParameterData node."""
         output_params = get_data_node(
             'parameter',
             dict={
@@ -60,6 +56,30 @@ class VasprunToAiida(object):
                 'energy': self.vasprun_obj.final_energy
             })
         return output_params
+
+    @property
+    def band_structure(self):
+        """Give the band structure as BandsData node."""
+        bands_node = get_data_node('array.bands')
+        bands_node.set_kpointsdata(self.actual_kpoints)  # has to be set first
+        try:
+            bands_object = self.vasprun_obj.get_band_structure()
+            structure = get_data_node(
+                'structure', pymatgen=bands_object.structure)
+            bands_node.set_cell_from_structure(structure)
+            bands_data = bands_object.bands
+            bands_node_data = []
+            for spin in [Spin.up, Spin.down]:
+                if spin in bands_data:
+                    bands_node_data.append(bands_data[spin].transpose())
+            bands_node_data = array(bands_node_data)
+            bands_node.set_bands(bands=bands_node_data)
+        except AttributeError:
+            if self.logger:
+                self.logger.warning(
+                    'Band structure could not be parsed, possibly because the final structure was missing from the xml'
+                )
+            return bands_node
 
 
 @dbenv

@@ -1,7 +1,8 @@
-"""A pymatgen based VaspCalculation parser"""
+"""Provide a pymatgen based VaspCalculation parser."""
 import xml
-from pymatgen.io.vasp.outputs import Vasprun
+
 from aiida.common.exceptions import ParsingError as AiidaParsingError
+from pymatgen.io.vasp.outputs import Vasprun
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.data.pymatgen.vasprun import VasprunToAiida
@@ -38,13 +39,14 @@ class PymatgenParser(BaseParser):
         # ... set up calc further
         calc.submit()
     """
+    _linkname_outparams = 'output_parameters'
 
     def __init__(self, calc):
         super(PymatgenParser, self).__init__(calc)
         self.vasprun_adapter = None
 
     def parse_with_retrieved(self, retrieved):
-        """Parse the calculation"""
+        """Parse the calculation."""
         self.check_state()
         success, _ = super(PymatgenParser,
                            self).parse_with_retrieved(retrieved)
@@ -53,19 +55,21 @@ class PymatgenParser(BaseParser):
             return self.result(success)
 
         parsed_vasprun = self.try_parse_vasprun()
-        self.vasprun_adapter = VasprunToAiida(parsed_vasprun)
+        self.vasprun_adapter = VasprunToAiida(
+            parsed_vasprun, logger=self.logger)
 
         self.add_node('structure', self.vasprun_adapter.last_structure)
         self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
         self.add_node('forces', self.vasprun_adapter.forces)
-        self.add_node(self.get_linkname_outparams,
+        self.add_node(self.get_linkname_outparams(),
                       self.vasprun_adapter.output_parameters)
+        self.add_node('bands', self.vasprun_adapter.band_structure)
 
         return self.result(success)
 
     def try_parse_vasprun(self):
         """
-        Try to parse the vasprun file
+        Try to parse the vasprun file.
 
         and give helpful error messages in case something goes wrong
         """
@@ -93,6 +97,7 @@ class PymatgenParser(BaseParser):
         return parsed_vasprun
 
     def get_vasprun_options(self):
+        """Get the options to the pymatgen Vasprun constructor from settings."""
         settings_input = self._calc.get_inputs_dict().get('settings')
         if not settings_input:
             return {}
