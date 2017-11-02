@@ -1,4 +1,4 @@
-"""Unittests for the PymatgenParser"""
+"""Unittests for the PymatgenParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import os
 
@@ -7,11 +7,11 @@ import pytest
 from aiida.common.exceptions import ParsingError
 
 from aiida_vasp.parsers.pymatgen_vasp import PymatgenParser
-from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures import *  # noqa f401
 
 
 def data_path(*args):
-    """path to a test data file"""
+    """Give the path to a test data file."""
     path = os.path.realpath(
         os.path.join(__file__, '../../../test_data', *args))
     assert os.path.exists(path)
@@ -21,7 +21,7 @@ def data_path(*args):
 
 @pytest.fixture(params=[-1])
 def vasprun_path(request, tmpdir):
-    """Truncate vasprun.xml at the given line number and parse"""
+    """Truncate vasprun.xml at the given line number and parse."""
     original_path = data_path('phonondb', 'vasprun.xml')
     if request.param == -1:
         return original_path
@@ -35,7 +35,7 @@ def vasprun_path(request, tmpdir):
 @pytest.fixture(params=[None])
 def parse_result(request, aiida_env, vasprun_path):
     """
-    Result of parsing a retrieved calculation (emulated)
+    Give the result of parsing a retrieved calculation (emulated).
 
     1. create a calculation with parser settings
     2. create a parser with the calculation
@@ -61,6 +61,7 @@ def parse_result(request, aiida_env, vasprun_path):
 
 
 def test_kpoints_result(parse_result):
+    """Test that the kpoints result node is a KpointsData instance."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
     nodes = dict(nodes)
@@ -68,6 +69,7 @@ def test_kpoints_result(parse_result):
 
 
 def test_structure_result(parse_result):
+    """Test that the structure result node is a StructureData instance."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
     nodes = dict(nodes)
@@ -75,7 +77,7 @@ def test_structure_result(parse_result):
 
 
 def test_forces_result(parse_result):
-    """Check the parsed forces result node"""
+    """Check the parsed forces result node."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
     nodes = dict(nodes)
@@ -87,7 +89,7 @@ def test_forces_result(parse_result):
 
 
 def test_res(parse_result):
-    """Check that the results manager can find scalar / low dim results"""
+    """Check that the results manager can find scalar / low dim results."""
     _, nodes = parse_result()
     nodes = dict(nodes)
     output_data = nodes['output_parameters'].get_dict()
@@ -99,7 +101,7 @@ def test_res(parse_result):
 @pytest.mark.parametrize(
     ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
 def test_slightly_broken_vasprun(parse_result, recwarn):
-    """Test that truncated vasprun (after one ionic step) can be read and warnings are emitted"""
+    """Test that truncated vasprun (after one ionic step) can be read and warnings are emitted."""
     success, nodes = parse_result()
     nodes = dict(nodes)
     assert success
@@ -111,5 +113,6 @@ def test_slightly_broken_vasprun(parse_result, recwarn):
 @pytest.mark.parametrize(
     ['vasprun_path', 'parse_result'], [(2331, True)], indirect=True)
 def test_broken_vasprun_exception(parse_result):
+    """Test that the parser raises an error with exception_on_bad_xml=True."""
     with pytest.raises(ParsingError):
-        _ = parse_result()
+        _ = parse_result()  # noqa: F841
