@@ -79,7 +79,7 @@ class VasprunToAiida(object):
                 self.logger.warning(
                     'Band structure could not be parsed, possibly because the final structure was missing from the xml'
                 )
-            return bands_node
+        return bands_node
 
 
 @dbenv
