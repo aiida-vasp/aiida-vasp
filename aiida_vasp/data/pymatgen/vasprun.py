@@ -81,6 +81,24 @@ class VasprunToAiida(object):
                 )
         return bands_node
 
+    @property
+    def tdos(self):
+        """Give the total density of states as an ArrayNode."""
+        tdos = self.vasprun_obj.tdos
+        tdos_node = get_data_node('array.xy')
+        tdos_node.set_x(tdos.energies, 'dos_energy', 'eV')
+        spins = [(Spin.up, 'dos_spin_up'), (Spin.down, 'dos_spin_down')]
+        y_arrays = []
+        y_names = []
+        y_units = []
+        for spin, y_label in spins:
+            if spin in tdos.densities:
+                y_arrays.append(tdos.densities[spin])
+                y_names.append(y_label)
+                y_units.append('states/eV')
+        tdos_node.set_y(y_arrays, y_names, y_units)
+        return tdos_node
+
 
 @dbenv
 def get_data_node(data_type, *args, **kwargs):
