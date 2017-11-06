@@ -62,7 +62,9 @@ def parse_result(request, aiida_env, vasprun_path):
         retrieved = DataFactory('folder')()
         retrieved.add_path(vasprun_path, '')
 
-        return parser.parse_with_retrieved({'retrieved': retrieved})
+        success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+        nodes = dict(nodes)
+        return success, nodes
 
     return parse
 
@@ -96,7 +98,6 @@ def test_kpoints_result(parse_result):
     """Test that the kpoints result node is a KpointsData instance."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
-    nodes = dict(nodes)
     assert isinstance(nodes['kpoints'], DataFactory('array.kpoints'))
 
 
@@ -104,7 +105,6 @@ def test_structure_result(parse_result):
     """Test that the structure result node is a StructureData instance."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
-    nodes = dict(nodes)
     assert isinstance(nodes['structure'], DataFactory('structure'))
 
 
@@ -112,7 +112,6 @@ def test_forces_result(parse_result):
     """Check the parsed forces result node."""
     from aiida.orm import DataFactory
     _, nodes = parse_result()
-    nodes = dict(nodes)
     assert isinstance(nodes['forces'], DataFactory('array'))
     assert numpy.all(nodes['forces'].get_array('forces')[0] == numpy.array(
         [-0.23272115, -0.01115905, 0.03449686]))
@@ -123,7 +122,6 @@ def test_forces_result(parse_result):
 def test_res(parse_result):
     """Check that the results manager can find scalar / low dim results."""
     _, nodes = parse_result()
-    nodes = dict(nodes)
     output_data = nodes['output_parameters'].get_dict()
     assert output_data['energy'] == -459.8761413
     assert output_data['efermi'] == 2.96801422
@@ -134,14 +132,12 @@ def test_res(parse_result):
 def test_no_born(parse_result):
     """Make sure no born charges output node exists if lepsilon is not True"""
     _, nodes = parse_result()
-    nodes = dict(nodes)
     assert 'born_charges' not in nodes
 
 
 def test_bands(parse_result):
     """Check that bands are parsed and have the right shape."""
     _, nodes = parse_result()
-    nodes = dict(nodes)
     bands = nodes['bands']
     assert bands.get_bands().shape == (1, 2, 452)
 
@@ -149,7 +145,6 @@ def test_bands(parse_result):
 def test_dos(parse_result):
     """Check that dos are parsed."""
     _, nodes = parse_result()
-    nodes = dict(nodes)
     dos = nodes['dos']
     name, array, units = dos.get_y()[0]
     assert name == 'dos_spin_up'
@@ -160,7 +155,6 @@ def test_dos(parse_result):
 def test_suppress_options(parse_result):
     """Test that suppress options work."""
     _, nodes = parse_result(parser={'parse_dos': False, 'parse_bands': False})
-    nodes = dict(nodes)
     assert 'dos' not in nodes
     assert 'bands' not in nodes
 
@@ -170,7 +164,6 @@ def test_suppress_options(parse_result):
 def test_slightly_broken_vasprun(parse_result, recwarn):
     """Test that truncated vasprun (after one ionic step) can be read and warnings are emitted."""
     success, nodes = parse_result()
-    nodes = dict(nodes)
     assert success
     assert 'kpoints' in nodes
     assert 'structure' in nodes
