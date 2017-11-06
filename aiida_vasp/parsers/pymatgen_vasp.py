@@ -19,6 +19,11 @@ class PymatgenParser(BaseParser):
     Parameters can be passed to the ``pymatgen.io.vasp.outputs.Vasprun``
     constructor via the settings input node for VaspCalculation (see example).
 
+    generic parser settings (not passed on to pymatgen):
+
+        * ``parse_dos``: [True] if false, suppress the dos output node
+        * ``parse_bands``: [True] if false, suppress the bands output node
+
     :note: on broken ``vasprun.xml``
 
         VASP needs to have completed at least one ionic step and must have written
@@ -47,6 +52,7 @@ class PymatgenParser(BaseParser):
     _linkname_bands = 'bands'
     _linkname_dos = 'dos'
     _linkname_born_charges = 'born_charges'
+    _default_options = {'parse_dos': True, 'parse_bands': True}
 
     def __init__(self, calc):
         super(PymatgenParser, self).__init__(calc)
@@ -71,9 +77,11 @@ class PymatgenParser(BaseParser):
         self.add_node(self._linkname_kpoints,
                       self.vasprun_adapter.actual_kpoints)
         self.add_node(self._linkname_forces, self.vasprun_adapter.forces)
-        self.add_node(self._linkname_bands,
-                      self.vasprun_adapter.band_structure)
-        self.add_node(self._linkname_dos, self.vasprun_adapter.tdos)
+        if self.get_option('parse_bands'):
+            self.add_node(self._linkname_bands,
+                          self.vasprun_adapter.band_structure)
+        if self.get_option('parse_dos'):
+            self.add_node(self._linkname_dos, self.vasprun_adapter.tdos)
 
         parsed_outcar = self.parse_outcar()
         if parsed_outcar:
@@ -131,6 +139,17 @@ class PymatgenParser(BaseParser):
         if not settings_input:
             return {}
         return settings_input.get_dict().get('pymatgen_parser', {})
+
+    def get_options(self):
+        """Get the generic parser options."""
+        settings_input = self._calc.get_inputs_dict().get('settings')
+        if not settings_input:
+            return self._default_options
+        return settings_input.get_dict().get('parser', self._default_options)
+
+    def get_option(self, option):
+        """Get a specific parser option."""
+        return self.get_options()[option]
 
     def get_output_parameters(self):
         """Get the output parameter node."""
