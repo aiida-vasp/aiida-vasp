@@ -40,6 +40,11 @@ class PymatgenParser(BaseParser):
         calc.submit()
     """
     _linkname_outparams = 'output_parameters'
+    _linkname_kpoints = 'kpoints'
+    _linkname_structure = 'structure'
+    _linkname_forces = 'forces'
+    _linkname_bands = 'bands'
+    _linkname_dos = 'dos'
 
     def __init__(self, calc):
         super(PymatgenParser, self).__init__(calc)
@@ -58,12 +63,16 @@ class PymatgenParser(BaseParser):
         self.vasprun_adapter = VasprunToAiida(
             parsed_vasprun, logger=self.logger)
 
-        self.add_node('structure', self.vasprun_adapter.last_structure)
-        self.add_node('kpoints', self.vasprun_adapter.actual_kpoints)
-        self.add_node('forces', self.vasprun_adapter.forces)
+        self.add_node(self._linkname_structure,
+                      self.vasprun_adapter.last_structure)
+        self.add_node(self._linkname_kpoints,
+                      self.vasprun_adapter.actual_kpoints)
+        self.add_node(self._linkname_forces, self.vasprun_adapter.forces)
         self.add_node(self.get_linkname_outparams(),
                       self.vasprun_adapter.output_parameters)
-        self.add_node('bands', self.vasprun_adapter.band_structure)
+        self.add_node(self._linkname_bands,
+                      self.vasprun_adapter.band_structure)
+        self.add_node(self._linkname_dos, self.vasprun_adapter.tdos)
 
         return self.result(success)
 
