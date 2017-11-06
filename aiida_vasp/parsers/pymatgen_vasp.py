@@ -2,10 +2,11 @@
 import xml
 
 from aiida.common.exceptions import ParsingError as AiidaParsingError
-from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.io.vasp.outputs import Vasprun, Outcar
 
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.data.pymatgen.vasprun import VasprunToAiida
+from aiida_vasp.data.pymatgen.vasprun import VasprunToAiida, get_data_node
+from aiida_vasp.data.pymatgen.outcar import OutcarToAiida
 
 
 class PymatgenParser(BaseParser):
@@ -45,10 +46,12 @@ class PymatgenParser(BaseParser):
     _linkname_forces = 'forces'
     _linkname_bands = 'bands'
     _linkname_dos = 'dos'
+    _linkname_born_charges = 'born_charges'
 
     def __init__(self, calc):
         super(PymatgenParser, self).__init__(calc)
         self.vasprun_adapter = None
+        self.outcar_adapter = None
 
     def parse_with_retrieved(self, retrieved):
         """Parse the calculation."""
@@ -68,11 +71,20 @@ class PymatgenParser(BaseParser):
         self.add_node(self._linkname_kpoints,
                       self.vasprun_adapter.actual_kpoints)
         self.add_node(self._linkname_forces, self.vasprun_adapter.forces)
-        self.add_node(self.get_linkname_outparams(),
-                      self.vasprun_adapter.output_parameters)
         self.add_node(self._linkname_bands,
                       self.vasprun_adapter.band_structure)
         self.add_node(self._linkname_dos, self.vasprun_adapter.tdos)
+
+        parsed_outcar = self.parse_outcar()
+        if parsed_outcar:
+            self.outcar_adapter = OutcarToAiida(parsed_outcar)
+
+            if parsed_outcar.lepsilon:
+                self.add_node(self._linkname_born_charges,
+                              self.outcar_adapter.born_charges)
+
+        self.add_node(self.get_linkname_outparams(),
+                      self.get_output_parameters())
 
         return self.result(success)
 
@@ -105,9 +117,26 @@ class PymatgenParser(BaseParser):
             )
         return parsed_vasprun
 
+    def parse_outcar(self):
+        """Try to parse the OUTCAR file."""
+        outcar_path = self.get_file('OUTCAR')
+        if not outcar_path:
+            return None
+        parsed_outcar = Outcar(outcar_path)
+        return parsed_outcar
+
     def get_vasprun_options(self):
         """Get the options to the pymatgen Vasprun constructor from settings."""
         settings_input = self._calc.get_inputs_dict().get('settings')
         if not settings_input:
             return {}
         return settings_input.get_dict().get('pymatgen_parser', {})
+
+    def get_output_parameters(self):
+        """Get the output parameter node."""
+        output_parameter_dict = self.vasprun_adapter.output_dict
+        if self.outcar_adapter:
+            output_parameter_dict.update(self.outcar_adapter.output_dict)
+        output_parameters = get_data_node(
+            'parameter', dict=output_parameter_dict)
+        return output_parameters
