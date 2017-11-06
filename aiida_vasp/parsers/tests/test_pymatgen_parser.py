@@ -37,24 +37,31 @@ def parse_result(request, aiida_env, vasprun_path):
     """
     Give the result of parsing a retrieved calculation (emulated).
 
+    Returns a function which does:
+
     1. create a calculation with parser settings
-    2. create a parser with the calculation
-    3. populate a fake retrieved folder and pass it to the parser
+    2. update the parser settings with the extra_settings
+    3. create a parser with the calculation
+    4. populate a fake retrieved folder and pass it to the parser
+    5. return the result
     """
-    from aiida.orm import CalculationFactory, DataFactory
-    calc = CalculationFactory('vasp.vasp')()
-    calc.use_settings(
-        DataFactory('parameter')(dict={
+
+    def parse(**extra_settings):
+        """Run the parser using default settings updated with extra_settings."""
+        from aiida.orm import CalculationFactory, DataFactory
+        calc = CalculationFactory('vasp.vasp')()
+        settings_dict = {
             'pymatgen_parser': {
                 'parse_potcar_file': False,
                 'exception_on_bad_xml': request.param
             }
-        }))
-    parser = PymatgenParser(calc=calc)
-    retrieved = DataFactory('folder')()
-    retrieved.add_path(vasprun_path, '')
+        }
+        settings_dict.update(extra_settings)
+        calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+        parser = PymatgenParser(calc=calc)
+        retrieved = DataFactory('folder')()
+        retrieved.add_path(vasprun_path, '')
 
-    def parse():
         return parser.parse_with_retrieved({'retrieved': retrieved})
 
     return parse
@@ -148,6 +155,14 @@ def test_dos(parse_result):
     assert name == 'dos_spin_up'
     assert array.shape == (301, )
     assert units == 'states/eV'
+
+
+def test_suppress_options(parse_result):
+    """Test that suppress options work."""
+    _, nodes = parse_result(parser={'parse_dos': False, 'parse_bands': False})
+    nodes = dict(nodes)
+    assert 'dos' not in nodes
+    assert 'bands' not in nodes
 
 
 @pytest.mark.parametrize(
