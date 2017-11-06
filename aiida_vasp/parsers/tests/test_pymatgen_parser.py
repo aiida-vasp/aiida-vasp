@@ -106,6 +106,17 @@ def test_bands(parse_result):
     assert bands.get_bands().shape == (1, 2, 452)
 
 
+def test_dos(parse_result):
+    """Check that dos are parsed."""
+    _, nodes = parse_result()
+    nodes = dict(nodes)
+    dos = nodes['dos']
+    name, array, units = dos.get_y()[0]
+    assert name == 'dos_spin_up'
+    assert array.shape == (301, )
+    assert units == 'states/eV'
+
+
 @pytest.mark.parametrize(
     ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
 def test_slightly_broken_vasprun(parse_result, recwarn):
