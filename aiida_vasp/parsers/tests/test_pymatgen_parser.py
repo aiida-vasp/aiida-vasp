@@ -60,6 +60,31 @@ def parse_result(request, aiida_env, vasprun_path):
     return parse
 
 
+@pytest.fixture()
+def parse_nac(aiida_env):
+    """Give the parsing result of a retrieved NAC calculation (emulated)."""
+    from aiida.orm import CalculationFactory, DataFactory
+    calc = CalculationFactory('vasp.vasp')()
+    calc.use_settings(
+        DataFactory('parameter')(dict={
+            'pymatgen_parser': {
+                'parse_potcar_file': False,
+                'exception_on_bad_xml': False
+            }
+        }))
+    parser = PymatgenParser(calc=calc)
+    retrieved = DataFactory('folder')()
+    retrieved.add_path(data_path('born_effective_charge', 'vasprun.xml'), '')
+    retrieved.add_path(data_path('born_effective_charge', 'OUTCAR'), '')
+
+    def parse():
+        success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+        nodes = dict(nodes)
+        return success, nodes
+
+    return parse
+
+
 def test_kpoints_result(parse_result):
     """Test that the kpoints result node is a KpointsData instance."""
     from aiida.orm import DataFactory
@@ -96,6 +121,14 @@ def test_res(parse_result):
     assert output_data['energy'] == -459.8761413
     assert output_data['efermi'] == 2.96801422
     assert 'stress' in output_data
+    assert 'dielectric tensor' not in output_data
+
+
+def test_no_born(parse_result):
+    """Make sure no born charges output node exists if lepsilon is not True"""
+    _, nodes = parse_result()
+    nodes = dict(nodes)
+    assert 'born_charges' not in nodes
 
 
 def test_bands(parse_result):
@@ -135,3 +168,13 @@ def test_broken_vasprun_exception(parse_result):
     """Test that the parser raises an error with exception_on_bad_xml=True."""
     with pytest.raises(ParsingError):
         _ = parse_result()  # noqa: F841
+
+
+def test_born_charges(parse_nac):
+    """Test that the born effective charges get parsed."""
+    success, nodes = parse_nac()
+    assert success
+    output_data = nodes['output_parameters'].get_dict()
+    assert numpy.all(output_data['dielectric tensor'] == numpy.array(
+        [[5.894056, 0.0, 0.0], [0.0, 5.894056, 0.0], [0.0, 0.0, 6.171821]]))
+    assert nodes['born_charges'].get_array('born_charges').shape == (26, 3, 3)

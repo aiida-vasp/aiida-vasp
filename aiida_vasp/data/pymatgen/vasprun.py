@@ -46,15 +46,18 @@ class VasprunToAiida(object):
         return forces_array
 
     @property
+    def output_dict(self):
+        """Collect scalars and small arrays into a dictionary."""
+        return {
+            'stress': self.vasprun_obj.ionic_steps[-1]['stress'],
+            'efermi': self.vasprun_obj.efermi,
+            'energy': self.vasprun_obj.final_energy
+        }
+
+    @property
     def output_parameters(self):
         """Collect scalars and small arrays into a results ParameterData node."""
-        output_params = get_data_node(
-            'parameter',
-            dict={
-                'stress': self.vasprun_obj.ionic_steps[-1]['stress'],
-                'efermi': self.vasprun_obj.efermi,
-                'energy': self.vasprun_obj.final_energy
-            })
+        output_params = get_data_node('parameter', dict=self.output_dict)
         return output_params
 
     @property
