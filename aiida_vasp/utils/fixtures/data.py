@@ -5,8 +5,10 @@ import shutil
 
 import numpy
 import pytest
+import pymatgen
 
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
+from aiida_vasp.data.pymatgen.vasprun import get_data_node
 
 
 @pytest.fixture(scope='session')
@@ -80,7 +82,20 @@ def vasp_structure(request, aiida_env):
         structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
+        structure.append_atom(position=[.5, .5, .5], symbols='In')
+        structure.append_atom(position=[.75, .75, .75], symbols='As')
     return structure
+
+
+@pytest.fixture()
+def vasp_structure_poscar(vasp_structure):
+    """Fixture: Well formed POSCAR contents"""
+    ase_structure = vasp_structure.get_ase()
+    aiida_structure = get_data_node('structure', ase=ase_structure)
+    pmg_structure = aiida_structure.get_pymatgen()
+    pmg_structure.sort()
+    pmg_poscar = pymatgen.io.vasp.inputs.Poscar(pmg_structure)
+    return pmg_poscar
 
 
 @pytest.fixture(params=['mesh', 'list'])
