@@ -9,7 +9,8 @@ except ImportError:
 
 from aiida.orm import DataFactory
 
-from .base import VaspCalcBase, Input
+from aiida_vasp.data.pymatgen.vasprun import get_data_node
+from aiida_vasp.calcs.base import VaspCalcBase, Input
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
@@ -170,9 +171,14 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
+        from pymatgen.io.vasp.inputs import Poscar
+        structure = self.inp.structure
+        if not hasattr(structure, 'get_pymatgen'):
+            structure = get_data_node('structure', ase=structure.get_ase())
+        pmg_structure = structure.get_pymatgen()
+        pmg_structure.sort()
+        writer = Poscar(pmg_structure)
+        writer.write_file(dst)
 
     def write_potcar(self, inputdict, dst):
         """

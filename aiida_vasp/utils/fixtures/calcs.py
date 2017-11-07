@@ -39,3 +39,7 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
 
 ONLY_ONE_CALC = pytest.mark.parametrize(
     ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+
+STRUCTURE_TYPES = pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')],
+    indirect=True)

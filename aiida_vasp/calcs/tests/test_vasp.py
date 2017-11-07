@@ -9,7 +9,7 @@ from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 
 
 @pytest.mark.parametrize(
@@ -31,20 +31,22 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
             assert result_incar_fo.read() == reference['incar']
 
 
-@ONLY_ONE_CALC
-def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref):
-    from ase.io.vasp import read_vasp
+@STRUCTURE_TYPES
+def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref,
+                      vasp_structure_poscar):
+    from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
         vasp_calc.write_poscar(inp, temp_file)
         with working_directory(temp_file):
-            result_ase = read_vasp(temp_file)
-            ref_ase = inp['structure'].get_ase()
-            assert numpy.allclose(
-                result_ase.get_cell(), ref_ase.get_cell(), atol=1e-16, rtol=0)
-            assert result_ase.get_chemical_formula(
-            ) == ref_ase.get_chemical_formula()
+            result_pmg = Poscar.from_file(temp_file).structure
+            ref_pmg = vasp_structure_poscar.structure
+            assert result_pmg.lattice, ref_pmg.lattice
+            assert result_pmg.formula == ref_pmg.formula
+
+        with open(temp_file, 'r') as poscar:
+            assert poscar.read() == vasp_structure_poscar.get_string()
 
 
 def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
