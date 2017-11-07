@@ -1,14 +1,12 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import os
-import shutil
 
 import numpy
 import pytest
-import pymatgen
+from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
-from aiida_vasp.data.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen.vasprun import get_data_node
 
 
 @pytest.fixture(scope='session')
@@ -94,7 +92,7 @@ def vasp_structure_poscar(vasp_structure):
     aiida_structure = get_data_node('structure', ase=ase_structure)
     pmg_structure = aiida_structure.get_pymatgen()
     pmg_structure.sort()
-    pmg_poscar = pymatgen.io.vasp.inputs.Poscar(pmg_structure)
+    pmg_poscar = Poscar(pmg_structure)
     return pmg_poscar
 
 

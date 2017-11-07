@@ -1,6 +1,6 @@
 """Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
 from numpy import array
-from pymatgen.electronic_structure.bandstructure import Spin
+from pymatgen import Spin
 
 from aiida_vasp.utils.aiida_utils import dbenv
 

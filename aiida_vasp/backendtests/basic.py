@@ -1,11 +1,11 @@
 """Test Creation and preparation of BasicCalculation"""
-import tempfile
 import os
+import tempfile
 
 from aiida.backends.testbase import AiidaTestCase
 from aiida.orm import CalculationFactory, Code, DataFactory
-from aiida_vasp.utils.io.incar import IncarParser
 
+from aiida_vasp.io.incar import IncarParser
 from .common import Common
 
 
@@ -101,7 +101,7 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_write_kpoints_mesh(self):
         """Check that KPOINTS in mesh format is written correctly"""
-        from aiida_vasp.utils.io.kpoints import KpParser
+        from aiida_vasp.io.kpoints import KpParser
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
@@ -110,7 +110,7 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_write_kpoints_list(self):
         """Check that KPOINTS in list format is written correctly"""
-        from aiida_vasp.utils.io.kpoints import KpParser
+        from aiida_vasp.io.kpoints import KpParser
         calc = self._get_calc('c', 'l')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)

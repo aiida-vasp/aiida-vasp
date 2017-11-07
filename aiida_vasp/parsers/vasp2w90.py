@@ -2,8 +2,8 @@
 from aiida.orm import DataFactory
 from aiida.orm.data.base import List
 
+from aiida_vasp.io.win import WinParser
 from .vasp import VaspParser
-from ..utils.io.win import WinParser
 
 
 class Vasp2w90Parser(VaspParser):

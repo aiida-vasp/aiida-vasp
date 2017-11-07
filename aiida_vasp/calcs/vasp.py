@@ -9,8 +9,8 @@ except ImportError:
 
 from aiida.orm import DataFactory
 
-from aiida_vasp.data.pymatgen.vasprun import get_data_node
 from aiida_vasp.calcs.base import VaspCalcBase, Input
+from aiida_vasp.io.pymatgen.vasprun import get_data_node
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
@@ -156,7 +156,7 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        from ..utils.io.incar import dict_to_incar
+        from aiida_vasp.io.incar import dict_to_incar
         with open(dst, 'w') as incar:
             incar.write(
                 dict_to_incar(

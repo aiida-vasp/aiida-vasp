@@ -1,14 +1,13 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 import numpy as np
-
 from aiida.orm import DataFactory
 
+from aiida_vasp.io.doscar import DosParser
+from aiida_vasp.io.eigenval import EigParser
+from aiida_vasp.io.kpoints import KpParser
+from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.utils.io.eigenval import EigParser
-from aiida_vasp.utils.io.vasprun import VasprunParser
-from aiida_vasp.utils.io.doscar import DosParser
-from aiida_vasp.utils.io.kpoints import KpParser
 
 
 class VaspParser(BaseParser):

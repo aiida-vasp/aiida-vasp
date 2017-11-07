@@ -4,9 +4,9 @@ import xml
 from aiida.common.exceptions import ParsingError as AiidaParsingError
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 
+from aiida_vasp.io.pymatgen.vasprun import VasprunToAiida, get_data_node
+from aiida_vasp.io.pymatgen.outcar import OutcarToAiida
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.data.pymatgen.vasprun import VasprunToAiida, get_data_node
-from aiida_vasp.data.pymatgen.outcar import OutcarToAiida
 
 
 class PymatgenParser(BaseParser):

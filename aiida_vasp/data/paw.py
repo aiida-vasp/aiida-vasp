@@ -3,12 +3,12 @@
 """PAW Pseudopotential data node"""
 import os
 
-from aiida.orm import Data
-from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
+from aiida.orm import Data
+from aiida.orm.querybuilder import QueryBuilder
 
-from aiida_vasp.utils.io.potcar import PawParser as pcparser
+from aiida_vasp.io.potcar import PawParser as pcparser
 
 
 class PawData(Data):
