@@ -36,6 +36,8 @@ class KeyValueParser(BaseParser):
     in vasp input and output files
     """
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
+    bool_true = re.compile(r'^T$')
+    bool_false = re.compile(r'^F$')
     comments = True
 
     @classmethod
@@ -46,10 +48,9 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def retval(cls, *args, **kwargs):
-        ret = list(args)
-        if cls.comments:
-            ret.append(kwargs.get('comment', ''))
-        return tuple(ret)
+        ret = {'value': list(args)}
+        ret.update(kwargs)
+        return ret
 
     @classmethod
     def flatten(cls, lst):
@@ -76,6 +77,21 @@ class KeyValueParser(BaseParser):
         return cls.retval(value, unit, comment=comment)
 
     @classmethod
+    def int(cls, string_):
+        vals = string_.split()
+        value = int(vals.pop(0))
+        comment = ' '.join(vals)
+        return cls.retval(value, comment=comment)
+
+    @classmethod
+    def int_unit(cls, string_):
+        vals = string_.split()
+        value = int(vals.pop(0))
+        unit = vasl.pop(0) if vals else ''
+        comment = ' '.join(vals)
+        return cls.retval(value, unit, comment=comment)
+
+    @classmethod
     def string(cls, string_):
         vals = string_.split()
         value = vals.pop(0)
@@ -87,12 +103,13 @@ class KeyValueParser(BaseParser):
         """Parse string into a boolean value"""
         vals = string_.split()
         bool_str = vals.pop(0)
-        if bool_str == 'T':
+        if re.match(cls.bool_true, bool_str):
             value = True
-        elif bool_str == 'F':
+        elif re.match(cls.bool_false, bool_str):
             value = False
         else:
-            raise ValueError('bool string must be "F" or "T"')
+            raise ValueError('bool string {} did not match any of {}'.format(
+                string_, [cls.bool_true.pattern, cls.bool_false.pattern]))
         comment = ' '.join(vals)
         return cls.retval(value, comment=comment)
 

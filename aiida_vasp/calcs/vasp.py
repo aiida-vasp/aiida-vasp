@@ -156,12 +156,11 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        from aiida_vasp.io.incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(
-                dict_to_incar(
-                    ChainMap(self.inp.parameters.get_dict(),
-                             self._DEFAULT_PARAMETERS)))
+        from aiida_vasp.io.incar import IncarIo
+        incar_dict = ChainMap(self.inp.parameters.get_dict(),
+                              self._DEFAULT_PARAMETERS)
+        incar_io = IncarIo(incar_dict=incar_dict)
+        incar_io.store(dst)
 
     def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         """

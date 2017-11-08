@@ -5,7 +5,7 @@ import tempfile
 from aiida.backends.testbase import AiidaTestCase
 from aiida.orm import CalculationFactory, Code, DataFactory
 
-from aiida_vasp.io.incar import IncarParser
+from aiida_vasp.io.incar import IncarIo
 from .common import Common
 
 
@@ -69,9 +69,9 @@ class BasicCalcTest(AiidaTestCase):
         calc = self._get_calc('s', 'm')
         inp = calc.get_inputs_dict()
         calc.write_incar(inp, self.tmpf)
-        icp = IncarParser(self.tmpf)
+        icp = IncarIo(self.tmpf)
         for key, value in calc.inp.parameters.get_dict().iteritems():
-            self.assertIn(str(value), icp.result[key])
+            self.assertIn(str(value), icp.incar_dict[key])
 
     def test_write_poscar_structure(self):
         """Check that POSCAR is written when the input is a structure node"""

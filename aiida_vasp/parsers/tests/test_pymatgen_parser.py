@@ -1,22 +1,13 @@
 """Unittests for the PymatgenParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
-import os
 
 import numpy
 import pytest
 from aiida.common.exceptions import ParsingError
 
 from aiida_vasp.parsers.pymatgen_vasp import PymatgenParser
-from aiida_vasp.utils.fixtures import *  # noqa f401
-
-
-def data_path(*args):
-    """Give the path to a test data file."""
-    path = os.path.realpath(
-        os.path.join(__file__, '../../../test_data', *args))
-    assert os.path.exists(path)
-    assert os.path.isabs(path)
-    return path
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures import *
 
 
 @pytest.fixture(params=[-1])
