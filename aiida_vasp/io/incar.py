@@ -1,9 +1,81 @@
 """Provides INCAR file interface and utilities."""
 import re
+from collections import Mapping, Sequence, OrderedDict
 
 import numpy as np
+from six import string_types
 
 from aiida_vasp.io.parser import KeyValueParser
+
+
+class IncarItem(object):
+    """
+    Represent an item in an incar file.
+
+    Example::
+
+        ENCUT = 350 eV this is an example
+        ^       ^   ^-------------------^
+        name    value       comment
+
+    :param name: mandatory
+    :param value: mandatory
+    :param comment: optional
+    """
+    _STR_TPL = '{name} = {value}{comment_sep}{comment}'
+
+    def __init__(self, *args, **kwargs):
+        if args and isinstance(args[0], self.__class__):
+            self.set_copy(args[0])
+        elif kwargs.has_key('incar_item'):
+            self.set_copy(kwargs['incar_item'])
+        else:
+            self.value = None
+            self._name = None
+            self._comment = None
+            self.set_values(*args, **kwargs)
+
+    def set_copy(self, other):
+        self.set_values(other.name, other.value, other.comment)
+
+    def set_values(self, name, value, comment=None):
+        self.name = name
+        self.value = value
+        self.comment = comment
+
+    @property
+    def comment(self):
+        return self._comment if self._comment else ''
+
+    @comment.setter
+    def comment(self, comment_input):
+        self._comment = str(comment).lstrip('#')
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name_input):
+        self._name = name.upper()
+
+    @property
+    def comment_separator(self):
+        if self.comment:
+            return ' # '
+        return ''
+
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'value': self.value,
+            'comment': self.comment
+        }
+
+    def __str__(self, rhs):
+        return self._STR_TPL.format(**self.as_dict)
+
+
 
 
 class IncarIo(KeyValueParser):
@@ -13,7 +85,7 @@ class IncarIo(KeyValueParser):
 
     def __init__(self, file_path=None, incar_dict=None):
         """Populate internal key-value storage from a file or dictionary."""
-        self.incar_dict = {}
+        self.incar_dict = OrderedDict()
         if file_path:
             self.read_incar_file(file_path)
         if incar_dict:
@@ -31,45 +103,42 @@ class IncarIo(KeyValueParser):
             content = fobj_or_str
         else:
             content = fobj_or_str.read()
-        kvd = dict(re.findall(cls.assignment, content))
-        kvd = {k.lower(): cls.clean_value(v) for k, v in kvd.iteritems()}
-        return kvd
+
+        items = re.findall(cls.assignment, content)):
+        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in items]
+        return OrderedDict(normalized_items)
+
+    @classmethod
+    def normalize_mapping(cls, input_mapping):
+        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in input_mapping]
+        return OrderedDict(normalized_items)
 
     @classmethod
     def clean_value(cls, str_value):
-        cleaned_value = {'value': None}
-        try:
-            cleaned_value = cls.bool(str_value)
-        except ValueError as err:
-            pass
-
-        if cleaned_value['value'] is None:
-            try:
-                cleaned_value = cls.int_unit(str_value)
-            except ValueError:
-                pass
-
-        if cleaned_value['value'] is None:
-            try:
-                cleaned_value = cls.float_unit(str_value)
-            except ValueError:
-                pass
-
-        if cleaned_value['value'] is None:
-            cleaned_value = cls.string(str_value)
-
+        cleaned_value = None
+        converters = cls.get_converter_iter()
+        while not cleaned_value:
+            cleaned_value = self.try_convert(converters.next())
         return cleaned_value
 
-    def update(self, incar_dict):
-        # TODO: This is really ugly and the whole storage format should
-        # TODO: be changed to make this not so weird
-        for key, val in incar_dict.items():
-            if key not in self.incar_dict:
-                self.incar_dict[key.lower()] = {}
-            if not hasattr(val, 'has_key'):
-                self.incar_dict[key.lower()]['value'] = val
-            else:
-                self.incar_dict[key.lower()].update(val)
+    @classmethod
+    def get_converter_iter(cls):
+        converter_order = [cls.bool, cls.int, cls.float, cls.string]
+        return (i for i in converter_order)
+
+    def try_convert(cls, str_value, converter):
+        try:
+            cleaned_value = converter(str_value)
+        except ValueError:
+            cleaned_value = {}
+
+        if cleaned_value.get('value', None) is None:
+            return None
+        return cleaned_value
+
+    def update(self, incar_mapping):
+        input_dict = self.normalize_mapping(incar_mapping)
+        self.incar_dict.update(input_dict)
 
     def __str__(self):
         return dict_to_incar(self.incar_dict, extended=True)
@@ -77,6 +146,12 @@ class IncarIo(KeyValueParser):
     def store(self, filename):
         with open(filename, 'w') as incar_fo:
             incar_fo.write(str(self))
+
+    def get_dict(self):
+        return {v.name: v.value for v in self.incar_dict.values()}
+
+    def make_param_node(self):
+        return get_data_node('param', dict=self.get_dict())
 
 
 
