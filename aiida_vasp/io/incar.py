@@ -73,7 +73,13 @@ class IncarItem(object):
         }
 
     def __str__(self, rhs):
-        return self._STR_TPL.format(**self.as_dict)
+        tpl_args = {
+            'name': self.name,
+            'value': _incarify(self.value),
+            'comment': self.comment,
+            'comment_sep': self.comment_separator
+        }
+        return self._STR_TPL.format(**tpl_args)
 
 
 
@@ -82,6 +88,8 @@ class IncarIo(KeyValueParser):
     """Parse and write VASP INCAR files."""
     bool_true = re.compile(r'.true.', re.IGNORECASE)
     bool_false = re.compile(r'.false.', re.IGNORECASE)
+    extra_key_order = 'IncarIo:order'
+    extra_key_comments = 'IncarIo:order'
 
     def __init__(self, file_path=None, incar_dict=None):
         """Populate internal key-value storage from a file or dictionary."""
@@ -141,7 +149,8 @@ class IncarIo(KeyValueParser):
         self.incar_dict.update(input_dict)
 
     def __str__(self):
-        return dict_to_incar(self.incar_dict, extended=True)
+        return '\n'.join(
+            (str(incar_item) for incar_item in self.incar_dict.items()))
 
     def store(self, filename):
         with open(filename, 'w') as incar_fo:
@@ -150,9 +159,24 @@ class IncarIo(KeyValueParser):
     def get_dict(self):
         return {v.name: v.value for v in self.incar_dict.values()}
 
-    def make_param_node(self):
-        return get_data_node('param', dict=self.get_dict())
+    def get_comments_dict(self):
+        return {k: v.comment for k, v in self.incar_dict.items()}
 
+    def make_param_node(self, annotate=True):
+        """
+        Create a ParameterData node containing the incar key/value pairs.
+
+        :kwarg annotate: [True] store the node and add extras to preserve
+            order and comments of the INCAR. Implies that the node gets stored in the process!
+        """
+
+        node = get_data_node('param', dict=self.get_dict())
+        if not annotate:
+            return node
+        node.store()
+        node.set_extra(self.extra_key_order, self.incar_dict.keys())
+        node.set_extra(self.extra_key_comments, self.get_comments_dict())
+        return node
 
 
 def _incarify(value):
