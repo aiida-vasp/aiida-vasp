@@ -49,7 +49,7 @@ class IncarItem(object):
 
     @comment.setter
     def comment(self, comment_input):
-        self._comment = str(comment).lstrip('#')
+        self._comment = str(comment_input).lstrip('#').strip()
 
     @property
     def name(self):
@@ -57,7 +57,7 @@ class IncarItem(object):
 
     @name.setter
     def name(self, name_input):
-        self._name = name.upper()
+        self._name = name_input.upper()
 
     @property
     def comment_separator(self):
@@ -72,7 +72,7 @@ class IncarItem(object):
             'comment': self.comment
         }
 
-    def __str__(self, rhs):
+    def __str__(self):
         tpl_args = {
             'name': self.name,
             'value': _incarify(self.value),
@@ -80,8 +80,6 @@ class IncarItem(object):
             'comment_sep': self.comment_separator
         }
         return self._STR_TPL.format(**tpl_args)
-
-
 
 
 class IncarIo(KeyValueParser):
@@ -112,13 +110,13 @@ class IncarIo(KeyValueParser):
         else:
             content = fobj_or_str.read()
 
-        items = re.findall(cls.assignment, content)):
+        items = re.findall(cls.assignment, content)
         normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in items]
         return OrderedDict(normalized_items)
 
     @classmethod
     def normalize_mapping(cls, input_mapping):
-        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in input_mapping]
+        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in input_mapping.items()]
         return OrderedDict(normalized_items)
 
     @classmethod
@@ -126,7 +124,7 @@ class IncarIo(KeyValueParser):
         cleaned_value = None
         converters = cls.get_converter_iter()
         while not cleaned_value:
-            cleaned_value = self.try_convert(converters.next())
+            cleaned_value = cls.try_convert(str_value, converters.next())
         return cleaned_value
 
     @classmethod
@@ -134,9 +132,12 @@ class IncarIo(KeyValueParser):
         converter_order = [cls.bool, cls.int, cls.float, cls.string]
         return (i for i in converter_order)
 
-    def try_convert(cls, str_value, converter):
+    @classmethod
+    def try_convert(cls, input_value, converter):
+        if not isinstance(input_value, string_types):
+            return {'value': input_value}
         try:
-            cleaned_value = converter(str_value)
+            cleaned_value = converter(input_value)
         except ValueError:
             cleaned_value = {}
 
@@ -150,14 +151,14 @@ class IncarIo(KeyValueParser):
 
     def __str__(self):
         return '\n'.join(
-            (str(incar_item) for incar_item in self.incar_dict.items()))
+            (str(incar_item) for incar_item in self.incar_dict.values()))
 
     def store(self, filename):
         with open(filename, 'w') as incar_fo:
             incar_fo.write(str(self))
 
     def get_dict(self):
-        return {v.name: v.value for v in self.incar_dict.values()}
+        return {k: v.value for k, v in self.incar_dict.items()}
 
     def get_comments_dict(self):
         return {k: v.comment for k, v in self.incar_dict.items()}

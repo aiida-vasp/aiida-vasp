@@ -48,7 +48,10 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def retval(cls, *args, **kwargs):
-        ret = {'value': list(args)}
+        val = list(args)
+        if len(val) == 1:
+            val = val[0]
+        ret = {'value': val}
         ret.update(kwargs)
         return ret
 

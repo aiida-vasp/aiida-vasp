@@ -116,6 +116,7 @@ class PawParser(KeyValueParser):
             raise ValueError('not parsing concatenated POTCAR files')
         kv_dict = cls.kv_dict(kv_list)
         is_paw, _ = cls.bool(kv_dict.get('LPAW', 'T'))
+        print kv_dict.get('LULTRA', 'F')
         is_ultrasoft, _ = cls.bool(kv_dict.get('LULTRA', 'F'))
         if not is_paw:
             raise ValueError('POTCAR contains non-PAW potential')
