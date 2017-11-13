@@ -1,6 +1,7 @@
 """Test the Incar io interface"""
 import re
 import pytest
+from collections import OrderedDict
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.io.incar import IncarIo, IncarItem
@@ -8,12 +9,8 @@ from aiida_vasp.io.incar import IncarIo, IncarItem
 
 @pytest.fixture()
 def incar_dict():
-    incar_dict = OrderedDict([
-        ('encut', 350),
-        ('sigma', .5e-1),
-        ('lreal', False),
-        ('prec', 'Accurate')
-    ])
+    incar_dict = OrderedDict([('encut', 350), ('sigma', .5e-1),
+                              ('lreal', False), ('prec', 'Accurate')])
     return incar_dict
 
 
@@ -31,7 +28,7 @@ def test_from_dict(incar_dict):
     incar_io = IncarIo(incar_dict=incar_dict)
     assert str(
         incar_io
-    ) == 'ENCUT = 350\nSIGMA = 0.05\nLREAL = .False.\nPREC = Accurate\n'
+    ) == 'ENCUT = 350\nSIGMA = 0.05\nLREAL = .False.\nPREC = Accurate'
 
 
 def test_write_incar(tmpdir, incar_dict):

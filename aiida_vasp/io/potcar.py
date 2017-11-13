@@ -115,9 +115,9 @@ class PawParser(KeyValueParser):
         if not cls.single(kv_list):
             raise ValueError('not parsing concatenated POTCAR files')
         kv_dict = cls.kv_dict(kv_list)
-        is_paw, _ = cls.bool(kv_dict.get('LPAW', 'T'))
-        print kv_dict.get('LULTRA', 'F')
-        is_ultrasoft, _ = cls.bool(kv_dict.get('LULTRA', 'F'))
+        kv_dict = cls.clean_dict(kv_dict)
+        is_paw = kv_dict.get('LPAW', True)
+        is_ultrasoft = kv_dict.get('LULTRA', False)
         if not is_paw:
             raise ValueError('POTCAR contains non-PAW potential')
         if is_ultrasoft:
@@ -129,21 +129,14 @@ class PawParser(KeyValueParser):
             attr_dict['family'] = fam
             attr_dict['symbol'] = sym
             attr_dict['paw_date'] = date
-            enmin, enmin_u, _ = cls.float_unit(kv_dict['ENMIN'])
-            attr_dict['enmin'] = enmin
-            attr_dict['enmin_unit'] = enmin_u
-            enmax, enmax_u, _ = cls.float_unit(kv_dict['ENMAX'])
-            attr_dict['enmax'] = enmax
-            attr_dict['enmax_unit'] = enmax_u
+            attr_dict['enmin'] = kv_dict['ENMIN']
+            attr_dict['enmax'] = kv_dict['ENMAX']
             elem, spconf = cls.vrhfin(kv_dict['VRHFIN'])
             attr_dict['element'] = elem
             attr_dict['atomic_conf'] = spconf
-            mass, _ = cls.float(kv_dict['POMASS'])
-            attr_dict['mass'] = mass
-            val, _ = cls.float(kv_dict['ZVAL'])
-            attr_dict['valence'] = val
-            xc_type, _ = cls.string(kv_dict['LEXCH'])
-            attr_dict['xc_type'] = xc_type
+            attr_dict['mass'] = kv_dict['POMASS']
+            attr_dict['valence'] = kv_dict['ZVAL']
+            attr_dict['xc_type'] = kv_dict['LEXCH']
         except KeyError as err:
             msg = 'missing or misspelled keyword "' + err.message
             msg += '" in ' + os.path.abspath(filename)
@@ -156,3 +149,11 @@ class PawParser(KeyValueParser):
             raise err.__class__(msg)
 
         return attr_dict
+
+    @classmethod
+    def clean_dict(cls, kv_dict):
+        return {k: cls.clean_value(v)['value'] for k, v in kv_dict.items()}
+
+    @classmethod
+    def string(cls, string_):
+        return cls.retval(string_)

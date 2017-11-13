@@ -8,6 +8,9 @@ class OutcarToAiida(object):
     def __init__(self, outcar_obj):
         self.outcar_obj = outcar_obj
 
+    def get_pymatgen(self):
+        return self.outcar_obj
+
     @property
     def output_dict(self):
         """Collect scalars and small arrays into a dictionary."""

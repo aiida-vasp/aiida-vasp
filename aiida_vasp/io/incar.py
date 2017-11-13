@@ -1,10 +1,10 @@
 """Provides INCAR file interface and utilities."""
 import re
-from collections import Mapping, Sequence, OrderedDict
+from collections import OrderedDict
 
 import numpy as np
-from six import string_types
 
+from aiida_vasp.io.pymatgen.vasprun import get_data_node
 from aiida_vasp.io.parser import KeyValueParser
 
 
@@ -49,7 +49,8 @@ class IncarItem(object):
 
     @comment.setter
     def comment(self, comment_input):
-        self._comment = str(comment_input).lstrip('#').strip()
+        if comment_input is not None:
+            self._comment = str(comment_input).lstrip('#').strip()
 
     @property
     def name(self):
@@ -89,13 +90,28 @@ class IncarIo(KeyValueParser):
     extra_key_order = 'IncarIo:order'
     extra_key_comments = 'IncarIo:order'
 
-    def __init__(self, file_path=None, incar_dict=None):
+    def __init__(self, file_path=None, incar_dict=None, parameter_node=None):
         """Populate internal key-value storage from a file or dictionary."""
         self.incar_dict = OrderedDict()
-        if file_path:
-            self.read_incar_file(file_path)
-        if incar_dict:
-            self.update(incar_dict)
+        if parameter_node:
+            self.read_param_node(parameter_node)
+        else:
+            if file_path:
+                self.read_incar_file(file_path)
+            if incar_dict:
+                self.update(incar_dict)
+
+    def read_param_node(self, parameter_node):
+        order = parameter_node.get_extra(self.extra_key_order, [])
+        self.incar_dict = OrderedDict([(k, None) for k in order])
+        params = parameter_node.get_dict()
+        comments = parameter_node.get_extra(self.extra_key_comments, {})
+        self.incar_dict.update({k: IncarItem(k, v, comments.get(k, None)) for k, v in params.items()})
+
+    def add_defaults(self, defaults_mapping):
+        for k, v in self.normalize_mapping(defaults_mapping):
+            if k not in self.incar_dict:
+                self.incar_dict[k] = v
 
     def read_incar_file(self, filename):
         """Read an INCAR file into internal storage."""
@@ -111,47 +127,23 @@ class IncarIo(KeyValueParser):
             content = fobj_or_str.read()
 
         items = re.findall(cls.assignment, content)
-        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in items]
+        normalized_items = [(k.lower(), IncarItem(
+            name=k, **cls.clean_value(v))) for k, v in items]
         return OrderedDict(normalized_items)
 
     @classmethod
     def normalize_mapping(cls, input_mapping):
-        normalized_items = [(k.lower(), IncarItem(name=k, **cls.clean_value(v))) for k, v in input_mapping.items()]
+        normalized_items = [(k.lower(), IncarItem(
+            name=k, **cls.clean_value(v))) for k, v in input_mapping.items()]
         return OrderedDict(normalized_items)
-
-    @classmethod
-    def clean_value(cls, str_value):
-        cleaned_value = None
-        converters = cls.get_converter_iter()
-        while not cleaned_value:
-            cleaned_value = cls.try_convert(str_value, converters.next())
-        return cleaned_value
-
-    @classmethod
-    def get_converter_iter(cls):
-        converter_order = [cls.bool, cls.int, cls.float, cls.string]
-        return (i for i in converter_order)
-
-    @classmethod
-    def try_convert(cls, input_value, converter):
-        if not isinstance(input_value, string_types):
-            return {'value': input_value}
-        try:
-            cleaned_value = converter(input_value)
-        except ValueError:
-            cleaned_value = {}
-
-        if cleaned_value.get('value', None) is None:
-            return None
-        return cleaned_value
 
     def update(self, incar_mapping):
         input_dict = self.normalize_mapping(incar_mapping)
         self.incar_dict.update(input_dict)
 
     def __str__(self):
-        return '\n'.join(
-            (str(incar_item) for incar_item in self.incar_dict.values()))
+        return '\n'.join((str(incar_item)
+                          for incar_item in self.incar_dict.values()))
 
     def store(self, filename):
         with open(filename, 'w') as incar_fo:
@@ -171,7 +163,7 @@ class IncarIo(KeyValueParser):
             order and comments of the INCAR. Implies that the node gets stored in the process!
         """
 
-        node = get_data_node('param', dict=self.get_dict())
+        node = get_data_node('parameter', dict=self.get_dict())
         if not annotate:
             return node
         node.store()
@@ -210,7 +202,8 @@ def _incar_item(key, value, units=None, comment=None):
     units = ' ' + units if units else ''
     comment = ' ' + comment if comment else ''
 
-    return _incar_item.tpl.format(key=key, value=value, units=units, comment=comment)
+    return _incar_item.tpl.format(
+        key=key, value=value, units=units, comment=comment)
 
 
 _incar_item.tpl = '{key} = {value}{units}{comment}'

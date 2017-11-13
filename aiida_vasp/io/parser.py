@@ -3,6 +3,8 @@ This module contains the base class for other vasp parsers.
 """
 import re
 
+from six import string_types
+
 
 class BaseParser(object):
     """Common codebase for all parser utilities"""
@@ -118,11 +120,39 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def kv_list(cls, filename):
-        with open(filename) as potcar:
-            kv_list = filter(None, map(cls.find_kv, potcar))
+        with open(filename) as input_fo:
+            kv_list = filter(None, map(cls.find_kv, input_fo))
         return kv_list
 
     @classmethod
     def kv_dict(cls, kv_list):
         kv_dict = dict(cls.flatten(kv_list))
         return kv_dict
+
+    @classmethod
+    def clean_value(cls, str_value):
+        if str_value == '':
+            return cls.retval(str_value)
+        cleaned_value = None
+        converters = cls.get_converter_iter()
+        while not cleaned_value:
+            cleaned_value = cls.try_convert(str_value, converters.next())
+        return cleaned_value
+
+    @classmethod
+    def get_converter_iter(cls):
+        converter_order = [cls.bool, cls.int, cls.float, cls.string]
+        return (i for i in converter_order)
+
+    @classmethod
+    def try_convert(cls, input_value, converter):
+        if not isinstance(input_value, string_types):
+            return {'value': input_value}
+        try:
+            cleaned_value = converter(input_value)
+        except ValueError:
+            cleaned_value = {}
+
+        if cleaned_value.get('value', None) is None:
+            return None
+        return cleaned_value

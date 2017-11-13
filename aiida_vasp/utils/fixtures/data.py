@@ -1,12 +1,14 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import os
+from collections import OrderedDict
 
 import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
 
 from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen.incar import IncarToAiida
 
 
 @pytest.fixture(scope='session')
@@ -41,12 +43,13 @@ def localhost(aiida_env, localhost_dir):
 def vasp_params(aiida_env):
     from aiida.orm import DataFactory
 
-    return DataFactory('parameter')(dict={
+    incar_io = IncarToAiida.from_dict({
         'gga': 'PE',
         'gga_compat': False,
         'lorbit': 11,
         'sigma': 0.5
     })
+    return incar_io.get_aiida_node()
 
 
 @pytest.fixture()

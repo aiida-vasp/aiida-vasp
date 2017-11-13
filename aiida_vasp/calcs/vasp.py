@@ -11,6 +11,7 @@ from aiida.orm import DataFactory
 
 from aiida_vasp.calcs.base import VaspCalcBase, Input
 from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen.incar import IncarToAiida
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
@@ -159,8 +160,8 @@ class VaspCalculation(VaspCalcBase):
         from aiida_vasp.io.incar import IncarIo
         incar_dict = ChainMap(self.inp.parameters.get_dict(),
                               self._DEFAULT_PARAMETERS)
-        incar_io = IncarIo(incar_dict=incar_dict)
-        incar_io.store(dst)
+        incar_io = IncarToAiida.from_dict(incar_dict)
+        incar_io.write_file(dst)
 
     def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         """
