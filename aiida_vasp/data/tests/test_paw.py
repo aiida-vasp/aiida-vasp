@@ -1,6 +1,6 @@
 import pytest
 
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 from aiida_vasp.utils.fixtures.testdata import data_path
 
 

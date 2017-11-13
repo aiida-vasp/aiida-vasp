@@ -1,11 +1,11 @@
 """Translate between pymatgen Incar class and Aiida datastructures."""
 from pymatgen.io.vasp import Incar
 
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 
 
 class IncarToAiida(object):
-    """Adap between Incar object and AiiDA Nodes."""
+    """Adapt between Incar object and AiiDA Nodes."""
 
     def __init__(self, incar_obj):
         self.incar_obj = incar_obj
@@ -39,8 +39,8 @@ class IncarToAiida(object):
 
     @classmethod
     def _normalize_for_aiida(cls, input_dict):
-        return {k.lower(): v for k, v in input_dict.items()}
+        return {k.lower(): Incar.proc_value(k, v) for k, v in input_dict.items()}
 
     @classmethod
     def _normalize_for_pymatgen(cls, input_dict):
-        return {k.upper(): v for k, v in input_dict.items()}
+        return {k.upper(): Incar.proc_value(k, v) for k, v in input_dict.items()}

@@ -4,22 +4,22 @@ import xml
 from aiida.common.exceptions import ParsingError as AiidaParsingError
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 
-from aiida_vasp.io.pymatgen.vasprun import VasprunToAiida, get_data_node
-from aiida_vasp.io.pymatgen.outcar import OutcarToAiida
+from aiida_vasp.io.pymatgen_aiida.vasprun import VasprunToAiida, get_data_node
+from aiida_vasp.io.pymatgen_aiida.outcar import OutcarToAiida
 from aiida_vasp.parsers.base import BaseParser
 
 
 class PymatgenParser(BaseParser):
     """
-    Use pymatgen to parse vasp output.
+    Use pymatgen_aiida to parse vasp output.
 
-    * Translate ``pymatgen`` ``Vasprun`` class into output nodes
+    * Translate ``pymatgen_aiida`` ``Vasprun`` class into output nodes
     * can read broken ``vasprun.xml`` files
 
-    Parameters can be passed to the ``pymatgen.io.vasp.outputs.Vasprun``
+    Parameters can be passed to the ``pymatgen_aiida.io.vasp.outputs.Vasprun``
     constructor via the settings input node for VaspCalculation (see example).
 
-    generic parser settings (not passed on to pymatgen):
+    generic parser settings (not passed on to pymatgen_aiida):
 
         * ``parse_dos``: [True] if false, suppress the dos output node
         * ``parse_bands``: [True] if false, suppress the bands output node
@@ -28,13 +28,13 @@ class PymatgenParser(BaseParser):
 
         VASP needs to have completed at least one ionic step and must have written
         the corresponding <calculation>...</calculation> tag to the vasprun.xml output
-        or the parser will still fail. This is a limitation of the ``pymatgen``'s ``Vasprun``
+        or the parser will still fail. This is a limitation of the ``pymatgen_aiida``'s ``Vasprun``
         class.
 
     Example Usage::
 
         calc = CalculationFactory('vasp.vasp')
-        calc.set_parser_cls(ParserFactory('vasp.pymatgen'))
+        calc.set_parser_cls(ParserFactory('vasp.pymatgen_aiida'))
         calc.use_settings(DataFactory('parameter')(dict={
             'pymatgen_parser': {
                 'exception_on_bad_xml': False,
@@ -134,7 +134,7 @@ class PymatgenParser(BaseParser):
         return parsed_outcar
 
     def get_vasprun_options(self):
-        """Get the options to the pymatgen Vasprun constructor from settings."""
+        """Get the options to the pymatgen_aiida Vasprun constructor from settings."""
         settings_input = self._calc.get_inputs_dict().get('settings')
         if not settings_input:
             return {}

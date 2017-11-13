@@ -1,0 +1,21 @@
+SYSTEM = Copper surface calculation
+
+Start parameter for this Run:
+  ISTART =        0   job   : 0-new  1-cont 2-samecut
+  ICHARG =        2   charge: 1-file 2-atom 10-const
+  INIWAV =        1   electr: 0-lowe 1-rand
+
+Electronic Relaxation 1
+  ENCUT  = 200.00 eV
+  IALGO  =     18   algorithm     NELM    =   60;     NELMIN= 0; NELMDL=  3   # of ELM steps m
+  EDIFF  =   1e-04  stopping-criterion for ELM
+  BMIX =2.0
+
+Ionic Relaxation
+  EDIFFG =  -0.01   stopping-criterion for IOM
+  NSW    =   9      number of steps for IOM
+  IBRION =   2      conjugate-gradient for IOM
+  POTIM  =   1.0    time step for ion-motion
+
+DOS related values:
+  SIGMA  = 0.2; ISMEAR = 1 broad. in eV, -4-tet -1-fermi 0-gaus

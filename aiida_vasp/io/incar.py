@@ -2,9 +2,11 @@
 import re
 from collections import OrderedDict
 
+from pymatgen.io.vasp import Incar
 import numpy as np
+import pyparsing as pp
 
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 from aiida_vasp.io.parser import KeyValueParser
 
 
@@ -24,6 +26,7 @@ class IncarItem(object):
     """
     _STR_TPL = '{name} = {value}{comment_sep}{comment}'
 
+
     def __init__(self, *args, **kwargs):
         if args and isinstance(args[0], self.__class__):
             self.set_copy(args[0])
@@ -34,6 +37,12 @@ class IncarItem(object):
             self._name = None
             self._comment = None
             self.set_values(*args, **kwargs)
+
+    @classmethod
+    def from_string(cls, input_string):
+        result =  cls.item_parser.parseString(input_string)
+        value = Incar.proc_val(result.key, result.value)
+        return IncarItem(result.key, value, result.comment)
 
     def set_copy(self, other):
         self.set_values(other.name, other.value, other.comment)
@@ -84,11 +93,11 @@ class IncarItem(object):
 
 
 class IncarIo(KeyValueParser):
-    """Parse and write VASP INCAR files."""
+    """Parse and write VASP INCAR files, preserving order and comments."""
     bool_true = re.compile(r'.true.', re.IGNORECASE)
     bool_false = re.compile(r'.false.', re.IGNORECASE)
-    extra_key_order = 'IncarIo:order'
-    extra_key_comments = 'IncarIo:order'
+    key_order = '__order'
+    key_comments = '__comments'
 
     def __init__(self, file_path=None, incar_dict=None, parameter_node=None):
         """Populate internal key-value storage from a file or dictionary."""
@@ -102,10 +111,10 @@ class IncarIo(KeyValueParser):
                 self.update(incar_dict)
 
     def read_param_node(self, parameter_node):
-        order = parameter_node.get_extra(self.extra_key_order, [])
-        self.incar_dict = OrderedDict([(k, None) for k in order])
         params = parameter_node.get_dict()
-        comments = parameter_node.get_extra(self.extra_key_comments, {})
+        order = params.pop(self.key_order, [])
+        comments = params.pop(self.key_comments, {})
+        self.incar_dict = OrderedDict([(k, None) for k in order])
         self.incar_dict.update({k: IncarItem(k, v, comments.get(k, None)) for k, v in params.items()})
 
     def add_defaults(self, defaults_mapping):
@@ -171,6 +180,37 @@ class IncarIo(KeyValueParser):
         node.set_extra(self.extra_key_comments, self.get_comments_dict())
         return node
 
+
+
+def item_parser():
+    name_token = pp.Word(pp.alphas, pp.alphanums + '_')
+    assignment_token = pp.Suppress('=')
+    nums_token = pp.Regex(r'(?P<list>(?P<num>[\-\+]?[\d.,\']+e?[\-\+]?\d*)\s?)*').setParseAction(lambda t: t[0].strip())
+    value_token = nums_token | pp.Word(pp.alphanums + '_.,+-')
+    item_end_token = pp.SkipTo(pp.Suppress(';') | pp.lineEnd)
+    comment_token = pp.Suppress(pp.Optional('#')) + item_end_token('comment')
+    item_token = name_token('key') + assignment_token + value_token('value') + comment_token
+    description_key_token = pp.Literal('SYSTEM')
+    description_token = description_key_token('key') + assignment_token + item_end_token('value')
+    item = description_token | item_token
+    return item
+
+
+def item_parser2():
+    word_chars = pp.printables.replace(';', '')
+    system_name = pp.Literal('SYSTEM')
+    item_end = pp.SkipTo(pp.Suppress(';') | pp.lineEnd)
+    equals = pp.Suppress('=')
+    system = system_name('name') + equals + item_end('value')
+    name = pp.Word(pp.alphas, word_chars)
+    number = pp.Regex(r'[+-]?((?:\d+(\.\d*)?)|(.\d+))([Ee][+-]?\d+)?')
+    num_value = pp.Group(pp.OneOrMore(number)).setParseAction(lambda t: ' '.join(t[0]))
+    str_value = pp.Word(word_chars)
+    value = num_value | str_value
+    comment = pp.SkipTo(pp.Literal('#') | pp.Literal(';') | pp.lineEnd)
+    std_param = name('name') + equals + pp.empty + value('value') + comment('comment')
+    param = system | std_param
+    return param
 
 def _incarify(value):
     """Format value of any compatible type into the string forat appropriate for INCAR files."""

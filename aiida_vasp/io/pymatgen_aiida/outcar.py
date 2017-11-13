@@ -1,5 +1,5 @@
 """Translate from pymatgen Outcar class to Aiida datastructures."""
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 
 
 class OutcarToAiida(object):

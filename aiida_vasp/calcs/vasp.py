@@ -1,7 +1,7 @@
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""VASP - Calculation: Generic run using pymatgen for file preparation"""
+"""VASP - Calculation: Generic run using pymatgen_aiida for file preparation"""
 try:
     from collections import ChainMap
 except ImportError:
@@ -10,8 +10,8 @@ except ImportError:
 from aiida.orm import DataFactory
 
 from aiida_vasp.calcs.base import VaspCalcBase, Input
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
-from aiida_vasp.io.pymatgen.incar import IncarToAiida
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.incar import IncarToAiida
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')

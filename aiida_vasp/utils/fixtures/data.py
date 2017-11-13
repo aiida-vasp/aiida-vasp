@@ -7,8 +7,8 @@ import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.io.pymatgen.vasprun import get_data_node
-from aiida_vasp.io.pymatgen.incar import IncarToAiida
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.incar import IncarToAiida
 
 
 @pytest.fixture(scope='session')
