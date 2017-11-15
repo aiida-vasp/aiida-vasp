@@ -19,8 +19,7 @@ class NscfWorkflow(Workflow):
         """Initialize a calculation builder instance"""
         params = self.get_parameters()
         maker = self.helper._get_calc_maker(  # pylint: disable=protected-access
-            'vasp.nscf',
-            continue_from=Calculation.query(uuid=params['continue_from'])[0])
+            'vasp.nscf', continue_from=Calculation.query(uuid=params['continue_from'])[0])
         nscf_parameters = {'lwannier90': params['use_wannier'], 'icharg': 11}
         maker.rewrite_parameters(**nscf_parameters)
         return maker
@@ -39,8 +38,7 @@ class NscfWorkflow(Workflow):
         calc.set_extras(params.get('extras'))
 
         self.attach_calculation(calc)
-        self.append_to_report(
-            self.helper._calc_start_msg('NSCF Calculation', calc))
+        self.append_to_report(self.helper._calc_start_msg('NSCF Calculation', calc))
         self.next(self.end)
 
     @Workflow.step
@@ -57,8 +55,7 @@ class NscfWorkflow(Workflow):
             self.add_result('calc', calc)
             self.append_to_report('Added the nscf calculation as a result')
         else:
-            self.append_to_report(
-                self.helper._calc_invalid_outs_msg(calc, output_links))
+            self.append_to_report(self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
     def _verify_param_kpoints(self, params):
@@ -66,8 +63,7 @@ class NscfWorkflow(Workflow):
         valid, log = self.helper._verify_kpoints(params)  # pylint: disable=protected-access
         if params.get('use_wannier') and params.get('kpoints'):
             if not params['kpoints'].get('mesh'):
-                log += ('{}: parameters: kpoints may only be given as a mesh '
-                        'when using wannier.').format(self.__class__.__name__)
+                log += ('{}: parameters: kpoints may only be given as a mesh ' 'when using wannier.').format(self.__class__.__name__)
                 valid = False
         return valid, log
 
@@ -80,8 +76,7 @@ class NscfWorkflow(Workflow):
         """returns a dictionary of keys and explanations how they
         can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
-        tmpl['use_wannier'] = ('True | False (if true, vasp_code must be '
-                               'compiled with wannier interface')
+        tmpl['use_wannier'] = ('True | False (if true, vasp_code must be ' 'compiled with wannier interface')
         return tmpl
 
     @classmethod

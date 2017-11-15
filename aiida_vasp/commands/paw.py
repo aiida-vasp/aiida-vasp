@@ -38,9 +38,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         import os.path
         import argparse as arp
 
-        parser = arp.ArgumentParser(
-            prog=self.get_full_command_name(),
-            description='Upload a new PAW pseudopotential family.')
+        parser = arp.ArgumentParser(prog=self.get_full_command_name(), description='Upload a new PAW pseudopotential family.')
         parser.add_argument(
             '--stop-if-existing',
             action='store_true',
@@ -67,21 +65,15 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         from aiida.orm import DataFactory
         paw_cls = DataFactory('vasp.paw')
         files_found, files_uploaded = paw_cls.import_family(
-            folder,
-            familyname=group_name,
-            family_desc=group_description,
-            stop_if_existing=stop_if_existing)
+            folder, familyname=group_name, family_desc=group_description, stop_if_existing=stop_if_existing)
 
-        print "POTCAR files found in subfolders: {}. New files uploaded from: {}".format(
-            files_found, files_uploaded)
+        print "POTCAR files found in subfolders: {}. New files uploaded from: {}".format(files_found, files_uploaded)
 
     def listfamilies(self, *args):
         """Subcommand to list AiiDA PAW families present in the DB"""
         import argparse
 
-        parser = argparse.ArgumentParser(
-            prog=self.get_full_command_name(),
-            description='List AiiDA PAW families.')
+        parser = argparse.ArgumentParser(prog=self.get_full_command_name(), description='List AiiDA PAW families.')
         parser.add_argument(
             '-e',
             '--element',
@@ -99,11 +91,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
             help="Filter the families only to those containing "
             "a potential for each of the specified symbols")
         parser.add_argument(
-            '-d',
-            '--with-description',
-            dest='with_description',
-            action='store_true',
-            help="Show also the description for the PAW family")
+            '-d', '--with-description', dest='with_description', action='store_true', help="Show also the description for the PAW family")
         parser.set_defaults(with_description=False)
 
         params = parser.parse_args(args)
@@ -111,8 +99,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         _try_load_dbenv()
         from aiida.orm import DataFactory
         paw_cls = DataFactory('vasp.paw')
-        groups = paw_cls.get_paw_groups(
-            elements=list(params.element), symbols=list(params.symbol))
+        groups = paw_cls.get_paw_groups(elements=list(params.element), symbols=list(params.symbol))
 
         if groups:
             for group in groups:
@@ -122,8 +109,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
                 if params.with_description:
                     description_string = ': {}'.format(group.description)
                 groupitem = '* {} [{} pseudos]{}'
-                print groupitem.format(group.name, num_paws,
-                                       description_string)
+                print groupitem.format(group.name, num_paws, description_string)
         else:
             print 'No PAW pseudopotential family found.'
 
@@ -148,8 +134,7 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         psctr = kwargs.get('psctr')
         psctr = expanduser(psctr[0]) if psctr else None
         try:
-            node, created = self.dataclass.get_or_create(
-                path, psctr=psctr, store=True)
+            node, created = self.dataclass.get_or_create(path, psctr=psctr, store=True)
             print repr(node)
             if not created:
                 print 'part of the following families:'
@@ -168,20 +153,9 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         from aiida.orm import DataFactory
         from aiida.common.exceptions import NotExistent
 
-        parser = argparse.ArgumentParser(
-            prog=self.get_full_command_name(),
-            description='Export a PAW potential family into a folder')
-        parser.add_argument(
-            '--name',
-            nargs=1,
-            type=str,
-            default=None,
-            help='name of the folder, defaults to '
-            'potpaw_<family_name>.')
-        parser.add_argument(
-            'folder',
-            help='path to where the potpaw '
-            'folder should be created')
+        parser = argparse.ArgumentParser(prog=self.get_full_command_name(), description='Export a PAW potential family into a folder')
+        parser.add_argument('--name', nargs=1, type=str, default=None, help='name of the folder, defaults to ' 'potpaw_<family_name>.')
+        parser.add_argument('folder', help='path to where the potpaw ' 'folder should be created')
         parser.add_argument('family_name')
 
         params = parser.parse_args(args)
@@ -192,12 +166,10 @@ class _Paw(VerdiCommandWithSubcommands, Importable):
         try:
             group = paw_cls.get_famgroup(params.family_name)
         except NotExistent:
-            print >> sys.stderr, ('paw family {} not found'.format(
-                params.family_name))
+            print >> sys.stderr, ('paw family {} not found'.format(params.family_name))
 
         #create folder
-        potpaw = params.name[0] if params.name else os.path.join(
-            folder, 'potpaw_%s' % params.family_name)
+        potpaw = params.name[0] if params.name else os.path.join(folder, 'potpaw_%s' % params.family_name)
         for paw in group.nodes:
             pawf = os.path.join(potpaw, paw.symbol)
             if not os.path.exists(pawf):

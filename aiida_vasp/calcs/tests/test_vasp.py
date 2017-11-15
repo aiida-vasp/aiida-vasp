@@ -12,9 +12,7 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 
 
-@pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')],
-    indirect=True)
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
 def test_store(vasp_calc_and_ref):
     vasp_calc, _ = vasp_calc_and_ref
     vasp_calc.store_all()
@@ -32,8 +30,7 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
 
 
 @STRUCTURE_TYPES
-def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref,
-                      vasp_structure_poscar):
+def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
     from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
@@ -107,9 +104,7 @@ def test_prepare(vasp_nscf_and_ref):
     with SandboxFolder() as sandbox_f:
         calc_info = vasp_calc._prepare_for_submission(sandbox_f, inp)
         inputs = sandbox_f.get_content_list()
-    assert set(inputs) == {
-        'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR'
-    }
+    assert set(inputs) == {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR'}
     assert 'EIGENVAL' in calc_info.retrieve_list
     assert 'DOSCAR' in calc_info.retrieve_list
     assert ('wannier90*', '.', 0) in calc_info.retrieve_list
@@ -127,10 +122,7 @@ def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     """Check that parsing is successful and creates the right output links"""
     vasp_calc, _ = vasp_nscf_and_ref
     parser = vasp_calc.get_parserclass()(vasp_calc)
-    success, outputs = parser.parse_with_retrieved({
-        'retrieved':
-        ref_retrieved_nscf
-    })
+    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     outputs = dict(outputs)
     assert success
     assert 'bands' in outputs

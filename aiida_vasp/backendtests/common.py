@@ -26,18 +26,13 @@ class Common(object):
 
     @staticmethod
     def cif():
-        cifpath = realpath(
-            join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
+        cifpath = realpath(join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
         cif = DataFactory('cif').get_or_create(cifpath)[0]
         return cif
 
     @staticmethod
     def import_paw():
-        DataFactory('vasp.paw').import_family(
-            subpath('LDA'),
-            familyname='TEST',
-            family_desc='stub '
-            'Potpaw Family for testing purposes')
+        DataFactory('vasp.paw').import_family(subpath('LDA'), familyname='TEST', family_desc='stub ' 'Potpaw Family for testing purposes')
 
     @staticmethod
     def paw_in():
@@ -73,18 +68,12 @@ class Common(object):
     @staticmethod
     def parameters():
         """Create ParameterData object with common parameters"""
-        parameters = {
-            'gga': 'PE',
-            'gga_compat': False,
-            'lorbit': 11,
-            'sigma': .05
-        }
+        parameters = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': .05}
         return DataFactory('parameter')(dict=parameters)
 
     @staticmethod
     def charge_density():
-        return DataFactory('vasp.chargedensity')(
-            file=subpath('data', 'CHGCAR'))
+        return DataFactory('vasp.chargedensity')(file=subpath('data', 'CHGCAR'))
 
     @staticmethod
     def charge_density_res():

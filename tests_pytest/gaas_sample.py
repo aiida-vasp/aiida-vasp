@@ -18,8 +18,7 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: d
 
         parameters = parameters if parameters else {}
 
-        process, inputs = get_process_inputs(
-            calculation_string=calculation_string, code_string='vasp')
+        process, inputs = get_process_inputs(calculation_string=calculation_string, code_string='vasp')
 
         structure = DataFactory('structure')()
         structure.set_ase(read_vasp(sample('GaAs/POSCAR')))
@@ -35,21 +34,17 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: d
         inputs.kpoints = kpoints
 
         parameters_input = DataFactory('parameter')(
-            dict=ChainMap(parameters,
-                          dict(
-                              nbands=24,
-                              gga='PE',
-                              gga_compat=False,
-                              ismear=0,
-                              lorbit=11,
-                              lsorbit=True,
-                              sigma=0.05,
-                          )))
+            dict=ChainMap(parameters, dict(
+                nbands=24,
+                gga='PE',
+                gga_compat=False,
+                ismear=0,
+                lorbit=11,
+                lsorbit=True,
+                sigma=0.05,
+            )))
         inputs.parameters = parameters_input
-        inputs._options.resources = {
-            'num_machines': 1,
-            'num_mpiprocs_per_machine': 12
-        }
+        inputs._options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 12}
         inputs._options.withmpi = True
         inputs._options.queue_name = 'dphys_compute'
         inputs._options.max_wallclock_seconds = 600

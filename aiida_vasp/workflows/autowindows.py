@@ -97,8 +97,7 @@ class AutowindowsWorkflow(Workflow):
         wannier_kpp = []
         for segment in kppath:
             # flatten the segment list
-            wannier_kpp.append(
-                list(itertools.chain.from_iterable(segment[:4])))
+            wannier_kpp.append(list(itertools.chain.from_iterable(segment[:4])))
         return wannier_kpp
 
     @Workflow.step
@@ -118,8 +117,7 @@ class AutowindowsWorkflow(Workflow):
         workflow.label = params.get('label')
         workflow.start()
         self.attach_workflow(workflow)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Preview-Bands', workflow))  # pylint: disable=protected-access
+        self.append_to_report(self.helper._subwf_start_msg('Preview-Bands', workflow))  # pylint: disable=protected-access
 
         self.next(self.make_windows)
 
@@ -130,8 +128,7 @@ class AutowindowsWorkflow(Workflow):
         params = self.get_parameters()
         num_wann = params['wannier_parameters']['num_wann']
 
-        bandpr_wf = self.get_step(
-            self.get_bands_preview).get_sub_workflows()[0]
+        bandpr_wf = self.get_step(self.get_bands_preview).get_sub_workflows()[0]
         bandpr_calc = bandpr_wf.get_result('calc')
         bandpr_bands = bandpr_calc.out.bands
         bands, occupations = bandpr_bands.get_bands(also_occupations=True)
@@ -201,8 +198,7 @@ class AutowindowsWorkflow(Workflow):
             wfpk.append(workflow.pk)
 
         self.append_to_report('running tbmodels for {} windows'.format(count))
-        self.append_to_report('tbmodels pk-range: {} - {}'.format(
-            wfpk[0], wfpk[-1]))
+        self.append_to_report('tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
 
         self.next(self.get_reference_bands)
 
@@ -228,8 +224,7 @@ class AutowindowsWorkflow(Workflow):
         workflow.label = params.get('label')
         workflow.start()
         self.attach_workflow(workflow)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Ref-Bands', workflow))  # pylint: disable=protected-access
+        self.append_to_report(self.helper._subwf_start_msg('Ref-Bands', workflow))  # pylint: disable=protected-access
 
         self.next(self.gather_results)
 
@@ -238,10 +233,8 @@ class AutowindowsWorkflow(Workflow):
         """Set the results of the workflow and the 'wbands_list' attribute"""
         self.append_to_report('retrieving and compiling results')
         wannier_wf_list = self.get_step(self.get_tbmodel).get_sub_workflows()
-        band_wf = self.get_step(
-            self.get_reference_bands).get_sub_workflows()[0]
-        self.add_result('reference_bands',
-                        band_wf.get_result('calc').out.bands)
+        band_wf = self.get_step(self.get_reference_bands).get_sub_workflows()[0]
+        self.add_result('reference_bands', band_wf.get_result('calc').out.bands)
         self.add_result('reference_calc', band_wf.get_result('calc'))
 
         wbands_list = []
@@ -253,15 +246,11 @@ class AutowindowsWorkflow(Workflow):
                 self.add_result('bands_{}'.format(calc.pk), bands)
             except Exception as err:  # pylint: disable=broad-except
                 wset = workflow.get_parameters()['parameters']
-                window = 'inner: {}-{}, outer: {}-{}'.format(
-                    wset['dis_froz_min'], wset['dis_froz_max'],
-                    wset['dis_win_min'], wset['dis_win_max'])
+                window = 'inner: {}-{}, outer: {}-{}'.format(wset['dis_froz_min'], wset['dis_froz_max'], wset['dis_win_min'],
+                                                             wset['dis_win_max'])
                 self.append_to_report(('workflow {pk} with window {window} '
                                        'did not yield the expected results: \n'
-                                       '{error}').format(
-                                           pk=workflow.pk,
-                                           window=window,
-                                           error=repr(err)))
+                                       '{error}').format(pk=workflow.pk, window=window, error=repr(err)))
 
         self.add_attribute('wbands_list', wbands_list)
 
@@ -318,16 +307,12 @@ class AutowindowsWorkflow(Workflow):
         tmpl['wannier_parameters'] = {'num_wann': 'int', 'hr_plot': True}
         tmpl['wannier_code'] = wtpl['wannier_code']
         tmpl['projections'] = ptpl['projections']
-        tmpl['iwindows-increment'] = ('eV increment between '
-                                      'different inner windows')
+        tmpl['iwindows-increment'] = ('eV increment between ' 'different inner windows')
         tmpl['num_iwindows'] = 'number of inner windows to try'
-        tmpl['owindows-increment'] = ('eV increment between '
-                                      'different outer windows')
+        tmpl['owindows-increment'] = ('eV increment between ' 'different outer windows')
         tmpl['num_owindows'] = 'number of outer windows to try'
         tmpl['kpoints'] = {'mesh': [], 'path': []}
-        tmpl['#kpoints'] = (
-            'mesh for everything up until wannier_setup'
-            'path for bands, format: [["A", [...], "B", [...]], [...]]')
+        tmpl['#kpoints'] = ('mesh for everything up until wannier_setup' 'path for bands, format: [["A", [...], "B", [...]], [...]]')
         return tmpl
 
     @classmethod
@@ -341,8 +326,7 @@ class AutowindowsWorkflow(Workflow):
             nproc = res['num_machines'] * res['num_mpiprocs_per_machine']
             if (nbands % nproc) != 0:
                 valid = False
-                log += ('nbands is not divisible by '
-                        'num_machines * num_mpiprocs_per_machine')
+                log += ('nbands is not divisible by ' 'num_machines * num_mpiprocs_per_machine')
         return valid, log
 
     def set_params(self, params, force=False):

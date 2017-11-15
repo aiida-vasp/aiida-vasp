@@ -8,15 +8,13 @@ class WinParser(KeyValueParser):
     """
     parses wannier90.win files
     """
-    block = re.compile(
-        r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
+    block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
     def __init__(self, filename):
         self.result = {}
         with open(filename) as winf:
-            self.keywords, self.blocks, self.comments = WinParser.parse_win(
-                winf)
+            self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
         self.result.update(self.keywords)
         self.result.update(self.blocks)
 

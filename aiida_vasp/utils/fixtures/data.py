@@ -1,14 +1,14 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import os
-import shutil
+from collections import OrderedDict
 
 import numpy
 import pytest
-import pymatgen
+from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
-from aiida_vasp.data.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.io.incar import IncarIo
 
 
 @pytest.fixture(scope='session')
@@ -41,14 +41,8 @@ def localhost(aiida_env, localhost_dir):
 
 @pytest.fixture()
 def vasp_params(aiida_env):
-    from aiida.orm import DataFactory
-
-    return DataFactory('parameter')(dict={
-        'gga': 'PE',
-        'gga_compat': False,
-        'lorbit': 11,
-        'sigma': 0.5
-    })
+    incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5})
+    return incar_io.get_param_node()
 
 
 @pytest.fixture()
@@ -61,10 +55,7 @@ def paws(aiida_env):
         familyname='TEST',
         family_desc='test data',
     )
-    paw_nodes = {
-        'In': DataFactory('vasp.paw').load_paw(element='In')[0],
-        'As': DataFactory('vasp.paw').load_paw(element='As')[0]
-    }
+    paw_nodes = {'In': DataFactory('vasp.paw').load_paw(element='In')[0], 'As': DataFactory('vasp.paw').load_paw(element='As')[0]}
     return paw_nodes
 
 
@@ -94,7 +85,7 @@ def vasp_structure_poscar(vasp_structure):
     aiida_structure = get_data_node('structure', ase=ase_structure)
     pmg_structure = aiida_structure.get_pymatgen()
     pmg_structure.sort()
-    pmg_poscar = pymatgen.io.vasp.inputs.Poscar(pmg_structure)
+    pmg_poscar = Poscar(pmg_structure)
     return pmg_poscar
 
 
@@ -154,7 +145,7 @@ def vasp_wavecar(aiida_env):
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read()
+        yield reference_incar_fo.read().strip()
 
 
 @pytest.fixture()
@@ -164,8 +155,7 @@ def ref_retrieved_nscf():
     from aiida_vasp.backendtests.common import subpath
     retrieved = DataFactory('folder')()
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
-        retrieved.add_path(
-            subpath('data', 'retrieved_nscf', 'path', fname), '')
+        retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
 
 

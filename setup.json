@@ -72,7 +72,9 @@
         "pymatgen", 
         "subprocess32", 
         "click", 
-        "chainmap"
+        "chainmap", 
+        "six", 
+        "pyparsing"
     ], 
     "keywords": "vasp aiida wannier90 workflows", 
     "license": "MIT License, see LICENSE.txt file.", 

@@ -1,6 +1,6 @@
 """Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
 from numpy import array
-from pymatgen.electronic_structure.bandstructure import Spin
+from pymatgen import Spin
 
 from aiida_vasp.utils.aiida_utils import dbenv
 
@@ -16,17 +16,14 @@ class VasprunToAiida(object):
     def actual_kpoints(self):
         """List actually used kpoints as KpointsData."""
         kpoints = get_data_node('array.kpoints')
-        kpoints.set_kpoints(
-            self.vasprun_obj.actual_kpoints,
-            weights=self.vasprun_obj.actual_kpoints_weights)
+        kpoints.set_kpoints(self.vasprun_obj.actual_kpoints, weights=self.vasprun_obj.actual_kpoints_weights)
         return kpoints
 
     @property
     def last_structure(self):
         """Give the structure after or at the last recorded ionic step as StructureData."""
         last_structure = self.vasprun_obj.structures[-1]
-        return self.final_structure or get_data_node(
-            'structure', pymatgen=last_structure)
+        return self.final_structure or get_data_node('structure', pymatgen=last_structure)
 
     @property
     def final_structure(self):
@@ -40,9 +37,7 @@ class VasprunToAiida(object):
     def forces(self):
         """Give forces in the last ioni step as ArrayData."""
         forces_array = get_data_node('array')
-        forces_array.set_array('forces',
-                               array(
-                                   self.vasprun_obj.ionic_steps[-1]['forces']))
+        forces_array.set_array('forces', array(self.vasprun_obj.ionic_steps[-1]['forces']))
         return forces_array
 
     @property
@@ -67,8 +62,7 @@ class VasprunToAiida(object):
         bands_node.set_kpointsdata(self.actual_kpoints)  # has to be set first
         try:
             bands_object = self.vasprun_obj.get_band_structure()
-            structure = get_data_node(
-                'structure', pymatgen=bands_object.structure)
+            structure = get_data_node('structure', pymatgen=bands_object.structure)
             bands_node.set_cell_from_structure(structure)
             bands_data = bands_object.bands
             bands_node_data = []
@@ -79,9 +73,7 @@ class VasprunToAiida(object):
             bands_node.set_bands(bands=bands_node_data)
         except AttributeError:
             if self.logger:
-                self.logger.warning(
-                    'Band structure could not be parsed, possibly because the final structure was missing from the xml'
-                )
+                self.logger.warning('Band structure could not be parsed, possibly because the final structure was missing from the xml')
         return bands_node
 
     @property

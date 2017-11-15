@@ -35,15 +35,7 @@ class TbmodelWorkflow(Workflow):
         """Return an VaspMaker instance."""
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_parameters(
-            icharg=0,
-            istart=0,
-            lorbit=11,
-            lsorbit=True,
-            sigma=0.05,
-            ismear=0,
-            gga='PE',
-            gga_compat=False)
+        maker.add_parameters(icharg=0, istart=0, lorbit=11, lsorbit=True, sigma=0.05, ismear=0, gga='PE', gga_compat=False)
         maker.code = Code.get_from_string(params['vasp'])
         maker.label = params.get('name')
         return maker
@@ -67,9 +59,7 @@ class TbmodelWorkflow(Workflow):
         calc.set_extras({'experiment': 'tight-binding'})
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
-        self.append_to_report(
-            '{}: starting selfconsistent run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting selfconsistent run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'scstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.winrun)
 
@@ -81,8 +71,7 @@ class TbmodelWorkflow(Workflow):
         scstep = self.get_attributes()['scstep']
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
-        self.append_to_report('{}: retrieved sc step calculation'.format(
-            params.get('name')))
+        self.append_to_report('{}: retrieved sc step calculation'.format(params.get('name')))
 
         # set up band structure step
         maker = VaspMaker(calc_cls='vasp.nscf', continue_from=sccalc)
@@ -96,8 +85,7 @@ class TbmodelWorkflow(Workflow):
 
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
-        self.append_to_report('{}: starting win run, PK={}, uuid={}'.format(
-            params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting win run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'winstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.amnrun)
 
@@ -108,8 +96,7 @@ class TbmodelWorkflow(Workflow):
         winstep = self.get_attributes()['winstep']
         prev = self.get_step_calculations(self.winrun)
         wincalc = prev.get(uuid=winstep['uuid'])
-        self.append_to_report('{}: retrieved nscf calculation'.format(
-            params.get('name')))
+        self.append_to_report('{}: retrieved nscf calculation'.format(params.get('name')))
 
         maker = VaspMaker(calc_cls='vasp.amn', copy_from=wincalc)
         maker.wannier_parameters = wincalc.out.wannier_parameters.copy()
@@ -125,8 +112,7 @@ class TbmodelWorkflow(Workflow):
 
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
-        self.append_to_report('{}: starting amn run, PK={}, uuid={}'.format(
-            params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting amn run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'amnstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.wannrun)
 
@@ -137,8 +123,7 @@ class TbmodelWorkflow(Workflow):
         amnstep = self.get_attributes()['amnstep']
         prev = self.get_step_calculations(self.amnrun)
         amncalc = prev.get(uuid=amnstep['uuid'])
-        self.append_to_report('{}: retrieved amn calculation'.format(
-            params.get('name')))
+        self.append_to_report('{}: retrieved amn calculation'.format(params.get('name')))
 
         calc = CalculationFactory('vasp.wannier')()
         code = Code.get_from_string(params['wannier_x'])
@@ -157,8 +142,6 @@ class TbmodelWorkflow(Workflow):
         self.group.add_nodes(calc)
         self.attach_calculation(calc)
         self.add_result('wannier_run', calc)
-        self.append_to_report(
-            '{}: starting wannier run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting wannier run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'wannstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.exit)

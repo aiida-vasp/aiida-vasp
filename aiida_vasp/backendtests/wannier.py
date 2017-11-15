@@ -65,8 +65,5 @@ class WannierCalcTest(AiidaTestCase):
         """Check that parsing is successful and that output links are created correctly"""
         calc, _ = self._get_calc()
         pars = calc.get_parserclass()(calc)
-        success, _ = pars.parse_with_retrieved({
-            'retrieved':
-            Common.retrieved_nscf()
-        })
+        success, _ = pars.parse_with_retrieved({'retrieved': Common.retrieved_nscf()})
         self.assertTrue(success)

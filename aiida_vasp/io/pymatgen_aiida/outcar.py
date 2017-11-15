@@ -1,5 +1,5 @@
 """Translate from pymatgen Outcar class to Aiida datastructures."""
-from aiida_vasp.data.pymatgen.vasprun import get_data_node
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 
 
 class OutcarToAiida(object):
@@ -8,13 +8,15 @@ class OutcarToAiida(object):
     def __init__(self, outcar_obj):
         self.outcar_obj = outcar_obj
 
+    def get_pymatgen(self):
+        return self.outcar_obj
+
     @property
     def output_dict(self):
         """Collect scalars and small arrays into a dictionary."""
         output_dict = {}
         if self.outcar_obj.lepsilon:
-            output_dict[
-                'dielectric tensor'] = self.outcar_obj.dielectric_tensor
+            output_dict['dielectric tensor'] = self.outcar_obj.dielectric_tensor
         return output_dict
 
     @property
