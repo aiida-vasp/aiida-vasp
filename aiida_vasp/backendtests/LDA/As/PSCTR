@@ -1,0 +1,20 @@
+   TITEL  = PAW_PBE As 11Sep1111
+   LPAW   = T
+   RPACOR =    1.1 
+   RWIGS  =    1.1   nn distance   
+                                      
+   ICORE  =       1                    
+   NE     =   111                     
+   LCOR   =   .TRUE.                  
+   EMAX   =   1.1
+  QCUT = 1 
+                                      
+   Description                        
+ l     E      TYP  RCUT    TYP  RCUT  
+ 1     1.1     11   1.1
+ 1     1.1     11   1.1
+ 1     1.1     11   1.1
+ 1     1.1     11   1.1
+ 1     1.1     11   1.1
+ 1    1.1      1   1.1
+
