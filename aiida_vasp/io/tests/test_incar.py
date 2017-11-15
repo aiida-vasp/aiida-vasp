@@ -1,8 +1,8 @@
 """Test the Incar io interface"""
-import re
-import pytest
-import py
+# pylint: disable=redefined-outer-name
 from collections import OrderedDict
+
+import pytest
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.io.incar import IncarIo, IncarItem, IncarParamParser
@@ -10,36 +10,41 @@ from aiida_vasp.io.incar import IncarIo, IncarItem, IncarParamParser
 
 @pytest.fixture()
 def incar_dict():
-    incar_dict = OrderedDict([('encut', 350), ('sigma', .5e-1),
-                              ('lreal', False), ('prec', 'Accurate')])
+    """Create a mapping of mixed case names to mixed parsed / unparsed values."""
+    incar_dict = OrderedDict([('encut', 350), ('Sigma', '.5e-1 comment'), ('lreal', False), ('PREC', 'Accurate')])
     return incar_dict
 
 
+@pytest.mark.incar
 def test_read_incar():
+    """Read an INCAR file and test that some of the keys are read correctly."""
     incar_path = data_path('phonondb', 'INCAR')
     incar_io = IncarIo(file_path=incar_path)
-    print incar_io.get_dict()
-    assert incar_io.get_dict()['prec'] == 'Accurate'
-    assert incar_io.get_dict()['ibrion'] == -1
-    assert incar_io.get_dict()['encut'] == 359.7399
-    assert incar_io.get_dict()['lreal'] == False
+    incar_dict = incar_io.get_dict()
+    assert incar_dict.pop('prec') == 'Accurate'
+    assert incar_dict.pop('ibrion') == -1
+    assert incar_dict.pop('encut') == 359.7399
+    assert incar_dict.pop('lreal') is False
 
 
+@pytest.mark.incar
 def test_from_dict(incar_dict):
     incar_io = IncarIo(incar_dict=incar_dict)
-    assert str(
-        incar_io
-    ) == 'ENCUT = 350\nSIGMA = 0.05\nLREAL = .False.\nPREC = Accurate'
+    ref_str = '\n'.join(sorted(['ENCUT = 350', 'SIGMA = 0.05', 'LREAL = .False.', 'PREC = Accurate']))
+    assert str(incar_io) == ref_str
 
 
+@pytest.mark.incar
 def test_write_incar(tmpdir, incar_dict):
     incar_io = IncarIo(incar_dict=incar_dict)
     tempfile = str(tmpdir.join('INCAR'))
-    incar_io.store(tempfile)
+    incar_io.write(tempfile)
     assert read_file(path=tempfile) == str(incar_io)
 
 
+@pytest.mark.incar
 def test_incar_item():
+    """Test the incar item class used to write to file"""
     item = IncarItem('encut', 350, '# test comment')
     assert item.name == 'ENCUT'
     assert item.value == 350
@@ -53,15 +58,18 @@ def test_incar_item():
     assert str(item) == 'ENCUT = 350 # test comment'
 
 
-@pytest.mark.wip
+@pytest.mark.incar
 def test_parser():
+    """Test the parser with a pathological string example."""
     test_string = '''TRUE = .True.
     FALSE=.False. this is a comment; FLOAT\t=\t1.45e-03
+    INT = 45  # endline comment; may contain '#' and ';' NOPARAM = this is not a parameter
     LIST = 1 2 -33 5.6
     '''
     parsed = IncarParamParser.parse_string(test_string)
-    print parsed
-    assert parsed['true'] == True
-    assert parsed['false'] == False
+    assert parsed['true'] is True
+    assert parsed['false'] is False
     assert parsed['float'] == 1.45e-3
     assert parsed['list'] == [1, 2, -33, 5.6]
+    assert parsed['int'] == 45
+    assert 'noparam' not in parsed

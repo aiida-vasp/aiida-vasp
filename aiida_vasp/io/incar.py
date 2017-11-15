@@ -8,7 +8,6 @@ import numpy as np
 import pyparsing as pp
 
 from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
-from aiida_vasp.io.parser import KeyValueParser
 
 
 class IncarItem(object):
@@ -27,11 +26,10 @@ class IncarItem(object):
     """
     _STR_TPL = '{name} = {value}{comment_sep}{comment}'
 
-
     def __init__(self, *args, **kwargs):
         if args and isinstance(args[0], self.__class__):
             self.set_copy(args[0])
-        elif kwargs.has_key('incar_item'):
+        elif 'incar_item' in kwargs:
             self.set_copy(kwargs['incar_item'])
         else:
             self.value = None
@@ -41,9 +39,8 @@ class IncarItem(object):
 
     @classmethod
     def from_string(cls, input_string):
-        result =  cls.item_parser.parseString(input_string)
-        value = Incar.proc_val(result.key, result.value)
-        return IncarItem(result.key, value, result.comment)
+        result = IncarParamParser.get_parser().parseString(input_string)
+        return IncarItem(result.key, result.value, result.comment)
 
     def set_copy(self, other):
         self.set_values(other.name, other.value, other.comment)
@@ -77,19 +74,10 @@ class IncarItem(object):
         return ''
 
     def as_dict(self):
-        return {
-            'name': self.name,
-            'value': self.value,
-            'comment': self.comment
-        }
+        return {'name': self.name, 'value': self.value, 'comment': self.comment}
 
     def __str__(self):
-        tpl_args = {
-            'name': self.name,
-            'value': _incarify(self.value),
-            'comment': self.comment,
-            'comment_sep': self.comment_separator
-        }
+        tpl_args = {'name': self.name, 'value': _incarify(self.value), 'comment': self.comment, 'comment_sep': self.comment_separator}
         return self._STR_TPL.format(**tpl_args)
 
 
@@ -97,9 +85,10 @@ class IncarIo(object):
     """
     Parse and write VASP INCAR files.
 
-    Improvements on pymatgen Incar object:
+    Improvements on pymatgen 4.5.3 Incar object:
         * can parse multiple parameters on a line, ';' separated
         * case insensitive
+        * parses floats as floats (example: ENCUT truncated to int in pymatgen 4.5.3)
 
     Writes INCAR files which can be completely parsed by pymatgen.
 
@@ -132,11 +121,10 @@ class IncarIo(object):
         self.incar_dict = {}
         if parameter_node:
             self.read_param_node(parameter_node)
-        else:
-            if file_path:
-                self.read_file(file_path)
-            if incar_dict:
-                self.update(incar_dict)
+        elif file_path:
+            self.read_file(file_path)
+        elif incar_dict:
+            self.incar_dict.update(self.normalize_mapping(incar_dict))
 
     def read_param_node(self, parameter_node):
         params = parameter_node.get_dict()
@@ -157,13 +145,13 @@ class IncarIo(object):
 
     @classmethod
     def normalize_mapping(cls, input_mapping):
-        normalized_items = [(k.lower(), cls._pmg_proc_val(k, v)) for k, v in input_mapping.items()]
+        normalized_items = [(k.lower(), cls.parse_val(v)) for k, v in input_mapping.items()]
         return dict(normalized_items)
 
     @classmethod
-    def _pmg_proc_val(self, key, input_val):
+    def parse_val(cls, input_val):
         if isinstance(input_val, six.string_types):
-            return Incar.proc_val(key, input_val)
+            return IncarParamParser.value_parser().parseString(input_val)[0]
         return input_val
 
     def __str__(self):
@@ -192,28 +180,138 @@ class IncarIo(object):
         return node
 
 
-
 class IncarParamParser(object):
     """Parse any INCAR file, including hand written ones."""
-    word_chars = pp.alphanums + '-+_:\'"<>~\/[]().,'
-    system_name = pp.Literal('SYSTEM')
-    item_end = pp.SkipTo(pp.Suppress(';') | pp.lineEnd)
+
+    word_chars = pp.alphanums + '-+_:\'"<>~/[]().,'
+    item_end = pp.Suppress(pp.MatchFirst(';' | pp.lineEnd))
     equals = pp.Suppress('=')
-    system = system_name('name') + equals + item_end('value')
-    name = pp.Word(pp.alphas, word_chars)
-    number = pp.Regex(r'[+-]?((?:\d+(\.\d*)?)|(.\d+))([Ee][+-]?\d+)?')
-    num_value = pp.Group(pp.OneOrMore(number)).setParseAction(lambda t: ' '.join(t[0]))
-    str_value = pp.Word(word_chars) + pp.empty
-    value = num_value | str_value
-    comment = pp.SkipTo(pp.Literal('#') | pp.Literal(';') | pp.lineEnd)
-    std_param = name('name') + equals + pp.empty + value('value') + comment('comment')
-    any_param = system | std_param
-    param = pp.empty + any_param
+
+    @classmethod
+    def value_parser(cls):
+        """
+        Parse INCAR values into an appropriate python type.
+
+        Examples::
+
+            MAGMOM = 1 -1 -> [1, -1]
+                     ^^^^ (numeric)
+
+            LORBIT = .False. -> False
+                     ^^^^^^^ (bool)
+
+        BNF::
+
+            value   :: numeric | boolean | word
+            numeric :: number+
+            number  :: <VASP readable number literal>
+            boolean :: <VASP readable boolean>
+        """
+        number = pp.Regex(r'[+-]?((?:\d+(\.\d*)?)|(.\d+))([Ee][+-]?\d+)?').setParseAction(cls.parse_num)
+        num_value = pp.Group(pp.OneOrMore(number)).setParseAction(cls.parse_num_list)
+        false = pp.Regex(r'.f(alse)?.', flags=re.IGNORECASE).setParseAction(lambda t: False)
+        true = pp.Regex(r'.t(rue)?.', flags=re.IGNORECASE).setParseAction(lambda t: True)
+        bool_value = false | true
+        str_value = pp.Word(cls.word_chars)
+        return num_value | bool_value | str_value
+
+    @classmethod
+    def system_parser(cls):
+        """
+        Parse SYSTEM parameter of INCAR files.
+
+        This is a special case because it can have multi-word values
+
+        Example::
+
+            SYSTEM = This is a system description
+            ^----^   ^--------------------------^
+             name               value
+
+        BNF::
+
+            system  :: name '=' value
+            name    :: 'SYSTEM'
+            value   :: (word | ' ' | tab)+
+        """
+        multiword = pp.Word(cls.word_chars + ' \t')
+        multiword_value = multiword + cls.item_end
+        system_name = pp.Literal('SYSTEM')
+        return system_name('name') + cls.equals + pp.empty + multiword_value('value').setParseAction(lambda t: t[0])
+
+    @classmethod
+    def comment_parser(cls):
+        """
+        Parse comments to INCAR parameter definitions
+
+        Example::
+
+            ENCUT = 280.567 this is an inline comment; LORBIT = .False.
+                            ^-----------------------^
+                                inline comment
+
+            EMIN = 420 # This is an end line comment; no PARAMETER = assignments after this.
+                         ^-----------------------------------------------------------------^
+                                    end line comment
+
+        BNF::
+
+            comment         :: (comment_char endline_comment) | inline_comment
+            comment_char    :: '#'
+            endline_comment :: <everything until end of line>
+            inline_comment  :: <anything except ';' or '#' until either ';' or end of line>
+        """
+        inline_comment = pp.Word(cls.word_chars + ' \t') + cls.item_end
+        endline_comment = pp.Suppress('#') + pp.Word(pp.printables + ' \t') + pp.Suppress(pp.lineEnd)
+        return endline_comment | inline_comment
+
+    @classmethod
+    def get_parser(cls):
+        """
+        Parse a parameter definition from an INCAR file.
+
+        Realistic examples can be found on
+        http://cms.mpi.univie.ac.at/vasp/vasp/INCAR_File.html#incar
+
+        BNF::
+
+            parameter_definition :: system_definition | other_definition
+            system_definition    :: system
+            other_definition     :: name = value [comment]
+        """
+        system = cls.system_parser()
+        name = pp.Word(pp.alphas, cls.word_chars)
+        value = cls.value_parser()
+        comment = cls.comment_parser()
+        std_param = name('name') + cls.equals + pp.empty + value('value') + pp.Optional(comment)('comment')
+        any_param = system | std_param
+        param = pp.empty + any_param
+        return param
 
     @classmethod
     def parse_string(cls, input_str):
-        all_params = cls.param.searchString(input_str)
-        return OrderedDict([(i.name.lower(), Incar.proc_val(i.name, i.value)) for i in all_params])
+        all_params = cls.get_parser().scanString(input_str)
+        return OrderedDict([(i.name.lower(), i.value) for i, _, _ in all_params])
+
+    @classmethod
+    def parse_num(cls, token):
+        num = float(token[0])
+        if int(num) == num:
+            return int(num)
+        return num
+
+    @classmethod
+    def parse_num_list(cls, token):
+        num_list = token.asList()
+        if len(num_list[0]) == 1:
+            return num_list[0]
+        return num_list
+
+    @classmethod
+    def proc_val(cls, name, value):
+        if isinstance(value, six.string_types):
+            return Incar.proc_val(name, value)
+        return value
 
 
 def _incarify(value):
@@ -230,39 +328,9 @@ def _incarify(value):
         elif dim == 2:
             result = '\n'.join([_incarify(i) for i in value])
         elif dim > 2:
-            raise TypeError('you are trying to input a more ' +
-                            'than 2-dimensional array to VASP.' +
-                            'Not sure what to do...')
+            raise TypeError('you are trying to input a more ' + 'than 2-dimensional array to VASP.' + 'Not sure what to do...')
     elif isinstance(value, bool):
         result = '.True.' if value else '.False.'
     elif np.isreal(value):
         result = '{}'.format(value)
     return result
-
-
-def _incar_item(key, value, units=None, comment=None):
-    key = key.upper()
-    value = _incarify(value)
-    units = ' ' + units if units else ''
-    comment = ' ' + comment if comment else ''
-
-    return _incar_item.tpl.format(
-        key=key, value=value, units=units, comment=comment)
-
-
-_incar_item.tpl = '{key} = {value}{units}{comment}'
-
-
-def dict_to_incar(incar_dict, extended=False):
-    incar_content = ''
-    for key, val in sorted(incar_dict.iteritems(), key=lambda t: t):
-        if not extended:
-            value = val
-            units = None
-            comment = None
-        else:
-            value = val['value']
-            units = val.get('units', '')
-            comment = val.get('comment', '')
-        incar_content += _incar_item(key, value, units, comment) + '\n'
-    return incar_content
