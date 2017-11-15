@@ -22,7 +22,7 @@ def test_input_get_dict():
 
     input_obj = Input(types=TYPE, doc=DOC, param=PARAM, ln=linkname)
     use_spec = input_obj.get_dict()
-    assert use_spec['valid_types'] == (DataFactory(TYPE), )
+    assert use_spec['valid_types'] == (DataFactory(TYPE),)
     assert use_spec['additional_parameter'] == PARAM
     assert use_spec['linkname'] == linkname
     assert use_spec['docstring'] == DOC

@@ -33,8 +33,7 @@ class ProjectionsWorkflow(Workflow):
 
         cout = cont.get_outputs_dict()
         cinp = cont.get_inputs_dict()
-        maker.wannier_parameters = cout.get('wannier_parameters',
-                                            cinp.get('wannier_parameters', {}))
+        maker.wannier_parameters = cout.get('wannier_parameters', cinp.get('wannier_parameters', {}))
         return maker
 
     @Workflow.step
@@ -56,8 +55,7 @@ class ProjectionsWorkflow(Workflow):
             mod_win['num_bands'] = nbands
         parameter_cls = DataFactory('parameter')
         mod_win = parameter_cls(dict=mod_win)
-        mod_c, mod_d = modify_wannier_parameters_inline(
-            original=old_win, modifications=mod_win)
+        mod_c, mod_d = modify_wannier_parameters_inline(original=old_win, modifications=mod_win)
         msg = ('added projections and overrides to wannier parameters.')
         self.append_to_report(msg)
         self.add_attribute('modify_wannier_parameters_uuid', mod_c.uuid)
@@ -70,8 +68,7 @@ class ProjectionsWorkflow(Workflow):
         calc.set_extras(params.get('extras'))
 
         self.attach_calculation(calc)
-        self.append_to_report(
-            self.helper._calc_start_msg('Amn Calculation', calc))
+        self.append_to_report(self.helper._calc_start_msg('Amn Calculation', calc))
         self.next(self.end)
 
     @Workflow.step
@@ -90,8 +87,7 @@ class ProjectionsWorkflow(Workflow):
         elif not wdat_valid:
             self.append_to_report(wdat_log)
         else:
-            self.append_to_report(
-                self.helper._calc_invalid_outs_msg(calc, output_links))
+            self.append_to_report(self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
     @staticmethod
@@ -114,8 +110,7 @@ class ProjectionsWorkflow(Workflow):
         valid, log = self.helper._verify_kpoints(params)  # pylint: disable=protected-access
         if params.get('use_wannier'):
             if not params['kpoints'].get('mesh'):
-                log += ('{}: parameters: kpoints may only be given as a mesh '
-                        'when using wannier.')
+                log += ('{}: parameters: kpoints may only be given as a mesh ' 'when using wannier.')
                 valid = False
         return valid, log
 
@@ -126,13 +121,10 @@ class ProjectionsWorkflow(Workflow):
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
         tmpl['wannier_parameters'] = {
-            '#_explanation':
-            ('overrides the parameters taken from continue_from '
-             'keys starting with # are ignored'),
-            '#num_wann':
-            'int',
-            '#use_bloch_phases':
-            'false | true',
+            '#_explanation': ('overrides the parameters taken from continue_from '
+                              'keys starting with # are ignored'),
+            '#num_wann': 'int',
+            '#use_bloch_phases': 'false | true',
         }
         return tmpl
 

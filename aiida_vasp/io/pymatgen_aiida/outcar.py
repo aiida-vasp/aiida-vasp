@@ -16,8 +16,7 @@ class OutcarToAiida(object):
         """Collect scalars and small arrays into a dictionary."""
         output_dict = {}
         if self.outcar_obj.lepsilon:
-            output_dict[
-                'dielectric tensor'] = self.outcar_obj.dielectric_tensor
+            output_dict['dielectric tensor'] = self.outcar_obj.dielectric_tensor
         return output_dict
 
     @property

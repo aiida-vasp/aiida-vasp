@@ -10,8 +10,7 @@ from packaging import version
 
 
 def subpath(*args):
-    return os.path.realpath(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', *args))
+    return os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', *args))
 
 
 @contextlib.contextmanager
@@ -37,8 +36,7 @@ class VersionUpdater(object):
             init_content = init_fo.read()
         with open(self.top_level_init, 'w') as init_fo:
             init_fo.write(
-                re.sub(r'(__version__ = )([\'"])(.*)([\'"])',
-                       r'\1\g<2>{}\4'.format(str(self.version)), init_content,
+                re.sub(r'(__version__ = )([\'"])(.*)([\'"])', r'\1\g<2>{}\4'.format(str(self.version)), init_content,
                        re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
@@ -49,8 +47,7 @@ class VersionUpdater(object):
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
     def get_version(self):
-        describe_byte_string = subprocess.check_output(
-            ['git', 'describe', '--match', 'v*.*.*'])
+        describe_byte_string = subprocess.check_output(['git', 'describe', '--match', 'v*.*.*'])
         version_string = re.findall(self.version_pat, describe_byte_string)[0]
         return version.parse(version_string)
 

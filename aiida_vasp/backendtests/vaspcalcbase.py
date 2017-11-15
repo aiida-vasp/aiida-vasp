@@ -11,10 +11,8 @@ class VaspCalcBaseTest(AiidaTestCase):
 
     def test_check_inputs_fail(self):
         calc = self.calc_cls()
-        self.assertRaises(ValueError, calc.check_input,
-                          calc.get_inputs_dict(), 'code')
-        self.assertRaises(ValueError, calc.verify_inputs,
-                          calc.get_inputs_dict())
+        self.assertRaises(ValueError, calc.check_input, calc.get_inputs_dict(), 'code')
+        self.assertRaises(ValueError, calc.verify_inputs, calc.get_inputs_dict())
 
     def test_check_inputs_succ(self):
         calc = self.calc_cls()

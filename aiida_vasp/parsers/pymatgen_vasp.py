@@ -62,24 +62,19 @@ class PymatgenParser(BaseParser):
     def parse_with_retrieved(self, retrieved):
         """Parse the calculation."""
         self.check_state()
-        success, _ = super(PymatgenParser,
-                           self).parse_with_retrieved(retrieved)
+        success, _ = super(PymatgenParser, self).parse_with_retrieved(retrieved)
 
         if not success:
             return self.result(success)
 
         parsed_vasprun = self.try_parse_vasprun()
-        self.vasprun_adapter = VasprunToAiida(
-            parsed_vasprun, logger=self.logger)
+        self.vasprun_adapter = VasprunToAiida(parsed_vasprun, logger=self.logger)
 
-        self.add_node(self._linkname_structure,
-                      self.vasprun_adapter.last_structure)
-        self.add_node(self._linkname_kpoints,
-                      self.vasprun_adapter.actual_kpoints)
+        self.add_node(self._linkname_structure, self.vasprun_adapter.last_structure)
+        self.add_node(self._linkname_kpoints, self.vasprun_adapter.actual_kpoints)
         self.add_node(self._linkname_forces, self.vasprun_adapter.forces)
         if self.get_option('parse_bands'):
-            self.add_node(self._linkname_bands,
-                          self.vasprun_adapter.band_structure)
+            self.add_node(self._linkname_bands, self.vasprun_adapter.band_structure)
         if self.get_option('parse_dos'):
             self.add_node(self._linkname_dos, self.vasprun_adapter.tdos)
 
@@ -88,11 +83,9 @@ class PymatgenParser(BaseParser):
             self.outcar_adapter = OutcarToAiida(parsed_outcar)
 
             if parsed_outcar.lepsilon:
-                self.add_node(self._linkname_born_charges,
-                              self.outcar_adapter.born_charges)
+                self.add_node(self._linkname_born_charges, self.outcar_adapter.born_charges)
 
-        self.add_node(self.get_linkname_outparams(),
-                      self.get_output_parameters())
+        self.add_node(self.get_linkname_outparams(), self.get_output_parameters())
 
         return self.result(success)
 
@@ -104,25 +97,19 @@ class PymatgenParser(BaseParser):
         """
         vasprun_path = self.get_file('vasprun.xml')
         try:
-            parsed_vasprun = Vasprun(vasprun_path,
-                                     **self.get_vasprun_options())
-        except (xml.etree.ElementTree.ParseError,
-                xml.etree.cElementTree.ParseError):
+            parsed_vasprun = Vasprun(vasprun_path, **self.get_vasprun_options())
+        except (xml.etree.ElementTree.ParseError, xml.etree.cElementTree.ParseError):
             msg_tpl = '{problem}, {solution}'
             problem = 'vasprun.xml contains invalid xml'
             solution_tpl = 'try parsing it anyway using\n{example}'
             example = '\n'.join([
-                '', 'vasp_calc.use_settings(ParameterData(dict={',
-                '    "pymatgen_parser": {',
-                '        "exception_on_bad_xml": False', '    }', '}))', ''
+                '', 'vasp_calc.use_settings(ParameterData(dict={', '    "pymatgen_parser": {', '        "exception_on_bad_xml": False',
+                '    }', '}))', ''
             ])
-            msg = msg_tpl.format(
-                problem=problem, solution=solution_tpl.format(example=example))
+            msg = msg_tpl.format(problem=problem, solution=solution_tpl.format(example=example))
             raise AiidaParsingError(msg)
         except IndexError:
-            raise AiidaParsingError(
-                'vasprun.xml must contain at least one complete ionic step (<calculation> tag)'
-            )
+            raise AiidaParsingError('vasprun.xml must contain at least one complete ionic step (<calculation> tag)')
         return parsed_vasprun
 
     def parse_outcar(self):
@@ -156,6 +143,5 @@ class PymatgenParser(BaseParser):
         output_parameter_dict = self.vasprun_adapter.output_dict
         if self.outcar_adapter:
             output_parameter_dict.update(self.outcar_adapter.output_dict)
-        output_parameters = get_data_node(
-            'parameter', dict=output_parameter_dict)
+        output_parameters = get_data_node('parameter', dict=output_parameter_dict)
         return output_parameters

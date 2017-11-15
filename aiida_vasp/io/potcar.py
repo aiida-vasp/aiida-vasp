@@ -93,8 +93,7 @@ class PawParser(KeyValueParser):
     def title(cls, title):
         """Parse the title line"""
         title_list = title.split()
-        fam = title_list.pop(0).replace('PAW_',
-                                        '') if len(title_list) > 1 else 'none'
+        fam = title_list.pop(0).replace('PAW_', '') if len(title_list) > 1 else 'none'
         fam = fam.replace('PAW', 'none')
         sym = title_list.pop(0) if title_list else ''
         date = title_list.pop(0) if title_list else 'none'

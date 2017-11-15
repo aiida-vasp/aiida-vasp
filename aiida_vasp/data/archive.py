@@ -32,8 +32,7 @@ class ArchiveData(Data):
 
     def _make_archive(self):
         """Create the archive file on disk with all it's contents"""
-        self.folder.create_file_from_filelike(StringIO.StringIO(),
-                                              'path/archive.tar.gz')
+        self.folder.create_file_from_filelike(StringIO.StringIO(), 'path/archive.tar.gz')
         archive = tarfile.open(self.get_archive_abs_path(), mode='w:gz')
         for src, dstn in self._filelist:
             archive.add(src, arcname=dstn)

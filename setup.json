@@ -73,7 +73,8 @@
         "subprocess32", 
         "click", 
         "chainmap", 
-        "six"
+        "six", 
+        "pyparsing"
     ], 
     "keywords": "vasp aiida wannier90 workflows", 
     "license": "MIT License, see LICENSE.txt file.", 

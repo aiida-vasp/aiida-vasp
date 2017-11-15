@@ -26,15 +26,7 @@ class Bandstructure(Workflow):
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
-        maker.add_parameters(
-            icharg=0,
-            istart=0,
-            lorbit=11,
-            lsorbit=True,
-            sigma=0.05,
-            ismear=0,
-            gga='PE',
-            gga_compat=False)
+        maker.add_parameters(icharg=0, istart=0, lorbit=11, lsorbit=True, sigma=0.05, ismear=0, gga='PE', gga_compat=False)
         maker.code = Code.get_from_string(params['code'])
         # ~ maker.computer = maker.code.get_computer()
         maker.label = params.get('name')
@@ -57,9 +49,7 @@ class Bandstructure(Workflow):
         calc.set_resources({'num_machines': 8, 'num_mpiprocs_per_machine': 2})
         calc.store_all()
         self.attach_calculation(calc)
-        self.append_to_report(
-            '{}: starting selfconsistent run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting selfconsistent run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'scstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.next(self.bandrun)
 
@@ -74,8 +64,7 @@ class Bandstructure(Workflow):
         scstep = self.get_attributes()['scstep']
         prev = self.get_step_calculations(self.start)
         sccalc = prev.get(uuid=scstep['uuid'])
-        self.append_to_report('{}: retrieved sc step calculation'.format(
-            params.get('name')))
+        self.append_to_report('{}: retrieved sc step calculation'.format(params.get('name')))
 
         # set up band structure step
         maker = self.get_calc_maker()
@@ -89,9 +78,7 @@ class Bandstructure(Workflow):
         calc.store_all()
 
         self.attach_calculation(calc)
-        self.append_to_report(
-            '{}: starting band structure run, PK={}, uuid={}'.format(
-                params.get('name'), calc.pk, calc.uuid))
+        self.append_to_report('{}: starting band structure run, PK={}, uuid={}'.format(params.get('name'), calc.pk, calc.uuid))
         self.add_attributes({'bsstep': {'pk': calc.pk, 'uuid': calc.uuid}})
         self.add_result('band_run', calc)
         self.next(self.get_results)
@@ -101,10 +88,8 @@ class Bandstructure(Workflow):
         params = self.get_parameters()
         prev = self.get_step_calculations(self.bandrun)
         bandcalc = prev.get(uuid=self.get_attribute('bsstep')['uuid'])
-        self.add_to_report('{}: calculations done, gathering results'.format(
-            params.get('name')))
+        self.add_to_report('{}: calculations done, gathering results'.format(params.get('name')))
         efermi = bandcalc.out.results.get_dict()['efermi']
-        self.add_to_report('{}: E_fermi = {}'.format(
-            params.get('name'), efermi))
+        self.add_to_report('{}: E_fermi = {}'.format(params.get('name'), efermi))
         self.add_result('efermi', bandcalc.out.results.get_dict()['efermi'])
         self.next(self.exit)

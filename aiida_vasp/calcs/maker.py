@@ -141,8 +141,7 @@ class VaspMaker(object):
         self.label = kwargs.get('label', 'unlabeled')
         self._computer = kwargs.get('computer')
         self._code = kwargs.get('code')
-        self._parameters = kwargs.get('parameters',
-                                      self.calc_cls.new_parameters())
+        self._parameters = kwargs.get('parameters', self.calc_cls.new_parameters())
         self._set_default_structure(kwargs.get('structure'))
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
@@ -186,8 +185,7 @@ class VaspMaker(object):
         elif isinstance(structure, (str, unicode)):
             structure = os.path.abspath(os.path.expanduser(structure))
             if os.path.splitext(structure)[1] == '.cif':
-                self._structure = DataFactory('cif').get_or_create(structure)[
-                    0]
+                self._structure = DataFactory('cif').get_or_create(structure)[0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
                 atoms = read_vasp(os.path.abspath(structure))
@@ -205,8 +203,7 @@ class VaspMaker(object):
         self.rewrite_parameters(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
-        self._wannier_parameters = out.get('wannier_parameters',
-                                           self._wannier_parameters)
+        self._wannier_parameters = out.get('wannier_parameters', self._wannier_parameters)
         self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
@@ -388,23 +385,17 @@ class VaspMaker(object):
         for key in self.elements:
             if key not in self._paws:
                 if self._paw_def is None:
-                    raise ValueError(
-                        "The 'paw_map' keyword is required. Pre-defined potential "
-                        "mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'."
-                    )
+                    raise ValueError("The 'paw_map' keyword is required. Pre-defined potential "
+                                     "mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.")
                 try:
-                    paw = self.calc_cls.Paw.load_paw(
-                        family=self._paw_fam, symbol=self._paw_def[key])[0]
+                    paw = self.calc_cls.Paw.load_paw(family=self._paw_fam, symbol=self._paw_def[key])[0]
                 except KeyError:
-                    raise ValueError(
-                        "The given 'paw_map' does not contain a mapping for element '{}'".
-                        format(key))
+                    raise ValueError("The given 'paw_map' does not contain a mapping for element '{}'".format(key))
                 self._paws[key] = paw
 
     @property
     def elements(self):
-        return ordered_unique_list(
-            self._structure.get_ase().get_chemical_symbols())
+        return ordered_unique_list(self._structure.get_ase().get_chemical_symbols())
 
     @staticmethod
     def compare_pk(node_a, node_b):

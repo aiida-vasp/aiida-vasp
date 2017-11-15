@@ -6,8 +6,7 @@ from .data import vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, re
 
 
 @pytest.fixture()
-def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints,
-                      vasp_structure, ref_incar):
+def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
     calc = VaspCalculation()
@@ -37,9 +36,6 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
     return calc, ref
 
 
-ONLY_ONE_CALC = pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
+ONLY_ONE_CALC = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 
-STRUCTURE_TYPES = pytest.mark.parametrize(
-    ['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')],
-    indirect=True)
+STRUCTURE_TYPES = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')], indirect=True)

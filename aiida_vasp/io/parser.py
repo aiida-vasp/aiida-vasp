@@ -50,6 +50,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def retval(cls, *args, **kwargs):
+        """Normalize return values from value conversion functions."""
         val = list(args)
         if len(val) == 1:
             val = val[0]
@@ -90,9 +91,10 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def int_unit(cls, string_):
+        """Convert a string into a python value, associated unit and optional comment."""
         vals = string_.split()
         value = int(vals.pop(0))
-        unit = vasl.pop(0) if vals else ''
+        unit = vals.pop(0) if vals else ''
         comment = ' '.join(vals)
         return cls.retval(value, unit, comment=comment)
 
@@ -113,8 +115,7 @@ class KeyValueParser(BaseParser):
         elif re.match(cls.bool_false, bool_str):
             value = False
         else:
-            raise ValueError('bool string {} did not match any of {}'.format(
-                string_, [cls.bool_true.pattern, cls.bool_false.pattern]))
+            raise ValueError('bool string {} did not match any of {}'.format(string_, [cls.bool_true.pattern, cls.bool_false.pattern]))
         comment = ' '.join(vals)
         return cls.retval(value, comment=comment)
 
@@ -131,6 +132,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def clean_value(cls, str_value):
+        """Get the converted python value from a string."""
         if str_value == '':
             return cls.retval(str_value)
         cleaned_value = None
@@ -146,6 +148,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def try_convert(cls, input_value, converter):
+        """Try to convert the input string into a python value given a conversion function."""
         if not isinstance(input_value, string_types):
             return {'value': input_value}
         try:

@@ -23,8 +23,7 @@ class WorkflowHelper(object):
         good_init |= bool(kwargs.get('structure'))
         if not good_init:
             kwargs['structure'] = params['structure']
-            kwargs['paw_family'] = kwargs.get('paw_family',
-                                              params['paw_family'])
+            kwargs['paw_family'] = kwargs.get('paw_family', params['paw_family'])
             kwargs['paw_map'] = kwargs.get('paw_map') or params['paw_map']
         maker = VaspMaker(calc_cls=calc_type, **kwargs)
         if params.get('parameters'):
@@ -53,8 +52,7 @@ class WorkflowHelper(object):
 
     def _default_label(self, structure):
         label = '[{}]: Calculation for {}'
-        label = label.format(self.parent.__class__.__name__,
-                             structure.get_formula())
+        label = label.format(self.parent.__class__.__name__, structure.get_formula())
         return label
 
     @staticmethod
@@ -79,8 +77,7 @@ class WorkflowHelper(object):
 
     @staticmethod
     def _calc_invalid_outs_msg(calc, links):
-        msg = ('Calculation {} does not have all required output nodes. '
-               'The required outputs are: {}')
+        msg = ('Calculation {} does not have all required output nodes. ' 'The required outputs are: {}')
         return msg.format(calc.pk, links)
 
     def _get_first_step_calc(self, step):
@@ -88,8 +85,7 @@ class WorkflowHelper(object):
         None, if there isn't any"""
         step_calcs = self.parent.get_step_calculations(step)
         if not bool(step_calcs):
-            self.parent.append_to_report(
-                'no calculation found for step {}'.format(step.__name__))
+            self.parent.append_to_report('no calculation found for step {}'.format(step.__name__))
             return None
         first_calc = step_calcs[0]
         return first_calc
@@ -117,10 +113,7 @@ class WorkflowHelper(object):
         log = []
 
         par_dict = self.parent.__class__.__dict__
-        verify_funcs = {
-            k: v
-            for k, v in par_dict.iteritems() if '_verify_param_' in k
-        }
+        verify_funcs = {k: v for k, v in par_dict.iteritems() if '_verify_param_' in k}
 
         for _, func in verify_funcs.iteritems():
             if isinstance(func, classmethod):
@@ -144,11 +137,7 @@ class WorkflowHelper(object):
         log = []
 
         par_dict = wf_cls.__class__.__dict__
-        verify_funcs = {
-            k: v
-            for k, v in par_dict.iteritems()
-            if '_verify_param_' in k and isinstance(v, classmethod)
-        }
+        verify_funcs = {k: v for k, v in par_dict.iteritems() if '_verify_param_' in k and isinstance(v, classmethod)}
 
         for _, func in verify_funcs.iteritems():
             valid_i, log_i = func.__func__(wf_cls, params)
@@ -228,30 +217,18 @@ class WorkflowHelper(object):
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
-        tmpl['resources'] = {
-            'num_machines': 'int',
-            'num_mpiprocs_per_machine': 'int'
-        }
+        tmpl['resources'] = {'num_machines': 'int', 'num_mpiprocs_per_machine': 'int'}
         tmpl['kpoints'] = {'mesh | list | path': ['...']}
         tmpl['label'] = 'optional label for calculations'
         tmpl['description'] = 'optional description for calculations'
-        tmpl['extras'] = {
-            'explanation': ('dict with extra attributes you '
-                            'want to give to all calcs run by this workflow.')
-        }
-        tmpl['parameters'] = {
-            'explanation': ('incar keys for the calculation')
-        }
+        tmpl['extras'] = {'explanation': ('dict with extra attributes you ' 'want to give to all calcs run by this workflow.')}
+        tmpl['parameters'] = {'explanation': ('incar keys for the calculation')}
         if continuation:
             tmpl['continue_from'] = 'uuid of a finished calculation'
             tmpl['kpoints'] = ['default: same as previous calc)']
-            tmpl['parameters'] = {
-                'explanation': ('additional / '
-                                'override incar keys')
-            }
+            tmpl['parameters'] = {'explanation': ('additional / ' 'override incar keys')}
         else:
-            tmpl['paw_family'] = ('name of a PAW family as imported from the '
-                                  'commandline')
+            tmpl['paw_family'] = ('name of a PAW family as imported from the ' 'commandline')
             tmpl['paw_map'] = {'Element': 'Symbol'}
             tmpl['structure'] = 'POSCAR or CIF file'
         return tmpl

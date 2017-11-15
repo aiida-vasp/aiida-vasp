@@ -154,6 +154,4 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_load_paw(self):
         calc = self.calc_cls()
-        calc.use_paw(
-            calc.load_paw(symbol=self.paw_in.symbol, family='TEST'),
-            kind='test')
+        calc.use_paw(calc.load_paw(symbol=self.paw_in.symbol, family='TEST'), kind='test')

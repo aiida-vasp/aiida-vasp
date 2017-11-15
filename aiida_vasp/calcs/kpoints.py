@@ -23,8 +23,7 @@ def write_kpoints(argdict):
             kpoints.write('%i ' % kpt)
         kpoints.write('\n0 0 0\n')
     elif len(shape) == 2:
-        kpoints.write('%i \n' %
-                      (params.get('intersections') or len(params['kpts'])))
+        kpoints.write('%i \n' % (params.get('intersections') or len(params['kpts'])))
         kpoints.write('Line-mode \n')
         if params['reciprocal']:
             kpoints.write('Reciprocal\n')

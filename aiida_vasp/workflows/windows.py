@@ -93,8 +93,7 @@ class WindowsWorkflow(Workflow):
         wannier_kpp = []
         for segment in kppath:
             # flatten the segment list
-            wannier_kpp.append(
-                list(itertools.chain.from_iterable(segment[:4])))
+            wannier_kpp.append(list(itertools.chain.from_iterable(segment[:4])))
         return wannier_kpp
 
     @Workflow.step
@@ -126,8 +125,7 @@ class WindowsWorkflow(Workflow):
             wfpk.append(workflow.pk)
 
         self.append_to_report('running tbmodels for {} windows'.format(count))
-        self.append_to_report('tbmodels pk-range: {} - {}'.format(
-            wfpk[0], wfpk[-1]))
+        self.append_to_report('tbmodels pk-range: {} - {}'.format(wfpk[0], wfpk[-1]))
 
         self.next(self.get_reference_bands)
 
@@ -153,8 +151,7 @@ class WindowsWorkflow(Workflow):
         workflow.label = params.get('label')
         workflow.start()
         self.attach_workflow(workflow)
-        self.append_to_report(
-            self.helper._subwf_start_msg('Ref-Bands', workflow))  # pylint: disable=protected-access
+        self.append_to_report(self.helper._subwf_start_msg('Ref-Bands', workflow))  # pylint: disable=protected-access
 
         self.next(self.make_results)
 
@@ -163,10 +160,8 @@ class WindowsWorkflow(Workflow):
         """Set results"""
         self.append_to_report('retrieving and compiling results')
         wannier_wf_list = self.get_step(self.get_tbmodel).get_sub_workflows()
-        band_wf = self.get_step(
-            self.get_reference_bands).get_sub_workflows()[0]
-        self.add_result('reference_bands',
-                        band_wf.get_result('calc').out.bands)
+        band_wf = self.get_step(self.get_reference_bands).get_sub_workflows()[0]
+        self.add_result('reference_bands', band_wf.get_result('calc').out.bands)
         self.add_result('reference_calc', band_wf.get_result('calc'))
 
         for workflow in wannier_wf_list:
@@ -176,15 +171,11 @@ class WindowsWorkflow(Workflow):
                 self.add_result('bands_{}'.format(calc.pk), bands)
             except Exception as err:  # pylint: disable=broad-except
                 wset = workflow.get_parameters()['parameters']
-                window = 'inner: {}-{}, outer: {}-{}'.format(
-                    wset['dis_froz_min'], wset['dis_froz_max'],
-                    wset['dis_win_min'], wset['dis_win_max'])
+                window = 'inner: {}-{}, outer: {}-{}'.format(wset['dis_froz_min'], wset['dis_froz_max'], wset['dis_win_min'],
+                                                             wset['dis_win_max'])
                 self.append_to_report(('workflow {pk} with window {window} '
                                        'did not yield the expected results: \n'
-                                       '{error}').format(
-                                           pk=workflow.pk,
-                                           window=window,
-                                           error=repr(err)))
+                                       '{error}').format(pk=workflow.pk, window=window, error=repr(err)))
 
         self.next(self.exit)
 
@@ -243,9 +234,7 @@ class WindowsWorkflow(Workflow):
         tmpl['windows'] = [{'inner': ['min', 'max'], 'outer': ['min', 'max']}]
         tmpl['windows'] += [{'inner': ['min', 'max'], 'outer': ['min', 'max']}]
         tmpl['kpoints'] = {'mesh': [], 'path': []}
-        tmpl['#kpoints'] = (
-            'mesh for everythin up until wannier_setup'
-            'path for bands, format: [["A", [...], "B", [...]], [...]]')
+        tmpl['#kpoints'] = ('mesh for everythin up until wannier_setup' 'path for bands, format: [["A", [...], "B", [...]], [...]]')
         return tmpl
 
     @classmethod
@@ -259,8 +248,7 @@ class WindowsWorkflow(Workflow):
             nproc = res['num_machines'] * res['num_mpiprocs_per_machine']
             if (nbands % nproc) != 0:
                 valid = False
-                log += ('nbands is not divisible by num_machines * '
-                        'num_mpiprocs_per_machine')
+                log += ('nbands is not divisible by num_machines * ' 'num_mpiprocs_per_machine')
         return valid, log
 
     def set_params(self, params, force=False):

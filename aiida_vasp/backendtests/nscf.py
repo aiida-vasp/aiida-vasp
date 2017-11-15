@@ -59,9 +59,7 @@ class NscfCalcTest(AiidaTestCase):
         with SandboxFolder() as sandbox_f:
             calc_info = calc._prepare_for_submission(sandbox_f, inp)
             inputs = sandbox_f.get_content_list()
-        self.assertEquals(
-            set(inputs),
-            {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR'})
+        self.assertEquals(set(inputs), {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'CHGCAR', 'WAVECAR'})
         self.assertIn('EIGENVAL', calc_info.retrieve_list)
         self.assertIn('DOSCAR', calc_info.retrieve_list)
         self.assertIn(['wannier90*', '.', 0], calc_info.retrieve_list)
@@ -71,8 +69,7 @@ class NscfCalcTest(AiidaTestCase):
         with SandboxFolder() as sandbox_f:
             calc._prepare_for_submission(sandbox_f, inp)
             inputs = sandbox_f.get_content_list()
-        self.assertEquals(
-            set(inputs), {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'})
+        self.assertEquals(set(inputs), {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'})
 
     def test_write_chgcar(self):
         """Test that CHGAR file is written correctly"""
@@ -94,10 +91,7 @@ class NscfCalcTest(AiidaTestCase):
         """Check that parsing is successful and creates the right output links"""
         calc, _ = self._get_calc()
         pars = calc.get_parserclass()(calc)
-        success, outs = pars.parse_with_retrieved({
-            'retrieved':
-            Common.retrieved_nscf()
-        })
+        success, outs = pars.parse_with_retrieved({'retrieved': Common.retrieved_nscf()})
         outs = dict(outs)
         self.assertTrue(success)
         self.assertIn('bands', outs)

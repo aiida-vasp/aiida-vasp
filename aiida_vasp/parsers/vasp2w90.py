@@ -52,8 +52,7 @@ class Vasp2w90Parser(VaspParser):
         if kpoints is None:
             return False, None
         kpoints_node = DataFactory('array.kpoints')()
-        kpoints_node.set_kpoints([[float(x) for x in k.split()]
-                                  for k in kpoints])
+        kpoints_node.set_kpoints([[float(x) for x in k.split()] for k in kpoints])
         return True, kpoints_node
 
     def set_node(self, name, node):
@@ -62,6 +61,5 @@ class Vasp2w90Parser(VaspParser):
             self.add_node(name, node)
 
     def has_full_dat(self):
-        success = all(
-            self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
+        success = all(self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
         return success
