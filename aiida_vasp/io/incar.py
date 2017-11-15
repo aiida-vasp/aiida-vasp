@@ -40,7 +40,7 @@ class IncarItem(object):
     @classmethod
     def from_string(cls, input_string):
         result = IncarParamParser.get_parser().parseString(input_string)
-        return IncarItem(result.key, result.value, result.comment)
+        return IncarItem(result.name, result.value, result.comment)
 
     def set_copy(self, other):
         self.set_values(other.name, other.value, other.comment)
@@ -90,7 +90,11 @@ class IncarIo(object):
         * case insensitive
         * parses floats as floats (example: ENCUT truncated to int in pymatgen 4.5.3)
 
-    Writes INCAR files which can be completely parsed by pymatgen.
+    Limitations:
+        * lists of numbers are always parsed as such, in other words a comment after a numeric
+            value may not start with a number.
+
+    Writes INCAR files which can be parsed by pymatgen.
 
     Usage::
         # reuse an INCAR file in an AiiDA calculation

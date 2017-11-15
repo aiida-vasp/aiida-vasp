@@ -21,10 +21,31 @@ def test_read_incar():
     incar_path = data_path('phonondb', 'INCAR')
     incar_io = IncarIo(file_path=incar_path)
     incar_dict = incar_io.get_dict()
-    assert incar_dict.pop('prec') == 'Accurate'
-    assert incar_dict.pop('ibrion') == -1
-    assert incar_dict.pop('encut') == 359.7399
-    assert incar_dict.pop('lreal') is False
+    assert incar_dict['prec'] == 'Accurate'
+    assert incar_dict['ibrion'] == -1
+    assert incar_dict['encut'] == 359.7399
+    assert incar_dict['lreal'] is False
+
+
+@pytest.mark.incar
+def test_example_incar():
+    """Read a pathological case of an INCAR file (top level example from VASP docs)."""
+    incar_path = data_path('incar_set', 'INCAR.copper_srf')
+    incar_io = IncarIo(file_path=incar_path)
+    incar_dict = incar_io.get_dict()
+    assert incar_dict['system'] == 'Copper surface calculation'
+
+    assert incar_dict['istart'] == 0
+    assert isinstance(incar_dict['istart'], int)
+
+    assert incar_dict['encut'] == 200.01
+    assert isinstance(incar_dict['encut'], float)
+
+    assert incar_dict['bmix'] == 2.0
+    assert isinstance(incar_dict['bmix'], int)
+
+    assert incar_dict['nelmin'] == 0
+    assert incar_dict['nelmdl'] == 3
 
 
 @pytest.mark.incar
@@ -32,6 +53,18 @@ def test_from_dict(incar_dict):
     incar_io = IncarIo(incar_dict=incar_dict)
     ref_str = '\n'.join(sorted(['ENCUT = 350', 'SIGMA = 0.05', 'LREAL = .False.', 'PREC = Accurate']))
     assert str(incar_io) == ref_str
+
+
+@pytest.mark.incar
+def test_from_string():
+    """Test reading from string."""
+    test_str = 'TRUE = .True\nFALSE=.f.'
+    incar_io = IncarIo()
+    incar_io.read_string(test_str)
+    incar_dict = incar_io.get_dict()
+    assert incar_dict.pop('true') is True
+    assert incar_dict.pop('false') is False
+    assert not incar_dict
 
 
 @pytest.mark.incar
@@ -45,17 +78,21 @@ def test_write_incar(tmpdir, incar_dict):
 @pytest.mark.incar
 def test_incar_item():
     """Test the incar item class used to write to file"""
+    test_str = 'ENCUT = 350 # test comment'
     item = IncarItem('encut', 350, '# test comment')
     assert item.name == 'ENCUT'
     assert item.value == 350
     assert item.comment == 'test comment'
-    assert str(item) == 'ENCUT = 350 # test comment'
+    assert str(item) == test_str
 
     item = IncarItem(name='encut', value=350, comment='# test comment')
     assert item.name == 'ENCUT'
     assert item.value == 350
     assert item.comment == 'test comment'
-    assert str(item) == 'ENCUT = 350 # test comment'
+    assert str(item) == test_str
+
+    item = IncarItem.from_string(test_str)
+    assert str(item) == test_str
 
 
 @pytest.mark.incar

@@ -6,7 +6,7 @@ Start parameter for this Run:
   INIWAV =        1   electr: 0-lowe 1-rand
 
 Electronic Relaxation 1
-  ENCUT  = 200.00 eV
+  ENCUT  = 200.01 eV
   IALGO  =     18   algorithm     NELM    =   60;     NELMIN= 0; NELMDL=  3   # of ELM steps m
   EDIFF  =   1e-04  stopping-criterion for ELM
   BMIX =2.0
