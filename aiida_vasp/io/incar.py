@@ -311,12 +311,6 @@ class IncarParamParser(object):
             return num_list[0]
         return num_list
 
-    @classmethod
-    def proc_val(cls, name, value):
-        if isinstance(value, six.string_types):
-            return Incar.proc_val(name, value)
-        return value
-
 
 def _incarify(value):
     """Format value of any compatible type into the string forat appropriate for INCAR files."""
