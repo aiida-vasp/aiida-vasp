@@ -41,12 +41,7 @@ def parse_result(request, aiida_env, vasprun_path):
         """Run the parser using default settings updated with extra_settings."""
         from aiida.orm import CalculationFactory, DataFactory
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {
-            'pymatgen_parser': {
-                'parse_potcar_file': False,
-                'exception_on_bad_xml': request.param
-            }
-        }
+        settings_dict = {'pymatgen_parser': {'parse_potcar_file': False, 'exception_on_bad_xml': request.param}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = PymatgenParser(calc=calc)
@@ -65,13 +60,7 @@ def parse_nac(aiida_env):
     """Give the parsing result of a retrieved NAC calculation (emulated)."""
     from aiida.orm import CalculationFactory, DataFactory
     calc = CalculationFactory('vasp.vasp')()
-    calc.use_settings(
-        DataFactory('parameter')(dict={
-            'pymatgen_parser': {
-                'parse_potcar_file': False,
-                'exception_on_bad_xml': False
-            }
-        }))
+    calc.use_settings(DataFactory('parameter')(dict={'pymatgen_parser': {'parse_potcar_file': False, 'exception_on_bad_xml': False}}))
     parser = PymatgenParser(calc=calc)
     retrieved = DataFactory('folder')()
     retrieved.add_path(data_path('born_effective_charge', 'vasprun.xml'), '')
@@ -104,10 +93,8 @@ def test_forces_result(parse_result):
     from aiida.orm import DataFactory
     _, nodes = parse_result()
     assert isinstance(nodes['forces'], DataFactory('array'))
-    assert numpy.all(nodes['forces'].get_array('forces')[0] == numpy.array(
-        [-0.23272115, -0.01115905, 0.03449686]))
-    assert numpy.all(nodes['forces'].get_array('forces')[-1] == numpy.array(
-        [-0.00300438, 0.00453998, 0.00066599]))
+    assert numpy.all(nodes['forces'].get_array('forces')[0] == numpy.array([-0.23272115, -0.01115905, 0.03449686]))
+    assert numpy.all(nodes['forces'].get_array('forces')[-1] == numpy.array([-0.00300438, 0.00453998, 0.00066599]))
 
 
 def test_res(parse_result):
@@ -139,7 +126,7 @@ def test_dos(parse_result):
     dos = nodes['dos']
     name, array, units = dos.get_y()[0]
     assert name == 'dos_spin_up'
-    assert array.shape == (301, )
+    assert array.shape == (301,)
     assert units == 'states/eV'
 
 
@@ -150,8 +137,7 @@ def test_suppress_options(parse_result):
     assert 'bands' not in nodes
 
 
-@pytest.mark.parametrize(
-    ['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
+@pytest.mark.parametrize(['vasprun_path', 'parse_result'], [(2331, False)], indirect=True)
 def test_slightly_broken_vasprun(parse_result, recwarn):
     """Test that truncated vasprun (after one ionic step) can be read and warnings are emitted."""
     success, nodes = parse_result()
@@ -161,19 +147,18 @@ def test_slightly_broken_vasprun(parse_result, recwarn):
     assert len(recwarn) >= 1
 
 
-@pytest.mark.parametrize(
-    ['vasprun_path', 'parse_result'], [(2331, True)], indirect=True)
+@pytest.mark.parametrize(['vasprun_path', 'parse_result'], [(2331, True)], indirect=True)
 def test_broken_vasprun_exception(parse_result):
     """Test that the parser raises an error with exception_on_bad_xml=True."""
     with pytest.raises(ParsingError):
         _ = parse_result()  # noqa: F841
 
 
-def test_born_charges(parse_nac):
+def test_born_charges(parse_nac, recwarn):
     """Test that the born effective charges get parsed."""
     success, nodes = parse_nac()
     assert success
     output_data = nodes['output_parameters'].get_dict()
-    assert numpy.all(output_data['dielectric tensor'] == numpy.array(
-        [[5.894056, 0.0, 0.0], [0.0, 5.894056, 0.0], [0.0, 0.0, 6.171821]]))
+    assert numpy.all(output_data['dielectric tensor'] == numpy.array([[5.894056, 0.0, 0.0], [0.0, 5.894056, 0.0], [0.0, 0.0, 6.171821]]))
     assert nodes['born_charges'].get_array('born_charges').shape == (26, 3, 3)
+    assert len(recwarn) >= 1
