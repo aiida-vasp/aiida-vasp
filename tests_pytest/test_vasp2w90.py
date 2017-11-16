@@ -25,14 +25,14 @@ def test_vasp2w90(
     charge_density.set_file(sample('GaAs/CHGCAR'))
     inputs.charge_density = charge_density
 
-    wannier_parameters = DataFactory('parameter')(dict=dict(
+    wannier_input_parameters = dict(
         dis_num_iter=1000,
         num_bands=24,
         num_iter=0,
         num_wann=14,
         spinors=True,
-    ))
-    inputs.wannier_parameters = wannier_parameters
+    )
+    inputs.wannier_parameters = DataFactory('parameter')(dict=wannier_input_parameters)
 
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
@@ -40,4 +40,13 @@ def test_vasp2w90(
 
     output, pid = run(process, _return_pid=True, **inputs)
     assert all(key in output for key in ['retrieved', 'kpoints', 'wannier_parameters', 'wannier_kpoints', 'wannier_projections'])
+    # check that the input parameters are preserved
+    wannier_output_parameters = output['wannier_parameters'].get_dict()
+    for key, value in wannier_input_parameters.items():
+        assert key in wannier_output_parameters
+        out_value = eval(wannier_output_parameters[key].strip('.').capitalize())
+        assert value == out_value
+    # check that the projections block is preserved
+    assert wannier_projections.get_attr('list') == output['wannier_projections'].get_attr('list')
+
     assert_finished(pid)

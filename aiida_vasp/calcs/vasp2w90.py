@@ -20,7 +20,7 @@ class Vasp2w90Calculation(VaspCalculation):
     @staticmethod
     def write_win(inputdict, dst):
         """Write Wannier90 input file"""
-        write_win(filename=dst, parameters=inputdict.get('wannier90_parameters', {}), projections=inputdict.get('projections', None))
+        write_win(filename=dst, parameters=inputdict.get('wannier_parameters', {}), projections=inputdict.get('wannier_projections', None))
 
     @staticmethod
     def new_wannier_parameters(**kwargs):
