@@ -1,4 +1,4 @@
-"""AiiDA Parser for aiida_vasp.Vasp2W90Calculation"""
+"""AiiDA Parser for aiida_vasp.Vasp2w90Calculation"""
 from aiida.orm import DataFactory
 from aiida.orm.data.base import List
 
@@ -7,7 +7,7 @@ from .vasp import VaspParser
 
 
 class Vasp2w90Parser(VaspParser):
-    """Parse a finished aiida_vasp.Vasp2W90Calculation"""
+    """Parse a finished aiida_vasp.Vasp2w90Calculation"""
 
     def parse_with_retrieved(self, retrieved):
         super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)

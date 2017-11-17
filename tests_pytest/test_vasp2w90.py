@@ -1,4 +1,4 @@
-"""Vasp2W90 calculation integration test"""
+"""Vasp2w90 calculation integration test"""
 from __future__ import print_function
 
 from gaas_sample import get_gaas_process_inputs  # pylint: disable=unused-import
@@ -9,7 +9,7 @@ def test_vasp2w90(
         sample,
         get_gaas_process_inputs,  # pylint: disable=redefined-outer-name
         assert_finished):
-    """Vasp2W90 unit test"""
+    """Vasp2w90 unit test"""
     from aiida.work.run import run
     from aiida.orm import DataFactory
     from aiida.orm.data.base import List

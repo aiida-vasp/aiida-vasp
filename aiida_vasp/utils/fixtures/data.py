@@ -141,10 +141,17 @@ def vasp_wavecar(aiida_env):
     return wavecar, ref_wavecar
 
 
-@pytest.fixture()
+@pytest.fixture
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
+        yield reference_incar_fo.read().strip()
+
+
+@pytest.fixture
+def ref_incar_vasp2w90():
+    from aiida_vasp.backendtests.common import subpath
+    with open(subpath('data', 'INCAR_Vasp2w90'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
 
