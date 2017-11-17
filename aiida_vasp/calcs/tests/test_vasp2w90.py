@@ -31,14 +31,14 @@ def test_write_incar(fresh_aiida_env, vasp2w90_calc_and_ref):
             assert result_incar_fo.read() == reference['incar']
 
 
-# @ONLY_ONE_CALC
-# def test_write_win(fresh_aiida_env, vasp2w90_calc_and_ref):
-#     vasp_calc, reference = vasp2w90_calc_and_ref
-#     inp = vasp_calc.get_inputs_dict()
-#     with tempfile.NamedTemporaryFile() as temp_file:
-#         vasp_calc.write_incar(inp, temp_file.name)
-#         with open(temp_file.name, 'r') as result_incar_fo:
-#             assert result_incar_fo.read() == reference['incar']
+@ONLY_ONE_CALC
+def test_write_win(fresh_aiida_env, vasp2w90_calc_and_ref):
+    vasp_calc, reference = vasp2w90_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        vasp_calc.write_win(inp, temp_file.name)
+        with open(temp_file.name, 'r') as result_incar_fo:
+            assert result_incar_fo.read() == reference['win']
 
 
 @STRUCTURE_TYPES
