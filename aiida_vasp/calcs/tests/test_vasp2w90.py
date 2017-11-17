@@ -11,8 +11,6 @@ from aiida.common.folders import SandboxFolder
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 
-from test_vasp import working_directory
-
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
 def test_store(vasp2w90_calc_and_ref):
@@ -48,11 +46,10 @@ def test_write_poscar(fresh_aiida_env, vasp2w90_calc_and_ref, vasp_structure_pos
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile() as temp_file:
         vasp_calc.write_poscar(inp, temp_file.name)
-        with working_directory(temp_file.name):
-            result_pmg = Poscar.from_file(temp_file.name).structure
-            ref_pmg = vasp_structure_poscar.structure
-            assert result_pmg.lattice, ref_pmg.lattice
-            assert result_pmg.formula == ref_pmg.formula
+        result_pmg = Poscar.from_file(temp_file.name).structure
+        ref_pmg = vasp_structure_poscar.structure
+        assert result_pmg.lattice, ref_pmg.lattice
+        assert result_pmg.formula == ref_pmg.formula
 
         with open(temp_file.name, 'r') as poscar:
             assert poscar.read() == vasp_structure_poscar.get_string()
