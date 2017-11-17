@@ -44,7 +44,7 @@ def test_vasp2w90(
     wannier_output_parameters = output['wannier_parameters'].get_dict()
     for key, value in wannier_input_parameters.items():
         assert key in wannier_output_parameters
-        out_value = eval(wannier_output_parameters[key].strip('.').capitalize())
+        out_value = eval(wannier_output_parameters[key].strip('.').capitalize())  # pylint: disable=eval-used
         assert value == out_value
     # check that the projections block is preserved
     assert wannier_projections.get_attr('list') == output['wannier_projections'].get_attr('list')
