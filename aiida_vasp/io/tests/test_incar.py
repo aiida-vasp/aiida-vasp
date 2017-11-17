@@ -42,7 +42,7 @@ def test_example_incar():
     assert isinstance(incar_dict['encut'], float)
 
     assert incar_dict['bmix'] == 2.0
-    assert isinstance(incar_dict['bmix'], int)
+    assert isinstance(incar_dict['bmix'], float)
 
     assert incar_dict['nelmin'] == 0
     assert incar_dict['nelmdl'] == 3
