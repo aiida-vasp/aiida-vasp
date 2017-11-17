@@ -1,0 +1,5 @@
+GGA = PE
+GGA_COMPAT = .False.
+LORBIT = 11
+LWANNIER90 = .True.
+SIGMA = 0.5

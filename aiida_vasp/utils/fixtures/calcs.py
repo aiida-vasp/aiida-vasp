@@ -2,27 +2,44 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
+from aiida_vasp.utils
 from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar
 
 
-@pytest.fixture()
-def vasp_calc_and_ref(vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar):
+@pytest.fixture
+def vasp_calc_and_ref(create_calc_and_ref, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
-    from aiida.orm.data.parameter import ParameterData
-    calc = VaspCalculation()
-    calc.use_code(vasp_code)
-    calc.set_computer(vasp_code.get_computer())
-    calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-    calc.use_parameters(vasp_params)
-    calc.use_potential(potentials['In'], kind='In')
-    calc.use_potential(potentials['As'], kind='As')
-    calc.use_potential(potentials['In_d'], kind='In_d')
-    calc.use_settings(ParameterData(dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
-    calc.use_structure(vasp_structure)
-    kpoints, ref_kpoints = vasp_kpoints
-    calc.use_kpoints(kpoints)
-    return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
+    return create_calc_and_ref(VaspCalculation, ref_incar=ref_incar)
+
+
+@pytest.fixture
+def vasp2w90_calc_and_ref(create_calc_and_ref, ref_incar_vasp2w90):
+    """Fixture for non varying setup of a vasp2w90 calculation"""
+    from aiida_vasp.calcs.vasp2w90 import Vasp2w90Calculation
+    return create_calc_and_ref(Vasp2w90Calculation, ref_incar=ref_incar_vasp2w90)
+
+
+@pytest.fixture
+def create_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure):
+    """Create a calculation of a given type."""
+
+    def inner(calc_type, ref_incar):
+        calc = calc_type()
+        calc.use_code(vasp_code)
+        calc.set_computer(vasp_code.get_computer())
+        calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        calc.use_parameters(vasp_params)
+    	calc.use_potential(potentials['In'], kind='In')
+    	calc.use_potential(potentials['As'], kind='As')
+    	calc.use_potential(potentials['In_d'], kind='In_d')
+	calc.use_settings(get_data_node('parameter', dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
+        calc.use_structure(vasp_structure)
+        kpoints, ref_kpoints = vasp_kpoints
+        calc.use_kpoints(kpoints)
+        return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
+
+    return inner
 
 
 @pytest.fixture()
