@@ -1,5 +1,7 @@
 """Provides INCAR file interface and utilities."""
 import re
+import operator
+import functools
 from collections import OrderedDict
 
 import six
@@ -206,18 +208,26 @@ class IncarParamParser(object):
 
         BNF::
 
-            value   :: numeric | boolean | word
-            numeric :: number+
-            number  :: <VASP readable number literal>
-            boolean :: <VASP readable boolean>
+            value               :: numeric | repeated_numeric | boolean | word
+            repeated_numeric    :: multiplier+ number
+            multiplier          :: integer '*'
+            numeric             :: number+
+            number              :: integer | decimal
+            integer             :: <VASP readable integer literal>
+            decimal             :: <VASP readable decimal literal>
+            boolean             :: <VASP readable boolean>
         """
-        number = pp.Regex(r'[+-]?((?:\d+(\.\d*)?)|(.\d+))([Ee][+-]?\d+)?').setParseAction(cls.parse_num)
+        decimal = pp.Regex(r'[+-]?((?:\d+(\.\d*))|(\.\d+))([Ee][+-]?\d+)?').setParseAction(cls.parse_decimal)
+        integer = pp.Regex(r'[+-]?(\d+)').setParseAction(cls.parse_int)
+        number = decimal | integer
+        multiplier = (integer + pp.Literal('*')).setParseAction(cls.parse_int)
+        repeated_numeric = (pp.Group(pp.OneOrMore(multiplier)) + number).setParseAction(cls.parse_repeated_num)
         num_value = pp.Group(pp.OneOrMore(number)).setParseAction(cls.parse_num_list)
         false = pp.Regex(r'.f(alse)?.', flags=re.IGNORECASE).setParseAction(lambda t: False)
         true = pp.Regex(r'.t(rue)?.', flags=re.IGNORECASE).setParseAction(lambda t: True)
         bool_value = false | true
         str_value = pp.Word(cls.word_chars)
-        return num_value | bool_value | str_value
+        return repeated_numeric | num_value | bool_value | str_value
 
     @classmethod
     def system_parser(cls):
@@ -298,11 +308,12 @@ class IncarParamParser(object):
         return OrderedDict([(i.name.lower(), i.value) for i, _, _ in all_params])
 
     @classmethod
-    def parse_num(cls, token):
-        num = float(token[0])
-        if int(num) == num:
-            return int(num)
-        return num
+    def parse_int(cls, token):
+        return int(token[0])
+
+    @classmethod
+    def parse_decimal(cls, token):
+        return float(token[0])
 
     @classmethod
     def parse_num_list(cls, token):
@@ -311,12 +322,19 @@ class IncarParamParser(object):
             return num_list[0]
         return num_list
 
+    @classmethod
+    def parse_repeated_num(cls, token):
+        multipliers, value = token.asList()
+        return {'repetitions': functools.reduce(operator.mul, multipliers), 'value': value}
+
 
 def _incarify(value):
     """Format value of any compatible type into the string forat appropriate for INCAR files."""
     result = None
     if isinstance(value, (str, unicode)):
         result = value
+    elif isinstance(value, dict):
+        result = "{}*{}".format(value['repetitions'], value['value'])
     elif not np.isscalar(value):
         value_array = np.array(value)
         shape = value_array.shape
