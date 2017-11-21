@@ -106,8 +106,49 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
-from aiida.orm import Data
+from pymatgen.io.vasp import PotcarSingle
+from aiida.common.utils import md5_file
+
+from aiida_vasp.data.archive import ArchiveData
 
 
-class PotcarFileData(Data):
+class PotcarFileData(ArchiveData):
     """Store a POTCAR file in the db"""
+
+    def set_file(self, filepath):
+        self.add_file(filepath)
+
+    def add_file(self, src_abs, dst_filename=None):
+        """Add the POTCAR file to the archive and set attributes."""
+        if self._filelist:
+            raise AttributeError('Can only hold one POTCAR file')
+        super(PotcarFileData, self).add_file(src_abs, dst_filename)
+        self.set_attr('md5', md5_file(src_abs))
+        potcar = PotcarSingle.from_file(src_abs)
+        self.set_attr('title', potcar.keywords['TITEL'])
+        self.set_attr('functional', potcar.functional)
+        self.set_attr('element', potcar.element)
+        self.set_attr('symbol', potcar.symbol)
+
+    def get_file_obj(self):
+        return self.archive.extractfile(self.archive.members[0])
+
+    @property
+    def md5(self):
+        return self.get_attr('md5')
+
+    @property
+    def title(self):
+        return self.get_attr('title')
+
+    @property
+    def functional(self):
+        return self.get_attr('functional')
+
+    @property
+    def element(self):
+        return self.get_attr('element')
+
+    @property
+    def symbol(self):
+        return self.get_attr('symbol')
