@@ -1,9 +1,33 @@
-u"""
+# pylint: disable=abstract-method
+"""
 Attempt to create a convenient but licence-respecting storage system that also guarantees provenience.
 
 Consists of two classes, PotcarData and PotcarFileData. Between the two data node classes exists a
 one to one mapping but never a DbLink of any kind. The mapping must be defined in terms of a POTCAR
 file hash sum.
+
+Reasons for not using a file system based solution in general:
+
+    * simplicity -> no necessity to define an fs based storage / retrieval schema
+    * storage schema can be updated without manual user interaction
+    * with fs based it is possible to lose enhanced provenance locally by deleting a file
+    * This is easier to share between machines for same user / group members
+
+Reasons for not using fs paths:
+
+    * migrating to a new machine involves reinstating file hierarchy, might be non-trivial
+    * corner cases with links, recursion etc
+
+Reasons for not using pymatgen system:
+
+    * changing an environment variable would invalidate provenance / disable reusing potentials
+    * would block upgrading to newer pymatgen versions if they decide to change
+
+
+Note::
+
+    An fs based solution can be advantageous but should be 'expert mode' and not
+    default solution due to provenance tradeoffs.
 
 The following requirements have to be met:
 
@@ -14,6 +38,12 @@ The following requirements have to be met:
     * The corresponding PotcarData node can be created at any time from the PotcarFileData node
     * PotcarFileData nodes are expected to be grouped in DbGroups called 'families'
     * The PotcarFileData nodes can be found according to their 'functional type' (pymatgen term)
+
+The following would be nice to also allow optionally:
+
+    * To pre-upload the files to a remote computer from a db and concat them right on there (to save traffic)
+    * To use files directly on the remote computer (disclaimer: will never be as secure / tested)
+    * To use existing pymatgen-style potentials library (disclaimer: support might break)
 
 It is not to be expected for hundreds of distinct Potcar families to be present in the same database.
 
@@ -29,7 +59,7 @@ The mechanism for reading a POTCAR file into the Db::
             v
      _-----------------------------------------------_
     ( exists for PotcarFileData with pmg_potcar.hash? )-----> no
-     ¯-----------------------------------------------¯        |
+     ^-----------------------------------------------^        |
             |                                                 v
             v                                                 create
             yes                                               |
@@ -37,7 +67,7 @@ The mechanism for reading a POTCAR file into the Db::
             v                                                 v
      _-------------------------_                             _-------------------------_
     ( Family given to parse to? ) -------------> no -+      ( Family given to parse to? )
-     ¯-------------------------¯                     |       ¯-------------------------¯
+     ^-------------------------^                     |       ^-------------------------^
             |                                        |        |         |
             v                                        |        |         no
             yes<------------------------------------]|[-------+         |
@@ -49,7 +79,7 @@ The mechanism for reading a POTCAR file into the Db::
             v                     v
      _--------------------------------_
     ( exists corresponding PotcarData? )-----> no -----> create
-     ¯--------------------------------¯ <------------------+
+     ^--------------------------------^ <------------------+
             |
             v
             return corresponding PotcarData
@@ -76,3 +106,8 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+from aiida.orm import Data
+
+
+class PotcarFileData(Data):
+    """Store a POTCAR file in the db"""
