@@ -108,12 +108,14 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 """
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.utils import md5_file
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm.data import Data
 
 from aiida_vasp.data.archive import ArchiveData
 
 
 class PotcarFileData(ArchiveData):
-    """Store a POTCAR file in the db"""
+    """Store a POTCAR file in the db."""
 
     def set_file(self, filepath):
         self.add_file(filepath)
@@ -132,6 +134,45 @@ class PotcarFileData(ArchiveData):
 
     def get_file_obj(self):
         return self.archive.extractfile(self.archive.members[0])
+
+    @property
+    def md5(self):
+        return self.get_attr('md5')
+
+    @property
+    def title(self):
+        return self.get_attr('title')
+
+    @property
+    def functional(self):
+        return self.get_attr('functional')
+
+    @property
+    def element(self):
+        return self.get_attr('element')
+
+    @property
+    def symbol(self):
+        return self.get_attr('symbol')
+
+
+class PotcarData(Data):
+    """Store enough metadata about a POTCAR file to identify it."""
+    _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
+
+    def set_potcar_file_node(self, potcar_file_node):
+        for attr_name in self._meta_attrs:
+            self.set_attr(attr_name, potcar_file_node.get_attr(attr_name))
+
+    def find_file_node(self):
+        """Find and return the matching PotcarFileData node."""
+        query_builder = QueryBuilder()
+        query_builder.append(PotcarFileData, tag='potcar_file')
+        filters = {}
+        for attr_name in self._meta_attrs:
+            filters['attributes.{}'.format(attr_name)] = {'==': self.get_attr(attr_name)}
+        query_builder.add_filter('potcar_file', filters)
+        return query_builder.one()
 
     @property
     def md5(self):
