@@ -12,8 +12,8 @@ class ArchiveData(Data):
     """Compressed archive data node, contains a group of files that don't need to be readily accessible on their own"""
 
     def __init__(self, *args, **kwargs):
-        super(ArchiveData, self).__init__(*args, **kwargs)
         self._filelist = []
+        super(ArchiveData, self).__init__(*args, **kwargs)
 
     def get_archive_abs_path(self):
         return self.get_abs_path('archive.tar.gz')

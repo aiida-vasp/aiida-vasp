@@ -116,6 +116,8 @@ from aiida_vasp.data.archive import ArchiveData
 
 class PotcarFileData(ArchiveData):
     """Store a POTCAR file in the db."""
+    _query_type_string = 'data.vasp.potcar_file.'
+    _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
 
     def set_file(self, filepath):
         self.add_file(filepath)
@@ -125,12 +127,16 @@ class PotcarFileData(ArchiveData):
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
-        self.set_attr('md5', md5_file(src_abs))
+        self._set_attr('md5', md5_file(src_abs))
         potcar = PotcarSingle.from_file(src_abs)
-        self.set_attr('title', potcar.keywords['TITEL'])
-        self.set_attr('functional', potcar.functional)
-        self.set_attr('element', potcar.element)
-        self.set_attr('symbol', potcar.symbol)
+        self._set_attr('title', potcar.keywords['TITEL'])
+        self._set_attr('functional', potcar.functional)
+        self._set_attr('element', potcar.element)
+        self._set_attr('symbol', potcar.symbol)
+
+    def store(self, with_transaction=True):
+        _ = PotcarData.get_or_create(self)
+        super(PotcarFileData, self).store(with_transaction=with_transaction)
 
     def get_file_obj(self):
         return self.archive.extractfile(self.archive.members[0])
@@ -159,20 +165,41 @@ class PotcarFileData(ArchiveData):
 class PotcarData(Data):
     """Store enough metadata about a POTCAR file to identify it."""
     _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
+    _query_type_string = 'data.vasp.potcar.'
+    _plugin_type_string = 'data.vasp.potcar.PotcarData'
 
     def set_potcar_file_node(self, potcar_file_node):
         for attr_name in self._meta_attrs:
-            self.set_attr(attr_name, potcar_file_node.get_attr(attr_name))
+            self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
         query_builder = QueryBuilder()
-        query_builder.append(PotcarFileData, tag='potcar_file')
+        query_builder.append(cls=PotcarFileData, tag='potcar_file')
         filters = {}
         for attr_name in self._meta_attrs:
             filters['attributes.{}'.format(attr_name)] = {'==': self.get_attr(attr_name)}
         query_builder.add_filter('potcar_file', filters)
-        return query_builder.one()
+        return query_builder.one()[0]
+
+    @classmethod
+    def find(cls, **kwargs):
+        """Find a PotcarData node by attributes."""
+        query_builder = QueryBuilder()
+        query_builder.append(cls=PotcarData, tag='potcar_data')
+        filters = {}
+        for attr_name, attr_val in kwargs.items():
+            filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
+        return query_builder.one()[0]
+
+    @classmethod
+    def get_or_create(cls, file_node):
+        """Get or create (store) a PotcarData node."""
+        node = PotcarData(potcar_file_node=file_node)
+        created = False if node.pk else True
+        if created:
+            node.store()
+        return node, created
 
     @property
     def md5(self):

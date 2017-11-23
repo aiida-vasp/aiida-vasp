@@ -125,3 +125,9 @@ class VasprunToAiida(object):
 def get_data_node(data_type, *args, **kwargs):
     from aiida.orm import DataFactory
     return DataFactory(data_type)(*args, **kwargs)
+
+
+@dbenv
+def get_data_class(data_type):
+    from aiida.orm import DataFactory
+    return DataFactory(data_type)
