@@ -3,6 +3,7 @@
 
 from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.environment import aiida_env
 
 
 def test_from_folder(aiida_env):
