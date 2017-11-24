@@ -1,5 +1,5 @@
 """Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
-from numpy import array
+from numpy import array, arange
 from pymatgen import Spin
 
 from aiida_vasp.utils.aiida_utils import dbenv
@@ -39,6 +39,32 @@ class VasprunToAiida(object):
         forces_array = get_data_node('array')
         forces_array.set_array('forces', array(self.vasprun_obj.ionic_steps[-1]['forces']))
         return forces_array
+
+    @property
+    def ionic_trajectories(self):
+        """Get trajectory properties as TrajectoryData and ArrayData nodes."""
+        array_node = get_data_node('array')
+        trajectory_node = get_data_node('array.trajectory')
+
+        pmg_trajectory = self.vasprun_obj.ionic_steps
+        trajectories = {}
+        for key in pmg_trajectory[0].keys():
+            print key
+            trajectories[key] = [step.get(key, None) for step in pmg_trajectory]
+
+        structures = trajectories.pop('structure')
+        trajectory_node.set_trajectory(
+            stepids=arange(len(pmg_trajectory)),
+            cells=array([get_data_node('structure', pymatgen=s).cell for s in structures]),
+            symbols=array([spec.symbol for spec in structures[0].species]),
+            positions=array([[site.coords for site in struc.sites] for struc in structures]))
+
+        for key, data in trajectories.items():
+            data = array(data)
+            array_node.set_array(key, data)
+            trajectory_node.set_array(key, data)
+
+        return trajectory_node, array_node
 
     @property
     def output_dict(self):

@@ -46,11 +46,12 @@ class PymatgenParser(BaseParser):
         calc.submit()
     """
     _linkname_outparams = 'output_parameters'
-    _linkname_kpoints = 'kpoints'
-    _linkname_structure = 'structure'
-    _linkname_forces = 'forces'
-    _linkname_bands = 'bands'
-    _linkname_dos = 'dos'
+    _linkname_kpoints = 'output_kpoints'
+    _linkname_structure = 'output_structure'
+    _linkname_array = 'output_array'
+    _linkname_trajectory = 'output_trajectory'
+    _linkname_bands = 'output_band'
+    _linkname_dos = 'output_dos'
     _linkname_born_charges = 'born_charges'
     _default_options = {'parse_dos': True, 'parse_bands': True}
 
@@ -72,7 +73,11 @@ class PymatgenParser(BaseParser):
 
         self.add_node(self._linkname_structure, self.vasprun_adapter.last_structure)
         self.add_node(self._linkname_kpoints, self.vasprun_adapter.actual_kpoints)
-        self.add_node(self._linkname_forces, self.vasprun_adapter.forces)
+
+        out_trajectory, out_array = self.parse_trajectories()
+        self.add_node(self._linkname_trajectory, out_trajectory)
+        self.add_node(self._linkname_array, out_array)
+
         if self.get_option('parse_bands'):
             self.add_node(self._linkname_bands, self.vasprun_adapter.band_structure)
         if self.get_option('parse_dos'):
@@ -111,6 +116,10 @@ class PymatgenParser(BaseParser):
         except IndexError:
             raise AiidaParsingError('vasprun.xml must contain at least one complete ionic step (<calculation> tag)')
         return parsed_vasprun
+
+    def parse_trajectories(self):
+        """Parse electronic step trajectories"""
+        return self.vasprun_adapter.ionic_trajectories
 
     def parse_outcar(self):
         """Try to parse the OUTCAR file."""
