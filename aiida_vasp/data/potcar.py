@@ -108,13 +108,57 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 """
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.utils import md5_file
-from aiida.orm.querybuilder import QueryBuilder
 from aiida.orm.data import Data
+from aiida.common.exceptions import UniquenessError
 
 from aiida_vasp.data.archive import ArchiveData
 
 
-class PotcarFileData(ArchiveData):
+class PotcarMetadataMixin(object):
+    """Provide common Potcar metadata access and querying functionality."""
+
+    @classmethod
+    def query_by_attrs(cls, **kwargs):
+        """Find a Data node by attributes."""
+        label = 'label'
+        query_builder = cls.querybuild(label=label)
+        filters = {}
+        for attr_name, attr_val in kwargs.items():
+            filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
+        query_builder.add_filter(label, filters)
+        return query_builder
+
+    @classmethod
+    def find(cls, **kwargs):
+        query_builder = cls.query_by_attrs(**kwargs)
+        return query_builder.one()[0]
+
+    @classmethod
+    def exists(cls, **kwargs):
+        return bool(cls.query_by_attrs(**kwargs).count() >= 1)
+
+    @property
+    def md5(self):
+        return self.get_attr('md5')
+
+    @property
+    def title(self):
+        return self.get_attr('title')
+
+    @property
+    def functional(self):
+        return self.get_attr('functional')
+
+    @property
+    def element(self):
+        return self.get_attr('element')
+
+    @property
+    def symbol(self):
+        return self.get_attr('symbol')
+
+
+class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     """Store a POTCAR file in the db."""
     _query_type_string = 'data.vasp.potcar_file.'
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
@@ -136,33 +180,24 @@ class PotcarFileData(ArchiveData):
 
     def store(self, with_transaction=True):
         _ = PotcarData.get_or_create(self)
-        super(PotcarFileData, self).store(with_transaction=with_transaction)
+        self.verify_unique()
+        return super(PotcarFileData, self).store(with_transaction=with_transaction)
+
+    def verify_unique(self):
+        """Raise a UniquenessError if an equivalent node exists."""
+        if self.exists(md5=self.md5):
+            raise UniquenessError('A PotcarFileData already exists for this file.')
+
+        other_attrs = self.get_attrs()
+        other_attrs.pop('md5')
+        if self.exists(**other_attrs):
+            raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
     def get_file_obj(self):
         return self.archive.extractfile(self.archive.members[0])
 
-    @property
-    def md5(self):
-        return self.get_attr('md5')
 
-    @property
-    def title(self):
-        return self.get_attr('title')
-
-    @property
-    def functional(self):
-        return self.get_attr('functional')
-
-    @property
-    def element(self):
-        return self.get_attr('element')
-
-    @property
-    def symbol(self):
-        return self.get_attr('symbol')
-
-
-class PotcarData(Data):
+class PotcarData(Data, PotcarMetadataMixin):
     """Store enough metadata about a POTCAR file to identify it."""
     _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
     _query_type_string = 'data.vasp.potcar.'
@@ -174,23 +209,21 @@ class PotcarData(Data):
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
-        query_builder = QueryBuilder()
-        query_builder.append(cls=PotcarFileData, tag='potcar_file')
-        filters = {}
-        for attr_name in self._meta_attrs:
-            filters['attributes.{}'.format(attr_name)] = {'==': self.get_attr(attr_name)}
-        query_builder.add_filter('potcar_file', filters)
-        return query_builder.one()[0]
+        return PotcarFileData.find(**self.get_attrs())
 
-    @classmethod
-    def find(cls, **kwargs):
-        """Find a PotcarData node by attributes."""
-        query_builder = QueryBuilder()
-        query_builder.append(cls=PotcarData, tag='potcar_data')
-        filters = {}
-        for attr_name, attr_val in kwargs.items():
-            filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
-        return query_builder.one()[0]
+    def store(self, with_transaction=True):
+        self.verify_unique()
+        return super(PotcarData, self).store(with_transaction=with_transaction)
+
+    def verify_unique(self):
+        """Raise a UniquenessError if an equivalent node exists."""
+        if self.exists(md5=self.md5):
+            raise UniquenessError('A PotcarFileData already exists for this file.')
+
+        other_attrs = self.get_attrs()
+        other_attrs.pop('md5')
+        if self.exists(**other_attrs):
+            raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
     @classmethod
     def get_or_create(cls, file_node):
@@ -200,23 +233,3 @@ class PotcarData(Data):
         if created:
             node.store()
         return node, created
-
-    @property
-    def md5(self):
-        return self.get_attr('md5')
-
-    @property
-    def title(self):
-        return self.get_attr('title')
-
-    @property
-    def functional(self):
-        return self.get_attr('functional')
-
-    @property
-    def element(self):
-        return self.get_attr('element')
-
-    @property
-    def symbol(self):
-        return self.get_attr('symbol')
