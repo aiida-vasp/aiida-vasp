@@ -2,6 +2,10 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 from aiida.common.exceptions import UniquenessError
+try:
+    import subprocess32 as sp
+except ImportError:
+    import subprocess as sp
 
 from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -57,5 +61,24 @@ def test_store_duplicate(potcar_node_pair):
     with pytest.raises(UniquenessError):
         data_node.store()
 
+    assert get_data_class('vasp.potcar').find(symbol='As')
+    assert get_data_class('vasp.potcar_file').find(symbol='As')
+
+
+def test_export_import(potcar_node_pair, tmpdir):
+    """Exporting and importing back may not store duplicates."""
+    tempfile = tmpdir.join('potcar.aiida')
+
+    sp.call(['verdi', 'export', 'create',
+             '-n', str(potcar_node_pair['file'].pk),
+             '-n', str(potcar_node_pair['potcar'].pk), str(tempfile)])  # yapf: disable
+
+    # import with same uuid
+    sp.call(['verdi', 'import', str(tempfile)])
+    assert get_data_class('vasp.potcar').find(symbol='As')
+    assert get_data_class('vasp.potcar_file').find(symbol='As')
+
+    # import with different uuid
+    sp.call(['verdi', 'import', data_path('potcar', 'export.aiida')])
     assert get_data_class('vasp.potcar').find(symbol='As')
     assert get_data_class('vasp.potcar_file').find(symbol='As')
