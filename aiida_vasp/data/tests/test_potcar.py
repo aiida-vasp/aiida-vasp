@@ -82,3 +82,34 @@ def test_export_import(potcar_node_pair, tmpdir):
     sp.call(['verdi', 'import', data_path('potcar', 'export.aiida')])
     assert get_data_class('vasp.potcar').find(symbol='As')
     assert get_data_class('vasp.potcar_file').find(symbol='As')
+
+
+def test_file_get_or_create(potcar_node_pair):
+    """Test get_or_create of PotcarFileData."""
+    potcar_as_path = data_path('potcar', 'As', 'POTCAR')
+    potcar_file_cls = get_data_class('vasp.potcar_file')
+    file_as = potcar_node_pair['file']
+    node_file_as, created_file_as = potcar_file_cls.get_or_create(potcar_as_path)
+    assert not created_file_as
+    assert file_as.pk == node_file_as.pk
+
+    potcar_in_path = data_path('potcar', 'In_d', 'POTCAR')
+    node_file_in, created_file_in = potcar_file_cls.get_or_create(potcar_in_path)
+    assert created_file_in
+    assert potcar_file_cls.exists(md5=node_file_in.md5)
+
+
+def test_potcar_get_or_create(potcar_node_pair):
+    """Test get_or_create method of PotcarData."""
+    potcar_cls = get_data_class('vasp.potcar')
+    file_cls = get_data_class('vasp.potcar_file')
+    file_as = potcar_node_pair['file']
+    potcar_as = potcar_node_pair['potcar']
+    node_potcar_as, created_potcar_as = potcar_cls.get_or_create(file_as)
+    assert not created_potcar_as
+    assert potcar_as.pk == node_potcar_as.pk
+
+    potcar_in_path = data_path('potcar', 'In_d', 'POTCAR')
+    node_potcar_in, created_potcar_in = potcar_cls.get_or_create(file_cls(file=potcar_in_path))
+    assert created_potcar_in
+    assert potcar_cls.exists(md5=node_potcar_in.md5)

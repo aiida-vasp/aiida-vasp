@@ -217,6 +217,19 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         """Open a readonly file object to read the stored POTCAR file."""
         return self.archive.extractfile(self.archive.members[0])
 
+    @classmethod
+    def get_or_create(cls, filepath):
+        """Get or create (store) a PotcarFileData node."""
+        md5 = md5_file(filepath)
+        if cls.exists(md5=md5):
+            created = False
+            node = cls.find(md5=md5)
+        else:
+            created = True
+            node = cls(file=filepath)
+            node.store()
+        return node, created
+
 
 class PotcarData(Data, PotcarMetadataMixin):
     """Store enough metadata about a POTCAR file to identify it."""
@@ -242,8 +255,11 @@ class PotcarData(Data, PotcarMetadataMixin):
     @classmethod
     def get_or_create(cls, file_node):
         """Get or create (store) a PotcarData node."""
-        node = PotcarData(potcar_file_node=file_node)
-        created = False if node.pk else True
-        if created:
+        if cls.exists(md5=file_node.md5):
+            created = False
+            node = cls.find(md5=file_node.md5)
+        else:
+            created = True
+            node = cls(potcar_file_node=file_node)
             node.store()
         return node, created
