@@ -130,40 +130,59 @@ class PotcarMetadataMixin(object):
 
     @classmethod
     def find(cls, **kwargs):
+        """Find a node by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
         return query_builder.one()[0]
 
     @classmethod
     def exists(cls, **kwargs):
+        """Answers the question wether a node with attributes given in kwargs exists."""
         return bool(cls.query_by_attrs(**kwargs).count() >= 1)
 
     @property
     def md5(self):
+        """Md5 hash of the POTCAR file (readonly)."""
         return self.get_attr('md5')
 
     @property
     def title(self):
+        """Title of the POTCAR file (readonly)."""
         return self.get_attr('title')
 
     @property
     def functional(self):
+        """Functional class of the POTCAR potential (readonly)."""
         return self.get_attr('functional')
 
     @property
     def element(self):
+        """Chemical element described by the POTCAR (readonly)."""
         return self.get_attr('element')
 
     @property
     def symbol(self):
+        """Element symbol property (VASP term) of the POTCAR potential (readonly)."""
         return self.get_attr('symbol')
+
+    def verify_unique(self):
+        """Raise a UniquenessError if an equivalent node exists."""
+        if self.exists(md5=self.md5):
+            raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
+
+        other_attrs = self.get_attrs()
+        other_attrs.pop('md5')
+        if self.exists(**other_attrs):
+            raise UniquenessError('A {} node with these attributes but a different file exists.'.format(str(self.__class__)))
 
 
 class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     """Store a POTCAR file in the db."""
+
     _query_type_string = 'data.vasp.potcar_file.'
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
 
     def set_file(self, filepath):
+        """Initialize from a file path."""
         self.add_file(filepath)
 
     def add_file(self, src_abs, dst_filename=None):
@@ -179,6 +198,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         self._set_attr('symbol', potcar.symbol)
 
     def store(self, with_transaction=True):
+        """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         _ = PotcarData.get_or_create(self)
         self.verify_unique()
         return super(PotcarFileData, self).store(with_transaction=with_transaction)
@@ -194,16 +214,19 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
     def get_file_obj(self):
+        """Open a readonly file object to read the stored POTCAR file."""
         return self.archive.extractfile(self.archive.members[0])
 
 
 class PotcarData(Data, PotcarMetadataMixin):
     """Store enough metadata about a POTCAR file to identify it."""
+
     _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
 
     def set_potcar_file_node(self, potcar_file_node):
+        """Initialize from a PotcarFileData node."""
         for attr_name in self._meta_attrs:
             self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
 
@@ -212,18 +235,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         return PotcarFileData.find(**self.get_attrs())
 
     def store(self, with_transaction=True):
+        """Ensure uniqueness before storing."""
         self.verify_unique()
         return super(PotcarData, self).store(with_transaction=with_transaction)
-
-    def verify_unique(self):
-        """Raise a UniquenessError if an equivalent node exists."""
-        if self.exists(md5=self.md5):
-            raise UniquenessError('A PotcarFileData already exists for this file.')
-
-        other_attrs = self.get_attrs()
-        other_attrs.pop('md5')
-        if self.exists(**other_attrs):
-            raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
     @classmethod
     def get_or_create(cls, file_node):
