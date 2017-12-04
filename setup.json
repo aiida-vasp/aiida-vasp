@@ -27,7 +27,8 @@
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
-            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser", 
+            "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
             "vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
