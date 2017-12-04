@@ -2,4 +2,5 @@ GGA = PE
 GGA_COMPAT = .False.
 LORBIT = 11
 LWANNIER90 = .True.
+MAGMOM = 60*0.0
 SIGMA = 0.5
