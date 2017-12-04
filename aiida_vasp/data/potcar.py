@@ -113,6 +113,8 @@ from aiida.common.exceptions import UniquenessError
 
 from aiida_vasp.data.archive import ArchiveData
 
+POTCAR_GROUP_TYPE = 'data.vasp.potcar.family'
+
 
 class PotcarMetadataMixin(object):
     """Provide common Potcar metadata access and querying functionality."""
@@ -263,3 +265,54 @@ class PotcarData(Data, PotcarMetadataMixin):
             node = cls(potcar_file_node=file_node)
             node.store()
         return node, created
+
+    def get_family_names(self):
+        """List potcar families to which this instance belongs."""
+
+    @classmethod
+    def potcar_family_type_string(cls):
+        return POTCAR_GROUP_TYPE
+
+    @classmethod
+    def get_potcar_group(cls, group_name):
+        """
+        Return the PotcarFamily group with the given name.
+        """
+
+    @classmethod
+    def get_potcar_groups(cls, filter_elements=None, user=None):
+        """
+        List all names of groups of type PotcarFamily, possibly with some filters.
+
+        :param filter_elements: A string or a list of strings.
+               If present, returns only the groups that contains one POTCAR for
+               every element present in the list. Default=None, meaning that
+               all families are returned.
+        :param user: if None (default), return the groups for all users.
+               If defined, it should be either a DbUser instance, or a string
+               for the username (that is, the user email).
+        """
+
+
+def get_potcars_dict(structure, family_name):
+    """
+    Get a dictionary {kind: POTCAR} for all elements in a structure.
+
+    :param structure: The structure to find POTCARs for
+    :param family_name: The POTCAR family to be used
+    """
+
+
+def upload_potcar_family(folder, group_name, group_description, stop_if_existing=True):
+    """
+    Upload a set of POTCAR potentials as a family.
+
+    :param folder: a path containing all POTCAR files to be added.
+    :param group_name: the name of the group to create. If it exists and is
+        non-empty, a UniquenessError is raised.
+    :param group_description: a string to be set as the group description.
+        Overwrites previous descriptions, if the group was existing.
+    :param stop_if_existing: if True, check for the md5 of the files and,
+        if the file already exists in the DB, raises a MultipleObjectsError.
+        If False, simply adds the existing UPFData node to the group.
+    """
