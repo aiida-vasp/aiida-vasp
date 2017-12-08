@@ -106,14 +106,15 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+import six
 from pymatgen.io.vasp import PotcarSingle
-from aiida.common.utils import md5_file
+from aiida.common.utils import md5_file, classproperty
 from aiida.orm.data import Data
-from aiida.common.exceptions import UniquenessError
+from aiida.orm import Group
+from aiida.orm.querybuilder import QueryBuilder
+from aiida.common.exceptions import UniquenessError, MultipleObjectsError, NotExistent
 
 from aiida_vasp.data.archive import ArchiveData
-
-POTCAR_GROUP_TYPE = 'data.vasp.potcar.family'
 
 
 class PotcarMetadataMixin(object):
@@ -178,7 +179,17 @@ class PotcarMetadataMixin(object):
 
 
 class PotcarFileData(ArchiveData, PotcarMetadataMixin):
-    """Store a POTCAR file in the db."""
+    """
+    Store a POTCAR file in the db, never use as input to a calculation or workflow.
+
+    .. warning:: Warning! Sharing nodes of this type may be illegal!
+
+    In general POTCAR files may underly licence agreements, such as the ones distributed
+    by the VASP group to VASP licence holders. Take care to not share such licenced data
+    with non-licence holders.
+
+    When writing a calculation plugin or workflow, do not use this as an input type, use :class:`aiida_vasp.data.potcar.PotcarData` instead!
+    """
 
     _query_type_string = 'data.vasp.potcar_file.'
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
@@ -234,11 +245,18 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
 
 
 class PotcarData(Data, PotcarMetadataMixin):
-    """Store enough metadata about a POTCAR file to identify it."""
+    """
+    Store enough metadata about a POTCAR file to identify and find it.
+
+    Meant to be used as an input to calculations. This node type holds no
+    licenced data and can be freely shared without legal repercussions.
+    """
 
     _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
+
+    GROUP_TYPE = 'data.vasp.potcar.family'
 
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
@@ -268,16 +286,18 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
+        return [group.name for group in Group.query(nodes=self, type_string=self.potcar_family_type_string)]
 
-    @classmethod
-    def potcar_family_type_string(cls):
-        return POTCAR_GROUP_TYPE
+    @classproperty
+    def potcar_family_type_string(cls):  # pylint: disable=no-self-argument
+        return cls.GROUP_TYPE
 
     @classmethod
     def get_potcar_group(cls, group_name):
         """
         Return the PotcarFamily group with the given name.
         """
+        return Group.get(name=group_name, type_string=cls.potcar_family_type_string)
 
     @classmethod
     def get_potcar_groups(cls, filter_elements=None, user=None):
@@ -287,11 +307,31 @@ class PotcarData(Data, PotcarMetadataMixin):
         :param filter_elements: A string or a list of strings.
                If present, returns only the groups that contains one POTCAR for
                every element present in the list. Default=None, meaning that
-               all families are returned.
+               all families are returned. A single element can be passed as a string.
         :param user: if None (default), return the groups for all users.
                If defined, it should be either a DbUser instance, or a string
                for the username (that is, the user email).
         """
+        group_query_params = {"type_string": cls.potcar_family_type_string}
+
+        if user is not None:
+            group_query_params['user'] = user
+
+        if isinstance(filter_elements, six.string_types):
+            filter_elements = [filter_elements]
+
+        if filter_elements is not None:
+            normalized_elements_set = {element.capitalize() for element in filter_elements}
+
+            group_query_params['node_attributes'] = {'element': normalized_elements_set}
+
+        all_upf_groups = Group.query(**group_query_params)
+
+        groups = [(group.name, group) for group in all_upf_groups]
+        # Sort by name
+        groups.sort()
+        # Return the groups, without name
+        return [item[1] for item in groups]
 
 
 def get_potcars_dict(structure, family_name):
@@ -301,6 +341,36 @@ def get_potcars_dict(structure, family_name):
     :param structure: The structure to find POTCARs for
     :param family_name: The POTCAR family to be used
     """
+    group_filters = {'name': {'==': family_name}, 'type': {'==': PotcarData.potcar_family_type_string}}
+    element_filters = {'attributes.element': {'in': [kind.symbol for kind in structure.kinds]}}
+    query = QueryBuilder()
+    query.append(Group, tag='family', filters=group_filters)
+    query.append(PotcarData, tag='potcar', member_of='family', filters=element_filters)
+
+    result_potcars = {}
+    for kind in structure.kinds:
+        potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == kind.symbol]
+        if not potcars_of_kind:
+            raise NotExistent('No POTCAR found for element {} in family {}'.format(kind.symbol, family_name))
+        elif len(potcars_of_kind) > 1:
+            raise MultipleObjectsError('More than one POTCAR for element {} found in family {}'.format(kind.symbol, family_name))
+        result_potcars[kind] = potcars_of_kind[0]
+
+    return result_potcars
+
+
+def get_potcars_from_structure(structure, family_name):
+    """
+    Given a POTCAR family name and a AiiDA
+    structure, return a dictionary associating each kind name with its
+    UpfData object.
+
+    :raise MultipleObjectsError: if more than one UPF for the same element is
+       found in the group.
+    :raise NotExistent: if no UPF for an element in the group is
+       found in the group.
+    """
+    return {kind.name: potcar for kind, potcar in get_potcars_dict(structure, family_name).items()}
 
 
 def upload_potcar_family(folder, group_name, group_description, stop_if_existing=True):
