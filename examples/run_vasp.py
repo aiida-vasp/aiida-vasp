@@ -107,19 +107,20 @@ def create_kpoints():
 
 def create_params_noncol():
     param_cls = get_data_cls('parameter')
-    return param_cls(dict={
-        'SYSTEM': 'InAs',
-        'EDIFF': 1e-5,
-        'LORBIT': 11,
-        'LSORBIT': '.True.',
-        'GGA_COMPAT': '.False.',
-        'ISMEAR': 0,
-        'SIGMA': 0.05,
-        'GGA': 'PE',
-        'ENCUT': '280.00 eV',
-        'MAGMOM': '6*0.0',
-        'NBANDS': 24,
-    })
+    return param_cls(
+        dict={
+            'SYSTEM': 'InAs',
+            'EDIFF': 1e-5,
+            'LORBIT': 11,
+            'LSORBIT': '.True.',
+            'GGA_COMPAT': '.False.',
+            'ISMEAR': 0,
+            'SIGMA': 0.05,
+            'GGA': 'PE',
+            'ENCUT': '280.00 eV',
+            'MAGMOM': '6*0.0',
+            'NBANDS': 24,
+        })
 
 
 def create_params_simple():
