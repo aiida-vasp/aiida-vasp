@@ -431,7 +431,9 @@ class PotcarData(Data, PotcarMetadataMixin):
 
         potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
         num_files = len(potcars_found)
-        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar not in group.nodes]
+        family_nodes_uuid = [node.uuid for node in group.nodes]
+        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found
+                         if potcar.uuid not in family_nodes_uuid]
 
         for potcar, created, file_path in potcars_found:
             if created:
@@ -454,13 +456,13 @@ class PotcarData(Data, PotcarMetadataMixin):
         for subpath in folder.listdir():
             if subpath.isdir():
                 list_created.extend(cls.recursive_upload_potcar(subpath, stop_if_existing))
-            elif subpath.isfile() and 'POTCAR' in subpath.basename:
+            elif subpath.isfile():
                 if tarfile.is_tarfile(str(subpath)):
                     with temp_dir() as staging_dir:
                         with tarfile.TarFile(str(subpath)) as potcar_archive:
                             potcar_archive.extractall(staging_dir)
                         list_created.extend(cls.recursive_upload_potcar(staging_dir, stop_if_existing))
-                else:
+                elif 'POTCAR' in subpath.basename:
                     potcar, created = cls.get_or_create_from_file(str(subpath))
                     if stop_if_existing and not created:
                         raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(

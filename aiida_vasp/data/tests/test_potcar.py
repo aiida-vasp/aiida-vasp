@@ -140,8 +140,16 @@ def test_upload(fresh_aiida_env):
 
     potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc)
 
+    assert potcar_cls.exists(element='In')
+    assert potcar_cls.exists(element='As')
+    assert potcar_cls.exists(element='Ga')
+
     assert [g.name for g in potcar_cls.get_potcar_groups()] == [family_name]
-    assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 2
+    assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 3
 
     with pytest.raises(ValueError):
-        potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=True)
+        potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=True)
+
+    num_files, num_uploaded = potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=False)
+    assert num_files >= 3
+    assert num_uploaded == 0
