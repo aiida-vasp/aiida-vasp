@@ -21,6 +21,14 @@ def potcar_node_pair(fresh_aiida_env):
     return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
 
 
+@pytest.fixture
+def potcar_family(fresh_aiida_env):
+    """Create a POTCAR family."""
+    family_name = 'fixture_family'
+    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name)
+    return family_name
+
+
 def test_creation(potcar_node_pair):
     """Test creating a data node pair."""
     potcar_node = get_data_class('vasp.potcar').find(symbol='As')
@@ -113,3 +121,27 @@ def test_potcar_get_or_create(potcar_node_pair):
     node_potcar_in, created_potcar_in = potcar_cls.get_or_create(file_cls(file=potcar_in_path))
     assert created_potcar_in
     assert potcar_cls.exists(md5=node_potcar_in.md5)
+
+
+def test_potcar_from_structure(potcar_family):
+    """Test getting POTCARS from a family for a structure."""
+    indium_2 = get_data_node('structure')
+    indium_2.append_atom(position=[0, 0, 0], symbols='In')
+    indium_2.append_atom(position=[1, 0, 0], symbols='In')
+    in2_potcars = get_data_class('vasp.potcar').get_potcars_dict(indium_2, potcar_family)
+    assert [kind.name for kind in in2_potcars.keys()] == ['In']
+
+
+def test_upload(fresh_aiida_env):
+    """Test uploading a family of POTCAR files."""
+    family_name = 'test_family'
+    family_desc = 'Test Family'
+    potcar_cls = get_data_class('vasp.potcar')
+
+    potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc)
+
+    assert [g.name for g in potcar_cls.get_potcar_groups()] == [family_name]
+    assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 2
+
+    with pytest.raises(ValueError):
+        potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=True)

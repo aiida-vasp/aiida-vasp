@@ -54,12 +54,12 @@ The mechanism for reading a POTCAR file into the Db::
     +-----------------------+
             |
             v
-            pmg_potcar = Potcar.from_file()
+            pmg_potcar = PotcarData.get_or_create_from_file()
             |
             v
-     _-----------------------------------------------_
-    ( exists for PotcarFileData with pmg_potcar.hash? )-----> no
-     ^-----------------------------------------------^        |
+     _----------------------------------------------_
+    ( exists for PotcarFileData with pmg_potcar.md5? )-----> no
+     ^----------------------------------------------^         |
             |                                                 v
             v                                                 create
             yes                                               |
@@ -106,15 +106,32 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+import tarfile
+import tempfile
+import shutil
+from contextlib import contextmanager
+
 import six
+import py
 from pymatgen.io.vasp import PotcarSingle
+from aiida.backends.utils import get_automatic_user
+from aiida.common import aiidalogger
 from aiida.common.utils import md5_file, classproperty
-from aiida.orm.data import Data
-from aiida.orm import Group
-from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import UniquenessError, MultipleObjectsError, NotExistent
+from aiida.orm import Group
+from aiida.orm.data import Data
+from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+
+
+@contextmanager
+def temp_dir():
+    try:
+        tempdir = tempfile.mkdtemp()
+        yield tempdir
+    finally:
+        shutil.rmtree(tempdir)
 
 
 class PotcarMetadataMixin(object):
@@ -167,6 +184,11 @@ class PotcarMetadataMixin(object):
         """Element symbol property (VASP term) of the POTCAR potential (readonly)."""
         return self.get_attr('symbol')
 
+    @property
+    def original_file_name(self):
+        """The name of the original file uploaded into AiiDA"""
+        return self.get_attr('original_filename')
+
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
         if self.exists(md5=self.md5):
@@ -209,6 +231,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         self._set_attr('functional', potcar.functional)
         self._set_attr('element', potcar.element)
         self._set_attr('symbol', potcar.symbol)
+        self._set_attr('original_filename', src_abs)
 
     def store(self, with_transaction=True):
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
@@ -252,7 +275,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     licenced data and can be freely shared without legal repercussions.
     """
 
-    _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol']
+    _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol', 'original_filename']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
 
@@ -282,6 +305,16 @@ class PotcarData(Data, PotcarMetadataMixin):
             created = True
             node = cls(potcar_file_node=file_node)
             node.store()
+        return node, created
+
+    @classmethod
+    def get_or_create_from_file(cls, file_path):
+        """Get or create (store) a PotcarData node from a POTCAR file."""
+        md5 = md5_file(file_path)
+        file_node = PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
+        node, created = cls.get_or_create(file_node)
+        if not file_node.is_stored:
+            file_node.store()
         return node, created
 
     def get_family_names(self):
@@ -333,56 +366,105 @@ class PotcarData(Data, PotcarMetadataMixin):
         # Return the groups, without name
         return [item[1] for item in groups]
 
+    @classmethod
+    def get_potcars_dict(cls, structure, family_name):
+        """
+        Get a dictionary {kind: POTCAR} for all elements in a structure.
 
-def get_potcars_dict(structure, family_name):
-    """
-    Get a dictionary {kind: POTCAR} for all elements in a structure.
+        :param structure: The structure to find POTCARs for
+        :param family_name: The POTCAR family to be used
+        """
+        group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
+        element_filters = {'attributes.element': {'in': [kind.symbol for kind in structure.kinds]}}
+        query = QueryBuilder()
+        query.append(Group, tag='family', filters=group_filters)
+        query.append(cls, tag='potcar', member_of='family', filters=element_filters)
 
-    :param structure: The structure to find POTCARs for
-    :param family_name: The POTCAR family to be used
-    """
-    group_filters = {'name': {'==': family_name}, 'type': {'==': PotcarData.potcar_family_type_string}}
-    element_filters = {'attributes.element': {'in': [kind.symbol for kind in structure.kinds]}}
-    query = QueryBuilder()
-    query.append(Group, tag='family', filters=group_filters)
-    query.append(PotcarData, tag='potcar', member_of='family', filters=element_filters)
+        result_potcars = {}
+        for kind in structure.kinds:
+            potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == kind.symbol]
+            if not potcars_of_kind:
+                raise NotExistent('No POTCAR found for element {} in family {}'.format(kind.symbol, family_name))
+            elif len(potcars_of_kind) > 1:
+                raise MultipleObjectsError('More than one POTCAR for element {} found in family {}'.format(kind.symbol, family_name))
+            result_potcars[kind] = potcars_of_kind[0]
 
-    result_potcars = {}
-    for kind in structure.kinds:
-        potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == kind.symbol]
-        if not potcars_of_kind:
-            raise NotExistent('No POTCAR found for element {} in family {}'.format(kind.symbol, family_name))
-        elif len(potcars_of_kind) > 1:
-            raise MultipleObjectsError('More than one POTCAR for element {} found in family {}'.format(kind.symbol, family_name))
-        result_potcars[kind] = potcars_of_kind[0]
+        return result_potcars
 
-    return result_potcars
+    @classmethod
+    def get_potcars_from_structure(cls, structure, family_name):
+        """
+        Given a POTCAR family name and a AiiDA
+        structure, return a dictionary associating each kind name with its
+        UpfData object.
 
+        :raise MultipleObjectsError: if more than one UPF for the same element is
+        found in the group.
+        :raise NotExistent: if no UPF for an element in the group is
+        found in the group.
+        """
+        return {kind.name: potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
 
-def get_potcars_from_structure(structure, family_name):
-    """
-    Given a POTCAR family name and a AiiDA
-    structure, return a dictionary associating each kind name with its
-    UpfData object.
+    @classmethod
+    def upload_potcar_family(cls, folder, group_name, group_description=None, stop_if_existing=True):
+        """
+        Upload a set of POTCAR potentials as a family.
 
-    :raise MultipleObjectsError: if more than one UPF for the same element is
-       found in the group.
-    :raise NotExistent: if no UPF for an element in the group is
-       found in the group.
-    """
-    return {kind.name: potcar for kind, potcar in get_potcars_dict(structure, family_name).items()}
+        :param folder: a path containing all POTCAR files to be added.
+        :param group_name: the name of the group to create. If it exists and is
+            non-empty, a UniquenessError is raised.
+        :param group_description: a string to be set as the group description.
+            Overwrites previous descriptions, if the group was existing.
+        :param stop_if_existing: if True, check for the md5 of the files and,
+            if the file already exists in the DB, raises a MultipleObjectsError.
+            If False, simply adds the existing UPFData node to the group.
+        """
+        group, _ = Group.get_or_create(name=group_name, type_string=cls.GROUP_TYPE)
 
+        if group.user != get_automatic_user():
+            raise UniquenessError(
+                'There is already a UpfFamily group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
+                    group_name, group.user.email))
 
-def upload_potcar_family(folder, group_name, group_description, stop_if_existing=True):
-    """
-    Upload a set of POTCAR potentials as a family.
+        if group_description:
+            group.description = group_description
 
-    :param folder: a path containing all POTCAR files to be added.
-    :param group_name: the name of the group to create. If it exists and is
-        non-empty, a UniquenessError is raised.
-    :param group_description: a string to be set as the group description.
-        Overwrites previous descriptions, if the group was existing.
-    :param stop_if_existing: if True, check for the md5 of the files and,
-        if the file already exists in the DB, raises a MultipleObjectsError.
-        If False, simply adds the existing UPFData node to the group.
-    """
+        potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
+        num_files = len(potcars_found)
+        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar not in group.nodes]
+
+        for potcar, created, file_path in potcars_found:
+            if created:
+                aiidalogger.debug('New PotcarData node %s created while uploading file %s for family %s', potcar.uuid, file_path,
+                                  group_name)
+            else:
+                aiidalogger.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
+
+        group.add_nodes([potcar for potcar, created, file_path in potcars_found])
+
+        num_uploaded = len(potcars_found)
+
+        return num_files, num_uploaded
+
+    @classmethod
+    def recursive_upload_potcar(cls, folder, stop_if_existing=True):
+        """Recursively search and upload POTCAR files in a folder."""
+        list_created = []
+        folder = py.path.local(folder)  # pylint: disable=no-name-in-module,no-member
+        for subpath in folder.listdir():
+            if subpath.isdir():
+                list_created.extend(cls.recursive_upload_potcar(subpath, stop_if_existing))
+            elif subpath.isfile() and 'POTCAR' in subpath.basename:
+                if tarfile.is_tarfile(str(subpath)):
+                    with temp_dir() as staging_dir:
+                        with tarfile.TarFile(str(subpath)) as potcar_archive:
+                            potcar_archive.extractall(staging_dir)
+                        list_created.extend(cls.recursive_upload_potcar(staging_dir, stop_if_existing))
+                else:
+                    potcar, created = cls.get_or_create_from_file(str(subpath))
+                    if stop_if_existing and not created:
+                        raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(
+                            str(subpath)))
+                    list_created.append((potcar, created, str(subpath)))
+
+        return list_created
