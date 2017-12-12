@@ -23,4 +23,4 @@ install:
 env:
     - TEST_TYPE="pre-commit"
     - TEST_TYPE="unittests"
-script: tox
+script: ./run_ci_tests.sh
