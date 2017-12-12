@@ -2,6 +2,7 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
+from pymatgen.io.vasp import PotcarSingle
 from aiida.common.exceptions import UniquenessError, NotExistent
 try:
     import subprocess32 as sp
@@ -104,11 +105,25 @@ def test_find(potcar_node_pair):
         _ = get_data_class('vasp.potcar_file').find(element='Xe')
 
 
-def file_get_file_obj(potcar_node_pair):
+def test_file_get_content(potcar_node_pair):
     file_node_as = potcar_node_pair['file']
     original_file = py_path.local(file_node_as.original_file_name)
-    with file_node_as.get_file_obj() as potcar_as_fo:
-        assert original_file.read() == potcar_as_fo.read()
+    assert original_file.read() == file_node_as.get_content()
+
+
+def test_file_get_pymatgen(potcar_node_pair):
+    """
+    Create a pymatgen ``PotcarSingle`` instance from a ``PotcarFileData`` node.
+
+    Test equality and completeness of the resulting object.
+    """
+    file_node_as = potcar_node_pair['file']
+    potcar_single_as = file_node_as.get_pymatgen()
+
+    assert isinstance(potcar_single_as, PotcarSingle)
+    assert file_node_as.title == potcar_single_as.keywords['TITEL']
+
+    assert potcar_single_as.data == file_node_as.get_content()
 
 
 def test_file_get_or_create(potcar_node_pair):

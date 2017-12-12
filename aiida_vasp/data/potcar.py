@@ -249,9 +249,24 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         if self.exists(**other_attrs):
             raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
+    @contextmanager
     def get_file_obj(self):
         """Open a readonly file object to read the stored POTCAR file."""
-        return self.archive.extractfile(self.archive.members[0])
+        file_obj = None
+        try:
+            file_obj = self.archive.extractfile(self.archive.members[0])
+            yield file_obj
+        finally:
+            if file_obj:
+                file_obj.close()
+
+    def get_content(self):
+        with self.get_file_obj() as potcar_fo:
+            return potcar_fo.read()
+
+    def get_pymatgen(self):
+        """Create a corresponding pymatgen ``PotcarSingle`` instance."""
+        return PotcarSingle(self.get_content())
 
     @classmethod
     def get_or_create(cls, filepath):
@@ -432,8 +447,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes]
-        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found
-                         if potcar.uuid not in family_nodes_uuid]
+        potcars_found = [
+            (potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar.uuid not in family_nodes_uuid
+        ]
 
         for potcar, created, file_path in potcars_found:
             if created:
