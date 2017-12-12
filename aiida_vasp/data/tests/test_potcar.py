@@ -1,7 +1,8 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
-from aiida.common.exceptions import UniquenessError
+from py import path as py_path  # pylint: disable=no-member,no-name-in-module
+from aiida.common.exceptions import UniquenessError, NotExistent
 try:
     import subprocess32 as sp
 except ImportError:
@@ -92,6 +93,24 @@ def test_export_import(potcar_node_pair, tmpdir):
     assert get_data_class('vasp.potcar_file').find(symbol='As')
 
 
+def test_exists(potcar_node_pair):
+    assert get_data_class('vasp.potcar_file').exists(element='As')
+    assert not get_data_class('vasp.potcar').exists(element='Xe')
+
+
+def test_find(potcar_node_pair):
+    assert get_data_class('vasp.potcar').find(element='As').uuid == potcar_node_pair['potcar'].uuid
+    with pytest.raises(NotExistent):
+        _ = get_data_class('vasp.potcar_file').find(element='Xe')
+
+
+def file_get_file_obj(potcar_node_pair):
+    file_node_as = potcar_node_pair['file']
+    original_file = py_path.local(file_node_as.original_file_name)
+    with file_node_as.get_file_obj() as potcar_as_fo:
+        assert original_file.read() == potcar_as_fo.read()
+
+
 def test_file_get_or_create(potcar_node_pair):
     """Test get_or_create of PotcarFileData."""
     potcar_as_path = data_path('potcar', 'As', 'POTCAR')
@@ -121,6 +140,15 @@ def test_potcar_get_or_create(potcar_node_pair):
     node_potcar_in, created_potcar_in = potcar_cls.get_or_create(file_cls(file=potcar_in_path))
     assert created_potcar_in
     assert potcar_cls.exists(md5=node_potcar_in.md5)
+
+
+def test_potcar_from_file(fresh_aiida_env):
+    """Test creating a node pair from a file, creating the data node first."""
+    potcar_cls = get_data_node('vasp.potcar')
+    _, created = potcar_cls.get_or_create_from_file(data_path('potcar', 'As', 'POTCAR'))
+    assert created
+    _, created = potcar_cls.get_or_create_from_file(data_path('potcar', 'As', 'POTCAR'))
+    assert not created
 
 
 def test_potcar_from_structure(potcar_family):
