@@ -4,7 +4,7 @@ from functools import update_wrapper
 from aiida.common.utils import md5_file
 from pymatgen.io.vasp import PotcarSingle
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 def delegate_method_kwargs(prefix='_init_with_'):

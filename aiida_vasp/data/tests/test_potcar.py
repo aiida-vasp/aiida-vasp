@@ -9,7 +9,7 @@ try:
 except ImportError:
     import subprocess as sp
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node, get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
 

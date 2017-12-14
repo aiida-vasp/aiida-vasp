@@ -1,7 +1,7 @@
 """Unit tests for the PawData AiiDA data structure"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures.environment import aiida_env
 

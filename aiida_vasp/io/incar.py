@@ -9,7 +9,7 @@ from pymatgen.io.vasp import Incar
 import numpy as np
 import pyparsing as pp
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 class IncarItem(object):

@@ -7,7 +7,7 @@ import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.io.incar import IncarIo
 
 

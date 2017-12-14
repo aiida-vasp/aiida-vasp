@@ -434,22 +434,23 @@ class PotcarData(Data, PotcarMetadataMixin):
             if the file already exists in the DB, raises a MultipleObjectsError.
             If False, simply adds the existing UPFData node to the group.
         """
-        group, _ = Group.get_or_create(name=group_name, type_string=cls.GROUP_TYPE)
+        group, group_created = Group.get_or_create(name=group_name, type_string=cls.GROUP_TYPE)
 
         if group.user != get_automatic_user():
             raise UniquenessError(
-                'There is already a UpfFamily group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
+                'There is already a PotcarFamily group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
                     group_name, group.user.email))
 
         if group_description:
             group.description = group_description
+        elif group_created:
+            raise ValueError('A new PotcarGroup {} should be created but no description was given!'.format(group_name))
 
         potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes]
-        potcars_found = [
-            (potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar.uuid not in family_nodes_uuid
-        ]
+        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found
+                         if potcar.uuid not in family_nodes_uuid]
 
         for potcar, created, file_path in potcars_found:
             if created:
@@ -486,3 +487,9 @@ class PotcarData(Data, PotcarMetadataMixin):
                     list_created.append((potcar, created, str(subpath)))
 
         return list_created
+
+    def get_content(self):
+        return self.find_file_node().get_content()
+
+    def get_pymatgen(self):
+        return self.find_file_node().get_pymatgen()

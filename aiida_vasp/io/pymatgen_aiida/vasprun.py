@@ -1,8 +1,7 @@
 """Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
+from aiida_vasp.utils.aiida_utils import get_data_node
 from numpy import array, arange
 from pymatgen import Spin
-
-from aiida_vasp.utils.aiida_utils import dbenv
 
 
 class VasprunToAiida(object):
@@ -119,15 +118,3 @@ class VasprunToAiida(object):
                 y_units.append('states/eV')
         tdos_node.set_y(y_arrays, y_names, y_units)
         return tdos_node
-
-
-@dbenv
-def get_data_node(data_type, *args, **kwargs):
-    from aiida.orm import DataFactory
-    return DataFactory(data_type)(*args, **kwargs)
-
-
-@dbenv
-def get_data_class(data_type):
-    from aiida.orm import DataFactory
-    return DataFactory(data_type)
