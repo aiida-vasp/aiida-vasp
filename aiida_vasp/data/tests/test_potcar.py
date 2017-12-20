@@ -12,23 +12,7 @@ except ImportError:
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
-
-
-@pytest.fixture
-def potcar_node_pair(fresh_aiida_env):
-    """Create a POTCAR node pair."""
-    potcar_path = data_path('potcar', 'As', 'POTCAR')
-    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    potcar_file_node.store()
-    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
-
-
-@pytest.fixture
-def potcar_family(fresh_aiida_env):
-    """Create a POTCAR family."""
-    family_name = 'fixture_family'
-    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name)
-    return family_name
+from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family
 
 
 def test_creation(potcar_node_pair):

@@ -5,7 +5,7 @@ from aiida.cmdline.commands import data_cmd
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-@data_cmd.group()
+@data_cmd.group('vasp-potcar')
 def potcar():
     """Top level command for handling VASP POTCAR files."""
 

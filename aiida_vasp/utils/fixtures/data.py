@@ -7,8 +7,11 @@ import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
+from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
+
+POTCAR_FAMILY_NAME = 'test_family'
 
 
 @pytest.fixture(scope='session')
@@ -139,6 +142,24 @@ def vasp_wavecar(aiida_env):
     with open(wavecar_path, 'r') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
     return wavecar, ref_wavecar
+
+
+@pytest.fixture
+def potcar_node_pair(fresh_aiida_env):
+    """Create a POTCAR node pair."""
+    potcar_path = data_path('potcar', 'As', 'POTCAR')
+    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
+    potcar_file_node.store()
+    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
+
+
+@pytest.fixture
+def potcar_family(fresh_aiida_env):
+    """Create a POTCAR family."""
+    family_name = POTCAR_FAMILY_NAME
+    family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
+    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc)
+    return family_name
 
 
 @pytest.fixture()
