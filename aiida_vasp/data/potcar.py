@@ -449,8 +449,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes]
-        potcars_found = [(potcar, created, file_path) for potcar, created, file_path in potcars_found
-                         if potcar.uuid not in family_nodes_uuid]
+        potcars_found = [
+            (potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar.uuid not in family_nodes_uuid
+        ]
 
         for potcar, created, file_path in potcars_found:
             if created:

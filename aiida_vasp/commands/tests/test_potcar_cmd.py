@@ -18,7 +18,7 @@ DESC_OPTION = '--desc="This is a test POTCAR family"'
 
 
 def run_cmd(command=None, args=None, **kwargs):
-    """Run verdi data vasp-potcar <command> [args]"""
+    """Run verdi data vasp-potcar <command> [args]."""
     runner = CliRunner()
     params = args or []
     if command:
@@ -32,7 +32,7 @@ def test_no_subcmd():
 
 
 def test_uploadfamily_withpath(fresh_aiida_env):
-    """Upload the test potcar family and check it is there"""
+    """Upload the test potcar family and check it is there."""
 
     result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION, DESC_OPTION])
 
@@ -44,7 +44,7 @@ def test_uploadfamily_withpath(fresh_aiida_env):
 
 
 def test_uploadfamily_inworkdir(fresh_aiida_env):
-    """Upload the test potcar family from the working env"""
+    """Upload the test potcar family from the working env."""
 
     potcar_dir = py_path.local(POTCAR_PATH)
     old_work_dir = potcar_dir.chdir()

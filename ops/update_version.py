@@ -1,4 +1,4 @@
-"""Update version numbers everywhere based on git tags"""
+"""Update version numbers everywhere based on git tags."""
 import os
 import re
 import json
@@ -25,9 +25,11 @@ def file_input(*args, **kwargs):
 
 class VersionUpdater(object):
     """Version number synchronisation interface"""
+
     version_pat = re.compile(r'\d+.\d+.\d+')
 
     def __init__(self):
+        """Initialize with documents that should be kept up to date and actual version."""
         self.top_level_init = subpath('aiida_vasp', '__init__.py')
         self.setup_json = subpath('setup.json')
         self.version = self.get_version()
@@ -41,7 +43,7 @@ class VersionUpdater(object):
                        re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
-        """Update version number in setup_json."""
+        """Write the updated version number to the setup file."""
         with open(self.setup_json, 'r') as setup_fo:
             setup = json.load(setup_fo)
         setup['version'] = str(self.version)

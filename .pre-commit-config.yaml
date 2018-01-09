@@ -10,7 +10,7 @@
   hooks:
   - id: prospector
     language: system
-    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)|(conftest.py)|(doc/source/conf.py)'
+    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)|(conftest.py)|(doc/source/conf.py)|(tests_pytest/*)'
 
 - repo: local
   hooks:

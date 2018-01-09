@@ -12,8 +12,7 @@ PARAMETER_CLS = DataFactory('parameter')
 
 class TbmodelWorkflow(Workflow):
     """
-    AiiDA workflow to get tight binding model of a material using VASP and
-    wannier90.
+    AiiDA workflow to get tight binding model of a material using VASP and wannier90.
 
     Necessary steps are:
         * selfconsistent run with few kpoints

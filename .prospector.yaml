@@ -1,3 +1,5 @@
+doc-warnings: true
+
 ignore-paths:
     - doc
     - examples
@@ -10,5 +12,10 @@ pylint:
 pyflakes:
   run: false
 
-pydocstyle:
+pep257:
   run: true
+  disable: 
+    - D107
+    - D212
+    - D203
+    - D204

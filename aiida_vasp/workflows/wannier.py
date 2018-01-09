@@ -78,8 +78,11 @@ class WannierWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        """returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow."""
+        """
+        Get a dictionary of keys and explanations.
+
+        Explanations detail how the keys can be used as parameters for this workflow.
+        """
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl.pop('vasp_code')
         tmpl.pop('kpoints')
