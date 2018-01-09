@@ -7,6 +7,7 @@ from .helper import WorkflowHelper
 class NscfWorkflow(Workflow):
     """
     AiiDA-VASP Workflow for continuing from an SCF Calculation.
+
     Can be used with or without the vasp2wannier90 interface.
     """
     Helper = WorkflowHelper
@@ -73,14 +74,12 @@ class NscfWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        """returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow."""
+        """Returns a dictionary of keys and explanations how they can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['use_wannier'] = ('True | False (if true, vasp_code must be ' 'compiled with wannier interface')
         return tmpl
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        """returns a JSON formatted string that can be stored to a file,
-        edited, loaded and used to run this Workflow."""
+        """Returns a JSON formatted string that can be stored to a file, edited, loaded and used to run this Workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

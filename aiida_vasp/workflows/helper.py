@@ -11,10 +11,7 @@ class WorkflowHelper(object):
         return self.parent.get_parameters()
 
     def _get_calc_maker(self, calc_type, **kwargs):
-        """
-        Instatiate a :py:class:`VaspMaker <aiida_vasp.calcs.maker.VaspMaker>`
-        and feed it the common input parameters for all vasp workflows.
-        """
+        """Initialize a new :py:class:`VaspMaker <aiida_vasp.calcs.maker.VaspMaker>` with common input params for all vasp workflows."""
         from aiida.orm import Code
         from aiida_vasp.calcs.maker import VaspMaker
         params = self.get_parameters()
@@ -57,18 +54,18 @@ class WorkflowHelper(object):
 
     @staticmethod
     def _calc_start_msg(name, calc):
-        """returns a message that the calculation was started"""
+        """Returns a message that the calculation was started."""
         msg = 'Calculation started: {name}, PK={calc.pk}, uuid={calc.uuid}'
         return msg.format(name=name, calc=calc)
 
     @staticmethod
     def _subwf_start_msg(name, workflow):
-        """returns a message that the subworkflow was started"""
+        """Returns a message that the subworkflow was started."""
         msg = 'Workflow started: {name}, PK={wf.pk}, uuid={wf.uuid}'
         return msg.format(name=name, wf=workflow)
 
     def _wf_start_msg(self):
-        """returns a message that the workflow was started"""
+        """Returns a message that the workflow was started."""
         params = self.get_parameters()
         msg = 'Workflow started: {wf_class} **{wf_label}**'
         wfclass = self.parent.__class__.__name__
@@ -81,8 +78,7 @@ class WorkflowHelper(object):
         return msg.format(calc.pk, links)
 
     def _get_first_step_calc(self, step):
-        """return either the first calculation for a step or
-        None, if there isn't any"""
+        """Return either the first calculation for a step or None, if there isn't any."""
         step_calcs = self.parent.get_step_calculations(step)
         if not bool(step_calcs):
             self.parent.append_to_report('no calculation found for step {}'.format(step.__name__))
@@ -92,8 +88,7 @@ class WorkflowHelper(object):
 
     @staticmethod
     def _verify_calc_output(calc, output_keys):
-        """returns True only if all output link names given in
-        output_keys are present on calc"""
+        """Returns True only if all output link names given in output_keys are present on calc."""
         if not bool(calc):
             return False
         out = calc.get_outputs_dict()
@@ -102,37 +97,13 @@ class WorkflowHelper(object):
             valid_out &= bool(out.get(k))
         return valid_out
 
-    # ~ def set_params(self, params, **kwargs):
-    # ~ self._verify_params(params)
-    # ~ self.parent.set_params(params, **kwargs)
-
     def _verify_params(self, params, silent=False):
-        """finds _verify_param_* methods on the parent instance
-        and loops through them to check parameter consistency"""
-        valid = True
-        log = []
-
-        par_dict = self.parent.__class__.__dict__
-        verify_funcs = {k: v for k, v in par_dict.iteritems() if '_verify_param_' in k}
-
-        for _, func in verify_funcs.iteritems():
-            if isinstance(func, classmethod):
-                func = func.__func__
-            valid_i, log_i = func(self.parent, params)
-            valid &= valid_i
-            log.append(log_i)
-
-        log = filter(None, log)
-        log = '\n'.join(log)
-        if not silent:
-            if any(log):
-                raise ValueError(log)
-        return valid, log
+        """Verify parameter consistency in the parent instance."""
+        return self._verify_params_cls(self.parent, params, silent)
 
     @classmethod
     def _verify_params_cls(cls, wf_cls, params, silent=False):
-        """same as _verify_params, but looks for classmethods on
-        the given workflow class"""
+        """Find _verify_param_* methods on the given class or instance and loop through them to check parameter consistency."""
         valid = True
         log = []
 
@@ -152,7 +123,7 @@ class WorkflowHelper(object):
         return valid, log
 
     def _verify_kpoints(self, params):
-        """common kpoints parameter consistency check"""
+        """Check kpoints parameter consistency."""
         log = ''
         kpoints = params.get('kpoints')
         if kpoints:
@@ -184,8 +155,7 @@ class WorkflowHelper(object):
         return valid, log
 
     def _verify_paws(self, params):
-        """check the paw input parameter for availability of the indicated
-        paw nodes in the database."""
+        """Check the paw input parameter for availability of the indicated paw nodes in the database."""
         from aiida.orm import DataFactory
         paw_cls = DataFactory('vasp.paw')
         log = ''
@@ -213,7 +183,7 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_params_template(cls, continuation=False):
-        """returns a dictionary with some common keys and explanations"""
+        """Returns a dictionary with some common keys and explanations."""
         tmpl = {}
         tmpl['vasp_code'] = 'code@computer'
         tmpl['queue'] = 'queue name on the remote computer'
@@ -235,10 +205,7 @@ class WorkflowHelper(object):
 
     @classmethod
     def get_template(cls, wf_class=None, path=None):
-        """
-        Stores the output of the parent's get_params_template method
-        in a JSON file
-        """
+        """Stores the output of the parent's get_params_template method in a JSON file."""
         import json
         from os.path import abspath, expanduser, exists
         result = None

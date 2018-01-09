@@ -20,9 +20,7 @@ class Bandstructure(Workflow):
     """
 
     def get_calc_maker(self):
-        """
-        return an VaspMaker instance.
-        """
+        """Return an VaspMaker instance."""
         from aiida.orm import Code
         params = self.get_parameters()
         maker = VaspMaker(structure=params['structure'])
@@ -35,10 +33,7 @@ class Bandstructure(Workflow):
 
     @Workflow.step
     def start(self):
-        """
-        prepare, store and attach the selfconsistent run
-        to get the charge density.
-        """
+        """Prepare, store and attach the selfconsistent run to get the charge density."""
         params = self.get_parameters()
         maker = self.get_calc_maker()
 
@@ -55,10 +50,7 @@ class Bandstructure(Workflow):
 
     @Workflow.step
     def bandrun(self):
-        """
-        prepare, store and attach the non-selfconsistent run
-        to get the band structure.
-        """
+        """Prepare, store and attach the non-selfconsistent run to get the band structure."""
         params = self.get_parameters()
         # get chgcar from previous step
         scstep = self.get_attributes()['scstep']

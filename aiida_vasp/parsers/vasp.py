@@ -11,9 +11,7 @@ from aiida_vasp.parsers.base import BaseParser
 
 
 class VaspParser(BaseParser):
-    """
-    Parses all Vasp calculations.
-    """
+    """Parses all Vasp calculations."""
 
     def __init__(self, calc):
         super(VaspParser, self).__init__(calc)
@@ -66,7 +64,7 @@ class VaspParser(BaseParser):
         return self.result(success=True)
 
     def read_run(self):
-        '''Read vasprun.xml'''
+        """Read vasprun.xml."""
         vasprun = self.get_file('vasprun.xml')
         if not vasprun:
             self.logger.warning('no vasprun.xml found')
@@ -74,7 +72,7 @@ class VaspParser(BaseParser):
         return VasprunParser(vasprun)
 
     def read_dos(self):
-        '''read DOSCAR for more accurate tdos and pdos'''
+        """Read DOSCAR for more accurate tdos and pdos."""
         doscar = self.get_file('DOSCAR')
         if not doscar:
             self.logger.warning('no DOSCAR found')
@@ -83,10 +81,7 @@ class VaspParser(BaseParser):
 
     @staticmethod
     def get_dos_node(vrp, dcp):
-        """
-        takes VasprunParser and DosParser objects
-        and returns a doscar array node
-        """
+        """Take VasprunParser and DosParser objects and return a doscar array node."""
         if not vrp or not dcp:
             return None
         dosnode = DataFactory('array')()
@@ -112,7 +107,7 @@ class VaspParser(BaseParser):
         return dosnode
 
     def read_cont(self):
-        '''read CONTCAR for output structure'''
+        """Read CONTCAR for output structure."""
         from ase.io import read
         structure = DataFactory('structure')()
         cont = self.get_file('CONTCAR')
@@ -123,16 +118,17 @@ class VaspParser(BaseParser):
         return structure
 
     def read_eigenval(self):
-        '''
+        """
         Create a bands and a kpoints node from values in eigenvalue.
 
-        returns: bsnode, kpout
-        - bsnode: BandsData containing eigenvalues from EIGENVAL
+        :return: bsnode, kpout
+
+        * bsnode: BandsData containing eigenvalues from EIGENVAL
                 and occupations from vasprun.xml
-        - kpout: KpointsData containing kpoints from EIGENVAL,
+        * kpout: KpointsData containing kpoints from EIGENVAL,
 
         both bsnode as well as kpnode come with cell unset
-        '''
+        """
         eig = self.get_file('EIGENVAL')
         if not eig:
             self.logger.warning('EIGENVAL not found')

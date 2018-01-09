@@ -1,8 +1,8 @@
 """Provide a pymatgen based VaspCalculation parser."""
 import xml
 
-from aiida.common.exceptions import ParsingError as AiidaParsingError
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
+from aiida.common.exceptions import ParsingError as AiidaParsingError
 
 from aiida_vasp.io.pymatgen_aiida.vasprun import VasprunToAiida
 from aiida_vasp.utils.aiida_utils import get_data_node
