@@ -86,3 +86,10 @@ def test_uploadfamily_again(potcar_family):
     assert node_count == node_qb.count()
     group_qb = QueryBuilder(path=[Group])
     assert group_count == group_qb.count()
+
+
+def test_listfamilies_existence():
+    """Make sure the listfamilies subcommand exists."""
+    result = run_cmd('listfamilies')
+    assert not result.exception
+    assert result.output

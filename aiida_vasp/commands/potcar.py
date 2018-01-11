@@ -1,5 +1,6 @@
 """Commandline util for dealing with potcar files"""
 import click
+import tabulate
 from aiida.cmdline.commands import data_cmd
 
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -40,3 +41,29 @@ def uploadfamily(path, name, desc, stop_if_existing):
     num_found, num_uploaded = potcar_data_cls.upload_potcar_family(path, name, desc, stop_if_existing=stop_if_existing)
 
     click.echo('POTCAR files found: {}. New files uploaded: {}'.format(num_found, num_uploaded))
+
+
+@potcar.command()
+@click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
+@click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
+@click.option('-d', '--with-description', is_flag=True)
+def listfamilies(element, symbol, with_description):
+    """List available families of VASP potcar files."""
+
+    potcar_data_cls = get_data_class('vasp.potcar')
+    groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
+
+    table = [['Family', 'Num Potentials']]
+    if with_description:
+        table[0].append('Description')
+    for group in groups:
+        row = [group.name, len(group.nodes)]
+        if with_description:
+            row.append(group.description)
+        table.append(row)
+    if len(table) > 1:
+        click.echo(tabulate.tabulate(table))
+    elif element or symbol:
+        click.echo('No POTCAR family contains all given elements and symbols.')
+    else:
+        click.echo('No POTCAR family available.')

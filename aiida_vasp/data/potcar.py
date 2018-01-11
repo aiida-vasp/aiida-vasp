@@ -111,7 +111,6 @@ import tempfile
 import shutil
 from contextlib import contextmanager
 
-import six
 import py
 from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
@@ -347,38 +346,52 @@ class PotcarData(Data, PotcarMetadataMixin):
         return Group.get(name=group_name, type_string=cls.potcar_family_type_string)
 
     @classmethod
-    def get_potcar_groups(cls, filter_elements=None, user=None):
+    def get_potcar_groups(cls, filter_elements=None, filter_symbols=None):
         """
         List all names of groups of type PotcarFamily, possibly with some filters.
 
-        :param filter_elements: A string or a list of strings.
+        :param filter_elements: list of strings.
                If present, returns only the groups that contains one POTCAR for
                every element present in the list. Default=None, meaning that
                all families are returned. A single element can be passed as a string.
-        :param user: if None (default), return the groups for all users.
-               If defined, it should be either a DbUser instance, or a string
-               for the username (that is, the user email).
+        :param filter_symbols: list of strings with symbols to filter for.
         """
-        group_query_params = {"type_string": cls.potcar_family_type_string}
+        group_query = QueryBuilder()
+        group_query.append(cls, tag='potcar_data')
+        group_query.append(
+            Group, group_of='potcar_data', tag='potcar_family', filters={'type': {
+                '==': cls.potcar_family_type_string
+            }}, project='*')
 
-        if user is not None:
-            group_query_params['user'] = user
+        groups = [group_list[0] for group_list in group_query.all()]
 
-        if isinstance(filter_elements, six.string_types):
-            filter_elements = [filter_elements]
+        if filter_elements:
+            for element in filter_elements:
+                idx_has_element = []
+                for i, group in enumerate(groups):
+                    group_filters = {'name': {'==': group.name}, 'type': {'==': cls.potcar_family_type_string}}
+                    element_filters = {'attributes.element': {'==': element}}
+                    elem_query = QueryBuilder()
+                    elem_query.append(Group, tag='family', filters=group_filters)
+                    elem_query.append(cls, tag='potcar', member_of='family', filters=element_filters)
+                    if elem_query.count() > 0:
+                        idx_has_element.append(i)
+                groups = [groups[i] for i in range(len(groups)) if i in idx_has_element]
 
-        if filter_elements is not None:
-            normalized_elements_set = {element.capitalize() for element in filter_elements}
+        if filter_symbols:
+            for symbol in filter_symbols:
+                idx_has_symbol = []
+                for i, group in enumerate(groups):
+                    group_filters = {'name': {'==': group.name}, 'type': {'==': cls.potcar_family_type_string}}
+                    symbol_filters = {'attributes.symbol': {'==': symbol}}
+                    symbol_query = QueryBuilder()
+                    symbol_query.append(Group, tag='family', filters=group_filters)
+                    symbol_query.append(cls, tag='potcar', member_of='family', filters=symbol_filters)
+                    if symbol_query.count() > 0:
+                        idx_has_symbol.append(i)
+                groups = [groups[i] for i in range(len(groups)) if i in idx_has_symbol]
 
-            group_query_params['node_attributes'] = {'element': normalized_elements_set}
-
-        all_upf_groups = Group.query(**group_query_params)
-
-        groups = [(group.name, group) for group in all_upf_groups]
-        # Sort by name
-        groups.sort()
-        # Return the groups, without name
-        return [item[1] for item in groups]
+        return groups
 
     @classmethod
     def get_potcars_dict(cls, structure, family_name):
@@ -410,10 +423,19 @@ class PotcarData(Data, PotcarMetadataMixin):
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
 
+        The Dictionary looks as follows::
+
+            {
+                (kind1, ): PotcarData_for_kind1,
+                (kind2, ): ...
+            }
+
+        This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
+
         :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
         :raise NotExistent: if no UPF for an element in the group is found in the group.
         """
-        return {kind.name: potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
+        return {(kind.name,): potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
 
     @classmethod
     def upload_potcar_family(cls, folder, group_name, group_description=None, stop_if_existing=True):
