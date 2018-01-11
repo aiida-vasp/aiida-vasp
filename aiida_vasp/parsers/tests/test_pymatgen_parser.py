@@ -36,6 +36,7 @@ def parse_result(request, aiida_env, vasprun_path):
     4. populate a fake retrieved folder and pass it to the parser
     5. return the result
     """
+
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
         from aiida.orm import CalculationFactory, DataFactory

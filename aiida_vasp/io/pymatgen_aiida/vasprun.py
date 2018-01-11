@@ -1,7 +1,8 @@
 """Provide pymatgen.io.vasp.outputs.Vasprun -> AiiDA nodes translation."""
-from aiida_vasp.utils.aiida_utils import get_data_node
 from numpy import array, arange
 from pymatgen import Spin
+
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 class VasprunToAiida(object):

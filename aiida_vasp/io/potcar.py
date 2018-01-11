@@ -1,6 +1,4 @@
-"""
-This module contains tools to read PawData attributes from POTCAR files.
-"""
+"""Contains tools to read PawData attributes from POTCAR files."""
 import re
 import datetime as dt
 import os
@@ -9,10 +7,7 @@ from .parser import KeyValueParser
 
 
 class PotParser(KeyValueParser):
-    """
-    contains regex and functions to find grammar elements
-    for POTCAR files
-    """
+    """Contains regex and functions to find grammar elements in POTCAR files in PAW libraries."""
     assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
     comments = True
 
@@ -32,7 +27,7 @@ class PotParser(KeyValueParser):
 
     @classmethod
     def vrhfin(cls, vrhfin):
-        """Parse vrhfin"""
+        """Extract info from the undocumented VRHFIN tag in a POTCAR file."""
         vrhfin_list = vrhfin.split(':')
         element = vrhfin_list.pop(0).strip()
         spconf = vrhfin_list and vrhfin_list.pop(0).strip()
@@ -78,10 +73,7 @@ class PotParser(KeyValueParser):
 
 
 class PawParser(KeyValueParser):
-    """
-    contains regex and functions to find grammar elements
-    in POTCAR files in PAW libraries
-    """
+    """Contains regex and functions to find grammar elements in POTCAR files in PAW libraries."""
     assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
     comments = True
 
@@ -102,7 +94,7 @@ class PawParser(KeyValueParser):
 
     @classmethod
     def vrhfin(cls, vrhfin):
-        """Parse vrhfin"""
+        """Extract info from the undocumented VRHFIN tag in a POTCAR file."""
         vrhfin_list = vrhfin.split(':')
         element = vrhfin_list.pop(0).strip() if vrhfin_list else ''
         spconf = vrhfin_list.pop(0).strip() if vrhfin_list else ''

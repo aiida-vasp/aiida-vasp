@@ -6,9 +6,7 @@ from aiida.cmdline.commands.data import Importable
 
 
 def _try_load_dbenv():
-    """
-    Run `load_dbenv` unless the dbenv has already been loaded.
-    """
+    """Run `load_dbenv` unless the dbenv has already been loaded."""
     from aiida import load_dbenv, is_dbenv_loaded
     if not is_dbenv_loaded():
         load_dbenv()
@@ -17,12 +15,10 @@ def _try_load_dbenv():
 
 
 class _Paw(VerdiCommandWithSubcommands, Importable):
-    """
-    Setup and manage paw pseudopotentials and families
-    """
+    """Setup and manage paw pseudopotentials and families."""
 
     def __init__(self):
-        """setup and register subcommands"""
+        """Setup and register subcommands."""
         from aiida_vasp.data.paw import PawData
 
         self.dataclass = PawData

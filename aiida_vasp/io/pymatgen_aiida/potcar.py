@@ -1,8 +1,8 @@
 """Find, import, compose and write POTCAR files."""
 from functools import update_wrapper
 
-from aiida.common.utils import md5_file
 from pymatgen.io.vasp import PotcarSingle
+from aiida.common.utils import md5_file
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 

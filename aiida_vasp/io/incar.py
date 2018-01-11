@@ -181,7 +181,6 @@ class IncarIo(object):
         :kwarg annotate: [True] store the node and add extras to preserve
             order and comments of the INCAR. Implies that the node gets stored in the process!
         """
-
         node = get_data_node('parameter', dict=self.get_dict())
         return node
 

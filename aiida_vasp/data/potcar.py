@@ -127,6 +127,7 @@ from aiida_vasp.data.archive import ArchiveData
 
 @contextmanager
 def temp_dir():
+    """Temporary directory context manager that deletes the tempdir after use."""
     try:
         tempdir = tempfile.mkdtemp()
         yield tempdir
@@ -342,9 +343,7 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     @classmethod
     def get_potcar_group(cls, group_name):
-        """
-        Return the PotcarFamily group with the given name.
-        """
+        """Return the PotcarFamily group with the given name."""
         return Group.get(name=group_name, type_string=cls.potcar_family_type_string)
 
     @classmethod
@@ -409,14 +408,10 @@ class PotcarData(Data, PotcarMetadataMixin):
     @classmethod
     def get_potcars_from_structure(cls, structure, family_name):
         """
-        Given a POTCAR family name and a AiiDA
-        structure, return a dictionary associating each kind name with its
-        UpfData object.
+        Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
 
-        :raise MultipleObjectsError: if more than one UPF for the same element is
-        found in the group.
-        :raise NotExistent: if no UPF for an element in the group is
-        found in the group.
+        :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
+        :raise NotExistent: if no UPF for an element in the group is found in the group.
         """
         return {kind.name: potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
 

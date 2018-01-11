@@ -63,15 +63,17 @@ class PawData(Data):
 
     @classmethod
     def get_famgroup(cls, famname):
-        """Returns a PAW family group if it exists, otherwise
-        raises an exception"""
+        """Returns a PAW family group if it exists, otherwise raises an exception."""
         from aiida.orm import Group
         return Group.get(name=famname, type_string=cls.group_type)
 
     @classmethod
     def check_family(cls, name):
-        """:py:method: checks wether a PAW family exists.
-            :returns: True if exists, False otherwise"""
+        """
+        :py:method: checks wether a PAW family exists.
+
+        :returns: True if exists, False otherwise
+        """
         exists = False
         try:
             group = cls.get_famgroup(name)
@@ -114,8 +116,7 @@ class PawData(Data):
 
     @classmethod
     def import_family(cls, folder, familyname=None, family_desc=None, store=True, stop_if_existing=False):
-        """Import a family from a folder like the ones distributed with VASP,
-        usually named potpaw_XXX"""
+        """Import a family from a folder like the ones distributed with VASP, usually named potpaw_XXX."""
         from aiida.common import aiidalogger
 
         ffound = []
@@ -234,7 +235,7 @@ class PawData(Data):
     @classmethod
     def _node_filter(cls, **kwargs):
         """
-        Create and return a node filtering function
+        Create and return a node filtering function.
 
         :return: True if all kwargs match node attributes
         """
@@ -250,7 +251,6 @@ class PawData(Data):
     @classmethod
     def load_paw(cls, **kwargs):
         """
-        py:method:: load_paw([family=None][, element=None][, symbol=None])
         Load PawData nodes from the databank. Use kwargs to filter.
 
         :return: a list of PawData instances

@@ -40,8 +40,7 @@ class VaspCalculation(VaspCalcBase):
     _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
 
     def _prepare_for_submission(self, tempfolder, inputdict):
-        """add EIGENVAL, DOSCAR, and all files starting with wannier90 to
-        the list of files to be retrieved."""
+        """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
         calcinfo = super(VaspCalculation, self)._prepare_for_submission(tempfolder, inputdict)
         try:
             additional_retrieve_list = inputdict['settings'].get_attr('ADDITIONAL_RETRIEVE_LIST')
@@ -63,15 +62,13 @@ class VaspCalculation(VaspCalcBase):
         self.check_input(inputdict, 'wavefunctions', self._need_wfn)
 
     def _prestore(self):
-        """
-        set attributes prior to storing
-        """
+        """Set attributes prior to storing."""
         super(VaspCalculation, self)._prestore()
         self._set_attr('elements', ordered_unique_list(self.inp.structure.get_ase().get_chemical_symbols()))
 
     @classmethod
     def _get_paw_linkname(cls, kind):
-        """required for storing multiple input paw nodes"""
+        """Required for storing multiple input paw nodes."""
         return 'paw_%s' % kind
 
     @property
@@ -85,7 +82,8 @@ class VaspCalculation(VaspCalcBase):
 
     def _need_kp(self):
         """
-        return wether an input kpoints node is needed or not.
+        Return wether an input kpoints node is needed or not.
+
         :return output:
             True if input kpoints node is needed
             (py:method::VaspCalculation.use_kpoints),
@@ -98,6 +96,7 @@ class VaspCalculation(VaspCalcBase):
     def _need_chgd(self):
         """
         Test wether an charge_densities input is needed or not.
+
         :return output:
             True if a chgcar file must be used
             (py:method::NscfCalculation.use_charge_densities),
@@ -112,6 +111,7 @@ class VaspCalculation(VaspCalcBase):
     def _need_wfn(self):
         """
         Test wether a wavefunctions input is needed or not.
+
         :return output:
             True if a wavecar file must be
             used (py:method::NscfCalculation.use_wavefunctions),
@@ -124,7 +124,7 @@ class VaspCalculation(VaspCalcBase):
         return bool(istart in [1, 2, 3])
 
     def write_additional(self, tempfolder, inputdict):
-        """write CHGAR and WAVECAR files if needed"""
+        """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, inputdict)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
@@ -148,8 +148,7 @@ class VaspCalculation(VaspCalcBase):
 
     def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         """
-        converts from structures node (StructureData) to POSCAR format
-        and writes to dst
+        Converts from structures node (StructureData) to POSCAR format and writes to dst.
 
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
@@ -186,8 +185,7 @@ class VaspCalculation(VaspCalcBase):
 
     def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
         """
-        converts from kpoints node (KpointsData) to KPOINTS format
-        and writes to dst
+        Converts from kpoints node (KpointsData) to KPOINTS format and writes to dst.
 
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to

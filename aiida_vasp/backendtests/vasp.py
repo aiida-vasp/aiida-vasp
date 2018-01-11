@@ -11,10 +11,7 @@ from .common import Common
 
 # pylint: disable=protected-access,too-many-public-methods
 class VaspCalcTest(AiidaTestCase):
-    """
-    Test Case for
-    py:class:`~aiida_vasp.calcs.vasp.VaspCalculation`
-    """
+    """Test Case for py:class:`~aiida_vasp.calcs.vasp.VaspCalculation`."""
 
     def setUp(self):
         self.calc = CalculationFactory('vasp.vasp')()
@@ -47,10 +44,7 @@ class VaspCalcTest(AiidaTestCase):
         self.assertEqual(self.calc._parameters, {'a': 0})
 
     def test_write_incar(self):
-        """
-        write out an INCAR tag to a tempfile and check wether
-        it was written correctly
-        """
+        """Write out an INCAR tag to a tempfile and check wether it was written correctly."""
         inc = self.calc.new_parameters(dict={'system': 'InAs'})
         dst = tempfile.mkstemp()[1]
         self.calc.use_parameters(inc)
@@ -59,10 +53,7 @@ class VaspCalcTest(AiidaTestCase):
             self.assertEqual(incar.read().strip(), 'SYSTEM = InAs')
 
     def test_write_potcar(self):
-        """
-        concatenate two paws into a tmp POTCAR and check wether
-        each is contained in the result
-        """
+        """Concatenate two paws into a tmp POTCAR and check wether each is contained in the result."""
         self.calc.use_parameters(self.calc.new_parameters(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
         self.calc.use_paw(self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
@@ -79,10 +70,7 @@ class VaspCalcTest(AiidaTestCase):
                 self.assertIn(data, potcar_content)
 
     def test_write_poscar(self):
-        """
-        feed a structure into calc and write it to a POSCAR temp file
-        check for nonemptiness of the file
-        """
+        """Feed a structure into calc and write it to a POSCAR temp file check for nonemptiness of the file."""
         self.calc.use_structure(self.structure)
         dst = tempfile.mkstemp()[1]
         self.calc.write_poscar({}, dst)
@@ -90,10 +78,7 @@ class VaspCalcTest(AiidaTestCase):
             self.assertTrue(poscar.read())
 
     def test_write_poscar_cif(self):
-        """
-        feed a cif file into calc and write it to a POSCAR temp file
-        make sure the file is not empty
-        """
+        """Feed a cif file into calc and write it to a POSCAR temp file make sure the file is not empty."""
         self.calc.use_structure(self.cif)
         dst = tempfile.mkstemp()[1]
         self.calc.write_poscar({}, dst)
@@ -101,10 +86,7 @@ class VaspCalcTest(AiidaTestCase):
             self.assertTrue(poscar.read())
 
     def test_write_kpoints(self):
-        """
-        feed kpoints into calc and write to KPOINTS temp file
-        verify the file is not empty
-        """
+        """Feed kpoints into calc and write to KPOINTS temp file verify the file is not empty."""
         kpoints = self.calc.new_kpoints()
         kpoints.set_kpoints_mesh([4, 4, 4])
         self.calc.use_kpoints(kpoints)
@@ -143,7 +125,7 @@ class VaspCalcTest(AiidaTestCase):
         self.assertTrue(self.calc._need_wfn())
 
     def test_need_wfn_istart(self):
-        """Check whether ISTART input parameter should be set"""
+        """Test if the calculation recognizes when WAVEFUN is required."""
         self.calc.use_parameters(self.calc.new_parameters(dict={'istart': 0}))
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:
