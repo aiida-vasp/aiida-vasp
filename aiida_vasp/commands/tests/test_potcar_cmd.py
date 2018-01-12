@@ -93,3 +93,37 @@ def test_listfamilies_existence():
     result = run_cmd('listfamilies')
     assert not result.exception
     assert result.output
+
+
+def test_listfamilies_nofilter(potcar_family):
+    """Test typical usecases without filtering."""
+    result = run_cmd('listfamilies')
+    assert not result.exception
+    assert potcar_family in result.output
+
+    family_group = get_data_class('vasp.potcar').get_potcar_group(potcar_family)
+    result = run_cmd('listfamilies', ['--with-description'])
+    assert not result.exception
+    assert 'Description' in result.output
+    assert family_group.description in result.output
+
+
+def test_listfamilies_filtering(potcar_family):
+    """Test filtering families by elements & symbols."""
+    result = run_cmd('listfamilies', ['--element', 'In', '--element', 'As'])
+    assert potcar_family in result.output
+
+    result = run_cmd('listfamilies', ['--element', 'In', '--element', 'U235'])
+    assert potcar_family not in result.output
+
+    result = run_cmd('listfamilies', ['--symbol', 'In_d'])
+    assert potcar_family in result.output
+
+    result = run_cmd('listfamilies', ['--symbol', 'In_d', '--symbol', 'In_s'])
+    assert potcar_family not in result.output
+
+    result = run_cmd('listfamilies', ['--symbol', 'In_d', '--element', 'As'])
+    assert potcar_family in result.output
+
+    result = run_cmd('listfamilies', ['--symbol', 'In_d', '--element', 'U235'])
+    assert potcar_family not in result.output
