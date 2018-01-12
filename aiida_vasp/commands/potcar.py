@@ -4,6 +4,7 @@ import tabulate
 from aiida.cmdline.commands import data_cmd
 
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.commands import options
 
 
 @data_cmd.group('vasp-potcar')
@@ -30,17 +31,21 @@ def try_grab_description(ctx, param, value):
 
 
 @potcar.command()
-@click.option('--path', default='.', type=click.Path(exists=True), help='Path to a folder or archive containing the POTCAR files')
-@click.option('--name', required=True, help='The name of the family')
-@click.option('--desc', help='A description for the family', callback=try_grab_description)
+@options.PATH(help='Path to a folder or archive containing the POTCAR files')
+@options.FAMILY_NAME()
+@options.DESCRIPTION(help='A description for the family', callback=try_grab_description)
 @click.option('--stop-if-existing', is_flag=True, help='Abort when encountering a previously uploaded POTCAR file')
-def uploadfamily(path, name, desc, stop_if_existing):
+@options.DRY_RUN()
+def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
     potcar_data_cls = get_data_class('vasp.potcar')
-    num_found, num_uploaded = potcar_data_cls.upload_potcar_family(path, name, desc, stop_if_existing=stop_if_existing)
+    num_found, num_uploaded = potcar_data_cls.upload_potcar_family(
+        path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run)
 
     click.echo('POTCAR files found: {}. New files uploaded: {}'.format(num_found, num_uploaded))
+    if dry_run:
+        click.echo('No files were uploaded due to --dry-run.')
 
 
 @potcar.command()
@@ -67,3 +72,14 @@ def listfamilies(element, symbol, with_description):
         click.echo('No POTCAR family contains all given elements and symbols.')
     else:
         click.echo('No POTCAR family available.')
+
+
+@potcar.command()
+@options.PATH(help='Path to location of the exported POTCAR family')
+@options.FAMILY_NAME()
+@options.DRY_RUN(help='Only display what would be exported.')
+@click.option('-z', '--as-archive', is_flag=True, help='create an archive instead of a folder.')
+def exportfamily(path, name, dry_run, as_archive):
+    """Export a POTCAR family into a compressed tar archive or folder."""
+
+    click.echo('{} {} {} {}'.format(path, name, dry_run, as_archive))

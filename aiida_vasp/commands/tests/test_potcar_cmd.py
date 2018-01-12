@@ -14,7 +14,7 @@ POTCAR_PATH = data_path('potcar')
 FAMILY_NAME = POTCAR_FAMILY_NAME
 PATH_OPTION = '--path={}'.format(POTCAR_PATH)
 NAME_OPTION = '--name={}'.format(FAMILY_NAME)
-DESC_OPTION = '--desc="This is a test POTCAR family"'
+DESC_OPTION = '--description="This is a test POTCAR family"'
 
 
 def run_cmd(command=None, args=None, **kwargs):
@@ -79,6 +79,26 @@ def test_uploadfamily_again(potcar_family):
     group_count = group_qb.count()
 
     result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION])
+
+    assert not result.exception
+
+    node_qb = QueryBuilder(path=[Node])
+    assert node_count == node_qb.count()
+    group_qb = QueryBuilder(path=[Group])
+    assert group_count == group_qb.count()
+
+
+def test_uploadfamily_dryrun(fresh_aiida_env):
+    """Make sure --dry-run does not affect the db"""
+    from aiida.orm import Node, Group
+    from aiida.orm.querybuilder import QueryBuilder
+
+    node_qb = QueryBuilder(path=[Node])
+    node_count = node_qb.count()
+    group_qb = QueryBuilder(path=[Group])
+    group_count = group_qb.count()
+
+    result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION, DESC_OPTION, '--dry-run'])
 
     assert not result.exception
 

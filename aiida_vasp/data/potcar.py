@@ -110,6 +110,7 @@ import tarfile
 import tempfile
 import shutil
 from contextlib import contextmanager
+from collections import namedtuple
 
 import py
 from pymatgen.io.vasp import PotcarSingle
@@ -332,6 +333,11 @@ class PotcarData(Data, PotcarMetadataMixin):
             file_node.store()
         return node, created
 
+    @classmethod
+    def file_not_uploaded(cls, file_path):
+        md5 = md5_file(file_path)
+        return PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
+
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
         return [group.name for group in Group.query(nodes=self, type_string=self.potcar_family_type_string)]
@@ -343,7 +349,11 @@ class PotcarData(Data, PotcarMetadataMixin):
     @classmethod
     def get_potcar_group(cls, group_name):
         """Return the PotcarFamily group with the given name."""
-        return Group.get(name=group_name, type_string=cls.potcar_family_type_string)
+        try:
+            group = Group.get(name=group_name, type_string=cls.potcar_family_type_string)
+        except NotExistent:
+            group = None
+        return group
 
     @classmethod
     def get_potcar_groups(cls, filter_elements=None, filter_symbols=None):
@@ -438,7 +448,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         return {(kind.name,): potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
 
     @classmethod
-    def upload_potcar_family(cls, folder, group_name, group_description=None, stop_if_existing=True):
+    def upload_potcar_family(cls, folder, group_name, group_description=None, stop_if_existing=True, dry_run=False):
         """
         Upload a set of POTCAR potentials as a family.
 
@@ -450,8 +460,15 @@ class PotcarData(Data, PotcarMetadataMixin):
         :param stop_if_existing: if True, check for the md5 of the files and,
             if the file already exists in the DB, raises a MultipleObjectsError.
             If False, simply adds the existing UPFData node to the group.
+        :param dry_run: If True, do not change the database.
         """
-        group, group_created = Group.get_or_create(name=group_name, type_string=cls.GROUP_TYPE)
+        if not dry_run:
+            group, group_created = Group.get_or_create(name=group_name, type_string=cls.potcar_family_type_string)
+        else:
+            group = cls.get_potcar_group(group_name)
+            group_created = bool(not group)
+            if not group:
+                group = Group(name=group_name)
 
         if group.user != get_automatic_user():
             raise UniquenessError(
@@ -463,9 +480,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         elif group_created:
             raise ValueError('A new PotcarGroup {} should be created but no description was given!'.format(group_name))
 
-        potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing)
+        potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing, dry_run=dry_run)
         num_files = len(potcars_found)
-        family_nodes_uuid = [node.uuid for node in group.nodes]
+        family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_found = [
             (potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar.uuid not in family_nodes_uuid
         ]
@@ -477,28 +494,35 @@ class PotcarData(Data, PotcarMetadataMixin):
             else:
                 aiidalogger.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
 
-        group.add_nodes([potcar for potcar, created, file_path in potcars_found])
+        if not dry_run:
+            group.add_nodes([potcar for potcar, created, file_path in potcars_found])
 
         num_uploaded = len(potcars_found)
 
         return num_files, num_uploaded
 
     @classmethod
-    def recursive_upload_potcar(cls, folder, stop_if_existing=True):
+    def recursive_upload_potcar(cls, folder, stop_if_existing=True, dry_run=False, level=0):
         """Recursively search and upload POTCAR files in a folder."""
+        if level >= 2:
+            return []
         list_created = []
         folder = py.path.local(folder)  # pylint: disable=no-name-in-module,no-member
         for subpath in folder.listdir():
             if subpath.isdir():
-                list_created.extend(cls.recursive_upload_potcar(subpath, stop_if_existing))
+                list_created.extend(cls.recursive_upload_potcar(subpath, stop_if_existing, dry_run=dry_run, level=level + 1))
             elif subpath.isfile():
                 if tarfile.is_tarfile(str(subpath)):
                     with temp_dir() as staging_dir:
                         with tarfile.TarFile(str(subpath)) as potcar_archive:
                             potcar_archive.extractall(staging_dir)
-                        list_created.extend(cls.recursive_upload_potcar(staging_dir, stop_if_existing))
+                        list_created.extend(cls.recursive_upload_potcar(staging_dir, stop_if_existing, dry_run=dry_run, level=level + 1))
                 elif 'POTCAR' in subpath.basename:
-                    potcar, created = cls.get_or_create_from_file(str(subpath))
+                    if not dry_run:
+                        potcar, created = cls.get_or_create_from_file(str(subpath))
+                    else:
+                        potcar = cls.file_not_uploaded(str(subpath))
+                        created = bool(potcar.uuid == -1)
                     if stop_if_existing and not created:
                         raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(
                             str(subpath)))
