@@ -4,7 +4,7 @@ case "$TEST_TYPE" in
         tox
         ;;
     pre-commit)
-        pre-commit run --all-files || git diff; git status; exit 1;
+        pre-commit run --all-files || ( git diff; git status; exit 1; )
         ;;
     *)
         echo "Invalid value for TEST_TYPE env variable."
