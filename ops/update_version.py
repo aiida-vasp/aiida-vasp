@@ -24,7 +24,19 @@ def file_input(*args, **kwargs):
 
 
 class VersionUpdater(object):
-    """Version number synchronisation interface"""
+    """
+    Version number synchronisation interface.
+
+    Updates the version information in
+
+    * setup.json
+    * aiida_vasp/__init__.py
+
+    to the current version number.
+
+    The current version number is either parsed from the output of ``git describe --match v*.*.*``, or if the command fails for any reason,
+    from setup.json. The current version number is decided on init, syncronization can be executed by calling ``.sync()``.
+    """
 
     version_pat = re.compile(r'\d+.\d+.\d+')
 
@@ -51,8 +63,15 @@ class VersionUpdater(object):
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
     def get_version(self):
-        describe_byte_string = subprocess.check_output(['git', 'describe', '--match', 'v*.*.*'])
-        version_string = re.findall(self.version_pat, describe_byte_string)[0]
+        """Get the current version number from ``git describe``, fall back to setup.json."""
+        try:
+            describe_byte_string = subprocess.check_output(['git', 'describe', '--match', 'v*.*.*'])
+            version_string = re.findall(self.version_pat, describe_byte_string)[0]
+        except subprocess.CalledProcessError:
+            with open(self.setup_json, 'r') as setup_fo:
+                setup = json.load(setup_fo)
+                version_string = setup['version']
+
         return version.parse(version_string)
 
     def sync(self):
