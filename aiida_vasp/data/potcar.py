@@ -112,7 +112,7 @@ import shutil
 from contextlib import contextmanager
 from collections import namedtuple
 
-import py
+from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
@@ -130,7 +130,7 @@ def temp_dir():
     """Temporary directory context manager that deletes the tempdir after use."""
     try:
         tempdir = tempfile.mkdtemp()
-        yield tempdir
+        yield py_path.local(tempdir)
     finally:
         shutil.rmtree(tempdir)
 
@@ -480,7 +480,8 @@ class PotcarData(Data, PotcarMetadataMixin):
         elif group_created:
             raise ValueError('A new PotcarGroup {} should be created but no description was given!'.format(group_name))
 
-        potcars_found = cls.recursive_upload_potcar(folder, stop_if_existing=stop_if_existing, dry_run=dry_run)
+        folder = py_path.local(folder)
+        potcars_found = cls.recursive_upload_potcar([folder], stop_if_existing=stop_if_existing, dry_run=dry_run)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_found = [
@@ -502,21 +503,21 @@ class PotcarData(Data, PotcarMetadataMixin):
         return num_files, num_uploaded
 
     @classmethod
-    def recursive_upload_potcar(cls, folder, stop_if_existing=True, dry_run=False, level=0):
+    def recursive_upload_potcar(cls, folders, stop_if_existing=True, dry_run=False, depth=0):
         """Recursively search and upload POTCAR files in a folder."""
-        if level >= 2:
+        if depth >= 3:
             return []
         list_created = []
-        folder = py.path.local(folder)  # pylint: disable=no-name-in-module,no-member
-        for subpath in folder.listdir():
+        for subpath in folders:
             if subpath.isdir():
-                list_created.extend(cls.recursive_upload_potcar(subpath, stop_if_existing, dry_run=dry_run, level=level + 1))
+                list_created.extend(cls.recursive_upload_potcar(subpath.listdir(), stop_if_existing, dry_run=dry_run, depth=depth + 1))
             elif subpath.isfile():
                 if tarfile.is_tarfile(str(subpath)):
                     with temp_dir() as staging_dir:
                         with tarfile.TarFile(str(subpath)) as potcar_archive:
-                            potcar_archive.extractall(staging_dir)
-                        list_created.extend(cls.recursive_upload_potcar(staging_dir, stop_if_existing, dry_run=dry_run, level=level + 1))
+                            potcar_archive.extractall(str(staging_dir))
+                        list_created.extend(
+                            cls.recursive_upload_potcar(staging_dir.listdir(), stop_if_existing, dry_run=dry_run, depth=depth))
                 elif 'POTCAR' in subpath.basename:
                     if not dry_run:
                         potcar, created = cls.get_or_create_from_file(str(subpath))

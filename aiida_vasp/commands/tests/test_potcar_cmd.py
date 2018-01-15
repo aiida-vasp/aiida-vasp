@@ -40,6 +40,20 @@ def test_uploadfamily_withpath(fresh_aiida_env):
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
+    assert potcar_cls.exists(element='Ga')
+    assert [g.name for g in potcar_cls.get_potcar_groups()] == [FAMILY_NAME]
+
+
+def test_uploadfamily_tar(fresh_aiida_env):
+    """Give a tar file as the source"""
+    path_option = '--path={}'.format(py_path.local(POTCAR_PATH).join('Ga.tar'))
+    result = run_cmd('uploadfamily', [path_option, NAME_OPTION, DESC_OPTION])
+    potcar_cls = get_data_class('vasp.potcar')
+
+    print result.output
+
+    assert not result.exception
+    assert potcar_cls.exists(element='Ga')
     assert [g.name for g in potcar_cls.get_potcar_groups()] == [FAMILY_NAME]
 
 
