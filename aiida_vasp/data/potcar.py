@@ -448,20 +448,8 @@ class PotcarData(Data, PotcarMetadataMixin):
         return {(kind.name,): potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
 
     @classmethod
-    def upload_potcar_family(cls, folder, group_name, group_description=None, stop_if_existing=True, dry_run=False):
-        """
-        Upload a set of POTCAR potentials as a family.
-
-        :param folder: a path containing all POTCAR files to be added.
-        :param group_name: the name of the group to create. If it exists and is
-            non-empty, a UniquenessError is raised.
-        :param group_description: a string to be set as the group description.
-            Overwrites previous descriptions, if the group was existing.
-        :param stop_if_existing: if True, check for the md5 of the files and,
-            if the file already exists in the DB, raises a MultipleObjectsError.
-            If False, simply adds the existing UPFData node to the group.
-        :param dry_run: If True, do not change the database.
-        """
+    def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
+        """Prepare a (possibly new) group to upload a POTCAR family to."""
         if not dry_run:
             group, group_created = Group.get_or_create(name=group_name, type_string=cls.potcar_family_type_string)
         else:
@@ -480,8 +468,27 @@ class PotcarData(Data, PotcarMetadataMixin):
         elif group_created:
             raise ValueError('A new PotcarGroup {} should be created but no description was given!'.format(group_name))
 
-        folder = py_path.local(folder)
-        potcars_found = cls.recursive_upload_potcar([folder], stop_if_existing=stop_if_existing, dry_run=dry_run)
+        return group
+
+    @classmethod
+    def upload_potcar_family(cls, source, group_name, group_description=None, stop_if_existing=True, dry_run=False):
+        """
+        Upload a set of POTCAR potentials as a family.
+
+        :param folder: a path containing all POTCAR files to be added.
+        :param group_name: the name of the group to create. If it exists and is
+            non-empty, a UniquenessError is raised.
+        :param group_description: a string to be set as the group description.
+            Overwrites previous descriptions, if the group was existing.
+        :param stop_if_existing: if True, check for the md5 of the files and,
+            if the file already exists in the DB, raises a MultipleObjectsError.
+            If False, simply adds the existing UPFData node to the group.
+        :param dry_run: If True, do not change the database.
+        """
+        group = cls._prepare_group_for_upload(group_name, group_description, dry_run=dry_run)
+
+        source = py_path.local(source)
+        potcars_found = cls.recursive_upload_potcar([source], stop_if_existing=stop_if_existing, dry_run=dry_run)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_found = [
