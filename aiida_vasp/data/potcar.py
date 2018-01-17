@@ -261,6 +261,39 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             if file_obj:
                 file_obj.close()
 
+    def export_file(self, path, dry_run=False):
+        """
+        Write the contents of the stored POTCAR file to a destination on the local file system.
+
+        :param path: path to the destination file or folder
+
+        When given a folder, the destination file will be created in a subdirectory with the name of the symbol.
+        This is for conveniently exporting multiple files into the same folder structure as the POTCARs are
+        distributed in.
+
+        Examples::
+
+            potcar_file = PotcarFileData.get_or_create(<file>)
+            assert potcar_file.symbol == 'Si_d'
+
+            potcar_file.export('./POTCAR.Si')
+            ## writes to ./POTCAR.Si
+
+            potcar_file.export('./potcars/')
+            ## writes to
+            ## ./
+            ##  |-potcars/
+            ##           |-Si_d/
+            ##                 |-POTCAR
+        """
+        path = py_path.local(path)
+        if path.isdir():
+            path = path.join(self.symbol, 'POTCAR')
+        if not dry_run:
+            with path.open(mode='w') as dest_fo:
+                dest_fo.write(self.get_content())
+        return path
+
     def get_content(self):
         with self.get_file_obj() as potcar_fo:
             return potcar_fo.read()
@@ -511,7 +544,7 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     @classmethod
     def recursive_upload_potcar(cls, folders, stop_if_existing=True, dry_run=False, depth=0):
-        """Recursively search and upload POTCAR files in a folder."""
+        """Recursively search and upload POTCAR files in a folder or archive."""
         if depth >= 3:
             return []
         list_created = []
@@ -537,6 +570,33 @@ class PotcarData(Data, PotcarMetadataMixin):
                     list_created.append((potcar, created, str(subpath)))
 
         return list_created
+
+    @classmethod
+    def export_potcar_family_folder(cls, family_name, path='.', dry_run=False):
+        """
+        Export a family of POTCAR nodes into a file hierarchy similar to the one POTCARs are distributed in.
+
+        :param family_name: name of the POTCAR family
+        :param path: path to a local directory
+        :param dry_run: bool, if True, only collect the names of files that would otherwise be written.
+
+        If ``path`` already exists, everything will be written into a subdirectory with the name of the family.
+        """
+        path = py_path.local(path)
+        if path.exists():
+            path = path.join(family_name)
+        group = cls.get_potcar_group(family_name)
+        all_file_nodes = [potcar.find_file_node() for potcar in group.nodes]
+        files_written = []
+
+        with temp_dir() as staging_dir:
+            for file_node in all_file_nodes:
+                new_file = file_node.export_file(staging_dir, dry_run=dry_run)
+                files_written.append(path.join(new_file.relto(staging_dir)))
+            if not dry_run:
+                staging_dir.copy(path, stat=True)
+
+        return files_written
 
     def get_content(self):
         return self.find_file_node().get_content()
