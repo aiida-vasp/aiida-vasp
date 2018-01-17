@@ -161,3 +161,28 @@ def test_listfamilies_filtering(potcar_family):
 
     result = run_cmd('listfamilies', ['--symbol', 'In_d', '--element', 'U235'])
     assert potcar_family not in result.output
+
+
+def test_exportfamilies(potcar_family, tmpdir):
+    """Test exporting potcar family."""
+    result = run_cmd('exportfamily', ['--name', potcar_family, '--path', str(tmpdir)])
+    assert not result.exception
+    export_path = tmpdir.join(potcar_family)
+    assert export_path.isdir()
+    assert export_path.exists()
+
+    new_dir = tmpdir.join('new_dir')
+    result = run_cmd('exportfamily', ['--dry-run', '--name', potcar_family, '--path', str(new_dir)])
+    assert not result.exception
+    assert not new_dir.exists()
+
+    result = run_cmd('exportfamily', ['--as-archive', '--name', potcar_family, '--path', str(tmpdir)])
+    assert not result.exception
+    export_path = tmpdir.join(potcar_family + '.tar.gz')
+    assert export_path.isfile()
+    assert export_path.exists()
+
+    new_arch = tmpdir.join('export.tar.gz')
+    result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', str(new_arch)])
+    assert not result.exception
+    assert not new_arch.exists()
