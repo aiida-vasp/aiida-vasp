@@ -88,11 +88,11 @@ def exportfamily(path, name, dry_run, as_archive, verbose):
     potcar_data_cls = get_data_class('vasp.potcar')
 
     if not as_archive:
-        files = potcar_data_cls.export_potcar_family_folder(name, path, dry_run)
+        files = potcar_data_cls.export_family_folder(name, path, dry_run)
         if verbose:
             click.echo(tabulate.tabulate([[i] for i in files], headers=['Files written:']))
     else:
-        archive, files = potcar_data_cls.export_potcar_family_archive(name, path, dry_run)
+        archive, files = potcar_data_cls.export_family_archive(name, path, dry_run)
         if verbose:
             click.echo(tabulate.tabulate([[i] for i in files], headers=['Files added to archive {}:'.format(archive)]))
 

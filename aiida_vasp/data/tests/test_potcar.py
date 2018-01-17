@@ -1,5 +1,7 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
+import tarfile
+
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from pymatgen.io.vasp import PotcarSingle
@@ -180,3 +182,43 @@ def test_upload(fresh_aiida_env):
     num_files, num_uploaded = potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=False)
     assert num_files >= 3
     assert num_uploaded == 0
+
+
+def test_export_family_folder(potcar_family, tmpdir):
+    """Test exporting to folder."""
+    potcar_cls = get_data_class('vasp.potcar')
+
+    potcar_cls.export_family_folder(potcar_family, path=tmpdir, dry_run=True)
+    assert not tmpdir.listdir()
+
+    files = potcar_cls.export_family_folder(potcar_family, path=tmpdir, dry_run=False)
+    exportdir = tmpdir.join(potcar_family)
+    subdirs = set(str(subpath.basename) for subpath in exportdir.listdir())
+    assert set(['Ga', 'As', 'In_d']).issubset(subdirs)
+    potcar_ga = exportdir.join('Ga', 'POTCAR')
+    assert str(potcar_ga) in files
+    assert len(files) >= 3
+    assert potcar_ga.isfile()
+    assert 'TITEL' in potcar_ga.read()
+
+    new_dir = 'new_dir'
+    potcar_cls.export_family_folder(potcar_family, path=tmpdir.join(new_dir), dry_run=False)
+    assert tmpdir.join(new_dir).exists()
+
+
+def test_export_family_archive(potcar_family, tmpdir):
+    """Test exporting to archive."""
+    potcar_cls = get_data_class('vasp.potcar')
+
+    potcar_cls.export_family_archive(potcar_family, path=tmpdir, dry_run=True)
+    assert not tmpdir.listdir()
+
+    ar_path, _ = potcar_cls.export_family_archive(potcar_family, path=tmpdir, dry_run=False)
+    archive = tarfile.open(str(ar_path))
+    assert set(['Ga/POTCAR', 'As/POTCAR', 'In_d/POTCAR']).issubset(set(archive.getnames()))
+    potcar_in = archive.extractfile('In_d/POTCAR')
+    try:
+        content = potcar_in.read()
+        assert 'TITEL' in content
+    finally:
+        potcar_in.close()

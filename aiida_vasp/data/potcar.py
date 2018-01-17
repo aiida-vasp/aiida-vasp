@@ -582,7 +582,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         return list_created
 
     @classmethod
-    def export_potcar_family_folder(cls, family_name, path='.', dry_run=False):
+    def export_family_folder(cls, family_name, path='.', dry_run=False):
         """
         Export a family of POTCAR nodes into a file hierarchy similar to the one POTCARs are distributed in.
 
@@ -609,7 +609,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         return files_written
 
     @classmethod
-    def export_potcar_family_archive(cls, family_name, path='.', dry_run=False):
+    def export_family_archive(cls, family_name, path='.', dry_run=False):
         """Export a family of POTCAR nodes into a compressed archive."""
         path = py_path.local(path)
 
