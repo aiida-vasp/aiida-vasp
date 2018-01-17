@@ -1,6 +1,7 @@
 """Commandline util for dealing with potcar files"""
 import click
 import tabulate
+
 from aiida.cmdline.commands import data_cmd
 
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -67,7 +68,8 @@ def listfamilies(element, symbol, with_description):
             row.append(group.description)
         table.append(row)
     if len(table) > 1:
-        click.echo(tabulate.tabulate(table))
+        click.echo(tabulate.tabulate(table, headers='firstrow'))
+        click.echo()
     elif element or symbol:
         click.echo('No POTCAR family contains all given elements and symbols.')
     else:
@@ -75,11 +77,25 @@ def listfamilies(element, symbol, with_description):
 
 
 @potcar.command()
-@options.PATH(help='Path to location of the exported POTCAR family')
+@options.PATH(type=click.Path(exists=False), help='Path to location of the exported POTCAR family.')
 @options.FAMILY_NAME()
 @options.DRY_RUN(help='Only display what would be exported.')
-@click.option('-z', '--as-archive', is_flag=True, help='create an archive instead of a folder.')
-def exportfamily(path, name, dry_run, as_archive):
+@click.option('-z', '--as-archive', is_flag=True, help='Create a compressed archive (.tar.gz) instead of a folder.')
+@click.option('-v', '--verbose', is_flag=True, help='Print the names of all created files.')
+def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
 
-    click.echo('{} {} {} {}'.format(path, name, dry_run, as_archive))
+    potcar_data_cls = get_data_class('vasp.potcar')
+
+    if not as_archive:
+        files = potcar_data_cls.export_potcar_family_folder(name, path, dry_run)
+        if verbose:
+            click.echo(tabulate.tabulate([[i] for i in files], headers=['Files written:']))
+    else:
+        archive, files = potcar_data_cls.export_potcar_family_archive(name, path, dry_run)
+        if verbose:
+            click.echo(tabulate.tabulate([[i] for i in files], headers=['Files added to archive {}:'.format(archive)]))
+
+    click.echo('{} POTCAR files exported.'.format(len(files)))
+    if dry_run:
+        click.echo('Nothing written due to "--dry-run"')

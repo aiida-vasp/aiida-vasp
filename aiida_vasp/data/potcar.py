@@ -261,6 +261,16 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             if file_obj:
                 file_obj.close()
 
+    def export_archive(self, archive, dry_run=False):
+        """Add the stored POTCAR file to an archive for export."""
+        with self.get_file_obj() as potcar_fo:
+            arcname = '{}/POTCAR'.format(self.symbol)
+            tarinfo = self.archive.members[0]
+            tarinfo.name = arcname
+            if not dry_run:
+                archive.addfile(tarinfo, fileobj=potcar_fo)
+        return tarinfo.name
+
     def export_file(self, path, dry_run=False):
         """
         Write the contents of the stored POTCAR file to a destination on the local file system.
@@ -290,7 +300,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         if path.isdir():
             path = path.join(self.symbol, 'POTCAR')
         if not dry_run:
-            with path.open(mode='w') as dest_fo:
+            with path.open(mode='w', ensure=True) as dest_fo:
                 dest_fo.write(self.get_content())
         return path
 
@@ -597,6 +607,28 @@ class PotcarData(Data, PotcarMetadataMixin):
                 staging_dir.copy(path, stat=True)
 
         return files_written
+
+    @classmethod
+    def export_potcar_family_archive(cls, family_name, path='.', dry_run=False):
+        """Export a family of POTCAR nodes into a compressed archive."""
+        path = py_path.local(path)
+
+        if path.isdir():
+            path = path.join(family_name)
+
+        if not path.ext:
+            path = path.dirpath().join(path.basename + '.tar.gz')
+
+        archive = tarfile.open(str(path), 'w:gz') if not dry_run else None
+        group = cls.get_potcar_group(family_name)
+        all_file_nodes = [potcar.find_file_node() for potcar in group.nodes]
+        files_added = []
+
+        for file_node in all_file_nodes:
+            files_added.append(file_node.export_archive(archive, dry_run=dry_run))
+        if not dry_run:
+            archive.close()
+        return path, files_added
 
     def get_content(self):
         return self.find_file_node().get_content()
