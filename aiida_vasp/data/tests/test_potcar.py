@@ -157,8 +157,8 @@ def test_potcar_from_structure(potcar_family):
     indium_2 = get_data_node('structure')
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
     indium_2.append_atom(position=[1, 0, 0], symbols='In')
-    in2_potcars = get_data_class('vasp.potcar').get_potcars_dict(indium_2, potcar_family)
-    assert [kind.name for kind in in2_potcars.keys()] == ['In']
+    in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(indium_2, potcar_family)
+    assert [kind[0] for kind in in2_potcars.keys()] == ['In']
 
 
 def test_upload(fresh_aiida_env):

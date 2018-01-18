@@ -56,7 +56,8 @@ class PotcarIo(object):
         get_data_class('vasp.potcar').get_or_create(file=filepath)
 
     def _init_with_potcar_file_node(self, node):
-        self.potcar_obj = PotcarSingle(node.get_file_obj.read())
+        with node.get_file_obj() as potcar_fo:
+            self.potcar_obj = PotcarSingle(potcar_fo.read())
         self.md5 = node.md5
 
     def _init_with_potcar_node(self, node):

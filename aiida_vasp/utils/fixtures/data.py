@@ -19,7 +19,7 @@ def localhost_dir(tmpdir_factory):
     return tmpdir_factory.mktemp('localhost_work')
 
 
-@pytest.fixture()
+@pytest.fixture
 def localhost(aiida_env, localhost_dir):
     """Fixture for a local computer called localhost"""
     from aiida.orm import Computer
@@ -42,24 +42,39 @@ def localhost(aiida_env, localhost_dir):
     return computer
 
 
-@pytest.fixture()
+@pytest.fixture
 def vasp_params(aiida_env):
     incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_io.get_param_node()
 
 
-@pytest.fixture()
-def paws(aiida_env):
+@pytest.fixture
+def potcar_node_pair(fresh_aiida_env):
+    """Create a POTCAR node pair."""
+    potcar_path = data_path('potcar', 'As', 'POTCAR')
+    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
+    potcar_file_node.store()
+    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
+
+
+@pytest.fixture
+def potcar_family(fresh_aiida_env):
+    """Create a POTCAR family."""
+    family_name = POTCAR_FAMILY_NAME
+    family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
+    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc)
+    return family_name
+
+
+@pytest.fixture
+def paws(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     from aiida.orm import DataFactory
     from aiida_vasp.backendtests.common import subpath
-    DataFactory('vasp.paw').import_family(
-        subpath('..', 'backendtests', 'LDA'),
-        familyname='TEST',
-        family_desc='test data',
-    )
-    paw_nodes = {'In': DataFactory('vasp.paw').load_paw(element='In')[0], 'As': DataFactory('vasp.paw').load_paw(element='As')[0]}
-    return paw_nodes
+    potcar_cls = get_data_class('vasp.potcar')
+    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family)
+
+    return potentials
 
 
 @pytest.fixture(params=['cif', 'str'])
@@ -142,24 +157,6 @@ def vasp_wavecar(aiida_env):
     with open(wavecar_path, 'r') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
     return wavecar, ref_wavecar
-
-
-@pytest.fixture
-def potcar_node_pair(fresh_aiida_env):
-    """Create a POTCAR node pair."""
-    potcar_path = data_path('potcar', 'As', 'POTCAR')
-    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    potcar_file_node.store()
-    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
-
-
-@pytest.fixture
-def potcar_family(fresh_aiida_env):
-    """Create a POTCAR family."""
-    family_name = POTCAR_FAMILY_NAME
-    family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
-    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc)
-    return family_name
 
 
 @pytest.fixture()

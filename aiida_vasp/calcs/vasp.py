@@ -28,7 +28,7 @@ class VaspCalculation(VaspCalcBase):
     default_parser = 'vasp.vasp'
     parameters = Input(types='parameter', doc='VASP INCAR parameters.')
     structure = Input(types=['structure', 'cif'])
-    paw = Input(types='vasp.paw', param='kind')
+    potential = Input(types='vasp.potcar', param='kind')
     kpoints = Input(types='array.kpoints')
     settings = Input(types='parameter', doc='Additional settings for the calculation.')
     charge_density = Input(
@@ -56,7 +56,7 @@ class VaspCalculation(VaspCalcBase):
         if 'elements' not in self.attrs():
             self._prestore()
         for kind in self.elements:
-            self.check_input(inputdict, self._get_paw_linkname(kind))
+            self.check_input(inputdict, self._get_potential_linkname(kind))
         self.check_input(inputdict, 'kpoints', self._need_kp)
         self.check_input(inputdict, 'charge_density', self._need_chgd)
         self.check_input(inputdict, 'wavefunctions', self._need_wfn)
@@ -67,7 +67,7 @@ class VaspCalculation(VaspCalcBase):
         self._set_attr('elements', ordered_unique_list(self.inp.structure.get_ase().get_chemical_symbols()))
 
     @classmethod
-    def _get_paw_linkname(cls, kind):
+    def _get_potential_linkname(cls, kind):
         """Required for storing multiple input paw nodes."""
         return 'paw_%s' % kind
 
@@ -169,15 +169,14 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        import subprocess32 as sp
-        catcom = ['cat']
+        potcar = pymatgen.io.vasp.Potcar()
         # ~ structure = inputdict['structure']
         # ~ structure = self.inp.structure
         # order the symbols according to order given in structure
         if 'elements' not in self.attrs():
             self._prestore()
         for kind in self.elements:
-            paw = inputdict[self._get_paw_linkname(kind)]
+            potcar = inputdict[self._get_potential_linkname(kind)]
             catcom.append(paw.get_abs_path('POTCAR'))
         # cat the pawdata nodes into the file
         with open(dst, 'w') as potcar_f:

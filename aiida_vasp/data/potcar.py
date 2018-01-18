@@ -137,11 +137,12 @@ def temp_dir():
 
 class PotcarMetadataMixin(object):
     """Provide common Potcar metadata access and querying functionality."""
+    _query_label = 'label'
 
     @classmethod
     def query_by_attrs(cls, **kwargs):
         """Find a Data node by attributes."""
-        label = 'label'
+        label = cls._query_label
         query_builder = cls.querybuild(label=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
@@ -214,6 +215,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     When writing a calculation plugin or workflow, do not use this as an input type, use :class:`aiida_vasp.data.potcar.PotcarData` instead!
     """
 
+    _query_label = 'potcar_file'
     _query_type_string = 'data.vasp.potcar_file.'
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
 
@@ -334,6 +336,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     licenced data and can be freely shared without legal repercussions.
     """
 
+    _query_label = 'potcar'
     _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol', 'original_filename']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
@@ -447,27 +450,27 @@ class PotcarData(Data, PotcarMetadataMixin):
         return groups
 
     @classmethod
-    def get_potcars_dict(cls, structure, family_name):
+    def get_potcars_dict(cls, elements, family_name):
         """
-        Get a dictionary {kind: POTCAR} for all elements in a structure.
+        Get a dictionary {element: POTCAR} for all given symbols.
 
-        :param structure: The structure to find POTCARs for
+        :param symbols: The list of symbols to find POTCARs for
         :param family_name: The POTCAR family to be used
         """
         group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
-        element_filters = {'attributes.element': {'in': [kind.symbol for kind in structure.kinds]}}
+        element_filters = {'attributes.element': {'in': elements}}
         query = QueryBuilder()
         query.append(Group, tag='family', filters=group_filters)
         query.append(cls, tag='potcar', member_of='family', filters=element_filters)
 
         result_potcars = {}
-        for kind in structure.kinds:
-            potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == kind.symbol]
+        for element in elements:
+            potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == element]
             if not potcars_of_kind:
-                raise NotExistent('No POTCAR found for element {} in family {}'.format(kind.symbol, family_name))
+                raise NotExistent('No POTCAR found for symbol {} in family {}'.format(element, family_name))
             elif len(potcars_of_kind) > 1:
-                raise MultipleObjectsError('More than one POTCAR for element {} found in family {}'.format(kind.symbol, family_name))
-            result_potcars[kind] = potcars_of_kind[0]
+                raise MultipleObjectsError('More than one POTCAR for symbol {} found in family {}'.format(element, family_name))
+            result_potcars[potcars_of_kind[0].element] = potcars_of_kind[0]
 
         return result_potcars
 
@@ -479,8 +482,8 @@ class PotcarData(Data, PotcarMetadataMixin):
         The Dictionary looks as follows::
 
             {
-                (kind1, ): PotcarData_for_kind1,
-                (kind2, ): ...
+                (element1, ): PotcarData_for_kind1,
+                (element2, ): ...
             }
 
         This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
@@ -488,7 +491,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
         :raise NotExistent: if no UPF for an element in the group is found in the group.
         """
-        return {(kind.name,): potcar for kind, potcar in cls.get_potcars_dict(structure, family_name).items()}
+        elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
+        return {(elements_to_name[element],): potcar
+                for element, potcar in cls.get_potcars_dict(elements_to_name.keys(), family_name).items()}
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
@@ -635,3 +640,15 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     def get_pymatgen(self):
         return self.find_file_node().get_pymatgen()
+
+    @classmethod
+    def find(cls, **kwargs):
+        """Extend `find()` with filtering by POTCAR family."""
+        family = kwargs.pop('family', None)
+        if not family:
+            return super(PotcarData, cls).find(**kwargs)
+        query = cls.query_by_attrs(**kwargs)
+        group_filters = {'name': {'==': family}, 'type': {'==': cls.potcar_family_type_string}}
+        query.append(Group, tag='family', filters=group_filtgers, group_of=cls._query_label)
+        query.add_projection(cls._query_label, '*')
+        return query.one()[0]
