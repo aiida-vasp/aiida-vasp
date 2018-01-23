@@ -67,7 +67,7 @@ def potcar_family(aiida_env):
 
 
 @pytest.fixture
-def paws(potcar_family):
+def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     potcar_cls = get_data_class('vasp.potcar')
     potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family)

@@ -2,7 +2,7 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
-from .data import vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar
+from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar
 
 
 @pytest.fixture()
