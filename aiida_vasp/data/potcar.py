@@ -106,6 +106,8 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+import re
+import hashlib
 import tarfile
 import tempfile
 import shutil
@@ -116,13 +118,27 @@ from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
-from aiida.common.utils import md5_file, classproperty
+from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, MultipleObjectsError, NotExistent
 from aiida.orm import Group
 from aiida.orm.data import Data
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+
+
+def normalize_potcar_contents(potcar_contents):
+    """Normalize whitespace in a POTCAR given as a string."""
+    normalized = re.sub('[ \t]+', '', potcar_contents)
+    normalized = re.sub('[\n\r]\s*', '\n', normalized)
+    return normalized
+
+
+def md5_potcar(potcar_contents):
+    """Hash the contents of a POTCAR file (given as str)."""
+    md5_hash = hashlib.md5()
+    md5_hash.update(normalize_potcar_contents(potcar_contents))
+    return md5_hash.hexdigest()
 
 
 @contextmanager
@@ -133,6 +149,16 @@ def temp_dir():
         yield py_path.local(tempdir)
     finally:
         shutil.rmtree(tempdir)
+
+
+@contextmanager
+def temp_potcar(contents):
+    """Temporary POTCAR file from contents."""
+    with temp_dir() as tempdir:
+        potcar_file = tempdir.join('POTCAR')
+        with potcar_file.open('w') as potcar_fo:
+            potcar_fo.write(contents)
+        yield potcar_file
 
 
 class PotcarMetadataMixin(object):
@@ -198,6 +224,7 @@ class PotcarMetadataMixin(object):
 
         other_attrs = self.get_attrs()
         other_attrs.pop('md5')
+        other_attrs.pop('original_filename')
         if self.exists(**other_attrs):
             raise UniquenessError('A {} node with these attributes but a different file exists.'.format(str(self.__class__)))
 
@@ -223,18 +250,30 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         """Initialize from a file path."""
         self.add_file(filepath)
 
+    def set_contents(self, contents):
+        """Initialize from a string."""
+        with temp_potcar(contents) as potcar_file:
+            self.add_file(str(potcar_file))
+
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
-        self._set_attr('md5', md5_file(src_abs))
+        self._set_attr('md5', self.get_file_md5(src_abs))
         potcar = PotcarSingle.from_file(src_abs)
         self._set_attr('title', potcar.keywords['TITEL'])
         self._set_attr('functional', potcar.functional)
         self._set_attr('element', potcar.element)
         self._set_attr('symbol', potcar.symbol)
         self._set_attr('original_filename', src_abs)
+
+    @classmethod
+    def get_file_md5(self, path):
+        path = py_path.local(path)
+        with path.open('r') as potcar_fo:
+            md5 = md5_potcar(potcar_fo.read())
+        return md5
 
     def store(self, with_transaction=True):
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
@@ -317,7 +356,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     @classmethod
     def get_or_create(cls, filepath):
         """Get or create (store) a PotcarFileData node."""
-        md5 = md5_file(filepath)
+        md5 = cls.get_file_md5(filepath)
         if cls.exists(md5=md5):
             created = False
             node = cls.find(md5=md5)
@@ -326,6 +365,12 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             node = cls(file=filepath)
             node.store()
         return node, created
+
+    @classmethod
+    def get_or_create_from_contents(cls, contents):
+        """Get or create (store) a PotcarFileData node from a string containing the POTCAR contents."""
+        with temp_potcar(contents) as potcar_file:
+            return cls.get_or_create(str(potcar_file))
 
 
 class PotcarData(Data, PotcarMetadataMixin):
@@ -372,7 +417,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     @classmethod
     def get_or_create_from_file(cls, file_path):
         """Get or create (store) a PotcarData node from a POTCAR file."""
-        md5 = md5_file(file_path)
+        md5 = PotcarFileData.get_file_md5(file_path)
         file_node = PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
@@ -380,8 +425,14 @@ class PotcarData(Data, PotcarMetadataMixin):
         return node, created
 
     @classmethod
+    def get_or_create_from_contents(cls, contents):
+        """Get or create (store) a PotcarData node from a string containing the POTCAR contents."""
+        with temp_potcar(contents) as potcar_file:
+            return cls.get_or_create(str(potcar_file))
+
+    @classmethod
     def file_not_uploaded(cls, file_path):
-        md5 = md5_file(file_path)
+        md5 = PotcarFileData.get_file_md5(file_path)
         return PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
 
     def get_family_names(self):
@@ -649,6 +700,6 @@ class PotcarData(Data, PotcarMetadataMixin):
             return super(PotcarData, cls).find(**kwargs)
         query = cls.query_by_attrs(**kwargs)
         group_filters = {'name': {'==': family}, 'type': {'==': cls.potcar_family_type_string}}
-        query.append(Group, tag='family', filters=group_filtgers, group_of=cls._query_label)
+        query.append(Group, tag='family', filters=group_filters, group_of=cls._query_label)
         query.add_projection(cls._query_label, '*')
         return query.one()[0]

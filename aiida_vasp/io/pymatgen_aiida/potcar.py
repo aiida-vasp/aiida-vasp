@@ -1,10 +1,14 @@
 """Find, import, compose and write POTCAR files."""
+import six
+import re
 from functools import update_wrapper
 
+from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.utils import md5_file
 
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
 
 def delegate_method_kwargs(prefix='_init_with_'):
@@ -74,3 +78,45 @@ class PotcarIo(object):
     @property
     def node(self):
         return get_data_class('vasp.potcar').find(md5=self.md5)
+
+    @classmethod
+    def from_(cls, potcar):
+        if isinstance(potcar, (six.string_types)):
+            potcar = cls(path=potcar)
+        elif isinstance(potcar, PotcarData):
+            potcar = cls(potcar_node=potcar)
+        elif isinstance(potcar, PotcarFileData):
+            potcar = cls(potcar_file_node=potcar)
+        elif isinstance(potcar, PotcarIo):
+            pass
+        else:
+            potcar = cls(path=str(potcar))
+        return potcar
+
+
+class MultiPotcarIo(object):
+
+    def __init__(self, potcars):
+        self._potcars = []
+        for potcar in potcars:
+            self.append(PotcarIo.from_(potcar))
+
+    def append(self, potcar):
+        self._potcars.append(PotcarIo.from_(potcar))
+
+    def write(self, path):
+        path = py_path.local(path)
+        with path.open('w') as dest_fo:
+            for potcar in self._potcars:
+                dest_fo.write(potcar.file_node.get_content() + '\n')
+
+    @classmethod
+    def read(cls, path):
+        potcars = cls()
+        path = py_path.local(path)
+        with path.open('r') as potcar_fo:
+            potcar_strings = re.compile(r"\n?(\s*.*?End of Dataset)", re.S).findall(potcar_fo.read())
+
+        for potcar_contents in potcar_strings:
+            potcars.append(PotcarData.get_or_create_from_contents(potcar_contents))
+        return potcars

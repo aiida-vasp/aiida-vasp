@@ -14,7 +14,9 @@ from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
 def test_store(vasp_calc_and_ref):
+    import time
     vasp_calc, _ = vasp_calc_and_ref
+    assert vasp_calc.get_computer().pk
     vasp_calc.store_all()
     assert vasp_calc.pk is not None
 
