@@ -1,7 +1,7 @@
 """Find, import, compose and write POTCAR files."""
-import six
-import re
 from functools import update_wrapper
+import re
+import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
@@ -81,6 +81,7 @@ class PotcarIo(object):
 
     @classmethod
     def from_(cls, potcar):
+        """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
         if isinstance(potcar, (six.string_types)):
             potcar = cls(path=potcar)
         elif isinstance(potcar, PotcarData):
@@ -95,11 +96,13 @@ class PotcarIo(object):
 
 
 class MultiPotcarIo(object):
+    """Handle file i/o for POTCAR files with one or more potentials."""
 
-    def __init__(self, potcars):
+    def __init__(self, potcars=None):
         self._potcars = []
-        for potcar in potcars:
-            self.append(PotcarIo.from_(potcar))
+        if potcars:
+            for potcar in potcars:
+                self.append(PotcarIo.from_(potcar))
 
     def append(self, potcar):
         self._potcars.append(PotcarIo.from_(potcar))
@@ -112,6 +115,7 @@ class MultiPotcarIo(object):
 
     @classmethod
     def read(cls, path):
+        """Read a POTCAR file that may contain one or more potentials into a list of PotcarIo objects."""
         potcars = cls()
         path = py_path.local(path)
         with path.open('r') as potcar_fo:

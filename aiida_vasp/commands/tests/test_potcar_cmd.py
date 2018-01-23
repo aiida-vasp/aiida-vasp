@@ -74,7 +74,7 @@ def test_uploadfamily_inworkdir(fresh_aiida_env):
     old_work_dir.chdir()
 
 
-def test_uploadfamily_again(potcar_family):
+def test_uploadfamily_again(fresh_aiida_env, potcar_family):
     """
     Re-upload a potcar family.
 
@@ -129,7 +129,7 @@ def test_listfamilies_existence():
     assert result.output
 
 
-def test_listfamilies_nofilter(potcar_family):
+def test_listfamilies_nofilter(fresh_aiida_env, potcar_family):
     """Test typical usecases without filtering."""
     result = run_cmd('listfamilies')
     assert not result.exception
@@ -142,7 +142,7 @@ def test_listfamilies_nofilter(potcar_family):
     assert family_group.description in result.output
 
 
-def test_listfamilies_filtering(potcar_family):
+def test_listfamilies_filtering(fresh_aiida_env, potcar_family):
     """Test filtering families by elements & symbols."""
     result = run_cmd('listfamilies', ['--element', 'In', '--element', 'As'])
     assert potcar_family in result.output
@@ -163,7 +163,7 @@ def test_listfamilies_filtering(potcar_family):
     assert potcar_family not in result.output
 
 
-def test_exportfamilies(potcar_family, tmpdir):
+def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
     """Test exporting potcar family."""
     result = run_cmd('exportfamily', ['--name', potcar_family, '--path', str(tmpdir)])
     assert not result.exception

@@ -129,8 +129,9 @@ from aiida_vasp.data.archive import ArchiveData
 
 def normalize_potcar_contents(potcar_contents):
     """Normalize whitespace in a POTCAR given as a string."""
-    normalized = re.sub('[ \t]+', '', potcar_contents)
-    normalized = re.sub('[\n\r]\s*', '\n', normalized)
+    normalized = re.sub(r'[ \t]+', r' ', potcar_contents)  # multiple spaces
+    normalized = re.sub(r'[\n\r]\s*', r'\n', normalized)  # line breaks and spaces afterwards / empty lines
+    normalized = re.sub(r'^\s*', r'', normalized)  # spaces / empty lines at the very beginning
     return normalized
 
 
@@ -269,7 +270,8 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         self._set_attr('original_filename', src_abs)
 
     @classmethod
-    def get_file_md5(self, path):
+    def get_file_md5(cls, path):
+        """Get the md5 sum for a POTCAR file (after whitespace normalization)."""
         path = py_path.local(path)
         with path.open('r') as potcar_fo:
             md5 = md5_potcar(potcar_fo.read())
@@ -694,7 +696,7 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     @classmethod
     def find(cls, **kwargs):
-        """Extend `find()` with filtering by POTCAR family."""
+        """Extend :py:meth:`PotcarMetadataMixin.find` with filtering by POTCAR family."""
         family = kwargs.pop('family', None)
         if not family:
             return super(PotcarData, cls).find(**kwargs)

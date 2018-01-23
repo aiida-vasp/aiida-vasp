@@ -49,7 +49,7 @@ def vasp_params(aiida_env):
 
 
 @pytest.fixture
-def potcar_node_pair(fresh_aiida_env):
+def potcar_node_pair(aiida_env):
     """Create a POTCAR node pair."""
     potcar_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
@@ -58,19 +58,17 @@ def potcar_node_pair(fresh_aiida_env):
 
 
 @pytest.fixture
-def potcar_family(fresh_aiida_env):
+def potcar_family(aiida_env):
     """Create a POTCAR family."""
     family_name = POTCAR_FAMILY_NAME
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
-    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc)
+    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=False)
     return family_name
 
 
 @pytest.fixture
 def paws(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
-    from aiida.orm import DataFactory
-    from aiida_vasp.backendtests.common import subpath
     potcar_cls = get_data_class('vasp.potcar')
     potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family)
 

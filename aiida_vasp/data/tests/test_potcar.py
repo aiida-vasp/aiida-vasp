@@ -17,7 +17,7 @@ from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family
 
 
-def test_creation(potcar_node_pair):
+def test_creation(fresh_aiida_env, potcar_node_pair):
     """Test creating a data node pair."""
     potcar_node = get_data_class('vasp.potcar').find(symbol='As')
     file_node = potcar_node.find_file_node()
@@ -26,7 +26,7 @@ def test_creation(potcar_node_pair):
 
 
 # pylint: disable=protected-access
-def test_store_duplicate(potcar_node_pair):
+def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
     """
     Storing a duplicate POTCAR node must fail.
 
@@ -61,7 +61,7 @@ def test_store_duplicate(potcar_node_pair):
     assert get_data_class('vasp.potcar_file').find(symbol='As')
 
 
-def test_export_import(potcar_node_pair, tmpdir):
+def test_export_import(fresh_aiida_env, potcar_node_pair, tmpdir):
     """Exporting and importing back may not store duplicates."""
     tempfile = tmpdir.join('potcar.aiida')
 
@@ -80,24 +80,24 @@ def test_export_import(potcar_node_pair, tmpdir):
     assert get_data_class('vasp.potcar_file').find(symbol='As')
 
 
-def test_exists(potcar_node_pair):
+def test_exists(fresh_aiida_env, potcar_node_pair):
     assert get_data_class('vasp.potcar_file').exists(element='As')
     assert not get_data_class('vasp.potcar').exists(element='Xe')
 
 
-def test_find(potcar_node_pair):
+def test_find(fresh_aiida_env, potcar_node_pair):
     assert get_data_class('vasp.potcar').find(element='As').uuid == potcar_node_pair['potcar'].uuid
     with pytest.raises(NotExistent):
         _ = get_data_class('vasp.potcar_file').find(element='Xe')
 
 
-def test_file_get_content(potcar_node_pair):
+def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     file_node_as = potcar_node_pair['file']
     original_file = py_path.local(file_node_as.original_file_name)
     assert original_file.read() == file_node_as.get_content()
 
 
-def test_file_get_pymatgen(potcar_node_pair):
+def test_file_get_pymatgen(fresh_aiida_env, potcar_node_pair):
     """
     Create a pymatgen ``PotcarSingle`` instance from a ``PotcarFileData`` node.
 
@@ -112,7 +112,7 @@ def test_file_get_pymatgen(potcar_node_pair):
     assert potcar_single_as.data == file_node_as.get_content()
 
 
-def test_file_get_or_create(potcar_node_pair):
+def test_file_get_or_create(fresh_aiida_env, potcar_node_pair):
     """Test get_or_create of PotcarFileData."""
     potcar_as_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_cls = get_data_class('vasp.potcar_file')
@@ -127,7 +127,7 @@ def test_file_get_or_create(potcar_node_pair):
     assert potcar_file_cls.exists(md5=node_file_in.md5)
 
 
-def test_potcar_get_or_create(potcar_node_pair):
+def test_potcar_get_or_create(fresh_aiida_env, potcar_node_pair):
     """Test get_or_create method of PotcarData."""
     potcar_cls = get_data_class('vasp.potcar')
     file_cls = get_data_class('vasp.potcar_file')
@@ -152,7 +152,7 @@ def test_potcar_from_file(fresh_aiida_env):
     assert not created
 
 
-def test_potcar_from_structure(potcar_family):
+def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     """Test getting POTCARS from a family for a structure."""
     indium_2 = get_data_node('structure')
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
@@ -184,7 +184,7 @@ def test_upload(fresh_aiida_env):
     assert num_uploaded == 0
 
 
-def test_export_family_folder(potcar_family, tmpdir):
+def test_export_family_folder(fresh_aiida_env, potcar_family, tmpdir):
     """Test exporting to folder."""
     potcar_cls = get_data_class('vasp.potcar')
 
@@ -206,7 +206,7 @@ def test_export_family_folder(potcar_family, tmpdir):
     assert tmpdir.join(new_dir).exists()
 
 
-def test_export_family_archive(potcar_family, tmpdir):
+def test_export_family_archive(fresh_aiida_env, potcar_family, tmpdir):
     """Test exporting to archive."""
     potcar_cls = get_data_class('vasp.potcar')
 
