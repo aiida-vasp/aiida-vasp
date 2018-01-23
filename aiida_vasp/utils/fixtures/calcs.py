@@ -6,7 +6,7 @@ from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structu
 
 
 @pytest.fixture()
-def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar):
+def vasp_calc_and_ref(vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
     calc = VaspCalculation()
@@ -14,8 +14,8 @@ def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure
     calc.set_computer(vasp_code.get_computer())
     calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
     calc.use_parameters(vasp_params)
-    calc.use_potential(paws['In'], kind='In')
-    calc.use_potential(paws['As'], kind='As')
+    calc.use_potential(potentials['In'], kind='In')
+    calc.use_potential(potentials['As'], kind='As')
     calc.use_structure(vasp_structure)
     kpoints, ref_kpoints = vasp_kpoints
     calc.use_kpoints(kpoints)

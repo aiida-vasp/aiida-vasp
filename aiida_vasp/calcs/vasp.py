@@ -10,9 +10,9 @@ except ImportError:
 from aiida.orm import DataFactory
 
 from aiida_vasp.calcs.base import VaspCalcBase, Input
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.pymatgen_aiida.potcar import MultiPotcarIo
+from aiida_vasp.io.potcar import MultiPotcarIo
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')

@@ -4,11 +4,8 @@ import re
 import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
-from pymatgen.io.vasp import PotcarSingle
-from aiida.common.utils import md5_file
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
 
 def delegate_method_kwargs(prefix='_init_with_'):
@@ -55,20 +52,23 @@ class PotcarIo(object):
         """Delegate initialization to _init_with - methods."""
 
     def _init_with_path(self, filepath):
-        self.potcar_obj = PotcarSingle(filepath)
-        self.md5 = md5_file(filepath)
-        get_data_class('vasp.potcar').get_or_create(file=filepath)
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=filepath)
+        self.md5 = node.md5
 
     def _init_with_potcar_file_node(self, node):
-        with node.get_file_obj() as potcar_fo:
-            self.potcar_obj = PotcarSingle(potcar_fo.read())
         self.md5 = node.md5
 
     def _init_with_potcar_node(self, node):
         self._init_with_potcar_file_node(node.find_file_node())
 
+    def _init_with_contents(self, contents):
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
+        self.md5 = node.md5
+
     @property
     def pymatgen(self):
+        if not self.potcar_obj:
+            self.potcar_obj = self.file_node.get_pymatgen()
         return self.potcar_obj
 
     @property
@@ -79,20 +79,30 @@ class PotcarIo(object):
     def node(self):
         return get_data_class('vasp.potcar').find(md5=self.md5)
 
+    @property
+    def content(self):
+        return self.file_node.get_content()
+
     @classmethod
     def from_(cls, potcar):
         """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
         if isinstance(potcar, (six.string_types)):
-            potcar = cls(path=potcar)
-        elif isinstance(potcar, PotcarData):
+            if py_path.local(potcar).exists():
+                potcar = cls(path=potcar)
+            else:
+                potcar = cls(contents=potcar)
+        elif isinstance(potcar, get_data_class('vasp.potcar')):
             potcar = cls(potcar_node=potcar)
-        elif isinstance(potcar, PotcarFileData):
+        elif isinstance(potcar, get_data_class('vasp.potcar_file')):
             potcar = cls(potcar_file_node=potcar)
         elif isinstance(potcar, PotcarIo):
             pass
         else:
-            potcar = cls(path=str(potcar))
+            potcar = cls.from_(str(potcar))
         return potcar
+
+    def __eq__(self, other):
+        return self.md5 == other.md5
 
 
 class MultiPotcarIo(object):
@@ -111,7 +121,7 @@ class MultiPotcarIo(object):
         path = py_path.local(path)
         with path.open('w') as dest_fo:
             for potcar in self._potcars:
-                dest_fo.write(potcar.file_node.get_content() + '\n')
+                dest_fo.write(potcar.content + '\n')
 
     @classmethod
     def read(cls, path):
@@ -119,8 +129,12 @@ class MultiPotcarIo(object):
         potcars = cls()
         path = py_path.local(path)
         with path.open('r') as potcar_fo:
-            potcar_strings = re.compile(r"\n?(\s*.*?End of Dataset)", re.S).findall(potcar_fo.read())
+            potcar_strings = re.compile(r"\n?(\s*.*?End of Dataset\n)", re.S).findall(potcar_fo.read())
 
         for potcar_contents in potcar_strings:
-            potcars.append(PotcarData.get_or_create_from_contents(potcar_contents))
+            potcars.append(PotcarIo.from_(potcar_contents))
         return potcars
+
+    @property
+    def potcars(self):
+        return self._potcars

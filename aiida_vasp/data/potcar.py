@@ -132,6 +132,7 @@ def normalize_potcar_contents(potcar_contents):
     normalized = re.sub(r'[ \t]+', r' ', potcar_contents)  # multiple spaces
     normalized = re.sub(r'[\n\r]\s*', r'\n', normalized)  # line breaks and spaces afterwards / empty lines
     normalized = re.sub(r'^\s*', r'', normalized)  # spaces / empty lines at the very beginning
+    normalized = re.sub(r'\s*$', r'\n', normalized)  # trailing endline
     return normalized
 
 
@@ -277,21 +278,16 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             md5 = md5_potcar(potcar_fo.read())
         return md5
 
+    @classmethod
+    def get_contents_md5(cls, contents):
+        """Get the md5 sum for the contents of a POTCAR file (after normalization)."""
+        return md5_potcar(contents)
+
     def store(self, with_transaction=True):
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         _ = PotcarData.get_or_create(self)
         self.verify_unique()
         return super(PotcarFileData, self).store(with_transaction=with_transaction)
-
-    def verify_unique(self):
-        """Raise a UniquenessError if an equivalent node exists."""
-        if self.exists(md5=self.md5):
-            raise UniquenessError('A PotcarFileData already exists for this file.')
-
-        other_attrs = self.get_attrs()
-        other_attrs.pop('md5')
-        if self.exists(**other_attrs):
-            raise UniquenessError('A PotcarFileData with these attributes but a different file exists.')
 
     @contextmanager
     def get_file_obj(self):
@@ -430,7 +426,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     def get_or_create_from_contents(cls, contents):
         """Get or create (store) a PotcarData node from a string containing the POTCAR contents."""
         with temp_potcar(contents) as potcar_file:
-            return cls.get_or_create(str(potcar_file))
+            return cls.get_or_create_from_file(str(potcar_file))
 
     @classmethod
     def file_not_uploaded(cls, file_path):

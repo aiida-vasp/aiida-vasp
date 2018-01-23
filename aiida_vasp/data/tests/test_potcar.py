@@ -12,7 +12,7 @@ except ImportError:
     import subprocess as sp
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
-from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family
 
@@ -23,6 +23,16 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
     file_node = potcar_node.find_file_node()
     assert potcar_node.pk == potcar_node_pair['potcar'].pk
     assert file_node.pk == potcar_node_pair['file'].pk
+
+
+def test_hashing(aiida_env):
+    """Ensure the file and content md5 hash equivalently for the same POTCAR."""
+    potcar_file_cls = get_data_class('vasp.potcar_file')
+    potcar_path = ['potcar', 'As', 'POTCAR']
+
+    file_md5 = potcar_file_cls.get_file_md5(data_path(*potcar_path))
+    content_md5 = potcar_file_cls.get_contents_md5(read_file(*potcar_path))
+    assert file_md5 == content_md5
 
 
 # pylint: disable=protected-access
@@ -222,3 +232,19 @@ def test_export_family_archive(fresh_aiida_env, potcar_family, tmpdir):
         assert 'TITEL' in content
     finally:
         potcar_in.close()
+
+
+def test_create_equivalence(potcar_family):
+    """Create from file (during upload) and from contents and ensure equivalence."""
+    potcar_file_cls = get_data_class('vasp.potcar_file')
+    potcar_path = ['potcar', 'As', 'POTCAR']
+    potcar_file, created = potcar_file_cls.get_or_create_from_contents(read_file(*potcar_path))
+    assert not created
+    assert potcar_file.md5 == potcar_file_cls.find(element='As').md5
+    assert potcar_file.uuid == potcar_file_cls.find(element='As').uuid
+
+    potcar_cls = get_data_class('vasp.potcar')
+    potcar, created = potcar_cls.get_or_create_from_contents(read_file(*potcar_path))
+    assert not created
+    assert potcar.md5 == potcar_cls.find(element='As').md5
+    assert potcar.uuid == potcar_cls.find(element='As').uuid
