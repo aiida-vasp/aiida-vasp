@@ -121,7 +121,7 @@ class MultiPotcarIo(object):
         path = py_path.local(path)
         with path.open('w') as dest_fo:
             for potcar in self._potcars:
-                dest_fo.write(potcar.content + '\n')
+                dest_fo.write(potcar.content)
 
     @classmethod
     def read(cls, path):

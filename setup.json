@@ -22,7 +22,6 @@
         "aiida.data": [
             "vasp.archive = aiida_vasp.data.archive:ArchiveData", 
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
-            "vasp.paw = aiida_vasp.data.paw:PawData", 
             "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
             "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
             "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
@@ -69,7 +68,7 @@
     }, 
     "include_package_data": true, 
     "install_requires": [
-        "aiida-core[atomic_tools]", 
+        "aiida-core[atomic_tools] >= 0.11.0", 
         "ase", 
         "scipy", 
         "pymatgen", 

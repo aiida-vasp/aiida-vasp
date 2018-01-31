@@ -63,7 +63,7 @@ class Input(object):
 
         parameters = Input(types='parameter', doc='input parameters.')
         structure = Input(types=['structure', 'cif'], doc='input structure')
-        paw = Input(types='vasp.paw', param='kind')
+        potential = Input(types='vasp.potcar', param='kind')
 
     """
 
@@ -190,13 +190,13 @@ class VaspCalcBase(JobCalculation):
         # write input files
         incar = tempfolder.get_abs_path('INCAR')
         structure = tempfolder.get_abs_path('POSCAR')
-        paw = tempfolder.get_abs_path('POTCAR')
+        potentials = tempfolder.get_abs_path('POTCAR')
         kpoints = tempfolder.get_abs_path('KPOINTS')
 
         self.verify_inputs(inputdict)
         self.write_incar(inputdict, incar)
         self.write_poscar(inputdict, structure)
-        self.write_potcar(inputdict, paw)
+        self.write_potcar(inputdict, potentials)
         self.write_kpoints(inputdict, kpoints)
         self.write_additional(tempfolder, inputdict)
 

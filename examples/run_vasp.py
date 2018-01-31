@@ -2,6 +2,12 @@ import click
 import numpy
 
 
+def get_data_cls(descriptor):
+    load_dbenv_if_not_loaded()
+    from aiida.orm import DataFactory
+    return DataFactory(descriptor)
+
+
 @click.group()
 def run_example():
     """Run an example vasp calculation"""
@@ -9,7 +15,7 @@ def run_example():
 
 def example_param_set(cmd_function):
 
-    @click.option('--paw-family', type=str, default='vasp-test')
+    @click.option('--pot-family', type=str, default='vasp-test')
     @click.option('--import-from', type=click.Path(), default='.')
     @click.option('--queue', type=str, default='')
     @click.argument('code', type=str)
@@ -25,21 +31,24 @@ def example_param_set(cmd_function):
 
 @run_example.command()
 @example_param_set
-def noncol(paw_family, import_from, queue, code, computer):
+def noncol(pot_family, import_from, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
     if import_from:
-        import_paws(import_from, paw_family)
-    paw_in, paw_as = get_paws(paw_family, 'In', 'As')
+        import_pots(import_from, pot_family)
+    pot_cls = get_data_cls('vasp.potcar')
+    pots = {}
+    pots['In'] = pot_cls.find(symbol='In_d', qualifiers='', family=pot_family)
+    pots['As'] = pot_cls.find(symbol='As', qualifiers='', family=pot_family)
 
     vasp_calc = CalculationFactory('vasp.vasp')()
     vasp_calc.use_structure(create_structure_InAs())
     vasp_calc.use_kpoints(create_kpoints())
-    vasp_calc.use_parameters(create_params())
+    vasp_calc.use_parameters(create_params_noncol())
     code = Code.get_from_string('{}@{}'.format(code, computer))
     vasp_calc.use_code(code)
-    vasp_calc.use_paw(paw_in, 'In')
-    vasp_calc.use_paw(paw_as, 'As')
+    vasp_calc.use_potential(pots['In'], 'In')
+    vasp_calc.use_potential(pots['As'], 'As')
     vasp_calc.set_computer(code.get_computer())
     vasp_calc.set_queue_name(queue)
     vasp_calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 20})
@@ -50,12 +59,13 @@ def noncol(paw_family, import_from, queue, code, computer):
 
 @run_example.command()
 @example_param_set
-def simple(paw_family, import_from, queue, code, computer):
+def simple(pot_family, import_from, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
     if import_from:
-        import_paws(import_from, paw_family)
-    paw_si, = get_paws(paw_family, 'Si')
+        import_pots(import_from, pot_family)
+    pot_cls = get_data_cls('vasp.potcar')
+    pot_si = pot_cls.find(family=pot_family, symbol='Si', qualifiers='')
 
     vasp_calc = CalculationFactory('vasp.vasp')()
     vasp_calc.use_structure(create_structure_Si())
@@ -63,7 +73,7 @@ def simple(paw_family, import_from, queue, code, computer):
     vasp_calc.use_parameters(create_params_simple())
     code = Code.get_from_string('{}@{}'.format(code, computer))
     vasp_calc.use_code(code)
-    vasp_calc.use_paw(paw_si, 'Si')
+    vasp_calc.use_potential(pot_si, 'Si')
     vasp_calc.set_computer(code.get_computer())
     vasp_calc.set_queue_name(queue)
     vasp_calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 20})
@@ -76,12 +86,6 @@ def load_dbenv_if_not_loaded():
     from aiida import load_dbenv, is_dbenv_loaded
     if not is_dbenv_loaded():
         load_dbenv()
-
-
-def get_data_cls(descriptor):
-    load_dbenv_if_not_loaded()
-    from aiida.orm import DataFactory
-    return DataFactory(descriptor)
 
 
 def create_structure_InAs():
@@ -128,23 +132,9 @@ def create_params_simple():
     return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-8, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})
 
 
-def import_paws(folder_path, family_name):
-    load_dbenv_if_not_loaded()
-    from aiida.orm import DataFactory
-    paw_cls = DataFactory('vasp.paw')
-    paw_cls.import_family(folder_path, familyname=family_name, family_desc='Test family')
-
-
-def get_paws(family_name, *symbols):
-    load_dbenv_if_not_loaded()
-    from aiida.orm import DataFactory
-    paw_cls = DataFactory('vasp.paw')
-    try:
-        paws = [paw_cls.load_paw(family=family_name, symbol=symbol)[0] for symbol in symbols]
-        return paws
-    except ValueError as err:
-        click.echo(repr(err), err=True)
-        raise ValueError('give a valid family or import a new one (run with --help)')
+def import_pots(folder_path, family_name):
+    pot_cls = get_data_cls('vasp.potcar')
+    pot_cls.upload_potcar_family(folder_path, group_name=family_name, group_description='Test family', stop_if_existing=False)
 
 
 if __name__ == '__main__':

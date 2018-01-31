@@ -69,8 +69,8 @@ class VaspCalculation(VaspCalcBase):
 
     @classmethod
     def _get_potential_linkname(cls, kind):
-        """Required for storing multiple input paw nodes."""
-        return 'paw_%s' % kind
+        """Required for storing multiple input potential nodes."""
+        return 'potential_%s' % kind
 
     @property
     def _parameters(self):

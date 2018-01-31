@@ -219,6 +219,11 @@ class PotcarMetadataMixin(object):
         """The name of the original file uploaded into AiiDA"""
         return self.get_attr('original_filename')
 
+    @property
+    def qualifiers(self):
+        """The name of the original file uploaded into AiiDA"""
+        return self.get_attr('qualifiers').split('_')
+
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
         if self.exists(md5=self.md5):
@@ -226,9 +231,9 @@ class PotcarMetadataMixin(object):
 
         other_attrs = self.get_attrs()
         other_attrs.pop('md5')
-        other_attrs.pop('original_filename')
         if self.exists(**other_attrs):
-            raise UniquenessError('A {} node with these attributes but a different file exists.'.format(str(self.__class__)))
+            raise UniquenessError('A {} node with these attributes but a different file exists:\n{}'.format(
+                str(self.__class__), str(other_attrs)))
 
 
 class PotcarFileData(ArchiveData, PotcarMetadataMixin):
@@ -268,7 +273,11 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         self._set_attr('functional', potcar.functional)
         self._set_attr('element', potcar.element)
         self._set_attr('symbol', potcar.symbol)
-        self._set_attr('original_filename', src_abs)
+        src_path = py_path.local(src_abs)
+        src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
+        self._set_attr('original_filename', src_rel)
+        dir_name = src_path.dirpath().basename
+        self._set_attr('qualifiers', re.sub(r'{}_*'.format(potcar.symbol), r'', dir_name))
 
     @classmethod
     def get_file_md5(cls, path):
@@ -380,7 +389,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     """
 
     _query_label = 'potcar'
-    _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol', 'original_filename']
+    # ~ _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol', 'original_filename', 'DEXC', 'EATOM', 'EAUG']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
 
@@ -388,7 +397,7 @@ class PotcarData(Data, PotcarMetadataMixin):
 
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
-        for attr_name in self._meta_attrs:
+        for attr_name in potcar_file_node.get_attrs().keys():
             self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
 
     def find_file_node(self):
@@ -516,7 +525,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         for element in elements:
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == element]
             if not potcars_of_kind:
-                raise NotExistent('No POTCAR found for symbol {} in family {}'.format(element, family_name))
+                raise NotExistent('No POTCAR found for element {} in family {}'.format(element, family_name))
             elif len(potcars_of_kind) > 1:
                 raise MultipleObjectsError('More than one POTCAR for symbol {} found in family {}'.format(element, family_name))
             result_potcars[potcars_of_kind[0].element] = potcars_of_kind[0]
@@ -613,7 +622,7 @@ class PotcarData(Data, PotcarMetadataMixin):
             return []
         list_created = []
         for subpath in folders:
-            if subpath.isdir():
+            if subpath.isdir() and not subpath.basename.startswith('runelement'):
                 list_created.extend(cls.recursive_upload_potcar(subpath.listdir(), stop_if_existing, dry_run=dry_run, depth=depth + 1))
             elif subpath.isfile():
                 if tarfile.is_tarfile(str(subpath)):
