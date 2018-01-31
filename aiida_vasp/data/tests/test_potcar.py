@@ -103,7 +103,7 @@ def test_find(fresh_aiida_env, potcar_node_pair):
 
 def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     file_node_as = potcar_node_pair['file']
-    original_file = py_path.local(file_node_as.original_file_name)
+    original_file = py_path.local(data_path(file_node_as.original_file_name))
     assert original_file.read() == file_node_as.get_content()
 
 
