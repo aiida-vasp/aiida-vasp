@@ -106,6 +106,8 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+from __future__ import print_function
+
 import re
 import hashlib
 import tarfile
@@ -168,15 +170,16 @@ class PotcarMetadataMixin(object):
     _query_label = 'label'
 
     @classmethod
-    def query_by_attrs(cls, **kwargs):
+    def query_by_attrs(cls, query=None, **kwargs):
         """Find a Data node by attributes."""
         label = cls._query_label
-        query_builder = cls.querybuild(label=label)
+        if not query:
+            query = cls.querybuild(label=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
             filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
-        query_builder.add_filter(label, filters)
-        return query_builder
+        query.add_filter(label, filters)
+        return query
 
     @classmethod
     def find(cls, **kwargs):
@@ -220,9 +223,9 @@ class PotcarMetadataMixin(object):
         return self.get_attr('original_filename')
 
     @property
-    def qualifiers(self):
+    def full_name(self):
         """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('qualifiers').split('_')
+        return self.get_attr('full_name')
 
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
@@ -277,7 +280,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
         self._set_attr('original_filename', src_rel)
         dir_name = src_path.dirpath().basename
-        self._set_attr('qualifiers', re.sub(r'{}_*'.format(potcar.symbol), r'', dir_name))
+        self._set_attr('full_name', dir_name)
 
     @classmethod
     def get_file_md5(cls, path):
@@ -508,15 +511,18 @@ class PotcarData(Data, PotcarMetadataMixin):
         return groups
 
     @classmethod
-    def get_potcars_dict(cls, elements, family_name):
+    def get_potcars_dict(cls, elements, family_name, mapping=None):
         """
         Get a dictionary {element: POTCAR} for all given symbols.
 
-        :param symbols: The list of symbols to find POTCARs for
+        :param elements: The list of symbols to find POTCARs for
         :param family_name: The POTCAR family to be used
+        :param mapping: A mapping[element] -> full_name
         """
+        if not mapping:
+            mapping = {element: element for element in elements}
         group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
-        element_filters = {'attributes.element': {'in': elements}}
+        element_filters = {'attributes.full_name': {'in': [mapping[element] for element in elements]}}
         query = QueryBuilder()
         query.append(Group, tag='family', filters=group_filters)
         query.append(cls, tag='potcar', member_of='family', filters=element_filters)
@@ -525,7 +531,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         for element in elements:
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == element]
             if not potcars_of_kind:
-                raise NotExistent('No POTCAR found for element {} in family {}'.format(element, family_name))
+                raise NotExistent('No POTCAR found for full name {} in family {}'.format(mapping[element], family_name))
             elif len(potcars_of_kind) > 1:
                 raise MultipleObjectsError('More than one POTCAR for symbol {} found in family {}'.format(element, family_name))
             result_potcars[potcars_of_kind[0].element] = potcars_of_kind[0]
@@ -533,7 +539,28 @@ class PotcarData(Data, PotcarMetadataMixin):
         return result_potcars
 
     @classmethod
-    def get_potcars_from_structure(cls, structure, family_name):
+    def query_by_attrs(cls, query=None, **kwargs):
+        family_name = kwargs.pop('family_name', None)
+        if family_name:
+            group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
+            query = QueryBuilder()
+            query.append(Group, tag='family', filters=group_filters)
+            query.append(cls, tag=cls._query_label, member_of='family')
+        return super(PotcarData, cls).query_by_attrs(query=query, **kwargs)
+
+    @classmethod
+    def get_full_names(cls, family_name=None, element=None):
+        """
+        Gives a set of symbols provided by this family.
+
+        Not every symbol may be supported for every element.
+        """
+        query = cls.query_by_attrs(family_name=family_name, element=element)
+        query.add_projection(cls._query_label, 'attributes.full_name')
+        return [name[0] for name in query.all()]
+
+    @classmethod
+    def get_potcars_from_structure(cls, structure, family_name, mapping=None):
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
 
@@ -551,7 +578,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         """
         elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
         return {(elements_to_name[element],): potcar
-                for element, potcar in cls.get_potcars_dict(elements_to_name.keys(), family_name).items()}
+                for element, potcar in cls.get_potcars_dict(elements_to_name.keys(), family_name, mapping=mapping).items()}
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
@@ -594,7 +621,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         group = cls._prepare_group_for_upload(group_name, group_description, dry_run=dry_run)
 
         source = py_path.local(source)
-        potcars_found = cls.recursive_upload_potcar([source], stop_if_existing=stop_if_existing, dry_run=dry_run)
+        potcars_found = cls._recursive_upload_potcar([source], stop_if_existing=stop_if_existing, dry_run=dry_run)
         num_files = len(potcars_found)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_found = [
@@ -616,31 +643,36 @@ class PotcarData(Data, PotcarMetadataMixin):
         return num_files, num_uploaded
 
     @classmethod
-    def recursive_upload_potcar(cls, folders, stop_if_existing=True, dry_run=False, depth=0):
+    def _recursive_upload_potcar(cls, folders, stop_if_existing=True, dry_run=False, depth=0):
         """Recursively search and upload POTCAR files in a folder or archive."""
         if depth >= 3:
             return []
         list_created = []
         for subpath in folders:
             if subpath.isdir() and not subpath.basename.startswith('runelement'):
-                list_created.extend(cls.recursive_upload_potcar(subpath.listdir(), stop_if_existing, dry_run=dry_run, depth=depth + 1))
+                list_created.extend(cls._recursive_upload_potcar(subpath.listdir(), stop_if_existing, dry_run=dry_run, depth=depth + 1))
             elif subpath.isfile():
                 if tarfile.is_tarfile(str(subpath)):
                     with temp_dir() as staging_dir:
                         with tarfile.TarFile(str(subpath)) as potcar_archive:
                             potcar_archive.extractall(str(staging_dir))
                         list_created.extend(
-                            cls.recursive_upload_potcar(staging_dir.listdir(), stop_if_existing, dry_run=dry_run, depth=depth))
+                            cls._recursive_upload_potcar(staging_dir.listdir(), stop_if_existing, dry_run=dry_run, depth=depth))
                 elif 'POTCAR' in subpath.basename:
-                    if not dry_run:
-                        potcar, created = cls.get_or_create_from_file(str(subpath))
-                    else:
-                        potcar = cls.file_not_uploaded(str(subpath))
-                        created = bool(potcar.uuid == -1)
-                    if stop_if_existing and not created:
-                        raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(
-                            str(subpath)))
-                    list_created.append((potcar, created, str(subpath)))
+                    try:
+                        if not dry_run:
+                            potcar, created = cls.get_or_create_from_file(str(subpath))
+                        else:
+                            potcar = cls.file_not_uploaded(str(subpath))
+                            created = bool(potcar.uuid == -1)
+                        if stop_if_existing and not created:
+                            raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(
+                                str(subpath)))
+                        list_created.append((potcar, created, str(subpath)))
+                    except KeyError as err:
+                        print('skipping file {} - uploading raised {}{}'.format(str(subpath), str(err.__class__), str(err)))
+                    except AttributeError as err:
+                        print('skipping file {} - uploading raised {}{}'.format(str(subpath), str(err.__class__), str(err)))
 
         return list_created
 

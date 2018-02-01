@@ -12,6 +12,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
 
 POTCAR_FAMILY_NAME = 'test_family'
+POTCAR_MAP = {'In': 'In_d', 'As': 'As', 'Ge': 'Ge'}
 
 
 @pytest.fixture(scope='session')
@@ -70,7 +71,7 @@ def potcar_family(aiida_env):
 def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     potcar_cls = get_data_class('vasp.potcar')
-    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family)
+    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
 
     return potentials
 
