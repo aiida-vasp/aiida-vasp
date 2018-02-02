@@ -109,6 +109,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 from __future__ import print_function
 
 import re
+import os
 import hashlib
 import tarfile
 import tempfile
@@ -117,6 +118,7 @@ from contextlib import contextmanager
 from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+# TODO from monty.io import zopen
 from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
@@ -163,6 +165,37 @@ def temp_potcar(contents):
         with potcar_file.open('w') as potcar_fo:
             potcar_fo.write(contents)
         yield potcar_file
+
+
+class PotcarWalker(object):
+    """
+    Walk the file system and find POTCAR files under a given directory.
+
+    Build a list of potcars including their full path and wether they are archived inside a tar archive.
+    """
+
+    def __init__(self, path):
+        self.path = py_path.local(path)
+        self.potcars = []
+
+    def walk(self):
+        for root, _, files in os.walk(str(self.path)):
+            for file_name in files:
+                self.file_dispatch(root, file_name)
+
+    def file_dispatch(self, dir_path, file_name):
+        """Dispatch handling of different kinds of files to other methods."""
+        file_path = py_path.local(dir_path).join(file_name)
+        if tarfile.is_tarfile(str(file_path)):
+            self.handle_tarfile(file_path)
+        elif 'POTCAR' in file_name:
+            self.potcars.append({'name': file_name, 'path': file_path, 'archive': None})
+
+    def handle_tarfile(self, archive_path):
+        with tarfile.open(str(archive_path)) as archive:
+            archived_potcars = [name for name in archive.getnames() if 'POTCAR' in name]
+        for potcar_path in archived_potcars:
+            self.potcars.append({'name': potcar_path, 'path': archive_path.join(potcar_path), 'archive': archive_path})
 
 
 class PotcarMetadataMixin(object):
