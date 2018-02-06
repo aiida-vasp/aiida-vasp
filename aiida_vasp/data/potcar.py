@@ -118,7 +118,6 @@ from contextlib import contextmanager
 from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
-# TODO from monty.io import zopen
 from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
@@ -167,6 +166,16 @@ def temp_potcar(contents):
         yield potcar_file
 
 
+def extract_tarfile(file_path):
+    """Extract a .tar archive into an appropriately named folder, return the path of the folder, avoid extracting if folder exists."""
+    with tarfile.open(str(file_path)) as archive:
+        new_dir = file_path.basename.split('.tar')[0]
+        new_path = file_path.dirpath().join(new_dir)
+        if not new_path.exists():
+            archive.extractall(str(new_path))
+    return new_path
+
+
 class PotcarWalker(object):
     """
     Walk the file system and find POTCAR files under a given directory.
@@ -176,26 +185,33 @@ class PotcarWalker(object):
 
     def __init__(self, path):
         self.path = py_path.local(path)
-        self.potcars = []
+        self.potcars = set()
 
     def walk(self):
-        for root, _, files in os.walk(str(self.path)):
-            for file_name in files:
-                self.file_dispatch(root, file_name)
+        if self.path.isfile():
+            extracted = self.file_dispatch(self.path.dirname, [], self.path.basename)
+            if extracted:
+                self.path = extracted
+                self.walk()
+        else:
+            for root, dirs, files in os.walk(str(self.path)):
+                for file_name in files:
+                    self.file_dispatch(root, dirs, file_name)
 
-    def file_dispatch(self, dir_path, file_name):
+    def file_dispatch(self, root, dirs, file_name):
         """Dispatch handling of different kinds of files to other methods."""
-        file_path = py_path.local(dir_path).join(file_name)
+        file_path = py_path.local(root).join(file_name)
         if tarfile.is_tarfile(str(file_path)):
-            self.handle_tarfile(file_path)
+            return self.handle_tarfile(dirs, file_path)
         elif 'POTCAR' in file_name:
-            self.potcars.append({'name': file_name, 'path': file_path, 'archive': None})
+            self.potcars.add(file_path)
 
-    def handle_tarfile(self, archive_path):
-        with tarfile.open(str(archive_path)) as archive:
-            archived_potcars = [name for name in archive.getnames() if 'POTCAR' in name]
-        for potcar_path in archived_potcars:
-            self.potcars.append({'name': potcar_path, 'path': archive_path.join(potcar_path), 'archive': archive_path})
+    @classmethod
+    def handle_tarfile(cls, dirs, file_path):
+        new_dir = extract_tarfile(file_path)
+        if new_dir not in dirs:
+            dirs.append(str(new_dir))
+        return new_dir
 
 
 class PotcarMetadataMixin(object):
@@ -260,6 +276,11 @@ class PotcarMetadataMixin(object):
         """The name of the original file uploaded into AiiDA"""
         return self.get_attr('full_name')
 
+    @property
+    def potential_set(self):
+        """The name of the original file uploaded into AiiDA"""
+        return self.get_attr('potential_set')
+
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
         if self.exists(md5=self.md5):
@@ -314,6 +335,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         self._set_attr('original_filename', src_rel)
         dir_name = src_path.dirpath().basename
         self._set_attr('full_name', dir_name)
+        self._set_attr('potential_set', src_path.parts()[-3].basename)
 
     @classmethod
     def get_file_md5(cls, path):
@@ -653,15 +675,16 @@ class PotcarData(Data, PotcarMetadataMixin):
         """
         group = cls._prepare_group_for_upload(group_name, group_description, dry_run=dry_run)
 
-        source = py_path.local(source)
-        potcars_found = cls._recursive_upload_potcar([source], stop_if_existing=stop_if_existing, dry_run=dry_run)
-        num_files = len(potcars_found)
+        potcar_finder = PotcarWalker(source)
+        potcar_finder.walk()
+        num_files = len(potcar_finder.potcars)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
-        potcars_found = [
-            (potcar, created, file_path) for potcar, created, file_path in potcars_found if potcar.uuid not in family_nodes_uuid
+        potcars_tried_upload = cls._try_upload_potcars(potcar_finder.potcars, stop_if_existing=stop_if_existing, dry_run=dry_run)
+        new_potcars_added = [
+            (potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload if potcar.uuid not in family_nodes_uuid
         ]
 
-        for potcar, created, file_path in potcars_found:
+        for potcar, created, file_path in new_potcars_added:
             if created:
                 aiidalogger.debug('New PotcarData node %s created while uploading file %s for family %s', potcar.uuid, file_path,
                                   group_name)
@@ -669,43 +692,33 @@ class PotcarData(Data, PotcarMetadataMixin):
                 aiidalogger.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
 
         if not dry_run:
-            group.add_nodes([potcar for potcar, created, file_path in potcars_found])
+            group.add_nodes([potcar for potcar, created, file_path in new_potcars_added])
 
-        num_uploaded = len(potcars_found)
+        num_added = len(new_potcars_added)
+        num_uploaded = len([item for item in new_potcars_added if item[1]])  # item[1] refers to 'created'
 
-        return num_files, num_uploaded
+        return num_files, num_added, num_uploaded
 
     @classmethod
-    def _recursive_upload_potcar(cls, folders, stop_if_existing=True, dry_run=False, depth=0):
-        """Recursively search and upload POTCAR files in a folder or archive."""
-        if depth >= 3:
-            return []
+    def _try_upload_potcars(cls, file_paths, stop_if_existing=True, dry_run=False):
+        """Given a list of absolute paths to potcar files, try to upload them (or pretend to if dry_run=True)."""
         list_created = []
-        for subpath in folders:
-            if subpath.isdir() and not subpath.basename.startswith('runelement'):
-                list_created.extend(cls._recursive_upload_potcar(subpath.listdir(), stop_if_existing, dry_run=dry_run, depth=depth + 1))
-            elif subpath.isfile():
-                if tarfile.is_tarfile(str(subpath)):
-                    with temp_dir() as staging_dir:
-                        with tarfile.TarFile(str(subpath)) as potcar_archive:
-                            potcar_archive.extractall(str(staging_dir))
-                        list_created.extend(
-                            cls._recursive_upload_potcar(staging_dir.listdir(), stop_if_existing, dry_run=dry_run, depth=depth))
-                elif 'POTCAR' in subpath.basename:
-                    try:
-                        if not dry_run:
-                            potcar, created = cls.get_or_create_from_file(str(subpath))
-                        else:
-                            potcar = cls.file_not_uploaded(str(subpath))
-                            created = bool(potcar.uuid == -1)
-                        if stop_if_existing and not created:
-                            raise ValueError('A POTCAR with identical MD5 to {} cannot be added with the stop_if_existing kwarg.'.format(
-                                str(subpath)))
-                        list_created.append((potcar, created, str(subpath)))
-                    except KeyError as err:
-                        print('skipping file {} - uploading raised {}{}'.format(str(subpath), str(err.__class__), str(err)))
-                    except AttributeError as err:
-                        print('skipping file {} - uploading raised {}{}'.format(str(subpath), str(err.__class__), str(err)))
+        for file_path_obj in file_paths:
+            file_path = str(file_path_obj)
+            try:
+                if not dry_run:
+                    potcar, created = cls.get_or_create_from_file(file_path)
+                else:
+                    potcar = cls.file_not_uploaded(file_path)
+                    created = bool(potcar.uuid == -1)
+                if stop_if_existing and not created:
+                    raise ValueError(('A POTCAR with identical MD5 to {} is already in the DB,'
+                                      'therefore it cannot be added with the stop_if_existing kwarg.').format(file_path))
+                list_created.append((potcar, created, file_path))
+            except KeyError as err:
+                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
+            except AttributeError as err:
+                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
 
         return list_created
 

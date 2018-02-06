@@ -63,7 +63,11 @@ def potcar_family(aiida_env):
     """Create a POTCAR family."""
     family_name = POTCAR_FAMILY_NAME
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
-    get_data_class('vasp.potcar').upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=False)
+    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=False)
+    assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
+    assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
+    assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
     return family_name
 
 

@@ -189,8 +189,10 @@ def test_upload(fresh_aiida_env):
     with pytest.raises(ValueError):
         potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=True)
 
-    num_files, num_uploaded = potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=False)
+    num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(
+        data_path('potcar'), family_name + '_new', family_desc, stop_if_existing=False)
     assert num_files >= 3
+    assert num_added >= 3
     assert num_uploaded == 0
 
 
