@@ -188,6 +188,7 @@ class PotcarWalker(object):
         self.potcars = set()
 
     def walk(self):
+        """Walk the folder tree to find POTCAR, extracting any tar archives along the way."""
         if self.path.isfile():
             extracted = self.file_dispatch(self.path.dirname, [], self.path.basename)
             if extracted:
@@ -199,15 +200,17 @@ class PotcarWalker(object):
                     self.file_dispatch(root, dirs, file_name)
 
     def file_dispatch(self, root, dirs, file_name):
-        """Dispatch handling of different kinds of files to other methods."""
+        """Add POTCAR files to the list and dispatch handling of different kinds of files to other methods."""
         file_path = py_path.local(root).join(file_name)
         if tarfile.is_tarfile(str(file_path)):
             return self.handle_tarfile(dirs, file_path)
         elif 'POTCAR' in file_name:
             self.potcars.add(file_path)
+        return None
 
     @classmethod
     def handle_tarfile(cls, dirs, file_path):
+        """Handle .tar archives: extract and add the extracted folder to be searched."""
         new_dir = extract_tarfile(file_path)
         if new_dir not in dirs:
             dirs.append(str(new_dir))

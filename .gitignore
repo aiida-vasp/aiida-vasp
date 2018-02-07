@@ -15,4 +15,3 @@
 .tox
 
 doc/build
-aiida_vasp/test_data/potcar/Ga

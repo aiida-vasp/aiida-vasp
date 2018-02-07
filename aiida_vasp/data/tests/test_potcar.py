@@ -14,7 +14,7 @@ except ImportError:
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
-from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family
+from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder
 
 
 def test_creation(fresh_aiida_env, potcar_node_pair):
@@ -171,13 +171,14 @@ def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     assert [kind[0] for kind in in2_potcars.keys()] == ['In']
 
 
-def test_upload(fresh_aiida_env):
+def test_upload(fresh_aiida_env, temp_pot_folder):
     """Test uploading a family of POTCAR files."""
     family_name = 'test_family'
     family_desc = 'Test Family'
     potcar_cls = get_data_class('vasp.potcar')
+    pot_dir = temp_pot_folder.strpath
 
-    potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc)
+    potcar_cls.upload_potcar_family(pot_dir, family_name, family_desc)
 
     assert potcar_cls.exists(element='In')
     assert potcar_cls.exists(element='As')
@@ -187,10 +188,9 @@ def test_upload(fresh_aiida_env):
     assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 3
 
     with pytest.raises(ValueError):
-        potcar_cls.upload_potcar_family(data_path('potcar'), family_name, stop_if_existing=True)
+        potcar_cls.upload_potcar_family(pot_dir, family_name, stop_if_existing=True)
 
-    num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(
-        data_path('potcar'), family_name + '_new', family_desc, stop_if_existing=False)
+    num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(pot_dir, family_name + '_new', family_desc, stop_if_existing=False)
     assert num_files >= 3
     assert num_added >= 3
     assert num_uploaded == 0

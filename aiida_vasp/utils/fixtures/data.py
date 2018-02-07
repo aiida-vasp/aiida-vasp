@@ -6,6 +6,7 @@ from collections import OrderedDict
 import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
+from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -59,12 +60,21 @@ def potcar_node_pair(aiida_env):
 
 
 @pytest.fixture
-def potcar_family(aiida_env):
+def temp_pot_folder(tmpdir):
+    """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
+    pot_archive = py_path.local(data_path('potcar'))
+    target = tmpdir.join('potcar')
+    pot_archive.copy(target)
+    return target
+
+
+@pytest.fixture
+def potcar_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
     family_name = POTCAR_FAMILY_NAME
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
-    potcar_cls.upload_potcar_family(data_path('potcar'), family_name, family_desc, stop_if_existing=False)
+    potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
     assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
     assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
