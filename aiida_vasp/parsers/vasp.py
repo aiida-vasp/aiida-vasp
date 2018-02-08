@@ -113,13 +113,13 @@ class VaspParser(BaseParser):
 
     def read_cont(self):
         '''read CONTCAR for output structure'''
-        from ase.io.vasp import read_vasp
+        from ase.io import read
         structure = DataFactory('structure')()
         cont = self.get_file('CONTCAR')
         if not cont:
             self.logger.info('CONTCAR not found!')
             return None
-        structure.set_ase(read_vasp(cont))
+        structure.set_ase(read(cont, format='vasp'))
         return structure
 
     def read_eigenval(self):
