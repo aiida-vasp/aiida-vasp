@@ -58,17 +58,19 @@ class VasprunParser(object):
     @property
     def is_static(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion == -1
+        nsw = self.param('NSW', default=0)
+        return (ibrion == -1) or (nsw == 0)
 
     @property
     def is_md(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion not in [-1, 1, 2]
+        return ibrion == 0
 
     @property
     def is_relaxation(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion in [1, 2]
+        nsw = self.param('NSW', default=0)
+        return (ibrion in [1, 2, 3]) and (nsw > 0)
 
     @property
     def is_sc(self):

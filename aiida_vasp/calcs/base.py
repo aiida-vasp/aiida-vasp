@@ -185,7 +185,7 @@ class VaspCalcBase(JobCalculation):
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """
-        Writes the four minimum output files,
+        Writes the four minimum input files,
         INCAR, POSCAR, POTCAR, KPOINTS. Delegates the
         construction and writing / copying to write_<file> methods.
         That way, subclasses can use any form of input nodes and just
