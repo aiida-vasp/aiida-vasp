@@ -30,6 +30,7 @@ class VasprunParser(object):
 
     @property
     def datetime(self):
+        """Parse Date and time information into a Python datetime object."""
         date = self._i('date')
         time = self._i('time')
         dtstr = date + ' ' + time

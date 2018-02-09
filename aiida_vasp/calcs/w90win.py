@@ -22,6 +22,7 @@ class DictToWin(object):
 
     @classmethod
     def _block(cls, name, val):
+        """String format a block"""
         res = ['begin ' + name]
         res += cls._value(val)
         res += ['end ' + name]
@@ -50,6 +51,7 @@ class DictToWin(object):
 
     @classmethod
     def parse(cls, in_dict):
+        """Parse a Dictionary in Wannier90 .win format (?)"""
         res = []
         for key, value in in_dict.iteritems():
             res += cls._item(key, value)

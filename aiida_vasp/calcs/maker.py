@@ -363,6 +363,7 @@ class VaspMaker(object):
             self._resources['num_mpiprocs_per_machine'] = val[1]
 
     def add_parameters(self, **kwargs):
+        """Add a parameter to _parameters dictionary"""
         if self._parameters.pk:
             self._parameters = self._parameters.copy()
         for key, value in kwargs.iteritems():
@@ -382,6 +383,7 @@ class VaspMaker(object):
         return conflict
 
     def _set_default_paws(self):
+        """If the PAW for one of the elements is missing, add the default PAW to _paws"""
         for key in self.elements:
             if key not in self._paws:
                 if self._paw_def is None:
@@ -464,6 +466,7 @@ class VaspMaker(object):
 
     @property
     def n_elec(self):
+        """Get the number of electrons based on the chemical symbols."""
         res = 0
         for k in self._structure.get_ase().get_chemical_symbols():
             res += self._paws[k].valence

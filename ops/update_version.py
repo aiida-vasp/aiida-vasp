@@ -40,6 +40,7 @@ class VersionUpdater(object):
                        re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
+        """Update version number in setup_json."""
         with open(self.setup_json, 'r') as setup_fo:
             setup = json.load(setup_fo)
         setup['version'] = str(self.version)
