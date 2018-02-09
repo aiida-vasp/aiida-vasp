@@ -15,6 +15,7 @@ def subpath(*args):
 
 @contextlib.contextmanager
 def file_input(*args, **kwargs):
+    """Manage file_input (?)"""
     input_fo = fileinput.FileInput(*args, **kwargs)
     try:
         yield input_fo

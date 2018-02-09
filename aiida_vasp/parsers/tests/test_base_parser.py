@@ -43,6 +43,7 @@ def test_add_node(base_parser):
 
 @ONLY_ONE_CALC
 def test_get_file(base_parser, ref_retrieved_nscf):
+    """Test get_file method of the base parser."""
     base_parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     assert os.path.isfile(base_parser.get_file('OUTCAR'))
     assert os.path.exists(base_parser.get_file('OUTCAR'))

@@ -21,6 +21,7 @@ def test_store(vasp_calc_and_ref):
 
 @ONLY_ONE_CALC
 def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
+    """Test writing an INCAR file"""
     vasp_calc, reference = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
@@ -31,6 +32,7 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
 
 @STRUCTURE_TYPES
 def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
+    """Test writing a POSCAR file"""
     from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
@@ -47,6 +49,7 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
 
 
 def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
+    """Test writing a KPOINTS file"""
     vasp_calc, reference = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     print inp['kpoints'].get_attrs(), reference['kpoints']
@@ -148,6 +151,7 @@ def test_verify_fail(vasp_calc_and_ref):
 
 @contextlib.contextmanager
 def managed_temp_file():
+    """Manage a temp_file (?)"""
     import tempfile
     _, temp_file = tempfile.mkstemp()
     try:
@@ -158,6 +162,7 @@ def managed_temp_file():
 
 @contextlib.contextmanager
 def working_directory(new_work_dir):
+    """Try to change to a new working directory (?)"""
     work_dir = os.getcwd()
     try:
         if os.path.isdir(new_work_dir):
