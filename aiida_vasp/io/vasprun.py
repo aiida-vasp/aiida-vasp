@@ -153,6 +153,7 @@ class VasprunParser(object):
         shape.append(len(ldim))
 
         def split(string_):
+            """Splits a string based on mode in ['r', 'rc']"""
             if mode == 'r':
                 return tuple(string_.text.split())
             elif mode == 'rc':
