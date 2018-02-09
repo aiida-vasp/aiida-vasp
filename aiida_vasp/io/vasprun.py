@@ -157,6 +157,7 @@ class VasprunParser(object):
                 return tuple(string_.text.split())
             elif mode == 'rc':
                 return tuple([x.text.strip() for x in string_.c])
+            return None
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)
