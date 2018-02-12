@@ -1,0 +1,9 @@
+aiida-core[atomi_tools]
+lxml
+ase
+scipy
+pymatgen
+click
+chainmap
+six
+pyparsing
