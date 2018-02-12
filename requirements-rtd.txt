@@ -1,7 +1,6 @@
 aiida-core[atomi_tools]
 lxml
 ase
-scipy >= 1.0.0
 click
 chainmap
 six
