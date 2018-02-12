@@ -363,7 +363,7 @@ class VaspMaker(object):
             self._resources['num_mpiprocs_per_machine'] = val[1]
 
     def add_parameters(self, **kwargs):
-        """Add a parameter to _parameters dictionary"""
+        """Add additional parameters to the generated calculation, does not override existing parameters."""
         if self._parameters.pk:
             self._parameters = self._parameters.copy()
         for key, value in kwargs.iteritems():
@@ -383,7 +383,7 @@ class VaspMaker(object):
         return conflict
 
     def _set_default_paws(self):
-        """If the PAW for one of the elements is missing, add the default PAW to _paws"""
+        """Set default POTCAR potentials from the given mapping."""
         for key in self.elements:
             if key not in self._paws:
                 if self._paw_def is None:
