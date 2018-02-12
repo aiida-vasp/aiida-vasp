@@ -46,26 +46,31 @@ class VaspMaker(object):
     :keyword charge_density: chargedensity node from a previously run
         calculation
     :type charge_density: ChargedensityData
+
     :keyword wavefunctions: wavefunctions node from a previously run
         calculation
     :type wavefunctions: WavefunData
+
     :keyword array.KpointsData kpoints: kpoints node to use for input
+
     :keyword str paw_family: The name of a PAW family stored in the db
-    :keyword str paw_map: A dictionary mapping element symbols -> PAW
-        symbols
+
+    :keyword str paw_map: A dictionary mapping element symbols -> PAW symbols
+
     :keyword str label: value for the calculation label
-    :keyword str computer: computer name, defaults to code's if code is
-        given
-    :keyword str code: code name, if any Calculations are given, defaults
-        to their code
+
+    :keyword str computer: computer name, defaults to code's if code is given
+
+    :keyword str code: code name, if any Calculations are given, defaults to their code
+
     :keyword str resources: defaults to copy_from.get_resources() or None
-    :keyword str queue: defaults to queue from given calculation, if any,
-        or None
+
+    :keyword str queue: defaults to queue from given calculation, if any, or None
+
 
     .. py:method:: new()
 
-        :returns: an instance of :py:attr:`calc_cls`, initialized with the data
-        held by the VaspMaker
+        :returns: an instance of :py:attr:`calc_cls`, initialized with the data held by the VaspMaker
 
     .. py:method:: add_parameters(**kwargs)
 

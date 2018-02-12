@@ -111,7 +111,7 @@ The following parameters are specific to this calculation or have changed semant
 Reference
 *********
 
-.. automodule:: aiida.workflows.vasp.windows
+.. automodule:: aiida_vasp.workflows.windows
 
    .. autoclass:: WindowsWorkflow
       :members: get_params_template, get_template, Helper

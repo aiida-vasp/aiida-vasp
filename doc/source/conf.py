@@ -48,7 +48,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'quickstart-index'
+master_doc = 'index'
 
 # General information about the project.
 project = u'AiiDA-VASP'
@@ -162,4 +162,13 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/', None), 'aiida': ('https://aiida-core.readthedocs.org/en/latest', None)}
+
+
+# Autodoc config
+try:
+    from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded
+    load_dbenv_if_not_loaded()
+except ImportError as err:
+    raise ImportError('AiiDA dbenv must be loaded for sphinx-build to work!\n' + str(err))
+

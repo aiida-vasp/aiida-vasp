@@ -95,16 +95,16 @@ These properties can be used to filter queries for calculations and therefore to
 Workflows
 *********
 
-* :py:class:`ScfWorkflow <aiida.workflows.vasp.scf.ScfWorkflow>`, runs a :doc:`ScfCalculation <../calcs/scf>`
-* :py:class:`NscfWorkflow <aiida.workflows.vasp.nscf.NscfWorkflow>`, runs a :doc:`NscfCalculation <../calcs/nscf>`
-* :py:class:`ProjectionsWorkflow <aiida.workflows.vasp.projections.ProjectionsWorkflow>`, runs an :doc:`AmnCalculation <../calcs/amn>`
-* :py:class:`WannieWannierrWorkflow <aiida.workflows.vasp.wannier.WannierWorkflow>`, runs an :doc:`WannierCalculation <../calcs/wannier>`
+* :py:class:`ScfWorkflow <aiida_vasp.workflows.scf.ScfWorkflow>`, runs a :doc:`ScfCalculation <../calcs/scf>`
+* :py:class:`NscfWorkflow <aiida_vasp.workflows.nscf.NscfWorkflow>`, runs a :doc:`NscfCalculation <../calcs/nscf>`
+* :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.projections.ProjectionsWorkflow>`, runs an :doc:`AmnCalculation <../calcs/amn>`
+* :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.wannier.WannierWorkflow>`, runs an :doc:`WannierCalculation <../calcs/wannier>`
 
 *********
 Reference
 *********
 
-.. automodule:: aiida.workflows.vasp.scf
+.. automodule:: aiida_vasp.workflows.scf
 
    .. autoclass:: ScfWorkflow
       :members: get_params_template, get_template
@@ -120,7 +120,7 @@ Reference
          wavefunctions and chargedensities nodes. Adds the scf calculation
          node to the results if successful.
 
-.. automodule:: aiida.workflows.vasp.nscf
+.. automodule:: aiida_vasp.workflows.nscf
 
    .. autoclass:: NscfWorkflow
       :members: get_params_template, get_template
@@ -136,7 +136,7 @@ Reference
          If all the expected outputs are present, adds the calculation
          node to the results.
 
-.. automodule:: aiida.workflows.vasp.projections
+.. automodule:: aiida_vasp.workflows.projections
 
    .. autoclass:: ProjectionsWorkflow
       :members: get_params_template, get_template
@@ -153,7 +153,7 @@ Reference
          If all the expected outputs are present, adds the calculation
          node to the results.
 
-.. automodule:: aiida.workflows.vasp.wannier
+.. automodule:: aiida_vasp.workflows.wannier
 
    .. autoclass:: WannierWorkflow
       :members: get_params_template, get_template
