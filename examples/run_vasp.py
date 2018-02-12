@@ -125,7 +125,7 @@ def create_params_noncol():
 
 def create_params_simple():
     param_cls = get_data_cls('parameter')
-    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-8, 'ialgo': 38, 'ismear': 0.0, 'sigma': 0.1})
+    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-8, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})
 
 
 def import_paws(folder_path, family_name):
