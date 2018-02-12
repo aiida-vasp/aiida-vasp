@@ -1,7 +1,7 @@
 aiida-core[atomi_tools]
 lxml
 ase
-scipy
+scipy < 1.0.0
 pymatgen
 click
 chainmap
