@@ -317,7 +317,7 @@ class IncarParamParser(object):
 
     @classmethod
     def parse_num_list(cls, token):
-        """Parse a list of numbers"""
+        """Parse a token into a list of numbers."""
         num_list = token.asList()
         if len(num_list[0]) == 1:
             return num_list[0]
