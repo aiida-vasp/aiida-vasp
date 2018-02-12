@@ -2,7 +2,7 @@
 WorkflowHelper Reference
 ########################
 
-.. automodule:: aiida.workflows.vasp.helper
+.. automodule:: aiida_vasp.workflows.helper
 
    .. autoclass:: WorkflowHelper
       :members:

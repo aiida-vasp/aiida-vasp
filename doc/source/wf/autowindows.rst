@@ -83,7 +83,7 @@ by parameters controlling the automatic generation of windows.
 Reference
 *********
 
-.. automodule:: aiida.workflows.vasp.autowindows
+.. automodule:: aiida_vasp.workflows.autowindows
 
    .. autoclass:: AutowindowsWorkflow
       :members: get_params_template, get_template, Helper
