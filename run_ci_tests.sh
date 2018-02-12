@@ -1,7 +1,7 @@
 set -ev
 case "$TEST_TYPE" in 
     unittests)
-        tox
+        tox && coveralls
         ;;
     pre-commit)
         pre-commit run --all-files
