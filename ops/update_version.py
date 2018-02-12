@@ -15,6 +15,7 @@ def subpath(*args):
 
 @contextlib.contextmanager
 def file_input(*args, **kwargs):
+    """Context manager for a FileInput object."""
     input_fo = fileinput.FileInput(*args, **kwargs)
     try:
         yield input_fo
@@ -40,6 +41,7 @@ class VersionUpdater(object):
                        re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
+        """Update version number in setup_json."""
         with open(self.setup_json, 'r') as setup_fo:
             setup = json.load(setup_fo)
         setup['version'] = str(self.version)

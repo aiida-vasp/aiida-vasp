@@ -37,7 +37,7 @@ class VaspCalculation(VaspCalcBase):
     wavefunctions = Input(types='vasp.wavefun', doc='wavefunction node: to speed up convergence for continuation jobs')
 
     _DEFAULT_PARAMETERS = {}
-    _ALWAYS_RETRIEVE_LIST = ['OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """add EIGENVAL, DOSCAR, and all files starting with wannier90 to

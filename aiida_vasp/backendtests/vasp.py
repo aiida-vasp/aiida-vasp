@@ -143,6 +143,7 @@ class VaspCalcTest(AiidaTestCase):
         self.assertTrue(self.calc._need_wfn())
 
     def test_need_wfn_istart(self):
+        """Check whether ISTART input parameter should be set"""
         self.calc.use_parameters(self.calc.new_parameters(dict={'istart': 0}))
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:

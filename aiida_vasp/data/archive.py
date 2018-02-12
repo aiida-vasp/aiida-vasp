@@ -38,6 +38,7 @@ class ArchiveData(Data):
             archive.add(src, arcname=dstn)
         archive.close()
 
+    # pylint: disable=arguments-differ
     def store(self, with_transaction=True):
         self._make_archive()
         del self._filelist

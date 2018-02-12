@@ -32,6 +32,7 @@ class PotParser(KeyValueParser):
 
     @classmethod
     def vrhfin(cls, vrhfin):
+        """Parse vrhfin"""
         vrhfin_list = vrhfin.split(':')
         element = vrhfin_list.pop(0).strip()
         spconf = vrhfin_list and vrhfin_list.pop(0).strip()
@@ -101,6 +102,7 @@ class PawParser(KeyValueParser):
 
     @classmethod
     def vrhfin(cls, vrhfin):
+        """Parse vrhfin"""
         vrhfin_list = vrhfin.split(':')
         element = vrhfin_list.pop(0).strip() if vrhfin_list else ''
         spconf = vrhfin_list.pop(0).strip() if vrhfin_list else ''

@@ -317,6 +317,7 @@ class IncarParamParser(object):
 
     @classmethod
     def parse_num_list(cls, token):
+        """Parse a token into a list of numbers."""
         num_list = token.asList()
         if len(num_list[0]) == 1:
             return num_list[0]
@@ -329,7 +330,7 @@ class IncarParamParser(object):
 
 
 def _incarify(value):
-    """Format value of any compatible type into the string forat appropriate for INCAR files."""
+    """Format value of any compatible type into the string format appropriate for INCAR files."""
     result = None
     if isinstance(value, (str, unicode)):
         result = value

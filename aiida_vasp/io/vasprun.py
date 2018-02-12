@@ -30,6 +30,7 @@ class VasprunParser(object):
 
     @property
     def datetime(self):
+        """Parse Date and time information into a Python datetime object."""
         date = self._i('date')
         time = self._i('time')
         dtstr = date + ' ' + time
@@ -58,17 +59,19 @@ class VasprunParser(object):
     @property
     def is_static(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion == -1
+        nsw = self.param('NSW', default=0)
+        return (ibrion == -1) or (nsw == 0)
 
     @property
     def is_md(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion not in [-1, 1, 2]
+        return ibrion == 0
 
     @property
     def is_relaxation(self):
         ibrion = self.param('IBRION', default=-1)
-        return ibrion in [1, 2]
+        nsw = self.param('NSW', default=0)
+        return (ibrion in [1, 2, 3]) and (nsw > 0)
 
     @property
     def is_sc(self):
@@ -151,10 +154,12 @@ class VasprunParser(object):
         shape.append(len(ldim))
 
         def split(string_):
+            """Splits a string based on mode in ['r', 'rc']"""
             if mode == 'r':
                 return tuple(string_.text.split())
             elif mode == 'rc':
                 return tuple([x.text.strip() for x in string_.c])
+            return None
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)

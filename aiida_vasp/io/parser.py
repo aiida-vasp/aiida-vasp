@@ -68,6 +68,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def float(cls, string_):
+        """Parse a string into an float value followed by a comment."""
         vals = string_.split()
         value = float(vals.pop(0))
         comment = ' '.join(vals)
@@ -84,6 +85,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def int(cls, string_):
+        """Parse a string into an integer value followed by a comment."""
         vals = string_.split()
         value = int(vals.pop(0))
         comment = ' '.join(vals)
@@ -100,6 +102,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def string(cls, string_):
+        """Parse a string into value and comment, assuming only the first word is the value."""
         vals = string_.split()
         value = vals.pop(0)
         comment = ' '.join(vals)
