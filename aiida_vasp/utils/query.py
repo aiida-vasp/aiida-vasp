@@ -82,10 +82,7 @@ class VaspFinder(object):
         """
         query_tool = QueryTool()
         query_tool.set_class(JobCalculation)
-        calc_list = [
-            calc for calc in query_tool.run_query()
-            if 'vasp' in str(calc.__class__)
-        ]
+        calc_list = [calc for calc in query_tool.run_query() if 'vasp' in str(calc.__class__)]
         calc_list.sort(cls.cmp_ctime)
         res = calc_list[-last:]
         res.reverse()
@@ -97,14 +94,8 @@ class VaspFinder(object):
         """Print a table of calculations with the state they are in"""
         query_tool = QueryTool()
         query_tool.set_class(JobCalculation)
-        states = [
-            'TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING',
-            'RETRIEVING'
-        ]
-        res_list = [
-            calc for calc in query_tool.run_query()
-            if cls.cstate(calc) in states
-        ]
+        states = ['TOSOBMIT', 'SUBMITTING', 'WITHSCHEDULER', 'COMPUTED', 'PARSING', 'RETRIEVING']
+        res_list = [calc for calc in query_tool.run_query() if cls.cstate(calc) in states]
         res_list.sort(cls.cmp_ctime)
         res_list.reverse()
         tab = [cls.table_element(c) for c in res_list]

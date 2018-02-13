@@ -83,12 +83,7 @@ class Input(object):
 
     def get_dict(self):
         """Create a dictionary representation of this input"""
-        ret = {
-            'valid_types': self.types,
-            'additional_parameter': self.param,
-            'linkname': self._ln,
-            'docstring': self.doc
-        }
+        ret = {'valid_types': self.types, 'additional_parameter': self.param, 'linkname': self._ln, 'docstring': self.doc}
         return ret
 
     @classmethod
@@ -106,11 +101,7 @@ class IntParam(object):
     internal parameter interfaces
     """
 
-    pmap = {
-        'default_parser': '_default_parser',
-        'input_file_name': '_INPUT_FILE_NAME',
-        'output_file_name': '_OUTPUT_FILE_NAME'
-    }
+    pmap = {'default_parser': '_default_parser', 'input_file_name': '_INPUT_FILE_NAME', 'output_file_name': '_OUTPUT_FILE_NAME'}
 
     @classmethod
     def it_filter(cls, item):
@@ -161,8 +152,7 @@ class CalcMeta(JobCalculation.__metaclass__):
         internals = dict(IntParam.map_params(classdict))
         delete.extend(IntParam.get_keylist(classdict))
         classdict['_use_methods'] = make_use_methods(inputs, bases)
-        classdict['_update_internal_params'] = make_init_internal(
-            mcs, **internals)
+        classdict['_update_internal_params'] = make_init_internal(mcs, **internals)
         for key in delete:
             classdict.pop(key)
         calc_cls = super(CalcMeta, mcs).__new__(mcs, name, bases, classdict)
@@ -188,18 +178,16 @@ class VaspCalcBase(JobCalculation):
     def max_retrieve_list(cls):
         """returns a list of all possible output files from a VASP run"""
         retrieve_list = [
-            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR',
-            'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
-            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR',
-            ['wannier90*', '.', 0], 'vasprun.xml'
+            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR', 'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
+            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR', ['wannier90*', '.', 0], 'vasprun.xml'
         ]
         return retrieve_list
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """
-        Writes the four minimum output files,
-        INCAR, POSCAR, POTCAR, KPOINTS. Delegates the
-        construction and writing / copying to write_<file> methods.
+        Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
+
+        Delegates the construction and writing / copying to write_<file> methods.
         That way, subclasses can use any form of input nodes and just
         have to implement the write_xxx method accordingly.
         Subclasses can extend by calling the super method and if neccessary

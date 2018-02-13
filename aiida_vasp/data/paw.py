@@ -3,12 +3,12 @@
 """PAW Pseudopotential data node"""
 import os
 
-from aiida.orm import Data
-from aiida.orm.querybuilder import QueryBuilder
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
+from aiida.orm import Data
+from aiida.orm.querybuilder import QueryBuilder
 
-from aiida_vasp.utils.io.potcar import PawParser as pcparser
+from aiida_vasp.io.potcar import PawParser as pcparser
 
 
 class PawData(Data):
@@ -86,14 +86,12 @@ class PawData(Data):
         from aiida.orm import Group
         from aiida.backends.utils import get_automatic_user
 
-        group, group_created = Group.get_or_create(
-            name=famname, type_string=cls.group_type)
+        group, group_created = Group.get_or_create(name=famname, type_string=cls.group_type)
 
         if group.user != get_automatic_user():
             raise UniquenessError("There is already a UpfFamily group "
                                   "with name {}, but it belongs to user {},"
-                                  " therefore you cannot modify it".format(
-                                      famname, group.user.email))
+                                  " therefore you cannot modify it".format(famname, group.user.email))
         return group, group_created
 
     @classmethod
@@ -101,13 +99,7 @@ class PawData(Data):
         """Find all paw groups containing potentials with the given attributes"""
         from aiida.orm import Group
         from aiida.backends.utils import get_automatic_user
-        params = {
-            'type_string': cls.group_type,
-            'node_attributes': {
-                'element': elements,
-                'symbol': symbols
-            }
-        }
+        params = {'type_string': cls.group_type, 'node_attributes': {'element': elements, 'symbol': symbols}}
         if user:
             params['user'] = user
         else:
@@ -121,12 +113,7 @@ class PawData(Data):
         return [i[1] for i in groups]
 
     @classmethod
-    def import_family(cls,
-                      folder,
-                      familyname=None,
-                      family_desc=None,
-                      store=True,
-                      stop_if_existing=False):
+    def import_family(cls, folder, familyname=None, family_desc=None, store=True, stop_if_existing=False):
         """Import a family from a folder like the ones distributed with VASP,
         usually named potpaw_XXX"""
         from aiida.common import aiidalogger
@@ -148,9 +135,7 @@ class PawData(Data):
         if stop_if_existing:
             for pawinfo in paw_list:
                 if not pawinfo[1]:
-                    raise ValueError("A PAW with identical MD5 to "
-                                     '' + pawinfo[2] + " cannot be added with "
-                                     "stop_if_existing")
+                    raise ValueError("A PAW with identical MD5 to " '' + pawinfo[2] + " cannot be added with " "stop_if_existing")
 
         for pawinfo in paw_list:
             paw = pawinfo[0]
@@ -159,12 +144,10 @@ class PawData(Data):
             if store:
                 if created:
                     paw.store_all()
-                    aiidalogger.debug("New node %s created for file %s",
-                                      paw.uuid, path)
+                    aiidalogger.debug("New node %s created for file %s", paw.uuid, path)
                     fupl.append(path)
                 else:
-                    aiidalogger.debug("Reusing node %s for file %s", paw.uuid,
-                                      path)
+                    aiidalogger.debug("Reusing node %s for file %s", paw.uuid, path)
 
         if store:
             if group_created:
@@ -184,8 +167,7 @@ class PawData(Data):
             try:
                 subfolder_path = os.path.join(family_path, pawf)
                 potcar_path = os.path.join(subfolder_path, 'POTCAR')
-                if os.path.isdir(subfolder_path) and os.path.exists(
-                        potcar_path):
+                if os.path.isdir(subfolder_path) and os.path.exists(potcar_path):
                     ffound.append(pawf)
                     paw, paw_created = cls.get_or_create(subfolder_path)
                     # ~ paw._set_attr('family', famname)
@@ -193,16 +175,13 @@ class PawData(Data):
                     # enforce group-wise uniqueness of symbols
                     in_group = False
                     if not group_created:
-                        in_group = bool(
-                            cls.load_paw(
-                                group=group, symbol=paw.symbol, silent=True))
+                        in_group = bool(cls.load_paw(group=group, symbol=paw.symbol, silent=True))
                     if not in_group:
                         paw_list.append((paw, paw_created, pawf))
             except Exception:  # pylint: disable=broad-except
                 import sys
                 err = sys.exc_info()[1]
-                print 'WARNING: skipping ' + os.path.abspath(
-                    os.path.join(family_path, pawf))
+                print 'WARNING: skipping ' + os.path.abspath(os.path.join(family_path, pawf))
                 print '  ' + err.__class__.__name__ + ': ' + err.message
         return paw_list
 
@@ -220,8 +199,7 @@ class PawData(Data):
             potcar_path = pawpath
             isdir = False
         md5new = md5_file(potcar_path)
-        paw = cls.query(
-            dbattributes__key='md5', dbattributes__tval=md5new).first()
+        paw = cls.query(dbattributes__key='md5', dbattributes__tval=md5new).first()
         created = False
         if not paw:
             if isdir:
@@ -320,5 +298,4 @@ class PawData(Data):
             sym = self.get_attr('symbol')
         except AttributeError:
             sym = '<symbol: (unset)>'
-        return '<PawData: {s} uuid: {u} (pk: {p})>'.format(
-            s=sym, u=self.uuid, p=self.pk)
+        return '<PawData: {s} uuid: {u} (pk: {p})>'.format(s=sym, u=self.uuid, p=self.pk)

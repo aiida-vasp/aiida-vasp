@@ -1,0 +1,7 @@
+tabulate
+aiida-core
+lxml
+click
+chainmap
+six
+pyparsing

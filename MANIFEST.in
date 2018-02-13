@@ -1,3 +1,4 @@
 include setup.json
 recursive-include aiida_vasp/backendtests/data *
 recursive-include aiida_vasp/backendtests/LDA *
+recursive-include aiida_vasp/test_data *

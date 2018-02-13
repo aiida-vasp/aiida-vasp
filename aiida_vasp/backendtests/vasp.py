@@ -26,8 +26,7 @@ class VaspCalcTest(AiidaTestCase):
         self.structure.append_atom(position=[0, 0, 0], symbols='In')
         self.structure.append_atom(position=[.25, .25, .25], symbols='As')
 
-        cifpath = realpath(
-            join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
+        cifpath = realpath(join(dirname(__file__), 'data', 'EntryWithCollCode43360.cif'))
         self.cif = DataFactory('cif').get_or_create(cifpath)[0]
 
     def test_inputs(self):
@@ -64,15 +63,10 @@ class VaspCalcTest(AiidaTestCase):
         concatenate two paws into a tmp POTCAR and check wether
         each is contained in the result
         """
-        self.calc.use_parameters(
-            self.calc.new_parameters(dict={
-                'System': 'Test'
-            }))
+        self.calc.use_parameters(self.calc.new_parameters(dict={'System': 'Test'}))
         self.calc.use_structure(self.structure)
-        self.calc.use_paw(
-            self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
-        self.calc.use_paw(
-            self.calc.load_paw(family='TEST', symbol='As'), kind='As')
+        self.calc.use_paw(self.calc.load_paw(family='TEST', symbol='In_d'), kind='In')
+        self.calc.use_paw(self.calc.load_paw(family='TEST', symbol='As'), kind='As')
         dst = tempfile.mkstemp()[1]
         self.calc.write_potcar(self.calc.get_inputs_dict(), dst)
         with open(dst, 'r') as potcar:
@@ -122,11 +116,7 @@ class VaspCalcTest(AiidaTestCase):
 
     def test_need_kp_false(self):
         """Test a case where kpoints input node is not required"""
-        self.calc.use_parameters(
-            self.calc.new_parameters(dict={
-                'kspacing': 0.5,
-                'kgamma': True
-            }))
+        self.calc.use_parameters(self.calc.new_parameters(dict={'kspacing': 0.5, 'kgamma': True}))
         self.assertFalse(self.calc._need_kp())
 
     def test_need_kp_true(self):
@@ -140,16 +130,10 @@ class VaspCalcTest(AiidaTestCase):
     def test_need_chgd_icharg(self):
         """Check ICHARG input parameter should be set"""
         for i in [0, 2, 4, 10, 12]:
-            self.calc.use_parameters(
-                self.calc.new_parameters(dict={
-                    'icharg': i
-                }))
+            self.calc.use_parameters(self.calc.new_parameters(dict={'icharg': i}))
             self.assertFalse(self.calc._need_chgd())
         for i in [1, 11]:
-            self.calc.use_parameters(
-                self.calc.new_parameters(dict={
-                    'icharg': i
-                }))
+            self.calc.use_parameters(self.calc.new_parameters(dict={'icharg': i}))
             self.assertTrue(self.calc._need_chgd())
 
     def test_need_wfn_none(self):
@@ -159,16 +143,12 @@ class VaspCalcTest(AiidaTestCase):
         self.assertTrue(self.calc._need_wfn())
 
     def test_need_wfn_istart(self):
+        """Check whether ISTART input parameter should be set"""
         self.calc.use_parameters(self.calc.new_parameters(dict={'istart': 0}))
         self.assertFalse(self.calc._need_wfn())
         for i in [1, 2, 3]:
-            self.calc.use_parameters(
-                self.calc.new_parameters(dict={
-                    'istart': i
-                }))
-            self.assertTrue(
-                self.calc._need_wfn(),
-                msg='_need_wfn not True for istart=%s' % i)
+            self.calc.use_parameters(self.calc.new_parameters(dict={'istart': i}))
+            self.assertTrue(self.calc._need_wfn(), msg='_need_wfn not True for istart=%s' % i)
 
     def test_get_paw_linkname(self):
         self.assertEqual(self.calc._get_paw_linkname('In'), 'paw_In')
@@ -182,21 +162,16 @@ class VaspCalcTest(AiidaTestCase):
         self.assertEqual(paw_a.pk, paw_b.pk)
 
     def test_new_setting(self):
-        self.assertIsInstance(self.calc.new_parameters(),
-                              DataFactory('parameter'))
+        self.assertIsInstance(self.calc.new_parameters(), DataFactory('parameter'))
 
     def test_new_structure(self):
-        self.assertIsInstance(self.calc.new_structure(),
-                              DataFactory('structure'))
+        self.assertIsInstance(self.calc.new_structure(), DataFactory('structure'))
 
     def test_new_kpoints(self):
-        self.assertIsInstance(self.calc.new_kpoints(),
-                              DataFactory('array.kpoints'))
+        self.assertIsInstance(self.calc.new_kpoints(), DataFactory('array.kpoints'))
 
     def test_new_charge_density(self):
-        self.assertIsInstance(self.calc.new_charge_density(),
-                              DataFactory('vasp.chargedensity'))
+        self.assertIsInstance(self.calc.new_charge_density(), DataFactory('vasp.chargedensity'))
 
     def test_new_wavefunctions(self):
-        self.assertIsInstance(self.calc.new_wavefunctions(),
-                              DataFactory('vasp.wavefun'))
+        self.assertIsInstance(self.calc.new_wavefunctions(), DataFactory('vasp.wavefun'))

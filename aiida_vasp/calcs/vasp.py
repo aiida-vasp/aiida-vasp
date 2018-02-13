@@ -1,7 +1,7 @@
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""VASP - Calculation: Generic run using pymatgen for file preparation"""
+"""VASP - Calculation: Generic run using pymatgen_aiida for file preparation"""
 try:
     from collections import ChainMap
 except ImportError:
@@ -9,7 +9,9 @@ except ImportError:
 
 from aiida.orm import DataFactory
 
-from .base import VaspCalcBase, Input
+from aiida_vasp.calcs.base import VaspCalcBase, Input
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.io.incar import IncarIo
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
@@ -28,34 +30,24 @@ class VaspCalculation(VaspCalcBase):
     structure = Input(types=['structure', 'cif'])
     paw = Input(types='vasp.paw', param='kind')
     kpoints = Input(types='array.kpoints')
-    settings = Input(
-        types='parameter', doc='Additional settings for the calculation.')
+    settings = Input(types='parameter', doc='Additional settings for the calculation.')
     charge_density = Input(
         types='vasp.chargedensity',
-        doc=
-        'chargedensity node: should be obtained from the output of a selfconsistent SCF calculation (written to CHGCAR)'
-    )
-    wavefunctions = Input(
-        types='vasp.wavefun',
-        doc='wavefunction node: to speed up convergence for continuation jobs')
+        doc='chargedensity node: should be obtained from the output of a selfconsistent SCF calculation (written to CHGCAR)')
+    wavefunctions = Input(types='vasp.wavefun', doc='wavefunction node: to speed up convergence for continuation jobs')
 
     _DEFAULT_PARAMETERS = {}
-    _ALWAYS_RETRIEVE_LIST = [
-        'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)
-    ]
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """add EIGENVAL, DOSCAR, and all files starting with wannier90 to
         the list of files to be retrieved."""
-        calcinfo = super(VaspCalculation, self)._prepare_for_submission(
-            tempfolder, inputdict)
+        calcinfo = super(VaspCalculation, self)._prepare_for_submission(tempfolder, inputdict)
         try:
-            additional_retrieve_list = inputdict['settings'].get_attr(
-                'ADDITIONAL_RETRIEVE_LIST')
+            additional_retrieve_list = inputdict['settings'].get_attr('ADDITIONAL_RETRIEVE_LIST')
         except (KeyError, AttributeError):
             additional_retrieve_list = []
-        calcinfo.retrieve_list = list(
-            set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
+        calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
         return calcinfo
 
     def verify_inputs(self, inputdict, *args, **kwargs):
@@ -75,10 +67,7 @@ class VaspCalculation(VaspCalcBase):
         set attributes prior to storing
         """
         super(VaspCalculation, self)._prestore()
-        self._set_attr(
-            'elements',
-            ordered_unique_list(
-                self.inp.structure.get_ase().get_chemical_symbols()))
+        self._set_attr('elements', ordered_unique_list(self.inp.structure.get_ase().get_chemical_symbols()))
 
     @classmethod
     def _get_paw_linkname(cls, kind):
@@ -87,8 +76,7 @@ class VaspCalculation(VaspCalcBase):
 
     @property
     def _parameters(self):
-        all_parameters = ChainMap(self.inp.parameters.get_dict(),
-                                  self._DEFAULT_PARAMETERS)
+        all_parameters = ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
         return {k.lower(): v for k, v in all_parameters.items()}
 
     @property
@@ -105,8 +93,7 @@ class VaspCalculation(VaspCalcBase):
         needs 'parameters' input to be set
         (py:method::VaspCalculation.use_parameters)
         """
-        return not bool('kspacing' in self._parameters
-                        and 'kgamma' in self._parameters)
+        return not bool('kspacing' in self._parameters and 'kgamma' in self._parameters)
 
     def _need_chgd(self):
         """
@@ -155,12 +142,9 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        from ..utils.io.incar import dict_to_incar
-        with open(dst, 'w') as incar:
-            incar.write(
-                dict_to_incar(
-                    ChainMap(self.inp.parameters.get_dict(),
-                             self._DEFAULT_PARAMETERS)))
+        incar_dict = ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
+        incar_io = IncarIo(incar_dict=incar_dict)
+        incar_io.write(dst)
 
     def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
         """
@@ -170,9 +154,14 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        from ase.io.vasp import write_vasp
-        with open(dst, 'w') as poscar:
-            write_vasp(poscar, self.inp.structure.get_ase(), vasp5=True)
+        from pymatgen.io.vasp.inputs import Poscar
+        structure = self.inp.structure
+        if not hasattr(structure, 'get_pymatgen'):
+            structure = get_data_node('structure', ase=structure.get_ase())
+        pmg_structure = structure.get_pymatgen()
+        pmg_structure.sort()
+        writer = Poscar(pmg_structure)
+        writer.write_file(dst)
 
     def write_potcar(self, inputdict, dst):
         """
@@ -215,11 +204,7 @@ class VaspCalculation(VaspCalcBase):
         """Write kpoints in mesh format to the destination file `dst`"""
         kpoints = self.inp.kpoints
         mesh, offset = kpoints.get_kpoints_mesh()
-        kpmtemp = ("Automatic mesh\n"
-                   "0\n"
-                   "Gamma\n"
-                   "{N[0]} {N[1]} {N[2]}\n"
-                   "{s[0]} {s[1]} {s[2]}\n")
+        kpmtemp = ("Automatic mesh\n" "0\n" "Gamma\n" "{N[0]} {N[1]} {N[2]}\n" "{s[0]} {s[1]} {s[2]}\n")
         with open(dst, 'w') as kpoints:
             kps = kpmtemp.format(N=mesh, s=offset)
             kpoints.write(kps)
@@ -234,15 +219,8 @@ class VaspCalculation(VaspCalcBase):
             weights = [1.] * kpl.shape[0]
         kpoint_weights = list(zip(kpl, weights))
 
-        kpls = '\n'.join([
-            '{k[0]} {k[1]} {k[2]} {w}'.format(k=k, w=w)
-            for k, w in kpoint_weights
-        ])
-        kps = ("Explicit list\n"
-               "{N}\n"
-               "Direct\n"
-               "{klist}\n").format(
-                   N=len(kpoint_weights), klist=kpls)
+        kpls = '\n'.join(['{k[0]} {k[1]} {k[2]} {w}'.format(k=k, w=w) for k, w in kpoint_weights])
+        kps = ("Explicit list\n" "{N}\n" "Direct\n" "{klist}\n").format(N=len(kpoint_weights), klist=kpls)
         with open(dst, 'w') as kpoints:
             kpoints.write(kps)
 

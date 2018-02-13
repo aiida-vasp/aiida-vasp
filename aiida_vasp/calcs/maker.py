@@ -46,26 +46,31 @@ class VaspMaker(object):
     :keyword charge_density: chargedensity node from a previously run
         calculation
     :type charge_density: ChargedensityData
+
     :keyword wavefunctions: wavefunctions node from a previously run
         calculation
     :type wavefunctions: WavefunData
+
     :keyword array.KpointsData kpoints: kpoints node to use for input
+
     :keyword str paw_family: The name of a PAW family stored in the db
-    :keyword str paw_map: A dictionary mapping element symbols -> PAW
-        symbols
+
+    :keyword str paw_map: A dictionary mapping element symbols -> PAW symbols
+
     :keyword str label: value for the calculation label
-    :keyword str computer: computer name, defaults to code's if code is
-        given
-    :keyword str code: code name, if any Calculations are given, defaults
-        to their code
+
+    :keyword str computer: computer name, defaults to code's if code is given
+
+    :keyword str code: code name, if any Calculations are given, defaults to their code
+
     :keyword str resources: defaults to copy_from.get_resources() or None
-    :keyword str queue: defaults to queue from given calculation, if any,
-        or None
+
+    :keyword str queue: defaults to queue from given calculation, if any, or None
+
 
     .. py:method:: new()
 
-        :returns: an instance of :py:attr:`calc_cls`, initialized with the data
-        held by the VaspMaker
+        :returns: an instance of :py:attr:`calc_cls`, initialized with the data held by the VaspMaker
 
     .. py:method:: add_parameters(**kwargs)
 
@@ -141,8 +146,7 @@ class VaspMaker(object):
         self.label = kwargs.get('label', 'unlabeled')
         self._computer = kwargs.get('computer')
         self._code = kwargs.get('code')
-        self._parameters = kwargs.get('parameters',
-                                      self.calc_cls.new_parameters())
+        self._parameters = kwargs.get('parameters', self.calc_cls.new_parameters())
         self._set_default_structure(kwargs.get('structure'))
         self._paw_fam = kwargs.get('paw_family', 'PBE')
         self._paw_def = kwargs.get('paw_map')
@@ -186,8 +190,7 @@ class VaspMaker(object):
         elif isinstance(structure, (str, unicode)):
             structure = os.path.abspath(os.path.expanduser(structure))
             if os.path.splitext(structure)[1] == '.cif':
-                self._structure = DataFactory('cif').get_or_create(structure)[
-                    0]
+                self._structure = DataFactory('cif').get_or_create(structure)[0]
             elif os.path.basename(structure) == 'POSCAR':
                 from ase.io.vasp import read_vasp
                 atoms = read_vasp(os.path.abspath(structure))
@@ -205,8 +208,7 @@ class VaspMaker(object):
         self.rewrite_parameters(istart=1, icharg=11)
         self.wavefunctions = prev.out.wavefunctions
         self.charge_density = prev.out.charge_density
-        self._wannier_parameters = out.get('wannier_parameters',
-                                           self._wannier_parameters)
+        self._wannier_parameters = out.get('wannier_parameters', self._wannier_parameters)
         self._wannier_data = out.get('wannier_data', self.wannier_data)
 
     def new(self):
@@ -366,6 +368,7 @@ class VaspMaker(object):
             self._resources['num_mpiprocs_per_machine'] = val[1]
 
     def add_parameters(self, **kwargs):
+        """Add additional parameters to the generated calculation, does not override existing parameters."""
         if self._parameters.pk:
             self._parameters = self._parameters.copy()
         for key, value in kwargs.iteritems():
@@ -385,26 +388,21 @@ class VaspMaker(object):
         return conflict
 
     def _set_default_paws(self):
+        """Set default POTCAR potentials from the given mapping."""
         for key in self.elements:
             if key not in self._paws:
                 if self._paw_def is None:
-                    raise ValueError(
-                        "The 'paw_map' keyword is required. Pre-defined potential "
-                        "mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'."
-                    )
+                    raise ValueError("The 'paw_map' keyword is required. Pre-defined potential "
+                                     "mappings are defined in 'aiida.tools.codespecific.vasp.default_paws'.")
                 try:
-                    paw = self.calc_cls.Paw.load_paw(
-                        family=self._paw_fam, symbol=self._paw_def[key])[0]
+                    paw = self.calc_cls.Paw.load_paw(family=self._paw_fam, symbol=self._paw_def[key])[0]
                 except KeyError:
-                    raise ValueError(
-                        "The given 'paw_map' does not contain a mapping for element '{}'".
-                        format(key))
+                    raise ValueError("The given 'paw_map' does not contain a mapping for element '{}'".format(key))
                 self._paws[key] = paw
 
     @property
     def elements(self):
-        return ordered_unique_list(
-            self._structure.get_ase().get_chemical_symbols())
+        return ordered_unique_list(self._structure.get_ase().get_chemical_symbols())
 
     @staticmethod
     def compare_pk(node_a, node_b):
@@ -473,6 +471,7 @@ class VaspMaker(object):
 
     @property
     def n_elec(self):
+        """Get the number of electrons based on the chemical symbols."""
         res = 0
         for k in self._structure.get_ase().get_chemical_symbols():
             res += self._paws[k].valence

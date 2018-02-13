@@ -36,8 +36,7 @@ class ScfWorkflow(Workflow):
         calc.store_all()
         calc.set_extras(params.get('extras'))
         self.attach_calculation(calc)
-        self.append_to_report(
-            self.helper._calc_start_msg('scf VASP run', calc))
+        self.append_to_report(self.helper._calc_start_msg('scf VASP run', calc))
         self.next(self.end)
 
     @Workflow.step
@@ -51,8 +50,7 @@ class ScfWorkflow(Workflow):
             self.add_result('calc', calc)
             self.append_to_report('Added the scf calculation as a result')
         else:
-            self.append_to_report(
-                self.helper._calc_invalid_outs_msg(calc, output_links))
+            self.append_to_report(self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
     def set_params(self, params, force=False):

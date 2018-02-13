@@ -1,3 +1,5 @@
+notifications:
+    email: false
 dist: trusty
 language: python
 python: 2.7
@@ -15,10 +17,10 @@ before_install:  # copied from pgtest's travis.yml
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
-    - pip install -e git+https://github.com/DropD/aiida_core@plugin-fixtures#egg=aiida-core
+    - pip install -e git+https://github.com/aiidateam/aiida_core#egg=aiida-core
     - pip install -e .[regen_default_paws,graphs,dev]
     - pip install tox-travis
 env:
     - TEST_TYPE="pre-commit"
     - TEST_TYPE="unittests"
-script: tox
+script: ./run_ci_tests.sh

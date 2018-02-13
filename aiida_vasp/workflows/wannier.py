@@ -48,16 +48,14 @@ class WannierWorkflow(Workflow):
 
         param_cls = DataFactory('parameter')
         mods = param_cls(dict=params['parameters'])
-        _, mod_d = modify_wannier_parameters_inline(
-            original=old_win, modifications=mods)
+        _, mod_d = modify_wannier_parameters_inline(original=old_win, modifications=mods)
         win = mod_d['wannier_parameters']
         calc = self.get_wannier_calc(win, wdat)
 
         calc.store_all()
         calc.set_extras(params.get('extras', {}))
         self.attach_calculation(calc)
-        self.append_to_report(
-            self.helper._calc_start_msg('wannier.x calculation', calc))
+        self.append_to_report(self.helper._calc_start_msg('wannier.x calculation', calc))
         self.next(self.end)
 
     @Workflow.step
@@ -73,11 +71,9 @@ class WannierWorkflow(Workflow):
                 self.add_result('bands', calc.out.bands)
             if calc.get_outputs_dict().get('tb_model'):
                 self.add_result('tb_model', calc.out.tb_model)
-            self.append_to_report(
-                'Added the wannier calculation and outputs as results.')
+            self.append_to_report('Added the wannier calculation and outputs as results.')
         else:
-            self.append_to_report(
-                self.helper._calc_invalid_outs_msg(calc, output_links))
+            self.append_to_report(self.helper._calc_invalid_outs_msg(calc, output_links))
         self.next(self.exit)
 
     @classmethod
@@ -87,34 +83,23 @@ class WannierWorkflow(Workflow):
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl.pop('vasp_code')
         tmpl.pop('kpoints')
-        tmpl['continue_from'] = (
-            'finished calculation, with a wannier_data link'
-            'in the output and a wannier_parameters link in input\n'
-            'or a dict with keys [parameters, data], and uuids for values')
-        tmpl[
-            'wannier_code'] = 'code in the database for running the wannier.x program'
+        tmpl['continue_from'] = ('finished calculation, with a wannier_data link'
+                                 'in the output and a wannier_parameters link in input\n'
+                                 'or a dict with keys [parameters, data], and uuids for values')
+        tmpl['wannier_code'] = 'code in the database for running the wannier.x program'
         tmpl['parameters'] = {
             '#comment': ('dict with wannier90.win keys, used to update '
                          'the original wannier_parameters keys, see examples'),
-            '#bands_plot':
-            'True | False',
-            '#hr_plot':
-            'True | False',
-            '#dis_win_min':
-            'int',
-            '#dis_win_max':
-            'int',
-            '#dis_froz_min':
-            'int',
-            '#dis_froz_max':
-            'int',
-            '#dis_num_iter':
-            'int',
+            '#bands_plot': 'True | False',
+            '#hr_plot': 'True | False',
+            '#dis_win_min': 'int',
+            '#dis_win_max': 'int',
+            '#dis_froz_min': 'int',
+            '#dis_froz_max': 'int',
+            '#dis_num_iter': 'int',
             '#kpoint_path': [[]],
-            '#projections':
-            'DO NOT SET?, use an ProjectionsWorkflow for that',
-            '#use_bloch_phases':
-            'False | True'
+            '#projections': 'DO NOT SET?, use an ProjectionsWorkflow for that',
+            '#use_bloch_phases': 'False | True'
         }
         return tmpl
 

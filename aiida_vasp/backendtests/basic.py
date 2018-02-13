@@ -1,11 +1,11 @@
 """Test Creation and preparation of BasicCalculation"""
-import tempfile
 import os
+import tempfile
 
 from aiida.backends.testbase import AiidaTestCase
 from aiida.orm import CalculationFactory, Code, DataFactory
-from aiida_vasp.utils.io.incar import IncarParser
 
+from aiida_vasp.io.incar import IncarIo
 from .common import Common
 
 
@@ -69,9 +69,9 @@ class BasicCalcTest(AiidaTestCase):
         calc = self._get_calc('s', 'm')
         inp = calc.get_inputs_dict()
         calc.write_incar(inp, self.tmpf)
-        icp = IncarParser(self.tmpf)
+        icp = IncarIo(self.tmpf)
         for key, value in calc.inp.parameters.get_dict().iteritems():
-            self.assertIn(str(value), icp.result[key])
+            self.assertIn(str(value), icp.incar_dict[key])
 
     def test_write_poscar_structure(self):
         """Check that POSCAR is written when the input is a structure node"""
@@ -101,7 +101,7 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_write_kpoints_mesh(self):
         """Check that KPOINTS in mesh format is written correctly"""
-        from aiida_vasp.utils.io.kpoints import KpParser
+        from aiida_vasp.io.kpoints import KpParser
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
@@ -110,7 +110,7 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_write_kpoints_list(self):
         """Check that KPOINTS in list format is written correctly"""
-        from aiida_vasp.utils.io.kpoints import KpParser
+        from aiida_vasp.io.kpoints import KpParser
         calc = self._get_calc('c', 'l')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
@@ -154,6 +154,4 @@ class BasicCalcTest(AiidaTestCase):
 
     def test_load_paw(self):
         calc = self.calc_cls()
-        calc.use_paw(
-            calc.load_paw(symbol=self.paw_in.symbol, family='TEST'),
-            kind='test')
+        calc.use_paw(calc.load_paw(symbol=self.paw_in.symbol, family='TEST'), kind='test')

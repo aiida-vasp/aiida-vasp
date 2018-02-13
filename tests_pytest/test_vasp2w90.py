@@ -15,8 +15,7 @@ def test_vasp2w90(
     from aiida.orm.data.base import List
 
     process, inputs = get_gaas_process_inputs(
-        calculation_string='vasp.vasp2w90',
-        parameters={
+        calculation_string='vasp.vasp2w90', parameters={
             'ncore': 1,
             'isym': -1,
             'icharg': 11,
@@ -40,9 +39,5 @@ def test_vasp2w90(
     inputs.wannier_projections = wannier_projections
 
     output, pid = run(process, _return_pid=True, **inputs)
-    assert all(key in output
-               for key in [
-                   'retrieved', 'kpoints', 'wannier_parameters',
-                   'wannier_kpoints', 'wannier_projections'
-               ])
+    assert all(key in output for key in ['retrieved', 'kpoints', 'wannier_parameters', 'wannier_kpoints', 'wannier_projections'])
     assert_finished(pid)

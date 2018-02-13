@@ -1,14 +1,13 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 import numpy as np
-
 from aiida.orm import DataFactory
 
+from aiida_vasp.io.doscar import DosParser
+from aiida_vasp.io.eigenval import EigParser
+from aiida_vasp.io.kpoints import KpParser
+from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.utils.io.eigenval import EigParser
-from aiida_vasp.utils.io.vasprun import VasprunParser
-from aiida_vasp.utils.io.doscar import DosParser
-from aiida_vasp.utils.io.kpoints import KpParser
 
 
 class VaspParser(BaseParser):
@@ -29,9 +28,7 @@ class VaspParser(BaseParser):
             return self.result(success=False)
         outcar = self.get_file('OUTCAR')
         if not outcar:
-            self.logger.error(
-                'OUTCAR not found, ' +
-                'look at the scheduler output for troubleshooting')
+            self.logger.error('OUTCAR not found, ' + 'look at the scheduler output for troubleshooting')
             return self.result(success=False)
 
         self.vrp = self.read_run()
@@ -99,8 +96,7 @@ class VaspParser(BaseParser):
             for i, name in enumerate(vrp.pdos.dtype.names[1:]):
                 num_spins = vrp.pdos.shape[1]
                 # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-                cur = dcp.pdos[:, :, i + 1:i + 1 + num_spins].transpose(
-                    0, 2, 1)
+                cur = dcp.pdos[:, :, i + 1:i + 1 + num_spins].transpose(0, 2, 1)
                 cond = vrp.pdos[name] < 0.1
                 pdos[name] = np.where(cond, cur, vrp.pdos[name])
             dosnode.set_array('pdos', pdos)
@@ -117,13 +113,13 @@ class VaspParser(BaseParser):
 
     def read_cont(self):
         '''read CONTCAR for output structure'''
-        from ase.io.vasp import read_vasp
+        from ase.io import read
         structure = DataFactory('structure')()
         cont = self.get_file('CONTCAR')
         if not cont:
             self.logger.info('CONTCAR not found!')
             return None
-        structure.set_ase(read_vasp(cont))
+        structure.set_ase(read(cont, format='vasp'))
         return structure
 
     def read_eigenval(self):
@@ -161,11 +157,9 @@ class VaspParser(BaseParser):
         if self._calc.inp.kpoints.labels:
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
-            bsnode.set_kpoints(
-                kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+            bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         bsnode.set_bands(bands, occupations=self.vrp.occupations)
-        kpout.set_kpoints(
-            kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+        kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         return bsnode, kpout, structure
 
     def read_ibzkpt(self):
@@ -176,8 +170,7 @@ class VaspParser(BaseParser):
             return None
         kpp = KpParser(ibz)
         kpout = DataFactory('array.kpoints')()
-        kpout.set_kpoints(
-            kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
+        kpout.set_kpoints(kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
         return kpout
 
     def get_chgcar(self):

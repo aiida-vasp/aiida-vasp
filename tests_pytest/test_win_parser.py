@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from aiida_vasp.utils.io.win import WinParser
+from aiida_vasp.io.win import WinParser
 
 
 @pytest.fixture(params=['0.win', '1.win'])

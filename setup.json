@@ -27,7 +27,8 @@
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
-            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser", 
+            "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
             "vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
@@ -48,7 +49,8 @@
             "coverage", 
             "pytest", 
             "pytest-cov", 
-            "pgtest"
+            "pgtest >= 1.1.0", 
+            "packaging"
         ], 
         "graphs": [
             "matplotlib"
@@ -67,10 +69,13 @@
     "install_requires": [
         "aiida-core[atomic_tools]", 
         "ase", 
+        "scipy", 
         "pymatgen", 
         "subprocess32", 
         "click", 
-        "chainmap"
+        "chainmap", 
+        "six", 
+        "pyparsing"
     ], 
     "keywords": "vasp aiida wannier90 workflows", 
     "license": "MIT License, see LICENSE.txt file.", 

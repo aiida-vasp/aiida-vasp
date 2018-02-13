@@ -4,12 +4,9 @@ import requests
 
 VERSION = {
     'latest': {
-        'version':
-        '5.2',
-        'url':
-        'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_PAW_potentials_DFT_calculations_using_vasp_5_2.html',
-        'gw-url':
-        'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_GW_PAW_potentials_vasp_5_2.html'
+        'version': '5.2',
+        'url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_PAW_potentials_DFT_calculations_using_vasp_5_2.html',
+        'gw-url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_GW_PAW_potentials_vasp_5_2.html'
     }
 }
 
@@ -87,12 +84,8 @@ if __name__ == '__main__':
     DEF_GW = get_recommendations(use_gw=True)
     with open('default_paws.py', 'w') as defaults:
         defaults.write('lda = {\n')
-        defaults.writelines(
-            ['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.iteritems()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines([
-            '"{}": "{}",\n'.format(k, v.replace('_GW', ''))
-            for k, v in DEF_GW.iteritems()
-        ])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.iteritems()])
         defaults.write('}\n\n')

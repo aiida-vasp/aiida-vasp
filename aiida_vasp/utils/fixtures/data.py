@@ -1,12 +1,14 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import os
-import shutil
+from collections import OrderedDict
 
 import numpy
 import pytest
+from pymatgen.io.vasp import Poscar
 
-from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
+from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.io.incar import IncarIo
 
 
 @pytest.fixture(scope='session')
@@ -39,14 +41,8 @@ def localhost(aiida_env, localhost_dir):
 
 @pytest.fixture()
 def vasp_params(aiida_env):
-    from aiida.orm import DataFactory
-
-    return DataFactory('parameter')(dict={
-        'gga': 'PE',
-        'gga_compat': False,
-        'lorbit': 11,
-        'sigma': 0.5
-    })
+    incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    return incar_io.get_param_node()
 
 
 @pytest.fixture()
@@ -59,10 +55,7 @@ def paws(aiida_env):
         familyname='TEST',
         family_desc='test data',
     )
-    paw_nodes = {
-        'In': DataFactory('vasp.paw').load_paw(element='In')[0],
-        'As': DataFactory('vasp.paw').load_paw(element='As')[0]
-    }
+    paw_nodes = {'In': DataFactory('vasp.paw').load_paw(element='In')[0], 'As': DataFactory('vasp.paw').load_paw(element='As')[0]}
     return paw_nodes
 
 
@@ -80,7 +73,20 @@ def vasp_structure(request, aiida_env):
         structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
+        structure.append_atom(position=[.5, .5, .5], symbols='In')
+        structure.append_atom(position=[.75, .75, .75], symbols='As')
     return structure
+
+
+@pytest.fixture()
+def vasp_structure_poscar(vasp_structure):
+    """Fixture: Well formed POSCAR contents"""
+    ase_structure = vasp_structure.get_ase()
+    aiida_structure = get_data_node('structure', ase=ase_structure)
+    pmg_structure = aiida_structure.get_pymatgen()
+    pmg_structure.sort()
+    pmg_poscar = Poscar(pmg_structure)
+    return pmg_poscar
 
 
 @pytest.fixture(params=['mesh', 'list'])
@@ -139,7 +145,7 @@ def vasp_wavecar(aiida_env):
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read()
+        yield reference_incar_fo.read().strip()
 
 
 @pytest.fixture()
@@ -149,8 +155,7 @@ def ref_retrieved_nscf():
     from aiida_vasp.backendtests.common import subpath
     retrieved = DataFactory('folder')()
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
-        retrieved.add_path(
-            subpath('data', 'retrieved_nscf', 'path', fname), '')
+        retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
 
 
