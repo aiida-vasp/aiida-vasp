@@ -1,5 +1,5 @@
 tabulate
-aiida-core[atomic_tools]
+aiida-core
 lxml
 click
 chainmap
