@@ -62,6 +62,7 @@ def test_file_contents_equivalence(aiida_env):
 
 def test_multi_round_trip(potcar_family, tmpdir):
     """Write multiple POTCAR potentials to a file and recover the nodes stored in the db."""
+    test_dir = tmpdir.mkdir('round_trip')
     potcar_cls = get_data_class('vasp.potcar')
     multi = MultiPotcarIo(
         potcar_cls.get_potcars_dict(elements=['As', 'Ga', 'In'], family_name=potcar_family, mapping={
@@ -69,7 +70,7 @@ def test_multi_round_trip(potcar_family, tmpdir):
             'As': 'As',
             'Ga': 'Ga'
         }).values())
-    tempfile = tmpdir.join('POTCAR')
+    tempfile = test_dir.join('POTCAR')
     multi.write(tempfile)
     recovered = multi.read(tempfile)
     uuids_start = set([potcar.node.uuid for potcar in multi.potcars])

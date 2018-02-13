@@ -198,34 +198,36 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
 
 def test_export_family_folder(fresh_aiida_env, potcar_family, tmpdir):
     """Test exporting to folder."""
+    export_dir = tmpdir.mkdir('export')
     potcar_cls = get_data_class('vasp.potcar')
 
-    potcar_cls.export_family_folder(potcar_family, path=tmpdir, dry_run=True)
-    assert not tmpdir.listdir()
+    potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=True)
+    assert not export_dir.listdir()
 
-    files = potcar_cls.export_family_folder(potcar_family, path=tmpdir, dry_run=False)
-    exportdir = tmpdir.join(potcar_family)
-    subdirs = set(str(subpath.basename) for subpath in exportdir.listdir())
+    files = potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=False)
+    family_dir = export_dir.join(potcar_family)
+    subdirs = set(str(subpath.basename) for subpath in family_dir.listdir())
     assert set(['Ga', 'As', 'In_d']).issubset(subdirs)
-    potcar_ga = exportdir.join('Ga', 'POTCAR')
+    potcar_ga = family_dir.join('Ga', 'POTCAR')
     assert str(potcar_ga) in files
     assert len(files) >= 3
     assert potcar_ga.isfile()
     assert 'TITEL' in potcar_ga.read()
 
-    new_dir = 'new_dir'
-    potcar_cls.export_family_folder(potcar_family, path=tmpdir.join(new_dir), dry_run=False)
-    assert tmpdir.join(new_dir).exists()
+    new_dir = export_dir.join('new_dir')
+    potcar_cls.export_family_folder(potcar_family, path=new_dir, dry_run=False)
+    assert new_dir.exists()
 
 
 def test_export_family_archive(fresh_aiida_env, potcar_family, tmpdir):
     """Test exporting to archive."""
+    export_dir = tmpdir.mkdir('export')
     potcar_cls = get_data_class('vasp.potcar')
 
-    potcar_cls.export_family_archive(potcar_family, path=tmpdir, dry_run=True)
-    assert not tmpdir.listdir()
+    potcar_cls.export_family_archive(potcar_family, path=export_dir, dry_run=True)
+    assert not export_dir.listdir()
 
-    ar_path, _ = potcar_cls.export_family_archive(potcar_family, path=tmpdir, dry_run=False)
+    ar_path, _ = potcar_cls.export_family_archive(potcar_family, path=export_dir, dry_run=False)
     archive = tarfile.open(str(ar_path))
     assert set(['Ga/POTCAR', 'As/POTCAR', 'In_d/POTCAR']).issubset(set(archive.getnames()))
     potcar_in = archive.extractfile('In_d/POTCAR')
