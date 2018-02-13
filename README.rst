@@ -5,6 +5,10 @@ AiiDA Vasp Plugin
 .. image:: https://travis-ci.org/DropD/aiida-vasp.svg?branch=develop
     :target: https://travis-ci.org/DropD/aiida-vasp
 
+.. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
+   :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 Install and usage:
 ------------------
 
