@@ -9,6 +9,9 @@ AiiDA Vasp Plugin
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://coveralls.io/repos/github/DropD/aiida-vasp/badge.svg?branch=coveralls
+   :target: https://coveralls.io/github/DropD/aiida-vasp?branch=coveralls
+
 Install and usage:
 ------------------
 
