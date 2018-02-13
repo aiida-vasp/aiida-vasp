@@ -1,6 +1,6 @@
-####
-VASP
-####
+##########
+AiiDA-VASP
+##########
 
 ************
 Description
@@ -115,7 +115,7 @@ familiar with the following parts of the official aiida documentation:
 * :doc:`Developping Data Nodes <aiida:developer_guide/devel_tutorial/code_plugin_float_sum>`
 * :doc:`Developping Workflows <aiida:developer_guide/workflows>`
 
-The VASP plugin provides some base and helper classes for convenience and to aid with rapid development and / or testing.
+The AiiDA-VASP plugin provides some base and helper classes for convenience and to aid with rapid development and / or testing.
 
 * :py:class:`CalcMeta <aiida_vasp.calcs.base.CalcMeta>`, a metaclass that allows writing calculations in a slightly less verbose yet more clear way.
 * :py:class:`VaspCalcBase <aiida_vasp.calcs.base.VaspCalcBase>`, takes over common tasks for vasp calculations while providing flexibility using hooks for subclasses.

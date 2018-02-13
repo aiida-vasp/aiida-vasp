@@ -1,6 +1,6 @@
-aiida-core[atomi_tools]
+tabulate
+aiida-core[atomic_tools]
 lxml
-ase
 click
 chainmap
 six
