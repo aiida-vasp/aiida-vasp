@@ -353,11 +353,12 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         """Get the md5 sum for the contents of a POTCAR file (after normalization)."""
         return md5_potcar(contents)
 
-    def store(self, with_transaction=True):
+    # pylint: disable=arguments-differ
+    def store(self, *args, **kwargs):
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         _ = PotcarData.get_or_create(self)
         self.verify_unique()
-        return super(PotcarFileData, self).store(with_transaction=with_transaction)
+        return super(PotcarFileData, self).store(*args, **kwargs)
 
     @contextmanager
     def get_file_obj(self):
@@ -465,10 +466,11 @@ class PotcarData(Data, PotcarMetadataMixin):
         """Find and return the matching PotcarFileData node."""
         return PotcarFileData.find(**self.get_attrs())
 
-    def store(self, with_transaction=True):
+    # pylint: disable=arguments-differ
+    def store(self, *args, **kwargs):
         """Ensure uniqueness before storing."""
         self.verify_unique()
-        return super(PotcarData, self).store(with_transaction=with_transaction)
+        return super(PotcarData, self).store(*args, **kwargs)
 
     @classmethod
     def get_or_create(cls, file_node):

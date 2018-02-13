@@ -39,10 +39,10 @@ class ArchiveData(Data):
         archive.close()
 
     # pylint: disable=arguments-differ
-    def store(self, with_transaction=True):
+    def store(self, *args, **kwargs):
         self._make_archive()
         del self._filelist
-        super(ArchiveData, self).store(with_transaction)
+        super(ArchiveData, self).store(*args, **kwargs)
 
     @property
     def archive(self):
