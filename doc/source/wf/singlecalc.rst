@@ -95,10 +95,10 @@ These properties can be used to filter queries for calculations and therefore to
 Workflows
 *********
 
-* :py:class:`ScfWorkflow <aiida_vasp.workflows.scf.ScfWorkflow>`, runs a :doc:`ScfCalculation <../calcs/scf>`
-* :py:class:`NscfWorkflow <aiida_vasp.workflows.nscf.NscfWorkflow>`, runs a :doc:`NscfCalculation <../calcs/nscf>`
-* :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.projections.ProjectionsWorkflow>`, runs an :doc:`AmnCalculation <../calcs/amn>`
-* :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.wannier.WannierWorkflow>`, runs an :doc:`WannierCalculation <../calcs/wannier>`
+* :py:class:`ScfWorkflow <aiida_vasp.workflows.scf.ScfWorkflow>`, Obsolete
+* :py:class:`NscfWorkflow <aiida_vasp.workflows.nscf.NscfWorkflow>`, Obsolete
+* :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.projections.ProjectionsWorkflow>`, Obsolete
+* :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.wannier.WannierWorkflow>`, Obsolete
 
 *********
 Reference

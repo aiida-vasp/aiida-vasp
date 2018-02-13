@@ -23,7 +23,7 @@ Plugin Details
 .. toctree::
    :maxdepth: 4
 
-   Vasp <vasp>
+   All-purpose VASP <vasp>
    Vasp2w90 <vasp2w90>
    VaspCalcBase <base>
 
