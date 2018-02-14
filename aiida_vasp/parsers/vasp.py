@@ -10,7 +10,7 @@ from aiida_vasp.io.outcar import OutcarParser
 from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.parsers.base import BaseParser
 
-linkname_dict = { 'parameters': 'output_parameters',
+LINKNAME_DICT = { 'parameters': 'output_parameters',
                    'kpoints': 'output_kpoints',
                    'structure': 'output_structure',
                    'array': 'output_array',
@@ -22,7 +22,7 @@ linkname_dict = { 'parameters': 'output_parameters',
                    'born_charges': 'born_charges',
                  }
 
-default_options = { 'add_bands': False,
+DEFAULT_OPTIONS = { 'add_bands': False,
                      'add_chgcar': False,
                      'add_dos': False,
                      'add_kpoints': False,
@@ -39,21 +39,21 @@ default_options = { 'add_bands': False,
 # Dictionary holding all the quantities which can be parsed by the vasp parser. Currently those coincide
 # with the output nodes, however this might change in a later version. Also at the moment the aditional 
 # information in the values is not used.
-parsable_quantities = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nodeName': 'parameters' },
-                       'structure': {'parsers': ['CONTCAR'], 'nodeName': 'structure' },
-                       'bands': {'parsers': ['EIGENVAL'], 'nodeName': 'bands' },
-                       'kpoints': {'parsers': ['EIGENVAL', 'IBZKPT'], 'nodeName': 'kpoints' },
-                       'dos': {'parsers': ['vasprun.xml', 'DOSCAR'], 'nodeName': 'dos' },
-                       'chgcar': {'parsers': ['CHGCAR'], 'nodeName': 'chgcar' },
-                       'wavecar': {'parsers': ['WAVECAR'], 'nodeName': 'wavecar' }, 
-                     }
+PARSABLE_QUANTITIES = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nodeName': 'parameters' },
+                        'structure': {'parsers': ['CONTCAR'], 'nodeName': 'structure' },
+                        'bands': {'parsers': ['EIGENVAL', 'vasprun.xml'], 'nodeName': 'bands' },
+                        'kpoints': {'parsers': ['EIGENVAL', 'IBZKPT'], 'nodeName': 'kpoints' },
+                        'dos': {'parsers': ['vasprun.xml', 'DOSCAR'], 'nodeName': 'dos' },
+                        'chgcar': {'parsers': ['CHGCAR'], 'nodeName': 'chgcar' },
+                        'wavecar': {'parsers': ['WAVECAR'], 'nodeName': 'wavecar' }, 
+                      }
 
-parsable_files = { 'DOSCAR': {'parser_class': DosParser, 'is_critical': False, 'status': 'Unknown' },
-                  'EIGENVAL': {'parser_class': EigParser, 'is_critical': False, 'status': 'Unknown' },
-                  'IBZKPT': {'parser_class': KpParser, 'is_critical': False, 'status': 'Unknown' },
-                  'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown' },
-                  'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': False, 'status': 'Unknown' },
-                }
+PARSABLE_FILES = { 'DOSCAR': {'parser_class': DosParser, 'is_critical': False, 'status': 'Unknown' },
+                   'EIGENVAL': {'parser_class': EigParser, 'is_critical': False, 'status': 'Unknown' },
+                   'IBZKPT': {'parser_class': KpParser, 'is_critical': False, 'status': 'Unknown' },
+                   'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown' },
+                   'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': False, 'status': 'Unknown' },
+                 }
 
 
 class VaspParser(BaseParser):
@@ -65,7 +65,7 @@ class VaspParser(BaseParser):
         super(VaspParser, self).__init__(calc)
 
         self.out_folder = None
-        self._settings = default_options
+        self._settings = DEFAULT_OPTIONS
   
         try:
             self._settings.update( self._calc.inp.settings.get_dict()['parser_settings'] )
@@ -73,8 +73,8 @@ class VaspParser(BaseParser):
             # There are no special parser settings so we just return the default settings
             pass
 
-        self._nodes_to_add = list( parsable_quantities.keys() ) 
-        self._parsable_files = parsable_files
+        self._nodes_to_add = list( PARSABLE_QUANTITIES.keys() ) 
+        self._parsable_files = PARSABLE_FILES
 
         self._parsers = { 'vasprun.xml': None,
                           'DOSCAR': None,
@@ -259,7 +259,7 @@ class VaspParser(BaseParser):
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
             bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-        bsnode.set_bands(bands, occupations=vrp.occupations)
+        bsnode.set_bands(bands, occupations=self._parsers['vasprun.xml'].occupations)
         kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         return {'bands': bsnode, 'kpoints': kpout }
 
@@ -372,6 +372,6 @@ class VaspParser(BaseParser):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
 
         if node is not None:
-            self.add_node( linkname_dict[ node_name ], node)
+            self.add_node( LINKNAME_DICT[ node_name ], node)
 
 
