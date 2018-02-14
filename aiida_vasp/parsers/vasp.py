@@ -150,19 +150,16 @@ class VaspParser(BaseParser):
 
             if not fileToParse:
                 self._parsers[ key ] = None
-
                 if value['is_critical']:
                     self.logger.error('{} not found, ' + 'look at the scheduler output for troubleshooting.'.format(key))
                     return False
-                
                 # The file is not critical
                 if self._settings['should_parse_' + key ]:
-                    self.logger.warning('{0} not found, but should be parsed.'.format( key )
-
-            else:
+                    self.logger.warning('{0} not found, but should be parsed.'.format( key ))
+            else:            
                 # The file should be parsed and has been found
                 self._parsers[ key ] = value['parser_class']( fileToParse )
-
+            
         # All critical files have been found, so we can safely return True. 
         return True
 
