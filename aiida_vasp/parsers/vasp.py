@@ -159,8 +159,6 @@ class VaspParser(BaseParser):
                 if self._settings['should_parse_' + key ]:
                     self.logger.warning('{0} not found, but should be parsed.'.format( key )
 
-                continue
-
             else:
                 # The file should be parsed and has been found
                 self._parsers[ key ] = value['parser_class']( fileToParse )
