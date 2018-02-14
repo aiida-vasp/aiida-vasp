@@ -155,6 +155,7 @@ class VaspParser(BaseParser):
         # might get dynamically updated during the loop.
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
+
             if self._settings['add_' + quantity]:
                 self._output_nodes.update(getattr(self, '_get_' + quantity)())
 
@@ -402,4 +403,3 @@ class VaspParser(BaseParser):
 
         if node is not None:
             self.add_node(LINKNAME_DICT[node_name], node)
-
