@@ -16,7 +16,7 @@ class OutcarParser(object):
     def output_dict(self):
         """Parse the OUTCAR file and return the parsed values wrapped in a dictionary"""
 
-        outputDict = {}
+        output_dict = {}
 
         for property_name in self.properties:
             try:
@@ -79,15 +79,5 @@ class OutcarParser(object):
 
             if line.rfind('E-fermi') > -1:
                 result['efermi'] = float( line.split()[2] )
-
-        return result
-
-
-    def _read_forces(self):
-        """Parse the OUTCAR file and return the forces acting on the ions. TODO implement me"""
-
-        result = {}
-        for line in open( self.outcar_file, 'r'):
-            pass        
 
         return result

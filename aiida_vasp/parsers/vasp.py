@@ -146,12 +146,12 @@ class VaspParser(BaseParser):
                 continue
 
             # We should parse this file and the parser has not been set yet.
-            file_to_arse = self.get_file( key )
+            file_to_parse = self.get_file( key )
 
             if not file_to_parse:
                 self._parsers[ key ] = None
                 if value['is_critical']:
-                    self.logger.error('{} not found, ' + 'look at the scheduler output for troubleshooting.'.format(key))
+                    self.logger.error('{} not found, look at the scheduler output for troubleshooting.'.format(key))
                     return False
                 # The file is not critical
                 if self._settings['should_parse_' + key ]:
@@ -165,6 +165,7 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_dos(self):
+        """Return True if dos should be parsed."""
 
         if not self._parsers['vasprun.xml']:
             return False
@@ -173,7 +174,8 @@ class VaspParser(BaseParser):
             return False
 
         if self._settings['add_dos'] and not self._parsers['vasprun.xml'].is_static():
-            self.logger.warning('Adding a DOS node has been requested by setting "add_dos = True". However, for calculating a DOS a static calculation is recommended.')
+            self.logger.warning('Adding a DOS node has been requested by setting "add_dos = True".' + 
+                                ' However, for calculating a DOS a static calculation is recommended.')
 
         return self._settings['add_dos']
         
@@ -257,12 +259,13 @@ class VaspParser(BaseParser):
             bsnode.labels = self._calc.inp.kpoints.labels
         else:
             bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-        bsnode.set_bands(bands, occupations=self.vrp.occupations)
+        bsnode.set_bands(bands, occupations=vrp.occupations)
         kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         return {'bands': bsnode, 'kpoints': kpout }
 
 
     def _should_parse_kpoints(self):
+        """Return True if IBZKPT should be parsed."""
 
         if not self._parsers['IBZKPT']:
             return False
@@ -277,7 +280,7 @@ class VaspParser(BaseParser):
             self.logger.warning('IBZKPT not found')
             return {'kpoints': None }
 
-        kpp = self.parser['IBZKPT'](ibz)
+        kpp = self._parsers['IBZKPT'](ibz)
         if kpp is None:
             return {'kpoints': None }
 
@@ -288,6 +291,7 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_chgcar(self):
+        """Return True if CHGCAR should be parsed."""
 
         if self._settings['add_chgcar'] and not self._parsers['vasprun.xml'].is_sc():
             self.logger.warning('Adding a CHGCAR node has been requested by setting "add_chgcar = True". However, the calculation is not selfconsistent.')
@@ -306,6 +310,7 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_structure(self):
+        """Return True if Structure should be parsed."""
 
         return self._settings['add_structure'] 
 
@@ -323,6 +328,7 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_wavecar(self):
+        """Return True if WAVECAR should be parsed."""
 
         if self._settings['add_wavecar'] and not self._parsers['vasprun.xml'].is_sc():
             self.logger.warning('Adding a WAVECAR node has been requested by setting "add_wavecar = True". However, the calculation is not selfconsistent.')
@@ -341,6 +347,7 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_parameters(self):
+        """Return True if Parameters should be parsed."""
 
         return self._settings['add_parameters']
 
