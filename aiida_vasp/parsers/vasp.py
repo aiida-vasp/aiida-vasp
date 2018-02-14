@@ -6,8 +6,54 @@ from aiida.orm import DataFactory
 from aiida_vasp.io.doscar import DosParser
 from aiida_vasp.io.eigenval import EigParser
 from aiida_vasp.io.kpoints import KpParser
+from aiida_vasp.io.outcar import OutcarParser
 from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.parsers.base import BaseParser
+
+_linkname_dict = { 'parameters': 'output_parameters',
+                   'kpoints': 'output_kpoints',
+                   'structure': 'output_structure',
+                   'array': 'output_array',
+                   'trajectory':'output_trajectory',
+                   'bands': 'output_band',
+                   'dos': 'output_dos',
+                   'chgcar': 'chgcar',
+                   'wavecar': 'wavecar',
+                   'born_charges': 'born_charges',
+                 }
+
+_default_options = { 'add_bands': False,
+                     'add_chgcar': False,
+                     'add_dos': False,
+                     'add_kpoints': False,
+                     'add_parameters': True,
+                     'add_structure': True,
+                     'add_wavecar': False,
+                     'should_parse_DOSCAR': False,
+                     'should_parse_EIGENVAL': False,
+                     'should_parse_IBZKPT': False,
+                     'should_parse_OUTCAR': True,
+                     'should_parse_vasprun.xml': True,
+                   }
+
+# Dictionary holding all the quantities which can be parsed by the vasp parser. Currently those coincide
+# with the output nodes, however this might change in a later version. Also at the moment the aditional 
+# information in the values is not used.
+parsableQuantities = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nodeName': 'parameters' },
+                       'structure': {'parsers': ['CONTCAR'], 'nodeName': 'structure' },
+                       'bands': {'parsers': ['EIGENVAL'], 'nodeName': 'bands' },
+                       'kpoints': {'parsers': ['EIGENVAL', 'IBZKPT'], 'nodeName': 'kpoints' },
+                       'dos': {'parsers': ['vasprun.xml', 'DOSCAR'], 'nodeName': 'dos' },
+                       'chgcar': {'parsers': ['CHGCAR'], 'nodeName': 'chgcar' },
+                       'wavecar': {'parsers': ['WAVECAR'], 'nodeName': 'wavecar' }, 
+                     }
+
+parsableFiles = { 'DOSCAR': {'parser_class': DosParser, 'is_critical': False, 'status': 'Unknown' },
+                  'EIGENVAL': {'parser_class': EigParser, 'is_critical': False, 'status': 'Unknown' },
+                  'IBZKPT': {'parser_class': KpParser, 'is_critical': False, 'status': 'Unknown' },
+                  'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown' },
+                  'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': False, 'status': 'Unknown' },
+                }
 
 
 class VaspParser(BaseParser):
@@ -17,78 +63,135 @@ class VaspParser(BaseParser):
 
     def __init__(self, calc):
         super(VaspParser, self).__init__(calc)
+
         self.out_folder = None
-        self.vrp = None
-        self.dcp = None
+        self._settings = _default_options
+  
+        try:
+            self._settings.update( self._calc.inp.settings.get_dict()['parser_settings'] )
+        except KeyError:
+            # There are no special parser settings so we just return the default settings
+            pass
+
+        self._nodesToAdd = list( parsableQuantities.keys() ) 
+        self._parsableFiles = parsableFiles
+
+        self._parsers = { 'vasprun.xml': None,
+                          'DOSCAR': None,
+                          'IBZKPT': None,
+                          'OUTCAR': None,
+                          'EIGENVAL': None,
+                        }
+
+        self._quantitiesToParse = []
+        self.outputNodes = {}
+
 
     def parse_with_retrieved(self, retrieved):
+
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
+
         if not self.out_folder:
             return self.result(success=False)
-        outcar = self.get_file('OUTCAR')
-        if not outcar:
-            self.logger.error('OUTCAR not found, ' + 'look at the scheduler output for troubleshooting')
+
+        # Get all specialised file parsers. Warnings will be issued if a file should be parsed and 
+        # the corresponding files do not exist.
+        success = self._set_file_parsers()
+        if not success:
+            # A critical file i.e. OUTCAR does not exist. Abort parsing.
             return self.result(success=False)
 
-        self.vrp = self.read_run()
+        # Get an initial list of quantities which should be parsed.
+        self._update_parsing_list()
 
-        bands, kpout, structure = self.read_eigenval()
+        # Parse all implemented quantities in the nodesToAdd list, if they should be parsed. The list
+        # might get dynamically updated during the loop.
+        while len( self._quantitiesToParse ) > 0:
+            quantity = self._quantitiesToParse.pop(0)
+            if self._settings[ 'add_' + quantity ]:
+                
+                self.outputNodes.update( getattr( self, '_get_' + quantity )() )
 
-        self.dcp = self.read_dos()
-        dosnode = self.get_dos_node(self.vrp, self.dcp)
-
-        if bands:
-            self.set_bands(bands)  # append output nodes
-
-        if not kpout:
-            kpout = self.read_ibzkpt()
-
-        if kpout:
-            self.set_kpoints(kpout)
-
-        if structure:
-            self.set_structure(structure)
-
-        if self.vrp:
-            if self.vrp.is_sc:  # add chgcar ouput node if selfconsistent run
-                chgnode = self.get_chgcar()
-                self.set_chgcar(chgnode)
-
-            if self.vrp.is_sc:
-                self.set_wavecar(self.get_wavecar())
-
-        self.add_node('results', self.get_output())
-
-        if dosnode:
-            self.set_dos(dosnode)
+        # Add output nodes if the corresponding data exists.
+        for key, value in self.outputNodes.iteritems():
+            if value:
+                self._set_node(key, value)
 
         return self.result(success=True)
 
-    def read_run(self):
-        '''Read vasprun.xml'''
-        vasprun = self.get_file('vasprun.xml')
-        if not vasprun:
-            self.logger.warning('no vasprun.xml found')
-            return None
-        return VasprunParser(vasprun)
 
-    def read_dos(self):
-        '''read DOSCAR for more accurate tdos and pdos'''
-        doscar = self.get_file('DOSCAR')
-        if not doscar:
-            self.logger.warning('no DOSCAR found')
-            return None
-        return DosParser(doscar)
+    def _update_parsing_list(self):
+        """Add all quantities, which should be parsed to the quantitiesToParse list."""
 
-    @staticmethod
-    def get_dos_node(vrp, dcp):
+        for quantity in self._nodesToAdd:
+            if quantity in self._quantitiesToParse:
+               continue
+            if getattr(self, '_should_parse_' + quantity )():
+                self._quantitiesToParse.append( quantity )
+
+
+    def _set_file_parsers(self):
         """
-        takes VasprunParser and DosParser objects
-        and returns a doscar array node
+        Set the specific file parsers for OUTCAR, DOSCAR, EIGENVAL and vasprun.xml.
+        Return False if a critical file is missing, which will abort the parsing.
         """
+
+        for key, value in self._parsableFiles.iteritems():
+
+            if not self._settings['should_parse_' + key ]:
+                continue
+
+            if self._parsers[ key ]:
+                continue
+
+            # We should parse this file and the parser has not been set yet.
+            fileToParse = self.get_file( key )
+
+            if not fileToParse:
+                self._parsers[ key ] = None
+
+                if value['is_critical']:
+                    self.logger.error('{} not found, ' + 'look at the scheduler output for troubleshooting.'.format(key))
+                    return False
+                
+                # The file is not critical
+                if self._settings['should_parse_' + key ]:
+                    self.logger.warning('{0} not found, but should be parsed.'.format( key )
+
+                continue
+
+            else:
+                # The file should be parsed and has been found
+                self._parsers[ key ] = value['parser_class']( fileToParse )
+
+        # All critical files have been found, so we can safely return True. 
+        return True
+
+
+    def _should_parse_dos(self):
+
+        if not self._parsers['vasprun.xml']:
+            return False
+
+        if not self._parsers['DOSCAR']:
+            return False
+
+        if self._settings['add_dos'] and not self._parsers['vasprun.xml'].is_static():
+            self.logger.warning('Adding a DOS node has been requested by setting "add_dos = True". However, for calculating a DOS a static calculation is recommended.')
+
+        return self._settings['add_dos']
+        
+
+    def _get_dos(self):
+        """Returns a doscar array node wrapped in a dictionary. """
+
+        vrp = self._parsers['vasprun.xml']
+        dcp = self._parsers['DOSCAR']
+
         if not vrp or not dcp:
-            return None
+            return {'dos': None }
+
         dosnode = DataFactory('array')()
         # vrp.pdos is a numpy array, and thus not directly bool-convertible
         if vrp.pdos.size > 0:
@@ -109,20 +212,21 @@ class VaspParser(BaseParser):
             cond = vrp.tdos[:num_spins, :][name] < 0.1
             tdos[name] = np.where(cond, cur, vrp.tdos[:num_spins, :][name])
         dosnode.set_array('tdos', tdos)
-        return dosnode
+        return {'dos': dosnode }
 
-    def read_cont(self):
-        '''read CONTCAR for output structure'''
-        from ase.io import read
-        structure = DataFactory('structure')()
-        cont = self.get_file('CONTCAR')
-        if not cont:
-            self.logger.info('CONTCAR not found!')
-            return None
-        structure.set_ase(read(cont, format='vasp'))
-        return structure
 
-    def read_eigenval(self):
+    def _should_parse_bands(self):
+
+        if not self._parsers['EIGENVAL']:
+            return False
+        
+        if self._settings['add_bands'] and not self._parsers['vasprun.xml'].is_static():
+            self.logger.warning('Adding a band_structure node has been requested by setting "add_bands = True". However, for calculating a band structure a static calculation is recommended.')
+
+        return self._settings['add_bands']
+
+
+    def _get_bands(self):
         '''
         Create a bands and a kpoints node from values in eigenvalue.
 
@@ -134,23 +238,21 @@ class VaspParser(BaseParser):
         both bsnode as well as kpnode come with cell unset
         '''
         eig = self.get_file('EIGENVAL')
-        if not eig:
-            self.logger.warning('EIGENVAL not found')
-            return None, None, None
+        if not eig:            
+            return {'bands': None, 'kpoints': None }
+
         _, kpoints, bands = EigParser.parse_eigenval(eig)
+
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
 
-        structure = None  # get output structure if not static
-        if self.vrp.is_md or self.vrp.is_relaxation:
-            structure = self.read_cont()
+        # Take the output structure if available.
+        structure = self.outputNodes['structure']
+        if structure is None:
+            structure = self._calc.inp.structure
 
-        if self.vrp.is_md:  # set cell from input or output structure
-            cellst = structure
-        else:
-            cellst = self._calc.inp.structure
-        bsnode.set_cell(cellst.get_ase().get_cell())
-        kpout.set_cell(cellst.get_ase().get_cell())
+        bsnode.set_cell(structure.get_ase().get_cell())
+        kpout.set_cell(structure.get_ase().get_cell())
 
         if self._calc.inp.kpoints.get_attrs().get('array|kpoints'):
             bsnode.set_kpointsdata(self._calc.inp.kpoints)
@@ -160,58 +262,112 @@ class VaspParser(BaseParser):
             bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
         bsnode.set_bands(bands, occupations=self.vrp.occupations)
         kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-        return bsnode, kpout, structure
+        return {'bands': bsnode, 'kpoints': kpout }
 
-    def read_ibzkpt(self):
+
+    def _should_parse_kpoints(self):
+
+        if not self._parsers['IBZKPT']:
+            return False
+
+        return self._settings['add_kpoints']
+
+
+    def _get_kpoints(self):
         """Create a DB Node for the IBZKPT file"""
         ibz = self.get_file('IBZKPT')
         if not ibz:
             self.logger.warning('IBZKPT not found')
-            return None
-        kpp = KpParser(ibz)
+            return {'kpoints': None }
+
+        kpp = self.parser['IBZKPT'](ibz)
+        if kpp is None:
+            return {'kpoints': None }
+
         kpout = DataFactory('array.kpoints')()
         kpout.set_kpoints(kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
-        return kpout
 
-    def get_chgcar(self):
+        return {'kpoints': kpout }
+
+
+    def _should_parse_chgcar(self):
+
+        if self._settings['add_chgcar'] and not self._parsers['vasprun.xml'].is_sc():
+            self.logger.warning('Adding a CHGCAR node has been requested by setting "add_chgcar = True". However, the calculation is not selfconsistent.')
+
+        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc()
+
+
+    def _get_chgcar(self):
         """Create a DB Node for the CHGCAR file"""
         chgc = self.get_file('CHGCAR')
         if chgc is None:
-            return None
+            return {'chgcar': None}
         chgnode = DataFactory('vasp.chargedensity')()
         chgnode.set_file(chgc)
-        return chgnode
+        return {'chgcar': chgnode }
 
-    def get_wavecar(self):
+
+    def _should_parse_structure(self):
+
+        return self._settings['add_structure'] 
+
+
+    def _get_structure(self):
+        '''read CONTCAR for output structure'''
+        from ase.io import read
+        structure = DataFactory('structure')()
+        cont = self.get_file('CONTCAR')
+        if not cont:
+            self.logger.info('CONTCAR not found!')
+            return {'structure': None }
+        structure.set_ase(read(cont, format='vasp'))
+        return {'structure': structure }
+
+
+    def _should_parse_wavecar(self):
+
+        if self._settings['add_wavecar'] and not self._parsers['vasprun.xml'].is_sc():
+            self.logger.warning('Adding a WAVECAR node has been requested by setting "add_wavecar = True". However, the calculation is not selfconsistent.')
+
+        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc()
+
+
+    def _get_wavecar(self):
         """Create a DB Node for the WAVECAR file"""
         wfn = self.get_file('WAVECAR')
         if wfn is None:
-            return None
+            return {'wavecar': None }
         wfnode = DataFactory('vasp.wavefun')()
         wfnode.set_file(wfn)
-        return wfnode
+        return {'wavecar': wfnode }
 
-    def get_output(self):
+
+    def _should_parse_parameters(self):
+
+        return self._settings['add_parameters']
+
+
+    def _get_parameters(self):
+        """Create ParameterData holding output parsed from OUTCAR and vasprun.xml."""
+
         output = DataFactory('parameter')()
-        output.update_dict({'efermi': self.vrp.efermi})
-        return output
 
-    def set_bands(self, node):
-        self.add_node('bands', node)
+        if not self._parsers['OUTCAR'] and not self._parsers['vasprun.xml']:
+            return {'parameters': None }
 
-    def set_kpoints(self, node):
-        self.add_node('kpoints', node)
+        if self._parsers['OUTCAR']:
+            output.update_dict( self._parsers['OUTCAR'].output_dict )
+        if self._parsers['vasprun.xml']:
+            output.update_dict({'efermi': self._parsers['vasprun.xml'].efermi})
 
-    def set_chgcar(self, node):
+        return {'parameters': output }
+
+
+    def _set_node(self, nodeName, node ):
+        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
+
         if node is not None:
-            self.add_node('charge_density', node)
+            self.add_node( _linkname_dict[ nodeName ], node)
 
-    def set_wavecar(self, node):
-        if node is not None:
-            self.add_node('wavefunctions', node)
 
-    def set_structure(self, node):
-        self.add_node('structure', node)
-
-    def set_dos(self, node):
-        self.add_node('dos', node)
