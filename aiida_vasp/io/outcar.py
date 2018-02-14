@@ -1,10 +1,6 @@
 """
 Tools for parsing OUTCAR files
 """
-import datetime as dt
-import numpy as np
-
-
 class OutcarParser(object):
     """
     parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
@@ -12,7 +8,7 @@ class OutcarParser(object):
 
     def __init__(self, fname):
         super(OutcarParser, self).__init__()
-        self.outcarFile = fname
+        self.outcar_file = fname
         self.properties = ['volume', 'energies', 'efermi']
 
 
@@ -22,25 +18,25 @@ class OutcarParser(object):
 
         outputDict = {}
 
-        for propertyName in self.properties:
+        for property_name in self.properties:
             try:
-                # call the method corresponding to propertyName.
-                result = getattr(self, '_read_' + propertyName)( self.outcarFile )
+                # call the method corresponding to property_name.
+                result = getattr(self, '_read_' + property_name)()
                 if result is not None:
-                    # read_propertyName returns a dictionary if parsing has been successful.
-                    outputDict.update( result )
+                    # read_property_name returns a dictionary if parsing has been successful.
+                    output_dict.update( result )
             except AttributeError:
-                raise NotImplementedError('The OUTCAR parser does not implemnt _read_{}'.format(propertyName))
+                raise NotImplementedError('The OUTCAR parser does not implemnt _read_{}'.format(property_name))
 
-        return outputDict
+        return output_dict
 
 
-    def _read_volume(self, fileName):
+    def _read_volume(self):
         """Parse the OUTCAR file and return the cell volume"""
 
         result = {}
 
-        for line in open( fileName, 'r'):
+        for line in open( self.outcar_file, 'r'):
 
             if line.rfind('volume of cell :') > -1:
                 result['volume'] = float( line.split()[-1] )
@@ -48,13 +44,13 @@ class OutcarParser(object):
         return result
 
 
-    def _read_energies(self, fileName):
+    def _read_energies(self):
         """Parse the OUTCAR file and return the total energies without entropy as well as free energies"""
 
         energy_free = []
         energy_zero = []
 
-        for line in open( fileName, 'r'):
+        for line in open( self.outcar_file, 'r'):
 
             # Free energy
             if line.lower().startswith('  free  energy   toten'):
@@ -74,12 +70,12 @@ class OutcarParser(object):
         return result
 
 
-    def _read_efermi(self, fileName):
+    def _read_efermi(self):
         """Parse the OUTCAR file and return the fermi energy"""
 
         result = {}
 
-        for line in open( fileName, 'r'):
+        for line in open( self.outcar_file, 'r'):
 
             if line.rfind('E-fermi') > -1:
                 result['efermi'] = float( line.split()[2] )
@@ -87,9 +83,11 @@ class OutcarParser(object):
         return result
 
 
-    def _read_forces(self, fileName):
+    def _read_forces(self):
         """Parse the OUTCAR file and return the forces acting on the ions. TODO implement me"""
 
         result = {}
+        for line in open( self.outcar_file, 'r'):
+            pass        
 
         return result

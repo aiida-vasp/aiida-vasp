@@ -10,7 +10,7 @@ from aiida_vasp.io.outcar import OutcarParser
 from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.parsers.base import BaseParser
 
-_linkname_dict = { 'parameters': 'output_parameters',
+linkname_dict = { 'parameters': 'output_parameters',
                    'kpoints': 'output_kpoints',
                    'structure': 'output_structure',
                    'array': 'output_array',
@@ -22,7 +22,7 @@ _linkname_dict = { 'parameters': 'output_parameters',
                    'born_charges': 'born_charges',
                  }
 
-_default_options = { 'add_bands': False,
+default_options = { 'add_bands': False,
                      'add_chgcar': False,
                      'add_dos': False,
                      'add_kpoints': False,
@@ -39,7 +39,7 @@ _default_options = { 'add_bands': False,
 # Dictionary holding all the quantities which can be parsed by the vasp parser. Currently those coincide
 # with the output nodes, however this might change in a later version. Also at the moment the aditional 
 # information in the values is not used.
-parsableQuantities = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nodeName': 'parameters' },
+parsable_quantities = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nodeName': 'parameters' },
                        'structure': {'parsers': ['CONTCAR'], 'nodeName': 'structure' },
                        'bands': {'parsers': ['EIGENVAL'], 'nodeName': 'bands' },
                        'kpoints': {'parsers': ['EIGENVAL', 'IBZKPT'], 'nodeName': 'kpoints' },
@@ -48,7 +48,7 @@ parsableQuantities = { 'parameters': {'parsers': ['OUTCAR', 'vasprun.xml'], 'nod
                        'wavecar': {'parsers': ['WAVECAR'], 'nodeName': 'wavecar' }, 
                      }
 
-parsableFiles = { 'DOSCAR': {'parser_class': DosParser, 'is_critical': False, 'status': 'Unknown' },
+parsable_files = { 'DOSCAR': {'parser_class': DosParser, 'is_critical': False, 'status': 'Unknown' },
                   'EIGENVAL': {'parser_class': EigParser, 'is_critical': False, 'status': 'Unknown' },
                   'IBZKPT': {'parser_class': KpParser, 'is_critical': False, 'status': 'Unknown' },
                   'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown' },
@@ -65,7 +65,7 @@ class VaspParser(BaseParser):
         super(VaspParser, self).__init__(calc)
 
         self.out_folder = None
-        self._settings = _default_options
+        self._settings = default_options
   
         try:
             self._settings.update( self._calc.inp.settings.get_dict()['parser_settings'] )
@@ -73,8 +73,8 @@ class VaspParser(BaseParser):
             # There are no special parser settings so we just return the default settings
             pass
 
-        self._nodesToAdd = list( parsableQuantities.keys() ) 
-        self._parsableFiles = parsableFiles
+        self._nodes_to_add = list( parsable_quantities.keys() ) 
+        self._parsable_files = parsable_files
 
         self._parsers = { 'vasprun.xml': None,
                           'DOSCAR': None,
@@ -83,8 +83,8 @@ class VaspParser(BaseParser):
                           'EIGENVAL': None,
                         }
 
-        self._quantitiesToParse = []
-        self.outputNodes = {}
+        self._quantities_to_parse = []
+        self._output_nodes = {}
 
 
     def parse_with_retrieved(self, retrieved):
@@ -107,14 +107,14 @@ class VaspParser(BaseParser):
 
         # Parse all implemented quantities in the nodesToAdd list, if they should be parsed. The list
         # might get dynamically updated during the loop.
-        while len( self._quantitiesToParse ) > 0:
-            quantity = self._quantitiesToParse.pop(0)
+        while self._quantities_to_parse:
+            quantity = self._quantities_to_parse.pop(0)
             if self._settings[ 'add_' + quantity ]:
                 
-                self.outputNodes.update( getattr( self, '_get_' + quantity )() )
+                self._output_nodes.update( getattr( self, '_get_' + quantity )() )
 
         # Add output nodes if the corresponding data exists.
-        for key, value in self.outputNodes.iteritems():
+        for key, value in self._output_nodes.iteritems():
             if value:
                 self._set_node(key, value)
 
@@ -124,11 +124,11 @@ class VaspParser(BaseParser):
     def _update_parsing_list(self):
         """Add all quantities, which should be parsed to the quantitiesToParse list."""
 
-        for quantity in self._nodesToAdd:
-            if quantity in self._quantitiesToParse:
+        for quantity in self._nodes_to_add:
+            if quantity in self._quantities_to_parse:
                continue
             if getattr(self, '_should_parse_' + quantity )():
-                self._quantitiesToParse.append( quantity )
+                self._quantities_to_parse.append( quantity )
 
 
     def _set_file_parsers(self):
@@ -137,7 +137,7 @@ class VaspParser(BaseParser):
         Return False if a critical file is missing, which will abort the parsing.
         """
 
-        for key, value in self._parsableFiles.iteritems():
+        for key, value in self._parsable_files.iteritems():
 
             if not self._settings['should_parse_' + key ]:
                 continue
@@ -146,9 +146,9 @@ class VaspParser(BaseParser):
                 continue
 
             # We should parse this file and the parser has not been set yet.
-            fileToParse = self.get_file( key )
+            file_to_arse = self.get_file( key )
 
-            if not fileToParse:
+            if not file_to_parse:
                 self._parsers[ key ] = None
                 if value['is_critical']:
                     self.logger.error('{} not found, ' + 'look at the scheduler output for troubleshooting.'.format(key))
@@ -158,7 +158,7 @@ class VaspParser(BaseParser):
                     self.logger.warning('{0} not found, but should be parsed.'.format( key ))
             else:            
                 # The file should be parsed and has been found
-                self._parsers[ key ] = value['parser_class']( fileToParse )
+                self._parsers[ key ] = value['parser_class']( file_to_parse )
             
         # All critical files have been found, so we can safely return True. 
         return True
@@ -211,12 +211,14 @@ class VaspParser(BaseParser):
 
 
     def _should_parse_bands(self):
-
+        """Return True if bands should be parsed."""
         if not self._parsers['EIGENVAL']:
             return False
         
         if self._settings['add_bands'] and not self._parsers['vasprun.xml'].is_static():
-            self.logger.warning('Adding a band_structure node has been requested by setting "add_bands = True". However, for calculating a band structure a static calculation is recommended.')
+            self.logger.warning('Adding a band_structure node has been requested by setting' + 
+                                ' "add_bands = True". However, for calculating a band structure' + 
+                                ' a static calculation is recommended.')
 
         return self._settings['add_bands']
 
@@ -242,7 +244,7 @@ class VaspParser(BaseParser):
         kpout = DataFactory('array.kpoints')()
 
         # Take the output structure if available.
-        structure = self.outputNodes['structure']
+        structure = self._output_nodes['structure']
         if structure is None:
             structure = self._calc.inp.structure
 
@@ -359,10 +361,10 @@ class VaspParser(BaseParser):
         return {'parameters': output }
 
 
-    def _set_node(self, nodeName, node ):
+    def _set_node(self, node_name, node ):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
 
         if node is not None:
-            self.add_node( _linkname_dict[ nodeName ], node)
+            self.add_node( linkname_dict[ node_name ], node)
 
 
