@@ -46,13 +46,6 @@ def vasp_params(aiida_env):
 
 
 @pytest.fixture()
-def vasp_settings(aiida_env):
-    from aiida.orm.data.parameter import ParameterData
-    settings = ParameterData(dict={'parser_settings': {}})
-    return settings
-
-
-@pytest.fixture()
 def paws(aiida_env):
     """Fixture for two incomplete POTPAW potentials"""
     from aiida.orm import DataFactory
