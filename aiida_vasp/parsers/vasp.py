@@ -275,12 +275,8 @@ class VaspParser(BaseParser):
 
     def _get_kpoints(self):
         """Create a DB Node for the IBZKPT file"""
-        ibz = self.get_file('IBZKPT')
-        if not ibz:
-            self.logger.warning('IBZKPT not found')
-            return {'kpoints': None }
 
-        kpp = self._parsers['IBZKPT'](ibz)
+        kpp = self._parsers['IBZKPT']
         if kpp is None:
             return {'kpoints': None }
 
