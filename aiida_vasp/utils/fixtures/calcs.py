@@ -2,7 +2,7 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
-from .data import vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar
+from .data import vasp_code, vasp_params, vasp_settings, paws, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar
 
 
 @pytest.fixture()
@@ -14,6 +14,7 @@ def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure
     calc.set_computer(vasp_code.get_computer())
     calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
     calc.use_parameters(vasp_params)
+    calc.use_settings(vasp_settings)
     calc.use_paw(paws['In'], kind='In')
     calc.use_paw(paws['As'], kind='As')
     calc.use_structure(vasp_structure)
