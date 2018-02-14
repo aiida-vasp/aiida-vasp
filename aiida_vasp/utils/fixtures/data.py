@@ -44,10 +44,13 @@ def vasp_params(aiida_env):
     incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_io.get_param_node()
 
+
 @pytest.fixture()
 def vasp_settings(aiida_env):
-    incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
-    return incar_io.get_param_node()
+    from aiida.orm.data.parameter import ParameterData
+    settings = ParameterData(dict={'parser_settings': {}})
+    return settings
+
 
 @pytest.fixture()
 def paws(aiida_env):
