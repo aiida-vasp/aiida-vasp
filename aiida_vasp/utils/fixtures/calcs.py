@@ -6,7 +6,7 @@ from .data import vasp_code, vasp_params, vasp_settings, paws, vasp_kpoints, vas
 
 
 @pytest.fixture()
-def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar):
+def vasp_calc_and_ref(vasp_code, vasp_params, vasp_settings, paws, vasp_kpoints, vasp_structure, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
     calc = VaspCalculation()
