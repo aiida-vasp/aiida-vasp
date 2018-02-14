@@ -20,7 +20,7 @@ class OutcarParser(object):
                 result = getattr(self, '_read_' + property_name)()
                 if result is not None:
                     # read_property_name returns a dictionary if parsing has been successful.
-                    output_dict.update( result )
+                    output_dict.update(result)
             except AttributeError:
                 raise NotImplementedError('The OUTCAR parser does not implemnt _read_{}'.format(property_name))
         return output_dict
@@ -28,16 +28,16 @@ class OutcarParser(object):
     def _read_volume(self):
         """Parse the OUTCAR file and return the cell volume"""
         result = {}
-        for line in open( self.outcar_file, 'r'):
+        for line in open(self.outcar_file, 'r'):
             if line.rfind('volume of cell :') > -1:
-                result['volume'] = float( line.split()[-1] )
+                result['volume'] = float(line.split()[-1])
         return result
 
     def _read_energies(self):
         """Parse the OUTCAR file and return the total energies without entropy as well as free energies"""
         energy_free = []
         energy_zero = []
-        for line in open( self.outcar_file, 'r'):
+        for line in open(self.outcar_file, 'r'):
             # Free energy
             if line.lower().startswith('  free  energy   toten'):
                 energy_free.append(float(line.split()[-2]))
@@ -54,7 +54,7 @@ class OutcarParser(object):
     def _read_efermi(self):
         """Parse the OUTCAR file and return the fermi energy"""
         result = {}
-        for line in open( self.outcar_file, 'r'):
+        for line in open(self.outcar_file, 'r'):
             if line.rfind('E-fermi') > -1:
-                result['efermi'] = float( line.split()[2] )
+                result['efermi'] = float(line.split()[2])
         return result
