@@ -15,7 +15,7 @@ def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure
     calc.set_computer(vasp_code.get_computer())
     calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
     calc.use_parameters(vasp_params)
-    calc.use_settings(ParameterData(dict={'parser_settings': {'add_node_bands': True, 'add_node_dos': True}}))
+    calc.use_settings(ParameterData(dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
     calc.use_paw(paws['In'], kind='In')
     calc.use_paw(paws['As'], kind='As')
     calc.use_structure(vasp_structure)
