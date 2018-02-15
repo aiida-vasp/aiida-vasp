@@ -118,6 +118,8 @@ class VaspParser(BaseParser):
             # There are no special parser settings so we just return the default settings
             pass
 
+        self._check_and_validate_settings()
+
         self._nodes_to_add = list(PARSABLE_QUANTITIES.keys())
         self._parsable_files = PARSABLE_FILES
 
@@ -165,6 +167,21 @@ class VaspParser(BaseParser):
                 self._set_node(key, value)
 
         return self.result(success=True)
+
+    def _check_and_validate_settings(self):
+        """Check the settings and set which files should be parsed based on the input."""
+
+        import copy
+        new_settings = copy.deepcopy(self._settings)
+
+        for key, value in self._settings.iteritems():
+            if not key.startswith('add_'):
+                continue
+            quantity = key[4:]
+            for filename in PARSABLE_QUANTITIES[quantity]['parsers']:
+                new_settings['should_parse_' + filename] = value
+
+        self._settings = new_settings
 
     def _update_parsing_list(self):
         """Add all quantities, which should be parsed to the quantitiesToParse list."""
