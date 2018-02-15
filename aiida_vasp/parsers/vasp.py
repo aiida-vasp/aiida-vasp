@@ -328,7 +328,9 @@ class VaspParser(BaseParser):
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
         # Take the output structure if available.
-        structure = self._output_nodes['structure']
+        structure = None
+        if 'structure' in self._output_nodes:
+            structure = self._output_nodes['structure']
         if structure is None:
             structure = self._calc.inp.structure
         bsnode.set_cell(structure.get_ase().get_cell())
