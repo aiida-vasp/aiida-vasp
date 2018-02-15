@@ -230,7 +230,7 @@ class VaspParser(BaseParser):
         if not self._parsers['DOSCAR']:
             return False
 
-        if self._settings['add_dos'] and not self._parsers['vasprun.xml'].is_static():
+        if self._settings['add_dos'] and not self._parsers['vasprun.xml'].is_static:
             self.logger.warning('Adding a DOS node has been requested by setting "add_dos = True".' +
                                 ' However, for calculating a DOS a static calculation is recommended.')
 
@@ -273,7 +273,7 @@ class VaspParser(BaseParser):
         if not self._parsers['EIGENVAL']:
             return False
 
-        if self._settings['add_bands'] and not self._parsers['vasprun.xml'].is_static():
+        if self._settings['add_bands'] and not self._parsers['vasprun.xml'].is_static:
             self.logger.warning('Adding a band_structure node has been requested by setting' +
                                 ' "add_bands = True". However, for calculating a band structure' + ' a static calculation is recommended.')
 
@@ -337,11 +337,11 @@ class VaspParser(BaseParser):
     def _should_parse_chgcar(self):
         """Return True if CHGCAR should be parsed."""
 
-        if self._settings['add_chgcar'] and not self._parsers['vasprun.xml'].is_sc():
+        if self._settings['add_chgcar'] and not self._parsers['vasprun.xml'].is_sc:
             self.logger.warning('Adding a CHGCAR node has been requested by setting "add_chgcar = True".' +
                                 ' However, the calculation is not selfconsistent.')
 
-        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc()
+        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc
 
     def _get_chgcar(self):
         """Create a DB Node for the CHGCAR file"""
@@ -376,11 +376,11 @@ class VaspParser(BaseParser):
     def _should_parse_wavecar(self):
         """Return True if WAVECAR should be parsed."""
 
-        if self._settings['add_wavecar'] and not self._parsers['vasprun.xml'].is_sc():
+        if self._settings['add_wavecar'] and not self._parsers['vasprun.xml'].is_sc:
             self.logger.warning('Adding a WAVECAR node has been requested by setting "add_wavecar = True".' +
                                 ' However, the calculation is not selfconsistent.')
 
-        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc()
+        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc
 
     def _get_wavecar(self):
         """Create a DB Node for the WAVECAR file"""
