@@ -44,31 +44,38 @@ DEFAULT_OPTIONS = {
 PARSABLE_QUANTITIES = {
     'parameters': {
         'parsers': ['OUTCAR', 'vasprun.xml'],
-        'nodeName': 'parameters'
+        'nodeName': 'parameters',
+        'prerequesites': []
     },
     'structure': {
         'parsers': ['CONTCAR'],
-        'nodeName': 'structure'
+        'nodeName': 'structure',
+        'prerequesites': []
     },
     'bands': {
         'parsers': ['EIGENVAL', 'vasprun.xml'],
-        'nodeName': 'bands'
+        'nodeName': 'bands',
+        'prerequesites': ['structure']
     },
     'kpoints': {
         'parsers': ['EIGENVAL', 'IBZKPT'],
-        'nodeName': 'kpoints'
+        'nodeName': 'kpoints',
+        'prerequesites': []
     },
     'dos': {
         'parsers': ['vasprun.xml', 'DOSCAR'],
-        'nodeName': 'dos'
+        'nodeName': 'dos',
+        'prerequesites': []
     },
     'chgcar': {
         'parsers': ['CHGCAR'],
-        'nodeName': 'chgcar'
+        'nodeName': 'chgcar',
+        'prerequesites': []
     },
     'wavecar': {
         'parsers': ['WAVECAR'],
-        'nodeName': 'wavecar'
+        'nodeName': 'wavecar',
+        'prerequesites': []
     },
 }
 
@@ -157,8 +164,9 @@ class VaspParser(BaseParser):
         # might get dynamically updated during the loop.
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
-
             if self._settings['add_' + quantity]:
+                if not self._check_prerequesites(quantity):
+                    continue
                 self._output_nodes.update(getattr(self, '_get_' + quantity)())
 
         # Add output nodes if the corresponding data exists.
@@ -220,6 +228,28 @@ class VaspParser(BaseParser):
                 self._parsers[key] = value['parser_class'](file_to_parse)
 
         # All critical files have been found, so we can safely return True.
+        return True
+
+    def _check_prerequesites(self, quantity):
+        """Check whether the prerequesites of a given quantity have been met. If not either
+           requeue or prevent this quantity from being parsed."""
+
+        prerequesites = PARSABLE_QUANTITIES[quantity]['prerequesites']
+        for preq in prerequesites:
+            if preq in self._output_nodes:
+                # requirement met, check the next one
+                continue
+
+            # Requirement not met yet.
+            if preq in self._quantities_to_parse:
+                # The prerequesite is in the queue, requeue this quantity and return
+                self._quantities_to_parse.append(quantity)
+                return False
+
+            # The prerequesite is not met and also not in the queue. Don't parse this quantity.
+            return False
+
+        # All requirements have been met
         return True
 
     def _should_parse_dos(self):
