@@ -203,6 +203,10 @@ class VaspParser(BaseParser):
 
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
+                # only keys starting with 'add_' will change the behaviour of the parser so get the next one.
+                continue
+            if not value:
+                # The quantity should not be added, so the corresponding files do not have to be parsed.
                 continue
             quantity = key[4:]
             if quantity not in PARSABLE_QUANTITIES:
