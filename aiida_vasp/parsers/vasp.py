@@ -110,20 +110,37 @@ PARSABLE_FILES = {
 
 class VaspParser(BaseParser):
     """
-    Parses all Vasp calculations.
+    Parses all Vasp calculations. The parser will check which quantities to parse and which nodes to add
+    to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
+    corresponding VaspCalculation.
+
+    Parser Settings usage:
+
+    Parser settings can be passed through the input node `settings` as follows::
+
+        settings = ParameterData(dict={
+            'parser_settings': {
+                ...
+            }
+        })
+
+    Valid keys for `parser_settings` are:
+
+    * `add_<quantity>`, where quantity is one of:
+
+        'parameters': Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
+        'bands':      Band structure node parsed from EIGENVAL.
+        'dos':        ArrayData node containing the DOS parsed from DOSCAR.
+        'kpoints':    KpointsData node parsed from IBZKPT.
+        'wavecar':    FileData node containing the WAVECAR file.
+        'chgcar':     FileData node containing the CHGCAR file.
     """
 
     def __init__(self, calc):
         super(VaspParser, self).__init__(calc)
 
         self.out_folder = None
-        self._settings = DEFAULT_OPTIONS
-
-        try:
-            self._settings.update(self._calc.inp.settings.get_dict()['parser_settings'])
-        except KeyError:
-            # There are no special parser settings so we just return the default settings
-            pass
+        self._settings = self._calc.inp.settings.get_dict().get('parser_settings', DEFAULT_OPTIONS)
 
         self._check_and_validate_settings()
 
@@ -186,6 +203,12 @@ class VaspParser(BaseParser):
             if not key.startswith('add_'):
                 continue
             quantity = key[4:]
+            if quantity not in PARSABLE_QUANTITIES:
+                self.logger.warning('{0} has been requested by setting add_{0}'.format(quantity) +
+                                    ' however it has not been implemented. Please check the docstrings' +
+                                    ' in  aiida_vasp.parsers.vasp.py for valid input.')
+                continue
+
             for filename in PARSABLE_QUANTITIES[quantity]['parsers']:
                 new_settings['should_parse_' + filename] = value
 

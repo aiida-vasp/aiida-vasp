@@ -31,22 +31,24 @@ class OutcarParser(object):
     def _read_volume(self):
         """Parse the OUTCAR file and return the cell volume"""
         result = {}
-        for line in open(self.outcar_file, 'r'):
-            if line.rfind('volume of cell :') > -1:
-                result['volume'] = float(line.split()[-1])
+        with open(self.outcar_file, 'r') as outcar_file_object:
+            for line in outcar_file_object:
+                if line.rfind('volume of cell :') > -1:
+                    result['volume'] = float(line.split()[-1])
         return result
 
     def _read_energies(self):
         """Parse the OUTCAR file and return the total energies without entropy as well as free energies"""
         energy_free = []
         energy_zero = []
-        for line in open(self.outcar_file, 'r'):
-            # Free energy
-            if line.lower().startswith('  free  energy   toten'):
-                energy_free.append(float(line.split()[-2]))
-            # Extrapolated zero point energy
-            if line.startswith('  energy  without entropy'):
-                energy_zero.append(float(line.split()[-1]))
+        with open(self.outcar_file, 'r') as outcar_file_object:
+            for line in outcar_file_object:
+                # Free energy
+                if line.lower().startswith('  free  energy   toten'):
+                    energy_free.append(float(line.split()[-2]))
+                # Extrapolated zero point energy
+                if line.startswith('  energy  without entropy'):
+                    energy_zero.append(float(line.split()[-1]))
         result = {}
         result['free_energy'] = energy_free[-1]
         result['energy_without_entropy'] = energy_zero[-1]
@@ -57,7 +59,8 @@ class OutcarParser(object):
     def _read_efermi(self):
         """Parse the OUTCAR file and return the fermi energy"""
         result = {}
-        for line in open(self.outcar_file, 'r'):
-            if line.rfind('E-fermi') > -1:
-                result['efermi'] = float(line.split()[2])
+        with open(self.outcar_file, 'r') as outcar_file_object:
+            for line in outcar_file_object:
+                if line.rfind('E-fermi') > -1:
+                    result['efermi'] = float(line.split()[2])
         return result
