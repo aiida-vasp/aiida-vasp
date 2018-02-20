@@ -1,5 +1,6 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
+from functools import update_wrapper
 import numpy as np
 from aiida.orm import DataFactory
 
@@ -108,9 +109,42 @@ PARSABLE_FILES = {
 }
 
 
+def delegate():
+    """
+    Get a decorator adding attributes to add or remove functions to a list of functions.
+    When the decorated function is called, all functions in the list will be called.
+    """
+
+    def decorator(meth):
+        """Decorate a class method to delegate kwargs."""
+
+        meth.listeners = []
+
+        def add_listener(func):
+            meth.listeners.append(func)
+
+        def remove_listener(func):
+            if func in meth.listeners:
+                meth.listeners.remove(func)
+
+        setattr(meth, 'add_listener', add_listener)
+        setattr(meth, 'remove_listener', remove_listener)
+
+        def wrapper(*args, **kwargs):
+            for func in meth.listeners:
+                func(*args, **kwargs)
+            meth(*args, **kwargs)
+
+        update_wrapper(wrapper, meth)
+        return wrapper
+
+    return decorator
+
+
 class VaspParser(BaseParser):
     """
-    Parses all Vasp calculations. The parser will check which quantities to parse and which nodes to add
+    Parses all Vasp calculations. This particular class manages all the specific file parsers in
+    aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
     to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
     corresponding VaspCalculation.
 
@@ -186,7 +220,8 @@ class VaspParser(BaseParser):
             if self._settings['add_' + quantity]:
                 if not self._check_prerequesites(quantity):
                     continue
-                self._output_nodes.update(getattr(self, '_get_' + quantity)())
+                for parser in PARSABLE_QUANTITIES['quantity']['parsers']:
+                    parser.get_quantities(quantity, self._output_nodes)
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():

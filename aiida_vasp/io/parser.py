@@ -7,8 +7,20 @@ from six import string_types
 
 
 class BaseParser(object):
-    """Common codebase for all parser utilities"""
+    """Common codebase for all parser utilities. It provides the following interface to be used
+    by the VaspParser:
+
+        - properties: a list holding all the properties this parser can extract from it's file
+        - get_quantities(properties, output): Method to be called by the VaspParser
+          which will call the specific parsing methods for each requested property and add
+          their results to the correct ouput node.
+    """
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
+
+    def __init__(self):
+        super(BaseParser, self).__init__()
+        self._parsable_items = {}
+        self._filepath = None
 
     @classmethod
     def line(cls, fobj_or_str, d_type=str):
@@ -30,6 +42,18 @@ class BaseParser(object):
         else:
             lines = fobj_or_str.readlines()
         return [cls.line(l, d_type) for l in lines]
+
+    def get_quantities(self, quantities, output):
+        """Public method for delegating the parsing of quantity to the specialised private method"""
+        for node, components in quantities.iteritem():
+            if node in self._parsable_items:
+                for component in components:
+                    if component in self._parsable_items[node]:
+                        inputs = output.get(node)
+                        try:
+                            output.update(getattr(self, '_get_' + component)(inputs))
+                        except:
+                            raise NotImplementedError('The {0} does not implemnt _get_{1}'.format(self.__class__.__name__, component))
 
 
 class KeyValueParser(BaseParser):
