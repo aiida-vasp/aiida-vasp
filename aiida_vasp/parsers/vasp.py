@@ -256,7 +256,7 @@ class VaspParser(BaseParser):
                     self.logger.warning('{0} not found, but should be parsed.'.format(key))
             else:
                 # The file should be parsed and has been found
-                self._parsers[key] = value['parser_class'](file_to_parse)
+                self._parsers[key] = value['parser_class'](file_to_parse, key)
 
         # All critical files have been found, so we can safely return True.
         return True
@@ -340,42 +340,6 @@ class VaspParser(BaseParser):
 
         return self._settings['add_bands']
 
-    def _get_bands(self):
-        '''
-        Create a bands and a kpoints node from values in eigenvalue.
-
-        returns: bsnode, kpout
-        - bsnode: BandsData containing eigenvalues from EIGENVAL
-                and occupations from vasprun.xml
-        - kpout: KpointsData containing kpoints from EIGENVAL,
-
-        both bsnode as well as kpnode come with cell unset
-        '''
-        eig = self.get_file('EIGENVAL')
-        if not eig:
-            return {'bands': None, 'kpoints': None}
-
-        _, kpoints, bands = EigParser.parse_eigenval(eig)
-        bsnode = DataFactory('array.bands')()
-        kpout = DataFactory('array.kpoints')()
-        # Take the output structure if available.
-        structure = None
-        if 'structure' in self._output_nodes:
-            structure = self._output_nodes['structure']
-        if structure is None:
-            structure = self._calc.inp.structure
-        bsnode.set_cell(structure.get_ase().get_cell())
-        kpout.set_cell(structure.get_ase().get_cell())
-        if self._calc.inp.kpoints.get_attrs().get('array|kpoints'):
-            bsnode.set_kpointsdata(self._calc.inp.kpoints)
-        if self._calc.inp.kpoints.labels:
-            bsnode.labels = self._calc.inp.kpoints.labels
-        else:
-            bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-        bsnode.set_bands(bands, occupations=self._parsers['vasprun.xml'].occupations)
-        kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-        return {'bands': bsnode, 'kpoints': kpout}
-
     def _should_parse_kpoints(self):
         """Return True if IBZKPT should be parsed."""
 
@@ -406,35 +370,10 @@ class VaspParser(BaseParser):
 
         return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc
 
-    def _get_chgcar(self):
-        """Create a DB Node for the CHGCAR file"""
-
-        chgc = self.get_file('CHGCAR')
-
-        if chgc is None:
-            return {'chgcar': None}
-
-        chgnode = DataFactory('vasp.chargedensity')()
-        chgnode.set_file(chgc)
-
-        return {'chgcar': chgnode}
-
     def _should_parse_structure(self):
         """Return True if Structure should be parsed."""
 
         return self._settings['add_structure']
-
-    def _get_structure(self):
-        '''read CONTCAR for output structure'''
-
-        from ase.io import read
-        structure = DataFactory('structure')()
-        cont = self.get_file('CONTCAR')
-        if not cont:
-            self.logger.info('CONTCAR not found!')
-            return {'structure': None}
-        structure.set_ase(read(cont, format='vasp'))
-        return {'structure': structure}
 
     def _should_parse_wavecar(self):
         """Return True if WAVECAR should be parsed."""
@@ -443,7 +382,7 @@ class VaspParser(BaseParser):
             self.logger.warning('Adding a WAVECAR node has been requested by setting "add_wavecar = True".' +
                                 ' However, the calculation is not selfconsistent.')
 
-        return self._settings['add_chgcar'] and self._parsers['vasprun.xml'].is_sc
+        return self._settings['add_wavecar'] and self._parsers['vasprun.xml'].is_sc
 
     def _get_wavecar(self):
         """Create a DB Node for the WAVECAR file"""

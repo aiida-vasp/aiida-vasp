@@ -51,7 +51,10 @@ class BaseParser(object):
             if node in self._parsable_items:
                 for component in components:
                     if component in self._parsable_items[node]:
-                        inputs = output.get(node)
+                        # gather everything required for parsing this component
+                        inputs = {}
+                        for inp in self._parsable_items[node][component]:
+                            inputs[inp] = output[inp]
                         try:
                             output.update(getattr(self, '_get_' + component)(inputs))
                         except:
