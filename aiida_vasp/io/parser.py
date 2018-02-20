@@ -21,6 +21,7 @@ class BaseParser(object):
         super(BaseParser, self).__init__()
         self._parsable_items = {}
         self._filepath = None
+        self._out_folder = None
 
     @classmethod
     def line(cls, fobj_or_str, d_type=str):
