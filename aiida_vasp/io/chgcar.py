@@ -10,16 +10,16 @@ class ChgcarParser(BaseParser):
     Add CHGCAR as a single file node.
     """
 
-    FILE_NAME = 'chgcar'
     PARSABLE_ITEMS = {
         'chgcar': {
             'chgcar': None,
         },
     }
 
-    def __init__(self, path):
+    def __init__(self, path, filename):
         super(ChgcarParser, self).__init__()
         self._filepath = path
+        self._filename = filename
         self._parsable_items = ChgcarParser.PARSABLE_ITEMS
 
     def _get_chgcar(self, inputs):
