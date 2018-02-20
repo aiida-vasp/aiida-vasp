@@ -1,7 +1,7 @@
 """
 Tools for parsing OUTCAR files
 """
-from .parser import BaseParser
+from aiida_vasp.io.parser import BaseParser
 
 
 class OutcarParser(BaseParser):
@@ -18,9 +18,10 @@ class OutcarParser(BaseParser):
         },
     }
 
-    def __init__(self, path):
+    def __init__(self, path, filename):
         super(OutcarParser, self).__init__()
         self._filepath = path
+        self._filename = filename
         self._parsable_items = OutcarParser.PARSABLE_ITEMS
 
     def _get_volume(self, inputs):

@@ -20,6 +20,7 @@ class BaseParser(object):
     def __init__(self):
         super(BaseParser, self).__init__()
         self._parsable_items = {}
+        self._filename = None
         self._filepath = None
         self._out_folder = None
 
