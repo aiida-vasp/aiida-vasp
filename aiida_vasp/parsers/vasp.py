@@ -384,19 +384,6 @@ class VaspParser(BaseParser):
 
         return self._settings['add_wavecar'] and self._parsers['vasprun.xml'].is_sc
 
-    def _get_wavecar(self):
-        """Create a DB Node for the WAVECAR file"""
-
-        wfn = self.get_file('WAVECAR')
-
-        if wfn is None:
-            return {'wavecar': None}
-
-        wfnode = DataFactory('vasp.wavefun')()
-        wfnode.set_file(wfn)
-
-        return {'wavecar': wfnode}
-
     def _should_parse_parameters(self):
         """Return True if Parameters should be parsed."""
 
