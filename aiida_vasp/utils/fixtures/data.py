@@ -141,11 +141,25 @@ def vasp_wavecar(aiida_env):
     return wavecar, ref_wavecar
 
 
-@pytest.fixture()
+@pytest.fixture
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
+
+
+@pytest.fixture
+def ref_incar_vasp2w90():
+    from aiida_vasp.backendtests.common import subpath
+    with open(subpath('data', 'INCAR_Vasp2w90'), 'r') as reference_incar_fo:
+        yield reference_incar_fo.read().strip()
+
+
+@pytest.fixture
+def ref_win():
+    from aiida_vasp.backendtests.common import subpath
+    with open(subpath('data', 'wannier90.win'), 'r') as reference_incar_fo:
+        yield reference_incar_fo.read()
 
 
 @pytest.fixture()
@@ -171,3 +185,23 @@ def _ref_kp_mesh():
     with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
+
+
+@pytest.fixture
+def wannier_params():
+    from aiida.orm.data.parameter import ParameterData
+    return ParameterData(dict=dict(
+        dis_num_iter=1000,
+        num_bands=24,
+        num_iter=0,
+        num_wann=14,
+        spinors=True,
+    ))
+
+
+@pytest.fixture
+def wannier_projections():
+    from aiida.orm.data.base import List
+    wannier_projections = List()
+    wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
+    return wannier_projections
