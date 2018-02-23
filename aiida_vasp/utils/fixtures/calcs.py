@@ -9,11 +9,13 @@ from .data import vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, re
 def vasp_calc_and_ref(vasp_code, vasp_params, paws, vasp_kpoints, vasp_structure, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
+    from aiida.orm.data.parameter import ParameterData
     calc = VaspCalculation()
     calc.use_code(vasp_code)
     calc.set_computer(vasp_code.get_computer())
     calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
     calc.use_parameters(vasp_params)
+    calc.use_settings(ParameterData(dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
     calc.use_paw(paws['In'], kind='In')
     calc.use_paw(paws['As'], kind='As')
     calc.use_structure(vasp_structure)
