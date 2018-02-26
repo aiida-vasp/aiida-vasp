@@ -12,7 +12,10 @@ class PoscarParser(BaseParser):
 
     PARSABLE_ITEMS = {
         'structure': {
-            'structure': None,
+            'inputs': [],
+            'parsers': ['CONTCAR'],
+            'nodeName': 'structure',
+            'prerequesites': []
         },
     }
 

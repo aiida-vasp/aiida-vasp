@@ -11,8 +11,11 @@ class WavecarParser(BaseParser):
     """
 
     PARSABLE_ITEMS = {
-        'chgcar': {
-            'chgcar': None,
+        'wavecar': {
+            'inputs': [],
+            'parsers': ['WAVECAR'],
+            'nodeName': 'wavecar',
+            'prerequesites': []
         },
     }
 

@@ -42,20 +42,10 @@ DEFAULT_OPTIONS = {
 # with the output nodes, however this might change in a later version. Also at the moment the aditional
 # information in the values is not used.
 PARSABLE_QUANTITIES = {
-    'parameters': {
-        'parsers': ['OUTCAR', 'vasprun.xml'],
-        'nodeName': 'parameters',
-        'prerequesites': []
-    },
     'structure': {
         'parsers': ['CONTCAR'],
         'nodeName': 'structure',
         'prerequesites': []
-    },
-    'bands': {
-        'parsers': ['EIGENVAL', 'vasprun.xml'],
-        'nodeName': 'bands',
-        'prerequesites': ['structure']
     },
     'kpoints': {
         'parsers': ['EIGENVAL', 'IBZKPT'],
@@ -65,16 +55,6 @@ PARSABLE_QUANTITIES = {
     'dos': {
         'parsers': ['vasprun.xml', 'DOSCAR'],
         'nodeName': 'dos',
-        'prerequesites': []
-    },
-    'chgcar': {
-        'parsers': ['CHGCAR'],
-        'nodeName': 'chgcar',
-        'prerequesites': []
-    },
-    'wavecar': {
-        'parsers': ['WAVECAR'],
-        'nodeName': 'wavecar',
         'prerequesites': []
     },
 }
@@ -147,8 +127,10 @@ class VaspParser(BaseParser):
 
         self._check_and_validate_settings()
 
-        self._nodes_to_add = list(PARSABLE_QUANTITIES.keys())
-        self._parsable_files = PARSABLE_FILES
+        self._parsable_quantities = {}
+        # Gather all parsable items as defined in the file parsers.
+        for filename in PARSABLE_FILES:
+            self._parsable_quantities.update(filename['parser_class'].PARSABLE_ITEMS)
 
         self._parsers = {
             'vasprun.xml': None,
@@ -192,6 +174,11 @@ class VaspParser(BaseParser):
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
+
+            if key != self._parsable_quantities[key]['nodeName']:
+                # this is just an intermediate result and should not be added as a node.
+                continue
+
             if value:
                 self._set_node(key, value)
 
@@ -225,7 +212,7 @@ class VaspParser(BaseParser):
     def _update_parsing_list(self):
         """Add all quantities, which should be parsed to the quantitiesToParse list."""
 
-        for quantity in self._nodes_to_add:
+        for quantity in list(self._parsable_quantities.keys()):
             if quantity in self._quantities_to_parse:
                 continue
             if getattr(self, '_should_parse_' + quantity)():
@@ -237,7 +224,7 @@ class VaspParser(BaseParser):
         Return False if a critical file is missing, which will abort the parsing.
         """
 
-        for key, value in self._parsable_files.iteritems():
+        for key, value in PARSABLE_FILES.iteritems():
             if not self._settings['should_parse_' + key]:
                 continue
             if self._parsers[key]:

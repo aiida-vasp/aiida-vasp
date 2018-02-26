@@ -18,7 +18,10 @@ class EigParser(BaseParser):
 
     PARSABLE_ITEMS = {
         'bands': {
-            'bands': None,
+            'inputs': ['structure', 'kpoints', 'occupations'],
+            'parsers': ['EIGENVAL', 'vasprun.xml'],
+            'nodeName': 'bands',
+            'prerequesites': ['structure', 'occupations']
         },
     }
 
@@ -26,7 +29,7 @@ class EigParser(BaseParser):
         super(EigParser, self).__init__()
         self._filepath = path
         self._filename = filename
-        self._cached_data = None
+        self._parsed_data = None
         self._parsable_items = EigParser.PARSABLE_ITEMS
 
     def _get_bands(self, inputs):
@@ -73,11 +76,11 @@ class EigParser(BaseParser):
     def parse_eigenval(self, filename):
         """Return values from EIGENVAL. Either return cached values or parse the file."""
 
-        if not self._cached_data:
-            self._cached_data = {}
-            self._cached_data['header'], self._cached_data['kpoints'], self._cached_data['bands'] = self._parse_eigenval(filename)
+        if not self._parsed_data:
+            self._parsed_data = {}
+            self._parsed_data['header'], self._parsed_data['kpoints'], self._parsed_data['bands'] = self._parse_eigenval(filename)
 
-        return self._cached_data['header'], self._cached_data['kpoints'], self._cached_data['bands']
+        return self._parsed_data['header'], self._parsed_data['kpoints'], self._parsed_data['bands']
 
     # pylint: disable=too-many-locals
     def _parse_eigenval(self, filename):

@@ -12,7 +12,10 @@ class ChgcarParser(BaseParser):
 
     PARSABLE_ITEMS = {
         'chgcar': {
-            'chgcar': None,
+            'inputs': [],
+            'parsers': ['CHGCAR'],
+            'nodeName': 'chgcar',
+            'prerequesites': []
         },
     }
 

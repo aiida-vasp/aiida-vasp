@@ -20,6 +20,7 @@ class BaseParser(object):
     def __init__(self):
         super(BaseParser, self).__init__()
         self._parsable_items = {}
+        self._parsed_data = None
         self._filename = None
         self._filepath = None
         self._out_folder = None
@@ -45,20 +46,18 @@ class BaseParser(object):
             lines = fobj_or_str.readlines()
         return [cls.line(l, d_type) for l in lines]
 
-    def get_quantities(self, quantities, output):
+    def get_quantity(self, quantity, output):
         """Public method for delegating the parsing of quantity to the specialised private method"""
-        for node, components in quantities.iteritem():
-            if node in self._parsable_items:
-                for component in components:
-                    if component in self._parsable_items[node]:
-                        # gather everything required for parsing this component
-                        inputs = {}
-                        for inp in self._parsable_items[node][component]:
-                            inputs[inp] = output[inp]
-                        try:
-                            output.update(getattr(self, '_get_' + component)(inputs))
-                        except:
-                            raise NotImplementedError('The {0} does not implemnt _get_{1}'.format(self.__class__.__name__, component))
+        if quantity in self._parsable_items:
+            # gather everything required for parsing this component
+            inputs = {}
+            for inp in self._parsable_items[quantity]['inputs']:
+                inputs[inp] = output.get(inp)
+
+            try:
+                output.update(getattr(self, '_get_' + quantity)(inputs))
+            except AttributeError:
+                raise NotImplementedError
 
 
 class KeyValueParser(BaseParser):

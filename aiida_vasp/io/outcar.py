@@ -11,10 +11,23 @@ class OutcarParser(BaseParser):
 
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
-        'parameters': {
-            'volume': None,
-            'energies': ['free_energy', 'free_energy_all', 'energy_without_entropy', 'energy_without_entropy_all'],
-            'efermi': None,
+        'volume': {
+            'inputs': ['parameters'],
+            'parsers': ['OUTCAR'],
+            'nodeName': 'parameters',
+            'prerequesites': []
+        },
+        'energies': {
+            'inputs': ['parameters'],
+            'parsers': ['OUTCAR'],
+            'nodeName': 'parameters',
+            'prerequesites': []
+        },
+        'efermi': {
+            'inputs': ['parameters'],
+            'parsers': ['OUTCAR'],
+            'nodeName': 'parameters',
+            'prerequesites': []
         },
     }
 
@@ -23,7 +36,7 @@ class OutcarParser(BaseParser):
         self._filepath = path
         self._filename = filename
         self._parsable_items = OutcarParser.PARSABLE_ITEMS
-        self._cached_data = {}
+        self._parsed_data = {}
 
     def _parse_outcar(self):
         """Parse the OUTCAR file into a dictionary."""
@@ -59,7 +72,7 @@ class OutcarParser(BaseParser):
     def _get_energies(self, inputs):
         """Parse the OUTCAR file and return the total energies without entropy as well as free energies"""
         result = inputs
-        for quantity in self._parsable_items:
+        for quantity in ['free_energy', 'free_energy_all', 'energy_without_entropy', 'energy_without_entropy_all']:
             result.update(self._get_quantity(quantity))
         return {'parameters': result}
 
@@ -70,11 +83,11 @@ class OutcarParser(BaseParser):
         return {'parameters': result}
 
     def _get_quantity(self, quantity):
-        """Return the requested quantity from the _cached_data. If OUTCAR has not been parsed yet, parse it."""
-        if not self._cached_data:
-            self._cached_data = self._parse_outcar()
+        """Return the requested quantity from the _parsed_data. If OUTCAR has not been parsed yet, parse it."""
+        if not self._parsed_data:
+            self._parsed_data = self._parse_outcar()
 
-        if quantity not in self._cached_data:
+        if quantity not in self._parsed_data:
             return {}
 
-        return {quantity: self._cached_data[quantity]}
+        return {quantity: self._parsed_data[quantity]}
