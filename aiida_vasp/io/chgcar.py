@@ -15,7 +15,7 @@ class ChgcarParser(BaseParser):
             'inputs': [],
             'parsers': ['CHGCAR'],
             'nodeName': 'chgcar',
-            'prerequesites': []
+            'prerequisites': []
         },
     }
 

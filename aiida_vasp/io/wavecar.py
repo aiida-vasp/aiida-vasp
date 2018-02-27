@@ -15,7 +15,7 @@ class WavecarParser(BaseParser):
             'inputs': [],
             'parsers': ['WAVECAR'],
             'nodeName': 'wavecar',
-            'prerequesites': []
+            'prerequisites': []
         },
     }
 

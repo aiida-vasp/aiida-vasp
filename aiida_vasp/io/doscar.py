@@ -15,7 +15,7 @@ class DosParser(BaseParser):
             'inputs': ['vrp_pdos', 'vrp_tdos'],
             'parsers': ['vasprun.xml', 'DOSCAR'],
             'nodeName': 'dos',
-            'prerequesites': ['vrp_pdos', 'vrp_tdos']
+            'prerequisites': ['vrp_pdos', 'vrp_tdos']
         },
     }
 

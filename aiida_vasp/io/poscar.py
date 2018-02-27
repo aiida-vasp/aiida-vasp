@@ -15,7 +15,7 @@ class PoscarParser(BaseParser):
             'inputs': [],
             'parsers': ['CONTCAR'],
             'nodeName': 'structure',
-            'prerequesites': []
+            'prerequisites': []
         },
     }
 

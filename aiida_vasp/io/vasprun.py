@@ -11,6 +11,8 @@ import numpy as np
 
 from aiida_vasp.io.parser import BaseParser
 
+DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos']}
+
 
 class VasprunParser(BaseParser):
     """
@@ -23,19 +25,19 @@ class VasprunParser(BaseParser):
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'intermediate_data',
-            'prerequesites': []
+            'prerequisites': []
         },
         'vrp_pdos': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'intermediate_data',
-            'prerequesites': []
+            'prerequisites': []
         },
         'vrp_tdos': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'intermediate_data',
-            'prerequesites': []
+            'prerequisites': []
         },
     }
 
@@ -50,13 +52,9 @@ class VasprunParser(BaseParser):
 
     def _parse_file(self, inputs):
 
-        settings = inputs.gets('settings', {})
-
-        if not settings:
-            return {}
+        settings = inputs.gets('settings', DEFAULT_OPTIONS)
 
         result = {}
-
         for quantity in settings['quantities_to_parse']:
             if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)()
