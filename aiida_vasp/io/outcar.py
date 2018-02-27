@@ -49,7 +49,8 @@ class OutcarParser(BaseParser):
         result = self._read_outcar(inputs)
         params = DataFactory('parameter')()
         params.update_dict(result)
-        return {'parameters': params}
+        result['parameters'] = result
+        return result
 
     def _read_outcar(self, inputs):
         """Parse the OUTCAR file into a dictionary."""
