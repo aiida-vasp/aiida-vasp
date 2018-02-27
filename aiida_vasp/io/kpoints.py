@@ -1,20 +1,28 @@
 """Utils for VASP KPOINTS format"""
 import numpy as np
 
-from .parser import BaseParser
+from aiida_vasp.io.parser import BaseParser
+from aiida.orm import DataFactory
 
 
 class KpParser(BaseParser):
     """Parser for VASP KPOINTS format"""
 
-    def __init__(self, fname):
-        self.header, res = self.parse_kp_file(fname)
-        self.kpoints = res[:, :3]
-        if res.shape[1] == 4:
-            self.weights = res[:, 3]
-        else:
-            self.weights = None
-        self.cartesian = self.header['cartesian']
+    PARSABLE_ITEMS = {
+        'kpoints': {
+            'inputs': [],
+            'parsers': ['EIGENVAL', 'IBZKPT'],
+            'nodeName': 'kpoints',
+            'prerequesites': []
+        },
+    }
+
+    def __init__(self, path, filename):
+        super(KpParser, self).__init__()
+        self._filepath = path
+        self._filename = filename
+        self._parsable_items = KpParser.PARSABLE_ITEMS
+        self._parsed_data = {}
 
     @classmethod
     def parse_kp(cls, fobj_or_str):
@@ -34,3 +42,23 @@ class KpParser(BaseParser):
     def parse_kp_file(cls, fname):
         with open(fname) as kpoints_f:
             return cls.parse_kp(kpoints_f)
+
+    def _parse_file(self, inputs):
+        """Create a DB Node for the IBZKPT file"""
+
+        result = inputs
+        result = {}
+
+        header, res = self.parse_kp_file(self._filepath)
+        kpoints = res[:, :3]
+        if res.shape[1] == 4:
+            weights = res[:, 3]
+        else:
+            weights = None
+
+        kpout = DataFactory('array.kpoints')()
+        kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
+
+        result['kpoints'] = kpout
+
+        return result

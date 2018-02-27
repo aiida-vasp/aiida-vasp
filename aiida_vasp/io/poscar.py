@@ -24,16 +24,18 @@ class PoscarParser(BaseParser):
         self._filepath = path
         self._filename = filename
         self._parsable_items = PoscarParser.PARSABLE_ITEMS
+        self._parsable_data = {}
 
-    def _get_structure(self, inputs):
+    def _parse_file(self, inputs):
         '''read POSCAR format file for output structure'''
         from ase.io import read
 
         result = inputs
-        result = DataFactory('structure')()
+        result = {}
+        result['structure'] = DataFactory('structure')()
         cont = self._filepath
         if not cont:
             return {'structure': None}
-        result.set_ase(read(cont, format='vasp'))
+        result['structure'].set_ase(read(cont, format='vasp'))
 
-        return {'structure': result}
+        return result

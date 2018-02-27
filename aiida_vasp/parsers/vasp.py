@@ -38,27 +38,6 @@ DEFAULT_OPTIONS = {
     'should_parse_vasprun.xml': True,
 }
 
-# Dictionary holding all the quantities which can be parsed by the vasp parser. Currently those coincide
-# with the output nodes, however this might change in a later version. Also at the moment the aditional
-# information in the values is not used.
-PARSABLE_QUANTITIES = {
-    'structure': {
-        'parsers': ['CONTCAR'],
-        'nodeName': 'structure',
-        'prerequesites': []
-    },
-    'kpoints': {
-        'parsers': ['EIGENVAL', 'IBZKPT'],
-        'nodeName': 'kpoints',
-        'prerequesites': []
-    },
-    'dos': {
-        'parsers': ['vasprun.xml', 'DOSCAR'],
-        'nodeName': 'dos',
-        'prerequesites': []
-    },
-}
-
 PARSABLE_FILES = {
     'DOSCAR': {
         'parser_class': DosParser,
@@ -169,7 +148,7 @@ class VaspParser(BaseParser):
             if self._settings['add_' + quantity]:
                 if not self._check_prerequesites(quantity):
                     continue
-                for parser in PARSABLE_QUANTITIES['quantity']['parsers']:
+                for parser in self._parsable_quantities['quantity']['parsers']:
                     parser.get_quantities(quantity, self._output_nodes)
 
         # Add output nodes if the corresponding data exists.
@@ -198,13 +177,13 @@ class VaspParser(BaseParser):
                 # The quantity should not be added, so the corresponding files do not have to be parsed.
                 continue
             quantity = key[4:]
-            if quantity not in PARSABLE_QUANTITIES:
+            if quantity not in self._parsable_quantities:
                 self.logger.warning('{0} has been requested by setting add_{0}'.format(quantity) +
                                     ' however it has not been implemented. Please check the docstrings' +
                                     ' in  aiida_vasp.parsers.vasp.py for valid input.')
                 continue
 
-            for filename in PARSABLE_QUANTITIES[quantity]['parsers']:
+            for filename in self._parsable_quantities[quantity]['parsers']:
                 new_settings['should_parse_' + filename] = value
 
         self._settings = new_settings
@@ -252,7 +231,7 @@ class VaspParser(BaseParser):
         """Check whether the prerequesites of a given quantity have been met. If not either
            requeue or prevent this quantity from being parsed."""
 
-        prerequesites = PARSABLE_QUANTITIES[quantity]['prerequesites']
+        prerequesites = self._parsable_quantities[quantity]['prerequesites']
         for preq in prerequesites:
             if preq in self._output_nodes:
                 # requirement met, check the next one
@@ -334,19 +313,6 @@ class VaspParser(BaseParser):
             return False
 
         return self._settings['add_kpoints']
-
-    def _get_kpoints(self):
-        """Create a DB Node for the IBZKPT file"""
-
-        kpp = self._parsers['IBZKPT']
-
-        if kpp is None:
-            return {'kpoints': None}
-
-        kpout = DataFactory('array.kpoints')()
-        kpout.set_kpoints(kpp.kpoints, weights=kpp.weights, cartesian=kpp.cartesian)
-
-        return {'kpoints': kpout}
 
     def _should_parse_chgcar(self):
         """Return True if CHGCAR should be parsed."""

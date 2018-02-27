@@ -9,16 +9,59 @@ except ImportError:
 import datetime as dt
 import numpy as np
 
+from aiida_vasp.io.parser import BaseParser
 
-class VasprunParser(object):
+
+class VasprunParser(BaseParser):
     """
     parse xml into objecttree, provide convenience methods
     for parsing
     """
 
-    def __init__(self, fname):
+    PARSABLE_ITEMS = {
+        'occupations': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequesites': []
+        },
+        'vrp_pdos': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequesites': []
+        },
+        'vrp_tdos': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequesites': []
+        },
+    }
+
+    def __init__(self, path, filename):
         super(VasprunParser, self).__init__()
-        self.tree = parse(fname)
+        self._filepath = path
+        self._filename = filename
+        self._parsed_data = None
+        self._parsable_items = VasprunParser.PARSABLE_ITEMS
+
+        self.tree = parse(filename)
+
+    def _parse_file(self, inputs):
+
+        settings = inputs.gets('settings', {})
+
+        if not settings:
+            return {}
+
+        result = {}
+
+        for quantity in settings['quantities_to_parse']:
+            if quantity in self._parsable_items:
+                result[quantity] = getattr(self, quantity)()
+
+        return result
 
     @property
     def program(self):
@@ -99,11 +142,11 @@ class VasprunParser(object):
         return eig['eigene']
 
     @property
-    def tdos(self):
+    def vrp_tdos(self):
         return self._array(parent='dos/total')
 
     @property
-    def pdos(self):
+    def vrp_pdos(self):
         """The partial DOS array"""
         try:
             dos = self._array(parent='dos/partial')

@@ -24,16 +24,18 @@ class ChgcarParser(BaseParser):
         self._filepath = path
         self._filename = filename
         self._parsable_items = ChgcarParser.PARSABLE_ITEMS
+        self._parsed_data = {}
 
-    def _get_chgcar(self, inputs):
+    def _parse_file(self, inputs):
         """Create a DB Node for the CHGCAR file"""
         result = inputs
+        result = {}
 
         chgcar = self._filepath
         if chgcar is None:
             return {'chgcar': None}
 
-        result = DataFactory('vasp.chargedensity')()
-        result.set_file(chgcar)
+        result['chgcar'] = DataFactory('vasp.chargedensity')()
+        result['chgcar'].set_file(chgcar)
 
-        return {'chgcar': result}
+        return result

@@ -32,22 +32,15 @@ class EigParser(BaseParser):
         self._parsed_data = None
         self._parsable_items = EigParser.PARSABLE_ITEMS
 
-    def _get_bands(self, inputs):
-        '''
-        Create a bands and a kpoints node from values in eigenvalue.
+    def _parse_file(self, inputs):
+        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
 
-        returns: bsnode, kpout
-        - bsnode: BandsData containing eigenvalues from EIGENVAL
-                and occupations from vasprun.xml
-        - kpout: KpointsData containing kpoints from EIGENVAL,
+        result = inputs.get('settings', {})
+        result = {}
 
-        both bsnode as well as kpnode come with cell unset
-        '''
-        eig = self._filepath
-        if not eig:
-            return {'bands': None, 'kpoints': None}
+        header, kpoints, bands = self._read_eigenval()
 
-        _, kpoints, bands = self.parse_eigenval(eig)
+        result['header'] = header
 
         bsnode = DataFactory('array.bands')()
         kpout = DataFactory('array.kpoints')()
@@ -71,22 +64,16 @@ class EigParser(BaseParser):
         bsnode.set_bands(bands, occupations=inputs['occupations'])
         kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
 
-        return {'bands': bsnode, 'kpoints': kpout}
+        result['bands'] = bsnode
+        result['kpoints'] = kpout
 
-    def parse_eigenval(self, filename):
-        """Return values from EIGENVAL. Either return cached values or parse the file."""
-
-        if not self._parsed_data:
-            self._parsed_data = {}
-            self._parsed_data['header'], self._parsed_data['kpoints'], self._parsed_data['bands'] = self._parse_eigenval(filename)
-
-        return self._parsed_data['header'], self._parsed_data['kpoints'], self._parsed_data['bands']
+        return result
 
     # pylint: disable=too-many-locals
-    def _parse_eigenval(self, filename):
+    def _read_eigenval(self):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
 
-        with open(filename) as eig:
+        with open(self._filepath) as eig:
             line_0 = self.line(eig, int)  # read header
             line_1 = self.line(eig, float)  # "
             line_2 = self.line(eig, float)  # "

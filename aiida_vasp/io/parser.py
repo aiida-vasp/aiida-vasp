@@ -14,6 +14,10 @@ class BaseParser(object):
         - get_quantities(properties, output): Method to be called by the VaspParser
           which will call the specific parsing methods for each requested property and add
           their results to the correct ouput node.
+
+          :output contains data parsed by other file parsers and optionally a 'settings' card
+                  which determines the behaviour of each file parsers _parse_file method.
+
     """
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
@@ -47,19 +51,33 @@ class BaseParser(object):
         return [cls.line(l, d_type) for l in lines]
 
     def get_quantity(self, quantity, output):
-        """Public method for delegating the parsing of quantity to the specialised private method"""
+        """
+        Public method to get the required quantity from the _parsed_data dictionary if that exists.
+        Otherwise parse the file. This method will be registered to the VaspParsers get_quantities
+        delegate during __init__.
+        """
         if quantity in self._parsable_items:
             # gather everything required for parsing this component
             inputs = {}
+            inputs['settings'] = output.get('settings')
             for inp in self._parsable_items[quantity]['inputs']:
                 inputs[inp] = output.get(inp)
 
-            try:
-                output.update(getattr(self, '_get_' + quantity)(inputs))
-            except AttributeError:
-                raise NotImplementedError
+            if not self._parsed_data:
+                # The file has not been parsed yet.
+                self._parsed_data = self._parse_file(inputs)
+
+            output[quantity] = self._parsed_data.get(quantity)
+
+    def _parse_file(self, inputs):
+        """
+        Abstract base method to parse this file parsers file. Has to be overwritten by the child class.
+        """
+
+        raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
 
 
+# pylint: disable=abstract-method
 class KeyValueParser(BaseParser):
     """
     contains regex and functions to find grammar elements

@@ -38,8 +38,9 @@ class OutcarParser(BaseParser):
         self._parsable_items = OutcarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
-    def _parse_outcar(self):
+    def _parse_file(self, inputs):
         """Parse the OUTCAR file into a dictionary."""
+        result = inputs.get('settings', {})
         result = {}
         energy_free = []
         energy_zero = []
@@ -57,37 +58,9 @@ class OutcarParser(BaseParser):
                 # Fermi energy
                 if line.rfind('E-fermi') > -1:
                     result['efermi'] = float(line.split()[2])
-        result['free_energy'] = energy_free[-1]
-        result['energy_without_entropy'] = energy_zero[-1]
-        result['free_energy_all'] = energy_free
-        result['energy_without_entropy_all'] = energy_zero
+        result['energies'] = {}
+        result['energies']['free_energy'] = energy_free[-1]
+        result['energies']['energy_without_entropy'] = energy_zero[-1]
+        result['energies']['free_energy_all'] = energy_free
+        result['energies']['energy_without_entropy_all'] = energy_zero
         return result
-
-    def _get_volume(self, inputs):
-        """Parse the OUTCAR file and return the cell volume"""
-        result = inputs
-        result.update(self._get_quantity('volume'))
-        return {'parameters': result}
-
-    def _get_energies(self, inputs):
-        """Parse the OUTCAR file and return the total energies without entropy as well as free energies"""
-        result = inputs
-        for quantity in ['free_energy', 'free_energy_all', 'energy_without_entropy', 'energy_without_entropy_all']:
-            result.update(self._get_quantity(quantity))
-        return {'parameters': result}
-
-    def _get_efermi(self, inputs):
-        """Return the fermi energy"""
-        result = inputs
-        result.update(self._get_quantity('efermi'))
-        return {'parameters': result}
-
-    def _get_quantity(self, quantity):
-        """Return the requested quantity from the _parsed_data. If OUTCAR has not been parsed yet, parse it."""
-        if not self._parsed_data:
-            self._parsed_data = self._parse_outcar()
-
-        if quantity not in self._parsed_data:
-            return {}
-
-        return {quantity: self._parsed_data[quantity]}

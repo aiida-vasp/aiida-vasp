@@ -24,15 +24,17 @@ class WavecarParser(BaseParser):
         self._filepath = path
         self._filename = filename
         self._parsable_items = WavecarParser.PARSABLE_ITEMS
+        self._parsed_data = {}
 
-    def _get_wavecar(self, inputs):
+    def _parse_file(self, inputs):
         """Create a DB Node for the WAVECAR file"""
         result = inputs
+        result = {}
         wfn = self._filepath
 
         if wfn is None:
             return {'wavecar': None}
 
-        result = DataFactory('vasp.wavefun')()
-        result.set_file(wfn)
-        return {'wavecar': result}
+        result['wavecar'] = DataFactory('vasp.wavefun')()
+        result['wavecar'].set_file(wfn)
+        return result
