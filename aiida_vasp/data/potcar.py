@@ -176,6 +176,22 @@ def extract_tarfile(file_path):
     return new_path
 
 
+def by_older(left, right):
+    if left.ctime < right.ctime:
+        return -1
+    elif left.ctime > right.ctime:
+        return 1
+    return 0
+
+
+def by_user(left, right):
+    if left.user.is_active and not right.user.is_active:
+        return -1
+    elif not left.user.is_active and right.user.is_active:
+        return 1
+    return 0
+
+
 class PotcarWalker(object):
     """
     Walk the file system and find POTCAR files under a given directory.
@@ -237,7 +253,12 @@ class PotcarMetadataMixin(object):
     def find(cls, **kwargs):
         """Find a node by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
-        return query_builder.one()[0]
+        if not query_builder.count():
+            raise NotExistent()
+        results = [result[0] for result in query_builder.all()]
+        results.sort(by_older)
+        results.sort(by_user)
+        return results[0]
 
     @classmethod
     def exists(cls, **kwargs):
@@ -792,4 +813,9 @@ class PotcarData(Data, PotcarMetadataMixin):
         group_filters = {'name': {'==': family}, 'type': {'==': cls.potcar_family_type_string}}
         query.append(Group, tag='family', filters=group_filters, group_of=cls._query_label)
         query.add_projection(cls._query_label, '*')
-        return query.one()[0]
+        if not query.count():
+            raise NotExistent()
+        results = [result[0] for result in query.all()]
+        results.sort(by_older)
+        results.sort(by_user)
+        return results[0]
