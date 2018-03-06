@@ -1,6 +1,10 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""PAW Pseudopotential data node"""
+"""
+Legacy PAW Pseudopotential data node.
+
+THIS MODULE IS DEPRECATED AND MAY BE REMOVED IN FUTURE VERSIONS.
+"""
 import os
 
 from aiida.common.exceptions import NotExistent, UniquenessError
