@@ -11,6 +11,7 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida_vasp.utils.fixtures import aiida_env
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.data import temp_pot_folder
 
 
 @pytest.fixture
@@ -26,7 +27,11 @@ def potcar_walker_cls(aiida_env):
     return PotcarWalker
 
 
-def test_find_potcars(temp_data_folder, potcar_walker_cls):
-    walker = potcar_walker_cls(temp_data_folder)
+@pytest.mark.wip
+def test_find_potcars(potcar_walker_cls, temp_pot_folder):
+    """Make sure the walker finds the right number fo POTCAR files."""
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    walker = potcar_walker_cls(temp_pot_folder.strpath)
     walker.walk()
-    assert len(walker.potcars) == 7
+    assert len(walker.potcars) == 3
+    assert not potcar_ga.exists()

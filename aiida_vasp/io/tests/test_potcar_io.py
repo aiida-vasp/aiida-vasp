@@ -27,7 +27,7 @@ def test_potcar_from_path(aiida_env):
 
 def test_potcar_from_file_node(potcar_family):
     """Create a PotcarIo instance from a PotcarFileData node."""
-    potcar_file_in = get_data_class('vasp.potcar_file').find(element='In')
+    potcar_file_in = get_data_class('vasp.potcar_file').find_one(element='In')
     from_ctor = PotcarIo(potcar_file_node=potcar_file_in)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_file_in)
@@ -36,7 +36,7 @@ def test_potcar_from_file_node(potcar_family):
 
 def test_potcar_from_node(potcar_family):
     """Create a PotcarIo instance from a PotcarData node."""
-    potcar_ga = get_data_class('vasp.potcar').find(element='Ga')
+    potcar_ga = get_data_class('vasp.potcar').find_one(element='Ga')
     from_ctor = PotcarIo(potcar_node=potcar_ga)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_ga)
@@ -48,7 +48,7 @@ def test_potcar_from_contents(potcar_family):
     contents_as = read_file('potcar', 'As', 'POTCAR')
     from_ctor = PotcarIo(contents=contents_as)
     verify_potcario(from_ctor)
-    assert from_ctor.node.uuid == get_data_class('vasp.potcar').find(element='As').uuid
+    assert from_ctor.node.uuid == get_data_class('vasp.potcar').find_one(element='As').uuid
     from_from = PotcarIo.from_(contents_as)
     assert from_ctor == from_from
 

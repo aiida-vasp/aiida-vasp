@@ -1,8 +1,10 @@
 """Unit tests for vasp-potcar command family"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import os
+import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
+from monty.collections import AttrDict
 
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -10,11 +12,17 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, temp_pot_folder
 
-POTCAR_PATH = data_path('potcar')
-FAMILY_NAME = POTCAR_FAMILY_NAME
-PATH_OPTION = '--path={}'.format(POTCAR_PATH)
-NAME_OPTION = '--name={}'.format(FAMILY_NAME)
-DESC_OPTION = '--description="This is a test POTCAR family"'
+
+@pytest.fixture
+def cmd_params(temp_pot_folder):
+    """Common building blocks for ``uploadfamily`` calls."""
+    params = AttrDict()
+    params.POTCAR_PATH = temp_pot_folder.strpath
+    params.FAMILY_NAME = POTCAR_FAMILY_NAME
+    params.PATH_OPTION = '--path={}'.format(params.POTCAR_PATH)
+    params.NAME_OPTION = '--name={}'.format(params.FAMILY_NAME)
+    params.DESC_OPTION = '--description="This is a test POTCAR family"'
+    return params
 
 
 def run_cmd(command=None, args=None, **kwargs):
@@ -31,50 +39,50 @@ def test_no_subcmd():
     assert not result.exception
 
 
-def test_uploadfamily_withpath(fresh_aiida_env):
+def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
     """Upload the test potcar family and check it is there."""
 
-    result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION, DESC_OPTION])
+    result = run_cmd('uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
 
     potcar_cls = get_data_class('vasp.potcar')
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [FAMILY_NAME]
+    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
-def test_uploadfamily_tar(fresh_aiida_env):
+def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     """Give a tar file as the source"""
-    path_option = '--path={}'.format(py_path.local(POTCAR_PATH).join('Ga.tar'))
-    result = run_cmd('uploadfamily', [path_option, NAME_OPTION, DESC_OPTION])
+    path_option = '--path={}'.format(py_path.local(cmd_params.POTCAR_PATH).join('Ga.tar'))
+    result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
     print result.output
 
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [FAMILY_NAME]
+    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
-def test_uploadfamily_inworkdir(fresh_aiida_env):
+def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
     """Upload the test potcar family from the working env."""
 
-    potcar_dir = py_path.local(POTCAR_PATH)
+    potcar_dir = py_path.local(cmd_params.POTCAR_PATH)
     old_work_dir = potcar_dir.chdir()
 
-    result = run_cmd('uploadfamily', [NAME_OPTION, DESC_OPTION])
+    result = run_cmd('uploadfamily', [cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
 
     potcar_cls = get_data_class('vasp.potcar')
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [FAMILY_NAME]
+    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
     old_work_dir.chdir()
 
 
-def test_uploadfamily_again(fresh_aiida_env, potcar_family):
+def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
     """
     Re-upload a potcar family.
 
@@ -92,7 +100,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family):
     group_qb = QueryBuilder(path=[Group])
     group_count = group_qb.count()
 
-    result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION])
+    result = run_cmd('uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION])
 
     assert not result.exception
 
@@ -102,7 +110,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family):
     assert group_count == group_qb.count()
 
 
-def test_uploadfamily_dryrun(fresh_aiida_env):
+def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
     """Make sure --dry-run does not affect the db"""
     from aiida.orm import Node, Group
     from aiida.orm.querybuilder import QueryBuilder
@@ -112,7 +120,7 @@ def test_uploadfamily_dryrun(fresh_aiida_env):
     group_qb = QueryBuilder(path=[Group])
     group_count = group_qb.count()
 
-    result = run_cmd('uploadfamily', [PATH_OPTION, NAME_OPTION, DESC_OPTION, '--dry-run'])
+    result = run_cmd('uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION, '--dry-run'])
 
     assert not result.exception
 

@@ -73,11 +73,11 @@ class PotcarIo(object):
 
     @property
     def file_node(self):
-        return get_data_class('vasp.potcar').find(md5=self.md5).find_file_node()
+        return get_data_class('vasp.potcar').find_one(md5=self.md5).find_file_node()
 
     @property
     def node(self):
-        return get_data_class('vasp.potcar').find(md5=self.md5)
+        return get_data_class('vasp.potcar').find_one(md5=self.md5)
 
     @property
     def content(self):

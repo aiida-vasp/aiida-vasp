@@ -168,11 +168,13 @@ def temp_potcar(contents):
 
 def extract_tarfile(file_path):
     """Extract a .tar archive into an appropriately named folder, return the path of the folder, avoid extracting if folder exists."""
+    new_path = None
     with tarfile.open(str(file_path)) as archive:
         new_dir = file_path.basename.split('.tar')[0]
         new_path = file_path.dirpath().join(new_dir)
         if not new_path.exists():
             archive.extractall(str(new_path))
+
     return new_path
 
 
@@ -185,9 +187,9 @@ def by_older(left, right):
 
 
 def by_user(left, right):
-    if left.user.is_active and not right.user.is_active:
+    if left.get_user().is_active and not right.get_user().is_active:
         return -1
-    elif not left.user.is_active and right.user.is_active:
+    elif not left.get_user().is_active and right.get_user().is_active:
         return 1
     return 0
 
@@ -246,19 +248,34 @@ class PotcarMetadataMixin(object):
         filters = {}
         for attr_name, attr_val in kwargs.items():
             filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
+        if cls._HAS_MODEL_VERSIONING:
+            filters['attributes._MODEL_VERSION'] = {'==': kwargs.get('model_version', cls._VERSION)}
         query.add_filter(label, filters)
         return query
 
     @classmethod
     def find(cls, **kwargs):
-        """Find a node by POTCAR metadata attributes given in kwargs."""
+        """Find nodes by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
         if not query_builder.count():
             raise NotExistent()
         results = [result[0] for result in query_builder.all()]
         results.sort(by_older)
         results.sort(by_user)
-        return results[0]
+        return results
+
+    @classmethod
+    def find_one(cls, **kwargs):
+        """
+        Find one single node.
+
+        Raise an exception if there are multiple.
+        """
+        res = cls.find(**kwargs)
+        if len(res) > 1:
+            if not all([True for node in res if node.md5 == res[0].md5]):
+                raise UniquenessError('Multiple nodes found satisfying {}'.format(kwargs))
+        return res[0]
 
     @classmethod
     def exists(cls, **kwargs):
@@ -317,7 +334,29 @@ class PotcarMetadataMixin(object):
                 str(self.__class__), str(other_attrs)))
 
 
-class PotcarFileData(ArchiveData, PotcarMetadataMixin):
+class VersioningMixin(object):
+    """Minimalistic Node versioning."""
+    _HAS_MODEL_VERSIONING = True
+    _VERSION = None
+
+    def set_version(self):
+        self._set_attr('_MODEL_VERSION', self._VERSION)
+
+    @property
+    def model_version(self):
+        return self.get_attr('_MODEL_VERSION')
+
+    @classmethod
+    def old_versions_in_db(cls):
+        """Determine whether there are Nodes created with an older version of the model."""
+        label = 'versioned'
+        query = cls.querybuild(label=label)
+        filters = {'attributes._MODEL_VERSION': {'<': cls._VERSION}}
+        query.add_filter(label, filters)
+        return bool(query.count() >= 1)
+
+
+class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     """
     Store a POTCAR file in the db, never use as input to a calculation or workflow.
 
@@ -333,6 +372,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     _query_label = 'potcar_file'
     _query_type_string = 'data.vasp.potcar_file.'
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
+    _VERSION = 1
 
     def set_file(self, filepath):
         """Initialize from a file path."""
@@ -345,6 +385,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
 
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
+        self.set_version()
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
@@ -377,6 +418,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
+        self.set_version()
         _ = PotcarData.get_or_create(self)
         self.verify_unique()
         return super(PotcarFileData, self).store(*args, **kwargs)
@@ -449,7 +491,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
         md5 = cls.get_file_md5(filepath)
         if cls.exists(md5=md5):
             created = False
-            node = cls.find(md5=md5)
+            node = cls.find_one(md5=md5)
         else:
             created = True
             node = cls(file=filepath)
@@ -463,7 +505,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin):
             return cls.get_or_create(str(potcar_file))
 
 
-class PotcarData(Data, PotcarMetadataMixin):
+class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     """
     Store enough metadata about a POTCAR file to identify and find it.
 
@@ -472,24 +514,26 @@ class PotcarData(Data, PotcarMetadataMixin):
     """
 
     _query_label = 'potcar'
-    # ~ _meta_attrs = ['md5', 'title', 'functional', 'element', 'symbol', 'original_filename', 'DEXC', 'EATOM', 'EAUG']
     _query_type_string = 'data.vasp.potcar.'
     _plugin_type_string = 'data.vasp.potcar.PotcarData'
+    _VERSION = 1
 
     GROUP_TYPE = 'data.vasp.potcar.family'
 
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
+        self.set_version()
         for attr_name in potcar_file_node.get_attrs().keys():
             self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
-        return PotcarFileData.find(**self.get_attrs())
+        return PotcarFileData.find_one(**self.get_attrs())
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
         """Ensure uniqueness before storing."""
+        self.set_version()
         self.verify_unique()
         return super(PotcarData, self).store(*args, **kwargs)
 
@@ -498,7 +542,7 @@ class PotcarData(Data, PotcarMetadataMixin):
         """Get or create (store) a PotcarData node."""
         if cls.exists(md5=file_node.md5):
             created = False
-            node = cls.find(md5=file_node.md5)
+            node = cls.find_one(md5=file_node.md5)
         else:
             created = True
             node = cls(potcar_file_node=file_node)
@@ -509,7 +553,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     def get_or_create_from_file(cls, file_path):
         """Get or create (store) a PotcarData node from a POTCAR file."""
         md5 = PotcarFileData.get_file_md5(file_path)
-        file_node = PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
+        file_node = PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
             file_node.store()
@@ -524,7 +568,7 @@ class PotcarData(Data, PotcarMetadataMixin):
     @classmethod
     def file_not_uploaded(cls, file_path):
         md5 = PotcarFileData.get_file_md5(file_path)
-        return PotcarFileData.find(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
+        return PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
@@ -818,4 +862,4 @@ class PotcarData(Data, PotcarMetadataMixin):
         results = [result[0] for result in query.all()]
         results.sort(by_older)
         results.sort(by_user)
-        return results[0]
+        return results

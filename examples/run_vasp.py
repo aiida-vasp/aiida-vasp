@@ -1,4 +1,5 @@
 import click
+from click_spinner import spinner as cli_spinner
 import numpy
 
 
@@ -35,11 +36,13 @@ def noncol(pot_family, import_from, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
     if import_from:
-        import_pots(import_from, pot_family)
+        click.echo('importing POTCAR files...')
+        with cli_spinner():
+            import_pots(import_from, pot_family)
     pot_cls = get_data_cls('vasp.potcar')
     pots = {}
-    pots['In'] = pot_cls.find(symbol='In_d', qualifiers='', family=pot_family)
-    pots['As'] = pot_cls.find(symbol='As', qualifiers='', family=pot_family)
+    pots['In'] = pot_cls.find_one(full_name='In_d', family=pot_family)
+    pots['As'] = pot_cls.find_one(full_name='As', family=pot_family)
 
     vasp_calc = CalculationFactory('vasp.vasp')()
     vasp_calc.use_structure(create_structure_InAs())
@@ -63,9 +66,11 @@ def simple(pot_family, import_from, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
     if import_from:
-        import_pots(import_from, pot_family)
+        click.echo('importing POTCAR files...')
+        with cli_spinner():
+            import_pots(import_from, pot_family)
     pot_cls = get_data_cls('vasp.potcar')
-    pot_si = pot_cls.find(family=pot_family, symbol='Si', qualifiers='')
+    pot_si = pot_cls.find_one(family=pot_family, full_name='Si')
 
     vasp_calc = CalculationFactory('vasp.vasp')()
     vasp_calc.use_structure(create_structure_Si())

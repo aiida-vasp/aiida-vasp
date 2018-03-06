@@ -56,12 +56,15 @@ def potcar_node_pair(aiida_env):
     potcar_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
     potcar_file_node.store()
-    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find(symbol='As')}
+    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find_one(symbol='As')}
 
 
 @pytest.fixture
 def temp_pot_folder(tmpdir):
     """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    print potcar_ga.strpath
+    assert not potcar_ga.exists()
     pot_archive = py_path.local(data_path('potcar'))
     target = tmpdir.join('potcar')
     pot_archive.copy(target)
@@ -71,6 +74,7 @@ def temp_pot_folder(tmpdir):
 @pytest.fixture
 def potcar_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     family_name = POTCAR_FAMILY_NAME
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
@@ -78,6 +82,7 @@ def potcar_family(aiida_env, temp_pot_folder):
     assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
     assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
+    assert not potcar_ga.exists()
     return family_name
 
 

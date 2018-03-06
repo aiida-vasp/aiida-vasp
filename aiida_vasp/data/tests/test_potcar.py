@@ -19,7 +19,7 @@ from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp
 
 def test_creation(fresh_aiida_env, potcar_node_pair):
     """Test creating a data node pair."""
-    potcar_node = get_data_class('vasp.potcar').find(symbol='As')
+    potcar_node = get_data_class('vasp.potcar').find_one(symbol='As')
     file_node = potcar_node.find_file_node()
     assert potcar_node.pk == potcar_node_pair['potcar'].pk
     assert file_node.pk == potcar_node_pair['file'].pk
@@ -67,8 +67,8 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
     with pytest.raises(UniquenessError):
         data_node.store()
 
-    assert get_data_class('vasp.potcar').find(symbol='As')
-    assert get_data_class('vasp.potcar_file').find(symbol='As')
+    assert get_data_class('vasp.potcar').find_one(symbol='As')
+    assert get_data_class('vasp.potcar_file').find_one(symbol='As')
 
 
 def test_export_import(fresh_aiida_env, potcar_node_pair, tmpdir):
@@ -81,13 +81,13 @@ def test_export_import(fresh_aiida_env, potcar_node_pair, tmpdir):
 
     # import with same uuid
     sp.call(['verdi', 'import', str(tempfile)])
-    assert get_data_class('vasp.potcar').find(symbol='As')
-    assert get_data_class('vasp.potcar_file').find(symbol='As')
+    assert get_data_class('vasp.potcar').find_one(symbol='As')
+    assert get_data_class('vasp.potcar_file').find_one(symbol='As')
 
     # import with different uuid
     sp.call(['verdi', 'import', data_path('potcar', 'export.aiida')])
-    assert get_data_class('vasp.potcar').find(symbol='As')
-    assert get_data_class('vasp.potcar_file').find(symbol='As')
+    assert get_data_class('vasp.potcar').find_one(symbol='As')
+    assert get_data_class('vasp.potcar_file').find_one(symbol='As')
 
 
 def test_exists(fresh_aiida_env, potcar_node_pair):
@@ -96,9 +96,9 @@ def test_exists(fresh_aiida_env, potcar_node_pair):
 
 
 def test_find(fresh_aiida_env, potcar_node_pair):
-    assert get_data_class('vasp.potcar').find(element='As').uuid == potcar_node_pair['potcar'].uuid
+    assert get_data_class('vasp.potcar').find_one(element='As').uuid == potcar_node_pair['potcar'].uuid
     with pytest.raises(NotExistent):
-        _ = get_data_class('vasp.potcar_file').find(element='Xe')
+        _ = get_data_class('vasp.potcar_file').find_one(element='Xe')
 
 
 def test_file_get_content(fresh_aiida_env, potcar_node_pair):
@@ -177,23 +177,28 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
     family_desc = 'Test Family'
     potcar_cls = get_data_class('vasp.potcar')
     pot_dir = temp_pot_folder.strpath
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    assert not potcar_ga.exists()
 
     potcar_cls.upload_potcar_family(pot_dir, family_name, family_desc)
 
     assert potcar_cls.exists(element='In')
     assert potcar_cls.exists(element='As')
     assert potcar_cls.exists(element='Ga')
+    assert not potcar_ga.exists()
 
     assert [g.name for g in potcar_cls.get_potcar_groups()] == [family_name]
     assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 3
 
     with pytest.raises(ValueError):
         potcar_cls.upload_potcar_family(pot_dir, family_name, stop_if_existing=True)
+    assert not potcar_ga.exists()
 
     num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(pot_dir, family_name + '_new', family_desc, stop_if_existing=False)
     assert num_files >= 3
     assert num_added >= 3
     assert num_uploaded == 0
+    assert not potcar_ga.exists()
 
 
 def test_export_family_folder(fresh_aiida_env, potcar_family, tmpdir):
@@ -244,11 +249,11 @@ def test_create_equivalence(potcar_family):
     potcar_path = ['potcar', 'As', 'POTCAR']
     potcar_file, created = potcar_file_cls.get_or_create_from_contents(read_file(*potcar_path))
     assert not created
-    assert potcar_file.md5 == potcar_file_cls.find(element='As').md5
-    assert potcar_file.uuid == potcar_file_cls.find(element='As').uuid
+    assert potcar_file.md5 == potcar_file_cls.find_one(element='As').md5
+    assert potcar_file.uuid == potcar_file_cls.find_one(element='As').uuid
 
     potcar_cls = get_data_class('vasp.potcar')
     potcar, created = potcar_cls.get_or_create_from_contents(read_file(*potcar_path))
     assert not created
-    assert potcar.md5 == potcar_cls.find(element='As').md5
-    assert potcar.uuid == potcar_cls.find(element='As').uuid
+    assert potcar.md5 == potcar_cls.find_one(element='As').md5
+    assert potcar.uuid == potcar_cls.find_one(element='As').uuid

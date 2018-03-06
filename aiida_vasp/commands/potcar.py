@@ -1,5 +1,6 @@
 """Commandline util for dealing with potcar files"""
 import click
+from click_spinner import spinner as cli_spinner
 import tabulate
 
 from aiida.cmdline.commands import data_cmd
@@ -41,8 +42,9 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
     potcar_data_cls = get_data_class('vasp.potcar')
-    num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
-        path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run)
+    with cli_spinner():
+        num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
+            path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run)
 
     click.echo('POTCAR files found: {}. New files uploaded: {}, Added to Family: {}'.format(num_found, num_uploaded, num_added))
     if dry_run:
