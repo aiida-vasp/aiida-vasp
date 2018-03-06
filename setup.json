@@ -24,7 +24,8 @@
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
             "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
             "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
-            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
+            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData", 
+            "vasp.paw = aiida_vasp.data.paw:LegacyPawData"
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
