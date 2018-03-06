@@ -16,9 +16,15 @@ def run_example():
 
 def example_param_set(cmd_function):
 
-    @click.option('--pot-family', type=str, default='vasp-test')
-    @click.option('--import-from', type=click.Path(), default='.')
-    @click.option('--queue', type=str, default='')
+    @click.option(
+        '--pot-family', type=str, default='vasp-test', help='Name for a Potcar family to upload to (or to look for if --no-import).')
+    @click.option(
+        '--import-from',
+        type=click.Path(),
+        default='.',
+        help='Folder to search for POTCARS to upload, . by default. Use --no-import to prevent uploading')
+    @click.option('--no-import', is_flag=True, help='Do not try to import POTCARs, instead rely on the given family existing.')
+    @click.option('--queue', type=str, default='', help='Name of the compute queue if your scheduler requires it')
     @click.argument('code', type=str)
     @click.argument('computer', type=str)
     def decorated_cmd_fn(*args, **kwargs):
@@ -32,10 +38,10 @@ def example_param_set(cmd_function):
 
 @run_example.command()
 @example_param_set
-def noncol(pot_family, import_from, queue, code, computer):
+def noncol(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
-    if import_from:
+    if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():
             import_pots(import_from, pot_family)
@@ -62,10 +68,10 @@ def noncol(pot_family, import_from, queue, code, computer):
 
 @run_example.command()
 @example_param_set
-def simple(pot_family, import_from, queue, code, computer):
+def simple(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
-    if import_from:
+    if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():
             import_pots(import_from, pot_family)
