@@ -12,6 +12,11 @@ AiiDA Vasp Plugin
 .. image:: https://coveralls.io/repos/github/DropD/aiida-vasp/badge.svg?branch=coveralls
    :target: https://coveralls.io/github/DropD/aiida-vasp?branch=coveralls
 
+This is a plugin to [www.aiida.net/?page_id=264](AiiDA) to run calculations with the ab-initio program [https://www.vasp.at/](VASP).
+
+* [https://aiida-vasp.readthedocs.org/en/latest](Documentation)
+* [https://github.com/DropD/aiida-vasp/blob/develop/CHANGELOG.md](Changelog)
+
 Install and usage:
 ------------------
 
