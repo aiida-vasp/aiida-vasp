@@ -34,8 +34,8 @@ class VersionUpdater(object):
 
     to the current version number.
 
-    The current version number is either parsed from the output of ``git describe --match v*.*.*``, or if the command fails for any reason,
-    from setup.json. The current version number is decided on init, syncronization can be executed by calling ``.sync()``.
+    The current version number is either parsed from the output of ``git describe --tags --match v*.*.*``, or if the command fails for
+    any reason, from setup.json. The current version number is decided on init, syncronization can be executed by calling ``.sync()``.
     """
 
     version_pat = re.compile(r'\d+.\d+.\d+')
@@ -65,7 +65,7 @@ class VersionUpdater(object):
     def get_version(self):
         """Get the current version number from ``git describe``, fall back to setup.json."""
         try:
-            describe_byte_string = subprocess.check_output(['git', 'describe', '--match', 'v*.*.*'])
+            describe_byte_string = subprocess.check_output(['git', 'describe', '--tags', '--match', 'v*.*.*'])
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
         except subprocess.CalledProcessError:
             with open(self.setup_json, 'r') as setup_fo:
