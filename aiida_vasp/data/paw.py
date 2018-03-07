@@ -1,6 +1,10 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""PAW Pseudopotential data node"""
+"""
+Legacy PAW Pseudopotential data node.
+
+THIS MODULE IS DEPRECATED AND MAY BE REMOVED IN FUTURE VERSIONS.
+"""
 import os
 
 from aiida.common.exceptions import NotExistent, UniquenessError
@@ -8,10 +12,8 @@ from aiida.common.utils import md5_file
 from aiida.orm import Data
 from aiida.orm.querybuilder import QueryBuilder
 
-from aiida_vasp.io.potcar import PawParser as pcparser
 
-
-class PawData(Data):
+class LegacyPawData(Data):
     """Holds the files and metadata that make up a VASP PAW format pseudopotential"""
     group_type = 'data.vasp.paw.family'
 
@@ -28,13 +30,8 @@ class PawData(Data):
         return self.get_abs_path('POTCAR')
 
     @potcar.setter
-    def potcar(self, value):
-        name = 'POTCAR'
-        self.folder.insert_path(value, 'path/' + name)
-        attr_dict = pcparser.parse_potcar(value)
-        self._set_attr('md5', md5_file(value))
-        for key, val in attr_dict.iteritems():
-            self._set_attr(key, val)
+    def potcar(self, value):  # pylint: disable=no-self-use,unused-argument
+        raise DeprecationWarning('PawData is deprecated and read-only')
 
     @property
     def psctr(self):
@@ -63,15 +60,17 @@ class PawData(Data):
 
     @classmethod
     def get_famgroup(cls, famname):
-        """Returns a PAW family group if it exists, otherwise
-        raises an exception"""
+        """Returns a PAW family group if it exists, otherwise raises an exception."""
         from aiida.orm import Group
         return Group.get(name=famname, type_string=cls.group_type)
 
     @classmethod
     def check_family(cls, name):
-        """:py:method: checks wether a PAW family exists.
-            :returns: True if exists, False otherwise"""
+        """
+        :py:method: checks wether a PAW family exists.
+
+        :returns: True if exists, False otherwise.
+        """
         exists = False
         try:
             group = cls.get_famgroup(name)
@@ -113,51 +112,13 @@ class PawData(Data):
         return [i[1] for i in groups]
 
     @classmethod
-    def import_family(cls, folder, familyname=None, family_desc=None, store=True, stop_if_existing=False):
-        """Import a family from a folder like the ones distributed with VASP,
-        usually named potpaw_XXX"""
-        from aiida.common import aiidalogger
+    def import_family(cls, folder, familyname=None, family_desc=None, store=True, stop_if_existing=False):  # pylint: disable=unused-argument
+        """Import a family from a folder like the ones distributed with VASP, usually named potpaw_XXX."""
+        raise DeprecationWarning('PawData is deprecated and read-only')
 
-        ffound = []
-        fupl = []
-        family_path = os.path.abspath(folder)
-        # ~ ffname = os.path.basename(
-        # ~ os.path.dirname(folder)).replace('potpaw_', '')
-        # ~ famname = familyname or ffname
-
-        group, group_created = cls.get_or_create_famgroup(familyname)
-
-        # Always update description, even if the group already existed
-        group.description = family_desc
-
-        paw_list = cls._find_paws(family_path, ffound, group, group_created)
-
-        if stop_if_existing:
-            for pawinfo in paw_list:
-                if not pawinfo[1]:
-                    raise ValueError("A PAW with identical MD5 to " '' + pawinfo[2] + " cannot be added with " "stop_if_existing")
-
-        for pawinfo in paw_list:
-            paw = pawinfo[0]
-            created = pawinfo[1]
-            path = pawinfo[2]
-            if store:
-                if created:
-                    paw.store_all()
-                    aiidalogger.debug("New node %s created for file %s", paw.uuid, path)
-                    fupl.append(path)
-                else:
-                    aiidalogger.debug("Reusing node %s for file %s", paw.uuid, path)
-
-        if store:
-            if group_created:
-                group.store()
-                aiidalogger.debug("New PAW family goup %s created", group.uuid)
-            group.add_nodes(i[0] for i in paw_list)
-        else:
-            print map(repr, [i[0] for i in paw_list])
-
-        return ffound, fupl
+    # pylint: disable=arguments-differ,unused-argument
+    def store(self, *args, **kwargs):
+        raise DeprecationWarning('PawData is deprecated and read-only')
 
     @classmethod
     def _find_paws(cls, family_path, ffound, group, group_created):
@@ -250,8 +211,7 @@ class PawData(Data):
     @classmethod
     def load_paw(cls, **kwargs):
         """
-        py:method:: load_paw([family=None][, element=None][, symbol=None])
-        Load PawData nodes from the databank. Use kwargs to filter.
+        Loads PawData nodes from the databank, use kwargs to filter.
 
         :return: a list of PawData instances
         :rtype: list

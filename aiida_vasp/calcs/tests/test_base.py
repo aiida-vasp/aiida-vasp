@@ -30,7 +30,7 @@ def test_input_get_dict():
 
 @pytest.mark.usefixtures('fresh_aiida_env')
 def test_input_type_seq():
-    """make sure sequence of type strings is correctly converted"""
+    """Make sure sequence of type strings is correctly converted"""
     from aiida.orm import DataFactory
     from aiida_vasp.calcs.base import Input
     type_1 = 'parameter'

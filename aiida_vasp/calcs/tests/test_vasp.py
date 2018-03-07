@@ -3,7 +3,6 @@
 import contextlib
 import os
 
-import numpy
 import pytest
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder

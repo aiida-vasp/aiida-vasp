@@ -5,9 +5,7 @@ from .parser import BaseParser
 
 
 class DosParser(BaseParser):
-    """
-    parse a DOSCAR file from a vasp run
-    """
+    """Parse a DOSCAR file from a vasp run."""
 
     def __init__(self, filename, **kwargs):
         self.ispin = kwargs.get('ispin')

@@ -55,7 +55,7 @@ def get_cifs_with_name(filename):
 
 
 def filter_cifs_for_structure(cif_seq, structure):
-    """return all cif files in the sequence which match the given structure"""
+    """Return all cif files in the sequence which match the given structure."""
     ase = None
     if hasattr(structure, 'get_ase'):
         ase = structure.get_ase()

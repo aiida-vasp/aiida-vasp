@@ -105,7 +105,7 @@ class Common(object):
 
     @staticmethod
     def retrieved_nscf():
-        """Create a test retrieve folder."""
+        """Create a FolderData node with the reference retrieved nscf calculation."""
         ret = DataFactory('folder')()
         for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
             ret.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')

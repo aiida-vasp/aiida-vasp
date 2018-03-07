@@ -8,17 +8,15 @@ except ImportError:
 
 
 def get_bs_dims(bands_array):
-    '''
-    py:function:: get_bs_dims(bands_array)
-
-    get the dimensions from the bands array of a BandsData node
+    """
+    Get the dimensions from the bands array of a BandsData node.
 
     :param numpy.array bands_array:
         an array with bands as stored in an array.bands data node
     :return: a tuple containing num_bands, num_kp, num_spins.
         if the array is only 2d, num_spins = 0
     :rtype tuple:
-    '''
+    """
     bshape = bands_array.shape
     nbd = nkp = nsp = 0
     if len(bshape) == 2:
@@ -32,10 +30,9 @@ def get_bs_dims(bands_array):
 
 
 def get_kp_labels(bands_node, kpoints_node=None):
-    '''
-    py:function:: get_kp_labels(bands_node[, kpoints_node=None])
+    """
+    Get Kpoint labels with their x-positions in matplotlib compatible format.
 
-    get Kpoint labels with their x-positions in matplotlib compatible format.
     A KpointsData node can optionally be given to fall back to if no labels
     are found on the BandsData node. The caller is responsible for ensuring
     the nodes match.  This should be the case if you take the kpoints from
@@ -51,7 +48,7 @@ def get_kp_labels(bands_node, kpoints_node=None):
     :rtype: tuple(list[int], list[unicode])
     :raises AttributeError: if neither of the given nodes have a labels
         attribute
-    '''
+    """
     kplabs = None
     kpx = []
     kpl = []
@@ -88,10 +85,9 @@ def get_kp_node(calc):
 
 
 def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent_calc=False, **kwargs):
-    '''
-    py:function:: plot_bstr(bands_node[, kpoints_node=None])
-
+    """
     Use matplotlib to plot the bands stored in a BandsData node.
+
     A KpointsData node can optionally be given as a fallback for
     kpoint labels. The caller is responsible for giving a node
     with matching labels (as in they are in/out nodes of the same
@@ -103,8 +99,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
         The optional KpointsData node will be searched only if no labels are
         present on the BandsData node. No consistency checks are performed.
     :return: the matplotlib figure containing the plot
-    '''
-
+    """
     fig = plt.figure()
     title = title or 'Band Structure (pk=%s)' % bands_node.pk
     bands = bands_node.get_bands()

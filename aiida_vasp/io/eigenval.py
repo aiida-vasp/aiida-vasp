@@ -1,6 +1,4 @@
-"""
-This module contains tools to read kpoints and bands from EIGENVALUE files.
-"""
+"""Contains tools to read kpoints and bands from EIGENVALUE files."""
 
 import re
 
@@ -10,10 +8,7 @@ from .parser import BaseParser
 
 
 class EigParser(BaseParser):
-    """
-    contains regex and functions to find grammar elements
-    in EIGENVALUE files
-    """
+    """Contains regex and functions to find grammar elements in EIGENVALUE files."""
 
     def __init__(self, filename):
         res = self.parse_eigenval(filename)

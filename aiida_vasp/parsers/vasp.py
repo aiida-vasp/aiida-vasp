@@ -110,24 +110,20 @@ PARSABLE_FILES = {
 
 class VaspParser(BaseParser):
     """
-    Parses all Vasp calculations. The parser will check which quantities to parse and which nodes to add
+    Parses all Vasp calculations.
+
+    The parser will check which quantities to parse and which nodes to add
     to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
     corresponding VaspCalculation.
-
     Parser Settings usage:
-
     Parser settings can be passed through the input node `settings` as follows::
-
         settings = ParameterData(dict={
             'parser_settings': {
                 ...
             }
         })
-
     Valid keys for `parser_settings` are:
-
     * `add_<quantity>`, where quantity is one of:
-
         'parameters': Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'bands':      Band structure node parsed from EIGENVAL.
         'dos':        ArrayData node containing the DOS parsed from DOSCAR.
@@ -232,6 +228,7 @@ class VaspParser(BaseParser):
     def _set_file_parsers(self):
         """
         Set the specific file parsers for OUTCAR, DOSCAR, EIGENVAL and vasprun.xml.
+
         Return False if a critical file is missing, which will abort the parsing.
         """
 
@@ -260,8 +257,11 @@ class VaspParser(BaseParser):
         return True
 
     def _check_prerequesites(self, quantity):
-        """Check whether the prerequesites of a given quantity have been met. If not either
-           requeue or prevent this quantity from being parsed."""
+        """
+        Check whether the prerequesites of a given quantity have been met.
+
+        If not either requeue or prevent this quantity from being parsed.
+        """
 
         prerequesites = PARSABLE_QUANTITIES[quantity]['prerequesites']
         for preq in prerequesites:
@@ -296,7 +296,7 @@ class VaspParser(BaseParser):
         return self._settings['add_dos']
 
     def _get_dos(self):
-        """Returns a doscar array node wrapped in a dictionary. """
+        """Return a doscar array node wrapped in a dictionary."""
 
         vrp = self._parsers['vasprun.xml']
         dcp = self._parsers['DOSCAR']
@@ -339,16 +339,16 @@ class VaspParser(BaseParser):
         return self._settings['add_bands']
 
     def _get_bands(self):
-        '''
+        """
         Create a bands and a kpoints node from values in eigenvalue.
 
-        returns: bsnode, kpout
-        - bsnode: BandsData containing eigenvalues from EIGENVAL
-                and occupations from vasprun.xml
-        - kpout: KpointsData containing kpoints from EIGENVAL,
+        :returns: bsnode, kpout
 
+        * bsnode: BandsData containing eigenvalues from EIGENVAL
+                and occupations from vasprun.xml
+        * kpout: KpointsData containing kpoints from EIGENVAL,
         both bsnode as well as kpnode come with cell unset
-        '''
+        """
         eig = self.get_file('EIGENVAL')
         if not eig:
             return {'bands': None, 'kpoints': None}
@@ -423,7 +423,7 @@ class VaspParser(BaseParser):
         return self._settings['add_structure']
 
     def _get_structure(self):
-        '''read CONTCAR for output structure'''
+        """Read CONTCAR for output structure."""
 
         from ase.io import read
         structure = DataFactory('structure')()
