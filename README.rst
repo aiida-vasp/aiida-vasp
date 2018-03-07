@@ -12,10 +12,10 @@ AiiDA Vasp Plugin
 .. image:: https://coveralls.io/repos/github/DropD/aiida-vasp/badge.svg?branch=coveralls
    :target: https://coveralls.io/github/DropD/aiida-vasp?branch=coveralls
 
-This is a plugin to `AiiDA <www.aiida.net/?page_id=264>` to run calculations with the ab-initio program `VASP <https://www.vasp.at/>`.
+This is a plugin to `AiiDA <www.aiida.net/?page_id=264>`_ to run calculations with the ab-initio program `VASP <https://www.vasp.at/>`_.
 
-* `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`
-* `Changelog <https://github.com/DropD/aiida-vasp/blob/develop/CHANGELOG.md>`
+* `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`_
+* `Changelog <https://github.com/DropD/aiida-vasp/blob/develop/CHANGELOG.md>`_
 
 Install and usage:
 ------------------
@@ -23,8 +23,8 @@ Install and usage:
 Install AiiDA
 ~~~~~~~~~~~~~
 
-1. Download from `www.aiida.net - <Download> www.aiida.net/?page_id=264>` (only EPFL version supports ssh)
-2. install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`
+1. Download from `www.aiida.net - <Download> www.aiida.net/?page_id=264>`_ (only EPFL version supports ssh)
+2. install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`_
 
 Install this plugin
 ~~~~~~~~~~~~~~~~~~~
@@ -63,7 +63,7 @@ You should see vasp.* in the list
 Configure the code
 ~~~~~~~~~~~~~~~~~~
 
-See `aiida docs <http://aiida-core.readthedocs.org/en/stable/setup/computerandcodes.html#computer-setup-and-configuration>`
+See `aiida docs <http://aiida-core.readthedocs.org/en/stable/setup/computerandcodes.html#computer-setup-and-configuration>`_
 on how to set up computers and codes. Note that you need at least one computer configured and a VASP executable on it
 in order to use this plugin.
 
