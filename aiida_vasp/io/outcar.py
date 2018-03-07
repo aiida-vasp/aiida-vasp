@@ -1,12 +1,8 @@
-"""
-Tools for parsing OUTCAR files
-"""
+"""Tools for parsing OUTCAR files."""
 
 
 class OutcarParser(object):
-    """
-    parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
-    """
+    """parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later."""
 
     def __init__(self, fname):
         super(OutcarParser, self).__init__()
