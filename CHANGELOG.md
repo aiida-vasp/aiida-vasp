@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v0.2.0]
+## [v0.2.0] - 2018-03-07
 
 ### Added
 - `data.potcar.PotcarData` (`vasp.potcar`) & `data.potcar.PotcarFileData`, replacement for PawData
