@@ -23,8 +23,7 @@ Install and usage:
 Install AiiDA
 ~~~~~~~~~~~~~
 
-1. Download from `www.aiida.net - <Download> www.aiida.net/?page_id=264>`_ (only EPFL version supports ssh)
-2. install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`_
+* Download, install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`_
 
 Install this plugin
 ~~~~~~~~~~~~~~~~~~~
