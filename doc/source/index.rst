@@ -8,13 +8,15 @@ Welcome to AiiDA-VASP's documentation!
 
 AiiDA-VASP is a plugin for the workflow management and data provenance tracking framework `AiiDA`_. It provides the classes `AiiDA`_ needs to run simulations using `VASP`_ (Vienna Ab initio Simulation Package). `VASP`_ is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles.  For more info and a list of features look `here`_. For detailed documentaion about using VASP take a look at the `documentation page`_ or the `wiki`_
 
+AiiDA-VASP is under active development, check out the newest changes here: `changelog_`
 
 .. _AiiDA: https://www.aiida.net
-
 .. _VASP: https://www.vasp.at/
 .. _here: https://www.vasp.at/index.php/about-vasp/59-about-vasp
 .. _documentation page: https://www.vasp.at/index.php/documentation
 .. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
+.. _changelog: https://github.com/DropD/aiida-vasp/blob/develop/CHANGELOG.md
+
 
 Getting started
 ===============
