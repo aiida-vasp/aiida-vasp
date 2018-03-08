@@ -11,6 +11,7 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
+from aiida_vasp.io.poscar import PoscarIo
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_d', 'As': 'As', 'Ge': 'Ge'}
@@ -119,10 +120,8 @@ def vasp_structure_poscar(vasp_structure):
     """Fixture: Well formed POSCAR contents"""
     ase_structure = vasp_structure.get_ase()
     aiida_structure = get_data_node('structure', ase=ase_structure)
-    pmg_structure = aiida_structure.get_pymatgen()
-    pmg_structure.sort()
-    pmg_poscar = Poscar(pmg_structure)
-    return pmg_poscar
+    writer = PoscarIo(aiida_structure)
+    return writer
 
 
 @pytest.fixture(params=['mesh', 'list'])
