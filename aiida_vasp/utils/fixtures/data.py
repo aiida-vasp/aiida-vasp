@@ -14,7 +14,7 @@ from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarIo
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_d', 'As': 'As', 'Ge': 'Ge'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ge': 'Ge'}
 
 
 @pytest.fixture(scope='session')
@@ -91,7 +91,7 @@ def potcar_family(aiida_env, temp_pot_folder):
 def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     potcar_cls = get_data_class('vasp.potcar')
-    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
+    potentials = potcar_cls.get_potcars_dict(['In', 'In_d', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
 
     return potentials
 
@@ -110,7 +110,9 @@ def vasp_structure(request, aiida_env):
         structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
-        structure.append_atom(position=[.5, .5, .5], symbols='In')
+        structure.append_atom(position=[.25, .33, .34], symbols='As')
+        structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
+        structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.75, .75, .75], symbols='As')
     return structure
 
