@@ -8,6 +8,7 @@ import pytest
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
+from aiida_vasp.io.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 from aiida_vasp.utils.fixtures.data import get_data_class
@@ -86,6 +87,7 @@ def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
             assert result_kpoints_fo.read() == reference['kpoints']
 
 
+@pytest.mark.wip
 @ONLY_ONE_CALC
 def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
     """Check that POTCAR is written correctly"""
@@ -95,9 +97,15 @@ def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
         vasp_calc.write_potcar(inp, temp_file)
         with open(temp_file, 'r') as potcar_fo:
             result_potcar = potcar_fo.read()
-        assert 'In_d' in result_potcar
+        assert 'In_sv' in result_potcar
         assert 'As' in result_potcar
+        assert 'In_d' in result_potcar
         assert result_potcar.count('End of Dataset') == 2
+
+        if isinstance(vasp_calc.inp.structure, get_data_class('structure')):
+            multipotcar = MultiPotcarIo.read(temp_file)
+            potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
+            assert potcar_order == ['In_sv', 'As', 'In_d', 'As']
 
 
 @ONLY_ONE_CALC
