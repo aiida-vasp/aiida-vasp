@@ -17,6 +17,7 @@ def vasp_calc_and_ref(vasp_code, vasp_params, potentials, vasp_kpoints, vasp_str
     calc.use_parameters(vasp_params)
     calc.use_potential(potentials['In'], kind='In')
     calc.use_potential(potentials['As'], kind='As')
+    calc.use_potential(potentials['In_d'], kind='In_d')
     calc.use_settings(ParameterData(dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
     calc.use_structure(vasp_structure)
     kpoints, ref_kpoints = vasp_kpoints
