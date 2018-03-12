@@ -2,11 +2,9 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import pytest
 
-from aiida_vasp.io.poscar import PoscarIo
 from aiida_vasp.utils.fixtures import *
 
 
-@pytest.mark.wip
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_poscar_io(fresh_aiida_env, vasp_structure_poscar):
     poscario = vasp_structure_poscar

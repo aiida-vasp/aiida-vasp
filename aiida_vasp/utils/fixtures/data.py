@@ -14,7 +14,7 @@ from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarIo
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ge': 'Ge'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
 
 
 @pytest.fixture(scope='session')
