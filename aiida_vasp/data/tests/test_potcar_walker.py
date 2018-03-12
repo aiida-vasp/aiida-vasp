@@ -27,7 +27,6 @@ def potcar_walker_cls(aiida_env):
     return PotcarWalker
 
 
-@pytest.mark.wip
 def test_find_potcars(potcar_walker_cls, temp_data_folder):
     """Make sure the walker finds the right number fo POTCAR files."""
     potcar_archive = py_path.local(data_path('.')).join('pot_archive')
