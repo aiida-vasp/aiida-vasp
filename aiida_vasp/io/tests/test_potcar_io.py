@@ -5,6 +5,7 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
+from aiida_vasp.utils.fixtures.data import POTCAR_MAP
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.potcar import PotcarIo, MultiPotcarIo
 
@@ -64,15 +65,18 @@ def test_multi_round_trip(potcar_family, tmpdir):
     """Write multiple POTCAR potentials to a file and recover the nodes stored in the db."""
     test_dir = tmpdir.mkdir('round_trip')
     potcar_cls = get_data_class('vasp.potcar')
-    multi = MultiPotcarIo(
-        potcar_cls.get_potcars_dict(elements=['As', 'Ga', 'In'], family_name=potcar_family, mapping={
-            'In': 'In_d',
-            'As': 'As',
-            'Ga': 'Ga'
-        }).values())
+    multi = MultiPotcarIo(potcar_cls.get_potcars_dict(elements=POTCAR_MAP.keys(), family_name=potcar_family, mapping=POTCAR_MAP).values())
     tempfile = test_dir.join('POTCAR')
     multi.write(tempfile)
     recovered = multi.read(tempfile)
-    uuids_start = set([potcar.node.uuid for potcar in multi.potcars])
-    uuids_recov = set([potcar.node.uuid for potcar in recovered.potcars])
+    uuids_start = [potcar.node.uuid for potcar in multi.potcars]
+    uuids_recov = [potcar.node.uuid for potcar in recovered.potcars]
     assert uuids_start == uuids_recov
+
+
+@pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
+def test_multi_from_structure(potcar_family, vasp_structure_poscar):
+    potcar_cls = get_data_class('vasp.potcar')
+    potcar_dict = potcar_cls.get_potcars_dict(elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP)
+    multi = MultiPotcarIo.from_structure(structure=vasp_structure_poscar.structure, potentials_dict=potcar_dict)
+    assert [potcar.node.full_name for potcar in multi.potcars] == ['In_sv', 'As', 'In_d', 'As']
