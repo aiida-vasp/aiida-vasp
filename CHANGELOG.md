@@ -5,12 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v0.2.1] - 2018-03-12
+
 ### Added
 - Allow Structures which do not have sites of same element grouped
 - Allow using different potentials for atoms of same element in a structure
 - `VaspCalculation`'s `settings` input now accepts `poscar_precision` key to set maximum precision for coordinates in POSCAR
  - This can be indicated in the structure by adding sites with same `symbol` but different `name`.
 - `io.poscar.PoscarIo`, POSCAR writer replacing pymatgen one, to be replaced by parsevasp.
+
+### Changed
+- Use always the same order for species in POSCAR and POTCAR
+- POSCAR float precision default changed to 10 decimal places
 
 ## [v0.2.0] - 2018-03-07
 
