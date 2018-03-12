@@ -1,6 +1,4 @@
-"""
-AiiDA - Workflow for investigating optimal Wannier90 window parameters
-"""
+"""AiiDA - Workflow for investigating optimal Wannier90 window parameters"""
 from aiida.orm import Workflow, WorkflowFactory
 
 from aiida_vasp.utils import compare_bands as bcp
@@ -8,8 +6,7 @@ from .helper import WorkflowHelper
 
 
 class AutowindowsWorkflow(Workflow):
-    """Try different inner and outer windows with wannier,
-    compare them and choose the best one according to simplistic criteria"""
+    """Try different inner and outer windows with wannier, compare them and choose the best one according to simplistic criteria."""
     Helper = WorkflowHelper
     ScfWf = WorkflowFactory('vasp.scf')
     NscfWf = WorkflowFactory('vasp.nscf')
@@ -292,15 +289,12 @@ class AutowindowsWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        """returns a JSON formatted string that could be stored
-        in a file, edited, loaded and used as parameters to run
-        this workflow."""
+        """Returns a JSON formatted string that could be stored in a file, edited, loaded and used as parameters to run this workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)
 
     @classmethod
     def get_params_template(cls):
-        """returns a dictionary with the necessary keys to
-        run this workflow and explanations to each key as values"""
+        """Returns a dictionary with the necessary keys to run this workflow and explanations to each key as values."""
         tmpl = cls.Helper.get_params_template()
         wtpl = cls.WannierWf.get_params_template()
         ptpl = cls.ProjWf.get_params_template()

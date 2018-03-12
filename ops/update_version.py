@@ -1,4 +1,4 @@
-"""Update version numbers everywhere based on git tags"""
+"""Update version numbers everywhere based on git tags."""
 import os
 import re
 import json
@@ -24,10 +24,24 @@ def file_input(*args, **kwargs):
 
 
 class VersionUpdater(object):
-    """Version number synchronisation interface"""
+    """
+    Version number synchronisation interface.
+
+    Updates the version information in
+
+    * setup.json
+    * aiida_vasp/__init__.py
+
+    to the current version number.
+
+    The current version number is either parsed from the output of ``git describe --tags --match v*.*.*``, or if the command fails for
+    any reason, from setup.json. The current version number is decided on init, syncronization can be executed by calling ``.sync()``.
+    """
+
     version_pat = re.compile(r'\d+.\d+.\d+')
 
     def __init__(self):
+        """Initialize with documents that should be kept up to date and actual version."""
         self.top_level_init = subpath('aiida_vasp', '__init__.py')
         self.setup_json = subpath('setup.json')
         self.version = self.get_version()
@@ -41,7 +55,7 @@ class VersionUpdater(object):
                        re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
-        """Update version number in setup_json."""
+        """Write the updated version number to the setup file."""
         with open(self.setup_json, 'r') as setup_fo:
             setup = json.load(setup_fo)
         setup['version'] = str(self.version)
@@ -49,8 +63,15 @@ class VersionUpdater(object):
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
     def get_version(self):
-        describe_byte_string = subprocess.check_output(['git', 'describe', '--match', 'v*.*.*'])
-        version_string = re.findall(self.version_pat, describe_byte_string)[0]
+        """Get the current version number from ``git describe``, fall back to setup.json."""
+        try:
+            describe_byte_string = subprocess.check_output(['git', 'describe', '--tags', '--match', 'v*.*.*'])
+            version_string = re.findall(self.version_pat, describe_byte_string)[0]
+        except subprocess.CalledProcessError:
+            with open(self.setup_json, 'r') as setup_fo:
+                setup = json.load(setup_fo)
+                version_string = setup['version']
+
         return version.parse(version_string)
 
     def sync(self):

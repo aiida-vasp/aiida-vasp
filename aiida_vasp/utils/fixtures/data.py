@@ -6,9 +6,14 @@ from collections import OrderedDict
 import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
+from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
+from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
+
+POTCAR_FAMILY_NAME = 'test_family'
+POTCAR_MAP = {'In': 'In_d', 'As': 'As', 'Ge': 'Ge'}
 
 
 @pytest.fixture(scope='session')
@@ -16,7 +21,7 @@ def localhost_dir(tmpdir_factory):
     return tmpdir_factory.mktemp('localhost_work')
 
 
-@pytest.fixture()
+@pytest.fixture
 def localhost(aiida_env, localhost_dir):
     """Fixture for a local computer called localhost"""
     from aiida.orm import Computer
@@ -39,24 +44,55 @@ def localhost(aiida_env, localhost_dir):
     return computer
 
 
-@pytest.fixture()
+@pytest.fixture
 def vasp_params(aiida_env):
     incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_io.get_param_node()
 
 
-@pytest.fixture()
-def paws(aiida_env):
+@pytest.fixture
+def potcar_node_pair(aiida_env):
+    """Create a POTCAR node pair."""
+    potcar_path = data_path('potcar', 'As', 'POTCAR')
+    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
+    potcar_file_node.store()
+    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find_one(symbol='As')}
+
+
+@pytest.fixture
+def temp_pot_folder(tmpdir):
+    """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    print potcar_ga.strpath
+    assert not potcar_ga.exists()
+    pot_archive = py_path.local(data_path('potcar'))
+    target = tmpdir.join('potcar')
+    pot_archive.copy(target)
+    return target
+
+
+@pytest.fixture
+def potcar_family(aiida_env, temp_pot_folder):
+    """Create a POTCAR family."""
+    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    family_name = POTCAR_FAMILY_NAME
+    family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
+    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
+    assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
+    assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
+    assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
+    assert not potcar_ga.exists()
+    return family_name
+
+
+@pytest.fixture
+def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
-    from aiida.orm import DataFactory
-    from aiida_vasp.backendtests.common import subpath
-    DataFactory('vasp.paw').import_family(
-        subpath('..', 'backendtests', 'LDA'),
-        familyname='TEST',
-        family_desc='test data',
-    )
-    paw_nodes = {'In': DataFactory('vasp.paw').load_paw(element='In')[0], 'As': DataFactory('vasp.paw').load_paw(element='As')[0]}
-    return paw_nodes
+    potcar_cls = get_data_class('vasp.potcar')
+    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
+
+    return potentials
 
 
 @pytest.fixture(params=['cif', 'str'])

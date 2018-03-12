@@ -3,7 +3,6 @@
 import contextlib
 import os
 
-import numpy
 import pytest
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
@@ -128,9 +127,9 @@ def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     outputs = dict(outputs)
     assert success
-    assert 'bands' in outputs
-    assert 'dos' in outputs
-    assert 'results' in outputs
+    assert 'output_band' in outputs
+    assert 'output_dos' in outputs
+    assert 'output_parameters' in outputs
 
 
 def test_verify_success(vasp_calc_and_ref):

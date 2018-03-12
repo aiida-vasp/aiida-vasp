@@ -1,6 +1,4 @@
-"""
-Tool to run a vasp workflow from json input
-"""
+"""Run a vasp workflow from json input."""
 
 import argparse
 from aiida import load_dbenv

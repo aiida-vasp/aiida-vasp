@@ -19,10 +19,11 @@ def _firstspin(bands):
 def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     """
     Compare bandstructure results from wannier and vasp.
+
     Takes two input array.bands nodes, stores them if they're not already
-    stored.
-    Takes the relevant bands from the vasp bandstructure and stores and outputs
+    stored. Takes the relevant bands from the vasp bandstructure and stores and outputs
     them in a node with linkname 'bandcmp'.
+
     Also returns a parameter data node with linkname 'bandinfo' containing
     fermi energy, bandgap etc of the reference bandstructure.
     """
@@ -85,9 +86,14 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
 
 def get_outer_window(bands_node, silent=False):
     """
-    Check if bands_node is a child of a calculation and that calculation
-    has a parameter data input node with linkname parameters and that
-    node has the keys 'dis_win_min' and 'dis_win_max'.
+    Get the ``outer_window`` parameter as a tuple (min, max), if it was given.
+
+    Check if bands_node
+
+    * is a child of a calculation and
+    * that calculation has a parameter data input node with linkname parameters and
+    * that node has the keys 'dis_win_min' and 'dis_win_max'.
+
     If that is the case, output outer_window = (min, max).
     """
     owindow = None
@@ -95,10 +101,6 @@ def get_outer_window(bands_node, silent=False):
         calc = bands_node.inp.bands
         wset = calc.inp.parameters.get_dict()
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
-        # ~ iwindow = (
-        # ~     wset['dis_froz_min'],
-        # ~     wset['dis_froz_max']
-        # ~ )
     except KeyError as err:
         if not silent:
             msg = ('Missing window parameters in input to ' 'parent calculation:\n') + err.message
@@ -112,7 +114,8 @@ def get_outer_window(bands_node, silent=False):
 
 def band_gap(bands, occ, efermi=None):
     """
-    find the band gap in a bandstructure
+    Find the band gap in a bandstructure.
+
     :param numpy.array bands:
         2D bands array (as from BandsData.get_bands())
     :param numpy.array occ:
@@ -168,8 +171,8 @@ def band_error(band1, band2):
 
 def bands_error(bands1, bands2):
     """
-    band for band rms error sqrt((|B1_i - B2_i|^2)/n) where BX_i is the i-th band of
-    Band Structure Node X.
+    Band for band rms error sqrt((|B1_i - B2_i|^2)/n) where BX_i is the i-th band of Band Structure Node X.
+
     Only works for BandsData nodes with 2d band arrays.
     """
     import numpy as np

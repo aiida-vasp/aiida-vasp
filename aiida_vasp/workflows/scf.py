@@ -59,13 +59,14 @@ class ScfWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        """returns a dictionary with the necessary keys to
-        run this workflow and explanations to each key as values"""
+        """Gives a dictionary: keys are workflow parameters, values are explanations."""
         return cls.Helper.get_params_template(continuation=False)
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        """returns a JSON formatted string that could be stored
-        in a file, edited, loaded and used as parameters to run
-        this workflow."""
+        """
+        Returns a JSON formatted template string.
+
+        The template can be stored in a file, edited, loaded and used as parameters to run this workflow.
+        """
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

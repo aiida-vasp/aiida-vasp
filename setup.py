@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-setup: usage: pip install -e .[graphs]
+Install the aiida_vasp python package.
+
+usage: pip install -e .[graphs]
 """
 
 import os

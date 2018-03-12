@@ -17,13 +17,15 @@
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
         ], 
         "aiida.cmdline.data": [
-            "vasp.paw = aiida_vasp.commands.paw:_Paw"
+            "vasp-potcar = aiida_vasp.commands.potcar:potcar"
         ], 
         "aiida.data": [
             "vasp.archive = aiida_vasp.data.archive:ArchiveData", 
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
-            "vasp.paw = aiida_vasp.data.paw:PawData", 
-            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData"
+            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
+            "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
+            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData", 
+            "vasp.paw = aiida_vasp.data.paw:LegacyPawData"
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
@@ -67,7 +69,7 @@
     }, 
     "include_package_data": true, 
     "install_requires": [
-        "aiida-core[atomic_tools]", 
+        "aiida-core[atomic_tools] >= 0.11.0", 
         "ase", 
         "scipy", 
         "pymatgen", 
@@ -88,5 +90,5 @@
         "reentry"
     ], 
     "url": "https://github.com/DropD/aiida-vasp", 
-    "version": "0.1.0"
+    "version": "0.2.0"
 }

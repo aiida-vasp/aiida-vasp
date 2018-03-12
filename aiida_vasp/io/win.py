@@ -5,9 +5,7 @@ from .parser import KeyValueParser
 
 
 class WinParser(KeyValueParser):
-    """
-    parses wannier90.win files
-    """
+    """Parses wannier90.win files."""
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
