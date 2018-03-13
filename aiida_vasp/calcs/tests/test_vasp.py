@@ -42,8 +42,6 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
         settings_dict.update({'poscar_precision': 12})
         vasp_calc.inp.settings.set_dict(settings_dict)
         vasp_calc.write_poscar(inp, temp_file)
-        with open(temp_file, 'r') as poscar:
-            print poscar.read()
         with working_directory(temp_file):
             result_pmg = Poscar.from_file(temp_file).structure
             ref_pmg = vasp_structure_poscar.structure.get_pymatgen()
@@ -53,10 +51,10 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
         with open(temp_file, 'r') as poscar:
             assert poscar.read() == vasp_structure_poscar.poscar_str()
 
-
 @STRUCTURE_TYPES
 def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
     """Verify the effect of the ``poscar_precision`` setting."""
+    from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
@@ -73,7 +71,6 @@ def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_po
             pos_this = lines[2].split(' ')[0]
             pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].split(' ')[0]
             assert pos_this != pos_ref
-
 
 def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
     """Write the kpoints input node to a file, compare content to a reference string."""

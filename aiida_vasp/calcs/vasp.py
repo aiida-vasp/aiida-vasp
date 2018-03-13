@@ -131,7 +131,6 @@ class VaspCalculation(VaspCalcBase):
         if not hasattr(structure, 'get_pymatgen'):
             structure = get_data_node('structure', ase=structure.get_ase())
         return structure
-
     def write_additional(self, tempfolder, inputdict):
         """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, inputdict)
@@ -162,6 +161,7 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
+        from pymatgen.io.vasp.inputs import Poscar
         settings = inputdict.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
@@ -176,9 +176,10 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         structure = self._structure()
-        pot_key = self._get_potential_linkname
-        potentials = {symbol: inputdict[pot_key(symbol)] for symbol in structure.get_kind_names()}
-        multi_potcar = MultiPotcarIo.from_structure(structure, potentials)
+        potcars = []
+        for element in structure.get_kind_names():
+            potcars.append(inputdict[self._get_potential_linkname(element)])
+        multi_potcar = MultiPotcarIo(potcars)
         multi_potcar.write(dst)
 
     def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
