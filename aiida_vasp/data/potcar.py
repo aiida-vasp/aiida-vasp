@@ -654,12 +654,13 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         result_potcars = {}
         for element in elements:
-            potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].element == element]
+            full_name = mapping[element]
+            potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
-                raise NotExistent('No POTCAR found for full name {} in family {}'.format(mapping[element], family_name))
+                raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
             elif len(potcars_of_kind) > 1:
-                raise MultipleObjectsError('More than one POTCAR for symbol {} found in family {}'.format(element, family_name))
-            result_potcars[potcars_of_kind[0].element] = potcars_of_kind[0]
+                raise MultipleObjectsError('More than one POTCAR for full name {} found in family {}'.format(full_name, family_name))
+            result_potcars[element] = potcars_of_kind[0]
 
         return result_potcars
 
