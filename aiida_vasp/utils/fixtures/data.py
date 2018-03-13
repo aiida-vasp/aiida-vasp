@@ -120,10 +120,8 @@ def vasp_structure(request, aiida_env):
 @pytest.fixture()
 def vasp_structure_poscar(vasp_structure):
     """Fixture: Well formed POSCAR contents"""
-    aiida_structure = vasp_structure
-    if isinstance(vasp_structure, get_data_class('cif')):
-        ase_structure = vasp_structure.get_ase()
-        aiida_structure = get_data_node('structure', ase=ase_structure)
+    ase_structure = vasp_structure.get_ase()
+    aiida_structure = get_data_node('structure', ase=ase_structure)
     writer = PoscarIo(aiida_structure)
     return writer
 
