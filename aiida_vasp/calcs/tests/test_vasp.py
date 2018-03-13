@@ -87,6 +87,7 @@ def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
             assert result_kpoints_fo.read() == reference['kpoints']
 
 
+@pytest.mark.wip
 @ONLY_ONE_CALC
 def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
     """Check that POTCAR is written correctly"""
