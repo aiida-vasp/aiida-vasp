@@ -24,9 +24,7 @@ class VaspCalculation(VaspCalcBase):
     General-purpose VASP calculation.
 
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR' and Wannier90 input / output files,
-    but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
-
-    Floating point precision for writing POSCAR files can be adjusted using ``settings['poscar_precision']``, default: 10
+    but additional retrieve files can be specified via the 'settings['ADDITIONAL_RETRIEVE_LIST']' input.
     """
 
     default_parser = 'vasp.vasp'
