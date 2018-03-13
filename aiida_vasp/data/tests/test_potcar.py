@@ -14,7 +14,7 @@ except ImportError:
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
-from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP
+from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder
 
 
 def test_creation(fresh_aiida_env, potcar_node_pair):
@@ -257,13 +257,3 @@ def test_create_equivalence(potcar_family):
     assert not created
     assert potcar.md5 == potcar_cls.find_one(element='As').md5
     assert potcar.uuid == potcar_cls.find_one(element='As').uuid
-
-
-def test_get_poctcars_dict(potcar_family):
-    """Test the keys are the same as the input element names"""
-    potcar_cls = get_data_class('vasp.potcar')
-    elements = POTCAR_MAP.keys()
-    mapping = POTCAR_MAP
-    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
-    assert set(potcar_dict.keys()) == set(elements)
-    assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]

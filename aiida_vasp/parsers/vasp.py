@@ -138,9 +138,7 @@ class VaspParser(BaseParser):
         self.out_folder = None
 
         self._settings = DEFAULT_OPTIONS
-        calc_settings = self._calc.get_inputs_dict().get('settings')
-        if calc_settings:
-            self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
+        self._settings.update(self._calc.inp.settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
         self._check_and_validate_settings()
 

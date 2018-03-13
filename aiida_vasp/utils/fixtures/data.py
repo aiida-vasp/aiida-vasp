@@ -11,10 +11,9 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.poscar import PoscarIo
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
+POTCAR_MAP = {'In': 'In_d', 'As': 'As', 'Ge': 'Ge'}
 
 
 @pytest.fixture(scope='session')
@@ -91,7 +90,7 @@ def potcar_family(aiida_env, temp_pot_folder):
 def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     potcar_cls = get_data_class('vasp.potcar')
-    potentials = potcar_cls.get_potcars_dict(['In', 'In_d', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
+    potentials = potcar_cls.get_potcars_dict(['In', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
 
     return potentials
 
@@ -110,9 +109,7 @@ def vasp_structure(request, aiida_env):
         structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
-        structure.append_atom(position=[.25, .33, .34], symbols='As')
-        structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
-        structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
+        structure.append_atom(position=[.5, .5, .5], symbols='In')
         structure.append_atom(position=[.75, .75, .75], symbols='As')
     return structure
 
@@ -120,12 +117,12 @@ def vasp_structure(request, aiida_env):
 @pytest.fixture()
 def vasp_structure_poscar(vasp_structure):
     """Fixture: Well formed POSCAR contents"""
-    aiida_structure = vasp_structure
-    if isinstance(vasp_structure, get_data_class('cif')):
-        ase_structure = vasp_structure.get_ase()
-        aiida_structure = get_data_node('structure', ase=ase_structure)
-    writer = PoscarIo(aiida_structure)
-    return writer
+    ase_structure = vasp_structure.get_ase()
+    aiida_structure = get_data_node('structure', ase=ase_structure)
+    pmg_structure = aiida_structure.get_pymatgen()
+    pmg_structure.sort()
+    pmg_poscar = Poscar(pmg_structure)
+    return pmg_poscar
 
 
 @pytest.fixture(params=['mesh', 'list'])

@@ -12,7 +12,6 @@ from aiida.orm import DataFactory
 from aiida_vasp.calcs.base import VaspCalcBase, Input
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.io.poscar import PoscarIo
 from aiida_vasp.utils.aiida_utils import get_data_node
 
 PARAMETER_CLS = DataFactory('parameter')
@@ -24,9 +23,7 @@ class VaspCalculation(VaspCalcBase):
     General-purpose VASP calculation.
 
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR' and Wannier90 input / output files,
-    but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
-
-    Floating point precision for writing POSCAR files can be adjusted using ``settings['poscar_precision']``, default: 10
+    but additional retrieve files can be specified via the 'settings['ADDITIONAL_RETRIEVE_LIST']' input.
     """
 
     default_parser = 'vasp.vasp'
@@ -59,7 +56,7 @@ class VaspCalculation(VaspCalcBase):
         self.check_input(inputdict, 'structure')
         if 'elements' not in self.attrs():
             self._prestore()
-        for kind in self._structure().get_kind_names():
+        for kind in self.elements:
             self.check_input(inputdict, self._get_potential_linkname(kind))
         self.check_input(inputdict, 'kpoints', self._need_kp)
         self.check_input(inputdict, 'charge_density', self._need_chgd)
@@ -127,12 +124,12 @@ class VaspCalculation(VaspCalcBase):
         istart = self._parameters.get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
-    def _structure(self):
+    def _get_sorted_pmg_structure(self):
         """Get the input structure as sorted pymatgen structure object."""
         structure = self.inp.structure
         if not hasattr(structure, 'get_pymatgen'):
             structure = get_data_node('structure', ase=structure.get_ase())
-        return structure
+        return structure.get_pymatgen().get_sorted_structure()
 
     def write_additional(self, tempfolder, inputdict):
         """Write CHGAR and WAVECAR files if needed."""
@@ -164,11 +161,10 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        settings = inputdict.get('settings')
-        settings = settings.get_dict() if settings else {}
-        poscar_precision = settings.get('poscar_precision', 10)
-        writer = PoscarIo(self._structure(), precision=poscar_precision)
-        writer.write(dst)
+        from pymatgen.io.vasp.inputs import Poscar
+        pmg_structure = self._get_sorted_pmg_structure()
+        writer = Poscar(pmg_structure)
+        writer.write_file(dst)
 
     def write_potcar(self, inputdict, dst):
         """
@@ -177,10 +173,11 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        structure = self._structure()
-        pot_key = self._get_potential_linkname
-        potentials = {symbol: inputdict[pot_key(symbol)] for symbol in structure.get_kind_names()}
-        multi_potcar = MultiPotcarIo.from_structure(structure, potentials)
+        sorted_structure = self._get_sorted_pmg_structure()
+        potcars = []
+        for element in sorted_structure.symbol_set:
+            potcars.append(inputdict[self._get_potential_linkname(element)])
+        multi_potcar = MultiPotcarIo(potcars)
         multi_potcar.write(dst)
 
     def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
