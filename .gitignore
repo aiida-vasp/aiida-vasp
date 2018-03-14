@@ -15,3 +15,5 @@
 .tox
 
 doc/build
+build/
+dist/
