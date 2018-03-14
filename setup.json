@@ -4,11 +4,10 @@
     "classifiers": [
         "Development Status :: 3 - Alpha", 
         "Environment :: Plugins", 
-        "Framework :: AiiDA", 
         "Intended Audience :: Science/Research", 
-        "License :: OSI Approved :=MIT License", 
-        "Programming Language :: Python :=2.7", 
-        "Topic :: Scientific/Engineering :=Physics"
+        "License :: OSI Approved :: MIT License", 
+        "Programming Language :: Python :: 2.7", 
+        "Topic :: Scientific/Engineering :: Physics"
     ], 
     "description": "AiiDA Plugin for running VASP calculations.", 
     "entry_points": {
@@ -79,7 +78,7 @@
         "six", 
         "pyparsing"
     ], 
-    "keywords": "vasp aiida wannier90 workflows", 
+    "keywords": "vasp VASP AiiDA aiida wannier90 workflows", 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
     "reentry_register": true, 
