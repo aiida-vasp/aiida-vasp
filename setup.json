@@ -79,7 +79,6 @@
         "pyparsing", 
         "py"
     ], 
-    "keywords": "vasp, aiida, wannier90, workflow, materials", 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
     "reentry_register": true, 
