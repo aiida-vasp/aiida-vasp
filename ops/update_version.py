@@ -50,8 +50,8 @@ class VersionUpdater(object):
 
     def write_to_init(self):
         init_content = self.top_level_init.read()
-        with open(self.top_level_init, 'w') as init_fo:
-            init_fo.write(re.sub(self.init_version_pat, r'\1\g<2>{}\4'.format(str(self.version)), init_content, re.DOTALL | re.MULTILINE))
+        self.top_level_init.write(
+            re.sub(self.init_version_pat, r'\1\g<2>{}\4'.format(str(self.version)), init_content, re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
         """Write the updated version number to the setup file."""
