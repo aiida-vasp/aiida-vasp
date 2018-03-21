@@ -8,6 +8,7 @@ from aiida_vasp.io.outcar import OutcarParser
 from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.io.chgcar import ChgcarParser
 from aiida_vasp.io.wavecar import WavecarParser
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.parsers.base import BaseParser
 
 LINKNAME_DICT = {
@@ -76,6 +77,11 @@ PARSABLE_FILES = {
         'is_critical': False,
         'status': 'Unknown'
     },
+    'CONTCAR': {
+        'parser_class': PoscarParser,
+        'is_critical': False,
+        'status': 'Unknown'
+    },
 }
 
 
@@ -83,19 +89,25 @@ class VaspParser(BaseParser):
     """
     Parses all Vasp calculations.
 
-    This particular class manages all the specific file parsers in aiida_vasp.io.
-    The parser will check which quantities to parse and which nodes to add
+    This particular class manages all the specific file parsers in
+    aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
     to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
     corresponding VaspCalculation.
+
     Parser Settings usage:
+
     Parser settings can be passed through the input node `settings` as follows::
+
         settings = ParameterData(dict={
             'parser_settings': {
                 ...
             }
         })
+
     Valid keys for `parser_settings` are:
+
     * `add_<quantity>`, where quantity is one of:
+
         'parameters': Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'structure':  (Default) StructureData node parsed from CONTCAR
         'bands':      Band structure node parsed from EIGENVAL.
@@ -114,19 +126,17 @@ class VaspParser(BaseParser):
         self._parsable_quantities = {}
 
         # Gather all parsable items as defined in the file parsers.
-        for filename in PARSABLE_FILES:
-            self._parsable_quantities.update(filename['parser_class'].PARSABLE_ITEMS)
+        for filename, value in PARSABLE_FILES.iteritems():
+            self._parsable_quantities.update(value['parser_class'].PARSABLE_ITEMS)
             self._parsers[filename] = None
 
         self._settings = DEFAULT_OPTIONS
-        calc_settings = self._calc.get_inputs_dict().get('settings')
-        if calc_settings:
-            self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
-
-        self._check_and_validate_settings()
+        self._settings.update(self._calc.inp.settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
         self._quantities_to_parse = []
         self._output_nodes = {}
+
+        self._check_and_validate_settings()
 
     def parse_with_retrieved(self, retrieved):
 
@@ -148,11 +158,10 @@ class VaspParser(BaseParser):
         # might get dynamically updated during the loop.
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
-            if self._settings['add_' + quantity]:
-                if not self._check_prerequisites(quantity):
-                    continue
-                for parser in self._parsable_quantities['quantity']['parsers']:
-                    parser.get_quantities(quantity, self._output_nodes)
+            if not self._check_prerequisites(quantity):
+                continue
+            for parser in self._parsable_quantities[quantity]['parsers']:
+                self._parsers[parser].get_quantity(quantity, self._output_nodes)
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
@@ -228,13 +237,13 @@ class VaspParser(BaseParser):
 
     def _check_prerequisites(self, quantity):
         """
-        Check whether the prerequesites of a given quantity have been met.
+        Check whether the prerequisites of a given quantity have been met.
 
         If not either requeue or prevent this quantity from being parsed.
         """
 
-        prerequesites = self._parsable_quantities[quantity]['prerequesites']
-        for preq in prerequesites:
+        prerequisites = self._parsable_quantities[quantity]['prerequisites']
+        for preq in prerequisites:
             if preq in self._output_nodes:
                 # requirement met, check the next one
                 continue

@@ -34,11 +34,12 @@ class DosParser(BaseParser):
 
         result['header'] = header
 
-        vrp_pdos = inputs.get('vrp_pdos')
-        vrp_tdos = inputs.get('vrp_tdos')
+        vrp_pdos = inputs.get('vrp_pdos', np.array([]))
+        vrp_tdos = inputs.get('vrp_tdos', np.array([]))
 
-        if not vrp_pdos or not vrp_tdos or not dcp_pdos or not dcp_tdos:
-            return {'dos': None}
+        for array in [vrp_pdos, vrp_tdos, dcp_pdos, dcp_tdos]:
+            if array.size == 0:
+                return {'dos': None}
 
         dosnode = DataFactory('array')()
         # vrp_pdos is a numpy array, and thus not directly bool-convertible

@@ -1,4 +1,4 @@
-"""Tools for parsing vasprun.xml files"""
+"""Tools for parsing vasprun.xml files."""
 
 try:
     from lxml.objectify import parse
@@ -13,7 +13,7 @@ DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos'
 
 
 class VasprunParser(BaseParser):
-    """parse xml into objecttree, provide convenience methods for parsing."""
+    """Parse xml into objecttree, provide convenience methods for parsing."""
 
     PARSABLE_ITEMS = {
         'occupations': {
@@ -43,16 +43,20 @@ class VasprunParser(BaseParser):
         self._parsed_data = None
         self._parsable_items = VasprunParser.PARSABLE_ITEMS
 
-        self.tree = parse(filename)
+        self.tree = parse(path)
 
     def _parse_file(self, inputs):
 
-        settings = inputs.gets('settings', DEFAULT_OPTIONS)
+        settings = inputs.get('settings', DEFAULT_OPTIONS)
+        if not settings:
+            settings = DEFAULT_OPTIONS
+
+        quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
 
         result = {}
-        for quantity in settings['quantities_to_parse']:
+        for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
-                result[quantity] = getattr(self, quantity)()
+                result[quantity] = getattr(self, quantity)
 
         return result
 
@@ -191,9 +195,11 @@ class VasprunParser(BaseParser):
 
         def split(string_):
             """Splits a string based on mode in ['r', 'rc']"""
-            if mode == 'rc':
+            if mode == 'r':
+                return tuple(string_.text.split())
+            elif mode == 'rc':
                 return tuple([x.text.strip() for x in string_.c])
-            return tuple(string_.text.split())
+            return None
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)
