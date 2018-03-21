@@ -105,8 +105,10 @@ class BasicCalcTest(AiidaTestCase):
         calc = self._get_calc('c', 'm')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
-        kpp = KpParser(self.tmpf)
-        self.assertTrue((kpp.kpoints == Common.kpoints_mesh_res()).all())
+        kpp = KpParser(self.tmpf, 'KPOINTS')
+        result = {}
+        kpp.get_quantity('kpoints_raw', result)
+        self.assertTrue((result['kpoints_raw'] == Common.kpoints_mesh_res()).all())
 
     def test_write_kpoints_list(self):
         """Check that KPOINTS in list format is written correctly"""
@@ -114,10 +116,13 @@ class BasicCalcTest(AiidaTestCase):
         calc = self._get_calc('c', 'l')
         inp = calc.get_inputs_dict()
         calc.write_kpoints(inp, self.tmpf)
-        kpp = KpParser(self.tmpf)
+        kpp = KpParser(self.tmpf, 'KPOINTS')
         kres, wres = Common.kpoints_list_res()
-        self.assertTrue((kpp.kpoints == kres).all())
-        self.assertTrue((kpp.weights == wres).all())
+        result = {}
+        kpp.get_quantity('kpoints_raw', result)
+        kpp.get_quantity('weights', result)
+        self.assertTrue((result['kpoints_raw'] == kres).all())
+        self.assertTrue((result['weights'] == wres).all())
 
     def test_write_potcar(self):
         """Check that POTCAR is written correctly"""

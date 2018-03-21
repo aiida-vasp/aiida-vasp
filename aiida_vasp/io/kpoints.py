@@ -59,6 +59,8 @@ class KpParser(BaseParser):
         kpout = DataFactory('array.kpoints')()
         kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
 
+        result['kpoints_raw'] = kpoints
+        result['weights'] = weights
         result['kpoints'] = kpout
 
         return result
