@@ -17,6 +17,7 @@ def make_use_methods(inputs, bases):
 
     @classproperty
     # pylint: disable=protected-access
+    # pylint: disable=no-member
     def _use_methods(cls):
         """Automatically generated _use_methods function."""
         retdict = JobCalculation._use_methods
