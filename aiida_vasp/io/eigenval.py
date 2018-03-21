@@ -1,6 +1,4 @@
-"""
-This module contains tools to read kpoints and bands from EIGENVALUE files.
-"""
+"""Contains tools to read kpoints and bands from EIGENVALUE files."""
 
 import re
 
@@ -11,10 +9,7 @@ from aiida_vasp.io.parser import BaseParser
 
 
 class EigParser(BaseParser):
-    """
-    contains regex and functions to find grammar elements
-    in EIGENVALUE files
-    """
+    """Contains regex and functions to find grammar elements in EIGENVALUE files."""
 
     PARSABLE_ITEMS = {
         'bands': {

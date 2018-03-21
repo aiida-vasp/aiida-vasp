@@ -6,9 +6,7 @@ from aiida.orm import DataFactory
 
 
 class DosParser(BaseParser):
-    """
-    parse a DOSCAR file from a vasp run
-    """
+    """Parse a DOSCAR file from a vasp run."""
 
     PARSABLE_ITEMS = {
         'dos': {

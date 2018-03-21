@@ -81,25 +81,21 @@ PARSABLE_FILES = {
 
 class VaspParser(BaseParser):
     """
-    Parses all Vasp calculations. This particular class manages all the specific file parsers in
-    aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
+    Parses all Vasp calculations.
+
+    This particular class manages all the specific file parsers in aiida_vasp.io.
+    The parser will check which quantities to parse and which nodes to add
     to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
     corresponding VaspCalculation.
-
     Parser Settings usage:
-
     Parser settings can be passed through the input node `settings` as follows::
-
         settings = ParameterData(dict={
             'parser_settings': {
                 ...
             }
         })
-
     Valid keys for `parser_settings` are:
-
     * `add_<quantity>`, where quantity is one of:
-
         'parameters': Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'structure':  (Default) StructureData node parsed from CONTCAR
         'bands':      Band structure node parsed from EIGENVAL.
@@ -123,7 +119,9 @@ class VaspParser(BaseParser):
             self._parsers[filename] = None
 
         self._settings = DEFAULT_OPTIONS
-        self._settings.update(self._calc.inp.settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
+        calc_settings = self._calc.get_inputs_dict().get('settings')
+        if calc_settings:
+            self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
         self._check_and_validate_settings()
 
@@ -202,6 +200,7 @@ class VaspParser(BaseParser):
     def _set_file_parsers(self):
         """
         Set the specific file parsers for OUTCAR, DOSCAR, EIGENVAL and vasprun.xml.
+
         Return False if a critical file is missing, which will abort the parsing.
         """
 
@@ -228,8 +227,11 @@ class VaspParser(BaseParser):
         return True
 
     def _check_prerequisites(self, quantity):
-        """Check whether the prerequesites of a given quantity have been met. If not either
-           requeue or prevent this quantity from being parsed."""
+        """
+        Check whether the prerequesites of a given quantity have been met.
+
+        If not either requeue or prevent this quantity from being parsed.
+        """
 
         prerequesites = self._parsable_quantities[quantity]['prerequesites']
         for preq in prerequesites:
@@ -250,10 +252,8 @@ class VaspParser(BaseParser):
         return True
 
     def _should_parse_quantity(self, quantity):
-        """
-        Check whether a quantity should be parsed based on whether all required parsers are
-        available.
-        """
+        """Check whether a quantity should be parsed based on whether all required parsers are available."""
+
         for filename in self._parsable_quantities[quantity]['parsers']:
             if not self._parsers[filename]:
                 return False

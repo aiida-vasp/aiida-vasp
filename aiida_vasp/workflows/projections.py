@@ -6,10 +6,11 @@ from .helper import WorkflowHelper
 
 class ProjectionsWorkflow(Workflow):
     """
-    AiiDA-VASP Workflow for continuing from an NSCF Calculation to get
-    all the data necessary to run a wannier calculation.
-    parameters are given using :py:func:set_params(parameter_dict).
-    see py:func:get_params_template() for a list of parameters.
+    AiiDA-VASP Workflow for continuing from an NSCF Calculation.
+
+    Get all the data necessary to run a wannier calculation.
+    Parameters are given using :py:func:set_params(parameter_dict).
+    See py:func:get_params_template() for a list of parameters.
     """
     Helper = WorkflowHelper
 
@@ -116,8 +117,7 @@ class ProjectionsWorkflow(Workflow):
 
     @classmethod
     def get_params_template(cls):
-        """returns a dictionary of keys and explanations how they
-        can be used as parameters for this workflow."""
+        """Returns a dictionary of keys and explanations how they can be used as parameters for this workflow."""
         tmpl = cls.Helper.get_params_template(continuation=True)
         tmpl['projections'] = ['XX : s; px; py; pz', 'YY: ...']
         tmpl['wannier_parameters'] = {
@@ -130,6 +130,5 @@ class ProjectionsWorkflow(Workflow):
 
     @classmethod
     def get_template(cls, *args, **kwargs):
-        """returns a JSON formatted string that can be stored to a file,
-        edited, loaded and used to run this Workflow."""
+        """Returns a JSON formatted string that can be stored to a file, edited, loaded and used to run this Workflow."""
         return cls.Helper.get_template(*args, wf_class=cls, **kwargs)

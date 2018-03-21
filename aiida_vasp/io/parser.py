@@ -1,14 +1,12 @@
-"""
-This module contains the base class for other vasp parsers.
-"""
+"""Contains the base class for other vasp file parsers."""
 import re
 
 from six import string_types
 
 
 class BaseParser(object):
-    """Common codebase for all parser utilities. It provides the following interface to be used
-    by the VaspParser:
+    """
+    Common codebase for all parser utilities. It provides the following interface to be used by the VaspParser:
 
         - properties: a list holding all the properties this parser can extract from it's file
         - get_quantities(properties, output): Method to be called by the VaspParser
@@ -43,7 +41,7 @@ class BaseParser(object):
 
     @classmethod
     def splitlines(cls, fobj_or_str, d_type=float):
-        """split a chunk of text into a list of lines and convert each line to d_type (default: float)"""
+        """Split a chunk of text into a list of lines and convert each line to d_type (default: float)."""
         if isinstance(fobj_or_str, str):
             lines = fobj_or_str.split('\n')
         else:
@@ -53,6 +51,7 @@ class BaseParser(object):
     def get_quantity(self, quantity, output):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
+
         Otherwise parse the file. This method will be registered to the VaspParsers get_quantities
         delegate during __init__.
         """
@@ -70,19 +69,14 @@ class BaseParser(object):
             output[quantity] = self._parsed_data.get(quantity)
 
     def _parse_file(self, inputs):
-        """
-        Abstract base method to parse this file parsers file. Has to be overwritten by the child class.
-        """
+        """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
 
         raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
 
 
 # pylint: disable=abstract-method
 class KeyValueParser(BaseParser):
-    """
-    contains regex and functions to find grammar elements
-    in vasp input and output files
-    """
+    """Contains regex and functions to find grammar elements in vasp input and output files."""
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     bool_true = re.compile(r'^T$')
     bool_false = re.compile(r'^F$')

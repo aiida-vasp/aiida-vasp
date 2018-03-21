@@ -1,6 +1,4 @@
-"""
-Tools for parsing OUTCAR files
-"""
+"""Tools for parsing OUTCAR files"""
 from aiida.orm import DataFactory
 from aiida_vasp.io.parser import BaseParser
 
@@ -8,9 +6,7 @@ DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
 
 
 class OutcarParser(BaseParser):
-    """
-    parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
-    """
+    """parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later."""
 
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
@@ -42,9 +38,7 @@ class OutcarParser(BaseParser):
         self._parsed_data = {}
 
     def _parse_file(self, inputs):
-        """
-        Add all quantities parsed from OUTCAR to _parsed_data.
-        """
+        """Add all quantities parsed from OUTCAR to _parsed_data."""
 
         result = self._read_outcar(inputs)
         params = DataFactory('parameter')()

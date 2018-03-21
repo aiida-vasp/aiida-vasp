@@ -1,6 +1,4 @@
-"""
-Tools for parsing vasprun.xml files
-"""
+"""Tools for parsing vasprun.xml files"""
 
 try:
     from lxml.objectify import parse
@@ -15,10 +13,7 @@ DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos'
 
 
 class VasprunParser(BaseParser):
-    """
-    parse xml into objecttree, provide convenience methods
-    for parsing
-    """
+    """parse xml into objecttree, provide convenience methods for parsing."""
 
     PARSABLE_ITEMS = {
         'occupations': {
@@ -168,7 +163,7 @@ class VasprunParser(BaseParser):
         return np.array(map(split, tag.v), dtype=float)
 
     def _array(self, parent, key=None, path='//'):
-        """extract an <array> tag"""
+        """Extract an <array> tag."""
         pred = '[@name="%s"]' % key if key else ''
         tag = self.tree.find(path + parent + '/array%s' % pred)
         dims = [i.text for i in tag.findall('dimension')]
@@ -196,11 +191,9 @@ class VasprunParser(BaseParser):
 
         def split(string_):
             """Splits a string based on mode in ['r', 'rc']"""
-            if mode == 'r':
-                return tuple(string_.text.split())
-            elif mode == 'rc':
+            if mode == 'rc':
                 return tuple([x.text.strip() for x in string_.c])
-            return None
+            return tuple(string_.text.split())
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)
