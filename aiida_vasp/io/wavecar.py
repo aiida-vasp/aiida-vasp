@@ -1,14 +1,11 @@
-"""
-Tools for parsing CHGCAR files.
-"""
+"""Tools for parsing CHGCAR files."""
+
 from aiida.orm import DataFactory
 from aiida_vasp.io.parser import BaseParser
 
 
 class WavecarParser(BaseParser):
-    """
-    Add CHGCAR as a single file node.
-    """
+    """Add WAVECAR as a single file node."""
 
     PARSABLE_ITEMS = {
         'wavecar': {

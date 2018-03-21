@@ -1,8 +1,8 @@
 """Utils for VASP KPOINTS format"""
 import numpy as np
 
-from aiida_vasp.io.parser import BaseParser
 from aiida.orm import DataFactory
+from aiida_vasp.io.parser import BaseParser
 
 
 class KpParser(BaseParser):

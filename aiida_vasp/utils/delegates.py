@@ -1,12 +1,11 @@
-"""
-Module containing various decorators implementing delegate types.
-"""
+"""Module containing various decorators implementing delegate types."""
 from functools import update_wrapper
 
 
 def delegate_method_kwargs(prefix='_init_with_'):
     """
     Get a kwargs delegating decorator.
+
     :params prefix: (str) common prefix of delegate functions
     """
 
@@ -27,6 +26,7 @@ def delegate_method_kwargs(prefix='_init_with_'):
 def delegate():
     """
     Get a decorator adding attributes to add or remove functions to a list of functions.
+
     When the decorated function is called, all functions in the list will be called.
     """
 

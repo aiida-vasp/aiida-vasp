@@ -4,12 +4,14 @@ import re
 from .parser import KeyValueParser
 
 
+# pylint: disable=abstract-method
 class WinParser(KeyValueParser):
     """Parses wannier90.win files."""
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
     def __init__(self, filename):
+        super(WinParser, self).__init__()
         self.result = {}
         with open(filename) as winf:
             self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
