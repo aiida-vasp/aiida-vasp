@@ -5,27 +5,8 @@ from six import string_types
 
 
 class BaseParser(object):
-    """
-    Common codebase for all parser utilities. It provides the following interface to be used by the VaspParser:
-
-        - properties: a list holding all the properties this parser can extract from it's file
-        - get_quantities(properties, output): Method to be called by the VaspParser
-          which will call the specific parsing methods for each requested property and add
-          their results to the correct ouput node.
-
-          :output contains data parsed by other file parsers and optionally a 'settings' card
-                  which determines the behaviour of each file parsers _parse_file method.
-
-    """
+    """Common codebase for all parser utilities"""
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
-
-    def __init__(self):
-        super(BaseParser, self).__init__()
-        self._parsable_items = {}
-        self._parsed_data = None
-        self._filename = None
-        self._filepath = None
-        self._out_folder = None
 
     @classmethod
     def line(cls, fobj_or_str, d_type=str):
@@ -47,6 +28,29 @@ class BaseParser(object):
         else:
             lines = fobj_or_str.readlines()
         return [cls.line(l, d_type) for l in lines]
+
+
+class BaseFileParser(BaseParser):
+    """
+    Abstract base class for the individual file parsers. It provides the following interface to be used by the VaspParser:
+
+        - properties: a list holding all the properties this parser can extract from it's file
+        - get_quantities(properties, output): Method to be called by the VaspParser
+          which will call the specific parsing methods for each requested property and add
+          their results to the correct ouput node.
+
+          :output contains data parsed by other file parsers and optionally a 'settings' card
+                  which determines the behaviour of each file parsers _parse_file method.
+
+    """
+
+    def __init__(self):
+        super(BaseFileParser, self).__init__()
+        self._parsable_items = {}
+        self._parsed_data = None
+        self._filename = None
+        self._filepath = None
+        self._out_folder = None
 
     def get_quantity(self, quantity, output):
         """
@@ -74,7 +78,6 @@ class BaseParser(object):
         raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
 
 
-# pylint: disable=abstract-method
 class KeyValueParser(BaseParser):
     """Contains regex and functions to find grammar elements in vasp input and output files."""
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')

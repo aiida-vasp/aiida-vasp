@@ -16,7 +16,7 @@ from itertools import groupby
 import numpy as np
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
-from aiida_vasp.io.parser import BaseParser
+from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -87,7 +87,7 @@ class PoscarIo(object):
         destination.write(self.poscar_str())
 
 
-class PoscarParser(BaseParser):
+class PoscarParser(BaseFileParser):
     """Parse a POSCAR format file into a StructureData node."""
 
     PARSABLE_ITEMS = {

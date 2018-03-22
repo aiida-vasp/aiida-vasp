@@ -1,12 +1,12 @@
 """Tools for parsing OUTCAR files."""
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.io.parser import BaseParser
+from aiida_vasp.io.parser import BaseFileParser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
 
 
-class OutcarParser(BaseParser):
+class OutcarParser(BaseFileParser):
     """Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later."""
 
     FILE_NAME = 'OUTCAR'

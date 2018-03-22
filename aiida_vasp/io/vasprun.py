@@ -7,12 +7,12 @@ except ImportError:
 import datetime as dt
 import numpy as np
 
-from aiida_vasp.io.parser import BaseParser
+from aiida_vasp.io.parser import BaseFileParser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos']}
 
 
-class VasprunParser(BaseParser):
+class VasprunParser(BaseFileParser):
     """Parse xml into objecttree, provide convenience methods for parsing."""
 
     PARSABLE_ITEMS = {
