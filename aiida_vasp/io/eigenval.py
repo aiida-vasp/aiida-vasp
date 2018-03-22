@@ -4,7 +4,7 @@ import re
 
 import numpy as np
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 
@@ -37,8 +37,8 @@ class EigParser(BaseParser):
 
         result['header'] = header
 
-        bsnode = DataFactory('array.bands')()
-        kpout = DataFactory('array.kpoints')()
+        bsnode = get_data_class('array.bands')()
+        kpout = get_data_class('array.kpoints')()
 
         structure = inputs.get('structure')
         if structure is None:

@@ -1,6 +1,6 @@
 """Tools for parsing CHGCAR files."""
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 
@@ -32,6 +32,6 @@ class WavecarParser(BaseParser):
         if wfn is None:
             return {'wavecar': None}
 
-        result['wavecar'] = DataFactory('vasp.wavefun')()
+        result['wavecar'] = get_data_class('vasp.wavefun')()
         result['wavecar'].set_file(wfn)
         return result

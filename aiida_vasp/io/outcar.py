@@ -1,6 +1,6 @@
 """Tools for parsing OUTCAR files."""
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
@@ -48,7 +48,7 @@ class OutcarParser(BaseParser):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
 
         result = self._read_outcar(inputs)
-        params = DataFactory('parameter')()
+        params = get_data_class('parameter')()
         params.update_dict(result)
         result['parameters'] = params
         return result

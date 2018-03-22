@@ -1,7 +1,7 @@
 """Utils for VASP KPOINTS format"""
 import numpy as np
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 
@@ -56,7 +56,7 @@ class KpParser(BaseParser):
         else:
             weights = None
 
-        kpout = DataFactory('array.kpoints')()
+        kpout = get_data_class('array.kpoints')()
         kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
 
         result['kpoints_raw'] = kpoints

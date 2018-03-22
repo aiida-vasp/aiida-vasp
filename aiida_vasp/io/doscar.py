@@ -1,7 +1,7 @@
 """DOSCAR (VASP format) utilities"""
 import numpy as np
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 
@@ -41,7 +41,7 @@ class DosParser(BaseParser):
             if array.size == 0:
                 return {'dos': None}
 
-        dosnode = DataFactory('array')()
+        dosnode = get_data_class('array')()
         # vrp_pdos is a numpy array, and thus not directly bool-convertible
         if vrp_pdos.size > 0:
             pdos = vrp_pdos.copy()

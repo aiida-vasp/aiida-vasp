@@ -1,6 +1,6 @@
 """Tools for parsing CHGCAR files."""
 
-from aiida.orm import DataFactory
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseParser
 
 
@@ -32,7 +32,7 @@ class ChgcarParser(BaseParser):
         if chgcar is None:
             return {'chgcar': None}
 
-        result['chgcar'] = DataFactory('vasp.chargedensity')()
+        result['chgcar'] = get_data_class('vasp.chargedensity')()
         result['chgcar'].set_file(chgcar)
 
         return result
