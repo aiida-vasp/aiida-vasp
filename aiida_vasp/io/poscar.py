@@ -17,6 +17,7 @@ import numpy as np
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from aiida_vasp.io.parser import BaseParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class PoscarIo(object):
@@ -108,11 +109,10 @@ class PoscarParser(BaseParser):
     def _parse_file(self, inputs):
         """Read POSCAR format file for output structure."""
         from ase.io import read
-        from aiida.orm import DataFactory
 
         result = inputs
         result = {}
-        result['structure'] = DataFactory('structure')()
+        result['structure'] = get_data_class('structure')()
         cont = self._filepath
         if not cont:
             return {'structure': None}
