@@ -1,8 +1,14 @@
-"""Cif data utilities"""
+"""
+Cif data utilities
+
+TODO: after the deprecation of aiida.orm.querytool this module has been fixed in a rush by replacing QueryTool with
+QueryBuilder. This might not work and should be fixed before actually using this Module.
+TODO: This module might not be required any more and therefore could be cleaned?
+"""
 import os
 
 from aiida.orm.calculation.inline import optional_inline
-from aiida.orm.querytool import QueryTool
+from aiida.orm.querybuilder import QueryBuilder
 from aiida.orm import DataFactory
 
 
@@ -48,10 +54,10 @@ def cts_filter(node):
 
 
 def get_cifs_with_name(filename):
-    query_tool = QueryTool()
-    query_tool.set_class(DataFactory('cif'))
-    query_tool.add_attr_filter('filename', '=', filename)
-    return query_tool.run_query()
+    query_builder = QueryBuilder()
+    query_builder.append(tag='node', cls=DataFactory('cif'))
+    query_builder.add_filter('node', {'filename': filename})
+    return query_builder.all()
 
 
 def filter_cifs_for_structure(cif_seq, structure):
