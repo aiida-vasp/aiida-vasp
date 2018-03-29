@@ -3,7 +3,7 @@
 
 import pytest
 
-from aiida_vasp.utils.fixtures.data import vasp_kpoints
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.kpoints import KpParser
 
