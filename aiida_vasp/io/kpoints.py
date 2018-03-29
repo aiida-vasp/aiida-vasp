@@ -40,7 +40,7 @@ class KpParser(BaseFileParser):
         header = {}
         header['name'] = fobj_or_str.readline()
         header['nkp'] = cls.line(fobj_or_str, d_type=int)
-        header['cartesian'] = fobj_or_str.readline().startswith('c', 'C', 'k', 'K')
+        header['cartesian'] = fobj_or_str.readline().startswith(('c', 'C', 'k', 'K'))
         lines = np.array(cls.splitlines(fobj_or_str))
         return header, lines
 
