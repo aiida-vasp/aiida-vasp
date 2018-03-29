@@ -1,8 +1,11 @@
 """
 Utils to query for Vasp calculations
 
-THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core
+THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core.
+Since QueryTools now has been fully replaced by QueryBuilder this module requires
+an overhaul.
 """
+# pylint: disable=import-error, no-name-in-module
 from aiida.orm.querytool import QueryTool
 from aiida.orm.calculation.job import JobCalculation
 
@@ -12,6 +15,8 @@ class VaspFinder(object):
     Utility class to query for Vasp calculations
 
     THIS IS LIKELY OUTDATED - It was written before QueryBuilder was added to aiida-core
+    Since QueryTools now has been fully replaced by QueryBuilder this module requires
+    an overhaul.
     """
 
     _vaspclass = ['vasp.vasp', 'vasp.vasp2w90']
