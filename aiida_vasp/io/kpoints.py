@@ -6,7 +6,13 @@ from aiida_vasp.io.parser import BaseFileParser
 
 
 class KpParser(BaseFileParser):
-    """Parser for VASP KPOINTS format"""
+    """
+    Parser for VASP KPOINTS format
+
+    This is a remainder of the previous VaspParser and at the moment only capable of
+    parsing KPOINTS files containing an explicit list of k-points. This should be
+    replaced by a more capable parser in the future.
+    """
 
     PARSABLE_ITEMS = {
         'kpoints': {
@@ -34,7 +40,7 @@ class KpParser(BaseFileParser):
         header = {}
         header['name'] = fobj_or_str.readline()
         header['nkp'] = cls.line(fobj_or_str, d_type=int)
-        header['mode'] = fobj_or_str.readline()
+        header['cartesian'] = fobj_or_str.readline().startswith('c', 'C', 'k', 'K')
         lines = np.array(cls.splitlines(fobj_or_str))
         return header, lines
 
@@ -57,7 +63,7 @@ class KpParser(BaseFileParser):
             weights = None
 
         kpout = get_data_class('array.kpoints')()
-        kpout.set_kpoints(kpoints, weights=weights, cartesian=False)
+        kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
 
         result['kpoints_header'] = header
         result['kpoints_raw'] = kpoints
