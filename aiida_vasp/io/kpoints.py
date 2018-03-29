@@ -34,7 +34,7 @@ class KpParser(BaseFileParser):
         header = {}
         header['name'] = fobj_or_str.readline()
         header['nkp'] = cls.line(fobj_or_str, d_type=int)
-        header['cartesian'] = not fobj_or_str.readline().startswith(('r', 'R'))
+        header['mode'] = fobj_or_str.readline()
         lines = np.array(cls.splitlines(fobj_or_str))
         return header, lines
 
@@ -57,8 +57,9 @@ class KpParser(BaseFileParser):
             weights = None
 
         kpout = get_data_class('array.kpoints')()
-        kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
+        kpout.set_kpoints(kpoints, weights=weights, cartesian=False)
 
+        result['kpoints_header'] = header
         result['kpoints_raw'] = kpoints
         result['weights'] = weights
         result['kpoints'] = kpout
