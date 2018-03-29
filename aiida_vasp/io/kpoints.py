@@ -15,6 +15,12 @@ class KpParser(BaseFileParser):
             'nodeName': 'kpoints',
             'prerequisites': []
         },
+        'kpoints_raw': {
+            'inputs': [],
+            'parsers': ['IBZKPT'],
+            'nodeName': 'kpoints',
+            'prerequisites': []
+        },
     }
 
     def __init__(self, path, filename):
