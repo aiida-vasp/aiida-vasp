@@ -13,6 +13,6 @@ def test_parse_kpoints(vasp_kpoints):
     kpoints_path = data_path('kpoints', 'KPOINTS')
     kpp = KpParser(kpoints_path, 'KPOINTS')
     result = {}
-    kpp.get_quantity('kpoints_raw', result)
-    _, reference = vasp_kpoints
-    assert result['kpoints_raw'] == reference
+    kpp.get_quantity('kpoints', result)
+    reference, _ = vasp_kpoints
+    assert result['kpoints'].get_kpoints() == reference.get_kpoints()
