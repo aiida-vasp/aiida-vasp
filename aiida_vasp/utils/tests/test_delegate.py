@@ -18,7 +18,7 @@ def test_delegate():
 
     inputs = 'This is a test input'
 
-    assert my_delegate.listeners is False
+    assert not my_delegate.listeners
     my_delegate.add_listener(method)
     assert my_delegate(inputs)[0] == inputs
     my_delegate.remove_listener(method)
