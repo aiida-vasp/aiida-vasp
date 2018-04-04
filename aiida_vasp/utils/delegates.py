@@ -27,7 +27,42 @@ def delegate():
     """
     Get a decorator adding attributes to add or remove functions to a list of functions.
 
-    When the decorated function is called, all functions in the list will be called.
+    When the decorated function is called, all functions in the list will be called. It
+    will return a list of all the return values of the subscribed functions. The basic
+    usage is outlined in the corresponding utils.tests.test_delegates. The idea is
+    that there is a class e.g.
+
+    class VaspParser():
+
+        @delegate()
+        def parse_quantity(inputs):
+            pass
+
+    managing a number of instances of classes e.g.
+
+    class FileParser():
+
+        def __init__(self, cls):
+            cls.parse_quantity.add_listener(self.parse_quantity)
+
+        def parse_file(inputs):
+            pass
+
+    The FileParsers can be instantiated somewhere in the code by giving them an instance
+    of the VaspParser i.e.
+
+    vasp_parser = VaspParser()
+    FileParser(vasp_parser)
+
+    and they will subscribe their parse_file method to the parse_quantity delegate of the VaspParser.
+    The VaspParser can then parse a given quantity by calling its parse_quantity method
+
+    self.parse_quantity(inputs)
+
+    which will then call of the methods subscribed to it. The advantage is that the
+    VaspParser itself, does not need to keep track of all the FileParser objects. In addition
+    it does not need to decide which of the FileParsers to call. This logic can be moved to
+    the FileParsers, who may decide whether they can pass that quantity based on the input.
     """
 
     def decorator(meth):
@@ -46,9 +81,13 @@ def delegate():
         setattr(meth, 'remove_listener', remove_listener)
 
         def wrapper(*args, **kwargs):
+            """Wrap the method to be delegated."""
+            result = []
             for func in meth.listeners:
-                func(*args, **kwargs)
-            meth(*args, **kwargs)
+                result.append(func(*args, **kwargs))
+            if result:
+                return result
+            return meth(*args, **kwargs)
 
         update_wrapper(wrapper, meth)
         return wrapper
