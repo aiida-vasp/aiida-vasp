@@ -13,8 +13,8 @@ def test_parse_chgcar():
     path = data_path('wavecar', 'WAVECAR')
     parser = WavecarParser(path, 'WAVECAR')
     result = {}
-    parser.get_quantity('wavcar', result)
-    with open(result['wavcar'].get_file_abs_path(), 'r') as file_obj:
+    parser.get_quantity('wavecar', result)
+    with open(result['wavecar'].get_file_abs_path(), 'r') as file_obj:
         content = file_obj.readline()
-    assert result['wavecar'].filename == 'WAVCAR'
+    assert result['wavecar'].filename == 'WAVECAR'
     assert content == 'This is a test WAVECAR file.\n'
