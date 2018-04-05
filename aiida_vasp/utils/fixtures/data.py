@@ -114,6 +114,14 @@ def vasp_structure(request, aiida_env):
         structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.75, .75, .75], symbols='As')
+    elif request.param == 'str-Al':
+        larray = numpy.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        alat = 4.04
+        structure = DataFactory('structure')(cell=larray * alat)
+        structure.append_atom(position=numpy.array([0, 0, 0]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
     return structure
 
 
