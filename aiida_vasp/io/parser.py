@@ -34,10 +34,14 @@ class BaseFileParser(BaseParser):
     """
     Abstract base class for the individual file parsers. It provides the following interface to be used by the VaspParser:
 
-        - properties: a list holding all the properties this parser can extract from it's file
+        - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
+          as the required information on how to extract those.
+        - _parsed_data: a dictionary containing all the parsed data from this file.
         - get_quantities(properties, output): Method to be called by the VaspParser
-          which will call the specific parsing methods for each requested property and add
-          their results to the correct ouput node.
+          which will either fill the _parsed_data in case that it is empty by calling _parse_file
+          or return the requested data from the _parsed_data.
+        _ _parse_file: an abstract method to be implemented by the actual file parser, which will
+          parse the file and fill the _parsed_data dictionary.
 
           :output contains data parsed by other file parsers and optionally a 'settings' card
                   which determines the behaviour of each file parsers _parse_file method.
@@ -47,10 +51,9 @@ class BaseFileParser(BaseParser):
     def __init__(self):
         super(BaseFileParser, self).__init__()
         self._parsable_items = {}
-        self._parsed_data = None
+        self._parsed_data = {}
         self._filename = None
         self._filepath = None
-        self._out_folder = None
 
     def get_quantity(self, quantity, output):
         """
