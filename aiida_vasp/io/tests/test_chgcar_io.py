@@ -1,4 +1,4 @@
-"""Test the Kpoints io interface"""
+"""Test the CHGCAR io interface"""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
