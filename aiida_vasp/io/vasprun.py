@@ -164,6 +164,8 @@ class VasprunParser(BaseFileParser):
         def split(string_):
             return string_.text.split()
 
+        # using 'tag.v' is an lxml specific feature. If lxml gets replaced in the future, children
+        # with tag 'v' might have to be found in another way.
         return np.array(map(split, tag.v), dtype=float)
 
     def _array(self, parent, key=None, path='//'):
