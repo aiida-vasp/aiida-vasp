@@ -77,7 +77,8 @@
         "chainmap", 
         "six", 
         "pyparsing", 
-        "py"
+        "py",
+        "lxml"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
