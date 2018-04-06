@@ -12,6 +12,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
@@ -204,6 +205,16 @@ def ref_retrieved_nscf():
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
         retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
+
+
+@pytest.fixture
+def vasprun_parser():
+    """Return an instance of VasprunParser for a reference vasprun.xml."""
+    file_name = 'vasprun.xml'
+    path = data_path('vasprun', file_name)
+    parser = VasprunParser(path, file_name)
+
+    return parser
 
 
 def _ref_kp_list():
