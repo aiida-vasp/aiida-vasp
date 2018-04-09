@@ -50,7 +50,7 @@ Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for example code on 
 More
 ====
 
-The following is documentation for a slightly out of date version, which was written to work with AiiDA up to version 0.7.
+.. The following is documentation for a slightly out of date version, which was written to work with AiiDA up to version 0.7.
 
 .. toctree::
    :maxdepth: 4
