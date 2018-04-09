@@ -101,7 +101,7 @@ To use a k-point path requires knowledge of the structure beforehand::
 This leads to::
 
    Explicit list
-   <Num AiiDA generated kpoints>
+   <Number of AiiDA generated kpoints>
    Direct
    0  0  0  1.0
    ...
@@ -114,7 +114,7 @@ how to influence the generation of kpoints from paths.
 structure
 =========
 :py:class:`StructureData <aiida.orm.data.structure.StructureData>` or :py:class:`CifData <aiida.orm.data.cif.CifData>`.
-Use ASE, Pymatgen python packages to convert POSCAR files into structure data::
+Use ASE, pymatgen python packages to convert POSCAR files into structure data::
 
    from ase.io.vasp import read_vasp
    import os
@@ -129,7 +129,7 @@ Use ASE, Pymatgen python packages to convert POSCAR files into structure data::
 
 potcar
 ======
-:py:class:`PawData <aiida.orm.data.vasp.potcar.PotcarData>`, containing POTPAW files.
+:py:class:`PawData <aiida.orm.data.vasp.potcar.PotcarData>`, containing POTCAR files.
 VASP's POTPAW folders can be uploaded to the database using :: 
    
    verdi data vasp-potcar uploadfamily.
@@ -138,25 +138,25 @@ Once uploaded they can be obtained as follows::
 
    # input_structure is InAs
    potcar_mapping = {'In': 'In_d', 'As': 'As'}
-   potcars = PawData.load_paw(family='PBE', structure=input_structure, mapping=potcar_mapping)
+   potcars = PotcarData.load_paw(family='PBE', structure=input_structure, mapping=potcar_mapping)
 
-If for example potpaw_PBE was uploaded with the family name "PBE".
+If for example ``potpaw_PBE/`` was uploaded with the family name "PBE".
 
-One potcar input node must be given to the calculations for each element in the system.
+One POTCAR input node must be given to the calculations for each element in the system.
 The calculations take responsibility for ordering the elements consistently between POSCAR and POTCAR.
 
 .. _vasp-input-chargedens:
 
 charge_density
 ==============
-:py:class:`ChargedensityData <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing a CHGCAR file from a previous (selfconsistent) run.
+:py:class:`ChargedensityData <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing a CHGCAR file from a previous (self-consistent) run.
 This input is optional.
 
 .. _vasp-input-wavefunctions:
 
 wavefunctions
 ==============
-:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (selfconsistent) run.
+:py:class:`ChargedensityData <aiida.orm.data.vasp.wavefun.WavefunData>` containing a WAVECAR file from a previous (self-consistent) run.
 This input is optional.
 
 .. _vasp-input-wannier_parameters:
@@ -164,7 +164,7 @@ This input is optional.
 wannier_parameters
 ==================
 :py:class:`ParameterData <aiida.orm.data.parameter.ParameterData>`
-containing information that would be given to wannier90 in a VASP run with LWANNIER90 = TRUE.
+containing information that would be given to Wannier90 in a VASP run with LWANNIER90 = TRUE.
 
 Keyword parameters are mapped to key-value pairs, begin-end blocks are represented as lists with an entry per line.
 Numerical and boolean values can be given as python or string representations of the respective type.
@@ -189,7 +189,7 @@ Each Calculation in AiiDA has at least the following two output nodes:
 * retrieved: :py:class:`FolderData <aiida.orm.data.folder.FolderData>`, containing information about the folder in the file repository holding the retrieved files. Each successfully completed VASP calculation will retrieve at least the OUTCAR, typically more files.
 * remote_folder: :py:class:`RemoteData <aiida.orm.data.remote.RemoteData>`, containing info about the folder on the remote computer the calculation ran on.
 
-In addition and depending on the specific Calculation and it's input parameters, a number of vasp-specific output nodes may be generated.
+In addition and depending on the specific Calculation and it's input parameters, a number of VASP-specific output nodes may be generated.
 
 .. _vasp-output-results:
 
@@ -199,7 +199,7 @@ results
 containing at least one key 'efermi' with the according value read from vasprun.xml output.
 This output node is a good way to store extra results in custom extension calculations.
 
-Applies to all Vasp calculations
+Applies to all VASP calculations
 
 .. _vasp-output-kpoints:
 
