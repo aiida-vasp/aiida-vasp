@@ -16,8 +16,8 @@ class ChgcarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename):
-        super(ChgcarParser, self).__init__()
+    def __init__(self, path, filename, cls):
+        super(ChgcarParser, self).__init__(cls)
         self._filepath = path
         self._filename = filename
         self._parsable_items = ChgcarParser.PARSABLE_ITEMS

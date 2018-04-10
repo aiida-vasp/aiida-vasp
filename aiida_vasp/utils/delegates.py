@@ -28,25 +28,31 @@ def delegate():
     Get a decorator adding attributes to add or remove functions to a list of functions.
 
     When the decorated function is called, all functions in the list will be called. It
-    will return a list of all the return values of the subscribed functions. The basic
-    usage is outlined in the corresponding utils.tests.test_delegates. The idea is
+    will return a list of all the return values of the subscribed functions. If the
+    delegate does not have any subscribers the code from the delegate method itself will
+    be executed. The basic usage is outlined in the corresponding utils.tests.test_delegates.
+    For a fully fleshed out example look at the VaspParser and the BaseFileParser. The idea is
     that there is a class e.g.
 
     class VaspParser():
 
         @delegate()
-        def parse_quantity(inputs):
-            pass
+        def parse_quantity(self, quantity, inputs):
+            return None
 
     managing a number of instances of classes e.g.
 
     class FileParser():
 
         def __init__(self, cls):
-            cls.parse_quantity.add_listener(self.parse_quantity)
+            cls.parse_quantity.add_listener(self.parse_file)
 
-        def parse_file(inputs):
-            pass
+        def parse_file(self, quantity, inputs):
+
+            if can_parse(quantity):
+               return parse(quantity, inputs)
+
+            return None
 
     The FileParsers can be instantiated somewhere in the code by giving them an instance
     of the VaspParser i.e.
@@ -59,10 +65,10 @@ def delegate():
 
     self.parse_quantity(inputs)
 
-    which will then call of the methods subscribed to it. The advantage is that the
+    which will then call all the methods subscribed to it. The advantage is that the
     VaspParser itself, does not need to keep track of all the FileParser objects. In addition
-    it does not need to decide which of the FileParsers to call. This logic can be moved to
-    the FileParsers, who may decide whether they can pass that quantity based on the input.
+    it does not need to decide, which of the FileParsers to call. This logic can be moved to
+    the FileParsers, who may decide whether they can parse that quantity based on the input.
     """
 
     def decorator(meth):
@@ -82,11 +88,12 @@ def delegate():
 
         def wrapper(*args, **kwargs):
             """Wrap the method to be delegated."""
-            result = []
+            results = []
             for func in meth.listeners:
-                result.append(func(*args, **kwargs))
-            if result:
-                return result
+                results.append(func(*args, **kwargs))
+            for result in results:
+                if result:
+                    return result
             return meth(*args, **kwargs)
 
         update_wrapper(wrapper, meth)

@@ -10,6 +10,7 @@ from aiida_vasp.io.chgcar import ChgcarParser
 from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.parsers.base import BaseParser
+from aiida_vasp.utils.delegates import delegate
 
 LINKNAME_DICT = {
     'parameters': 'output_parameters',
@@ -135,6 +136,7 @@ class VaspParser(BaseParser):
 
         self._quantities_to_parse = []
         self._output_nodes = {}
+        self._requested_quantities = []
 
         self._check_and_validate_settings()
 
@@ -154,14 +156,11 @@ class VaspParser(BaseParser):
             # A critical file i.e. OUTCAR does not exist. Abort parsing.
             return self.result(success=False)
 
-        # Parse all implemented quantities in the nodesToAdd list, if they should be parsed. The list
-        # might get dynamically updated during the loop.
+        # Parse all implemented quantities in the quantities_to_parse list.
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
-            if not self._check_prerequisites(quantity):
-                continue
-            for parser in self._parsable_quantities[quantity]['parsers']:
-                self._parsers[parser].get_quantity(quantity, self._output_nodes)
+            print quantity
+            self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
@@ -213,61 +212,65 @@ class VaspParser(BaseParser):
         Return False if a critical file is missing, which will abort the parsing.
         """
 
-        for key, value in PARSABLE_FILES.iteritems():
-            if not self._settings['should_parse_' + key]:
+        for file_name, value in PARSABLE_FILES.iteritems():
+            if not self._settings['should_parse_' + file_name]:
+                # Based on the settings, we should not parse this file. continue with the next one.
                 continue
-            if self._parsers[key]:
+            if self._parsers[file_name] is not None:
+                # This fileParser has already been set, continue with the next one.
                 continue
 
             # We should parse this file and the parser has not been set yet.
-            file_to_parse = self.get_file(key)
+            file_to_parse = self.get_file(file_name)
             if not file_to_parse:
-                self._parsers[key] = None
+                self._parsers[file_name] = None
                 if value['is_critical']:
-                    self.logger.error('{} not found, look at the scheduler output for troubleshooting.'.format(key))
+                    self.logger.error('{} not found, look at the scheduler output for troubleshooting.'.format(file_name))
                     return False
 
-                self.logger.warning('{0} not found, but should be parsed.'.format(key))
+                self.logger.warning('{0} not found, but should be parsed.'.format(file_name))
             else:
                 # The file should be parsed and has been found
-                self._parsers[key] = value['parser_class'](file_to_parse, key)
+                self._parsers[file_name] = value['parser_class'](file_to_parse, file_name, self)
 
         # All critical files have been found, so we can safely return True.
         return True
 
-    def _check_prerequisites(self, quantity):
+    # pylint: disable=unused-argument, no-self-use
+    @delegate()
+    def get_quantity(self, quantity, settings):
+        """Delegate to which the FileParsers will subscribe their get_quantity methods when they are initialised."""
+        return {quantity: None}
+
+    def get_inputs(self, quantity):
         """
-        Check whether the prerequisites of a given quantity have been met.
+        Return a quantity required as input for another quantity.
 
-        If not either requeue or prevent this quantity from being parsed.
+        This method will be called by the FileParsers in order to get a required input quantity
+        from self._output_nodes. If the quantity is not in the dictionary the VaspParser will
+        try to parse it. If a quantiy has been requested this way two times, parsing will be
+        aborted because there is a cyclic dependency of the parsable items.
         """
 
-        prerequisites = self._parsable_quantities[quantity]['prerequisites']
-        for preq in prerequisites:
-            if preq in self._output_nodes:
-                # requirement met, check the next one
-                continue
+        if quantity in self._requested_quantities:
+            raise RuntimeError('{0} has been requested for parsing a second time.'.format(quantity) +
+                               ' There is probably a cycle in the prerequisites of the parsable_items in the single FileParsers.')
 
-            # Requirement not met yet.
-            if preq in self._quantities_to_parse:
-                # The prerequesite is in the queue, requeue this quantity and return
-                self._quantities_to_parse.append(quantity)
-                return False
+        # This is the first time this quantity has been requested, keep track of it.
+        self._requested_quantities.append(quantity)
 
-            # The prerequesite is not met and also not in the queue. Don't parse this quantity.
-            return False
+        if quantity not in self._output_nodes:
+            # The quantity is not in the output_nodes. Try to parse it
+            self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
-        # All requirements have been met
-        return True
+        # parsing the quantity without requesting it a second time was succesful, so remove it from requested_quantities.
+        self._requested_quantities.remove(quantity)
 
-    def _should_parse_quantity(self, quantity):
-        """Check whether a quantity should be parsed based on whether all required parsers are available."""
+        # since the quantity has already been parsed as an input now, we don't have to parse it a second time later.
+        if quantity in self._quantities_to_parse:
+            self._quantities_to_parse.remove(quantity)
 
-        for filename in self._parsable_quantities[quantity]['parsers']:
-            if not self._parsers[filename]:
-                return False
-
-        return self._settings.get('add_' + self._parsable_quantities[quantity]['nodename'])
+        return self._output_nodes.get(quantity)
 
     def _set_node(self, node_name, node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""

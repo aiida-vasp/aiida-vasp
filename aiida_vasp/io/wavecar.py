@@ -16,8 +16,8 @@ class WavecarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename):
-        super(WavecarParser, self).__init__()
+    def __init__(self, path, filename, cls):
+        super(WavecarParser, self).__init__(cls)
         self._filepath = path
         self._filename = filename
         self._parsable_items = WavecarParser.PARSABLE_ITEMS

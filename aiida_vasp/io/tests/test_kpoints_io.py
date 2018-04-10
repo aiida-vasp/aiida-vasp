@@ -11,9 +11,8 @@ from aiida_vasp.io.kpoints import KpParser
 @pytest.mark.parametrize(['vasp_kpoints'], [('list',)], indirect=True)
 def test_parse_kpoints(vasp_kpoints):
     """Parse a reference KPOINTS file with the KpParser and compare the result to a reference kpoints-node."""
-    kpoints_path = data_path('kpoints', 'KPOINTS')
-    kpp = KpParser(kpoints_path, 'KPOINTS')
-    result = {}
-    kpp.get_quantity('kpoints', result)
+    file_path = data_path('kpoints', 'KPOINTS')
+    parser = KpParser(file_path, 'KPOINTS', None)
+    result = parser.get_quantity(None, 'kpoints', {})
     kpoints, _ = vasp_kpoints
     assert result['kpoints'].get_kpoints().all() == kpoints.get_kpoints().all()

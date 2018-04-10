@@ -99,8 +99,8 @@ class PoscarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename):
-        super(PoscarParser, self).__init__()
+    def __init__(self, path, filename, cls):
+        super(PoscarParser, self).__init__(cls)
         self._filepath = path
         self._filename = filename
         self._parsable_items = PoscarParser.PARSABLE_ITEMS

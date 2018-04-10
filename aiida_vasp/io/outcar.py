@@ -37,8 +37,8 @@ class OutcarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename):
-        super(OutcarParser, self).__init__()
+    def __init__(self, path, filename, cls):
+        super(OutcarParser, self).__init__(cls)
         self._filepath = path
         self._filename = filename
         self._parsable_items = OutcarParser.PARSABLE_ITEMS

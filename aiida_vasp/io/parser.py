@@ -48,32 +48,48 @@ class BaseFileParser(BaseParser):
 
     """
 
-    def __init__(self):
+    def __init__(self, cls):
         super(BaseFileParser, self).__init__()
+        self._vasp_parser = cls
+        if cls is not None:
+            cls.get_quantity.add_listener(self.get_quantity)
+
         self._parsable_items = {}
         self._parsed_data = {}
         self._filename = None
         self._filepath = None
 
-    def get_quantity(self, quantity, output):
+    def get_quantity(self, cls, quantity, settings, inputs=None):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
         Otherwise parse the file. This method will be registered to the VaspParsers get_quantities
         delegate during __init__.
         """
-        if quantity in self._parsable_items:
-            # gather everything required for parsing this component
-            inputs = {}
-            inputs['settings'] = output.get('settings')
-            for inp in self._parsable_items[quantity]['inputs']:
-                inputs[inp] = output.get(inp)
 
-            if not self._parsed_data:
-                # The file has not been parsed yet.
-                self._parsed_data = self._parse_file(inputs)
+        if quantity not in self._parsable_items:
+            return None
 
-            output[quantity] = self._parsed_data.get(quantity)
+        if self._parsed_data is None or self._parsed_data.get(quantity) is None:
+            # The file has not been parsed yet, or the quantity has not
+            # been parsed yet, due to lack of required inputs..
+
+            # gather everything required for parsing this component.
+            if inputs is None:
+                inputs = {}
+            inputs['settings'] = settings
+
+            if cls is not None:
+                # gather everything required for parsing this quantity from the VaspParser.
+                for inp in self._parsable_items[quantity]['inputs']:
+                    inputs[inp] = cls.get_inputs(inp)
+                    if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
+                        # The VaspParser was unable to provide the required input.
+                        return {quantity: None}
+
+            self._parsed_data = self._parse_file(inputs)
+
+        return {quantity: self._parsed_data.get(quantity)}
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""

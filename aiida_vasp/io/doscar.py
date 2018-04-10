@@ -17,8 +17,8 @@ class DosParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename):
-        super(DosParser, self).__init__()
+    def __init__(self, path, filename, cls):
+        super(DosParser, self).__init__(cls)
         self._filepath = path
         self._filename = filename
         self._parsable_items = DosParser.PARSABLE_ITEMS
