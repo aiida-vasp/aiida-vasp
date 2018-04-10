@@ -15,7 +15,7 @@ def test_parse_vasprun():
     path = data_path('vasprun', file_name)
     parser = VasprunParser(path, file_name, None)
     occupations = numpy.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
-    result = parser.get_quantity(None, 'occupations', {})
+    result = parser.get_quantity('occupations', {})
     assert result['occupations'].all() == occupations.all()
     assert not parser.is_md
     assert not parser.is_relaxation

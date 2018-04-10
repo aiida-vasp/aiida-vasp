@@ -11,7 +11,7 @@ def test_delegate():
 
     @delegate()
     def my_delegate(inputs):
-        pass
+        return None
 
     def method(inputs):
         return inputs
@@ -20,6 +20,6 @@ def test_delegate():
 
     assert not my_delegate.listeners
     my_delegate.add_listener(method)
-    assert my_delegate(inputs)[0] == inputs
+    assert my_delegate(inputs) == inputs
     my_delegate.remove_listener(method)
     assert my_delegate.listeners == []

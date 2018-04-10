@@ -13,7 +13,7 @@ def test_parse_outcar():
     file_name = 'OUTCAR'
     path = data_path('outcar', file_name)
     parser = OutcarParser(path, file_name, None)
-    params = parser.get_quantity(None, 'parameters', {})
+    params = parser.get_quantity('parameters', {})
     result = params['parameters'].get_dict()
     assert result['volume'] == 65.94
     assert result['efermi'] == 7.2948

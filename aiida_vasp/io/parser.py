@@ -59,7 +59,7 @@ class BaseFileParser(BaseParser):
         self._filename = None
         self._filepath = None
 
-    def get_quantity(self, cls, quantity, settings, inputs=None):
+    def get_quantity(self, quantity, settings, inputs=None):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
@@ -79,10 +79,10 @@ class BaseFileParser(BaseParser):
                 inputs = {}
             inputs['settings'] = settings
 
-            if cls is not None:
+            if self._vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
                 for inp in self._parsable_items[quantity]['inputs']:
-                    inputs[inp] = cls.get_inputs(inp)
+                    inputs[inp] = self._vasp_parser.get_inputs(inp)
                     if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity: None}

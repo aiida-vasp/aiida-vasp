@@ -12,7 +12,7 @@ def test_parse_wavecar():
     """Parse a reference CHGCAR file with the ChargcarParser and compare the result to a reference string."""
     path = data_path('wavecar', 'WAVECAR')
     parser = WavecarParser(path, 'WAVECAR', None)
-    result = parser.get_quantity(None, 'wavecar', {})
+    result = parser.get_quantity('wavecar', {})
     with open(result['wavecar'].get_file_abs_path(), 'r') as file_obj:
         content = file_obj.readline()
     assert result['wavecar'].filename == 'WAVECAR'

@@ -23,7 +23,7 @@ def test_parse_doscar(vasprun_parser):
     inputs = {}
     inputs['vrp_pdos'] = vasprun_parser.vrp_pdos
     inputs['vrp_tdos'] = vasprun_parser.vrp_tdos
-    result = parser.get_quantity(None, 'dos', {}, inputs)
+    result = parser.get_quantity('dos', {}, inputs)
     # The 'tdos' array is a nested array for some reason.
     result_dos = result['dos'].get_array('tdos')[0]
     for i in range(0, dos.size):
