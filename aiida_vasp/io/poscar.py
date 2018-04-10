@@ -39,7 +39,7 @@ class PoscarIo(object):
      * <sites> = <positions> kind_name
      * <positions> = 3-vector of coordinates (in lattice basis)
     """
-    POSCAR_TPL = '{comment}\n1.0\n{lattice}\n{kind_counts}\ndirect\n{positions}'
+    POSCAR_TPL = '{comment}\n1.0\n{lattice}\n{kind_counts}\ncartesian\n{positions}'
     LATTICE_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}}'
     POS_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}} {label}'
 
