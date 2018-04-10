@@ -9,11 +9,11 @@ def run_example():
 
 def example_param_set(cmd_function):
 
-    @click.option('--paw-family', type=str, default='vasp-test')
-    @click.option('--import-from', type=click.Path(), default='.')
+    @click.option('--paw-family', type=str, default='PBE_54')
+    @click.option('--import-from', type=click.Path(), default='/Users/user/quan/work/workplace/VASP/VASP.5.4.1/potpaw_PBE.54')
     @click.option('--queue', type=str, default='')
-    @click.argument('code', type=str)
-    @click.argument('computer', type=str)
+    @click.argument('code', type=str, default='vasp5.4.4_ncl-fidis')
+    @click.argument('computer', type=str, default='fidis')
     def decorated_cmd_fn(*args, **kwargs):
         return cmd_function(*args, **kwargs)
 
@@ -97,7 +97,8 @@ def create_structure_Si():
     alat = 5.4
     structure = structure_cls(cell=numpy.array([[.5, .5, 0], [.5, 0, .5], [0, .5, .5]]) * alat)
     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
-    return structure
+    r0eturn structure
+
 
 
 def create_kpoints():
@@ -124,7 +125,7 @@ def create_params_noncol():
 
 def create_params_simple():
     param_cls = get_data_cls('parameter')
-    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-8, 'ialgo': 38, 'ismear': 0.0, 'sigma': 0.1})
+    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-8, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})
 
 
 def import_paws(folder_path, family_name):
