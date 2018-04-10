@@ -4,11 +4,10 @@
     "classifiers": [
         "Development Status :: 3 - Alpha", 
         "Environment :: Plugins", 
-        "Framework :: AiiDA", 
         "Intended Audience :: Science/Research", 
-        "License :: OSI Approved :=MIT License", 
-        "Programming Language :: Python :=2.7", 
-        "Topic :: Scientific/Engineering :=Physics"
+        "License :: OSI Approved :: MIT License", 
+        "Programming Language :: Python :: 2.7", 
+        "Topic :: Scientific/Engineering :: Physics"
     ], 
     "description": "AiiDA Plugin for running VASP calculations.", 
     "entry_points": {
@@ -17,17 +16,20 @@
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
         ], 
         "aiida.cmdline.data": [
-            "vasp.paw = aiida_vasp.commands.paw:_Paw"
+            "vasp-potcar = aiida_vasp.commands.potcar:potcar"
         ], 
         "aiida.data": [
             "vasp.archive = aiida_vasp.data.archive:ArchiveData", 
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
-            "vasp.paw = aiida_vasp.data.paw:PawData", 
-            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData"
+            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
+            "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
+            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData", 
+            "vasp.paw = aiida_vasp.data.paw:LegacyPawData"
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
-            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser", 
+            "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
             "vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
@@ -66,17 +68,17 @@
     }, 
     "include_package_data": true, 
     "install_requires": [
-        "aiida-core[atomic_tools]", 
+        "aiida-core[atomic_tools] >= 0.11.0", 
         "ase", 
-        "scipy < 1.0.0", 
+        "scipy", 
         "pymatgen", 
         "subprocess32", 
         "click", 
         "chainmap", 
         "six", 
-        "pyparsing"
+        "pyparsing", 
+        "py"
     ], 
-    "keywords": "vasp aiida wannier90 workflows", 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
     "reentry_register": true, 
@@ -87,5 +89,5 @@
         "reentry"
     ], 
     "url": "https://github.com/DropD/aiida-vasp", 
-    "version": "0.1.0"
+    "version": "0.2.3"
 }

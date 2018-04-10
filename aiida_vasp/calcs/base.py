@@ -10,15 +10,15 @@ from aiida.common.exceptions import ValidationError
 
 def make_use_methods(inputs, bases):
     """
-    creates the _use_methods classproperty from a list of
-    base classes as well as :py:class:`Input` instances. For use
-    in :py:class:`CalcMeta` during class creation.
+    Create the _use_methods classproperty from a list of base classes as well as :py:class:`Input` instances.
+
+    For use in :py:class:`CalcMeta` during class creation.
     """
 
     @classproperty
-    # pylint: disable=protected-access
+    # pylint: disable=protected-access,no-member
     def _use_methods(cls):
-        """automatically generated _use_methods function"""
+        """Automatically generated _use_methods function."""
         retdict = JobCalculation._use_methods
         for base_class in bases:
             if hasattr(base_class, '_use_methods'):
@@ -34,10 +34,7 @@ def make_use_methods(inputs, bases):
 
 
 def make_init_internal(cls, **kwargs):  # pylint: disable=unused-argument
-    """
-    returns a _update internal_params method, required in class creation
-    by :py:class:`CalcMeta`
-    """
+    """Returns a _update internal_params method, required in class creation by :py:class:`CalcMeta`."""
 
     def _update_internal_params(self):
         for key, value in kwargs.iteritems():
@@ -60,14 +57,13 @@ def datify(type_or_str):
 
 class Input(object):
     """
-    Utility class that handles mapping between CalcMeta's and Calculation's
-    interfaces for defining input nodes
+    Utility class that handles mapping between CalcMeta's and Calculation's interfaces for defining input nodes.
 
     Examples::
 
         parameters = Input(types='parameter', doc='input parameters.')
         structure = Input(types=['structure', 'cif'], doc='input structure')
-        paw = Input(types='vasp.paw', param='kind')
+        potential = Input(types='vasp.potcar', param='kind')
 
     """
 
@@ -96,10 +92,7 @@ class Input(object):
 
 
 class IntParam(object):
-    """
-    Utility class that handles mapping between CalcMeta's and Calculation's
-    internal parameter interfaces
-    """
+    """Utility class that handles mapping between CalcMeta's and Calculation's internal parameter interfaces."""
 
     pmap = {'default_parser': '_default_parser', 'input_file_name': '_INPUT_FILE_NAME', 'output_file_name': '_OUTPUT_FILE_NAME'}
 
@@ -132,6 +125,7 @@ class IntParam(object):
 class CalcMeta(JobCalculation.__metaclass__):
     """
     Metaclass that allows simpler and clearer Calculation class writing.
+
     Takes :py:class:`Input` instances from the class and converts it to
     the correct entries in the finished class's _use_methods classproperty.
     finds class attributes corresponding to 'internal parameters'
@@ -176,7 +170,7 @@ class VaspCalcBase(JobCalculation):
 
     @classmethod
     def max_retrieve_list(cls):
-        """returns a list of all possible output files from a VASP run"""
+        """Return a list of all possible output files from a VASP run."""
         retrieve_list = [
             'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR', 'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
             'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR', ['wannier90*', '.', 0], 'vasprun.xml'
@@ -185,9 +179,9 @@ class VaspCalcBase(JobCalculation):
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """
-        Writes the four minimum output files,
-        INCAR, POSCAR, POTCAR, KPOINTS. Delegates the
-        construction and writing / copying to write_<file> methods.
+        Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
+
+        Delegates the construction and writing / copying to write_<file> methods.
         That way, subclasses can use any form of input nodes and just
         have to implement the write_xxx method accordingly.
         Subclasses can extend by calling the super method and if neccessary
@@ -196,13 +190,13 @@ class VaspCalcBase(JobCalculation):
         # write input files
         incar = tempfolder.get_abs_path('INCAR')
         structure = tempfolder.get_abs_path('POSCAR')
-        paw = tempfolder.get_abs_path('POTCAR')
+        potentials = tempfolder.get_abs_path('POTCAR')
         kpoints = tempfolder.get_abs_path('KPOINTS')
 
         self.verify_inputs(inputdict)
         self.write_incar(inputdict, incar)
         self.write_poscar(inputdict, structure)
-        self.write_potcar(inputdict, paw)
+        self.write_potcar(inputdict, potentials)
         self.write_kpoints(inputdict, kpoints)
         self.write_additional(tempfolder, inputdict)
 
@@ -218,14 +212,14 @@ class VaspCalcBase(JobCalculation):
         return calcinfo
 
     def _init_internal_params(self):
-        """must be present on all JobCalculation subclasses, that
-        set internal parameters"""
+        """Must be present on all JobCalculation subclasses, that set internal parameters."""
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
     def verify_inputs(self, inputdict, *args, **kwargs):  # pylint: disable=unused-argument
         """
         Hook to be extended by subclasses with checks for input nodes.
+
         Is called once before submission.
         """
         self.check_input(inputdict, 'code')
@@ -234,9 +228,7 @@ class VaspCalcBase(JobCalculation):
     @staticmethod
     def check_input(inputdict, linkname, check_fn=lambda: True):
         """
-        :py:classmethod:: check_input(inputdict, linkname[, check_fn])
-
-        check wether the given linkname is in the inputdict.
+        Check wether the given linkname is in the inputdict.
 
         This is meant to be called prior to submission and will raise an
         Exception if no input node is found for the linkname.
@@ -252,8 +244,7 @@ class VaspCalcBase(JobCalculation):
         return True
 
     def store(self, *args, **kwargs):
-        """adds a _prestore subclass hook for operations that
-        should be done just before storing"""
+        """Adds a _prestore subclass hook for operations that should be done just before storing."""
         self._prestore()
         super(VaspCalcBase, self).store(*args, **kwargs)
 
@@ -262,7 +253,5 @@ class VaspCalcBase(JobCalculation):
         pass
 
     def write_additional(self, tempfolder, inputdict):
-        """
-        Subclass hook to write additional input files.
-        """
+        """Subclass hook to write additional input files."""
         pass

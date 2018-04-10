@@ -1,158 +1,148 @@
-"""
-This module contains tools to read PawData attributes from POTCAR files.
-"""
+"""Find, import, compose and write POTCAR files."""
+from functools import update_wrapper
 import re
-import datetime as dt
-import os
+import six
 
-from .parser import KeyValueParser
+from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+
+from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-class PotParser(KeyValueParser):
+def delegate_method_kwargs(prefix='_init_with_'):
     """
-    contains regex and functions to find grammar elements
-    for POTCAR files
+    Get a kwargs delegating decorator.
+
+    :params prefix: (str) common prefix of delegate functions
     """
-    assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
-    comments = True
 
-    @classmethod
-    def single(cls, kv_list):
-        k_list = [ssl[0] for subl in kv_list for ssl in subl]
-        return bool([k for k in k_list if k == 'TITEL'])
+    def decorator(meth):
+        """Decorate a class method to delegate kwargs."""
 
-    @classmethod
-    def title(cls, title):
-        """Parse the title line"""
-        title_list = title.split()
-        fam = title_list[0].replace('PAW_', '')
-        sym = title_list[1]
-        date = dt.datetime.strptime(title_list[2], '%d%b%Y').date()
-        return fam, sym, date
+        def wrapper(*args, **kwargs):
+            for kwarg, value in kwargs.items():
+                getattr(args[0], prefix + kwarg)(value)
+            meth(*args, **kwargs)
 
-    @classmethod
-    def vrhfin(cls, vrhfin):
-        vrhfin_list = vrhfin.split(':')
-        element = vrhfin_list.pop(0).strip()
-        spconf = vrhfin_list and vrhfin_list.pop(0).strip()
-        return element, spconf
+        update_wrapper(wrapper, meth)
+        return wrapper
 
-    @classmethod
-    # pylint: disable=too-many-locals
-    def parse_potcar(cls, filename):
-        """Parse a VASP POTCAR file"""
-        kv_list = cls.kv_list(filename)
-        if not cls.single(kv_list):
-            raise ValueError('not parsing concatenated POTCAR files')
-        kv_dict = cls.kv_dict(kv_list)
-        is_paw, _ = cls.bool(kv_dict.get('LPAW', 1))
-        is_ultrasoft, _ = cls.bool(kv_dict['LULTRA'])
-        if not is_paw:
-            raise ValueError('POTCAR contains non-PAW potential')
-        if is_ultrasoft:
-            raise ValueError('POTCAR contains ultrasoft PP')
-
-        attr_dict = {}
-        fam, sym, date = cls.title(kv_dict['TITEL'])
-        attr_dict['family'] = fam
-        attr_dict['symbol'] = sym
-        attr_dict['paw_date'] = date
-        enmin, enmin_u, _ = cls.float_unit(kv_dict['ENMIN'])
-        attr_dict['enmin'] = enmin
-        attr_dict['enmin_unit'] = enmin_u
-        enmax, enmax_u, _ = cls.float_unit(kv_dict['ENMAX'])
-        attr_dict['enmax'] = enmax
-        attr_dict['enmax_unit'] = enmax_u
-        elem, spconf = cls.vrhfin(kv_dict['VRHFIN'])
-        attr_dict['element'] = elem
-        attr_dict['atomic_conf'] = spconf
-        mass, _ = cls.float(kv_dict['POMASS'])
-        attr_dict['mass'] = mass
-        val, _ = cls.float(kv_dict['ZVAL'])
-        attr_dict['valence'] = val
-        xc_type, _ = cls.string(kv_dict['LEXCH'])
-        attr_dict['xc_type'] = xc_type
-
-        return attr_dict
+    return decorator
 
 
-class PawParser(KeyValueParser):
+class PotcarIo(object):
     """
-    contains regex and functions to find grammar elements
-    in POTCAR files in PAW libraries
+    Use pymatgen.io.vasp.Potcar to deal with VASP pseudopotential IO.
+
+    Instanciate with one of the following kwargs:
+
+    :param pymatgen: a pymatgen.io.vasp.PotcarSingle instance
+    :param path: (string) absolute path to the POTCAR file
+    :param potcar_node: a PotcarData node
+    :param potcar_file_node: a PotcarFileNode
     """
-    assignment = re.compile(r'(\w*)\s*=\s*([^;]*);?')
-    comments = True
+
+    def __init__(self, **kwargs):
+        """Init from Potcar object or delegate to kwargs initializers."""
+        self.potcar_obj = None
+        self.md5 = None
+        self.init_with_kwargs(**kwargs)
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_path(self, filepath):
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=filepath)
+        self.md5 = node.md5
+
+    def _init_with_potcar_file_node(self, node):
+        self.md5 = node.md5
+
+    def _init_with_potcar_node(self, node):
+        self._init_with_potcar_file_node(node.find_file_node())
+
+    def _init_with_contents(self, contents):
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
+        self.md5 = node.md5
+
+    @property
+    def pymatgen(self):
+        if not self.potcar_obj:
+            self.potcar_obj = self.file_node.get_pymatgen()
+        return self.potcar_obj
+
+    @property
+    def file_node(self):
+        return get_data_class('vasp.potcar').find_one(md5=self.md5).find_file_node()
+
+    @property
+    def node(self):
+        return get_data_class('vasp.potcar').find_one(md5=self.md5)
+
+    @property
+    def content(self):
+        return self.file_node.get_content()
 
     @classmethod
-    def single(cls, kv_list):
-        k_list = [ssl[0] for subl in kv_list for ssl in subl]
-        return bool(len([k for k in k_list if k == 'TITEL']) == 1)
+    def from_(cls, potcar):
+        """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
+        if isinstance(potcar, (six.string_types)):
+            if py_path.local(potcar).exists():
+                potcar = cls(path=potcar)
+            else:
+                potcar = cls(contents=potcar)
+        elif isinstance(potcar, get_data_class('vasp.potcar')):
+            potcar = cls(potcar_node=potcar)
+        elif isinstance(potcar, get_data_class('vasp.potcar_file')):
+            potcar = cls(potcar_file_node=potcar)
+        elif isinstance(potcar, PotcarIo):
+            pass
+        else:
+            potcar = cls.from_(str(potcar))
+        return potcar
+
+    def __eq__(self, other):
+        return self.md5 == other.md5
+
+
+class MultiPotcarIo(object):
+    """Handle file i/o for POTCAR files with one or more potentials."""
+
+    def __init__(self, potcars=None):
+        self._potcars = []
+        if potcars:
+            for potcar in potcars:
+                self.append(PotcarIo.from_(potcar))
+
+    def append(self, potcar):
+        self._potcars.append(PotcarIo.from_(potcar))
+
+    def write(self, path):
+        path = py_path.local(path)
+        with path.open('w') as dest_fo:
+            for potcar in self._potcars:
+                dest_fo.write(potcar.content)
 
     @classmethod
-    def title(cls, title):
-        """Parse the title line"""
-        title_list = title.split()
-        fam = title_list.pop(0).replace('PAW_', '') if len(title_list) > 1 else 'none'
-        fam = fam.replace('PAW', 'none')
-        sym = title_list.pop(0) if title_list else ''
-        date = title_list.pop(0) if title_list else 'none'
-        return fam, sym, date
+    def read(cls, path):
+        """Read a POTCAR file that may contain one or more potentials into a list of PotcarIo objects."""
+        potcars = cls()
+        path = py_path.local(path)
+        with path.open('r') as potcar_fo:
+            potcar_strings = re.compile(r"\n?(\s*.*?End of Dataset\n)", re.S).findall(potcar_fo.read())
+
+        for potcar_contents in potcar_strings:
+            potcars.append(PotcarIo.from_(potcar_contents))
+        return potcars
+
+    @property
+    def potcars(self):
+        return self._potcars
 
     @classmethod
-    def vrhfin(cls, vrhfin):
-        vrhfin_list = vrhfin.split(':')
-        element = vrhfin_list.pop(0).strip() if vrhfin_list else ''
-        spconf = vrhfin_list.pop(0).strip() if vrhfin_list else ''
-        return element, spconf
-
-    @classmethod
-    # pylint: disable=too-many-locals
-    def parse_potcar(cls, filename):
-        """Parse a Vasp POTCAR file"""
-        kv_list = cls.kv_list(filename)
-        if not cls.single(kv_list):
-            raise ValueError('not parsing concatenated POTCAR files')
-        kv_dict = cls.kv_dict(kv_list)
-        kv_dict = cls.clean_dict(kv_dict)
-        is_paw = kv_dict.get('LPAW', True)
-        is_ultrasoft = kv_dict.get('LULTRA', False)
-        if not is_paw:
-            raise ValueError('POTCAR contains non-PAW potential')
-        if is_ultrasoft:
-            raise ValueError('POTCAR contains ultrasoft PP')
-
-        attr_dict = {}
-        try:
-            fam, sym, date = cls.title(kv_dict['TITEL'])
-            attr_dict['family'] = fam
-            attr_dict['symbol'] = sym
-            attr_dict['paw_date'] = date
-            attr_dict['enmin'] = kv_dict['ENMIN']
-            attr_dict['enmax'] = kv_dict['ENMAX']
-            elem, spconf = cls.vrhfin(kv_dict['VRHFIN'])
-            attr_dict['element'] = elem
-            attr_dict['atomic_conf'] = spconf
-            attr_dict['mass'] = kv_dict['POMASS']
-            attr_dict['valence'] = kv_dict['ZVAL']
-            attr_dict['xc_type'] = kv_dict['LEXCH']
-        except KeyError as err:
-            msg = 'missing or misspelled keyword "' + err.message
-            msg += '" in ' + os.path.abspath(filename)
-            raise KeyError(msg)
-        except Exception:
-            import sys
-            err = sys.exc_info()[1]
-            msg = err.message
-            msg += ' in file: ' + os.path.abspath(filename)
-            raise err.__class__(msg)
-
-        return attr_dict
-
-    @classmethod
-    def clean_dict(cls, kv_dict):
-        return {k: cls.clean_value(v)['value'] for k, v in kv_dict.items()}
-
-    @classmethod
-    def string(cls, string_):
-        return cls.retval(string_)
+    def from_structure(cls, structure, potentials_dict):
+        """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a potential for each kind in the structure."""
+        poscario = PoscarIo(structure)
+        symbol_order = poscario.potentials_order
+        return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])

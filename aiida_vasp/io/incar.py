@@ -9,7 +9,7 @@ from pymatgen.io.vasp import Incar
 import numpy as np
 import pyparsing as pp
 
-from aiida_vasp.io.pymatgen_aiida.vasprun import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 class IncarItem(object):
@@ -181,7 +181,6 @@ class IncarIo(object):
         :kwarg annotate: [True] store the node and add extras to preserve
             order and comments of the INCAR. Implies that the node gets stored in the process!
         """
-
         node = get_data_node('parameter', dict=self.get_dict())
         return node
 
@@ -317,6 +316,7 @@ class IncarParamParser(object):
 
     @classmethod
     def parse_num_list(cls, token):
+        """Parse a token into a list of numbers."""
         num_list = token.asList()
         if len(num_list[0]) == 1:
             return num_list[0]
@@ -329,7 +329,7 @@ class IncarParamParser(object):
 
 
 def _incarify(value):
-    """Format value of any compatible type into the string forat appropriate for INCAR files."""
+    """Format value of any compatible type into the string format appropriate for INCAR files."""
     result = None
     if isinstance(value, (str, unicode)):
         result = value

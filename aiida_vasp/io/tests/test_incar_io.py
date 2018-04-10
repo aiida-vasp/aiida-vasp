@@ -69,6 +69,7 @@ def test_from_string():
 
 @pytest.mark.incar
 def test_write_incar(tmpdir, incar_dict):
+    """Test writing and INCAR file from an IncarIo object."""
     incar_io = IncarIo(incar_dict=incar_dict)
     tempfile = str(tmpdir.join('INCAR'))
     incar_io.write(tempfile)

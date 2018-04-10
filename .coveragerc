@@ -1,6 +1,10 @@
 [run]
 source = aiida_vasp
-omit = *test*
+
+[report]
+omit =
+    *test*
+    *aiida_vasp/data/paw.py
 
 [html]
 directory = coverage/html

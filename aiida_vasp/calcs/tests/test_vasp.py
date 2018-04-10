@@ -2,14 +2,16 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import contextlib
 import os
+import math
 
-import numpy
 import pytest
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
+from aiida_vasp.io.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
+from aiida_vasp.utils.fixtures.data import get_data_class
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
@@ -21,6 +23,7 @@ def test_store(vasp_calc_and_ref):
 
 @ONLY_ONE_CALC
 def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
+    """Write parameters input node to INCAR file, compare to reference string."""
     vasp_calc, reference = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
@@ -31,22 +34,50 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
 
 @STRUCTURE_TYPES
 def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
+    """Write structure input node to file, compare contents to reference string."""
     from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
+        settings_dict = vasp_calc.inp.settings.get_dict()
+        settings_dict.update({'poscar_precision': 12})
+        vasp_calc.inp.settings.set_dict(settings_dict)
         vasp_calc.write_poscar(inp, temp_file)
+        with open(temp_file, 'r') as poscar:
+            print poscar.read()
         with working_directory(temp_file):
             result_pmg = Poscar.from_file(temp_file).structure
-            ref_pmg = vasp_structure_poscar.structure
+            ref_pmg = vasp_structure_poscar.structure.get_pymatgen()
             assert result_pmg.lattice, ref_pmg.lattice
             assert result_pmg.formula == ref_pmg.formula
 
         with open(temp_file, 'r') as poscar:
-            assert poscar.read() == vasp_structure_poscar.get_string()
+            assert poscar.read() == vasp_structure_poscar.poscar_str()
+
+
+@STRUCTURE_TYPES
+def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
+    """Verify the effect of the ``poscar_precision`` setting."""
+    vasp_calc, _ = vasp_calc_and_ref
+    inp = vasp_calc.get_inputs_dict()
+    with managed_temp_file() as temp_file:
+        settings_dict = vasp_calc.inp.settings.get_dict()
+        settings_dict.update({'poscar_precision': 20})
+        vasp_calc.inp.settings.set_dict(settings_dict)
+        if isinstance(vasp_calc.inp.structure, get_data_class('structure')):
+            cell = vasp_calc.inp.structure.cell
+            cell[0][0] = math.pi * 1e-10 + math.pi
+            vasp_calc.inp.structure.cell = cell
+        vasp_calc.write_poscar(inp, temp_file)
+        with open(temp_file, 'r') as poscar:
+            lines = poscar.readlines()
+            pos_this = lines[2].split(' ')[0]
+            pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].split(' ')[0]
+            assert pos_this != pos_ref
 
 
 def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
+    """Write the kpoints input node to a file, compare content to a reference string."""
     vasp_calc, reference = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     print inp['kpoints'].get_attrs(), reference['kpoints']
@@ -65,9 +96,15 @@ def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
         vasp_calc.write_potcar(inp, temp_file)
         with open(temp_file, 'r') as potcar_fo:
             result_potcar = potcar_fo.read()
-        assert 'In_d' in result_potcar
+        assert 'In_sv' in result_potcar
         assert 'As' in result_potcar
+        assert 'In_d' in result_potcar
         assert result_potcar.count('End of Dataset') == 2
+
+        if isinstance(vasp_calc.inp.structure, get_data_class('structure')):
+            multipotcar = MultiPotcarIo.read(temp_file)
+            potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
+            assert potcar_order == ['In_sv', 'As', 'In_d', 'As']
 
 
 @ONLY_ONE_CALC
@@ -125,9 +162,9 @@ def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     outputs = dict(outputs)
     assert success
-    assert 'bands' in outputs
-    assert 'dos' in outputs
-    assert 'results' in outputs
+    assert 'output_band' in outputs
+    assert 'output_dos' in outputs
+    assert 'output_parameters' in outputs
 
 
 def test_verify_success(vasp_calc_and_ref):
@@ -148,6 +185,7 @@ def test_verify_fail(vasp_calc_and_ref):
 
 @contextlib.contextmanager
 def managed_temp_file():
+    """Create a temp file for a with context, delete after use."""
     import tempfile
     _, temp_file = tempfile.mkstemp()
     try:
@@ -158,6 +196,7 @@ def managed_temp_file():
 
 @contextlib.contextmanager
 def working_directory(new_work_dir):
+    """Change working dir in a with context, change back at the end."""
     work_dir = os.getcwd()
     try:
         if os.path.isdir(new_work_dir):

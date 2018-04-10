@@ -13,3 +13,7 @@
 *_REMOTE_*
 .coverage
 .tox
+
+doc/build
+build/
+dist/

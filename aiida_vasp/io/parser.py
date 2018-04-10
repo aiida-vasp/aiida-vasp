@@ -1,6 +1,4 @@
-"""
-This module contains the base class for other vasp parsers.
-"""
+"""Contains the base class for other vasp file parsers."""
 import re
 
 from six import string_types
@@ -24,7 +22,7 @@ class BaseParser(object):
 
     @classmethod
     def splitlines(cls, fobj_or_str, d_type=float):
-        """split a chunk of text into a list of lines and convert each line to d_type (default: float)"""
+        """Split a chunk of text into a list of lines and convert each line to d_type (default: float)."""
         if isinstance(fobj_or_str, str):
             lines = fobj_or_str.split('\n')
         else:
@@ -33,10 +31,7 @@ class BaseParser(object):
 
 
 class KeyValueParser(BaseParser):
-    """
-    contains regex and functions to find grammar elements
-    in vasp input and output files
-    """
+    """Contains regex and functions to find grammar elements in vasp input and output files."""
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     bool_true = re.compile(r'^T$')
     bool_false = re.compile(r'^F$')
@@ -68,6 +63,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def float(cls, string_):
+        """Parse a string into an float value followed by a comment."""
         vals = string_.split()
         value = float(vals.pop(0))
         comment = ' '.join(vals)
@@ -84,6 +80,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def int(cls, string_):
+        """Parse a string into an integer value followed by a comment."""
         vals = string_.split()
         value = int(vals.pop(0))
         comment = ' '.join(vals)
@@ -100,6 +97,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def string(cls, string_):
+        """Parse a string into value and comment, assuming only the first word is the value."""
         vals = string_.split()
         value = vals.pop(0)
         comment = ' '.join(vals)

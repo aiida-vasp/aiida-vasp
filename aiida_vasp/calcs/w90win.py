@@ -22,6 +22,7 @@ class DictToWin(object):
 
     @classmethod
     def _block(cls, name, val):
+        """Create a win parameter block with name being the block name, val being the content in python representation."""
         res = ['begin ' + name]
         res += cls._value(val)
         res += ['end ' + name]
@@ -50,6 +51,7 @@ class DictToWin(object):
 
     @classmethod
     def parse(cls, in_dict):
+        """Parse a dictionary into win formatted string."""
         res = []
         for key, value in in_dict.iteritems():
             res += cls._item(key, value)

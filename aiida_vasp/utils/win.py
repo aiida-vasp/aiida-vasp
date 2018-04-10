@@ -6,7 +6,7 @@ from aiida.orm import DataFactory
 @make_inline
 def modify_wannier_parameters_inline(original, modifications):  # pylint: disable=invalid-name
     """
-    InlineCalculation for modifying wannier parameters ('.win' file)
+    An InlineCalculation for modifying wannier parameters ('.win' file).
 
     :key ParameterData original: base parameters, can be overridden
     :key ParameterData modifications: additional parameters and overrides
