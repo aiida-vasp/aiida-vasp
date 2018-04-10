@@ -159,7 +159,6 @@ class VaspParser(BaseParser):
         # Parse all implemented quantities in the quantities_to_parse list.
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
-            print quantity
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
         # Add output nodes if the corresponding data exists.
