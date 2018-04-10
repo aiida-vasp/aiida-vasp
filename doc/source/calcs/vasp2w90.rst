@@ -7,7 +7,7 @@ Description
 ***********
 
 Works exactly the same as :doc:`VaspCalculation <vasp>`, from which it is derived, with the difference
-that it takes a wannier_parameters input as well, so it covers every possible use case of VASP with LWANNIER90=True.
+that it takes a ``wannier_parameters`` input as well, for use with the VASP2Wannier90 interface. This requires a VASP code compiled with ``LWANNIER90=True``.
 
 ******
 Inputs

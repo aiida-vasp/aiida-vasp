@@ -79,7 +79,6 @@
         "pyparsing", 
         "py"
     ], 
-    "keywords": "vasp, aiida, wannier90, workflow, materials", 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
     "reentry_register": true, 
@@ -90,5 +89,5 @@
         "reentry"
     ], 
     "url": "https://github.com/DropD/aiida-vasp", 
-    "version": "0.2.2"
+    "version": "0.2.3"
 }
