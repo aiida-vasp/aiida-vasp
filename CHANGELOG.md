@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v0.2.2a] - 2018-03-15
+## [v0.2.3]
+
+### Changed
+- fixed POSCAR writing (was writing 'direct' followed by cartesian coordinates)
+
+### Removed
+- pruned outdated parts of documentation
+
+## [v0.2.2] - 2018-03-15
 
 ### Changed
 - missing requirement added
