@@ -6,6 +6,9 @@ def delegate():
     """
     Get a decorator adding attributes to add or remove functions to a list of functions.
 
+    :param return_type: Decides how many items will be returned. Must be one of 'void',
+                        'single' and 'list', meaning no, one or many return values.
+
     When the decorated function is called, all functions in the list will be called. It
     will return a list of all the return values of the subscribed functions. If the
     delegate does not have any subscribers the code from the delegate method itself will
