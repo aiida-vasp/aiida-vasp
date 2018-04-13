@@ -104,6 +104,7 @@ Parses files like::
 import re
 
 from six import string_types
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 class BaseParser(object):
@@ -162,6 +163,11 @@ class BaseFileParser(BaseParser):
         self._parsed_data = {}
         self._filename = None
         self._file_path = file_path
+        self._data_obj = None
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwargs):
+        """Delegate initialization to _init_with - methods."""
 
     def get_quantity(self, quantity, settings, inputs=None):
         """
@@ -194,6 +200,15 @@ class BaseFileParser(BaseParser):
             self._parsed_data = self._parse_file(inputs)
 
         return {quantity: self._parsed_data.get(quantity)}
+
+    def write(self, filepath):
+        if self._data_obj is not None:
+            self._data_obj.write(filepath)
+            # parsevasp removes the final 'newline' character, which is required in the POSIX standard.
+
+
+#            with open(filepath, 'a') as file_obj:
+#                 file_obj.write('\n')
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
