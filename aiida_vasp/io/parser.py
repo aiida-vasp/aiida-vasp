@@ -205,10 +205,8 @@ class BaseFileParser(BaseParser):
         if self._data_obj is not None:
             self._data_obj.write(filepath)
             # parsevasp removes the final 'newline' character, which is required in the POSIX standard.
-
-
-#            with open(filepath, 'a') as file_obj:
-#                 file_obj.write('\n')
+            with open(filepath, 'a') as file_obj:
+                file_obj.write('\n')
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
