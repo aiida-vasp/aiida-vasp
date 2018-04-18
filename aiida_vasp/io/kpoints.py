@@ -47,9 +47,9 @@ class KpParser(BaseFileParser):
         kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(kpointsdata))
 
         try:
-            self._data_obj = Kpoints(kpoints_dict=kpoints_dict)
+            self._parsed_obj = Kpoints(kpoints_dict=kpoints_dict)
         except SystemExit:
-            self._data_obj = None
+            self._parsed_obj = None
 
     def _parse_file(self, inputs):
         """Create a DB Node from a KPOINTS file"""

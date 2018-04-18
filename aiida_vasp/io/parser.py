@@ -156,6 +156,16 @@ class BaseFileParser(BaseParser):
     The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
     The BaseFileParser will store the data object in self._data_obj and provide a public 'write' method
     to right the corresponding VASP file.
+
+    For now the BaseFileParser has four different representations of it's data:
+    - _filepath: data stored in a file
+    . _parsed_data: dictionary with everything parsed from the file.
+    - _data_obj: The Aiida data obj, which should be written to a file.
+    - _parsed_obj: The parsevasp object representing this file.
+
+    It seams like _parsed_data and _parsed_obj mgiht be equivalent. The same is true for _file_path and
+    data_obj since both of them represent the data in its unparsed state. A future rework might unify this.
+    also 'parse_file' could then switch it's parsing direction based on the context.
     """
 
     def __init__(self, file_path=None, calc_parser_cls=None):
@@ -166,9 +176,9 @@ class BaseFileParser(BaseParser):
 
         self._parsable_items = {}
         self._parsed_data = {}
-        self._filename = None
-        self._file_path = file_path
+        self._filepath = None
         self._data_obj = None
+        self._parsed_obj = None
 
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
