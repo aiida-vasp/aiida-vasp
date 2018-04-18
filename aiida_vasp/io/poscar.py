@@ -8,6 +8,22 @@ from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
+def aiida_to_parsevasp(structure):
+    """Convert Aiida StructureData to parsevasp's dictionary format."""
+    dictionary = {}
+    dictionary["comment"] = structure.label or structure.get_formula()
+    dictionary["unitcell"] = np.asarray(structure.cell)
+    selective = [True, True, True]
+    # As for now all Aiida-structures are in Cartesian coordinates.
+    direct = False
+    sites = []
+    for site in structure.sites:
+        position = np.asarray(site.position)
+        sites.append(Site(site.kind_name, position, selective=selective, direct=direct))
+    dictionary["sites"] = sites
+    return dictionary
+
+
 class PoscarParser(BaseFileParser):
     """
     Parse a POSCAR format file into a StructureData node and vice versa.
@@ -37,11 +53,9 @@ class PoscarParser(BaseFileParser):
     def _init_with_structure(self, structure):
         """Init with Aiida StructureData"""
         self._data_obj = structure
-        dictionary = {}
-        dictionary.update(self._prepare_inputs_dict(structure))
 
         try:
-            self._parsed_obj = Poscar(poscar_dict=dictionary)
+            self._parsed_obj = Poscar(poscar_dict=aiida_to_parsevasp(structure))
         except SystemExit:
             self._parsed_obj = None
 
@@ -63,18 +77,3 @@ class PoscarParser(BaseFileParser):
             result['structure'].append(position=np.array(site.get_position()), symbols=site.get_specie())
 
         return result
-
-    def _prepare_inputs_dict(self, structure):
-        """Prepare the input dictionary required for parsevasp."""
-        dictionary = {}
-        dictionary["comment"] = structure.label or structure.get_formula()
-        dictionary["unitcell"] = np.asarray(structure.cell)
-        selective = [True, True, True]
-        # As for now all Aiida-structures are in Cartesian coordinates.
-        direct = False
-        sites = []
-        for site in structure.sites:
-            position = np.asarray(site.position)
-            sites.append(Site(site.kind_name, position, selective=selective, direct=direct))
-        dictionary["sites"] = sites
-        return dictionary

@@ -34,6 +34,7 @@ class KpParser(BaseFileParser):
 
     def _init_with_kpointsdata(self, kpointsdata):
         """Initialise with a given kpointsData object"""
+        self._data_obj = kpointsdata
 
         if kpointsdata.get_attrs().get('mesh'):
             mode = 'automatic'
