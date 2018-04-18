@@ -140,17 +140,22 @@ class BaseFileParser(BaseParser):
         - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
           as the required information on how to extract those.
         - _parsed_data: a dictionary containing all the parsed data from this file.
-        - get_quantities(properties, output): Method to be called by the VaspParser
+        - get_quantity(): Method to be called by the VaspParser
           which will either fill the _parsed_data in case that it is empty by calling _parse_file
-          or return the requested data from the _parsed_data.
+          or return the requested data from the _parsed_data. If another quantity is required as
+          prerequisite it will be requested from the VaspParser.
+
+          This method will be subscribed to the VaspParsers get_quantity delegate during initialisation.
+          When the VaspParser calls his delegate this method will be called and return the requested
+          quantity.
         _ _parse_file: an abstract method to be implemented by the actual file parser, which will
           parse the file and fill the _parsed_data dictionary.
 
-          :output contains data parsed by other file parsers and optionally a 'settings' card
-                  which determines the behaviour of each file parsers _parse_file method.
-
-        :param file_path: string, containing the path to the file to be parsed
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
+
+    The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
+    The BaseFileParser will store the data object in self._data_obj and provide a public 'write' method
+    to right the corresponding VASP file.
     """
 
     def __init__(self, file_path=None, calc_parser_cls=None):
@@ -204,9 +209,6 @@ class BaseFileParser(BaseParser):
     def write(self, filepath):
         if self._data_obj is not None:
             self._data_obj.write(filepath)
-            # parsevasp removes the final 'newline' character, which is required in the POSIX standard.
-            with open(filepath, 'a') as file_obj:
-                file_obj.write('\n')
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""

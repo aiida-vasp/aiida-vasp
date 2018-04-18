@@ -1,6 +1,5 @@
 # pylint: disable=no-self-use
 """Utils for VASP KPOINTS format"""
-import logging
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
@@ -11,8 +10,8 @@ class KpParser(BaseFileParser):
     """
     Parser for VASP KPOINTS format
 
-    This is a wrapper for the parsevasp.kpoints parser. It will read a given KPOINTS file and
-    parse it into a Aiida KpointsData object.
+    This is a wrapper for the parsevasp.kpoints parser. It will convert KPOINTS files to
+    Aiida KpointsData objects and vice versa.
     """
 
     PARSABLE_ITEMS = {
@@ -35,7 +34,6 @@ class KpParser(BaseFileParser):
 
     def _init_with_kpointsdata(self, kpointsdata):
         """Initialise with a given kpointsData object"""
-        logging.basicConfig()
 
         if kpointsdata.get_attrs().get('mesh'):
             mode = 'automatic'
@@ -122,7 +120,7 @@ class KpParser(BaseFileParser):
         return dictionary
 
     def _get_kpointsdict_automatic(self, kpointsdata):
-        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
+        """Turn Aiida KpointData into an 'automatic' kpoints dictionary."""
         dictionary = {}
         # automatic mode
         mesh = kpointsdata.get_kpoints_mesh()
