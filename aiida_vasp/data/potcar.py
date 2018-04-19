@@ -702,9 +702,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
         :raise NotExistent: if no UPF for an element in the group is found in the group.
         """
-        elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
-        return {(elements_to_name[element],): potcar
-                for element, potcar in cls.get_potcars_dict(elements_to_name.keys(), family_name, mapping=mapping).items()}
+        # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
+        return {(kind_name,): potcar
+                for kind_name, potcar in cls.get_potcars_dict(structure.get_kind_names(), family_name, mapping=mapping).items()}
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
