@@ -166,9 +166,11 @@ def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     """Test getting POTCARS from a family for a structure."""
     indium_2 = get_data_node('structure')
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
-    indium_2.append_atom(position=[1, 0, 0], symbols='In')
-    in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(indium_2, potcar_family, mapping={'In': 'In_d'})
-    assert [kind[0] for kind in in2_potcars.keys()] == ['In']
+    indium_2.append_atom(position=[1, 0, 0], symbols='In', name='In1')
+    in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(indium_2, potcar_family, mapping={'In': 'In_d', 'In1': 'In_d'})
+    assert in2_potcars.keys() == [('In',), ('In1',)]
+    in_d_potcar = get_data_class('vasp.potcar').find(family_name=potcar_family, full_name='In_d')
+    assert in2_potcars[('In',)].uuid == in_d_potcar.uuid == in2_potcars[('In1',)]
 
 
 def test_upload(fresh_aiida_env, temp_pot_folder):
