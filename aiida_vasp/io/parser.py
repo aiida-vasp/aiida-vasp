@@ -30,6 +30,73 @@ class BaseParser(object):
         return [cls.line(l, d_type) for l in lines]
 
 
+class BaseFileParser(BaseParser):
+    """
+    Abstract base class for the individual file parsers. It provides the following interface to be used by the VaspParser:
+
+        - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
+          as the required information on how to extract those.
+        - _parsed_data: a dictionary containing all the parsed data from this file.
+        - get_quantities(properties, output): Method to be called by the VaspParser
+          which will either fill the _parsed_data in case that it is empty by calling _parse_file
+          or return the requested data from the _parsed_data.
+        _ _parse_file: an abstract method to be implemented by the actual file parser, which will
+          parse the file and fill the _parsed_data dictionary.
+
+          :output contains data parsed by other file parsers and optionally a 'settings' card
+                  which determines the behaviour of each file parsers _parse_file method.
+
+    """
+
+    def __init__(self, cls):
+        super(BaseFileParser, self).__init__()
+        self._vasp_parser = cls
+        if cls is not None:
+            cls.get_quantity.add_listener(self.get_quantity)
+
+        self._parsable_items = {}
+        self._parsed_data = {}
+        self._filename = None
+        self._filepath = None
+
+    def get_quantity(self, quantity, settings, inputs=None):
+        """
+        Public method to get the required quantity from the _parsed_data dictionary if that exists.
+
+        Otherwise parse the file. This method will be registered to the VaspParsers get_quantities
+        delegate during __init__.
+        """
+
+        if quantity not in self._parsable_items:
+            return None
+
+        if self._parsed_data is None or self._parsed_data.get(quantity) is None:
+            # The file has not been parsed yet, or the quantity has not
+            # been parsed yet, due to lack of required inputs..
+
+            # gather everything required for parsing this component.
+            if inputs is None:
+                inputs = {}
+            inputs['settings'] = settings
+
+            if self._vasp_parser is not None:
+                # gather everything required for parsing this quantity from the VaspParser.
+                for inp in self._parsable_items[quantity]['inputs']:
+                    inputs[inp] = self._vasp_parser.get_inputs(inp)
+                    if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
+                        # The VaspParser was unable to provide the required input.
+                        return {quantity: None}
+
+            self._parsed_data = self._parse_file(inputs)
+
+        return {quantity: self._parsed_data.get(quantity)}
+
+    def _parse_file(self, inputs):
+        """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
+
+        raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
+
+
 class KeyValueParser(BaseParser):
     """Contains regex and functions to find grammar elements in vasp input and output files."""
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')

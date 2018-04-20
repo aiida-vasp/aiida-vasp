@@ -4,32 +4,80 @@ import re
 
 import numpy as np
 
-from .parser import BaseParser
+from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.io.parser import BaseFileParser
 
 
-class EigParser(BaseParser):
+class EigParser(BaseFileParser):
     """Contains regex and functions to find grammar elements in EIGENVALUE files."""
 
-    def __init__(self, filename):
-        res = self.parse_eigenval(filename)
-        self.header = res[0]
-        self.kpoints = res[1]
-        self.bands = res[2]
+    PARSABLE_ITEMS = {
+        'bands': {
+            'inputs': ['structure', 'kpoints', 'occupations'],
+            'parsers': ['EIGENVAL', 'vasprun.xml'],
+            'nodeName': 'bands',
+            'prerequisites': ['structure', 'occupations']
+        },
+    }
 
-    @classmethod
-    # pylint: disable=too-many-locals
-    def parse_eigenval(cls, filename):
+    def __init__(self, path, filename, cls):
+        super(EigParser, self).__init__(cls)
+        self._filepath = path
+        self._filename = filename
+        self._parsed_data = None
+        self._parsable_items = EigParser.PARSABLE_ITEMS
+
+    def _parse_file(self, inputs):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
-        with open(filename) as eig:
-            line_0 = cls.line(eig, int)  # read header
-            line_1 = cls.line(eig, float)  # "
-            line_2 = cls.line(eig, float)  # "
-            coord_type = cls.line(eig)  # "
-            name = cls.line(eig)  # read name line (can be empty)
-            param_0, num_kp, num_bands = cls.line(eig, int)  # read: ? #kp #bands
+
+        result = inputs.get('settings', {})
+        result = {}
+
+        header, kpoints, bands = self._read_eigenval()
+
+        result['header'] = header
+
+        bsnode = get_data_class('array.bands')()
+        kpout = get_data_class('array.kpoints')()
+
+        structure = inputs.get('structure')
+        if structure is None:
+            return {'bands': None, 'kpoints': None}
+
+        bsnode.set_cell(structure.get_ase().get_cell())
+        kpout.set_cell(structure.get_ase().get_cell())
+
+        kpoints_inp = inputs.get('kpoints')
+        if kpoints_inp:
+            bsnode.set_kpointsdata(kpoints_inp)
+
+            if kpoints_inp.labels:
+                bsnode.labels = kpoints_inp.labels
+        else:
+            bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+
+        bsnode.set_bands(bands, occupations=inputs['occupations'])
+        kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
+
+        result['bands'] = bsnode
+        result['kpoints'] = kpout
+
+        return result
+
+    # pylint: disable=too-many-locals
+    def _read_eigenval(self):
+        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
+
+        with open(self._filepath) as eig:
+            line_0 = self.line(eig, int)  # read header
+            line_1 = self.line(eig, float)  # "
+            line_2 = self.line(eig, float)  # "
+            coord_type = self.line(eig)  # "
+            name = self.line(eig)  # read name line (can be empty)
+            param_0, num_kp, num_bands = self.line(eig, int)  # read: ? #kp #bands
             data = eig.read()  # rest is data
         num_ions, num_atoms, p00, num_spins = line_0
-        data = re.split(cls.empty_line, data)  # list of data blocks
+        data = re.split(self.empty_line, data)  # list of data blocks
         data = [[line.split() for line in block.splitlines()] for block in data]
         kpoints = np.zeros((num_kp, 4))
         bands = np.zeros((num_spins, num_kp, num_bands))

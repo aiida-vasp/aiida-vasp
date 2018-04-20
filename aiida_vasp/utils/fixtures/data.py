@@ -12,6 +12,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
@@ -114,6 +115,14 @@ def vasp_structure(request, aiida_env):
         structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.75, .75, .75], symbols='As')
+    elif request.param == 'str-Al':
+        larray = numpy.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        alat = 4.04
+        structure = DataFactory('structure')(cell=larray * alat)
+        structure.append_atom(position=numpy.array([0, 0, 0]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
     return structure
 
 
@@ -196,6 +205,16 @@ def ref_retrieved_nscf():
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
         retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
+
+
+@pytest.fixture
+def vasprun_parser():
+    """Return an instance of VasprunParser for a reference vasprun.xml."""
+    file_name = 'vasprun.xml'
+    path = data_path('vasprun', file_name)
+    parser = VasprunParser(path, file_name, None)
+
+    return parser
 
 
 def _ref_kp_list():

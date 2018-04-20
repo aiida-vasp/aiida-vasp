@@ -1,5 +1,9 @@
 """
-Poscar writer.
+Tools for parsing POSCAR files.
+
+Contains:
+- Poscar Parser
+- Poscar writer
 
 Features not in `pymatgen.io.vasp.Poscar`:
 
@@ -11,6 +15,9 @@ from itertools import groupby
 
 import numpy as np
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+
+from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class PoscarIo(object):
@@ -78,3 +85,37 @@ class PoscarIo(object):
     def write(self, path):
         destination = py_path.local(path)
         destination.write(self.poscar_str())
+
+
+class PoscarParser(BaseFileParser):
+    """Parse a POSCAR format file into a StructureData node."""
+
+    PARSABLE_ITEMS = {
+        'structure': {
+            'inputs': [],
+            'parsers': ['CONTCAR'],
+            'nodeName': 'structure',
+            'prerequisites': []
+        },
+    }
+
+    def __init__(self, path, filename, cls):
+        super(PoscarParser, self).__init__(cls)
+        self._filepath = path
+        self._filename = filename
+        self._parsable_items = PoscarParser.PARSABLE_ITEMS
+        self._parsable_data = {}
+
+    def _parse_file(self, inputs):
+        """Read POSCAR format file for output structure."""
+        from ase.io import read
+
+        result = inputs
+        result = {}
+        result['structure'] = get_data_class('structure')()
+        cont = self._filepath
+        if not cont:
+            return {'structure': None}
+        result['structure'].set_ase(read(cont, format='vasp'))
+
+        return result

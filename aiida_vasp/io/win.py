@@ -10,6 +10,7 @@ class WinParser(KeyValueParser):
     comment = re.compile(r'(!.*)\n?')
 
     def __init__(self, filename):
+        super(WinParser, self).__init__()
         self.result = {}
         with open(filename) as winf:
             self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
