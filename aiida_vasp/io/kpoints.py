@@ -11,7 +11,8 @@ class KpParser(BaseFileParser):
     Parser for VASP KPOINTS format
 
     This is a wrapper for the parsevasp.kpoints parser. It will convert KPOINTS files to
-    Aiida KpointsData objects and vice versa.
+    Aiida KpointsData objects and vice versa. The Parsing direction depends on whether the Parser is initialised with
+    'path = ...' or 'data = ...'.
     """
 
     PARSABLE_ITEMS = {
@@ -28,29 +29,38 @@ class KpParser(BaseFileParser):
         self.init_with_kwargs(**kwargs)
 
     def _init_with_path(self, filepath):
-        self._filepath = filepath
+        self._data_obj = filepath
         self._parsable_items = KpParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
-    def _init_with_kpointsdata(self, kpointsdata):
+    def _init_with_data(self, kpointsdata):
         """Initialise with a given kpointsData object"""
         self._data_obj = kpointsdata
+        self._parsed_data = None
 
-        if kpointsdata.get_attrs().get('mesh'):
-            mode = 'automatic'
-        elif kpointsdata.get_attrs().get('array|kpoints'):
-            mode = 'explicit'
+    @property
+    def _parsed_object(self):
+        """Return an instance of parsevasp.Kpoints corresponding to the stored KpointsData."""
 
-        kpoints_dict = {}
-        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
-            kpoints_dict[keyword] = None
+        if not self._parsed_data:
+            # The KpointsData has not been successfully parsed yet. So let's parse it.
+            if self._data_obj.get_attrs().get('mesh'):
+                mode = 'automatic'
+            elif self._data_obj.get_attrs().get('array|kpoints'):
+                mode = 'explicit'
 
-        kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(kpointsdata))
+            kpoints_dict = {}
+            for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+                kpoints_dict[keyword] = None
 
-        try:
-            self._parsed_obj = Kpoints(kpoints_dict=kpoints_dict)
-        except SystemExit:
-            self._parsed_obj = None
+            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
+
+            try:
+                self._parsed_data = Kpoints(kpoints_dict=kpoints_dict)
+            except SystemExit:
+                self._parsed_data = None
+
+        return self._parsed_data
 
     def _parse_file(self, inputs):
         """Create a DB Node from a KPOINTS file"""
@@ -59,7 +69,7 @@ class KpParser(BaseFileParser):
         result = {}
 
         try:
-            parsed_kpoints = Kpoints(None, None, self._filepath, None)
+            parsed_kpoints = Kpoints(file_path=self._data_obj)
         except SystemExit:
             return {'kpoints': None}
 

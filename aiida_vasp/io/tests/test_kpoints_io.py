@@ -23,7 +23,7 @@ def test_parse_kpoints(vasp_kpoints):
         method = 'get_kpoints'
         param = 'list'
 
-    parser = KpParser(None, path=file_path)
+    parser = KpParser(path=file_path)
     result = parser.get_quantity('kpoints', {})
     if param == 'list':
         assert getattr(result['kpoints'], method)().all() == getattr(kpoints, method)().all()

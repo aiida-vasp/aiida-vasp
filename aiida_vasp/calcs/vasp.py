@@ -12,7 +12,7 @@ from aiida.orm import DataFactory
 from aiida_vasp.calcs.base import VaspCalcBase, Input
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 
@@ -165,10 +165,7 @@ class VaspCalculation(VaspCalcBase):
         :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        settings = inputdict.get('settings')
-        settings = settings.get_dict() if settings else {}
-        poscar_precision = settings.get('poscar_precision', 10)
-        writer = PoscarIo(self._structure(), precision=poscar_precision)
+        writer = PoscarParser(data=self._structure())
         writer.write(dst)
 
     def write_potcar(self, inputdict, dst):
@@ -193,7 +190,7 @@ class VaspCalculation(VaspCalcBase):
         """
         kpoints = self.inp.kpoints
 
-        kpoint_parser = KpParser(None, kpointsdata=kpoints)
+        kpoint_parser = KpParser(data=kpoints)
         kpoint_parser.write(dst)
 
     def write_chgcar(self, inputdict, dst):  # pylint: disable=unused-argument

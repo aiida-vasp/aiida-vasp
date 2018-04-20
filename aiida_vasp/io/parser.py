@@ -154,18 +154,8 @@ class BaseFileParser(BaseParser):
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
 
     The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
-    The BaseFileParser will store the data object in self._data_obj and provide a public 'write' method
+    The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
     to right the corresponding VASP file.
-
-    For now the BaseFileParser has four different representations of it's data:
-    - _filepath: data stored in a file
-    . _parsed_data: dictionary with everything parsed from the file.
-    - _data_obj: The Aiida data obj, which should be written to a file.
-    - _parsed_obj: The parsevasp object representing this file.
-
-    It seams like _parsed_data and _parsed_obj mgiht be equivalent. The same is true for _file_path and
-    data_obj since both of them represent the data in its unparsed state. A future rework might unify this.
-    also 'parse_file' could then switch it's parsing direction based on the context.
     """
 
     def __init__(self, file_path=None, calc_parser_cls=None):
@@ -176,9 +166,7 @@ class BaseFileParser(BaseParser):
 
         self._parsable_items = {}
         self._parsed_data = {}
-        self._filepath = None
         self._data_obj = None
-        self._parsed_obj = None
 
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
@@ -217,8 +205,14 @@ class BaseFileParser(BaseParser):
         return {quantity: self._parsed_data.get(quantity)}
 
     def write(self, filepath):
-        if self._data_obj is not None:
-            self._data_obj.write(filepath)
+        if self._parsed_object is not None:
+            self._parsed_object.write(filepath)
+
+    @property
+    def _parsed_object(self):
+        """Abstract property to parse this file parsers _data_object. Has to be overwritten by the child class."""
+
+        raise NotImplementedError('{0} does not implement a _parsed_object() property.'.format(self.__class__.__name__))
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
