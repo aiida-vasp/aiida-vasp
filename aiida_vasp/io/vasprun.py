@@ -145,7 +145,7 @@ class VasprunParser(BaseFileParser):
         if occ[0] is None:
             return None
 
-        return occ
+        return np.array(occ)
 
     @property
     def efermi(self):
