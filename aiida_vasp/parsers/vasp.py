@@ -238,7 +238,7 @@ class VaspParser(BaseParser):
                 self.logger.warning('{0} not found, but should be parsed.'.format(file_name))
             else:
                 # The file should be parsed and has been found
-                self._parsers[file_name] = value['parser_class'](file_to_parse, calc_parser_cls=self)
+                self._parsers[file_name] = value['parser_class'](cls=self, path=file_to_parse)
 
         # All critical files have been found, so we can safely return True.
         return True
