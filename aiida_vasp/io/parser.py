@@ -220,6 +220,39 @@ class BaseFileParser(BaseParser):
         raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
 
 
+class SingleFile(object):
+    """
+    Datastructure for a singleFile file providing a write method.
+
+    This should get replaced, as soon as parsevasp has a dedicated class.
+    """
+
+    def __init__(self, **kwargs):
+        super(SingleFile, self).__init__()
+        self._path = None
+        self.init_with_kwargs(**kwargs)
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwqargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_path(self, path):
+        self._path = path
+
+    def _init_with_data(self, data):
+        """Initialise with SingleFileData."""
+        self._path = data.get_file_abs_path()
+
+    @property
+    def path(self):
+        return self._path
+
+    def write(self, dst):
+        """Copy CHGCAR to destination."""
+        import shutil
+        shutil.copyfile(self._path, dst)
+
+
 class KeyValueParser(BaseParser):
     """Contains regex and functions to find grammar elements in vasp input and output files."""
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
