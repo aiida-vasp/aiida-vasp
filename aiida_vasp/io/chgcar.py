@@ -22,6 +22,7 @@ class ChgcarParser(BaseFileParser):
 
     def _init_with_path(self, path):
         self._data_obj = SingleFile(path=path)
+        self._parsable_items = ChgcarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def _init_with_data(self, data):

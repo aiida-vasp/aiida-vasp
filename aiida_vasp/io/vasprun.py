@@ -1,8 +1,9 @@
+# pylint: disable=protected-access
 """Tools for parsing vasprun.xml files."""
 import numpy as np
 
 from parsevasp.xml import Xml
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 DEFAULT_OPTIONS = {
@@ -45,7 +46,7 @@ class VasprunParser(BaseFileParser):
         super(VasprunParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
 
-    def _init_with_path(self, filepath):
+    def _init_with_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
         self._parsable_items = VasprunParser.PARSABLE_ITEMS
@@ -53,15 +54,18 @@ class VasprunParser(BaseFileParser):
         # Since vasprun.xml can be fairly large, we will parse it only
         # once and store the parsevasp Xml object instead of the filepath.
         try:
-            self._data_obj = Xml(None, file_path=filepath)
+            self._data_obj = Xml(None, file_path=path)
         except SystemExit:
             self._data_obj = None
+
+    def _init_with_data(self, data):
+        """Init with singleFileData."""
+        self._init_with_path(data.get_file_abs_path())
 
     @property
     def _parsed_object(self):
         """The vasprunParser will most likely not write a vasprun.xml file."""
-
-        return None
+        return SingleFile(path=self._data_obj._file_path)
 
     def _parse_file(self, inputs):
 

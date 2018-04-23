@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
 
 
 class EigParser(BaseFileParser):
@@ -22,8 +22,21 @@ class EigParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(EigParser, self).__init__(*args, **kwargs)
-        self._parsed_data = None
+        self.init_with_kwargs(**kwargs)
+
+    def _init_with_path(self, path):
+
+        self._data_obj = SingleFile(path=path)
+        self._parsed_data = {}
         self._parsable_items = EigParser.PARSABLE_ITEMS
+
+    def _init_with_data(self, data):
+        self._data_obj = SingleFile(data=data)
+        self._parsed_data = {}
+
+    @property
+    def _parsed_object(self):
+        return self._data_obj
 
     def _parse_file(self, inputs):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
@@ -66,7 +79,7 @@ class EigParser(BaseFileParser):
     def _read_eigenval(self):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
 
-        with open(self._file_path) as eig:
+        with open(self._data_obj.path) as eig:
             line_0 = self.line(eig, int)  # read header
             line_1 = self.line(eig, float)  # "
             line_2 = self.line(eig, float)  # "

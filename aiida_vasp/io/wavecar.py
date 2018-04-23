@@ -22,6 +22,7 @@ class WavecarParser(BaseFileParser):
 
     def _init_with_filepath(self, filepath):
         self._data_obj = SingleFile(filepath=filepath)
+        self._parsable_items = WavecarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def _init_with_data(self, data):
