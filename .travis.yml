@@ -14,6 +14,7 @@ before_install:  # copied from pgtest's travis.yml
     - sudo apt-get remove postgresql
     - sudo apt-get install postgresql
     - sudo updatedb
+    - pip install --upgrade pip
 install:
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
     - pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
