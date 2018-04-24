@@ -637,7 +637,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         :param elements: The list of symbols to find POTCARs for
         :param family_name: The POTCAR family to be used
-        :param mapping: A mapping[element] -> ``full_name``
+        :param mapping: A mapping[element] -> ``full_name``, for example: mapping={'In': 'In', 'As': 'As_d'}
 
         If no POTCAR is found for a given element, a ``NotExistent`` error is raised.
 
@@ -693,7 +693,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         :param structure: An AiiDA structure
         :param family_name: The POTCAR family to be used
-        :param mapping: A mapping[kind name] -> ``full_name``
+        :param mapping: A mapping[kind name] -> ``full_name``, for example: mapping={'In1': 'In', 'In2': 'In_d', 'As': 'As_d'}
 
         The Dictionary looks as follows::
 
@@ -706,6 +706,32 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
         :raise NotExistent: if no UPF for an element in the group is found in the group.
+
+
+        Example::
+
+            ## using VASP recommended POTCARs
+            from aiida_vasp.utils.default_paws import DEFAULT_LDA, DEFAULT_GW
+            vasp_process = CalculationFactory('vasp.vasp').process()
+            inputs = vasp_process.get_inputs_template()
+            inputs.structure = load_node(123)
+            inputs.potential = PotcarData.get_potcars_from_structure(
+                structure=inputs.structure,
+                family_name='PBE',
+                mapping=DEFAULT_GW
+            )
+
+            ## using custom POTCAR map
+            custom_mapping = {
+                'In1': 'In',
+                'In2': 'In_d',
+                'As': 'As_d'
+            }
+            inputs.potential = PotcarData.get_potcars_from_structure(
+                structure=inputs.structure,
+                family_name='PBE',
+                mapping=custom_mapping
+            )
         """
         # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
         return {(kind_name,): potcar
