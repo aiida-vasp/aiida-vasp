@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- PotcarData.get_potcars_from_structure() now returns an entry for each `kind.name` in the structure, not one per `kind.symbol`.
+
 ## [v0.2.3]
 
 ### Changed
