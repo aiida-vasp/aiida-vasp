@@ -691,11 +691,15 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
 
+        :param structure: An AiiDA structure
+        :param family_name: The POTCAR family to be used
+        :param mapping: A mapping[kind name] -> ``full_name``
+
         The Dictionary looks as follows::
 
             {
-                (element1, ): PotcarData_for_kind1,
-                (element2, ): ...
+                (kind1.name, ): PotcarData_for_kind1,
+                (kind2.name, ): ...
             }
 
         This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
