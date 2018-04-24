@@ -73,6 +73,20 @@ def temp_pot_folder(tmpdir):
     return target
 
 
+# pylint: disable=protected-access
+def duplicate_potcar_data(potcar_node):
+    """Create and store (and return) a duplicate of a given PotcarData node."""
+    from aiida_vasp.data.potcar import temp_potcar
+    file_node = potcar_node.find_file_node().copy()
+    with temp_potcar(potcar_node.get_content()) as potcar_file:
+        file_node.set_file(potcar_file.strpath)
+        file_node._set_attr('md5', 'abcd')
+        file_node._set_attr('full_name', potcar_node.full_name)
+        file_node.store()
+    data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
+    return data_node
+
+
 @pytest.fixture
 def potcar_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
@@ -81,6 +95,12 @@ def potcar_family(aiida_env, temp_pot_folder):
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
     potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
+    if len(potcar_cls.find(full_name='In_d')) == 1:
+        family_group = potcar_cls.get_potcar_group(POTCAR_FAMILY_NAME)
+        in_d = potcar_cls.find(full_name='In_d')[0]
+        in_d_double = duplicate_potcar_data(in_d)
+        family_group.add_nodes(in_d_double)
+        assert in_d.uuid == potcar_cls.find(full_name='In_d')[0].uuid
     assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
     assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
