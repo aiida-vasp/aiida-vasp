@@ -155,10 +155,13 @@ class BaseFileParser(BaseParser):
 
     The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
     The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
-    to right the corresponding VASP file.
+    to write the corresponding VASP file. Depending on whether the file under consideration is an actual input
+    file, this may simply mean copying a file.
     """
 
-    def __init__(self, file_path=None, calc_parser_cls=None):
+    PARSABLE_ITEMS = {}
+
+    def __init__(self, calc_parser_cls=None):
         super(BaseFileParser, self).__init__()
         self._vasp_parser = calc_parser_cls
         if calc_parser_cls is not None:
@@ -171,6 +174,24 @@ class BaseFileParser(BaseParser):
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
+
+    def _init_with_path(self, path):
+        """Init with a file path."""
+        self._data_obj = SingleFile(path=path)
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
+
+    def _init_with_data(self, data):
+        """
+        Init with aiida-data.
+
+        This has to be overriden by every FileParser, which deals with an
+        Aiida data class other than SingleFileData.
+        """
+
+        self._data_obj = SingleFile(data=data)
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
 
     def get_quantity(self, quantity, settings, inputs=None):
         """
@@ -205,14 +226,26 @@ class BaseFileParser(BaseParser):
         return {quantity: self._parsed_data.get(quantity)}
 
     def write(self, filepath):
+        """
+        Writes a VASP style file from the parsed Object.
+
+        For non input files this means simply copying the file.
+        """
         if self._parsed_object is not None:
             self._parsed_object.write(filepath)
 
     @property
     def _parsed_object(self):
-        """Abstract property to parse this file parsers _data_object. Has to be overwritten by the child class."""
+        """
+        Property to return the FileParsers _data_obj.
 
-        raise NotImplementedError('{0} does not implement a _parsed_object() property.'.format(self.__class__.__name__))
+        The data_obj is either an instance of one of the parsevasp parser classes,
+        which provide a write function, an instance of an aiida data node or an
+        instance of SingleFile in case that it is just a file and does not have
+        it's own 'write' method. In particular FileParsers storing aiida data nodes
+        will have to override this.
+        """
+        return self._data_obj
 
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
@@ -248,7 +281,7 @@ class SingleFile(object):
         return self._path
 
     def write(self, dst):
-        """Copy CHGCAR to destination."""
+        """Copy file to destination."""
         import shutil
         shutil.copyfile(self._path, dst)
 

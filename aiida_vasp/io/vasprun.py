@@ -3,13 +3,30 @@
 import numpy as np
 
 from parsevasp.xml import Xml
-from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos'],
     'output_params': ['energies', 'forces', 'efermi'],
 }
+
+
+class ExtendedXml(Xml):
+    """
+    Extension of parsevasp's Xml class in order to keep the interface clean.
+
+    This can be removed later in case parsevasp implements these two properties.
+    """
+
+    @property
+    def path(self):
+        return self._file_path
+
+    def write(self, dst):
+        """Copy vasprun.xml to destination."""
+        import shutil
+        shutil.copyfile(self._file_path, dst)
 
 
 class VasprunParser(BaseFileParser):
@@ -54,18 +71,14 @@ class VasprunParser(BaseFileParser):
         # Since vasprun.xml can be fairly large, we will parse it only
         # once and store the parsevasp Xml object instead of the filepath.
         try:
-            self._data_obj = Xml(None, file_path=path)
+            self._data_obj = ExtendedXml(None, file_path=path)
         except SystemExit:
             self._data_obj = None
 
     def _init_with_data(self, data):
         """Init with singleFileData."""
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_path(data.get_file_abs_path())
-
-    @property
-    def _parsed_object(self):
-        """The vasprunParser will most likely not write a vasprun.xml file."""
-        return SingleFile(path=self._data_obj._file_path)
 
     def _parse_file(self, inputs):
 

@@ -2,7 +2,7 @@
 import re
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.io.parser import BaseFileParser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
 
@@ -57,20 +57,6 @@ class OutcarParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(OutcarParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
-
-    def _init_with_path(self, path):
-
-        self._data_obj = SingleFile(path=path)
-        self._parsed_data = {}
-        self._parsable_items = OutcarParser.PARSABLE_ITEMS
-
-    def _init_with_data(self, data):
-        self._data_obj = SingleFile(data=data)
-        self._parsed_data = {}
-
-    @property
-    def _parsed_object(self):
-        return self._data_obj
 
     def _parse_file(self, inputs):
         """Add all quantities parsed from OUTCAR to _parsed_data."""

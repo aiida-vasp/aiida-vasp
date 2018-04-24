@@ -28,39 +28,32 @@ class KpParser(BaseFileParser):
         super(KpParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
 
-    def _init_with_path(self, filepath):
-        self._data_obj = filepath
-        self._parsable_items = KpParser.PARSABLE_ITEMS
-        self._parsed_data = {}
-
-    def _init_with_data(self, kpointsdata):
+    def _init_with_data(self, data):
         """Initialise with a given kpointsData object"""
-        self._data_obj = kpointsdata
-        self._parsed_data = None
+        self._data_obj = data
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
 
     @property
     def _parsed_object(self):
         """Return an instance of parsevasp.Kpoints corresponding to the stored KpointsData."""
 
-        if not self._parsed_data:
-            # The KpointsData has not been successfully parsed yet. So let's parse it.
-            if self._data_obj.get_attrs().get('mesh'):
-                mode = 'automatic'
-            elif self._data_obj.get_attrs().get('array|kpoints'):
-                mode = 'explicit'
+        # The KpointsData has not been successfully parsed yet. So let's parse it.
+        if self._data_obj.get_attrs().get('mesh'):
+            mode = 'automatic'
+        elif self._data_obj.get_attrs().get('array|kpoints'):
+            mode = 'explicit'
 
-            kpoints_dict = {}
-            for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
-                kpoints_dict[keyword] = None
+        kpoints_dict = {}
+        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+            kpoints_dict[keyword] = None
 
-            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
+        kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
 
-            try:
-                self._parsed_data = Kpoints(kpoints_dict=kpoints_dict)
-            except SystemExit:
-                self._parsed_data = None
-
-        return self._parsed_data
+        try:
+            return Kpoints(kpoints_dict=kpoints_dict)
+        except SystemExit:
+            return None
 
     def _parse_file(self, inputs):
         """Create a DB Node from a KPOINTS file"""
@@ -68,8 +61,11 @@ class KpParser(BaseFileParser):
         result = inputs
         result = {}
 
+        if isinstance(self._data_obj, get_data_class('array.kpoints')):
+            return {'kpoints': self._data_obj}
+
         try:
-            parsed_kpoints = Kpoints(file_path=self._data_obj)
+            parsed_kpoints = Kpoints(file_path=self._data_obj.path)
         except SystemExit:
             return {'kpoints': None}
 
@@ -78,7 +74,8 @@ class KpParser(BaseFileParser):
 
         return result
 
-    def _get_kpointsdata_explicit(self, kpoints_dict):
+    @staticmethod
+    def _get_kpointsdata_explicit(kpoints_dict):
         """Turn an 'explicit' kpoints dictionary into Aiida KpointsData"""
         kpout = get_data_class('array.kpoints')()
 
@@ -97,7 +94,8 @@ class KpParser(BaseFileParser):
 
         return kpout
 
-    def _get_kpointsdata_automatic(self, kpoints_dict):
+    @staticmethod
+    def _get_kpointsdata_automatic(kpoints_dict):
         """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
         kpout = get_data_class('array.kpoints')()
 
@@ -107,7 +105,8 @@ class KpParser(BaseFileParser):
 
         return kpout
 
-    def _get_kpointsdict_explicit(self, kpointsdata):
+    @staticmethod
+    def _get_kpointsdict_explicit(kpointsdata):
         """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
         dictionary = {}
 
@@ -130,7 +129,8 @@ class KpParser(BaseFileParser):
 
         return dictionary
 
-    def _get_kpointsdict_automatic(self, kpointsdata):
+    @staticmethod
+    def _get_kpointsdict_automatic(kpointsdata):
         """Turn Aiida KpointData into an 'automatic' kpoints dictionary."""
         dictionary = {}
         # automatic mode

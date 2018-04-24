@@ -121,7 +121,7 @@ class VaspParser(BaseParser):
 
     * `output_params`: A list of things that should be added to the 'output_parameters'
                        node, available options are:
-                       DEFAULT: ['energies', 'forces', 'version', 'datetime']
+                       DEFAULT: ['energies', 'forces']
     """
 
     def __init__(self, calc):
