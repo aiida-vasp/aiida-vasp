@@ -23,10 +23,8 @@ class KpParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename, cls):
-        super(KpParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(KpParser, self).__init__(*args, **kwargs)
         self._parsable_items = KpParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
@@ -55,7 +53,7 @@ class KpParser(BaseFileParser):
         result = inputs
         result = {}
 
-        header, res = self.parse_kp_file(self._filepath)
+        header, res = self.parse_kp_file(self._file_path)
         kpoints = res[:, :3]
         if res.shape[1] == 4:
             weights = res[:, 3]

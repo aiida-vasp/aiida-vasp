@@ -16,10 +16,8 @@ class WavecarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename, cls):
-        super(WavecarParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(WavecarParser, self).__init__(*args, **kwargs)
         self._parsable_items = WavecarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
@@ -27,7 +25,7 @@ class WavecarParser(BaseFileParser):
         """Create a DB Node for the WAVECAR file"""
         result = inputs
         result = {}
-        wfn = self._filepath
+        wfn = self._file_path
 
         if wfn is None:
             return {'wavecar': None}

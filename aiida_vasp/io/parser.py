@@ -48,16 +48,16 @@ class BaseFileParser(BaseParser):
 
     """
 
-    def __init__(self, cls):
+    def __init__(self, file_path=None, calc_parser_cls=None):
         super(BaseFileParser, self).__init__()
-        self._vasp_parser = cls
-        if cls is not None:
-            cls.get_quantity.add_listener(self.get_quantity)
+        self._vasp_parser = calc_parser_cls
+        if calc_parser_cls is not None:
+            calc_parser_cls.get_quantity.add_listener(self.get_quantity)
 
         self._parsable_items = {}
         self._parsed_data = {}
         self._filename = None
-        self._filepath = None
+        self._file_path = file_path
 
     def get_quantity(self, quantity, settings, inputs=None):
         """

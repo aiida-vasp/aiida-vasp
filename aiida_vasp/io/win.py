@@ -9,10 +9,10 @@ class WinParser(KeyValueParser):
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
-    def __init__(self, filename):
+    def __init__(self, file_path):
         super(WinParser, self).__init__()
         self.result = {}
-        with open(filename) as winf:
+        with open(file_path) as winf:
             self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
         self.result.update(self.keywords)
         self.result.update(self.blocks)

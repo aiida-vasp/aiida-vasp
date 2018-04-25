@@ -37,7 +37,7 @@ class OutcarParser(BaseFileParser):
             'prerequisites': []
         },
         'symmetries': {
-            'inputs': [],
+            'inputs': ['parameters'],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
@@ -49,10 +49,8 @@ class OutcarParser(BaseFileParser):
     POINT_SYMMETRY_PATTERN = re.compile(r'point symmetry (.*?)\s*\.')
     SPACE_GROUP_PATTERN = re.compile(r'space group is (.*?)\s*\.')
 
-    def __init__(self, path, filename, cls):
-        super(OutcarParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(OutcarParser, self).__init__(*args, **kwargs)
         self._parsable_items = OutcarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
@@ -89,7 +87,7 @@ class OutcarParser(BaseFileParser):
         energy_free = []
         energy_zero = []
         symmetries = {}
-        with open(self._filepath, 'r') as outcar_file_object:
+        with open(self._file_path, 'r') as outcar_file_object:
             for line in outcar_file_object:
                 # volume
                 if line.rfind('volume of cell :') > -1:

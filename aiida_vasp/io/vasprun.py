@@ -36,14 +36,12 @@ class VasprunParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename, cls):
-        super(VasprunParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(VasprunParser, self).__init__(*args, **kwargs)
         self._parsed_data = None
         self._parsable_items = VasprunParser.PARSABLE_ITEMS
 
-        self.tree = parse(path)
+        self.tree = parse(self._file_path)
 
     def _parse_file(self, inputs):
 
