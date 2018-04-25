@@ -8,7 +8,12 @@ DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
 
 
 class OutcarParser(BaseFileParser):
-    """Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later."""
+    """
+    Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
+
+    For constructor params and more details check the documentation for ``aiida_vasp.io.parser`` and
+    ``aiida_vasp.io.parser.BaseParser``.
+    """
 
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
@@ -37,7 +42,7 @@ class OutcarParser(BaseFileParser):
             'prerequisites': []
         },
         'symmetries': {
-            'inputs': ['parameters'],
+            'inputs': [],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
@@ -58,8 +63,7 @@ class OutcarParser(BaseFileParser):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
 
         result = self._read_outcar(inputs)
-        params = get_data_class('parameter')()
-        params.update_dict(result)
+        params = get_data_class('parameter')(dict=result)
         result['parameters'] = params
         return result
 

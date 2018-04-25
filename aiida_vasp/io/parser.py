@@ -1,4 +1,106 @@
-"""Contains the base class for other vasp file parsers."""
+r"""
+Base classes for vasp file parsers.
+
+BaseFileParser
+--------------
+This baseclass makes no assumptions about the format of the file to be parsed.
+
+Usage::
+
+    import re
+
+    import py
+
+    from aiida_vasp.utils.aiida_utils import get_data_class
+    from aiida_vasp.io.parser import BaseFileParser
+
+    ExampleFileParser(BaseFileParser):
+
+        PARSABLE_ITEMS = {
+            'item1': {
+                'inputs': ['required_quantity'],  # This quantity will be parsed first and made available in time if possible
+                'parsers': ['ExampleFile'], # During setup the VaspParser will check, whether ExampleFile has been retrieved
+                ## and initialise the corresponding parser, if this quantity is requested by setting any of the
+                ## 'parser_settings['add_OutputNode'] = True'
+                'nodeName': ['examples'],  # The quantity will be added to the 'output_examples' output node
+                'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
+            }
+            'item2': {
+                'inputs': [],
+                'parsers': ['ExampleFile'],
+                'nodeName': ['examples'],
+                'prerequisites': [],
+            }
+        }
+
+        def __init__(self, *args, **kwargs):
+            super(ExampleFileParser, self).__init__(*args, **kwargs)
+            self._parsable_items = self.PARSABLE_ITEMS
+            self._parsed_data = {}
+
+        def _parse_file(self, inputs):
+            example_file = py.path.local(self._file_path)  # self._file_path is set by the superclass
+            data = example_file.read()
+            item1 = int(re.findall(r'item1 is: (\d+)', data)[0]) * inputs['required_quantity']  # extract item 1
+            item2 = [int(i) for i in re.findall(r'item2: (\d+)', data)]  # extract list of item2
+            output_node = get_data_class('parameter')(dict={  # construct ParameterData node
+                'item1': item1,
+                'item2': item2
+            }
+            return {'examples': output_node}  # each of the ``nodeName``s from above must be a key in the returned dict
+
+    example_parser = ExampleFileParser('example_file')
+    item1 = example_parser.get_quantity('item1', inputs={'required_quantity': 1})
+    item2 = example_parser.get_quantities('item2, inputs=None)
+
+Parses Files like::
+
+    item1 is: 213
+    item2: 1
+    item2: 2
+    item2: 4
+
+KeyValueParser
+--------------
+This baseclass has some utility functions for parsing files that are (mostly) in a `key` = `value` format.
+
+This class does not integrate with the VaspParser class currently.
+
+A simple example, which tries to convert values to python objects on a best effort basis:
+Usage::
+
+    import re
+
+    import py
+
+    from aiida_vasp.io.parser import KeyValueParser
+
+    ParamParser(KeyValueParser):
+
+        def __init__(self, file_path):
+            self._file_path = py.path.local(file_path)
+            super(WinParser, self).__init__()
+            self.result = {}
+
+        def convert_or_not(self, value):
+            for converter in self.get_converter_iter():
+                converted = self.try_convert(value, converter)
+                if converted and 'value' in converted:
+                    return converted['value']
+            return value
+
+        def parse_file(self):
+            assignments = re.findall(self.assignment, self._file_path.read())
+            return {key: self.convert_or_not(value)}
+
+Parses files like::
+
+    StrParam = value_1
+    FloatParam = 1.0
+    BoolParam = True
+
+
+"""
 import re
 
 from six import string_types
@@ -46,6 +148,8 @@ class BaseFileParser(BaseParser):
           :output contains data parsed by other file parsers and optionally a 'settings' card
                   which determines the behaviour of each file parsers _parse_file method.
 
+        :param file_path: string, containing the path to the file to be parsed
+        :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
     """
 
     def __init__(self, file_path=None, calc_parser_cls=None):
