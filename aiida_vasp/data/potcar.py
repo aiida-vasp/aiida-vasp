@@ -122,7 +122,7 @@ from pymatgen.io.vasp import PotcarSingle
 from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
 from aiida.common.utils import classproperty
-from aiida.common.exceptions import UniquenessError, MultipleObjectsError, NotExistent
+from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida.orm import Group
 from aiida.orm.data import Data
 from aiida.orm.querybuilder import QueryBuilder
@@ -378,13 +378,9 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         """Initialize from a file path."""
         self.add_file(filepath)
 
-    def set_contents(self, contents):
-        """Initialize from a string."""
-        with temp_potcar(contents) as potcar_file:
-            self.add_file(str(potcar_file))
-
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
+        src_path = py_path.local(src_abs)
         self.set_version()
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
@@ -395,7 +391,6 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self._set_attr('functional', potcar.functional)
         self._set_attr('element', potcar.element)
         self._set_attr('symbol', potcar.symbol)
-        src_path = py_path.local(src_abs)
         src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
         self._set_attr('original_filename', src_rel)
         dir_name = src_path.dirpath().basename
@@ -638,11 +633,16 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_potcars_dict(cls, elements, family_name, mapping=None):
         """
-        Get a dictionary {element: POTCAR} for all given symbols.
+        Get a dictionary {element: ``PotcarData.full_name``} for all given symbols.
 
         :param elements: The list of symbols to find POTCARs for
         :param family_name: The POTCAR family to be used
-        :param mapping: A mapping[element] -> full_name
+        :param mapping: A mapping[element] -> ``full_name``, for example: mapping={'In': 'In', 'As': 'As_d'}
+
+        If no POTCAR is found for a given element, a ``NotExistent`` error is raised.
+
+        If there are multiple POTCAR with the same ``full_name``, the first one
+        returned by ``PotcarData.find()`` will be used.
         """
         if not mapping:
             mapping = {element: element for element in elements}
@@ -659,8 +659,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             if not potcars_of_kind:
                 raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
             elif len(potcars_of_kind) > 1:
-                raise MultipleObjectsError('More than one POTCAR for full name {} found in family {}'.format(full_name, family_name))
-            result_potcars[element] = potcars_of_kind[0]
+                result_potcars[element] = cls.find(family=family_name, full_name=full_name)[0]
+            else:
+                result_potcars[element] = potcars_of_kind[0]
 
         return result_potcars
 
@@ -690,21 +691,51 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
 
+        :param structure: An AiiDA structure
+        :param family_name: The POTCAR family to be used
+        :param mapping: A mapping[kind name] -> ``full_name``, for example: mapping={'In1': 'In', 'In2': 'In_d', 'As': 'As_d'}
+
         The Dictionary looks as follows::
 
             {
-                (element1, ): PotcarData_for_kind1,
-                (element2, ): ...
+                (kind1.name, ): PotcarData_for_kind1,
+                (kind2.name, ): ...
             }
 
         This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
 
         :raise MultipleObjectsError: if more than one UPF for the same element is found in the group.
         :raise NotExistent: if no UPF for an element in the group is found in the group.
+
+
+        Example::
+
+            ## using VASP recommended POTCARs
+            from aiida_vasp.utils.default_paws import DEFAULT_LDA, DEFAULT_GW
+            vasp_process = CalculationFactory('vasp.vasp').process()
+            inputs = vasp_process.get_inputs_template()
+            inputs.structure = load_node(123)
+            inputs.potential = PotcarData.get_potcars_from_structure(
+                structure=inputs.structure,
+                family_name='PBE',
+                mapping=DEFAULT_GW
+            )
+
+            ## using custom POTCAR map
+            custom_mapping = {
+                'In1': 'In',
+                'In2': 'In_d',
+                'As': 'As_d'
+            }
+            inputs.potential = PotcarData.get_potcars_from_structure(
+                structure=inputs.structure,
+                family_name='PBE',
+                mapping=custom_mapping
+            )
         """
-        elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
-        return {(elements_to_name[element],): potcar
-                for element, potcar in cls.get_potcars_dict(elements_to_name.keys(), family_name, mapping=mapping).items()}
+        # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
+        kind_names = structure.get_kind_names()
+        return {(kind_name,): potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
@@ -850,7 +881,16 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     @classmethod
     def find(cls, **kwargs):
-        """Extend :py:meth:`PotcarMetadataMixin.find` with filtering by POTCAR family."""
+        """
+        Extend :py:meth:`PotcarMetadataMixin.find` with filtering by POTCAR family.
+
+        If no POTCAR is found, raise a ``NotExistent`` exception.
+
+        If multiple POTCAR are found, sort them by:
+
+            * POTCARS belonging to the active user first
+            * oldest first
+        """
         family = kwargs.pop('family', None)
         if not family:
             return super(PotcarData, cls).find(**kwargs)

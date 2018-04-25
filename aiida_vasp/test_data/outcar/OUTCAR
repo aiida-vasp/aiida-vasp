@@ -130,6 +130,7 @@ Analysis of symmetry for initial positions (statically):
 
 
 The static configuration has the point symmetry O_h .
+ The point group associated with its full space group is D_2d.
 
 
 Analysis of symmetry for dynamics (positions and initial velocities):

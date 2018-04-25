@@ -17,3 +17,8 @@ def test_parse_outcar():
     result = params['parameters'].get_dict()
     assert result['volume'] == 65.94
     assert result['efermi'] == 7.2948
+    assert result['energies']
+    assert result['symmetries']['num_space_group_operations'] == 48
+    assert result['symmetries']['num_point_group_operations'] == 48
+    assert result['symmetries']['point_symmetry'] == 'O_h'
+    assert result['symmetries']['space_group'] == 'D_2d'
