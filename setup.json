@@ -59,9 +59,6 @@
         "regen_default_paws": [
             "lxml"
         ], 
-        "test": [
-            "aiida-pytest"
-        ], 
         "wannier": [
             "aiida-wannier90"
         ]

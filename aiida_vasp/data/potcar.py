@@ -734,8 +734,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             )
         """
         # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
-        return {(kind_name,): potcar
-                for kind_name, potcar in cls.get_potcars_dict(structure.get_kind_names(), family_name, mapping=mapping).items()}
+        kind_names = structure.get_kind_names()
+        return {(kind_name,): potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):

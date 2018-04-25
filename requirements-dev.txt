@@ -4,4 +4,3 @@ pylint
 flake8
 yapf
 coverage
-git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
