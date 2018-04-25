@@ -17,7 +17,7 @@ def test_poscar_io(fresh_aiida_env, vasp_structure_poscar):
 def test_parse_poscar(fresh_aiida_env, vasp_structure):
     """Parse a reference POSCAR file with the PoscarParser and compare the result to a reference structure."""
     path = data_path('poscar', 'POSCAR')
-    parser = PoscarParser(path)
+    parser = PoscarParser(path=path)
     result = parser.get_quantity('structure', {})
     structure = vasp_structure
     assert result['structure'].cell == structure.cell
