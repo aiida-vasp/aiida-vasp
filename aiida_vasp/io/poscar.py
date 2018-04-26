@@ -99,10 +99,8 @@ class PoscarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, path, filename, cls):
-        super(PoscarParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(PoscarParser, self).__init__(*args, **kwargs)
         self._parsable_items = PoscarParser.PARSABLE_ITEMS
         self._parsable_data = {}
 
@@ -113,7 +111,7 @@ class PoscarParser(BaseFileParser):
         result = inputs
         result = {}
         result['structure'] = get_data_class('structure')()
-        cont = self._filepath
+        cont = self._file_path
         if not cont:
             return {'structure': None}
         result['structure'].set_ase(read(cont, format='vasp'))

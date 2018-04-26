@@ -8,7 +8,12 @@ DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
 
 
 class OutcarParser(BaseFileParser):
-    """Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later."""
+    """
+    Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
+
+    For constructor params and more details check the documentation for ``aiida_vasp.io.parser`` and
+    ``aiida_vasp.io.parser.BaseParser``.
+    """
 
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
@@ -49,10 +54,8 @@ class OutcarParser(BaseFileParser):
     POINT_SYMMETRY_PATTERN = re.compile(r'point symmetry (.*?)\s*\.')
     SPACE_GROUP_PATTERN = re.compile(r'space group is (.*?)\s*\.')
 
-    def __init__(self, path, filename, cls):
-        super(OutcarParser, self).__init__(cls)
-        self._filepath = path
-        self._filename = filename
+    def __init__(self, *args, **kwargs):
+        super(OutcarParser, self).__init__(*args, **kwargs)
         self._parsable_items = OutcarParser.PARSABLE_ITEMS
         self._parsed_data = {}
 
@@ -60,8 +63,7 @@ class OutcarParser(BaseFileParser):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
 
         result = self._read_outcar(inputs)
-        params = get_data_class('parameter')()
-        params.update_dict(result)
+        params = get_data_class('parameter')(dict=result)
         result['parameters'] = params
         return result
 
@@ -89,7 +91,7 @@ class OutcarParser(BaseFileParser):
         energy_free = []
         energy_zero = []
         symmetries = {}
-        with open(self._filepath, 'r') as outcar_file_object:
+        with open(self._file_path, 'r') as outcar_file_object:
             for line in outcar_file_object:
                 # volume
                 if line.rfind('volume of cell :') > -1:

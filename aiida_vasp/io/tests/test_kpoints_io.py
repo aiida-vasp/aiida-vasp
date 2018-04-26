@@ -12,7 +12,7 @@ from aiida_vasp.io.kpoints import KpParser
 def test_parse_kpoints(vasp_kpoints):
     """Parse a reference KPOINTS file with the KpParser and compare the result to a reference kpoints-node."""
     file_path = data_path('kpoints', 'KPOINTS')
-    parser = KpParser(file_path, 'KPOINTS', None)
+    parser = KpParser(file_path)
     result = parser.get_quantity('kpoints', {})
     kpoints, _ = vasp_kpoints
     assert result['kpoints'].get_kpoints().all() == kpoints.get_kpoints().all()

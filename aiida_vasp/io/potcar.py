@@ -52,8 +52,8 @@ class PotcarIo(object):
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_path(self, filepath):
-        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=filepath)
+    def _init_with_path(self, file_path):
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=file_path)
         self.md5 = node.md5
 
     def _init_with_potcar_file_node(self, node):
