@@ -47,7 +47,7 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
             print poscar.read()
         with working_directory(temp_file):
             result_pmg = Poscar.from_file(temp_file).structure
-            ref_pmg = vasp_structure_poscar.structure.get_pymatgen()
+            ref_pmg = vasp_structure_poscar.data_obj.get_pymatgen()
             assert result_pmg.lattice, ref_pmg.lattice
             assert result_pmg.formula == ref_pmg.formula
 

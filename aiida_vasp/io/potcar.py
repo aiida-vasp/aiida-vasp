@@ -5,7 +5,7 @@ import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
-from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -143,6 +143,6 @@ class MultiPotcarIo(object):
     @classmethod
     def from_structure(cls, structure, potentials_dict):
         """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a potential for each kind in the structure."""
-        poscario = PoscarIo(structure)
+        poscario = PoscarParser(data=structure)
         symbol_order = poscario.potentials_order
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])

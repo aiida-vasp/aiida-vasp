@@ -23,7 +23,7 @@ def test_poscar_potcar(fresh_aiida_env, vasp_structure_poscar, potcar_family):
         index += count
     potcar_cls = get_data_class('vasp.potcar')
     potcar_dict = potcar_cls.get_potcars_dict(elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP)
-    mulpotio = MultiPotcarIo.from_structure(structure=vasp_structure_poscar.structure, potentials_dict=potcar_dict)
+    mulpotio = MultiPotcarIo.from_structure(structure=vasp_structure_poscar.data_obj, potentials_dict=potcar_dict)
     assert [re.sub('_.*', '', symbol) for symbol in vasp_structure_poscar.potentials_order] == poscar_pot_order
     assert [potio.node.full_name for potio in mulpotio.potcars] == [
         POTCAR_MAP[element] for element in vasp_structure_poscar.potentials_order

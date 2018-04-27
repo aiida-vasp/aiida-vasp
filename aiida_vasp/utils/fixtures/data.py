@@ -232,7 +232,7 @@ def vasprun_parser():
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     file_name = 'vasprun.xml'
     path = data_path('vasprun', file_name)
-    parser = VasprunParser(path)
+    parser = VasprunParser(path=path)
 
     return parser
 

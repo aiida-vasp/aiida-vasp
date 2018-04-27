@@ -1,36 +1,19 @@
-# pylint: disable=protected-access
 """Tools for parsing vasprun.xml files."""
+
+try:
+    from lxml.objectify import parse
+except ImportError:
+    from xml.etree.ElementTree import parse
+import datetime as dt
 import numpy as np
 
-from parsevasp.xml import Xml
-from aiida_vasp.io.parser import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
 
-DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos'],
-    'output_params': ['energies', 'forces', 'efermi'],
-}
-
-
-class ExtendedXml(Xml):
-    """
-    Extension of parsevasp's Xml class in order to keep the interface clean.
-
-    This can be removed later in case parsevasp implements these two properties.
-    """
-
-    @property
-    def path(self):
-        return self._file_path
-
-    def write(self, dst):
-        """Copy vasprun.xml to destination."""
-        import shutil
-        shutil.copyfile(self._file_path, dst)
+DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos']}
 
 
 class VasprunParser(BaseFileParser):
-    """Wrapper for parsevasps Xml class parsing vasprun.xml files."""
+    """Parse xml into objecttree, provide convenience methods for parsing."""
 
     PARSABLE_ITEMS = {
         'occupations': {
@@ -51,16 +34,11 @@ class VasprunParser(BaseFileParser):
             'nodeName': 'intermediate_data',
             'prerequisites': []
         },
-        'vrp_parameters': {
-            'inputs': ['ocp_parameters'],
-            'parsers': ['vasprun.xml'],
-            'nodeName': 'intermediate_data',
-            'prerequisites': []
-        },
     }
 
     def __init__(self, *args, **kwargs):
         super(VasprunParser, self).__init__(*args, **kwargs)
+        self.tree = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_path(self, path):
@@ -68,24 +46,10 @@ class VasprunParser(BaseFileParser):
         self._parsed_data = {}
         self._parsable_items = VasprunParser.PARSABLE_ITEMS
 
-        # Since vasprun.xml can be fairly large, we will parse it only
-        # once and store the parsevasp Xml object instead of the filepath.
-        try:
-            self._data_obj = ExtendedXml(None, file_path=path)
-        except SystemExit:
-            self._data_obj = None
-
-    def _init_with_data(self, data):
-        """Init with singleFileData."""
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._init_with_path(data.get_file_abs_path())
+        self._data_obj = SingleFile(path=path)
+        self.tree = parse(path)
 
     def _parse_file(self, inputs):
-
-        # Since all qunatiies will be returned by properties, we can't pass
-        # inputs as a parameter, so we store them in self._parsed_data
-        for key, value in inputs.iteritems():
-            self._parsed_data[key] = value
 
         settings = inputs.get('settings', DEFAULT_OPTIONS)
         if not settings:
@@ -101,159 +65,184 @@ class VasprunParser(BaseFileParser):
         return result
 
     @property
-    def vrp_bands(self):
-        """Return a BandsData node containing the bandstructure parsed from vasprun.xml."""
-
-        eigenvalues = self.eigenvalues
-        occupations = self.occupations
-
-        if eigenvalues is None and occupations is None:
-            return None
-
-        bands = get_data_class('array.bands')()
-        kpoints, weights = self.kpoints_and_weights
-
-        bands.set_kpointsdata(kpoints, weights=weights, cartesian=False)
-        bands.set_bands(eigenvalues, occupations=occupations)
-
-        return bands
+    def program(self):
+        return self._i('program')
 
     @property
-    def kpoints_and_weights(self):
-        """Fetch the kpoints and weights."""
-        return self._data_obj.get_kpoints(), self._data_obj.get_kpointsw()
+    def version(self):
+        return self._i('version').strip()
 
     @property
-    def eigenvalues(self):
-        """Get eigenvalues from vasprun.xml."""
-        eigenvalues = self._data_obj.get_eigenvalues()
-
-        if eigenvalues is None:
-            return None
-
-        eigen = []
-        eigen.append(eigenvalues.get("total"))
-
-        if eigen[0] is None:
-            eigen[0] = eigenvalues.get("up")
-            eigen.append(eigenvalues.get("down"))
-
-        if eigen[0] is None:
-            return None
-
-        return eigen
+    def datetime(self):
+        """Parse Date and time information into a Python datetime object."""
+        date = self._i('date')
+        time = self._i('time')
+        dtstr = date + ' ' + time
+        return dt.datetime.strptime(dtstr, '%Y %m %d %H:%M:%S')
 
     @property
-    def occupations(self):
-        """Get occupations from vasprun.xml."""
+    def cell(self):
+        return self._varray('basis', path=self._fppath())
 
-        occupations = self._data_obj.get_occupancies()
+    @property
+    def volume(self):
+        return self._i('basis', path=self._fppath())
 
-        if occupations is None:
-            return None
+    @property
+    def pos(self):
+        return self._varray('positions', path=self._fppath())
 
-        occ = []
-        occ.append(occupations.get("total"))
-
-        if occ[0] is None:
-            occ[0] = occupations.get("up")
-            occ.append(occupations.get("down"))
-
-        if occ[0] is None:
-            return None
-
-        return np.array(occ)
+    @property
+    def root(self):
+        return self.tree.getroot()
 
     @property
     def efermi(self):
-        """Get the Fermi energy from vasprun.xml."""
-        return self._data_obj.get_fermi_level()
+        return self._i('efermi')
 
     @property
-    def energies(self, nosc=True):
-        """Fetch the total energies."""
-
-        # energy without entropy
-        etype = "energy_no_entropy"
-        energies = self._data_obj.get_energies(status="all", etype=etype, nosc=nosc)
-
-        if energies is None:
-            return None
-
-        # two elements for a static run, both are similar,
-        # only take the last
-        if len(energies) == 2:
-            return np.asarray(energies[-1:])
-
-        return np.asarray(energies)
+    def is_static(self):
+        ibrion = self.param('IBRION', default=-1)
+        nsw = self.param('NSW', default=0)
+        return (ibrion == -1) or (nsw == 0)
 
     @property
-    def stress(self):
-        """Fetch last recorded stress."""
-        stress = self._data_obj.get_stress("final")
-        return stress
+    def is_md(self):
+        ibrion = self.param('IBRION', default=-1)
+        return ibrion == 0
 
     @property
-    def forces(self):
-        """Fetch the last recorded forces"""
-        forces = self._data_obj.get_forces("final")
-        return forces
+    def is_relaxation(self):
+        ibrion = self.param('IBRION', default=-1)
+        nsw = self.param('NSW', default=0)
+        return (ibrion in [1, 2, 3]) and (nsw > 0)
+
+    @property
+    def is_sc(self):
+        icharg = self._i('ICHARG')
+        return icharg < 10
+
+    @property
+    def occupations(self):
+        eig = self._array(parent='calculation/eigenvalues')
+        return eig['occ']
+
+    @property
+    def projected_occupations(self):
+        eig = self._array(parent='calculation/projected/eigenvalues')
+        return eig['occ']
+
+    @property
+    def bands(self):
+        eig = self._array(parent='calculation/eigenvalues')
+        return eig['eigene']
+
+    @property
+    def projected_bands(self):
+        eig = self._array(parent='calculation/projected/eigenvalues')
+        return eig['eigene']
 
     @property
     def vrp_tdos(self):
-        """Get the total dos from vasprun.xml."""
-
-        dos = self._data_obj.get_dos()
-
-        if dos is None:
-            return np.array([])
-
-        tdos = []
-        tdos.append(dos.get("energy"))
-
-        total = dos.get('total')
-        dosup = dos.get('up')
-        down = dos.get('down')
-
-        if dosup is None and down is None:
-            tdos.append(total['total'])
-        else:
-            tdos.append(dosup['total'])
-            tdos.append(down['total'])
-
-        return np.array(tdos)
+        return self._array(parent='dos/total')
 
     @property
     def vrp_pdos(self):
         """The partial DOS array"""
-        dos = self._data_obj.get_dos()
+        try:
+            dos = self._array(parent='dos/partial')
+        except Exception:  # pylint: disable=broad-except
+            dos = np.array([])
+        return dos
 
-        if dos is None:
-            return np.array([])
+    def param(self, key, default=None):
+        path = '/parameters//'
+        return self._i(key, path=path) or self._v(key, path=path) or default
 
-        pdos = []
-        pdos.append(dos.get("energy"))
+    def _varray(self, key, path='//'):
+        """Extract a <varray> tag"""
+        tag = self.tag('varray', key, path)
+        if tag is None:
+            return None
 
-        total = dos.get('total')
-        dosup = dos.get('up')
-        down = dos.get('down')
+        def split(string_):
+            return string_.text.split()
 
-        if dosup is None and down is None:
-            pdos.append(total['partial'])
-        else:
-            pdos.append(dosup['partial'])
-            pdos.append(down['partial'])
+        # using 'tag.v' is an lxml specific feature. If lxml gets replaced in the future, children
+        # with tag 'v' might have to be found in another way.
+        return np.array(map(split, tag.v), dtype=float)
 
-        return np.array(pdos)
+    def _array(self, parent, key=None, path='//'):
+        """Extract an <array> tag."""
+        pred = '[@name="%s"]' % key if key else ''
+        tag = self.tree.find(path + parent + '/array%s' % pred)
+        dims = [i.text for i in tag.findall('dimension')]
 
-    @property
-    def vrp_parameters(self):
-        """Assemble the 'output_parameters' node."""
-        parameters = {}
-        parameters.update(self._parsed_data.get('ocp_parameters'))
+        def getdtf(field):
+            d_type = field.attrib.get('type', float)
+            if d_type == 'string':
+                d_type = 'S128'
+            return (field.text.strip(), d_type)
 
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
-        for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
-            parameters[quantity] = getattr(self, quantity)
+        dtyp = np.dtype([getdtf(f) for f in tag.findall('field')])
+        ndim = len(dims)
+        shape = []
+        subset = tag.find('set')
+        for _ in range(ndim - 1):
+            if subset.find('set') is not None:
+                shape.append(len(subset.findall('set')))
+                subset = subset.find('set')
+        ldim = subset.findall('r')
+        mode = 'r'
+        if not ldim:
+            ldim = subset.findall('rc')
+            mode = 'rc'
+        shape.append(len(ldim))
 
-        return parameters
+        def split(string_):
+            """Splits a string based on mode in ['r', 'rc']"""
+            if mode == 'r':
+                return tuple(string_.text.split())
+            elif mode == 'rc':
+                return tuple([x.text.strip() for x in string_.c])
+            return None
+
+        data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
+        return data.reshape(shape)
+
+    def _i(self, key, path='//'):
+        """Extract an <i> tag"""
+        tag = self.tag('i', key, path)
+        res = None
+        if tag is not None:
+            if tag.attrib.get('type') == 'logical':
+                res = 'T' in tag.text
+            elif tag.attrib.get('type') == 'int':
+                res = int(tag.text)
+            elif tag.attrib.get('type') == 'string':
+                res = tag.text.strip()
+            else:
+                try:
+                    res = int(tag.text)
+                except ValueError:
+                    try:
+                        res = float(tag.text)
+                    except ValueError:
+                        res = tag.text.strip()
+        return res
+
+    def _v(self, key, path='//'):
+        """Extract an <v> tag"""
+        tag = self.tag('v', key, path)
+        if tag is not None:
+            dtype = tag.attrib.get('type', float)
+            return np.array(tag.text.split(), dtype=dtype)
+        return None
+
+    @staticmethod
+    def _fppath():
+        return '//structure[@name="finalpos"]//'
+
+    def tag(self, tag, key, path='//'):
+        path = '{p}{t}[@name="{n}"]'.format(p=path, t=tag, n=key)
+        return self.tree.find(path)
