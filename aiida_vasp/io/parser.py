@@ -35,8 +35,7 @@ Usage::
 
         def __init__(self, *args, **kwargs):
             super(ExampleFileParser, self).__init__(*args, **kwargs)
-            self._parsable_items = self.PARSABLE_ITEMS
-            self._parsed_data = {}
+            self.init_with_kwargs(**kwargs)
 
         def _parse_file(self, inputs):
             example_file = py.path.local(self._file_path)  # self._file_path is set by the superclass
@@ -152,6 +151,8 @@ class BaseFileParser(BaseParser):
           parse the file and fill the _parsed_data dictionary.
 
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
+        :param file_path: Initialise with a path to a file. The file will be parsed by the FileParser
+        :param data: Initialise with an aiida data object. This may be SingleFileData, KpointsData or StructureData.
 
     The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
     The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
@@ -161,7 +162,7 @@ class BaseFileParser(BaseParser):
 
     PARSABLE_ITEMS = {}
 
-    def __init__(self, calc_parser_cls=None):
+    def __init__(self, calc_parser_cls=None, **kwargs):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
         self._vasp_parser = calc_parser_cls
         if calc_parser_cls is not None:
@@ -175,7 +176,7 @@ class BaseFileParser(BaseParser):
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_path(self, path):
+    def _init_with_file_path(self, path):
         """Init with a file path."""
         self._data_obj = SingleFile(path=path)
         self._parsable_items = self.__class__.PARSABLE_ITEMS

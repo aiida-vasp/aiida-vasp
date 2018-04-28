@@ -13,7 +13,7 @@ def test_parse_vasprun():
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
     file_name = 'vasprun.xml'
     path = data_path('vasprun', file_name)
-    parser = VasprunParser(path=path)
+    parser = VasprunParser(file_path=path)
     occupations = numpy.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
     result = parser.get_quantity('occupations', {})
     assert result['occupations'].all() == occupations.all()

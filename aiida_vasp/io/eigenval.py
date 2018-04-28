@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.io.parser import BaseFileParser
 
 
 class EigParser(BaseFileParser):
@@ -23,16 +23,6 @@ class EigParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(EigParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
-
-    def _init_with_path(self, path):
-
-        self._data_obj = SingleFile(path=path)
-        self._parsed_data = {}
-        self._parsable_items = EigParser.PARSABLE_ITEMS
-
-    def _init_with_data(self, data):
-        self._data_obj = SingleFile(data=data)
-        self._parsed_data = {}
 
     @property
     def _parsed_object(self):

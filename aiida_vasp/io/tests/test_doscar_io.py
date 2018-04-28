@@ -13,7 +13,7 @@ def test_parse_doscar(vasprun_parser):
     """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
     file_name = 'DOSCAR'
     path = data_path('doscar', file_name)
-    parser = DosParser(path=path)
+    parser = DosParser(file_path=path)
     dos = numpy.array(
         [(-3.4398, -1.10400000e-43, -2.09900000e-43), (-1.5387, 1.40000000e-01, 2.66100000e-01), (0.3624, -3.62400000e-73, 2.00000000e+00),
          (2.2636, -1.33800000e-05, 2.00000000e+00), (4.1647, 3.15600000e+00, 8.00000000e+00), (6.0659, -2.41200000e-15, 8.00000000e+00),

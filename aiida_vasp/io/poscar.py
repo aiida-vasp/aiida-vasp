@@ -17,6 +17,13 @@ class PoscarParser(BaseFileParser):
     This is a wrapper for parsevasps Poscar class for parsing POSCAR format
     files. The Parsing direction depends on whether the Parser is initialised with
     'path = ...' or 'data = ...'.
+
+    The PoscarParser will deal with non standard atomic symbols internally if it is
+    initialised with StructureData. In case that a POSCAR with non standard atomic
+    symbols should be parsed, the comment line must contain the keyword '# Aiida-elements:'
+    and a list of the actual atomic symbols, e.g.:
+
+        # Aiida-elements: Ga In As
     """
 
     PARSABLE_ITEMS = {

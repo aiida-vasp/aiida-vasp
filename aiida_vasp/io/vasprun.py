@@ -41,7 +41,7 @@ class VasprunParser(BaseFileParser):
         self.tree = None
         self.init_with_kwargs(**kwargs)
 
-    def _init_with_path(self, path):
+    def _init_with_file_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
         self._parsable_items = VasprunParser.PARSABLE_ITEMS
