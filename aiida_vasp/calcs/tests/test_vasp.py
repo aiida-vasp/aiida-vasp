@@ -8,6 +8,7 @@ import pytest
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
@@ -35,7 +36,6 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
 @STRUCTURE_TYPES
 def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
     """Write structure input node to file, compare contents to reference string."""
-    from pymatgen.io.vasp.inputs import Poscar
     vasp_calc, _ = vasp_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with managed_temp_file() as temp_file:
@@ -46,10 +46,10 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
         with open(temp_file, 'r') as poscar:
             print poscar.read()
         with working_directory(temp_file):
-            result_pmg = Poscar.from_file(temp_file).structure
-            ref_pmg = vasp_structure_poscar.data_obj.get_pymatgen()
-            assert result_pmg.lattice, ref_pmg.lattice
-            assert result_pmg.formula == ref_pmg.formula
+            result = PoscarParser(file_path=temp_file).get_quantity('structure', {})['structure']
+            ref = vasp_structure_poscar.get_quantity('structure', {})['structure']
+            assert result.cell, ref.cell
+            assert result.get_formula() == ref.get_formula()
 
         with open(temp_file, 'r') as poscar:
             assert poscar.read() == vasp_structure_poscar.poscar_str()
@@ -71,8 +71,8 @@ def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_po
         vasp_calc.write_poscar(inp, temp_file)
         with open(temp_file, 'r') as poscar:
             lines = poscar.readlines()
-            pos_this = lines[2].split(' ')[0]
-            pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].split(' ')[0]
+            pos_this = lines[2].strip().split(' ')[0]
+            pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].strip().split(' ')[0]
             assert pos_this != pos_ref
 
 

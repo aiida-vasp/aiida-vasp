@@ -3,7 +3,6 @@
 from itertools import groupby
 
 import numpy as np
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from parsevasp.poscar import Poscar, Site
 from aiida_vasp.io.parser import BaseFileParser
@@ -35,17 +34,13 @@ class PoscarParser(BaseFileParser):
         },
     }
 
-    POSCAR_TPL = '{comment}\n1.0\n{lattice}\n{kind_counts}\ncartesian\n{positions}'
-    LATTICE_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}}'
-    POS_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}} {label}'
-
     def __init__(self, *args, **kwargs):
         super(PoscarParser, self).__init__(*args, **kwargs)
-        self.float_format = ''
+        self.precision = 12
         self.init_with_kwargs(**kwargs)
 
     def _init_with_precision(self, precision):
-        self.float_format = '.{}'.format(precision)
+        self.precision = precision
 
     def _init_with_data(self, data):
         """Init with Aiida StructureData"""
@@ -58,7 +53,7 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         try:
-            return Poscar(poscar_dict=aiida_to_parsevasp(self._data_obj))
+            return Poscar(poscar_dict=aiida_to_parsevasp(self._data_obj), prec=self.precision)
         except SystemExit:
             return None
 
@@ -75,14 +70,12 @@ class PoscarParser(BaseFileParser):
         # only accepts cartesian coordinates. Therefore we have to prepare POSCAR prior to parsing.
         poscar_string, res_dict = prepare_poscar(self._data_obj.path)
         try:
-            poscar_dict = Poscar(poscar_string=poscar_string).entries
+            poscar_dict = Poscar(poscar_string=poscar_string, prec=self.precision).entries
             poscar_dict.update(res_dict)
         except SystemExit:
             return {'structure': None}
 
         result['structure'] = get_data_class('structure')(cell=poscar_dict['unitcell'])
-
-        print res_dict['mapping']
 
         for site in poscar_dict['sites']:
 
@@ -97,6 +90,44 @@ class PoscarParser(BaseFileParser):
                 position=np.array(position), symbols=res_dict['mapping'][site.get_specie()], name=site.get_specie())
 
         return result
+
+    def write(self, filepath):
+        """
+        Override write a POSCAR file from data_obj.
+
+        Since parsevasp modifies the comment in the first line we have to rewrite it one more time.
+        """
+
+        if self._parsed_object is not None:
+            self._parsed_object.write(filepath)
+
+        with open(filepath, 'r') as file_obj:
+            content = file_obj.readlines()
+
+        comment = None
+
+        # check whether non standard types are used
+        mapping = {}
+        non_standard_symbol = False
+
+        for site in self._data_obj.sites:
+            symbol = self._data_obj.get_kind(site.kind_name).symbols[0]
+            mapping[site.kind_name] = site.kind_name
+            if site.kind_name != symbol:
+                mapping[site.kind_name] = symbol
+                non_standard_symbol = True
+
+        if non_standard_symbol:
+            comment = '# Aiida-elements:'
+            for kind_name in content[5].split():
+                comment += ' ' + mapping[kind_name]
+
+        if comment:
+            comment += '\n'
+            content[0] = comment
+
+            with open(filepath, 'w') as file_obj:
+                file_obj.writelines(content)
 
     def count_kinds(self):
         """
@@ -119,21 +150,33 @@ class PoscarParser(BaseFileParser):
 
         Accounts for lattices which have triple product < 0 by inverting lattice vectors in that case.
         """
-        cell = np.array(self._data_obj.cell)
-        if np.linalg.det(cell) < 0:
-            cell = cell * -1
-        comment = self._data_obj.label or self._data_obj.get_formula()
-        lattice = '\n'.join([self.LATTICE_ROW_TPL.format(*row, float_fmt=self.float_format) for row in cell])
-        kind_counts = ' '.join([str(count[1]) for count in self.count_kinds()])
-        positions = '\n'.join([
-            self.POS_ROW_TPL.format(*site.position, float_fmt=self.float_format, label=self._data_obj.get_kind(site.kind_name).symbol)
-            for site in self._data_obj.sites
-        ])
-        return self.POSCAR_TPL.format(comment=comment, lattice=lattice, kind_counts=kind_counts, positions=positions)
 
-    def write(self, filepath):
-        destination = py_path.local(filepath)
-        destination.write(self.poscar_str())
+        lines = self._parsed_object.get_string().split('\n')
+
+        comment = None
+
+        # check whether non standard types are used
+        mapping = {}
+        non_standard_symbol = False
+
+        for site in self._data_obj.sites:
+            symbol = self._data_obj.get_kind(site.kind_name).symbols[0]
+            mapping[site.kind_name] = site.kind_name
+            if site.kind_name != symbol:
+                mapping[site.kind_name] = symbol
+                non_standard_symbol = True
+
+        if non_standard_symbol:
+            comment = '# Aiida-elements:'
+            for kind_name in lines[5].split():
+                comment += ' ' + mapping[kind_name]
+
+        if comment:
+            lines[0] = comment
+
+        out_string = '\n'.join(lines)
+
+        return out_string
 
 
 def prepare_poscar(path):
@@ -148,10 +191,8 @@ def prepare_poscar(path):
     kind_names = lines[5].split()
     symbols = kind_names
 
-    print kind_names
-
     if comment.startswith('# Aiida-elements:'):
-        symbols = comment.split(':')[1].split(' ')
+        symbols = comment.split(': ')[1].split()
 
     mapping = {}
 
@@ -182,12 +223,18 @@ def aiida_to_parsevasp(structure):
     selective = [True, True, True]
     # As for now all Aiida-structures are in Cartesian coordinates.
     direct = True
+    non_standard_types = False
     sites = []
 
     for site in structure.sites:
-        # position = get_direct_coords(dictionary['unitcell'], np.asarray(site.position))
-        position = np.asarray(site.position)
+
+        position = get_direct_coords(dictionary['unitcell'], site.position)
         sites.append(Site(site.kind_name, position, selective=selective, direct=direct))
+
+    if non_standard_types:
+        # Using non standard kind_names. Add the required comment line.
+        dictionary['comment'] = dictionary['aiida-elements']
+
     dictionary["sites"] = sites
     return dictionary
 
@@ -202,10 +249,10 @@ def get_direct_coords(cell, position):
     b_1 = 1.0 / omega * np.cross(cell[2], cell[0])
     b_2 = 1.0 / omega * np.cross(cell[0], cell[1])
 
-    rbasis = np.asarray([b_0, b_1, b_2])
+    rbasis = np.vstack([b_0, b_1, b_2])
 
     # Convert to direct coordinates:
 
-    direct = np.asarray([np.dot(position, rbasis[0]), np.dot(position, rbasis[1])], np.dot(position, rbasis[2]))
+    direct = np.asarray([np.dot(position, rbasis[0]), np.dot(position, rbasis[1]), np.dot(position, rbasis[2])])
 
     return direct
