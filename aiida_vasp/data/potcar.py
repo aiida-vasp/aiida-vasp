@@ -119,7 +119,6 @@ from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
-from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
@@ -128,6 +127,7 @@ from aiida.orm.data import Data
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+from aiida_vasp.utils.aiida_utils import get_current_user
 
 
 def normalize_potcar_contents(potcar_contents):
@@ -371,7 +371,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     _query_label = 'potcar_file'
     _query_type_string = 'data.vasp.potcar_file.'
-    _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
+    _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData.'
     _VERSION = 1
 
     def set_file(self, filepath):
@@ -510,7 +510,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     _query_label = 'potcar'
     _query_type_string = 'data.vasp.potcar.'
-    _plugin_type_string = 'data.vasp.potcar.PotcarData'
+    _plugin_type_string = 'data.vasp.potcar.PotcarData.'
     _VERSION = 1
 
     GROUP_TYPE = 'data.vasp.potcar.family'
@@ -748,7 +748,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             if not group:
                 group = Group(name=group_name)
 
-        if group.user != get_automatic_user():
+        if group.user.pk != get_current_user().pk:
             raise UniquenessError(
                 'There is already a PotcarFamily group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
                     group_name, group.user.email))
@@ -782,9 +782,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         num_files = len(potcar_finder.potcars)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_tried_upload = cls._try_upload_potcars(potcar_finder.potcars, stop_if_existing=stop_if_existing, dry_run=dry_run)
-        new_potcars_added = [
-            (potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload if potcar.uuid not in family_nodes_uuid
-        ]
+        new_potcars_added = [(potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload
+                             if potcar.uuid not in family_nodes_uuid]
 
         for potcar, created, file_path in new_potcars_added:
             if created:
