@@ -65,6 +65,15 @@ class Input(object):
         structure = Input(types=['structure', 'cif'], doc='input structure')
         potential = Input(types='vasp.potcar', param='kind')
 
+    Usage::
+
+        MyCalculation(JobCalculation):
+            __metaclass__ = CalcMeta
+            potential = Input(types='vasp.potcar', param='kind')
+
+        my_calc = MyCalculation
+        potential = load_node(...)
+        my_calc.use_potential(potential, kind='In')
     """
 
     def __init__(self, types, param=None, ln=None, doc=''):

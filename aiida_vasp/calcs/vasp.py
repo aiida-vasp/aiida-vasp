@@ -27,6 +27,40 @@ class VaspCalculation(VaspCalcBase):
     but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
 
     Floating point precision for writing POSCAR files can be adjusted using ``settings['poscar_precision']``, default: 10
+
+    The following assumes you are familiar with the AiiDA data structures and how to set up and run an AiiDA calculation in general.
+
+    Example usage::
+
+        from aiida.orm import CalculationFactory, DataFactory
+        from aiida.work import submit
+
+        proc = CalculationFactory('vasp.vasp').process()
+        inputs = proc.get_inputs_template()
+
+        inputs.parameter = <ParameterData with INCAR params>
+        inputs.structure = <StructureData> or <CifData>
+        inputs.kpoints = <KpointsData>
+        inputs.settings = <ParameterData with parser settings etc>
+        inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure, ...)
+        inputs.code = <Code representing vasp on your cluster>
+        inputs._options = <Computer, resources, etc, AiiDA specific stuff>
+
+        submit(proc, **inputs)
+
+    Example Low-Level usage::
+
+        ## assuming already set up incar (ParameterData), structure, kpoints, settings, etc
+        calc = CalculationFactory('vasp.vasp')()
+        calc.use_parameter(incar)
+        calc.use_structure(structure)
+        calc.use_kpoints(kpoints)
+        calc.use_settings(settings)
+        calc.use_potential(potential_kind_1, kind=<kind 1>)
+        calc.use_potential(potential_kind_2, kind=<kind 2>)
+        ## unspecific to this calculation: set computer, resources, etc
+        calc.submit()
+
     """
 
     default_parser = 'vasp.vasp'

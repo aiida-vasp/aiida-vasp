@@ -146,3 +146,22 @@ class MultiPotcarIo(object):
         poscario = PoscarIo(structure)
         symbol_order = poscario.potentials_order
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])
+
+    def get_potentials_dict(self, structure):
+        """
+        Get a dictionary {kind_name: PotcarData} that would fit the structure.
+
+        If the PotcarData contained in MultiPotcarIo do not match the structure, an exception is raised.
+        """
+        structure_elements = structure.get_symbols_set()
+        if structure_elements != self.element_symbols:
+            raise ValueError('structure elements do not match POTCAR elements')
+        if len(structure.get_kind_names) != len(structure_elements):
+            raise ValueError('structure has more kind names than elements')
+
+        element_potcars = {potcario.node.element: potcario.node for potcario in self.potcars}
+        return {kind.name: element_potcars[kind.symbol] for kind in structure.kinds}
+
+    @property
+    def element_symbols(self):
+        return {potcario.node.element for potcario in self.potcars}
