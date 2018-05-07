@@ -782,8 +782,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         num_files = len(potcar_finder.potcars)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
         potcars_tried_upload = cls._try_upload_potcars(potcar_finder.potcars, stop_if_existing=stop_if_existing, dry_run=dry_run)
-        new_potcars_added = [(potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload
-                             if potcar.uuid not in family_nodes_uuid]
+        new_potcars_added = [
+            (potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload if potcar.uuid not in family_nodes_uuid
+        ]
 
         for potcar, created, file_path in new_potcars_added:
             if created:
