@@ -4,13 +4,30 @@ import numpy as np
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
 
+# Map from number of columns in DOSCAR to dtype.
+DTYPES = {
+    3:
+    np.dtype([('energy', float), ('total', float), ('integrated', float)]),
+    5:
+    np.dtype([('energy', float), ('total', float, (2,)), ('integrated', float, (2,))]),
+    10:
+    np.dtype([('energy', float), ('s', float), ('py', float), ('px', float), ('pz', float), ('dxy', float), ('dyz', float), ('dz2', float),
+              ('dxz', float), ('x2-y2', float)]),
+    19:
+    np.dtype([('energy', float), ('s', float, (2,)), ('py', float, (2,)), ('px', float, (2,)), ('pz', float, (2,)), ('dxy', float, (2,)),
+              ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('x2-y2', float, (2,))]),
+    37:
+    np.dtype([('energy', float), ('s', float, (4,)), ('py', float, (4,)), ('px', float, (4,)), ('pz', float, (4,)), ('dxy', float, (4,)),
+              ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('x2-y2', float, (4,))])
+}
+
 
 class DosParser(BaseFileParser):
     """Parse a DOSCAR file from a vasp run."""
 
     PARSABLE_ITEMS = {
         'dos': {
-            'inputs': ['vrp_pdos', 'vrp_tdos'],
+            'inputs': [],
             'parsers': ['vasprun.xml', 'DOSCAR'],
             'nodeName': 'dos',
             'prerequisites': ['vrp_pdos', 'vrp_tdos']
@@ -27,37 +44,20 @@ class DosParser(BaseFileParser):
         result = inputs
         result = {}
 
-        header, dcp_pdos, dcp_tdos = self._read_doscar()
+        header, pdos, tdos = self._read_doscar()
+
+        print tdos
 
         result['header'] = header
 
-        vrp_pdos = inputs.get('vrp_pdos', np.array([]))
-        vrp_tdos = inputs.get('vrp_tdos', np.array([]))
-
-        for array in [vrp_pdos, vrp_tdos, dcp_pdos, dcp_tdos]:
+        for array in [pdos, tdos]:
             if array.size == 0:
                 return {'dos': None}
 
         dosnode = get_data_class('array')()
-        # vrp_pdos is a numpy array, and thus not directly bool-convertible
-        if vrp_pdos.size > 0:
-            pdos = vrp_pdos.copy()
-            for i, name in enumerate(vrp_pdos.dtype.names[1:]):
-                num_spins = vrp_pdos.shape[1]
-                # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
-                cur = dcp_pdos[:, :, i + 1:i + 1 + num_spins].transpose(0, 2, 1)
-                cond = vrp_pdos[name] < 0.1
-                pdos[name] = np.where(cond, cur, vrp_pdos[name])
-            dosnode.set_array('pdos', pdos)
-        num_spins = 1
-        if dcp_tdos.shape[1] == 5:
-            num_spins = 2
-        tdos = vrp_tdos[:num_spins, :].copy()
-        for i, name in enumerate(vrp_tdos.dtype.names[1:]):
-            cur = dcp_tdos[:, i + 1:i + 1 + num_spins].transpose()
-            cond = vrp_tdos[:num_spins, :][name] < 0.1
-            tdos[name] = np.where(cond, cur, vrp_tdos[:num_spins, :][name])
+        dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
+
         result['dos'] = dosnode
 
         return result
@@ -77,20 +77,34 @@ class DosParser(BaseFileParser):
             ndos = int(ndos)
             raw = self.splitlines(dos)
 
-        # either (e tot intd) or (e tot^ tot_ intd^ intd_)
-        tdos = np.array(raw[:ndos])
-        # either (e s (p) (d)) -> 10
-        # or (e s^ s_ (p^ p_) (d^ d_)) -> 19
-        # or (e s[m] (p[m]) (d[m]) -> 37
-        # or (e s^[m] s_[m] (p^[m] p_[m]) (d^[m] d_[m]) -> 73
-        # probably format later with vasprun or PROCAR info?
-        # from vasprun: pdos[i][1+j::n_spin] <-> vrunpdos[i][j][1:]
+        # Get the number of columns for the tdos section.
+        count = len(raw[ndos - 1])
+
+        num_spin = 1
+        if count == 5:
+            num_spin = 2
+        if count == 9:
+            num_spin = 4
+
+        tdos_raw = np.array(raw[:ndos])
+        tdos = np.zeros((tdos_raw.shape[0]), DTYPES[count])
+        tdos['energy'] = tdos_raw[:, 0]
+        for i, name in enumerate(DTYPES[count].names[1:]):
+            tdos[name] = np.squeeze(tdos_raw[:, i + 1:i + 1 + num_spin], axis=1)
+
         pdos = []
         if line_2 in raw:
             for _ in range(num_ions):
                 start = raw.index(line_2) + 1
                 pdos += [raw[start:start + ndos]]
-            pdos = np.array(pdos)
+            # Get the number of columns for the pdos section.
+            count = len(pdos[-1])
+            pdos_raw = np.array(pdos)
+
+            pdos = np.zeros((pdos_raw.shape[0], pdos_raw.shape[1]), DTYPES[count])
+            pdos['energy'] = pdos_raw[:, :, 0]
+            for i, name in enumerate(DTYPES[count].names[1:]):
+                pdos[name] = np.squeeze(pdos_raw[:, :, i + 1:i + 1 + num_spin], axis=2)
 
         header = {}
         header[0] = line_0

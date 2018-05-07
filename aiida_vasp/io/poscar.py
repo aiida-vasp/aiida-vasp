@@ -17,10 +17,16 @@ class PoscarParser(BaseFileParser):
     files. The Parsing direction depends on whether the Parser is initialised with
     'path = ...' or 'data = ...'.
 
+    :keyword file_path: Path to the POSCAR file.
+    :keyword data: Aiida StructureData for parsing.
+    :keyword precision: 'int' number specifying the number of digits for floating point
+                        numbers that will be written to POSCAR.
+                        DEFAULT = 12
+
     The PoscarParser will deal with non standard atomic symbols internally if it is
     initialised with StructureData. In case that a POSCAR with non standard atomic
     symbols should be parsed, the comment line must contain the keyword '# Aiida-elements:'
-    and a list of the actual atomic symbols, e.g.:
+    followed by a list of the actual atomic symbols, e.g.:
 
         # Aiida-elements: Ga In As
     """
@@ -81,6 +87,7 @@ class PoscarParser(BaseFileParser):
 
             position = site.get_position()
             if not res_dict['cartesian']:
+                # Convert coordinates to cartesian for Aiida.
                 position_cart = poscar_dict['unitcell'][0] * position[0] \
                                 + poscar_dict['unitcell'][1] * position[1] \
                                 + poscar_dict['unitcell'][2] * position[2]
@@ -102,9 +109,23 @@ class PoscarParser(BaseFileParser):
             self._parsed_object.write(filepath)
 
         with open(filepath, 'r') as file_obj:
-            content = file_obj.readlines()
+            lines = file_obj.readlines()
 
-        comment = None
+        # Check whether non-standard types are used and if so replace the comment line.
+        lines[0] = self._get_comment_from_lines(lines) + '\n'
+
+        with open(filepath, 'w') as file_obj:
+            file_obj.writelines(lines)
+
+    def _get_comment_from_lines(self, lines):
+        """
+        Prepare the comment line for POSCAR.
+
+        in case non standard kind_names are used, return the mapping kind_name -> symbol.
+        Otherwise return the original comment line.
+        """
+
+        comment = lines[0].strip()
 
         # check whether non standard types are used
         mapping = {}
@@ -118,16 +139,12 @@ class PoscarParser(BaseFileParser):
                 non_standard_symbol = True
 
         if non_standard_symbol:
+            # Generate the comment for the mapping of non standard kind_names.
             comment = '# Aiida-elements:'
-            for kind_name in content[5].split():
+            for kind_name in lines[5].split():
                 comment += ' ' + mapping[kind_name]
 
-        if comment:
-            comment += '\n'
-            content[0] = comment
-
-            with open(filepath, 'w') as file_obj:
-                file_obj.writelines(content)
+        return comment
 
     def count_kinds(self):
         """
@@ -145,42 +162,25 @@ class PoscarParser(BaseFileParser):
         return [kind[0] for kind in self.count_kinds()]
 
     def poscar_str(self):
-        """
-        Create a string of the POSCAR contents.
-
-        Accounts for lattices which have triple product < 0 by inverting lattice vectors in that case.
-        """
+        """Create a string of the POSCAR contents."""
 
         lines = self._parsed_object.get_string().split('\n')
-
-        comment = None
-
-        # check whether non standard types are used
-        mapping = {}
-        non_standard_symbol = False
-
-        for site in self._data_obj.sites:
-            symbol = self._data_obj.get_kind(site.kind_name).symbols[0]
-            mapping[site.kind_name] = site.kind_name
-            if site.kind_name != symbol:
-                mapping[site.kind_name] = symbol
-                non_standard_symbol = True
-
-        if non_standard_symbol:
-            comment = '# Aiida-elements:'
-            for kind_name in lines[5].split():
-                comment += ' ' + mapping[kind_name]
-
-        if comment:
-            lines[0] = comment
-
+        # Parsevasp replaces the comment line, so we have to update it in case
+        # that non standard kind_names have been used.
+        lines[0] = self._get_comment_from_lines(lines)
         out_string = '\n'.join(lines)
 
         return out_string
 
 
 def prepare_poscar(path):
-    """Workaround for Cartesian coordinate POSCAR, which is currently not supported by parsevasp."""
+    """
+    Prepare POSCAR for parsing with parsevasp.
+
+    If the POSSCAR is in Cartesian format, it has to be converted to Direct coordinates.
+    In addition in case that non-standard kind_names have been used, the mapping from
+    kind_names to symbols will be read from the comment line.
+    """
 
     result = {}
 
@@ -191,6 +191,7 @@ def prepare_poscar(path):
     kind_names = lines[5].split()
     symbols = kind_names
 
+    # Check for non-standard kind_names mapping in the comment line.
     if comment.startswith('# Aiida-elements:'):
         symbols = comment.split(': ')[1].split()
 
@@ -201,10 +202,12 @@ def prepare_poscar(path):
 
     result['mapping'] = mapping
 
-    out_string = ""
+    out_string = ''
     cartesian = False
+
     for line in lines:
         if line.lower().startswith('c'):
+            # Change from 'Cartesian' to 'Direct'.
             line = 'Direct\n'
             cartesian = True
 
@@ -223,17 +226,12 @@ def aiida_to_parsevasp(structure):
     selective = [True, True, True]
     # As for now all Aiida-structures are in Cartesian coordinates.
     direct = True
-    non_standard_types = False
     sites = []
 
     for site in structure.sites:
 
         position = get_direct_coords(dictionary['unitcell'], site.position)
         sites.append(Site(site.kind_name, position, selective=selective, direct=direct))
-
-    if non_standard_types:
-        # Using non standard kind_names. Add the required comment line.
-        dictionary['comment'] = dictionary['aiida-elements']
 
     dictionary["sites"] = sites
     return dictionary
@@ -242,8 +240,7 @@ def aiida_to_parsevasp(structure):
 def get_direct_coords(cell, position):
     """Convert cartesian coordinates to direct coordinates."""
 
-    # First calculate the reciprocal basis
-
+    # First calculate the reciprocal basis.
     omega = np.dot(cell[0], np.cross(cell[1], cell[2]))
     b_0 = 1.0 / omega * np.cross(cell[1], cell[2])
     b_1 = 1.0 / omega * np.cross(cell[2], cell[0])
@@ -252,7 +249,6 @@ def get_direct_coords(cell, position):
     rbasis = np.vstack([b_0, b_1, b_2])
 
     # Convert to direct coordinates:
-
     direct = np.asarray([np.dot(position, rbasis[0]), np.dot(position, rbasis[1]), np.dot(position, rbasis[2])])
 
     return direct

@@ -151,8 +151,11 @@ class BaseFileParser(BaseParser):
           parse the file and fill the _parsed_data dictionary.
 
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
-        :param file_path: Initialise with a path to a file. The file will be parsed by the FileParser
-        :param data: Initialise with an aiida data object. This may be SingleFileData, KpointsData or StructureData.
+
+        :keyword file_path: Initialise with a path to a file. The file will be parsed by the FileParser
+        :keyword data: Initialise with an aiida data object. This may be SingleFileData, KpointsData or StructureData.
+
+    Additional keyword arguments might be defined by the inheriting classes.
 
     The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
     The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
@@ -243,8 +246,9 @@ class BaseFileParser(BaseParser):
         The data_obj is either an instance of one of the parsevasp parser classes,
         which provide a write function, an instance of an aiida data node or an
         instance of SingleFile in case that it is just a file and does not have
-        it's own 'write' method. In particular FileParsers storing aiida data nodes
-        will have to override this.
+        it's own 'write' method.
+
+        In particular FileParsers storing aiida data nodes. will have to override this.
         """
         return self._data_obj
 
