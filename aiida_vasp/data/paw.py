@@ -88,7 +88,7 @@ class LegacyPawData(Data):
         group, group_created = Group.get_or_create(name=famname, type_string=cls.group_type)
 
         if group.user.pk != get_current_user().pk:
-            raise UniquenessError("There is already a UpfFamily group "
+            raise UniquenessError("There is already a LegacyPawData family group "
                                   "with name {}, but it belongs to user {},"
                                   " therefore you cannot modify it".format(famname, group.user.email))
         return group, group_created
