@@ -8,3 +8,8 @@ omit =
 
 [html]
 directory = coverage/html
+
+[paths]
+source =
+    aiida_vasp
+    .tox/*/lib/python*/site-packages/aiida_vasp
