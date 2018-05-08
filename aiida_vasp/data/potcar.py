@@ -119,7 +119,6 @@ from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
-from aiida.backends.utils import get_automatic_user
 from aiida.common import aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
@@ -128,6 +127,7 @@ from aiida.orm.data import Data
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+from aiida_vasp.utils.aiida_utils import get_current_user
 
 
 def normalize_potcar_contents(potcar_contents):
@@ -371,7 +371,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     _query_label = 'potcar_file'
     _query_type_string = 'data.vasp.potcar_file.'
-    _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData'
+    _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData.'
     _VERSION = 1
 
     def set_file(self, filepath):
@@ -510,7 +510,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     _query_label = 'potcar'
     _query_type_string = 'data.vasp.potcar.'
-    _plugin_type_string = 'data.vasp.potcar.PotcarData'
+    _plugin_type_string = 'data.vasp.potcar.PotcarData.'
     _VERSION = 1
 
     GROUP_TYPE = 'data.vasp.potcar.family'
@@ -689,7 +689,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_potcars_from_structure(cls, structure, family_name, mapping=None):
         """
-        Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its UpfData object.
+        Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with its PotcarData object.
 
         :param structure: An AiiDA structure
         :param family_name: The POTCAR family to be used
@@ -748,15 +748,15 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             if not group:
                 group = Group(name=group_name)
 
-        if group.user != get_automatic_user():
+        if group.user.pk != get_current_user().pk:
             raise UniquenessError(
-                'There is already a PotcarFamily group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
+                'There is already a POTCAR family group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
                     group_name, group.user.email))
 
         if group_description:
             group.description = group_description
         elif group_created:
-            raise ValueError('A new PotcarGroup {} should be created but no description was given!'.format(group_name))
+            raise ValueError('A new POTCAR family {} should be created but no description was given!'.format(group_name))
 
         return group
 

@@ -31,3 +31,28 @@ def get_data_node(data_type, *args, **kwargs):
 def get_data_class(data_type):
     from aiida.orm import DataFactory
     return DataFactory(data_type)
+
+
+@dbenv
+def backend_obj_users():
+    """Test if aiida accesses users through backend object."""
+    backend_obj_flag = False
+    try:
+        from aiida.backends.utils import get_automatic_user  # pylint: disable=unused-variable,no-name-in-module
+    except ImportError:
+        backend_obj_flag = True
+    return backend_obj_flag
+
+
+@dbenv
+def get_current_user():
+    """Get current user backwards compatibly with aiida-core <= 0.12.1."""
+    current_user = None
+    if backend_obj_users():
+        from aiida.orm.backend import construct_backend  # pylint: disable=no-name-in-module
+        backend = construct_backend()
+        current_user = backend.users.get_automatic_user()
+    else:
+        from aiida.backends.utils import get_automatic_user  # pylint: disable=no-name-in-module
+        current_user = get_automatic_user()
+    return current_user
