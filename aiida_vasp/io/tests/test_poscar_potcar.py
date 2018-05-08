@@ -13,18 +13,15 @@ from aiida_vasp.utils.fixtures.data import POTCAR_MAP
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_poscar_potcar(fresh_aiida_env, vasp_structure_poscar, potcar_family):
     """Test that the order of potentials corresponds between POSCAR and POTCAR."""
-    poscar_lines = vasp_structure_poscar.poscar_str().splitlines()
-    poscar_counts = [int(count) for count in poscar_lines[5].split(' ')]
-    index = 0
-    poscar_sites = poscar_lines[7:]
-    poscar_pot_order = []
-    for count in poscar_counts:
-        poscar_pot_order.append(poscar_sites[index].rsplit(' ', 1)[1])
-        index += count
+    poscar_lines = vasp_structure_poscar.get_string().splitlines()
+
+    print poscar_lines
+    poscar_pot_order = poscar_lines[5].split()
+
     potcar_cls = get_data_class('vasp.potcar')
     potcar_dict = potcar_cls.get_potcars_dict(elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP)
     mulpotio = MultiPotcarIo.from_structure(structure=vasp_structure_poscar.data_obj, potentials_dict=potcar_dict)
-    assert [re.sub('_.*', '', symbol) for symbol in vasp_structure_poscar.potentials_order] == poscar_pot_order
+    assert vasp_structure_poscar.potentials_order == poscar_pot_order
     assert [potio.node.full_name for potio in mulpotio.potcars] == [
         POTCAR_MAP[element] for element in vasp_structure_poscar.potentials_order
     ]

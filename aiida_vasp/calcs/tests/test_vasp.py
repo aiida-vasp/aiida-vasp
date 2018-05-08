@@ -52,7 +52,7 @@ def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar)
             assert result.get_formula() == ref.get_formula()
 
         with open(temp_file, 'r') as poscar:
-            assert poscar.read() == vasp_structure_poscar.poscar_str()
+            assert poscar.read() == vasp_structure_poscar.get_string()
 
 
 @STRUCTURE_TYPES
@@ -72,7 +72,7 @@ def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_po
         with open(temp_file, 'r') as poscar:
             lines = poscar.readlines()
             pos_this = lines[2].strip().split(' ')[0]
-            pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].strip().split(' ')[0]
+            pos_ref = vasp_structure_poscar.get_string().split('\n')[2].strip().split(' ')[0]
             assert pos_this != pos_ref
 
 

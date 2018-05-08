@@ -59,7 +59,7 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         try:
-            return Poscar(poscar_dict=aiida_to_parsevasp(self._data_obj), prec=self.precision)
+            return Poscar(poscar_dict=aiida_to_parsevasp(self._data_obj), prec=self.precision, conserve_order=True)
         except SystemExit:
             return None
 
@@ -76,7 +76,7 @@ class PoscarParser(BaseFileParser):
         # only accepts cartesian coordinates. Therefore we have to prepare POSCAR prior to parsing.
         poscar_string, res_dict = prepare_poscar(self._data_obj.path)
         try:
-            poscar_dict = Poscar(poscar_string=poscar_string, prec=self.precision).entries
+            poscar_dict = Poscar(poscar_string=poscar_string, prec=self.precision, conserve_order=True).entries
             poscar_dict.update(res_dict)
         except SystemExit:
             return {'structure': None}
@@ -159,9 +159,10 @@ class PoscarParser(BaseFileParser):
 
     @property
     def potentials_order(self):
+        """Get the order of the potentials from the StructureData stored in _data_obj."""
         return [kind[0] for kind in self.count_kinds()]
 
-    def poscar_str(self):
+    def get_string(self):
         """Create a string of the POSCAR contents."""
 
         lines = self._parsed_object.get_string().split('\n')

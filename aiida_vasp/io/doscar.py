@@ -97,8 +97,9 @@ class DosParser(BaseFileParser):
             for _ in range(num_ions):
                 start = raw.index(line_2) + 1
                 pdos += [raw[start:start + ndos]]
+
             # Get the number of columns for the pdos section.
-            count = len(pdos[-1])
+            count = len(pdos[-1][-1])
             pdos_raw = np.array(pdos)
 
             pdos = np.zeros((pdos_raw.shape[0], pdos_raw.shape[1]), DTYPES[count])
