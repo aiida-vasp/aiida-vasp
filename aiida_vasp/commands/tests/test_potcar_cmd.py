@@ -194,3 +194,9 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
     result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', str(new_arch)])
     assert not result.exception
     assert not new_arch.exists()
+
+
+def test_call_from_vasp():
+    import subprocess
+    output = subprocess.check_output(['verdi', 'data', 'potcar-vasp', '--help'])
+    assert 'Usage: verdi data vasp-potcar' in output
