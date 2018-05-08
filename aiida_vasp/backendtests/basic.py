@@ -99,26 +99,6 @@ class BasicCalcTest(AiidaTestCase):
         os.chdir(os.path.dirname(working_dir))
         self.assertIsNotNone(poscar)
 
-    def test_write_kpoints_mesh(self):
-        """Check that KPOINTS in mesh format is written correctly"""
-        from aiida_vasp.io.kpoints import KpParser
-        calc = self._get_calc('c', 'm')
-        inp = calc.get_inputs_dict()
-        calc.write_kpoints(inp, self.tmpf)
-        kpp = KpParser(self.tmpf)
-        self.assertTrue((kpp.kpoints == Common.kpoints_mesh_res()).all())
-
-    def test_write_kpoints_list(self):
-        """Check that KPOINTS in list format is written correctly"""
-        from aiida_vasp.io.kpoints import KpParser
-        calc = self._get_calc('c', 'l')
-        inp = calc.get_inputs_dict()
-        calc.write_kpoints(inp, self.tmpf)
-        kpp = KpParser(self.tmpf)
-        kres, wres = Common.kpoints_list_res()
-        self.assertTrue((kpp.kpoints == kres).all())
-        self.assertTrue((kpp.weights == wres).all())
-
     def test_write_potcar(self):
         """Check that POTCAR is written correctly"""
         calc = self._get_calc('c', 'm')

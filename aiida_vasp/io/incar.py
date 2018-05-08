@@ -136,9 +136,9 @@ class IncarIo(object):
         params = parameter_node.get_dict()
         self.incar_dict = self.normalize_mapping(params)
 
-    def read_file(self, filename):
+    def read_file(self, file_path):
         """Read an INCAR file into internal storage."""
-        with open(filename) as incar_fo:
+        with open(file_path) as incar_fo:
             self.read_file_object(incar_fo)
 
     def read_file_object(self, file_object):
@@ -164,8 +164,8 @@ class IncarIo(object):
         items = [IncarItem(*item) for item in sorted(self.incar_dict.items())]
         return '\n'.join((str(incar_item) for incar_item in items))
 
-    def write(self, filename):
-        with open(filename, 'w') as incar_fo:
+    def write(self, file_path):
+        with open(file_path, 'w') as incar_fo:
             incar_fo.write(str(self))
 
     def get_dict(self):

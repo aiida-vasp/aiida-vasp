@@ -1,7 +1,7 @@
 set -ev
 case "$TEST_TYPE" in 
     unittests)
-        tox
+        tox -e $TOX_ENV
         ;;
     pre-commit)
         pre-commit run --all-files || ( git diff; git status; exit 1; )

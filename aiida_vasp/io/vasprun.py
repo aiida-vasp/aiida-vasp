@@ -1,4 +1,4 @@
-"""Tools for parsing vasprun.xml files"""
+"""Tools for parsing vasprun.xml files."""
 
 try:
     from lxml.objectify import parse
@@ -7,13 +7,56 @@ except ImportError:
 import datetime as dt
 import numpy as np
 
+from aiida_vasp.io.parser import BaseFileParser
 
-class VasprunParser(object):
+DEFAULT_OPTIONS = {'quantities_to_parse': ['occupations', 'vrp_pdos', 'vrp_tdos']}
+
+
+class VasprunParser(BaseFileParser):
     """Parse xml into objecttree, provide convenience methods for parsing."""
 
-    def __init__(self, fname):
-        super(VasprunParser, self).__init__()
-        self.tree = parse(fname)
+    PARSABLE_ITEMS = {
+        'occupations': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequisites': []
+        },
+        'vrp_pdos': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequisites': []
+        },
+        'vrp_tdos': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'intermediate_data',
+            'prerequisites': []
+        },
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(VasprunParser, self).__init__(*args, **kwargs)
+        self._parsed_data = None
+        self._parsable_items = VasprunParser.PARSABLE_ITEMS
+
+        self.tree = parse(self._file_path)
+
+    def _parse_file(self, inputs):
+
+        settings = inputs.get('settings', DEFAULT_OPTIONS)
+        if not settings:
+            settings = DEFAULT_OPTIONS
+
+        quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
+
+        result = {}
+        for quantity in quantities_to_parse:
+            if quantity in self._parsable_items:
+                result[quantity] = getattr(self, quantity)
+
+        return result
 
     @property
     def program(self):
@@ -94,11 +137,11 @@ class VasprunParser(object):
         return eig['eigene']
 
     @property
-    def tdos(self):
+    def vrp_tdos(self):
         return self._array(parent='dos/total')
 
     @property
-    def pdos(self):
+    def vrp_pdos(self):
         """The partial DOS array"""
         try:
             dos = self._array(parent='dos/partial')
@@ -119,6 +162,8 @@ class VasprunParser(object):
         def split(string_):
             return string_.text.split()
 
+        # using 'tag.v' is an lxml specific feature. If lxml gets replaced in the future, children
+        # with tag 'v' might have to be found in another way.
         return np.array(map(split, tag.v), dtype=float)
 
     def _array(self, parent, key=None, path='//'):
@@ -150,9 +195,11 @@ class VasprunParser(object):
 
         def split(string_):
             """Splits a string based on mode in ['r', 'rc']"""
-            if mode == 'rc':
+            if mode == 'r':
+                return tuple(string_.text.split())
+            elif mode == 'rc':
                 return tuple([x.text.strip() for x in string_.c])
-            return tuple(string_.text.split())
+            return None
 
         data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
         return data.reshape(shape)

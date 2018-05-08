@@ -12,6 +12,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
@@ -72,6 +73,20 @@ def temp_pot_folder(tmpdir):
     return target
 
 
+# pylint: disable=protected-access
+def duplicate_potcar_data(potcar_node):
+    """Create and store (and return) a duplicate of a given PotcarData node."""
+    from aiida_vasp.data.potcar import temp_potcar
+    file_node = potcar_node.find_file_node().copy()
+    with temp_potcar(potcar_node.get_content()) as potcar_file:
+        file_node.set_file(potcar_file.strpath)
+        file_node._set_attr('md5', 'abcd')
+        file_node._set_attr('full_name', potcar_node.full_name)
+        file_node.store()
+    data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
+    return data_node
+
+
 @pytest.fixture
 def potcar_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
@@ -80,6 +95,12 @@ def potcar_family(aiida_env, temp_pot_folder):
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
     potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
+    if len(potcar_cls.find(full_name='In_d')) == 1:
+        family_group = potcar_cls.get_potcar_group(POTCAR_FAMILY_NAME)
+        in_d = potcar_cls.find(full_name='In_d')[0]
+        in_d_double = duplicate_potcar_data(in_d)
+        family_group.add_nodes(in_d_double)
+        assert in_d.uuid == potcar_cls.find(full_name='In_d')[0].uuid
     assert 'As' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'As')
     assert 'Ga' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'Ga')
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
@@ -114,6 +135,14 @@ def vasp_structure(request, aiida_env):
         structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
         structure.append_atom(position=[.75, .75, .75], symbols='As')
+    elif request.param == 'str-Al':
+        larray = numpy.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        alat = 4.04
+        structure = DataFactory('structure')(cell=larray * alat)
+        structure.append_atom(position=numpy.array([0, 0, 0]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
     return structure
 
 
@@ -196,6 +225,16 @@ def ref_retrieved_nscf():
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
         retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
+
+
+@pytest.fixture
+def vasprun_parser():
+    """Return an instance of VasprunParser for a reference vasprun.xml."""
+    file_name = 'vasprun.xml'
+    path = data_path('vasprun', file_name)
+    parser = VasprunParser(path)
+
+    return parser
 
 
 def _ref_kp_list():

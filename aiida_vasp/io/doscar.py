@@ -1,32 +1,82 @@
 """DOSCAR (VASP format) utilities"""
 import numpy as np
 
-from .parser import BaseParser
+from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.io.parser import BaseFileParser
 
 
-class DosParser(BaseParser):
+class DosParser(BaseFileParser):
     """Parse a DOSCAR file from a vasp run."""
 
-    def __init__(self, filename, **kwargs):
-        self.ispin = kwargs.get('ispin')
-        self.lorbit = kwargs.get('lorbit')
-        self.rwigs = kwargs.get('rwigs')
-        self.header, self.tdos, self.pdos = self.parse_doscar(filename)
+    PARSABLE_ITEMS = {
+        'dos': {
+            'inputs': ['vrp_pdos', 'vrp_tdos'],
+            'parsers': ['vasprun.xml', 'DOSCAR'],
+            'nodeName': 'dos',
+            'prerequisites': ['vrp_pdos', 'vrp_tdos']
+        },
+    }
 
-    @classmethod
-    # pylint: disable=too-many-locals
-    def parse_doscar(cls, filename):
+    def __init__(self, *args, **kwargs):
+        super(DosParser, self).__init__(*args, **kwargs)
+        self._parsable_items = DosParser.PARSABLE_ITEMS
+        self._parsed_data = {}
+
+    def _parse_file(self, inputs):
         """Read a VASP DOSCAR file and extract metadata and a density of states data array"""
-        with open(filename) as dos:
-            num_ions, num_atoms, p00, p01 = cls.line(dos, int)
-            line_0 = cls.line(dos, float)
-            line_1 = cls.line(dos, float)
-            coord_type = cls.line(dos)
-            sys = cls.line(dos)
-            line_2 = cls.line(dos, float)
+
+        result = inputs
+        result = {}
+
+        header, dcp_pdos, dcp_tdos = self._read_doscar()
+
+        result['header'] = header
+
+        vrp_pdos = inputs.get('vrp_pdos', np.array([]))
+        vrp_tdos = inputs.get('vrp_tdos', np.array([]))
+
+        for array in [vrp_pdos, vrp_tdos, dcp_pdos, dcp_tdos]:
+            if array.size == 0:
+                return {'dos': None}
+
+        dosnode = get_data_class('array')()
+        # vrp_pdos is a numpy array, and thus not directly bool-convertible
+        if vrp_pdos.size > 0:
+            pdos = vrp_pdos.copy()
+            for i, name in enumerate(vrp_pdos.dtype.names[1:]):
+                num_spins = vrp_pdos.shape[1]
+                # ~ pdos[name] = dcp[:, :, i+1:i+1+ns].transpose(0,2,1)
+                cur = dcp_pdos[:, :, i + 1:i + 1 + num_spins].transpose(0, 2, 1)
+                cond = vrp_pdos[name] < 0.1
+                pdos[name] = np.where(cond, cur, vrp_pdos[name])
+            dosnode.set_array('pdos', pdos)
+        num_spins = 1
+        if dcp_tdos.shape[1] == 5:
+            num_spins = 2
+        tdos = vrp_tdos[:num_spins, :].copy()
+        for i, name in enumerate(vrp_tdos.dtype.names[1:]):
+            cur = dcp_tdos[:, i + 1:i + 1 + num_spins].transpose()
+            cond = vrp_tdos[:num_spins, :][name] < 0.1
+            tdos[name] = np.where(cond, cur, vrp_tdos[:num_spins, :][name])
+        dosnode.set_array('tdos', tdos)
+        result['dos'] = dosnode
+
+        return result
+
+    # pylint: disable=too-many-locals
+    def _read_doscar(self):
+        """Read a VASP DOSCAR file and extract metadata and a density of states data array"""
+
+        with open(self._file_path) as dos:
+            num_ions, num_atoms, p00, p01 = self.line(dos, int)
+            line_0 = self.line(dos, float)
+            line_1 = self.line(dos, float)
+            coord_type = self.line(dos)
+            sys = self.line(dos)
+            line_2 = self.line(dos, float)
             emax, emin, ndos, efermi, weight = line_2
             ndos = int(ndos)
-            raw = cls.splitlines(dos)
+            raw = self.splitlines(dos)
 
         # either (e tot intd) or (e tot^ tot_ intd^ intd_)
         tdos = np.array(raw[:ndos])
@@ -59,4 +109,4 @@ class DosParser(BaseParser):
         header['efermi'] = efermi
         header['weight'] = weight
 
-        return header, tdos, pdos
+        return header, pdos, tdos

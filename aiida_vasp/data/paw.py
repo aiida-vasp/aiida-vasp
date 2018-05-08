@@ -83,12 +83,12 @@ class LegacyPawData(Data):
     def get_or_create_famgroup(cls, famname):
         """Returns a PAW family group, creates it if it didn't exists"""
         from aiida.orm import Group
-        from aiida.backends.utils import get_automatic_user
+        from aiida_vasp.utils.aiida_utils import get_current_user
 
         group, group_created = Group.get_or_create(name=famname, type_string=cls.group_type)
 
-        if group.user != get_automatic_user():
-            raise UniquenessError("There is already a UpfFamily group "
+        if group.user.pk != get_current_user().pk:
+            raise UniquenessError("There is already a LegacyPawData family group "
                                   "with name {}, but it belongs to user {},"
                                   " therefore you cannot modify it".format(famname, group.user.email))
         return group, group_created
@@ -97,12 +97,12 @@ class LegacyPawData(Data):
     def get_paw_groups(cls, elements=None, symbols=None, user=None):
         """Find all paw groups containing potentials with the given attributes"""
         from aiida.orm import Group
-        from aiida.backends.utils import get_automatic_user
+        from aiida_vasp.utils.aiida_utils import get_current_user
         params = {'type_string': cls.group_type, 'node_attributes': {'element': elements, 'symbol': symbols}}
         if user:
             params['user'] = user
         else:
-            params['user'] = get_automatic_user()
+            params['user'] = get_current_user()
 
         res = Group.query(**params)
         groups = [(g.name, g) for g in res]
