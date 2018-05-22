@@ -9,7 +9,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.doscar import DosParser
 
 
-def test_parse_doscar(vasprun_parser):
+def test_parse_doscar():
     """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
     file_name = 'DOSCAR'
     path = data_path('doscar', file_name)
@@ -21,8 +21,6 @@ def test_parse_doscar(vasprun_parser):
          (13.67, 0.00000000e+00, 2.00000000e+01)],
         dtype=[('energy', '<f8'), ('total', '<f8'), ('integrated', '<f8')])
     inputs = {}
-    inputs['vrp_pdos'] = vasprun_parser.vrp_pdos
-    inputs['vrp_tdos'] = vasprun_parser.vrp_tdos
     result = parser.get_quantity('dos', {}, inputs)
     # The 'tdos' array is a nested array for some reason.
     result_dos = result['dos'].get_array('tdos')
