@@ -5,12 +5,19 @@ import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
 from monty.collections import AttrDict
+from packaging import version
+
+from aiida import __version__ as aiida_version
 
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, temp_pot_folder
+
+AIIDA_VERSION = version.parse(aiida_version)
+V_0_12_0 = version.parse('0.12.0')
+V_0_12_1 = version.parse('0.12.1')
 
 
 @pytest.fixture
@@ -196,7 +203,8 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
     assert not new_arch.exists()
 
 
+@pytest.mark.xfail(V_0_12_0 <= AIIDA_VERSION <= V_0_12_1, reason='Plugin commands broken in "aiida >= 0.12.0, <= 0.12.1"')
 def test_call_from_vasp():
     import subprocess
-    output = subprocess.check_output(['verdi', 'data', 'potcar-vasp', '--help'])
+    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
     assert 'Usage: verdi data vasp-potcar' in output
