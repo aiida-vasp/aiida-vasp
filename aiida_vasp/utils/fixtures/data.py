@@ -1,5 +1,5 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
 import os
 from collections import OrderedDict
 
@@ -11,7 +11,7 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
@@ -153,7 +153,7 @@ def vasp_structure_poscar(vasp_structure):
     if isinstance(vasp_structure, get_data_class('cif')):
         ase_structure = vasp_structure.get_ase()
         aiida_structure = get_data_node('structure', ase=ase_structure)
-    writer = PoscarIo(aiida_structure)
+    writer = PoscarParser(data=aiida_structure)
     return writer
 
 
@@ -232,7 +232,7 @@ def vasprun_parser():
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     file_name = 'vasprun.xml'
     path = data_path('vasprun', file_name)
-    parser = VasprunParser(path)
+    parser = VasprunParser(file_path=path)
 
     return parser
 

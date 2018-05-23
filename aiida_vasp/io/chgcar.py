@@ -18,15 +18,14 @@ class ChgcarParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(ChgcarParser, self).__init__(*args, **kwargs)
-        self._parsable_items = ChgcarParser.PARSABLE_ITEMS
-        self._parsed_data = {}
+        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Create a DB Node for the CHGCAR file"""
         result = inputs
         result = {}
 
-        chgcar = self._file_path
+        chgcar = self._data_obj.path
         if chgcar is None:
             return {'chgcar': None}
 

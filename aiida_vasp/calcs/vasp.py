@@ -12,7 +12,8 @@ from aiida.orm import DataFactory
 from aiida_vasp.calcs.base import VaspCalcBase, Input
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.poscar import PoscarParser
+from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 
 PARAMETER_CLS = DataFactory('parameter')
@@ -167,7 +168,8 @@ class VaspCalculation(VaspCalcBase):
         settings = inputdict.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        writer = PoscarIo(self._structure(), precision=poscar_precision)
+
+        writer = PoscarParser(data=self._structure(), precision=poscar_precision)
         writer.write(dst)
 
     def write_potcar(self, inputdict, dst):
@@ -191,36 +193,9 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         kpoints = self.inp.kpoints
-        if kpoints.get_attrs().get('mesh'):
-            self._write_kpoints_mesh(dst)
-        elif kpoints.get_attrs().get('array|kpoints'):
-            self._write_kpoints_list(dst)
-        else:
-            raise AttributeError('you supplied an empty kpoints node')
 
-    def _write_kpoints_mesh(self, dst):
-        """Write kpoints in mesh format to the destination file `dst`"""
-        kpoints = self.inp.kpoints
-        mesh, offset = kpoints.get_kpoints_mesh()
-        kpmtemp = ("Automatic mesh\n" "0\n" "Gamma\n" "{N[0]} {N[1]} {N[2]}\n" "{s[0]} {s[1]} {s[2]}\n")
-        with open(dst, 'w') as kpoints:
-            kps = kpmtemp.format(N=mesh, s=offset)
-            kpoints.write(kps)
-
-    def _write_kpoints_list(self, dst):
-        """Write a list of kpoints to the destination file `dst`"""
-        kpoints = self.inp.kpoints
-        if 'array|weights' in kpoints.get_attrs():
-            kpl, weights = kpoints.get_kpoints(also_weights=True)
-        else:
-            kpl = kpoints.get_kpoints()
-            weights = [1.] * kpl.shape[0]
-        kpoint_weights = list(zip(kpl, weights))
-
-        kpls = '\n'.join(['{k[0]} {k[1]} {k[2]} {w}'.format(k=k, w=w) for k, w in kpoint_weights])
-        kps = ("Explicit list\n" "{N}\n" "Direct\n" "{klist}\n").format(N=len(kpoint_weights), klist=kpls)
-        with open(dst, 'w') as kpoints:
-            kpoints.write(kps)
+        kpoint_parser = KpParser(data=kpoints)
+        kpoint_parser.write(dst)
 
     def write_chgcar(self, inputdict, dst):  # pylint: disable=unused-argument
         import shutil

@@ -116,6 +116,12 @@ class VaspParser(BaseParser):
         'kpoints':    KpointsData node parsed from IBZKPT.
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
+
+        Set any of these to True, if the corresponding output node should be added.
+
+    * `output_params`: A list of things that should be added to the 'output_parameters'
+                       node, available options are:
+                       DEFAULT: ['energies', 'forces']
     """
 
     def __init__(self, calc):
@@ -232,7 +238,7 @@ class VaspParser(BaseParser):
                 self.logger.warning('{0} not found, but should be parsed.'.format(file_name))
             else:
                 # The file should be parsed and has been found
-                self._parsers[file_name] = value['parser_class'](file_to_parse, calc_parser_cls=self)
+                self._parsers[file_name] = value['parser_class'](self, file_path=file_to_parse)
 
         # All critical files have been found, so we can safely return True.
         return True

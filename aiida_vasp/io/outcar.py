@@ -56,8 +56,7 @@ class OutcarParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(OutcarParser, self).__init__(*args, **kwargs)
-        self._parsable_items = OutcarParser.PARSABLE_ITEMS
-        self._parsed_data = {}
+        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
@@ -91,7 +90,7 @@ class OutcarParser(BaseFileParser):
         energy_free = []
         energy_zero = []
         symmetries = {}
-        with open(self._file_path, 'r') as outcar_file_object:
+        with open(self._data_obj.path, 'r') as outcar_file_object:
             for line in outcar_file_object:
                 # volume
                 if line.rfind('volume of cell :') > -1:

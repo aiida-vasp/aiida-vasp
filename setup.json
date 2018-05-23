@@ -75,7 +75,8 @@
         "six", 
         "pyparsing", 
         "py",
-        "lxml"
+        "lxml",
+        "parsevasp"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 

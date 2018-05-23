@@ -22,8 +22,11 @@ class EigParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(EigParser, self).__init__(*args, **kwargs)
-        self._parsed_data = None
-        self._parsable_items = EigParser.PARSABLE_ITEMS
+        self.init_with_kwargs(**kwargs)
+
+    @property
+    def _parsed_object(self):
+        return self._data_obj
 
     def _parse_file(self, inputs):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
@@ -66,7 +69,7 @@ class EigParser(BaseFileParser):
     def _read_eigenval(self):
         """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
 
-        with open(self._file_path) as eig:
+        with open(self._data_obj.path) as eig:
             line_0 = self.line(eig, int)  # read header
             line_1 = self.line(eig, float)  # "
             line_2 = self.line(eig, float)  # "
