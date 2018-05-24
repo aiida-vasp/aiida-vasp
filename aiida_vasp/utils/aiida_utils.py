@@ -56,3 +56,10 @@ def get_current_user():
         from aiida.backends.utils import get_automatic_user  # pylint: disable=no-name-in-module
         current_user = get_automatic_user()
     return current_user
+
+
+def builder_interface(calc_cls):
+    """Return the JobProcess or the JobCalculation class, depending on aiida version."""
+    if hasattr(calc_cls, 'get_builder'):
+        return True
+    return False
