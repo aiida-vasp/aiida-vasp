@@ -15,7 +15,7 @@ AiiDA-VASP is under active development, check out the newest changes here: `chan
 .. _here: https://www.vasp.at/index.php/about-vasp/59-about-vasp
 .. _documentation page: https://www.vasp.at/index.php/documentation
 .. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
-.. _changelog: https://github.com/DropD/aiida-vasp/blob/develop/CHANGELOG.md
+.. _changelog: https://github.com/aiidateam/aiida-vasp/blob/develop/CHANGELOG.md
 
 
 Getting started
@@ -26,23 +26,29 @@ If you use python for other things chances are you have a working system to mana
 If you are already using AiiDA, simply activate the virtualenv you are using it in. Otherwise, set up a python virtualenv::
 
    $ pip install virtualenvwrapper
-   $ mkvirtualenv --python=python2.7 aiida
-   $ workon aiida-vasp
+   $ mkvirtualenv --python=python2.7 aiida-vasp-env
+   $ workon aiida-vasp-env
+
+Or using conda::
+
+   $ conda create -n aiida-vasp-env python=2
+   $ source activate aiida-vasp-env
 
 Install the plug-in using::
 
-   $ pip install git+https://github.com/DropD/aiida-vasp/tree/master#egg=aiida-vasp-0.1.0
+   $ pip install aiida-vasp
+   $ reentry scan -r aiida  # (not necessary if using 'develop' branch of aiida)
 
-This will automatically install the AiiDA python package(s) as well as any other dependencies of the plug-in. Follow the steps in the `AiiDA documentation`_ to complete setting up AiiDA. Of course, if you had AiiDA already set up, you don't need to do that.
+This will automatically install the AiiDA python package(s) as well as any other dependencies of the plug-in and register all the plugin classes with AiiDA. Follow the steps in the `AiiDA documentation`_ to complete setting up AiiDA. Of course, if you had AiiDA already set up, you don't need to do that.
 
 After setting up the database and profile and configuring the compute resources, you might want to run an example VASP calculation.
 
-   $ (aiida-venv) git clone github.com/DropD/aiida-vasp
+   $ (aiida-venv) git clone github.com/aiidateam/aiida-vasp
    $ (aiida-venv) python aiida-vasp/examples/run_vasp simple --import-from <POTCAR-path> <code> <computer>
 
 Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../vasp_pot/potpaw_PBE``), ``<code>`` is the PK or name of the code you set up in AiiDA for running VASP, ``<computer>`` is the PK or name of the computer you set up in AiiDA for running VASP on.
 
-Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for example code on how to programmatically create and submit a VASP calculation.
+Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for an example code on how to programmatically create and submit a VASP calculation.
 
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
 
@@ -50,7 +56,7 @@ Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for example code on 
 More
 ====
 
-.. The following is documentation for a slightly out of date version, which was written to work with AiiDA up to version 0.7.
+.. The following may be partially outdated and is in the process of being brought up to date
 
 .. toctree::
    :maxdepth: 4
