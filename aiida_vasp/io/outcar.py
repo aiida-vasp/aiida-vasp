@@ -97,7 +97,8 @@ class OutcarParser(BaseFileParser):
                 if line.rfind('volume of cell :') > -1:
                     result['volume'] = float(line.split()[-1])
                 # Free energy
-                if line.lower().startswith('  free  energy   toten'):
+               #if line.lower().startswith('  free  energy   toten'):
+                if " ".join(line.split()).lower().startswith('free energy   toten'):
                     energy_free.append(float(line.split()[-2]))
                 # Extrapolated zero point energy
                 if line.startswith('  energy  without entropy'):
