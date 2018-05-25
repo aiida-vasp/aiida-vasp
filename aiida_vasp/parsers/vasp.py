@@ -18,20 +18,32 @@ LINKNAME_DICT = {
     'structure': 'output_structure',
     'array': 'output_array',
     'trajectory': 'output_trajectory',
+    'trajectory_full': 'output_trajectory_arr',
     'bands': 'output_band',
     'dos': 'output_dos',
+    'projectors': 'output_projectors',
+    'born': 'output_born_charges',
+    'dielectrics': 'output_dielectrics',
+    'hessian': 'output_hessian',
+    'dynmat': 'output_dynmat',
     'chgcar': 'chgcar',
     'wavecar': 'wavecar',
     'born_charges': 'born_charges',
 }
 
 DEFAULT_OPTIONS = {
+    'add_trajectory': False,
     'add_bands': False,
     'add_chgcar': False,
     'add_dos': False,
     'add_kpoints': False,
     'add_parameters': True,
     'add_structure': True,
+    'add_projectors': False,
+    'add_born': False,
+    'add_dielectrics': False,
+    'add_hessian': False,
+    'add_dynmat': False,
     'add_wavecar': False,
     'should_parse_DOSCAR': False,
     'should_parse_EIGENVAL': False,
@@ -60,7 +72,7 @@ PARSABLE_FILES = {
     },
     'OUTCAR': {
         'parser_class': OutcarParser,
-        'is_critical': True,
+        'is_critical': False,
         'status': 'Unknown'
     },
     'vasprun.xml': {
@@ -171,7 +183,6 @@ class VaspParser(BaseParser):
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
-
             if key != self._parsable_quantities[key]['nodeName']:
                 # this is just an intermediate result and should not be added as a node.
                 continue
@@ -186,6 +197,9 @@ class VaspParser(BaseParser):
 
         import copy
         new_settings = copy.deepcopy(self._settings)
+
+        calc_settings = self._calc.get_inputs_dict().get('settings')
+        calc_parser_settings = calc_settings.get_dict().get('parser_settings')
 
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
@@ -208,7 +222,15 @@ class VaspParser(BaseParser):
                 self._quantities_to_parse.append(quantity)
                 # Flag all the required files for being parsed.
                 for filename in self._parsable_quantities[quantity]['parsers']:
-                    new_settings['should_parse_' + filename] = value
+                    k = 'should_parse_' + filename
+                    new_settings[k] = value
+                    # make sure we rewrite if this was overridden for the
+                    # calc settings
+                    # eFL: THIS IS SUPER NASTY AND SHOULD BE REPLACED ASAP
+                    try:
+                        new_settings[k] = calc_parser_settings[k]
+                    except KeyError:
+                        pass
 
         self._settings = new_settings
 

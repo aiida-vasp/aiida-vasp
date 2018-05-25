@@ -119,6 +119,7 @@ def potentials(potcar_family):
 
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
+    print(request.param)
     """Fixture: StructureData or CifData"""
     from aiida_vasp.backendtests.common import subpath
     from aiida.orm import DataFactory
@@ -143,6 +144,13 @@ def vasp_structure(request, aiida_env):
         structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
+    elif request.param == 'str-InAs':
+        structure_cls = DataFactory('structure')
+        structure = structure_cls(cell=numpy.array([[0, .5, .5],
+                                                    [.5, 0, .5],
+                                                    [.5, .5, 0]]) * 6.058)
+        structure.append_atom(position=(0, 0, 0), symbols='In', name='Hamburger')
+        structure.append_atom(position=(0.25, 0.25, 0.25), symbols='As', name='Pizza')
     return structure
 
 

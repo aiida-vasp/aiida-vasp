@@ -229,14 +229,14 @@ class BaseFileParser(BaseParser):
 
         return {quantity: self._parsed_data.get(quantity)}
 
-    def write(self, filepath):
+    def write(self, file_path):
         """
         Writes a VASP style file from the parsed Object.
 
         For non input files this means simply copying the file.
         """
         if self._parsed_object is not None:
-            self._parsed_object.write(filepath)
+            self._parsed_object.write(file_path)
 
     @property
     def _parsed_object(self):

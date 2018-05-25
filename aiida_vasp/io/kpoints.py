@@ -4,15 +4,18 @@
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
-
+from aiida.common import aiidalogger
 
 class KpParser(BaseFileParser):
     """
     Parser for VASP KPOINTS format
 
-    This is a wrapper for the parsevasp.kpoints parser. It will convert KPOINTS files to
-    Aiida KpointsData objects and vice versa. The Parsing direction depends on whether the Parser is initialised with
-    'path = ...' or 'data = ...'.
+    This is a wrapper for the parsevasp.kpoints parser. It will convert 
+    KPOINTS type files to Aiida KpointsData objects and vice versa. 
+    
+    The Parsing direction depends on whether the KpParser is initialised with
+    'path = ...' (read from file) or 'data = ...' (read from data).
+
     """
 
     PARSABLE_ITEMS = {
@@ -26,17 +29,21 @@ class KpParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(KpParser, self).__init__(*args, **kwargs)
+        self._logger = aiidalogger.getChild('KpParser')
         self.init_with_kwargs(**kwargs)
 
     def _init_with_data(self, data):
-        """Initialise with a given kpointsData object"""
+        """Initialise with a given kpointsData object."""
         self._data_obj = data
         self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
     def _parsed_object(self):
-        """Return an instance of parsevasp.Kpoints corresponding to the stored KpointsData."""
+        """Return an instance of parsevasp.Kpoints corresponding 
+        to the stored KpointsData.
+
+        """
 
         # The KpointsData has not been successfully parsed yet. So let's parse it.
         if self._data_obj.get_attrs().get('mesh'):
@@ -45,7 +52,8 @@ class KpParser(BaseFileParser):
             mode = 'explicit'
 
         kpoints_dict = {}
-        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra',
+                        'tetra_volume', 'mode', 'centering', 'num_kpoints']:
             kpoints_dict[keyword] = None
 
         kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
@@ -67,9 +75,15 @@ class KpParser(BaseFileParser):
         try:
             parsed_kpoints = Kpoints(file_path=self._data_obj.path)
         except SystemExit:
+            self._logger.warning("Parsevasp exitited abnormally. "
+                              "Returning None.")
             return {'kpoints': None}
 
         mode = parsed_kpoints.entries.get('mode')
+        if mode == 'line':
+            self._logger.warning("The read KPOINTS contained line mode which is"
+                                 "not supported. Returning None.")
+            return {'kpoints': None}
         result['kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
 
         return result
