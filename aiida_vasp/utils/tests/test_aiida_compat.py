@@ -3,11 +3,16 @@
 
 import pytest
 
-from aiida_vasp.utils.aiida_utils import get_current_user
+from aiida_vasp.utils.aiida_utils import get_current_user, backend_obj_users
 from aiida_vasp.utils.fixtures import aiida_env
 
 
 def test_get_current_user(aiida_env):
+    """Assert that get_current_user returns a user in all tested aiida versions."""
     from aiida.orm.user import User
     user = get_current_user()
-    assert isinstance(user, User)
+    if backend_obj_users():
+        assert isinstance(user, User)
+    assert user.first_name
+    assert user.last_name
+    assert user.email
