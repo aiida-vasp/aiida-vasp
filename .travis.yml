@@ -23,6 +23,7 @@ install:
     - pip install tox-travis coveralls
 env:
     - TEST_TYPE="pre-commit"
+    - TEST_TYPE="unittests" TOX_ENV=py27-aiida_11
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_stable
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_dev
 script: ./run_ci_tests.sh
