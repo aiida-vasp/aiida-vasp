@@ -56,13 +56,3 @@ See `Files used by VASP <http://cms.mpi.univie.ac.at/vasp/Files_used_by_VASp.htm
 * vasprun.xml
 * wannier90* (all files starting with "wannier90")
 
-*********
-Reference
-*********
-Superclasses:
-
-* :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
-
-.. autoclass:: aiida_vasp.calcs.vasp2w90.Vasp2w90Calculation
-   :members: verify_inputs, _prepare_for_submission
-   :undoc-members:

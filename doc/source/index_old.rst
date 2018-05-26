@@ -24,6 +24,7 @@ Plugins
    :maxdepth: 3
 
    VASP <calcs/index>
+   Legacy Workflows <wf/index>
 
 **********************
 Adapting and Extending

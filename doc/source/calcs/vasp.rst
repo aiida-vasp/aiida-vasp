@@ -51,13 +51,3 @@ See `Files used by VASP <http://cms.mpi.univie.ac.at/vasp/Files_used_by_VASp.htm
 * XDATACAR
 * vasprun.xml
 
-*********
-Reference
-*********
-Superclasses:
-
-* :py:class:`VaspCalcBase <aiida_vasp.calcs.base.VaspCalcBase>`
-
-.. autoclass:: aiida_vasp.calcs.vasp.VaspCalculation
-   :members: verify_inputs, _prepare_for_submission
-   :undoc-members:

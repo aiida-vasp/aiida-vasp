@@ -95,77 +95,8 @@ These properties can be used to filter queries for calculations and therefore to
 Workflows
 *********
 
-* :py:class:`ScfWorkflow <aiida_vasp.workflows.scf.ScfWorkflow>`, Obsolete
-* :py:class:`NscfWorkflow <aiida_vasp.workflows.nscf.NscfWorkflow>`, Obsolete
-* :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.projections.ProjectionsWorkflow>`, Obsolete
-* :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.wannier.WannierWorkflow>`, Obsolete
+* :py:class:`ScfWorkflow <aiida_vasp.workflows.legacy.scf.ScfWorkflow>`, Obsolete
+* :py:class:`NscfWorkflow <aiida_vasp.workflows.legacy.nscf.NscfWorkflow>`, Obsolete
+* :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.legacy.projections.ProjectionsWorkflow>`, Obsolete
+* :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.legacy.wannier.WannierWorkflow>`, Obsolete
 
-*********
-Reference
-*********
-
-.. automodule:: aiida_vasp.workflows.scf
-
-   .. autoclass:: ScfWorkflow
-      :members: get_params_template, get_template
-
-      .. automethod:: start
-
-         Run a ScfCalculation with input nodes constructed
-         from the workflow's parameters
-
-      .. automethod:: end
-
-         Checks wether the run was successful in producing
-         wavefunctions and chargedensities nodes. Adds the scf calculation
-         node to the results if successful.
-
-.. automodule:: aiida_vasp.workflows.nscf
-
-   .. autoclass:: NscfWorkflow
-      :members: get_params_template, get_template
-
-      .. automethod:: start
-
-         Runs an NscfCalculation using the given uuid of a
-         ScfCalculation.
-
-      .. automethod:: end
-
-         Checks for success of the NscfCalculation.
-         If all the expected outputs are present, adds the calculation
-         node to the results.
-
-.. automodule:: aiida_vasp.workflows.projections
-
-   .. autoclass:: ProjectionsWorkflow
-      :members: get_params_template, get_template
-
-      .. automethod:: start
-
-         Runs an AmnCalculation using the given uuid of a
-         NscfCalculation. Modifies wannier_parameters from the nscf calculation
-         it continues from transparently using an InlineCalculation.
-
-      .. automethod:: end
-
-         Checks for success of the AmnCalculation.
-         If all the expected outputs are present, adds the calculation
-         node to the results.
-
-.. automodule:: aiida_vasp.workflows.wannier
-
-   .. autoclass:: WannierWorkflow
-      :members: get_params_template, get_template
-
-      .. automethod:: start
-
-         Runs a WannierCalculation using the given uuid of a
-         AmnCalculation. Modifies wannier_parameters from the amn calculation
-         it continues from transparently using an InlineCalculation, if necessary.
-
-      .. automethod:: end
-
-         Checks for success of the WannierCalculation.
-         If all the expected outputs are present, adds the calculation
-         node to the results.
