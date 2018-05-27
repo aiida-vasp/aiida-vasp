@@ -10,7 +10,7 @@ from aiida.common import aiidalogger
 
 
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['bands', 'parameters', 'settings']
+    'quantities_to_parse': ['bands', 'parameters', 'settings', 'kpoints', 'occupations']
 }
 
 
@@ -50,6 +50,12 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'kpoints',
+            'prerequisites': []
+        },
+        'occupations': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': '',
             'prerequisites': []
         },
         'trajectories': {
@@ -181,20 +187,20 @@ class VasprunParser(BaseFileParser):
 
         # fetch eigenvalues and occupancies
         eigenvalues = self.eigenvalues
-        occupations = self.occupations
+        occupations = self.occupations_bands
 
         if eigenvalues is None:
             # did not find any eigenvalues
             return None
 
         # generate Aiida specific BandsData for storage
-        banddata = get_data_class('array.bands')()
+        band_data = get_data_class('array.bands')()
         
         # put everything into BandData and KpointsData
-        banddata.set_kpointsdata(self.kpoints)
-        banddata.set_bands(eigenvalues, occupations=occupations)
+        band_data.set_kpointsdata(self.kpoints)
+        band_data.set_bands(eigenvalues, occupations=occupations)
 
-        return banddata
+        return band_data
 
     @property
     def eigenvalues(self):
@@ -221,6 +227,32 @@ class VasprunParser(BaseFileParser):
 
         return eigen
 
+
+    @property
+    def occupations_bands(self):
+        """Fetch occupations from parsevasp."""
+
+        # fetch occupations
+        occupations = self._data_obj.get_occupancies()
+
+        if occupations is None:
+            # occupations not present, should not really happen?
+            return None
+        
+        occ = []
+        occ.append(occupations.get("total"))
+
+        if occ[0] is None:
+            # spin decomposed
+            occ[0] = occupations.get("up")
+            occ.append(occupations.get("down"))
+
+        if occ[0] is None:
+            # should not really happen
+            return None
+        
+        return occ
+    
     @property
     def occupations(self):
         """Fetch occupations from parsevasp."""
@@ -232,19 +264,27 @@ class VasprunParser(BaseFileParser):
             # occupations not present, should not really happen?
             return None
 
-        occ = []
-        occ.append(occupations.get("total"))
-
-        if occ[0] is None:
-            # spin decomposed
-            occ[0] = occupations.get("up")
-            occ.append(occupations.get("down"))
-
-        if occ[0] is None:
+        array_data = get_data_class('array')()
+        
+        total = occupations.get('total')
+        up = occupations.get('up')
+        down = occupations.get('down')
+        print(total)
+        if total is not None:
+            # we have total
+            array_data.set_array('total', total)
+        elif up is not None:
+            # we have spin decomposed
+            array_data.set_array('up', up)
+            if down is None:
+                self._logger.error("Serious error, detected spin up, but no spin down "
+                                   "channel. This should not happen. Continuing.")
+            array_data.set_array('down', down)
+        else:
             # safety, should not really happen?
             return None
 
-        return occ
+        return array_data
 
     @property
     def fermi_level(self):
@@ -273,12 +313,13 @@ class VasprunParser(BaseFileParser):
 
         kpts = self._data_obj.get_kpoints()
         kptsw = self._data_obj.get_kpointsw()
-        kpoints = None
+        kpoints_data = None
         if (kpts is not None) and (kptsw is not None):
-            kpoints = get_data_class('array.kpoints')()
-            kpoints.set_kpoints(kpts, weights = kptsw)
+            # create a KpointsData object and store k-points
+            kpoints_data = get_data_class('array.kpoints')()
+            kpoints_data.set_kpoints(kpts, weights = kptsw)
 
-        return kpoints
+        return kpoints_data
 
     @property
     def last_structure(self):

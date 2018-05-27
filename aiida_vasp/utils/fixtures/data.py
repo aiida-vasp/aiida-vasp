@@ -17,7 +17,6 @@ from aiida_vasp.io.vasprun import VasprunParser
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
 
-
 @pytest.fixture(scope='session')
 def localhost_dir(tmpdir_factory):
     return tmpdir_factory.mktemp('localhost_work')
@@ -119,7 +118,6 @@ def potentials(potcar_family):
 
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
-    print(request.param)
     """Fixture: StructureData or CifData"""
     from aiida_vasp.backendtests.common import subpath
     from aiida.orm import DataFactory
@@ -223,7 +221,6 @@ def ref_incar():
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
-
 @pytest.fixture()
 def ref_retrieved_nscf():
     """Fixture: retrieved directory from an NSCF vasp run"""
@@ -234,16 +231,21 @@ def ref_retrieved_nscf():
         retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
     return retrieved
 
-
-@pytest.fixture
+@pytest.fixture()
 def vasprun_parser():
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     file_name = 'vasprun.xml'
     path = data_path('vasprun', file_name)
     parser = VasprunParser(file_path=path)
-
     return parser
 
+@pytest.fixture(params=['basic'])
+def vasp_xml(request):
+    """Return an instance of VasprunParser for a reference vasprun.xml."""
+    file_name = 'vasprun.xml'
+    path = data_path(request.param, file_name)
+    parser = VasprunParser(file_path=path)
+    return parser
 
 def _ref_kp_list():
     from aiida_vasp.backendtests.common import subpath
