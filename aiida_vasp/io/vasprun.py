@@ -10,7 +10,7 @@ from aiida.common import aiidalogger
 
 
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['bands', 'parameters', 'settings', 'kpoints', 'occupations']
+    'quantities_to_parse': ['parameters', 'settings']
 }
 
 
@@ -34,6 +34,12 @@ class VasprunParser(BaseFileParser):
     """Interface to parsevasp's xml parser."""
 
     PARSABLE_ITEMS = {
+        'structure': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'structure',
+            'prerequisites': []
+        },
         'bands': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
@@ -100,7 +106,7 @@ class VasprunParser(BaseFileParser):
             'nodeName': '',
             'prerequisites': []
         },
-        'born': {
+        'born_charges': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': '',
@@ -170,7 +176,6 @@ class VasprunParser(BaseFileParser):
 
         quantities_to_parse = settings.get('quantities_to_parse',
                                            DEFAULT_OPTIONS['quantities_to_parse'])
-
         result = {}
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
@@ -321,6 +326,22 @@ class VasprunParser(BaseFileParser):
 
         return kpoints_data
 
+    @property
+    def structure(self):
+        """Fetch a given structure and store as StructureData.
+        Which structure to fetch is controlled by inputs.
+
+        eFL: Need to clean this so that we can set different
+        structures to pull from the outside. Could be usefull not
+        pulling the whole trajectory.
+
+        Currently defaults to the last structure
+
+        """
+
+        return self.last_structure
+    
+    
     @property
     def last_structure(self):
         """Fetch the structure after or at the last recorded "
@@ -538,7 +559,7 @@ class VasprunParser(BaseFileParser):
         return dielectrics
 
     @property
-    def born(self):
+    def born_charges(self):
         """Fetch the Born effective charges from parsevasp and store
         as ArrayData.
 
@@ -634,7 +655,7 @@ class VasprunParser(BaseFileParser):
 
         """
         
-        structure_cls = get_data_class('structure')()
+        structure_cls = get_data_class('structure')
         unitcell = lattice["unitcell"]
         structure = structure_cls(cell = unitcell)
         # Aiida wants the species as symbols, so invert
