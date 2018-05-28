@@ -6,11 +6,10 @@ from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida.common import aiidalogger
 
 
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['parameters', 'settings']
+    'quantities_to_parse': ['settings', 'scalars']
 }
 
 
@@ -124,6 +123,12 @@ class VasprunParser(BaseFileParser):
             'nodeName': '',
             'prerequisites': []
         },
+        'scalars': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': 'scalars',
+            'prerequisites': []
+        },
         'parameters': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
@@ -140,7 +145,6 @@ class VasprunParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(VasprunParser, self).__init__(*args, **kwargs)
-        self._logger = aiidalogger.getChild("VasprunParser")
         self.init_with_kwargs(**kwargs)
 
     def _init_with_file_path(self, path):
@@ -274,7 +278,6 @@ class VasprunParser(BaseFileParser):
         total = occupations.get('total')
         up = occupations.get('up')
         down = occupations.get('down')
-        print(total)
         if total is not None:
             # we have total
             array_data.set_array('total', total)
@@ -292,13 +295,7 @@ class VasprunParser(BaseFileParser):
         return array_data
 
     @property
-    def fermi_level(self):
-        """Fetch the Fermi energy from parsevasp."""
-        
-        return self._data_obj.get_fermi_level()
-
-    @property
-    def vrp_parameters(self):
+    def parameters(self):
         """Assemble the 'output_params' node."""
         
         parameters = {}
@@ -639,14 +636,16 @@ class VasprunParser(BaseFileParser):
         return densta
 
     @property
-    def parameters(self):
-        """Fetch parameters from parsevasp and put results 
+    def scalars(self):
+        """Fetch scalars from parsevasp and put results 
         into ParameterData node.
 
         """
 
-        prmts = self._data_obj.get_parameters()
-        output_params = get_data_node('parameter', dict=prmts)
+        values = {}
+        values['fermi_level'] = self._data_obj.get_fermi_level()
+
+        output_params = get_data_node('parameter', dict=values)
         
         return output_params
 

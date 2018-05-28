@@ -104,7 +104,7 @@ import re
 
 from six import string_types
 from aiida_vasp.utils.delegates import delegate_method_kwargs
-
+from aiida.common import aiidalogger
 
 class BaseParser(object):
     """Common codebase for all parser utilities"""
@@ -167,6 +167,7 @@ class BaseFileParser(BaseParser):
 
     def __init__(self, calc_parser_cls=None, **kwargs):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
+        self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
         if calc_parser_cls is not None:
             calc_parser_cls.get_quantity.add_listener(self.get_quantity)

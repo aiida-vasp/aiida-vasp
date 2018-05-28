@@ -4,7 +4,6 @@
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida.common import aiidalogger
 
 class KpParser(BaseFileParser):
     """
@@ -29,7 +28,6 @@ class KpParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(KpParser, self).__init__(*args, **kwargs)
-        self._logger = aiidalogger.getChild('KpParser')
         self.init_with_kwargs(**kwargs)
 
     def _init_with_data(self, data):

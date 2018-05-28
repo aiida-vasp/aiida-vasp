@@ -8,7 +8,6 @@ import sys
 from parsevasp.poscar import Poscar, Site
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida.common import aiidalogger
 
 class PoscarParser(BaseFileParser):
     """
@@ -44,7 +43,6 @@ class PoscarParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(PoscarParser, self).__init__(*args, **kwargs)
         self.precision = 12
-        self._logger = aiidalogger.getChild("PoscarParser")
         self.init_with_kwargs(**kwargs)
 
     def _init_with_precision(self, precision):

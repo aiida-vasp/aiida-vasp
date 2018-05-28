@@ -8,8 +8,6 @@ import pytest
 from aiida_vasp.parsers.vasp import VaspParser
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures import *
-#from aiida import load_dbenv
-#load_dbenv()
 
 def xml_path(folder):
     """Set the path to the XML file."""

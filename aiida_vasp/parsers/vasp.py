@@ -13,6 +13,7 @@ from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.delegates import delegate
 
 LINKNAME_DICT = {
+    'scalars' : 'output_scalars',
     'parameters': 'output_parameters',
     'kpoints': 'output_kpoints',
     'structure': 'output_structure',
@@ -22,13 +23,12 @@ LINKNAME_DICT = {
     'bands': 'output_band',
     'dos': 'output_dos',
     'projectors': 'output_projectors',
-    'born': 'output_born_charges',
+    'born_charges': 'output_born_charges',
     'dielectrics': 'output_dielectrics',
     'hessian': 'output_hessian',
     'dynmat': 'output_dynmat',
     'chgcar': 'chgcar',
     'wavecar': 'wavecar',
-    'born_charges': 'born_charges',
 }
 
 DEFAULT_OPTIONS = {
