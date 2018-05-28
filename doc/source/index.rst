@@ -48,10 +48,25 @@ After setting up the database and profile and configuring the compute resources,
 
 Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../vasp_pot/potpaw_PBE``), ``<code>`` is the PK or name of the code you set up in AiiDA for running VASP, ``<computer>`` is the PK or name of the computer you set up in AiiDA for running VASP on.
 
-Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for an example code on how to programmatically create and submit a VASP calculation.
-
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
 
+Running calculations
+--------------------
+
+ * Take a look at the file `example calc`_ for an example code on how to create and submit a VASP calculation from python code.
+ * Take a look at the file `example workflow`_ for an example on how to do the same via an AiiDA WorkChain.
+
+.. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
+.. _example workflow: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_base_wf.py
+
+Creating workflows
+------------------
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   howto/write_workflows
 
 More
 ====

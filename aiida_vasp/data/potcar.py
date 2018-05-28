@@ -639,7 +639,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param family_name: The POTCAR family to be used
         :param mapping: A mapping[element] -> ``full_name``, for example: mapping={'In': 'In', 'As': 'As_d'}
 
-        If no POTCAR is found for a given element, a ``NotExistent`` error is raised.
+        Exceptions:
+
+         *If the mapping does not contain an item for a given element name, raise a ``ValueError``.
+         *If no POTCAR is found for a given element, a ``NotExistent`` error is raised.
 
         If there are multiple POTCAR with the same ``full_name``, the first one
         returned by ``PotcarData.find()`` will be used.
@@ -654,6 +657,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         result_potcars = {}
         for element in elements:
+            if element not in mapping:
+                raise ValueError('Potcar mapping must contain an item for each element in the structure, '
+                                 'with the full name of the POTCAR file (i.e. "In_d", "As_h").')
             full_name = mapping[element]
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
