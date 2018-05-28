@@ -25,15 +25,15 @@ def test_parse_vasprun(vasprun_parser):
     # eFL: How do we want to store scalar values?
     #assert  == 7.29482275
 
-def test_scalar_results(vasp_xml):
-    """Test that the result node is a ParametersData instance and
+def test_parameter_results(vasp_xml):
+    """Test that the parameter node is a ParametersData instance and
     contain the Fermi level. 
 
     """
 
-    settings = {'quantities_to_parse': ['scalars']}
-    quantity = vasp_xml.get_quantity('scalars', settings = settings)
-    data_obj = quantity['scalars']
+    settings = {'quantities_to_parse': ['parameters'], 'output_params': ['fermi_level']}
+    quantity = vasp_xml.get_quantity('parameters', settings = settings)
+    data_obj = quantity['parameters']
     assert isinstance(data_obj, ParameterData)
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939

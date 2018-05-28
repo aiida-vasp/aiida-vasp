@@ -9,7 +9,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['settings', 'scalars']
+    'quantities_to_parse': ['settings', 'parameters'],
+    'output_params': []
 }
 
 
@@ -123,24 +124,12 @@ class VasprunParser(BaseFileParser):
             'nodeName': '',
             'prerequisites': []
         },
-        'scalars': {
-            'inputs': [],
-            'parsers': ['vasprun.xml'],
-            'nodeName': 'scalars',
-            'prerequisites': []
-        },
         'parameters': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'parameters',
             'prerequisites': []
         }
-        # 'vcp-parameters': {
-        #     'inputs': ['ocp_parameters'],
-        #     'parsers': ['vasprun.xml'],
-        #     'nodeName': 'intermediate_data',
-        #     'prerequisites': []
-        # }
     }
 
     def __init__(self, *args, **kwargs):
@@ -299,13 +288,18 @@ class VasprunParser(BaseFileParser):
         """Assemble the 'output_params' node."""
         
         parameters = {}
-        parameters.update(self._parsed_data.get('ocp_parameters'))
-
+        outcar_parameters = self._parsed_data.get('ocp_parameters')
+        if outcar_parameters is not None:
+            parameters.update(outcar_parameters)
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        #print(settings)
+        #sys.exit(1)
         for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
-        return parameters
+        output_parameters = get_data_node('parameter', dict = parameters)
+            
+        return output_parameters
 
     @property
     def kpoints(self):
@@ -636,19 +630,11 @@ class VasprunParser(BaseFileParser):
         return densta
 
     @property
-    def scalars(self):
-        """Fetch scalars from parsevasp and put results 
-        into ParameterData node.
+    def fermi_level(self):
+        """Fetch Fermi level from parsevasp. """
 
-        """
-
-        values = {}
-        values['fermi_level'] = self._data_obj.get_fermi_level()
-
-        output_params = get_data_node('parameter', dict=values)
-        
-        return output_params
-
+        return self._data_obj.get_fermi_level()
+    
     def _build_structure(self, lattice):
         """Builds a structure according to Aiida spec.
 
