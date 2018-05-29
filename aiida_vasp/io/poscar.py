@@ -1,13 +1,15 @@
 # pylint: disable=no-self-use
 """Tools for parsing POSCAR files."""
 from itertools import groupby
-
+from collections import Counter, defaultdict
 import numpy as np
 import sys
+
 
 from parsevasp.poscar import Poscar, Site
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida.common.constants import elements
 
 class PoscarParser(BaseFileParser):
     """
@@ -80,54 +82,9 @@ class PoscarParser(BaseFileParser):
                                  "Returning None.")
             return {'structure': None}
 
-        # fetch a dictionary containing the entries, make sure all coordinates are
-        # cartesian
-        poscar_dict = poscar.get_dict(direct = False)
-
-        # generate Aiida StructureData and add results from the loaded file
-        result = {}
-        
-        result['structure'] = get_data_class('structure')(cell=poscar_dict['unitcell'])
-        
-        for site in poscar_dict['sites']:
-            specie = site['specie']
-            # here we ignore the possible option of having trailing
-            # characters after the specie, i.e. if different potentials than
-            # standard are used.
-            result['structure'].append_atom(position=site['position'],
-                                            symbols=specie, name=specie)
+        result = parsevasp_to_aiida(poscar)
 
         return result
-
-
-    # def _get_comment_from_lines(self, lines):
-    #     """
-    #     Prepare the comment line for POSCAR.
-
-    #     in case non standard kind_names are used, return the mapping kind_name -> symbol.
-    #     Otherwise return the original comment line.
-    #     """
-
-    #     comment = lines[0].strip()
-
-    #     # check whether non standard types are used
-    #     mapping = {}
-    #     non_standard_symbol = False
-
-    #     for site in self._data_obj.sites:
-    #         symbol = self._data_obj.get_kind(site.kind_name).symbols[0]
-    #         mapping[site.kind_name] = site.kind_name
-    #         if site.kind_name != symbol:
-    #             mapping[site.kind_name] = symbol
-    #             non_standard_symbol = True
-
-    #     if non_standard_symbol:
-    #         # Generate the comment for the mapping of non standard kind_names.
-    #         comment = '# Aiida-elements:'
-    #         for kind_name in lines[5].split():
-    #             comment += ' ' + mapping[kind_name]
-
-    #     return comment
 
     def count_kinds(self):
         """
@@ -151,57 +108,50 @@ class PoscarParser(BaseFileParser):
         lines = self._parsed_object.get_string().split('\n')
         # Parsevasp replaces the comment line, so we have to update it in case
         # that non standard kind_names have been used.
-        lines[0] = self._get_comment_from_lines(lines)
+        # eFL : commented this functionality for the moment
+        # lines[0] = self._get_comment_from_lines(lines)
         out_string = '\n'.join(lines)
 
         return out_string
 
+def parsevasp_to_aiida(poscar):
+    """Generate an Aiida structure from the parsevasp instance of the
+    Poscar class.
 
-# def prepare_poscar(path):
-#     """
-#     Prepare POSCAR for parsing with parsevasp.
+    """
+    
+    # fetch a dictionary containing the entries, make sure all coordinates are
+    # cartesian
+    poscar_dict = poscar.get_dict(direct = False)
+    
+    # generate Aiida StructureData and add results from the loaded file
+    result = {}
+    
+    result['structure'] = get_data_class('structure') \
+                          (cell=poscar_dict['unitcell'])
+    
+    for site in poscar_dict['sites']:
+        specie = site['specie']
+        # user can specify whatever they want for the elements, but
+        # the symbols entries in Aiida only support the entries defined
+        # in aiida.common.constants.elements{}
 
-#     If the POSCAR is in Cartesian format, it has to be converted to Direct coordinates.
-#     In addition in case that non-standard kind_names have been used, the mapping from
-#     kind_names to symbols will be read from the comment line.
-#     """
+        # strip trailing _ in case user specifies potential
+        symbol = specie.split('_')[0].capitalize()
+        # check if leading entry is part of
+        # aiida.common.constants.elements{}, otherwise set to X, but first
+        # invert
+        symbols = fetch_symbols_from_elements(elements)
+        try:
+            symbols[symbol]
+        except KeyError:
+            symbol = 'X'
+        result['structure'].append_atom(position=site['position'],
+                                        symbols=symbol, name=specie)
 
-#     result = {}
+    return result
 
-#     with open(path, 'r') as file_obj:
-#         lines = file_obj.readlines()
-
-#     comment = lines[0]
-#     kind_names = lines[5].split()
-#     symbols = kind_names
-
-#     # Check for non-standard kind_names mapping in the comment line.
-#     if comment.startswith('# Aiida-elements:'):
-#         symbols = comment.split(': ')[1].split()
-
-#     mapping = {}
-
-#     for i, key in enumerate(kind_names):
-#         mapping[key] = symbols[i]
-
-#     result['mapping'] = mapping
-
-#     out_string = ''
-#     cartesian = False
-
-#     for line in lines:
-#         if line.lower().startswith('c'):
-#             # Change from 'Cartesian' to 'Direct'.
-#             line = 'Direct\n'
-#             cartesian = True
-
-#         out_string += line
-
-#     result['cartesian'] = cartesian
-
-#     return out_string, result
-
-
+    
 def aiida_to_parsevasp(structure):
     """Convert Aiida StructureData to parsevasp's dictionary format."""
     dictionary = {}
@@ -218,19 +168,13 @@ def aiida_to_parsevasp(structure):
     dictionary["sites"] = sites
     return dictionary
 
+def fetch_symbols_from_elements(elmnts):
+    """Fetch the symbol entry in the elements
+    dictionary in Aiida.
 
-# def get_direct_coords(cell, position):
-#     """Convert cartesian coordinates to direct coordinates."""
+    """
 
-#     # First calculate the reciprocal basis.
-#     omega = np.dot(cell[0], np.cross(cell[1], cell[2]))
-#     b_0 = 1.0 / omega * np.cross(cell[1], cell[2])
-#     b_1 = 1.0 / omega * np.cross(cell[2], cell[0])
-#     b_2 = 1.0 / omega * np.cross(cell[0], cell[1])
-
-#     rbasis = np.vstack([b_0, b_1, b_2])
-
-#     # Convert to direct coordinates:
-#     direct = np.asarray([np.dot(position, rbasis[0]), np.dot(position, rbasis[1]), np.dot(position, rbasis[2])])
-
-#     return direct
+    new_dict = {}
+    for k, v in elmnts.items():
+        new_dict[v['symbol']]=k
+    return new_dict

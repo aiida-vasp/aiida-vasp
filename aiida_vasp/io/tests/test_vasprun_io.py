@@ -6,12 +6,8 @@ import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.vasprun import VasprunParser
-from aiida import load_dbenv
-load_dbenv()
-from aiida.orm import DataFactory
-from aiida.orm.data.parameter import ParameterData
-
 
 def test_parse_vasprun(vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
@@ -34,7 +30,8 @@ def test_parameter_results(vasp_xml):
     settings = {'quantities_to_parse': ['parameters'], 'output_params': ['fermi_level']}
     quantity = vasp_xml.get_quantity('parameters', settings = settings)
     data_obj = quantity['parameters']
-    assert isinstance(data_obj, ParameterData)
+    ref_class = get_data_class('parameter')
+    assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
     
@@ -44,7 +41,8 @@ def test_kpoints_result(vasp_xml):
     settings = {'quantities_to_parse': ['kpoints']}
     quantity = vasp_xml.get_quantity('kpoints', settings = settings)
     data_obj = quantity['kpoints']
-    assert isinstance(data_obj, DataFactory('array.kpoints'))
+    ref_class = get_data_class('array.kpoints')
+    assert isinstance(data_obj, ref_class)
     assert np.all(data_obj.get_kpoints()[0] ==
                   np.array([0.0, 0.0, 0.0]))
     assert np.all(data_obj.get_kpoints()[-1] ==
@@ -61,7 +59,8 @@ def test_structure_result(vasp_xml):
     quantity = vasp_xml.get_quantity('structure', settings = settings)
     data_obj = quantity['structure']
     # check object
-    assert isinstance(data_obj, DataFactory('structure'))
+    ref_obj = get_data_class('structure')
+    assert isinstance(data_obj, ref_obj)
     # check cell
     unitcell = data_obj.cell
     assert np.all(unitcell[0] == np.array([5.46503124, 0.0, 0.0]))
@@ -81,18 +80,20 @@ def test_forces_result(vasp_xml):
     that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run). """
 
-    settings = {'quantities_to_parse': ['trajectories']}
-    quantity = vasp_xml.get_quantity('trajectories', settings = settings)
-    data_obj, data_obj_arr = quantity['trajectories']
-    # test object (a tupple as we store trajectories as an array as well)
-    assert isinstance(data_obj_arr, DataFactory('array'))
+    settings = {'quantities_to_parse': ['trajectory']}
+    quantity = vasp_xml.get_quantity('trajectory', settings = settings)
+    data_obj, data_obj_arr = quantity['trajectory']
+    # test object (a tupple as we store trajectory as an array as well)
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj_arr, ref_obj)
     data_obj_arr = data_obj_arr.get_array('forces')
     # test entries
     assert np.all(data_obj_arr[0][0] == np.array([-0.24286901, 0.0, 0.0]))
     assert np.all(data_obj_arr[0][-1] == np.array([-0.73887169,
                                               -0.43727184, -0.43727184]))
     # test object
-    assert isinstance(data_obj, DataFactory('array.trajectory'))
+    ref_obj = get_data_class('array.trajectory')
+    assert isinstance(data_obj, ref_obj)
     data_obj = data_obj.get_array('forces')
     # test entries
     assert np.all(data_obj[0][0] == np.array([-0.24286901, 0.0, 0.0]))
@@ -108,11 +109,12 @@ def test_forces_result_relax(vasp_xml):
     that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run). """
 
-    settings = {'quantities_to_parse': ['trajectories']}
-    quantity = vasp_xml.get_quantity('trajectories', settings = settings)
-    _, data_obj_arr = quantity['trajectories']
+    settings = {'quantities_to_parse': ['trajectory']}
+    quantity = vasp_xml.get_quantity('trajectory', settings = settings)
+    _, data_obj_arr = quantity['trajectory']
     # test object
-    assert isinstance(data_obj_arr, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj_arr, ref_obj)
     data_obj_arr = data_obj_arr.get_array('forces')
     # test shape of array
     assert data_obj_arr.shape == (19, 8, 3)
@@ -136,11 +138,12 @@ def test_unitcells_result_relax(vasp_xml):
     that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run). """
 
-    settings = {'quantities_to_parse': ['trajectories']}
-    quantity = vasp_xml.get_quantity('trajectories', settings = settings)
-    _, data_obj_arr = quantity['trajectories']
+    settings = {'quantities_to_parse': ['trajectory']}
+    quantity = vasp_xml.get_quantity('trajectory', settings = settings)
+    _, data_obj_arr = quantity['trajectory']
     # test object
-    assert isinstance(data_obj_arr, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj_arr, ref_obj)
     data_obj_arr = data_obj_arr.get_array('cells')
     # test shape of array
     assert data_obj_arr.shape == (19, 3, 3)
@@ -164,11 +167,12 @@ def test_positions_result_relax(vasp_xml):
     that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run). """
 
-    settings = {'quantities_to_parse': ['trajectories']}
-    quantity = vasp_xml.get_quantity('trajectories', settings = settings)
-    _, data_obj_arr = quantity['trajectories']
+    settings = {'quantities_to_parse': ['trajectory']}
+    quantity = vasp_xml.get_quantity('trajectory', settings = settings)
+    _, data_obj_arr = quantity['trajectory']
     # test object
-    assert isinstance(data_obj_arr, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj_arr, ref_obj)
     data_obj_arr = data_obj_arr.get_array('positions')
     # test shape of array
     assert data_obj_arr.shape == (19, 8, 3)
@@ -198,7 +202,8 @@ def test_dielectrics_result(vasp_xml):
     quantity = vasp_xml.get_quantity('dielectrics', settings = settings)
     data_obj = quantity['dielectrics']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     imag = data_obj.get_array('idiel')
     real = data_obj.get_array('rdiel')
     energy = data_obj.get_array('ediel')
@@ -257,7 +262,8 @@ def test_born_result(vasp_xml):
     quantity = vasp_xml.get_quantity('born_charges', settings = settings)
     data_obj = quantity['born_charges']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     born = data_obj.get_array('born_charges')
     # test shape of array
     assert born.shape == (8, 3, 3)
@@ -283,7 +289,8 @@ def test_dos_result(vasp_xml):
     quantity = vasp_xml.get_quantity('dos', settings = settings)
     data_obj = quantity['dos']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     dos = data_obj.get_array('tdos')
     energy = data_obj.get_array('edos')
     # test shape of array
@@ -306,7 +313,8 @@ def test_dos_spin_result(vasp_xml):
     quantity = vasp_xml.get_quantity('dos', settings = settings)
     data_obj = quantity['dos']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     dos = data_obj.get_array('tdos')
     # test shape of array
     assert dos.shape == (2, 1000,)
@@ -326,7 +334,8 @@ def test_pdos_result(vasp_xml):
     quantity = vasp_xml.get_quantity('dos', settings = settings)
     data_obj = quantity['dos']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     dos = data_obj.get_array('pdos')
     energy = data_obj.get_array('edos')
     # test shape of array
@@ -352,7 +361,8 @@ def test_projectors_result(vasp_xml):
     quantity = vasp_xml.get_quantity('projectors', settings = settings)
     data_obj = quantity['projectors']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     proj = data_obj.get_array('projectors')
     # test shape of array
     assert proj.shape == (8, 64, 21, 9)
@@ -398,7 +408,8 @@ def test_bands_result(vasp_xml):
     quantity = vasp_xml.get_quantity('bands', settings = settings)
     data_obj = quantity['bands']
     # test object
-    assert isinstance(data_obj, DataFactory('array.bands'))
+    ref_obj = get_data_class('array.bands')
+    assert isinstance(data_obj, ref_obj)
     eigenocc = data_obj.get_bands(also_occupations=True)
     eigen = eigenocc[0]
     occ = eigenocc[1]
@@ -426,7 +437,8 @@ def test_eigenocc_spin_result(vasp_xml):
     quantity = vasp_xml.get_quantity('bands', settings = settings)
     data_obj = quantity['bands']    
     # test object
-    assert isinstance(data_obj, DataFactory('array.bands'))
+    ref_obj = get_data_class('array.bands')
+    assert isinstance(data_obj, ref_obj)
     eigenocc = data_obj.get_bands(also_occupations=True)
     eigen = eigenocc[0]
     occ = eigenocc[1]
@@ -458,7 +470,8 @@ def test_toten_result(vasp_xml):
     quantity = vasp_xml.get_quantity('energies', settings = settings)
     data_obj = quantity['energies']    
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     energies = data_obj.get_array('toten_0')
     # test number of entries
     assert energies.shape == (1,)
@@ -477,7 +490,8 @@ def test_totens_relax_result(vasp_xml):
     quantity = vasp_xml.get_quantity('energies', settings = settings)
     data_obj = quantity['energies']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     energies = data_obj.get_array('toten_0')
     # test number of entries
     assert energies.shape == (19,)
@@ -498,7 +512,8 @@ def test_hessian_result(vasp_xml):
     quantity = vasp_xml.get_quantity('hessian', settings = settings)
     data_obj = quantity['hessian']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     hessian = data_obj.get_array('hessian')
     # test shape
     assert hessian.shape == (24, 24)
@@ -564,7 +579,8 @@ def test_dynmat_result(vasp_xml):
     quantity = vasp_xml.get_quantity('dynmat', settings = settings)
     data_obj = quantity['dynmat']
     # test object
-    assert isinstance(data_obj, DataFactory('array'))
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
     dynvec = data_obj.get_array('dynvec')
     dyneig = data_obj.get_array('dyneig')
     # test shape

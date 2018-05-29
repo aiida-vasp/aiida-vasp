@@ -9,7 +9,19 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['settings', 'parameters'],
+    'quantities_to_parse': ['parameters',
+                            'structure',
+                            'bands',
+                            'dos',
+                            'kpoints',
+                            'occupations',
+                            'trajectory',
+                            'energies',
+                            'projectors',
+                            'dielectrics',
+                            'born_charges',
+                            'hessian',
+                            'dynmat'],
     'output_params': []
 }
 
@@ -61,31 +73,31 @@ class VasprunParser(BaseFileParser):
         'occupations': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'occupations',
             'prerequisites': []
         },
-        'trajectories': {
+        'trajectory': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'trajectory',
             'prerequisites': []
         },
         'energies': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'energies',
             'prerequisites': []
         },
         'projectors': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'projectors',
             'prerequisites': []
         },
         'dielectrics': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'dielectrics',
             'prerequisites': []
         },
         'final_stress': {
@@ -109,19 +121,19 @@ class VasprunParser(BaseFileParser):
         'born_charges': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'born_charges',
             'prerequisites': []
         },
         'hessian': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'hessian',
             'prerequisites': []
         },
         'dynmat': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
-            'nodeName': '',
+            'nodeName': 'dynmat',
             'prerequisites': []
         },
         'parameters': {
@@ -292,8 +304,6 @@ class VasprunParser(BaseFileParser):
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
-        #print(settings)
-        #sys.exit(1)
         for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
@@ -404,7 +414,7 @@ class VasprunParser(BaseFileParser):
         return self.last_stress
     
     @property
-    def trajectories(self):
+    def trajectory(self):
         """Fetch unitcells, positions, species, forces and stress
         for all calculation steps from parsevasp and store as TrajectoryData.
 

@@ -8,6 +8,7 @@ import pytest
 from aiida_vasp.parsers.vasp import VaspParser
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 
 def xml_path(folder):
     """Set the path to the XML file."""
@@ -44,7 +45,9 @@ def parse_result(request, aiida_env, tmpdir):
         settings_dict = {'parser_settings': {'parse_potcar_file': False,
                                              'exception_on_bad_xml': False,
                                              'should_parse_OUTCAR': False,
-                                             'should_parse_CONTCAR': False}}
+                                             'should_parse_CONTCAR': False,
+                                             'quantities_to_parse': ['parameters', 'bands', 'kpoints'],
+                                             'output_params': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = VaspParser(calc=calc)
@@ -65,15 +68,14 @@ def parse_result(request, aiida_env, tmpdir):
     return parse
 
 
-def test_kpoints_result(parse_result, vasp_xml):
-    """Test that the kpoints result node is a KpointsData instance."""
+def test_parameters_result(parse_result):
+    """Test that the parameters result node is a KpointsData instance."""
 
-    from aiida.orm import DataFactory
-    settings = {'quantities_to_parse': ['kpoints']}
-    quantity = vasp_xml.get_quantity('kpoints', settings = settings)
-    data_obj = quantity['kpoints']
-    assert isinstance(data_obj, DataFactory('array.kpoints'))
-    assert np.all(data_obj.get_kpoints()[0] ==
-                  np.array([0.0, 0.0, 0.0]))
-    assert np.all(data_obj.get_kpoints()[-1] ==
-                  np.array([0.42857143, -0.42857143, 0.42857143]))
+    _, nodes = parse_result(folder='basic')
+    parameters = nodes['output_parameters']
+    bands = nodes['output_bands']
+    kpoints = nodes['output_kpoints']
+    assert isinstance(parameters, get_data_class('parameter'))
+    assert isinstance(bands, get_data_class('array.bands'))
+    assert isinstance(kpoints, get_data_class('array.kpoints'))
+    assert parameters.get_dict()['fermi_level'] == 5.96764939
