@@ -6,14 +6,14 @@ Any validation and / or error handling that applies to *every* VASP run,
 should be handled on this level, so that every workflow can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
-from aiida.work.workchain import WorkChain, ToContext
-from aiida.work import submit
+from aiida.work.workchain import while_
 from aiida.work.db_types import Str
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, builder_interface
+from aiida_vasp.workflows.restart import BaseRestartWorkChain
 
 
 def get_vasp_proc():
@@ -23,7 +23,7 @@ def get_vasp_proc():
     return vasp_cls.process()
 
 
-class VaspBaseWf(WorkChain):
+class VaspBaseWf(BaseRestartWorkChain):
     """
     Error handling enriched wrapper around VaspCalculation.
 
@@ -46,13 +46,8 @@ class VaspBaseWf(WorkChain):
     To see working examples, including generation of input nodes from scratch, please refer to ``examples/run_base_wf.py``
     and ``examples/run_vasp.py``.
     """
-
-    def _fail_compat(self, *args, **kwargs):
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)
+    _verbose = True
+    _calculation_class = CalculationFactory('vasp.vasp')
 
     @classmethod
     def define(cls, spec):
@@ -69,8 +64,13 @@ class VaspBaseWf(WorkChain):
         spec.input('options', valid_type=get_data_class('parameter'))
 
         spec.outline(
+            cls.setup,
             cls.validate_inputs,
-            cls.run_calculation,
+            while_(cls.should_run_calculation)(
+                cls.prepare_calculation,
+                cls.run_calculation,
+                cls.inspect_calculation
+            ),
             cls.results
         )  ## yapf: disable
 
@@ -80,6 +80,10 @@ class VaspBaseWf(WorkChain):
         spec.output('output_band', valid_type=get_data_class('array.bands'), required=False)
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+
+    def prepare_calculation(self):
+        if isinstance(self.ctx.restart_calc, self._calculation_class):
+            self.ctx.inputs.restart_folder = self.ctx.restart_calc.out.remote_folder
 
     def validate_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -98,7 +102,7 @@ class VaspBaseWf(WorkChain):
         expected_options = ['computer', 'resources', 'queue_name']
         for option in expected_options:
             if option not in options:
-                self.fail(exception=ValueError('option required but not passed!'))
+                self._fail_compat(exception=ValueError('option required but not passed!'))
         if builder_interface(CalculationFactory('vasp.vasp')):  ## aiida 1.0.0+ will use this
             self.ctx.inputs.options = options
         else:
@@ -109,27 +113,6 @@ class VaspBaseWf(WorkChain):
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure, family_name=self.inputs.potcar_family.value, mapping=self.inputs.potcar_mapping.get_dict())
         except ValueError as err:
-            self.fail(exception=err)
+            self._fail_compat(exception=err)
         except NotExistent as err:
-            self.fail(exception=err)
-
-    def run_calculation(self):
-        vasp_proc = get_vasp_proc()
-        running = submit(vasp_proc, **self.ctx.inputs)
-        return ToContext(calculation=running)
-
-    def results(self):
-        """Attach the outputs specified in the output specification from the last completed calculation."""
-        self.report('workchain completed')
-
-        for name, port in self.spec().outputs.iteritems():
-            if port.required and name not in self.ctx.calculation.out:
-                self.report('the spec specifies the output {} as required but was not an output of {} (pk: {})'.format(
-                    name, self._calculation_class.__name__, self.ctx.calculation.pk))
-
-            if name in self.ctx.calculation.out:
-                node = self.ctx.calculation.out[name]
-                self.out(name, self.ctx.calculation.out[name])
-                self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
-
-        return
+            self._fail_compat(exception=err)
