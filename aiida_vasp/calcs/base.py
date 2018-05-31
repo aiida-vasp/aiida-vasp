@@ -1,6 +1,7 @@
 # pylint: disable=abstract-method,invalid-metaclass
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
+import os
 
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
@@ -168,6 +169,8 @@ class VaspCalcBase(JobCalculation):
     input_file_name = 'INCAR'
     output_file_name = 'OUTCAR'
 
+    restart_folder = Input(types='remote', doc='A remote folder to restart from after crashing')
+
     @classmethod
     def max_retrieve_list(cls):
         """Return a list of all possible output files from a VASP run."""
@@ -193,7 +196,11 @@ class VaspCalcBase(JobCalculation):
         potentials = tempfolder.get_abs_path('POTCAR')
         kpoints = tempfolder.get_abs_path('KPOINTS')
 
+        remote_copy_list = []
+
         self.verify_inputs(inputdict)
+        if self._is_restart(inputdict):
+            remote_copy_list.extend(self.remote_copy_restart_folder(inputdict))
         self.write_incar(inputdict, incar)
         self.write_poscar(inputdict, structure)
         self.write_potcar(inputdict, potentials)
@@ -208,6 +215,7 @@ class VaspCalcBase(JobCalculation):
         codeinfo.code_uuid = self.get_code().uuid
         codeinfo.code_pk = self.get_code().pk
         calcinfo.codes_info = [codeinfo]
+        calcinfo.remote_copy_list = remote_copy_list
 
         return calcinfo
 
@@ -216,6 +224,16 @@ class VaspCalcBase(JobCalculation):
         super(VaspCalcBase, self)._init_internal_params()
         self._update_internal_params()
 
+    def remote_copy_restart_folder(self, inputdict):
+        """Add all files required for restart to the list of files to be copied from the previous calculation."""
+        restart_folder = inputdict['restart_folder']
+        computer = self.get_computer()
+        excluded = ['INCAR', '_aiidasubmit.sh', '.aiida']
+        copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.')
+                     for name in restart_folder.listdir()
+                     if name not in excluded]
+        return copy_list
+
     def verify_inputs(self, inputdict, *args, **kwargs):  # pylint: disable=unused-argument
         """
         Hook to be extended by subclasses with checks for input nodes.
@@ -223,6 +241,7 @@ class VaspCalcBase(JobCalculation):
         Is called once before submission.
         """
         self.check_input(inputdict, 'code')
+        self.check_restart_folder(inputdict)
         return True
 
     @staticmethod
@@ -242,6 +261,21 @@ class VaspCalcBase(JobCalculation):
             if linkname not in inputdict:
                 raise ValidationError(notset_msg % linkname)
         return True
+
+    def check_restart_folder(self, inputdict):
+        restart_folder = inputdict.get('restart_folder', None)
+        if restart_folder:
+            previous_calc = restart_folder.get_inputs(node_type=JobCalculation)[0]
+            if not self.get_computer().pk == previous_calc.get_computer().pk:
+                raise ValidationError('Calculation can not be restarted on another computer')
+
+    # pylint: disable=no-self-use
+    def _is_restart(self, inputdict):
+        restart_folder = inputdict.get('restart_folder', None)
+        is_restart = False
+        if restart_folder:
+            is_restart = True
+        return is_restart
 
     def store(self, *args, **kwargs):
         """Adds a _prestore subclass hook for operations that should be done just before storing."""
