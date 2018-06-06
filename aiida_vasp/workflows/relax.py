@@ -1,6 +1,7 @@
 """Structure relaxation workchain for VASP."""
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm.data.base import Float, Bool
+from aiida.work import WorkChain
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.vasp.isif import IsifStressFlags, Isif
@@ -54,20 +55,19 @@ def clean_incar_overrides(inputs):
     return overrides
 
 
-class VaspRelaxWf(VaspBaseWf):
+class VaspRelaxWf(WorkChain):
     """Structure relaxation workchain for VASP."""
 
     @classmethod
     def define(cls, spec):
+        super(VaspRelaxWf, cls).define(spec)
         spec.expose_inputs(VaspBaseWf, include=['code', 'structure', 'potcar_family', 'potcar_mapping'])
-        spec.input_namespace('kpoints')
-        spec.input('mesh', valid_type=get_data_class('array.kpoints'), namespace='kpoints', required=False)
-        spec.input('distance', valid_type=Float, namespace='kpoints', required=False)
+        spec.input('kpoints.mesh', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input('kpoints.distance', valid_type=Float, required=False)
         spec.input('incar_add', valid_type=get_data_class('parameter'), required=False)
-        spec.input_namespace('relax')
-        spec.input('positions', valid_type=Bool, required=False)
-        spec.input('shape', valid_type=Bool, required=False)
-        spec.input('volume', valid_type=Bool, required=False)
+        spec.input('relax.positions', valid_type=Bool, required=False)
+        spec.input('relax.shape', valid_type=Bool, required=False)
+        spec.input('relax.volume', valid_type=Bool, required=False)
         spec.input('options', valid_type=get_data_class('parameter'), required=False)
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
 
@@ -133,5 +133,13 @@ class VaspRelaxWf(VaspBaseWf):
         self.ctx.inputs.structure = self.inputs.structure
         self.ctx.inputs.potcar_family = self.inputs.potcar_family
         self.ctx.inputs.potcar_mapping = self.inputs.potcar_mapping
+
+    def validate_inputs(self):
         self.ctx.inputs.kpoints = self._clean_kpoints()
         self.ctx.inputs.incar = self._clean_incar(RELAXATION_INCAR_TEMPLATE)
+
+    def run_relax(self):
+        pass
+
+    def results(self):
+        pass
