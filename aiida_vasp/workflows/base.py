@@ -11,7 +11,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_class, builder_interface
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
 from aiida_vasp.workflows.restart import BaseRestartWorkChain
 
 
@@ -81,8 +81,17 @@ class VaspBaseWf(BaseRestartWorkChain):
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
 
     def prepare_calculation(self):
+        """Set the restart folder and set INCAR tags for a restart."""
         if isinstance(self.ctx.restart_calc, self._calculation_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.out.remote_folder
+            old_incar = AttributeDict(self.ctx.inputs.incar.get_dict())
+            incar = old_incar.copy()
+            if 'istart' in incar:
+                incar.istart = 1
+            if 'icharg' in incar:
+                incar.icharg = 1
+            if incar != old_incar:
+                self.ctx.inputs.incar = get_data_node('parameter', dict=incar)
 
     def validate_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
