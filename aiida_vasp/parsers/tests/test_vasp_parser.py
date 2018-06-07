@@ -9,7 +9,8 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 
 
-class TestFileParser(object):
+class ExampleFileParser(BaseFileParser):
+    """Example FileParser class for testing VaspParsers functionality."""
 
     PARSABLE_ITEMS = {
         'quantity_with_alternatives': {
@@ -40,6 +41,12 @@ class TestFileParser(object):
         },
     }
 
+    def _parse_file(self, inputs):
+        result = {}
+        for quantity in ExampleFileParser.PARSABLE_ITEMS:
+            result[quantity] = None
+        return result
+
 
 @pytest.fixture
 def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
@@ -48,7 +55,7 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     vasp_calc, _ = vasp_nscf_and_ref
     vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
     parser = vasp_calc.get_parserclass()(vasp_calc)
-    parser.add_file_parser('test_parser', {'parser_class': TestFileParser, 'is_critical': False})
+    parser.add_file_parser('test_parser', {'parser_class': ExampleFileParser, 'is_critical': False})
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     return parser
 
@@ -58,13 +65,12 @@ def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
     parsable_quantities = parser._parsable_quantities
-    for quantity in TestFileParser.PARSABLE_ITEMS:
+    for quantity in ExampleFileParser.PARSABLE_ITEMS:
         assert quantity in parsable_quantities
 
-    print parsable_quantities['quantity1']
-    assert parsable_quantities['quantity1'].have_files
+    assert parsable_quantities['quantity1'].has_files
     assert parsable_quantities['quantity1'].is_parsable
-    assert not parsable_quantities['quantity_with_alternatives'].have_files
+    assert not parsable_quantities['quantity_with_alternatives'].has_files
     assert parsable_quantities['quantity2'].is_parsable
     assert not parsable_quantities['quantity3'].is_parsable
     assert 'non_existing_quantity' in parsable_quantities

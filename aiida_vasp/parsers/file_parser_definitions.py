@@ -55,7 +55,7 @@ FILE_PARSER_SETS = {
 }
 
 
-def get_file_parser_set(parser_set):
-    if parser_set in FILE_PARSER_SETS:
-        return FILE_PARSER_SETS[parser_set]
-    return FILE_PARSER_SETS['default']
+def get_file_parser_set(parser_set='default'):
+    if parser_set not in FILE_PARSER_SETS:
+        return None
+    return FILE_PARSER_SETS[parser_set]

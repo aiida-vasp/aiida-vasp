@@ -44,15 +44,15 @@ class ParsableQuantity(DictWithAttributes):
         self.name = name
 
         # Check whether all files required for parsing this quantity have been retrieved and store it.
-        missing_files = self.have_all(files_list)
+        missing_files = self.has_all(files_list)
         if missing_files is None:
-            self.have_files = False
+            self.has_files = False
             missing_files = []
         else:
-            self.have_files = not missing_files
+            self.has_files = not missing_files
         self.missing_files = missing_files
 
-    def have_all(self, available_items):
+    def has_all(self, available_items):
         """Check whether all items are in item_list."""
         missing_items = []
         if not self.parsers:
@@ -122,8 +122,15 @@ class VaspParser(BaseParser):
         if calc_settings:
             self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
+        file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
+        if file_parser_set is None:
+            self.logger.warning(' The {0} FileParser-set has been requested by setting `file_parser_set: {0}`,'.format(
+                self._settings['file_parser_set']) + ' however it does not exist. Parsing will continue using the `default` set of' +
+                                ' Please check the `parsers/file_parser_definitions.py`' + ' or the documentation for available options.')
+            file_parser_set = get_file_parser_set()
+
         self._parsers = {}
-        for key, value in get_file_parser_set(self._settings['file_parser_set']).iteritems():
+        for key, value in file_parser_set.iteritems():
             self.add_file_parser(key, value)
 
         self._quantities_to_parse = []
@@ -218,9 +225,9 @@ class VaspParser(BaseParser):
             value = self._parsable_quantities[quantity]
             is_parsable = True
             for prereq in value.prerequisites:
-                if not self._parsable_quantities[prereq].have_files:
+                if not self._parsable_quantities[prereq].has_files:
                     is_parsable = False
-            value.is_parsable = is_parsable and value.have_files
+            value.is_parsable = is_parsable and value.has_files
             if quantity == value.nodeName:
                 # This quantity and all of its alternatives represent a node.
                 value.is_node = True
