@@ -30,9 +30,39 @@ DEFAULT_OPTIONS = {
     'file_parser_set': 'default',
 }
 
-QUANTITY_ATTR_DEFAULTS = {
-    'alternatives': [],
-}
+
+class ParsableQuantity(DictWithAttributes):
+    """Container class for parsable quantities."""
+
+    QUANTITY_ATTR_DEFAULTS = {
+        'alternatives': [],
+        'parsers': [],
+    }
+
+    def __init__(self, name, init, files_list):
+        super(ParsableQuantity, self).__init__(init, ParsableQuantity.QUANTITY_ATTR_DEFAULTS)
+        self.name = name
+
+        # Check whether all files required for parsing this quantity have been retrieved and store it.
+        missing_files = self.have_all(files_list)
+        if missing_files is None:
+            self.have_files = False
+            missing_files = []
+        else:
+            self.have_files = not missing_files
+        self.missing_files = missing_files
+
+    def have_all(self, available_items):
+        """Check whether all items are in item_list."""
+        missing_items = []
+        if not self.parsers:
+            return None
+        if not available_items:
+            return self.parsers
+        for item in self.parsers:
+            if item not in available_items:
+                missing_items.append(item)
+        return missing_items
 
 
 class VaspParser(BaseParser):
@@ -112,6 +142,11 @@ class VaspParser(BaseParser):
         """
         self._parsers[parser_name] = DictWithAttributes(parser_dict)
 
+    def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
+        """Add a single parsable quantity to the _parsable_quantities."""
+
+        self._parsable_quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
+
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
@@ -159,14 +194,6 @@ class VaspParser(BaseParser):
     def _set_parsable_quantities(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        def have_all(item_list, available_items):
-            """Check whether all items are in item_list."""
-            missing_items = []
-            for item in item_list:
-                if item not in available_items:
-                    missing_items.append(item)
-            return missing_items
-
         import copy
 
         # Gather all parsable items as defined in the file parsers.
@@ -178,15 +205,8 @@ class VaspParser(BaseParser):
                                    ' an alternative for the other.')
             value.parser = None
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
-
                 # Create quantity objects.
-                self._parsable_quantities[quantity] = DictWithAttributes(quantity_dict, QUANTITY_ATTR_DEFAULTS)
-                self._parsable_quantities[quantity].name = quantity
-
-                # Check whether all files required for parsing this quantity have been retrieved and store it.
-                missing_files = have_all(quantity_dict.get('parsers', []), self.out_folder.get_folder_list())
-                self._parsable_quantities[quantity].have_files = not missing_files
-                self._parsable_quantities[quantity].missing_files = missing_files
+                self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
         # make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
@@ -209,8 +229,9 @@ class VaspParser(BaseParser):
             # Add this quantity to the list of alternatives of another quantity.
             if value.is_alternative is not None:
                 if value.is_alternative not in self._parsable_quantities:
-                    dummy_quantity = DictWithAttributes({'is_parsable': False, 'alternatives': []})
-                    self._parsable_quantities[value.is_alternative] = dummy_quantity
+                    # The quantity which this quantity is an alternative to is not in _parsable_quantities.
+                    # Add an unparsable dummy quantity for it.
+                    self.add_parsable_quantity(value.is_alternative, {})
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
                     self._parsable_quantities[value.is_alternative].alternatives.append(quantity)
 
