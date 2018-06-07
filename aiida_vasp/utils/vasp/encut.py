@@ -11,6 +11,7 @@ from aiida_vasp.utils.vasp.incar_param import AbstractIncarParam
 class EncutFlags(enum.Enum):
     MIN_ENMAX = 'min(Enmax)'
     MAX_ENMAX = 'max(Enmax)'
+    VALUE_ENTRY = '<given value>'
 
 
 class Encut(AbstractIncarParam):
@@ -27,24 +28,42 @@ class Encut(AbstractIncarParam):
     :param structure: StructureData, passed to ``PotcarData.get_potcars_from_structure()``
     :param potcar_family: String, passed to ``PotcarData.get_potcars_from_structure()``
     :param potcar_mapping: Dictionary, passed to ``PotcarData.get_potcars_from_structure()``
-    :param min_or_max: EncutFlags.MIN_ENMAX or EncutFlags.MAX_ENMAX
+    :param strategy: EncutFlags.VALUE_ENTRY for manual entry of a value or
+        EncutFlags.MIN_ENMAX, EncutFlags.MAX_ENMAX to automatically retrieve the value from a set of POTCARs
     :param factor: a factor with which the min or max ENMAX should be multiplied
+    :param value: only in combination with strategy VALUE_ENTRY: manually enter a value
     """
 
-    def __init__(self, structure, potcar_family, potcar_mapping, min_or_max=EncutFlags.MAX_ENMAX, factor=1):
-        if not isinstance(min_or_max, EncutFlags):
-            raise ValueError('min_or_max parameter must be of type {}'.format(EncutFlags))
-        self._structure = structure
-        self._potcar_family = potcar_family
-        self._multipotcar = MultiPotcarIo.from_structure(structure,
+    def __init__(self, strategy, **kwargs):
+        if not isinstance(strategy, EncutFlags):
+            raise ValueError('strategy parameter must be of type {}'.format(EncutFlags))
+        self._strategy = strategy
+
+        self._base_encut = kwargs.pop('value', None)
+        self._factor = kwargs.pop('factor', 1)
+        self._structure = kwargs.pop('structure', None)
+        self._potcar_family = kwargs.pop('potcar_family', None)
+        self._potcar_mapping = kwargs.pop('potcar_mapping', None)
+        self._multipotcar = None
+        self.validate()
+        if self._strategy != EncutFlags.VALUE_ENTRY:
+            self._init_from_structure(**kwargs)
+
+    def _init_from_structure(self):
+
+        self._multipotcar = MultiPotcarIo.from_structure(self._structure,
                                                          get_data_class('potcar').get_potcars_from_structure(
-                                                             structure=structure, family_name=potcar_family, mapping=potcar_mapping))
-        self._min_or_max = min_or_max
-        if min_or_max == EncutFlags.MIN_ENMAX:
+                                                             structure=self._structure,
+                                                             family_name=self._potcar_family,
+                                                             mapping=self._potcar_mapping))
+        self._min_or_max = strategy
+        if strategy == EncutFlags.MIN_ENMAX:
             self._base_encut = min([potcar.pymatgen.enmax for potcar in self._multipotcar.potcars])
         else:
             self._base_encut = max([potcar.pymatgen.enmax for potcar in self._multipotcar.potcars])
-        self._factor = factor
+
+        if not self._base_encut:
+            raise EncutInferringError('An unexpected error occurred while inferring ENCUT with strategy {}'.format(self._strategy))
 
     @classproperty
     def name(self):
@@ -58,11 +77,23 @@ class Encut(AbstractIncarParam):
         return [], []
 
     def validate(self):
-        pass
+        if self._strategy == EncutFlags.VALUE_ENTRY:
+            if not self._base_encut:
+                raise ValueError('missing kwarg "value" for strategy {}'.format(self._strategy))
+        else:
+            if not self._structure:
+                raise ValueError('missing kwarg "structure" for strategy {}'.format(self._strategy))
+            if not self._potcar_family:
+                raise ValueError('missing kwarg "potcar_family" for strategy {}'.format(self._strategy))
+            if not self._potcar_mapping:
+                raise ValueError('missing kwarg "potcar_mapping" for strategy {}'.format(self._strategy))
 
     @property
     def info(self):
-        msg = '{factor}x{minmax}, unit: eV'
+        msg = '{factor}x{strategy}, unit: eV'
         factor = '' if self._factor == 1 else '{}x'.format(self._factor)
 
-        return msg.format(factor, self._min_or_max.value)
+        return msg.format(factor=factor, strategy=self._strategy.value)
+
+    class EncutInferringError(Exception):
+        pass

@@ -107,7 +107,9 @@ class VaspBaseWf(BaseRestartWorkChain):
         options = AttributeDict()
         options.computer = self.inputs.code.get_computer()
         options.update(self.inputs.options.get_dict())
-        expected_options = ['computer', 'resources', 'queue_name']
+        expected_options = ['computer', 'resources']
+        if computer.get_scheduler_type() != 'direct':
+            expected_options.append('queue_name')
         for option in expected_options:
             if option not in options:
                 self._fail_compat(exception=ValueError('option required but not passed!'))

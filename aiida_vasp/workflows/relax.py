@@ -8,6 +8,7 @@ from aiida_vasp.utils.vasp.isif import IsifStressFlags, Isif
 from aiida_vasp.utils.vasp.ibrion import IbrionFlags, Ibrion
 from aiida_vasp.utils.vasp.encut import EncutFlags, Encut
 from aiida_vasp.workflows.base import VaspBaseWf
+from aiida_vasp.workflows.relax import prepare_process_inputs
 
 RELAXATION_INCAR_TEMPLATE = AttributeDict({
     "ismear": -1,
@@ -61,22 +62,19 @@ class VaspRelaxWf(WorkChain):
     @classmethod
     def define(cls, spec):
         super(VaspRelaxWf, cls).define(spec)
-        spec.expose_inputs(VaspBaseWf, include=['code', 'structure', 'potcar_family', 'potcar_mapping'])
+        spec.expose_inputs(VaspBaseWf, include=['code', 'structure', 'potcar_family', 'potcar_mapping', 'options'])
         spec.input('kpoints.mesh', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input('kpoints.distance', valid_type=Float, required=False)
         spec.input('incar_add', valid_type=get_data_class('parameter'), required=False)
         spec.input('relax.positions', valid_type=Bool, required=False)
         spec.input('relax.shape', valid_type=Bool, required=False)
         spec.input('relax.volume', valid_type=Bool, required=False)
-        spec.input('options', valid_type=get_data_class('parameter'), required=False)
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
 
         spec.outline(cls.setup, cls.validate_inputs, cls.run_relax, cls.results)
 
-        spec.output('output_structure', valid_type=get_data_class('structure'))
+        spec.output('relaxed_structure', valid_type=get_data_class('structure'))
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
-        spec.output('remote_folder', valid_type=get_data_class('remote'))
-        spec.output('retrieved', valid_type=get_data_class('folder'))
 
     def _clean_incar(self, base_incar):
         """Update incar parameters based on other inputs."""
@@ -130,16 +128,27 @@ class VaspRelaxWf(WorkChain):
 
     def setup(self):
         self.ctx.inputs = AttributeDict()
+        self.ctx.inputs.code = self.inputs.code
         self.ctx.inputs.structure = self.inputs.structure
         self.ctx.inputs.potcar_family = self.inputs.potcar_family
         self.ctx.inputs.potcar_mapping = self.inputs.potcar_mapping
+        self.ctx.options = self.inputs.options
+        if 'max_iterations' in self.inputs.restart:
+            self.ctx.inputs.max_iterations = self.inputs.restart.max_iterations
 
     def validate_inputs(self):
         self.ctx.inputs.kpoints = self._clean_kpoints()
         self.ctx.inputs.incar = self._clean_incar(RELAXATION_INCAR_TEMPLATE)
 
     def run_relax(self):
-        pass
+        inputs = prepare_process_inputs(self.ctx.inputs)
+        running = submit(VaspBaseWf, **inputs)
+
+        self.report('launching VaspBaseWf<{}>'.format(running.pid))
+
+        return ToContext(workchains=append_(running))
 
     def results(self):
-        pass
+        last_workchain = self.ctx.workchains[-1]
+        relaxed_structure = last_workchain.out.output_structure
+        output_parameters = last_workchain.out.output_parameters
