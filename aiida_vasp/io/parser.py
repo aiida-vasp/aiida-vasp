@@ -26,6 +26,8 @@ Usage::
                 'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
                 'alternatives': ['alternative_quantity1', ... ] # Optional. If a quantity can be parsed from more than
                 ## one file, a list of alternative quantities can be provided here.
+                'is_alternative': another_quantity # Optional. If this quantity is an alternative to another_quantity
+                ## set this flag. The VaspParser will automatically add this quantity to another_quantities alternatives.
             }
             'item2': {
                 'inputs': [],
