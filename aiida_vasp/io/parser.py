@@ -17,13 +17,17 @@ Usage::
     ExampleFileParser(BaseFileParser):
 
         PARSABLE_ITEMS = {
-            'item1': {
+            'item1': { # The name of a quantity. It should be unique among all of the FileParsers.
                 'inputs': ['required_quantity'],  # This quantity will be parsed first and made available in time if possible
                 'parsers': ['ExampleFile'], # During setup the VaspParser will check, whether ExampleFile has been retrieved
                 ## and initialise the corresponding parser, if this quantity is requested by setting any of the
                 ## 'parser_settings['add_OutputNode'] = True'
                 'nodeName': ['examples'],  # The quantity will be added to the 'output_examples' output node
                 'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
+                'alternatives': ['alternative_quantity1', ... ] # Optional. If a quantity can be parsed from more than
+                ## one file, a list of alternative quantities can be provided here.
+                'is_alternative': another_quantity # Optional. If this quantity is an alternative to another_quantity
+                ## set this flag. The VaspParser will automatically add this quantity to another_quantities alternatives.
             }
             'item2': {
                 'inputs': [],
