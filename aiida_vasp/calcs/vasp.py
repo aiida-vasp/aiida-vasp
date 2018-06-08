@@ -43,6 +43,8 @@ class VaspCalculation(VaspCalcBase):
 
     _DEFAULT_PARAMETERS = {}
     _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
+    _query_type_string = 'vasp.vasp'
+    _plugin_type_string = 'vasp.vasp'
 
     def _prepare_for_submission(self, tempfolder, inputdict):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""

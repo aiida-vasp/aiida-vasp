@@ -32,12 +32,13 @@
             "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
-            "vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
-            "vasp.nscf = aiida_vasp.workflows.nscf:NscfWorkflow", 
-            "vasp.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow", 
-            "vasp.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow", 
-            "vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow", 
-            "vasp.windows = aiida_vasp.workflows.windows:WindowsWorkflow"
+            "vasp.base = aiida_vasp.workflows.base:VaspBaseWf",
+            "vasp.legacy.scf = aiida_vasp.workflows.legacy.scf:ScfWorkflow", 
+            "vasp.legacy.nscf = aiida_vasp.workflows.legacy.nscf:NscfWorkflow", 
+            "vasp.legacy.projections = aiida_vasp.workflows.legacy.projections:ProjectionsWorkflow", 
+            "vasp.legacy.autowindows = aiida_vasp.workflows.legacy.autowindows:AutowindowsWorkflow", 
+            "vasp.legacy.wannier = aiida_vasp.workflows.legacy.wannier:WannierWorkflow", 
+            "vasp.legacy.windows = aiida_vasp.workflows.legacy.windows:WindowsWorkflow"
         ]
     }, 
     "extras_require": {

@@ -48,10 +48,62 @@ After setting up the database and profile and configuring the compute resources,
 
 Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../vasp_pot/potpaw_PBE``), ``<code>`` is the PK or name of the code you set up in AiiDA for running VASP, ``<computer>`` is the PK or name of the computer you set up in AiiDA for running VASP on.
 
-Take a look at the file ``aiida-vasp/examples/run_vasp.py`` for an example code on how to programmatically create and submit a VASP calculation.
-
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
 
+Running calculations
+--------------------
+
+ * Take a look at the file `example calc`_ for an example code on how to create and submit a VASP calculation from python code.
+ * Take a look at the file `example workflow`_ for an example on how to do the same via an AiiDA WorkChain.
+
+.. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
+.. _example workflow: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_base_wf.py
+
+Managing potcar files
+---------------------
+
+AiiDA-VASP takes care of managing your POTCAR files, but because they are part of the VASP licence, you need to obtain them separately and make them available to AiiDA-VASP. You should have recieved a folder (``tar`` archive) containing multiple subfolders (``tar`` archives), each representing a set of POTCAR files intended to be used together. AiiDA-VASP allows you to upload only the sets (or even individual potentials) you require, and keep them grouped in so called "families".
+
+The command line tools for these tasks are written as plugins to AiiDA, they can be called through AiiDA's ``verdi`` command like so::
+
+   $ verdi data vasp-potcar --help
+   Usage: verdi data vasp-potcar [OPTIONS] COMMAND [ARGS]...
+
+      Top level command for handling VASP POTCAR files.
+
+   Options:
+     --help  Show this message and exit.
+   
+   Commands:
+     exportfamily  Export a POTCAR family into a compressed tar...
+     listfamilies  List available families of VASP potcar files.
+     uploadfamily  Upload a family of VASP potcar files.
+
+To make for example the PBE.54 family of POTCAR files available, use the ``uploadfamily`` command like so::
+
+   $ verdi data vasp-potcar uploadfamily --path=vasp_pot/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4"
+
+Which will allow you to pass for example the following to the base workflow::
+
+   $ inputs.potcar_family = Str('PBE.54')
+   $ inputs.potcar_mapping = DataFactory('parameter')(dict={'In': 'In_d', 'As': 'As'})
+
+Assuming you will run VASP on an InAs structure and wish to use the ``potpaw_PBE.54/In_d/POTCAR`` and the ``potpaw_Ppotpaw_PBE.54/As/POTCAR`` potentials.
+
+More information about managing POTCAR files can be found here:
+
+.. toctree::
+   :maxdepth: 2
+
+   howto/upload_potcars
+
+Creating workflows
+------------------
+
+.. toctree::
+   :maxdepth: 3
+
+   howto/write_workflows
 
 More
 ====

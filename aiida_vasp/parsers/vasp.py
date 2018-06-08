@@ -1,15 +1,8 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
-from aiida_vasp.io.doscar import DosParser
-from aiida_vasp.io.eigenval import EigParser
-from aiida_vasp.io.kpoints import KpParser
-from aiida_vasp.io.outcar import OutcarParser
-from aiida_vasp.io.vasprun import VasprunParser
-from aiida_vasp.io.chgcar import ChgcarParser
-from aiida_vasp.io.wavecar import WavecarParser
-from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.parsers.base import BaseParser
+from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
 from aiida_vasp.utils.delegates import delegate
 from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.structure import StructureData
@@ -17,6 +10,7 @@ from aiida.orm.data.array.kpoints import KpointsData
 from aiida.orm.data.array.bands import BandsData
 from aiida.orm.data.array.trajectory import TrajectoryData
 from aiida.orm.data.array import ArrayData
+from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 LINKNAME_DICT = {
     'parameters': 'output_parameters',
@@ -67,59 +61,43 @@ DEFAULT_OPTIONS = {
     'add_hessian': False,
     'add_dynmat': False,
     'add_wavecar': False,
-    'should_parse_DOSCAR': False,
-    'should_parse_EIGENVAL': False,
-    'should_parse_IBZKPT': False,
-    'should_parse_OUTCAR': False,
-    'should_parse_CONTCAR': False,
-    'should_parse_vasprun.xml': True,
-    'should_parse_WAVECAR': False,
-    'should_parse_CHGCAR': False
+    'file_parser_set': 'default',
 }
 
-PARSABLE_FILES = {
-    'DOSCAR': {
-        'parser_class': DosParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'EIGENVAL': {
-        'parser_class': EigParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'IBZKPT': {
-        'parser_class': KpParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'OUTCAR': {
-        'parser_class': OutcarParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'vasprun.xml': {
-        'parser_class': VasprunParser,
-        'is_critical': True,
-        'status': 'Unknown'
-    },
-    'CHGCAR': {
-        'parser_class': ChgcarParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'WAVECAR': {
-        'parser_class': WavecarParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-    'CONTCAR': {
-        'parser_class': PoscarParser,
-        'is_critical': False,
-        'status': 'Unknown'
-    },
-}
 
+class ParsableQuantity(DictWithAttributes):
+    """Container class for parsable quantities."""
+
+    QUANTITY_ATTR_DEFAULTS = {
+        'alternatives': [],
+        'parsers': [],
+    }
+
+    def __init__(self, name, init, files_list):
+        super(ParsableQuantity, self).__init__(init, ParsableQuantity.QUANTITY_ATTR_DEFAULTS)
+        self.name = name
+
+        # Check whether all files required for parsing this quantity have been retrieved and store it.
+        missing_files = self.has_all(files_list)
+        if missing_files is None:
+            self.has_files = False
+            missing_files = []
+        else:
+            self.has_files = not missing_files
+        self.missing_files = missing_files
+
+    def has_all(self, available_items):
+        """Check whether all items are in item_list."""
+        missing_items = []
+        if not self.parsers:
+            return None
+        if not available_items:
+            return self.parsers
+        for item in self.parsers:
+            if item not in available_items:
+                missing_items.append(item)
+        return missing_items
+    
 
 class VaspParser(BaseParser):
     """
@@ -144,7 +122,7 @@ class VaspParser(BaseParser):
 
     * `add_<quantity>`, where quantity is one of:
 
-        'parameters': Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
+        'parameters': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'structure':  (Default) StructureData node parsed from CONTCAR
         'bands':      Band structure node parsed from EIGENVAL.
         'dos':        ArrayData node containing the DOS parsed from DOSCAR.
@@ -152,11 +130,18 @@ class VaspParser(BaseParser):
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
 
-        Set any of these to True, if the corresponding output node should be added.
+    * `file_parser_set`: String (DEFAULT = 'default').
 
-    * `output_params`: A list of things that should be added to the 'output_parameters'
-                       node, available options are:
-                       DEFAULT: ['energies', 'forces']
+        By this option the default set of FileParsers can be chosen. See file_parser_definitions.py
+        for available options.
+
+    Additional FileParsers can be added to the VaspParser by using
+
+        VaspParser.add_file_parser(parser_name, parser_definition_dict),
+
+    where the 'parser_definition_dict' should contain the 'parser_class' and the
+    'is_critical' flag. Keep in mind adding an additional FileParser after 'parse_with_retrieved'
+    is called, will only have an effect when parsing a second time.
     """
 
     def __init__(self, calc):
@@ -164,26 +149,52 @@ class VaspParser(BaseParser):
 
         self.out_folder = None
 
-        self._parsers = {}
         self._parsable_quantities = {}
-
-        # Gather all parsable items as defined in the file parsers.
-        for filename, value in PARSABLE_FILES.iteritems():
-            self._parsable_quantities.update(value['parser_class'].PARSABLE_ITEMS)
-            self._parsers[filename] = None
 
         self._settings = DEFAULT_OPTIONS
         calc_settings = self._calc.get_inputs_dict().get('settings')
         if calc_settings:
             self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
+        file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
+        if file_parser_set is None:
+            self.logger.warning(' The {0} FileParser-set has been requested by setting `file_parser_set: {0}`,'.format(
+                self._settings['file_parser_set']) + ' however it does not exist. Parsing will continue using the `default` set of' +
+                                ' Please check the `parsers/file_parser_definitions.py`' + ' or the documentation for available options.')
+            file_parser_set = get_file_parser_set()
+
+        self._parsers = {}
+        for key, value in file_parser_set.iteritems():
+            self.add_file_parser(key, value)
+
         self._quantities_to_parse = []
         self._output_nodes = {}
+
+        # this list is for bookkeeping, to check whether a quantity has been requested
+        # twice during the parsing cycle.
         self._requested_quantities = []
 
-        self._check_and_validate_settings()
+    def add_file_parser(self, parser_name, parser_dict):
+        """
+        Add the definition of a fileParser to self._parsers.
+
+        The required tags for the parser_dict can be found in PARSABLE_FILES. The FileParser must inherit
+        from BaseFileParser and it will replace another previously defined fileParser with the same name.
+        """
+        self._parsers[parser_name] = DictWithAttributes(parser_dict)
+
+    def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
+        """Add a single parsable quantity to the _parsable_quantities."""
+
+        self._parsable_quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
 
     def parse_with_retrieved(self, retrieved):
+
+        def missing_critical_file():
+            for file_name, value_dict in self._parsers.iteritems():
+                if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
+                    return True
+            return False
 
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
@@ -191,13 +202,18 @@ class VaspParser(BaseParser):
         if not self.out_folder:
             return self.result(success=False)
 
-        # Get all specialised file parsers. Warnings will be issued if a file should be parsed and
-        # the corresponding files do not exist.
-        success = self._set_file_parsers()
-
-        if not success:
+        if missing_critical_file():
             # A critical file i.e. OUTCAR does not exist. Abort parsing.
             return self.result(success=False)
+
+        # Get the _parsable_quantities from the FileParsers.
+        self._set_parsable_quantities()
+
+        # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
+        # the corresponding files do not exist.
+        self._check_and_validate_settings()
+
+        self._set_file_parsers()
 
         # Parse all implemented quantities in the quantities_to_parse list.
         print("quantities_to_parse:", self._quantities_to_parse)
@@ -207,9 +223,9 @@ class VaspParser(BaseParser):
             
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
-            print("KEY, VALUE: ", key, value)
-            if key != self._parsable_quantities[key]['nodeName']:
-                # this is just an intermediate result and should not be added as a node.
+
+            if not self._parsable_quantities[key].is_node:
+                # This quantity does not represent a node, continue with the next one.
                 continue
 
             if value:
@@ -217,14 +233,60 @@ class VaspParser(BaseParser):
 
         return self.result(success=True)
 
+    def _set_parsable_quantities(self):
+        """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
+
+        import copy
+
+        # Gather all parsable items as defined in the file parsers.
+        for filename, value in self._parsers.iteritems():
+            # initialise the instance of this FileParser to None.
+            if filename in self._parsable_quantities:
+                raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
+                                   ' Quantity names must be unique. If both quantities are equivalent, define one as' +
+                                   ' an alternative for the other.')
+            value.parser = None
+            for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
+                # Create quantity objects.
+                self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
+
+        # make a local copy of parsable_quantities, because during the next step
+        # dummy quantities for missing quantities might be added.
+        parsable_quantities = copy.deepcopy(self._parsable_quantities.keys())
+
+        # check for every quantity, whether all of the prerequisites are parsable, whether they
+        # represent a node, and whether they are alternatives for another quantity.
+        for quantity in parsable_quantities:
+            value = self._parsable_quantities[quantity]
+            is_parsable = True
+            for prereq in value.prerequisites:
+                if not self._parsable_quantities[prereq].has_files:
+                    is_parsable = False
+            value.is_parsable = is_parsable and value.has_files
+            if quantity == value.nodeName:
+                # This quantity and all of its alternatives represent a node.
+                value.is_node = True
+                for item in value.alternatives:
+                    self._parsable_quantities[item].is_node = True
+            # Add this quantity to the list of alternatives of another quantity.
+            if value.is_alternative is not None:
+                if value.is_alternative not in self._parsable_quantities:
+                    # The quantity which this quantity is an alternative to is not in _parsable_quantities.
+                    # Add an unparsable dummy quantity for it.
+                    self.add_parsable_quantity(value.is_alternative, {})
+                if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
+                    self._parsable_quantities[value.is_alternative].alternatives.append(quantity)
+
     def _check_and_validate_settings(self):
         """Check the settings and set which files should be parsed based on the input."""
 
-        import copy
-        new_settings = copy.deepcopy(self._settings)
-
-        calc_settings = self._calc.get_inputs_dict().get('settings')
-        calc_parser_settings = calc_settings.get_dict().get('parser_settings')
+        def add_quantity(quantity_to_add):
+            """Check, whether a quantity or it's alternatives can be added."""
+            for item in [quantity_to_add] + self._parsable_quantities[quantity_to_add].alternatives:
+                if self._parsable_quantities[item].is_parsable:
+                    self._quantities_to_parse.append(item)
+                    return True
+            return False
 
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
@@ -237,27 +299,27 @@ class VaspParser(BaseParser):
             if quantity not in self._parsable_quantities:
                 self.logger.warning('{0} has been requested by setting add_{0}'.format(quantity) +
                                     ' however it has not been implemented. Please check the docstrings' +
-                                    ' in  aiida_vasp.parsers.vasp.py for valid input.')
+                                    ' in aiida_vasp.parsers.vasp.py for valid input.')
                 continue
 
-            # Found a node, which should be added, add itself and all it's perequisites to the quantities to parse.
-            for quantity in self._parsable_quantities[quantity]['prerequisites'] + [quantity]:
-                if quantity in self._quantities_to_parse:
-                    continue
-                self._quantities_to_parse.append(quantity)
-                # Flag all the required files for being parsed.
-                for filename in self._parsable_quantities[quantity]['parsers']:
-                    k = 'should_parse_' + filename
-                    new_settings[k] = value
-                    # make sure we rewrite if this was overridden for the
-                    # calc settings
-                    # eFL: THIS IS SUPER NASTY AND SHOULD BE REPLACED ASAP
-                    #try:
-                    #    new_settings[k] = calc_parser_settings[k]
-                    #except KeyError:
-                    #    pass
+            # Found a node, which should be added, add it to the quantities to parse.
+            # if all files required for this quantity have been retrieved. If there are
+            # alternatives for this quantity also try those.
+            success = add_quantity(quantity)
 
-        self._settings = new_settings
+            if not success:
+                # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
+                # Gather a list of all the missing files and issue a warning.
+                missing_files = []
+                for quant in [quantity] + self._parsable_quantities[quantity].alternatives:
+                    for missing_file in self._parsable_quantities[quant].missing_files:
+                        missing_files.append(missing_file)
+
+                missing_files = ", ".join(missing_files)
+                self.logger.warning('{0} has been requested, however the following files'
+                                    ''.format(quantity) +
+                                    ' required for parsing have not been retrieved: {0}.'
+                                    ''.format(missing_files))
 
     def _set_file_parsers(self):
         """
@@ -266,29 +328,14 @@ class VaspParser(BaseParser):
         Return False if a critical file is missing, which will abort the parsing.
         """
 
-        for file_name, value in PARSABLE_FILES.iteritems():
-            if not self._settings['should_parse_' + file_name]:
-                # Based on the settings, we should not parse this file. continue with the next one.
-                continue
-            if self._parsers[file_name] is not None:
-                # This fileParser has already been set, continue with the next one.
-                continue
-
-            # We should parse this file and the parser has not been set yet.
-            file_to_parse = self.get_file(file_name)
-            if not file_to_parse:
-                self._parsers[file_name] = None
-                if value['is_critical']:
-                    self.logger.error('{} not found, look at the scheduler output for troubleshooting.'.format(file_name))
-                    return False
-
-                self.logger.warning('{0} not found, but should be parsed.'.format(file_name))
-            else:
-                # The file should be parsed and has been found
-                self._parsers[file_name] = value['parser_class'](self, file_path=file_to_parse)
-
-        # All critical files have been found, so we can safely return True.
-        return True
+        for quantity in self._quantities_to_parse:
+            for filename in self._parsable_quantities[quantity]['parsers']:
+                if self._parsers[filename].parser is not None:
+                    # This parser has already been checked.
+                    continue
+                file_to_parse = self.get_file(filename)
+                self._parsers[filename].parser = self._parsers[filename]['parser_class'](
+                    file_to_parse, calc_parser_cls=self)
 
     # pylint: disable=unused-argument, no-self-use
     @delegate()
@@ -308,7 +355,7 @@ class VaspParser(BaseParser):
 
         if quantity in self._requested_quantities:
             raise RuntimeError('{0} has been requested for parsing a second time.'.format(quantity) +
-                               ' There is probably a cycle in the prerequisites of the parsable_items in the single FileParsers.')
+                               ' There is probably a cycle in the prerequisites of the' + ' parsable_items in the single FileParsers.')
 
         # This is the first time this quantity has been requested, keep track of it.
         self._requested_quantities.append(quantity)
@@ -317,10 +364,10 @@ class VaspParser(BaseParser):
             # The quantity is not in the output_nodes. Try to parse it
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
-        # parsing the quantity without requesting it a second time was succesful, so remove it from requested_quantities.
+        # parsing the quantity without requesting it a second time was successful, remove it from requested_quantities.
         self._requested_quantities.remove(quantity)
 
-        # since the quantity has already been parsed as an input now, we don't have to parse it a second time later.
+        # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
         if quantity in self._quantities_to_parse:
             self._quantities_to_parse.remove(quantity)
 
