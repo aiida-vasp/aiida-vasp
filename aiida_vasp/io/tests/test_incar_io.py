@@ -5,8 +5,8 @@ from collections import OrderedDict
 import pytest
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
-from aiida_vasp.io.incar import IncarIo, IncarItem, IncarParamParser
-
+from aiida_vasp.io.incar import IncarIo, IncarItem, IncarParamParser, IncarParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 @pytest.fixture()
 def incar_dict():
@@ -14,6 +14,12 @@ def incar_dict():
     incar_dict = OrderedDict([('encut', 350), ('Sigma', '.5e-1 comment'), ('lreal', False), ('PREC', 'Accurate')])
     return incar_dict
 
+@pytest.fixture()
+def incar_dict_example():
+    """Create a example dict. """
+    incar_dict = {'encut': 350, 'Sigma': '.5e-1 #comment', 'lreal': False, 'PREC': 'Accurate'}
+    return incar_dict
+            
 
 @pytest.mark.incar
 def test_read_incar():
@@ -111,3 +117,84 @@ def test_parser():
     assert parsed['list'] == [1, 2, -33, 5.6]
     assert parsed['int'] == 45
     assert 'noparam' not in parsed
+
+@pytest.mark.incar
+def test_parser_read_parsevasp():
+    """Test to read a INCAR file from parsevasp. """
+
+    path = data_path('phonondb', 'INCAR')
+    parser = IncarParser(file_path=path)
+    result = parser.get_quantity('incar', {})
+    assert isinstance(result['incar'], get_data_class('parameter'))
+    incar= result['incar'].get_dict()
+    assert incar['prec'] == 'Accurate'
+    assert incar['ibrion'] == -1
+    assert incar['encut'] == 359.7399
+    assert incar['lreal'] is False
+                
+
+@pytest.mark.incar
+def test_parser_read_example_parsevasp():
+    """Test to read example INCAR from VASP documentation using
+    parsevasp.
+
+    This test should fail as the comment line does not start
+    with hashtag.
+
+    """
+
+    path = data_path('incar_set', 'INCAR.copper_srf')
+    try:
+        parser = IncarParser(file_path=path)
+    except AssertionError:
+        pass
+
+@pytest.mark.incar
+def test_parser_dict_parsevasp(incar_dict_example):
+    """Test to pass a dict to the INCAR parser using
+    parsevasp. Should fail, since passing of dict in
+    the interface is not implemented yet.
+
+    """
+    
+    try:
+        parser = IncarParser(incar_dict=incar_dict)
+    except AttributeError:
+        pass                
+
+@pytest.mark.incar
+def test_parser_string_parsevasp():
+    """Test to pass a string to the INCAR parser using
+    parsevasp. Should fail, since passing of string in
+    the interface is not implemented yet.
+
+    """
+
+    test_string = 'TRUE = .True.\nFalse=.false.'
+    try:
+        parser = IncarParser(incar_string=test_string)
+    except AttributeError:
+        pass                
+    
+@pytest.mark.incar
+def test_parser_write_parser(tmpdir, incar_dict_example):
+    """Test writing an INCAR from a dict, read and
+    compare. 
+
+    """
+
+    # create ParameterData instances
+    incar_params = get_data_class('parameter')(dict = incar_dict_example)
+    assert isinstance(incar_params, get_data_class('parameter'))
+    parser = IncarParser(data = incar_params)
+    result = parser.get_quantity('incar', {})
+    assert isinstance(result['incar'], get_data_class('parameter'))
+    # now write
+    temp_file = str(tmpdir.join('INCAR'))
+    parser.write(temp_file)
+    # read again
+    parser_reparse = IncarParser(file_path = temp_file)
+    result = parser_reparse.get_quantity('incar', {})
+    assert isinstance(result['incar'], get_data_class('parameter'))
+    comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
+    assert str(sorted(result['incar'].get_dict())) == str(sorted(comp_dict))

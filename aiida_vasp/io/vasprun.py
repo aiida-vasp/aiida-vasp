@@ -500,19 +500,19 @@ class VasprunParser(BaseFileParser):
         # self consistent steps, which contain a different
         # number of elements, not supported by Numpy's std.
         # arrays
-        energies = self._data_obj.get_energies(status="all",
+        enrgies = self._data_obj.get_energies(status="all",
                                               etype = etype,
                                               nosc = nosc)
-        if energies is None:
+        if enrgies is None:
             return None
         enrgy = get_data_class('array')()
         # should be a list, but convert to ndarray, here
         # staggered arrays are not a problem
         # two elements for a static run, both are similar,
         # only take the last
-        if len(energies) == 2:
-            energies = energies[-1:]
-        enrgy.set_array('toten_0', np.asarray(energies))
+        if len(enrgies) == 2:
+            enrgies = enrgies[-1:]
+        enrgy.set_array('toten_0', np.asarray(enrgies))
         return enrgy
         
     @property

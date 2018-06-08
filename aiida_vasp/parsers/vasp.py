@@ -11,16 +11,22 @@ from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.delegates import delegate
+from aiida.orm.data.parameter import ParameterData
+from aiida.orm.data.structure import StructureData
+from aiida.orm.data.array.kpoints import KpointsData
+from aiida.orm.data.array.bands import BandsData
+from aiida.orm.data.array.trajectory import TrajectoryData
+from aiida.orm.data.array import ArrayData
 
 LINKNAME_DICT = {
     'parameters': 'output_parameters',
     'kpoints': 'output_kpoints',
     'structure': 'output_structure',
-    'array': 'output_array',
     'trajectory': 'output_trajectory',
     'trajectory_full': 'output_trajectory_arr',
     'bands': 'output_bands',
     'dos': 'output_dos',
+    'energies': 'output_energies',
     'projectors': 'output_projectors',
     'born_charges': 'output_born_charges',
     'dielectrics': 'output_dielectrics',
@@ -30,25 +36,42 @@ LINKNAME_DICT = {
     'wavecar': 'wavecar',
 }
 
+ALLOWED_TYPES = {
+    'parameters': ParameterData,
+    'kpoints': KpointsData,
+    'structure': StructureData,
+    'trajectory': TrajectoryData,
+    'trajectory_full': ArrayData,
+    'bands': BandsData,
+    'dos': ArrayData,
+    'energies': ArrayData,
+    'projectors': ArrayData,
+    'born_charges': ArrayData,
+    'dielectrics': ArrayData,
+    'hessian': ArrayData,
+    'dynmat': ArrayData
+}
+
 DEFAULT_OPTIONS = {
-    'add_trajectory': True,
-    'add_bands': True,
+    'add_trajectory': False,
+    'add_bands': False,
     'add_chgcar': False,
-    'add_dos': True,
+    'add_dos': False,
     'add_kpoints': True,
+    'add_energies': True,
     'add_parameters': True,
     'add_structure': True,
-    'add_projectors': True,
-    'add_born_charges': True,
-    'add_dielectrics': True,
-    'add_trajectory': True,
-    'add_hessian': True,
-    'add_dynmat': True,
+    'add_projectors': False,
+    'add_born_charges': False,
+    'add_dielectrics': False,
+    'add_hessian': False,
+    'add_dynmat': False,
     'add_wavecar': False,
     'should_parse_DOSCAR': False,
     'should_parse_EIGENVAL': False,
     'should_parse_IBZKPT': False,
-    'should_parse_OUTCAR': True,
+    'should_parse_OUTCAR': False,
+    'should_parse_CONTCAR': False,
     'should_parse_vasprun.xml': True,
     'should_parse_WAVECAR': False,
     'should_parse_CHGCAR': False
@@ -164,7 +187,7 @@ class VaspParser(BaseParser):
 
         self.check_state()
         self.out_folder = self.get_folder(retrieved)
-
+        
         if not self.out_folder:
             return self.result(success=False)
 
@@ -177,12 +200,14 @@ class VaspParser(BaseParser):
             return self.result(success=False)
 
         # Parse all implemented quantities in the quantities_to_parse list.
+        print("quantities_to_parse:", self._quantities_to_parse)
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
-
+            
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.iteritems():
+            print("KEY, VALUE: ", key, value)
             if key != self._parsable_quantities[key]['nodeName']:
                 # this is just an intermediate result and should not be added as a node.
                 continue
@@ -227,10 +252,10 @@ class VaspParser(BaseParser):
                     # make sure we rewrite if this was overridden for the
                     # calc settings
                     # eFL: THIS IS SUPER NASTY AND SHOULD BE REPLACED ASAP
-                    try:
-                        new_settings[k] = calc_parser_settings[k]
-                    except KeyError:
-                        pass
+                    #try:
+                    #    new_settings[k] = calc_parser_settings[k]
+                    #except KeyError:
+                    #    pass
 
         self._settings = new_settings
 

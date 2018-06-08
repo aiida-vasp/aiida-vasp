@@ -6,10 +6,12 @@ from collections import OrderedDict
 
 import six
 from pymatgen.io.vasp import Incar
+from parsevasp.incar import Incar
+from aiida_vasp.io.parser import BaseFileParser
 import numpy as np
 import pyparsing as pp
 
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 
 
 class IncarItem(object):
@@ -349,4 +351,85 @@ def _incarify(value):
         result = '.True.' if value else '.False.'
     elif np.isreal(value):
         result = '{}'.format(value)
+    return result
+
+
+class IncarParser(BaseFileParser):
+    """
+    Parser for VASP INCAR format
+
+    This is a wrapper for the parsevasp.incar parser.
+    
+    The Parsing direction depends on whether the IncarParser is initialised with
+    'path = ...' (read from file) or 'data = ...' (read from data).
+
+    """
+
+    PARSABLE_ITEMS = {
+        'incar': {
+            'inputs': [],
+            'parsers': ['INCAR'],
+            'nodeName': '',
+            'prerequisites': []
+        },
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(IncarParser, self).__init__(*args, **kwargs)
+        self.init_with_kwargs(**kwargs)
+
+    def _init_with_data(self, data):
+        """Initialise with a given kpointsData object."""
+        self._data_obj = data
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
+
+        
+    @property
+    def _parsed_object(self):
+        """Return an instance of parsevasp.incar.Incar corresponding 
+        to the stored data in inputs.parameters.incar
+
+        """
+
+        incar_dict = self._data_obj.get_dict()
+
+        try:
+            return Incar(incar_dict=incar_dict)
+        except SystemExit:
+            return None
+
+    def _parse_file(self, inputs):
+        """Create a DB Node from an INCAR file"""
+
+        result = inputs
+        result = {}
+
+        if isinstance(self._data_obj, get_data_class('parameter')):
+            return {'incar': self._data_obj}
+
+        try:
+            incar = Incar(file_path=self._data_obj.path)
+        except SystemExit:
+            self._logger.warning("Parsevasp exitited abnormally. "
+                              "Returning None.")
+            return {'incar': None}
+
+
+        result = parsevasp_to_aiida(incar)
+        
+        return result
+
+def parsevasp_to_aiida(incar):
+    """Generate an Aiida ParameterData that contains the
+    entries found in INCAR using parsevasp.
+
+    """
+
+    incar_dict = incar.get_dict()
+    
+    result = {}
+
+    result['incar'] = get_data_class('parameter')(dict = incar_dict)
+    
     return result

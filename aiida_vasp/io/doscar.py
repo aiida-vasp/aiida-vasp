@@ -46,8 +46,6 @@ class DosParser(BaseFileParser):
 
         header, pdos, tdos = self._read_doscar()
 
-        print tdos
-
         result['header'] = header
 
         for array in [pdos, tdos]:
