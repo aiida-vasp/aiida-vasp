@@ -22,6 +22,7 @@ DEFAULT_OPTIONS = {
                             'born_charges',
                             'hessian',
                             'dynmat'],
+    'energy_type': ['energy_no_entropy'],
     'output_params': []
 }
 
@@ -465,6 +466,51 @@ class VasprunParser(BaseFileParser):
         else:
             return None
 
+
+    # @property
+    # def trajectory_full(self):
+    #     """Fetch unitcells, positions, species, forces and stress
+    #     for all calculation steps from parsevasp and store as ArrayData.
+
+    #     """
+                
+    #     unitcell = self._data_obj.get_unitcell("all")
+    #     positions = self._data_obj.get_positions("all")
+    #     species = self._data_obj.get_species()
+    #     forces = self._data_obj.get_forces("all")
+    #     stress = self._data_obj.get_stress("all")
+    #     make sure all are sorted, first to last calculation
+    #     (species is constant)
+    #     unitcell = sorted(unitcell.items())
+    #     positions = sorted(positions.items())
+    #     forces = sorted(forces.items())
+    #     stress = sorted(stress.items())
+    #     convert to numpy
+    #     unitcell = np.asarray(map(operator.itemgetter(1),unitcell))
+    #     positions = np.asarray(map(operator.itemgetter(1),positions))
+    #     forces = np.asarray(map(operator.itemgetter(1),forces))
+    #     stress = np.asarray(map(operator.itemgetter(1),stress))
+    #     Aiida wants the species as symbols, so invert
+    #     elements = self._invert_dict(parsevaspct.elements)
+    #     symbols = np.asarray([elements[item].title() for item in species])
+
+    #     if (unitcell is not None) and (positions is not None) and \
+    #        (species is not None) and (forces is not None) and \
+    #        (stress is not None):
+    #         array_node = get_data_class('array')()
+
+    #         keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
+
+    #         for key, data in zip(keys, (unitcell,
+    #                                     positions,
+    #                                     symbols,
+    #                                     forces,
+    #                                     stress)):
+    #             array_node.set_array(key, data)
+    #         return array_node
+    #     else:
+    #         return None
+        
     @property
     def energies_sc(self):
         """Fetch the total energies from parsevasp and store in
@@ -482,37 +528,36 @@ class VasprunParser(BaseFileParser):
     @property
     def energies(self, nosc = True):
         """Fetch the total energies from parsevasp and store in
-        ArrayData for all calculations (i.e.
-        ionic steps).
+        ArrayData for all calculations (i.e. ionic steps).
 
         """
 
-        # eFL: HERE WE SHOULD REALLY BE USING THE POWER
-        # OF THE SETTINGS TO SET ETYPE ETC. AND DEFINE
-        # MULTIPLE ArrayData IF SEVERAL TYPES OF ENERGIES
-        # ARE NEEDED
-        
-        # energy without entropy
-        etype = "energy_no_entropy"
-
-        # this returns a list, not an ndarray due to
-        # the posibility of returning the energies for all
-        # self consistent steps, which contain a different
-        # number of elements, not supported by Numpy's std.
-        # arrays
-        enrgies = self._data_obj.get_energies(status="all",
-                                              etype = etype,
-                                              nosc = nosc)
-        if enrgies is None:
-            return None
+        # create a ArrayData object
         enrgy = get_data_class('array')()
-        # should be a list, but convert to ndarray, here
-        # staggered arrays are not a problem
-        # two elements for a static run, both are similar,
-        # only take the last
-        if len(enrgies) == 2:
-            enrgies = enrgies[-1:]
-        enrgy.set_array('toten_0', np.asarray(enrgies))
+
+        # fetch the type of energies that the user wants to extract
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+            
+            # this returns a list, not an ndarray due to
+            # the posibility of returning the energies for all
+            # self consistent steps, which contain a different
+            # number of elements, not supported by Numpy's std.
+            # arrays
+            enrgies = self._data_obj.get_energies(status="all",
+                                                  etype = etype,
+                                                  nosc = nosc)
+            if enrgies is None:
+                return None
+            enrgy = get_data_class('array')()
+            # should be a list, but convert to ndarray, here
+            # staggered arrays are not a problem
+            # two elements for a static run, both are similar,
+            # only take the last
+            if len(enrgies) == 2:
+                enrgies = enrgies[-1:]
+            enrgy.set_array(etype, np.asarray(enrgies))
+
         return enrgy
         
     @property

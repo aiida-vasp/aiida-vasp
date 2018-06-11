@@ -17,7 +17,6 @@ LINKNAME_DICT = {
     'kpoints': 'output_kpoints',
     'structure': 'output_structure',
     'trajectory': 'output_trajectory',
-    'trajectory_full': 'output_trajectory_arr',
     'bands': 'output_bands',
     'dos': 'output_dos',
     'energies': 'output_energies',
@@ -35,7 +34,6 @@ ALLOWED_TYPES = {
     'kpoints': KpointsData,
     'structure': StructureData,
     'trajectory': TrajectoryData,
-    'trajectory_full': ArrayData,
     'bands': BandsData,
     'dos': ArrayData,
     'energies': ArrayData,
@@ -216,7 +214,6 @@ class VaspParser(BaseParser):
         self._set_file_parsers()
 
         # Parse all implemented quantities in the quantities_to_parse list.
-        print("quantities_to_parse:", self._quantities_to_parse)
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
@@ -335,7 +332,7 @@ class VaspParser(BaseParser):
                     continue
                 file_to_parse = self.get_file(filename)
                 self._parsers[filename].parser = self._parsers[filename]['parser_class'](
-                    file_to_parse, calc_parser_cls=self)
+                    self, file_path=file_to_parse)
 
     # pylint: disable=unused-argument, no-self-use
     @delegate()

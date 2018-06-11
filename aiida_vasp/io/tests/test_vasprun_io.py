@@ -472,7 +472,7 @@ def test_toten_result(vasp_xml):
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
-    energies = data_obj.get_array('toten_0')
+    energies = data_obj.get_array('energy_no_entropy')
     # test number of entries
     assert energies.shape == (1,)
     # check energy
@@ -492,7 +492,7 @@ def test_totens_relax_result(vasp_xml):
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
-    energies = data_obj.get_array('toten_0')
+    energies = data_obj.get_array('energy_no_entropy')
     # test number of entries
     assert energies.shape == (19,)
     # test a few entries
