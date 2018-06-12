@@ -2,7 +2,7 @@
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
+from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set, DEFAULT_PARSABLE_ITEMS
 from aiida_vasp.utils.delegates import delegate
 from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.structure import StructureData
@@ -235,17 +235,35 @@ class VaspParser(BaseParser):
 
         import copy
 
-        # Gather all parsable items as defined in the file parsers.
+        # Fetch the default parsable items
+        items = DEFAULT_PARSABLE_ITEMS
+
+        # Fetch overides or additions for custom parsers
+        items_extra = {}
         for filename, value in self._parsers.iteritems():
-            # initialise the instance of this FileParser to None.
-            if filename in self._parsable_quantities:
-                raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
-                                   ' Quantity names must be unique. If both quantities are equivalent, define one as' +
-                                   ' an alternative for the other.')
+            # Set parser to None (used later in _set_file_parsers)
             value.parser = None
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
-                # Create quantity objects.
-                self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
+                items_extra[quantity] = quantity_dict
+
+        # Update the default with overrides/new quantities
+        items.update(items_extra)
+
+        # Now add all items as parsable quantities
+        for quantity, quantity_dict in items.iteritems():
+            self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
+        
+        # # Gather all parsable items as defined in the file parsers.
+        # for filename, value in self._parsers.iteritems():
+        #     # initialise the instance of this FileParser to None.
+        #     if filename in self._parsable_quantities:
+        #         raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
+        #                            ' Quantity names must be unique. If both quantities are equivalent, define one as' +
+        #                            ' an alternative for the other.')
+        #     value.parser = None
+        #     for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
+        #         # Create quantity objects.
+        #         self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
         # make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
@@ -325,10 +343,12 @@ class VaspParser(BaseParser):
         Return False if a critical file is missing, which will abort the parsing.
         """
 
+
         for quantity in self._quantities_to_parse:
             for filename in self._parsable_quantities[quantity]['parsers']:
                 if self._parsers[filename].parser is not None:
-                    # This parser has already been checked.
+                    # This parser has already been checked, i.e. take the first
+                    # available in the list that can be parsed (i.e. file exists)
                     continue
                 file_to_parse = self.get_file(filename)
                 self._parsers[filename].parser = self._parsers[filename]['parser_class'](
