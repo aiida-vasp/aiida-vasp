@@ -41,7 +41,7 @@ FILE_PARSER_SETS = {
             'parser_class': VasprunParser,
             'is_critical': True,
             'status': 'Unknown',
-            'priority': 1000
+            'priority': DEFAULT_PRIORITY + 1
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,

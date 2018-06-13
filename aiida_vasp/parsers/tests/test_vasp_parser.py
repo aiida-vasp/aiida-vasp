@@ -65,14 +65,8 @@ def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
     parsable_quantities = parser._parsable_quantities
-    for key, value in parsable_quantities.iteritems():
-        print("---")
-        print(key)
-        print(value)
-        print("---\n")
     for quantity in ExampleFileParser.PARSABLE_ITEMS:
         assert quantity in parsable_quantities
-
     assert parsable_quantities['quantity1'].has_files
     assert parsable_quantities['quantity1'].is_parsable
     assert not parsable_quantities['quantity_with_alternatives'].has_files
