@@ -2,7 +2,7 @@
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set, DEFAULT_PARSABLE_ITEMS
+from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set, DEFAULT_PRIORITY
 from aiida_vasp.utils.delegates import delegate
 from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.structure import StructureData
@@ -235,35 +235,32 @@ class VaspParser(BaseParser):
 
         import copy
 
-        # Fetch the default parsable items
-        items = DEFAULT_PARSABLE_ITEMS
-
-        # Fetch overides or additions for custom parsers
-        items_extra = {}
+        # Gather all parsable items as defined in the file parsers.
+        # We introduce the concept of priority which can be defined in
+        # FILE_PARSER_SETS as the key 'priority' and a number. If a
+        # quantity is present in several different parsers, the parser
+        # with the highest number will persist.
+        priority = {}
         for filename, value in self._parsers.iteritems():
-            # Set parser to None (used later in _set_file_parsers)
+            # initialise the instance of this FileParser to None.
+            if filename in self._parsable_quantities:
+                raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
+                                   ' Quantity names must be unique. If both quantities are equivalent, define one as' +
+                                   ' an alternative for the other.')
             value.parser = None
+            # Check if we have an entry without priority (say the user added it
+            # in situ)
+            if value.priority is None:
+                value.priority = DEFAULT_PRIORITY
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
-                items_extra[quantity] = quantity_dict
-
-        # Update the default with overrides/new quantities
-        items.update(items_extra)
-
-        # Now add all items as parsable quantities
-        for quantity, quantity_dict in items.iteritems():
-            self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
-        
-        # # Gather all parsable items as defined in the file parsers.
-        # for filename, value in self._parsers.iteritems():
-        #     # initialise the instance of this FileParser to None.
-        #     if filename in self._parsable_quantities:
-        #         raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
-        #                            ' Quantity names must be unique. If both quantities are equivalent, define one as' +
-        #                            ' an alternative for the other.')
-        #     value.parser = None
-        #     for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
-        #         # Create quantity objects.
-        #         self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
+                # Create quantity objects.
+                if (priority.get(quantity is None)) \
+                    or (value.priority > priority.get(quantity)):
+                    # Make sure only to add entry if it does not exists or
+                    # if the priority is higher than the existing entry.
+                    priority[quantity] = value.priority
+                    self.add_parsable_quantity(quantity, quantity_dict,
+                                               self.out_folder.get_folder_list())
 
         # make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
@@ -302,7 +299,8 @@ class VaspParser(BaseParser):
                     self._quantities_to_parse.append(item)
                     return True
             return False
-
+            
+        
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
                 # only keys starting with 'add_' will change the behaviour of the parser so get the next one.

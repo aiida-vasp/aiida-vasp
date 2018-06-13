@@ -9,165 +9,57 @@ from aiida_vasp.io.chgcar import ChgcarParser
 from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.io.poscar import PoscarParser
 
-DEFAULT_PARSABLE_ITEMS = {
-    'structure': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'CONTCAR'],
-        'nodeName': 'structure',
-        'prerequisites': []
-    },
-    'bands': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'EIGENVAL'],
-        'nodeName': 'bands',
-        'prerequisites': []
-    },
-    'dos': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'DOSCAR'],
-        'nodeName': 'dos',
-        'prerequisites': []
-    },
-    'kpoints': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'IBZKPT'],
-        'nodeName': 'kpoints',
-        'prerequisites': []
-    },
-    'occupations': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'occupations',
-        'prerequisites': []
-    },
-    'trajectory': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'trajectory',
-        'prerequisites': []
-    },
-    'energies': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'OUTCAR'],
-        'nodeName': 'energies',
-        'prerequisites': []
-    },
-    'projectors': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'projectors',
-        'prerequisites': []
-    },
-    'dielectrics': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'dielectrics',
-        'prerequisites': []
-    },
-    'final_stress': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': '',
-        'prerequisites': []
-    },
-    'final_forces': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': '',
-        'prerequisites': []
-    },
-    'final_structure': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': '',
-        'prerequisites': []
-    },
-    'born_charges': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'born_charges',
-        'prerequisites': []
-    },
-    'hessian': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'hessian',
-        'prerequisites': []
-    },
-    'dynmat': {
-        'inputs': [],
-        'parsers': ['vasprun.xml'],
-        'nodeName': 'dynmat',
-        'prerequisites': []
-    },
-    'parameters': {
-        'inputs': [],
-        'parsers': ['vasprun.xml', 'OUTCAR'],
-        'nodeName': 'parameters',
-        'prerequisites': []
-    }
-    # eFL: Aiida can already calculate volume, right?
-    # no reason to parse (or store)
-    
-    #'volume': {
-    #    'inputs': ['parameters'],
-    #    'parsers': ['vasprun.xml', 'OUTCAR'],
-    #    'nodeName': 'parameters',
-    #    'prerequisites': []
-    #}
-
-    # eFL: symmetries are in fact not presently available
-    # in vasprun.xml, but will be included in the future
-    #        'symmetries': {
-    #            'inputs': [],
-    #            'parsers': ['OUTCAR'],
-    #            'nodeName': 'parameters',
-    #            'prerequisites': []
-    #        }
-}
-
+DEFAULT_PRIORITY = 100
 
 FILE_PARSER_SETS = {
     'default': {
         'DOSCAR': {
             'parser_class': DosParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'EIGENVAL': {
             'parser_class': EigParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'IBZKPT': {
             'parser_class': KpParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': True,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': 1000
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'WAVECAR': {
             'parser_class': WavecarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'priority': DEFAULT_PRIORITY
         },
     },
 }
