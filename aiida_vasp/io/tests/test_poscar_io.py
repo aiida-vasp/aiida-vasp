@@ -6,7 +6,6 @@ import sys
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.poscar import PoscarParser
-from aiida.common.exceptions import UnsupportedSpeciesError
 
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_poscar_io(fresh_aiida_env, vasp_structure_poscar):
