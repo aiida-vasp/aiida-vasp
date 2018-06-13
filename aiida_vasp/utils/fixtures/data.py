@@ -2,6 +2,7 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
 import os
 from collections import OrderedDict
+import subprocess as sp
 
 import numpy
 import pytest
@@ -20,7 +21,10 @@ POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
 
 @pytest.fixture(scope='session')
 def localhost_dir(tmpdir_factory):
-    return tmpdir_factory.mktemp('localhost_work')
+    # ~ return tmpdir_factory.mktemp('localhost_work')
+    test_dir = py_path.local('/home/hauselmann/tmp/aiida_test/')
+    test_dir.ensure_dir()
+    return test_dir
 
 
 @pytest.fixture
@@ -42,6 +46,7 @@ def localhost(aiida_env, localhost_dir):
             workdir=localhost_dir.strpath,
             transport_type='local',
             scheduler_type='direct',
+            mpirun_command=[],
             enabled_state=True)
     return computer
 
@@ -179,14 +184,39 @@ def vasp_kpoints(request, aiida_env):
 
 @pytest.fixture()
 def vasp_code(localhost):
-    """Fixture for a vasp code, the executable it points to does not exist"""
+    """Fixture for a vasp code, the executable it points to does not exist."""
     from aiida.orm import Code
-    localhost.store()
+    if not localhost.pk:
+        localhost.store()
     code = Code()
     code.label = 'vasp'
     code.description = 'VASP code'
     code.set_remote_computer_exec((localhost, '/usr/local/bin/vasp'))
     code.set_input_plugin_name('vasp.vasp')
+    return code
+
+
+@pytest.fixture()
+def mock_vasp(localhost):
+    """Points to a mock-up of a VASP executable."""
+    from aiida.orm import Code
+    from aiida.orm.querybuilder import QueryBuilder
+    query_builder = QueryBuilder()
+    query_builder.append(Code, tag='code')
+    query_builder.add_filter('code', {'label': {'==': 'mock-vasp'}})
+    query_results = query_builder.all()
+    if query_results:
+        code = query_results[0][0]
+    else:
+        os_env = os.environ.copy()
+        if not localhost.pk:
+            localhost.store()
+        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env).strip()
+        code = Code()
+        code.label = 'mock-vasp'
+        code.description = 'Mock VASP for tests'
+        code.set_remote_computer_exec((localhost, mock_vasp_path))
+        code.set_input_plugin_name('vasp.vasp')
     return code
 
 

@@ -50,20 +50,19 @@ class Encut(AbstractIncarParam):
             self._init_from_structure(**kwargs)
 
     def _init_from_structure(self):
-
+        """Get the value from the POTCARs depending on the `strategy` keyword passed in the ctor."""
         self._multipotcar = MultiPotcarIo.from_structure(self._structure,
-                                                         get_data_class('potcar').get_potcars_from_structure(
-                                                             structure=self._structure,
+                                                         get_data_class('vasp.potcar').get_potcars_dict(
+                                                             elements=self._structure.get_kind_names(),
                                                              family_name=self._potcar_family,
                                                              mapping=self._potcar_mapping))
-        self._min_or_max = strategy
-        if strategy == EncutFlags.MIN_ENMAX:
+        if self._strategy == EncutFlags.MIN_ENMAX:
             self._base_encut = min([potcar.pymatgen.enmax for potcar in self._multipotcar.potcars])
         else:
             self._base_encut = max([potcar.pymatgen.enmax for potcar in self._multipotcar.potcars])
 
         if not self._base_encut:
-            raise EncutInferringError('An unexpected error occurred while inferring ENCUT with strategy {}'.format(self._strategy))
+            raise self.EncutInferringError('An unexpected error occurred while inferring ENCUT with strategy {}'.format(self._strategy))
 
     @classproperty
     def name(self):
@@ -96,4 +95,5 @@ class Encut(AbstractIncarParam):
         return msg.format(factor=factor, strategy=self._strategy.value)
 
     class EncutInferringError(Exception):
+        """Raise when an error occurs while getting ENCUT from max or min(ENMAX) of the given potentials."""
         pass

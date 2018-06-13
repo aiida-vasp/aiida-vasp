@@ -108,11 +108,11 @@ class VaspBaseWf(BaseRestartWorkChain):
         options.computer = self.inputs.code.get_computer()
         options.update(self.inputs.options.get_dict())
         expected_options = ['computer', 'resources']
-        if computer.get_scheduler_type() != 'direct':
+        if options.computer.get_scheduler_type() != 'direct':
             expected_options.append('queue_name')
         for option in expected_options:
             if option not in options:
-                self._fail_compat(exception=ValueError('option required but not passed!'))
+                self._fail_compat(exception=ValueError('option {} required but not passed!'.format(option)))
         if builder_interface(CalculationFactory('vasp.vasp')):  ## aiida 1.0.0+ will use this
             self.ctx.inputs.options = options
         else:

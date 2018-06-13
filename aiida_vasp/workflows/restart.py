@@ -11,7 +11,6 @@ from aiida.orm.calculation import JobCalculation
 from aiida.orm.data.base import Bool, Int
 from aiida.orm.data.parameter import ParameterData
 from aiida.work.workchain import WorkChain, ToContext, append_
-from aiida.work.run import submit
 
 
 def prepare_process_inputs(inputs):
@@ -161,7 +160,7 @@ class BaseRestartWorkChain(WorkChain):
 
         inputs = prepare_process_inputs(unwrapped_inputs)
         process = self._calculation_class.process()
-        running = submit(process, **inputs)
+        running = self.submit(process, **inputs)
 
         if hasattr(running, 'pid'):
             self.report('launching {}<{}> iteration #{}'.format(self._calculation_class.__name__, running.pid, self.ctx.iteration))
