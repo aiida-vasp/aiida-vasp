@@ -2,12 +2,11 @@
 # pylint:
 # disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
-import numpy as np
 import pytest
 
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_class
+
 
 def xml_path(folder):
     """Set the path to the XML file."""
@@ -24,7 +23,7 @@ def xml_truncate(index, original, tmp):
 
 
 @pytest.fixture(params=[0, 1])
-def parse_result(request, aiida_env, tmpdir):
+def _parse_me(request, tmpdir):
     """
     Give the result of parsing a retrieved calculation (emulated).
 
@@ -35,14 +34,14 @@ def parse_result(request, aiida_env, tmpdir):
     3. create a parser with the calculation
     4. populate a fake retrieved folder and pass it to the parser
     5. return the result
+
     """
 
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
         from aiida.orm import CalculationFactory, DataFactory
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True,
-                                             'output_params': ['fermi_level']}}
+        settings_dict = {'parser_settings': {'add_bands': True, 'output_params': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         from aiida_vasp.parsers.vasp import VaspParser
@@ -64,10 +63,10 @@ def parse_result(request, aiida_env, tmpdir):
     return parse
 
 
-def test_parameters_result(parse_result):
+def test_parameters_result(_parse_me):
     """Test that the parameters result node is a KpointsData instance."""
 
-    _, nodes = parse_result(folder='basic')
+    _, nodes = _parse_me(folder='basic')
     parameters = nodes['output_parameters']
     bands = nodes['output_bands']
     kpoints = nodes['output_kpoints']

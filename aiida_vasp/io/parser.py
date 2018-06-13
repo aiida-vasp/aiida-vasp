@@ -107,8 +107,9 @@ Parses files like::
 import re
 
 from six import string_types
-from aiida_vasp.utils.delegates import delegate_method_kwargs
 from aiida.common import aiidalogger
+from aiida_vasp.utils.delegates import delegate_method_kwargs
+
 
 class BaseParser(object):
     """Common codebase for all parser utilities"""

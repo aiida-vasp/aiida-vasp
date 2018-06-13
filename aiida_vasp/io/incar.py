@@ -3,13 +3,13 @@ import re
 import operator
 import functools
 from collections import OrderedDict
-
-import six
-from pymatgen.io.vasp import Incar
-from parsevasp.incar import Incar
-from aiida_vasp.io.parser import BaseFileParser
 import numpy as np
 import pyparsing as pp
+
+import six
+from pymatgen.io.vasp import Incar as IncarPymatgen
+from parsevasp.incar import Incar as IncarParsevasp
+from aiida_vasp.io.parser import BaseFileParser
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 
@@ -174,7 +174,7 @@ class IncarIo(object):
         return self.incar_dict
 
     def get_pymatgen(self):
-        return Incar.from_dict({k.upper(): v for k, v in self.incar_dict.items()})
+        return IncarPymatgen.from_dict({k.upper(): v for k, v in self.incar_dict.items()})
 
     def get_param_node(self):
         """
@@ -356,10 +356,10 @@ def _incarify(value):
 
 class IncarParser(BaseFileParser):
     """
-    Parser for VASP INCAR format
+    Parser for VASP INCAR format.
 
     This is a wrapper for the parsevasp.incar parser.
-    
+
     The Parsing direction depends on whether the IncarParser is initialised with
     'path = ...' (read from file) or 'data = ...' (read from data).
 
@@ -384,23 +384,24 @@ class IncarParser(BaseFileParser):
         self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
-        
     @property
     def _parsed_object(self):
-        """Return an instance of parsevasp.incar.Incar corresponding 
-        to the stored data in inputs.parameters.incar
+        """
+        Return an instance of parsevasp.incar.Incar.
+
+        Corresponds to the stored data in inputs.parameters.incar.
 
         """
 
         incar_dict = self._data_obj.get_dict()
 
         try:
-            return Incar(incar_dict=incar_dict)
+            return IncarParsevasp(incar_dict=incar_dict)
         except SystemExit:
             return None
 
     def _parse_file(self, inputs):
-        """Create a DB Node from an INCAR file"""
+        """Create a DB Node from an INCAR file."""
 
         result = inputs
         result = {}
@@ -409,27 +410,29 @@ class IncarParser(BaseFileParser):
             return {'incar': self._data_obj}
 
         try:
-            incar = Incar(file_path=self._data_obj.path)
+            incar = IncarParsevasp(file_path=self._data_obj.path)
         except SystemExit:
-            self._logger.warning("Parsevasp exitited abnormally. "
-                              "Returning None.")
+            self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
             return {'incar': None}
 
-
         result = parsevasp_to_aiida(incar)
-        
+
         return result
 
+
 def parsevasp_to_aiida(incar):
-    """Generate an Aiida ParameterData that contains the
+    """
+    Parsevasp to Aiida conversion.
+
+    Generate an Aiida ParameterData that contains the
     entries found in INCAR using parsevasp.
 
     """
 
     incar_dict = incar.get_dict()
-    
+
     result = {}
 
-    result['incar'] = get_data_class('parameter')(dict = incar_dict)
-    
+    result['incar'] = get_data_class('parameter')(dict=incar_dict)
+
     return result

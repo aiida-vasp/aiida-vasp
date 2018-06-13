@@ -1,35 +1,27 @@
 """Tools for parsing vasprun.xml files."""
-import numpy as np
 import operator
+import numpy as np
 
 from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
-
 DEFAULT_OPTIONS = {
-    'quantities_to_parse': ['parameters',
-                            'structure',
-                            'bands',
-                            'dos',
-                            'kpoints',
-                            'occupations',
-                            'trajectory',
-                            'energies',
-                            'projectors',
-                            'dielectrics',
-                            'born_charges',
-                            'hessian',
-                            'dynmat'],
+    'quantities_to_parse': [
+        'parameters', 'structure', 'bands', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
+        'born_charges', 'hessian', 'dynmat'
+    ],
     'energy_type': ['energy_no_entropy'],
     'output_params': []
 }
 
 
 class ExtendedXml(Xml):
-    """Extension of parsevasp's Xml class in order to keep parser
-    interfaces the same.
+    """
+    Extension of parsevasp's Xml class.
+
+    To keep parser interfaces similar.
 
     """
 
@@ -159,7 +151,7 @@ class VasprunParser(BaseFileParser):
         # Also, make sure the k-point index runs before the band index as
         # per BandsData spec.
         try:
-            self._data_obj = ExtendedXml(file_path=path, k_before_band = True)
+            self._data_obj = ExtendedXml(file_path=path, k_before_band=True)
         except SystemExit:
             self._logger.warning("Parsevasp exited abruptly. Returning None.")
             self._data_obj = None
@@ -180,8 +172,7 @@ class VasprunParser(BaseFileParser):
         if not settings:
             settings = DEFAULT_OPTIONS
 
-        quantities_to_parse = settings.get('quantities_to_parse',
-                                           DEFAULT_OPTIONS['quantities_to_parse'])
+        quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
@@ -191,9 +182,11 @@ class VasprunParser(BaseFileParser):
 
     @property
     def bands(self):
-        """Return a BandsData node containing the bandstructure parsed 
-        from vasprun.xml.
-        
+        """
+        Return a BandsData node.
+
+        Contains the bandstructure parsed from vasprun.xml.
+
         """
 
         # fetch eigenvalues and occupancies
@@ -206,7 +199,7 @@ class VasprunParser(BaseFileParser):
 
         # generate Aiida specific BandsData for storage
         band_data = get_data_class('array.bands')()
-        
+
         # put everything into BandData and KpointsData
         band_data.set_kpointsdata(self.kpoints)
         band_data.set_bands(eigenvalues, occupations=occupations)
@@ -238,7 +231,6 @@ class VasprunParser(BaseFileParser):
 
         return eigen
 
-
     @property
     def occupations_bands(self):
         """Fetch occupations from parsevasp."""
@@ -249,7 +241,7 @@ class VasprunParser(BaseFileParser):
         if occupations is None:
             # occupations not present, should not really happen?
             return None
-        
+
         occ = []
         occ.append(occupations.get("total"))
 
@@ -261,9 +253,9 @@ class VasprunParser(BaseFileParser):
         if occ[0] is None:
             # should not really happen
             return None
-        
+
         return occ
-    
+
     @property
     def occupations(self):
         """Fetch occupations from parsevasp."""
@@ -276,20 +268,19 @@ class VasprunParser(BaseFileParser):
             return None
 
         array_data = get_data_class('array')()
-        
+
         total = occupations.get('total')
-        up = occupations.get('up')
-        down = occupations.get('down')
+        upspin = occupations.get('up')
+        downspin = occupations.get('down')
         if total is not None:
             # we have total
             array_data.set_array('total', total)
-        elif up is not None:
+        elif upspin is not None:
             # we have spin decomposed
-            array_data.set_array('up', up)
-            if down is None:
-                self._logger.error("Serious error, detected spin up, but no spin down "
-                                   "channel. This should not happen. Continuing.")
-            array_data.set_array('down', down)
+            array_data.set_array('up', upspin)
+            if downspin is None:
+                self._logger.error("Serious error, detected spin up, but no spin down " "channel. This should not happen. Continuing.")
+            array_data.set_array('down', downspin)
         else:
             # safety, should not really happen?
             return None
@@ -299,7 +290,7 @@ class VasprunParser(BaseFileParser):
     @property
     def parameters(self):
         """Assemble the 'output_params' node."""
-        
+
         parameters = {}
         outcar_parameters = self._parsed_data.get('ocp_parameters')
         if outcar_parameters is not None:
@@ -308,15 +299,13 @@ class VasprunParser(BaseFileParser):
         for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
-        output_parameters = get_data_node('parameter', dict = parameters)
-            
+        output_parameters = get_data_node('parameter', dict=parameters)
+
         return output_parameters
 
     @property
     def kpoints(self):
-        """Fetch the kpoints from parsevasp an store in KpointsData.
-
-        """
+        """Fetch the kpoints from parsevasp an store in KpointsData."""
 
         kpts = self._data_obj.get_kpoints()
         kptsw = self._data_obj.get_kpointsw()
@@ -324,43 +313,49 @@ class VasprunParser(BaseFileParser):
         if (kpts is not None) and (kptsw is not None):
             # create a KpointsData object and store k-points
             kpoints_data = get_data_class('array.kpoints')()
-            kpoints_data.set_kpoints(kpts, weights = kptsw)
+            kpoints_data.set_kpoints(kpts, weights=kptsw)
 
         return kpoints_data
 
     @property
     def structure(self):
-        """Fetch a given structure and store as StructureData.
+        """
+        Fetch a given structure and store as StructureData.
+
         Which structure to fetch is controlled by inputs.
 
         eFL: Need to clean this so that we can set different
         structures to pull from the outside. Could be usefull not
         pulling the whole trajectory.
 
-        Currently defaults to the last structure
+        Currently defaults to the last structure.
 
         """
 
         return self.last_structure
-    
-    
+
     @property
     def last_structure(self):
-        """Fetch the structure after or at the last recorded "
-        ionic step from parsevasp and store as StructureData.
+        """
+        Fetch the structure.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as StructureData.
 
         """
 
         last_lattice = self._data_obj.get_lattice("final")
         if last_lattice is not None:
-            return self._build_structure(last_lattice)
-        else:
-            return None
-        
+            return _build_structure(last_lattice)
+        return None
+
     @property
     def final_structure(self):
-        """Fetch the structure after or at the last recorded "
-        ionic step from parsevasp and store as StructureData. Should in
+        """
+        Fetch the structure.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as StructureData. Should in
         principle be the same as the method above.
 
         """
@@ -369,8 +364,11 @@ class VasprunParser(BaseFileParser):
 
     @property
     def last_forces(self):
-        """Fetch forces after or at the last recorded "
-        ionic step from parsevasp and store as ArrayData.
+        """
+        Fetch forces.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
 
         """
 
@@ -383,18 +381,23 @@ class VasprunParser(BaseFileParser):
 
     @property
     def final_forces(self):
-        """Fetch forces after or at the last recorded "
+        """
+        Fetch forces.
+
+        After or at the last recorded
         ionic step from parsevasp and store as ArrayData.
 
         """
 
         return self.last_forces
 
-    
     @property
     def last_stress(self):
-        """Fetch stess after or at the last recorded "
-        ionic step from parsevasp and store as ArrayData.
+        """
+        Fetch stess.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
 
         """
 
@@ -407,20 +410,25 @@ class VasprunParser(BaseFileParser):
 
     @property
     def final_stress(self):
-        """Fetch stress after or at the last recorded "
-        ionic step from parsevasp and store as ArrayData.
+        """
+        Fetch stress.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
 
         """
 
         return self.last_stress
-    
+
     @property
     def trajectory(self):
-        """Fetch unitcells, positions, species, forces and stress
-        for all calculation steps from parsevasp and store as TrajectoryData.
+        """
+        Fetch unitcells, positions, species, forces and stress.
+
+        For all calculation steps from parsevasp and store as TrajectoryData.
 
         """
-                
+
         unitcell = self._data_obj.get_unitcell("all")
         positions = self._data_obj.get_positions("all")
         species = self._data_obj.get_species()
@@ -433,12 +441,12 @@ class VasprunParser(BaseFileParser):
         forces = sorted(forces.items())
         stress = sorted(stress.items())
         # convert to numpy
-        unitcell = np.asarray(map(operator.itemgetter(1),unitcell))
-        positions = np.asarray(map(operator.itemgetter(1),positions))
-        forces = np.asarray(map(operator.itemgetter(1),forces))
-        stress = np.asarray(map(operator.itemgetter(1),stress))
+        unitcell = np.asarray(map(operator.itemgetter(1), unitcell))
+        positions = np.asarray(map(operator.itemgetter(1), positions))
+        forces = np.asarray(map(operator.itemgetter(1), forces))
+        stress = np.asarray(map(operator.itemgetter(1), stress))
         # Aiida wants the species as symbols, so invert
-        elements = self._invert_dict(parsevaspct.elements)
+        elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species])
 
         if (unitcell is not None) and (positions is not None) and \
@@ -449,23 +457,14 @@ class VasprunParser(BaseFileParser):
 
             keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
 
-            trajectory_node.set_trajectory(
-                stepids=np.arange(unitcell.shape[0]),
-                cells=unitcell,
-                symbols=symbols,
-                positions=positions)
-        
-            for key, data in zip(keys, (unitcell,
-                                        positions,
-                                        symbols,
-                                        forces,
-                                        stress)):
+            trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
+
+            for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
                 array_node.set_array(key, data)
                 trajectory_node.set_array(key, data)
             return trajectory_node, array_node
-        else:
-            return None
 
+        return None
 
     # @property
     # def trajectory_full(self):
@@ -473,7 +472,7 @@ class VasprunParser(BaseFileParser):
     #     for all calculation steps from parsevasp and store as ArrayData.
 
     #     """
-                
+
     #     unitcell = self._data_obj.get_unitcell("all")
     #     positions = self._data_obj.get_positions("all")
     #     species = self._data_obj.get_species()
@@ -510,25 +509,28 @@ class VasprunParser(BaseFileParser):
     #         return array_node
     #     else:
     #         return None
-        
+
     @property
     def energies_sc(self):
-        """Fetch the total energies from parsevasp and store in
-        ArrayData for all self-consistent electronic
-        steps.
+        """
+        Fetch the total energies.
+
+        Store in ArrayData for all self-consistent electronic steps.
 
         """
-        
+
         # raise error due to lack of knowledge if
         # the Aiida data structure support for instance
         # lists of ndarrays.
         raise NotImplementedError
         #return self.energies(nosc = False)
-        
+
     @property
-    def energies(self, nosc = True):
-        """Fetch the total energies from parsevasp and store in
-        ArrayData for all calculations (i.e. ionic steps).
+    def energies(self, nosc=True):
+        """
+        Fetch the total energies.
+
+        Store as ArrayData for all calculations (i.e. ionic steps).
 
         """
 
@@ -538,15 +540,13 @@ class VasprunParser(BaseFileParser):
         # fetch the type of energies that the user wants to extract
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
         for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
-            
+
             # this returns a list, not an ndarray due to
             # the posibility of returning the energies for all
             # self consistent steps, which contain a different
             # number of elements, not supported by Numpy's std.
             # arrays
-            enrgies = self._data_obj.get_energies(status="all",
-                                                  etype = etype,
-                                                  nosc = nosc)
+            enrgies = self._data_obj.get_energies(status="all", etype=etype, nosc=nosc)
             if enrgies is None:
                 return None
             enrgy = get_data_class('array')()
@@ -559,11 +559,13 @@ class VasprunParser(BaseFileParser):
             enrgy.set_array(etype, np.asarray(enrgies))
 
         return enrgy
-        
+
     @property
     def projectors(self):
-        """Fetch the projectors from parsevasp and 
-        store in ArrayData.
+        """
+        Fetch the projectors.
+
+        Store as ArrayData.
 
         """
 
@@ -579,8 +581,7 @@ class VasprunParser(BaseFileParser):
                 prj.append(proj["up"])
                 prj.append(proj["down"])
             except KeyError:
-                self._logger.error("Did not detect any projectors. "
-                                   "Returning.")
+                self._logger.error("Did not detect any projectors. " "Returning.")
         if len(prj) == 1:
             projectors.set_array('projectors', prj[0])
         else:
@@ -589,8 +590,10 @@ class VasprunParser(BaseFileParser):
 
     @property
     def dielectrics(self):
-        """Fetch the dielectric function from parsevasp and store as
-        ArrayData.
+        """
+        Fetch the dielectric function.
+
+        Store as ArrayData.
 
         """
 
@@ -606,11 +609,13 @@ class VasprunParser(BaseFileParser):
 
     @property
     def born_charges(self):
-        """Fetch the Born effective charges from parsevasp and store
-        as ArrayData.
+        """
+        Fetch the Born effective charges.
+
+        Store as ArrayData.
 
         """
-        
+
         brn = self._data_obj.get_born()
         if brn is None:
             return None
@@ -620,11 +625,13 @@ class VasprunParser(BaseFileParser):
 
     @property
     def hessian(self):
-        """Fetch the Hessian matrix from parsevasp and store
-        as ArrayData.
+        """
+        Fetch the Hessian matrix.
+
+        Store as ArrayData.
 
         """
-        
+
         hessian = self._data_obj.get_hessian()
         if hessian is None:
             return None
@@ -634,12 +641,13 @@ class VasprunParser(BaseFileParser):
 
     @property
     def dynmat(self):
-        """Fetch the dynamical eigenvectors and 
-        eigenvalues from parsevasp and store and store
-        as ArrayData.
+        """
+        Fetch the dynamical eigenvectors and eigenvalues.
+
+        Store as ArrayData.
 
         """
-        
+
         dynmat = self._data_obj.get_dynmat()
         if dynmat is None:
             return None
@@ -647,12 +655,13 @@ class VasprunParser(BaseFileParser):
         dyn.set_array('dynvec', dynmat["eigenvectors"])
         dyn.set_array('dyneig', dynmat["eigenvalues"])
         return dyn
-    
-    
+
     @property
     def dos(self):
-        """Fetch the total density of states from parsevasp and store as
-        ArrayData.
+        """
+        Fetch the total density of states.
+
+        Store as ArrayData.
 
         """
 
@@ -666,44 +675,42 @@ class VasprunParser(BaseFileParser):
         densta.set_array('edos', energy)
         tdos = None
         pdos = None
-        up = dos.get("up")
-        down = dos.get("down")
+        upspin = dos.get("up")
+        downspin = dos.get("down")
         total = dos.get("total")
-        if (up is not None) and (down is not None):
-            tdos = np.stack((up["total"], down["total"]))
-            if (up["partial"] is not None) and \
-               (down["partial"] is not None):
-                pdos = np.stack((up["partial"],
-                                 down["partial"]))
+        if (upspin is not None) and (downspin is not None):
+            tdos = np.stack((upspin["total"], downspin["total"]))
+            if (upspin["partial"] is not None) and \
+               (downspin["partial"] is not None):
+                pdos = np.stack((upspin["partial"], downspin["partial"]))
         else:
             tdos = total["total"]
             pdos = total["partial"]
         densta.set_array('tdos', tdos)
         if pdos is not None:
             densta.set_array('pdos', pdos)
-        
+
         return densta
 
     @property
     def fermi_level(self):
-        """Fetch Fermi level from parsevasp. """
+        """Fetch Fermi level."""
 
         return self._data_obj.get_fermi_level()
-    
-    def _build_structure(self, lattice):
-        """Builds a structure according to Aiida spec.
 
-        """
-        
-        structure_cls = get_data_class('structure')
-        unitcell = lattice["unitcell"]
-        structure = structure_cls(cell = unitcell)
-        # Aiida wants the species as symbols, so invert
-        elements = self._invert_dict(parsevaspct.elements)
-        for p, s in zip(lattice["positions"], lattice["species"]):
-            structure.append_atom(position=np.dot(p, unitcell),
-                                  symbols=elements[s].title())
-        return structure
 
-    def _invert_dict(self, dct):
-        return dct.__class__(map(reversed, dct.items()))   
+def _build_structure(lattice):
+    """Builds a structure according to Aiida spec."""
+
+    structure_cls = get_data_class('structure')
+    unitcell = lattice["unitcell"]
+    structure = structure_cls(cell=unitcell)
+    # Aiida wants the species as symbols, so invert
+    elements = _invert_dict(parsevaspct.elements)
+    for pos, specie in zip(lattice["positions"], lattice["species"]):
+        structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
+    return structure
+
+
+def _invert_dict(dct):
+    return dct.__class__(map(reversed, dct.items()))

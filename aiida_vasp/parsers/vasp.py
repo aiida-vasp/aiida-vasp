@@ -1,16 +1,16 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
-from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
-from aiida_vasp.utils.delegates import delegate
-from aiida_vasp.utils.extended_dicts import DictWithAttributes
 from aiida.orm.data.parameter import ParameterData
 from aiida.orm.data.structure import StructureData
 from aiida.orm.data.array.kpoints import KpointsData
 from aiida.orm.data.array.bands import BandsData
 from aiida.orm.data.array.trajectory import TrajectoryData
 from aiida.orm.data.array import ArrayData
+from aiida_vasp.parsers.base import BaseParser
+from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
+from aiida_vasp.utils.delegates import delegate
+from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 LINKNAME_DICT = {
     'parameters': 'output_parameters',

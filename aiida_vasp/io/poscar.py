@@ -1,15 +1,13 @@
 # pylint: disable=no-self-use
 """Tools for parsing POSCAR files."""
 from itertools import groupby
-from collections import Counter, defaultdict
 import numpy as np
-import sys
-
 
 from parsevasp.poscar import Poscar, Site
+from aiida.common.constants import elements
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida.common.constants import elements
+
 
 class PoscarParser(BaseFileParser):
     """
@@ -61,8 +59,7 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         try:
-            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['structure']),
-                          prec=self.precision, conserve_order=True)
+            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['structure']), prec=self.precision, conserve_order=True)
         except SystemExit:
             return None
 
@@ -75,11 +72,9 @@ class PoscarParser(BaseFileParser):
 
         # pass file path to parsevasp and try to load file
         try:
-            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision,
-                            conserve_order=True)
+            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True)
         except SystemExit:
-            self._logger.warning("Parsevasp exited abnormally. "
-                                 "Returning None.")
+            self._logger.warning("Parsevasp exited abnormally. " "Returning None.")
             return {'structure': None}
 
         result = parsevasp_to_aiida(poscar)
@@ -114,22 +109,26 @@ class PoscarParser(BaseFileParser):
 
         return out_string
 
+
 def parsevasp_to_aiida(poscar):
-    """Generate an Aiida structure from the parsevasp instance of the
+    """
+    Parsevasp to Aiida conversion.
+
+    Generate an Aiida structure from the parsevasp instance of the
     Poscar class.
 
     """
-    
+
     # fetch a dictionary containing the entries, make sure all coordinates are
     # cartesian
-    poscar_dict = poscar.get_dict(direct = False)
-    
+    poscar_dict = poscar.get_dict(direct=False)
+
     # generate Aiida StructureData and add results from the loaded file
     result = {}
-    
+
     result['structure'] = get_data_class('structure') \
                           (cell=poscar_dict['unitcell'])
-    
+
     for site in poscar_dict['sites']:
         specie = site['specie']
         # user can specify whatever they want for the elements, but
@@ -146,12 +145,11 @@ def parsevasp_to_aiida(poscar):
             symbols[symbol]
         except KeyError:
             symbol = 'X'
-        result['structure'].append_atom(position=site['position'],
-                                        symbols=symbol, name=specie)
+        result['structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
 
     return result
 
-    
+
 def aiida_to_parsevasp(structure):
     """Convert Aiida StructureData to parsevasp's dictionary format."""
     dictionary = {}
@@ -162,19 +160,16 @@ def aiida_to_parsevasp(structure):
     direct = False
     sites = []
     for site in structure.sites:
-        sites.append(Site(site.kind_name, site.position,
-                          selective=selective, direct=direct))
+        sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct))
 
     dictionary["sites"] = sites
     return dictionary
 
-def fetch_symbols_from_elements(elmnts):
-    """Fetch the symbol entry in the elements
-    dictionary in Aiida.
 
-    """
+def fetch_symbols_from_elements(elmnts):
+    """Fetch the symbol entry in the elements dictionary in Aiida."""
 
     new_dict = {}
-    for k, v in elmnts.items():
-        new_dict[v['symbol']]=k
+    for key, value in elmnts.items():
+        new_dict[value['symbol']] = key
     return new_dict
