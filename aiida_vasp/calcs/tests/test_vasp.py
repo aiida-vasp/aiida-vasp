@@ -31,6 +31,7 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
         with open(temp_file, 'r') as result_incar_fo:
             assert result_incar_fo.read() == reference['incar']
 
+
 @ONLY_ONE_CALC
 def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
     """Check that POTCAR is written correctly"""
@@ -96,7 +97,7 @@ def test_prepare(vasp_nscf_and_ref):
         calc_info = vasp_calc._prepare_for_submission(sandbox_f, inp)
         inputs = sandbox_f.get_content_list()
     assert set(inputs) == {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'}
-    
+
 
 def test_verify_success(vasp_calc_and_ref):
     """Check that correct inputs are successfully verified"""

@@ -31,4 +31,3 @@ def test_parse_eigenval(vasprun_parser, vasp_structure):
     inputs['structure'] = vasp_structure
     result = parser.get_quantity('bands', {}, inputs)
     assert result['bands'].get_bands().all() == bands.all()
-    
