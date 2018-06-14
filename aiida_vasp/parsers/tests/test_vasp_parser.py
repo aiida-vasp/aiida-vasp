@@ -116,18 +116,6 @@ def test_parsable_quantities(vasp_parser_with_test):
 
 
 @ONLY_ONE_CALC
-def test_quantities_to_parse(vasp_parser_with_test):
-    """Check if quantities are added to quantities to parse correctly."""
-    parser = vasp_parser_with_test
-    # after parse_with_retrieved quantities_to_parse will be empty, so we
-    # have to set it one more time.
-    parser._check_and_validate_settings()
-    assert 'quantity2' in parser._quantities_to_parse
-    assert 'quantity_with_alternatives' not in parser._quantities_to_parse
-    assert 'quantity1' in parser._quantities_to_parse
-
-
-@ONLY_ONE_CALC
 def test_node_link_names(vasp_parser_with_test):
     """Check whether an alternative quantity representing a node will be added with the correct linkname."""
     parser = vasp_parser_with_test
