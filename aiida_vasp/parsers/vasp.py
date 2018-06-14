@@ -1,12 +1,6 @@
 #encoding: utf-8
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
-from aiida.orm.data.parameter import ParameterData
-from aiida.orm.data.structure import StructureData
-from aiida.orm.data.array.kpoints import KpointsData
-from aiida.orm.data.array.bands import BandsData
-from aiida.orm.data.array.trajectory import TrajectoryData
-from aiida.orm.data.array import ArrayData
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
 from aiida_vasp.utils.delegates import delegate
@@ -30,18 +24,18 @@ LINKNAME_DICT = {
 }
 
 ALLOWED_TYPES = {
-    'parameters': ParameterData,
-    'kpoints': KpointsData,
-    'structure': StructureData,
-    'trajectory': TrajectoryData,
-    'bands': BandsData,
-    'dos': ArrayData,
-    'energies': ArrayData,
-    'projectors': ArrayData,
-    'born_charges': ArrayData,
-    'dielectrics': ArrayData,
-    'hessian': ArrayData,
-    'dynmat': ArrayData
+    'parameters': 'parameters',
+    'kpoints': 'array.kpoints',
+    'structure': 'structure',
+    'trajectory': 'array.trajectory',
+    'bands': 'array.bands',
+    'dos': 'array',
+    'energies': 'array',
+    'projectors': 'array',
+    'born_charges': 'array',
+    'dielectrics': 'array',
+    'hessian': 'array',
+    'dynmat': 'array'
 }
 
 DEFAULT_OPTIONS = {
@@ -162,7 +156,7 @@ class VaspParser(BaseParser):
             file_parser_set = get_file_parser_set()
 
         self._parsers = {}
-        for key, value in file_parser_set.iteritems():
+        for key, value in file_parser_set.items():
             self.add_file_parser(key, value)
 
         self._quantities_to_parse = []
@@ -190,7 +184,7 @@ class VaspParser(BaseParser):
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
-            for file_name, value_dict in self._parsers.iteritems():
+            for file_name, value_dict in self._parsers.items():
                 if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
                     return True
             return False
@@ -220,69 +214,41 @@ class VaspParser(BaseParser):
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
         # Add output nodes if the corresponding data exists.
-        for key, value in self._output_nodes.iteritems():
+        for key, value in self._output_nodes.items():
 
             if not self._parsable_quantities[key].is_node:
                 # This quantity does not represent a node, continue with the next one.
                 continue
 
             if value:
-                self._set_node(key, value)
+                self._set_node(self._parsable_quantities[key].nodeName, value)
 
         return self.result(success=True)
 
-    def _check_priority_and_add(self):
-        """Add a parser based on priority and availability of the files to be parsed."""
+    def _check_uniqueness_and_add(self):
+        """Check uniqueness and add parsable quantities."""
 
+        self._parsable_quantities = {}
         # Gather all parsable items as defined in the file parsers.
-        # We introduce the concept of priority which can be defined in
-        # FILE_PARSER_SETS as the key 'priority' and a number. If a
-        # quantity is present in several different parsers, the parser
-        # with the highest number will persist. The file also has to exist.
-        # It is still fully possible to create custom parser and/or utilize the
-        # alternatives approach.
-        priority = {}
-        for filename, value in self._parsers.iteritems():
+        for value in self._parsers.values():
             # initialise the instance of this FileParser to None.
             value.parser = None
-            for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
-                add = False
-                if value.priority is not None:
-                    # Priority present
-                    if priority.get(quantity is None):
-                        # Quantity not yet added, add if file is present
-                        if self.get_file(filename) is not None:
-                            add = True
-                    if value.priority > priority.get(quantity):
-                        # Value exists, if priority is higher and file exists, add it
-                        # and update priority for the quantity
-                        if self.get_file(filename) is not None:
-                            priority[quantity] = value.priority
-                            add = True
-                else:
-                    # No priority present. Fly under the radar and assume
-                    # the user knows how to configure the parsers. This is usefull
-                    # if one for instance want to use the alternatives approach and
-                    # is particularly nice if one is writing custom parsers that does
-                    # not require files to be present.
-                    # However, here we need to make sure that we do not add a quantities
-                    # that exists
-                    if quantity in self._parsable_quantities:
-                        raise RuntimeError('The quantity {0} has been defined by two '
-                                           'FileParser classes.'.format(quantity) + ' Quantity names must be unique. If both '
-                                           'quantities are equivalent, define one as' + ' an alternative for the other.')
-                    add = True
-                if add:
-                    # Create quantity objects.
-                    self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
+            for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
+                # However, here we need to make sure that we do not add a quantities
+                # that exists
+                if quantity in self._parsable_quantities:
+                    raise RuntimeError('The quantity {0} has been defined by two '
+                                       'FileParser classes.'.format(quantity) + 'The quantity name must be unique. If two '
+                                       'quantities are equivalent, define one as '
+                                       'an alternative for the other with its own '
+                                       'unique name.')
+                # Create quantity objects.
+                self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
-    def _set_parsable_quantities(self):
-        """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
+    def _check_consitency_and_alternatives(self):
+        """Check the consistency and alternatives."""
 
         import copy
-
-        # add parsers
-        self._check_priority_and_add()
 
         # make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
@@ -311,6 +277,16 @@ class VaspParser(BaseParser):
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
                     self._parsable_quantities[value.is_alternative].alternatives.append(quantity)
 
+    def _set_parsable_quantities(self):
+        """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
+
+        # check uniqueness and add parsers
+        self._check_uniqueness_and_add()
+
+        # check consistency, that the quantity is parsable and
+        # alternatives
+        self._check_consitency_and_alternatives()
+
     def _check_and_validate_settings(self):
         """Check the settings and set which files should be parsed based on the input."""
 
@@ -322,7 +298,7 @@ class VaspParser(BaseParser):
                     return True
             return False
 
-        for key, value in self._settings.iteritems():
+        for key, value in self._settings.items():
             if not key.startswith('add_'):
                 # only keys starting with 'add_' will change the behaviour of the parser so get the next one.
                 continue

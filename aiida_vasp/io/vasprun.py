@@ -43,97 +43,113 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'structure',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['poscar-structure']
         },
         'bands': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'bands',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['eigenval-bands']
         },
         'dos': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'dos',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['doscar-dos']
         },
         'kpoints': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'kpoints',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['kpoints-kpoints']
         },
         'occupations': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'occupations',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['eigenval-occupations']
         },
         'trajectory': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'trajectory',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['xdatcar-trajectory']
         },
         'energies': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'energies',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['outcar-energies']
         },
         'projectors': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'projectors',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['procar-projectors']
         },
         'dielectrics': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'dielectrics',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-dielectrics']
         },
         'final_stress': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': '',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_stress']
         },
         'final_forces': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': '',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_stress']
         },
         'final_structure': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': '',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_structure']
         },
         'born_charges': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'born_charges',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-born_charges']
         },
         'hessian': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'hessian',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-hessian']
         },
         'dynmat': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'dynmat',
-            'prerequisites': []
+            'prerequisites': [],
+            #'alternatives': ['outcar-dynmat']
         },
         'parameters': {
             'inputs': [],
             'parsers': ['vasprun.xml'],
             'nodeName': 'parameters',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['outcar-parameters']
         }
     }
 
@@ -165,7 +181,7 @@ class VasprunParser(BaseFileParser):
 
         # Since all quantities will be returned by properties, we can't pass
         # inputs as a parameter, so we store them in self._parsed_data
-        for key, value in inputs.iteritems():
+        for key, value in inputs.items():
             self._parsed_data[key] = value
 
         settings = inputs.get('settings', DEFAULT_OPTIONS)
@@ -672,7 +688,7 @@ class VasprunParser(BaseFileParser):
         # energy is always there, regardless of
         # total, spin or partial
         energy = dos["total"]["energy"]
-        densta.set_array('edos', energy)
+        densta.set_array('energy', energy)
         tdos = None
         pdos = None
         upspin = dos.get("up")

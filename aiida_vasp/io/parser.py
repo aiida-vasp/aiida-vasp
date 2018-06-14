@@ -230,7 +230,6 @@ class BaseFileParser(BaseParser):
                     if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity: None}
-
             self._parsed_data = self._parse_file(inputs)
 
         return {quantity: self._parsed_data.get(quantity)}

@@ -13,11 +13,11 @@ def test_parse_outcar():
     file_name = 'OUTCAR'
     path = data_path('outcar', file_name)
     parser = OutcarParser(file_path=path)
-    params = parser.get_quantity('parameters', {})
-    result = params['parameters'].get_dict()
-    assert result['volume'] == 65.94
-    assert result['efermi'] == 7.2948
-    assert result['energies']
+    params = parser.get_quantity('outcar-parameters', {})
+    result = params['outcar-parameters'].get_dict()
+    assert result['outcar-volume'] == 65.94
+    assert result['outcar-efermi'] == 7.2948
+    assert result['outcar-energies']
     assert result['symmetries']['num_space_group_operations'] == 48
     assert result['symmetries']['num_point_group_operations'] == 48
     assert result['symmetries']['point_symmetry'] == 'O_h'

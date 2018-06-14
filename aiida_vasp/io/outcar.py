@@ -17,25 +17,25 @@ class OutcarParser(BaseFileParser):
 
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
-        'volume': {
+        'outcar-volume': {
             'inputs': ['parameters'],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
-        'energies': {
+        'outcar-energies': {
             'inputs': ['parameters'],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
-        'efermi': {
+        'outcar-fermi_level': {
             'inputs': ['parameters'],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
-        'parameters': {
+        'outcar-parameters': {
             'inputs': [],
             'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
@@ -63,7 +63,7 @@ class OutcarParser(BaseFileParser):
 
         result = self._read_outcar(inputs)
         params = get_data_class('parameter')(dict=result)
-        result['parameters'] = params
+        result['outcar-parameters'] = params
         return result
 
     @staticmethod
@@ -94,7 +94,7 @@ class OutcarParser(BaseFileParser):
             for line in outcar_file_object:
                 # volume
                 if line.rfind('volume of cell :') > -1:
-                    result['volume'] = float(line.split()[-1])
+                    result['outcar-volume'] = float(line.split()[-1])
                 # Free energy
                 if line.lower().startswith('  free  energy   toten'):
                     energy_free.append(float(line.split()[-2]))
@@ -103,7 +103,7 @@ class OutcarParser(BaseFileParser):
                     energy_zero.append(float(line.split()[-1]))
                 # Fermi energy
                 if line.rfind('E-fermi') > -1:
-                    result['efermi'] = float(line.split()[2])
+                    result['outcar-efermi'] = float(line.split()[2])
                 # space group operations
                 self._parse_line_regex_once(line, self.SPACE_GROUP_OP_PATTERN, symmetries, 'num_space_group_operations', int)
                 # point group operations
@@ -112,10 +112,10 @@ class OutcarParser(BaseFileParser):
                 self._parse_line_regex_once(line, self.POINT_SYMMETRY_PATTERN, symmetries, 'point_symmetry')
                 # space group
                 self._parse_line_regex_once(line, self.SPACE_GROUP_PATTERN, symmetries, 'space_group')
-        result['energies'] = {}
-        result['energies']['free_energy'] = energy_free[-1]
-        result['energies']['energy_without_entropy'] = energy_zero[-1]
-        result['energies']['free_energy_all'] = energy_free
-        result['energies']['energy_without_entropy_all'] = energy_zero
+        result['outcar-energies'] = {}
+        result['outcar-energies']['free_energy'] = energy_free[-1]
+        result['outcar-energies']['energy_without_entropy'] = energy_zero[-1]
+        result['outcar-energies']['free_energy_all'] = energy_free
+        result['outcar-energies']['energy_without_entropy_all'] = energy_zero
         result['symmetries'] = symmetries
         return result

@@ -9,57 +9,47 @@ from aiida_vasp.io.chgcar import ChgcarParser
 from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.io.poscar import PoscarParser
 
-DEFAULT_PRIORITY = 100
-
 FILE_PARSER_SETS = {
     'default': {
         'DOSCAR': {
             'parser_class': DosParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'EIGENVAL': {
             'parser_class': EigParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'IBZKPT': {
             'parser_class': KpParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': True,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY + 1
+            'status': 'Unknown'
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'WAVECAR': {
             'parser_class': WavecarParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
-            'status': 'Unknown',
-            'priority': DEFAULT_PRIORITY
+            'status': 'Unknown'
         },
     },
 }

@@ -23,7 +23,8 @@ def test_parse_vasprun(vasprun_parser):
     #assert  == 7.29482275
 
 
-def test_parameter_results(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_parameter_results(vasprun_parser):
     """
     Test that the parameter node is a ParametersData instance.
 
@@ -32,7 +33,7 @@ def test_parameter_results(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['parameters'], 'output_params': ['fermi_level']}
-    quantity = vasp_xml.get_quantity('parameters', settings=settings)
+    quantity = vasprun_parser.get_quantity('parameters', settings=settings)
     data_obj = quantity['parameters']
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
@@ -40,11 +41,12 @@ def test_parameter_results(vasp_xml):
     assert data_dict['fermi_level'] == 5.96764939
 
 
-def test_kpoints_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_kpoints_result(vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
     settings = {'quantities_to_parse': ['kpoints']}
-    quantity = vasp_xml.get_quantity('kpoints', settings=settings)
+    quantity = vasprun_parser.get_quantity('kpoints', settings=settings)
     data_obj = quantity['kpoints']
     ref_class = get_data_class('array.kpoints')
     assert isinstance(data_obj, ref_class)
@@ -52,7 +54,8 @@ def test_kpoints_result(vasp_xml):
     assert np.all(data_obj.get_kpoints()[-1] == np.array([0.42857143, -0.42857143, 0.42857143]))
 
 
-def test_structure_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_structure_result(vasprun_parser):
     """
     Test that the structure result node is a StructureData instance.
 
@@ -61,7 +64,7 @@ def test_structure_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['structure']}
-    quantity = vasp_xml.get_quantity('structure', settings=settings)
+    quantity = vasprun_parser.get_quantity('structure', settings=settings)
     data_obj = quantity['structure']
     # check object
     ref_obj = get_data_class('structure')
@@ -78,7 +81,8 @@ def test_structure_result(vasp_xml):
     assert data_obj.get_cell_volume() == np.float(163.22171870360754)
 
 
-def test_forces_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_forces_result(vasprun_parser):
     """
     Check that the parsed forces are of type ArrayData.
 
@@ -88,7 +92,7 @@ def test_forces_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasp_xml.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
     data_obj, data_obj_arr = quantity['trajectory']
     # test object (a tupple as we store trajectory as an array as well)
     ref_obj = get_data_class('array')
@@ -108,8 +112,8 @@ def test_forces_result(vasp_xml):
     assert np.all(data_obj[0][0] == data_obj[1][0])
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('relax',)], indirect=True)
-def test_forces_result_relax(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+def test_forces_result_relax(vasprun_parser):
     """
     Check that the parsed forces are of type ArrayData.
 
@@ -119,7 +123,7 @@ def test_forces_result_relax(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasp_xml.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -134,8 +138,8 @@ def test_forces_result_relax(vasp_xml):
     assert np.all(data_obj_arr[-1][-1] == np.array([-1.75970000e-03, 1.12150000e-04, 1.12150000e-04]))
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('relax',)], indirect=True)
-def test_unitcells_result_relax(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+def test_unitcells_result_relax(vasprun_parser):
     """
     Check that the parsed unitcells are of type ArrayData.
 
@@ -145,7 +149,7 @@ def test_unitcells_result_relax(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasp_xml.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -160,8 +164,8 @@ def test_unitcells_result_relax(vasp_xml):
     assert np.all(data_obj_arr[-1][-1] == np.array([0.0, 2.19104000e-03, 5.46705225e+00]))
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('relax',)], indirect=True)
-def test_positions_result_relax(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+def test_positions_result_relax(vasprun_parser):
     """
     Check that the parsed positions are of type ArrayData.
 
@@ -171,7 +175,7 @@ def test_positions_result_relax(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasp_xml.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -186,8 +190,8 @@ def test_positions_result_relax(vasp_xml):
     assert np.all(data_obj_arr[-1][-1] == np.array([0.7437189, 0.74989833, 0.24989833]))
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('dielectric',)], indirect=True)
-def test_dielectrics_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)
+def test_dielectrics_result(vasprun_parser):
     """
     Check that the parsed dielectrics are of type ArrayData.
 
@@ -196,7 +200,7 @@ def test_dielectrics_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['dielectrics']}
-    quantity = vasp_xml.get_quantity('dielectrics', settings=settings)
+    quantity = vasprun_parser.get_quantity('dielectrics', settings=settings)
     data_obj = quantity['dielectrics']
     # test object
     ref_obj = get_data_class('array')
@@ -219,8 +223,8 @@ def test_dielectrics_result(vasp_xml):
     assert energy[500] == 10.2933
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('localfield',)], indirect=True)
-def test_born_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('localfield',)], indirect=True)
+def test_born_result(vasprun_parser):
     """
     Check that the Born effective charges are of type ArrayData.
 
@@ -229,7 +233,7 @@ def test_born_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['born_charges']}
-    quantity = vasp_xml.get_quantity('born_charges', settings=settings)
+    quantity = vasprun_parser.get_quantity('born_charges', settings=settings)
     data_obj = quantity['born_charges']
     # test object
     ref_obj = get_data_class('array')
@@ -243,7 +247,8 @@ def test_born_result(vasp_xml):
     assert np.all(born[4][0] == np.array([1.68565200e-01, -2.92058000e-02, -2.92058000e-02]))
 
 
-def test_dos_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_dos_result(vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -252,13 +257,13 @@ def test_dos_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['dos']}
-    quantity = vasp_xml.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos', settings=settings)
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
     dos = data_obj.get_array('tdos')
-    energy = data_obj.get_array('edos')
+    energy = data_obj.get_array('energy')
     # test shape of array
     assert dos.shape == (301,)
     assert energy.shape == (301,)
@@ -267,8 +272,8 @@ def test_dos_result(vasp_xml):
     assert energy[150] == 2.3373
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('spin',)], indirect=True)
-def test_dos_spin_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
+def test_dos_spin_result(vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -279,7 +284,7 @@ def test_dos_spin_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['dos']}
-    quantity = vasp_xml.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos', settings=settings)
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
@@ -295,8 +300,8 @@ def test_dos_spin_result(vasp_xml):
     assert dos[1, 500] == 0.9844
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('partial',)], indirect=True)
-def test_pdos_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
+def test_pdos_result(vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -305,13 +310,13 @@ def test_pdos_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['dos']}
-    quantity = vasp_xml.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos', settings=settings)
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
     dos = data_obj.get_array('pdos')
-    energy = data_obj.get_array('edos')
+    energy = data_obj.get_array('energy')
     # test shape of array
     assert dos.shape == (8, 1000, 9)
     assert energy.shape == (1000,)
@@ -321,8 +326,8 @@ def test_pdos_result(vasp_xml):
     assert energy[500] == 0.01
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('partial',)], indirect=True)
-def test_projectors_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
+def test_projectors_result(vasprun_parser):
     """
     Check that the projectors are of type ArrayData.
 
@@ -331,7 +336,7 @@ def test_projectors_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['projectors']}
-    quantity = vasp_xml.get_quantity('projectors', settings=settings)
+    quantity = vasprun_parser.get_quantity('projectors', settings=settings)
     data_obj = quantity['projectors']
     # test object
     ref_obj = get_data_class('array')
@@ -345,7 +350,7 @@ def test_projectors_result(vasp_xml):
     assert np.all(proj[4, 3, 5] == np.array([0.2033, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]))
 
 
-def test_bands_result(vasp_xml):
+def test_bands_result(vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -355,7 +360,7 @@ def test_bands_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['bands']}
-    quantity = vasp_xml.get_quantity('bands', settings=settings)
+    quantity = vasprun_parser.get_quantity('bands', settings=settings)
     data_obj = quantity['bands']
     # test object
     ref_obj = get_data_class('array.bands')
@@ -375,8 +380,8 @@ def test_bands_result(vasp_xml):
     assert occ[0, 6, 4] == 1.0
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('spin',)], indirect=True)
-def test_eigenocc_spin_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
+def test_eigenocc_spin_result(vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -386,7 +391,7 @@ def test_eigenocc_spin_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['bands']}
-    quantity = vasp_xml.get_quantity('bands', settings=settings)
+    quantity = vasprun_parser.get_quantity('bands', settings=settings)
     data_obj = quantity['bands']
     # test object
     ref_obj = get_data_class('array.bands')
@@ -412,7 +417,8 @@ def test_eigenocc_spin_result(vasp_xml):
     assert occ[1, 6, 4] == 1.0
 
 
-def test_toten_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_toten_result(vasprun_parser):
     """
     Check that the total energy are of type ArrayData.
 
@@ -421,7 +427,7 @@ def test_toten_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['energies']}
-    quantity = vasp_xml.get_quantity('energies', settings=settings)
+    quantity = vasprun_parser.get_quantity('energies', settings=settings)
     data_obj = quantity['energies']
     # test object
     ref_obj = get_data_class('array')
@@ -433,8 +439,8 @@ def test_toten_result(vasp_xml):
     assert energies[0] == -42.91113621
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('relax',)], indirect=True)
-def test_totens_relax_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+def test_totens_relax_result(vasprun_parser):
     """
     Check that the total energies are of type ArrayData.
 
@@ -443,7 +449,7 @@ def test_totens_relax_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['energies']}
-    quantity = vasp_xml.get_quantity('energies', settings=settings)
+    quantity = vasprun_parser.get_quantity('energies', settings=settings)
     data_obj = quantity['energies']
     # test object
     ref_obj = get_data_class('array')
@@ -457,8 +463,8 @@ def test_totens_relax_result(vasp_xml):
     assert energies[-1] == -43.39087657
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('disp',)], indirect=True)
-def test_hessian_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
+def test_hessian_result(vasprun_parser):
     """
     Check that the Hessian matrix are of type ArrayData.
 
@@ -467,7 +473,7 @@ def test_hessian_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['hessian']}
-    quantity = vasp_xml.get_quantity('hessian', settings=settings)
+    quantity = vasprun_parser.get_quantity('hessian', settings=settings)
     data_obj = quantity['hessian']
     # test object
     ref_obj = get_data_class('array')
@@ -488,8 +494,8 @@ def test_hessian_result(vasp_xml):
     ]))
 
 
-@pytest.mark.parametrize(['vasp_xml'], [('disp',)], indirect=True)
-def test_dynmat_result(vasp_xml):
+@pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
+def test_dynmat_result(vasprun_parser):
     """
     Check parsing of the dynamical eigenvectors and eigenvalues.
 
@@ -498,7 +504,7 @@ def test_dynmat_result(vasp_xml):
     """
 
     settings = {'quantities_to_parse': ['dynmat']}
-    quantity = vasp_xml.get_quantity('dynmat', settings=settings)
+    quantity = vasprun_parser.get_quantity('dynmat', settings=settings)
     data_obj = quantity['dynmat']
     # test object
     ref_obj = get_data_class('array')

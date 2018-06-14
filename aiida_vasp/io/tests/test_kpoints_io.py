@@ -30,11 +30,11 @@ def test_parse_kpoints(vasp_kpoints):
         param = 'list'
 
     parser = KpParser(file_path=file_path)
-    result = parser.get_quantity('kpoints', {})
+    result = parser.get_quantity('kpoints-kpoints', {})
     if param == 'list':
-        assert getattr(result['kpoints'], method)().all() == getattr(kpoints, method)().all()
+        assert getattr(result['kpoints-kpoints'], method)().all() == getattr(kpoints, method)().all()
     if param == 'mesh':
-        assert getattr(result['kpoints'], method)() == getattr(kpoints, method)()
+        assert getattr(result['kpoints-kpoints'], method)() == getattr(kpoints, method)()
 
 
 def test_parse_kpoints_write(vasp_kpoints, tmpdir):
@@ -58,8 +58,8 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     temp_file = str(tmpdir.join('KPOINTS'))
     parser.write(file_path=temp_file)
     parser_reparse = KpParser(file_path=temp_file)
-    result = parser_reparse.get_quantity('kpoints', {})
+    result = parser_reparse.get_quantity('kpoints-kpoints', {})
     if param == 'list':
-        assert getattr(result['kpoints'], method)().all() == getattr(kpoints, method)().all()
+        assert getattr(result['kpoints-kpoints'], method)().all() == getattr(kpoints, method)().all()
     if param == 'mesh':
-        assert getattr(result['kpoints'], method)() == getattr(kpoints, method)()
+        assert getattr(result['kpoints-kpoints'], method)() == getattr(kpoints, method)()

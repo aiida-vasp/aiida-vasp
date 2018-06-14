@@ -9,7 +9,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 def xml_path(folder):
-    """Set the path to the XML file."""
+    """Return the full path to the XML file."""
     return data_path(folder, 'vasprun.xml')
 
 
@@ -40,11 +40,11 @@ def _parse_me(request, tmpdir):
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
         from aiida.orm import CalculationFactory, DataFactory
+        from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
         settings_dict = {'parser_settings': {'add_bands': True, 'output_params': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
-        from aiida_vasp.parsers.vasp import VaspParser
         parser = VaspParser(calc=calc)
         retrieved = DataFactory('folder')()
         fldr = "basic"

@@ -26,11 +26,11 @@ class DosParser(BaseFileParser):
     """Parse a DOSCAR file from a vasp run."""
 
     PARSABLE_ITEMS = {
-        'dos': {
+        'doscar-dos': {
             'inputs': [],
-            'parsers': ['vasprun.xml', 'DOSCAR'],
+            'parsers': ['DOSCAR'],
             'nodeName': 'dos',
-            'prerequisites': ['dos']
+            'prerequisites': []
         },
     }
 
@@ -50,13 +50,13 @@ class DosParser(BaseFileParser):
 
         for array in [pdos, tdos]:
             if array.size == 0:
-                return {'dos': None}
+                return {'doscar-dos': None}
 
         dosnode = get_data_class('array')()
         dosnode.set_array('pdos', pdos)
         dosnode.set_array('tdos', tdos)
 
-        result['dos'] = dosnode
+        result['doscar-dos'] = dosnode
 
         return result
 

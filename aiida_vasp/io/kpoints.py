@@ -19,7 +19,7 @@ class KpParser(BaseFileParser):
     """
 
     PARSABLE_ITEMS = {
-        'kpoints': {
+        'kpoints-kpoints': {
             'inputs': [],
             'parsers': ['EIGENVAL', 'IBZKPT'],
             'nodeName': 'kpoints',
@@ -70,19 +70,19 @@ class KpParser(BaseFileParser):
         result = {}
 
         if isinstance(self._data_obj, get_data_class('array.kpoints')):
-            return {'kpoints': self._data_obj}
+            return {'kpoints-kpoints': self._data_obj}
 
         try:
             parsed_kpoints = Kpoints(file_path=self._data_obj.path)
         except SystemExit:
             self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
-            return {'kpoints': None}
+            return {'kpoints-kpoints': None}
 
         mode = parsed_kpoints.entries.get('mode')
         if mode == 'line':
             self._logger.warning("The read KPOINTS contained line mode which is" "not supported. Returning None.")
-            return {'kpoints': None}
-        result['kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
+            return {'kpoints-kpoints': None}
+        result['kpoints-kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
 
         return result
 

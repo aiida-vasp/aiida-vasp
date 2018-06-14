@@ -25,11 +25,11 @@ def test_parse_poscar(fresh_aiida_env, vasp_structure):
 
     path = data_path('poscar', 'POSCAR')
     parser = PoscarParser(file_path=path)
-    result = parser.get_quantity('structure', {})
+    result = parser.get_quantity('poscar-structure', {})
     structure = vasp_structure
-    assert result['structure'].cell == structure.cell
-    assert result['structure'].get_site_kindnames() == structure.get_site_kindnames()
-    assert result['structure'].sites[2].position == structure.sites[2].position
+    assert result['poscar-structure'].cell == structure.cell
+    assert result['poscar-structure'].get_site_kindnames() == structure.get_site_kindnames()
+    assert result['poscar-structure'].sites[2].position == structure.sites[2].position
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
@@ -44,18 +44,18 @@ def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
 
     structure = vasp_structure
     parser = PoscarParser(data=structure)
-    result = parser.get_quantity('structure', {})
-    assert result['structure'].cell == structure.cell
-    assert result['structure'].get_site_kindnames() == structure.get_site_kindnames()
-    assert result['structure'].sites[2].position == structure.sites[2].position
+    result = parser.get_quantity('poscar-structure', {})
+    assert result['poscar-structure'].cell == structure.cell
+    assert result['poscar-structure'].get_site_kindnames() == structure.get_site_kindnames()
+    assert result['poscar-structure'].sites[2].position == structure.sites[2].position
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('structure', {})
-    assert result_reparse['structure'].cell == structure.cell
-    assert result_reparse['structure'].get_site_kindnames() == \
+    result_reparse = parser.get_quantity('poscar-structure', {})
+    assert result_reparse['poscar-structure'].cell == structure.cell
+    assert result_reparse['poscar-structure'].get_site_kindnames() == \
         structure.get_site_kindnames()
-    assert result_reparse['structure'].sites[2].position == \
+    assert result_reparse['poscar-structure'].sites[2].position == \
         structure.sites[2].position
 
 
@@ -71,16 +71,16 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
 
     path = data_path('poscar', 'POSCAR')
     parser = PoscarParser(file_path=path)
-    _ = parser.get_quantity('structure', {})
+    _ = parser.get_quantity('poscar-structure', {})
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('structure', {})
+    result_reparse = parser.get_quantity('poscar-structure', {})
     structure = vasp_structure
-    assert result_reparse['structure'].cell == structure.cell
-    assert result_reparse['structure'].get_site_kindnames() == \
+    assert result_reparse['poscar-structure'].cell == structure.cell
+    assert result_reparse['poscar-structure'].get_site_kindnames() == \
         structure.get_site_kindnames()
-    assert result_reparse['structure'].sites[2].position == \
+    assert result_reparse['poscar-structure'].sites[2].position == \
         structure.sites[2].position
 
 
@@ -135,16 +135,16 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     """
 
     parser = PoscarParser(data=vasp_structure)
-    result = parser.get_quantity('structure', {})
-    names = result['structure'].get_site_kindnames()
+    result = parser.get_quantity('poscar-structure', {})
+    names = result['poscar-structure'].get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result['structure'].get_symbols_set()
+    symbols = result['poscar-structure'].get_symbols_set()
     assert symbols == set(['As', 'In'])
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('structure', {})
-    names = result_reparse['structure'].get_site_kindnames()
+    result_reparse = parser.get_quantity('poscar-structure', {})
+    names = result_reparse['poscar-structure'].get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result_reparse['structure'].get_symbols_set()
+    symbols = result_reparse['poscar-structure'].get_symbols_set()
     assert symbols == set(['As', 'In'])

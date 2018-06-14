@@ -232,17 +232,8 @@ def ref_retrieved_nscf():
     return retrieved
 
 
-@pytest.fixture()
-def vasprun_parser():
-    """Return an instance of VasprunParser for a reference vasprun.xml."""
-    file_name = 'vasprun.xml'
-    path = data_path('vasprun', file_name)
-    parser = VasprunParser(file_path=path)
-    return parser
-
-
-@pytest.fixture(params=['basic'])
-def vasp_xml(request):
+@pytest.fixture(params=['vasprun'])
+def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)

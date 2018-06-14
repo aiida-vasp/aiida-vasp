@@ -32,7 +32,7 @@ class PoscarParser(BaseFileParser):
     """
 
     PARSABLE_ITEMS = {
-        'structure': {
+        'poscar-structure': {
             'inputs': [],
             'parsers': ['CONTCAR'],
             'nodeName': 'structure',
@@ -59,7 +59,7 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         try:
-            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['structure']), prec=self.precision, conserve_order=True)
+            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['poscar-structure']), prec=self.precision, conserve_order=True)
         except SystemExit:
             return None
 
@@ -68,14 +68,14 @@ class PoscarParser(BaseFileParser):
 
         # check if structure have already been loaded, in that case just return
         if isinstance(self._data_obj, get_data_class('structure')):
-            return {'structure': self._data_obj}
+            return {'poscar-structure': self._data_obj}
 
         # pass file path to parsevasp and try to load file
         try:
             poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True)
         except SystemExit:
             self._logger.warning("Parsevasp exited abnormally. " "Returning None.")
-            return {'structure': None}
+            return {'poscar-structure': None}
 
         result = parsevasp_to_aiida(poscar)
 
@@ -126,8 +126,8 @@ def parsevasp_to_aiida(poscar):
     # generate Aiida StructureData and add results from the loaded file
     result = {}
 
-    result['structure'] = get_data_class('structure') \
-                          (cell=poscar_dict['unitcell'])
+    result['poscar-structure'] = get_data_class('structure') \
+                                 (cell=poscar_dict['unitcell'])
 
     for site in poscar_dict['sites']:
         specie = site['specie']
@@ -145,7 +145,7 @@ def parsevasp_to_aiida(poscar):
             symbols[symbol]
         except KeyError:
             symbol = 'X'
-        result['structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
+        result['poscar-structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
 
     return result
 
