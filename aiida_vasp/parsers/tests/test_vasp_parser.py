@@ -136,7 +136,9 @@ def test_node_link_names(vasp_parser_with_test):
     """Check whether an alternative quantity representing a node will be added with the correct linkname."""
     parser = vasp_parser_with_test
 
-    print parser._parsers['_scheduler-stdout.txt'].parser._parsed_data
+    print parser._parsable_quantities['structure']
+    print parser._parsable_quantities['trajectory']
+    print parser._parsable_quantities['quantity2']
     assert 'quantity2' in parser._output_nodes
     print parser._output_nodes['quantity2']
     # 'quantity2' is alternative to 'trajectory', which is not going to be parsed here.

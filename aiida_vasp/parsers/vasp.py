@@ -34,13 +34,10 @@ DEFAULT_OPTIONS = {
 class ParsableQuantity(DictWithAttributes):
     """Container class for parsable quantities."""
 
-    QUANTITY_ATTR_DEFAULTS = {
-        'alternatives': [],
-        'parsers': [],
-    }
-
     def __init__(self, name, init, files_list):
-        super(ParsableQuantity, self).__init__(init, ParsableQuantity.QUANTITY_ATTR_DEFAULTS)
+        self.parsers = []
+        self.alternatives = []
+        super(ParsableQuantity, self).__init__(init)
         self.name = name
 
         # Check whether all files required for parsing this quantity have been retrieved and store it.
@@ -248,7 +245,14 @@ class VaspParser(BaseParser):
                 if value.is_alternative not in self._parsable_quantities:
                     # The quantity which this quantity is an alternative to is not in _parsable_quantities.
                     # Add an unparsable dummy quantity for it.
-                    self.add_parsable_quantity(value.is_alternative, {})
+                    is_node = self._parsable_quantities[quantity].nodeName == value.is_alternative
+                    self._parsable_quantities[quantity].is_node = is_node
+                    self.add_parsable_quantity(value.is_alternative, {
+                        'alternatives': [],
+                        'nodeName': self._parsable_quantities[quantity].nodeName,
+                        'is_node': is_node
+                    })
+
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
                     self._parsable_quantities[value.is_alternative].alternatives.append(quantity)
 
