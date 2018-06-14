@@ -90,7 +90,10 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     parser = vasp_calc.get_parserclass()(vasp_calc)
     parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
-    return parser
+    try:
+        yield parser
+    finally:
+        parser = vasp_calc.get_parserclass()(vasp_calc)
 
 
 @ONLY_ONE_CALC
