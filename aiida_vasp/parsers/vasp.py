@@ -154,6 +154,14 @@ class VaspParser(BaseParser):
 
         self._parsable_quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
 
+    def add_quantity_to_parse(self, quantity_to_add):
+        """Check, whether a quantity or it's alternatives can be added."""
+        for item in [quantity_to_add] + self._parsable_quantities[quantity_to_add].alternatives:
+            if self._parsable_quantities[item].is_parsable:
+                self._quantities_to_parse.append(item)
+                return True
+        return False
+
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
@@ -203,6 +211,7 @@ class VaspParser(BaseParser):
 
         import copy
 
+        self._parsable_quantities = {}
         # Gather all parsable items as defined in the file parsers.
         for filename, value in self._parsers.iteritems():
             # initialise the instance of this FileParser to None.
@@ -246,14 +255,7 @@ class VaspParser(BaseParser):
     def _check_and_validate_settings(self):
         """Check the settings and set which files should be parsed based on the input."""
 
-        def add_quantity(quantity_to_add):
-            """Check, whether a quantity or it's alternatives can be added."""
-            for item in [quantity_to_add] + self._parsable_quantities[quantity_to_add].alternatives:
-                if self._parsable_quantities[item].is_parsable:
-                    self._quantities_to_parse.append(item)
-                    return True
-            return False
-
+        self._quantities_to_parse = []
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
                 # only keys starting with 'add_' will change the behaviour of the parser so get the next one.
@@ -271,7 +273,7 @@ class VaspParser(BaseParser):
             # Found a node, which should be added, add it to the quantities to parse.
             # if all files required for this quantity have been retrieved. If there are
             # alternatives for this quantity also try those.
-            success = add_quantity(quantity)
+            success = self.add_quantity_to_parse(quantity)
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
