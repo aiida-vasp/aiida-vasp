@@ -194,7 +194,7 @@ class VaspParser(BaseParser):
                 continue
 
             if value:
-                self._set_node(key, value)
+                self._set_node(self._parsable_quantities[key].nodeName, value)
 
         return self.result(success=True)
 
