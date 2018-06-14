@@ -206,12 +206,13 @@ class VaspParser(BaseParser):
         # Gather all parsable items as defined in the file parsers.
         for filename, value in self._parsers.iteritems():
             # initialise the instance of this FileParser to None.
-            if filename in self._parsable_quantities:
-                raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
-                                   ' Quantity names must be unique. If both quantities are equivalent, define one as' +
-                                   ' an alternative for the other.')
             value.parser = None
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
+
+                if quantity in self._parsable_quantities:
+                    raise RuntimeError('The quantity {0} defined in {1} has been defined '.format(quantity, filename) +
+                                       'by two FileParser classes. Quantity names must be unique. If both quantities ' +
+                                       'are equivalent, define one as an alternative for the other.')
                 # Create quantity objects.
                 self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
