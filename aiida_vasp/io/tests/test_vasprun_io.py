@@ -350,6 +350,7 @@ def test_projectors_result(vasprun_parser):
     assert np.all(proj[4, 3, 5] == np.array([0.2033, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]))
 
 
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_bands_result(vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
