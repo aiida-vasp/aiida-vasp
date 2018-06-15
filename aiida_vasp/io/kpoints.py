@@ -23,7 +23,8 @@ class KpParser(BaseFileParser):
             'inputs': [],
             'parsers': ['EIGENVAL', 'IBZKPT'],
             'nodeName': 'kpoints',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['kpoints']
         },
     }
 

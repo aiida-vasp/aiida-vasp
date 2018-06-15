@@ -30,7 +30,8 @@ class DosParser(BaseFileParser):
             'inputs': [],
             'parsers': ['DOSCAR'],
             'nodeName': 'dos',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['dos']
         },
     }
 

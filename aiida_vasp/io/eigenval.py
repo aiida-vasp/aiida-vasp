@@ -16,7 +16,8 @@ class EigParser(BaseFileParser):
             'inputs': ['structure', 'kpoints', 'occupations'],
             'parsers': ['EIGENVAL', 'vasprun.xml'],
             'nodeName': 'bands',
-            'prerequisites': ['structure', 'occupations']
+            'prerequisites': ['structure', 'occupations'],
+            'alternatives': ['bands']
         },
     }
 

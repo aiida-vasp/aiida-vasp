@@ -5,7 +5,8 @@
 import pytest
 
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_class, load_dbenv_if_not_loaded
+load_dbenv_if_not_loaded()
 
 
 def xml_path(folder):
