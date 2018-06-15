@@ -6,7 +6,6 @@ import pytest
 
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class, load_dbenv_if_not_loaded
-load_dbenv_if_not_loaded()
 
 
 def xml_path(folder):
@@ -24,7 +23,7 @@ def xml_truncate(index, original, tmp):
 
 
 @pytest.fixture(params=[0, 1])
-def _parse_me(request, tmpdir):
+def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
     """
     Give the result of parsing a retrieved calculation (emulated).
 
@@ -36,10 +35,18 @@ def _parse_me(request, tmpdir):
     4. populate a fake retrieved folder and pass it to the parser
     5. return the result
 
+    Note: This function is defined as protected to avoid pyling throwing
+    redefined-outer-name (as it still does, even though it is disabled above).
+    Pylint has some problems with pytest, there was a plugin, but maintanance is
+    flaky. See discussions here:
+    http://grokbase.com/t/python/pytest-dev/13bt9kz56y/fixtures-and-pylint-w0621
+
+
     """
 
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
+        load_dbenv_if_not_loaded()
         from aiida.orm import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
