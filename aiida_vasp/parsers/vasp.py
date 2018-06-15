@@ -34,13 +34,10 @@ DEFAULT_OPTIONS = {
 class ParsableQuantity(DictWithAttributes):
     """Container class for parsable quantities."""
 
-    QUANTITY_ATTR_DEFAULTS = {
-        'alternatives': [],
-        'parsers': [],
-    }
-
     def __init__(self, name, init, files_list):
-        super(ParsableQuantity, self).__init__(init, ParsableQuantity.QUANTITY_ATTR_DEFAULTS)
+        self.parsers = []
+        self.alternatives = []
+        super(ParsableQuantity, self).__init__(init)
         self.name = name
 
         # Check whether all files required for parsing this quantity have been retrieved and store it.
@@ -154,6 +151,14 @@ class VaspParser(BaseParser):
 
         self._parsable_quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
 
+    def add_quantity_to_parse(self, quantity_to_add):
+        """Check, whether a quantity or it's alternatives can be added."""
+        for item in [quantity_to_add] + self._parsable_quantities[quantity_to_add].alternatives:
+            if self._parsable_quantities[item].is_parsable:
+                self._quantities_to_parse.append(item)
+                return True
+        return False
+
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
@@ -194,7 +199,7 @@ class VaspParser(BaseParser):
                 continue
 
             if value:
-                self._set_node(key, value)
+                self._set_node(self._parsable_quantities[key].nodeName, value)
 
         return self.result(success=True)
 
@@ -203,15 +208,17 @@ class VaspParser(BaseParser):
 
         import copy
 
+        self._parsable_quantities = {}
         # Gather all parsable items as defined in the file parsers.
         for filename, value in self._parsers.iteritems():
             # initialise the instance of this FileParser to None.
-            if filename in self._parsable_quantities:
-                raise RuntimeError('The quantity {0} has been defined by two FileParser classes.'.format(filename) +
-                                   ' Quantity names must be unique. If both quantities are equivalent, define one as' +
-                                   ' an alternative for the other.')
             value.parser = None
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
+
+                if quantity in self._parsable_quantities:
+                    raise RuntimeError('The quantity {0} defined in {1} has been defined '.format(quantity, filename) +
+                                       'by two FileParser classes. Quantity names must be unique. If both quantities ' +
+                                       'are equivalent, define one as an alternative for the other.')
                 # Create quantity objects.
                 self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
@@ -238,21 +245,21 @@ class VaspParser(BaseParser):
                 if value.is_alternative not in self._parsable_quantities:
                     # The quantity which this quantity is an alternative to is not in _parsable_quantities.
                     # Add an unparsable dummy quantity for it.
-                    self.add_parsable_quantity(value.is_alternative, {})
+                    is_node = self._parsable_quantities[quantity].nodeName == value.is_alternative
+                    self._parsable_quantities[quantity].is_node = is_node
+                    self.add_parsable_quantity(value.is_alternative, {
+                        'alternatives': [],
+                        'nodeName': self._parsable_quantities[quantity].nodeName,
+                        'is_node': is_node
+                    })
+
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
                     self._parsable_quantities[value.is_alternative].alternatives.append(quantity)
 
     def _check_and_validate_settings(self):
         """Check the settings and set which files should be parsed based on the input."""
 
-        def add_quantity(quantity_to_add):
-            """Check, whether a quantity or it's alternatives can be added."""
-            for item in [quantity_to_add] + self._parsable_quantities[quantity_to_add].alternatives:
-                if self._parsable_quantities[item].is_parsable:
-                    self._quantities_to_parse.append(item)
-                    return True
-            return False
-
+        self._quantities_to_parse = []
         for key, value in self._settings.iteritems():
             if not key.startswith('add_'):
                 # only keys starting with 'add_' will change the behaviour of the parser so get the next one.
@@ -270,7 +277,7 @@ class VaspParser(BaseParser):
             # Found a node, which should be added, add it to the quantities to parse.
             # if all files required for this quantity have been retrieved. If there are
             # alternatives for this quantity also try those.
-            success = add_quantity(quantity)
+            success = self.add_quantity_to_parse(quantity)
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
