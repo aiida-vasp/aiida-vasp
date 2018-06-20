@@ -247,7 +247,7 @@ class VaspParser(BaseParser):
                     # Add an unparsable dummy quantity for it.
                     self.add_parsable_quantity(value.is_alternative, {
                         'alternatives': [],
-                        'nodeName': self._parsable_quantities[quantity].nodeName,
+                        'nodeName': self._parsable_quantities[quantity].nodeName
                     })
 
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
