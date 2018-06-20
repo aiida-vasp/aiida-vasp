@@ -61,8 +61,10 @@ class ParsableQuantity(DictWithAttributes):
     """Container class for parsable quantities."""
 
     def __init__(self, name, init, files_list):
+        # assign default values for optional attributes
         self.parsers = []
         self.alternatives = []
+
         super(ParsableQuantity, self).__init__(init)
         self.name = name
 
@@ -74,6 +76,9 @@ class ParsableQuantity(DictWithAttributes):
         else:
             self.has_files = not missing_files
         self.missing_files = missing_files
+
+        # Check whether this quantity represents a node
+        self.is_node = self.nodeName in LINKNAME_DICT
 
     def has_all(self, available_items):
         """Check whether all items are in item_list."""
@@ -256,8 +261,8 @@ class VaspParser(BaseParser):
         # dummy quantities for missing quantities might be added.
         parsable_quantities = copy.deepcopy(self._parsable_quantities.keys())
 
-        # Check for every quantity, whether all of the prerequisites are parsable, whether they
-        # represent a node, and whether they are alternatives for another quantity.
+        # Check for every quantity, whether all of the prerequisites are parsable, and whether
+        # they are alternatives for another quantity.
         for quantity in parsable_quantities:
             value = self._parsable_quantities[quantity]
             is_parsable = True
@@ -265,22 +270,14 @@ class VaspParser(BaseParser):
                 if not self._parsable_quantities[prereq].has_files:
                     is_parsable = False
             value.is_parsable = is_parsable and value.has_files
-            if quantity == value.nodeName:
-                # This quantity and all of its alternatives represent a node.
-                value.is_node = True
-                for item in value.alternatives:
-                    self._parsable_quantities[item].is_node = True
             # Add this quantity to the list of alternatives of another quantity.
             if value.is_alternative is not None:
                 if value.is_alternative not in self._parsable_quantities:
                     # The quantity which this quantity is an alternative to is not in _parsable_quantities.
                     # Add an unparsable dummy quantity for it.
-                    is_node = self._parsable_quantities[quantity].nodeName == value.is_alternative
-                    self._parsable_quantities[quantity].is_node = is_node
                     self.add_parsable_quantity(value.is_alternative, {
                         'alternatives': [],
-                        'nodeName': self._parsable_quantities[quantity].nodeName,
-                        'is_node': is_node
+                        'nodeName': self._parsable_quantities[quantity].nodeName
                     })
 
                 if quantity not in self._parsable_quantities[value.is_alternative].alternatives:
