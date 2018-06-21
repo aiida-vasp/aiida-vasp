@@ -3,6 +3,7 @@
 from collections import OrderedDict
 
 import pytest
+from pytest import raises
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.io.incar import IncarIo, IncarItem, IncarParamParser, IncarParser
@@ -155,10 +156,8 @@ def test_parser_read_doc_parsevasp():
     """
 
     path = data_path('incar_set', 'INCAR.copper_srf')
-    try:
+    with raises('AssertionError'):
         IncarParser(file_path=path)
-    except AssertionError:
-        pass
 
 
 @pytest.mark.incar
@@ -171,10 +170,8 @@ def test_parser_dict_parsevasp(incar_dict_example):
 
     """
 
-    try:
+    with raises('AttributeError'):
         IncarParser(incar_dict=incar_dict_example)
-    except AttributeError:
-        pass
 
 
 @pytest.mark.incar
@@ -188,14 +185,12 @@ def test_parser_string_parsevasp():
     """
 
     test_string = 'TRUE = .True.\nFalse=.false.'
-    try:
+    with raises('AttributeError'):
         IncarParser(incar_string=test_string)
-    except AttributeError:
-        pass
 
 
 @pytest.mark.incar
-def test_parser_write_parser(tmpdir, incar_dict_example):
+def test_write_parser(tmpdir, incar_dict_example):
     """Test writing an INCAR from a dict, read and compare."""
 
     # create ParameterData instances
