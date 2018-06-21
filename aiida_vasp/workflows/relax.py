@@ -10,7 +10,7 @@ from aiida_vasp.utils.vasp.ibrion import IbrionFlags, Ibrion
 from aiida_vasp.utils.vasp.encut import EncutFlags, Encut
 from aiida_vasp.utils.vasp.nsw import Nsw
 from aiida_vasp.workflows.base import VaspBaseWf
-from aiida_vasp.workflows.restart import prepare_process_inputs
+from aiida_vasp.workflows.restart import prepare_process_inputs, UnexpectedCalculationFailure
 
 RELAXATION_INCAR_TEMPLATE = AttributeDict({
     "ismear": -1,
@@ -150,9 +150,33 @@ class VaspRelaxWf(WorkChain):
         inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(VaspBaseWf, **inputs)
 
-        self.report('launching VaspBaseWf<{}>'.format(running.pid))
+        self.report('launching VaspBaseWf'.format(running.pid))
 
         return ToContext(workchains=append_(running))
+
+    def inspect_relax(self):
+        """
+        Compare the input and output structures of the most recent relaxation run.
+
+        If volume, shape and ion positions are all within a given threshold, consider the relaxation converged.
+        """
+        if not self.ctx.workchains:
+            self._fail_compat(IndexError('The first iteration finished without returning a VaspBaseWf'))
+        workchain = self.ctx.workchains[-1]
+
+        if 'output_structure' not in workchain.out:
+            self._fail_compat(
+                UnexpectedCalculationFailure(
+                    'The VaspBaseWf for the relaxation run did not have an output structure and most likely failed'))
+        structure = workchain.out.output_structure
+
+        converged = True
+        if self.inputs.meta_convergence.ions.value and self.inputs.relax.ions.value:
+            converged &= self.check_positions_convergence()
+        if self.inputs.meta_convergence.volume.value and self.inputs.relax.volume.value:
+            converged &= self.check_volume_convergence()
+        if self.inputs.meta_convergence.shape.value and self.inputs.relax.shape.value:
+            converged &= self.check_shape_convergence()
 
     def results(self):
         last_workchain = self.ctx.workchains[-1]
