@@ -12,7 +12,7 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
     from aiida.work import submit
-    from aiida.work.db_types import Str, Float
+    from aiida.work.db_types import Str, Float, Bool
 
     if not no_import:
         click.echo('importing POTCAR files...')
@@ -27,6 +27,10 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs.kpoints = AttributeDict()
     inputs.kpoints.distance = Float(0.2)
     inputs.relax = AttributeDict()
+    inputs.convergence = AttributeDict()
+    inputs.convergence.shape = AttributeDict()
+    inputs.convergence.on = Bool(True)
+    inputs.convergence.positions = Float(0.1)
     inputs.restart = AttributeDict()
     inputs.code = code
     inputs.potcar_family = Str(pot_family)

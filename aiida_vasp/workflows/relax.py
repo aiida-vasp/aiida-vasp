@@ -1,8 +1,9 @@
 """Structure relaxation workchain for VASP."""
+import numpy
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm.data.base import Float, Bool
+from aiida.orm.data.base import Float, Bool, Int
 from aiida.work import WorkChain
-from aiida.work.workchain import append_, ToContext
+from aiida.work.workchain import append_, while_, ToContext
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.vasp.isif import IsifStressFlags, Isif
@@ -59,6 +60,32 @@ def clean_incar_overrides(inputs):
     return overrides
 
 
+def l2_norm(vector_a):
+    """L^2 norm for a line vector"""
+    return numpy.sqrt(numpy.dot(vector_a, vector_a.T))
+
+
+def compare_structures(structure_a, structure_b):
+    """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
+    delta = AttributeDict()
+    volume_a = structure_a.get_cell_volume()
+    volume_b = structure_b.get_cell_volume()
+    delta.volume = volume_a - volume_b
+
+    pos_a = numpy.array([site.position for site in structure_a.sites])
+    pos_b = numpy.array([site.position for site in structure_b.sites])
+    delta.pos = pos_a - pos_b
+
+    site_vectors = [delta.pos[i, :] for i in range(delta.pos.shape[0])]
+    delta.pos_lengths = numpy.array([l2_norm(vector) for vector in site_vectors])
+
+    delta.cell = numpy.array(structure_a.cell) - numpy.array(structure_b.cell)
+    delta.cell_lengths = numpy.array(structure_a.cell_lengths) - numpy.array(structure_b.cell_lengths)
+    delta.cell_angles = numpy.array(structure_a.cell_angles) - numpy.array(structure_b.cell_angles)
+
+    return delta
+
+
 class VaspRelaxWf(WorkChain):
     """Structure relaxation workchain for VASP."""
 
@@ -72,9 +99,23 @@ class VaspRelaxWf(WorkChain):
         spec.input('relax.positions', valid_type=Bool, required=False, default=Bool(True))
         spec.input('relax.shape', valid_type=Bool, required=False, default=Bool(False))
         spec.input('relax.volume', valid_type=Bool, required=False, default=Bool(False))
+        spec.input('convergence.on', valid_type=Bool, required=False, default=Bool(False))
+        spec.input('convergence.max_iterations', valid_type=Int, required=False, default=Int(5))
+        spec.input('convergence.shape.lengths', valid_type=Float, required=False, default=Float(0.1))  # in cartesian coordinates
+        spec.input('convergence.shape.angles', valid_type=Float, required=False, default=Float(0.1))   # in degree in the cartesian system
+        spec.input('convergence.volume', valid_type=Float, required=False, default=Float(0.01))   # in degree in the cartesian system
+        spec.input('convergence.positions', valid_type=Float, required=False, default=Float(0.01))   # in degree in the cartesian system
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
 
-        spec.outline(cls.setup, cls.validate_inputs, cls.run_relax, cls.results)
+        spec.outline(
+            cls.setup,
+            cls.validate_inputs,
+            while_(cls.should_relax)(
+                cls.run_relax,
+                cls.inspect_relax,
+            ),
+            cls.results
+        )  # yapf: disable
 
         spec.output('relaxed_structure', valid_type=get_data_class('structure'))
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
@@ -132,6 +173,12 @@ class VaspRelaxWf(WorkChain):
 
     def setup(self):
         """Store exposed inputs in the context."""
+        self.ctx.current_structure = self.inputs.structure
+        self.ctx.current_restart_folder = None
+        self.ctx.is_converged = False
+        self.ctx.iteration = 0
+        self.ctx.workchains = []
+
         self.ctx.inputs = AttributeDict()
         self.ctx.inputs.code = self.inputs.code
         self.ctx.inputs.structure = self.inputs.structure
@@ -145,12 +192,20 @@ class VaspRelaxWf(WorkChain):
         self.ctx.inputs.kpoints = self._clean_kpoints()
         self.ctx.inputs.incar = self._clean_incar(RELAXATION_INCAR_TEMPLATE)
 
+
+    def should_relax(self):
+        within_max_iterations = bool(self.ctx.iteration < self.inputs.convergence.max_iterations.value)
+        return bool(within_max_iterations and not self.ctx.is_converged)
+
     def run_relax(self):
         """Run the BaseVaspWf for the relaxation."""
+        if self.ctx.current_restart_folder:
+            self.ctx.inputs.restart_folder = self.ctx.current_restart_folder
         inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(VaspBaseWf, **inputs)
+        self.ctx.iteration += 1
 
-        self.report('launching VaspBaseWf'.format(running.pid))
+        self.report('launching VaspBaseWf{}'.format(running))
 
         return ToContext(workchains=append_(running))
 
@@ -168,15 +223,55 @@ class VaspRelaxWf(WorkChain):
             self._fail_compat(
                 UnexpectedCalculationFailure(
                     'The VaspBaseWf for the relaxation run did not have an output structure and most likely failed'))
-        structure = workchain.out.output_structure
+
+        self.ctx.previous_structure = self.ctx.current_structure
+        self.ctx.current_structure = workchain.out.output_structure
 
         converged = True
-        if self.inputs.meta_convergence.ions.value and self.inputs.relax.ions.value:
-            converged &= self.check_positions_convergence()
-        if self.inputs.meta_convergence.volume.value and self.inputs.relax.volume.value:
-            converged &= self.check_volume_convergence()
-        if self.inputs.meta_convergence.shape.value and self.inputs.relax.shape.value:
-            converged &= self.check_shape_convergence()
+        if self.inputs.convergence.on.value:
+            delta = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
+            if self.inputs.relax.positions.value:
+                converged &= self.check_positions_convergence(delta)
+            if self.inputs.relax.volume.value:
+                converged &= self.check_volume_convergence(delta)
+            if self.inputs.relax.shape.value:
+                converged &= self.check_shape_convergence(delta)
+
+        if not converged:
+            self.ctx.current_restart_folder = workchain.out.remote_folder
+            self.report('VaspBaseWf{} was not converged.'.format(workchain))
+        elif self.inputs.convergence.on.value:
+            self.report('Convergence checking is off')
+        else:
+            self.report('VaspBaseWf{} was converged, finishing.'.format(workchain))
+
+        self.ctx.is_converged = converged
+
+
+    def check_shape_convergence(self, delta):
+        l2_length_changes = l2_norm(delta.cell_lengths)
+        lengths_converged = bool(l2_length_changes <= self.inputs.convergence.shape.lengths.value)
+        if not lengths_converged:
+            self.report('cell lengths changed by {}, tolerance is {}'.format(l2_length_changes, self.inputs.convergence.shape.lengths.value))
+
+        l2_angle_changes = l2_norm(delta.cell_angles)
+        angles_converged = bool(l2_angle_changes <= self.inputs.convergence.shape.angles.value)
+        if not angles_converged:
+            self.report('cell angles changed by {}, tolerance is {}'.format(l2_angle_changes, self.inputs.convergence.shape.angles.value))
+
+        return bool(lengths_converged and angles_converged)
+
+    def check_volume_convergence(self, delta):
+        volume_converged = bool(delta.volume <= self.inputs.convergence.volume.value)
+        if not volume_converged:
+            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.convergence.volume.value))
+        return volume_converged
+
+    def check_positions_convergence(self, delta):
+        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.convergence.positions.value)
+        if not positions_converged:
+            self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(), self.inputs.convergence.positions.value))
+        return positions_converged
 
     def results(self):
         last_workchain = self.ctx.workchains[-1]
@@ -184,3 +279,11 @@ class VaspRelaxWf(WorkChain):
         output_parameters = last_workchain.out.output_parameters
         self.out('relaxed_structure', relaxed_structure)
         self.out('output_parameters', output_parameters)
+        self.report('workchain completed successfully after {} convergence iterations'.format(self.ctx.iteration))
+
+    def _fail_compat(self, *args, **kwargs):
+        if hasattr(self, 'fail'):
+            self.fail(*args, **kwargs)
+        else:
+            msg = '{}'.format(kwargs['exception'])
+            self.abort_nowait(msg)
