@@ -21,16 +21,37 @@ def dbenv(function):
     return decorated_function
 
 
-@dbenv
 def get_data_node(data_type, *args, **kwargs):
-    from aiida.orm import DataFactory
-    return DataFactory(data_type)(*args, **kwargs)
+    return get_data_class(data_type)(*args, **kwargs)
 
 
 @dbenv
 def get_data_class(data_type):
+    """
+    Provide access to the orm.data classes with deferred dbenv loading.
+
+    compatiblity: also provide access to the orm.data.base memebers, which are loadable through the DataFactory as of 1.0.0-alpha only.
+    """
     from aiida.orm import DataFactory
-    return DataFactory(data_type)
+    from aiida.common.exceptions import MissingPluginError
+    data_cls = None
+    try:
+        data_cls = DataFactory(data_type)
+    except MissingPluginError as err:
+        if data_type in BASIC_DATA_TYPES:
+            data_cls = get_basic_data_pre_1_0(data_type)
+        else:
+            raise err
+    return data_cls
+
+
+BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str'])
+
+
+@dbenv
+def get_basic_data_pre_1_0(data_type):
+    from aiida.orm.data import base as base_data
+    return getattr(base_data, data_type.capitalize())
 
 
 @dbenv

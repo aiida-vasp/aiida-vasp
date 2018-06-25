@@ -96,7 +96,7 @@ class BaseRestartWorkChain(WorkChain):
             self.fail(*args, **kwargs)
         else:
             msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)
+            self.abort_nowait(msg)  # pylint: disable=no-member
 
     def __init__(self, *args, **kwargs):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
@@ -104,6 +104,10 @@ class BaseRestartWorkChain(WorkChain):
         if self._calculation_class is None or not issubclass(self._calculation_class, JobCalculation):
             raise ValueError('no valid JobCalculation class defined for _calculation_class attribute')
 
+        ## compatibility v0.12.x <-> v1.0.0-alpha
+        self._error_handlers = []
+        if not hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
+            self.on_terminated = self.on_destroy
         return
 
     @classmethod
@@ -244,10 +248,13 @@ class BaseRestartWorkChain(WorkChain):
 
     def on_destroy(self):
         """Clean remote folders of the calculations called in the workchain if the clean_workdir input is True."""
-        super(BaseRestartWorkChain, self).on_destroy()
+        if hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
+            super(BaseRestartWorkChain, self).on_destroy()  # pylint: disable=no-member
 
-        if not self.has_finished() or self.inputs.clean_workdir.value is False:
-            return
+            if not self.has_finished() or self.inputs.clean_workdir.value is False:
+                return
+        else:
+            super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
 
         cleaned_calcs = []
 

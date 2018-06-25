@@ -266,9 +266,9 @@ class VaspParser(BaseParser):
                 continue
             quantity = key[4:]
             if quantity not in self._parsable_quantities:
-                self.logger.warning('{0} has been requested by setting add_{0}'.format(quantity) +
-                                    ' however it has not been implemented. Please check the docstrings' +
-                                    ' in aiida_vasp.parsers.vasp.py for valid input.')
+                self.logger.warning(
+                    '{0} has been requested by setting add_{0}'.format(quantity) +
+                    ' however it has not been implemented. Please check the docstrings' + ' in aiida_vasp.parsers.vasp.py for valid input.')
                 continue
 
             # Found a node, which should be added, add it to the quantities to parse.

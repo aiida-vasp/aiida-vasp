@@ -7,7 +7,6 @@ should be handled on this level, so that every workflow can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
 from aiida.work.workchain import while_
-from aiida.work.db_types import Str
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
@@ -55,7 +54,7 @@ class VaspBaseWf(BaseRestartWorkChain):
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.input('potcar_family', valid_type=Str)
+        spec.input('potcar_family', valid_type=get_data_class('str'))
         spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
