@@ -3,7 +3,7 @@
 
 import pytest
 
-from aiida_vasp.utils.aiida_utils import get_current_user, backend_obj_users
+from aiida_vasp.utils.aiida_utils import get_current_user, backend_obj_users, get_data_class, get_data_node
 from aiida_vasp.utils.fixtures import aiida_env
 
 
@@ -16,3 +16,11 @@ def test_get_current_user(aiida_env):
     assert user.first_name
     assert user.last_name
     assert user.email
+
+
+def test_get_base_data(aiida_env):
+    bool_cls = get_data_class('bool')
+    bool_obj = get_data_node('bool', True)
+    from aiida.orm.data.base import Bool
+    assert bool_cls == Bool
+    assert isinstance(bool_obj, Bool)
