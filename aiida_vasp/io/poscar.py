@@ -1,6 +1,5 @@
 # pylint: disable=no-self-use
 """Tools for parsing POSCAR files."""
-from itertools import groupby
 import numpy as np
 
 from parsevasp.poscar import Poscar, Site
@@ -81,34 +80,6 @@ class PoscarParser(BaseFileParser):
         result = parsevasp_to_aiida(poscar)
 
         return result
-
-    def count_kinds(self):
-        """
-        Count consecutive sites that should use the same potential.
-
-        :return: [(kind_name, num), ... ]
-        """
-        kind_name_order = [site.kind_name for site in self._data_obj.sites]
-        groups = groupby(kind_name_order)
-        counts = [(label, sum(1 for _ in group)) for label, group in groups]
-        return counts
-
-    @property
-    def potentials_order(self):
-        """Get the order of the potentials from the StructureData stored in _data_obj."""
-        return [kind[0] for kind in self.count_kinds()]
-
-    def get_string(self):
-        """Create a string of the POSCAR contents."""
-
-        lines = self._parsed_object.get_string().split('\n')
-        # Parsevasp replaces the comment line, so we have to update it in case
-        # that non standard kind_names have been used.
-        # eFL : commented this functionality for the moment
-        # lines[0] = self._get_comment_from_lines(lines)
-        out_string = '\n'.join(lines)
-
-        return out_string
 
 
 def parsevasp_to_aiida(poscar):

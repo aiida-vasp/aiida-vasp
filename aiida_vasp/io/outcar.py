@@ -4,7 +4,7 @@ import re
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
 
-DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'efermi']}
+DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'fermi_level']}
 
 
 class OutcarParser(BaseFileParser):

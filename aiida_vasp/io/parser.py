@@ -264,7 +264,7 @@ class BaseFileParser(BaseParser):
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
 
-        raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
+        raise NotImplementedError('{classname} does not implement a _parse_file() ' 'method.'.format(classname=self.__class__.__name__))
 
 
 class SingleFile(object):

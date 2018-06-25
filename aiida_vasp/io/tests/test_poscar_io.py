@@ -3,14 +3,9 @@
 import pytest
 
 from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.environment import aiida_version
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.poscar import PoscarParser
-
-
-@pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
-def test_poscar_io(fresh_aiida_env, vasp_structure_poscar):
-    poscario = vasp_structure_poscar
-    assert poscario.potentials_order == ['In', 'As', 'In_d', 'As']
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
@@ -84,44 +79,49 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
         structure.sites[2].position
 
 
-# The following tests can be enabled when Aiida gets updated
-# (hopefully) with an element X.
+@pytest.mark.xfail(aiida_version() < (1, 0), reason="Element X only present in Aiida >= 1.x")
+def test_parse_poscar_silly_read(fresh_aiida_env):
+    """
+    Parse (read) a reference POSCAR with silly elemental names.
 
-# def test_parse_poscar_silly_read(fresh_aiida_env):
-#     """Parse a reference POSCAR with silly elemental names with the
-#     PoscarParser and compare the result to a reference structure.
+    Using the PoscarParser and compare the result to a reference
+    structure.
 
-#     """
+    """
 
-#     path = data_path('poscar', 'POSCARSILLY')
-#     parser = PoscarParser(file_path=path)
-#     result = parser.get_quantity('structure', {})
-#     names = result['structure'].get_site_kindnames()
-#     assert names == ['Hamburger', 'Pizza']
-#     symbols = result['structure'].get_symbols_set()
-#     assert symbols == set(['X', 'X'])
+    path = data_path('poscar', 'POSCARSILLY')
+    parser = PoscarParser(file_path=path)
+    result = parser.get_quantity('poscar-structure', {})
+    names = result['poscar-structure'].get_site_kindnames()
+    assert names == ['Hamburger', 'Pizza']
+    symbols = result['poscar-structure'].get_symbols_set()
+    assert symbols == set(['X', 'X'])
 
-# @pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
-# def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
-#     """Parse a reference POSCAR with silly elemental names with the
-#     PoscarParser and compare the result to a reference structure.
 
-#     """
+@pytest.mark.xfail(aiida_version() < (1, 0), reason="Element X only present in Aiida >= 1.x")
+@pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
+def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
+    """
+    Parse (read, write) a reference POSCAR with silly elemental names.
 
-#     parser = PoscarParser(data=vasp_structure)
-#     result = parser.get_quantity('structure', {})
-#     names = result['structure'].get_site_kindnames()
-#     assert names == ['Hamburger', 'Pizza']
-#     symbols = result['structure'].get_symbols_set()
-#     assert symbols == set(['As', 'In'])
-#     temp_file = str(tmpdir.join('POSCAR'))
-#     parser.write(temp_file)
-#     parser = PoscarParser(file_path=temp_file)
-#     result_reparse = parser.get_quantity('structure', {})
-#     names = result_reparse['structure'].get_site_kindnames()
-#     assert names == ['Hamburger', 'Pizza']
-#     symbols = result_reparse['structure'].get_symbols_set()
-#     assert symbols == set(['X', 'X'])
+    Using the PoscarParser and compare the result to a reference structure.
+
+    """
+
+    parser = PoscarParser(data=vasp_structure)
+    result = parser.get_quantity('poscar-structure', {})
+    names = result['poscar-structure'].get_site_kindnames()
+    assert names == ['Hamburger', 'Pizza']
+    symbols = result['poscar-structure'].get_symbols_set()
+    assert symbols == set(['As', 'In'])
+    temp_file = str(tmpdir.join('POSCAR'))
+    parser.write(temp_file)
+    parser = PoscarParser(file_path=temp_file)
+    result_reparse = parser.get_quantity('poscar-structure', {})
+    names = result_reparse['poscar-structure'].get_site_kindnames()
+    assert names == ['Hamburger', 'Pizza']
+    symbols = result_reparse['poscar-structure'].get_symbols_set()
+    assert symbols == set(['X', 'X'])
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)

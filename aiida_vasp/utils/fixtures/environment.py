@@ -2,7 +2,17 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
+from aiida import __version__ as aiidav
 from aiida.utils.fixtures import fixture_manager
+
+
+@pytest.fixture()
+def aiida_version():
+    """Fetches the Aiida version as a tupple."""
+
+    # We here assume 'major.minor.bugfix' type of version.
+    versions = aiidav.split('.')
+    return tuple(versions)
 
 
 @pytest.fixture(scope='session')

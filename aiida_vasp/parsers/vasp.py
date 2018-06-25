@@ -152,9 +152,12 @@ class VaspParser(BaseParser):
 
         file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
         if file_parser_set is None:
-            self.logger.warning(' The {0} FileParser-set has been requested by setting `file_parser_set: {0}`,'.format(
-                self._settings['file_parser_set']) + ' however it does not exist. Parsing will continue using the `default` set of' +
-                                ' Please check the `parsers/file_parser_definitions.py`' + ' or the documentation for available options.')
+            self.logger.warning('The FileParser set: {file_parser_set} has been '
+                                'requested by setting `file_parser_set: {file_parser_set}`.'
+                                'However it does not exist. Parsing will continue using '
+                                'the `default` set of FileParser. Please check the '
+                                '`parsers/file_parser_definitions.py` or the documentation '
+                                'for available options.'.format(file_parser_set=self._settings['file_parser_set']))
             file_parser_set = get_file_parser_set()
 
         self._parsers = {}
@@ -177,6 +180,14 @@ class VaspParser(BaseParser):
         """
 
         self._parsers[parser_name] = DictWithAttributes(parser_dict)
+
+    def remove_file_parser(self, parser_name):
+        """Remove the definition of a fileParser to self._parsers."""
+
+        try:
+            del self._parsers[parser_name]
+        except KeyError:
+            pass
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         """Add a single parsable quantity to the _parsable_quantities."""
@@ -246,9 +257,10 @@ class VaspParser(BaseParser):
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
                 if quantity in self._parsable_quantities:
                     # Check uniqueness
-                    raise RuntimeError('The quantity {0} defined in {1} has been defined '.format(quantity, filename) +
-                                       'by two FileParser classes. Quantity names must be unique. If both quantities ' +
-                                       'are equivalent, define one as an alternative for the other.')
+                    raise RuntimeError('The quantity {quantity} defined in {filename} has been '
+                                       'defined by two FileParser classes. Quantity names must '
+                                       'be unique. If both quantities are equivalent, define one '
+                                       'as an alternative for the other.'.format(quantity=quantity, filename=filename))
                 # Create quantity objects.
                 self.add_parsable_quantity(quantity, quantity_dict, self.out_folder.get_folder_list())
 
@@ -306,9 +318,10 @@ class VaspParser(BaseParser):
                 continue
             quantity = key[4:]
             if quantity not in self._parsable_quantities:
-                self.logger.warning('{0} has been requested by setting add_{0}'.format(quantity) +
-                                    ' however it has not been implemented. Please check the docstrings' +
-                                    ' in aiida_vasp.parsers.vasp.py for valid input.')
+                self.logger.warning('{quantity} has been requested by setting '
+                                    'add_{quantity}. However it has not been implemented. '
+                                    'Please check the docstrings in aiida_vasp.parsers.vasp.py '
+                                    'for valid input.'.format(quantity=quantity))
                 continue
 
             # Found a node, which should be added, add it to the quantities to parse.
@@ -325,9 +338,9 @@ class VaspParser(BaseParser):
                         missing_files.append(missing_file)
 
                 missing_files = ", ".join(missing_files)
-                self.logger.warning('{0} has been requested, however the following files'
-                                    ''.format(quantity) + ' required for parsing have not been retrieved: {0}.'
-                                    ''.format(missing_files))
+                self.logger.warning('{quantity} has been requested, however the '
+                                    'following files required for parsing have not been '
+                                    'retrieved: {missing_files}.'.format(quantity=quantity, missing_files=missing_files))
 
     def _set_file_parsers(self):
         """
@@ -360,10 +373,10 @@ class VaspParser(BaseParser):
         try to parse it. If a quantiy has been requested this way two times, parsing will be
         aborted because there is a cyclic dependency of the parsable items.
         """
-
         if quantity in self._requested_quantities:
-            raise RuntimeError('{0} has been requested for parsing a second time.'.format(quantity) +
-                               ' There is probably a cycle in the prerequisites of the' + ' parsable_items in the single FileParsers.')
+            raise RuntimeError('{quantity} has been requested for parsing a second time. '
+                               'There is probably a cycle in the prerequisites of the '
+                               'parsable_items in the single FileParsers.'.format(quantity=quantity))
 
         # This is the first time this quantity has been requested, keep track of it.
         self._requested_quantities.append(quantity)

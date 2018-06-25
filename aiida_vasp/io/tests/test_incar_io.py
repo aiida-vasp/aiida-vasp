@@ -150,14 +150,16 @@ def test_parser_read_doc_parsevasp():
     """
     Read example INCAR from VASP documentation.
 
-    Using parsevasp.This test should fail as the comment line does
-    not start with hashtag.
+    Using parsevasp. Returned content should be none
+    since parsevasp refuse to parse an INCAR where the
+    comments does not start with hashtags.
 
     """
 
     path = data_path('incar_set', 'INCAR.copper_srf')
-    with raises('AssertionError'):
-        IncarParser(file_path=path)
+    parser = IncarParser(file_path=path)
+    result = parser.get_quantity('incar', {})
+    assert result['incar'] is None
 
 
 @pytest.mark.incar
@@ -170,7 +172,7 @@ def test_parser_dict_parsevasp(incar_dict_example):
 
     """
 
-    with raises('AttributeError'):
+    with raises(AttributeError):
         IncarParser(incar_dict=incar_dict_example)
 
 
@@ -185,7 +187,7 @@ def test_parser_string_parsevasp():
     """
 
     test_string = 'TRUE = .True.\nFalse=.false.'
-    with raises('AttributeError'):
+    with raises(AttributeError):
         IncarParser(incar_string=test_string)
 
 
