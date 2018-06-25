@@ -230,8 +230,14 @@ class VaspParser(BaseParser):
         self._set_file_parsers()
 
         # Parse all implemented quantities in the quantities_to_parse list.
+        print self._quantities_to_parse
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
+            balla = self.get_quantity(quantity, self._settings)
+            if quantity == 'parameters':
+                print self._settings
+                print self._output_nodes
+                print balla['parameters'].get_dict()
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
         # Add output nodes if the corresponding data exists.

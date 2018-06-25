@@ -216,8 +216,8 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
     return parse
 
 
-def test_parameters(_parse_me):
-    """Test that the parameters result node is a KpointsData instance."""
+def test_parser_nodes(_parse_me):
+    """Test a few basic node items of the parser."""
 
     _, nodes = _parse_me(folder='basic')
     parameters = nodes['output_parameters']
