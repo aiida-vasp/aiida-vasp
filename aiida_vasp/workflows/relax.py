@@ -1,7 +1,6 @@
 """Structure relaxation workchain for VASP."""
 import numpy
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm.data.base import Float, Bool, Int
 from aiida.work import WorkChain
 from aiida.work.workchain import append_, while_, ToContext
 
@@ -94,17 +93,25 @@ class VaspRelaxWf(WorkChain):
         super(VaspRelaxWf, cls).define(spec)
         spec.expose_inputs(VaspBaseWf, include=['code', 'structure', 'potcar_family', 'potcar_mapping', 'options'])
         spec.input('kpoints.mesh', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('kpoints.distance', valid_type=Float, required=False)
+        spec.input('kpoints.distance', valid_type=get_data_class('float'), required=False)
         spec.input('incar_add', valid_type=get_data_class('parameter'), required=False)
-        spec.input('relax.positions', valid_type=Bool, required=False, default=Bool(True))
-        spec.input('relax.shape', valid_type=Bool, required=False, default=Bool(False))
-        spec.input('relax.volume', valid_type=Bool, required=False, default=Bool(False))
-        spec.input('convergence.on', valid_type=Bool, required=False, default=Bool(False))
-        spec.input('convergence.max_iterations', valid_type=Int, required=False, default=Int(5))
-        spec.input('convergence.shape.lengths', valid_type=Float, required=False, default=Float(0.1))  # in cartesian coordinates
-        spec.input('convergence.shape.angles', valid_type=Float, required=False, default=Float(0.1))  # in degree in the cartesian system
-        spec.input('convergence.volume', valid_type=Float, required=False, default=Float(0.01))  # in degree in the cartesian system
-        spec.input('convergence.positions', valid_type=Float, required=False, default=Float(0.01))  # in degree in the cartesian system
+        spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
+        spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
+        spec.input(
+            'convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
+            default=get_data_node('float', 0.1))  # in cartesian coordinates
+        spec.input(
+            'convergence.shape.angles', valid_type=get_data_class('float'), required=False,
+            default=get_data_node('float', 0.1))  # in degree in the cartesian system
+        spec.input(
+            'convergence.volume', valid_type=get_data_class('float'), required=False,
+            default=get_data_node('float', 0.01))  # in degree in the cartesian system
+        spec.input(
+            'convergence.positions', valid_type=get_data_class('float'), required=False,
+            default=get_data_node('float', 0.01))  # in degree in the cartesian system
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
 
         spec.outline(
