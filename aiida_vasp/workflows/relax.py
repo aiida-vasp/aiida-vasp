@@ -247,9 +247,9 @@ class VaspRelaxWf(WorkChain):
             self.ctx.current_restart_folder = workchain.out.remote_folder
             self.report('VaspBaseWf{} was not converged.'.format(workchain))
         elif self.inputs.convergence.on.value:
-            self.report('Convergence checking is off')
-        else:
             self.report('VaspBaseWf{} was converged, finishing.'.format(workchain))
+        else:
+            self.report('Convergence checking is off')
 
         self.ctx.is_converged = converged
 
