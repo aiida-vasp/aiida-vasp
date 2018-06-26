@@ -102,9 +102,9 @@ class VaspRelaxWf(WorkChain):
         spec.input('convergence.on', valid_type=Bool, required=False, default=Bool(False))
         spec.input('convergence.max_iterations', valid_type=Int, required=False, default=Int(5))
         spec.input('convergence.shape.lengths', valid_type=Float, required=False, default=Float(0.1))  # in cartesian coordinates
-        spec.input('convergence.shape.angles', valid_type=Float, required=False, default=Float(0.1))   # in degree in the cartesian system
-        spec.input('convergence.volume', valid_type=Float, required=False, default=Float(0.01))   # in degree in the cartesian system
-        spec.input('convergence.positions', valid_type=Float, required=False, default=Float(0.01))   # in degree in the cartesian system
+        spec.input('convergence.shape.angles', valid_type=Float, required=False, default=Float(0.1))  # in degree in the cartesian system
+        spec.input('convergence.volume', valid_type=Float, required=False, default=Float(0.01))  # in degree in the cartesian system
+        spec.input('convergence.positions', valid_type=Float, required=False, default=Float(0.01))  # in degree in the cartesian system
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
 
         spec.outline(
@@ -192,7 +192,6 @@ class VaspRelaxWf(WorkChain):
         self.ctx.inputs.kpoints = self._clean_kpoints()
         self.ctx.inputs.incar = self._clean_incar(RELAXATION_INCAR_TEMPLATE)
 
-
     def should_relax(self):
         within_max_iterations = bool(self.ctx.iteration < self.inputs.convergence.max_iterations.value)
         return bool(within_max_iterations and not self.ctx.is_converged)
@@ -247,12 +246,13 @@ class VaspRelaxWf(WorkChain):
 
         self.ctx.is_converged = converged
 
-
     def check_shape_convergence(self, delta):
+        """Check the difference in cell shape before / after the last iteratio against a tolerance."""
         l2_length_changes = l2_norm(delta.cell_lengths)
         lengths_converged = bool(l2_length_changes <= self.inputs.convergence.shape.lengths.value)
         if not lengths_converged:
-            self.report('cell lengths changed by {}, tolerance is {}'.format(l2_length_changes, self.inputs.convergence.shape.lengths.value))
+            self.report('cell lengths changed by {}, tolerance is {}'.format(l2_length_changes,
+                                                                             self.inputs.convergence.shape.lengths.value))
 
         l2_angle_changes = l2_norm(delta.cell_angles)
         angles_converged = bool(l2_angle_changes <= self.inputs.convergence.shape.angles.value)
@@ -270,10 +270,12 @@ class VaspRelaxWf(WorkChain):
     def check_positions_convergence(self, delta):
         positions_converged = bool(delta.pos_lengths.max() <= self.inputs.convergence.positions.value)
         if not positions_converged:
-            self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(), self.inputs.convergence.positions.value))
+            self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(),
+                                                                                 self.inputs.convergence.positions.value))
         return positions_converged
 
     def results(self):
+        """Gather results from the last relaxation iteration."""
         last_workchain = self.ctx.workchains[-1]
         relaxed_structure = last_workchain.out.output_structure
         output_parameters = last_workchain.out.output_parameters
