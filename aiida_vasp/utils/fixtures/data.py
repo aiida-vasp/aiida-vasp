@@ -21,10 +21,7 @@ POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
 
 @pytest.fixture(scope='session')
 def localhost_dir(tmpdir_factory):
-    # ~ return tmpdir_factory.mktemp('localhost_work')
-    test_dir = py_path.local('/home/hauselmann/tmp/aiida_test/')
-    test_dir.ensure_dir()
-    return test_dir
+    return tmpdir_factory.mktemp('localhost_work')
 
 
 @pytest.fixture
