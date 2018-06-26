@@ -108,7 +108,7 @@ import re
 
 from six import string_types
 from aiida.common import aiidalogger
-#from aiida_vasp.utils.delegates import delegate_method_kwargs
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 class BaseParser(object):
