@@ -258,7 +258,7 @@ class VaspParser(BaseParser):
         for filename, value in self._parsers.items():
             # Initialise the instance of this FileParser to None.
             value.parser = None
-            for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.iteritems():
+            for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
                 if quantity in self._parsable_quantities:
                     # Check uniqueness
                     raise RuntimeError('The quantity {quantity} defined in {filename} has been '
