@@ -160,7 +160,7 @@ class BaseFileParser(BaseParser):
         super(BaseFileParser, self).__init__()
         self._vasp_parser = calc_parser_cls
         if calc_parser_cls is not None:
-            calc_parser_cls.get_quantity.add_listener(self.get_quantity)
+            calc_parser_cls.get_quantity.append(self.get_quantity)
 
         self._parsable_items = {}
         self._parsed_data = {}
