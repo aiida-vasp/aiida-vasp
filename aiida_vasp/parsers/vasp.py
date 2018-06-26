@@ -1,9 +1,12 @@
 #encoding: utf-8
+
+# pylint: disable=no-member
+# Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
-from aiida_vasp.utils.delegates import delegate
+from aiida_vasp.utils.delegates import Delegate
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 LINKNAME_DICT = {
@@ -140,6 +143,9 @@ class VaspParser(BaseParser):
 
     def __init__(self, calc):
         super(VaspParser, self).__init__(calc)
+
+        # Initialise the 'get_quantity' delegate:
+        setattr(self, 'get_quantity', Delegate())
 
         self.out_folder = None
 
@@ -363,12 +369,6 @@ class VaspParser(BaseParser):
                     continue
                 file_to_parse = self.get_file(filename)
                 self._parsers[filename].parser = self._parsers[filename]['parser_class'](self, file_path=file_to_parse)
-
-    # pylint: disable=unused-argument, no-self-use
-    @delegate()
-    def get_quantity(self, quantity, settings):
-        """Delegate to which the FileParsers will subscribe their get_quantity methods when they are initialised."""
-        return {quantity: None}
 
     def get_inputs(self, quantity):
         """
