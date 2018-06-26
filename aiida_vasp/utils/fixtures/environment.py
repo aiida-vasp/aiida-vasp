@@ -10,8 +10,11 @@ from aiida.utils.fixtures import fixture_manager
 def aiida_version():
     """Fetches the Aiida version as a tupple."""
 
-    # We here assume 'major.minor.bugfix' type of version.
+    # We here assume 'major.minor.bugfix' type of version,
+    # and only return (major, minor) as there can be letters
+    # in the bugfix.
     versions = aiidav.split('.')
+    versions = [int(versions[0]), int(versions[1])]
     return tuple(versions)
 
 
