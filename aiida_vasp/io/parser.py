@@ -257,6 +257,10 @@ class BaseFileParser(BaseParser):
         """
         return self._data_obj
 
+    @property
+    def data_obj(self):
+        return self._data_obj
+
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
 
