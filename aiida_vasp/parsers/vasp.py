@@ -187,14 +187,6 @@ class VaspParser(BaseParser):
 
         self._parsers[parser_name] = DictWithAttributes(parser_dict)
 
-    def remove_file_parser(self, parser_name):
-        """Remove the definition of a fileParser to self._parsers."""
-
-        try:
-            del self._parsers[parser_name]
-        except KeyError:
-            pass
-
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         """Add a single parsable quantity to the _parsable_quantities."""
 
