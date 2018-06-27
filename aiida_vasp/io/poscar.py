@@ -1,119 +1,147 @@
-"""
-Tools for parsing POSCAR files.
-
-Contains:
-- Poscar Parser
-- Poscar writer
-
-Features not in `pymatgen.io.vasp.Poscar`:
-
- * Site ordering is left alone
- * Element grouping allows for different potentials for sites of same species
- * Exposes order of potentials to be used when concatting the POTCAR
-"""
-from itertools import groupby
-
+# pylint: disable=no-self-use
+"""Tools for parsing POSCAR files."""
 import numpy as np
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
+from parsevasp.poscar import Poscar, Site
+from aiida.common.constants import elements
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-class PoscarIo(object):
-    """
-    Write a POSCAR of the form
-
-    <comment>
-    <lattice_constant>>
-    <lattice vectors>
-    <kind counts vector>
-    direct
-    <sites>
-
-    where:
-     * <comment> = label of the structure, or chemical formula if label is ''
-     * <lattice_constant> = 1.0
-     * <lattice_vector> = 3x3 matrix of floats
-     * <kind counts vector> = numbers of sites that should use the same potential consecutively
-     * <sites> = <positions> kind_name
-     * <positions> = 3-vector of coordinates (in lattice basis)
-    """
-    POSCAR_TPL = '{comment}\n1.0\n{lattice}\n{kind_counts}\ncartesian\n{positions}'
-    LATTICE_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}}'
-    POS_ROW_TPL = '{:{float_fmt}} {:{float_fmt}} {:{float_fmt}} {label}'
-
-    def __init__(self, structure, precision=None):
-        self.structure = structure
-        self.float_format = ''
-        if precision:
-            self.float_format = '.{}'.format(precision)
-
-    def count_kinds(self):
-        """
-        Count consecutive sites that should use the same potential.
-
-        :return: [(kind_name, num), ... ]
-        """
-        kind_name_order = [site.kind_name for site in self.structure.sites]
-        groups = groupby(kind_name_order)
-        counts = [(label, sum(1 for _ in group)) for label, group in groups]
-        return counts
-
-    @property
-    def potentials_order(self):
-        return [kind[0] for kind in self.count_kinds()]
-
-    def poscar_str(self):
-        """
-        Create a string of the POSCAR contents.
-
-        Accounts for lattices which have triple product < 0 by inverting lattice vectors in that case.
-        """
-        cell = np.array(self.structure.cell)
-        if np.linalg.det(cell) < 0:
-            cell = cell * -1
-        comment = self.structure.label or self.structure.get_formula()
-        lattice = '\n'.join([self.LATTICE_ROW_TPL.format(*row, float_fmt=self.float_format) for row in cell])
-        kind_counts = ' '.join([str(count[1]) for count in self.count_kinds()])
-        positions = '\n'.join([
-            self.POS_ROW_TPL.format(*site.position, float_fmt=self.float_format, label=self.structure.get_kind(site.kind_name).symbol)
-            for site in self.structure.sites
-        ])
-        return self.POSCAR_TPL.format(comment=comment, lattice=lattice, kind_counts=kind_counts, positions=positions)
-
-    def write(self, path):
-        destination = py_path.local(path)
-        destination.write(self.poscar_str())
-
-
 class PoscarParser(BaseFileParser):
-    """Parse a POSCAR format file into a StructureData node."""
+    """
+    Parse a POSCAR format file into a StructureData node and vice versa.
+
+    This is a wrapper for parsevasps Poscar class for parsing POSCAR format
+    files. The Parsing direction depends on whether the Parser is initialised with
+    'path = ...' or 'data = ...'.
+
+    :keyword file_path: Path to the POSCAR file.
+    :keyword data: Aiida StructureData for parsing.
+    :keyword precision: 'int' number specifying the number of digits for floating point
+                        numbers that will be written to POSCAR.
+                        DEFAULT = 12
+
+    The PoscarParser will deal with non standard atomic symbols internally if it is
+    initialised with StructureData. In case that a POSCAR with non standard atomic
+    symbols should be parsed, the comment line must contain the keyword '# Aiida-elements:'
+    followed by a list of the actual atomic symbols, e.g.:
+
+        # Aiida-elements: Ga In As
+    """
 
     PARSABLE_ITEMS = {
-        'structure': {
+        'poscar-structure': {
             'inputs': [],
             'parsers': ['CONTCAR'],
             'nodeName': 'structure',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['structure']
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(PoscarParser, self).__init__(*args, **kwargs)
-        self._parsable_items = PoscarParser.PARSABLE_ITEMS
-        self._parsable_data = {}
+        self.precision = 12
+        self.init_with_kwargs(**kwargs)
+
+    def _init_with_precision(self, precision):
+        self.precision = precision
+
+    def _init_with_data(self, data):
+        """Init with Aiida StructureData"""
+        self._data_obj = data
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
+
+    @property
+    def _parsed_object(self):
+        """Return the parsevasp object representing the POSCAR file."""
+
+        try:
+            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['poscar-structure']), prec=self.precision, conserve_order=True)
+        except SystemExit:
+            return None
 
     def _parse_file(self, inputs):
-        """Read POSCAR format file for output structure."""
-        from ase.io import read
+        """Read POSCAR file format."""
 
-        result = inputs
-        result = {}
-        result['structure'] = get_data_class('structure')()
-        cont = self._file_path
-        if not cont:
-            return {'structure': None}
-        result['structure'].set_ase(read(cont, format='vasp'))
+        # check if structure have already been loaded, in that case just return
+        if isinstance(self._data_obj, get_data_class('structure')):
+            return {'poscar-structure': self._data_obj}
+
+        # pass file path to parsevasp and try to load file
+        try:
+            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True)
+        except SystemExit:
+            self._logger.warning("Parsevasp exited abnormally. " "Returning None.")
+            return {'poscar-structure': None}
+
+        result = parsevasp_to_aiida(poscar)
 
         return result
+
+
+def parsevasp_to_aiida(poscar):
+    """
+    Parsevasp to Aiida conversion.
+
+    Generate an Aiida structure from the parsevasp instance of the
+    Poscar class.
+
+    """
+
+    # fetch a dictionary containing the entries, make sure all coordinates are
+    # cartesian
+    poscar_dict = poscar.get_dict(direct=False)
+
+    # generate Aiida StructureData and add results from the loaded file
+    result = {}
+
+    result['poscar-structure'] = get_data_class('structure') \
+                                 (cell=poscar_dict['unitcell'])
+
+    for site in poscar_dict['sites']:
+        specie = site['specie']
+        # user can specify whatever they want for the elements, but
+        # the symbols entries in Aiida only support the entries defined
+        # in aiida.common.constants.elements{}
+
+        # strip trailing _ in case user specifies potential
+        symbol = specie.split('_')[0].capitalize()
+        # check if leading entry is part of
+        # aiida.common.constants.elements{}, otherwise set to X, but first
+        # invert
+        symbols = fetch_symbols_from_elements(elements)
+        try:
+            symbols[symbol]
+        except KeyError:
+            symbol = 'X'
+        result['poscar-structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
+
+    return result
+
+
+def aiida_to_parsevasp(structure):
+    """Convert Aiida StructureData to parsevasp's dictionary format."""
+    dictionary = {}
+    dictionary["comment"] = structure.label or structure.get_formula()
+    dictionary["unitcell"] = np.asarray(structure.cell)
+    selective = [True, True, True]
+    # As for now all Aiida-structures are in Cartesian coordinates.
+    direct = False
+    sites = []
+    for site in structure.sites:
+        sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct))
+
+    dictionary["sites"] = sites
+    return dictionary
+
+
+def fetch_symbols_from_elements(elmnts):
+    """Fetch the symbol entry in the elements dictionary in Aiida."""
+
+    new_dict = {}
+    for key, value in elmnts.items():
+        new_dict[value['symbol']] = key
+    return new_dict

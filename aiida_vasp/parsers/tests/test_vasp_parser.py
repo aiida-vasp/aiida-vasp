@@ -7,6 +7,8 @@ import pytest
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.aiida_utils import get_data_class, load_dbenv_if_not_loaded
 
 
 class ExampleFileParser(BaseFileParser):
@@ -135,14 +137,9 @@ def test_parsable_quantities(vasp_parser_with_test):
 def test_node_link_names(vasp_parser_with_test):
     """Check whether an alternative quantity representing a node will be added with the correct linkname."""
     parser = vasp_parser_with_test
-
-    print parser._parsable_quantities['structure']
-    print parser._parsable_quantities['trajectory']
-    print parser._parsable_quantities['quantity2']
     assert 'quantity2' in parser._output_nodes
-    print parser._output_nodes['quantity2']
     # 'quantity2' is alternative to 'trajectory', which is not going to be parsed here.
-    assert 'output_trajectory' in parser._new_nodes
+    assert 'output_trajectory' in parser.new_nodes
 
 
 @ONLY_ONE_CALC
@@ -154,3 +151,79 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     with pytest.raises(RuntimeError) as excinfo:
         parser._set_parsable_quantities()
     assert 'quantity1' in str(excinfo.value)
+
+
+def xml_path(folder):
+    """Return the full path to the XML file."""
+    return data_path(folder, 'vasprun.xml')
+
+
+def xml_truncate(index, original, tmp):
+    """Truncate vasprun.xml at the given line number and parse."""
+    with open(original, 'r') as xmlfile:
+        content = xmlfile.read().splitlines()
+        truncated_content = '\n'.join(content[:-index or None])
+    with open(tmp, 'w') as xmlfile:
+        xmlfile.write(str(truncated_content))
+
+
+@pytest.fixture(params=[0, 1])
+def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
+    """
+    Give the result of parsing a retrieved calculation (emulated).
+
+    Returns a function which does:
+
+    1. create a calculation with parser settings
+    2. update the parser settings with the extra_settings
+    3. create a parser with the calculation
+    4. populate a fake retrieved folder and pass it to the parser
+    5. return the result
+
+    Note: This function is defined as protected to avoid pyling throwing
+    redefined-outer-name (as it still does, even though it is disabled above).
+    Pylint has some problems with pytest, there was a plugin, but maintanance is
+    flaky. See discussions here:
+    http://grokbase.com/t/python/pytest-dev/13bt9kz56y/fixtures-and-pylint-w0621
+
+
+    """
+
+    def parse(**extra_settings):
+        """Run the parser using default settings updated with extra_settings."""
+        load_dbenv_if_not_loaded()
+        from aiida.orm import CalculationFactory, DataFactory
+        from aiida_vasp.parsers.vasp import VaspParser
+        calc = CalculationFactory('vasp.vasp')()
+        settings_dict = {'parser_settings': {'add_bands': True, 'output_params': ['fermi_level']}}
+        settings_dict.update(extra_settings)
+        calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+        parser = VaspParser(calc=calc)
+        retrieved = DataFactory('folder')()
+        fldr = "basic"
+        if "folder" in extra_settings:
+            fldr = extra_settings["folder"]
+        xml_file_path = xml_path(fldr)
+        tmp_file_path = str(tmpdir.join('vasprun.xml'))
+        #tmp_file_path = os.path.realpath(os.path.join(
+        #    __file__, '../../../test_data/tmp/vasprun.xml'))
+        xml_truncate(request.param, xml_file_path, tmp_file_path)
+        retrieved.add_path(tmp_file_path, '')
+        success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+        nodes = dict(nodes)
+        return success, nodes
+
+    return parse
+
+
+def test_parser_nodes(_parse_me):
+    """Test a few basic node items of the parser."""
+
+    _, nodes = _parse_me(folder='basic')
+    parameters = nodes['output_parameters']
+    bands = nodes['output_bands']
+    kpoints = nodes['output_kpoints']
+    assert isinstance(parameters, get_data_class('parameter'))
+    assert isinstance(bands, get_data_class('array.bands'))
+    assert isinstance(kpoints, get_data_class('array.kpoints'))
+    assert parameters.get_dict()['fermi_level'] == 5.96764939

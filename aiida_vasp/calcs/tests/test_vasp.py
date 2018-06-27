@@ -32,61 +32,6 @@ def test_write_incar(fresh_aiida_env, vasp_calc_and_ref):
             assert result_incar_fo.read() == reference['incar']
 
 
-@STRUCTURE_TYPES
-def test_write_poscar(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
-    """Write structure input node to file, compare contents to reference string."""
-    from pymatgen.io.vasp.inputs import Poscar
-    vasp_calc, _ = vasp_calc_and_ref
-    inp = vasp_calc.get_inputs_dict()
-    with managed_temp_file() as temp_file:
-        settings_dict = vasp_calc.inp.settings.get_dict()
-        settings_dict.update({'poscar_precision': 12})
-        vasp_calc.inp.settings.set_dict(settings_dict)
-        vasp_calc.write_poscar(inp, temp_file)
-        with open(temp_file, 'r') as poscar:
-            print poscar.read()
-        with working_directory(temp_file):
-            result_pmg = Poscar.from_file(temp_file).structure
-            ref_pmg = vasp_structure_poscar.structure.get_pymatgen()
-            assert result_pmg.lattice, ref_pmg.lattice
-            assert result_pmg.formula == ref_pmg.formula
-
-        with open(temp_file, 'r') as poscar:
-            assert poscar.read() == vasp_structure_poscar.poscar_str()
-
-
-@STRUCTURE_TYPES
-def test_write_poscar_prec(fresh_aiida_env, vasp_calc_and_ref, vasp_structure_poscar):
-    """Verify the effect of the ``poscar_precision`` setting."""
-    vasp_calc, _ = vasp_calc_and_ref
-    inp = vasp_calc.get_inputs_dict()
-    with managed_temp_file() as temp_file:
-        settings_dict = vasp_calc.inp.settings.get_dict()
-        settings_dict.update({'poscar_precision': 20})
-        vasp_calc.inp.settings.set_dict(settings_dict)
-        if isinstance(vasp_calc.inp.structure, get_data_class('structure')):
-            cell = vasp_calc.inp.structure.cell
-            cell[0][0] = math.pi * 1e-10 + math.pi
-            vasp_calc.inp.structure.cell = cell
-        vasp_calc.write_poscar(inp, temp_file)
-        with open(temp_file, 'r') as poscar:
-            lines = poscar.readlines()
-            pos_this = lines[2].split(' ')[0]
-            pos_ref = vasp_structure_poscar.poscar_str().split('\n')[2].split(' ')[0]
-            assert pos_this != pos_ref
-
-
-def test_write_kpoints(fresh_aiida_env, vasp_calc_and_ref):
-    """Write the kpoints input node to a file, compare content to a reference string."""
-    vasp_calc, reference = vasp_calc_and_ref
-    inp = vasp_calc.get_inputs_dict()
-    print inp['kpoints'].get_attrs(), reference['kpoints']
-    with managed_temp_file() as temp_file:
-        vasp_calc.write_kpoints(inp, temp_file)
-        with open(temp_file, 'r') as result_kpoints_fo:
-            assert result_kpoints_fo.read() == reference['kpoints']
-
-
 @ONLY_ONE_CALC
 def test_write_potcar(fresh_aiida_env, vasp_calc_and_ref):
     """Check that POTCAR is written correctly"""
@@ -152,19 +97,6 @@ def test_prepare(vasp_nscf_and_ref):
         calc_info = vasp_calc._prepare_for_submission(sandbox_f, inp)
         inputs = sandbox_f.get_content_list()
     assert set(inputs) == {'INCAR', 'KPOINTS', 'POSCAR', 'POTCAR', 'WAVECAR'}
-
-
-@ONLY_ONE_CALC
-def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
-    """Check that parsing is successful and creates the right output links"""
-    vasp_calc, _ = vasp_nscf_and_ref
-    parser = vasp_calc.get_parserclass()(vasp_calc)
-    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
-    outputs = dict(outputs)
-    assert success
-    assert 'output_band' in outputs
-    assert 'output_dos' in outputs
-    assert 'output_parameters' in outputs
 
 
 def test_verify_success(vasp_calc_and_ref):
