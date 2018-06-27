@@ -1,7 +1,6 @@
 """Unittests for PoscarIo"""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import pytest
-from distutils.version import StrictVersion
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
