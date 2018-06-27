@@ -63,6 +63,7 @@ class Ibrion(AbstractIncarParam):
         if not isinstance(ion_updates, IbrionFlags):
             raise ValueError('ion_updates parameter must be of type {}'.format(IbrionFlags))
         self._ion_updates = ion_updates
+        self.validate()
 
     @classproperty
     def name(self):

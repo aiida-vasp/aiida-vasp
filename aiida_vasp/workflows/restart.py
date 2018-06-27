@@ -37,6 +37,8 @@ def prepare_process_inputs(inputs):
 def finished_ok_compat(calc):
     if hasattr(calc, 'has_finished_ok'):
         return calc.has_finished_ok()
+    elif hasattr(calc, 'is_finished_ok'):
+        return calc.is_finished_ok
     return calc.finished_ok
 
 
@@ -253,10 +255,11 @@ class BaseRestartWorkChain(WorkChain):
         if hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
             super(BaseRestartWorkChain, self).on_destroy()  # pylint: disable=no-member
 
-            if not self.has_finished() or self.inputs.clean_workdir.value is False:
-                return
         else:
             super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
+
+        if not self.has_finished() or self.inputs.clean_workdir.value is False:
+            return
 
         cleaned_calcs = []
 

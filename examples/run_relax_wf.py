@@ -12,7 +12,6 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
     from aiida.work import submit
-    from aiida.work.db_types import Str, Float, Bool
 
     if not no_import:
         click.echo('importing POTCAR files...')
@@ -25,15 +24,15 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs = AttributeDict()
     inputs.structure = create_structure_Si()
     inputs.kpoints = AttributeDict()
-    inputs.kpoints.distance = Float(0.2)
+    inputs.kpoints.distance = get_data_node('float', 0.2)
     inputs.relax = AttributeDict()
     inputs.convergence = AttributeDict()
     inputs.convergence.shape = AttributeDict()
-    inputs.convergence.on = Bool(True)
-    inputs.convergence.positions = Float(0.1)
+    inputs.convergence.on = get_data_node('bool', True)
+    inputs.convergence.positions = get_data_node('float', 0.1)
     inputs.restart = AttributeDict()
     inputs.code = code
-    inputs.potcar_family = Str(pot_family)
+    inputs.potcar_family = get_data_node('str', pot_family)
     inputs.potcar_mapping = get_data_node('parameter', dict={'Si': 'Si'})
     options = AttributeDict()
     options.queue_name = queue
