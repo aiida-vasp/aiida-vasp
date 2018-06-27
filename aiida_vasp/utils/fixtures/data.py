@@ -1,5 +1,5 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
 import os
 from collections import OrderedDict
 
@@ -11,7 +11,7 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.poscar import PoscarIo
+from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
@@ -143,6 +143,11 @@ def vasp_structure(request, aiida_env):
         structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
+    elif request.param == 'str-InAs':
+        structure_cls = DataFactory('structure')
+        structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * 6.058)
+        structure.append_atom(position=(0, 0, 0), symbols='In', name='Hamburger')
+        structure.append_atom(position=(0.25, 0.25, 0.25), symbols='As', name='Pizza')
     return structure
 
 
@@ -153,7 +158,7 @@ def vasp_structure_poscar(vasp_structure):
     if isinstance(vasp_structure, get_data_class('cif')):
         ase_structure = vasp_structure.get_ase()
         aiida_structure = get_data_node('structure', ase=ase_structure)
-    writer = PoscarIo(aiida_structure)
+    writer = PoscarParser(data=aiida_structure)
     return writer
 
 
@@ -227,13 +232,12 @@ def ref_retrieved_nscf():
     return retrieved
 
 
-@pytest.fixture
-def vasprun_parser():
+@pytest.fixture(params=['vasprun'])
+def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     file_name = 'vasprun.xml'
-    path = data_path('vasprun', file_name)
-    parser = VasprunParser(path)
-
+    path = data_path(request.param, file_name)
+    parser = VasprunParser(file_path=path)
     return parser
 
 

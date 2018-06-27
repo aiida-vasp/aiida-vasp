@@ -28,7 +28,7 @@ FILE_PARSER_SETS = {
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
-            'is_critical': True,
+            'is_critical': False,
             'status': 'Unknown'
         },
         'vasprun.xml': {

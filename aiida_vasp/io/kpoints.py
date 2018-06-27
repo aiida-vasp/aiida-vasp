@@ -1,71 +1,160 @@
+# pylint: disable=no-self-use
 """Utils for VASP KPOINTS format"""
-import numpy as np
 
-from aiida_vasp.utils.aiida_utils import get_data_class
+from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class KpParser(BaseFileParser):
     """
-    Parser for VASP KPOINTS format
+    Parser for VASP KPOINTS format.
 
-    This is a remainder of the previous VaspParser and at the moment only capable of
-    parsing KPOINTS files containing an explicit list of k-points. This should be
-    replaced by a more capable parser in the future.
+    This is a wrapper for the parsevasp.kpoints parser. It will convert
+    KPOINTS type files to Aiida KpointsData objects and vice versa.
+
+    The Parsing direction depends on whether the KpParser is initialised with
+    'path = ...' (read from file) or 'data = ...' (read from data).
+
     """
 
     PARSABLE_ITEMS = {
-        'kpoints': {
+        'kpoints-kpoints': {
             'inputs': [],
             'parsers': ['EIGENVAL', 'IBZKPT'],
             'nodeName': 'kpoints',
-            'prerequisites': []
+            'prerequisites': [],
+            'alternatives': ['kpoints']
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(KpParser, self).__init__(*args, **kwargs)
-        self._parsable_items = KpParser.PARSABLE_ITEMS
+        self.init_with_kwargs(**kwargs)
+
+    def _init_with_data(self, data):
+        """Initialise with a given kpointsData object."""
+        self._data_obj = data
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
-    @classmethod
-    def parse_kp(cls, fobj_or_str):
-        """Parse VASP KPOINTS files"""
+    @property
+    def _parsed_object(self):
+        """
+        Return an instance of parsevasp.Kpoints.
 
-        if isinstance(fobj_or_str, str):
-            from StringIO import StringIO
-            fobj_or_str = StringIO(fobj_or_str)
-        header = {}
-        header['name'] = fobj_or_str.readline()
-        header['nkp'] = cls.line(fobj_or_str, d_type=int)
-        header['cartesian'] = fobj_or_str.readline().startswith(('c', 'C', 'k', 'K'))
-        lines = np.array(cls.splitlines(fobj_or_str))
-        return header, lines
+        Corresponds to the stored KpointsData.
 
-    @classmethod
-    def parse_kp_file(cls, fname):
-        with open(fname) as kpoints_f:
-            return cls.parse_kp(kpoints_f)
+        """
+
+        # The KpointsData has not been successfully parsed yet. So let's parse it.
+        if self._data_obj.get_attrs().get('mesh'):
+            mode = 'automatic'
+        elif self._data_obj.get_attrs().get('array|kpoints'):
+            mode = 'explicit'
+
+        kpoints_dict = {}
+        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+            kpoints_dict[keyword] = None
+
+        kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
+
+        try:
+            return Kpoints(kpoints_dict=kpoints_dict)
+        except SystemExit:
+            return None
 
     def _parse_file(self, inputs):
-        """Create a DB Node for the IBZKPT file"""
+        """Create a DB Node from a KPOINTS file"""
 
         result = inputs
         result = {}
 
-        header, res = self.parse_kp_file(self._file_path)
-        kpoints = res[:, :3]
-        if res.shape[1] == 4:
-            weights = res[:, 3]
-        else:
-            weights = None
+        if isinstance(self._data_obj, get_data_class('array.kpoints')):
+            return {'kpoints-kpoints': self._data_obj}
 
-        kpout = get_data_class('array.kpoints')()
-        kpout.set_kpoints(kpoints, weights=weights, cartesian=header['cartesian'])
+        try:
+            parsed_kpoints = Kpoints(file_path=self._data_obj.path)
+        except SystemExit:
+            self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
+            return {'kpoints-kpoints': None}
 
-        result['kpoints_header'] = header
-        result['kpoints_raw'] = kpoints
-        result['weights'] = weights
-        result['kpoints'] = kpout
+        mode = parsed_kpoints.entries.get('mode')
+        if mode == 'line':
+            self._logger.warning("The read KPOINTS contained line mode which is" "not supported. Returning None.")
+            return {'kpoints-kpoints': None}
+        result['kpoints-kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
 
         return result
+
+    @staticmethod
+    def _get_kpointsdata_explicit(kpoints_dict):
+        """Turn an 'explicit' kpoints dictionary into Aiida KpointsData"""
+        kpout = get_data_class('array.kpoints')()
+
+        kpoints = kpoints_dict.get('points')
+        cartesian = not kpoints[0].get_direct()
+        kpoint_list = []
+        weights = []
+        for kpoint in kpoints:
+            kpoint_list.append(kpoint.get_point().tolist())
+            weights.append(kpoint.get_weight())
+
+        if weights[0] is None:
+            weights = None
+
+        kpout.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
+
+        return kpout
+
+    @staticmethod
+    def _get_kpointsdata_automatic(kpoints_dict):
+        """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
+        kpout = get_data_class('array.kpoints')()
+
+        mesh = kpoints_dict.get('divisions')
+        shifts = kpoints_dict.get('shifts')
+        kpout.set_kpoints_mesh(mesh, offset=shifts)
+
+        return kpout
+
+    @staticmethod
+    def _get_kpointsdict_explicit(kpointsdata):
+        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
+        dictionary = {}
+
+        kpts = []
+        try:
+            points, weights = kpointsdata.get_kpoints(also_weights=True)
+        except AttributeError:
+            points = kpointsdata.get_kpoints()
+            weights = None
+        for index, point in enumerate(points):
+            if weights is not None:
+                kpt = Kpoint(point, weight=weights[index])
+            else:
+                # no weights supplied, so set them to 1.0
+                kpt = Kpoint(point, weight=1.0)
+            kpts.append(kpt)
+        dictionary["points"] = kpts
+        dictionary["mode"] = "explicit"
+        dictionary["num_kpoints"] = len(kpts)
+
+        return dictionary
+
+    @staticmethod
+    def _get_kpointsdict_automatic(kpointsdata):
+        """Turn Aiida KpointData into an 'automatic' kpoints dictionary."""
+        dictionary = {}
+        # automatic mode
+        mesh = kpointsdata.get_kpoints_mesh()
+        dictionary["divisions"] = mesh[0]
+        dictionary["shifts"] = mesh[1]
+        dictionary["mode"] = "automatic"
+        # here we need to make a choice, so should
+        # add more to Aiida to make this better
+        # defined
+        dictionary["centering"] = "Gamma"
+        dictionary["num_kpoints"] = 0
+
+        return dictionary

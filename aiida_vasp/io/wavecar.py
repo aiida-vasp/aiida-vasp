@@ -18,14 +18,13 @@ class WavecarParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(WavecarParser, self).__init__(*args, **kwargs)
-        self._parsable_items = WavecarParser.PARSABLE_ITEMS
-        self._parsed_data = {}
+        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Create a DB Node for the WAVECAR file"""
         result = inputs
         result = {}
-        wfn = self._file_path
+        wfn = self._data_obj.path
 
         if wfn is None:
             return {'wavecar': None}
