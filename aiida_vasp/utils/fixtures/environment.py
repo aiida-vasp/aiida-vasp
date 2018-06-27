@@ -4,6 +4,15 @@ import pytest
 
 from aiida.utils.fixtures import fixture_manager
 
+@pytest.fixture()
+def element_x_not_present():
+    # Element X was added in the same version as
+    # the get_strict_version function.
+    try:
+        from aiida import get_strict_version
+        return False
+    except ImportError:
+        return True
 
 @pytest.fixture(scope='session')
 def aiida_env():

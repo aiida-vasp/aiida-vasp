@@ -3,11 +3,10 @@
 import pytest
 from distutils.version import StrictVersion
 
-from aiida import get_strict_version
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.environment import element_x_not_present
 from aiida_vasp.io.poscar import PoscarParser
-
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_parse_poscar(fresh_aiida_env, vasp_structure):
@@ -80,7 +79,7 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
         structure.sites[2].position
 
 
-@pytest.mark.xfail(get_strict_version() <= StrictVersion('0.12'), reason="Element X only present in Aiida >= 1.x")
+@pytest.mark.xfail(element_x_not_present(), reason="Element X only present in Aiida >= 1.x")
 def test_parse_poscar_silly_read(fresh_aiida_env):
     """
     Parse (read) a reference POSCAR with silly elemental names.
@@ -99,7 +98,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
     assert symbols == set(['X', 'X'])
 
 
-@pytest.mark.xfail(get_strict_version() <= StrictVersion('0.12'), reason="Element X only present in Aiida >= 1.x")
+@pytest.mark.xfail(element_x_not_present(), reason="Element X only present in Aiida >= 1.x")
 @pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
 def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     """
