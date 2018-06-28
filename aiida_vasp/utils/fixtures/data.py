@@ -194,7 +194,7 @@ def vasp_code(localhost):
 
 
 @pytest.fixture()
-def mock_vasp(localhost):
+def mock_vasp(aiida_env, localhost):
     """Points to a mock-up of a VASP executable."""
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
@@ -214,6 +214,8 @@ def mock_vasp(localhost):
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
+        aiidapath = py_path.local(aiida_env.root_dir).join('.aiida')
+        code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
     return code
 
 

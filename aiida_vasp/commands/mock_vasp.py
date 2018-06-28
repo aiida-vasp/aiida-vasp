@@ -1,4 +1,5 @@
 """Separate cli interface for commands useful in development and testing."""
+import os
 import click
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
@@ -16,7 +17,16 @@ def output_file(*args):
 @click.command('mock-vasp')
 def mock_vasp():
     """Verify input files are parseable and copy in output files."""
+    from aiida.common.setup import AIIDA_CONFIG_FOLDER
     pwd = py_path.local('.')
+
+    aiida_path = py_path.local(AIIDA_CONFIG_FOLDER)
+    aiida_cfg = aiida_path.join('config.json')
+    click.echo('DEBUG: AIIDA_PATH = {}'.format(os.environ.get('AIIDA_PATH')))
+    click.echo('DEBUG: AIIDA_CONFIG_FOLDER = {}'.format(aiida_path.strpath))
+    assert aiida_path.isdir()
+    assert aiida_cfg.isfile()
+    click.echo(aiida_cfg.read())
 
     incar = pwd.join('INCAR')
     assert incar.isfile(), 'INCAR input file was not found.'

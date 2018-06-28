@@ -45,9 +45,10 @@ def create_authinfo(computer):
     return authinfo
 
 
+@pytest.mark.wf
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_base(vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
+def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import WorkflowFactory, Code
     from aiida import work

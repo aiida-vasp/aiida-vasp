@@ -59,28 +59,23 @@ def clean_incar_overrides(inputs):
     return overrides
 
 
-def l2_norm(vector_a):
-    """L^2 norm for a line vector"""
-    return numpy.sqrt(numpy.dot(vector_a, vector_a.T))
-
-
 def compare_structures(structure_a, structure_b):
     """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
     delta = AttributeDict()
     volume_a = structure_a.get_cell_volume()
     volume_b = structure_b.get_cell_volume()
-    delta.volume = volume_a - volume_b
+    delta.volume = numpy.absolute(volume_a - volume_b)
 
     pos_a = numpy.array([site.position for site in structure_a.sites])
     pos_b = numpy.array([site.position for site in structure_b.sites])
     delta.pos = pos_a - pos_b
 
     site_vectors = [delta.pos[i, :] for i in range(delta.pos.shape[0])]
-    delta.pos_lengths = numpy.array([l2_norm(vector) for vector in site_vectors])
+    delta.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors])
 
-    delta.cell = numpy.array(structure_a.cell) - numpy.array(structure_b.cell)
-    delta.cell_lengths = numpy.array(structure_a.cell_lengths) - numpy.array(structure_b.cell_lengths)
-    delta.cell_angles = numpy.array(structure_a.cell_angles) - numpy.array(structure_b.cell_angles)
+    delta.cell_lengths = numpy.absolute(numpy.array(structure_a.cell_lengths) - numpy.array(structure_b.cell_lengths))
+
+    delta.cell_angles = numpy.absolute(numpy.array(structure_a.cell_angles) - numpy.array(structure_b.cell_angles))
 
     return delta
 
@@ -255,16 +250,15 @@ class VaspRelaxWf(WorkChain):
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
-        l2_length_changes = l2_norm(delta.cell_lengths)
-        lengths_converged = bool(l2_length_changes <= self.inputs.convergence.shape.lengths.value)
+        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.convergence.shape.lengths.value)
         if not lengths_converged:
-            self.report('cell lengths changed by {}, tolerance is {}'.format(l2_length_changes,
-                                                                             self.inputs.convergence.shape.lengths.value))
+            self.report('cell lengths changed by max {}, tolerance is {}'.format(delta.cell_lengths.max(),
+                                                                                 self.inputs.convergence.shape.lengths.value))
 
-        l2_angle_changes = l2_norm(delta.cell_angles)
-        angles_converged = bool(l2_angle_changes <= self.inputs.convergence.shape.angles.value)
+        angles_converged = bool(delta.cell_angles.max() <= self.inputs.convergence.shape.angles.value)
         if not angles_converged:
-            self.report('cell angles changed by {}, tolerance is {}'.format(l2_angle_changes, self.inputs.convergence.shape.angles.value))
+            self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
+                                                                                self.inputs.convergence.shape.angles.value))
 
         return bool(lengths_converged and angles_converged)
 

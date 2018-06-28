@@ -7,6 +7,7 @@ should be handled on this level, so that every workflow can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
 from aiida.work.workchain import while_
+from aiida.work.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
@@ -126,3 +127,16 @@ class VaspBaseWf(BaseRestartWorkChain):
             self._fail_compat(exception=err)
         except NotExistent as err:
             self._fail_compat(exception=err)
+
+    @override
+    def on_except(self, exc_info):
+
+        last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
+        if last_calc:
+            self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
+            sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
+            sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')
+            self.report('Scheduler output:\n{}'.format(sched_out or ''))
+            self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
+
+        return super(VaspBaseWf, self).on_except(exc_info)
