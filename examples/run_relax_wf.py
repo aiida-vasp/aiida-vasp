@@ -6,6 +6,14 @@ from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded, get_data_node
 from run_vasp import example_param_set, create_structure_Si, create_kpoints, create_params_simple
 
 
+def create_structure_perturbed():
+    structure_cls = get_data_cls('structure')
+    alat = 5.4
+    structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
+    structure.append_atom(position=numpy.array([.28, .24, .35]) * alat, symbols='Si')
+    return structure
+
+
 @click.command()
 @example_param_set
 def main(pot_family, import_from, queue, code, computer, no_import):
@@ -29,7 +37,8 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs.convergence = AttributeDict()
     inputs.convergence.shape = AttributeDict()
     inputs.convergence.on = get_data_node('bool', True)
-    inputs.convergence.positions = get_data_node('float', 0.1)
+    inputs.convergence.positions = get_data_node('float', 0.001)
+    inputs.incar_add = get_data_node('parameter', dict={'NSW': 1})
     inputs.restart = AttributeDict()
     inputs.code = code
     inputs.potcar_family = get_data_node('str', pot_family)

@@ -1,62 +1,13 @@
 """Structure relaxation workchain for VASP."""
+import enum
 import numpy
 from aiida.common.extendeddicts import AttributeDict
 from aiida.work import WorkChain
 from aiida.work.workchain import append_, while_, ToContext
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.vasp.isif import IsifStressFlags, Isif
-from aiida_vasp.utils.vasp.ibrion import IbrionFlags, Ibrion
-from aiida_vasp.utils.vasp.encut import EncutFlags, Encut
-from aiida_vasp.utils.vasp.nsw import Nsw
 from aiida_vasp.workflows.base import VaspBaseWf
 from aiida_vasp.workflows.restart import prepare_process_inputs, UnexpectedCalculationFailure
-
-RELAXATION_INCAR_TEMPLATE = AttributeDict({
-    "ismear": -1,
-    "sigma": 0.2,
-    "algo": 'NORMAL',
-    "ediff": 1E-6,
-    "prec": 'Normal',
-    "ibrion": 2,
-    "nsw": 200,
-    "nelmin": 4,
-    "ediffg": -0.01,
-    "isif": 4
-})
-
-
-def relax_parameters(pos, shape, volume):
-    """Set IBRION and ISIF according to the choice of what should be relaxed."""
-    if not (pos or volume or shape):
-        raise ValueError('relaxation workflow requires at least one of "positions", "cell shape", "cell volume" to be alowed to change.')
-    if not pos:
-        ibrion = Ibrion(ion_updates=IbrionFlags.NO_UPDATE)
-    else:
-        ibrion = Ibrion(ion_updates=IbrionFlags.IONIC_RELAXATION_CG)
-    isif = Isif(calculate_stress=IsifStressFlags.FULL, vary_positions=pos, vary_cell_shape=shape, vary_cell_volume=volume)
-    nsw = Nsw(value=200, ibrion=ibrion)
-    return ibrion, isif, nsw
-
-
-def encut_factor(volume):
-    if volume:
-        return 1.3
-    return 1
-
-
-def clean_incar_overrides(inputs):
-    """Make sure the incar overrides do not clash with parameters necessary for relaxation."""
-    overrides = AttributeDict(inputs.incar_add.get_dict())
-    if 'ibrion' in overrides:
-        raise ValueError('overriding IBRION not allowed, use relax.xxx inputs to control')
-    if 'isif' in overrides:
-        raise ValueError('overriding ISIF not allowed, use relax.xxx inputs to control')
-    if 'nsw' in overrides:
-        if inputs.relax.positions.value and overrides.nsw < 1:
-            raise ValueError('NSW (num ionic steps) was set to 0 but relaxing positions was requested')
-
-    return overrides
 
 
 def compare_structures(structure_a, structure_b):
@@ -82,6 +33,31 @@ def compare_structures(structure_a, structure_b):
 
 class VaspRelaxWf(WorkChain):
     """Structure relaxation workchain for VASP."""
+
+    class IbrionEnum(enum.IntEnum):
+        """Encode IBRION values descriptively in enum."""
+        NO_UPDATE = -1
+        IONIC_RELAXATION_RMM_DIIS = 1
+        IONIC_RELAXATION_CG = 2
+
+    class IsifEnum(enum.IntEnum):
+        """Encode ISIF values descriptively in enum."""
+        POS_ONLY = 1
+        POS_SHAPE_VOL = 3
+        POS_SHAPE = 4
+        SHAPE_ONLY = 5
+
+        @classmethod
+        def get_from_dof(cls, **kwargs):
+            """Get the correct ISIF value for relaxation for the given degrees of freedom."""
+            dof = tuple(kwargs[i] for i in ['positions', 'shape', 'volume'])
+            value_from_dof = {
+                (True, False, False): cls.POS_ONLY,
+                (True, True, True): cls.POS_SHAPE_VOL,
+                (True, True, False): cls.POS_SHAPE,
+                (False, True, False): cls.SHAPE_ONLY
+            }
+            return value_from_dof[dof]
 
     @classmethod
     def define(cls, spec):
@@ -122,43 +98,39 @@ class VaspRelaxWf(WorkChain):
         spec.output('relaxed_structure', valid_type=get_data_class('structure'))
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
 
-    def _clean_incar(self, base_incar):
-        """Update incar parameters based on other inputs."""
-        incar = base_incar.copy()
-        try:
-            ibrion, isif, nsw = relax_parameters(
-                pos=self.inputs.relax.positions.value, shape=self.inputs.relax.shape.value, volume=self.inputs.relax.shape.value)
-            incar.ibrion = ibrion.value
-            incar.isif = isif.value
-            incar.nsw = nsw.value
-        except ValueError as err:
-            self._fail_compat(exception=err)
+    def _set_ibrion(self, incar):
+        if self.inputs.relax.positions.value:
+            incar.ibrion = self.IbrionEnum.IONIC_RELAXATION_CG
+        else:
+            incar.ibrion = self.IbrionEnum.NO_UPDATE
 
-        encut = Encut(
-            strategy=EncutFlags.MAX_ENMAX,
-            structure=self.inputs.structure,
-            potcar_family=self.inputs.potcar_family.value,
-            potcar_mapping=self.inputs.potcar_mapping.get_dict(),
-            factor=encut_factor(self.inputs.relax.volume))
-        if self.inputs.relax.shape.value:
-            incar.encut = encut.value
+    def _set_isif(self, incar):
+        """Set ISIF value according to the chosen degrees of freedom."""
+        incar.isif = self.IsifEnum.get_from_dof(
+            positions=self.inputs.relax.positions.value, shape=self.inputs.relax.shape.value, volume=self.inputs.relax.volume.value)
 
+    def _add_overrides(self, incar):
+        """Add incar tag overrides, except the ones controlled by other inputs (for provenance)."""
+        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.incar_add.get_dict().items()})
+        if 'ibrion' in overrides:
+            raise ValueError('overriding IBRION not allowed, use relax.xxx inputs to control')
+        if 'isif' in overrides:
+            raise ValueError('overriding ISIF not allowed, use relax.xxx inputs to control')
+        if 'nsw' in overrides:
+            if self.inputs.relax.positions.value and overrides.nsw < 1:
+                raise ValueError('NSW (num ionic steps) was set to 0 but relaxing positions was requested')
+        incar.update(overrides)
+
+    def _assemble_incar(self):
+        """Set incar parameters based on other inputs."""
+        incar = AttributeDict()
+        self._set_ibrion(incar)
+        self._set_isif(incar)
         if 'incar_add' in self.inputs:
             try:
-                incar_overrides = clean_incar_overrides(self.inputs)
-                incar.update(incar_overrides)
+                self._add_overrides(incar)
             except ValueError as err:
                 self._fail_compat(exception=err)
-
-        for param in [ibrion, isif, encut]:
-            errors, warnings = param.clean(incar)
-            for error in errors:
-                self.logger.error(error)
-            for warning in warnings:
-                self.report(warning)
-            if errors:
-                self._fail_compat(exception=ValueError(errors[0]))
-
         return incar
 
     def _clean_kpoints(self):
@@ -182,6 +154,7 @@ class VaspRelaxWf(WorkChain):
         self.ctx.workchains = []
 
         self.ctx.inputs = AttributeDict()
+        self.ctx.inputs.incar = self._assemble_incar()
         self.ctx.inputs.code = self.inputs.code
         self.ctx.inputs.structure = self.inputs.structure
         self.ctx.inputs.potcar_family = self.inputs.potcar_family
@@ -192,7 +165,6 @@ class VaspRelaxWf(WorkChain):
 
     def validate_inputs(self):
         self.ctx.inputs.kpoints = self._clean_kpoints()
-        self.ctx.inputs.incar = self._clean_incar(RELAXATION_INCAR_TEMPLATE)
 
     def should_relax(self):
         within_max_iterations = bool(self.ctx.iteration < self.inputs.convergence.max_iterations.value)
