@@ -15,7 +15,7 @@ def aiida_env():
     # The following should be addressed in aiida-core in the long term
     from aiida.utils import fixtures
     if hasattr(fixtures, '_GLOBAL_FIXTURE_MANAGER'):
-        global_fixture_manager = fixtures._GLOBAL_FIXTURE_MANAGERA  # pylint: disable=no-member,protected-access
+        global_fixture_manager = fixtures._GLOBAL_FIXTURE_MANAGER  # pylint: disable=no-member,protected-access
     elif hasattr(fixtures, '_PYTEST_FIXTURE_MANAGER'):
         global_fixture_manager = fixtures._PYTEST_FIXTURE_MANAGER  # pylint: disable=no-member,protected-access
     global_fixture_manager.create_root_dir()

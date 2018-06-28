@@ -51,11 +51,10 @@ class Encut(AbstractIncarParam):
 
     def _init_from_structure(self):
         """Get the value from the POTCARs depending on the `strategy` keyword passed in the ctor."""
-        self._multipotcar = MultiPotcarIo.from_structure(self._structure,
-                                                         get_data_class('vasp.potcar').get_potcars_dict(
-                                                             elements=self._structure.get_kind_names(),
-                                                             family_name=self._potcar_family,
-                                                             mapping=self._potcar_mapping))
+        self._multipotcar = MultiPotcarIo.from_structure(
+            self._structure,
+            get_data_class('vasp.potcar').get_potcars_dict(
+                elements=self._structure.get_kind_names(), family_name=self._potcar_family, mapping=self._potcar_mapping))
         if self._strategy == EncutFlags.MIN_ENMAX:
             self._base_encut = min([potcar.pymatgen.enmax for potcar in self._multipotcar.potcars])
         else:

@@ -292,7 +292,7 @@ class VaspRelaxWf(WorkChain):
 
     def _fail_compat(self, *args, **kwargs):
         if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)
+            self.fail(*args, **kwargs)  # pylint: disable=no-member
         else:
             msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)
+            self.abort_nowait(msg)  # pylint: disable=no-member
