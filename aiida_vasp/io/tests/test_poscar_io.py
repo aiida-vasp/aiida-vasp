@@ -7,6 +7,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures.environment import element_x_not_present
 from aiida_vasp.io.poscar import PoscarParser
 
+
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_parse_poscar(fresh_aiida_env, vasp_structure):
     """

@@ -4,20 +4,22 @@ import pytest
 
 from aiida.utils.fixtures import fixture_manager
 
+
 @pytest.fixture()
 def element_x_not_present():
     """
     Check if element X is implemented in Aiida.
-    
+
     Element X was added in the same version as
     the get_strict_version function.
     """
-    
+
     try:
-        from aiida import get_strict_version #pylint: disable=unused-variable
+        from aiida import get_strict_version  #pylint: disable=unused-variable
         return False
     except ImportError:
         return True
+
 
 @pytest.fixture(scope='session')
 def aiida_env():
