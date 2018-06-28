@@ -128,7 +128,7 @@ def vasp_structure(request, aiida_env):
         cif_path = subpath('data', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
-        larray = numpy.array([[0, .5, .5], [.5, .5, 0], [.5, 0, .5]])
+        larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
         alat = 6.058
         structure = DataFactory('structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
