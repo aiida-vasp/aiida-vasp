@@ -827,6 +827,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
             except AttributeError as err:
                 print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
+            except IndexError as err:
+                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
 
         return list_created
 
