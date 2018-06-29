@@ -174,6 +174,7 @@ class VaspRelaxWf(WorkChain):
         """Run the BaseVaspWf for the relaxation."""
         if self.ctx.current_restart_folder:
             self.ctx.inputs.restart_folder = self.ctx.current_restart_folder
+        self.ctx.inputs.structure = self.ctx.current_structure
         inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(VaspBaseWf, **inputs)
         self.ctx.iteration += 1

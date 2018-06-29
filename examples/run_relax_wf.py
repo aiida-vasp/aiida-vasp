@@ -1,3 +1,4 @@
+import numpy
 import click
 from click_spinner import spinner as cli_spinner
 from aiida.common.extendeddicts import AttributeDict
@@ -7,10 +8,17 @@ from run_vasp import example_param_set, create_structure_Si, create_kpoints, cre
 
 
 def create_structure_perturbed():
-    structure_cls = get_data_cls('structure')
-    alat = 5.4
-    structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
-    structure.append_atom(position=numpy.array([.28, .24, .35]) * alat, symbols='Si')
+    """
+    Create a perturbed structure (example taken from the VASP wiki).
+
+
+    `Link to the wiki page <http://cms.mpi.univie.ac.at/wiki/index.php/Cd_Si_relaxation>`_
+    """
+
+    alat = 5.5
+    structure = get_data_node('structure', cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
+    structure.append_atom(position=numpy.array([-0.125, -0.125, -0.125]) * alat, symbols='Si')
+    structure.append_atom(position=numpy.array([0.125, 0.125, 0.130]) * alat, symbols='Si')
     return structure
 
 
@@ -30,15 +38,15 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     workflow = WorkflowFactory('vasp.relax')
 
     inputs = AttributeDict()
-    inputs.structure = create_structure_Si()
+    inputs.structure = create_structure_perturbed()
     inputs.kpoints = AttributeDict()
     inputs.kpoints.distance = get_data_node('float', 0.2)
     inputs.relax = AttributeDict()
     inputs.convergence = AttributeDict()
     inputs.convergence.shape = AttributeDict()
     inputs.convergence.on = get_data_node('bool', True)
-    inputs.convergence.positions = get_data_node('float', 0.001)
-    inputs.incar_add = get_data_node('parameter', dict={'NSW': 1})
+    inputs.convergence.positions = get_data_node('float', 0.0001)
+    inputs.incar_add = get_data_node('parameter', dict={'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0, 'sigma': 0.1})
     inputs.restart = AttributeDict()
     inputs.code = code
     inputs.potcar_family = get_data_node('str', pot_family)
