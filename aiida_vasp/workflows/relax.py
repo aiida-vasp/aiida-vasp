@@ -13,20 +13,29 @@ from aiida_vasp.workflows.restart import prepare_process_inputs, UnexpectedCalcu
 def compare_structures(structure_a, structure_b):
     """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
     delta = AttributeDict()
+    delta.absolute = AttributeDict()
+    delta.relative = AttributeDict()
     volume_a = structure_a.get_cell_volume()
     volume_b = structure_b.get_cell_volume()
-    delta.volume = numpy.absolute(volume_a - volume_b)
+    delta.absolute.volume = numpy.absolute(volume_a - volume_b)
+    delta.relative.volume = numpy.absolute(volume_a - volume_b) / volume_a
 
     pos_a = numpy.array([site.position for site in structure_a.sites])
     pos_b = numpy.array([site.position for site in structure_b.sites])
-    delta.pos = pos_a - pos_b
+    delta.absolute.pos = pos_a - pos_b
 
-    site_vectors = [delta.pos[i, :] for i in range(delta.pos.shape[0])]
-    delta.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors])
+    site_vectors = [delta.absolute.pos[i, :] for i in range(delta.pos.shape[0])]
+    a_lengths = numpy.linalg.norm(pos_a, axis=1)
+    delta.absolute.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors])
+    delta.relative.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors]) / a_lengths
 
-    delta.cell_lengths = numpy.absolute(numpy.array(structure_a.cell_lengths) - numpy.array(structure_b.cell_lengths))
+    cell_lengths_a = numpy.array(structure_a.cell_lengths)
+    delta.absolute.cell_lengths = numpy.absolute(cell_lengths_a - numpy.array(structure_b.cell_lengths))
+    delta.relative.cell_lengths = numpy.absolute(cell_lengths_a - numpy.array(structure_b.cell_lengths)) / cell_lengths_a
 
-    delta.cell_angles = numpy.absolute(numpy.array(structure_a.cell_angles) - numpy.array(structure_b.cell_angles))
+    cell_angles_a = numpy.array(structure_a.cell_angles)
+    delta.absolute.cell_angles = numpy.absolute(cell_angles_a - numpy.array(structure_b.cell_angles))
+    delta.relative.cell_angles = numpy.absolute(cell_angles_a - numpy.array(structure_b.cell_angles)) / cell_angles_a
 
     return delta
 
@@ -70,6 +79,7 @@ class VaspRelaxWf(WorkChain):
         spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
         spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
         spec.input('convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
         spec.input('convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
         spec.input(
             'convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
@@ -203,7 +213,8 @@ class VaspRelaxWf(WorkChain):
 
         converged = True
         if self.inputs.convergence.on.value:
-            delta = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
+            comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
+            delta = comparison.absolute if self.inputs.convergence.absolute.value else comparison.relative
             if self.inputs.relax.positions.value:
                 converged &= self.check_positions_convergence(delta)
             if self.inputs.relax.volume.value:

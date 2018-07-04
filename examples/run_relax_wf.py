@@ -45,8 +45,10 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs.convergence = AttributeDict()
     inputs.convergence.shape = AttributeDict()
     inputs.convergence.on = get_data_node('bool', True)
-    inputs.convergence.positions = get_data_node('float', 0.0001)
-    inputs.incar_add = get_data_node('parameter', dict={'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0, 'sigma': 0.1})
+    inputs.convergence.positions = get_data_node('float', 0.1)
+    inputs.incar_add = get_data_node('parameter', dict={
+        'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0, 'sigma': 0.1
+    })  # yapf: disable
     inputs.restart = AttributeDict()
     inputs.code = code
     inputs.potcar_family = get_data_node('str', pot_family)
