@@ -129,6 +129,9 @@ class VaspRelaxWf(WorkChain):
         if 'nsw' in overrides:
             if self.inputs.relax.positions.value and overrides.nsw < 1:
                 raise ValueError('NSW (num ionic steps) was set to 0 but relaxing positions was requested')
+            elif not self.inputs.relax.positions.value and overrides.nsw > 0:
+                self.report('NSW (num ionic steps) > 1 but relaxing positions was not requested '
+                            '(ionic steps will be performed but ions will not move)')
         incar.update(overrides)
 
     def _assemble_incar(self):
