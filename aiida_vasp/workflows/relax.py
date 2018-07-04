@@ -24,7 +24,7 @@ def compare_structures(structure_a, structure_b):
     pos_b = numpy.array([site.position for site in structure_b.sites])
     delta.absolute.pos = pos_a - pos_b
 
-    site_vectors = [delta.absolute.pos[i, :] for i in range(delta.pos.shape[0])]
+    site_vectors = [delta.absolute.pos[i, :] for i in range(delta.absolute.pos.shape[0])]
     a_lengths = numpy.linalg.norm(pos_a, axis=1)
     delta.absolute.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors])
     delta.relative.pos_lengths = numpy.array([numpy.linalg.norm(vector) for vector in site_vectors]) / a_lengths

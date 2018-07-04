@@ -47,7 +47,7 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs.convergence.on = get_data_node('bool', True)
     inputs.convergence.positions = get_data_node('float', 0.1)
     inputs.incar_add = get_data_node('parameter', dict={
-        'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0, 'sigma': 0.1
+        'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0, 'sigma': 0.1, 'system': 'test-case:test_relax_wf',
     })  # yapf: disable
     inputs.restart = AttributeDict()
     inputs.code = code

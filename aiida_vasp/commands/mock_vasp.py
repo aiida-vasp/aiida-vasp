@@ -1,10 +1,11 @@
 """Separate cli interface for commands useful in development and testing."""
 import os
+import re
 import click
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.io.incar import IncarIo
+from aiida_vasp.io.incar import IncarParser
 from aiida_vasp.io.potcar import PotcarIo
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.kpoints import KpParser
@@ -40,15 +41,25 @@ def mock_vasp():
     kpoints = pwd.join('KPOINTS')
     assert kpoints.isfile(), 'KPOINTS input file not found.'
 
-    assert IncarIo(file_path=incar.strpath), 'INCAR could not be parsed.'
+    incar_parser = IncarParser(file_path=incar.strpath)
+    assert incar_parser, 'INCAR could not be parsed.'
     assert PotcarIo(path=potcar.strpath), 'POTCAR could not be parsed.'
     assert PoscarParser(file_path=poscar.strpath), 'POSCAR could not be parsed.'
     assert KpParser(file_path=kpoints.strpath), 'KPOINTS could not be parsed.'
 
-    output_file('outcar', 'OUTCAR').copy(pwd.join('OUTCAR'))
-    output_file('vasprun', 'vasprun.xml').copy(pwd.join('vasprun.xml'))
-    output_file('chgcar', 'CHGCAR').copy(pwd.join('CHGCAR'))
-    output_file('wavecar', 'WAVECAR').copy(pwd.join('WAVECAR'))
-    output_file('eigenval', 'EIGENVAL').copy(pwd.join('EIGENVAL'))
-    output_file('doscar', 'DOSCAR').copy(pwd.join('DOSCAR'))
-    poscar.copy(pwd.join('CONTCAR'))
+    system = incar_parser.get_quantity('incar', {})['incar'].get_dict()['system']
+    test_case = re.findall(r'test-case:(.*)$', system)
+
+    if not test_case:
+        output_file('outcar', 'OUTCAR').copy(pwd.join('OUTCAR'))
+        output_file('vasprun', 'vasprun.xml').copy(pwd.join('vasprun.xml'))
+        output_file('chgcar', 'CHGCAR').copy(pwd.join('CHGCAR'))
+        output_file('wavecar', 'WAVECAR').copy(pwd.join('WAVECAR'))
+        output_file('eigenval', 'EIGENVAL').copy(pwd.join('EIGENVAL'))
+        output_file('doscar', 'DOSCAR').copy(pwd.join('DOSCAR'))
+        poscar.copy(pwd.join('CONTCAR'))
+    else:
+        test_case = test_case[0]
+        test_data_path = py_path.local(data_path(test_case)).join('out')
+        for out_file in test_data_path.listdir():
+            out_file.copy(pwd)

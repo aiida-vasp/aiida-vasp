@@ -16,7 +16,7 @@ from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si'}
 
 
 @pytest.fixture(scope='session')
