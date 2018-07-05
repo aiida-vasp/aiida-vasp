@@ -55,6 +55,8 @@ class VaspRelaxWf(WorkChain):
         POS_SHAPE_VOL = 3
         POS_SHAPE = 4
         SHAPE_ONLY = 5
+        SHAPE_VOL = 6
+        VOL_ONLY = 7
 
         @classmethod
         def get_from_dof(cls, **kwargs):
@@ -64,7 +66,9 @@ class VaspRelaxWf(WorkChain):
                 (True, False, False): cls.POS_ONLY,
                 (True, True, True): cls.POS_SHAPE_VOL,
                 (True, True, False): cls.POS_SHAPE,
-                (False, True, False): cls.SHAPE_ONLY
+                (False, True, False): cls.SHAPE_ONLY,
+                (False, True, True): cls.SHAPE_VOL,
+                (False, False, True): cls.VOL_ONLY,
             }
             return value_from_dof[dof]
 
