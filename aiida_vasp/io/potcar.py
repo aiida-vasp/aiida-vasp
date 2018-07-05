@@ -161,3 +161,7 @@ class MultiPotcarIo(object):
         groups = groupby(kind_name_order)
         counts = [(label, sum(1 for _ in group)) for label, group in groups]
         return counts
+
+    @property
+    def max_enmax(self):
+        return max([potcario.pymatgen.enmax for potcario in self.potcars])

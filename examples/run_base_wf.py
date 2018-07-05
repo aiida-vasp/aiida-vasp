@@ -12,7 +12,6 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
     from aiida.work import submit
-    from aiida.work.db_types import Str
 
     if not no_import:
         click.echo('importing POTCAR files...')
@@ -27,7 +26,7 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     inputs.kpoints = create_kpoints()
     inputs.incar = create_params_simple()
     inputs.code = code
-    inputs.potcar_family = Str(pot_family)
+    inputs.potcar_family = get_data_node('str', pot_family)
     inputs.potcar_mapping = get_data_node('parameter', dict={'Si': 'Si'})
     options = AttributeDict()
     options.queue_name = queue

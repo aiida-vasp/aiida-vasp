@@ -1,5 +1,6 @@
 """Utilities for working with aiida in general"""
 from functools import wraps
+from packaging import version
 
 
 def load_dbenv_if_not_loaded(**kwargs):
@@ -84,3 +85,12 @@ def builder_interface(calc_cls):
     if hasattr(calc_cls, 'get_builder'):
         return True
     return False
+
+
+def aiida_version():
+    from aiida import __version__ as aiida_version_
+    return version.parse(aiida_version_)
+
+
+def cmp_version(string):
+    return version.parse(string)

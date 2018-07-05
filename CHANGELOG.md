@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- 'vasp.base' workchain which transparently calls through to the 'vasp.vasp' calculation and restarts if appropriate.
+ - restarting conditions are minimal yet (only submission failed will trigger a retry)
+- 'vasp.relax' workchain which specializes in structure relaxation and optionally iterates until the structure converges.
+
 ### Changed
 - PotcarData.get_potcars_from_structure() now returns an entry for each `kind.name` in the structure, not one per `kind.symbol`
 - PotcarData.get_potcars_dict() no longer fails if there is more than one PotcarData with the same full name in the family
