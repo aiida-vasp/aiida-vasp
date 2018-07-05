@@ -94,6 +94,7 @@ class VaspRelaxWf(WorkChain):
             'convergence.positions', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.01))  # in degree in the cartesian system
         spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
+        spec.expose_inputs(VaspBaseWf, namespace='restart', include=['clean_workdir'])
 
         spec.outline(
             cls.setup,
@@ -173,8 +174,11 @@ class VaspRelaxWf(WorkChain):
         self.ctx.inputs.potcar_family = self.inputs.potcar_family
         self.ctx.inputs.potcar_mapping = self.inputs.potcar_mapping
         self.ctx.inputs.options = self.inputs.options
+        self.ctx.inputs.settings = {'parser_settings': {'add_structure': True}}
         if 'max_iterations' in self.inputs.restart:
             self.ctx.inputs.max_iterations = self.inputs.restart.max_iterations
+        if 'clean_workdir' in self.inputs.restart:
+            self.ctx.inputs.clean_workdir = self.inputs.restart.clean_workdir
 
     def validate_inputs(self):
         self.ctx.inputs.kpoints = self._clean_kpoints()
@@ -185,8 +189,6 @@ class VaspRelaxWf(WorkChain):
 
     def run_relax(self):
         """Run the BaseVaspWf for the relaxation."""
-        if self.ctx.current_restart_folder:
-            self.ctx.inputs.restart_folder = self.ctx.current_restart_folder
         self.ctx.inputs.structure = self.ctx.current_structure
         inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(VaspBaseWf, **inputs)

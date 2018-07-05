@@ -73,6 +73,9 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     incar_add = {k: v for k, v in incar_add.items() if k not in ['isif', 'ibrion']}
     incar_add['system'] = 'test-case:test_relax_wf'
 
+    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir.store()
+
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
@@ -95,6 +98,7 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.convergence.on = get_data_node('bool', True)
     inputs.convergence.positions = get_data_node('float', 0.1)
     inputs.restart = AttributeDict()
+    inputs.restart.clean_workdir = restart_clean_workdir
     inputs.relax = AttributeDict()
 
     results = work.run(base_wf_proc, **inputs)
