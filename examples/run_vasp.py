@@ -179,7 +179,8 @@ def create_structure_Si():
     alat = 5.4
     structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
-    return structure
+    r0eturn structure
+
 
 
 def create_kpoints():
