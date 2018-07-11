@@ -252,16 +252,14 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data', 'INCAR_Vasp2w90'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read().strip()
+    data = py_path.local(data_path('incar_set', 'INCAR.vasp2w90'))
+    yield data.read()
 
 
 @pytest.fixture
 def ref_win():
-    from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data', 'wannier90.win'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read()
+    data = py_path.local(data_path('wannier90.win'))
+    yield data.read()
 
 
 @pytest.fixture()

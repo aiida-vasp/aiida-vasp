@@ -1,15 +1,30 @@
 """Unittests for Vasp2w90Calculation"""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import os
+import re
 import tempfile
 
 import numpy
 import pytest
+from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
+
+
+def normalize_contents(file_contents):
+    """Remove trailing zeroes after floating point and normalize trailin newline to unix standard."""
+    normalized = re.sub(r'(\d*.\d*?)0+(\s)', r'\g<1>0\2', file_contents)  # remove trailing zeroes
+    if not re.match(r'\n', file_contents[-1]):  # add trailing newline if necessary
+        normalized += '\n'
+    return normalized
+
+
+def assert_contents_equivalent(contents_a, contents_b):
+    """Assert equivalence of files with floating point numbers."""
+    assert normalize_contents(contents_a) == normalize_contents(contents_b)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
@@ -21,16 +36,18 @@ def test_store(vasp2w90_calc_and_ref):
 
 @ONLY_ONE_CALC
 def test_write_incar(fresh_aiida_env, vasp2w90_calc_and_ref):
+    """Write INCAR reference file and compare to reference."""
     vasp_calc, reference = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile() as temp_file:
         vasp_calc.write_incar(inp, temp_file.name)
         with open(temp_file.name, 'r') as result_incar_fo:
-            assert result_incar_fo.read() == reference['incar']
+            assert_contents_equivalent(result_incar_fo.read(), reference['incar'])
 
 
 @ONLY_ONE_CALC
 def test_write_win(fresh_aiida_env, vasp2w90_calc_and_ref):
+    """Write wannier90.win input file and compare to reference."""
     vasp_calc, reference = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -41,21 +58,25 @@ def test_write_win(fresh_aiida_env, vasp2w90_calc_and_ref):
 
 @STRUCTURE_TYPES
 def test_write_poscar(fresh_aiida_env, vasp2w90_calc_and_ref, vasp_structure_poscar):
-    from pymatgen.io.vasp.inputs import Poscar
+    """Write POSCAR input file and compare to reference."""
+    from aiida_vasp.io.poscar import PoscarParser
     vasp_calc, _ = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile() as temp_file:
         vasp_calc.write_poscar(inp, temp_file.name)
-        result_pmg = Poscar.from_file(temp_file.name).structure
-        ref_pmg = vasp_structure_poscar.structure
-        assert result_pmg.lattice, ref_pmg.lattice
-        assert result_pmg.formula == ref_pmg.formula
+        result_structure = PoscarParser(file_path=temp_file.name).get_quantity('poscar-structure', {})['poscar-structure']
+        ref_structure = vasp_structure_poscar.get_quantity('poscar-structure', {})['poscar-structure']
+        assert result_structure.cell, ref_structure.cell
+        assert result_structure.get_formula() == ref_structure.get_formula()
 
+        vasp_structure_poscar._parsed_data.update(vasp_structure_poscar.get_quantity('poscar-structure', {}))  # pylint: disable=protected-access
+        ref_string = vasp_structure_poscar._parsed_object.get_string()  # pylint: disable=protected-access
         with open(temp_file.name, 'r') as poscar:
-            assert poscar.read() == vasp_structure_poscar.get_string()
+            assert_contents_equivalent(poscar.read(), ref_string)
 
 
 def test_write_kpoints(fresh_aiida_env, vasp2w90_calc_and_ref):
+    """Write KPOINTS file and compare to reference."""
     vasp_calc, reference = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     print inp['kpoints'].get_attrs(), reference['kpoints']
@@ -134,9 +155,9 @@ def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     outputs = dict(outputs)
     assert success
-    assert 'bands' in outputs
-    assert 'dos' in outputs
-    assert 'results' in outputs
+    assert 'output_bands' in outputs
+    assert 'output_dos' in outputs
+    assert 'output_parameters' in outputs
 
 
 def test_verify_success(vasp2w90_calc_and_ref):
