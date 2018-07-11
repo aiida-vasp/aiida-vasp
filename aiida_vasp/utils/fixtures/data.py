@@ -79,7 +79,7 @@ def temp_pot_folder(tmpdir):
 def duplicate_potcar_data(potcar_node):
     """Create and store (and return) a duplicate of a given PotcarData node."""
     from aiida_vasp.data.potcar import temp_potcar
-    file_node = potcar_node.find_file_node().copy()
+    file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.set_file(potcar_file.strpath)
         file_node._set_attr('md5', 'abcd')
