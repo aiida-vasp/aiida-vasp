@@ -1,11 +1,12 @@
-Please tick the applicable:
+**Please check the applicable boxes, thank you**:
 
-I the author consider this
+I, the author consider this PR
  - [ ] ready to be reviewed and merged (as soon as tests have passed)
  - [ ] work in progress (early feedback welcome)
-  - [ ] the name of this PR starts with "WIP: "
  
-## Interactions with issues / other PRs (type "#" followed by search words to find issues / PRs)
+## Interactions with issues / other PRs 
+
+*type "#" followed by search words to find issues / PRs*
 
 fixes:
 
