@@ -1,4 +1,3 @@
-## Checklist
 Please check these boxes before submitting your issue, thank you!
 
  - [ ] aiida-vasp and aiida-core are installed in a virtualenv that is used for nothing else
