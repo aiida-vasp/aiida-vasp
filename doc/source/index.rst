@@ -55,6 +55,7 @@ Running calculations
 
  * Take a look at the file `example calc`_ for an example code on how to create and submit a VASP calculation from python code.
  * Take a look at the file `example workflow`_ for an example on how to do the same via an AiiDA WorkChain.
+ * Read about running structure relaxations in the `How To section <howto/relax_wf/one-off>`
 
 .. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
 .. _example workflow: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_base_wf.py
@@ -99,11 +100,13 @@ More information about managing POTCAR files can be found here:
 
 Creating workflows
 ------------------
+Read about how to write workflows by combining the building blocks provided as well as about the building blocks themselves.
 
 .. toctree::
    :maxdepth: 3
 
    howto/write_workflows
+   howto/use_relax_wf
 
 More
 ====

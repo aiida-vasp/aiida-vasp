@@ -125,6 +125,7 @@ As a (simple) example: Calculating a band structure requires an (optional) relax
                                        +---------------------------------+
 
 
+.. _howto/base_wf/reference
 Detailed usage of VaspBaseWf
 ----------------------------
 
