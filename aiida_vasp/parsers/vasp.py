@@ -26,21 +26,6 @@ LINKNAME_DICT = {
     'wavecar': 'wavecar',
 }
 
-ALLOWED_TYPES = {
-    'parameters': 'parameters',
-    'kpoints': 'array.kpoints',
-    'structure': 'structure',
-    'trajectory': 'array.trajectory',
-    'bands': 'array.bands',
-    'dos': 'array',
-    'energies': 'array',
-    'projectors': 'array',
-    'born_charges': 'array',
-    'dielectrics': 'array',
-    'hessian': 'array',
-    'dynmat': 'array'
-}
-
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
     'add_bands': False,
@@ -126,6 +111,8 @@ class VaspParser(BaseParser):
         'kpoints':    KpointsData node parsed from IBZKPT.
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
+
+    * `output_params`: A list of quantities, that should be added to the 'output_parameters' node.
 
     * `file_parser_set`: String (DEFAULT = 'default').
 
@@ -228,14 +215,8 @@ class VaspParser(BaseParser):
         self._set_file_parsers()
 
         # Parse all implemented quantities in the quantities_to_parse list.
-        print self._quantities_to_parse
         while self._quantities_to_parse:
             quantity = self._quantities_to_parse.pop(0)
-            balla = self.get_quantity(quantity, self._settings)
-            if quantity == 'parameters':
-                print self._settings
-                print self._output_nodes
-                print balla['parameters'].get_dict()
             self._output_nodes.update(self.get_quantity(quantity, self._settings))
 
         # Add output nodes if the corresponding data exists.
