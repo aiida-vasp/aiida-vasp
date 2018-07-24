@@ -110,7 +110,7 @@ def test_quantities_to_parse(vasp_nscf_and_ref, ref_retrieved_nscf):
 
     parser.out_folder = parser.get_folder({'retrieved': ref_retrieved_nscf})
     parser._quantities.setup(parser._parsers, parser.out_folder)
-    parser._parsers.setup(parser._settings, parser._quantities)
+    parser._parsers.setup(parser._settings)
 
     quantities_to_parse = parser._parsers.get_quantities_to_parse()
     assert 'quantity2' in quantities_to_parse
