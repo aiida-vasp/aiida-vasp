@@ -130,6 +130,7 @@ class VaspBaseWf(BaseRestartWorkChain):
 
     @override
     def on_except(self, exc_info):
+        """Handle excepted state."""
 
         last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
         if last_calc:
