@@ -48,8 +48,8 @@
     "extras_require": {
         "dev": [
             "pre-commit", 
-            "prospector", 
-            "pylint", 
+            "prospector == 0.12.11", 
+            "pylint == 1.9.3", 
             "flake8", 
             "yapf", 
             "coverage", 
