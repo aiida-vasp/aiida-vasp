@@ -82,7 +82,7 @@ class VaspParser(BaseParser):
 
         self.out_folder = None
 
-        self._quantities = ParsableQuantities()
+        self._quantities = ParsableQuantities(vasp_parser=self)
 
         self._settings = DEFAULT_OPTIONS
         calc_settings = self._calc.get_inputs_dict().get('settings')
@@ -99,7 +99,7 @@ class VaspParser(BaseParser):
                                 'for available options.'.format(file_parser_set=self._settings['file_parser_set']))
             file_parser_set = get_file_parser_set()
 
-        self._parsers = ParserManager(vasp_parser=self, quantities=self._quantities)
+        self._parsers = ParserManager(vasp_parser=self, quantities=self._quantities, settings=self._settings)
         for key, value in file_parser_set.items():
             self.add_file_parser(key, value)
 
@@ -138,11 +138,11 @@ class VaspParser(BaseParser):
             return self.result(success=False)
 
         # Get the _quantities from the FileParsers.
-        self._quantities.setup(self._parsers, self.out_folder)
+        self._quantities.setup(self._parsers)
 
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
-        self._parsers.setup(self._settings)
+        self._parsers.setup()
 
         quantities_to_parse = self._parsers.get_quantities_to_parse()
         # Parse all implemented quantities in the quantities_to_parse list.

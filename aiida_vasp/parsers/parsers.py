@@ -3,20 +3,48 @@
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
+def convert_settings(settings_dict):
+    """
+    Convert a 'parser_settings' dict to a Settings object.
+
+    :param settings_dict: Dict holding the parser settings.
+
+    :return settings: A Settings object.
+    """
+    settings = DictWithAttributes({})
+
+    # Find all the nodes, that should be added.
+    nodes = []
+    for key, value in settings_dict.items():
+        if not key.startswith('add_'):
+            # only keys starting with 'add_' are relevant as nodes.
+            continue
+        if not value:
+            # The quantity should not be added.
+            continue
+        nodes.append(key[4:])
+
+    settings['nodes'] = nodes
+
+    return settings
+
+
 class ParserManager(object):
     """
     A manager for FileParsers.
 
     :param vasp_parser: Reference to the VaspParser required for logging.
     :param quantities: Reference to a ParsableQuantities object for getting quantities.
+    :param settings: A dictionary holding the 'parser_settings'.
     """
 
-    def __init__(self, vasp_parser=None, quantities=None):
+    def __init__(self, vasp_parser=None, quantities=None, settings=None):
         self._parsers = {}
         self._quantities_to_parse = []
 
         self._vasp_parser = vasp_parser
         self._quantities = quantities
+        self._settings = convert_settings(settings)
 
     def get_parsers(self):
         return self._parsers.items()
@@ -51,23 +79,16 @@ class ParserManager(object):
                 return True
         return False
 
-    def setup(self, settings):
+    def setup(self):
 
-        self._check_and_validate_settings(settings)
+        self._set_quantities_to_parse()
         self._set_file_parsers()
 
-    def _check_and_validate_settings(self, settings):
-        """Check the settings and set which files should be parsed based on the input."""
+    def _set_quantities_to_parse(self):
+        """Set the quantities to parse list."""
 
         self._quantities_to_parse = []
-        for key, value in settings.items():
-            if not key.startswith('add_'):
-                # only keys starting with 'add_' will change the behaviour of the parser so get the next one.
-                continue
-            if not value:
-                # The quantity should not be added, so the corresponding files do not have to be parsed.
-                continue
-            quantity_name = key[4:]
+        for quantity_name in self._settings.nodes:
             if not self._quantities.get_by_name(quantity_name):
                 self._vasp_parser.logger.warning('{quantity} has been requested by setting '
                                                  'add_{quantity}. However it has not been implemented. '
@@ -75,20 +96,13 @@ class ParserManager(object):
                                                  'for valid input.'.format(quantity=quantity_name))
                 continue
 
-            # Found a node, which should be added, add it to the quantities to parse.
-            # if all files required for this quantity have been retrieved. If there are
-            # alternatives for this quantity also try those.
+            # Add this quantity or one of its alternatives to the quantities to parse.
             success = self.add_quantity_to_parse(self._quantities.get_equivalent_quantities(quantity_name))
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
                 # Gather a list of all the missing files and issue a warning.
-                missing_files = []
-                for quantity in self._quantities.get_equivalent_quantities(quantity_name):
-                    for missing_file in quantity.missing_files:
-                        missing_files.append(missing_file)
-
-                missing_files = ", ".join(missing_files)
+                missing_files = self._quantities.get_missing_files(quantity_name)
                 self._vasp_parser.logger.warning('{quantity} has been requested, however the '
                                                  'following files required for parsing have not been '
                                                  'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))

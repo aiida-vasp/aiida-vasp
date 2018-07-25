@@ -64,12 +64,16 @@ class ParsableQuantities(object):
     - Provide ways to get parsable quantities.
     """
 
-    def __init__(self):
+    def __init__(self, vasp_parser=None):
         self._quantities = {}
 
+        self._vasp_parser = vasp_parser
+
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
-        """Add a parsable quantity."""
         self._quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
+
+    def remove_parsable_quantity(self, quantity_name):
+        _ = self._quantities.pop(quantity_name, None)
 
     def get_equivalent_quantities(self, quantity_name):
         """Get a list of equivalent quantities."""
@@ -80,10 +84,20 @@ class ParsableQuantities(object):
         """Get a quantity by name."""
         return self._quantities.get(quantity_name)
 
-    def setup(self, parsers, retrieved):
+    def get_missing_files(self, quantity_name):
+        """Return a list with all missing files for a quantity."""
+        missing_files = []
+        for quantity in self.get_equivalent_quantities(quantity_name):
+            for missing_file in quantity.missing_files:
+                missing_files.append(missing_file)
+
+        return missing_files
+
+    def setup(self, parsers):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
         # check uniqueness and add parsable quantities
+        retrieved = self._vasp_parser.out_folder.get_folder_list()
         self._check_uniqueness_add_parsable(parsers, retrieved)
 
         # check consistency, that the quantity is parsable and
@@ -104,7 +118,7 @@ class ParsableQuantities(object):
                                        'be unique. If both quantities are equivalent, define one '
                                        'as an alternative for the other.'.format(quantity=quantity, filename=filename))
                 # Create quantity objects.
-                self.add_parsable_quantity(quantity, quantity_dict, retrieved.get_folder_list())
+                self.add_parsable_quantity(quantity, quantity_dict, retrieved)
 
     def _check_consitency_and_alternatives(self):
         """Check the consistency and alternatives."""

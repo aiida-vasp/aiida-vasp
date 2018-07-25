@@ -109,8 +109,8 @@ def test_quantities_to_parse(vasp_nscf_and_ref, ref_retrieved_nscf):
     parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
 
     parser.out_folder = parser.get_folder({'retrieved': ref_retrieved_nscf})
-    parser._quantities.setup(parser._parsers, parser.out_folder)
-    parser._parsers.setup(parser._settings)
+    parser._quantities.setup(parser._parsers)
+    parser._parsers.setup()
 
     quantities_to_parse = parser._parsers.get_quantities_to_parse()
     assert 'quantity2' in quantities_to_parse
@@ -153,7 +153,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
     parser.add_file_parser('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
-        parser._quantities.setup(parser._parsers, parser.out_folder)
+        parser._quantities.setup(parser._parsers)
     assert 'quantity1' in str(excinfo.value)
 
 
