@@ -5,7 +5,6 @@
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
 from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
 from aiida_vasp.parsers.parsers import ParserManager
 from aiida_vasp.utils.delegates import Delegate
@@ -89,19 +88,7 @@ class VaspParser(BaseParser):
         if calc_settings:
             self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
-        file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
-        if file_parser_set is None:
-            self.logger.warning('The FileParser set: {file_parser_set} has been '
-                                'requested by setting `file_parser_set: {file_parser_set}`.'
-                                'However it does not exist. Parsing will continue using '
-                                'the `default` set of FileParser. Please check the '
-                                '`parsers/file_parser_definitions.py` or the documentation '
-                                'for available options.'.format(file_parser_set=self._settings['file_parser_set']))
-            file_parser_set = get_file_parser_set()
-
         self._parsers = ParserManager(vasp_parser=self, quantities=self._quantities, settings=self._settings)
-        for key, value in file_parser_set.items():
-            self.add_file_parser(key, value)
 
         self._output_nodes = {}
 
@@ -143,8 +130,8 @@ class VaspParser(BaseParser):
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
         self._parsers.setup()
-
         quantities_to_parse = self._parsers.get_quantities_to_parse()
+
         # Parse all implemented quantities in the quantities_to_parse list.
         while quantities_to_parse:
             quantity = quantities_to_parse.pop(0)

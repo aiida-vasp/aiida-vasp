@@ -1,5 +1,6 @@
 """Classes representing FileParsers in the VaspParser."""
 
+from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
@@ -16,6 +17,7 @@ def convert_settings(settings_dict):
     # Find all the nodes, that should be added.
     nodes = []
     for key, value in settings_dict.items():
+        settings[key] = value
         if not key.startswith('add_'):
             # only keys starting with 'add_' are relevant as nodes.
             continue
@@ -45,6 +47,20 @@ class ParserManager(object):
         self._vasp_parser = vasp_parser
         self._quantities = quantities
         self._settings = convert_settings(settings)
+
+        # Add all FileParsers from the requested set.
+        file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
+        if file_parser_set is None:
+            vasp_parser.logger.warning('The FileParser set: {file_parser_set} has been '
+                                       'requested by setting `file_parser_set: {file_parser_set}`.'
+                                       'However it does not exist. Parsing will continue using '
+                                       'the `default` set of FileParser. Please check the '
+                                       '`parsers/file_parser_definitions.py` or the documentation '
+                                       'for available options.'.format(file_parser_set=self._settings['file_parser_set']))
+            file_parser_set = get_file_parser_set()
+
+        for key, value in file_parser_set.items():
+            self.add_file_parser(key, value)
 
     def get_parsers(self):
         return self._parsers.items()
