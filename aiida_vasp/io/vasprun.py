@@ -156,6 +156,7 @@ class VasprunParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(VasprunParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
+        self._settings = {}
 
     def _init_with_file_path(self, path):
         """Init with a filepath."""
@@ -187,6 +188,7 @@ class VasprunParser(BaseFileParser):
         settings = inputs.get('settings', DEFAULT_OPTIONS)
         if not settings:
             settings = DEFAULT_OPTIONS
+        self._settings = settings
 
         quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
@@ -311,8 +313,7 @@ class VasprunParser(BaseFileParser):
         outcar_parameters = self._parsed_data.get('ocp_parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
-        for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
+        for quantity in self._settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
         output_parameters = get_data_node('parameter', dict=parameters)
@@ -391,9 +392,8 @@ class VasprunParser(BaseFileParser):
         frs = self._data_obj.get_forces("final")
         if frs is None:
             return None
-        forces = get_data_class('array')()
-        forces.set_array('forces', frs)
-        return forces
+
+        return frs
 
     @property
     def final_forces(self):

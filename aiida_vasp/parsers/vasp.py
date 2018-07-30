@@ -59,6 +59,8 @@ class VaspParser(BaseParser):
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
 
+    * `output_params`: A list of quantities, that should be added to the 'output_parameters' node.
+
     * `file_parser_set`: String (DEFAULT = 'default').
 
         By this option the default set of FileParsers can be chosen. See file_parser_definitions.py
