@@ -6,7 +6,7 @@
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
-from aiida_vasp.parsers.parsers import ParserManager
+from aiida_vasp.parsers.parsers import ParserManager, convert_settings
 from aiida_vasp.utils.delegates import Delegate
 
 DEFAULT_OPTIONS = {
@@ -81,14 +81,15 @@ class VaspParser(BaseParser):
 
         self.out_folder = None
 
-        self._quantities = ParsableQuantities(vasp_parser=self)
-
-        self._settings = DEFAULT_OPTIONS
+        settings = DEFAULT_OPTIONS
         calc_settings = self._calc.get_inputs_dict().get('settings')
         if calc_settings:
-            self._settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
+            settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
 
-        self._parsers = ParserManager(vasp_parser=self, quantities=self._quantities, settings=self._settings)
+        self.settings = convert_settings(settings)
+
+        self.quantities = ParsableQuantities(vasp_parser=self)
+        self.parsers = ParserManager(vasp_parser=self)
 
         self._output_nodes = {}
 
@@ -99,17 +100,17 @@ class VaspParser(BaseParser):
     def add_file_parser(self, parser_name, parser_dict):
         """Add the definition of a fileParser to self._parsers."""
 
-        self._parsers.add_file_parser(parser_name, parser_dict)
+        self.parsers.add_file_parser(parser_name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         """Add a single parsable quantity to the _parsable_quantities."""
 
-        self._quantities.add_parsable_quantity(quantity_name, quantity_dict, retrieved_files)
+        self.quantities.add_parsable_quantity(quantity_name, quantity_dict, retrieved_files)
 
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
-            for file_name, value_dict in self._parsers.get_parsers():
+            for file_name, value_dict in self.parsers.get_parsers():
                 if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
                     return True
             return False
@@ -125,21 +126,21 @@ class VaspParser(BaseParser):
             return self.result(success=False)
 
         # Get the _quantities from the FileParsers.
-        self._quantities.setup(self._parsers)
+        self.quantities.setup()
 
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
-        self._parsers.setup()
-        quantities_to_parse = self._parsers.get_quantities_to_parse()
+        self.parsers.setup()
+        quantities_to_parse = self.parsers.get_quantities_to_parse()
 
         # Parse all implemented quantities in the quantities_to_parse list.
         while quantities_to_parse:
             quantity = quantities_to_parse.pop(0)
-            self._output_nodes.update(self.get_quantity(quantity, self._settings))
+            self._output_nodes.update(self.get_quantity(quantity, self.settings))
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.items():
-            quantity = self._quantities.get_by_name(key)
+            quantity = self.quantities.get_by_name(key)
             if not quantity.is_node:
                 # This quantity does not represent a node, continue with the next one.
                 continue
@@ -168,13 +169,13 @@ class VaspParser(BaseParser):
 
         if quantity not in self._output_nodes:
             # The quantity is not in the output_nodes. Try to parse it
-            self._output_nodes.update(self.get_quantity(quantity, self._settings))
+            self._output_nodes.update(self.get_quantity(quantity, self.settings))
 
         # parsing the quantity without requesting it a second time was successful, remove it from requested_quantities.
         self._requested_quantities.remove(quantity)
 
         # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
-        self._parsers.remove(quantity)
+        self.parsers.remove(quantity)
 
         return self._output_nodes.get(quantity)
 

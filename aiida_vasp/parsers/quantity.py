@@ -68,6 +68,7 @@ class ParsableQuantities(object):
         self._quantities = {}
 
         self._vasp_parser = vasp_parser
+        self._parsers = None
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         self._quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
@@ -93,26 +94,29 @@ class ParsableQuantities(object):
 
         return missing_files
 
-    def setup(self, parsers):
+    def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        # check uniqueness and add parsable quantities
+        if self._parsers is None:
+            self._parsers = self._vasp_parser.parsers
+
         retrieved = self._vasp_parser.out_folder.get_folder_list()
-        self._check_uniqueness_add_parsable(parsers, retrieved)
+        # check uniqueness and add parsable quantities
+        self._check_uniqueness_add_parsable(retrieved)
 
         # check consistency, that the quantity is parsable and
         # alternatives
         self._check_consitency_and_alternatives()
 
-    def _check_uniqueness_add_parsable(self, parsers, retrieved):
+    def _check_uniqueness_add_parsable(self, retrieved):
         """Check uniqueness and add parsable quantities."""
 
         self._quantities = {}
         # Gather all parsable items as defined in the file parsers.
-        for filename, value in parsers.get_parsers():
+        for filename, value in self._parsers.get_parsers():
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
                 if quantity in self._quantities:
-                    # Check uniqueness
+                    # This quantity has already been added so it is not unique.
                     raise RuntimeError('The quantity {quantity} defined in {filename} has been '
                                        'defined by two FileParser classes. Quantity names must '
                                        'be unique. If both quantities are equivalent, define one '

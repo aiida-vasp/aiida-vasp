@@ -40,13 +40,13 @@ class ParserManager(object):
     :param settings: A dictionary holding the 'parser_settings'.
     """
 
-    def __init__(self, vasp_parser=None, quantities=None, settings=None):
+    def __init__(self, vasp_parser=None):
         self._parsers = {}
         self._quantities_to_parse = []
 
         self._vasp_parser = vasp_parser
-        self._quantities = quantities
-        self._settings = convert_settings(settings)
+        self._quantities = vasp_parser.quantities
+        self._settings = vasp_parser.settings
 
         # Add all FileParsers from the requested set.
         file_parser_set = get_file_parser_set(self._settings['file_parser_set'])
