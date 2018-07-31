@@ -108,6 +108,7 @@ import re
 
 from six import string_types
 from aiida.common import aiidalogger
+from aiida_vasp.utils.settings_utils import create_new_settings
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
@@ -174,8 +175,11 @@ class BaseFileParser(BaseParser):
         super(BaseFileParser, self).__init__()
         self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
+        self.settings = create_new_settings({})
+
         if calc_parser_cls is not None:
             calc_parser_cls.get_quantity.append(self.get_quantity)
+            self.settings = calc_parser_cls.settings
 
         self._parsable_items = {}
         self._parsed_data = {}
@@ -203,7 +207,13 @@ class BaseFileParser(BaseParser):
         self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
-    def get_quantity(self, quantity, settings, inputs=None):
+    def _init_with_settings(self, settings):
+        """Init with settings."""
+        if settings is None:
+            settings = {}
+        self.settings = create_new_settings(settings)
+
+    def get_quantity(self, quantity, inputs=None):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
@@ -221,7 +231,6 @@ class BaseFileParser(BaseParser):
             # gather everything required for parsing this component.
             if inputs is None:
                 inputs = {}
-            inputs['settings'] = settings
 
             if self._vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.

@@ -6,7 +6,8 @@
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
-from aiida_vasp.parsers.parsers import ParserManager, convert_settings
+from aiida_vasp.parsers.parsers import ParserManager
+from aiida_vasp.utils.settings_utils import create_new_settings
 from aiida_vasp.utils.delegates import Delegate
 
 DEFAULT_OPTIONS = {
@@ -83,12 +84,12 @@ class VaspParser(BaseParser):
 
         self.out_folder = None
 
-        settings = DEFAULT_OPTIONS
         calc_settings = self._calc.get_inputs_dict().get('settings')
+        settings = None
         if calc_settings:
-            settings.update(calc_settings.get_dict().get('parser_settings', DEFAULT_OPTIONS))
+            settings = calc_settings.get_dict().get('parser_settings')
 
-        self.settings = convert_settings(settings)
+        self.settings = create_new_settings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
         self.parsers = ParserManager(vasp_parser=self)
@@ -138,7 +139,7 @@ class VaspParser(BaseParser):
         # Parse all implemented quantities in the quantities_to_parse list.
         while quantities_to_parse:
             quantity = quantities_to_parse.pop(0)
-            self._output_nodes.update(self.get_quantity(quantity, self.settings))
+            self._output_nodes.update(self.get_quantity(quantity))
 
         # Add output nodes if the corresponding data exists.
         for key, value in self._output_nodes.items():
@@ -171,7 +172,7 @@ class VaspParser(BaseParser):
 
         if quantity not in self._output_nodes:
             # The quantity is not in the output_nodes. Try to parse it
-            self._output_nodes.update(self.get_quantity(quantity, self.settings))
+            self._output_nodes.update(self.get_quantity(quantity))
 
         # parsing the quantity without requesting it a second time was successful, remove it from requested_quantities.
         self._requested_quantities.remove(quantity)

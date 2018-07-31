@@ -7,14 +7,13 @@ import numpy as np
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.io.vasprun import VasprunParser
+from aiida_vasp.utils.settings_utils import create_new_settings
 
 
 def test_parse_vasprun(vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
-    settings = {'quantities_to_parse': ['occupations']}
-    quantity = vasprun_parser.get_quantity('occupations', settings=settings)
+    quantity = vasprun_parser.get_quantity('occupations')
     data_obj = quantity['occupations']
     occ = data_obj.get_array('total')
     occupations = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
@@ -32,8 +31,8 @@ def test_parameter_results(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['parameters'], 'output_params': ['fermi_level']}
-    quantity = vasprun_parser.get_quantity('parameters', settings=settings)
+    vasprun_parser.settings['output_params'] = ['fermi_level']
+    quantity = vasprun_parser.get_quantity('parameters')
     data_obj = quantity['parameters']
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
@@ -45,8 +44,7 @@ def test_parameter_results(vasprun_parser):
 def test_kpoints_result(vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
-    settings = {'quantities_to_parse': ['kpoints']}
-    quantity = vasprun_parser.get_quantity('kpoints', settings=settings)
+    quantity = vasprun_parser.get_quantity('kpoints')
     data_obj = quantity['kpoints']
     ref_class = get_data_class('array.kpoints')
     assert isinstance(data_obj, ref_class)
@@ -63,8 +61,7 @@ def test_structure_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['structure']}
-    quantity = vasprun_parser.get_quantity('structure', settings=settings)
+    quantity = vasprun_parser.get_quantity('structure')
     data_obj = quantity['structure']
     # check object
     ref_obj = get_data_class('structure')
@@ -91,8 +88,7 @@ def test_forces_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory')
     data_obj, data_obj_arr = quantity['trajectory']
     # test object (a tupple as we store trajectory as an array as well)
     ref_obj = get_data_class('array')
@@ -122,8 +118,7 @@ def test_forces_result_relax(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory')
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -148,8 +143,7 @@ def test_unitcells_result_relax(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory')
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -174,8 +168,7 @@ def test_positions_result_relax(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['trajectory']}
-    quantity = vasprun_parser.get_quantity('trajectory', settings=settings)
+    quantity = vasprun_parser.get_quantity('trajectory')
     _, data_obj_arr = quantity['trajectory']
     # test object
     ref_obj = get_data_class('array')
@@ -199,8 +192,7 @@ def test_dielectrics_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['dielectrics']}
-    quantity = vasprun_parser.get_quantity('dielectrics', settings=settings)
+    quantity = vasprun_parser.get_quantity('dielectrics')
     data_obj = quantity['dielectrics']
     # test object
     ref_obj = get_data_class('array')
@@ -232,8 +224,7 @@ def test_born_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['born_charges']}
-    quantity = vasprun_parser.get_quantity('born_charges', settings=settings)
+    quantity = vasprun_parser.get_quantity('born_charges')
     data_obj = quantity['born_charges']
     # test object
     ref_obj = get_data_class('array')
@@ -256,8 +247,7 @@ def test_dos_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['dos']}
-    quantity = vasprun_parser.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos')
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
@@ -283,8 +273,7 @@ def test_dos_spin_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['dos']}
-    quantity = vasprun_parser.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos')
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
@@ -309,8 +298,7 @@ def test_pdos_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['dos']}
-    quantity = vasprun_parser.get_quantity('dos', settings=settings)
+    quantity = vasprun_parser.get_quantity('dos')
     data_obj = quantity['dos']
     # test object
     ref_obj = get_data_class('array')
@@ -335,8 +323,7 @@ def test_projectors_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['projectors']}
-    quantity = vasprun_parser.get_quantity('projectors', settings=settings)
+    quantity = vasprun_parser.get_quantity('projectors')
     data_obj = quantity['projectors']
     # test object
     ref_obj = get_data_class('array')
@@ -360,8 +347,7 @@ def test_bands_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['bands']}
-    quantity = vasprun_parser.get_quantity('bands', settings=settings)
+    quantity = vasprun_parser.get_quantity('bands')
     data_obj = quantity['bands']
     # test object
     ref_obj = get_data_class('array.bands')
@@ -391,8 +377,7 @@ def test_eigenocc_spin_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['bands']}
-    quantity = vasprun_parser.get_quantity('bands', settings=settings)
+    quantity = vasprun_parser.get_quantity('bands')
     data_obj = quantity['bands']
     # test object
     ref_obj = get_data_class('array.bands')
@@ -427,8 +412,7 @@ def test_toten_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['energies']}
-    quantity = vasprun_parser.get_quantity('energies', settings=settings)
+    quantity = vasprun_parser.get_quantity('energies')
     data_obj = quantity['energies']
     # test object
     ref_obj = get_data_class('array')
@@ -449,8 +433,7 @@ def test_totens_relax_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['energies']}
-    quantity = vasprun_parser.get_quantity('energies', settings=settings)
+    quantity = vasprun_parser.get_quantity('energies')
     data_obj = quantity['energies']
     # test object
     ref_obj = get_data_class('array')
@@ -473,8 +456,7 @@ def test_hessian_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['hessian']}
-    quantity = vasprun_parser.get_quantity('hessian', settings=settings)
+    quantity = vasprun_parser.get_quantity('hessian')
     data_obj = quantity['hessian']
     # test object
     ref_obj = get_data_class('array')
@@ -504,8 +486,7 @@ def test_dynmat_result(vasprun_parser):
 
     """
 
-    settings = {'quantities_to_parse': ['dynmat']}
-    quantity = vasprun_parser.get_quantity('dynmat', settings=settings)
+    quantity = vasprun_parser.get_quantity('dynmat')
     data_obj = quantity['dynmat']
     # test object
     ref_obj = get_data_class('array')

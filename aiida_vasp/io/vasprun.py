@@ -5,6 +5,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.utils.settings_utils import update_settings_with
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 DEFAULT_OPTIONS = {
@@ -156,7 +157,6 @@ class VasprunParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(VasprunParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
-        self._settings = {}
 
     def _init_with_file_path(self, path):
         """Init with a filepath."""
@@ -185,12 +185,9 @@ class VasprunParser(BaseFileParser):
         for key, value in inputs.items():
             self._parsed_data[key] = value
 
-        settings = inputs.get('settings', DEFAULT_OPTIONS)
-        if not settings:
-            settings = DEFAULT_OPTIONS
-        self._settings = settings
+        update_settings_with(self.settings, DEFAULT_OPTIONS)
 
-        quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
+        quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
@@ -313,7 +310,7 @@ class VasprunParser(BaseFileParser):
         outcar_parameters = self._parsed_data.get('ocp_parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
-        for quantity in self._settings.get('output_params', DEFAULT_OPTIONS['output_params']):
+        for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
         output_parameters = get_data_node('parameter', dict=parameters)

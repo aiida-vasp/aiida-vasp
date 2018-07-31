@@ -4,33 +4,6 @@ from aiida_vasp.parsers.file_parser_definitions import get_file_parser_set
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
-def convert_settings(settings_dict):
-    """
-    Convert a 'parser_settings' dict to a Settings object.
-
-    :param settings_dict: Dict holding the parser settings.
-
-    :return settings: A Settings object.
-    """
-    settings = DictWithAttributes({})
-
-    # Find all the nodes, that should be added.
-    nodes = []
-    for key, value in settings_dict.items():
-        settings[key] = value
-        if not key.startswith('add_'):
-            # only keys starting with 'add_' are relevant as nodes.
-            continue
-        if not value:
-            # The quantity should not be added.
-            continue
-        nodes.append(key[4:])
-
-    settings['nodes'] = nodes
-
-    return settings
-
-
 class ParserManager(object):
     """
     A manager for FileParsers.
