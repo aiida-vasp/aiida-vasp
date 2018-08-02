@@ -450,6 +450,12 @@ class VasprunParser(BaseFileParser):
         species = self._data_obj.get_species()
         forces = self._data_obj.get_forces("all")
         stress = self._data_obj.get_stress("all")
+        # If any is None, return None for all (parsing failed for
+        # some quantity)
+        if (unitcell is None) or (positions is None) or \
+           (species is None) or (forces is None) or \
+           (stress is not None):
+            return None
         # make sure all are sorted, first to last calculation
         # (species is constant)
         unitcell = sorted(unitcell.items())
@@ -464,23 +470,14 @@ class VasprunParser(BaseFileParser):
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species])
-
-        if (unitcell is not None) and (positions is not None) and \
-           (species is not None) and (forces is not None) and \
-           (stress is not None):
-            array_node = get_data_class('array')()
-            trajectory_node = get_data_class('array.trajectory')()
-
-            keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
-
-            trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
-
-            for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
-                array_node.set_array(key, data)
-                trajectory_node.set_array(key, data)
-            return trajectory_node, array_node
-
-        return None
+        array_node = get_data_class('array')()
+        trajectory_node = get_data_class('array.trajectory')()
+        keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
+        trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
+        for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
+            array_node.set_array(key, data)
+            trajectory_node.set_array(key, data)
+        return trajectory_node, array_node
 
     # @property
     # def trajectory_full(self):
@@ -720,12 +717,14 @@ def _build_structure(lattice):
 
     structure_cls = get_data_class('structure')
     unitcell = lattice["unitcell"]
-    structure = structure_cls(cell=unitcell)
-    # Aiida wants the species as symbols, so invert
-    elements = _invert_dict(parsevaspct.elements)
-    for pos, specie in zip(lattice["positions"], lattice["species"]):
-        structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
-    return structure
+    if unitcell is not None:
+        structure = structure_cls(cell=unitcell)
+        # Aiida wants the species as symbols, so invert
+        elements = _invert_dict(parsevaspct.elements)
+        for pos, specie in zip(lattice["positions"], lattice["species"]):
+            structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
+        return structure
+    return None
 
 
 def _invert_dict(dct):

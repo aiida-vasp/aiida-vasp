@@ -358,7 +358,7 @@ class VersioningMixin(object):
 
 class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     """
-    Store a POTCAR file in the db, never use as input to a calculation or workflow.
+    Store a POTCAR file in the db, never use as input to a calculation or workchain.
 
     .. warning:: Warning! Sharing nodes of this type may be illegal!
 
@@ -366,7 +366,8 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     by the VASP group to VASP licence holders. Take care to not share such licenced data
     with non-licence holders.
 
-    When writing a calculation plugin or workflow, do not use this as an input type, use :class:`aiida_vasp.data.potcar.PotcarData` instead!
+    When writing a calculation plugin or workchain, do not use this as an input type,
+    use :class:`aiida_vasp.data.potcar.PotcarData` instead!
     """
 
     _query_label = 'potcar_file'

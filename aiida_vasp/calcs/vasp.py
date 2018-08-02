@@ -195,7 +195,6 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         kpoints = self.inp.kpoints
-
         kpoint_parser = KpParser(data=kpoints)
         kpoint_parser.write(dst)
 

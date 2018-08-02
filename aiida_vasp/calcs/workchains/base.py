@@ -1,9 +1,10 @@
+# pylint: disable=no-member
 """
 Base WorkChain for VASP, Error Handling enriched wrapper around VaspCalculation.
 
-Intended to be reused (launched instead of a VaspCalculation) in all other VASP workflows.
+Intended to be reused (launched instead of a VaspCalculation) in all other VASP workchains.
 Any validation and / or error handling that applies to *every* VASP run,
-should be handled on this level, so that every workflow can profit from it.
+should be handled on this level, so that every workchain can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
 from aiida.work.workchain import while_
@@ -12,7 +13,7 @@ from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, builder_interface
-from aiida_vasp.workflows.restart import BaseRestartWorkChain
+from aiida_vasp.calcs.workchains.restart import BaseRestartWorkChain
 
 
 def get_vasp_proc():
@@ -63,12 +64,12 @@ class VaspBaseWf(BaseRestartWorkChain):
         spec.input('options', valid_type=get_data_class('parameter'))
 
         spec.outline(
-            cls.setup,
-            cls.validate_inputs,
-            while_(cls.should_run_calculation)(
-                cls.prepare_calculation,
+            cls.init_context,
+            cls.init_inputs,
+            while_(cls.run_calculations)(
+                cls.init_calculation,
                 cls.run_calculation,
-                cls.inspect_calculation
+                cls.verify_calculation
             ),
             cls.results
         )  ## yapf: disable
@@ -79,12 +80,13 @@ class VaspBaseWf(BaseRestartWorkChain):
         spec.output('output_band', valid_type=get_data_class('array.bands'), required=False)
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.exit_code(1, 'ERROR', 'Mangled VaspBaseWf')
 
-    def prepare_calculation(self):
+    def init_calculation(self):
         if isinstance(self.ctx.restart_calc, self._calculation_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.out.remote_folder
 
-    def validate_inputs(self):
+    def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
         self.ctx.inputs = AttributeDict()
         self.ctx.inputs.code = self.inputs.code
