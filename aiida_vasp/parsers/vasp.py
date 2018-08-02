@@ -148,6 +148,10 @@ class VaspParser(BaseParser):
                 # This quantity does not represent a node, continue with the next one.
                 continue
 
+            if quantity.nodeName in self.settings.nodes and value is None:
+                # One of the requested output nodes is None, parsing has not been successful.
+                return self.result(success=False)
+
             if value:
                 self._set_node(quantity.nodeName, value)
 
