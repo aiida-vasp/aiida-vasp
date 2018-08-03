@@ -105,11 +105,11 @@ class ParserSettings(object):
     def get(self, item, default=None):
         return self._settings.get(item, default)
 
-    def set_parser_definitions(self, file_parser_set=None):
+    def set_parser_definitions(self, file_parser_set='default'):
         """Load the parser definitions."""
-        if file_parser_set is None:
-            file_parser_set = 'default'
+        from copy import deepcopy
+
         if file_parser_set not in FILE_PARSER_SETS:
             return
         for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self.parser_definitions[file_name] = parser_dict
+            self.parser_definitions[file_name] = deepcopy(parser_dict)
