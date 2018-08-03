@@ -60,7 +60,7 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
     work.set_runner(runner)
 
-    base_wf_proc = WorkflowFactory('vasp.relax')
+    workchain = WorkflowFactory('vasp.relax')
 
     mock_vasp.store()
     print(mock_vasp.get_remote_exec_path())
@@ -101,5 +101,5 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.restart.clean_workdir = restart_clean_workdir
     inputs.relax = AttributeDict()
 
-    results = work.run(base_wf_proc, **inputs)
+    results = work.run(workchain, **inputs)
     assert 'relaxed_structure' in results

@@ -38,6 +38,7 @@
             "vasp.vasp = aiida_vasp.calcs.workchains.vasp:VaspWorkChain",
 	    "vasp.verify = aiida_vasp.calcs.workchains.verify:VerifyWorkChain",
 	    "vasp.converge = aiida_vasp.calcs.workchains.converge:ConvergeWorkChain",
+	    "vasp.relax = aiida_vasp.calcs.workchains.relax:RelaxWorkChain",
             "vasp.legacy.scf = aiida_vasp.calcs.workflows.scf:ScfWorkflow", 
             "vasp.legacy.nscf = aiida_vasp.calcs.workflows.nscf:NscfWorkflow", 
             "vasp.legacy.projections = aiida_vasp.calcs.workflows.projections:ProjectionsWorkflow", 
