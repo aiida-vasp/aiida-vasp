@@ -22,12 +22,12 @@ def test_parse_eigenval(vasprun_parser, vasp_structure):
     vrp_bands = vasprun_parser.get_quantity('bands', {})
     inputs['occupations'] = vrp_bands['bands'].get_array('occupations')
     inputs['structure'] = vasp_structure
-    result = parser.get_quantity('eigenval-bands', {}, inputs)
+    result = parser.get_quantity('eigenval-bands', inputs)
     assert result['eigenval-bands'].get_bands().all() == bands.all()
 
     # or directly
     vrp_occupations = vasprun_parser.get_quantity('occupations', {})
     inputs['occupations'] = vrp_occupations['occupations'].get_array('total')
     inputs['structure'] = vasp_structure
-    result = parser.get_quantity('eigenval-bands', {}, inputs)
+    result = parser.get_quantity('eigenval-bands', inputs)
     assert result['eigenval-bands'].get_bands().all() == bands.all()

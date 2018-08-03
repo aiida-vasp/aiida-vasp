@@ -21,9 +21,3 @@ class DictWithAttributes(AttributeDict):
     def __setattr__(self, attr, value):
         """Set a key as an attribute."""
         self[attr] = value
-
-    def get(self, attr):
-        if attr in self:
-            return self[attr]
-
-        return None
