@@ -1,0 +1,10 @@
+dis_num_iter = 1000
+num_bands = 24
+num_iter = 0
+num_wann = 14
+spinors = .true.
+
+begin projections
+Ga : s; px; py; pz
+As : px; py; pz
+end projections

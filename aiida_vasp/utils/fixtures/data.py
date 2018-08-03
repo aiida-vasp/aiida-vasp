@@ -2,6 +2,7 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
 import os
 from collections import OrderedDict
+import subprocess as sp
 
 import numpy
 import pytest
@@ -15,7 +16,7 @@ from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si'}
 
 
 @pytest.fixture(scope='session')
@@ -42,6 +43,7 @@ def localhost(aiida_env, localhost_dir):
             workdir=localhost_dir.strpath,
             transport_type='local',
             scheduler_type='direct',
+            mpirun_command=[],
             enabled_state=True)
     return computer
 
@@ -76,7 +78,7 @@ def temp_pot_folder(tmpdir):
 def duplicate_potcar_data(potcar_node):
     """Create and store (and return) a duplicate of a given PotcarData node."""
     from aiida_vasp.data.potcar import temp_potcar
-    file_node = potcar_node.find_file_node().copy()
+    file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.set_file(potcar_file.strpath)
         file_node._set_attr('md5', 'abcd')
@@ -178,14 +180,41 @@ def vasp_kpoints(request, aiida_env):
 
 @pytest.fixture()
 def vasp_code(localhost):
-    """Fixture for a vasp code, the executable it points to does not exist"""
+    """Fixture for a vasp code, the executable it points to does not exist."""
     from aiida.orm import Code
-    localhost.store()
+    if not localhost.pk:
+        localhost.store()
     code = Code()
     code.label = 'vasp'
     code.description = 'VASP code'
     code.set_remote_computer_exec((localhost, '/usr/local/bin/vasp'))
     code.set_input_plugin_name('vasp.vasp')
+    return code
+
+
+@pytest.fixture()
+def mock_vasp(aiida_env, localhost):
+    """Points to a mock-up of a VASP executable."""
+    from aiida.orm import Code
+    from aiida.orm.querybuilder import QueryBuilder
+    query_builder = QueryBuilder()
+    query_builder.append(Code, tag='code')
+    query_builder.add_filter('code', {'label': {'==': 'mock-vasp'}})
+    query_results = query_builder.all()
+    if query_results:
+        code = query_results[0][0]
+    else:
+        os_env = os.environ.copy()
+        if not localhost.pk:
+            localhost.store()
+        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env).strip()
+        code = Code()
+        code.label = 'mock-vasp'
+        code.description = 'Mock VASP for tests'
+        code.set_remote_computer_exec((localhost, mock_vasp_path))
+        code.set_input_plugin_name('vasp.vasp')
+        aiidapath = py_path.local(aiida_env.root_dir).join('.aiida')
+        code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
     return code
 
 
@@ -213,11 +242,23 @@ def vasp_wavecar(aiida_env):
     return wavecar, ref_wavecar
 
 
-@pytest.fixture()
+@pytest.fixture
 def ref_incar():
     from aiida_vasp.backendtests.common import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
+
+
+@pytest.fixture
+def ref_incar_vasp2w90():
+    data = py_path.local(data_path('incar_set', 'INCAR.vasp2w90'))
+    yield data.read()
+
+
+@pytest.fixture
+def ref_win():
+    data = py_path.local(data_path('wannier90.win'))
+    yield data.read()
 
 
 @pytest.fixture()
@@ -252,3 +293,23 @@ def _ref_kp_mesh():
     with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
+
+
+@pytest.fixture
+def wannier_params():
+    from aiida.orm.data.parameter import ParameterData
+    return ParameterData(dict=dict(
+        dis_num_iter=1000,
+        num_bands=24,
+        num_iter=0,
+        num_wann=14,
+        spinors=True,
+    ))
+
+
+@pytest.fixture
+def wannier_projections():
+    from aiida.orm.data.base import List
+    wannier_projections = List()
+    wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
+    return wannier_projections

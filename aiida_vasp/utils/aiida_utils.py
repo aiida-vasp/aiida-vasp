@@ -1,6 +1,7 @@
 """Utilities for working with aiida in general"""
 from functools import wraps
 import numpy as np
+from packaging import version
 
 from aiida.common.extendeddicts import AttributeDict
 
@@ -156,3 +157,12 @@ def compress_cell(structure, volume_change):
     cell = structure.cell
     new_cell = np.array(cell) * volume_change
     structure.reset_cell(new_cell.to_list())
+
+
+def aiida_version():
+    from aiida import __version__ as aiida_version_
+    return version.parse(aiida_version_)
+
+
+def cmp_version(string):
+    return version.parse(string)

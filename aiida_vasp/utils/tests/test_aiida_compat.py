@@ -7,6 +7,7 @@ from aiida_vasp.utils.aiida_utils import get_current_user, backend_obj_users, ge
 from aiida_vasp.utils.fixtures import aiida_env
 
 
+@pytest.mark.wf
 def test_get_current_user(aiida_env):
     """Assert that get_current_user returns a user in all tested aiida versions."""
     from aiida.orm.user import User
@@ -18,7 +19,9 @@ def test_get_current_user(aiida_env):
     assert user.email
 
 
+@pytest.mark.wf
 def test_get_base_data(aiida_env):
+    """Make sure we can retrieve the Bool data type through get_data_class."""
     bool_cls = get_data_class('bool')
     bool_obj = get_data_node('bool', True)
     from aiida.orm.data.base import Bool

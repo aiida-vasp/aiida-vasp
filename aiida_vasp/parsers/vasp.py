@@ -26,21 +26,6 @@ LINKNAME_DICT = {
     'wavecar': 'wavecar',
 }
 
-ALLOWED_TYPES = {
-    'parameters': 'parameters',
-    'kpoints': 'array.kpoints',
-    'structure': 'structure',
-    'trajectory': 'array.trajectory',
-    'bands': 'array.bands',
-    'dos': 'array',
-    'energies': 'array',
-    'projectors': 'array',
-    'born_charges': 'array',
-    'dielectrics': 'array',
-    'hessian': 'array',
-    'dynmat': 'array'
-}
-
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
     'add_bands': False,
@@ -126,6 +111,8 @@ class VaspParser(BaseParser):
         'kpoints':    KpointsData node parsed from IBZKPT.
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
+
+    * `output_params`: A list of quantities, that should be added to the 'output_parameters' node.
 
     * `file_parser_set`: String (DEFAULT = 'default').
 

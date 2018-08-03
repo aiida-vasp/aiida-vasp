@@ -16,6 +16,7 @@ from aiida.orm import WorkflowFactory, Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, init_input, \
     displaced_structure, compressed_structure, new_structure, new_parameter, new_kpoints
+from aiida_vasp.calcs.workchains.auxiliary.utils import fetch_k_grid
 
 
 class ConvergeWorkChain(WorkChain):
@@ -63,18 +64,21 @@ class ConvergeWorkChain(WorkChain):
             cls.init_conv,
             while_(cls.run_pw_conv_calcs)(
                 cls.init_pw_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_pw_conv_calc
             ),
             cls.analyze_pw_conv,
             while_(cls.run_kpoints_conv_calcs)(
                 cls.init_kpoints_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_kpoints_conv_calc
             ),
             cls.init_disp_conv,
             while_(cls.run_pw_conv_disp_calcs)(
                 cls.init_pw_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_pw_conv_calc
             ),
@@ -83,12 +87,14 @@ class ConvergeWorkChain(WorkChain):
             ),
             while_(cls.run_kpoints_conv_disp_calcs)(
                 cls.init_kpoints_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_kpoints_conv_calc
             ),
             cls.init_comp_conv,
             while_(cls.run_pw_conv_comp_calcs)(
                 cls.init_pw_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_pw_conv_calc
             ),
@@ -97,12 +103,14 @@ class ConvergeWorkChain(WorkChain):
             ),
             while_(cls.run_kpoints_conv_comp_calcs)(
                 cls.init_kpoints_conv_calc,
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.results_kpoints_conv_calc
             ),
             cls.analyze_conv,
             cls.store_conv,
             cls.init_converged,
+            cls.init_next_workchain,
             cls.run_next_workchain,
             cls.results
         )  # yapf: disable
@@ -626,17 +634,21 @@ class ConvergeWorkChain(WorkChain):
 
         return
 
-    def run_next_workchain(self):
-        """Run verify workflow."""
+    def init_next_workchain(self):
+        """Initialize the next workchain calculation."""
 
         try:
-            inputs = self.ctx.inputs
+            self.ctx.inputs
         except AttributeError:
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
         if self.ctx.replace_nodes:
             self._replace_nodes()
 
+    def run_next_workchain(self):
+        """Run next workchain."""
+
+        inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
         if hasattr(running, 'pid'):
@@ -850,7 +862,7 @@ class ConvergeWorkChain(WorkChain):
         # Only analyze plane wave cutoff if the encut is not supplied
         if self.ctx.converge.settings['encut_org'] is None:
             self.report("PW_DATA:{}".format(self.ctx.converge.pw_data))
-            encut = self.check_pw_converged()
+            encut = self._check_pw_converged()
             # Check if something went wrong
             if encut is None:
                 self.report('We were not able to obtain a convergence of the plane wave cutoff'
@@ -880,12 +892,12 @@ class ConvergeWorkChain(WorkChain):
         if not (displace or compress):
             encut = settings['encut']
             k_data = self.ctx.converge.k_data
-            kgrid = self.check_kpoints_converged(k_data, cutoff_type, cutoff_value)
+            kgrid = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value)
         else:
             pw_data_org = self.ctx.converge.pw_data_org
-            encut = self.check_pw_converged(pw_data_org, cutoff_type, cutoff_value)
+            encut = self._check_pw_converged(pw_data_org, cutoff_type, cutoff_value)
             k_data_org = self.ctx.converge.k_data_org
-            kgrid = self.check_kpoints_converged(k_data_org, cutoff_type, cutoff_value)
+            kgrid = self._check_kpoints_converged(k_data_org, cutoff_type, cutoff_value)
 
         if displace and not compress:
             encut_diff_displacement, kgrid_diff_displacement = self._analyze_conv_disp(encut, kgrid, pw_data_org, k_data_org)
@@ -984,8 +996,8 @@ class ConvergeWorkChain(WorkChain):
         cutoff_value_r = settings['cutoff_value_r']
         pw_data_displacement = self.ctx.converge.pw_data_displacement
         k_data_displacement = self.ctx.converge.k_data_displacement
-        encut_displacement = self.check_pw_converged(pw_data_displacement, cutoff_type, cutoff_value)
-        kgrid_displacement = self.check_kpoints_converged(k_data_displacement, cutoff_type, cutoff_value)
+        encut_displacement = self._check_pw_converged(pw_data_displacement, cutoff_type, cutoff_value)
+        kgrid_displacement = self._check_kpoints_converged(k_data_displacement, cutoff_type, cutoff_value)
         # Calculate diffs for the plane wave cutoff
         if encut_org is None:
             pw_data = pw_data_displacement
@@ -993,7 +1005,7 @@ class ConvergeWorkChain(WorkChain):
                 pw_data[index][1:] = [
                     pw_data_displacement[index][j + 1] - pw_data_org[index][j + 1] for j in range(len(pw_data_displacement[0]) - 1)
                 ]
-            encut_diff_displacement = self.check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
+            encut_diff_displacement = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
             encut_diff_displacement = encut_org
 
@@ -1004,7 +1016,7 @@ class ConvergeWorkChain(WorkChain):
                 k_data[index][4:] = [
                     k_data_displacement[index][j + 4] - k_data_org[index][j + 4] for j in range(len(k_data_displacement[0]) - 4)
                 ]
-            kgrid_diff_displacement = self.check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
+            kgrid_diff_displacement = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         else:
             kgrid_diff_displacement = kgrid_org
         if self._verbose:
@@ -1053,14 +1065,14 @@ class ConvergeWorkChain(WorkChain):
         cutoff_value_r = settings['cutoff_value_r']
         pw_data_comp = self.ctx.converge.pw_data_comp
         k_data_comp = self.ctx.converge.k_data_comp
-        encut_comp = self.check_pw_converged(pw_data_comp, cutoff_type, cutoff_value)
-        kgrid_comp = self.check_kpoints_converged(k_data_comp, cutoff_type, cutoff_value)
+        encut_comp = self._check_pw_converged(pw_data_comp, cutoff_type, cutoff_value)
+        kgrid_comp = self._check_kpoints_converged(k_data_comp, cutoff_type, cutoff_value)
         # Calculate diffs for encut
         if encut_org is None:
             pw_data = pw_data_comp
             for index, _ in enumerate(pw_data):
                 pw_data[index][1:] = [pw_data_comp[index][j + 1] - pw_data_org[index][j + 1] for j in range(len(pw_data_comp[0]) - 1)]
-            encut_diff_comp = self.check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
+            encut_diff_comp = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
             encut_diff_comp = encut_org
         # Then for the k points
@@ -1068,7 +1080,7 @@ class ConvergeWorkChain(WorkChain):
             k_data = k_data_comp
             for index, _ in enumerate(k_data_comp):
                 k_data[index][4:] = [k_data_comp[index][j + 4] - k_data_org[index][j + 4] for j in range(len(k_data_comp[0]) - 4)]
-            kgrid_diff_comp = self.check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
+            kgrid_diff_comp = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         else:
             kgrid_diff_comp = kgrid_org
         if self._verbose:
@@ -1137,7 +1149,7 @@ class ConvergeWorkChain(WorkChain):
 
         return
 
-    def check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
+    def _check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
         """
         Check if plane wave cutoffs are converged to the specified value.
 
@@ -1184,7 +1196,7 @@ class ConvergeWorkChain(WorkChain):
 
         return pw_data[index][0]
 
-    def check_kpoints_converged(self, k_data=None, cutoff_type=None, cutoff_value=None):
+    def _check_kpoints_converged(self, k_data=None, cutoff_type=None, cutoff_value=None):
         """
         Check if the k-point grid are converged to the specified value.
 
@@ -1275,32 +1287,3 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.kpoints = kpoints(kpoints_mesh=[1, 1, 1], cell_from_structure=comp_structure)
 
         return comp_structure
-
-
-def fetch_k_grid(rec_cell, k_spacing):
-    """
-    Suggest a sensible k-point sampling based on a supplied spacing.
-
-    Parameters
-    ----------
-    rec_cell : ndarray
-        A two dimensional ndarray of floats defining the reciprocal lattice with each
-        vector as row elements.
-    k_spacing : float
-        The k-point spacing.
-
-    Returns
-    -------
-    kgrid : (3) list of int
-        The k-point grid given the supplied `rec_cell` and `kstep`
-
-    Notes
-    -----
-    This is usable for instance when performing
-    plane wave cutoff convergence tests without a base k-point grid.
-
-    """
-    rec_cell_lenghts = np.linalg.norm(rec_cell, axis=1)
-    kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
-
-    return kgrid.astype('int').tolist()

@@ -11,6 +11,9 @@
     ], 
     "description": "AiiDA Plugin for running VASP calculations.", 
     "entry_points": {
+        "console_scripts": [
+            "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
+        ],
         "aiida.calculations": [
             "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation", 
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
@@ -46,8 +49,8 @@
     "extras_require": {
         "dev": [
             "pre-commit", 
-            "prospector", 
-            "pylint", 
+            "prospector == 0.12.11", 
+            "pylint == 1.9.3", 
             "flake8", 
             "yapf", 
             "coverage", 
