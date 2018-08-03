@@ -5,7 +5,6 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
 from aiida_vasp.io.parser import BaseFileParser
-from aiida_vasp.utils.settings_utils import update_settings_with
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 DEFAULT_OPTIONS = {
@@ -185,7 +184,10 @@ class VasprunParser(BaseFileParser):
         for key, value in inputs.items():
             self._parsed_data[key] = value
 
-        update_settings_with(self.settings, DEFAULT_OPTIONS)
+        if self.settings is not None:
+            self.settings.update_with(DEFAULT_OPTIONS)
+        else:
+            self.settings = DEFAULT_OPTIONS
 
         quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}

@@ -108,7 +108,6 @@ import re
 
 from six import string_types
 from aiida.common import aiidalogger
-from aiida_vasp.utils.settings_utils import create_new_settings
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
@@ -175,7 +174,7 @@ class BaseFileParser(BaseParser):
         super(BaseFileParser, self).__init__()
         self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
-        self.settings = create_new_settings({})
+        self.settings = None
 
         if calc_parser_cls is not None:
             calc_parser_cls.get_quantity.append(self.get_quantity)
@@ -209,9 +208,7 @@ class BaseFileParser(BaseParser):
 
     def _init_with_settings(self, settings):
         """Init with settings."""
-        if settings is None:
-            settings = {}
-        self.settings = create_new_settings(settings)
+        self.settings = settings
 
     def get_quantity(self, quantity, inputs=None):
         """

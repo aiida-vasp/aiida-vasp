@@ -68,7 +68,6 @@ class ParsableQuantities(object):
         self._quantities = {}
 
         self._vasp_parser = vasp_parser
-        self._parsers = None
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         self._quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
@@ -97,10 +96,8 @@ class ParsableQuantities(object):
     def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        if self._parsers is None:
-            self._parsers = self._vasp_parser.parsers
-
         retrieved = self._vasp_parser.out_folder.get_folder_list()
+
         # check uniqueness and add parsable quantities
         self._check_uniqueness_add_parsable(retrieved)
 
@@ -113,7 +110,7 @@ class ParsableQuantities(object):
 
         self._quantities = {}
         # Gather all parsable items as defined in the file parsers.
-        for filename, value in self._parsers.get_parsers():
+        for filename, value in self._vasp_parser.settings.parser_definitions.items():
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
                 if quantity in self._quantities:
                     # This quantity has already been added so it is not unique.

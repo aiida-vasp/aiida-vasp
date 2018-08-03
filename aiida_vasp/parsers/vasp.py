@@ -6,8 +6,8 @@
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
-from aiida_vasp.parsers.parsers import ParserManager
-from aiida_vasp.utils.settings_utils import create_new_settings
+from aiida_vasp.parsers.parser_manager import ParserManager
+from aiida_vasp.parsers.parser_settings import ParserSettings
 from aiida_vasp.utils.delegates import Delegate
 
 DEFAULT_OPTIONS = {
@@ -64,7 +64,7 @@ class VaspParser(BaseParser):
 
     * `file_parser_set`: String (DEFAULT = 'default').
 
-        By this option the default set of FileParsers can be chosen. See file_parser_definitions.py
+        By this option the default set of FileParsers can be chosen. See parser_settings.py
         for available options.
 
     Additional FileParsers can be added to the VaspParser by using
@@ -89,7 +89,7 @@ class VaspParser(BaseParser):
         if calc_settings:
             settings = calc_settings.get_dict().get('parser_settings')
 
-        self.settings = create_new_settings(settings, DEFAULT_OPTIONS)
+        self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
         self.parsers = ParserManager(vasp_parser=self)
@@ -101,8 +101,9 @@ class VaspParser(BaseParser):
         self._requested_quantities = []
 
     def add_file_parser(self, parser_name, parser_dict):
-        """Add the definition of a fileParser to self._parsers."""
+        """Add the definition of a fileParser to self.settings and self.parsers."""
 
+        self.settings.parser_definitions[parser_name] = parser_dict
         self.parsers.add_file_parser(parser_name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
@@ -113,7 +114,7 @@ class VaspParser(BaseParser):
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
-            for file_name, value_dict in self.parsers.get_parsers():
+            for file_name, value_dict in self.settings.parser_definitions.items():
                 if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
                     return True
             return False
@@ -154,6 +155,9 @@ class VaspParser(BaseParser):
 
             if value:
                 self._set_node(quantity.nodeName, value)
+
+        # Reset the 'get_quantity' delegate
+        self.get_quantity.clear()
 
         return self.result(success=True)
 

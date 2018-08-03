@@ -7,7 +7,6 @@ import numpy as np
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.settings_utils import create_new_settings
 
 
 def test_parse_vasprun(vasprun_parser):
@@ -31,7 +30,7 @@ def test_parameter_results(vasprun_parser):
 
     """
 
-    vasprun_parser.settings['output_params'] = ['fermi_level']
+    vasprun_parser.settings.update_with({'output_params': ['fermi_level']})
     quantity = vasprun_parser.get_quantity('parameters')
     data_obj = quantity['parameters']
     ref_class = get_data_class('parameter')
