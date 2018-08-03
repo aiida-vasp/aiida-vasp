@@ -7,11 +7,12 @@ should be handled on this level, so that every workchain can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
 from aiida.work.workchain import while_
+from aiida.work.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_class, builder_interface
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
 from aiida_vasp.calcs.workchains.restart import BaseRestartWorkChain
 
 
@@ -57,9 +58,9 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         spec.outline(
             cls.init_context,
-            cls.validate_inputs,
+            cls.init_inputs,
             while_(cls.run_calculations)(
-                cls.prepare_calculation,
+                cls.init_calculation,
                 cls.run_calculation,
                 cls.verify_calculation
             ),
@@ -73,11 +74,20 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
 
-    def prepare_calculation(self):
+    def init_calculation(self):
+        """Set the restart folder and set INCAR tags for a restart."""
         if isinstance(self.ctx.restart_calc, self._calculation):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.out.remote_folder
+            old_incar = AttributeDict(self.ctx.inputs.incar.get_dict())
+            incar = old_incar.copy()
+            if 'istart' in incar:
+                incar.istart = 1
+            if 'icharg' in incar:
+                incar.icharg = 1
+            if incar != old_incar:
+                self.ctx.inputs.incar = get_data_node('parameter', dict=incar)
 
-    def validate_inputs(self):
+    def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
         self.ctx.inputs = AttributeDict()
         self.ctx.inputs.code = self.inputs.code
@@ -91,12 +101,13 @@ class VaspWorkChain(BaseRestartWorkChain):
         options = AttributeDict()
         options.computer = self.inputs.code.get_computer()
         options.update(self.inputs.options.get_dict())
-        expected_options = ['computer', 'resources', 'queue_name']
+        expected_options = ['computer', 'resources']
+        if options.computer.get_scheduler_type() != 'direct':
+            expected_options.append('queue_name')
         for option in expected_options:
             if option not in options:
-                message = '{} required but not passed!'.format(option)
-                self._fail_compat(exception=ValueError(message))
-        if builder_interface(CalculationFactory('vasp.vasp')):  # aiida > 1.0.0 will use this
+                self._fail_compat(exception=ValueError('option {} required but not passed!'.format(option)))
+        if builder_interface(CalculationFactory('vasp.vasp')):  # aiida 1.0.0+ will use this
             self.ctx.inputs.options = options
         else:
             self.ctx.inputs._options = options  # pylint: disable=protected-access
@@ -109,3 +120,17 @@ class VaspWorkChain(BaseRestartWorkChain):
             self._fail_compat(exception=err)
         except NotExistent as err:
             self._fail_compat(exception=err)
+
+    @override
+    def on_except(self, exc_info):
+        """Handle excepted state."""
+
+        last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
+        if last_calc:
+            self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
+            sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
+            sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')
+            self.report('Scheduler output:\n{}'.format(sched_out or ''))
+            self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
+
+        return super(VaspWorkChain, self).on_except(exc_info)
