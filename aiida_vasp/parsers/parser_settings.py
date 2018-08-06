@@ -73,6 +73,8 @@ class ParserSettings(object):
 
         self._settings = settings
         if default_settings:
+            if self._settings is None:
+                self._settings = {}
             self.update_with(default_settings)
 
         self.nodes = []
