@@ -5,6 +5,7 @@ import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
 from monty.collections import AttrDict
+from packaging import version
 
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -194,3 +195,9 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
     result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', str(new_arch)])
     assert not result.exception
     assert not new_arch.exists()
+
+
+def test_call_from_vasp():
+    import subprocess
+    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
+    assert 'Usage: verdi data vasp-potcar' in output

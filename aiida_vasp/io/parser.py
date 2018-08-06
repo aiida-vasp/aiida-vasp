@@ -17,13 +17,17 @@ Usage::
     ExampleFileParser(BaseFileParser):
 
         PARSABLE_ITEMS = {
-            'item1': {
+            'item1': { # The name of a quantity. It should be unique among all of the FileParsers.
                 'inputs': ['required_quantity'],  # This quantity will be parsed first and made available in time if possible
                 'parsers': ['ExampleFile'], # During setup the VaspParser will check, whether ExampleFile has been retrieved
                 ## and initialise the corresponding parser, if this quantity is requested by setting any of the
                 ## 'parser_settings['add_OutputNode'] = True'
                 'nodeName': ['examples'],  # The quantity will be added to the 'output_examples' output node
                 'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
+                'alternatives': ['alternative_quantity1', ... ] # Optional. If a quantity can be parsed from more than
+                ## one file, a list of alternative quantities can be provided here.
+                'is_alternative': another_quantity # Optional. If this quantity is an alternative to another_quantity
+                ## set this flag. The VaspParser will automatically add this quantity to another_quantities alternatives.
             }
             'item2': {
                 'inputs': [],
@@ -35,8 +39,7 @@ Usage::
 
         def __init__(self, *args, **kwargs):
             super(ExampleFileParser, self).__init__(*args, **kwargs)
-            self._parsable_items = self.PARSABLE_ITEMS
-            self._parsed_data = {}
+            self.init_with_kwargs(**kwargs)
 
         def _parse_file(self, inputs):
             example_file = py.path.local(self._file_path)  # self._file_path is set by the superclass
@@ -104,6 +107,8 @@ Parses files like::
 import re
 
 from six import string_types
+from aiida.common import aiidalogger
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 class BaseParser(object):
@@ -139,29 +144,64 @@ class BaseFileParser(BaseParser):
         - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
           as the required information on how to extract those.
         - _parsed_data: a dictionary containing all the parsed data from this file.
-        - get_quantities(properties, output): Method to be called by the VaspParser
+        - get_quantity(): Method to be called by the VaspParser
           which will either fill the _parsed_data in case that it is empty by calling _parse_file
-          or return the requested data from the _parsed_data.
+          or return the requested data from the _parsed_data. If another quantity is required as
+          prerequisite it will be requested from the VaspParser.
+
+          This method will be subscribed to the VaspParsers get_quantity delegate during initialisation.
+          When the VaspParser calls his delegate this method will be called and return the requested
+          quantity.
         _ _parse_file: an abstract method to be implemented by the actual file parser, which will
           parse the file and fill the _parsed_data dictionary.
 
-          :output contains data parsed by other file parsers and optionally a 'settings' card
-                  which determines the behaviour of each file parsers _parse_file method.
-
-        :param file_path: string, containing the path to the file to be parsed
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
+
+        :keyword file_path: Initialise with a path to a file. The file will be parsed by the FileParser
+        :keyword data: Initialise with an aiida data object. This may be SingleFileData, KpointsData or StructureData.
+
+    Additional keyword arguments might be defined by the inheriting classes.
+
+    The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
+    The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
+    to write the corresponding VASP file. Depending on whether the file under consideration is an actual input
+    file, this may simply mean copying a file.
     """
 
-    def __init__(self, file_path=None, calc_parser_cls=None):
+    PARSABLE_ITEMS = {}
+
+    def __init__(self, calc_parser_cls=None, **kwargs):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
+        self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
         if calc_parser_cls is not None:
-            calc_parser_cls.get_quantity.add_listener(self.get_quantity)
+            calc_parser_cls.get_quantity.append(self.get_quantity)
 
         self._parsable_items = {}
         self._parsed_data = {}
-        self._filename = None
-        self._file_path = file_path
+        self._data_obj = None
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_file_path(self, path):
+        """Init with a file path."""
+        self._data_obj = SingleFile(path=path)
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
+
+    def _init_with_data(self, data):
+        """
+        Init with aiida-data.
+
+        This has to be overriden by every FileParser, which deals with an
+        Aiida data class other than SingleFileData.
+        """
+
+        self._data_obj = SingleFile(data=data)
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsed_data = {}
 
     def get_quantity(self, quantity, settings, inputs=None):
         """
@@ -190,15 +230,74 @@ class BaseFileParser(BaseParser):
                     if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity: None}
-
             self._parsed_data = self._parse_file(inputs)
 
         return {quantity: self._parsed_data.get(quantity)}
 
+    def write(self, file_path):
+        """
+        Writes a VASP style file from the parsed Object.
+
+        For non input files this means simply copying the file.
+        """
+        if self._parsed_object is not None:
+            self._parsed_object.write(file_path)
+
+    @property
+    def _parsed_object(self):
+        """
+        Property to return the FileParsers _data_obj.
+
+        The data_obj is either an instance of one of the parsevasp parser classes,
+        which provide a write function, an instance of an aiida data node or an
+        instance of SingleFile in case that it is just a file and does not have
+        it's own 'write' method.
+
+        In particular FileParsers storing aiida data nodes. will have to override this.
+        """
+        return self._data_obj
+
+    @property
+    def data_obj(self):
+        return self._data_obj
+
     def _parse_file(self, inputs):
         """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
 
-        raise NotImplementedError('{0} does not implement a _parse_file() method.'.format(self.__class__.__name__))
+        raise NotImplementedError('{classname} does not implement a _parse_file() ' 'method.'.format(classname=self.__class__.__name__))
+
+
+class SingleFile(object):
+    """
+    Datastructure for a singleFile file providing a write method.
+
+    This should get replaced, as soon as parsevasp has a dedicated class.
+    """
+
+    def __init__(self, **kwargs):
+        super(SingleFile, self).__init__()
+        self._path = None
+        self.init_with_kwargs(**kwargs)
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwqargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_path(self, path):
+        self._path = path
+
+    def _init_with_data(self, data):
+        """Initialise with SingleFileData."""
+        self._path = data.get_file_abs_path()
+
+    @property
+    def path(self):
+        return self._path
+
+    def write(self, dst):
+        """Copy file to destination."""
+        import shutil
+        shutil.copyfile(self._path, dst)
 
 
 class KeyValueParser(BaseParser):

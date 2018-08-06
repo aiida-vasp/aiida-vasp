@@ -1,11 +1,11 @@
 """Find, import, compose and write POTCAR files."""
 from functools import update_wrapper
+from itertools import groupby
 import re
 import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
-from aiida_vasp.io.poscar import PoscarIo
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -143,8 +143,7 @@ class MultiPotcarIo(object):
     @classmethod
     def from_structure(cls, structure, potentials_dict):
         """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a potential for each kind in the structure."""
-        poscario = PoscarIo(structure)
-        symbol_order = poscario.potentials_order
+        symbol_order = cls.potentials_order(structure)
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])
 
     def get_potentials_dict(self, structure):
@@ -165,3 +164,23 @@ class MultiPotcarIo(object):
     @property
     def element_symbols(self):
         return {potcario.node.element for potcario in self.potcars}
+
+    @classmethod
+    def potentials_order(cls, structure):
+        return [kind[0] for kind in cls.count_kinds(structure)]
+
+    @classmethod
+    def count_kinds(cls, structure):
+        """
+        Count consecutive kinds that compose the different sites.
+
+        :return: [(kind_name, num), ... ]
+        """
+        kind_name_order = [site.kind_name for site in structure.sites]
+        groups = groupby(kind_name_order)
+        counts = [(label, sum(1 for _ in group)) for label, group in groups]
+        return counts
+
+    @property
+    def max_enmax(self):
+        return max([potcario.pymatgen.enmax for potcario in self.potcars])

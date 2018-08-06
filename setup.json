@@ -11,6 +11,9 @@
     ], 
     "description": "AiiDA Plugin for running VASP calculations.", 
     "entry_points": {
+        "console_scripts": [
+            "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
+        ],
         "aiida.calculations": [
             "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation", 
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
@@ -32,12 +35,14 @@
             "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
-            "vasp.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
-            "vasp.nscf = aiida_vasp.workflows.nscf:NscfWorkflow", 
-            "vasp.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow", 
-            "vasp.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow", 
-            "vasp.wannier = aiida_vasp.workflows.wannier:WannierWorkflow", 
-            "vasp.windows = aiida_vasp.workflows.windows:WindowsWorkflow"
+            "vasp.base = aiida_vasp.workflows.base:VaspBaseWf",
+            "vasp.relax = aiida_vasp.workflows.relax:VaspRelaxWf",
+            "vasp.legacy.scf = aiida_vasp.workflows.legacy.scf:ScfWorkflow", 
+            "vasp.legacy.nscf = aiida_vasp.workflows.legacy.nscf:NscfWorkflow", 
+            "vasp.legacy.projections = aiida_vasp.workflows.legacy.projections:ProjectionsWorkflow", 
+            "vasp.legacy.autowindows = aiida_vasp.workflows.legacy.autowindows:AutowindowsWorkflow", 
+            "vasp.legacy.wannier = aiida_vasp.workflows.legacy.wannier:WannierWorkflow", 
+            "vasp.legacy.windows = aiida_vasp.workflows.legacy.windows:WindowsWorkflow"
         ]
     }, 
     "extras_require": {
@@ -75,7 +80,8 @@
         "six", 
         "pyparsing", 
         "py",
-        "lxml"
+        "lxml",
+        "parsevasp >= 0.2.12"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 

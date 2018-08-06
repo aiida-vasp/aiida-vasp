@@ -3,13 +3,16 @@ import click
 from click_spinner import spinner as cli_spinner
 import tabulate
 
-from aiida.cmdline.commands import data_cmd
+try:
+    from aiida.cmdline.commands import data_cmd as verdi_data
+except ImportError:
+    from aiida.cmdline.commands import verdi_data
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.commands import options
 
 
-@data_cmd.group('vasp-potcar')
+@verdi_data.group('vasp-potcar')
 def potcar():
     """Top level command for handling VASP POTCAR files."""
 

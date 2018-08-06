@@ -49,7 +49,6 @@ class VasprunToAiida(object):
         pmg_trajectory = self.vasprun_obj.ionic_steps
         trajectories = {}
         for key in pmg_trajectory[0].keys():
-            print key
             trajectories[key] = [step.get(key, None) for step in pmg_trajectory]
 
         structures = trajectories.pop('structure')
