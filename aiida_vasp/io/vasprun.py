@@ -191,6 +191,14 @@ class VasprunParser(BaseFileParser):
 
         quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
+
+        # We now need to check if there was a failure, as for the Xml,
+        # we should have something else than None in _data_obj at this point
+        #if self._data_obj is None:
+        #    for quantity in quantities_to_parse:
+        #        if quantity in self._parsable_items:
+        #            result[quantity] = None
+        #else:
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)

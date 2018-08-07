@@ -1,11 +1,8 @@
-# pylint: disable=too-many-lines, too-many-locals, too-many-statements
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements, attribute-defined-outside-init
 """
-Base WorkChain for VASP, Error Handling enriched wrapper around VaspCalculation.
+ConvergenceWorkChain.
 
-Intended to be reused (launched instead of a VaspCalculation) in all other VASP workchains.
-Any validation and / or error handling that applies to *every* VASP run,
-should be handled on this level, so that every workchain can profit from it.
-Anything related to a subset of use cases must be handled in a subclass.
+Intended to be used to control convergence checks for plane-wave calculations.
 """
 import copy
 import numpy as np
@@ -52,82 +49,93 @@ class ConvergeWorkChain(WorkChain):
         spec.input('potcar_family', valid_type=get_data_class('str'))
         spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
         spec.input('options', valid_type=get_data_class('parameter'))
-
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
         spec.outline(
-            cls.init_inputs,
-            cls.init_context,
-            cls.init_conv,
-            while_(cls.run_pw_conv_calcs)(
-                cls.init_pw_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_pw_conv_calc
-            ),
-            cls.analyze_pw_conv,
-            while_(cls.run_kpoints_conv_calcs)(
-                cls.init_kpoints_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_kpoints_conv_calc
-            ),
-            cls.init_disp_conv,
-            while_(cls.run_pw_conv_disp_calcs)(
-                cls.init_pw_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_pw_conv_calc
-            ),
-            if_(cls.run_pw_conv_disp_calcs)(
-                cls.analyze_pw_conv
-            ),
-            while_(cls.run_kpoints_conv_disp_calcs)(
-                cls.init_kpoints_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_kpoints_conv_calc
-            ),
-            cls.init_comp_conv,
-            while_(cls.run_pw_conv_comp_calcs)(
-                cls.init_pw_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_pw_conv_calc
-            ),
-            if_(cls.run_pw_conv_comp_calcs)(
+            cls.initialize,
+            if_(cls.run_pw_conv_calcs or cls.run_kpoints_conv_calcs)(
+                while_(cls.run_pw_conv_calcs)(
+                    cls.init_pw_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_pw_conv_calc
+                ),
                 cls.analyze_pw_conv,
+                while_(cls.run_kpoints_conv_calcs)(
+                    cls.init_kpoints_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_kpoints_conv_calc
+                ),
+                cls.init_disp_conv,
+                while_(cls.run_pw_conv_disp_calcs)(
+                    cls.init_pw_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_pw_conv_calc
+                ),
+                if_(cls.run_pw_conv_disp_calcs)(
+                    cls.analyze_pw_conv
+                ),
+                while_(cls.run_kpoints_conv_disp_calcs)(
+                    cls.init_kpoints_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_kpoints_conv_calc
+                ),
+                cls.init_comp_conv,
+                while_(cls.run_pw_conv_comp_calcs)(
+                    cls.init_pw_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_pw_conv_calc
+                ),
+                if_(cls.run_pw_conv_comp_calcs)(
+                    cls.analyze_pw_conv,
+                ),
+                while_(cls.run_kpoints_conv_comp_calcs)(
+                    cls.init_kpoints_conv_calc,
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.results_kpoints_conv_calc
+                ),
+                cls.analyze_conv,
+                cls.store_conv,
             ),
-            while_(cls.run_kpoints_conv_comp_calcs)(
-                cls.init_kpoints_conv_calc,
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.results_kpoints_conv_calc
-            ),
-            cls.analyze_conv,
-            cls.store_conv,
             cls.init_converged,
             cls.init_next_workchain,
             cls.run_next_workchain,
-            cls.results
+            cls.verify_next_workchain,
+            cls.results,
+            cls.finalize
         )  # yapf: disable
 
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_band', valid_type=get_data_class('array.bands'), required=False)
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
 
-    def init_inputs(self):
-        """Initialize the inputs dictionary."""
-        self.ctx.inputs = init_input(self.inputs)
+    def initialize(self):
+        """Initialize."""
+        self._init_context()
+        self._init_inputs()
+        self._init_conv()
+
         return
 
-    def init_context(self):
+    def _init_inputs(self):
+        """Initialize the inputs."""
+        self.ctx.inputs = init_input(self.inputs)
+
+        return
+
+    def _init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
         self._init_standard_context()
         self._init_converge_context()
@@ -434,7 +442,7 @@ class ConvergeWorkChain(WorkChain):
 
         return
 
-    def init_conv(self):
+    def _init_conv(self):
         """Initialize the convergence tests."""
 
         # Fetch a temporary StructureData and ParameterData that we will use throughout,
@@ -612,8 +620,9 @@ class ConvergeWorkChain(WorkChain):
         # inform user
         if self._verbose:
             if not self.ctx.converge.settings['supplied_kmesh']:
-                self.report('executing one final calculation for storage with a plane wave cutoff'
-                            ' of {encut} and a {kgrid0}x{kgrid1}x{kgrid2} k-point grid'.format(
+                self.report('executing a calculation for storage with an assumed converged '
+                            'plane wave cutoff of {encut} and a {kgrid0}x{kgrid1}x{kgrid2} '
+                            'k-point grid'.format(
                                 encut=self.ctx.converge.settings['encut'],
                                 kgrid0=self.ctx.converge.settings['kgrid'][0],
                                 kgrid1=self.ctx.converge.settings['kgrid'][1],
@@ -729,12 +738,10 @@ class ConvergeWorkChain(WorkChain):
         """Fetch and store the relevant convergence parameters for each plane wave calculation."""
 
         # Check if verify workchain was successfull
-        self.report("NUMBER OF WORKCHAINS:{}".format(len(self.ctx.pw_workchains)))
         exit_status = self.ctx.pw_workchains[-1].exit_status
         if exit_status:
             self.report('This single convergence calculation has to be considered '
-                        'failed as the exit status from a child workchain is not '
-                        'zero, exit_status:{}'.format(exit_status))
+                        'failed as the exit status from the child {} is {}'.format(self._next_workchain, exit_status))
 
         # Update plane wave iteration index.
         self.ctx.converge.pw_iteration += 1
@@ -750,7 +757,6 @@ class ConvergeWorkChain(WorkChain):
             self.report('the plane wave convergence calculation finished ' 'without returning a {}'.format(self._next_workchain.__name__))
 
         encut = self.ctx.converge.settings['encut']
-        self.report('ENCUT:{}'.format(encut))
         if not exit_status:
             # fetch total energy
             energy = 0.0
@@ -773,7 +779,6 @@ class ConvergeWorkChain(WorkChain):
             gap = 0.0
 
             # add stuff to the converge context
-            self.report("APPENDING ENCUT:{}".format(encut))
             self.ctx.converge.pw_data.append([encut, energy, max_force, max_valence_band, gap])
         else:
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
@@ -861,15 +866,15 @@ class ConvergeWorkChain(WorkChain):
 
         # Only analyze plane wave cutoff if the encut is not supplied
         if self.ctx.converge.settings['encut_org'] is None:
-            self.report("PW_DATA:{}".format(self.ctx.converge.pw_data))
             encut = self._check_pw_converged()
             # Check if something went wrong
             if encut is None:
-                self.report('We were not able to obtain a convergence of the plane wave cutoff'
-                            'to the specified cutoff. This could also be caused by failures of'
-                            'the calculations producing results for the convergence tests. Setting '
-                            'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.pw_data[-1][0]))
-                self.ctx.converge.settings['encut'] = self.ctx.pw_data[-1][0]
+                self.report(
+                    'We were not able to obtain a convergence of the plane wave cutoff '
+                    'to the specified cutoff. This could also be caused by failures of '
+                    'the calculations producing results for the convergence tests. Setting '
+                    'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.converge.pw_data[-1][0]))
+                self.ctx.converge.settings['encut'] = self.ctx.converge.pw_data[-1][0]
             else:
                 self.ctx.converge.settings['encut'] = encut
 
@@ -972,16 +977,16 @@ class ConvergeWorkChain(WorkChain):
         # or that we where not able to reach the requested convergence.
         if settings['encut'] is None:
             self.report('We were not able to obtain a convergence of the plane wave cutoff'
-                        'to the specified cutoff. This could also be caused by failures of'
+                        'to the specified cutoff. This could also be caused by failures of '
                         'the calculations producing results for the convergence tests. Setting '
-                        'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.pw_data[-1][0]))
-            settings['encut'] = self.ctx.pw_data[-1][0]
+                        'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.converge.pw_data[-1][0]))
+            settings['encut'] = self.ctx.converge.pw_data[-1][0]
         if settings['kgrid'] is None:
             self.report('We were not able to obtain a convergence of the k-point grid'
-                        'to the specified cutoff. This could also be caused by failures of'
+                        'to the specified cutoff. This could also be caused by failures of '
                         'the calculations producing results for the convergence tests. Setting '
-                        'the k-point grid sampling to the highest specified value: {kgrid}'.format(kgrid=self.ctx.k_data[-1][0]))
-            settings['kgrid'] = self.ctx.k_data[-1][0]
+                        'the k-point grid sampling to the highest specified value: {kgrid}'.format(kgrid=self.ctx.converge.k_data[-1][0]))
+            settings['kgrid'] = self.ctx.converge.k_data[-1][0]
 
         return
 
@@ -1129,19 +1134,25 @@ class ConvergeWorkChain(WorkChain):
 
             # Store regular conversion data
             try:
-                convergence.set_array('regular', np.array(self.ctx.converge.pw_data_org))
+                convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data_org))
             except AttributeError:
-                convergence.set_array('regular', np.array(self.ctx.converge.pw_data))
+                convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data))
+            try:
+                convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data_org))
+            except AttributeError:
+                convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data))
 
             # Then possibly displacement
             try:
-                convergence.set_array('displacement', np.array(self.ctx.converge.pw_data_displacement))
+                convergence.set_array('pw_displacement', np.array(self.ctx.converge.pw_data_displacement))
+                convergence.set_array('kpoints_displacement', np.array(self.ctx.converge.k_data_displacement))
             except AttributeError:
                 pass
 
             # And finally for compression
             try:
-                convergence.set_array('compression', np.array(self.ctx.converge.pw_data_comp))
+                convergence.set_array('pw_compression', np.array(self.ctx.converge.pw_data_comp))
+                convergence.set_array('kpoints_compression', np.array(self.ctx.converge.k_data_comp))
             except AttributeError:
                 pass
 
@@ -1183,7 +1194,7 @@ class ConvergeWorkChain(WorkChain):
                 if self._verbose:
                     self.report('A plane wave cutoff of {encut} eV is considered converged '
                                 'by observing the convergence of the {cutoff_type} to within a '
-                                'relative difference of {cutoff_value}.'.format(
+                                'difference of {cutoff_value}.'.format(
                                     encut=pw_data[encut][0], cutoff_type=cutoff_type, cutoff_value=cutoff_value))
                 encut_okey = True
                 index = encut
@@ -1228,7 +1239,7 @@ class ConvergeWorkChain(WorkChain):
             if delta < cutoff_value:
                 self.report('The k-point grid of {k_data0}x{k_data1}x{k_data2} is '
                             'considered converged by observing the convergence of '
-                            'the {cutoff_type} to within a relative difference '
+                            'the {cutoff_type} to within a difference '
                             'of {cutoff_value}'.format(
                                 k_data0=k_data[k][0],
                                 k_data1=k_data[k][1],
@@ -1245,24 +1256,44 @@ class ConvergeWorkChain(WorkChain):
 
         return k_data[index][0:3]
 
+    def verify_next_workchain(self):
+        """Verify and inherit exit status from child workchains."""
+
+        # Adopt exit status from last child workchain (supposed to be successfull)
+        next_workchain_exit_status = self.ctx.workchains[-1].exit_status
+        if not next_workchain_exit_status:
+            self.exit_status = 0
+            return
+        self.exit_status = next_workchain_exit_status
+        self.report('The child {} returned a non-zero exit status, {} inherits exit status {}'.format(
+            self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+        return
+
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
-        self.report('final convergence workchain completed')
 
-        workchain = self.ctx.workchains[-1]
+        if not self.exit_status:
+            self.report('{} completed'.format(self.__class__.__name__))
 
-        for name, port in self.spec().outputs.iteritems():
-            if port.required and name not in workchain.out:
-                self.report('the spec specifies the output {} as required but was not an output of {}<{}>'.format(
-                    name, self._next_workchain.__name__, workchain.pk))
+            workchain = self.ctx.workchains[-1]
 
-            if name in workchain.out:
-                node = workchain.out[name]
-                self.out(name, workchain.out[name])
-                if self._verbose:
-                    self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+            for name, port in self.spec().outputs.iteritems():
+                if port.required and name not in workchain.out:
+                    self.report('the spec specifies the output {} as required '
+                                'but was not an output of {}<{}>'.format(name, self._next_workchain.__name__, workchain.pk))
+
+                if name in workchain.out:
+                    node = workchain.out[name]
+                    self.out(name, workchain.out[name])
+                    if self._verbose:
+                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
 
         return
+
+    def finalize(self):
+        """Finalize the workchain."""
+
+        return self.exit_status
 
     def _displace_structure(self):
         """Displace the input structure according to the supplied settings."""

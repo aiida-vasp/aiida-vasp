@@ -90,7 +90,7 @@ def builder_interface(calc_cls):
     return False
 
 
-def init_input(inputs):
+def init_input(inputs, exclude=None):
     """
     Assemble the input into a AttributeDict.
 
@@ -99,7 +99,8 @@ def init_input(inputs):
     """
     assembled_inputs = AttributeDict()
     for name, value in inputs.items():
-        assembled_inputs[name] = value
+        if (exclude is None) or (not name == exclude):
+            assembled_inputs[name] = value
 
     return assembled_inputs
 

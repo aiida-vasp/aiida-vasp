@@ -2,7 +2,7 @@
 import click
 import numpy
 
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 def example_param_set(cmd_function):
@@ -20,6 +20,21 @@ def example_param_set(cmd_function):
     decorated_cmd_fn.__doc__ = cmd_function.__doc__
 
     return decorated_cmd_fn
+
+
+def create_structure_perturbed():
+    """
+    Create a perturbed structure (example taken from the VASP wiki).
+
+
+    `Link to the wiki page <http://cms.mpi.univie.ac.at/wiki/index.php/Cd_Si_relaxation>`_
+    """
+
+    alat = 5.5
+    structure = get_data_node('structure', cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
+    structure.append_atom(position=numpy.array([-0.125, -0.125, -0.125]) * alat, symbols='Si')
+    structure.append_atom(position=numpy.array([0.125, 0.125, 0.130]) * alat, symbols='Si')
+    return structure
 
 
 def set_structure_InAs():
@@ -73,7 +88,7 @@ def set_params_simple():
     """Set INCAR parameters."""
 
     param_cls = get_data_class('parameter')
-    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})
+    return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1})
 
 
 def set_params_simple_no_encut():

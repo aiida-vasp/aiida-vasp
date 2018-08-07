@@ -11,6 +11,7 @@ from aiida.work.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
+from aiida.orm.data.base import Bool, Int
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
 from aiida_vasp.calcs.workchains.restart import BaseRestartWorkChain
@@ -51,10 +52,24 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('potcar_family', valid_type=get_data_class('str'))
         spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
+        spec.input('options', valid_type=get_data_class('parameter'))
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
-        spec.input('options', valid_type=get_data_class('parameter'))
+        spec.input(
+            'restart.max_iterations',
+            valid_type=Int,
+            default=Int(5),
+            help="""
+            the maximum number of iterations the workchain will attempt to get the calculation to finish successfully
+            """)
+        spec.input(
+            'restart.clean_workdir',
+            valid_type=Bool,
+            default=Bool(False),
+            help="""
+            when set to True, the work directories of all called calculation will be cleaned at the end of workchain execution
+            """)
 
         spec.outline(
             cls.init_context,
@@ -64,7 +79,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                 cls.run_calculation,
                 cls.verify_calculation
             ),
-            cls.results
+            cls.results,
+            cls.finalize
         )  # yapf: disable
 
         spec.output('output_parameters', valid_type=get_data_class('parameter'))

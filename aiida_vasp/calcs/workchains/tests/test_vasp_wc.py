@@ -60,7 +60,7 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
     workchain = WorkflowFactory('vasp.vasp')
 
     mock_vasp.store()
-    print(mock_vasp.get_remote_exec_path())
+    print("MOCK LOCATION:", mock_vasp.get_remote_exec_path())
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 

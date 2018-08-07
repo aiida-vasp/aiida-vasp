@@ -70,9 +70,10 @@ class ParserSettings(object):
     """
 
     def __init__(self, settings, default_settings=None):
-
         self._settings = settings
-        if default_settings:
+        if default_settings is not None:
+            if self._settings is None:
+                self._settings = {}
             self.update_with(default_settings)
 
         self.nodes = []

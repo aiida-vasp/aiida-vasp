@@ -88,7 +88,6 @@ class VaspParser(BaseParser):
         settings = None
         if calc_settings:
             settings = calc_settings.get_dict().get('parser_settings')
-
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)

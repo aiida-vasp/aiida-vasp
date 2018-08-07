@@ -20,16 +20,16 @@ def main(potcar_family, queue, code, computer):
     code = Code.get_from_string('{}@{}'.format(code, computer))
 
     # set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.converge')
+    workchain = WorkflowFactory('vasp.verify')
 
     # set inputs
     inputs = AttributeDict()
     inputs.restart = AttributeDict()
     inputs.verify = AttributeDict()
     inputs.structure = set_structure_Si()
-    #inputs.kpoints = set_kpoints()
-    inputs.incar = set_params_simple_no_encut()
-    #inputs.incar = set_params_simple()
+    inputs.kpoints = set_kpoints()
+    #inputs.incar = set_params_simple_no_encut()
+    inputs.incar = set_params_simple()
     inputs.code = code
     inputs.potcar_family = get_data_class('str')(potcar_family)
     inputs.potcar_mapping = get_data_node('parameter', dict={'Si': 'Si'})
@@ -37,7 +37,6 @@ def main(potcar_family, queue, code, computer):
     inputs.verify.max_iterations = get_data_class('int')(1)
     inputs.restart.clean_workdir = get_data_class('bool')(True)
     inputs.verify.clean_workdir = get_data_class('bool')(False)
-    #inputs.max_iterations = get_data_class('int')(1)
 
     # set options
     options = AttributeDict()

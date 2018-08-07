@@ -3,9 +3,9 @@ import enum
 from aiida.common.extendeddicts import AttributeDict
 from aiida.work import WorkChain
 from aiida.work.workchain import append_, while_
-from aiida.orm import WorkflowFactory
+from aiida.orm import WorkflowFactory, Code
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, init_input
 from aiida_vasp.calcs.workchains.restart import UnexpectedCalculationFailure
 from aiida_vasp.calcs.workchains.auxiliary.utils import compare_structures, prepare_process_inputs
 
@@ -43,34 +43,40 @@ class RelaxWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, include=['code', 'structure', 'potcar_family', 'potcar_mapping', 'options'])
-        spec.input('kpoints.mesh', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('kpoints.distance', valid_type=get_data_class('float'), required=False)
-        spec.input('incar_add', valid_type=get_data_class('parameter'), required=False)
+        spec.input('code', valid_type=Code)
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
+        spec.input('potcar_family', valid_type=get_data_class('str'))
+        spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
+        spec.input('incar', valid_type=get_data_class('parameter'))
+        spec.input('options', valid_type=get_data_class('parameter'))
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('relax.incar_add', valid_type=get_data_class('parameter'), required=False)
         spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
         spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
         spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
+        spec.input('relax.convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
         spec.input(
-            'convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
+            'relax.convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.1))  # in cartesian coordinates
         spec.input(
-            'convergence.shape.angles', valid_type=get_data_class('float'), required=False,
+            'relax.convergence.shape.angles', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.1))  # in degree in the cartesian system
         spec.input(
-            'convergence.volume', valid_type=get_data_class('float'), required=False,
+            'relax.convergence.volume', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.01))  # in degree in the cartesian system
         spec.input(
-            'convergence.positions', valid_type=get_data_class('float'), required=False,
+            'relax.convergence.positions', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.01))  # in degree in the cartesian system
-        spec.expose_inputs(cls._next_workchain, namespace='restart', include=['max_iterations'])
-        spec.expose_inputs(cls._next_workchain, namespace='restart', include=['clean_workdir'])
 
         spec.outline(
-            cls.init_context,
-            cls.init_inputs,
+            cls.initialize,
             while_(cls.run_next_workchains)(
                 cls.init_next_workchain,
                 cls.run_next_workchain,
@@ -95,7 +101,7 @@ class RelaxWorkChain(WorkChain):
 
     def _add_overrides(self, incar):
         """Add incar tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.incar_add.get_dict().items()})
+        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.incar_add.get_dict().items()})
         if 'ibrion' in overrides:
             raise ValueError('overriding IBRION not allowed, use relax.xxx inputs to control')
         if 'isif' in overrides:
@@ -113,51 +119,43 @@ class RelaxWorkChain(WorkChain):
         incar = AttributeDict()
         self._set_ibrion(incar)
         self._set_isif(incar)
-        if 'incar_add' in self.inputs:
+        if 'relax.incar_add' in self.inputs:
             try:
                 self._add_overrides(incar)
             except ValueError as err:
                 self._fail_compat(exception=err)
         return incar
 
-    def _clean_kpoints(self):
-        """Use or create a kpoints mesh depending on user input."""
-        kpoints = None
-        if 'mesh' in self.inputs.kpoints:
-            kpoints = self.inputs.kpoints.mesh
-        elif 'distance' in self.inputs.kpoints:
-            kpoints = get_data_node(
-                'array.kpoints', cell_from_structure=self.inputs.structure, kpoints_mesh_from_density=self.inputs.kpoints.distance.value)
-        else:
-            self._fail_compat(exception=ValueError('either kpoints.mesh or kpoints.distance is required'))
-        return kpoints
+    def initialize(self):
+        """Initialize."""
+        self._init_context()
+        self._init_inputs()
+        self._init_structure()
 
-    def init_context(self):
+        return
+
+    def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.current_structure = self.inputs.structure
         self.ctx.current_restart_folder = None
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
 
-        self.ctx.inputs = AttributeDict()
-        self.ctx.inputs.incar = self._assemble_incar()
-        self.ctx.inputs.code = self.inputs.code
-        self.ctx.inputs.structure = self.inputs.structure
-        self.ctx.inputs.potcar_family = self.inputs.potcar_family
-        self.ctx.inputs.potcar_mapping = self.inputs.potcar_mapping
-        self.ctx.inputs.options = self.inputs.options
-        self.ctx.inputs.settings = {'parser_settings': {'add_structure': True}}
-        if 'max_iterations' in self.inputs.restart:
-            self.ctx.inputs.max_iterations = self.inputs.restart.max_iterations
-        if 'clean_workdir' in self.inputs.restart:
-            self.ctx.inputs.clean_workdir = self.inputs.restart.clean_workdir
+    def _init_structure(self):
+        """Initialize the structure."""
+        self.ctx.current_structure = self.inputs.structure
 
-    def init_inputs(self):
-        self.ctx.inputs.kpoints = self._clean_kpoints()
+        return
+
+    def _init_inputs(self):
+        """Initialize the input."""
+
+        self.ctx.inputs = init_input(self.inputs, exclude='relax')
+
+        return
 
     def run_next_workchains(self):
-        within_max_iterations = bool(self.ctx.iteration < self.inputs.convergence.max_iterations.value)
+        within_max_iterations = bool(self.ctx.iteration < self.inputs.relax.convergence.max_iterations.value)
         return bool(within_max_iterations and not self.ctx.is_converged)
 
     def init_next_workchain(self):
@@ -206,9 +204,9 @@ class RelaxWorkChain(WorkChain):
         self.ctx.current_structure = workchain.out.output_structure
 
         converged = True
-        if self.inputs.convergence.on.value:
+        if self.inputs.relax.convergence.on.value:
             comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
-            delta = comparison.absolute if self.inputs.convergence.absolute.value else comparison.relative
+            delta = comparison.absolute if self.inputs.relax.convergence.absolute.value else comparison.relative
             if self.inputs.relax.positions.value:
                 converged &= self.check_positions_convergence(delta)
             if self.inputs.relax.volume.value:
@@ -219,7 +217,7 @@ class RelaxWorkChain(WorkChain):
         if not converged:
             self.ctx.current_restart_folder = workchain.out.remote_folder
             self.report('VaspBaseWf{} was not converged.'.format(workchain))
-        elif self.inputs.convergence.on.value:
+        elif self.inputs.relax.convergence.on.value:
             self.report('VaspBaseWf{} was converged, finishing.'.format(workchain))
         else:
             self.report('Convergence checking is off')
@@ -228,29 +226,29 @@ class RelaxWorkChain(WorkChain):
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
-        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.convergence.shape.lengths.value)
+        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.relax.convergence.shape.lengths.value)
         if not lengths_converged:
             self.report('cell lengths changed by max {}, tolerance is {}'.format(delta.cell_lengths.max(),
-                                                                                 self.inputs.convergence.shape.lengths.value))
+                                                                                 self.inputs.relax.convergence.shape.lengths.value))
 
-        angles_converged = bool(delta.cell_angles.max() <= self.inputs.convergence.shape.angles.value)
+        angles_converged = bool(delta.cell_angles.max() <= self.inputs.relax.convergence.shape.angles.value)
         if not angles_converged:
             self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
-                                                                                self.inputs.convergence.shape.angles.value))
+                                                                                self.inputs.relax.convergence.shape.angles.value))
 
         return bool(lengths_converged and angles_converged)
 
     def check_volume_convergence(self, delta):
-        volume_converged = bool(delta.volume <= self.inputs.convergence.volume.value)
+        volume_converged = bool(delta.volume <= self.inputs.relax.convergence.volume.value)
         if not volume_converged:
-            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.convergence.volume.value))
+            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.relax.convergence.volume.value))
         return volume_converged
 
     def check_positions_convergence(self, delta):
-        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.convergence.positions.value)
+        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.relax.convergence.positions.value)
         if not positions_converged:
             self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(),
-                                                                                 self.inputs.convergence.positions.value))
+                                                                                 self.inputs.relax.convergence.positions.value))
         return positions_converged
 
     def results(self):
