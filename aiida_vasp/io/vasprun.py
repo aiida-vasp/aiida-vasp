@@ -173,6 +173,14 @@ class VasprunParser(BaseFileParser):
 
         quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
+
+        if self._xml is None:
+            # parsevasp threw an exception, which means vasprun.xml could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self._parsable_items:
+                    result[quantity] = None
+            return result
+
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)
