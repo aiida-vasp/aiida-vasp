@@ -1,3 +1,4 @@
+# pylint: disable=attribute-defined-outside-init
 """Structure relaxation workchain."""
 import enum
 from aiida.common.extendeddicts import AttributeDict
@@ -82,7 +83,8 @@ class RelaxWorkChain(WorkChain):
                 cls.run_next_workchain,
                 cls.verify_next_workchain,
             ),
-            cls.results
+            cls.results,
+            cls.finalize
         )  # yapf: disable
 
         spec.output('relaxed_structure', valid_type=get_data_class('structure'))
@@ -192,8 +194,19 @@ class RelaxWorkChain(WorkChain):
         If volume, shape and ion positions are all within a given threshold, consider the relaxation converged.
         """
         if not self.ctx.workchains:
-            self._fail_compat(IndexError('The first iteration finished without returning a VaspBaseWf'))
+            self._fail_compat(IndexError('The first iteration finished without ' 'returning a {}'.format(self._next_workchain)))
+
         workchain = self.ctx.workchains[-1]
+
+        # Adopt exit status from last child workchain (supposed to be successfull)
+        next_workchain_exit_status = self.ctx.workchains[-1].exit_status
+        if not next_workchain_exit_status:
+            self.exit_status = 0
+        else:
+            self.exit_status = next_workchain_exit_status
+            self.report('The child {} returned a non-zero exit status, {} '
+                        'inherits exit status {}'.format(self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+            return
 
         if 'output_structure' not in workchain.out:
             self._fail_compat(
@@ -253,12 +266,17 @@ class RelaxWorkChain(WorkChain):
 
     def results(self):
         """Gather results from the last relaxation iteration."""
-        last_workchain = self.ctx.workchains[-1]
-        relaxed_structure = last_workchain.out.output_structure
-        output_parameters = last_workchain.out.output_parameters
-        self.out('relaxed_structure', relaxed_structure)
-        self.out('output_parameters', output_parameters)
-        self.report('workchain completed successfully after {} convergence iterations'.format(self.ctx.iteration))
+        if not self.exit_status:
+            last_workchain = self.ctx.workchains[-1]
+            relaxed_structure = last_workchain.out.output_structure
+            output_parameters = last_workchain.out.output_parameters
+            self.out('relaxed_structure', relaxed_structure)
+            self.out('output_parameters', output_parameters)
+            self.report('workchain completed successfully after {} convergence iterations'.format(self.ctx.iteration))
+
+    def finalize(self):
+        """Finalize the workchain."""
+        return self.exit_status
 
     def _fail_compat(self, *args, **kwargs):
         if hasattr(self, 'fail'):

@@ -35,6 +35,7 @@ class VerifyWorkChain(WorkChain):
             'verify.max_iterations',
             valid_type=Int,
             default=Int(1),
+            required=False,
             help="""
             the maximum number of iterations VerifyWorkChain will attempt to get the calculation to finish successfully
             """)
@@ -42,6 +43,7 @@ class VerifyWorkChain(WorkChain):
             'verify.clean_workdir',
             valid_type=Bool,
             default=Bool(False),
+            required=False,
             help="""
             when set to True, the work directories of all called calculation will be cleaned at the end of VerifyWorkChain execution
             """)
@@ -129,9 +131,10 @@ class VerifyWorkChain(WorkChain):
         if not next_workchain_exit_status:
             self.exit_status = 0
             return
-        self.exit_status = next_workchain_exit_status
-        self.report('The child {} returned a non-zero exit status, {} inherits exit status {}'.format(
-            self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+        else:
+            self.exit_status = next_workchain_exit_status
+            self.report('The child {} returned a non-zero exit status, {} '
+                        'inherits exit status {}'.format(self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
         return
 
     def results(self):

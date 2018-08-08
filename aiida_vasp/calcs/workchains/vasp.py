@@ -6,12 +6,13 @@ Any validation and / or error handling that applies to *every* VASP run,
 should be handled on this level, so that every workchain can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
+import os
+
 from aiida.work.workchain import while_
 from aiida.work.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.orm import Code, CalculationFactory
-from aiida.orm.data.base import Bool, Int
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
 from aiida_vasp.calcs.workchains.restart import BaseRestartWorkChain
@@ -56,20 +57,22 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
-        spec.input(
-            'restart.max_iterations',
-            valid_type=Int,
-            default=Int(5),
-            help="""
-            the maximum number of iterations the workchain will attempt to get the calculation to finish successfully
-            """)
-        spec.input(
-            'restart.clean_workdir',
-            valid_type=Bool,
-            default=Bool(False),
-            help="""
-            when set to True, the work directories of all called calculation will be cleaned at the end of workchain execution
-            """)
+        # spec.input(
+        #     'restart.max_iterations',
+        #     valid_type=Int,
+        #     default=Int(5),
+        #     required=False,
+        #     help="""
+        #     the maximum number of iterations the workchain will attempt to get the calculation to finish successfully
+        #     """)
+        # spec.input(
+        #     'restart.clean_workdir',
+        #     valid_type=Bool,
+        #     default=Bool(False),
+        #     required=False,
+        #     help="""
+        #     when set to True, the work directories of all called calculation will be cleaned at the end of workchain execution
+        #     """)
 
         spec.outline(
             cls.init_context,
@@ -141,8 +144,9 @@ class VaspWorkChain(BaseRestartWorkChain):
     def on_except(self, exc_info):
         """Handle excepted state."""
 
+        dump_background = os.environ.get('DUMP_BACKGROUND', False)
         last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
-        if last_calc:
+        if last_calc and dump_background:
             self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
             sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
             sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')

@@ -71,13 +71,16 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
 
     kpoints, _ = vasp_kpoints
     inputs = AttributeDict()
+    inputs.restart = AttributeDict()
+    #inputs.verify = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
     inputs.incar = vasp_params
     inputs.kpoints = kpoints
     inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
-    inputs.max_iterations = get_data_class('int')(2)
+    inputs.restart.max_iterations = get_data_class('int')(1)
+    inputs.restart.clean_workdir = get_data_class('bool')(False)
     inputs.options = get_data_node(
         'parameter', dict={
             'queue_name': 'None',
@@ -86,7 +89,8 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
                 'num_mpiprocs_per_machine': 1
             }
         })
-    inputs.max_iterations = get_data_node('int', 1)
+    #inputs.restart.max_iterations = get_data_node('int', 1)
+    #inputs.verify.max_iterations = get_data_node('int', 1)
     inputs.settings = get_data_node('parameter', dict={'parser_settings': {'add_structure': False, 'should_parse_CONTCAR': False}})
 
     # ~ running = run(workchain, **inputs)

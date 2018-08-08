@@ -91,6 +91,7 @@ class BaseRestartWorkChain(WorkChain):
             'restart.max_iterations',
             valid_type=Int,
             default=Int(5),
+            required=False,
             help="""
             the maximum number of iterations the BaseRestartWorkChain will attempt to get the calculation to finish successfully
             """)
@@ -98,6 +99,7 @@ class BaseRestartWorkChain(WorkChain):
             'restart.clean_workdir',
             valid_type=Bool,
             default=Bool(False),
+            required=False,
             help="""
             when set to True, the work directories of all called calculation will be cleaned at the end of BaseRestartWorkChain execution
             """)
