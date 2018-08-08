@@ -94,3 +94,32 @@ def aiida_version():
 
 def cmp_version(string):
     return version.parse(string)
+
+
+def cmp_load_verdi_data():
+    """Load the verdi data click command group for any version since 0.11."""
+    verdi_data = None
+    import_errors = []
+
+    try:
+        from aiida.cmdline.commands import data_cmd as verdi_data
+    except ImportError as err:
+        import_errors.append(err)
+
+    if not verdi_data:
+        try:
+            from aiida.cmdline.commands import verdi_data
+        except ImportError as err:
+            import_errors.append(err)
+
+    if not verdi_data:
+        try:
+            from aiida.cmdline.commands.cmd_data import verdi_data
+        except ImportError as err:
+            import_errors.append(err)
+
+    if not verdi_data:
+        err_messages = '\n'.join([' * {}'.format(err) for err in import_errors])
+        raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
+
+    return verdi_data

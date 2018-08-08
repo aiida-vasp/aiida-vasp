@@ -21,7 +21,6 @@ class KpParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'kpoints-kpoints': {
             'inputs': [],
-            'parsers': ['EIGENVAL', 'IBZKPT'],
             'nodeName': 'kpoints',
             'prerequisites': [],
             'alternatives': ['kpoints']
