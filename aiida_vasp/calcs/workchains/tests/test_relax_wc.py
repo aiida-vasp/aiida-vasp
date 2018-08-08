@@ -6,10 +6,6 @@ and `run` just seems to get stuck after a while.
 """
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name
 from __future__ import print_function
-import time
-import os
-import uuid
-import subprocess as sp
 
 import pytest
 from aiida.common.extendeddicts import AttributeDict
@@ -17,7 +13,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version
+from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version, not_ubuntu
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.incar import IncarParser
@@ -51,6 +47,7 @@ def create_authinfo(computer):
 
 @pytest.mark.wf
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
+@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
 def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import WorkflowFactory, Code

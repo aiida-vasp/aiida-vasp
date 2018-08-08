@@ -6,17 +6,13 @@ and `run` just seems to get stuck after a while.
 """
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name
 from __future__ import print_function
-import time
-import os
-import uuid
-import subprocess as sp
 
 import pytest
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, get_current_user, aiida_version, cmp_version
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, get_current_user, aiida_version, cmp_version, not_ubuntu
 
 
 def create_authinfo(computer):
@@ -47,6 +43,7 @@ def create_authinfo(computer):
 
 @pytest.mark.wf
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
+@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
@@ -60,7 +57,6 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
     workchain = WorkflowFactory('vasp.vasp')
 
     mock_vasp.store()
-    print("MOCK LOCATION:", mock_vasp.get_remote_exec_path())
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 
@@ -71,16 +67,12 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
 
     kpoints, _ = vasp_kpoints
     inputs = AttributeDict()
-    inputs.restart = AttributeDict()
-    #inputs.verify = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
     inputs.incar = vasp_params
     inputs.kpoints = kpoints
     inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
-    inputs.restart.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(False)
     inputs.options = get_data_node(
         'parameter', dict={
             'queue_name': 'None',
@@ -89,9 +81,10 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
                 'num_mpiprocs_per_machine': 1
             }
         })
-    #inputs.restart.max_iterations = get_data_node('int', 1)
-    #inputs.verify.max_iterations = get_data_node('int', 1)
     inputs.settings = get_data_node('parameter', dict={'parser_settings': {'add_structure': False, 'should_parse_CONTCAR': False}})
+    inputs.restart = AttributeDict()
+    inputs.restart.max_iterations = get_data_class('int')(1)
+    inputs.restart.clean_workdir = get_data_class('bool')(False)
 
     # ~ running = run(workchain, **inputs)
     running = work.run(workchain, **inputs)

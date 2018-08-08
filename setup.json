@@ -83,6 +83,7 @@
         "pyparsing", 
         "py",
         "lxml",
+	"distro",
         "parsevasp >= 0.2.16"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 

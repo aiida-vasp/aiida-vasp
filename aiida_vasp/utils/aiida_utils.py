@@ -1,5 +1,6 @@
 """Utilities for working with aiida in general"""
 from functools import wraps
+import platform
 import numpy as np
 from packaging import version
 
@@ -158,6 +159,16 @@ def compress_cell(structure, volume_change):
     cell = structure.cell
     new_cell = np.array(cell) * volume_change
     structure.reset_cell(new_cell.to_list())
+
+
+def not_ubuntu():
+    """Check if the system runs Ubuntu."""
+    if platform.system() == 'Linux':
+        # Okey, we have Linux, check if it is Ubuntu
+        import distro
+        if distro.id() != 'ubuntu':
+            return True
+    return False
 
 
 def aiida_version():
