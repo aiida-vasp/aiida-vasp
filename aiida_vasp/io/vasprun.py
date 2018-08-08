@@ -23,112 +23,96 @@ class VasprunParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'structure': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'structure',
             'prerequisites': [],
             'alternatives': ['poscar-structure']
         },
         'bands': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'bands',
             'prerequisites': [],
             'alternatives': ['eigenval-bands']
         },
         'dos': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dos',
             'prerequisites': [],
             'alternatives': ['doscar-dos']
         },
         'kpoints': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'kpoints',
             'prerequisites': [],
             'alternatives': ['kpoints-kpoints']
         },
         'occupations': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'occupations',
             'prerequisites': [],
             #'alternatives': ['eigenval-occupations']
         },
         'trajectory': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'trajectory',
             'prerequisites': [],
             #'alternatives': ['xdatcar-trajectory']
         },
         'energies': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'energies',
             'prerequisites': [],
             'alternatives': ['outcar-energies']
         },
         'projectors': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'projectors',
             'prerequisites': [],
             #'alternatives': ['procar-projectors']
         },
         'dielectrics': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dielectrics',
             'prerequisites': [],
             #'alternatives': ['outcar-dielectrics']
         },
         'final_stress': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
         },
         'final_forces': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
         },
         'final_structure': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_structure']
         },
         'born_charges': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'born_charges',
             'prerequisites': [],
             #'alternatives': ['outcar-born_charges']
         },
         'hessian': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'hessian',
             'prerequisites': [],
             #'alternatives': ['outcar-hessian']
         },
         'dynmat': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dynmat',
             'prerequisites': [],
             #'alternatives': ['outcar-dynmat']
         },
         'parameters': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'parameters',
             'prerequisites': [],
             'alternatives': ['outcar-parameters']

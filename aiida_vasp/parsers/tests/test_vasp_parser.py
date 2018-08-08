@@ -15,29 +15,20 @@ class ExampleFileParser(BaseFileParser):
     """Example FileParser class for testing VaspParsers functionality."""
 
     PARSABLE_ITEMS = {
-        'quantity_with_alternatives': {
-            'inputs': [],
-            'parsers': ['DUMMY'],
-            'nodeName': 'structure',
-            'prerequisites': [],
-        },
         'quantity1': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': 'structure',
             'is_alternative': 'quantity_with_alternatives',
             'prerequisites': []
         },
         'quantity2': {
             'inputs': [],
-            'parsers': ['_scheduler-stdout.txt'],
             'nodeName': 'trajectory',
             'is_alternative': 'trajectory',
             'prerequisites': ['quantity1']
         },
         'quantity3': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': '',
             'is_alternative': 'non_existing_quantity',
             'prerequisites': ['quantity_with_alternatives']
@@ -61,9 +52,13 @@ class ExampleFileParser2(BaseFileParser):
     """Example class for testing non unique quantity identifiers."""
 
     PARSABLE_ITEMS = {
+        'quantity_with_alternatives': {
+            'inputs': [],
+            'nodeName': 'structure',
+            'prerequisites': [],
+        },
         'quantity1': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': '',
             'is_alternative': 'quantity_with_alternatives',
             'prerequisites': []
@@ -127,9 +122,9 @@ def test_parsable_quantities(vasp_parser_with_test):
     for quantity in ExampleFileParser.PARSABLE_ITEMS:
         assert quantities.get_by_name(quantity) is not None
     # Check whether quantities have been set up correctly.
-    assert quantities.get_by_name('quantity1').has_files
+    assert not quantities.get_by_name('quantity1').missing_files
     assert quantities.get_by_name('quantity1').is_parsable
-    assert not quantities.get_by_name('quantity_with_alternatives').has_files
+    assert quantities.get_by_name('quantity_with_alternatives').missing_files
     assert quantities.get_by_name('quantity2').is_parsable
     assert not quantities.get_by_name('quantity3').is_parsable
     # check whether the additional non existing quantity has been added. This is for cases,
