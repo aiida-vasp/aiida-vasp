@@ -10,7 +10,6 @@ class WavecarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'wavecar': {
             'inputs': [],
-            'parsers': ['WAVECAR'],
             'nodeName': 'wavecar',
             'prerequisites': []
         },

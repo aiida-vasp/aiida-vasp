@@ -14,7 +14,6 @@ class EigParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'eigenval-bands': {
             'inputs': ['structure', 'kpoints', 'occupations'],
-            'parsers': ['EIGENVAL', 'vasprun.xml'],
             'nodeName': 'bands',
             'prerequisites': ['structure', 'occupations'],
             'alternatives': ['bands']

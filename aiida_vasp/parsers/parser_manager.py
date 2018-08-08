@@ -86,10 +86,10 @@ class ParserManager(object):
         """Set the specific FileParsers."""
 
         for quantity in self._quantities_to_parse:
-            for filename in self._quantities.get_by_name(quantity).parsers:
-                if self._parsers[filename].parser is not None:
-                    # This parser has already been checked, i.e. take the first
-                    # available in the list that can be parsed (i.e. file exists)
-                    continue
-                file_to_parse = self._vasp_parser.get_file(filename)
-                self._parsers[filename].parser = self._parsers[filename]['parser_class'](self._vasp_parser, file_path=file_to_parse)
+            file_name = self._quantities.get_by_name(quantity).file_name
+            if self._parsers[file_name].parser is not None:
+                # This parser has already been checked, i.e. take the first
+                # available in the list that can be parsed (i.e. file exists)
+                continue
+            file_to_parse = self._vasp_parser.get_file(file_name)
+            self._parsers[file_name].parser = self._parsers[file_name]['parser_class'](self._vasp_parser, file_path=file_to_parse)
