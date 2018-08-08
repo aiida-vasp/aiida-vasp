@@ -25,35 +25,20 @@ class ParsableQuantity(DictWithAttributes):
 
     def __init__(self, name, init, files_list):
         # assign default values for optional attributes
-        self.parsers = []
         self.alternatives = []
 
         super(ParsableQuantity, self).__init__(init)
         self.name = name
 
-        # Check whether all files required for parsing this quantity have been retrieved and store it.
-        missing_files = self.has_all(files_list)
-        if missing_files is None:
-            self.has_files = False
-            missing_files = []
-        else:
-            self.has_files = not missing_files
+        # Check whether the file required for parsing this quantity have been retrieved.
+        missing_files = []
+
+        if files_list is None or self.file_name not in files_list:
+            missing_files.append(self.file_name)
         self.missing_files = missing_files
 
         # Check whether this quantity represents a node
         self.is_node = self.nodeName in NODES
-
-    def has_all(self, available_items):
-        """Check whether all items are in item_list."""
-        missing_items = []
-        if not self.parsers:
-            return None
-        if not available_items:
-            return self.parsers
-        for item in self.parsers:
-            if item not in available_items:
-                missing_items.append(item)
-        return missing_items
 
 
 class ParsableQuantities(object):
@@ -110,15 +95,16 @@ class ParsableQuantities(object):
 
         self._quantities = {}
         # Gather all parsable items as defined in the file parsers.
-        for filename, value in self._vasp_parser.settings.parser_definitions.items():
+        for file_name, value in self._vasp_parser.settings.parser_definitions.items():
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
                 if quantity in self._quantities:
                     # This quantity has already been added so it is not unique.
                     raise RuntimeError('The quantity {quantity} defined in {filename} has been '
                                        'defined by two FileParser classes. Quantity names must '
                                        'be unique. If both quantities are equivalent, define one '
-                                       'as an alternative for the other.'.format(quantity=quantity, filename=filename))
+                                       'as an alternative for the other.'.format(quantity=quantity, filename=file_name))
                 # Create quantity objects.
+                quantity_dict['file_name'] = file_name
                 self.add_parsable_quantity(quantity, quantity_dict, retrieved)
 
     def _check_consitency_and_alternatives(self):
@@ -136,9 +122,9 @@ class ParsableQuantities(object):
             value = self._quantities[quantity]
             is_parsable = True
             for prereq in value.prerequisites:
-                if not self._quantities[prereq].has_files:
+                if self._quantities[prereq].missing_files:
                     is_parsable = False
-            value.is_parsable = is_parsable and value.has_files
+            value.is_parsable = is_parsable and not value.missing_files
 
             # Add this quantity to the list of alternatives of another quantity.
             if value.is_alternative is not None:
