@@ -71,6 +71,8 @@ class ParserSettings(object):
 
     def __init__(self, settings, default_settings=None):
 
+        if settings is None:
+            settings = {}
         self._settings = settings
         if default_settings:
             self.update_with(default_settings)
