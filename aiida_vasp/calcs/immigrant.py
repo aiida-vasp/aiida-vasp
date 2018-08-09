@@ -32,7 +32,7 @@ class VaspImmigrant(VaspCalculation):
     def _process_remote_workdir(self, remote_workdir):
         if remote_workdir:
             self.set_remote_workdir(remote_workdir)
-        elif not self._get_attr('remote_workdir', None):
+        elif not self.get_attr('remote_workdir', None):
             raise InputValidationError(
                 'expected keyword parameter ``remote_workdir`` as it has not been set previously with ``.set_remote_workdir()``')
 
@@ -62,18 +62,18 @@ class VaspImmigrant(VaspCalculation):
     def _create_potcar_input(self, open_transport, sandbox_path, structure, potcar_spec=None):
         """Copy the POTCAR files, retrieve the potcar nodes for them and use those."""
         remote_path = os.path.join(self._get_remote_workdir(), 'POTCAR')
-        open_transport.get(remote_path, sandbox_path.strpath)
+        open_transport.get(remote_path, sandbox_path.strpath, ignore_nonexisting=True)
         local_potcar = sandbox_path.join('POTCAR')
         multi_potcar_io = None
         if local_potcar.exists():
             multi_potcar_io = MultiPotcarIo.read(local_potcar.strpath)
-            for kind_name, potcar in multi_potcar_io.get_potentials_dict(structure).items():
-                self.use_potential(potcar, kind=kind_name)
         elif potcar_spec:
             potentials_dict = PotcarData.get_potcars_dict(structure.get_kind_names(), potcar_spec['family'], potcar_spec['map'])
             multi_potcar_io = MultiPotcarIo.from_structure(structure, potentials_dict)
         else:
             raise InputValidationError('no POTCAR found in remote folder and potcar_spec was not passed')
+        for kind_name, potcar in multi_potcar_io.get_potentials_dict(structure).items():
+            self.use_potential(potcar, kind=kind_name)
 
         return multi_potcar_io
 

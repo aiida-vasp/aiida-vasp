@@ -1,0 +1,63 @@
+  PAW_PBE S 11Jan1111                   
+   11.1111111111111     
+
+ parameters from PSCTR are:
+   VRHFIN =S: s1p1
+   LEXCH  = PE
+   EATOM  =   111.1111 eV,    1.1111 Ry
+
+   TITEL  = PAW_PBE S 11Jan1111
+   LULTRA =        F    use ultrasoft PP ?
+   IUNSCR =        1    unscreen: 1-lin 1-nonlin 1-no
+   RPACOR =    1.111    partial core radius
+   POMASS =   11.111; ZVAL   =    1.111    mass and valenz
+   RCORE  =    1.111    outmost cutoff radius
+   RWIGS  =    1.111; RWIGS  =    1.111    wigner-seitz radius (au A)
+   ENMAX  =  111.111; ENMIN  =  111.111 eV
+   ICORE  =        1    local potential
+   LCOR   =        T    correct aug charges
+   LPAW   =        T    paw PP
+   EAUG   =  111.111
+   DEXC   =    1.111
+   RMAX   =    1.111    core radius for proj-oper
+   RAUG   =    1.111    factor for augmentation sphere
+   RDEP   =    1.111    radius for radial grids
+   RDEPT  =    1.111    core radius for aug-charge
+ 
+   Atomic configuration
+    1 entries
+     n  l   j            E        occ.
+     1  1  1.11     -1111.1111   1.1111
+     1  1  1.11      -111.1111   1.1111
+     1  1  1.11       -11.1111   1.1111
+     1  1  1.11       -11.1111   1.1111
+     1  1  1.11        -1.1111   1.1111
+     1  1  1.11        -1.1111   1.1111
+   Description
+     l       E           TYP  RCUT    TYP  RCUT
+     1    -11.1111111     11  1.111
+     1     -1.1111111     11  1.111
+     1     -1.1111111     11  1.111
+     1      1.1111111     11  1.111
+     1     -1.1111111      1  1.111
+   Error from kinetic energy argument (eV)
+   NDATA  =      111
+   STEP   =   11.111   1.111
+  11.1      1.11      1.11      1.11      1.11      1.11      1.11      1.11
+  1.11      1.11      1.11      1.11      1.11      1.11      1.11      1.11
+  1.11      1.11      1.11      1.11      1.11     1.111     1.111     1.111
+ 1.111     1.111     1.111     1.111     1.111     1.111     1.111     1.111
+ 1.111     1.111     1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+ 1.111E-11 1.111E-11 1.111E-11 1.111E-11
+END of PSCTR-controll parameters
+
+ ... DATA ...
+
+ End of Dataset

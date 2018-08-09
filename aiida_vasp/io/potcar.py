@@ -155,7 +155,7 @@ class MultiPotcarIo(object):
         structure_elements = structure.get_symbols_set()
         if structure_elements != self.element_symbols:
             raise ValueError('structure elements do not match POTCAR elements')
-        if len(structure.get_kind_names) != len(structure_elements):
+        if len(structure.get_kind_names()) != len(structure_elements):
             raise ValueError('structure has more kind names than elements')
 
         element_potcars = {potcario.node.element: potcario.node for potcario in self.potcars}

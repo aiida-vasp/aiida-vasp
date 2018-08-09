@@ -123,3 +123,34 @@ def cmp_load_verdi_data():
         raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
 
     return verdi_data
+
+
+@dbenv
+def create_authinfo(computer, store=False):
+    """
+    Allow the current user to use the given computer.
+
+    Deal with backwards compatibility down to aiida 0.11
+    """
+    from aiida.orm import backend as orm_backend
+    authinfo = None
+    if hasattr(orm_backend, 'construct_backend'):
+        backend = orm_backend.construct_backend()
+        authinfo = backend.authinfos.create(computer=computer, user=get_current_user())
+        if store:
+            authinfo.store()
+    else:
+        from aiida.backends.settings import BACKEND
+        from aiida.backends.profile import BACKEND_SQLA, BACKEND_DJANGO
+
+        if BACKEND == BACKEND_DJANGO:
+            from aiida.backends.djsite.db.models import DbAuthInfo
+            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+        elif BACKEND == BACKEND_SQLA:
+            from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
+            from aiida.backends.sqlalchemy import get_scoped_session
+            _ = get_scoped_session()
+            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+        if store:
+            authinfo.save()
+    return authinfo
