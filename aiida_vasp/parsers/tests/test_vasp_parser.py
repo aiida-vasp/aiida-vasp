@@ -98,16 +98,11 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
 
 
 @ONLY_ONE_CALC
-def test_quantities_to_parse(vasp_nscf_and_ref, ref_retrieved_nscf):
+def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
     from aiida.orm.data.parameter import ParameterData
-    vasp_calc, _ = vasp_nscf_and_ref
-    vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
-    parser = vasp_calc.get_parserclass()(vasp_calc)
 
-    parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
-
-    parser.out_folder = parser.get_folder({'retrieved': ref_retrieved_nscf})
+    parser = vasp_parser_with_test
     parser.quantities.setup()
     parser.parsers.setup()
 
