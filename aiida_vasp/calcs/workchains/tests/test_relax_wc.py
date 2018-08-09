@@ -95,6 +95,7 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.verify.max_iterations = get_data_node('int', 1)
     inputs.verify.clean_workdir = restart_clean_workdir
     inputs.relax = AttributeDict()
+    inputs.relax.perform = get_data_node('bool', True)
     inputs.relax.convergence = AttributeDict()
     inputs.relax.convergence.shape = AttributeDict()
     inputs.relax.convergence.on = get_data_node('bool', True)
