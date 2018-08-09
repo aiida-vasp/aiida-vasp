@@ -101,4 +101,4 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.relax.convergence.positions = get_data_node('float', 0.1)
 
     results = work.run(workchain, **inputs)
-    assert 'relaxed_structure' in results
+    assert 'output_structure_relaxed' in results
