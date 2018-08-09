@@ -154,3 +154,10 @@ def create_authinfo(computer, store=False):
         if store:
             authinfo.save()
     return authinfo
+
+
+@dbenv
+def cmp_get_transport(computer, authinfo):
+    if hasattr(computer, 'get_transport'):
+        return computer.get_transport()
+    return authinfo.get_transport()
