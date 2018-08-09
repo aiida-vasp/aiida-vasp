@@ -90,7 +90,7 @@ def duplicate_potcar_data(potcar_node):
 
 
 @pytest.fixture
-def potential_family(aiida_env, temp_pot_folder):
+def potcar_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     family_name = POTCAR_FAMILY_NAME
@@ -108,6 +108,11 @@ def potential_family(aiida_env, temp_pot_folder):
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
     assert not potcar_ga.exists()
     return family_name
+
+
+@pytest.fixture
+def potential_family(aiida_env, temp_pot_folder):
+    potcar_family(aiida_env, temp_pot_folder)
 
 
 @pytest.fixture
