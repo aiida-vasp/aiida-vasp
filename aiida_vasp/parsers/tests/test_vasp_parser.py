@@ -52,11 +52,6 @@ class ExampleFileParser2(BaseFileParser):
     """Example class for testing non unique quantity identifiers."""
 
     PARSABLE_ITEMS = {
-        'quantity_with_alternatives': {
-            'inputs': [],
-            'nodeName': 'structure',
-            'prerequisites': [],
-        },
         'quantity1': {
             'inputs': [],
             'nodeName': '',
@@ -86,6 +81,15 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
     parser = vasp_calc.get_parserclass()(vasp_calc)
     parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    parser.add_parsable_quantity(
+        'quantity_with_alternatives',
+        {
+            'file_name': 'DUMMY',
+            'inputs': [],
+            'nodeName': 'structure',
+            'prerequisites': [],
+        },
+    )
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     try:
         yield parser
