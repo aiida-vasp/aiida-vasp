@@ -71,8 +71,8 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
     inputs.structure = vasp_structure
     inputs.incar = vasp_params
     inputs.kpoints = kpoints
-    inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
         'parameter', dict={
             'queue_name': 'None',

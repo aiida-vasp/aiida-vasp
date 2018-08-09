@@ -78,8 +78,8 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.structure = structure
     inputs.incar = get_data_node('parameter', dict=incar)
     inputs.kpoints = kpoints
-    inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
         'parameter', dict={
             'queue_name': 'None',
