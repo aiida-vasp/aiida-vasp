@@ -20,13 +20,13 @@ class ConvergeWorkChain(WorkChain):
     """A workchain to perform convergence tests."""
 
     _verbose = True
-    _next_workchain = WorkflowFactory('vasp.verify')
+    _next_workchain = WorkflowFactory('vasp.relax')
 
     # a few default values defined here for now
     _encut_start_default = 200
     _encut_step_default = 50
     _encut_samples_default = 3
-    _k_step_default = 0.2
+    _k_step_default = 0.15
     _k_spacing_default = 0.5
     _k_samples_default = 3
     _cutoff_type_default = 'energy'
@@ -38,6 +38,7 @@ class ConvergeWorkChain(WorkChain):
     _displacement_distance_default = 0.2  # AA
     _displacement_atom_default = 1  # atom number starting from 1
     _volume_change_default = np.array([[1.05, 0.0, 0.0], [0.0, 1.05, 0.0], [0.0, 0.0, 1.05]])
+    _relax_default = False
 
     _ALLOWED_CUTOFF_TYPES = {'energy': 0, 'forces': 1, 'vbm': 2, 'gap': 3}
 
@@ -46,8 +47,8 @@ class ConvergeWorkChain(WorkChain):
         super(ConvergeWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('potcar_family', valid_type=get_data_class('str'))
-        spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
+        spec.input('potential_family', valid_type=get_data_class('str'))
+        spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
@@ -56,9 +57,30 @@ class ConvergeWorkChain(WorkChain):
         spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
         spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
         spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('relax.incar', valid_type=get_data_class('parameter'), required=False)
+        spec.input('relax.perform', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(True))
+        spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(True))
+        spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
+        spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
+        spec.input('relax.convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
+        spec.input('relax.convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
+        spec.input('relax.convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_class('int')(5))
+        spec.input(
+            'relax.convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
+            default=get_data_class('float')(0.1))  # in cartesian coordinates
+        spec.input(
+            'relax.convergence.shape.angles', valid_type=get_data_class('float'), required=False,
+            default=get_data_class('float')(0.1))  # in degree in the cartesian system
+        spec.input(
+            'relax.convergence.volume', valid_type=get_data_class('float'), required=False,
+            default=get_data_class('float')(0.01))  # in degree in the cartesian system
+        spec.input(
+            'relax.convergence.positions', valid_type=get_data_class('float'), required=False,
+            default=get_data_class('float')(0.01))  # in degree in the cartesian system
+
         spec.outline(
             cls.initialize,
-            if_(cls.run_pw_conv_calcs or cls.run_kpoints_conv_calcs)(
+            if_(cls.run_conv_calcs)(
                 while_(cls.run_pw_conv_calcs)(
                     cls.init_pw_conv_calc,
                     cls.init_next_workchain,
@@ -119,7 +141,8 @@ class ConvergeWorkChain(WorkChain):
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -290,6 +313,7 @@ class ConvergeWorkChain(WorkChain):
         converge_dict['displacement_distance'] = None
         converge_dict['displacement_atom'] = None
         converge_dict['volume_change'] = None
+        converge_dict['relax'] = None
         if 'settings' in self.inputs:
             settings = self.inputs.settings.get_dict()
             if 'converge' in settings:
@@ -303,6 +327,7 @@ class ConvergeWorkChain(WorkChain):
                 converge_dict['displacement_distance'] = converge.get('displacement_distance')
                 converge_dict['displacement_atom'] = converge.get('displacement_atom')
                 converge_dict['volume_change'] = converge.get('volume_change')
+                converge_dict['relax'] = converge.get('relax')
 
         return
 
@@ -313,8 +338,18 @@ class ConvergeWorkChain(WorkChain):
         self._check_context_kpoints()
         self._check_context_relative()
         self._check_context_cutoffs()
+        self._check_context_others()
 
         return
+
+    def _check_context_others(self):
+        """Check and verify general context parameters."""
+        settings = self.ctx.converge.settings
+
+        if settings['relax'] is None:
+            if self._verbose:
+                self.report('setting the default relaxation parameter for the convergence ' 'tests to {}'.format(self._relax_default))
+                settings['relax'] = self._relax_default
 
     def _check_context_pw(self):
         """Check and verify plane wave related parameters."""
@@ -457,6 +492,11 @@ class ConvergeWorkChain(WorkChain):
         self._init_pw_conv()
         self._init_kpoints_conv()
 
+        # If we do not want relaxations during convergence tests, disable
+        # the inputs.relax.perform flag and enable it for the final calculation.
+        if not self.ctx.converge.settings.relax:
+            self.ctx.inputs.relax.perform = get_data_class('bool')(False)
+
         return
 
     def init_rel_conv(self):
@@ -578,7 +618,6 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.kpoints_iteration = 0
         self.ctx.converge.run_kpoints_conv_calcs = False
         self.ctx.converge.kpoints_workchains = []
-
         if kgrid_org is None and not supplied_kmesh:
             # No kpoint grid supplied, run kpoints convergence tests.
             self.ctx.converge.run_kpoints_conv_calcs = True
@@ -617,10 +656,13 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.running_pw = False
         self.ctx.replace_nodes = False
 
+        # reset all the relaxation flag
+        self.ctx.inputs.relax = self.inputs.relax
+
         # inform user
         if self._verbose:
             if not self.ctx.converge.settings['supplied_kmesh']:
-                self.report('executing a calculation for storage with an assumed converged '
+                self.report('executing a calculation with an assumed converged '
                             'plane wave cutoff of {encut} and a {kgrid0}x{kgrid1}x{kgrid2} '
                             'k-point grid'.format(
                                 encut=self.ctx.converge.settings['encut'],
@@ -628,9 +670,8 @@ class ConvergeWorkChain(WorkChain):
                                 kgrid1=self.ctx.converge.settings['kgrid'][1],
                                 kgrid2=self.ctx.converge.settings['kgrid'][2]))
             else:
-                self.report('executing one final calculation for storage with a plane wave cutoff'
-                            ' of {encut} and a supplied k-point grid'.format(encut=self.ctx.converge.settings['encut']))
-
+                self.report('executing a calculation with an assumed converged '
+                            'plane wave cutoff of {encut} and a supplied k-point grid'.format(encut=self.ctx.converge.settings['encut']))
         return
 
     def _replace_nodes(self):
@@ -737,7 +778,7 @@ class ConvergeWorkChain(WorkChain):
     def results_pw_conv_calc(self):
         """Fetch and store the relevant convergence parameters for each plane wave calculation."""
 
-        # Check if verify workchain was successfull
+        # Check if child workchain was successfull
         exit_status = self.ctx.pw_workchains[-1].exit_status
         if exit_status:
             self.report('This single convergence calculation has to be considered '
@@ -813,7 +854,7 @@ class ConvergeWorkChain(WorkChain):
     def results_kpoints_conv_calc(self):
         """Fetch and store the relevant convergence parameters for each k-point grid calculation."""
 
-        # Check if verify workchain was successfull
+        # Check if child workchain was successfull
         exit_status = self.ctx.kpoints_workchains[-1].exit_status
         if exit_status:
             self.report('This single convergence calculation has to be considered '
@@ -1127,36 +1168,37 @@ class ConvergeWorkChain(WorkChain):
 
     def store_conv(self):
         """Store the obtained convergence data on nodes."""
+        convergence = get_data_class('array')()
+
         if self._verbose:
-            self.report('storing convergence data')
+            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
+                                                                   'output_convergence_data'))
 
-            convergence = get_data_class('array')()
+        # Store regular conversion data
+        try:
+            convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data_org))
+        except AttributeError:
+            convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data))
+        try:
+            convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data_org))
+        except AttributeError:
+            convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data))
 
-            # Store regular conversion data
-            try:
-                convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data_org))
-            except AttributeError:
-                convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data))
-            try:
-                convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data_org))
-            except AttributeError:
-                convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data))
+        # Then possibly displacement
+        try:
+            convergence.set_array('pw_displacement', np.array(self.ctx.converge.pw_data_displacement))
+            convergence.set_array('kpoints_displacement', np.array(self.ctx.converge.k_data_displacement))
+        except AttributeError:
+            pass
 
-            # Then possibly displacement
-            try:
-                convergence.set_array('pw_displacement', np.array(self.ctx.converge.pw_data_displacement))
-                convergence.set_array('kpoints_displacement', np.array(self.ctx.converge.k_data_displacement))
-            except AttributeError:
-                pass
+        # And finally for compression
+        try:
+            convergence.set_array('pw_compression', np.array(self.ctx.converge.pw_data_comp))
+            convergence.set_array('kpoints_compression', np.array(self.ctx.converge.k_data_comp))
+        except AttributeError:
+            pass
 
-            # And finally for compression
-            try:
-                convergence.set_array('pw_compression', np.array(self.ctx.converge.pw_data_comp))
-                convergence.set_array('kpoints_compression', np.array(self.ctx.converge.k_data_comp))
-            except AttributeError:
-                pass
-
-            self.out('output_convergence', convergence)
+        self.out('output_convergence_data', convergence)
 
         return
 
@@ -1277,11 +1319,13 @@ class ConvergeWorkChain(WorkChain):
 
             workchain = self.ctx.workchains[-1]
 
-            for name, port in self.spec().outputs.iteritems():
-                if port.required and name not in workchain.out:
-                    self.report('the spec specifies the output {} as required '
-                                'but was not an output of {}<{}>'.format(name, self._next_workchain.__name__, workchain.pk))
-
+            for name, _ in self.spec().outputs.iteritems():
+                # if port.required and (name not in workchain.out or name not in self.out):
+                #    self.report('the spec specifying the output {} as required '
+                #                'but was not an output of {}<{}> or already stored '
+                #                'in the output of this workchain'.
+                #                format(name, self._next_workchain.__name__,
+                #                       workchain.pk))
                 if name in workchain.out:
                     node = workchain.out[name]
                     self.out(name, workchain.out[name])
@@ -1294,6 +1338,11 @@ class ConvergeWorkChain(WorkChain):
         """Finalize the workchain."""
 
         return self.exit_status
+
+    def run_conv_calcs(self):
+        """Determines if convergence calcs are to be run at all."""
+
+        return self.run_kpoints_conv_calcs or self.run_pw_conv_calcs
 
     def _displace_structure(self):
         """Displace the input structure according to the supplied settings."""

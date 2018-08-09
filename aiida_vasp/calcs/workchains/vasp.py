@@ -50,8 +50,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.input('potcar_family', valid_type=get_data_class('str'))
-        spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
+        spec.input('potential_family', valid_type=get_data_class('str'))
+        spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
@@ -89,9 +89,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_band', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.output('output_structure', valid_type=get_data_class('structure'))
 
     def init_calculation(self):
         """Set the restart folder and set INCAR tags for a restart."""
@@ -134,7 +132,9 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Verify potcars
         try:
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
-                structure=self.inputs.structure, family_name=self.inputs.potcar_family.value, mapping=self.inputs.potcar_mapping.get_dict())
+                structure=self.inputs.structure,
+                family_name=self.inputs.potential_family.value,
+                mapping=self.inputs.potential_mapping.get_dict())
         except ValueError as err:
             self._fail_compat(exception=err)
         except NotExistent as err:

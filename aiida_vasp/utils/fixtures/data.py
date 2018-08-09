@@ -90,7 +90,7 @@ def duplicate_potcar_data(potcar_node):
 
 
 @pytest.fixture
-def potcar_family(aiida_env, temp_pot_folder):
+def potential_family(aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     family_name = POTCAR_FAMILY_NAME

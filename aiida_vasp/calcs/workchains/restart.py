@@ -193,7 +193,7 @@ class BaseRestartWorkChain(WorkChain):
         """Attach the outputs specified in the output specification from the last completed calculation."""
 
         if not self.exit_status:
-            self.report('{} completed after {} iterations'.format(self.__class__.__name__, self.ctx.iteration))
+            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
 
             for name, port in self.spec().outputs.iteritems():
                 if port.required and name not in self.ctx.restart_calc.out:
@@ -206,8 +206,9 @@ class BaseRestartWorkChain(WorkChain):
                     if self._verbose:
                         self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
         else:
-            self.report('The calculation {} returned a non-zero exit status. '
-                        'The exit status of {} is thus set to {}'.format(self._calculation, self.__class__.__name__, self.exit_status))
+            self.report('The calculation {}<{}> returned a non-zero exit status. '
+                        'The exit status of {} is thus set to {}'.format(self._calculation, self.pid, self.__class__.__name__,
+                                                                         self.exit_status))
         return
 
     def on_destroy(self):

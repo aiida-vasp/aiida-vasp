@@ -4,7 +4,7 @@ import click
 from click_spinner import spinner as cli_spinner
 import numpy
 
-from aiida_vasp.utils.aiida_utils import builder_interface, load_dbenv_if_not_loaded
+from aiida_vasp.utils.aiida_utils import builder_interface, load_dbenv_if_not_loaded, get_data_class
 from auxilary import example_param_set, set_structure_InAs, set_structure_Si, set_kpoints, set_params_noncol, set_params_simple
 
 
@@ -136,7 +136,7 @@ def simple_builder(potcar_family, queue, code, calc_cls):
 
 
 def import_pots(folder_path, family_name):
-    pot_cls = get_data_cls('vasp.potcar')
+    pot_cls = get_data_class('vasp.potcar')
     pot_cls.upload_potcar_family(folder_path, group_name=family_name, group_description='Test family', stop_if_existing=False)
 
 

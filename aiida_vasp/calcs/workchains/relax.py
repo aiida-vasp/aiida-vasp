@@ -3,7 +3,7 @@
 import enum
 from aiida.common.extendeddicts import AttributeDict
 from aiida.work import WorkChain
-from aiida.work.workchain import append_, while_
+from aiida.work.workchain import append_, while_, if_
 from aiida.orm import WorkflowFactory, Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, init_input
@@ -14,6 +14,7 @@ from aiida_vasp.calcs.workchains.auxiliary.utils import compare_structures, prep
 class RelaxWorkChain(WorkChain):
     """Structure relaxation workchain."""
 
+    _verbose = True
     _next_workchain = WorkflowFactory('vasp.verify')
 
     class AlgoEnum(enum.IntEnum):
@@ -46,9 +47,8 @@ class RelaxWorkChain(WorkChain):
         super(RelaxWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('potcar_family', valid_type=get_data_class('str'))
-        spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
-        spec.input('incar', valid_type=get_data_class('parameter'))
+        spec.input('potential_family', valid_type=get_data_class('str'))
+        spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
@@ -56,7 +56,8 @@ class RelaxWorkChain(WorkChain):
         spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
         spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
         spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
-        spec.input('relax.incar_add', valid_type=get_data_class('parameter'), required=False)
+        spec.input('relax.incar', valid_type=get_data_class('parameter'), required=False)
+        spec.input('relax.perform', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
         spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
         spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
         spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
@@ -78,17 +79,28 @@ class RelaxWorkChain(WorkChain):
 
         spec.outline(
             cls.initialize,
-            while_(cls.run_next_workchains)(
-                cls.init_next_workchain,
-                cls.run_next_workchain,
-                cls.verify_next_workchain,
+            if_(cls.perform_relaxation)(
+                while_(cls.run_next_workchains)(
+                    cls.init_next_workchain,
+                    cls.run_next_workchain,
+                    cls.verify_next_workchain,
+                    cls.analyze_convergence,
+                ),
+                cls.store_relaxed,
             ),
+            cls.init_relaxed,
+            cls.init_next_workchain,
+            cls.run_next_workchain,
+            cls.verify_next_workchain,
             cls.results,
             cls.finalize
         )  # yapf: disable
 
-        spec.output('relaxed_structure', valid_type=get_data_class('structure'))
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        spec.output('remote_folder', valid_type=get_data_class('remote'))
+        spec.output('retrieved', valid_type=get_data_class('folder'))
+        spec.output('output_structure', valid_type=get_data_class('structure'))
+        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
 
     def _set_ibrion(self, incar):
         if self.inputs.relax.positions.value:
@@ -103,7 +115,7 @@ class RelaxWorkChain(WorkChain):
 
     def _add_overrides(self, incar):
         """Add incar tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.incar_add.get_dict().items()})
+        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.incar.get_dict().items()})
         if 'ibrion' in overrides:
             raise ValueError('overriding IBRION not allowed, use relax.xxx inputs to control')
         if 'isif' in overrides:
@@ -116,12 +128,12 @@ class RelaxWorkChain(WorkChain):
                             '(ionic steps will be performed but ions will not move)')
         incar.update(overrides)
 
-    def _assemble_incar(self):
+    def _init_incar(self):
         """Set incar parameters based on other inputs."""
         incar = AttributeDict()
         self._set_ibrion(incar)
         self._set_isif(incar)
-        if 'relax.incar_add' in self.inputs:
+        if 'relax.incar' in self.inputs:
             try:
                 self._add_overrides(incar)
             except ValueError as err:
@@ -138,7 +150,6 @@ class RelaxWorkChain(WorkChain):
 
     def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.current_restart_folder = None
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
@@ -151,14 +162,20 @@ class RelaxWorkChain(WorkChain):
 
     def _init_inputs(self):
         """Initialize the input."""
-
         self.ctx.inputs = init_input(self.inputs, exclude='relax')
+        self.ctx.inputs.incar = self._init_incar()
 
         return
 
     def run_next_workchains(self):
         within_max_iterations = bool(self.ctx.iteration < self.inputs.relax.convergence.max_iterations.value)
         return bool(within_max_iterations and not self.ctx.is_converged)
+
+    def init_relaxed(self):
+        """Initialize a calculation based on a relaxed or assumed relaxed structure."""
+        if not self.perform_relaxation():
+            if self._verbose:
+                self.report('skipping structure relaxation and forwarding input/output ' 'to the next workchain')
 
     def init_next_workchain(self):
         """Initialize the next workchain calculation."""
@@ -173,17 +190,24 @@ class RelaxWorkChain(WorkChain):
     def run_next_workchain(self):
         """Run the next workchain."""
 
-        inputs = prepare_process_inputs(self.ctx.inputs)
+        if not self.ctx.is_converged:
+            self.ctx.iteration += 1
 
+        inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(self._next_workchain, **inputs)
 
-        self.ctx.iteration += 1
-
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
+        if not self.ctx.is_converged and self.perform_relaxation():
+            if hasattr(running, 'pid'):
+                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
+            else:
+                # Aiida < 1.0
+                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
         else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+            if hasattr(running, 'pid'):
+                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
+            else:
+                # Aiida < 1.0
+                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
@@ -193,31 +217,39 @@ class RelaxWorkChain(WorkChain):
 
         If volume, shape and ion positions are all within a given threshold, consider the relaxation converged.
         """
-        if not self.ctx.workchains:
-            self._fail_compat(IndexError('The first iteration finished without ' 'returning a {}'.format(self._next_workchain)))
 
         workchain = self.ctx.workchains[-1]
-
         # Adopt exit status from last child workchain (supposed to be successfull)
-        next_workchain_exit_status = self.ctx.workchains[-1].exit_status
+        next_workchain_exit_status = workchain.exit_status
         if not next_workchain_exit_status:
             self.exit_status = 0
         else:
             self.exit_status = next_workchain_exit_status
-            self.report('The child {} returned a non-zero exit status, {} '
-                        'inherits exit status {}'.format(self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
+                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
+                                                         next_workchain_exit_status))
             return
 
+    def analyze_convergence(self):
+        """Analyze the convergence of the relaxation."""
+
+        workchain = self.ctx.workchains[-1]
+        # Double check presence of output_structure
         if 'output_structure' not in workchain.out:
             self._fail_compat(
-                UnexpectedCalculationFailure(
-                    'The VaspBaseWf for the relaxation run did not have an output structure and most likely failed'))
+                UnexpectedCalculationFailure('The {}<{}> for the relaxation run did not have an '
+                                             'output structure and most likely failed. However,'
+                                             'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk)))
+            self.exit_status = 9999
+            return
 
         self.ctx.previous_structure = self.ctx.current_structure
         self.ctx.current_structure = workchain.out.output_structure
 
         converged = True
         if self.inputs.relax.convergence.on.value:
+            if self._verbose:
+                self.report('Cheking the convergence of the relaxation.')
             comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
             delta = comparison.absolute if self.inputs.relax.convergence.absolute.value else comparison.relative
             if self.inputs.relax.positions.value:
@@ -229,13 +261,16 @@ class RelaxWorkChain(WorkChain):
 
         if not converged:
             self.ctx.current_restart_folder = workchain.out.remote_folder
-            self.report('VaspBaseWf{} was not converged.'.format(workchain))
-        elif self.inputs.relax.convergence.on.value:
-            self.report('VaspBaseWf{} was converged, finishing.'.format(workchain))
+            if self._verbose:
+                self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
         else:
-            self.report('Convergence checking is off')
+            if self.inputs.relax.convergence.on.value:
+                if self._verbose:
+                    self.report('{}<{}> was converged, finishing with a final calculation.'.format(
+                        self._next_workchain.__name__, workchain.pk))
+            self.ctx.is_converged = converged
 
-        self.ctx.is_converged = converged
+        return
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
@@ -264,23 +299,58 @@ class RelaxWorkChain(WorkChain):
                                                                                  self.inputs.relax.convergence.positions.value))
         return positions_converged
 
-    def results(self):
-        """Gather results from the last relaxation iteration."""
+    def store_relaxed(self):
+        """Store the relaxed structure."""
+        workchain = self.ctx.workchains[-1]
+
         if not self.exit_status:
-            last_workchain = self.ctx.workchains[-1]
-            relaxed_structure = last_workchain.out.output_structure
-            output_parameters = last_workchain.out.output_parameters
-            self.out('relaxed_structure', relaxed_structure)
+            relaxed_structure = workchain.out.output_structure
+            output_parameters = workchain.out.output_parameters
+            if self._verbose:
+                self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
+                                                                       'output_structure_relaxed'))
+                self.report("attaching the node {}<{}> as '{}'".format(output_parameters.__class__.__name__, output_parameters.pk,
+                                                                       'output_parameters'))
+            self.out('output_structure_relaxed', relaxed_structure)
             self.out('output_parameters', output_parameters)
-            self.report('workchain completed successfully after {} convergence iterations'.format(self.ctx.iteration))
+
+    def results(self):
+        """Attach the outputs specified in the output specification from the last completed calculation."""
+
+        if not self.exit_status:
+            self.report('{}<{}> completed'.format(self.__class__.__name__, self.pid))
+
+            workchain = self.ctx.workchains[-1]
+
+            for name, _ in self.spec().outputs.iteritems():
+                # if port.required and ((name not in workchain.out) or (name not in self.out)):
+                #    self.report('the spec specifying the output {} as required '
+                #                'but was not an output of {}<{}> or already stored '
+                #                'in the output of this workchain'.
+                #                format(name, self._next_workchain.__name__,
+                #                       workchain.pk))
+                if name in workchain.out:
+                    node = workchain.out[name]
+                    self.out(name, workchain.out[name])
+                    if self._verbose:
+                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+
+        return
 
     def finalize(self):
         """Finalize the workchain."""
         return self.exit_status
 
     def _fail_compat(self, *args, **kwargs):
+        """Method to handle general failures."""
+
         if hasattr(self, 'fail'):
             self.fail(*args, **kwargs)  # pylint: disable=no-member
         else:
             msg = '{}'.format(kwargs['exception'])
             self.abort_nowait(msg)  # pylint: disable=no-member
+        return
+
+    def perform_relaxation(self):
+        """Check if a relaxation is to be performed."""
+        return self.inputs.relax.perform.value

@@ -10,7 +10,7 @@ os.system('verdi daemon restart')
 
 @click.command()
 @example_param_set
-def main(potcar_family, queue, code, computer):
+def main(potential_family, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
     from aiida.work import submit, run
@@ -20,25 +20,52 @@ def main(potcar_family, queue, code, computer):
     code = Code.get_from_string('{}@{}'.format(code, computer))
 
     # set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.verify')
+    workchain = WorkflowFactory('vasp.converge')
 
     # set inputs
+
+    # standard
     inputs = AttributeDict()
+    inputs.structure = set_structure_Si()
+    inputs.code = code
+    inputs.potential_family = get_data_class('str')(potential_family)
+    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
     inputs.restart = AttributeDict()
     inputs.verify = AttributeDict()
-    inputs.structure = set_structure_Si()
-    inputs.kpoints = set_kpoints()
-    #inputs.incar = set_params_simple_no_encut()
-    inputs.incar = set_params_simple()
-    inputs.code = code
-    inputs.potcar_family = get_data_class('str')(potcar_family)
-    inputs.potcar_mapping = get_data_node('parameter', dict={'Si': 'Si'})
     inputs.restart.max_iterations = get_data_class('int')(1)
     inputs.verify.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(True)
+    inputs.restart.clean_workdir = get_data_class('bool')(False)
     inputs.verify.clean_workdir = get_data_class('bool')(False)
 
-    # set options
+    # relaxation
+    inputs.relax = AttributeDict()
+    inputs.relax.perform = get_data_class('bool')(False)
+    inputs.relax.convergence = AttributeDict()
+    inputs.relax.convergence.shape = AttributeDict()
+    inputs.relax.convergence.on = get_data_class('bool')(True)
+    inputs.relax.convergence.positions = get_data_node('float', 0.1)
+
+    # convergence tests (to disable, set the kpoints and/or make sure
+    # the plane wave cutoff is specified)
+    inputs.incar = get_data_class('parameter')(dict={
+        'nsw': 1, 'ediffg': -0.0001, 'ismear': 0,
+        'sigma': 0.1, 'system': 'extensive vasp workchain example'
+    })  # yapf: disable
+    inputs.relax.incar = get_data_class('parameter')(dict={
+        'nsw': 1, 'ediffg': -0.0001, 'ismear': 0,
+        'sigma': 0.1, 'system': 'extensive vasp workchain example'
+    })  # yapf: disable
+    # inputs.kpoints = set_kpoints()
+    # inputs.incar = get_data_class('parameter')(dict={
+    #    'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0,
+    #    'sigma': 0.1, 'system': 'extensive vasp workchain example',
+    # })  # yapf: disable
+    # inputs.relax.incar = get_data_class('parameter')(dict={
+    #    'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0,
+    #    'sigma': 0.1, 'system': 'extensive vasp workchain example',
+    # })  # yapf: disable
+
+    # options and settings
     options = AttributeDict()
     settings = AttributeDict()
     converge_settings = {'compress': False, 'displace': False}

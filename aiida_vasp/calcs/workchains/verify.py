@@ -24,8 +24,8 @@ class VerifyWorkChain(WorkChain):
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.input('potcar_family', valid_type=get_data_class('str'))
-        spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
+        spec.input('potential_family', valid_type=get_data_class('str'))
+        spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
@@ -60,9 +60,7 @@ class VerifyWorkChain(WorkChain):
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_band', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.output('output_structure', valid_type=get_data_class('structure'))
 
     def initialize(self):
         """Initialize."""
@@ -127,28 +125,30 @@ class VerifyWorkChain(WorkChain):
         self.ctx.is_finished = True
 
         # Adopt exit status from last child workchain (supposed to be successfull)
-        next_workchain_exit_status = self.ctx.workchains[-1].exit_status
+        next_workchain = self.ctx.workchains[-1]
+        next_workchain_exit_status = next_workchain.exit_status
         if not next_workchain_exit_status:
             self.exit_status = 0
             return
         else:
             self.exit_status = next_workchain_exit_status
-            self.report('The child {} returned a non-zero exit status, {} '
-                        'inherits exit status {}'.format(self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
+                        'inherits exit status {}'.format(next_workchain.__class__.__name__, next_workchain.pk, self.__class__.__name__,
+                                                         self.pid, next_workchain_exit_status))
         return
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
 
         if not self.exit_status:
-            self.report('{} completed after {} iterations'.format(self.__class__.__name__, self.ctx.iteration))
+            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
 
             workchain = self.ctx.workchains[-1]
 
             for name, port in self.spec().outputs.iteritems():
                 if port.required and name not in workchain.out:
                     self.report('the spec specifies the output {} as required '
-                                'but was not an output of {}<{}>'.format(name, self._next_workchain.__name__, workchain.pk))
+                                'but was not an output of {}<{}>'.format(name, workchain.__class__.__name__, workchain.pk))
 
                 if name in workchain.out:
                     node = workchain.out[name]

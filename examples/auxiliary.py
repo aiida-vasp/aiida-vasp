@@ -9,7 +9,7 @@ def example_param_set(cmd_function):
     """Define the command line options."""
 
     @click.option(
-        '--potcar-family', type=str, default='vasp-test', help='Name for a Potcar family to upload to (or to look for if --no-import).')
+        '--potential-family', type=str, default='vasp-test', help='Name for a Potcar family to upload to (or to look for if --no-import).')
     @click.option('--queue', type=str, default='', help='Name of the compute queue if your scheduler requires it')
     @click.argument('code', type=str)
     @click.argument('computer', type=str)
