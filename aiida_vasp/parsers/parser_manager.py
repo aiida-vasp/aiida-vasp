@@ -51,6 +51,7 @@ class ParserManager(object):
         for quantity in quantities:
             if quantity.is_parsable:
                 self._quantities_to_parse.append(quantity.name)
+                self._vasp_parser.settings.update_node(quantities[0].name, quantity.name)
                 return True
         return False
 
@@ -63,7 +64,7 @@ class ParserManager(object):
         """Set the quantities to parse list."""
 
         self._quantities_to_parse = []
-        for quantity_name in self._settings.nodes:
+        for quantity_name in self._settings.quantities_to_parse:
             if not self._quantities.get_by_name(quantity_name):
                 self._vasp_parser.logger.warning('{quantity} has been requested by setting '
                                                  'add_{quantity}. However it has not been implemented. '

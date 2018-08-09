@@ -1,23 +1,7 @@
 """Classes representing quantities and a list of quantities."""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
-
-NODES = {
-    'parameters': 'output_parameters',
-    'kpoints': 'output_kpoints',
-    'structure': 'output_structure',
-    'trajectory': 'output_trajectory',
-    'bands': 'output_bands',
-    'dos': 'output_dos',
-    'energies': 'output_energies',
-    'projectors': 'output_projectors',
-    'born_charges': 'output_born_charges',
-    'dielectrics': 'output_dielectrics',
-    'hessian': 'output_hessian',
-    'dynmat': 'output_dynmat',
-    'chgcar': 'chgcar',
-    'wavecar': 'wavecar',
-}
+from aiida_vasp.parsers.output_node_definitions import NODES
 
 
 class ParsableQuantity(DictWithAttributes):

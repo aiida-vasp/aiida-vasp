@@ -111,6 +111,13 @@ class VasprunParser(BaseFileParser):
             'prerequisites': [],
             #'alternatives': ['outcar-dynmat']
         },
+        'fermi_level': {
+            'inputs': [],
+            'parsers': ['vasprun.xml'],
+            'nodeName': '',
+            'prerequisites': [],
+            'alternatives': ['outcar-fermi_level']
+        },
         'parameters': {
             'inputs': [],
             'nodeName': 'parameters',
@@ -150,12 +157,10 @@ class VasprunParser(BaseFileParser):
         for key, value in inputs.items():
             self._parsed_data[key] = value
 
-        if self.settings is not None:
-            self.settings.update_with(DEFAULT_OPTIONS)
-        else:
-            self.settings = DEFAULT_OPTIONS
+        quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
+        if self.settings is not None and self.settings.quantities_to_parse:
+            quantities_to_parse = self.settings.quantities_to_parse
 
-        quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
 
         if self._xml is None:
