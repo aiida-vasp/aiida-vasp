@@ -105,10 +105,9 @@ class VaspParser(BaseParser):
         self.settings.parser_definitions[parser_name] = parser_dict
         self.parsers.add_file_parser(parser_name, parser_dict)
 
-    def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
+    def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
-
-        self.quantities.add_parsable_quantity(quantity_name, quantity_dict, retrieved_files)
+        self.quantities.additional_quantities[quantity_name] = quantity_dict
 
     def parse_with_retrieved(self, retrieved):
 
