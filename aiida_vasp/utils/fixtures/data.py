@@ -315,3 +315,10 @@ def wannier_projections():
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections
+
+
+@pytest.fixture
+def phonondb_run(tmpdir):
+    phonondb = py_path.local(data_path('phonondb'))
+    phonondb.copy(tmpdir)
+    yield tmpdir
