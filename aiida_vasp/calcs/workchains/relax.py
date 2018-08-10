@@ -249,7 +249,7 @@ class RelaxWorkChain(WorkChain):
         converged = True
         if self.inputs.relax.convergence.on.value:
             if self._verbose:
-                self.report('Cheking the convergence of the relaxation.')
+                self.report('Checking the convergence of the relaxation.')
             comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
             delta = comparison.absolute if self.inputs.relax.convergence.absolute.value else comparison.relative
             if self.inputs.relax.positions.value:

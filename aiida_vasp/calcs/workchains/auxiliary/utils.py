@@ -47,6 +47,8 @@ def compare_structures(structure_a, structure_b):
 
     pos_a = np.array([site.position for site in structure_a.sites])
     pos_b = np.array([site.position for site in structure_b.sites])
+    print("CELL A:", structure_a.cell)
+    print("CELL B:", structure_b.cell)
     print("POS A:", pos_a)
     print("POS B:", pos_b)
     delta.absolute.pos = pos_a - pos_b

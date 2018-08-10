@@ -33,7 +33,7 @@ FILE_PARSER_SETS = {
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
-            'is_critical': True,
+            'is_critical': False,
             'status': 'Unknown'
         },
         'CHGCAR': {
