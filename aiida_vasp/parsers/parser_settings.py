@@ -8,7 +8,6 @@ from aiida_vasp.io.vasprun import VasprunParser
 from aiida_vasp.io.chgcar import ChgcarParser
 from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.parsers.output_node_definitions import NODES
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {
@@ -53,6 +52,79 @@ FILE_PARSER_SETS = {
             'is_critical': False,
             'status': 'Unknown'
         },
+    },
+}
+
+NODES = {
+    'parameters': {
+        'link_name': 'output_parameters',
+        'type': 'parameter',
+        'quantities': ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries'],
+    },
+    'kpoints': {
+        'link_name': 'output_kpoints',
+        'type': 'array.kpoints',
+        'quantities': ['kpoints'],
+    },
+    'structure': {
+        'link_name': 'output_structure',
+        'type': 'structure',
+        'quantities': ['structure'],
+    },
+    'trajectory': {
+        'link_name': 'output_trajectory',
+        'type': 'array.trajectory',
+        'quantities': ['trajectory'],
+    },
+    'bands': {
+        'link_name': 'output_bands',
+        'type': 'array.bands',
+        'quantities': ['eigenvalues', 'kpoints', 'occupations'],
+    },
+    'dos': {
+        'link_name': 'output_dos',
+        'type': 'array',
+        'quantities': ['dos'],
+    },
+    'energies': {
+        'link_name': 'output_energies',
+        'type': 'array',
+        'quantities': ['energies'],
+    },
+    'projectors': {
+        'link_name': 'output_projectors',
+        'type': 'array',
+        'quantities': ['projectors'],
+    },
+    'born_charges': {
+        'link_name': 'output_born_charges',
+        'type': 'array',
+        'quantities': ['born_charges'],
+    },
+    'dielectrics': {
+        'link_name': 'output_dielectrics',
+        'type': 'array',
+        'quantities': ['dielectrics'],
+    },
+    'hessian': {
+        'link_name': 'output_hessian',
+        'type': 'array',
+        'quantities': ['hessian'],
+    },
+    'dynmat': {
+        'link_name': 'output_dynmat',
+        'type': 'array',
+        'quantities': ['dynmat'],
+    },
+    'chgcar': {
+        'link_name': 'chgcar',
+        'type': 'vasp.chargedensity',
+        'quantities': ['chgcar'],
+    },
+    'wavecar': {
+        'link_name': 'wavecar',
+        'type': 'vasp.wavefun',
+        'quantities': ['wavecar'],
     },
 }
 

@@ -20,9 +20,8 @@ def test_parse_doscar():
          (7.967, 3.15600000e+00, 1.40000000e+01), (9.868, -1.38100000e-27, 1.40000000e+01), (11.769, 2.90100000e+00, 1.95200000e+01),
          (13.67, 0.00000000e+00, 2.00000000e+01)],
         dtype=[('energy', '<f8'), ('total', '<f8'), ('integrated', '<f8')])
-    inputs = {}
-    result = parser.get_quantity('doscar-dos', inputs)
+    result = parser.dos
     # The 'tdos' array is a nested array for some reason.
-    result_dos = result['doscar-dos'].get_array('tdos')
+    result_dos = result.get_array('tdos')
     for i in range(0, dos.size):
         assert result_dos[i] == dos[i]

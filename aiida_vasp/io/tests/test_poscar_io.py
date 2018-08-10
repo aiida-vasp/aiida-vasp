@@ -6,6 +6,8 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.io.poscar import PoscarParser
+from aiida_vasp.parsers.output_node_definitions import NodeComposer
+from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
@@ -20,11 +22,12 @@ def test_parse_poscar(fresh_aiida_env, vasp_structure):
 
     path = data_path('poscar', 'POSCAR')
     parser = PoscarParser(file_path=path)
-    result = parser.get_quantity('poscar-structure', {})
+    result = parser.structure
     structure = vasp_structure
-    assert result['poscar-structure'].cell == structure.cell
-    assert result['poscar-structure'].get_site_kindnames() == structure.get_site_kindnames()
-    assert result['poscar-structure'].sites[2].position == structure.sites[2].position
+
+    assert result.cell == structure.cell
+    assert result.get_site_kindnames() == structure.get_site_kindnames()
+    assert result.sites[2].position == structure.sites[2].position
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
@@ -32,25 +35,24 @@ def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
     """
     Parse (write) a reference POSCAR file.
 
-    Using the PoscarParser, parse (read), and compare to reference
+    Using the PoscarParser, and compare to reference
     structure.
 
     """
 
     structure = vasp_structure
     parser = PoscarParser(data=structure)
-    result = parser.get_quantity('poscar-structure', {})
-    assert result['poscar-structure'].cell == structure.cell
-    assert result['poscar-structure'].get_site_kindnames() == structure.get_site_kindnames()
-    assert result['poscar-structure'].sites[2].position == structure.sites[2].position
+
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
+
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('poscar-structure', {})
-    assert result_reparse['poscar-structure'].cell == structure.cell
-    assert result_reparse['poscar-structure'].get_site_kindnames() == \
+    result_reparse = parser.structure
+
+    assert result_reparse.cell == structure.cell
+    assert result_reparse.get_site_kindnames() == \
         structure.get_site_kindnames()
-    assert result_reparse['poscar-structure'].sites[2].position == \
+    assert result_reparse.sites[2].position == \
         structure.sites[2].position
 
 
@@ -66,17 +68,17 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
 
     path = data_path('poscar', 'POSCAR')
     parser = PoscarParser(file_path=path)
-    _ = parser.get_quantity('poscar-structure', {})
+
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
+
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('poscar-structure', {})
+    result = parser.structure
+
     structure = vasp_structure
-    assert result_reparse['poscar-structure'].cell == structure.cell
-    assert result_reparse['poscar-structure'].get_site_kindnames() == \
-        structure.get_site_kindnames()
-    assert result_reparse['poscar-structure'].sites[2].position == \
-        structure.sites[2].position
+    assert result.cell == structure.cell
+    assert result.get_site_kindnames() == structure.get_site_kindnames()
+    assert result.sites[2].position == structure.sites[2].position
 
 
 @pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason="Element X only present in Aiida >= 1.x")
@@ -91,10 +93,11 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
 
     path = data_path('poscar', 'POSCARSILLY')
     parser = PoscarParser(file_path=path)
-    result = parser.get_quantity('poscar-structure', {})
-    names = result['poscar-structure'].get_site_kindnames()
+    result = parser.structure
+
+    names = result.get_site_kindnames()
     assert names == ['Hamburger', 'Pizza']
-    symbols = result['poscar-structure'].get_symbols_set()
+    symbols = result.get_symbols_set()
     assert symbols == set(['X', 'X'])
 
 
@@ -114,13 +117,16 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     assert names == ['Hamburger', 'Pizza']
     symbols = result['poscar-structure'].get_symbols_set()
     assert symbols == set(['As', 'In'])
+
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
+
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('poscar-structure', {})
-    names = result_reparse['poscar-structure'].get_site_kindnames()
+    result_reparse = parser.structure
+
+    names = result_reparse.get_site_kindnames()
     assert names == ['Hamburger', 'Pizza']
-    symbols = result_reparse['poscar-structure'].get_symbols_set()
+    symbols = result_reparse.get_symbols_set()
     assert symbols == set(['X', 'X'])
 
 
@@ -143,8 +149,8 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)
     parser = PoscarParser(file_path=temp_file)
-    result_reparse = parser.get_quantity('poscar-structure', {})
-    names = result_reparse['poscar-structure'].get_site_kindnames()
+    result_reparse = parser.structure
+    names = result_reparse.get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result_reparse['poscar-structure'].get_symbols_set()
+    symbols = result_reparse.get_symbols_set()
     assert symbols == set(['As', 'In'])

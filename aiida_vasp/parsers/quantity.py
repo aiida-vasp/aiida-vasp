@@ -1,7 +1,6 @@
 """Classes representing quantities and a list of quantities."""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
-from aiida_vasp.parsers.output_node_definitions import NODES
 
 
 class ParsableQuantity(DictWithAttributes):
@@ -20,9 +19,6 @@ class ParsableQuantity(DictWithAttributes):
         if files_list is None or self.file_name not in files_list:
             missing_files.append(self.file_name)
         self.missing_files = missing_files
-
-        # Check whether this quantity represents a node
-        self.is_node = self.nodeName in NODES
 
 
 class ParsableQuantities(object):

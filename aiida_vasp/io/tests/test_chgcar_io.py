@@ -13,8 +13,8 @@ def test_parse_chgcar():
     file_name = 'CHGCAR'
     path = data_path('chgcar', file_name)
     parser = ChgcarParser(file_path=path)
-    result = parser.get_quantity('chgcar', {})
-    with open(result['chgcar'].get_file_abs_path(), 'r') as file_obj:
+    result = parser.chgcar
+    with open(result.get_file_abs_path(), 'r') as file_obj:
         content = file_obj.readline()
-    assert result['chgcar'].filename == file_name
+    assert result.filename == file_name
     assert content == 'This is a test CHGCAR file.\n'

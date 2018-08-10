@@ -232,7 +232,7 @@ class BaseFileParser(BaseParser):
             if self._vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
                 for inp in self._parsable_items[quantity]['inputs']:
-                    inputs[inp] = self._vasp_parser.get_inputs(inp)
+                    inputs.update(self._vasp_parser.get_inputs(inp))
                     if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity: None}

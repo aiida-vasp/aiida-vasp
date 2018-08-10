@@ -7,44 +7,16 @@ import numpy as np
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
-
-
-def test_parse_vasprun(vasprun_parser):
-    """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
-
-    quantity = vasprun_parser.get_quantity('occupations')
-    data_obj = quantity['occupations']
-    occ = data_obj.get_array('total')
-    occupations = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
-    assert occ.all() == occupations.all()
-    # eFL: How do we want to store scalar values?
-    #assert  == 7.29482275
-
-
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_parameter_results(vasprun_parser):
-    """
-    Test that the parameter node is a ParametersData instance.
-
-    Should contain the Fermi level.
-
-    """
-
-    vasprun_parser.settings.update_with({'output_params': ['fermi_level']})
-    quantity = vasprun_parser.get_quantity('parameters')
-    data_obj = quantity['parameters']
-    ref_class = get_data_class('parameter')
-    assert isinstance(data_obj, ref_class)
-    data_dict = data_obj.get_dict()
-    assert data_dict['fermi_level'] == 5.96764939
+from aiida_vasp.parsers.output_node_definitions import NodeComposer
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_kpoints_result(vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
-    quantity = vasprun_parser.get_quantity('kpoints')
-    data_obj = quantity['kpoints']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.kpoints', quantities=['kpoints'])
+
     ref_class = get_data_class('array.kpoints')
     assert isinstance(data_obj, ref_class)
     assert np.all(data_obj.get_kpoints()[0] == np.array([0.0, 0.0, 0.0]))
@@ -60,8 +32,8 @@ def test_structure_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('structure')
-    data_obj = quantity['structure']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('structure', quantities=['structure'])
     # check object
     ref_obj = get_data_class('structure')
     assert isinstance(data_obj, ref_obj)
@@ -87,12 +59,13 @@ def test_forces_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('trajectory')
-    data_obj, data_obj_arr = quantity['trajectory']
-    # test object (a tupple as we store trajectory as an array as well)
-    ref_obj = get_data_class('array')
-    assert isinstance(data_obj_arr, ref_obj)
-    data_obj_arr = data_obj_arr.get_array('forces')
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
+
+    # test object
+    ref_obj = get_data_class('array.trajectory')
+    assert isinstance(data_obj, ref_obj)
+    data_obj_arr = data_obj.get_array('forces')
     # test entries
     assert np.all(data_obj_arr[0][0] == np.array([-0.24286901, 0.0, 0.0]))
     assert np.all(data_obj_arr[0][-1] == np.array([-0.73887169, -0.43727184, -0.43727184]))
@@ -117,12 +90,12 @@ def test_forces_result_relax(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('trajectory')
-    _, data_obj_arr = quantity['trajectory']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
     # test object
-    ref_obj = get_data_class('array')
-    assert isinstance(data_obj_arr, ref_obj)
-    data_obj_arr = data_obj_arr.get_array('forces')
+    ref_obj = get_data_class('array.trajectory')
+    assert isinstance(data_obj, ref_obj)
+    data_obj_arr = data_obj.get_array('forces')
     # test shape of array
     assert data_obj_arr.shape == (19, 8, 3)
     # test a few entries (first and last atom)
@@ -142,12 +115,12 @@ def test_unitcells_result_relax(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('trajectory')
-    _, data_obj_arr = quantity['trajectory']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
     # test object
-    ref_obj = get_data_class('array')
-    assert isinstance(data_obj_arr, ref_obj)
-    data_obj_arr = data_obj_arr.get_array('cells')
+    ref_obj = get_data_class('array.trajectory')
+    assert isinstance(data_obj, ref_obj)
+    data_obj_arr = data_obj.get_array('cells')
     # test shape of array
     assert data_obj_arr.shape == (19, 3, 3)
     # test a few entries (first and last vector)
@@ -167,12 +140,12 @@ def test_positions_result_relax(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('trajectory')
-    _, data_obj_arr = quantity['trajectory']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
     # test object
-    ref_obj = get_data_class('array')
-    assert isinstance(data_obj_arr, ref_obj)
-    data_obj_arr = data_obj_arr.get_array('positions')
+    ref_obj = get_data_class('array.trajectory')
+    assert isinstance(data_obj, ref_obj)
+    data_obj_arr = data_obj.get_array('positions')
     # test shape of array
     assert data_obj_arr.shape == (19, 8, 3)
     # test a few entries (first and last atom)
@@ -191,8 +164,8 @@ def test_dielectrics_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('dielectrics')
-    data_obj = quantity['dielectrics']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dielectrics'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -223,8 +196,8 @@ def test_born_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('born_charges')
-    data_obj = quantity['born_charges']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['born_charges'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -246,8 +219,8 @@ def test_dos_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('dos')
-    data_obj = quantity['dos']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -272,8 +245,8 @@ def test_dos_spin_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('dos')
-    data_obj = quantity['dos']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -297,8 +270,8 @@ def test_pdos_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('dos')
-    data_obj = quantity['dos']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -322,8 +295,8 @@ def test_projectors_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('projectors')
-    data_obj = quantity['projectors']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['projectors'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -346,8 +319,8 @@ def test_bands_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('bands')
-    data_obj = quantity['bands']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupations'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
@@ -376,8 +349,8 @@ def test_eigenocc_spin_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('bands')
-    data_obj = quantity['bands']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupations'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
@@ -411,8 +384,8 @@ def test_toten_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('energies')
-    data_obj = quantity['energies']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['energies'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -432,8 +405,8 @@ def test_totens_relax_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('energies')
-    data_obj = quantity['energies']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['energies'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -455,8 +428,8 @@ def test_hessian_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('hessian')
-    data_obj = quantity['hessian']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['hessian'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -485,8 +458,8 @@ def test_dynmat_result(vasprun_parser):
 
     """
 
-    quantity = vasprun_parser.get_quantity('dynmat')
-    data_obj = quantity['dynmat']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dynmat'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)

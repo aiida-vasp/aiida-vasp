@@ -1,7 +1,7 @@
 """Tools for parsing CHGCAR files."""
 
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.output_node_definitions import NodeComposer
 
 
 class WavecarParser(BaseFileParser):
@@ -10,13 +10,14 @@ class WavecarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'wavecar': {
             'inputs': [],
-            'nodeName': 'wavecar',
+            'nodeName': '',
             'prerequisites': []
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(WavecarParser, self).__init__(*args, **kwargs)
+        self._wavecar = None
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
@@ -28,6 +29,12 @@ class WavecarParser(BaseFileParser):
         if wfn is None:
             return {'wavecar': None}
 
-        result['wavecar'] = get_data_class('vasp.wavefun')()
-        result['wavecar'].set_file(wfn)
+        result['wavecar'] = wfn
         return result
+
+    @property
+    def wavecar(self):
+        if self._wavecar is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._wavecar = composer.compose('vasp.wavefun')
+        return self._wavecar

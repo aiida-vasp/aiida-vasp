@@ -1,7 +1,7 @@
 """Tools for parsing CHGCAR files."""
 
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.output_node_definitions import NodeComposer
 
 
 class ChgcarParser(BaseFileParser):
@@ -17,6 +17,7 @@ class ChgcarParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(ChgcarParser, self).__init__(*args, **kwargs)
+        self._chgcar = None
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
@@ -28,7 +29,13 @@ class ChgcarParser(BaseFileParser):
         if chgcar is None:
             return {'chgcar': None}
 
-        result['chgcar'] = get_data_class('vasp.chargedensity')()
-        result['chgcar'].set_file(chgcar)
+        result['chgcar'] = chgcar
 
         return result
+
+    @property
+    def chgcar(self):
+        if self._chgcar is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._chgcar = composer.compose('vasp.chargedensity')
+        return self._chgcar

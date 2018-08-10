@@ -1,10 +1,10 @@
 """Tools for parsing OUTCAR files."""
 import re
 
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.output_node_definitions import NodeComposer
 
-DEFAULT_OPTIONS = {'quantities_to_parse': ['volume', 'energies', 'fermi_level']}
+DEFAULT_OPTIONS = ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries']
 
 
 class OutcarParser(BaseFileParser):
@@ -18,23 +18,18 @@ class OutcarParser(BaseFileParser):
     FILE_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
         'outcar-volume': {
-            'inputs': ['parameters'],
+            'inputs': [],
             'nodeName': '',
             'prerequisites': []
         },
         'outcar-energies': {
-            'inputs': ['parameters'],
-            'nodeName': '',
-            'prerequisites': []
-        },
-        'outcar-fermi_level': {
-            'inputs': ['parameters'],
-            'nodeName': '',
-            'prerequisites': []
-        },
-        'outcar-parameters': {
             'inputs': [],
-            'nodeName': 'parameters',
+            'nodeName': '',
+            'prerequisites': []
+        },
+        'outcar-efermi': {
+            'inputs': [],
+            'nodeName': '',
             'prerequisites': []
         },
         'symmetries': {
@@ -50,6 +45,7 @@ class OutcarParser(BaseFileParser):
     SPACE_GROUP_PATTERN = re.compile(r'space group is (.*?)\s*\.')
 
     def __init__(self, *args, **kwargs):
+        self._parameter = None
         super(OutcarParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
 
@@ -57,8 +53,6 @@ class OutcarParser(BaseFileParser):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
 
         result = self._read_outcar(inputs)
-        params = get_data_class('parameter')(dict=result)
-        result['outcar-parameters'] = params
         return result
 
     @staticmethod
@@ -114,3 +108,10 @@ class OutcarParser(BaseFileParser):
         result['outcar-energies']['energy_without_entropy_all'] = energy_zero
         result['symmetries'] = symmetries
         return result
+
+    @property
+    def parameter(self):
+        if self._parameter is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._parameter = composer.compose('parameter', quantities=DEFAULT_OPTIONS)
+        return self._parameter

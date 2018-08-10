@@ -13,8 +13,9 @@ def test_parse_outcar():
     file_name = 'OUTCAR'
     path = data_path('outcar', file_name)
     parser = OutcarParser(file_path=path)
-    params = parser.get_quantity('outcar-parameters', {})
-    result = params['outcar-parameters'].get_dict()
+
+    result = parser.parameter.get_dict()
+
     assert result['outcar-volume'] == 65.94
     assert result['outcar-efermi'] == 7.2948
     assert result['outcar-energies']
