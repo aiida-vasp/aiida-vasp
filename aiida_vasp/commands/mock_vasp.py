@@ -49,6 +49,7 @@ def mock_vasp():
 
     system = incar_parser.get_quantity('incar', {})['incar'].get_dict().get('system', '')
     test_case = re.findall(r'test-case:(.*)$', system)
+    print("CASE", test_case)
 
     if not test_case:
         output_file('outcar', 'OUTCAR').copy(pwd.join('OUTCAR'))
@@ -61,5 +62,6 @@ def mock_vasp():
     else:
         test_case = test_case[0]
         test_data_path = py_path.local(data_path(test_case)).join('out')
+        print("PATH", test_data_path)
         for out_file in test_data_path.listdir():
             out_file.copy(pwd)

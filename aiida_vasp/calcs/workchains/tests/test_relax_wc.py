@@ -47,7 +47,7 @@ def create_authinfo(computer):
 
 @pytest.mark.wf
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
-@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
+#@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
 def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import WorkflowFactory, Code
@@ -64,11 +64,11 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 
-    structure = PoscarParser(file_path=data_path('test_relax_wf', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
-    kpoints = KpParser(file_path=data_path('test_relax_wf', 'inp', 'KPOINTS')).get_quantity('kpoints-kpoints', {})['kpoints-kpoints']
-    incar = IncarParser(file_path=data_path('test_relax_wf', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
+    structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
+    kpoints = KpParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).get_quantity('kpoints-kpoints', {})['kpoints-kpoints']
+    incar = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
     incar = {k: v for k, v in incar.items() if k not in ['isif', 'ibrion']}
-    incar['system'] = 'test-case:test_relax_wf'
+    incar['system'] = 'test-case:test_relax_wc'
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
