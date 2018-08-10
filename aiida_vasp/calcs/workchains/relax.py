@@ -305,14 +305,10 @@ class RelaxWorkChain(WorkChain):
 
         if not self.exit_status:
             relaxed_structure = workchain.out.output_structure
-            output_parameters = workchain.out.output_parameters
             if self._verbose:
                 self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
                                                                        'output_structure_relaxed'))
-                self.report("attaching the node {}<{}> as '{}'".format(output_parameters.__class__.__name__, output_parameters.pk,
-                                                                       'output_parameters'))
             self.out('output_structure_relaxed', relaxed_structure)
-            self.out('output_parameters', output_parameters)
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""

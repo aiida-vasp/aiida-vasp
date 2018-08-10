@@ -20,6 +20,7 @@ def main(potential_family, queue, code, computer):
     inputs.structure = create_structure_perturbed()
     inputs.kpoints = set_kpoints()
     inputs.relax = AttributeDict()
+    inputs.relax.perform = get_data_node('bool', True)
     inputs.relax.convergence = AttributeDict()
     inputs.relax.convergence.shape = AttributeDict()
     inputs.relax.convergence.on = get_data_node('bool', True)

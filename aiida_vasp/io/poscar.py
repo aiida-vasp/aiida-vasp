@@ -97,8 +97,7 @@ def parsevasp_to_aiida(poscar):
     # generate Aiida StructureData and add results from the loaded file
     result = {}
 
-    result['poscar-structure'] = get_data_class('structure') \
-                                 (cell=poscar_dict['unitcell'])
+    result['poscar-structure'] = get_data_class('structure')(cell=poscar_dict['unitcell'])
 
     for site in poscar_dict['sites']:
         specie = site['specie']
