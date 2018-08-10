@@ -415,24 +415,9 @@ class IncarParser(BaseFileParser):
             self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
             return {'incar': None}
 
-        result = parsevasp_to_aiida(incar)
-
+        result['incar'] = incar.get_dict()
         return result
 
-
-def parsevasp_to_aiida(incar):
-    """
-    Parsevasp to Aiida conversion.
-
-    Generate an Aiida ParameterData that contains the
-    entries found in INCAR using parsevasp.
-
-    """
-
-    incar_dict = incar.get_dict()
-
-    result = {}
-
-    result['incar'] = get_data_class('parameter')(dict=incar_dict)
-
-    return result
+    @property
+    def incar(self):
+        return self.get_quantity('incar', {})['incar']

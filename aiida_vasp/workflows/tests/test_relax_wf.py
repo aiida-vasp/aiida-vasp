@@ -4,7 +4,7 @@ Test submitting a VaspBaseWf workflow.
 This does not seem to work, for `submit` the daemon will not pick up the workchain
 and `run` just seems to get stuck after a while.
 """
-# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name,no-member
 from __future__ import print_function
 import time
 import os
@@ -67,9 +67,9 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 
-    structure = PoscarParser(file_path=data_path('test_relax_wf', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
-    kpoints = KpParser(file_path=data_path('test_relax_wf', 'inp', 'KPOINTS')).get_quantity('kpoints-kpoints', {})['kpoints-kpoints']
-    incar_add = IncarParser(file_path=data_path('test_relax_wf', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
+    structure = PoscarParser(file_path=data_path('test_relax_wf', 'inp', 'POSCAR')).structure
+    kpoints = KpParser(file_path=data_path('test_relax_wf', 'inp', 'KPOINTS')).kpoints
+    incar_add = IncarParser(file_path=data_path('test_relax_wf', 'inp', 'INCAR')).incar
     incar_add = {k: v for k, v in incar_add.items() if k not in ['isif', 'ibrion']}
     incar_add['system'] = 'test-case:test_relax_wf'
 
