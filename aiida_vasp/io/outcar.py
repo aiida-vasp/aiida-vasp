@@ -2,7 +2,7 @@
 import re
 
 from aiida_vasp.io.parser import BaseFileParser
-from aiida_vasp.parsers.output_node_definitions import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer
 
 DEFAULT_OPTIONS = ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries']
 

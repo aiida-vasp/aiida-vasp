@@ -1,7 +1,7 @@
 """DOSCAR (VASP format) utilities"""
 import numpy as np
 
-from aiida_vasp.parsers.output_node_definitions import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.io.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.

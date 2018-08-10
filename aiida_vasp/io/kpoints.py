@@ -3,7 +3,7 @@
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
-from aiida_vasp.parsers.output_node_definitions import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 

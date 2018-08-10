@@ -1,7 +1,7 @@
 """Tools for parsing CHGCAR files."""
 
 from aiida_vasp.io.parser import BaseFileParser
-from aiida_vasp.parsers.output_node_definitions import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer
 
 
 class WavecarParser(BaseFileParser):

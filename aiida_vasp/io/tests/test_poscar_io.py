@@ -6,8 +6,6 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.parsers.output_node_definitions import NodeComposer
-from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
