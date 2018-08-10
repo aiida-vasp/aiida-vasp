@@ -51,6 +51,7 @@ class ParsableQuantities(object):
 
     def __init__(self, vasp_parser=None):
         self._quantities = {}
+        self.additional_quantities = {}
 
         self._vasp_parser = vasp_parser
 
@@ -94,6 +95,11 @@ class ParsableQuantities(object):
         """Check uniqueness and add parsable quantities."""
 
         self._quantities = {}
+
+        # Add all the additional quantities that have been added by the user.
+        for key, value in self.additional_quantities.items():
+            self.add_parsable_quantity(key, value, retrieved)
+
         # Gather all parsable items as defined in the file parsers.
         for file_name, value in self._vasp_parser.settings.parser_definitions.items():
             for quantity, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
