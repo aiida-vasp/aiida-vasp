@@ -133,11 +133,12 @@ class RelaxWorkChain(WorkChain):
         incar = AttributeDict()
         self._set_ibrion(incar)
         self._set_isif(incar)
-        if 'relax.incar' in self.inputs:
+        if 'incar' in self.inputs.relax:
             try:
                 self._add_overrides(incar)
             except ValueError as err:
                 self._fail_compat(exception=err)
+
         return incar
 
     def initialize(self):
