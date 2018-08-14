@@ -84,7 +84,7 @@
         "py",
         "lxml",
 	"distro",
-        "parsevasp >= 0.2.16"
+        "parsevasp >= 0.2.18"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
