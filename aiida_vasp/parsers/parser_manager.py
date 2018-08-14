@@ -50,8 +50,7 @@ class ParserManager(object):
         """Check, whether a quantity or it's alternatives can be added."""
         for quantity in quantities:
             if quantity.is_parsable:
-                self._quantities_to_parse.append(quantity.name)
-                self._vasp_parser.settings.update_node(quantities[0].name, quantity.name)
+                self._quantities_to_parse.append(quantity.original_name)
                 return True
         return False
 

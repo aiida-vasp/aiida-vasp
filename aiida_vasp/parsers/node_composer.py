@@ -4,6 +4,7 @@
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
+from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
     'parameter': ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries'],
@@ -27,6 +28,7 @@ class NodeComposer(object):
     def __init__(self, **kwargs):
         # create the delegate for getting quantities.
         setattr(self, 'get_quantity', Delegate())
+        self.quantites = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -35,15 +37,24 @@ class NodeComposer(object):
 
     def _init_with_file_parsers(self, file_parsers):
         """Init with a list of file parsers."""
+        from copy import deepcopy
+
         if not file_parsers:
             return
+
+        self.quantites = ParsableQuantities()
+
         # Add all the FileParsers get_quantity methods to our get_quantity delegate.
         for parser in file_parsers:
+            for key, value in parser.parsable_items.items():
+                self.quantites.add_parsable_quantity(key, deepcopy(value))
+
             self.get_quantity.append(parser.get_quantity)
 
     def _init_with_vasp_parser(self, vasp_parser):
         """Init with a VaspParser object."""
         self.get_quantity.append(vasp_parser.get_inputs)
+        self.quantites = vasp_parser.quantities
 
     def compose(self, node_type, quantities=None):
         """
@@ -61,8 +72,9 @@ class NodeComposer(object):
         current_node = get_data_class(node_type)()
 
         inputs = {}
-        for quantity in quantities:
-            inputs.update(self.get_quantity(quantity))
+        for quantity_name in quantities:
+            quantity = self.quantites.get_by_name(quantity_name)
+            inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
 
         # Call the correct specialised method for assembling.
         getattr(self, "_compose_with_" + node_type.replace(".", "_"))(current_node, inputs)

@@ -28,9 +28,8 @@ class DosParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'doscar-dos': {
             'inputs': [],
-            'nodeName': 'dos',
+            'name': 'dos',
             'prerequisites': [],
-            'alternatives': ['dos']
         },
     }
 

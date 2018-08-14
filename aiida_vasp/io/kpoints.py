@@ -22,9 +22,8 @@ class KpParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'kpoints-kpoints': {
             'inputs': [],
-            'nodeName': 'kpoints',
+            'name': 'kpoints',
             'prerequisites': [],
-            'alternatives': ['kpoints']
         },
     }
 
@@ -37,7 +36,7 @@ class KpParser(BaseFileParser):
         """Initialise with a given kpointsData object."""
         self._data_obj = data
         self._kpoints = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property

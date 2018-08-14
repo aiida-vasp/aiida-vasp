@@ -34,9 +34,8 @@ class PoscarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'poscar-structure': {
             'inputs': [],
-            'nodeName': 'structure',
+            'name': 'structure',
             'prerequisites': [],
-            'alternatives': ['structure']
         },
     }
 
@@ -53,7 +52,7 @@ class PoscarParser(BaseFileParser):
         """Init with Aiida StructureData"""
         self._data_obj = data
         self._structure = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property

@@ -12,16 +12,14 @@ class EigParser(BaseFileParser):
 
     PARSABLE_ITEMS = {
         'eigenval-eigenvalues': {
-            'inputs': ['occupations', 'kpoints'],
-            'nodeName': 'bands',
-            'prerequisites': ['occupations'],
-            'alternatives': ['bands']
+            'inputs': [],
+            'name': 'eigenvalues',
+            'prerequisites': [],
         },
         'eigenval-kpoints': {
-            'inputs': [],
-            'nodeName': 'kpoints',
-            'prerequisites': [],
-            'is_alternative': 'kpoints',
+            'inputs': ['structure'],
+            'name': 'kpoints',
+            'prerequisites': ['structure'],
         },
     }
 

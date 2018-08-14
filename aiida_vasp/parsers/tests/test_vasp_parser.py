@@ -17,20 +17,17 @@ class ExampleFileParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'quantity1': {
             'inputs': [],
-            'nodeName': 'structure',
-            'is_alternative': 'quantity_with_alternatives',
+            'name': 'quantity_with_alternatives',
             'prerequisites': []
         },
         'quantity2': {
             'inputs': [],
-            'nodeName': 'trajectory',
-            'is_alternative': 'trajectory',
+            'name': 'trajectory',
             'prerequisites': ['quantity1']
         },
         'quantity3': {
             'inputs': [],
-            'nodeName': '',
-            'is_alternative': 'non_existing_quantity',
+            'name': 'non_existing_quantity',
             'prerequisites': ['quantity_with_alternatives']
         },
     }
@@ -54,8 +51,7 @@ class ExampleFileParser2(BaseFileParser):
     PARSABLE_ITEMS = {
         'quantity1': {
             'inputs': [],
-            'nodeName': '',
-            'is_alternative': 'quantity_with_alternatives',
+            'name': 'quantity_with_alternatives',
             'prerequisites': []
         },
     }
@@ -82,12 +78,10 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
         ParameterData(
             dict={
                 'parser_settings': {
-                    'custom_nodes': {
-                        'custom': {
-                            'link_name': 'custom_node',
-                            'type': 'parameter',
-                            'quantities': ['quantity2', 'quantity_with_alternatives']
-                        }
+                    'add_custom': {
+                        'link_name': 'custom_node',
+                        'type': 'parameter',
+                        'quantities': ['quantity2', 'quantity_with_alternatives']
                     }
                 }
             }))
@@ -96,9 +90,7 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     parser.add_parsable_quantity(
         'quantity_with_alternatives',
         {
-            'file_name': 'DUMMY',
             'inputs': [],
-            'nodeName': 'structure',
             'prerequisites': [],
         },
     )
@@ -195,7 +187,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
         from aiida.orm import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True, 'parameters': ['fermi_level', 'parameters']}}
+        settings_dict = {'parser_settings': {'add_bands': True, 'add_parameters': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = VaspParser(calc=calc)

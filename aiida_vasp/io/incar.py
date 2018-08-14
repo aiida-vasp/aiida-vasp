@@ -368,8 +368,7 @@ class IncarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'incar': {
             'inputs': [],
-            'parsers': ['INCAR'],
-            'nodeName': '',
+            'name': 'incar',
             'prerequisites': []
         },
     }
@@ -381,7 +380,7 @@ class IncarParser(BaseFileParser):
     def _init_with_data(self, data):
         """Initialise with a given kpointsData object."""
         self._data_obj = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property

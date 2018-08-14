@@ -145,7 +145,7 @@ class ParserSettings(object):
 
     def __init__(self, settings, default_settings=None):
 
-        self._quantities_to_node = {}
+        self.alternatives = {}
         if settings is None:
             settings = {}
         self._settings = settings
@@ -159,7 +159,28 @@ class ParserSettings(object):
         self.set_parser_definitions(self._settings.get('file_parser_set'))
 
     def set_nodes(self):
-        """Set the 'nodes' card of a settings object."""
+        """
+        Set the 'nodes' card of a settings object.
+
+        Nodes can be added by setting:
+
+            'add_node_name' : value
+
+        in 'parser_settings'. The type of value determines the mode for adding the node:
+
+         -  bool: if True and node_name in NODES a default node will be add with default quantities.
+
+                'add_structure': True
+
+         -  list: if node_name in NODES a default node with updated quantities will be added.
+
+                'add_parameters': ['efermi', 'energies', ...]
+
+         -  dict: a custom node will be add. The dict must provide 'type' and 'quantities'. 'link_name' is optional
+
+                'add_custom_node': {'type': 'parameter', 'quantities': ['efermi', 'forces'], 'link_name': 'my_custom_node'}
+        """
+        from copy import deepcopy
 
         self.nodes = {}
 
@@ -169,23 +190,22 @@ class ParserSettings(object):
                 # only keys starting with 'add_' are relevant as nodes.
                 continue
             if not value:
-                # The quantity should not be added.
+                # The quantity should not be added (This also excludes nodes with empty list or dict).
                 continue
-            self.add_node(key[4:])
 
-        # Check for all default nodes, whether their quantities should be overridden.
-        for key in NODES:
-            if key in self._settings:
-                quantities = self.get(key)
-                if isinstance(quantities, list):
-                    self.nodes[key]['quantities'] = quantities
+            node_name = key[4:]
+            node_dict = deepcopy(NODES.get(node_name, {}))
 
-        # add all custom nodes.
-        custom_nodes = self.get('custom_nodes')
-        if custom_nodes is None:
-            return
-        for key, value in custom_nodes.items():
-            self.add_node(key, value)
+            if isinstance(value, list):
+                node_dict['quantities'] = value
+
+            if isinstance(value, dict):
+                node_dict.update(value)
+
+            if 'link_name' not in node_dict:
+                node_dict['link_name'] = node_name
+
+            self.add_node(node_name, node_dict)
 
     def add_node(self, node_name, node_dict=None):
         """Add a definition of node to the nodes dictionary."""
@@ -195,23 +215,18 @@ class ParserSettings(object):
             # Try to get a node_dict from NODES.
             node_dict = deepcopy(NODES.get(node_name, {}))
 
-        if node_dict:
-            self.nodes[node_name] = DictWithAttributes(node_dict)
-            for quantity in node_dict['quantities']:
-                self._quantities_to_node[quantity] = node_name
+        # Check, whether the node_dict contains required keys 'type' and 'quantities'
+        for key in ['type', 'quantities']:
+            if node_dict.get(key) is None:
+                return
+
+        self.nodes[node_name] = DictWithAttributes(node_dict)
 
     def update_with(self, update_dict):
         """Selectively update keys from one Dictionary to another."""
         for key, value in update_dict.items():
             if key not in self._settings:
                 self._settings[key] = value
-
-    def update_node(self, original_quantity, quantity):
-        """Update a nodes quantities list with a new alternative quantity."""
-        if original_quantity == quantity:
-            return
-        self.nodes[self._quantities_to_node[original_quantity]].quantities.remove(original_quantity)
-        self.nodes[self._quantities_to_node[original_quantity]].quantities.append(quantity)
 
     def get(self, item, default=None):
         return self._settings.get(item, default)
