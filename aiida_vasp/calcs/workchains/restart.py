@@ -216,14 +216,16 @@ class BaseRestartWorkChain(WorkChain):
 
         if hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
             super(BaseRestartWorkChain, self).on_destroy()  # pylint: disable=no-member
-            if not self.has_finished() or self.inputs.restart.clean_workdir.value is False:
+            # Do not clean if we do not want to or the calculation failed
+            if self.exit_status or self.inputs.restart.clean_workdir.value is False:
                 return
         else:
             super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
-            if not self.has_finished() or self.inputs.restart.clean_workdir.value is False:
+            # Do not clean if we do not want to or the calculation failed
+            if self.exit_status or self.inputs.restart.clean_workdir.value is False:
                 return
-
-        if not self.has_finished() or self.inputs.restart.clean_workdir.value is False:
+        # Do not clean if we do not want to or the calculation failed
+        if self.exit_status or self.inputs.restart.clean_workdir.value is False:
             return
 
         cleaned_calcs = []
