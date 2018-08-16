@@ -157,7 +157,28 @@ def create_authinfo(computer, store=False):
 
 
 @dbenv
-def cmp_get_transport(computer, authinfo):
+def cmp_get_authinfo(computer):
+    if hasattr(computer, 'get_authinfo'):
+        return computer.get_authinfo(get_current_user())
+    else:
+        from aiida.backends.settings import BACKEND
+        from aiida.backends.profile import BACKEND_SQLA, BACKEND_DJANGO
+
+        if BACKEND == BACKEND_DJANGO:
+            from aiida.backends.djsite.db.models import DbAuthInfo
+            return DbAuthInfo.objects.get(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+        elif BACKEND == BACKEND_SQLA:
+            from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
+            from aiida.backends.sqlalchemy import get_scoped_session
+            session = get_scoped_session()
+            return session.query(DbAuthInfo).filter(DbAuthInfo.dbcomputer == computer.dbcomputer).filter(
+                DbAuthInfo.aiidauser == get_current_user())
+    return None
+
+
+@dbenv
+def cmp_get_transport(computer):
     if hasattr(computer, 'get_transport'):
         return computer.get_transport()
+    authinfo = cmp_get_authinfo(computer)
     return authinfo.get_transport()
