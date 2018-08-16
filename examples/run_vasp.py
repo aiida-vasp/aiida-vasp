@@ -177,7 +177,7 @@ def create_structure_InAs():
 def create_structure_Si():
     structure_cls = get_data_cls('structure')
     alat = 5.4
-    structure = structure_cls(cell=numpy.array([[.5, .5, 0], [.5, 0, .5], [0, .5, .5]]) * alat)
+    structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
     return structure
 

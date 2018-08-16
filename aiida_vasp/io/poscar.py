@@ -33,7 +33,6 @@ class PoscarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'poscar-structure': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': 'structure',
             'prerequisites': [],
             'alternatives': ['structure']

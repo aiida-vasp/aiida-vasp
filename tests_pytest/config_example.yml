@@ -25,5 +25,5 @@ codes:
 pseudo_families:
   pbe:
     command_name: aiida_vasp.commands.paw._Paw
-    folder: /home/greschd/software/VASP-5.4.1/potpaw_PBE.54
+    folder: /home/greschd/programming/aiida/vasp_potentials_minimal
     group_description: VASP 5.4 potpaw_PBE

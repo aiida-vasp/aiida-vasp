@@ -4,7 +4,7 @@ import numpy as np
 
 from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 DEFAULT_OPTIONS = {
@@ -17,136 +17,102 @@ DEFAULT_OPTIONS = {
 }
 
 
-class ExtendedXml(Xml):
-    """
-    Extension of parsevasp's Xml class.
-
-    To keep parser interfaces similar.
-
-    """
-
-    @property
-    def path(self):
-        return self._file_path
-
-    def write(self, dst):
-        """Copy vasprun.xml to destination."""
-        import shutil
-        shutil.copyfile(self._file_path, dst)
-
-
 class VasprunParser(BaseFileParser):
     """Interface to parsevasp's xml parser."""
 
     PARSABLE_ITEMS = {
         'structure': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'structure',
             'prerequisites': [],
             'alternatives': ['poscar-structure']
         },
         'bands': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'bands',
             'prerequisites': [],
             'alternatives': ['eigenval-bands']
         },
         'dos': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dos',
             'prerequisites': [],
             'alternatives': ['doscar-dos']
         },
         'kpoints': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'kpoints',
             'prerequisites': [],
             'alternatives': ['kpoints-kpoints']
         },
         'occupations': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'occupations',
             'prerequisites': [],
             #'alternatives': ['eigenval-occupations']
         },
         'trajectory': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'trajectory',
             'prerequisites': [],
             #'alternatives': ['xdatcar-trajectory']
         },
         'energies': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'energies',
             'prerequisites': [],
             'alternatives': ['outcar-energies']
         },
         'projectors': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'projectors',
             'prerequisites': [],
             #'alternatives': ['procar-projectors']
         },
         'dielectrics': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dielectrics',
             'prerequisites': [],
             #'alternatives': ['outcar-dielectrics']
         },
         'final_stress': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
         },
         'final_forces': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
         },
         'final_structure': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': '',
             'prerequisites': [],
             #'alternatives': ['outcar-final_structure']
         },
         'born_charges': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'born_charges',
             'prerequisites': [],
             #'alternatives': ['outcar-born_charges']
         },
         'hessian': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'hessian',
             'prerequisites': [],
             #'alternatives': ['outcar-hessian']
         },
         'dynmat': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'dynmat',
             'prerequisites': [],
             #'alternatives': ['outcar-dynmat']
         },
         'parameters': {
             'inputs': [],
-            'parsers': ['vasprun.xml'],
             'nodeName': 'parameters',
             'prerequisites': [],
             'alternatives': ['outcar-parameters']
@@ -155,22 +121,22 @@ class VasprunParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(VasprunParser, self).__init__(*args, **kwargs)
+        self._xml = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_file_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._data_obj = SingleFile(path=path)
 
         # Since vasprun.xml can be fairly large, we will parse it only
-        # once and store the parsevasp Xml object instead of the filepath.
-        # Also, make sure the k-point index runs before the band index as
-        # per BandsData spec.
+        # once and store the parsevasp Xml object.
         try:
-            self._data_obj = ExtendedXml(file_path=path, k_before_band=True)
+            self._xml = Xml(file_path=path, k_before_band=True)
         except SystemExit:
             self._logger.warning("Parsevasp exited abruptly. Returning None.")
-            self._data_obj = None
+            self._xml = None
 
     def _init_with_data(self, data):
         """Init with singleFileData."""
@@ -184,12 +150,21 @@ class VasprunParser(BaseFileParser):
         for key, value in inputs.items():
             self._parsed_data[key] = value
 
-        settings = inputs.get('settings', DEFAULT_OPTIONS)
-        if not settings:
-            settings = DEFAULT_OPTIONS
+        if self.settings is not None:
+            self.settings.update_with(DEFAULT_OPTIONS)
+        else:
+            self.settings = DEFAULT_OPTIONS
 
-        quantities_to_parse = settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
+        quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
         result = {}
+
+        if self._xml is None:
+            # parsevasp threw an exception, which means vasprun.xml could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self._parsable_items:
+                    result[quantity] = None
+            return result
+
         for quantity in quantities_to_parse:
             if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)
@@ -227,7 +202,7 @@ class VasprunParser(BaseFileParser):
         """Fetch eigenvalues from parsevasp."""
 
         # fetch eigenvalues
-        eigenvalues = self._data_obj.get_eigenvalues()
+        eigenvalues = self._xml.get_eigenvalues()
 
         if eigenvalues is None:
             # eigenvalues not present
@@ -252,7 +227,7 @@ class VasprunParser(BaseFileParser):
         """Fetch occupations from parsevasp."""
 
         # fetch occupations
-        occupations = self._data_obj.get_occupancies()
+        occupations = self._xml.get_occupancies()
 
         if occupations is None:
             # occupations not present, should not really happen?
@@ -277,7 +252,7 @@ class VasprunParser(BaseFileParser):
         """Fetch occupations from parsevasp."""
 
         # fetch occupations
-        occupations = self._data_obj.get_occupancies()
+        occupations = self._xml.get_occupancies()
 
         if occupations is None:
             # occupations not present, should not really happen?
@@ -311,8 +286,7 @@ class VasprunParser(BaseFileParser):
         outcar_parameters = self._parsed_data.get('ocp_parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
-        for quantity in settings.get('output_params', DEFAULT_OPTIONS['output_params']):
+        for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
             parameters[quantity] = getattr(self, quantity)
 
         output_parameters = get_data_node('parameter', dict=parameters)
@@ -323,8 +297,8 @@ class VasprunParser(BaseFileParser):
     def kpoints(self):
         """Fetch the kpoints from parsevasp an store in KpointsData."""
 
-        kpts = self._data_obj.get_kpoints()
-        kptsw = self._data_obj.get_kpointsw()
+        kpts = self._xml.get_kpoints()
+        kptsw = self._xml.get_kpointsw()
         kpoints_data = None
         if (kpts is not None) and (kptsw is not None):
             # create a KpointsData object and store k-points
@@ -360,7 +334,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        last_lattice = self._data_obj.get_lattice("final")
+        last_lattice = self._xml.get_lattice("final")
         if last_lattice is not None:
             return _build_structure(last_lattice)
         return None
@@ -388,12 +362,11 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        frs = self._data_obj.get_forces("final")
+        frs = self._xml.get_forces("final")
         if frs is None:
             return None
-        forces = get_data_class('array')()
-        forces.set_array('forces', frs)
-        return forces
+
+        return frs
 
     @property
     def final_forces(self):
@@ -417,7 +390,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        strs = self._data_obj.get_stress("final")
+        strs = self._xml.get_stress("final")
         if strs is None:
             return None
         stress = get_data_class('array')()
@@ -445,11 +418,11 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        unitcell = self._data_obj.get_unitcell("all")
-        positions = self._data_obj.get_positions("all")
-        species = self._data_obj.get_species()
-        forces = self._data_obj.get_forces("all")
-        stress = self._data_obj.get_stress("all")
+        unitcell = self._xml.get_unitcell("all")
+        positions = self._xml.get_positions("all")
+        species = self._xml.get_species()
+        forces = self._xml.get_forces("all")
+        stress = self._xml.get_stress("all")
         # make sure all are sorted, first to last calculation
         # (species is constant)
         unitcell = sorted(unitcell.items())
@@ -562,7 +535,7 @@ class VasprunParser(BaseFileParser):
             # self consistent steps, which contain a different
             # number of elements, not supported by Numpy's std.
             # arrays
-            enrgies = self._data_obj.get_energies(status="all", etype=etype, nosc=nosc)
+            enrgies = self._xml.get_energies(status="all", etype=etype, nosc=nosc)
             if enrgies is None:
                 return None
             enrgy = get_data_class('array')()
@@ -585,7 +558,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        proj = self._data_obj.get_projectors()
+        proj = self._xml.get_projectors()
         if proj is None:
             return None
         projectors = get_data_class('array')()
@@ -613,7 +586,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        diel = self._data_obj.get_dielectrics()
+        diel = self._xml.get_dielectrics()
         if diel is None:
             return None
         dielectrics = get_data_class('array')()
@@ -632,7 +605,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        brn = self._data_obj.get_born()
+        brn = self._xml.get_born()
         if brn is None:
             return None
         born = get_data_class('array')()
@@ -648,7 +621,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        hessian = self._data_obj.get_hessian()
+        hessian = self._xml.get_hessian()
         if hessian is None:
             return None
         hess = get_data_class('array')()
@@ -664,7 +637,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        dynmat = self._data_obj.get_dynmat()
+        dynmat = self._xml.get_dynmat()
         if dynmat is None:
             return None
         dyn = get_data_class('array')()
@@ -681,7 +654,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        dos = self._data_obj.get_dos()
+        dos = self._xml.get_dos()
         if dos is None:
             return None
         densta = get_data_class('array')()
@@ -712,7 +685,7 @@ class VasprunParser(BaseFileParser):
     def fermi_level(self):
         """Fetch Fermi level."""
 
-        return self._data_obj.get_fermi_level()
+        return self._xml.get_fermi_level()
 
 
 def _build_structure(lattice):
