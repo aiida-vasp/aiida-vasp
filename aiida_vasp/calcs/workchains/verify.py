@@ -9,7 +9,8 @@ or not currently checked in it.
 from aiida.work.workchain import WorkChain, while_, append_
 from aiida.orm import WorkflowFactory, Code
 from aiida.orm.data.base import Int, Bool
-from aiida_vasp.utils.aiida_utils import get_data_class, init_input
+from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.calcs.workchains.auxiliary.utils import init_input
 
 
 class VerifyWorkChain(WorkChain):
@@ -50,6 +51,7 @@ class VerifyWorkChain(WorkChain):
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
+                cls.init_next_workchain,
                 cls.run_next_workchain,
                 cls.verify_next_workchain
             ),
@@ -92,16 +94,18 @@ class VerifyWorkChain(WorkChain):
         """
         return not self.ctx.is_finished and self.ctx.iteration <= self.ctx.max_iterations
 
-    def run_next_workchain(self):
-        """Run the lower level VASP workchain."""
-
+    def init_next_workchain(self):
+        """Initialize the next workchain."""
         self.ctx.iteration += 1
 
         try:
-            inputs = self.ctx.inputs
+            self.ctx.inputs
         except AttributeError:
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
+    def run_next_workchain(self):
+        """Run the lower level VASP workchain."""
+        inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
         if hasattr(running, 'pid'):

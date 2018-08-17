@@ -4,8 +4,6 @@ import platform
 import numpy as np
 from packaging import version
 
-from aiida.common.extendeddicts import AttributeDict
-
 
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
@@ -89,21 +87,6 @@ def builder_interface(calc_cls):
     if hasattr(calc_cls, 'get_builder'):
         return True
     return False
-
-
-def init_input(inputs, exclude=None):
-    """
-    Assemble the input into a AttributeDict.
-
-    It is necessary to do this if passing the inputs come from a previous
-    submit and one is set to pass it along.
-    """
-    assembled_inputs = AttributeDict()
-    for name, value in inputs.items():
-        if (exclude is None) or (not name == exclude):
-            assembled_inputs[name] = value
-
-    return assembled_inputs
 
 
 def new_structure(old_structure):

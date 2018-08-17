@@ -11,9 +11,9 @@ from aiida.work.workchain import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import WorkflowFactory, Code
 
-from aiida_vasp.utils.aiida_utils import get_data_class, init_input, \
+from aiida_vasp.utils.aiida_utils import get_data_class, \
     displaced_structure, compressed_structure, new_structure, new_parameter, new_kpoints
-from aiida_vasp.calcs.workchains.auxiliary.utils import fetch_k_grid
+from aiida_vasp.calcs.workchains.auxiliary.utils import fetch_k_grid, init_input
 
 
 class ConvergeWorkChain(WorkChain):
@@ -690,7 +690,7 @@ class ConvergeWorkChain(WorkChain):
         try:
             self.ctx.inputs
         except AttributeError:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs')
+            raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
         if self.ctx.replace_nodes:
             self._replace_nodes()

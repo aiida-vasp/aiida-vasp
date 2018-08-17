@@ -6,9 +6,9 @@ from aiida.work import WorkChain
 from aiida.work.workchain import append_, while_, if_
 from aiida.orm import WorkflowFactory, Code
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, init_input
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.calcs.workchains.restart import UnexpectedCalculationFailure
-from aiida_vasp.calcs.workchains.auxiliary.utils import compare_structures, prepare_process_inputs
+from aiida_vasp.calcs.workchains.auxiliary.utils import compare_structures, prepare_process_inputs, init_input
 
 
 class RelaxWorkChain(WorkChain):
@@ -181,19 +181,18 @@ class RelaxWorkChain(WorkChain):
     def init_next_workchain(self):
         """Initialize the next workchain calculation."""
 
+        if not self.ctx.is_converged:
+            self.ctx.iteration += 1
+
         try:
             self.ctx.inputs
         except AttributeError:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs')
+            raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
         self.ctx.inputs.structure = self.ctx.current_structure
 
     def run_next_workchain(self):
         """Run the next workchain."""
-
-        if not self.ctx.is_converged:
-            self.ctx.iteration += 1
-
         inputs = prepare_process_inputs(self.ctx.inputs)
         running = self.submit(self._next_workchain, **inputs)
 

@@ -96,3 +96,24 @@ def fetch_k_grid(rec_cell, k_spacing):
     kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
 
     return kgrid.astype('int').tolist()
+
+
+def init_input(inputs, exclude=None):
+    """
+    Assemble the input into a AttributeDict.
+
+    It is necessary to do this if passing the inputs come from a previous
+    submit and one is set to pass it along.
+    """
+
+    try:
+        inputs
+    except AttributeError:
+        raise ValueError('no input dictionary was defined in self.ctx.inputs')
+
+    assembled_inputs = AttributeDict()
+    for name, value in inputs.items():
+        if (exclude is None) or (not name == exclude):
+            assembled_inputs[name] = value
+
+    return assembled_inputs
