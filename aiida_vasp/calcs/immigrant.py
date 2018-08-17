@@ -1,8 +1,6 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA."""
-import os
-
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from aiida.common.folders import SandboxFolder
 from aiida.common.exceptions import InputValidationError
@@ -118,10 +116,11 @@ def get_immigrant_with_builder(code, remote_path, resources=None, potcar_spec=No
     :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and mapping to find the right POTCARs.
     :param settings: dict. Used for non-default parsing instructions, etc.
     """
+    remote_path = py_path.local(remote_path)
     proc_cls = VaspImmigrantJobProcess.build(VaspCalculation)
     builder = proc_cls.get_builder()
     builder.code = code
-    builder.options.resources = resources or {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
+    builder.options.resources = resources or {'num_machines': 1, 'num_mpiprocs_per_machine': 1}  # pylint: disable=no-member
     settings = settings or {}
     settings.update({'import_from_path': remote_path.strpath})
     builder.settings = get_data_node('parameter', dict=settings)
