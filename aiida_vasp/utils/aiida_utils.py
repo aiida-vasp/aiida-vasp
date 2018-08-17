@@ -158,6 +158,7 @@ def create_authinfo(computer, store=False):
 
 @dbenv
 def cmp_get_authinfo(computer):
+    """Get an existing authinfo or None for the given computer and current user."""
     if hasattr(computer, 'get_authinfo'):
         return computer.get_authinfo(get_current_user())
     else:
@@ -166,7 +167,7 @@ def cmp_get_authinfo(computer):
 
         if BACKEND == BACKEND_DJANGO:
             from aiida.backends.djsite.db.models import DbAuthInfo
-            return DbAuthInfo.objects.get(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+            return DbAuthInfo.objects.get(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())  # pylint: disable=no-member
         elif BACKEND == BACKEND_SQLA:
             from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
             from aiida.backends.sqlalchemy import get_scoped_session

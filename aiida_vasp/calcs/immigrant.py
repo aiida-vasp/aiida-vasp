@@ -2,18 +2,18 @@
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA."""
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
-from aiida.common.folders import SandboxFolder
 from aiida.common.exceptions import InputValidationError
 from aiida.common.lang import override
 from aiida.work import JobProcess
 
-from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.io.incar import IncarParser
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
+from aiida_vasp.io.chgcar import ChgcarParser
+from aiida_vasp.io.wavecar import WavecarParser
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 def get_quantity_node(parser, quantity):
@@ -67,6 +67,10 @@ class VaspImmigrantJobProcess(JobProcess):
             transport.get(remote_path.join('INCAR').strpath, raw_input_folder.abspath)
             transport.get(remote_path.join('KPOINTS').strpath, raw_input_folder.abspath)
             transport.get(remote_path.join('POSCAR').strpath, raw_input_folder.abspath)
+            if 'wavefunctions' in self.inputs:
+                transport.get(remote_path.join('WAVECAR').strpath, raw_input_folder.abspath)
+            if 'charge_density' in self.inputs:
+                transport.get(remote_path.join('CHGCAR').strpath, raw_input_folder.abspath)
 
         self.calc._set_state(calc_states.COMPUTED)  # pylint: disable=protected-access
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
@@ -103,36 +107,9 @@ def get_kpoints_input(dir_path, structure=None):
     return kpoints
 
 
-def get_immigrant_with_builder(code, remote_path, resources=None, potcar_spec=None, settings=None):
-    """
-    Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
+def get_chgcar_input(dir_path):
+    return get_quantity_node(ChgcarParser(file_path=dir_path.join('CHGCAR').strpath), 'chgcar')
 
-    More inputs are required to pass resources information, if the POTCAR file is missing from the folder
-    or if additional settings need to be passed, e.g. parser instructions.
 
-    :param code: a Code instance for the code originally used.
-    :param remote_path: The directory on the code's computer in which the simulation was run.
-    :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
-    :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and mapping to find the right POTCARs.
-    :param settings: dict. Used for non-default parsing instructions, etc.
-    """
-    remote_path = py_path.local(remote_path)
-    proc_cls = VaspImmigrantJobProcess.build(VaspCalculation)
-    builder = proc_cls.get_builder()
-    builder.code = code
-    builder.options.resources = resources or {'num_machines': 1, 'num_mpiprocs_per_machine': 1}  # pylint: disable=no-member
-    settings = settings or {}
-    settings.update({'import_from_path': remote_path.strpath})
-    builder.settings = get_data_node('parameter', dict=settings)
-    with cmp_get_transport(code.get_computer()) as transport:
-        with SandboxFolder() as sandbox:
-            sandbox_path = py_path.local(sandbox.abspath)
-            transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
-            transport.get(remote_path.join('POSCAR').strpath, sandbox_path.strpath)
-            transport.get(remote_path.join('POTCAR').strpath, sandbox_path.strpath, ignore_nonexisting=True)
-            transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
-            builder.parameters = get_incar_input(sandbox_path)
-            builder.structure = get_poscar_input(sandbox_path)
-            builder.potential = get_potcar_input(sandbox_path, potcar_spec=potcar_spec)
-            builder.kpoints = get_kpoints_input(sandbox_path)
-    return proc_cls, builder
+def get_wavecar_input(dir_path):
+    return get_quantity_node(WavecarParser(file_path=dir_path.join('WAVECAR').strpath), 'wavecar')
