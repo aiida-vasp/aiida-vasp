@@ -21,7 +21,6 @@ PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
 
 _IMMIGRANT_EXTRA_KWARGS = """
-
 vasp.vasp specific kwargs:
 
 :param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
