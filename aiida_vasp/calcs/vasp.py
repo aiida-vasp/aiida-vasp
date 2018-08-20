@@ -15,11 +15,21 @@ from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.calcs.base import VaspCalcBase, Input
+from aiida_vasp.utils.inheritance import update_docstring
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
 
+_IMMIGRANT_EXTRA_KWARGS = """
 
+vasp.vasp specific kwargs:
+
+:param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
+:param use_wavecar: bool, if True, read the WAVECAR file (has to exist) and convert it to an input node.
+"""
+
+
+@update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 class VaspCalculation(VaspCalcBase):
     """
     General-purpose VASP calculation.
