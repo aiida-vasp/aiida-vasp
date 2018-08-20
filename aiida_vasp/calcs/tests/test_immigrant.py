@@ -20,10 +20,15 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     return proc, builder
 
 
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
-def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
-    """Provide process class and inputs for importing a AiiDA-external VASP run."""
+@pytest.fixture
+def aiida_runner():
     from aiida import work
+    yield work.runners.new_runner(rmq_config=None)
+
+
+@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
+def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp, aiida_runner):
+    """Provide process class and inputs for importing a AiiDA-external VASP run."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)
     potcar_spec = {'family': POTCAR_FAMILY_NAME, 'map': POTCAR_MAP}
@@ -33,8 +38,7 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     for input_link in expected_inputs:
         assert builder.get(input_link, None) is not None, 'input link "{}" was not set!'.format(input_link)
 
-    runner = work.runners.new_runner()
-    result = runner.run(proc, **builder)
+    result = aiida_runner.run(proc, **builder)
 
     expected_files = {'INCAR', 'POSCAR', 'KPOINTS', 'CHGCAR', 'WAVECAR'}
     banned_files = {'POTCAR'}
@@ -50,13 +54,11 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
 
 
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
-def test_vasp_immigrant(immigrant_with_builder):
+def test_vasp_immigrant(immigrant_with_builder, aiida_runner):
     """Test importing a calculation from the folder of a completed VASP run."""
-    from aiida import work
     immigrant, inputs = immigrant_with_builder
-    runner = work.runners.new_runner()
 
-    result = runner.run(immigrant, **inputs)
+    result = aiida_runner.run(immigrant, **inputs)
 
     expected_output_nodes = {'output_energies', 'output_kpoints', 'output_parameters', 'output_structure', 'remote_folder', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))
