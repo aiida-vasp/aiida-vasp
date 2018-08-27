@@ -1,3 +1,5 @@
+.. _howto-potcar:
+
 How to import POTCAR files
 ==========================
 

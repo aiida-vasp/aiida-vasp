@@ -2,11 +2,15 @@
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
 import os
+from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from aiida.orm import JobCalculation, DataFactory
 from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.exceptions import ValidationError
+from aiida.common.folders import SandboxFolder
+
+from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
 
 
 def make_use_methods(inputs, bases):
@@ -66,6 +70,15 @@ class Input(object):
         structure = Input(types=['structure', 'cif'], doc='input structure')
         potential = Input(types='vasp.potcar', param='kind')
 
+    Usage::
+
+        MyCalculation(JobCalculation):
+            __metaclass__ = CalcMeta
+            potential = Input(types='vasp.potcar', param='kind')
+
+        my_calc = MyCalculation
+        potential = load_node(...)
+        my_calc.use_potential(potential, kind='In')
     """
 
     def __init__(self, types, param=None, ln=None, doc=''):
@@ -288,4 +301,46 @@ class VaspCalcBase(JobCalculation):
 
     def write_additional(self, tempfolder, inputdict):
         """Subclass hook to write additional input files."""
+        pass
+
+    @classmethod
+    def immigrant(cls, code, remote_path, **kwargs):
+        """
+        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
+
+        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
+        or if additional settings need to be passed, e.g. parser instructions.
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: The directory on the code's computer in which the simulation was run.
+        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
+        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
+            mapping to find the right POTCARs.
+        :param settings: dict. Used for non-default parsing instructions, etc.
+        """
+        from aiida_vasp.calcs import immigrant as imgr
+        remote_path = py_path.local(remote_path)
+        proc_cls = imgr.VaspImmigrantJobProcess.build(cls)
+        builder = proc_cls.get_builder()
+        builder.code = code
+        builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
+        settings = kwargs.get('settings', {})
+        settings.update({'import_from_path': remote_path.strpath})
+        builder.settings = get_data_node('parameter', dict=settings)
+        with cmp_get_transport(code.get_computer()) as transport:
+            with SandboxFolder() as sandbox:
+                sandbox_path = py_path.local(sandbox.abspath)
+                transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
+                transport.get(remote_path.join('POSCAR').strpath, sandbox_path.strpath)
+                transport.get(remote_path.join('POTCAR').strpath, sandbox_path.strpath, ignore_nonexisting=True)
+                transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
+                builder.parameters = imgr.get_incar_input(sandbox_path)
+                builder.structure = imgr.get_poscar_input(sandbox_path)
+                builder.potential = imgr.get_potcar_input(sandbox_path, potcar_spec=kwargs.get('potcar_spec', None))
+                builder.kpoints = imgr.get_kpoints_input(sandbox_path)
+                cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
+        return proc_cls, builder
+
+    @classmethod
+    def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):
         pass

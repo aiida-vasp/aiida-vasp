@@ -17,6 +17,7 @@ AiiDA-VASP is under active development, check out the newest changes here: `chan
 .. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
 .. _changelog: https://github.com/aiidateam/aiida-vasp/blob/develop/CHANGELOG.md
 
+.. _main-quickstart:
 
 Getting started
 ===============
@@ -50,6 +51,8 @@ Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../
 
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
 
+.. _main-running:
+
 Running calculations
 --------------------
 
@@ -58,6 +61,14 @@ Running calculations
 
 .. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
 .. _example workflow: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_base_wf.py
+
+Importing non-AiiDA VASP runs
+-----------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   howto/immigrate
 
 Managing potcar files
 ---------------------
