@@ -38,11 +38,6 @@ class VaspImmigrantJobProcess(JobProcess):
 
         _ = super(VaspImmigrantJobProcess, self).run()
 
-        state = self.calc.get_state()
-
-        if state != calc_states.TOSUBMIT:
-            raise RuntimeError('immigrant calculations should always begin in NEW state')
-
         def return_empty_list():
             return []
 
