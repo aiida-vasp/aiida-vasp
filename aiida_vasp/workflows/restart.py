@@ -42,6 +42,14 @@ def finished_ok_compat(calc):
     return calc.finished_ok
 
 
+def finished_compat(calc):
+    if hasattr(calc, 'has_finished'):
+        return calc.has_finished()
+    elif hasattr(calc, 'is_finished'):
+        return calc.is_finished
+    return None
+
+
 class UnexpectedCalculationFailure(AiidaException):
     """Raised when a Calculation has failed for an unknown reason."""
 
@@ -258,7 +266,7 @@ class BaseRestartWorkChain(WorkChain):
         else:
             super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
 
-        if not self.has_finished() or self.inputs.clean_workdir.value is False:
+        if not finished_compat(self) or self.inputs.clean_workdir.value is False:
             return
 
         cleaned_calcs = []
