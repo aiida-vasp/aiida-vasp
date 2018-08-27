@@ -107,7 +107,7 @@ class BaseRestartWorkChain(WorkChain):
 
         if self._calculation_class is None or not issubclass(self._calculation_class, JobCalculation):
             raise ValueError('no valid JobCalculation class defined for _calculation_class attribute')
-        self.exit_status = 0
+
         ## compatibility v0.12.x <-> v1.0.0-alpha
         self._error_handlers = []
         if not hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
@@ -258,7 +258,7 @@ class BaseRestartWorkChain(WorkChain):
         else:
             super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
 
-        if self.exit_status or self.inputs.clean_workdir.value is False:
+        if finished_ok_compat(self) or self.inputs.clean_workdir.value is False:
             return
 
         cleaned_calcs = []
