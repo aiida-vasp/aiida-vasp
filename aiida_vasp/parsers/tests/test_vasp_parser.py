@@ -15,29 +15,20 @@ class ExampleFileParser(BaseFileParser):
     """Example FileParser class for testing VaspParsers functionality."""
 
     PARSABLE_ITEMS = {
-        'quantity_with_alternatives': {
-            'inputs': [],
-            'parsers': ['DUMMY'],
-            'nodeName': 'structure',
-            'prerequisites': [],
-        },
         'quantity1': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': 'structure',
             'is_alternative': 'quantity_with_alternatives',
             'prerequisites': []
         },
         'quantity2': {
             'inputs': [],
-            'parsers': ['_scheduler-stdout.txt'],
             'nodeName': 'trajectory',
             'is_alternative': 'trajectory',
             'prerequisites': ['quantity1']
         },
         'quantity3': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': '',
             'is_alternative': 'non_existing_quantity',
             'prerequisites': ['quantity_with_alternatives']
@@ -63,7 +54,6 @@ class ExampleFileParser2(BaseFileParser):
     PARSABLE_ITEMS = {
         'quantity1': {
             'inputs': [],
-            'parsers': ['CONTCAR'],
             'nodeName': '',
             'is_alternative': 'quantity_with_alternatives',
             'prerequisites': []
@@ -91,6 +81,15 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
     parser = vasp_calc.get_parserclass()(vasp_calc)
     parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    parser.add_parsable_quantity(
+        'quantity_with_alternatives',
+        {
+            'file_name': 'DUMMY',
+            'inputs': [],
+            'nodeName': 'structure',
+            'prerequisites': [],
+        },
+    )
     success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
     try:
         yield parser
@@ -99,38 +98,37 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
 
 
 @ONLY_ONE_CALC
-def test_quantities_to_parse(vasp_nscf_and_ref, ref_retrieved_nscf):
+def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
     from aiida.orm.data.parameter import ParameterData
-    vasp_calc, _ = vasp_nscf_and_ref
-    vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
-    parser = vasp_calc.get_parserclass()(vasp_calc)
-    parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
-    parser.out_folder = parser.get_folder({'retrieved': ref_retrieved_nscf})
-    parser._set_parsable_quantities()
-    parser._check_and_validate_settings()
-    assert 'quantity2' in parser._quantities_to_parse
-    assert 'quantity_with_alternatives' not in parser._quantities_to_parse
-    assert 'quantity1' in parser._quantities_to_parse
+
+    parser = vasp_parser_with_test
+    parser.quantities.setup()
+    parser.parsers.setup()
+
+    quantities_to_parse = parser.parsers.get_quantities_to_parse()
+    assert 'quantity2' in quantities_to_parse
+    assert 'quantity_with_alternatives' not in quantities_to_parse
+    assert 'quantity1' in quantities_to_parse
 
 
 @ONLY_ONE_CALC
 def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
-    parsable_quantities = parser._parsable_quantities
+    quantities = parser.quantities
     # Check whether all quantities from the added ExampleFileParser have been added.
     for quantity in ExampleFileParser.PARSABLE_ITEMS:
-        assert quantity in parsable_quantities
+        assert quantities.get_by_name(quantity) is not None
     # Check whether quantities have been set up correctly.
-    assert parsable_quantities['quantity1'].has_files
-    assert parsable_quantities['quantity1'].is_parsable
-    assert not parsable_quantities['quantity_with_alternatives'].has_files
-    assert parsable_quantities['quantity2'].is_parsable
-    assert not parsable_quantities['quantity3'].is_parsable
+    assert not quantities.get_by_name('quantity1').missing_files
+    assert quantities.get_by_name('quantity1').is_parsable
+    assert quantities.get_by_name('quantity_with_alternatives').missing_files
+    assert quantities.get_by_name('quantity2').is_parsable
+    assert not quantities.get_by_name('quantity3').is_parsable
     # check whether the additional non existing quantity has been added. This is for cases,
     # where a quantity is an alternative to another main quantity, which has not been loaded.
-    assert 'non_existing_quantity' in parsable_quantities
+    assert quantities.get_by_name('non_existing_quantity') is not None
 
 
 @ONLY_ONE_CALC
@@ -149,7 +147,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
     parser.add_file_parser('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
-        parser._set_parsable_quantities()
+        parser.quantities.setup()
     assert 'quantity1' in str(excinfo.value)
 
 

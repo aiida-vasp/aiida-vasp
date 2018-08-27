@@ -35,3 +35,7 @@ class Delegate(list):
             if result:
                 return result
         return {args[0]: None}
+
+    def clear(self):
+        """Clear the listener list, for Python > 3.3 this will be a built-in method."""
+        del self[:]

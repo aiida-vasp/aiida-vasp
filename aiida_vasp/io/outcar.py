@@ -19,31 +19,26 @@ class OutcarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'outcar-volume': {
             'inputs': ['parameters'],
-            'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
         'outcar-energies': {
             'inputs': ['parameters'],
-            'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
         'outcar-fermi_level': {
             'inputs': ['parameters'],
-            'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
         'outcar-parameters': {
             'inputs': [],
-            'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         },
         'symmetries': {
             'inputs': [],
-            'parsers': ['OUTCAR'],
             'nodeName': 'parameters',
             'prerequisites': []
         }
