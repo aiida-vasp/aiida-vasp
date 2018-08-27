@@ -23,7 +23,7 @@ Reference: vasp.relax inputs
 Degrees of freedom
 ^^^^^^^^^^^^^^^^^^
 
-Through its input parameters, VASP can be configured to utilize three degrees of freedoms for relaxations: ion positions, cell volume and cell shape. Some, but not all combinations are allowed, read more about that in the `official VASP wiki - ISIF tag page`_. Other posibilities are also posible, but not covered here and typically demands a dedicated VASP version with changes in to the standard source code embedded.
+Through its input parameters, VASP can be configured to utilize three degrees of freedom for relaxations: ion positions, cell volume and cell shape. Some, but not all combinations are allowed, read more about that in the `official VASP wiki - ISIF tag page`_. Other posibilities are also posible, but not covered here and typically demands a dedicated VASP version with hard coded changes to the source code.
 
 `vasp.relax` allows to switch each degree of freedom on / off independently, setting the ISIF and IBRION tags accordingly. Each of these inputs is optional and by default only the ion positions are relaxed.
 
