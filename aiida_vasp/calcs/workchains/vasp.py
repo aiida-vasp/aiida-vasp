@@ -87,6 +87,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         )  # yapf: disable
 
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('output_structure', valid_type=get_data_class('structure'))

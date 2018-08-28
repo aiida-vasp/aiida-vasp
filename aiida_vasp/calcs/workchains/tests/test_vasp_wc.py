@@ -98,3 +98,52 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     assert 'output_parameters' in running
     assert 'remote_folder' in running
     # ~ assert running.is_finished_ok
+
+
+@pytest.mark.wf
+@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
+#@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
+    """Test submitting only, not correctness, with mocked vasp code."""
+    from aiida.orm import WorkflowFactory, Code
+    from aiida import work
+
+    rmq_config = None
+    runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
+    work.set_runner(runner)
+
+    workchain = WorkflowFactory('vasp.vasp')
+
+    mock_vasp.store()
+    comp = mock_vasp.get_computer()
+    create_authinfo(computer=comp).store()
+
+    # ~ os_env = os.environ.copy()
+    # ~ sp.call(['verdi', 'daemon', 'start'], env=os_env)
+    # ~ print sp.check_output(['verdi', 'daemon', 'status'], env=os_env)
+    # ~ print sp.check_output(['which', 'verdi'], env=os_env)
+
+    kpoints, _ = vasp_kpoints
+    inputs = AttributeDict()
+    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.structure = vasp_structure
+    inputs.incar = vasp_params
+    inputs.kpoints = kpoints
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
+    inputs.options = get_data_node(
+        'parameter', dict={
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            }
+        })
+    inputs.settings = get_data_node('parameter', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}})
+    inputs.restart = AttributeDict()
+    inputs.restart.max_iterations = get_data_class('int')(1)
+    inputs.restart.clean_workdir = get_data_class('bool')(False)
+
+    running = work.run(workchain, **inputs)
+    assert 'output_chgcar' in running
