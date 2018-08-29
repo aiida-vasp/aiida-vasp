@@ -174,20 +174,16 @@ def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
 
 def compare_objects(obj_a, obj_b):
     """Compare two potentially nested objects assuming they have the same structure."""
+    import numpy as np
 
     if isinstance(obj_a, dict):
         for key in obj_a:
             compare_objects(obj_a[key], obj_b[key])
             return
 
-    if isinstance(obj_a, str):
-        assert obj_a == obj_b
-        return
-
-    try:
-        _ = obj_a[0]
+    if isinstance(obj_a, (list, tuple, np.ndarray)):
         for item_a, item_b in zip(obj_a, obj_b):
             compare_objects(item_a, item_b)
-    except TypeError:
-        # obj_a is not iterable.
-        assert obj_a == obj_b
+            return
+
+    assert obj_a == obj_b
