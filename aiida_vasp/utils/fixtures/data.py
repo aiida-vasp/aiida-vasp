@@ -16,8 +16,7 @@ from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
 
 POTCAR_FAMILY_NAME = 'test_family'
-#POTCAR_FAMILY_NAME = 'PBE.54'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
 
 
 @pytest.fixture(scope='session')
@@ -320,3 +319,10 @@ def wannier_projections():
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections
+
+
+@pytest.fixture
+def phonondb_run(tmpdir):
+    phonondb = py_path.local(data_path('phonondb'))
+    phonondb.copy(tmpdir)
+    yield tmpdir

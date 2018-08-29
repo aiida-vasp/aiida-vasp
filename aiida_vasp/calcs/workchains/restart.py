@@ -12,6 +12,14 @@ from aiida.work.workchain import WorkChain, append_
 from aiida_vasp.calcs.workchains.auxiliary.utils import prepare_process_inputs, finished_ok_compat
 
 
+def finished_compat(calc):
+    if hasattr(calc, 'has_finished'):
+        return calc.has_finished()
+    elif hasattr(calc, 'is_finished'):
+        return calc.is_finished
+    return None
+
+
 class UnexpectedCalculationFailure(AiidaException):
     """Raised when a Calculation has failed for an unknown reason."""
 

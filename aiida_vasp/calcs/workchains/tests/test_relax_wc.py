@@ -17,32 +17,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.incar import IncarParser
-
-
-def create_authinfo(computer):
-    """
-    Allow the current user to use the given computer.
-
-    Deal with backwards compatibility down to aiida 0.11
-    """
-    from aiida.orm import backend as orm_backend
-    authinfo = None
-    if hasattr(orm_backend, 'construct_backend'):
-        backend = orm_backend.construct_backend()
-        authinfo = backend.authinfos.create(computer=computer, user=get_current_user())
-    else:
-        from aiida.backends.settings import BACKEND
-        from aiida.backends.profile import BACKEND_SQLA, BACKEND_DJANGO
-
-        if BACKEND == BACKEND_DJANGO:
-            from aiida.backends.djsite.db.models import DbAuthInfo
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
-        elif BACKEND == BACKEND_SQLA:
-            from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
-            from aiida.backends.sqlalchemy import get_scoped_session
-            _ = get_scoped_session()
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
-    return authinfo
+from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.mark.wf

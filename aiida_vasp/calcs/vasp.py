@@ -9,17 +9,26 @@ except ImportError:
 
 from aiida.orm import DataFactory
 
-from aiida_vasp.calcs.base import VaspCalcBase, Input
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.potcar import MultiPotcarIo
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.calcs.base import VaspCalcBase, Input
+from aiida_vasp.utils.inheritance import update_docstring
 
 PARAMETER_CLS = DataFactory('parameter')
 SINGLEFILE_CLS = DataFactory('singlefile')
 
+_IMMIGRANT_EXTRA_KWARGS = """
+vasp.vasp specific kwargs:
 
+:param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
+:param use_wavecar: bool, if True, read the WAVECAR file (has to exist) and convert it to an input node.
+"""
+
+
+@update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 class VaspCalculation(VaspCalcBase):
     """
     General-purpose VASP calculation.
@@ -28,6 +37,40 @@ class VaspCalculation(VaspCalcBase):
     but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
 
     Floating point precision for writing POSCAR files can be adjusted using ``settings['poscar_precision']``, default: 10
+
+    The following assumes you are familiar with the AiiDA data structures and how to set up and run an AiiDA calculation in general.
+
+    Example usage::
+
+        from aiida.orm import CalculationFactory, DataFactory
+        from aiida.work import submit
+
+        proc = CalculationFactory('vasp.vasp').process()
+        inputs = proc.get_inputs_template()
+
+        inputs.parameter = <ParameterData with INCAR params>
+        inputs.structure = <StructureData> or <CifData>
+        inputs.kpoints = <KpointsData>
+        inputs.settings = <ParameterData with parser settings etc>
+        inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure, ...)
+        inputs.code = <Code representing vasp on your cluster>
+        inputs._options = <Computer, resources, etc, AiiDA specific stuff>
+
+        submit(proc, **inputs)
+
+    Example Low-Level usage::
+
+        ## assuming already set up incar (ParameterData), structure, kpoints, settings, etc
+        calc = CalculationFactory('vasp.vasp')()
+        calc.use_parameter(incar)
+        calc.use_structure(structure)
+        calc.use_kpoints(kpoints)
+        calc.use_settings(settings)
+        calc.use_potential(potential_kind_1, kind=<kind 1>)
+        calc.use_potential(potential_kind_2, kind=<kind 2>)
+        ## unspecific to this calculation: set computer, resources, etc
+        calc.submit()
+
     """
 
     default_parser = 'vasp.vasp'
@@ -205,6 +248,18 @@ class VaspCalculation(VaspCalcBase):
     def write_wavecar(self, inputdict, dst):  # pylint: disable=unused-argument
         import shutil
         shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
+
+    @classmethod
+    def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):
+        from aiida_vasp.calcs.immigrant import get_chgcar_input, get_wavecar_input
+        add_wavecar = kwargs.get('use_wavecar') or bool(builder.parameters.get_dict().get('istart', 0))
+        add_chgcar = kwargs.get('use_chgcar') or builder.parameters.get_dict().get('icharg', -1) in [1, 11]
+        if add_chgcar:
+            transport.get(remote_path.join('CHGCAR').strpath, sandbox_path.strpath)
+            builder.charge_density = get_chgcar_input(sandbox_path)
+        if add_wavecar:
+            transport.get(remote_path.join('WAVECAR').strpath, sandbox_path.strpath)
+            builder.wavefunctions = get_wavecar_input(sandbox_path)
 
 
 def ordered_unique_list(in_list):
