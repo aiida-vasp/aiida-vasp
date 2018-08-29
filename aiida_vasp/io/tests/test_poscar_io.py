@@ -152,3 +152,42 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
     symbols = result_reparse.get_symbols_set()
     assert symbols == set(['As', 'In'])
+
+
+@pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
+def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
+    """
+    Compare the poscar-dict returned by parsevasp to the dict created by the PoscarParser.
+
+    This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
+    """
+    from aiida_vasp.io.poscar import parsevasp_to_aiida
+    from parsevasp.poscar import Poscar
+
+    path = data_path('poscar', 'POSCAR')
+    poscar = Poscar(file_path=path, prec=12, conserve_order=True)
+
+    poscar_dict = poscar.get_dict(direct=False)
+    result_dict = parsevasp_to_aiida(poscar)['poscar-structure']
+    compare_objects(poscar_dict, result_dict)
+
+
+def compare_objects(obj_a, obj_b):
+    """Compare two potentially nested objects assuming they have the same structure."""
+
+    if isinstance(obj_a, dict):
+        for key in obj_a:
+            compare_objects(obj_a[key], obj_b[key])
+            return
+
+    if isinstance(obj_a, str):
+        assert obj_a == obj_b
+        return
+
+    try:
+        _ = obj_a[0]
+        for item_a, item_b in zip(obj_a, obj_b):
+            compare_objects(item_a, item_b)
+    except TypeError:
+        # obj_a is not iterable.
+        assert obj_a == obj_b
