@@ -100,10 +100,10 @@ def fetch_k_grid(rec_cell, k_spacing):
 
 def init_input(inputs, exclude=None):
     """
-    Assemble the input into a AttributeDict.
+    Assemble the input into an AttributeDict.
 
-    It is necessary to do this if passing the inputs come from a previous
-    submit and one is set to pass it along.
+    Creates a new AttributeDict which contains the elements of inputs.
+
     """
 
     try:

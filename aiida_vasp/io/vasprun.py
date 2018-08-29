@@ -1,3 +1,4 @@
+# pylint: disable=too-many-public-methods
 """Tools for parsing vasprun.xml files."""
 import operator
 import numpy as np
@@ -10,10 +11,10 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
         'parameters', 'structure', 'bands', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat'
+        'born_charges', 'hessian', 'dynmat', 'final_forces', 'final_stress'
     ],
     'energy_type': ['energy_no_entropy'],
-    'output_params': []
+    'output_params': ['total_energies', 'maximum_forces', 'maximum_stress']
 }
 
 
@@ -381,6 +382,14 @@ class VasprunParser(BaseFileParser):
         return self.last_forces
 
     @property
+    def maximum_forces(self):
+        """Fetch the maximum force of at the last ionic run."""
+
+        forces = self.final_forces.get_array('forces')
+
+        return np.amax(np.abs(forces[-1]))
+
+    @property
     def last_stress(self):
         """
         Fetch stess.
@@ -395,6 +404,7 @@ class VasprunParser(BaseFileParser):
             return None
         stress = get_data_class('array')()
         stress.set_array('forces', strs)
+
         return stress
 
     @property
@@ -408,6 +418,14 @@ class VasprunParser(BaseFileParser):
         """
 
         return self.last_stress
+
+    @property
+    def maximum_stress(self):
+        """Fetch the maximum stress of at the last ionic run."""
+
+        stress = self.final_stress.get_array('stress')
+
+        return np.amax(np.abs(stress[-1]))
 
     @property
     def trajectory(self):
@@ -504,6 +522,19 @@ class VasprunParser(BaseFileParser):
         # lists of ndarrays.
         raise NotImplementedError
         #return self.energies(nosc = False)
+
+    @property
+    def total_energies(self):
+        """Fetch the total energies after the last ionic run."""
+
+        energies = self.energies
+        # fetch the type of energies that the user wants to extract
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        energies_dict = {}
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+            energies_dict[etype] = energies.get_array('etype')[-1]
+
+        return energies_dict
 
     @property
     def energies(self, nosc=True):

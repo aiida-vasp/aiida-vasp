@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines, too-many-locals, too-many-statements, attribute-defined-outside-init
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements, attribute-defined-outside-init, too-many-public-methods
 """
 ConvergenceWorkChain.
 
@@ -101,8 +101,8 @@ class ConvergeWorkChain(WorkChain):
                     cls.run_next_workchain,
                     cls.results_pw_conv_calc
                 ),
-                if_(cls.run_pw_conv_disp_calcs)(
-                    cls.analyze_pw_conv
+                if_(cls.analyze_pw_after_disp)(
+                    cls.analyze_pw_conv,
                 ),
                 while_(cls.run_kpoints_conv_disp_calcs)(
                     cls.init_kpoints_conv_calc,
@@ -117,7 +117,7 @@ class ConvergeWorkChain(WorkChain):
                     cls.run_next_workchain,
                     cls.results_pw_conv_calc
                 ),
-                if_(cls.run_pw_conv_comp_calcs)(
+                if_(cls.analyze_pw_after_comp)(
                     cls.analyze_pw_conv,
                 ),
                 while_(cls.run_kpoints_conv_comp_calcs)(
@@ -143,6 +143,21 @@ class ConvergeWorkChain(WorkChain):
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
         spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
+        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
+        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
+        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
+        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
+        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
+        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
+        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
+        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
+        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
+        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
+        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -901,6 +916,14 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], encut, None, None, None, None])
 
         return
+
+    def analyze_pw_after_comp(self):
+        """Return True if we are running compressed convergence tests."""
+        return self.ctx.converge.settings['compress']
+
+    def analyze_pw_after_disp(self):
+        """Return True if we are running displaced convergence tests."""
+        return self.ctx.converge.settings['displace']
 
     def analyze_pw_conv(self):
         """Analyze the plane wave convergence and store it if need be."""
