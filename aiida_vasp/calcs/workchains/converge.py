@@ -13,7 +13,7 @@ from aiida.orm import WorkflowFactory, Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, \
     displaced_structure, compressed_structure, new_structure, new_parameter, new_kpoints
-from aiida_vasp.calcs.workchains.auxiliary.utils import fetch_k_grid, init_input
+from aiida_vasp.utils.workchains.utils import fetch_k_grid, init_input
 
 
 class ConvergeWorkChain(WorkChain):

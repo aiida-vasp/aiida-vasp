@@ -10,7 +10,7 @@ from aiida.work.workchain import WorkChain, while_, append_
 from aiida.orm import WorkflowFactory, Code
 from aiida.orm.data.base import Int, Bool
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.calcs.workchains.auxiliary.utils import init_input
+from aiida_vasp.utils.workchains.utils import init_input
 
 
 class VerifyWorkChain(WorkChain):

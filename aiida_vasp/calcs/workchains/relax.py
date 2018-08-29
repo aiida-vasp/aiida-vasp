@@ -8,7 +8,7 @@ from aiida.orm import WorkflowFactory, Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.calcs.workchains.restart import UnexpectedCalculationFailure
-from aiida_vasp.calcs.workchains.auxiliary.utils import compare_structures, prepare_process_inputs, init_input
+from aiida_vasp.utils.workchains.utils import compare_structures, prepare_process_inputs, init_input
 
 
 class RelaxWorkChain(WorkChain):

@@ -9,7 +9,7 @@ from aiida.common.links import LinkType
 from aiida.orm.calculation import JobCalculation
 from aiida.orm.data.base import Bool, Int
 from aiida.work.workchain import WorkChain, append_
-from aiida_vasp.calcs.workchains.auxiliary.utils import prepare_process_inputs, finished_ok_compat
+from aiida_vasp.utils.workchains.utils import prepare_process_inputs, finished_ok_compat
 
 
 def finished_compat(calc):
