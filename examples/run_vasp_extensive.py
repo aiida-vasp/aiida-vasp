@@ -84,7 +84,7 @@ def main(potential_family, queue, code, computer):
     inputs.settings = get_data_node('parameter', dict=settings)
 
     # submit the requested workchain with the supplied inputs
-    run(workchain, **inputs)
+    submit(workchain, **inputs)
 
 
 if __name__ == '__main__':

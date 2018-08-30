@@ -8,7 +8,7 @@ from aiida.orm import WorkflowFactory, Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.calcs.workchains.restart import UnexpectedCalculationFailure
-from aiida_vasp.utils.workchains.utils import compare_structures, prepare_process_inputs, init_input
+from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, init_input
 
 
 class RelaxWorkChain(WorkChain):
@@ -46,24 +46,39 @@ class RelaxWorkChain(WorkChain):
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
+        spec.input('structure', valid_type=(
+            get_data_class('structure'), get_data_class('cif')))
         spec.input('potential_family', valid_type=get_data_class('str'))
         spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
-        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
-        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
-        spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
-        spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
-        spec.input('relax.incar', valid_type=get_data_class('parameter'), required=False)
-        spec.input('relax.perform', valid_type=get_data_class('bool'), required=False, default=get_data_class('bool')(False))
-        spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
-        spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
+        spec.input('kpoints', valid_type=get_data_class(
+            'array.kpoints'), required=False)
+        spec.input('settings', valid_type=get_data_class(
+            'parameter'), required=False)
+        spec.input('restart.max_iterations',
+                   valid_type=get_data_class('int'), required=False)
+        spec.input('restart.clean_workdir',
+                   valid_type=get_data_class('bool'), required=False)
+        spec.input('verify.max_iterations',
+                   valid_type=get_data_class('int'), required=False)
+        spec.input('verify.clean_workdir',
+                   valid_type=get_data_class('bool'), required=False)
+        spec.input('relax.incar', valid_type=get_data_class(
+            'parameter'), required=False)
+        spec.input('relax.perform', valid_type=get_data_class('bool'),
+                   required=False, default=get_data_node('bool', False))
+        spec.input('relax.positions', valid_type=get_data_class(
+            'bool'), required=False, default=get_data_node('bool', True))
+        spec.input('relax.shape', valid_type=get_data_class('bool'),
+                   required=False, default=get_data_node('bool', False))
+        spec.input('relax.volume', valid_type=get_data_class('bool'),
+                   required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.on', valid_type=get_data_class(
+            'bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.absolute', valid_type=get_data_class(
+            'bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.max_iterations', valid_type=get_data_class(
+            'int'), required=False, default=get_data_node('int', 5))
         spec.input(
             'relax.convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.1))  # in cartesian coordinates
@@ -96,26 +111,43 @@ class RelaxWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        spec.output('output_parameters',
+                    valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('output_structure', valid_type=get_data_class('structure'))
-        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
-        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
+        spec.output('output_structure_relaxed',
+                    valid_type=get_data_class('structure'), required=False)
+        spec.output('output_kpoints', valid_type=get_data_class(
+            'array.kpoints'), required=False)
+        spec.output('output_trajectory', valid_type=get_data_class(
+            'array.trajectory'), required=False)
+        spec.output('output_chgcar', valid_type=get_data_class(
+            'vasp.chargedensity'), required=False)
+        spec.output('output_wavecar', valid_type=get_data_class(
+            'vasp.wavefun'), required=False)
+        spec.output('output_bands', valid_type=get_data_class(
+            'array.bands'), required=False)
+        spec.output('output_dos', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_occupations',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_energies', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_projectors', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_dielectrics',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_born_charges',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_hessian', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_dynmat', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_final_forces',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_stress',
+                    valid_type=get_data_class('array'), required=False)
 
     def _set_ibrion(self, incar):
         if self.inputs.relax.positions.value:
@@ -130,14 +162,18 @@ class RelaxWorkChain(WorkChain):
 
     def _add_overrides(self, incar):
         """Add incar tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.incar.get_dict().items()})
+        overrides = AttributeDict(
+            {k.lower(): v for k, v in self.inputs.relax.incar.get_dict().items()})
         if 'ibrion' in overrides:
-            raise ValueError('overriding IBRION not allowed, use relax.xxx inputs to control')
+            raise ValueError(
+                'overriding IBRION not allowed, use relax.xxx inputs to control')
         if 'isif' in overrides:
-            raise ValueError('overriding ISIF not allowed, use relax.xxx inputs to control')
+            raise ValueError(
+                'overriding ISIF not allowed, use relax.xxx inputs to control')
         if 'nsw' in overrides:
             if self.inputs.relax.positions.value and overrides.nsw < 1:
-                raise ValueError('NSW (num ionic steps) was set to 0 but relaxing positions was requested')
+                raise ValueError(
+                    'NSW (num ionic steps) was set to 0 but relaxing positions was requested')
             elif not self.inputs.relax.positions.value and overrides.nsw > 0:
                 self.report('NSW (num ionic steps) > 1 but relaxing positions was not requested '
                             '(ionic steps will be performed but ions will not move)')
@@ -184,14 +220,16 @@ class RelaxWorkChain(WorkChain):
         return
 
     def run_next_workchains(self):
-        within_max_iterations = bool(self.ctx.iteration < self.inputs.relax.convergence.max_iterations.value)
+        within_max_iterations = bool(
+            self.ctx.iteration < self.inputs.relax.convergence.max_iterations.value)
         return bool(within_max_iterations and not self.ctx.is_converged)
 
     def init_relaxed(self):
         """Initialize a calculation based on a relaxed or assumed relaxed structure."""
         if not self.perform_relaxation():
             if self._verbose:
-                self.report('skipping structure relaxation and forwarding input/output ' 'to the next workchain')
+                self.report(
+                    'skipping structure relaxation and forwarding input/output ' 'to the next workchain')
 
     def init_next_workchain(self):
         """Initialize the next workchain calculation."""
@@ -202,7 +240,8 @@ class RelaxWorkChain(WorkChain):
         try:
             self.ctx.inputs
         except AttributeError:
-            raise ValueError('no input dictionary was defined in self.ctx.inputs')
+            raise ValueError(
+                'no input dictionary was defined in self.ctx.inputs')
 
         self.ctx.inputs.structure = self.ctx.current_structure
 
@@ -213,16 +252,20 @@ class RelaxWorkChain(WorkChain):
 
         if not self.ctx.is_converged and self.perform_relaxation():
             if hasattr(running, 'pid'):
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
+                self.report('launching {}<{}> iteration #{}'.format(
+                    self._next_workchain.__name__, running.pid, self.ctx.iteration))
             else:
                 # Aiida < 1.0
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+                self.report('launching {}<{}> iteration #{}'.format(
+                    self._next_workchain.__name__, running.pk, self.ctx.iteration))
         else:
             if hasattr(running, 'pid'):
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
+                self.report('launching {}<{}> '.format(
+                    self._next_workchain.__name__, running.pid))
             else:
                 # Aiida < 1.0
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+                self.report('launching {}<{}> '.format(
+                    self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
@@ -234,7 +277,8 @@ class RelaxWorkChain(WorkChain):
         """
 
         workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be successfull)
+        # Adopt exit status from last child workchain (supposed to be
+        # successfull)
         next_workchain_exit_status = workchain.exit_status
         if not next_workchain_exit_status:
             self.exit_status = 0
@@ -265,7 +309,8 @@ class RelaxWorkChain(WorkChain):
         if self.inputs.relax.convergence.on.value:
             if self._verbose:
                 self.report('Checking the convergence of the relaxation.')
-            comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
+            comparison = compare_structures(
+                self.ctx.previous_structure, self.ctx.current_structure)
             delta = comparison.absolute if self.inputs.relax.convergence.absolute.value else comparison.relative
             if self.inputs.relax.positions.value:
                 converged &= self.check_positions_convergence(delta)
@@ -277,7 +322,8 @@ class RelaxWorkChain(WorkChain):
         if not converged:
             self.ctx.current_restart_folder = workchain.out.remote_folder
             if self._verbose:
-                self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
+                self.report('{}<{}> was not converged, restarting the relaxation.'.format(
+                    self._next_workchain.__name__, workchain.pk))
         else:
             if self.inputs.relax.convergence.on.value:
                 if self._verbose:
@@ -289,12 +335,14 @@ class RelaxWorkChain(WorkChain):
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
-        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.relax.convergence.shape.lengths.value)
+        lengths_converged = bool(delta.cell_lengths.max(
+        ) <= self.inputs.relax.convergence.shape.lengths.value)
         if not lengths_converged:
             self.report('cell lengths changed by max {}, tolerance is {}'.format(delta.cell_lengths.max(),
                                                                                  self.inputs.relax.convergence.shape.lengths.value))
 
-        angles_converged = bool(delta.cell_angles.max() <= self.inputs.relax.convergence.shape.angles.value)
+        angles_converged = bool(delta.cell_angles.max(
+        ) <= self.inputs.relax.convergence.shape.angles.value)
         if not angles_converged:
             self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
                                                                                 self.inputs.relax.convergence.shape.angles.value))
@@ -302,13 +350,16 @@ class RelaxWorkChain(WorkChain):
         return bool(lengths_converged and angles_converged)
 
     def check_volume_convergence(self, delta):
-        volume_converged = bool(delta.volume <= self.inputs.relax.convergence.volume.value)
+        volume_converged = bool(
+            delta.volume <= self.inputs.relax.convergence.volume.value)
         if not volume_converged:
-            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.relax.convergence.volume.value))
+            self.report('cell volume changed by {}, tolerance is {}'.format(
+                delta.volume, self.inputs.relax.convergence.volume.value))
         return volume_converged
 
     def check_positions_convergence(self, delta):
-        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.relax.convergence.positions.value)
+        positions_converged = bool(delta.pos_lengths.max(
+        ) <= self.inputs.relax.convergence.positions.value)
         if not positions_converged:
             self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(),
                                                                                  self.inputs.relax.convergence.positions.value))
@@ -329,7 +380,8 @@ class RelaxWorkChain(WorkChain):
         """Attach the outputs specified in the output specification from the last completed calculation."""
 
         if not self.exit_status:
-            self.report('{}<{}> completed'.format(self.__class__.__name__, self.pid))
+            self.report('{}<{}> completed'.format(
+                self.__class__.__name__, self.pid))
 
             workchain = self.ctx.workchains[-1]
 
@@ -344,7 +396,8 @@ class RelaxWorkChain(WorkChain):
                     node = workchain.out[name]
                     self.out(name, workchain.out[name])
                     if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+                        self.report("attaching the node {}<{}> as '{}'".format(
+                            node.__class__.__name__, node.pk, name))
 
         return
 

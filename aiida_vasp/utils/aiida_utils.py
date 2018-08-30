@@ -89,7 +89,7 @@ def builder_interface(calc_cls):
     return False
 
 
-def new_structure(old_structure):
+def copy_structure(old_structure):
     """Assemble a new StructureData."""
     structure_cls = get_data_class('structure')
     old_cell = old_structure.cell
@@ -97,17 +97,17 @@ def new_structure(old_structure):
     old_sites = old_structure.sites
     kinds = old_structure.kinds
     for index, site in enumerate(old_sites):
-        structure.append_atom(position=site.position, symbols=kinds[index].symbols, name=kinds[index].name)
+        structure.append_atom(position=site.position, symbols=kinds[
+                              index].symbols, name=kinds[index].name)
     return structure
 
 
-def new_parameter(old_parameter):
+def copy_parameter(old_parameter):
     """Assemble a new ParameterData."""
-    parameter_cls = get_data_class('parameter')
-    return parameter_cls(dict=old_parameter.get_dict())
+    return get_data_node('parameter', dict=old_parameter.get_dict())
 
 
-def new_kpoints(old_kpoints, structure):
+def copy_kpoints(old_kpoints, structure):
     """Assemble a new KpointsData."""
     kpoints = get_data_class('array.kpoints')
     mesh = old_kpoints.get_kpoints_mesh()
@@ -115,13 +115,13 @@ def new_kpoints(old_kpoints, structure):
 
 
 def displaced_structure(structure, displacement, entry):
-    disp_structure = new_structure(structure)
+    disp_structure = copy_structure(structure)
     displace_position(disp_structure, displacement, entry)
     return disp_structure
 
 
 def compressed_structure(structure, volume_change):
-    comp_structure = new_structure(structure)
+    comp_structure = copy_structure(structure)
     compress_cell(comp_structure, volume_change)
     return comp_structure
 
@@ -186,8 +186,10 @@ def cmp_load_verdi_data():
             import_errors.append(err)
 
     if not verdi_data:
-        err_messages = '\n'.join([' * {}'.format(err) for err in import_errors])
-        raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
+        err_messages = '\n'.join([' * {}'.format(err)
+                                  for err in import_errors])
+        raise ImportError(
+            'The verdi data base command group could not be found:\n' + err_messages)
 
     return verdi_data
 
@@ -203,7 +205,8 @@ def create_authinfo(computer, store=False):
     authinfo = None
     if hasattr(orm_backend, 'construct_backend'):
         backend = orm_backend.construct_backend()
-        authinfo = backend.authinfos.create(computer=computer, user=get_current_user())
+        authinfo = backend.authinfos.create(
+            computer=computer, user=get_current_user())
         if store:
             authinfo.store()
     else:
@@ -212,12 +215,14 @@ def create_authinfo(computer, store=False):
 
         if BACKEND == BACKEND_DJANGO:
             from aiida.backends.djsite.db.models import DbAuthInfo
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+            authinfo = DbAuthInfo(
+                dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
         elif BACKEND == BACKEND_SQLA:
             from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
             from aiida.backends.sqlalchemy import get_scoped_session
             _ = get_scoped_session()
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+            authinfo = DbAuthInfo(
+                dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
         if store:
             authinfo.save()
     return authinfo

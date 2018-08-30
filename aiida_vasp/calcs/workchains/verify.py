@@ -10,7 +10,7 @@ from aiida.work.workchain import WorkChain, while_, append_
 from aiida.orm import WorkflowFactory, Code
 from aiida.orm.data.base import Int, Bool
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.workchains.utils import init_input
+from aiida_vasp.utils.workchains import init_input
 
 
 class VerifyWorkChain(WorkChain):
@@ -23,15 +23,19 @@ class VerifyWorkChain(WorkChain):
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
+        spec.input('structure', valid_type=(
+            get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.input('potential_family', valid_type=get_data_class('str'))
         spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
-        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
-        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('settings', valid_type=get_data_class(
+            'parameter'), required=False)
+        spec.input('restart.max_iterations',
+                   valid_type=get_data_class('int'), required=False)
+        spec.input('restart.clean_workdir',
+                   valid_type=get_data_class('bool'), required=False)
         spec.input(
             'verify.max_iterations',
             valid_type=Int,
@@ -59,25 +63,41 @@ class VerifyWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        spec.output('output_parameters',
+                    valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('output_structure', valid_type=get_data_class('structure'))
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
-        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
+        spec.output('output_kpoints', valid_type=get_data_class(
+            'array.kpoints'), required=False)
+        spec.output('output_trajectory', valid_type=get_data_class(
+            'array.trajectory'), required=False)
+        spec.output('output_chgcar', valid_type=get_data_class(
+            'vasp.chargedensity'), required=False)
+        spec.output('output_wavecar', valid_type=get_data_class(
+            'vasp.wavefun'), required=False)
+        spec.output('output_bands', valid_type=get_data_class(
+            'array.bands'), required=False)
+        spec.output('output_dos', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_occupations',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_energies', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_projectors', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_dielectrics',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_born_charges',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_hessian', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_dynmat', valid_type=get_data_class(
+            'array'), required=False)
+        spec.output('output_final_forces',
+                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_stress',
+                    valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -116,7 +136,8 @@ class VerifyWorkChain(WorkChain):
         try:
             self.ctx.inputs
         except AttributeError:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs')
+            raise ValueError(
+                'No input dictionary was defined in self.ctx.inputs')
 
     def run_next_workchain(self):
         """Run the lower level VASP workchain."""
@@ -124,10 +145,12 @@ class VerifyWorkChain(WorkChain):
         running = self.submit(self._next_workchain, **inputs)
 
         if hasattr(running, 'pid'):
-            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(
+                self._next_workchain.__name__, running.pid, self.ctx.iteration))
         else:
             # Aiida < 1.0
-            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(
+                self._next_workchain.__name__, running.pk, self.ctx.iteration))
 
         return self.to_context(workchains=append_(running))
 
@@ -143,7 +166,8 @@ class VerifyWorkChain(WorkChain):
         # Currently only set to finished on first go.
         self.ctx.is_finished = True
 
-        # Adopt exit status from last child workchain (supposed to be successfull)
+        # Adopt exit status from last child workchain (supposed to be
+        # successfull)
         next_workchain = self.ctx.workchains[-1]
         next_workchain_exit_status = next_workchain.exit_status
         if not next_workchain_exit_status:
@@ -160,7 +184,8 @@ class VerifyWorkChain(WorkChain):
         """Attach the outputs specified in the output specification from the last completed calculation."""
 
         if not self.exit_status:
-            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
+            self.report('{}<{}> completed after {} iterations'.format(
+                self.__class__.__name__, self.pid, self.ctx.iteration))
 
             workchain = self.ctx.workchains[-1]
 
@@ -173,7 +198,8 @@ class VerifyWorkChain(WorkChain):
                     node = workchain.out[name]
                     self.out(name, workchain.out[name])
                     if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+                        self.report("attaching the node {}<{}> as '{}'".format(
+                            node.__class__.__name__, node.pk, name))
 
         return
 

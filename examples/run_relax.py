@@ -43,14 +43,8 @@ def main(potential_family, queue, code, computer):
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 4}
     inputs.options = get_data_node('parameter', dict=options)
 
-    running = run(workflow, **inputs)
-    org_sites = running['output_structure'].sites
-    new_sites = running['output_structure_relaxed'].sites
-    for site in org_sites:
-        print("org:", site.position)
-    for site in new_sites:
-        print("new:", site.position)
-
+    # submit the requested workchain with the supplied inputs
+    submit(workflow, **inputs)
 
 if __name__ == '__main__':
     main()
