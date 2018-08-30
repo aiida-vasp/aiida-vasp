@@ -55,8 +55,7 @@
             "coverage", 
             "pytest", 
             "pytest-cov", 
-            "pgtest >= 1.1.0", 
-            "packaging"
+            "pgtest >= 1.1.0"
         ], 
         "graphs": [
             "matplotlib"
@@ -81,6 +80,7 @@
         "pyparsing", 
         "py",
         "lxml",
+	"packaging",
         "parsevasp >= 0.2.18"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
@@ -93,5 +93,5 @@
         "reentry"
     ], 
     "url": "https://github.com/DropD/aiida-vasp", 
-    "version": "0.2.3"
+    "version": "0.2.4"
 }
