@@ -2,20 +2,20 @@
 AiiDA Vasp Plugin
 =================
 
-.. image:: https://travis-ci.org/aiida-team/aiida-vasp.svg?branch=develop
-    :target: https://travis-ci.org/aiida-team/aiida-vasp
+.. image:: https://travis-ci.org/aiida-vasp/aiida-vasp.svg?branch=develop
+    :target: https://travis-ci.org/aiida-vasp/aiida-vasp
 
 .. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/aiida-team/aiida-vasp/badge.svg?branch=coveralls
-   :target: https://coveralls.io/github/aiida-team/aiida-vasp?branch=coveralls
+.. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
+   :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
 
 This is a plugin to `AiiDA <www.aiida.net/?page_id=264>`_ to run calculations with the ab-initio program `VASP <https://www.vasp.at/>`_.
 
 * `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`_
-* `Changelog <https://github.com/aiida-team/aiida-vasp/blob/develop/CHANGELOG.md>`_
+* `Changelog <https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md>`_
 
 Install and usage:
 ------------------
