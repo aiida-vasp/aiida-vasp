@@ -25,14 +25,23 @@ Install AiiDA
 
 * Download, install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`_
 
-Install this plugin
-~~~~~~~~~~~~~~~~~~~
+Install stable version of the plugin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+   $ pip install aiida-vasp
+  
+Install development version of the plugin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From the aiida-vasp folder use::
 
    $ pip install .
    # or
    $ pip install -e . # <-- for plugin developers
+
+Troubleshoot
+~~~~~~~~~~~~
 
 To test wether the installation was successful use::
 
