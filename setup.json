@@ -55,7 +55,8 @@
             "coverage", 
             "pytest", 
             "pytest-cov", 
-            "pgtest >= 1.1.0"
+            "pgtest >= 1.1.0", 
+            "packaging"
         ], 
         "graphs": [
             "matplotlib"
@@ -92,6 +93,6 @@
     "setup_requires": [
         "reentry"
     ], 
-    "url": "https://github.com/DropD/aiida-vasp", 
+    "url": "https://github.com/aiida-vasp/aiida-vasp", 
     "version": "0.2.4"
 }
