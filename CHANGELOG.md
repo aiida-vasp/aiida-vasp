@@ -4,16 +4,18 @@ All notable changes to this project after version 0.1.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.4]
 
 ### Added
 - 'vasp.base' workchain which transparently calls through to the 'vasp.vasp' calculation and restarts if appropriate.
  - restarting conditions are minimal yet (only submission failed will trigger a retry)
 - 'vasp.relax' workchain which specializes in structure relaxation and optionally iterates until the structure converges.
+- 'vasp.calc.immigrant' added in order to support VASP import Aiida-external jobs.
 
 ### Changed
 - PotcarData.get_potcars_from_structure() now returns an entry for each `kind.name` in the structure, not one per `kind.symbol`
 - PotcarData.get_potcars_dict() no longer fails if there is more than one PotcarData with the same full name in the family
+- Minor changes in parser.
 
 ## [v0.2.3]
 
