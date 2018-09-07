@@ -78,13 +78,14 @@ class Input(object):
 
     Usage::
 
+        @six.add_metaclass(CalcMeta)
         MyCalculation(JobCalculation):
-            __metaclass__ = CalcMeta
             potential = Input(types='vasp.potcar', param='kind')
 
         my_calc = MyCalculation
         potential = load_node(...)
         my_calc.use_potential(potential, kind='In')
+
     """
 
     def __init__(self, types, param=None, ln=None, doc=''):
@@ -178,7 +179,7 @@ class VaspCalcBase(JobCalculation):
     """
     Base class of all calculations utilizing VASP.
 
-    * sets :py:class:`CalcMeta` as it's __metaclass__
+    * sets :py:class:`CalcMeta` as it's metaclass
     * Defines internal parameters common to all vasp calculations.
     * provides a basic, extendable implementation of _prepare_for_submission
     * provides hooks, so subclasses can extend the behaviour without
