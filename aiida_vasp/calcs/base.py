@@ -1,4 +1,4 @@
-# pylint: disable=abstract-method,invalid-metaclass
+# pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
 import os
@@ -10,9 +10,13 @@ from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
-from aiida.orm.implementation.general.node import _AbstractNodeMeta
 
-from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
+from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport, aiida_version, cmp_version
+
+if aiida_version() >= cmp_version('1.0.0a1'):
+    from aiida.orm.implementation.general.node import _AbstractNodeMeta as __absnode__
+else:
+    __absnode__ = JobCalculation.__metaclass__
 
 
 def make_use_methods(inputs, bases):
@@ -138,7 +142,7 @@ class IntParam(object):
         return filter(cls.k_filter, classdict)
 
 
-class CalcMeta(_AbstractNodeMeta):
+class CalcMeta(__absnode__):
     """
     Metaclass that allows simpler and clearer Calculation class writing.
 
