@@ -2,6 +2,7 @@
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
 import os
+import six
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from aiida.orm import JobCalculation, DataFactory
@@ -9,6 +10,7 @@ from aiida.common.utils import classproperty
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
+from aiida.orm.implementation.general.node import _AbstractNodeMeta
 
 from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
 
@@ -136,7 +138,7 @@ class IntParam(object):
         return filter(cls.k_filter, classdict)
 
 
-class CalcMeta(JobCalculation.__metaclass__):
+class CalcMeta(_AbstractNodeMeta):
     """
     Metaclass that allows simpler and clearer Calculation class writing.
 
@@ -167,6 +169,7 @@ class CalcMeta(JobCalculation.__metaclass__):
         return calc_cls
 
 
+@six.add_metaclass(CalcMeta)
 class VaspCalcBase(JobCalculation):
     """
     Base class of all calculations utilizing VASP.
@@ -178,7 +181,7 @@ class VaspCalcBase(JobCalculation):
 
     having to reimplement common functionality
     """
-    __metaclass__ = CalcMeta
+
     input_file_name = 'INCAR'
     output_file_name = 'OUTCAR'
 
