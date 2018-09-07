@@ -14,7 +14,8 @@ DEFAULT_OPTIONS = {
         'born_charges', 'hessian', 'dynmat', 'final_forces', 'final_stress'
     ],
     'energy_type': ['energy_no_entropy'],
-    'output_params': ['total_energies', 'maximum_forces', 'maximum_stress']
+    #'output_params': ['total_energies', 'maximum_forces', 'maximum_stress']
+    'output_params': []
 }
 
 
@@ -284,7 +285,7 @@ class VasprunParser(BaseFileParser):
         """Assemble the 'output_params' node."""
 
         parameters = {}
-        outcar_parameters = self._parsed_data.get('ocp_parameters')
+        outcar_parameters = self._parsed_data.get('outcar_parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
         for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):

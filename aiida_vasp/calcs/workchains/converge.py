@@ -1,5 +1,4 @@
-# pylint: disable=too-many-lines, too-many-locals, too-many-statements,
-# attribute-defined-outside-init
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init
 """
 ConvergenceWorkChain.
 
@@ -12,10 +11,8 @@ from aiida.work.workchain import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import WorkflowFactory, Code
 
-from aiida_vasp.utils.aiida_utils import (
-    get_data_class, get_data_node, displaced_structure, compressed_structure,
-    copy_structure, copy_parameter, copy_kpoints
-)
+from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure, copy_structure,
+                                          copy_parameter, copy_kpoints)
 from aiida_vasp.utils.workchains import fetch_k_grid, init_input
 
 
@@ -40,8 +37,7 @@ class ConvergeWorkChain(WorkChain):
     _displacement_vector_default = np.array([1.0, 1.0, 1.0])
     _displacement_distance_default = 0.2  # AA
     _displacement_atom_default = 1  # atom number starting from 1
-    _volume_change_default = np.array(
-        [[1.05, 0.0, 0.0], [0.0, 1.05, 0.0], [0.0, 0.0, 1.05]])
+    _volume_change_default = np.array([1.05, 1.05, 1.05])
     _relax_default = False
 
     _ALLOWED_CUTOFF_TYPES = {'energy': 0, 'forces': 1, 'vbm': 2, 'gap': 3}
@@ -50,40 +46,25 @@ class ConvergeWorkChain(WorkChain):
     def define(cls, spec):
         super(ConvergeWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
-        spec.input('structure', valid_type=(
-            get_data_class('structure'), get_data_class('cif')))
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('potential_family', valid_type=get_data_class('str'))
         spec.input('potential_mapping', valid_type=get_data_class('parameter'))
         spec.input('incar', valid_type=get_data_class('parameter'))
         spec.input('options', valid_type=get_data_class('parameter'))
-        spec.input('kpoints', valid_type=get_data_class(
-            'array.kpoints'), required=False)
-        spec.input('settings', valid_type=get_data_class(
-            'parameter'), required=False)
-        spec.input('restart.max_iterations',
-                   valid_type=get_data_class('int'), required=False)
-        spec.input('restart.clean_workdir',
-                   valid_type=get_data_class('bool'), required=False)
-        spec.input('verify.max_iterations',
-                   valid_type=get_data_class('int'), required=False)
-        spec.input('verify.clean_workdir',
-                   valid_type=get_data_class('bool'), required=False)
-        spec.input('relax.incar', valid_type=get_data_class(
-            'parameter'), required=False)
-        spec.input('relax.perform', valid_type=get_data_class('bool'),
-                   required=False, default=get_data_node('bool', True))
-        spec.input('relax.positions', valid_type=get_data_class(
-            'bool'), required=False, default=get_data_node('bool', True))
-        spec.input('relax.shape', valid_type=get_data_class('bool'),
-                   required=False, default=get_data_node('bool', False))
-        spec.input('relax.volume', valid_type=get_data_class('bool'),
-                   required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.on', valid_type=get_data_class(
-            'bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.absolute', valid_type=get_data_class(
-            'bool'), required=False, default=get_data_node('bool', False))
-        spec.input('relax.convergence.max_iterations', valid_type=get_data_class(
-            'int'), required=False, default=get_data_node('int', 5))
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('verify.max_iterations', valid_type=get_data_class('int'), required=False)
+        spec.input('verify.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('relax.incar', valid_type=get_data_class('parameter'), required=False)
+        spec.input('relax.perform', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
+        spec.input('relax.positions', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', True))
+        spec.input('relax.shape', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.volume', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.on', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.absolute', valid_type=get_data_class('bool'), required=False, default=get_data_node('bool', False))
+        spec.input('relax.convergence.max_iterations', valid_type=get_data_class('int'), required=False, default=get_data_node('int', 5))
         spec.input(
             'relax.convergence.shape.lengths', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.1))  # in cartesian coordinates
@@ -156,46 +137,27 @@ class ConvergeWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters',
-                    valid_type=get_data_class('parameter'))
+        spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_structure', valid_type=get_data_class(
-            'structure'), required=False)
-        spec.output('output_structure_relaxed',
-                    valid_type=get_data_class('structure'), required=False)
-        spec.output('output_convergence_data',
-                    valid_type=get_data_class('array'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class(
-            'array.kpoints'), required=False)
-        spec.output('output_trajectory', valid_type=get_data_class(
-            'array.trajectory'), required=False)
-        spec.output('output_chgcar', valid_type=get_data_class(
-            'vasp.chargedensity'), required=False)
-        spec.output('output_wavecar', valid_type=get_data_class(
-            'vasp.wavefun'), required=False)
-        spec.output('output_bands', valid_type=get_data_class(
-            'array.bands'), required=False)
-        spec.output('output_dos', valid_type=get_data_class(
-            'array'), required=False)
-        spec.output('output_occupations',
-                    valid_type=get_data_class('array'), required=False)
-        spec.output('output_energies', valid_type=get_data_class(
-            'array'), required=False)
-        spec.output('output_projectors', valid_type=get_data_class(
-            'array'), required=False)
-        spec.output('output_dielectrics',
-                    valid_type=get_data_class('array'), required=False)
-        spec.output('output_born_charges',
-                    valid_type=get_data_class('array'), required=False)
-        spec.output('output_hessian', valid_type=get_data_class(
-            'array'), required=False)
-        spec.output('output_dynmat', valid_type=get_data_class(
-            'array'), required=False)
-        spec.output('output_final_forces',
-                    valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress',
-                    valid_type=get_data_class('array'), required=False)
+        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
+        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
+        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
+        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
+        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
+        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
+        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
+        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
+        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
+        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
+        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
+        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
+        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
+        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -267,21 +229,15 @@ class ConvergeWorkChain(WorkChain):
             if 'converge' in settings:
                 converge = settings.get('converge')
                 converge_dict.encut = converge.get('pw_energy_cutoff')
-                converge_dict.encut_start = converge.get(
-                    'pw_energy_cutoff_start')
-                converge_dict.encut_step = converge.get(
-                    'pw_energy_cutoff_step')
-                converge_dict.encut_samples = converge.get(
-                    'pw_energy_cutoff_samples')
+                converge_dict.encut_start = converge.get('pw_energy_cutoff_start')
+                converge_dict.encut_step = converge.get('pw_energy_cutoff_step')
+                converge_dict.encut_samples = converge.get('pw_energy_cutoff_samples')
         # Also check if encut is supplied in the incar input, this takes presence over
         # the encut supplied in settings
         if self.inputs.incar:
             incar_dict = self.inputs.incar.get_dict()
-            try:
-                encut = incar_dict.encut
-                converge_dict.encut = encut
-            except KeyError:
-                pass
+            encut = incar_dict.get('encut', None)
+            converge_dict.encut = encut
 
         return
 
@@ -378,14 +334,10 @@ class ConvergeWorkChain(WorkChain):
                 converge_dict.displace = converge.get('displace')
                 converge_dict.cutoff_type = converge.get('cutoff_type')
                 converge_dict.cutoff_value = converge.get('cutoff_value')
-                converge_dict.cutoff_value_r = converge.get(
-                    'cutoff_value_r')
-                converge_dict.displacement_vector = converge.get(
-                    'displacement_vector')
-                converge_dict.displacement_distance = converge.get(
-                    'displacement_distance')
-                converge_dict.displacement_atom = converge.get(
-                    'displacement_atom')
+                converge_dict.cutoff_value_r = converge.get('cutoff_value_r')
+                converge_dict.displacement_vector = converge.get('displacement_vector')
+                converge_dict.displacement_distance = converge.get('displacement_distance')
+                converge_dict.displacement_atom = converge.get('displacement_atom')
                 converge_dict.volume_change = converge.get('volume_change')
                 converge_dict.relax = converge.get('relax')
 
@@ -408,8 +360,7 @@ class ConvergeWorkChain(WorkChain):
 
         if settings.relax is None:
             if self._verbose:
-                self.report('setting the default relaxation parameter for the convergence ' 'tests to {}'.format(
-                    self._relax_default))
+                self.report('setting the default relaxation parameter for the convergence ' 'tests to {}'.format(self._relax_default))
                 settings.relax = self._relax_default
 
     def _check_context_pw(self):
@@ -443,7 +394,7 @@ class ConvergeWorkChain(WorkChain):
 
         # Check if a k-point sampling is supplied, if not, also set defaults for
         # converge tests.
-        if settings.kgrid is None:
+        if not settings.supplied_kmesh:
             if settings.k_step is None:
                 if self._verbose:
                     self.report('setting the default value of the step size between '
@@ -456,8 +407,7 @@ class ConvergeWorkChain(WorkChain):
                 settings.k_samples = self._k_samples_default
             if settings.k_spacing is None:
                 if self._verbose:
-                    self.report(
-                        'setting the default value of the k-point spacing ' '(k_spacing) to {}'.format(self._k_spacing_default))
+                    self.report('setting the default value of the k-point spacing ' '(k_spacing) to {}'.format(self._k_spacing_default))
                 settings.k_spacing = self._k_spacing_default
 
         return
@@ -468,8 +418,7 @@ class ConvergeWorkChain(WorkChain):
 
         if settings.cutoff_type is None:
             if self._verbose:
-                self.report('setting the default convergence parameter to the default ' '({})'.format(
-                    self._cutoff_type_default))
+                self.report('setting the default convergence parameter to the default ' '({})'.format(self._cutoff_type_default))
             settings.cutoff_type = self._cutoff_type_default
         try:
             self._ALLOWED_CUTOFF_TYPES[settings.cutoff_type]
@@ -480,13 +429,11 @@ class ConvergeWorkChain(WorkChain):
             settings.cutoff_type = self._cutoff_type_default
         if settings.cutoff_value is None:
             if self._verbose:
-                self.report('setting the default convergence value to {}'.format(
-                    self._cutoff_value_default))
+                self.report('setting the default convergence value to {}'.format(self._cutoff_value_default))
             settings.cutoff_value = self._cutoff_value_default
         if settings.cutoff_value_r is None:
             if self._verbose:
-                self.report('setting the default relative convergence value to {}'.format(
-                    self._cutoff_value_r_default))
+                self.report('setting the default relative convergence value to {}'.format(self._cutoff_value_r_default))
             settings.cutoff_value_r = self._cutoff_value_r_default
 
         return
@@ -497,13 +444,11 @@ class ConvergeWorkChain(WorkChain):
 
         if settings.compress is None:
             if self._verbose:
-                self.report(
-                    'turning the relative convergence test for compression on')
+                self.report('turning the relative convergence test for compression on')
             settings.compress = True
         if settings.displace is None:
             if self._verbose:
-                self.report(
-                    'turning the relative convergence test for displacement on')
+                self.report('turning the relative convergence test for displacement on')
             settings.displace = True
         self._check_context_relative_st()
 
@@ -559,8 +504,7 @@ class ConvergeWorkChain(WorkChain):
         # Also create a dummy KpointsData in order to calculate the reciprocal
         # unit cell
         kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(
-            kpoints_mesh=[1, 1, 1], cell_from_structure=self.ctx.inputs.structure)
+        self.ctx.converge.kpoints = kpoints(kpoints_mesh=[1, 1, 1], cell_from_structure=self.ctx.inputs.structure)
         self._init_pw_conv()
         self._init_kpoints_conv()
 
@@ -594,13 +538,11 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.inputs.structure = self._displace_structure()
             # Set extra information on verbose info
             self.ctx.converge.settings.inform_details = ', using a displaced structure'
-            # Also, make sure the data arrays from previous convergence tests are saved
-            # in order to be able to calculate the relative convergence
-            # criterias.
-            self.ctx.converge.pw_data_org = copy.deepcopy(
-                self.ctx.converge.pw_data)
-            self.ctx.converge.k_data_org = copy.deepcopy(
-                self.ctx.converge.k_data)
+        # Also, make sure the data arrays from previous convergence tests are saved
+        # in order to be able to calculate the relative convergence
+        # criterias later.
+        self.ctx.converge.pw_data_org = copy.deepcopy(self.ctx.converge.pw_data)
+        self.ctx.converge.k_data_org = copy.deepcopy(self.ctx.converge.k_data)
 
         return
 
@@ -613,19 +555,12 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.inputs.structure = self._compress_structure()
             # Set extra information on verbose info
             self.ctx.converge.settings.inform_details = ', using a compressed structure'
-            # Also, make sure the data arrays from previous convergence tests are saved
-            # in order to be able to calculate the relative convergence criterias.
-            # If we jumped the displacement tests, save the regular test data.
-            if self.ctx.converge.settings.displace:
-                self.ctx.converge.pw_data_displacement = copy.deepcopy(
-                    self.ctx.converge.pw_data)
-                self.ctx.converge.k_data_displacement = copy.deepcopy(
-                    self.ctx.converge.k_data)
-            else:
-                self.ctx.converge.pw_data_org = copy.deepcopy(
-                    self.ctx.converge.pw_data)
-                self.ctx.converge.k_data_org = copy.deepcopy(
-                    self.ctx.converge.k_data)
+        # Also, make sure the data arrays from previous convergence tests are saved
+        # in order to be able to calculate the relative convergence criterias later.
+        # If we jumped the displacement tests, we have already saved the original data.
+        if self.ctx.converge.settings.displace:
+            self.ctx.converge.pw_data_displacement = copy.deepcopy(self.ctx.converge.pw_data)
+            self.ctx.converge.k_data_displacement = copy.deepcopy(self.ctx.converge.k_data)
 
         return
 
@@ -649,7 +584,6 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.settings.encut_org = copy.deepcopy(encut)
         self.ctx.converge.settings.kgrid_org = copy.deepcopy(kgrid)
         encut_org = self.ctx.converge.settings.encut_org
-        kgrid_org = self.ctx.converge.settings.kgrid_org
         encut_start = settings.encut_start
         encut_step = settings.encut_step
         encut_samples = settings.encut_samples
@@ -664,20 +598,18 @@ class ConvergeWorkChain(WorkChain):
         # Detect what kind of convergence tests that needs to be run.
         if encut_org is None:
             # No encut supplied, run plane wave convergence tests.
-            if kgrid_org is None and not supplied_kmesh:
+            if not supplied_kmesh:
                 # Set sensible k-point grid (k_spacing stepping in zone)
                 # for plane wave cutoff tests.
                 kgrid = fetch_k_grid(rec_cell, k_spacing)
                 self.ctx.converge.settings.kgrid = kgrid
                 # Update grid.
                 kpoints = get_data_class('array.kpoints')
-                self.ctx.converge.kpoints = kpoints(
-                    kpoints_mesh=kgrid, cell_from_structure=self.ctx.converge.structure)
+                self.ctx.converge.kpoints = kpoints(kpoints_mesh=kgrid, cell_from_structure=self.ctx.converge.structure)
             # Turn on plane wave convergene tests.
             self.ctx.converge.run_pw_conv_calcs = True
             # make encut test vector
-            self.ctx.converge.encut_sampling = [
-                encut_start + x * encut_step for x in range(encut_samples)]
+            self.ctx.converge.encut_sampling = [encut_start + x * encut_step for x in range(encut_samples)]
 
         return
 
@@ -695,12 +627,13 @@ class ConvergeWorkChain(WorkChain):
         settings = self.ctx.converge.settings
         kgrid_org = settings.kgrid_org
         supplied_kmesh = settings.supplied_kmesh
-        self.ctx.converge.k_data = []
+        self.ctx.converge.k_data = None
         self.ctx.converge.k_sampling = None
         self.ctx.converge.kpoints_iteration = 0
         self.ctx.converge.run_kpoints_conv_calcs = False
         self.ctx.converge.kpoints_workchains = []
         if kgrid_org is None and not supplied_kmesh:
+            self.ctx.converge.k_data = []
             # No kpoint grid supplied, run kpoints convergence tests.
             self.ctx.converge.run_kpoints_conv_calcs = True
 
@@ -726,16 +659,13 @@ class ConvergeWorkChain(WorkChain):
         # The plane wave cutoff needs to be updated in the INCAR to the set
         # value.
         converged_incar_dict = self.inputs.incar.get_dict()
-        converged_incar_dict.update(
-            {'encut': self.ctx.converge.settings.encut})
-        self.ctx.inputs.incar = get_data_node(
-            'parameter', dict=converged_incar_dict)
+        converged_incar_dict.update({'encut': self.ctx.converge.settings.encut})
+        self.ctx.inputs.incar = get_data_node('parameter', dict=converged_incar_dict)
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
             kpoints = get_data_class('array.kpoints')
-            self.ctx.inputs.kpoints = kpoints(
-                kpoints_mesh=self.ctx.converge.settings.kgrid, cell_from_structure=self.ctx.inputs.structure)
+            self.ctx.inputs.kpoints = kpoints(kpoints_mesh=self.ctx.converge.settings.kgrid, cell_from_structure=self.ctx.inputs.structure)
 
         self.ctx.running_kpoints = False
         self.ctx.running_pw = False
@@ -765,8 +695,7 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.inputs.incar = copy_parameter(self.ctx.converge.incar)
         # Only the k-points if no mesh was supplied
         if not self.ctx.converge.settings.supplied_kmesh:
-            self.ctx.inputs.kpoints = copy_kpoints(
-                self.ctx.converge.kpoints, self.ctx.inputs.structure)
+            self.ctx.inputs.kpoints = copy_kpoints(self.ctx.converge.kpoints, self.ctx.inputs.structure)
 
         return
 
@@ -776,8 +705,7 @@ class ConvergeWorkChain(WorkChain):
         try:
             self.ctx.inputs
         except AttributeError:
-            raise ValueError(
-                'no input dictionary was defined in self.ctx.inputs')
+            raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
         if self.ctx.replace_nodes:
             self._replace_nodes()
@@ -789,12 +717,10 @@ class ConvergeWorkChain(WorkChain):
         running = self.submit(self._next_workchain, **inputs)
 
         if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(
-                self._next_workchain.__name__, running.pid))
+            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
         else:
             # Aiida < 1.0
-            self.report('launching {}<{}> '.format(
-                self._next_workchain.__name__, running.pk))
+            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         if self.ctx.running_pw:
             return self.to_context(pw_workchains=append_(running))
@@ -805,7 +731,6 @@ class ConvergeWorkChain(WorkChain):
 
     def run_pw_conv_calcs(self):
         """Should a new plane wave cutoff convergence calculation run?"""
-
         return self.ctx.converge.run_pw_conv_calcs
 
     def run_pw_conv_disp_calcs(self):
@@ -820,7 +745,6 @@ class ConvergeWorkChain(WorkChain):
 
     def run_kpoints_conv_calcs(self):
         """Should a new kpoints convergence calculation run?"""
-
         return self.ctx.converge.run_kpoints_conv_calcs
 
     def run_kpoints_conv_disp_calcs(self):
@@ -837,8 +761,7 @@ class ConvergeWorkChain(WorkChain):
         """Initialize a single plane wave convergence calculation."""
 
         # Update the plane wave cutoff
-        encut = self.ctx.converge.encut_sampling[
-            self.ctx.converge.pw_iteration]
+        encut = self.ctx.converge.encut_sampling[self.ctx.converge.pw_iteration]
         self.ctx.converge.settings.encut = encut
         incar_dict = self.ctx.converge.incar.get_dict()
         incar_dict.update({'encut': self.ctx.converge.settings.encut})
@@ -885,8 +808,7 @@ class ConvergeWorkChain(WorkChain):
         try:
             self.ctx.pw_workchains[-1]
         except IndexError:
-            self.report('the plane wave convergence calculation finished ' 'without returning a {}'.format(
-                self._next_workchain.__name__))
+            self.report('the plane wave convergence calculation finished ' 'without returning a {}'.format(self._next_workchain.__name__))
 
         encut = self.ctx.converge.settings.encut
         if not exit_status:
@@ -912,8 +834,7 @@ class ConvergeWorkChain(WorkChain):
             gap = 0.0
 
             # add stuff to the converge context
-            self.ctx.converge.pw_data.append(
-                [encut, energy, max_force, max_valence_band, gap])
+            self.ctx.converge.pw_data.append([encut, energy, max_force, max_valence_band, gap])
         else:
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
 
@@ -923,15 +844,13 @@ class ConvergeWorkChain(WorkChain):
         """Initialize a single k-point grid convergence calculation."""
 
         # Fetch k-point grid by using the distance between each point
-        kstep = self.ctx.converge.k_sampling[
-            self.ctx.converge.kpoints_iteration]
+        kstep = self.ctx.converge.k_sampling[self.ctx.converge.kpoints_iteration]
         rec_cell = self.ctx.converge.kpoints.cell
         kgrid = fetch_k_grid(rec_cell, kstep)
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.
         kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(
-            kpoints_mesh=kgrid, cell_from_structure=self.ctx.inputs.structure)
+        self.ctx.converge.kpoints = kpoints(kpoints_mesh=kgrid, cell_from_structure=self.ctx.inputs.structure)
         self.ctx.running_kpoints = True
         self.ctx.running_pw = False
         inform_details = self.ctx.converge.settings.get('inform_details')
@@ -967,8 +886,7 @@ class ConvergeWorkChain(WorkChain):
         try:
             self.ctx.kpoints_workchains[-1]
         except IndexError:
-            self.report('the k-point grid convergence calculation ' 'finished without returning a {}'.format(
-                self._next_workchain.__name__))
+            self.report('the k-point grid convergence calculation ' 'finished without returning a {}'.format(self._next_workchain.__name__))
 
         kgrid = self.ctx.converge.settings.kgrid
         encut = self.ctx.converge.settings.encut
@@ -994,11 +912,9 @@ class ConvergeWorkChain(WorkChain):
             #_, gap = find_bandgap(bands)
             gap = 0.0
             # add stuff to the converge context
-            self.ctx.converge.k_data.append(
-                [kgrid[0], kgrid[1], kgrid[2], encut, energy, max_force, max_valence_band, gap])
+            self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], encut, energy, max_force, max_valence_band, gap])
         else:
-            self.ctx.converge.k_data.append(
-                [kgrid[0], kgrid[1], kgrid[2], encut, None, None, None, None])
+            self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], encut, None, None, None, None])
 
         return
 
@@ -1023,12 +939,18 @@ class ConvergeWorkChain(WorkChain):
                     'to the specified cutoff. This could also be caused by failures of '
                     'the calculations producing results for the convergence tests. Setting '
                     'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.converge.pw_data[-1][0]))
-                self.ctx.converge.settings.encut = self.ctx.converge.pw_data[
-                    -1][0]
+                self.ctx.converge.settings.encut = self.ctx.converge.pw_data[-1][0]
             else:
                 self.ctx.converge.settings.encut = encut
 
         return
+
+    def _set_encut_and_kgrid(self, encut, kgrid):
+        """Sets the encut and kgrid (if mesh was not supplied)."""
+        settings = self.ctx.converge.settings
+        settings.encut = encut
+        if not settings.supplied_kmesh:
+            settings.kgrid = kgrid
 
     def analyze_conv(self):
         """Analyze convergence and store its parameters."""
@@ -1040,9 +962,8 @@ class ConvergeWorkChain(WorkChain):
         cutoff_value = settings.cutoff_value
 
         # Notify the user
-        self.report('||||||||||||||||||||||||||||||||'
-                    'All convergence tests are done.'
-                    '||||||||||||||||||||||||||||||||')
+        if self._verbose:
+            self.report('||||||||||||||||||||||||||||||||' 'All convergence tests are done.' '||||||||||||||||||||||||||||||||')
 
         # We know the recommended plane wave cutoff have been updated if no displacement
         # or compression tests have been performed, otherwise refetch
@@ -1050,43 +971,56 @@ class ConvergeWorkChain(WorkChain):
         # the recommendation fromt the original convergence test
         if displace or compress:
             pw_data_org = self.ctx.converge.pw_data_org
-            encut = self._check_pw_converged(
-                pw_data_org, cutoff_type, cutoff_value)
+            if pw_data_org is not None:
+                encut = self._check_pw_converged(pw_data_org, cutoff_type, cutoff_value)
+            else:
+                encut = self.ctx.converge.settings.encut_org
             k_data_org = self.ctx.converge.k_data_org
-            kgrid = self._check_kpoints_converged(
-                k_data_org, cutoff_type, cutoff_value)
-            self.report('The original convergence test suggest to use a plane wave cutoff '
-                        'of {encut} eV and a k-point grid of {kgrid0}x{kgrid1}x{kgrid2} '
-                        'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}. '
-                        '||||||||||||||||||||||||||||||||'.format(
-                            encut=encut,
-                            kgrid=kgrid,
-                            cutoff_type=cutoff_type,
-                            cutoff_value=cutoff_value))
+            if not settings.supplied_kmesh:
+                kgrid = self._check_kpoints_converged(k_data_org, cutoff_type, cutoff_value)
+                if self._verbose:
+                    self.report('The original convergence test suggest to use a plane wave cutoff '
+                                'of {encut} eV and a k-point grid of {kgrid0}x{kgrid1}x{kgrid2} '
+                                'for the convergence criteria {cutoff_type} and a cutoff of '
+                                '{cutoff_value}. '
+                                '||||||||||||||||||||||||||||||||'.format(
+                                    encut=encut,
+                                    kgrid0=kgrid[0],
+                                    kgrid1=kgrid[1],
+                                    kgrid2=kgrid[2],
+                                    cutoff_type=cutoff_type,
+                                    cutoff_value=cutoff_value))
+            else:
+                kgrid = None
+                if self._verbose:
+                    self.report('The original convergence test suggest to use a plane wave cutoff '
+                                'of {encut} eV for the convergence criteria {cutoff_type} and a '
+                                'cutoff of {cutoff_value}. The user supplied a k-point mesh.'
+                                '||||||||||||||||||||||||||||||||'.format(encut=encut, cutoff_type=cutoff_type, cutoff_value=cutoff_value))
 
         if displace:
-            encut_diff_displacement, kgrid_diff_displacement = self._analyze_conv_disp(
-                encut, kgrid, pw_data_org, k_data_org)
-            settings.encut = encut_diff_displacement
-            settings.kgrid = kgrid_diff_displacement
+            if not compress:
+                # We have data sitting from the displacement tests
+                self.ctx.converge.pw_data_displacement = copy.deepcopy(self.ctx.converge.pw_data)
+                self.ctx.converge.k_data_displacement = copy.deepcopy(self.ctx.converge.k_data)
+            encut_diff_displacement, kgrid_diff_displacement = self._analyze_conv_disp(pw_data_org, k_data_org)
+            self._set_encut_and_kgrid(encut_diff_displacement, kgrid_diff_displacement)
 
         if compress:
-            encut_diff_comp, kgrid_diff_comp = self._analyze_conv_comp(
-                encut, kgrid, pw_data_org, k_data_org)
-            settings.encut = encut_diff_comp
-            settings.kgrid = kgrid_diff_comp
+            # We have data sitting from the compression tests
+            self.ctx.converge.pw_data_comp = copy.deepcopy(self.ctx.converge.pw_data)
+            self.ctx.converge.k_data_comp = copy.deepcopy(self.ctx.converge.k_data)
+            encut_diff_comp, kgrid_diff_comp = self._analyze_conv_comp(pw_data_org, k_data_org)
+            self._set_encut_and_kgrid(encut_diff_comp, kgrid_diff_comp)
 
         if displace and compress:
-            encut_disp_comp, kgrid_disp_comp = self._analyze_conv_disp_comp(
-                encut_diff_displacement, encut_diff_comp, kgrid_diff_displacement, kgrid_diff_comp)
-            settings.encut = encut_disp_comp
-            settings.kgrid = kgrid_disp_comp
+            encut_disp_comp, kgrid_disp_comp = self._analyze_conv_disp_comp(encut_diff_displacement, encut_diff_comp,
+                                                                            kgrid_diff_displacement, kgrid_diff_comp)
+            self._set_encut_and_kgrid(encut_disp_comp, kgrid_disp_comp)
 
         if not (displace or compress):
-            encut, kgrid = self._analyze_conv(
-                encut, kgrid, cutoff_type, cutoff_value)
-            settings.encut = encut
-            settings.kgrid = kgrid
+            encut, kgrid = self._analyze_conv()
+            self._set_encut_and_kgrid(encut, kgrid)
 
         # Check if any we have None entries for encut or kgrid, which means something failed,
         # or that we where not able to reach the requested convergence.
@@ -1095,17 +1029,17 @@ class ConvergeWorkChain(WorkChain):
                         'to the specified cutoff. This could also be caused by failures of '
                         'the calculations producing results for the convergence tests. Setting '
                         'the plane wave cutoff to the highest specified value: {encut} eV'.format(encut=self.ctx.converge.pw_data[-1][0]))
-            settings.encut = self.ctx.converge.pw_data[-1][0]
-        if settings.kgrid is None:
+            settings.encut = self.ctx.converge.pw_data[-1][0:3]
+        if not settings.supplied_kmesh and self.ctx.converge.settings.kgrid is None:
             self.report('We were not able to obtain a convergence of the k-point grid'
                         'to the specified cutoff. This could also be caused by failures of '
                         'the calculations producing results for the convergence tests. Setting '
                         'the k-point grid sampling to the highest specified value: {kgrid}'.format(kgrid=self.ctx.converge.k_data[-1][0]))
-            settings.kgrid = self.ctx.converge.k_data[-1][0]
+            settings.kgrid = self.ctx.converge.k_data[-1][0:3]
 
         return
 
-    def _analyze_conv(self, encut, kgrid, cutoff_type, cutoff_value):
+    def _analyze_conv(self):
         """
         Analyze convergence using no displacements or compression.
 
@@ -1113,28 +1047,40 @@ class ConvergeWorkChain(WorkChain):
         converged plane wave cutoff is already stored.
         """
 
-        encut = self.ctx.converge.settings.encut
-        k_data = self.ctx.converge.k_data
-        kgrid = self._check_kpoints_converged(
-            k_data, cutoff_type, cutoff_value)
+        settings = self.ctx.converge.settings
+        cutoff_type = settings.cutoff_type
+        cutoff_value = settings.cutoff_value
 
-        if self._verbose:
-            self.report('No atomic displacements or compression were performed. '
-                        '||||||||||||||||||||||||||||||||'
-                        'The convergence test suggest to use a plane wave cutoff of '
-                        '{encut} eV and a k-point grid {kgrid0}x{kgrid1}x{kgrid2} for '
-                        'the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}'
-                        '||||||||||||||||||||||||||||||||'.format(
-                            encut=encut,
-                            kgrid0=kgrid[0],
-                            kgrid1=kgrid[1],
-                            kgrid2=kgrid[2],
-                            cutoff_type=cutoff_type,
-                            cutoff_value=cutoff_value))
+        encut = settings.encut
+        k_data = self.ctx.converge.k_data
+        if not settings.supplied_kmesh:
+            kgrid = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value)
+            if self._verbose:
+                self.report('No atomic displacements or compression were performed. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test suggest to use a plane wave cutoff of '
+                            '{encut} eV and a k-point grid {kgrid0}x{kgrid1}x{kgrid2} for '
+                            'the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}'
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut=encut,
+                                kgrid0=kgrid[0],
+                                kgrid1=kgrid[1],
+                                kgrid2=kgrid[2],
+                                cutoff_type=cutoff_type,
+                                cutoff_value=cutoff_value))
+        else:
+            kgrid = None
+            if self._verbose:
+                self.report('No atomic displacements or compression were performed. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test suggest to use a plane wave cutoff of '
+                            '{encut} eV for the convergence criteria {cutoff_type} and a '
+                            'cutoff of {cutoff_value}. The user supplied a k-point mesh.'
+                            '||||||||||||||||||||||||||||||||'.format(encut=encut, cutoff_type=cutoff_type, cutoff_value=cutoff_value))
+
         return encut, kgrid
 
-    def _analyze_disp_comp(self, encut_displacement, encut_comp,
-                           kgrid_displacement, kgrid_comp, cutoff_type, cutoff_value):
+    def _analyze_conv_disp_comp(self, encut_displacement, encut_comp, kgrid_displacement, kgrid_comp):
         """
         Analyze the convergence when both displacements and compression is performed.
 
@@ -1143,35 +1089,48 @@ class ConvergeWorkChain(WorkChain):
 
         """
 
+        settings = self.ctx.converge.settings
+        cutoff_type = settings.cutoff_type
+        cutoff_value = settings.cutoff_value_r
         # return the highest plane wave cutoff and densest grid (L2 norm)
         # of the two
         encut = max(encut_displacement, encut_comp)
-        if np.sqrt(sum([x**2 for x in kgrid_displacement])) > np.sqrt(sum([x**2 for x in kgrid_comp])):
-            kgrid = kgrid_displacement
+        if not self.ctx.converge.settings.supplied_kmesh:
+            if np.sqrt(sum([x**2 for x in kgrid_displacement])) > np.sqrt(sum([x**2 for x in kgrid_comp])):
+                kgrid = kgrid_displacement
+            else:
+                kgrid = kgrid_comp
+            if self._verbose:
+                self.report('||||||||||||||||||||||||||||||||'
+                            'The convergence tests, taking the highest required plane-wave and '
+                            'k-point values for both the atomic displacement and compression '
+                            'tests suggests to use a plane wave cutoff of '
+                            '{encut} eV and a k-point grid of '
+                            '{kgrid0}x{kgrid1}x{kgrid2} for the convergence criteria '
+                            '{cutoff_type} and a cutoff of {cutoff_value} '
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut=encut,
+                                kgrid0=kgrid[0],
+                                kgrid1=kgrid[1],
+                                kgrid2=kgrid[2],
+                                cutoff_type=cutoff_type,
+                                cutoff_value=cutoff_value))
         else:
-            kgrid = kgrid_comp
-
-        if self._verbose:
-            self.report('||||||||||||||||||||||||||||||||'
-                        'The convergence tests, taking the highest required plane-wave '
-                        'k-point values for both the atomic displacement and compression '
-                        'tests suggests to use a plane wave cutoff of '
-                        '{encut} eV and a k-point grid of '
-                        '{kgrid0}x{kgrid1}x{kgrid2} for the convergence criteria '
-                        '{cutoff_type} and a cutoff of {cutoff_value} '
-                        '||||||||||||||||||||||||||||||||'.format(
-                            encut=encut,
-                            kgridt0=kgrid[0],
-                            kgridt1=kgrid[1],
-                            kgridt2=kgrid[2],
-                            cutoff_type=cutoff_type,
-                            cutoff_value=cutoff_value))
+            kgrid = None
+            if self._verbose:
+                self.report('||||||||||||||||||||||||||||||||'
+                            'The convergence tests, taking the highest required plane-wave '
+                            'for both the atomic displacement and compression '
+                            'tests suggests to use a plane wave cutoff of '
+                            '{encut} eV for the convergence criteria '
+                            '{cutoff_type} and a cutoff of {cutoff_value}. The user supplied '
+                            'a k-point mesh.'
+                            '||||||||||||||||||||||||||||||||'.format(encut=encut, cutoff_type=cutoff_type, cutoff_value=cutoff_value))
 
         return encut, kgrid
 
-    def _analyze_conv_disp(self, encut, kgrid, pw_data_org, k_data_org):
+    def _analyze_conv_disp(self, pw_data_org, k_data_org):
         """Analyze the convergence when atomic displacements are performed."""
-
         settings = self.ctx.converge.settings
         encut_org = settings.encut_org
         kgrid_org = settings.kgrid_org
@@ -1179,11 +1138,12 @@ class ConvergeWorkChain(WorkChain):
         cutoff_value = settings.cutoff_value
         cutoff_value_r = settings.cutoff_value_r
         pw_data_displacement = self.ctx.converge.pw_data_displacement
-        k_data_displacement = self.ctx.converge.k_data_displacement
-        encut_displacement = self._check_pw_converged(
-            pw_data_displacement, cutoff_type, cutoff_value)
-        kgrid_displacement = self._check_kpoints_converged(
-            k_data_displacement, cutoff_type, cutoff_value)
+        encut_displacement = self._check_pw_converged(pw_data_displacement, cutoff_type, cutoff_value)
+        if not settings.supplied_kmesh:
+            k_data_displacement = self.ctx.converge.k_data_displacement
+            kgrid_displacement = self._check_kpoints_converged(k_data_displacement, cutoff_type, cutoff_value)
+        else:
+            kgrid_diff_displacement = None
         # Calculate diffs for the plane wave cutoff
         if encut_org is None:
             pw_data = pw_data_displacement
@@ -1191,53 +1151,66 @@ class ConvergeWorkChain(WorkChain):
                 pw_data[index][1:] = [
                     pw_data_displacement[index][j + 1] - pw_data_org[index][j + 1] for j in range(len(pw_data_displacement[0]) - 1)
                 ]
-            encut_diff_displacement = self._check_pw_converged(
-                pw_data, cutoff_type, cutoff_value_r)
+            encut_diff_displacement = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
             encut_diff_displacement = encut_org
 
         # Then for the k points
-        if kgrid_org is None:
+        if kgrid_org is None and not settings.supplied_kmesh:
             k_data = k_data_displacement
             for index, _ in enumerate(k_data_displacement):
                 k_data[index][4:] = [
                     k_data_displacement[index][j + 4] - k_data_org[index][j + 4] for j in range(len(k_data_displacement[0]) - 4)
                 ]
-            kgrid_diff_displacement = self._check_kpoints_converged(
-                k_data, cutoff_type, cutoff_value_r)
+            kgrid_diff_displacement = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
+        if not settings.supplied_kmesh:
+            if self._verbose:
+                self.report('Performed atomic displacements. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test using the difference between the original '
+                            'and displaced dataset suggest to use a plane wave cutoff of '
+                            '{encut_diff_displacement} eV and a k-point grid of '
+                            '{kgrid_diff_displacement0}x{kgrid_diff_displacement1}x'
+                            '{kgrid_diff_displacement2} '
+                            'for the convergence criteria {cutoff_type} and a cutoff of '
+                            '{cutoff_value_r}.'
+                            '(The displacement convergence test suggest to use a plane wave cutoff '
+                            '{encut_displacement} eV and a k-point grid of '
+                            '{kgrids0}x{kgrids1}x{kgrids2} '
+                            'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}.)'
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut_diff_displacement=encut_diff_displacement,
+                                kgrid_diff_displacement0=kgrid_diff_displacement[0],
+                                kgrid_diff_displacement1=kgrid_diff_displacement[1],
+                                kgrid_diff_displacement2=kgrid_diff_displacement[2],
+                                cutoff_type=cutoff_type,
+                                cutoff_value_r=cutoff_value_r,
+                                cutoff_value=cutoff_value,
+                                encut_displacement=encut_displacement,
+                                kgrids0=kgrid_displacement[0],
+                                kgrids1=kgrid_displacement[1],
+                                kgrids2=kgrid_displacement[2]))
         else:
-            kgrid_diff_displacement = kgrid_org
-        if self._verbose:
-            self.report('Performed atomic displacements. '
-                        '||||||||||||||||||||||||||||||||'
-                        'The convergence test using the difference between the original '
-                        'and displaced dataset suggest to use a plane wave cutoff of '
-                        '{encut_diff_displacement} eV and a k-point grid of '
-                        '{kgrid_diff_displacement0}x{kgrid_diff_displacement1}x{kgrid_diff_displacement2} '
-                        'for the convergence criteria {cutoff_type} and a cutoff of '
-                        '{cutoff_value_r}.'
-                        '(The displacement convergence test suggest to use a plane wave cutoff '
-                        '{encut_displacement} eV and a k-point grid of {kgrids0}x{kgrids1}x{kgrids2} '
-                        'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}.)'
-                        '||||||||||||||||||||||||||||||||'.format(
-                            encut_diff_displacement=encut_diff_displacement,
-                            kgrid_diff_displacement0=kgrid_diff_displacement[
-                                0],
-                            kgrid_diff_displacement1=kgrid_diff_displacement[
-                                1],
-                            kgrid_diff_displacement2=kgrid_diff_displacement[
-                                2],
-                            cutoff_type=cutoff_type,
-                            cutoff_value_r=cutoff_value_r,
-                            cutoff_value=cutoff_value,
-                            encut_displacement=encut_displacement,
-                            kgrids0=kgrid_displacement[0],
-                            kgrids1=kgrid_displacement[1],
-                            kgrids2=kgrid_displacement[2]))
+            if self._verbose:
+                self.report('Performed atomic displacements. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test using the difference between the original '
+                            'and displaced dataset suggest to use a plane wave cutoff of '
+                            '{encut_diff_displacement} eV for the convergence criteria '
+                            '{cutoff_type} and a cutoff of {cutoff_value_r}. The user supplied '
+                            'a k-point grid.'
+                            '(The displacement convergence test suggest to use a plane wave cutoff '
+                            '{encut_displacement} eV using a cutoff of {cutoff_value}.)'
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut_diff_displacement=encut_diff_displacement,
+                                cutoff_type=cutoff_type,
+                                cutoff_value_r=cutoff_value_r,
+                                cutoff_value=cutoff_value,
+                                encut_displacement=encut_displacement))
 
         return encut_diff_displacement, kgrid_diff_displacement
 
-    def _analyze_conv_comp(self, encut, kgrid, pw_data_org, k_data_org):
+    def _analyze_conv_comp(self, pw_data_org, k_data_org):
         """Analize the relative convergence due to unit cell compression."""
 
         settings = self.ctx.converge.settings
@@ -1246,63 +1219,77 @@ class ConvergeWorkChain(WorkChain):
         cutoff_type = settings.cutoff_type
         cutoff_value = settings.cutoff_value
         cutoff_value_r = settings.cutoff_value_r
+        # Do not be too confused here.
         pw_data_comp = self.ctx.converge.pw_data_comp
-        k_data_comp = self.ctx.converge.k_data_comp
-        encut_comp = self._check_pw_converged(
-            pw_data_comp, cutoff_type, cutoff_value)
-        kgrid_comp = self._check_kpoints_converged(
-            k_data_comp, cutoff_type, cutoff_value)
+        encut_comp = self._check_pw_converged(pw_data_comp, cutoff_type, cutoff_value)
+        if not settings.supplied_kmesh:
+            k_data_comp = self.ctx.converge.k_data_comp
+            kgrid_comp = self._check_kpoints_converged(k_data_comp, cutoff_type, cutoff_value)
+        else:
+            kgrid_diff_comp = None
         # Calculate diffs for encut
         if encut_org is None:
             pw_data = pw_data_comp
             for index, _ in enumerate(pw_data):
-                pw_data[index][1:] = [pw_data_comp[index][
-                    j + 1] - pw_data_org[index][j + 1] for j in range(len(pw_data_comp[0]) - 1)]
-            encut_diff_comp = self._check_pw_converged(
-                pw_data, cutoff_type, cutoff_value_r)
+                pw_data[index][1:] = [pw_data_comp[index][j + 1] - pw_data_org[index][j + 1] for j in range(len(pw_data_comp[0]) - 1)]
+            encut_diff_comp = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
             encut_diff_comp = encut_org
         # Then for the k points
-        if kgrid_org is None:
+        if kgrid_org is None and not settings.supplied_kmesh:
             k_data = k_data_comp
             for index, _ in enumerate(k_data_comp):
-                k_data[index][4:] = [k_data_comp[index][
-                    j + 4] - k_data_org[index][j + 4] for j in range(len(k_data_comp[0]) - 4)]
-            kgrid_diff_comp = self._check_kpoints_converged(
-                k_data, cutoff_type, cutoff_value_r)
+                k_data[index][4:] = [k_data_comp[index][j + 4] - k_data_org[index][j + 4] for j in range(len(k_data_comp[0]) - 4)]
+            kgrid_diff_comp = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
+        if not settings.supplied_kmesh:
+            if self._verbose:
+                self.report('Performed compression. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test using the difference between the '
+                            'original and dataset with a volume change suggest to use a '
+                            'plane wave cutoff of {encut_diff_comp} eV and a k-point grid '
+                            'of {kgrid_diff_comp0}x{kgrid_diff_comp1}x{kgrid_diff_comp2} '
+                            'for the convergence criteria {cutoff_type} and a cutoff of '
+                            '{cutoff_value_r}.'
+                            '(The convergence test with a volume change suggest to use a plane '
+                            'wave cutoff of {encut_comp} eV and a k-point grid of '
+                            '{kgrid_comp0}x{kgrid_comp1}x{kgrid_comp2} for the convergence criteria '
+                            'using a cutoff of {cutoff_value}.) '
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut_diff_comp=encut_diff_comp,
+                                kgrid_diff_comp0=kgrid_diff_comp[0],
+                                kgrid_diff_comp1=kgrid_diff_comp[1],
+                                kgrid_diff_comp2=kgrid_diff_comp[2],
+                                cutoff_type=cutoff_type,
+                                cutoff_value=cutoff_value,
+                                cutoff_value_r=cutoff_value_r,
+                                encut_comp=encut_comp,
+                                kgrid_comp0=kgrid_comp[0],
+                                kgrid_comp1=kgrid_comp[1],
+                                kgrid_comp2=kgrid_comp[2]))
         else:
-            kgrid_diff_comp = kgrid_org
-        if self._verbose:
-            self.report('Performed compression. '
-                        '||||||||||||||||||||||||||||||||'
-                        'The convergence test using the difference between the '
-                        'original and dataset with a volume change suggest to use a '
-                        'plane wave cutoff of {encut_diff_comp} eV and a k-point grid '
-                        'of {kgrid_diff_comp0}x{kgrid_diff_comp1}x{kgrid_diff_comp2} '
-                        'for the convergence criteria {cutoff_type} and a cutoff of '
-                        '{cutoff_value_r}.'
-                        '(The convergence test with a volume change suggest to use a plane '
-                        'wave cutoff of {encut_comp} eV and a k-point grid of '
-                        '{kgrid_comp0}x{kgrid_comp1}x{kgrid_comp2} for the convergence criteria '
-                        '{cutoff_type} and a cutoff of {cutoff_value_r}.) '
-                        '||||||||||||||||||||||||||||||||'.format(
-                            encut_diff_comp=encut_diff_comp,
-                            kgrid_diff_comp0=kgrid_diff_comp[0],
-                            kgrid_diff_comp1=kgrid_diff_comp[1],
-                            kgrid_diff_comp2=kgrid_diff_comp[2],
-                            cutoff_type=cutoff_type,
-                            cutoff_value=cutoff_value,
-                            cutoff_value_r=cutoff_value_r,
-                            encut_comp=encut_comp,
-                            kgrid_comp0=kgrid_comp[0],
-                            kgrid_comp1=kgrid_comp[1],
-                            kgrid_comp2=kgrid_comp[2]))
+            if self._verbose:
+                self.report('Performed compression. '
+                            '||||||||||||||||||||||||||||||||'
+                            'The convergence test using the difference between the '
+                            'original and dataset with a volume change suggest to use a '
+                            'plane wave cutoff of {encut_diff_comp} eV '
+                            'for the convergence criteria {cutoff_type} and a cutoff of '
+                            '{cutoff_value_r}. The user supplied a k-point mesh.'
+                            '(The convergence test with a volume change suggest to use a plane '
+                            'wave cutoff of {encut_comp} eV using a cutoff of {cutoff_value}.) '
+                            '||||||||||||||||||||||||||||||||'.format(
+                                encut_diff_comp=encut_diff_comp,
+                                cutoff_type=cutoff_type,
+                                cutoff_value=cutoff_value,
+                                cutoff_value_r=cutoff_value_r,
+                                encut_comp=encut_comp))
 
         return encut_diff_comp, kgrid_diff_comp
 
     def store_conv(self):
         """Store the obtained convergence data on nodes."""
-        convergence = get_data_class('array')
+        convergence = get_data_class('array')()
 
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
@@ -1310,33 +1297,25 @@ class ConvergeWorkChain(WorkChain):
 
         # Store regular conversion data
         try:
-            convergence.set_array('pw_regular', np.array(
-                self.ctx.converge.pw_data_org))
+            convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data_org))
         except AttributeError:
-            convergence.set_array(
-                'pw_regular', np.array(self.ctx.converge.pw_data))
+            convergence.set_array('pw_regular', np.array(self.ctx.converge.pw_data))
         try:
-            convergence.set_array('kpoints_regular', np.array(
-                self.ctx.converge.k_data_org))
+            convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data_org))
         except AttributeError:
-            convergence.set_array(
-                'kpoints_regular', np.array(self.ctx.converge.k_data))
+            convergence.set_array('kpoints_regular', np.array(self.ctx.converge.k_data))
 
         # Then possibly displacement
         try:
-            convergence.set_array('pw_displacement', np.array(
-                self.ctx.converge.pw_data_displacement))
-            convergence.set_array('kpoints_displacement', np.array(
-                self.ctx.converge.k_data_displacement))
+            convergence.set_array('pw_displacement', np.array(self.ctx.converge.pw_data_displacement))
+            convergence.set_array('kpoints_displacement', np.array(self.ctx.converge.k_data_displacement))
         except AttributeError:
             pass
 
         # And finally for compression
         try:
-            convergence.set_array('pw_compression', np.array(
-                self.ctx.converge.pw_data_comp))
-            convergence.set_array('kpoints_compression',
-                                  np.array(self.ctx.converge.k_data_comp))
+            convergence.set_array('pw_compression', np.array(self.ctx.converge.pw_data_comp))
+            convergence.set_array('kpoints_compression', np.array(self.ctx.converge.k_data_comp))
         except AttributeError:
             pass
 
@@ -1373,8 +1352,7 @@ class ConvergeWorkChain(WorkChain):
         index = 0
         criteria = self._ALLOWED_CUTOFF_TYPES[cutoff_type]
         for encut in range(1, len(pw_data)):
-            delta = abs(pw_data[encut][criteria + 1] -
-                        pw_data[encut - 1][criteria + 1])
+            delta = abs(pw_data[encut][criteria + 1] - pw_data[encut - 1][criteria + 1])
             if delta < cutoff_value:
                 if self._verbose:
                     self.report('A plane wave cutoff of {encut} eV is considered converged '
@@ -1439,7 +1417,7 @@ class ConvergeWorkChain(WorkChain):
                         'cutoff of {cutoff_value})'.format(cutoff_type=cutoff_type, cutoff_value=cutoff_value))
             return None
 
-        return k_data[index][0: 3]
+        return k_data[index][0:3]
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
@@ -1474,8 +1452,7 @@ class ConvergeWorkChain(WorkChain):
                     node = workchain.out[name]
                     self.out(name, workchain.out[name])
                     if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(
-                            node.__class__.__name__, node.pk, name))
+                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
 
         return
 
@@ -1486,8 +1463,7 @@ class ConvergeWorkChain(WorkChain):
 
     def run_conv_calcs(self):
         """Determines if convergence calcs are to be run at all."""
-
-        return self.run_kpoints_conv_calcs or self.run_pw_conv_calcs
+        return self.run_kpoints_conv_calcs() or self.run_pw_conv_calcs()
 
     def _displace_structure(self):
         """Displace the input structure according to the supplied settings."""
@@ -1506,11 +1482,9 @@ class ConvergeWorkChain(WorkChain):
 
         volume_change = self.ctx.converge.settings.volume_change
         # Apply compression and tension
-        comp_structure = compressed_structure(
-            self.ctx.inputs.structure, volume_change)
+        comp_structure = compressed_structure(self.ctx.inputs.structure, volume_change)
         # Make sure we also reset the reciprocal cell
         kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(
-            kpoints_mesh=[1, 1, 1], cell_from_structure=comp_structure)
+        self.ctx.converge.kpoints = kpoints(kpoints_mesh=[1, 1, 1], cell_from_structure=comp_structure)
 
         return comp_structure

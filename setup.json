@@ -11,9 +11,6 @@
     ], 
     "description": "AiiDA Plugin for running VASP calculations.", 
     "entry_points": {
-        "console_scripts": [
-            "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
-        ],
         "aiida.calculations": [
             "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation", 
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
@@ -35,16 +32,19 @@
             "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
-            "vasp.vasp = aiida_vasp.calcs.workchains.vasp:VaspWorkChain",
-	    "vasp.verify = aiida_vasp.calcs.workchains.verify:VerifyWorkChain",
-	    "vasp.converge = aiida_vasp.calcs.workchains.converge:ConvergeWorkChain",
-	    "vasp.relax = aiida_vasp.calcs.workchains.relax:RelaxWorkChain",
+            "vasp.vasp = aiida_vasp.calcs.workchains.vasp:VaspWorkChain", 
+            "vasp.verify = aiida_vasp.calcs.workchains.verify:VerifyWorkChain", 
+            "vasp.converge = aiida_vasp.calcs.workchains.converge:ConvergeWorkChain", 
+            "vasp.relax = aiida_vasp.calcs.workchains.relax:RelaxWorkChain", 
             "vasp.legacy.scf = aiida_vasp.calcs.workflows.scf:ScfWorkflow", 
             "vasp.legacy.nscf = aiida_vasp.calcs.workflows.nscf:NscfWorkflow", 
             "vasp.legacy.projections = aiida_vasp.calcs.workflows.projections:ProjectionsWorkflow", 
             "vasp.legacy.autowindows = aiida_vasp.calcs.workflows.autowindows:AutowindowsWorkflow", 
             "vasp.legacy.wannier = aiida_vasp.calcs.workflows.wannier:WannierWorkflow", 
             "vasp.legacy.windows = aiida_vasp.calcs.workflows.windows:WindowsWorkflow"
+        ], 
+        "console_scripts": [
+            "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
         ]
     }, 
     "extras_require": {
@@ -81,9 +81,9 @@
         "chainmap", 
         "six", 
         "pyparsing", 
-        "py",
-        "lxml",
-	"distro",
+        "py", 
+        "lxml", 
+        "distro", 
         "parsevasp >= 0.2.18"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
@@ -96,5 +96,5 @@
         "reentry"
     ], 
     "url": "https://github.com/DropD/aiida-vasp", 
-    "version": "0.2.3"
+    "version": "0.2.4"
 }

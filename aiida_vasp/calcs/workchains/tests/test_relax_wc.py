@@ -13,11 +13,10 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version, not_ubuntu
+from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, not_ubuntu, create_authinfo
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.incar import IncarParser
-from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.mark.wf

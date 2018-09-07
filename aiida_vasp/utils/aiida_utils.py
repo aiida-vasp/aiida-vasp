@@ -89,17 +89,17 @@ def builder_interface(calc_cls):
     return False
 
 
-def copy_structure(old_structure):
+def copy_structure(structure):
     """Assemble a new StructureData."""
-    structure_cls = get_data_class('structure')
-    old_cell = old_structure.cell
-    structure = structure_cls(cell=old_cell)
-    old_sites = old_structure.sites
-    kinds = old_structure.kinds
-    for index, site in enumerate(old_sites):
-        structure.append_atom(position=site.position, symbols=kinds[
-                              index].symbols, name=kinds[index].name)
-    return structure
+    copied_structure = get_data_node('structure', cell=structure.cell)
+    for site in structure.sites:
+        symbols = None
+        # This is not very elegant...
+        for kind in structure.kinds:
+            if kind.name == site.kind_name:
+                symbols = kind.symbol
+        copied_structure.append_atom(position=site.position, symbols=symbols, name=site.kind_name)
+    return copied_structure
 
 
 def copy_parameter(old_parameter):
@@ -141,7 +141,7 @@ def compress_cell(structure, volume_change):
     """Apply compression or tensile forces to the unit cell."""
     cell = structure.cell
     new_cell = np.array(cell) * volume_change
-    structure.reset_cell(new_cell.to_list())
+    structure.reset_cell(new_cell.tolist())
 
 
 def not_ubuntu():
@@ -186,10 +186,8 @@ def cmp_load_verdi_data():
             import_errors.append(err)
 
     if not verdi_data:
-        err_messages = '\n'.join([' * {}'.format(err)
-                                  for err in import_errors])
-        raise ImportError(
-            'The verdi data base command group could not be found:\n' + err_messages)
+        err_messages = '\n'.join([' * {}'.format(err) for err in import_errors])
+        raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
 
     return verdi_data
 
@@ -205,8 +203,7 @@ def create_authinfo(computer, store=False):
     authinfo = None
     if hasattr(orm_backend, 'construct_backend'):
         backend = orm_backend.construct_backend()
-        authinfo = backend.authinfos.create(
-            computer=computer, user=get_current_user())
+        authinfo = backend.authinfos.create(computer=computer, user=get_current_user())
         if store:
             authinfo.store()
     else:
@@ -215,14 +212,12 @@ def create_authinfo(computer, store=False):
 
         if BACKEND == BACKEND_DJANGO:
             from aiida.backends.djsite.db.models import DbAuthInfo
-            authinfo = DbAuthInfo(
-                dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
         elif BACKEND == BACKEND_SQLA:
             from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
             from aiida.backends.sqlalchemy import get_scoped_session
             _ = get_scoped_session()
-            authinfo = DbAuthInfo(
-                dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
+            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
         if store:
             authinfo.save()
     return authinfo

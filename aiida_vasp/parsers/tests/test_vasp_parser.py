@@ -263,7 +263,6 @@ def test_structure(request):
     parser = VaspParser(calc=calc)
     retrieved = DataFactory('folder')()
     test_file_path = str(request.fspath.join('..') + '../../../test_data/basic/vasprun.xml')
-    print('TEST_PATH:', test_file_path)
     retrieved.add_path(test_file_path, '')
     success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
     nodes = dict(nodes)
