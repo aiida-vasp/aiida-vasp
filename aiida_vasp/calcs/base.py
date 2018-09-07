@@ -11,11 +11,11 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.exceptions import ValidationError
 from aiida.common.folders import SandboxFolder
 
-from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport, aiida_version, cmp_version
+from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
 
-if aiida_version() >= cmp_version('1.0.0a1'):
+try:
     from aiida.orm.implementation.general.node import _AbstractNodeMeta as __absnode__
-else:
+except ImportError:
     __absnode__ = JobCalculation.__metaclass__
 
 
