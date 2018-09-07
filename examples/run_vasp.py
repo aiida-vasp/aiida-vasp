@@ -2,6 +2,8 @@ import click
 from click_spinner import spinner as cli_spinner
 import numpy
 
+from aiida_vasp.utils.aiida_utils import builder_interface
+
 
 def get_data_cls(descriptor):
     load_dbenv_if_not_loaded()
@@ -41,29 +43,63 @@ def example_param_set(cmd_function):
 def noncol(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
+    from aiida.work import submit
     if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():
             import_pots(import_from, pot_family)
-    pot_cls = get_data_cls('vasp.potcar')
-    pots = {}
-    pots['In'] = pot_cls.find_one(full_name='In_d', family=pot_family)
-    pots['As'] = pot_cls.find_one(full_name='As', family=pot_family)
-
-    vasp_calc = CalculationFactory('vasp.vasp')()
-    vasp_calc.use_structure(create_structure_InAs())
-    vasp_calc.use_kpoints(create_kpoints())
-    vasp_calc.use_parameters(create_params_noncol())
     code = Code.get_from_string('{}@{}'.format(code, computer))
-    vasp_calc.use_code(code)
-    vasp_calc.use_potential(pots['In'], 'In')
-    vasp_calc.use_potential(pots['As'], 'As')
-    vasp_calc.set_computer(code.get_computer())
-    vasp_calc.set_queue_name(queue)
-    vasp_calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 20})
-    vasp_calc.label = 'Test VASP run'
-    vasp_calc.store_all()
-    vasp_calc.submit()
+    calc_cls = CalculationFactory('vasp.vasp')
+
+    if builder_interface(calc_cls):
+        proc, inputs = noncol_builder(pot_family, queue, code, calc_cls)
+    else:
+        proc, inputs = noncol_inputs_template(pot_family, queue, code, calc_cls)
+
+    submit(proc, **inputs)
+
+
+def noncol_inputs_template(pot_family, queue, code, calc_cls):
+    """Submit noncol example in AiiDA 0.10.0 - 0.11.4."""
+    vasp_proc = calc_cls.process()
+    inputs = vasp_proc.get_inputs_template()
+
+    inputs.structure = create_structure_InAs()
+    inputs.kpoints = create_kpoints()
+    inputs.parameters = create_params_noncol()
+    inputs.code = code
+    inputs.potential = get_data_cls('vasp.potcar').get_potcars_from_structure(
+        structure=inputs.structure, family_name=pot_family, mapping={
+            'In': 'In_d',
+            'As': 'As'
+        })
+    inputs._options.computer = inputs.code.get_computer()
+    inputs._options.queue_name = queue
+    inputs._options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
+    inputs['_label'] = 'Example - noncol VASP run'
+
+    return vasp_proc, inputs
+
+
+def noncol_builder(pot_family, queue, code, calc_cls):
+    """Submit noncol example in AiiDA 0.12.0 and higher."""
+    builder = calc_cls.get_builder()
+
+    builder.structure = create_structure_InAs()
+    builder.kpoints = create_kpoints()
+    builder.parameters = create_params_noncol()
+    builder.code = code
+    builder.potential = get_data_cls('vasp.potcar').get_potcars_from_structure(
+        structure=builder.structure, family_name=pot_family, mapping={
+            'In': 'In_d',
+            'As': 'As'
+        })
+    builder.options.computer = builder.code.get_computer()
+    builder.options.queue_name = queue
+    builder.options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
+    builder.label = 'Example - noncol VASP run'
+
+    return calc_cls, builder
 
 
 @run_example.command()
@@ -71,26 +107,57 @@ def noncol(pot_family, import_from, queue, code, computer, no_import):
 def simple(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import CalculationFactory, Code
+    from aiida.work import submit
     if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():
             import_pots(import_from, pot_family)
-    pot_cls = get_data_cls('vasp.potcar')
-    pot_si = pot_cls.find_one(family=pot_family, full_name='Si')
-
-    vasp_calc = CalculationFactory('vasp.vasp')()
-    vasp_calc.use_structure(create_structure_Si())
-    vasp_calc.use_kpoints(create_kpoints())
-    vasp_calc.use_parameters(create_params_simple())
     code = Code.get_from_string('{}@{}'.format(code, computer))
-    vasp_calc.use_code(code)
-    vasp_calc.use_potential(pot_si, 'Si')
-    vasp_calc.set_computer(code.get_computer())
-    vasp_calc.set_queue_name(queue)
-    vasp_calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 20})
-    vasp_calc.label = 'Test VASP run'
-    vasp_calc.store_all()
-    vasp_calc.submit()
+
+    calc_cls = CalculationFactory('vasp.vasp')
+    if builder_interface(calc_cls):
+        proc, inputs = simple_builder(pot_family, queue, code, calc_cls)
+    else:
+        proc, inputs = simple_inputs_template(pot_family, queue, code, calc_cls)
+
+    submit(proc, **inputs)
+
+
+def simple_inputs_template(pot_family, queue, code, calc_cls):
+    """Submit simple example in AiiDA 0.10.0 - 0.11.4."""
+    vasp_proc = calc_cls.process()
+    inputs = vasp_proc.get_inputs_template()
+
+    inputs.structure = create_structure_Si()
+    inputs.kpoints = create_kpoints()
+    inputs.parameters = create_params_simple()
+    inputs.code = code
+    inputs.potential = get_data_cls('vasp.potcar').get_potcars_from_structure(
+        structure=inputs.structure, family_name=pot_family, mapping={'Si': 'Si'})
+    inputs._options.computer = inputs.code.get_computer()
+    inputs._options.queue_name = queue
+    inputs._options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
+    inputs['_label'] = 'Example - simple VASP run'
+
+    return vasp_proc, inputs
+
+
+def simple_builder(pot_family, queue, code, calc_cls):
+    """Submit simple example in AiiDA 0.12.0 and higher."""
+    builder = calc_cls.get_builder()
+
+    builder.structure = create_structure_Si()
+    builder.kpoints = create_kpoints()
+    builder.parameters = create_params_simple()
+    builder.code = code
+    builder.potential = get_data_cls('vasp.potcar').get_potcars_from_structure(
+        structure=builder.structure, family_name=pot_family, mapping={'Si': 'Si'})
+    builder.options.computer = builder.code.get_computer()
+    builder.options.queue_name = queue
+    builder.options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
+    builder.label = 'Example - simple VASP run'
+
+    return calc_cls, builder
 
 
 def load_dbenv_if_not_loaded():
@@ -110,7 +177,7 @@ def create_structure_InAs():
 def create_structure_Si():
     structure_cls = get_data_cls('structure')
     alat = 5.4
-    structure = structure_cls(cell=numpy.array([[.5, .5, 0], [.5, 0, .5], [0, .5, .5]]) * alat)
+    structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * alat)
     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
     return structure
 

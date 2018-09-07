@@ -1,195 +1,705 @@
-"""Tools for parsing vasprun.xml files"""
-
-try:
-    from lxml.objectify import parse
-except ImportError:
-    from xml.etree.ElementTree import parse
-import datetime as dt
+"""Tools for parsing vasprun.xml files."""
+import operator
 import numpy as np
 
+from parsevasp.vasprun import Xml
+from parsevasp import constants as parsevaspct
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
-class VasprunParser(object):
-    """Parse xml into objecttree, provide convenience methods for parsing."""
+DEFAULT_OPTIONS = {
+    'quantities_to_parse': [
+        'parameters', 'structure', 'bands', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
+        'born_charges', 'hessian', 'dynmat'
+    ],
+    'energy_type': ['energy_no_entropy'],
+    'output_params': []
+}
 
-    def __init__(self, fname):
-        super(VasprunParser, self).__init__()
-        self.tree = parse(fname)
 
-    @property
-    def program(self):
-        return self._i('program')
+class VasprunParser(BaseFileParser):
+    """Interface to parsevasp's xml parser."""
 
-    @property
-    def version(self):
-        return self._i('version').strip()
+    PARSABLE_ITEMS = {
+        'structure': {
+            'inputs': [],
+            'nodeName': 'structure',
+            'prerequisites': [],
+            'alternatives': ['poscar-structure']
+        },
+        'bands': {
+            'inputs': [],
+            'nodeName': 'bands',
+            'prerequisites': [],
+            'alternatives': ['eigenval-bands']
+        },
+        'dos': {
+            'inputs': [],
+            'nodeName': 'dos',
+            'prerequisites': [],
+            'alternatives': ['doscar-dos']
+        },
+        'kpoints': {
+            'inputs': [],
+            'nodeName': 'kpoints',
+            'prerequisites': [],
+            'alternatives': ['kpoints-kpoints']
+        },
+        'occupations': {
+            'inputs': [],
+            'nodeName': 'occupations',
+            'prerequisites': [],
+            #'alternatives': ['eigenval-occupations']
+        },
+        'trajectory': {
+            'inputs': [],
+            'nodeName': 'trajectory',
+            'prerequisites': [],
+            #'alternatives': ['xdatcar-trajectory']
+        },
+        'energies': {
+            'inputs': [],
+            'nodeName': 'energies',
+            'prerequisites': [],
+            'alternatives': ['outcar-energies']
+        },
+        'projectors': {
+            'inputs': [],
+            'nodeName': 'projectors',
+            'prerequisites': [],
+            #'alternatives': ['procar-projectors']
+        },
+        'dielectrics': {
+            'inputs': [],
+            'nodeName': 'dielectrics',
+            'prerequisites': [],
+            #'alternatives': ['outcar-dielectrics']
+        },
+        'final_stress': {
+            'inputs': [],
+            'nodeName': '',
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_stress']
+        },
+        'final_forces': {
+            'inputs': [],
+            'nodeName': '',
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_stress']
+        },
+        'final_structure': {
+            'inputs': [],
+            'nodeName': '',
+            'prerequisites': [],
+            #'alternatives': ['outcar-final_structure']
+        },
+        'born_charges': {
+            'inputs': [],
+            'nodeName': 'born_charges',
+            'prerequisites': [],
+            #'alternatives': ['outcar-born_charges']
+        },
+        'hessian': {
+            'inputs': [],
+            'nodeName': 'hessian',
+            'prerequisites': [],
+            #'alternatives': ['outcar-hessian']
+        },
+        'dynmat': {
+            'inputs': [],
+            'nodeName': 'dynmat',
+            'prerequisites': [],
+            #'alternatives': ['outcar-dynmat']
+        },
+        'parameters': {
+            'inputs': [],
+            'nodeName': 'parameters',
+            'prerequisites': [],
+            'alternatives': ['outcar-parameters']
+        }
+    }
 
-    @property
-    def datetime(self):
-        """Parse Date and time information into a Python datetime object."""
-        date = self._i('date')
-        time = self._i('time')
-        dtstr = date + ' ' + time
-        return dt.datetime.strptime(dtstr, '%Y %m %d %H:%M:%S')
+    def __init__(self, *args, **kwargs):
+        super(VasprunParser, self).__init__(*args, **kwargs)
+        self._xml = None
+        self.init_with_kwargs(**kwargs)
 
-    @property
-    def cell(self):
-        return self._varray('basis', path=self._fppath())
+    def _init_with_file_path(self, path):
+        """Init with a filepath."""
+        self._parsed_data = {}
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._data_obj = SingleFile(path=path)
 
-    @property
-    def volume(self):
-        return self._i('basis', path=self._fppath())
+        # Since vasprun.xml can be fairly large, we will parse it only
+        # once and store the parsevasp Xml object.
+        try:
+            self._xml = Xml(file_path=path, k_before_band=True)
+        except SystemExit:
+            self._logger.warning("Parsevasp exited abruptly. Returning None.")
+            self._xml = None
 
-    @property
-    def pos(self):
-        return self._varray('positions', path=self._fppath())
+    def _init_with_data(self, data):
+        """Init with singleFileData."""
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._init_with_file_path(data.get_file_abs_path())
 
-    @property
-    def root(self):
-        return self.tree.getroot()
+    def _parse_file(self, inputs):
 
-    @property
-    def efermi(self):
-        return self._i('efermi')
+        # Since all quantities will be returned by properties, we can't pass
+        # inputs as a parameter, so we store them in self._parsed_data
+        for key, value in inputs.items():
+            self._parsed_data[key] = value
 
-    @property
-    def is_static(self):
-        ibrion = self.param('IBRION', default=-1)
-        nsw = self.param('NSW', default=0)
-        return (ibrion == -1) or (nsw == 0)
+        if self.settings is not None:
+            self.settings.update_with(DEFAULT_OPTIONS)
+        else:
+            self.settings = DEFAULT_OPTIONS
 
-    @property
-    def is_md(self):
-        ibrion = self.param('IBRION', default=-1)
-        return ibrion == 0
+        quantities_to_parse = self.settings.get('quantities_to_parse', DEFAULT_OPTIONS['quantities_to_parse'])
+        result = {}
 
-    @property
-    def is_relaxation(self):
-        ibrion = self.param('IBRION', default=-1)
-        nsw = self.param('NSW', default=0)
-        return (ibrion in [1, 2, 3]) and (nsw > 0)
+        if self._xml is None:
+            # parsevasp threw an exception, which means vasprun.xml could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self._parsable_items:
+                    result[quantity] = None
+            return result
 
-    @property
-    def is_sc(self):
-        icharg = self._i('ICHARG')
-        return icharg < 10
+        for quantity in quantities_to_parse:
+            if quantity in self._parsable_items:
+                result[quantity] = getattr(self, quantity)
 
-    @property
-    def occupations(self):
-        eig = self._array(parent='calculation/eigenvalues')
-        return eig['occ']
-
-    @property
-    def projected_occupations(self):
-        eig = self._array(parent='calculation/projected/eigenvalues')
-        return eig['occ']
+        return result
 
     @property
     def bands(self):
-        eig = self._array(parent='calculation/eigenvalues')
-        return eig['eigene']
+        """
+        Return a BandsData node.
 
-    @property
-    def projected_bands(self):
-        eig = self._array(parent='calculation/projected/eigenvalues')
-        return eig['eigene']
+        Contains the bandstructure parsed from vasprun.xml.
 
-    @property
-    def tdos(self):
-        return self._array(parent='dos/total')
+        """
 
-    @property
-    def pdos(self):
-        """The partial DOS array"""
-        try:
-            dos = self._array(parent='dos/partial')
-        except Exception:  # pylint: disable=broad-except
-            dos = np.array([])
-        return dos
+        # fetch eigenvalues and occupancies
+        eigenvalues = self.eigenvalues
+        occupations = self.occupations_bands
 
-    def param(self, key, default=None):
-        path = '/parameters//'
-        return self._i(key, path=path) or self._v(key, path=path) or default
-
-    def _varray(self, key, path='//'):
-        """Extract a <varray> tag"""
-        tag = self.tag('varray', key, path)
-        if tag is None:
+        if eigenvalues is None:
+            # did not find any eigenvalues
             return None
 
-        def split(string_):
-            return string_.text.split()
+        # generate Aiida specific BandsData for storage
+        band_data = get_data_class('array.bands')()
 
-        return np.array(map(split, tag.v), dtype=float)
+        # put everything into BandData and KpointsData
+        band_data.set_kpointsdata(self.kpoints)
+        band_data.set_bands(eigenvalues, occupations=occupations)
 
-    def _array(self, parent, key=None, path='//'):
-        """Extract an <array> tag."""
-        pred = '[@name="%s"]' % key if key else ''
-        tag = self.tree.find(path + parent + '/array%s' % pred)
-        dims = [i.text for i in tag.findall('dimension')]
+        return band_data
 
-        def getdtf(field):
-            d_type = field.attrib.get('type', float)
-            if d_type == 'string':
-                d_type = 'S128'
-            return (field.text.strip(), d_type)
+    @property
+    def eigenvalues(self):
+        """Fetch eigenvalues from parsevasp."""
 
-        dtyp = np.dtype([getdtf(f) for f in tag.findall('field')])
-        ndim = len(dims)
-        shape = []
-        subset = tag.find('set')
-        for _ in range(ndim - 1):
-            if subset.find('set') is not None:
-                shape.append(len(subset.findall('set')))
-                subset = subset.find('set')
-        ldim = subset.findall('r')
-        mode = 'r'
-        if not ldim:
-            ldim = subset.findall('rc')
-            mode = 'rc'
-        shape.append(len(ldim))
+        # fetch eigenvalues
+        eigenvalues = self._xml.get_eigenvalues()
 
-        def split(string_):
-            """Splits a string based on mode in ['r', 'rc']"""
-            if mode == 'rc':
-                return tuple([x.text.strip() for x in string_.c])
-            return tuple(string_.text.split())
+        if eigenvalues is None:
+            # eigenvalues not present
+            return None
 
-        data = np.array(map(split, tag.iterfind('*//%s' % mode)), dtype=dtyp)
-        return data.reshape(shape)
+        eigen = []
+        eigen.append(eigenvalues.get("total"))
 
-    def _i(self, key, path='//'):
-        """Extract an <i> tag"""
-        tag = self.tag('i', key, path)
-        res = None
-        if tag is not None:
-            if tag.attrib.get('type') == 'logical':
-                res = 'T' in tag.text
-            elif tag.attrib.get('type') == 'int':
-                res = int(tag.text)
-            elif tag.attrib.get('type') == 'string':
-                res = tag.text.strip()
-            else:
-                try:
-                    res = int(tag.text)
-                except ValueError:
-                    try:
-                        res = float(tag.text)
-                    except ValueError:
-                        res = tag.text.strip()
-        return res
+        if eigen[0] is None:
+            # spin decomposed?
+            eigen[0] = eigenvalues.get("up")
+            eigen.append(eigenvalues.get("down"))
 
-    def _v(self, key, path='//'):
-        """Extract an <v> tag"""
-        tag = self.tag('v', key, path)
-        if tag is not None:
-            dtype = tag.attrib.get('type', float)
-            return np.array(tag.text.split(), dtype=dtype)
+        if eigen[0] is None:
+            # safety, should not really happen?
+            return None
+
+        return eigen
+
+    @property
+    def occupations_bands(self):
+        """Fetch occupations from parsevasp."""
+
+        # fetch occupations
+        occupations = self._xml.get_occupancies()
+
+        if occupations is None:
+            # occupations not present, should not really happen?
+            return None
+
+        occ = []
+        occ.append(occupations.get("total"))
+
+        if occ[0] is None:
+            # spin decomposed
+            occ[0] = occupations.get("up")
+            occ.append(occupations.get("down"))
+
+        if occ[0] is None:
+            # should not really happen
+            return None
+
+        return occ
+
+    @property
+    def occupations(self):
+        """Fetch occupations from parsevasp."""
+
+        # fetch occupations
+        occupations = self._xml.get_occupancies()
+
+        if occupations is None:
+            # occupations not present, should not really happen?
+            return None
+
+        array_data = get_data_class('array')()
+
+        total = occupations.get('total')
+        upspin = occupations.get('up')
+        downspin = occupations.get('down')
+        if total is not None:
+            # we have total
+            array_data.set_array('total', total)
+        elif upspin is not None:
+            # we have spin decomposed
+            array_data.set_array('up', upspin)
+            if downspin is None:
+                self._logger.error("Serious error, detected spin up, but no spin down " "channel. This should not happen. Continuing.")
+            array_data.set_array('down', downspin)
+        else:
+            # safety, should not really happen?
+            return None
+
+        return array_data
+
+    @property
+    def parameters(self):
+        """Assemble the 'output_params' node."""
+
+        parameters = {}
+        outcar_parameters = self._parsed_data.get('ocp_parameters')
+        if outcar_parameters is not None:
+            parameters.update(outcar_parameters)
+        for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
+            parameters[quantity] = getattr(self, quantity)
+
+        output_parameters = get_data_node('parameter', dict=parameters)
+
+        return output_parameters
+
+    @property
+    def kpoints(self):
+        """Fetch the kpoints from parsevasp an store in KpointsData."""
+
+        kpts = self._xml.get_kpoints()
+        kptsw = self._xml.get_kpointsw()
+        kpoints_data = None
+        if (kpts is not None) and (kptsw is not None):
+            # create a KpointsData object and store k-points
+            kpoints_data = get_data_class('array.kpoints')()
+            kpoints_data.set_kpoints(kpts, weights=kptsw)
+
+        return kpoints_data
+
+    @property
+    def structure(self):
+        """
+        Fetch a given structure and store as StructureData.
+
+        Which structure to fetch is controlled by inputs.
+
+        eFL: Need to clean this so that we can set different
+        structures to pull from the outside. Could be usefull not
+        pulling the whole trajectory.
+
+        Currently defaults to the last structure.
+
+        """
+
+        return self.last_structure
+
+    @property
+    def last_structure(self):
+        """
+        Fetch the structure.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as StructureData.
+
+        """
+
+        last_lattice = self._xml.get_lattice("final")
+        if last_lattice is not None:
+            return _build_structure(last_lattice)
         return None
 
-    @staticmethod
-    def _fppath():
-        return '//structure[@name="finalpos"]//'
+    @property
+    def final_structure(self):
+        """
+        Fetch the structure.
 
-    def tag(self, tag, key, path='//'):
-        path = '{p}{t}[@name="{n}"]'.format(p=path, t=tag, n=key)
-        return self.tree.find(path)
+        After or at the last recorded ionic step from parsevasp
+        and store as StructureData. Should in
+        principle be the same as the method above.
+
+        """
+
+        return self.last_structure
+
+    @property
+    def last_forces(self):
+        """
+        Fetch forces.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
+
+        """
+
+        frs = self._xml.get_forces("final")
+        if frs is None:
+            return None
+
+        return frs
+
+    @property
+    def final_forces(self):
+        """
+        Fetch forces.
+
+        After or at the last recorded
+        ionic step from parsevasp and store as ArrayData.
+
+        """
+
+        return self.last_forces
+
+    @property
+    def last_stress(self):
+        """
+        Fetch stess.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
+
+        """
+
+        strs = self._xml.get_stress("final")
+        if strs is None:
+            return None
+        stress = get_data_class('array')()
+        stress.set_array('forces', strs)
+        return stress
+
+    @property
+    def final_stress(self):
+        """
+        Fetch stress.
+
+        After or at the last recorded ionic step from parsevasp
+        and store as ArrayData.
+
+        """
+
+        return self.last_stress
+
+    @property
+    def trajectory(self):
+        """
+        Fetch unitcells, positions, species, forces and stress.
+
+        For all calculation steps from parsevasp and store as TrajectoryData.
+
+        """
+
+        unitcell = self._xml.get_unitcell("all")
+        positions = self._xml.get_positions("all")
+        species = self._xml.get_species()
+        forces = self._xml.get_forces("all")
+        stress = self._xml.get_stress("all")
+        # make sure all are sorted, first to last calculation
+        # (species is constant)
+        unitcell = sorted(unitcell.items())
+        positions = sorted(positions.items())
+        forces = sorted(forces.items())
+        stress = sorted(stress.items())
+        # convert to numpy
+        unitcell = np.asarray(map(operator.itemgetter(1), unitcell))
+        positions = np.asarray(map(operator.itemgetter(1), positions))
+        forces = np.asarray(map(operator.itemgetter(1), forces))
+        stress = np.asarray(map(operator.itemgetter(1), stress))
+        # Aiida wants the species as symbols, so invert
+        elements = _invert_dict(parsevaspct.elements)
+        symbols = np.asarray([elements[item].title() for item in species])
+
+        if (unitcell is not None) and (positions is not None) and \
+           (species is not None) and (forces is not None) and \
+           (stress is not None):
+            array_node = get_data_class('array')()
+            trajectory_node = get_data_class('array.trajectory')()
+
+            keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
+
+            trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
+
+            for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
+                array_node.set_array(key, data)
+                trajectory_node.set_array(key, data)
+            return trajectory_node, array_node
+
+        return None
+
+    # @property
+    # def trajectory_full(self):
+    #     """Fetch unitcells, positions, species, forces and stress
+    #     for all calculation steps from parsevasp and store as ArrayData.
+
+    #     """
+
+    #     unitcell = self._data_obj.get_unitcell("all")
+    #     positions = self._data_obj.get_positions("all")
+    #     species = self._data_obj.get_species()
+    #     forces = self._data_obj.get_forces("all")
+    #     stress = self._data_obj.get_stress("all")
+    #     make sure all are sorted, first to last calculation
+    #     (species is constant)
+    #     unitcell = sorted(unitcell.items())
+    #     positions = sorted(positions.items())
+    #     forces = sorted(forces.items())
+    #     stress = sorted(stress.items())
+    #     convert to numpy
+    #     unitcell = np.asarray(map(operator.itemgetter(1),unitcell))
+    #     positions = np.asarray(map(operator.itemgetter(1),positions))
+    #     forces = np.asarray(map(operator.itemgetter(1),forces))
+    #     stress = np.asarray(map(operator.itemgetter(1),stress))
+    #     Aiida wants the species as symbols, so invert
+    #     elements = self._invert_dict(parsevaspct.elements)
+    #     symbols = np.asarray([elements[item].title() for item in species])
+
+    #     if (unitcell is not None) and (positions is not None) and \
+    #        (species is not None) and (forces is not None) and \
+    #        (stress is not None):
+    #         array_node = get_data_class('array')()
+
+    #         keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
+
+    #         for key, data in zip(keys, (unitcell,
+    #                                     positions,
+    #                                     symbols,
+    #                                     forces,
+    #                                     stress)):
+    #             array_node.set_array(key, data)
+    #         return array_node
+    #     else:
+    #         return None
+
+    @property
+    def energies_sc(self):
+        """
+        Fetch the total energies.
+
+        Store in ArrayData for all self-consistent electronic steps.
+
+        """
+
+        # raise error due to lack of knowledge if
+        # the Aiida data structure support for instance
+        # lists of ndarrays.
+        raise NotImplementedError
+        #return self.energies(nosc = False)
+
+    @property
+    def energies(self, nosc=True):
+        """
+        Fetch the total energies.
+
+        Store as ArrayData for all calculations (i.e. ionic steps).
+
+        """
+
+        # create a ArrayData object
+        enrgy = get_data_class('array')()
+
+        # fetch the type of energies that the user wants to extract
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+
+            # this returns a list, not an ndarray due to
+            # the posibility of returning the energies for all
+            # self consistent steps, which contain a different
+            # number of elements, not supported by Numpy's std.
+            # arrays
+            enrgies = self._xml.get_energies(status="all", etype=etype, nosc=nosc)
+            if enrgies is None:
+                return None
+            enrgy = get_data_class('array')()
+            # should be a list, but convert to ndarray, here
+            # staggered arrays are not a problem
+            # two elements for a static run, both are similar,
+            # only take the last
+            if len(enrgies) == 2:
+                enrgies = enrgies[-1:]
+            enrgy.set_array(etype, np.asarray(enrgies))
+
+        return enrgy
+
+    @property
+    def projectors(self):
+        """
+        Fetch the projectors.
+
+        Store as ArrayData.
+
+        """
+
+        proj = self._xml.get_projectors()
+        if proj is None:
+            return None
+        projectors = get_data_class('array')()
+        prj = []
+        try:
+            prj.append(proj["total"])
+        except KeyError:
+            try:
+                prj.append(proj["up"])
+                prj.append(proj["down"])
+            except KeyError:
+                self._logger.error("Did not detect any projectors. " "Returning.")
+        if len(prj) == 1:
+            projectors.set_array('projectors', prj[0])
+        else:
+            projectors.set_array('projectors', np.asarray(prj))
+        return projectors
+
+    @property
+    def dielectrics(self):
+        """
+        Fetch the dielectric function.
+
+        Store as ArrayData.
+
+        """
+
+        diel = self._xml.get_dielectrics()
+        if diel is None:
+            return None
+        dielectrics = get_data_class('array')()
+        energy = diel["energy"]
+        dielectrics.set_array('ediel', energy)
+        dielectrics.set_array('rdiel', diel["real"])
+        dielectrics.set_array('idiel', diel["imag"])
+        return dielectrics
+
+    @property
+    def born_charges(self):
+        """
+        Fetch the Born effective charges.
+
+        Store as ArrayData.
+
+        """
+
+        brn = self._xml.get_born()
+        if brn is None:
+            return None
+        born = get_data_class('array')()
+        born.set_array('born_charges', brn)
+        return born
+
+    @property
+    def hessian(self):
+        """
+        Fetch the Hessian matrix.
+
+        Store as ArrayData.
+
+        """
+
+        hessian = self._xml.get_hessian()
+        if hessian is None:
+            return None
+        hess = get_data_class('array')()
+        hess.set_array('hessian', hessian)
+        return hess
+
+    @property
+    def dynmat(self):
+        """
+        Fetch the dynamical eigenvectors and eigenvalues.
+
+        Store as ArrayData.
+
+        """
+
+        dynmat = self._xml.get_dynmat()
+        if dynmat is None:
+            return None
+        dyn = get_data_class('array')()
+        dyn.set_array('dynvec', dynmat["eigenvectors"])
+        dyn.set_array('dyneig', dynmat["eigenvalues"])
+        return dyn
+
+    @property
+    def dos(self):
+        """
+        Fetch the total density of states.
+
+        Store as ArrayData.
+
+        """
+
+        dos = self._xml.get_dos()
+        if dos is None:
+            return None
+        densta = get_data_class('array')()
+        # energy is always there, regardless of
+        # total, spin or partial
+        energy = dos["total"]["energy"]
+        densta.set_array('energy', energy)
+        tdos = None
+        pdos = None
+        upspin = dos.get("up")
+        downspin = dos.get("down")
+        total = dos.get("total")
+        if (upspin is not None) and (downspin is not None):
+            tdos = np.stack((upspin["total"], downspin["total"]))
+            if (upspin["partial"] is not None) and \
+               (downspin["partial"] is not None):
+                pdos = np.stack((upspin["partial"], downspin["partial"]))
+        else:
+            tdos = total["total"]
+            pdos = total["partial"]
+        densta.set_array('tdos', tdos)
+        if pdos is not None:
+            densta.set_array('pdos', pdos)
+
+        return densta
+
+    @property
+    def fermi_level(self):
+        """Fetch Fermi level."""
+
+        return self._xml.get_fermi_level()
+
+
+def _build_structure(lattice):
+    """Builds a structure according to Aiida spec."""
+
+    structure_cls = get_data_class('structure')
+    unitcell = lattice["unitcell"]
+    structure = structure_cls(cell=unitcell)
+    # Aiida wants the species as symbols, so invert
+    elements = _invert_dict(parsevaspct.elements)
+    for pos, specie in zip(lattice["positions"], lattice["species"]):
+        structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
+    return structure
+
+
+def _invert_dict(dct):
+    return dct.__class__(map(reversed, dct.items()))

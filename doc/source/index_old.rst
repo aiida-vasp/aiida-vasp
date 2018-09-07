@@ -24,6 +24,7 @@ Plugins
    :maxdepth: 3
 
    VASP <calcs/index>
+   Legacy Workflows <wf/index>
 
 **********************
 Adapting and Extending
@@ -32,7 +33,7 @@ Adapting and Extending
 When developing calculation plug-ins it should be kept in mind, that
 for calculations run with them to be successfully shared with other researchers,
 those other researchers will need to have access to the calculation plug-in as well.
-This means that any calculation should be contributed to the ``github.com/aiidateam/aiida-vasp`` plug-in repository.
+This means that any calculation should be contributed to the ``github.com/aiida-vasp/aiida-vasp`` plug-in repository.
 
 Another consideration is that changing a calculation that has already been used may
 break consistency and reproducibility, so proceed with extreme caution.

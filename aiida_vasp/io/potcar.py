@@ -1,11 +1,11 @@
 """Find, import, compose and write POTCAR files."""
 from functools import update_wrapper
+from itertools import groupby
 import re
 import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
-from aiida_vasp.io.poscar import PoscarIo
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -52,8 +52,8 @@ class PotcarIo(object):
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_path(self, filepath):
-        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=filepath)
+    def _init_with_path(self, file_path):
+        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=file_path)
         self.md5 = node.md5
 
     def _init_with_potcar_file_node(self, node):
@@ -143,6 +143,44 @@ class MultiPotcarIo(object):
     @classmethod
     def from_structure(cls, structure, potentials_dict):
         """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a potential for each kind in the structure."""
-        poscario = PoscarIo(structure)
-        symbol_order = poscario.potentials_order
+        symbol_order = cls.potentials_order(structure)
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])
+
+    def get_potentials_dict(self, structure):
+        """
+        Get a dictionary {kind_name: PotcarData} that would fit the structure.
+
+        If the PotcarData contained in MultiPotcarIo do not match the structure, an exception is raised.
+        """
+        structure_elements = structure.get_symbols_set()
+        if structure_elements != self.element_symbols:
+            raise ValueError('structure elements do not match POTCAR elements')
+        if len(structure.get_kind_names()) != len(structure_elements):
+            raise ValueError('structure has more kind names than elements')
+
+        element_potcars = {potcario.node.element: potcario.node for potcario in self.potcars}
+        return {kind.name: element_potcars[kind.symbol] for kind in structure.kinds}
+
+    @property
+    def element_symbols(self):
+        return {potcario.node.element for potcario in self.potcars}
+
+    @classmethod
+    def potentials_order(cls, structure):
+        return [kind[0] for kind in cls.count_kinds(structure)]
+
+    @classmethod
+    def count_kinds(cls, structure):
+        """
+        Count consecutive kinds that compose the different sites.
+
+        :return: [(kind_name, num), ... ]
+        """
+        kind_name_order = [site.kind_name for site in structure.sites]
+        groups = groupby(kind_name_order)
+        counts = [(label, sum(1 for _ in group)) for label, group in groups]
+        return counts
+
+    @property
+    def max_enmax(self):
+        return max([potcario.pymatgen.enmax for potcario in self.potcars])

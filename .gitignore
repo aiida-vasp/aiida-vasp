@@ -11,8 +11,10 @@
 *_BASE_*
 *_LOCAL_*
 *_REMOTE_*
+*__pycache__
 .coverage
 .tox
+.pytest_cache
 
 doc/build
 build/
