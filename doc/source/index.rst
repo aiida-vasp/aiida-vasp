@@ -15,8 +15,9 @@ AiiDA-VASP is under active development, check out the newest changes here: `chan
 .. _here: https://www.vasp.at/index.php/about-vasp/59-about-vasp
 .. _documentation page: https://www.vasp.at/index.php/documentation
 .. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
-.. _changelog: https://github.com/aiidateam/aiida-vasp/blob/develop/CHANGELOG.md
+.. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 
+.. _main-quickstart:
 
 Getting started
 ===============
@@ -43,12 +44,14 @@ This will automatically install the AiiDA python package(s) as well as any other
 
 After setting up the database and profile and configuring the compute resources, you might want to run an example VASP calculation.
 
-   $ (aiida-venv) git clone github.com/aiidateam/aiida-vasp
+   $ (aiida-venv) git clone github.com/aiida-vasp/aiida-vasp
    $ (aiida-venv) python aiida-vasp/examples/run_vasp simple --import-from <POTCAR-path> <code> <computer>
 
 Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../vasp_pot/potpaw_PBE``), ``<code>`` is the PK or name of the code you set up in AiiDA for running VASP, ``<computer>`` is the PK or name of the computer you set up in AiiDA for running VASP on.
 
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
+
+.. _main-running:
 
 Running calculations
 --------------------
@@ -58,7 +61,15 @@ Running calculations
  * Read about running structure relaxations in the `How To section <howto/relax_wf/one-off>`
 
 .. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
-.. _example workflow: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_base_wf.py
+.. _example workflow: https://github.com/aiida-vasp/aiida-vasp/blob/develop/examples/run_base_wf.py
+
+Importing non-AiiDA VASP runs
+-----------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   howto/immigrate
 
 Managing potcar files
 ---------------------
