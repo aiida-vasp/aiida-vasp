@@ -71,8 +71,7 @@ class BaseRestartWorkChain(WorkChain):
     _verbose = False
     _calculation = None
     _error_handler_entry_point = None
-    _expected_calculation_states = [
-        calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
+    _expected_calculation_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
 
     def _fail_compat(self, *args, **kwargs):
         if hasattr(self, 'fail'):
@@ -85,8 +84,7 @@ class BaseRestartWorkChain(WorkChain):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
         self.exit_status = None
         if self._calculation is None or not issubclass(self._calculation, JobCalculation):
-            raise ValueError(
-                'no valid JobCalculation class defined for _calculation attribute')
+            raise ValueError('no valid JobCalculation class defined for _calculation attribute')
 
         # compatibility v0.12.x <-> v1.0.0-alpha
         self._error_handlers = []
@@ -142,20 +140,17 @@ class BaseRestartWorkChain(WorkChain):
         try:
             unwrapped_inputs = self.ctx.inputs
         except AttributeError:
-            raise ValueError(
-                'no calculation input dictionary was defined in self.ctx.inputs')
+            raise ValueError('no calculation input dictionary was defined in self.ctx.inputs')
 
         inputs = prepare_process_inputs(unwrapped_inputs)
         calculation = self._calculation.process()
         running = self.submit(calculation, **inputs)
 
         if hasattr(running, 'pid'):
-            self.report('launching {}<{}> iteration #{}'.format(
-                self._calculation.__name__, running.pid, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pid, self.ctx.iteration))
         else:
             # Aiida < 1.0
-            self.report('launching {}<{}> iteration #{}'.format(
-                self._calculation.__name__, running.pk, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))
 
         return self.to_context(calculations=append_(running))
 
@@ -206,8 +201,7 @@ class BaseRestartWorkChain(WorkChain):
         """Attach the outputs specified in the output specification from the last completed calculation."""
 
         if not self.exit_status:
-            self.report('{}<{}> completed after {} iterations'.format(
-                self.__class__.__name__, self.pid, self.ctx.iteration))
+            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
 
             for name, port in self.spec().outputs.iteritems():
                 if port.required and name not in self.ctx.restart_calc.out:
@@ -218,8 +212,7 @@ class BaseRestartWorkChain(WorkChain):
                     node = self.ctx.restart_calc.out[name]
                     self.out(name, self.ctx.restart_calc.out[name])
                     if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(
-                            node.__class__.__name__, node.pk, name))
+                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
         else:
             self.report('The calculation {}<{}> returned a non-zero exit status. '
                         'The exit status of {} is thus set to {}'.format(self._calculation, self.pid, self.__class__.__name__,
@@ -230,11 +223,9 @@ class BaseRestartWorkChain(WorkChain):
         """Clean remote folders of the calculations called in the workchain if the clean_workdir input is True."""
 
         if hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
-            super(BaseRestartWorkChain, self).on_destroy(
-            )  # pylint: disable=no-member
+            super(BaseRestartWorkChain, self).on_destroy()  # pylint: disable=no-member
         else:
-            super(BaseRestartWorkChain, self).on_terminated(
-            )  # pylint: disable=no-member
+            super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
         # Do not clean if we do not want to or the calculation failed
         if self.exit_status or self.inputs.restart.clean_workdir.value is False:
             return
@@ -248,13 +239,11 @@ class BaseRestartWorkChain(WorkChain):
                 pass
 
         if cleaned_calcs:
-            self.report('cleaned remote folders of calculations: {}'.format(
-                ' '.join(map(str, cleaned_calcs))))
+            self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))
 
     def _handle_succesfull(self, calculation):
         """Handle the case when the calculaton was successfull."""
-        self.report('{}<{}> completed successfully'.format(
-            self._calculation.__name__, calculation.pk))
+        self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.exit_status = 0
@@ -306,8 +295,7 @@ class BaseRestartWorkChain(WorkChain):
                 exception=UnexpectedCalculationFailure('submission for {}<{}> failed for the second consecutive time'.format(
                     self._calculation.__name__, calculation.pk)))
         else:
-            self.report('submission for {}<{}> failed, trying to restart'.format(
-                self._calculation.__name__, calculation.pk))
+            self.report('submission for {}<{}> failed, trying to restart'.format(self._calculation.__name__, calculation.pk))
 
         self.ctx.submission_failure = True
 
@@ -330,8 +318,7 @@ class BaseRestartWorkChain(WorkChain):
                 exception=UnexpectedCalculationFailure('failure of {}<{}> could not be handled for the second consecutive time'.format(
                     self._calculation.__name__, calculation.pk)))
         else:
-            self.report('failure of {}<{}> could not be handled, trying to restart'.format(
-                self._calculation.__name__, calculation.pk))
+            self.report('failure of {}<{}> could not be handled, trying to restart'.format(self._calculation.__name__, calculation.pk))
             self.exit_status = 0
 
         return
@@ -354,13 +341,11 @@ class BaseRestartWorkChain(WorkChain):
         is_handled = False
 
         # Sort the handlers based on their priority in reverse order
-        handlers = sorted(self._error_handlers,
-                          key=lambda x: x.priority, reverse=True)
+        handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
 
         if not handlers:
             self.exit_status = 1
-            raise UnexpectedCalculationFailure(
-                'no calculation error handlers were registered')
+            raise UnexpectedCalculationFailure('no calculation error handlers were registered')
 
         for handler in handlers:
             handler_report = handler.method(self, calculation)
@@ -380,8 +365,7 @@ class BaseRestartWorkChain(WorkChain):
         # error, the failure reason is unknown
         if not is_handled:
             self.exit_status = 1
-            raise UnexpectedCalculationFailure(
-                'calculation failure was not handled')
+            raise UnexpectedCalculationFailure('calculation failure was not handled')
 
         return
 
@@ -410,8 +394,7 @@ class BaseRestartWorkChain(WorkChain):
         else:
             self.ctx.unexpected_failure = False
             self.ctx.restart_calc = calculation
-            self.report(
-                'calculation terminated without errors but did not complete successfully, trying to restart')
+            self.report('calculation terminated without errors but did not complete successfully, trying to restart')
 
         return
 

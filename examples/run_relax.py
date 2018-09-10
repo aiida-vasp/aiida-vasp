@@ -46,5 +46,6 @@ def main(potential_family, queue, code, computer):
     # submit the requested workchain with the supplied inputs
     submit(workflow, **inputs)
 
+
 if __name__ == '__main__':
     main()
