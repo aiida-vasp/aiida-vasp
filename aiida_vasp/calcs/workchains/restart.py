@@ -255,8 +255,8 @@ class BaseRestartWorkChain(WorkChain):
         self.exit_status = 1
         self._fail_compat(
             exception=MaxIterationsFailure('reached the maximumm number of iterations '
-                                           '{}: last ran {}<{}>'.format(self.ctx.max_iterations, self._calculation.__name__,
-                                                                        calculation.pk)))
+                                           '{}: last ran {}<{}>'.format(self.ctx.max_iterations, self._calculation.__name__, calculation.
+                                                                        pk)))
 
         return
 
@@ -264,8 +264,8 @@ class BaseRestartWorkChain(WorkChain):
         """Handle the case when an unexpected state is detected."""
         self.exit_status = 1
         self._fail_compat(
-            exception=UnexpectedCalculationFailure('unexpected state ({}) of {}<{}>'.format(calculation.get_state(),
-                                                                                            self._calculation.__name__, calculation.pk)))
+            exception=UnexpectedCalculationFailure('unexpected state ({}) of {}<{}>'.format(calculation.get_state(), self._calculation.
+                                                                                            __name__, calculation.pk)))
 
         return
 
