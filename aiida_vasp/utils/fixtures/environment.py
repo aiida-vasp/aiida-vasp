@@ -1,12 +1,8 @@
 """pytest-style test fixtures"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
-import os
-import json
-
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
-from aiida import __version__ as aiidav
 from aiida.utils.fixtures import fixture_manager
 
 
