@@ -384,7 +384,7 @@ class VasprunParser(BaseFileParser):
         return self.last_forces
 
     @property
-    def maximum_forces(self):
+    def maximum_force(self):
         """Fetch the maximum force of at the last ionic run."""
 
         forces = self.final_forces.get_array('forces')

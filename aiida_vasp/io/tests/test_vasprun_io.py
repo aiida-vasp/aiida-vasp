@@ -30,7 +30,7 @@ def test_parameter_results(vasprun_parser):
 
     """
 
-    vasprun_parser.settings.update_with({'output_params': ['fermi_level', 'total_energies', 'maximum_forces', 'maximum_stress']})
+    vasprun_parser.settings.update_with({'output_params': ['fermi_level', 'total_energies', 'maximum_force', 'maximum_stress']})
     quantity = vasprun_parser.get_quantity('parameters')
     data_obj = quantity['parameters']
     ref_class = get_data_class('parameter')
@@ -39,7 +39,7 @@ def test_parameter_results(vasprun_parser):
     assert data_dict['fermi_level'] == 5.96764939
     assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
     assert data_dict['maximum_stress'] == 28.803993008871014
-    assert data_dict['maximum_forces'] == 3.41460162
+    assert data_dict['maximum_force'] == 3.41460162
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
