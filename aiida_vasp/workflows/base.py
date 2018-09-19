@@ -140,7 +140,6 @@ class VaspBaseWf(BaseRestartWorkChain):
                 self.report('Scheduler output:\n{}'.format(sched_out or ''))
                 self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
         except AttributeError:
-            self.report('No calculation was found in the context. '
-                        'Something really awefull happened. Please inspect messages and act.')
+            self.report('No calculation was found in the context. ' 'Something really awefull happened. Please inspect messages and act.')
 
         return super(VaspBaseWf, self).on_except(exc_info)
