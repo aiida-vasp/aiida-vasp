@@ -108,12 +108,12 @@ class VaspBaseWf(BaseRestartWorkChain):
         options = AttributeDict()
         options.computer = self.inputs.code.get_computer()
         options.update(self.inputs.options.get_dict())
-        expected_options = ['computer', 'resources']
-        if options.computer.get_scheduler_type() != 'direct':
-            expected_options.append('queue_name')
-        for option in expected_options:
-            if option not in options:
-                self._fail_compat(exception=ValueError('option {} required but not passed!'.format(option)))
+        #expected_options = ['computer', 'resources']
+        #if options.computer.get_scheduler_type() != 'direct':
+        #    expected_options.append('queue_name')
+        #for option in expected_options:
+        #    if option not in options:
+        #        self._fail_compat(exception=ValueError('option {} required but not passed!'.format(option)))
         if builder_interface(CalculationFactory('vasp.vasp')):  ## aiida 1.0.0+ will use this
             self.ctx.inputs.options = options
         else:
@@ -131,13 +131,15 @@ class VaspBaseWf(BaseRestartWorkChain):
     @override
     def on_except(self, exc_info):
         """Handle excepted state."""
-
-        last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
-        if last_calc:
-            self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
-            sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
-            sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')
-            self.report('Scheduler output:\n{}'.format(sched_out or ''))
-            self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
+        try:
+            last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
+            if last_calc is not None:
+                self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
+                sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
+                sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')
+                self.report('Scheduler output:\n{}'.format(sched_out or ''))
+                self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
+        except AttributeError:
+            self.report('No calculation was found in the context. ' 'Something really awefull happened. Please inspect messages and act.')
 
         return super(VaspBaseWf, self).on_except(exc_info)

@@ -11,7 +11,7 @@ from run_vasp import example_param_set, create_structure_Si, create_kpoints, cre
 def main(pot_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
-    from aiida.work import submit
+    from aiida.work import submit, run
 
     if not no_import:
         click.echo('importing POTCAR files...')
@@ -31,6 +31,7 @@ def main(pot_family, import_from, queue, code, computer, no_import):
     options = AttributeDict()
     options.queue_name = queue
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 4}
+    options.max_wallclock_seconds = 3600
     inputs.options = get_data_node('parameter', dict=options)
 
     submit(workflow, **inputs)
