@@ -1,5 +1,5 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args, protected-access
 import os
 from collections import OrderedDict
 import subprocess as sp
@@ -27,23 +27,17 @@ def localhost_dir(tmpdir_factory):
 @pytest.fixture
 def localhost(aiida_env, localhost_dir):
     """Fixture for a local computer called localhost"""
-    from aiida.orm import Computer
-    from aiida.orm.querybuilder import QueryBuilder
-    query_builder = QueryBuilder()
-    query_builder.append(Computer, tag='comp')
-    query_builder.add_filter('comp', {'name': {'==': 'localhost'}})
-    query_results = query_builder.all()
-    if query_results:
-        computer = query_results[0][0]
-    else:
-        computer = Computer(
+    from aiida.common import exceptions
+    try:
+        computer = aiida_env._backend.computers.get(name='localhost')
+    except exceptions.NotExistent:
+        computer = aiida_env._backend.computers.create(
             name='localhost',
             description='description',
             hostname='localhost',
             workdir=localhost_dir.strpath,
             transport_type='local',
             scheduler_type='direct',
-            mpirun_command=[],
             enabled_state=True)
     return computer
 
