@@ -85,10 +85,9 @@ def potcar_node_pair(aiida_env):
 def temp_pot_folder(tmpdir):
     """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
-    print potcar_ga.strpath
     assert not potcar_ga.exists()
     pot_archive = py_path.local(data_path('potcar'))
-    target = tmpdir.join('potcar')
+    target = tmpdir.join('potentials')
     pot_archive.copy(target)
     return target
 
