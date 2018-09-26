@@ -52,8 +52,10 @@ def test_base(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_struc
     inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter', dict={
+        'parameter',
+        dict={
             'queue_name': 'None',
+            'max_wallclock_seconds': 1,
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
