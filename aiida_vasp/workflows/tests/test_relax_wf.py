@@ -64,6 +64,7 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         dict={
             'queue_name': 'None',
             'max_wallclock_seconds': 1,
+            'import_sys_environment': True,
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
