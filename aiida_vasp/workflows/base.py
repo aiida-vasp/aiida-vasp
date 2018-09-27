@@ -132,7 +132,7 @@ class VaspBaseWf(BaseRestartWorkChain):
     def on_except(self, exc_info):
         """Handle excepted state."""
 
-        last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
+        last_calc = self.ctx.calculations[-1] if self.ctx.get('calculations') else None
         if last_calc:
             self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
             sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
