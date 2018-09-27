@@ -19,7 +19,7 @@ from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.incar import IncarParser
 
 
-@pytest.mark.wf
+@pytest.mark.wc
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 #@pytest.mark.skipif(not_ubuntu(), reason='The workchain tests currently only work on Ubuntu systems. It uses the direct scheduler.')
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
