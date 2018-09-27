@@ -1,3 +1,4 @@
+# pylint: disable=too-many-public-methods
 """Tools for parsing vasprun.xml files."""
 import operator
 import numpy as np
@@ -10,7 +11,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
         'parameters', 'structure', 'bands', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat'
+        'born_charges', 'hessian', 'dynmat', 'final_forces', 'final_stress'
     ],
     'energy_type': ['energy_no_entropy'],
     'output_params': []
@@ -283,7 +284,7 @@ class VasprunParser(BaseFileParser):
         """Assemble the 'output_params' node."""
 
         parameters = {}
-        outcar_parameters = self._parsed_data.get('ocp_parameters')
+        outcar_parameters = self._parsed_data.get('outcar_parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
         for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
@@ -365,8 +366,10 @@ class VasprunParser(BaseFileParser):
         frs = self._xml.get_forces("final")
         if frs is None:
             return None
+        forces = get_data_class('array')()
+        forces.set_array('forces', frs)
 
-        return frs
+        return forces
 
     @property
     def final_forces(self):
@@ -379,6 +382,15 @@ class VasprunParser(BaseFileParser):
         """
 
         return self.last_forces
+
+    @property
+    def maximum_force(self):
+        """Fetch the maximum force of at the last ionic run."""
+
+        forces = self.final_forces.get_array('forces')
+        norm = np.linalg.norm(forces, axis=1)
+
+        return np.amax(np.abs(norm))
 
     @property
     def last_stress(self):
@@ -394,7 +406,8 @@ class VasprunParser(BaseFileParser):
         if strs is None:
             return None
         stress = get_data_class('array')()
-        stress.set_array('forces', strs)
+        stress.set_array('stress', strs)
+
         return stress
 
     @property
@@ -408,6 +421,15 @@ class VasprunParser(BaseFileParser):
         """
 
         return self.last_stress
+
+    @property
+    def maximum_stress(self):
+        """Fetch the maximum stress of at the last ionic run."""
+
+        stress = self.final_stress.get_array('stress')
+        norm = np.linalg.norm(stress, axis=1)
+
+        return np.amax(np.abs(norm))
 
     @property
     def trajectory(self):
@@ -437,23 +459,14 @@ class VasprunParser(BaseFileParser):
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species])
-
-        if (unitcell is not None) and (positions is not None) and \
-           (species is not None) and (forces is not None) and \
-           (stress is not None):
-            array_node = get_data_class('array')()
-            trajectory_node = get_data_class('array.trajectory')()
-
-            keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
-
-            trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
-
-            for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
-                array_node.set_array(key, data)
-                trajectory_node.set_array(key, data)
-            return trajectory_node, array_node
-
-        return None
+        array_node = get_data_class('array')()
+        trajectory_node = get_data_class('array.trajectory')()
+        keys = ('cells', 'positions', 'symbols', 'forces', 'stress')
+        trajectory_node.set_trajectory(stepids=np.arange(unitcell.shape[0]), cells=unitcell, symbols=symbols, positions=positions)
+        for key, data in zip(keys, (unitcell, positions, symbols, forces, stress)):
+            array_node.set_array(key, data)
+            trajectory_node.set_array(key, data)
+        return trajectory_node, array_node
 
     # @property
     # def trajectory_full(self):
@@ -513,6 +526,19 @@ class VasprunParser(BaseFileParser):
         # lists of ndarrays.
         raise NotImplementedError
         #return self.energies(nosc = False)
+
+    @property
+    def total_energies(self):
+        """Fetch the total energies after the last ionic run."""
+
+        energies = self.energies
+        # fetch the type of energies that the user wants to extract
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        energies_dict = {}
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+            energies_dict[etype] = energies.get_array(etype)[-1]
+
+        return energies_dict
 
     @property
     def energies(self, nosc=True):
@@ -693,12 +719,14 @@ def _build_structure(lattice):
 
     structure_cls = get_data_class('structure')
     unitcell = lattice["unitcell"]
-    structure = structure_cls(cell=unitcell)
-    # Aiida wants the species as symbols, so invert
-    elements = _invert_dict(parsevaspct.elements)
-    for pos, specie in zip(lattice["positions"], lattice["species"]):
-        structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
-    return structure
+    if unitcell is not None:
+        structure = structure_cls(cell=unitcell)
+        # Aiida wants the species as symbols, so invert
+        elements = _invert_dict(parsevaspct.elements)
+        for pos, specie in zip(lattice["positions"], lattice["species"]):
+            structure.append_atom(position=np.dot(pos, unitcell), symbols=elements[specie].title())
+        return structure
+    return None
 
 
 def _invert_dict(dct):
