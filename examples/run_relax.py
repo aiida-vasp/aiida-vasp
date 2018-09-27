@@ -42,14 +42,6 @@ def main(potential_family, queue, code, computer):
     inputs = AttributeDict()
     # set code
     inputs.code = code
-    # relaxation flags
-    # turn relaxation on
-    inputs.perform = get_data_node('bool', True)
-    inputs.convergence_on = get_data_node('bool', True)
-    inputs.convergence_positions = get_data_node('float', 0.1)
-    inputs.relax_parameters = get_data_node('parameter', dict={
-        'ediffg': -0.0001
-    })  # yapf: disable
     # set structure
     inputs.structure = create_structure_perturbed()
     # set parameters
@@ -66,8 +58,17 @@ def main(potential_family, queue, code, computer):
     inputs.options = get_data_node('parameter', dict=options)
     # set settings
     inputs.settings = get_data_node('parameter', dict=settings)
+    # set workchain related inputs
+    # turn relaxation on
+    inputs.perform = get_data_node('bool', True)
+    inputs.convergence_on = get_data_node('bool', True)
+    inputs.convergence_positions = get_data_node('float', 0.1)
+    inputs.relax_parameters = get_data_node('parameter', dict={
+        'ediffg': -0.0001
+    })  # yapf: disable
+    inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    run(workflow, **inputs)
+    submit(workflow, **inputs)
 
 
 if __name__ == '__main__':

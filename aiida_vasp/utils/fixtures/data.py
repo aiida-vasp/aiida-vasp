@@ -1,5 +1,6 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args, protected-access
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,
+# pylint: disable=too-many-function-args, protected-access, abstract-class-instantiated, no-value-for-parameter, unexpected-keyword-arg
 import os
 from collections import OrderedDict
 import subprocess as sp

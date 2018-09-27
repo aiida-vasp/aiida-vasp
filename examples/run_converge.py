@@ -64,8 +64,9 @@ def main(potential_family, queue, code, computer):
     inputs.relax = get_data_node('bool', True)
     inputs.encut_samples = get_data_node('int', 3)
     inputs.k_samples = get_data_node('int', 3)
+    inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    run(workchain, **inputs)
+    submit(workchain, **inputs)
 
 
 if __name__ == '__main__':

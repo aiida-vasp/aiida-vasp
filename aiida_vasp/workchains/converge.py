@@ -328,10 +328,13 @@ class ConvergeWorkChain(WorkChain):
 
     def _init_inputs(self):
         """Initialize the inputs."""
+        self.report("VERBOPSE:{}".format(self.inputs.verbose.value))
+        self.report("{}".format(self._verbose))
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
+        self.report("{}".format(self._verbose))
 
     def _init_settings(self):
         """Initialize the settings."""

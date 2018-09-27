@@ -68,3 +68,4 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
 
     results = work.run(workchain, **inputs)
     assert 'output_structure_relaxed' in results
+    assert False

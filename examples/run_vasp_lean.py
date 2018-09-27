@@ -58,6 +58,8 @@ def main(potential_family, queue, code, computer):
     inputs.options = get_data_node('parameter', dict=options)
     # set settings
     inputs.settings = get_data_node('parameter', dict=settings)
+    # set workchain related inputs
+    inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 
