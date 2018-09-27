@@ -13,7 +13,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import WorkflowFactory
 from aiida.orm.data.array.bands import find_bandgap
 
-from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure, copy_kpoints)
+from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure, copy_parameter)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs
 
 
@@ -506,9 +506,12 @@ class ConvergeWorkChain(WorkChain):
         if encut_org is None:
             # No encut supplied, run plane wave convergence tests.
             self.ctx.converge.pw_data = []
-            # Clone the input parameters if we have not encut,
+            # Clone the input parameters if we have no encut,
             # we will eject this into the parameters as we go
-            self.ctx.converge.parameters = self.inputs.parameters.clone()
+            try:
+                self.ctx.converge.parameters = copy_parameter(self.inputs.parameters)
+            except AttributeError:
+                self.ctx.converge.parameters = get_data_node('parameter')
             if not supplied_kmesh and kgrid_org is None:
                 # If k-point grid is not supplied, generate a standard grid
                 # Set sensible k-point grid (k_spacing stepping in zone)
@@ -601,7 +604,7 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.inputs.parameters = self.ctx.converge.parameters.clone()
         # Only the k-points if no mesh was supplied
         if not self.ctx.converge.settings.supplied_kmesh:
-            self.ctx.inputs.kpoints = copy_kpoints(self.ctx.converge.kpoints, self.ctx.inputs.structure)
+            self.ctx.inputs.kpoints = self.ctx.converge.kpoints.clone()
         else:
             self.ctx.inputs.kpoints = self.inputs.kpoints
         return

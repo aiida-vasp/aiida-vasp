@@ -89,47 +89,19 @@ def builder_interface(calc_cls):
     return False
 
 
-def copy_structure(structure):
-    """Assemble a new StructureData."""
-    copied_structure = get_data_node('structure', cell=structure.cell)
-    for site in structure.sites:
-        symbols = None
-        # This is not very elegant...
-        for kind in structure.kinds:
-            if kind.name == site.kind_name:
-                symbols = kind.symbol
-        copied_structure.append_atom(position=site.position, symbols=symbols, name=site.kind_name)
-    return copied_structure
-
-
 def copy_parameter(old_parameter):
     """Assemble a new ParameterData."""
     return get_data_node('parameter', dict=old_parameter.get_dict())
 
 
-def copy_kpoints(old_kpoints, structure):
-    """Assemble a new KpointsData."""
-    kpoints = get_data_class('array.kpoints')()
-    kpoints.set_cell_from_structure(structure)
-    if old_kpoints.get_attrs().get('mesh') is not None:
-        mesh, offset = old_kpoints.get_kpoints_mesh()
-        kpoints.set_kpoints_mesh(mesh, offset=offset)
-    elif old_kpoints.get_attrs().get('array|kpoints') is not None:
-        mesh, weights = old_kpoints.get_kpoints(also_weights=True)
-        kpoints.set_kpoints(mesh, weights=weights)
-    else:
-        kpoints = None
-    return kpoints
-
-
 def displaced_structure(structure, displacement, entry):
-    disp_structure = copy_structure(structure)
+    disp_structure = structure.clone()
     displace_position(disp_structure, displacement, entry)
     return disp_structure
 
 
 def compressed_structure(structure, volume_change):
-    comp_structure = copy_structure(structure)
+    comp_structure = structure.clone()
     compress_cell(comp_structure, volume_change)
     return comp_structure
 

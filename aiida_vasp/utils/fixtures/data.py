@@ -1,5 +1,5 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args, protected-access
 import os
 from collections import OrderedDict
 import subprocess as sp
@@ -9,6 +9,7 @@ import pytest
 from pymatgen.io.vasp import Poscar
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
+from aiida.common.exceptions import NotExistent
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
@@ -27,25 +28,41 @@ def localhost_dir(tmpdir_factory):
 @pytest.fixture
 def localhost(aiida_env, localhost_dir):
     """Fixture for a local computer called localhost"""
-    from aiida.orm import Computer
-    from aiida.orm.querybuilder import QueryBuilder
-    query_builder = QueryBuilder()
-    query_builder.append(Computer, tag='comp')
-    query_builder.add_filter('comp', {'name': {'==': 'localhost'}})
-    query_results = query_builder.all()
-    if query_results:
-        computer = query_results[0][0]
+
+    # Check whether Aiida uses the new backend interface to create collections.
+    if hasattr(aiida_env, '_backend'):
+        try:
+            computer = aiida_env._backend.computers.get(name='localhost')
+        except NotExistent:
+            computer = aiida_env._backend.computers.create(
+                name='localhost',
+                description='description',
+                hostname='localhost',
+                workdir=localhost_dir.strpath,
+                transport_type='local',
+                scheduler_type='direct',
+                enabled_state=True)
+        return computer
     else:
-        computer = Computer(
-            name='localhost',
-            description='description',
-            hostname='localhost',
-            workdir=localhost_dir.strpath,
-            transport_type='local',
-            scheduler_type='direct',
-            mpirun_command=[],
-            enabled_state=True)
-    return computer
+        from aiida.orm import Computer
+        from aiida.orm.querybuilder import QueryBuilder
+        query_builder = QueryBuilder()
+        query_builder.append(Computer, tag='comp')
+        query_builder.add_filter('comp', {'name': {'==': 'localhost'}})
+        query_results = query_builder.all()
+        if query_results:
+            computer = query_results[0][0]
+        else:
+            computer = Computer(
+                name='localhost',
+                description='description',
+                hostname='localhost',
+                workdir=localhost_dir.strpath,
+                transport_type='local',
+                scheduler_type='direct',
+                mpirun_command=[],
+                enabled_state=True)
+        return computer
 
 
 @pytest.fixture
