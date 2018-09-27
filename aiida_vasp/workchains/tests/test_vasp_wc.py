@@ -12,7 +12,7 @@ from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, aiida_version, cmp_version, not_ubuntu, create_authinfo
+from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, not_ubuntu, create_authinfo
 
 
 @pytest.mark.wf
@@ -43,22 +43,23 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
-    inputs.incar = vasp_params
+    inputs.parameters = vasp_params
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter', dict={
+        'parameter',
+        dict={
             'queue_name': 'None',
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
-            }
+            },
+            'max_wallclock_seconds': 3600
         })
     inputs.settings = get_data_node('parameter', dict={'parser_settings': {'add_structure': False, 'should_parse_CONTCAR': False}})
-    inputs.restart = AttributeDict()
-    inputs.restart.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(False)
+    inputs.max_iterations = get_data_node('int', 1)
+    inputs.clean_workdir = get_data_node('bool', False)
 
     # ~ running = run(workchain, **inputs)
     running = work.run(workchain, **inputs)
@@ -102,22 +103,23 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
-    inputs.incar = vasp_params
+    inputs.parameters = vasp_params
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter', dict={
+        'parameter',
+        dict={
             'queue_name': 'None',
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
-            }
+            },
+            'max_wallclock_seconds': 3600
         })
     inputs.settings = get_data_node('parameter', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}})
-    inputs.restart = AttributeDict()
-    inputs.restart.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(False)
+    inputs.max_iterations = get_data_node('int', 1)
+    inputs.clean_workdir = get_data_node('bool', False)
 
     running = work.run(workchain, **inputs)
     assert 'output_chgcar' in running

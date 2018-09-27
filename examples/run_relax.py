@@ -13,38 +13,61 @@ def main(potential_family, queue, code, computer):
     from aiida.orm import WorkflowFactory, Code
     from aiida.work import submit, run
 
+    # fetch the code to be used (tied to a computer)
     code = Code.get_from_string('{}@{}'.format(code, computer))
+
+    # set the WorkChain you would like to call
     workflow = WorkflowFactory('vasp.relax')
 
+    # organize options (needs a bit of special care)
+    options = AttributeDict()
+    if computer == 'unity':
+        options.account = ''
+        options.qos = ''
+        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
+    elif computer == 'fram':
+        options.account = 'nn9544k'
+        options.qos = 'devel'
+        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    options.queue_name = ''
+    options.max_wallclock_seconds = 3600
+
+    # organize settings
+    settings = AttributeDict()
+    parser_settings = {'add_structure': True}
+    settings.parser_settings = parser_settings
+
+    # set inputs for the following WorkChain execution
+
     inputs = AttributeDict()
-    inputs.structure = create_structure_perturbed()
-    inputs.kpoints = set_kpoints()
-    inputs.relax = AttributeDict()
-    inputs.relax.perform = get_data_node('bool', True)
-    inputs.relax.convergence = AttributeDict()
-    inputs.relax.convergence.shape = AttributeDict()
-    inputs.relax.convergence.on = get_data_node('bool', True)
-    inputs.relax.convergence.positions = get_data_node('float', 0.1)
-    inputs.relax.incar = get_data_node('parameter', dict={
-        'nsw': 1, 'ediffg': -0.0001, 'encut': 240, 'ismear': 0,
-        'sigma': 0.1, 'system': 'test-case:test_relax_wf',
-    })  # yapf: disable
-    inputs.restart = AttributeDict()
-    inputs.verify = AttributeDict()
-    inputs.restart.max_iterations = get_data_node('int', 1)
-    inputs.restart.clean_workdir = get_data_node('bool', False)
-    inputs.verify.max_iterations = get_data_node('int', 1)
-    inputs.verify.clean_workdir = get_data_node('bool', False)
+    # set code
     inputs.code = code
+    # relaxation flags
+    # turn relaxation on
+    inputs.perform = get_data_node('bool', True)
+    inputs.convergence_on = get_data_node('bool', True)
+    inputs.convergence_positions = get_data_node('float', 0.1)
+    inputs.relax_parameters = get_data_node('parameter', dict={
+        'ediffg': -0.0001
+    })  # yapf: disable
+    # set structure
+    inputs.structure = create_structure_perturbed()
+    # set parameters
+    inputs.parameters = get_data_node('parameter', dict={
+        'encut': 240, 'ismear': 0,
+        'sigma': 0.1, 'system': 'test system',
+    })  # yapf: disable
+    # set k-point grid density
+    inputs.kpoints = set_kpoints()
+    # set potentials and their mapping
     inputs.potential_family = get_data_node('str', potential_family)
     inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
-    options = AttributeDict()
-    options.queue_name = queue
-    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 4}
+    # set options
     inputs.options = get_data_node('parameter', dict=options)
-
+    # set settings
+    inputs.settings = get_data_node('parameter', dict=settings)
     # submit the requested workchain with the supplied inputs
-    submit(workflow, **inputs)
+    run(workflow, **inputs)
 
 
 if __name__ == '__main__':

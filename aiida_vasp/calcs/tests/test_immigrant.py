@@ -26,6 +26,7 @@ def aiida_runner():
     yield work.runners.new_runner(rmq_config=None)
 
 
+@pytest.mark.xfail(reason="Removing POTCAR from calc.raw_input not implemented yet.")
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
 def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp, aiida_runner):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
@@ -60,5 +61,5 @@ def test_vasp_immigrant(immigrant_with_builder, aiida_runner):
 
     result = aiida_runner.run(immigrant, **inputs)
 
-    expected_output_nodes = {'output_energies', 'output_kpoints', 'output_parameters', 'output_structure', 'remote_folder', 'retrieved'}
+    expected_output_nodes = {'output_parameters', 'remote_folder', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))

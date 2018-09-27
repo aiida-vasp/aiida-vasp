@@ -6,48 +6,46 @@ Indented to be used to verify a calculation, perform corrections in inputs files
 restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
 or not currently checked in it.
 """
+from aiida.plugins.entry_point import load_entry_point_from_string
+from aiida.common.extendeddicts import AttributeDict
 from aiida.work.workchain import WorkChain, while_, append_
-from aiida.orm import WorkflowFactory, Code
-from aiida.orm.data.base import Int, Bool
-from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.workchains import init_input
+from aiida.orm import WorkflowFactory
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.workchains import prepare_process_inputs
 
 
 class VerifyWorkChain(WorkChain):
     """Verify the calculations based on basic principles from physics, chemistry and material science."""
 
-    _verbose = True
-    _next_workchain = WorkflowFactory('vasp.vasp')
+    _verbose = False
+    _next_workchain_string = 'vasp.vasp'
+    _next_workchain = WorkflowFactory(_next_workchain_string)
 
     @classmethod
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
-        spec.input('code', valid_type=Code)
+        spec.expose_inputs(
+            load_entry_point_from_string('aiida.workflows:' + cls._next_workchain_string), exclude=('structure', 'kpoints', 'parameters'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.input('potential_family', valid_type=get_data_class('str'))
-        spec.input('potential_mapping', valid_type=get_data_class('parameter'))
-        spec.input('incar', valid_type=get_data_class('parameter'))
-        spec.input('options', valid_type=get_data_class('parameter'))
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
-        spec.input('restart.max_iterations', valid_type=get_data_class('int'), required=False)
-        spec.input('restart.clean_workdir', valid_type=get_data_class('bool'), required=False)
+        spec.input('parameters', valid_type=get_data_class('parameter'))
         spec.input(
-            'verify.max_iterations',
-            valid_type=Int,
-            default=Int(1),
+            'max_iterations',
+            valid_type=get_data_class('int'),
             required=False,
+            default=get_data_node('int', 5),
             help="""
-            the maximum number of iterations VerifyWorkChain will attempt to get the calculation to finish successfully
-            """)
+                   The maximum number of iterations to perform.
+                   """)
         spec.input(
-            'verify.clean_workdir',
-            valid_type=Bool,
-            default=Bool(False),
+            'clean_workdir',
+            valid_type=get_data_class('bool'),
             required=False,
+            default=get_data_node('bool', True),
             help="""
-            when set to True, the work directories of all called calculation will be cleaned at the end of VerifyWorkChain execution
-            """)
+                   If True, clean the work dir upon the completion of a successfull calculation.
+                   """)
+
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
@@ -90,15 +88,20 @@ class VerifyWorkChain(WorkChain):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
         self.ctx.is_finished = False
         self.ctx.iteration = 0
-        self.ctx.max_iterations = self.inputs.verify.max_iterations.value
+        self.ctx.inputs = AttributeDict()
 
         return
 
     def _init_inputs(self):
         """Initialize inputs."""
-        self.ctx.inputs = init_input(self.inputs, exclude='verify')
-
-        return
+        # Set structure, kpoints and parameters (these will be modified in the future)
+        self.ctx.inputs.structure = self.inputs.structure
+        self.ctx.inputs.kpoints = self.inputs.kpoints
+        self.ctx.inputs.parameters = self.inputs.parameters
+        try:
+            self._verbose = self.inputs.verbose.value
+        except AttributeError:
+            pass
 
     def run_next_workchains(self):
         """
@@ -107,10 +110,11 @@ class VerifyWorkChain(WorkChain):
         This is the case as long as the last calculation has not finished successfully and the maximum number of restarts
         has not yet been exceeded.
         """
-        return not self.ctx.is_finished and self.ctx.iteration <= self.ctx.max_iterations
+        return not self.ctx.is_finished and self.ctx.iteration <= self.inputs.max_iterations.value
 
     def init_next_workchain(self):
         """Initialize the next workchain."""
+
         self.ctx.iteration += 1
 
         try:
@@ -118,8 +122,14 @@ class VerifyWorkChain(WorkChain):
         except AttributeError:
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
+        # Add exposed inputs
+        self.ctx.inputs.update(self.exposed_inputs(load_entry_point_from_string('aiida.workflows:' + self._next_workchain_string)))
+
+        # Make sure we do not have any floating dict (convert to ParameterData)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+
     def run_next_workchain(self):
-        """Run the lower level VASP workchain."""
+        """Run the next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 

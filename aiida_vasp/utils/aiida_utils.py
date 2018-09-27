@@ -109,9 +109,17 @@ def copy_parameter(old_parameter):
 
 def copy_kpoints(old_kpoints, structure):
     """Assemble a new KpointsData."""
-    kpoints = get_data_class('array.kpoints')
-    mesh = old_kpoints.get_kpoints_mesh()
-    return kpoints(kpoints=mesh, cell_from_structure=structure)
+    kpoints = get_data_class('array.kpoints')()
+    kpoints.set_cell_from_structure(structure)
+    if old_kpoints.get_attrs().get('mesh') is not None:
+        mesh, offset = old_kpoints.get_kpoints_mesh()
+        kpoints.set_kpoints_mesh(mesh, offset=offset)
+    elif old_kpoints.get_attrs().get('array|kpoints') is not None:
+        mesh, weights = old_kpoints.get_kpoints(also_weights=True)
+        kpoints.set_kpoints(mesh, weights=weights)
+    else:
+        kpoints = None
+    return kpoints
 
 
 def displaced_structure(structure, displacement, entry):

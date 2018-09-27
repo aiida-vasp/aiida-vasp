@@ -14,7 +14,6 @@ DEFAULT_OPTIONS = {
         'born_charges', 'hessian', 'dynmat', 'final_forces', 'final_stress'
     ],
     'energy_type': ['energy_no_entropy'],
-    #'output_params': ['total_energies', 'maximum_forces', 'maximum_stress']
     'output_params': []
 }
 
@@ -367,8 +366,10 @@ class VasprunParser(BaseFileParser):
         frs = self._xml.get_forces("final")
         if frs is None:
             return None
+        forces = get_data_class('array')()
+        forces.set_array('forces', frs)
 
-        return frs
+        return forces
 
     @property
     def final_forces(self):
@@ -383,12 +384,12 @@ class VasprunParser(BaseFileParser):
         return self.last_forces
 
     @property
-    def maximum_forces(self):
+    def maximum_force(self):
         """Fetch the maximum force of at the last ionic run."""
 
         forces = self.final_forces.get_array('forces')
-
-        return np.amax(np.abs(forces[-1]))
+        norm = np.linalg.norm(forces, axis=1)
+        return np.amax(norm)
 
     @property
     def last_stress(self):
@@ -404,7 +405,7 @@ class VasprunParser(BaseFileParser):
         if strs is None:
             return None
         stress = get_data_class('array')()
-        stress.set_array('forces', strs)
+        stress.set_array('stress', strs)
 
         return stress
 
@@ -425,8 +426,8 @@ class VasprunParser(BaseFileParser):
         """Fetch the maximum stress of at the last ionic run."""
 
         stress = self.final_stress.get_array('stress')
-
-        return np.amax(np.abs(stress[-1]))
+        norm = np.linalg.norm(stress, axis=1)
+        return np.amax(norm)
 
     @property
     def trajectory(self):
@@ -533,7 +534,7 @@ class VasprunParser(BaseFileParser):
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
         energies_dict = {}
         for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
-            energies_dict[etype] = energies.get_array('etype')[-1]
+            energies_dict[etype] = energies.get_array(etype)[-1]
 
         return energies_dict
 

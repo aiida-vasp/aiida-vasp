@@ -41,18 +41,20 @@ def set_structure_InAs():
     """Set up a simple InAs structure."""
 
     structure_cls = get_data_class('structure')
-    structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * 6.058)
-    structure.append_atom(position=(0, 0, 0), symbols='In')
-    structure.append_atom(position=(0.25, 0.25, 0.25), symbols='As')
+    alat = 6.058
+    structure = structure_cls(cell=numpy.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat)
+    structure.append_atom(position=numpy.array([0.0, 0.0, 0.0]) * alat, symbols='In')
+    structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='As')
     return structure
 
 
-def set_structure_Si():
+def set_structure_si():
     """Set up a simple Si structure."""
 
     structure_cls = get_data_class('structure')
     alat = 5.4
     structure = structure_cls(cell=numpy.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat)
+    structure.append_atom(position=numpy.array([0.0, 0.0, 0.0]) * alat, symbols='Si')
     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
     return structure
 

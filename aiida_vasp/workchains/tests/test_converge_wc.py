@@ -38,9 +38,9 @@ def test_converge_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     create_authinfo(computer=comp).store()
 
     structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
-    incar = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
-    incar = {k: v for k, v in incar.items() if k not in ['isif', 'ibrion']}
-    incar['system'] = 'test-case:test_relax_wc'
+    parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
+    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion']}
+    parameters['system'] = 'test-case:test_relax_wc'
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -48,32 +48,27 @@ def test_converge_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
-    if 'encut' in incar:
-        del incar['encut']
-    inputs.incar = get_data_node('parameter', dict=incar)
+    if 'encut' in parameters:
+        del parameters['encut']
+    if 'nsw' in parameters:
+        del parameters['nsw']
+    inputs.parameters = get_data_node('parameter', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter', dict={
+        'parameter',
+        dict={
             'queue_name': 'None',
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
-            }
+            },
+            'max_wallclock_seconds': 3600
         })
-    inputs.restart = AttributeDict()
-    inputs.verify = AttributeDict()
-    inputs.restart.max_iterations = get_data_node('int', 1)
-    inputs.restart.clean_workdir = restart_clean_workdir
-    inputs.verify.max_iterations = get_data_node('int', 1)
-    inputs.verify.clean_workdir = restart_clean_workdir
-    inputs.relax = AttributeDict()
-    inputs.relax.incar = get_data_node('parameter', dict=incar)
-    inputs.relax.perform = get_data_node('bool', True)
-    inputs.relax.convergence = AttributeDict()
-    inputs.relax.convergence.shape = AttributeDict()
-    inputs.relax.convergence.on = get_data_node('bool', True)
-    inputs.relax.convergence.positions = get_data_node('float', 0.1)
+    inputs.max_iterations = get_data_node('int', 1)
+    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.relax = get_data_node('bool', True)
+    inputs.verbose = get_data_node('bool', True)
 
     results = work.run(workchain, **inputs)
     assert 'output_convergence_data' in results
@@ -87,19 +82,3 @@ def test_converge_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         conv_data.get_array('kpoints_regular')
     except KeyError:
         pytest.fail('Did not find kpoints_regular in output_convergence_data')
-    try:
-        conv_data.get_array('pw_displacement')
-    except KeyError:
-        pytest.fail('Did not find pw_displacement in output_convergence_data')
-    try:
-        conv_data.get_array('kpoints_displacement')
-    except KeyError:
-        pytest.fail('Did not find kpoints_displacement in output_convergence_data')
-    try:
-        conv_data.get_array('pw_compression')
-    except KeyError:
-        pytest.fail('Did not find pw_compression in output_convergence_data')
-    try:
-        conv_data.get_array('kpoints_compression')
-    except KeyError:
-        pytest.fail('Did not find kpoints_compression in output_convergence_data')

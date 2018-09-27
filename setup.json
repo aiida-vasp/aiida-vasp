@@ -32,16 +32,16 @@
             "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
         ], 
         "aiida.workflows": [
-            "vasp.vasp = aiida_vasp.calcs.workchains.vasp:VaspWorkChain", 
-            "vasp.verify = aiida_vasp.calcs.workchains.verify:VerifyWorkChain", 
-            "vasp.converge = aiida_vasp.calcs.workchains.converge:ConvergeWorkChain", 
-            "vasp.relax = aiida_vasp.calcs.workchains.relax:RelaxWorkChain", 
-            "vasp.legacy.scf = aiida_vasp.calcs.workflows.scf:ScfWorkflow", 
-            "vasp.legacy.nscf = aiida_vasp.calcs.workflows.nscf:NscfWorkflow", 
-            "vasp.legacy.projections = aiida_vasp.calcs.workflows.projections:ProjectionsWorkflow", 
-            "vasp.legacy.autowindows = aiida_vasp.calcs.workflows.autowindows:AutowindowsWorkflow", 
-            "vasp.legacy.wannier = aiida_vasp.calcs.workflows.wannier:WannierWorkflow", 
-            "vasp.legacy.windows = aiida_vasp.calcs.workflows.windows:WindowsWorkflow"
+            "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain", 
+            "vasp.verify = aiida_vasp.workchains.verify:VerifyWorkChain", 
+            "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain", 
+            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain", 
+            "vasp.legacy.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
+            "vasp.legacy.nscf = aiida_vasp.workflows.nscf:NscfWorkflow", 
+            "vasp.legacy.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow", 
+            "vasp.legacy.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow", 
+            "vasp.legacy.wannier = aiida_vasp.workflows.wannier:WannierWorkflow", 
+            "vasp.legacy.windows = aiida_vasp.workflows.windows:WindowsWorkflow"
         ], 
         "console_scripts": [
             "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"

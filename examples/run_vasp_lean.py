@@ -3,7 +3,7 @@ import os
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded, get_data_node
-from auxiliary import example_param_set, set_structure_Si, set_kpoints, set_params_simple, set_params_simple_no_encut
+from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
 
 os.system('verdi daemon restart')
 
@@ -22,40 +22,42 @@ def main(potential_family, queue, code, computer):
     # set the workchain you would like to call
     workchain = WorkflowFactory('vasp.verify')
 
-    # set inputs
-    inputs = AttributeDict()
-    inputs.restart = AttributeDict()
-    inputs.verify = AttributeDict()
-    inputs.structure = set_structure_Si()
-    inputs.kpoints = set_kpoints()
-    #inputs.incar = set_params_simple_no_encut()
-    inputs.incar = set_params_simple()
-    inputs.code = code
-    inputs.potential_family = get_data_class('str')(potential_family)
-    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
-    inputs.restart.max_iterations = get_data_class('int')(1)
-    inputs.verify.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(True)
-    inputs.verify.clean_workdir = get_data_class('bool')(False)
-
-    # set options
+    # organize options (needs a bit of special care)
     options = AttributeDict()
-    settings = AttributeDict()
-    converge_settings = {'compress': False, 'displace': False}
-    settings['converge'] = converge_settings
     if computer == 'unity':
         options.account = ''
-        options.queue_name = ''
         options.qos = ''
         options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     elif computer == 'fram':
         options.account = 'nn9544k'
-        options.queue_name = ''
         options.qos = 'devel'
         options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
-    inputs.options = get_data_node('parameter', dict=options)
-    inputs.settings = get_data_node('parameter', dict=settings)
+    options.queue_name = ''
+    options.max_wallclock_seconds = 3600
 
+    # organize selfettings
+    settings = AttributeDict()
+    parser_settings = {'output_params': ['total_energies', 'maximum_force']}
+    settings.parser_settings = parser_settings
+
+    # set inputs for the following WorkChain execution
+
+    inputs = AttributeDict()
+    # set code
+    inputs.code = code
+    # set structure
+    inputs.structure = set_structure_si()
+    # set k-points grid density
+    inputs.kpoints = set_kpoints()
+    # set parameters
+    inputs.parameters = set_params_simple()
+    # set potentials and their mapping
+    inputs.potential_family = get_data_class('str')(potential_family)
+    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
+    # set options
+    inputs.options = get_data_node('parameter', dict=options)
+    # set settings
+    inputs.settings = get_data_node('parameter', dict=settings)
     # submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 

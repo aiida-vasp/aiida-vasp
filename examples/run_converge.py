@@ -3,7 +3,7 @@ import os
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded, get_data_node
-from auxiliary import example_param_set, set_structure_Si, set_kpoints, set_params_simple, set_params_simple_no_encut
+from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
 
 os.system('verdi daemon restart')
 
@@ -16,49 +16,56 @@ def main(potential_family, queue, code, computer):
     from aiida.work import submit, run
     from aiida_vasp.utils.aiida_utils import get_data_class
 
-    # set the code to be used, currently tied to a computer
+    # fetch the code to be used (tied to a computer)
     code = Code.get_from_string('{}@{}'.format(code, computer))
 
-    # set the workchain you would like to call
+    # set the WorkChain you would like to call
     workchain = WorkflowFactory('vasp.converge')
 
-    # set inputs
-    inputs = AttributeDict()
-    inputs.restart = AttributeDict()
-    inputs.verify = AttributeDict()
-    inputs.structure = set_structure_Si()
-    #inputs.kpoints = set_kpoints()
-    inputs.incar = set_params_simple_no_encut()
-    #inputs.incar = set_params_simple()
-    inputs.code = code
-    inputs.potential_family = get_data_class('str')(potential_family)
-    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
-    inputs.restart.max_iterations = get_data_class('int')(1)
-    inputs.verify.max_iterations = get_data_class('int')(1)
-    inputs.restart.clean_workdir = get_data_class('bool')(True)
-    inputs.verify.clean_workdir = get_data_class('bool')(False)
-    #inputs.max_iterations = get_data_class('int')(1)
-
-    # set options
+    # organize options (needs a bit of special care)
     options = AttributeDict()
-    settings = AttributeDict()
-    converge_settings = {'compress': False, 'displace': False}
-    settings['converge'] = converge_settings
     if computer == 'unity':
         options.account = ''
-        options.queue_name = ''
         options.qos = ''
         options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     elif computer == 'fram':
         options.account = 'nn9544k'
-        options.queue_name = ''
         options.qos = 'devel'
         options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
-    inputs.options = get_data_node('parameter', dict=options)
-    inputs.settings = get_data_node('parameter', dict=settings)
+    options.queue_name = ''
+    options.max_wallclock_seconds = 3600
 
+    # organize settings
+    settings = AttributeDict()
+    parser_settings = {'add_bands': True, 'output_params': ['total_energies', 'maximum_force']}
+    settings.parser_settings = parser_settings
+
+    # set inputs for the following WorkChain execution
+
+    inputs = AttributeDict()
+    # set code
+    inputs.code = code
+    # set structure
+    inputs.structure = set_structure_si()
+    # set k-points grid density (do not supply if you want to perform convergence tests on this)
+    inputs.kpoints = set_kpoints()
+    # set parameters (do not supply plane wave cutoff if you want to perform convergence
+    # tests on this)
+    inputs.parameters = set_params_simple_no_encut()
+    #inputs.parameters = set_params_simple()
+    # set potentials and their mapping
+    inputs.potential_family = get_data_class('str')(potential_family)
+    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
+    # set options
+    inputs.options = get_data_node('parameter', dict=options)
+    # set settings
+    inputs.settings = get_data_node('parameter', dict=settings)
+    # set workchain related inputs
+    inputs.relax = get_data_node('bool', True)
+    inputs.encut_samples = get_data_node('int', 3)
+    inputs.k_samples = get_data_node('int', 3)
     # submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    run(workchain, **inputs)
 
 
 if __name__ == '__main__':

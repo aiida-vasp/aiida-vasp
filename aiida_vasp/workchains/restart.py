@@ -7,7 +7,6 @@ from aiida.common.datastructures import calc_states
 from aiida.common.exceptions import AiidaException
 from aiida.common.links import LinkType
 from aiida.orm.calculation import JobCalculation
-from aiida.orm.data.base import Bool, Int
 from aiida.work.workchain import WorkChain, append_
 from aiida_vasp.utils.workchains import prepare_process_inputs, finished_ok_compat
 
@@ -95,22 +94,6 @@ class BaseRestartWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BaseRestartWorkChain, cls).define(spec)
-        spec.input(
-            'restart.max_iterations',
-            valid_type=Int,
-            default=Int(5),
-            required=False,
-            help="""
-            the maximum number of iterations the BaseRestartWorkChain will attempt to get the calculation to finish successfully
-            """)
-        spec.input(
-            'restart.clean_workdir',
-            valid_type=Bool,
-            default=Bool(False),
-            required=False,
-            help="""
-            when set to True, the work directories of all called calculation will be cleaned at the end of BaseRestartWorkChain execution
-            """)
 
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
@@ -119,7 +102,6 @@ class BaseRestartWorkChain(WorkChain):
         self.ctx.restart_calc = None
         self.ctx.is_finished = False
         self.ctx.iteration = 0
-        self.ctx.max_iterations = self.inputs.restart.max_iterations.value
 
         return
 
@@ -130,7 +112,7 @@ class BaseRestartWorkChain(WorkChain):
         This is the case as long as the last calculation has not finished successfully and the maximum number of restarts
         has not yet been exceeded.
         """
-        return not self.ctx.is_finished and self.ctx.iteration < self.ctx.max_iterations
+        return not self.ctx.is_finished and self.ctx.iteration < self.inputs.max_iterations
 
     def run_calculation(self):
         """Run a new calculation, taking the input dictionary from the context at self.ctx.inputs."""
@@ -180,7 +162,7 @@ class BaseRestartWorkChain(WorkChain):
             self._handle_succesfull(calculation)
 
         # Abort: exceeded maximum number of retries
-        elif self.ctx.iteration > self.ctx.max_iterations:
+        elif self.ctx.iteration > self.inputs.max_iterations:
             self._handle_max_iterations(calculation)
 
         # Abort: unexpected state of last calculation
@@ -227,7 +209,7 @@ class BaseRestartWorkChain(WorkChain):
         else:
             super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
         # Do not clean if we do not want to or the calculation failed
-        if self.exit_status or self.inputs.restart.clean_workdir.value is False:
+        if self.exit_status or self.inputs.clean_workdir.value is False:
             return
 
         cleaned_calcs = []
@@ -255,7 +237,7 @@ class BaseRestartWorkChain(WorkChain):
         self.exit_status = 1
         self._fail_compat(
             exception=MaxIterationsFailure('reached the maximumm number of iterations '
-                                           '{}: last ran {}<{}>'.format(self.ctx.max_iterations, self._calculation.__name__, calculation.
+                                           '{}: last ran {}<{}>'.format(self.inputs.max_iterations, self._calculation.__name__, calculation.
                                                                         pk)))
 
         return

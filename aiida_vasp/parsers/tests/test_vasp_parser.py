@@ -199,7 +199,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
         from aiida.orm import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True, 'output_params': ['fermi_level']}}
+        settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'output_params': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = VaspParser(calc=calc)
