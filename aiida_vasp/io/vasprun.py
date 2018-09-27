@@ -389,7 +389,7 @@ class VasprunParser(BaseFileParser):
 
         forces = self.final_forces.get_array('forces')
         norm = np.linalg.norm(forces, axis=1)
-        return np.amax(norm)
+        return np.amax(np.abs(norm))
 
     @property
     def last_stress(self):
@@ -427,7 +427,7 @@ class VasprunParser(BaseFileParser):
 
         stress = self.final_stress.get_array('stress')
         norm = np.linalg.norm(stress, axis=1)
-        return np.amax(norm)
+        return np.amax(np.abs(norm))
 
     @property
     def trajectory(self):
