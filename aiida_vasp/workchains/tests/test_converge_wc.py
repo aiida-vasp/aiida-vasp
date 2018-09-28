@@ -20,9 +20,8 @@ from aiida_vasp.io.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
-@pytest.mark.wc
-@pytest.mark.xfail(reason="Travis does not do runs over 10 min!")
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
+@pytest.mark.skip(reason="Travis does not do runs over 10 min!")
+#@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_converge_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import WorkflowFactory, Code
