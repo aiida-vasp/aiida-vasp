@@ -28,14 +28,22 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
-    from aiida.orm import WorkflowFactory, Code
+    from aiida.orm import Code
+    from aiida_vasp.workflows.relax import VaspRelaxWf
+    from aiida_vasp.workflows.base import VaspBaseWf
     from aiida import work
+
+    class MockBaseWorkChain(VaspBaseWf):
+        pass
+
+    class MockRelaxWorkChain(VaspRelaxWf):
+        _base_workchain = MockBaseWorkChain
 
     rmq_config = None
     runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
     work.set_runner(runner)
 
-    base_wf_proc = WorkflowFactory('vasp.relax')
+    base_wf_proc = MockRelaxWorkChain
 
     mock_vasp.store()
     print(mock_vasp.get_remote_exec_path())
