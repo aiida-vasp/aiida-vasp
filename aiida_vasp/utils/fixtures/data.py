@@ -128,11 +128,6 @@ def potcar_family(aiida_env, temp_pot_folder):
 
 
 @pytest.fixture
-def potential_family(aiida_env, temp_pot_folder):
-    potcar_family(aiida_env, temp_pot_folder)
-
-
-@pytest.fixture
 def potentials(potcar_family):
     """Fixture for two incomplete POTPAW potentials"""
     potcar_cls = get_data_class('vasp.potcar')
