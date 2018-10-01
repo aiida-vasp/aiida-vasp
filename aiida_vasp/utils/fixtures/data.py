@@ -1,6 +1,6 @@
 """pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name,
-# pylint: disable=too-many-function-args, protected-access, abstract-class-instantiated, no-value-for-parameter, unexpected-keyword-arg
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
+# pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg
 import os
 from collections import OrderedDict
 import subprocess as sp
@@ -29,12 +29,12 @@ def localhost_dir(tmpdir_factory):
 @pytest.fixture
 def localhost(aiida_env, localhost_dir):
     """Fixture for a local computer called localhost"""
-
     # Check whether Aiida uses the new backend interface to create collections.
     if hasattr(aiida_env, '_backend'):
+        from aiida.common import exceptions
         try:
             computer = aiida_env._backend.computers.get(name='localhost')
-        except NotExistent:
+        except exceptions.NotExistent:
             computer = aiida_env._backend.computers.create(
                 name='localhost',
                 description='description',
@@ -87,7 +87,7 @@ def temp_pot_folder(tmpdir):
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     assert not potcar_ga.exists()
     pot_archive = py_path.local(data_path('potcar'))
-    target = tmpdir.join('potcar')
+    target = tmpdir.join('potentials')
     pot_archive.copy(target)
     return target
 

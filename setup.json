@@ -75,7 +75,7 @@
         "aiida-core[atomic_tools] >= 0.11.0", 
         "ase", 
         "scipy", 
-        "pymatgen", 
+        "pymatgen == 2018.4.20", 
         "subprocess32", 
         "click", 
         "chainmap", 
