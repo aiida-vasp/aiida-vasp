@@ -331,6 +331,7 @@ class VaspCalcBase(JobCalculation):
         proc_cls = imgr.VaspImmigrantJobProcess.build(cls)
         builder = proc_cls.get_builder()
         builder.code = code
+        builder.options.max_wallclock_seconds = 1  # pylint: disable=no-member
         builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': remote_path.strpath})

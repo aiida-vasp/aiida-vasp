@@ -10,6 +10,38 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.parsers.node_composer import NodeComposer
 
 
+def test_parse_vasprun(vasprun_parser):
+    """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
+
+    quantity = vasprun_parser.get_quantity('occupations')
+    data_obj = quantity['occupations']
+    occ = data_obj.get('total')
+    occupations = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
+    assert occ.all() == occupations.all()
+    # eFL: How do we want to store scalar values?
+    #assert  == 7.29482275
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_parameter_results(vasprun_parser):
+    """
+    Test that the parameter node is a ParametersData instance.
+
+    Should contain the Fermi level.
+
+    """
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('parameter', quantities=['fermi_level', 'total_energies', 'maximum_force', 'maximum_stress'])
+    
+    ref_class = get_data_class('parameter')
+    assert isinstance(data_obj, ref_class)
+    data_dict = data_obj.get_dict()
+    assert data_dict['fermi_level'] == 5.96764939
+    assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
+    assert data_dict['maximum_stress'] == 28.803993008871014
+    assert data_dict['maximum_force'] == 3.41460162
+
+
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_kpoints_result(vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
