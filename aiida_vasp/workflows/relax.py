@@ -43,6 +43,8 @@ def compare_structures(structure_a, structure_b):
 class VaspRelaxWf(WorkChain):
     """Structure relaxation workchain for VASP."""
 
+    _base_workchain = VaspBaseWf
+
     class IbrionEnum(enum.IntEnum):
         """Encode IBRION values descriptively in enum."""
         NO_UPDATE = -1
@@ -71,7 +73,7 @@ class VaspRelaxWf(WorkChain):
     @classmethod
     def define(cls, spec):
         super(VaspRelaxWf, cls).define(spec)
-        spec.expose_inputs(VaspBaseWf, include=['code', 'structure', 'potcar_family', 'potcar_mapping', 'options'])
+        spec.expose_inputs(cls._base_workchain, include=['code', 'structure', 'potcar_family', 'potcar_mapping', 'options'])
         spec.input('kpoints.mesh', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input('kpoints.distance', valid_type=get_data_class('float'), required=False)
         spec.input('incar_add', valid_type=get_data_class('parameter'), required=False)
@@ -93,8 +95,8 @@ class VaspRelaxWf(WorkChain):
         spec.input(
             'convergence.positions', valid_type=get_data_class('float'), required=False,
             default=get_data_node('float', 0.01))  # in degree in the cartesian system
-        spec.expose_inputs(VaspBaseWf, namespace='restart', include=['max_iterations'])
-        spec.expose_inputs(VaspBaseWf, namespace='restart', include=['clean_workdir'])
+        spec.expose_inputs(cls._base_workchain, namespace='restart', include=['max_iterations'])
+        spec.expose_inputs(cls._base_workchain, namespace='restart', include=['clean_workdir'])
 
         spec.outline(
             cls.setup,
@@ -191,7 +193,7 @@ class VaspRelaxWf(WorkChain):
         """Run the BaseVaspWf for the relaxation."""
         self.ctx.inputs.structure = self.ctx.current_structure
         inputs = prepare_process_inputs(self.ctx.inputs)
-        running = self.submit(VaspBaseWf, **inputs)
+        running = self.submit(self._base_workchain, **inputs)
         self.ctx.iteration += 1
 
         self.report('launching VaspBaseWf{}'.format(running))

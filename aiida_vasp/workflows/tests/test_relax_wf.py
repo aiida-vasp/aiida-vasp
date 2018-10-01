@@ -6,10 +6,6 @@ and `run` just seems to get stuck after a while.
 """
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name
 from __future__ import print_function
-import time
-import os
-import uuid
-import subprocess as sp
 
 import pytest
 from aiida.common.extendeddicts import AttributeDict
@@ -26,16 +22,16 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.mark.wf
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
-def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
+def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wf):
     """Test submitting only, not correctness, with mocked vasp code."""
-    from aiida.orm import WorkflowFactory, Code
+    from aiida.orm import Code
     from aiida import work
 
     rmq_config = None
     runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
     work.set_runner(runner)
 
-    base_wf_proc = WorkflowFactory('vasp.relax')
+    base_wf_proc = mock_relax_wf
 
     mock_vasp.store()
     print(mock_vasp.get_remote_exec_path())
@@ -60,8 +56,11 @@ def test_relax_wf(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.potcar_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potcar_mapping = get_data_node('parameter', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter', dict={
+        'parameter',
+        dict={
             'queue_name': 'None',
+            'max_wallclock_seconds': 1,
+            'import_sys_environment': True,
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
