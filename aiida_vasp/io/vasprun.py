@@ -10,8 +10,20 @@ from aiida_vasp.io.parser import BaseFileParser, SingleFile
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
-        'structure', 'eigenvalues', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics', 'born_charges',
-        'hessian', 'dynmat', 'final_forces', 'final_stress',
+        'structure',
+        'eigenvalues',
+        'dos',
+        'kpoints',
+        'occupations',
+        'trajectory',
+        'energies',
+        'projectors',
+        'dielectrics',
+        'born_charges',
+        'hessian',
+        'dynmat',
+        'final_forces',
+        'final_stress',
     ],
     'energy_type': ['energy_no_entropy'],
     'output_params': []
@@ -71,49 +83,52 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'nodeName': 'dielectrics',
             'prerequisites': [],
-            #'alternatives': ['outcar-dielectrics']
         },
         'final_stress': {
             'inputs': [],
             'name': 'final_stress',
             'prerequisites': [],
-            #'alternatives': ['outcar-final_stress']
         },
         'final_forces': {
             'inputs': [],
             'name': 'final_forces',
             'prerequisites': [],
-            #'alternatives': ['outcar-final_stress']
         },
         'final_structure': {
             'inputs': [],
             'name': 'final_structure',
             'prerequisites': [],
-            #'alternatives': ['outcar-final_structure']
         },
         'born_charges': {
             'inputs': [],
             'name': 'born_charges',
             'prerequisites': [],
-            #'alternatives': ['outcar-born_charges']
         },
         'hessian': {
             'inputs': [],
             'name': 'hessian',
             'prerequisites': [],
-            #'alternatives': ['outcar-hessian']
         },
         'dynmat': {
             'inputs': [],
             'name': 'dynmat',
             'prerequisites': [],
-            #'alternatives': ['outcar-dynmat']
         },
         'fermi_level': {
             'inputs': [],
             'name': 'fermi_level',
             'prerequisites': [],
             'alternatives': ['outcar-efermi']
+        },
+        'maximum_force': {
+            'inputs': [],
+            'name': 'maximum_force',
+            'prerequisites': [],
+        },
+        'maximum_stress': {
+            'inputs': [],
+            'name': 'maximum_stress',
+            'prerequisites': [],
         },
     }
 
@@ -217,33 +232,6 @@ class VasprunParser(BaseFileParser):
 
         return occ
 
- 
-    @property
-    def occupations(self):
-        """Fetch occupations from parsevasp."""
-
-        # fetch occupations
-        occupations = self._xml.get_occupancies()
-
-        if occupations is None:
-            # occupations not present, should not really happen?
-            return None
-
-        occ = []
-        occ.append(occupations.get("total"))
-
-        if occ[0] is None:
-            # spin decomposed
-            occ[0] = occupations.get("up")
-            occ.append(occupations.get("down"))
-
-        if occ[0] is None:
-            # should not really happen
-            return None
-
-        return occ
-
-
     @property
     def kpoints(self):
         """Fetch the kpoints from parsevasp an store in KpointsData."""
@@ -319,10 +307,8 @@ class VasprunParser(BaseFileParser):
         frs = self._xml.get_forces("final")
         if frs is None:
             return None
-        forces = get_data_class('array')()
-        forces.set_array('forces', frs)
 
-        return forces
+        return frs
 
     @property
     def final_forces(self):
@@ -340,7 +326,7 @@ class VasprunParser(BaseFileParser):
     def maximum_force(self):
         """Fetch the maximum force of at the last ionic run."""
 
-        forces = self.final_forces.get_array('forces')
+        forces = self.final_forces
         norm = np.linalg.norm(forces, axis=1)
 
         return np.amax(np.abs(norm))
@@ -360,7 +346,7 @@ class VasprunParser(BaseFileParser):
             return None
 
         stress = dict()
-        stress['forces'] = strs
+        stress['stress'] = strs
 
         return stress
 
@@ -380,7 +366,7 @@ class VasprunParser(BaseFileParser):
     def maximum_stress(self):
         """Fetch the maximum stress of at the last ionic run."""
 
-        stress = self.final_stress.get_array('stress')
+        stress = self.final_stress.get('stress')
         norm = np.linalg.norm(stress, axis=1)
 
         return np.amax(np.abs(norm))
@@ -428,7 +414,6 @@ class VasprunParser(BaseFileParser):
 
         return None
 
-
     @property
     def energies_sc(self):
         """
@@ -443,19 +428,6 @@ class VasprunParser(BaseFileParser):
         # lists of ndarrays.
         raise NotImplementedError
         #return self.energies(nosc = False)
-
-    @property
-    def total_energies(self):
-        """Fetch the total energies after the last ionic run."""
-
-        energies = self.energies
-        # fetch the type of energies that the user wants to extract
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
-        energies_dict = {}
-        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
-            energies_dict[etype] = energies.get_array(etype)[-1]
-
-        return energies_dict
 
     @property
     def energies(self, nosc=True):

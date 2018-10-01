@@ -14,8 +14,7 @@ def test_parse_vasprun(vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
     quantity = vasprun_parser.get_quantity('occupations')
-    data_obj = quantity['occupations']
-    occ = data_obj.get('total')
+    occ = quantity['occupations'][0]
     occupations = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
     assert occ.all() == occupations.all()
     # eFL: How do we want to store scalar values?
@@ -30,14 +29,23 @@ def test_parameter_results(vasprun_parser):
     Should contain the Fermi level.
 
     """
+
+    vasprun_parser.settings.nodes.update({
+        'parameters': {
+            'type': 'parameter',
+            'quantities': ['fermi_level', 'energies', 'maximum_force', 'maximum_stress'],
+            'link_name': 'my_custom_node'
+        }
+    })
+
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('parameter', quantities=['fermi_level', 'total_energies', 'maximum_force', 'maximum_stress'])
-    
+    data_obj = composer.compose('parameter', quantities=['fermi_level', 'energies', 'maximum_force', 'maximum_stress'])
+
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
-    assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
+    assert data_dict['energies']['energy_no_entropy'][0] == -42.91113621
     assert data_dict['maximum_stress'] == 28.803993008871014
     assert data_dict['maximum_force'] == 3.41460162
 
