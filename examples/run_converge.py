@@ -24,20 +24,16 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    if computer == 'unity':
-        options.account = ''
-        options.qos = ''
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
-    elif computer == 'fram':
-        options.account = 'nn9544k'
-        options.qos = 'devel'
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    options.account = ''
+    options.qos = ''
+    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
     # organize settings
     settings = AttributeDict()
-    parser_settings = {'add_bands': True, 'output_params': ['total_energies', 'maximum_force']}
+    # the workchains should configure the required parser settings on the fly
+    parser_settings = {}
     settings.parser_settings = parser_settings
 
     # set inputs for the following WorkChain execution
@@ -48,11 +44,11 @@ def main(potential_family, queue, code, computer):
     # set structure
     inputs.structure = set_structure_si()
     # set k-points grid density (do not supply if you want to perform convergence tests on this)
-    inputs.kpoints = set_kpoints()
+    #inputs.kpoints = set_kpoints()
     # set parameters (do not supply plane wave cutoff if you want to perform convergence
     # tests on this)
-    inputs.parameters = set_params_simple_no_encut()
-    #inputs.parameters = set_params_simple()
+    #inputs.parameters = set_params_simple_no_encut()
+    inputs.parameters = set_params_simple()
     # set potentials and their mapping
     inputs.potential_family = get_data_class('str')(potential_family)
     inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
@@ -61,10 +57,13 @@ def main(potential_family, queue, code, computer):
     # set settings
     inputs.settings = get_data_node('parameter', dict=settings)
     # set workchain related inputs
-    inputs.relax = get_data_node('bool', True)
+    inputs.relax = get_data_node('bool', False)
+    inputs.converge_relax = get_data_node('bool', False)
     inputs.encut_samples = get_data_node('int', 3)
     inputs.k_samples = get_data_node('int', 3)
     inputs.verbose = get_data_node('bool', True)
+    inputs.compress = get_data_node('bool', False)
+    inputs.displace = get_data_node('bool', False)
     # submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 

@@ -24,14 +24,9 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    if computer == 'unity':
-        options.account = ''
-        options.qos = ''
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
-    elif computer == 'fram':
-        options.account = 'nn9544k'
-        options.qos = 'devel'
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    options.account = ''
+    options.qos = ''
+    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
@@ -61,7 +56,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    run(workchain, **inputs)
 
 
 if __name__ == '__main__':

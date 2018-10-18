@@ -112,7 +112,7 @@ class BaseRestartWorkChain(WorkChain):
         This is the case as long as the last calculation has not finished successfully and the maximum number of restarts
         has not yet been exceeded.
         """
-        return not self.ctx.is_finished and self.ctx.iteration < self.inputs.max_iterations
+        return not self.ctx.is_finished and self.ctx.iteration < self.inputs.max_iterations.value
 
     def run_calculation(self):
         """Run a new calculation, taking the input dictionary from the context at self.ctx.inputs."""
@@ -162,7 +162,7 @@ class BaseRestartWorkChain(WorkChain):
             self._handle_succesfull(calculation)
 
         # Abort: exceeded maximum number of retries
-        elif self.ctx.iteration > self.inputs.max_iterations:
+        elif self.ctx.iteration > self.inputs.max_iterations.value:
             self._handle_max_iterations(calculation)
 
         # Abort: unexpected state of last calculation
@@ -237,8 +237,8 @@ class BaseRestartWorkChain(WorkChain):
         self.exit_status = 1
         self._fail_compat(
             exception=MaxIterationsFailure('reached the maximumm number of iterations '
-                                           '{}: last ran {}<{}>'.format(self.inputs.max_iterations, self._calculation.__name__, calculation.
-                                                                        pk)))
+                                           '{}: last ran {}<{}>'.format(self.inputs.max_iterations.value, self._calculation.__name__,
+                                                                        calculation.pk)))
 
         return
 

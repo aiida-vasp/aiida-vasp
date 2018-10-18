@@ -49,6 +49,7 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     inputs.options = get_data_node(
         'parameter',
         dict={
+            'withmpi': False,
             'queue_name': 'None',
             'resources': {
                 'num_machines': 1,
@@ -74,7 +75,7 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     # ~ assert running.is_finished_ok
 
 
-@pytest.mark.wf
+@pytest.mark.wc
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
@@ -108,6 +109,7 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs.options = get_data_node(
         'parameter',
         dict={
+            'withmpi': False,
             'queue_name': 'None',
             'resources': {
                 'num_machines': 1,

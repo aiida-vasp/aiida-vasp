@@ -21,20 +21,16 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    if computer == 'unity':
-        options.account = ''
-        options.qos = ''
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
-    elif computer == 'fram':
-        options.account = 'nn9544k'
-        options.qos = 'devel'
-        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    options.account = ''
+    options.qos = ''
+    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
     # organize settings
     settings = AttributeDict()
-    parser_settings = {'add_structure': True}
+    # the workchains should configure the required parser settings on the fly
+    parser_settings = {}
     settings.parser_settings = parser_settings
 
     # set inputs for the following WorkChain execution

@@ -11,7 +11,7 @@ import pytest
 
 @pytest.fixture
 def mock_base_wc():
-    """Fixture for a mock-up of the VaspBaseWf."""
+    """Fixture for a mock-up of the VaspWorkChain."""
     from aiida.orm import WorkflowFactory
     _base_wc_cls = WorkflowFactory('vasp.vasp')
 
@@ -23,7 +23,7 @@ def mock_base_wc():
 
 @pytest.fixture
 def mock_relax_wc(mock_base_wc):
-    """Fixture for a VaspRelaxWf using a mock-up for the lower level BaseWf."""
+    """Fixture for a RelaxWorkChain using a mock-up for the lower level VaspWorkChain."""
     from aiida.orm import WorkflowFactory
     _base_wc_cls = WorkflowFactory('vasp.relax')
 

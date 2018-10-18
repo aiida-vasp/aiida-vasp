@@ -111,8 +111,9 @@ def displace_position(structure, displacement, entry):
     positions = []
     for site in sites:
         positions.append(site.position)
-    position = positions[entry]
-    position = position + displacement
+    new_position = np.asarray(positions[entry - 1]) + displacement
+    new_position = new_position.tolist()
+    positions[entry - 1] = tuple(new_position)
     structure.reset_sites_positions(positions)
 
 

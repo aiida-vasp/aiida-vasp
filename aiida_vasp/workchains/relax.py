@@ -55,7 +55,7 @@ class RelaxWorkChain(WorkChain):
         spec.input('relax_parameters', valid_type=get_data_class('parameter'), required=False)
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
         spec.input(
-            'perform',
+            'relax',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -179,7 +179,7 @@ class RelaxWorkChain(WorkChain):
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_structure', valid_type=get_data_class('structure'))
+        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
@@ -269,17 +269,17 @@ class RelaxWorkChain(WorkChain):
         """Initialize the settings."""
         # Make sure we parse the output structure when we want to perform
         # relaxations (override if contrary entry exists).
+        if 'settings' in self.inputs:
+            settings = AttributeDict(self.inputs.settings.get_dict())
+        else:
+            settings = AttributeDict({'parser_settings': {}})
         if self.perform_relaxation():
             dict_entry = {'add_structure': True}
-            if 'settings' in self.inputs:
-                settings = AttributeDict(self.inputs.settings.get_dict())
-                try:
-                    settings.parser_settings.update(dict_entry)
-                except AttributeError:
-                    settings.parser_settings = dict_entry
-            else:
-                settings = AttributeDict({'parser_settings': dict_entry})
-            self.ctx.inputs.settings = settings
+            try:
+                settings.parser_settings.update(dict_entry)
+            except AttributeError:
+                settings.parser_settings = dict_entry
+        self.ctx.inputs.settings = settings
 
         return
 
@@ -487,7 +487,7 @@ class RelaxWorkChain(WorkChain):
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""
-        return self.inputs.perform.value
+        return self.inputs.relax.value
 
 
 def check_parameters_relax_entries(parameters):

@@ -21,17 +21,18 @@ from aiida_vasp.io.incar import IncarParser
 
 @pytest.mark.wc
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
-def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
+def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
+    #def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
-    from aiida.orm import Code
+    from aiida.orm import WorkflowFactory, Code
     from aiida import work
 
     rmq_config = None
     runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
     work.set_runner(runner)
 
-    #workchain = WorkflowFactory('vasp.relax')
-    workchain = mock_relax_wc
+    workchain = WorkflowFactory('vasp.relax')
+    #workchain = mock_relax_wc
 
     mock_vasp.store()
     comp = mock_vasp.get_computer()
@@ -52,6 +53,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_rela
     inputs.options = get_data_node(
         'parameter',
         dict={
+            'withmpi': False,
             'queue_name': 'None',
             'max_wallclock_seconds': 1,
             'import_sys_environment': True,
@@ -63,7 +65,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_rela
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.relax_parameters = get_data_node('parameter', dict=parameters)
-    inputs.perform = get_data_node('bool', True)
+    inputs.relax = get_data_node('bool', True)
     inputs.convergence_on = get_data_node('bool', True)
     inputs.convergence_positions = get_data_node('float', 0.1)
 

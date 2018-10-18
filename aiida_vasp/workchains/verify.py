@@ -29,23 +29,15 @@ class VerifyWorkChain(WorkChain):
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.input('parameters', valid_type=get_data_class('parameter'))
+        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
         spec.input(
-            'max_iterations',
+            'verify_max_iterations',
             valid_type=get_data_class('int'),
             required=False,
-            default=get_data_node('int', 5),
+            default=get_data_node('int', 1),
             help="""
                    The maximum number of iterations to perform.
                    """)
-        spec.input(
-            'clean_workdir',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', True),
-            help="""
-                   If True, clean the work dir upon the completion of a successfull calculation.
-                   """)
-
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
@@ -60,7 +52,7 @@ class VerifyWorkChain(WorkChain):
         spec.output('output_parameters', valid_type=get_data_class('parameter'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_structure', valid_type=get_data_class('structure'))
+        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
         spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
@@ -98,6 +90,8 @@ class VerifyWorkChain(WorkChain):
         self.ctx.inputs.structure = self.inputs.structure
         self.ctx.inputs.kpoints = self.inputs.kpoints
         self.ctx.inputs.parameters = self.inputs.parameters
+        if 'settings' in self.inputs:
+            self.ctx.inputs.settings = self.inputs.settings
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:
@@ -110,7 +104,7 @@ class VerifyWorkChain(WorkChain):
         This is the case as long as the last calculation has not finished successfully and the maximum number of restarts
         has not yet been exceeded.
         """
-        return not self.ctx.is_finished and self.ctx.iteration <= self.inputs.max_iterations.value
+        return not self.ctx.is_finished and self.ctx.iteration <= self.inputs.verify_max_iterations.value
 
     def init_next_workchain(self):
         """Initialize the next workchain."""
@@ -174,7 +168,6 @@ class VerifyWorkChain(WorkChain):
             self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
 
             workchain = self.ctx.workchains[-1]
-
             for name, port in self.spec().outputs.iteritems():
                 if port.required and name not in workchain.out:
                     self.report('the spec specifies the output {} as required '
