@@ -10,24 +10,24 @@ import pytest
 
 
 @pytest.fixture
-def mock_base_wf():
-    """Fixture for a mock-up of the VaspBaseWf."""
+def mock_base_wc():
+    """Fixture for a mock-up of the VaspWorkChain."""
     from aiida.orm import WorkflowFactory
-    _base_wf_cls = WorkflowFactory('vasp.base')
+    _base_wc_cls = WorkflowFactory('vasp.vasp')
 
-    class BaseWorkChain(_base_wf_cls):
+    class VaspWorkChain(_base_wc_cls):
         pass
 
-    return BaseWorkChain
+    return VaspWorkChain
 
 
 @pytest.fixture
-def mock_relax_wf(mock_base_wf):
-    """Fixture for a VaspRelaxWf using a mock-up for the lower level BaseWf."""
+def mock_relax_wc(mock_base_wc):
+    """Fixture for a RelaxWorkChain using a mock-up for the lower level VaspWorkChain."""
     from aiida.orm import WorkflowFactory
-    _base_wf_cls = WorkflowFactory('vasp.relax')
+    _base_wc_cls = WorkflowFactory('vasp.relax')
 
-    class RelaxWorkChain(_base_wf_cls):
-        _base_workchain = mock_base_wf
+    class RelaxWorkChain(_base_wc_cls):
+        _base_workchain = mock_base_wc
 
     return RelaxWorkChain

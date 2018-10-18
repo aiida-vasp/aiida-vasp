@@ -1,5 +1,6 @@
 """Utilities for working with aiida in general"""
 from functools import wraps
+import numpy as np
 from packaging import version
 
 
@@ -85,6 +86,42 @@ def builder_interface(calc_cls):
     if hasattr(calc_cls, 'get_builder'):
         return True
     return False
+
+
+def copy_parameter(old_parameter):
+    """Assemble a new ParameterData."""
+    return get_data_node('parameter', dict=old_parameter.get_dict())
+
+
+def displaced_structure(structure, displacement, entry):
+    disp_structure = structure.clone()
+    displace_position(disp_structure, displacement, entry)
+    return disp_structure
+
+
+def compressed_structure(structure, volume_change):
+    comp_structure = structure.clone()
+    compress_cell(comp_structure, volume_change)
+    return comp_structure
+
+
+def displace_position(structure, displacement, entry):
+    """Displace a position in the StructureData."""
+    sites = structure.sites
+    positions = []
+    for site in sites:
+        positions.append(site.position)
+    new_position = np.asarray(positions[entry - 1]) + displacement
+    new_position = new_position.tolist()
+    positions[entry - 1] = tuple(new_position)
+    structure.reset_sites_positions(positions)
+
+
+def compress_cell(structure, volume_change):
+    """Apply compression or tensile forces to the unit cell."""
+    cell = structure.cell
+    new_cell = np.array(cell) * volume_change
+    structure.reset_cell(new_cell.tolist())
 
 
 def aiida_version():

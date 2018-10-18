@@ -3,6 +3,7 @@
 # pylint: disable=protected-access,unused-variable,too-few-public-methods
 
 import pytest
+import numpy as np
 
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
@@ -156,6 +157,11 @@ def xml_path(folder):
     return data_path(folder, 'vasprun.xml')
 
 
+def poscar_path(folder):
+    """Return the full path to the CONTCAR file."""
+    return data_path(folder, 'CONTCAR')
+
+
 def xml_truncate(index, original, tmp):
     """Truncate vasprun.xml at the given line number and parse."""
     with open(original, 'r') as xmlfile:
@@ -193,7 +199,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
         from aiida.orm import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True, 'output_params': ['fermi_level']}}
+        settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'output_params': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = VaspParser(calc=calc)
@@ -203,8 +209,6 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
             fldr = extra_settings["folder"]
         xml_file_path = xml_path(fldr)
         tmp_file_path = str(tmpdir.join('vasprun.xml'))
-        #tmp_file_path = os.path.realpath(os.path.join(
-        #    __file__, '../../../test_data/tmp/vasprun.xml'))
         xml_truncate(request.param, xml_file_path, tmp_file_path)
         retrieved.add_path(tmp_file_path, '')
         success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
@@ -225,3 +229,63 @@ def test_parser_nodes(_parse_me):
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
     assert parameters.get_dict()['fermi_level'] == 5.96764939
+
+
+def test_structure(request):
+    """Test that the structure from vasprun and POSCAR is the same."""
+
+    load_dbenv_if_not_loaded()
+    from aiida.orm import CalculationFactory, DataFactory
+    from aiida_vasp.parsers.vasp import VaspParser
+    calc = CalculationFactory('vasp.vasp')()
+    # turn of everything, except structure
+    settings_dict = {
+        'parser_settings': {
+            'add_trajectory': False,
+            'add_bands': False,
+            'add_chgcar': False,
+            'add_dos': False,
+            'add_kpoints': False,
+            'add_energies': False,
+            'add_parameters': False,
+            'add_structure': True,
+            'add_projectors': False,
+            'add_born_charges': False,
+            'add_dielectrics': False,
+            'add_hessian': False,
+            'add_dynmat': False,
+            'add_wavecar': False,
+            'file_parser_set': 'default'
+        }
+    }
+    calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+    # First fetch structure from vasprun
+    parser = VaspParser(calc=calc)
+    retrieved = DataFactory('folder')()
+    test_file_path = str(request.fspath.join('..') + '../../../test_data/basic/vasprun.xml')
+    retrieved.add_path(test_file_path, '')
+    success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+    nodes = dict(nodes)
+    structure_vasprun = nodes['output_structure']
+    assert isinstance(structure_vasprun, get_data_class('structure'))
+    # Then from POSCAR/CONTCAR
+    parser = VaspParser(calc=calc)
+    retrieved = DataFactory('folder')()
+    test_file_path = str(request.fspath.join('..') + '../../../test_data/basic_poscar/CONTCAR')
+    retrieved.add_path(test_file_path, '')
+    success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+    nodes = dict(nodes)
+    structure_poscar = nodes['output_structure']
+    assert isinstance(structure_poscar, get_data_class('structure'))
+    assert np.array_equal(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7))
+    positions_vasprun = []
+    positions_poscar = []
+    for site in structure_vasprun.sites:
+        pos = np.round(np.asarray(site.position), 7)
+        positions_vasprun.append(pos)
+    for site in structure_poscar.sites:
+        pos = np.round(np.asarray(site.position), 7)
+        positions_poscar.append(pos)
+    positions_vasprun = np.asarray(positions_vasprun)
+    positions_poscar = np.asarray(positions_poscar)
+    assert np.array_equal(positions_vasprun, positions_poscar)

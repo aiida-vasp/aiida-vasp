@@ -10,6 +10,7 @@ import pytest
 from pymatgen.io.vasp import Poscar
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
+from aiida.common.exceptions import NotExistent
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
@@ -84,7 +85,6 @@ def potcar_node_pair(aiida_env):
 def temp_pot_folder(tmpdir):
     """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
-    print potcar_ga.strpath
     assert not potcar_ga.exists()
     pot_archive = py_path.local(data_path('potcar'))
     target = tmpdir.join('potentials')
@@ -233,6 +233,7 @@ def mock_vasp(aiida_env, localhost):
         code.set_input_plugin_name('vasp.vasp')
         aiidapath = py_path.local(aiida_env.root_dir).join('.aiida')
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
+
     return code
 
 

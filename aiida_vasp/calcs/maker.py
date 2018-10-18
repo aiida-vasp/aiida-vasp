@@ -179,6 +179,8 @@ class VaspMaker(object):
         self._wannier_parameters = ins.get('wannier_parameters')
         self._wannier_data = ins.get('wannier_data')
         self._queue = calc.get_queue_name()
+        self._account = calc.get_account()
+        self._qos = calc.get_qos()
         self._resources = calc.get_resources()
 
     def _set_default_structure(self, structure):
@@ -220,6 +222,8 @@ class VaspMaker(object):
         calc.use_kpoints(self._kpoints)
         calc.set_computer(self._computer)
         calc.set_queue_name(self._queue)
+        calc.set_account(self._account)
+        calc.set_qos(self._qos)
         if self._charge_density:
             calc.use_charge_density(self._charge_density)
         if self._wavefunctions:

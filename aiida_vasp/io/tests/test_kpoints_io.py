@@ -47,7 +47,6 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     """
 
     kpoints, _ = vasp_kpoints
-
     if kpoints.get_attrs().get('mesh'):
         method = 'get_kpoints_mesh'
         param = 'mesh'

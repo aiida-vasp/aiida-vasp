@@ -61,5 +61,5 @@ def test_vasp_immigrant(immigrant_with_builder, aiida_runner):
 
     result = aiida_runner.run(immigrant, **inputs)
 
-    expected_output_nodes = {'output_energies', 'output_kpoints', 'output_parameters', 'output_structure', 'remote_folder', 'retrieved'}
+    expected_output_nodes = {'output_parameters', 'remote_folder', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))

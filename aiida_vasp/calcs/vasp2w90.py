@@ -1,9 +1,9 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VASP2Wannier90 - Calculation"""
+from aiida_wannier90.io import write_win
 from aiida.orm import DataFactory
 from aiida.orm.data.base import List
-from aiida_wannier90.io import write_win
 
 from aiida_vasp.calcs.base import Input
 from aiida_vasp.calcs.vasp import VaspCalculation

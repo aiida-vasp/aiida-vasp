@@ -33,7 +33,7 @@ FILE_PARSER_SETS = {
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
-            'is_critical': True,
+            'is_critical': False,
             'status': 'Unknown'
         },
         'CHGCAR': {
@@ -74,7 +74,7 @@ class ParserSettings(object):
         if settings is None:
             settings = {}
         self._settings = settings
-        if default_settings:
+        if default_settings is not None:
             self.update_with(default_settings)
 
         self.nodes = []

@@ -15,8 +15,8 @@ NODES = {
     'dielectrics': 'output_dielectrics',
     'hessian': 'output_hessian',
     'dynmat': 'output_dynmat',
-    'chgcar': 'chgcar',
-    'wavecar': 'wavecar',
+    'chgcar': 'output_chgcar',
+    'wavecar': 'output_wavecar',
 }
 
 

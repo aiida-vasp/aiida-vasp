@@ -15,10 +15,10 @@ DEFAULT_OPTIONS = {
     'add_bands': False,
     'add_chgcar': False,
     'add_dos': False,
-    'add_kpoints': True,
-    'add_energies': True,
+    'add_kpoints': False,
+    'add_energies': False,
     'add_parameters': True,
-    'add_structure': True,
+    'add_structure': False,
     'add_projectors': False,
     'add_born_charges': False,
     'add_dielectrics': False,
@@ -88,7 +88,6 @@ class VaspParser(BaseParser):
         settings = None
         if calc_settings:
             settings = calc_settings.get_dict().get('parser_settings')
-
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
