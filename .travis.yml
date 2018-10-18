@@ -26,7 +26,7 @@ env:
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_11
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_stable
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_dev
-script: ./run_ci_tests.sh
+script: travis_wait ./run_ci_tests.sh
 after_success:
     - coverage combine
     - coveralls
