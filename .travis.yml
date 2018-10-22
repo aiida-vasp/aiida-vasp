@@ -6,13 +6,10 @@ python: 2.7
 services:
     - postgresql
 addons:
-    postgresql: "11.0"
+    postgresql: "9.5"
 cache: pip
-before_install:  # copied from pgtest's travis.yml
+before_install:
     - sudo apt-get install locate
-    - sudo service postgresql stop
-    - sudo apt-get remove postgresql-9.2 postgresql-client-9.2
-    - sudo apt-get install postgresql
     - sudo updatedb
 install:
     - pip install --upgrade pip
