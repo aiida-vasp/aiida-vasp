@@ -396,7 +396,7 @@ class IncarParser(BaseFileParser):
         incar_dict = self._data_obj.get_dict()
 
         try:
-            return IncarParsevasp(incar_dict=incar_dict)
+            return IncarParsevasp(incar_dict=incar_dict, logger=self._logger)
         except SystemExit:
             return None
 
@@ -412,7 +412,7 @@ class IncarParser(BaseFileParser):
         try:
             incar = IncarParsevasp(file_path=self._data_obj.path)
         except SystemExit:
-            self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
+            self._logger.warning("Parsevasp exitited abnormally. Returning None.")
             return {'incar': None}
 
         result = parsevasp_to_aiida(incar)

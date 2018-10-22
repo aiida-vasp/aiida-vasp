@@ -59,7 +59,7 @@ class KpParser(BaseFileParser):
         kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
 
         try:
-            return Kpoints(kpoints_dict=kpoints_dict)
+            return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
         except SystemExit:
             return None
 
@@ -73,7 +73,7 @@ class KpParser(BaseFileParser):
             return {'kpoints-kpoints': self._data_obj}
 
         try:
-            parsed_kpoints = Kpoints(file_path=self._data_obj.path)
+            parsed_kpoints = Kpoints(file_path=self._data_obj.path, logger=self._logger)
         except SystemExit:
             self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
             return {'kpoints-kpoints': None}
@@ -85,6 +85,29 @@ class KpParser(BaseFileParser):
         result['kpoints-kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
 
         return result
+
+    def _get_kpointsdict_explicit(self, kpointsdata):
+        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
+        dictionary = {}
+
+        kpts = []
+        try:
+            points, weights = kpointsdata.get_kpoints(also_weights=True)
+        except AttributeError:
+            points = kpointsdata.get_kpoints()
+            weights = None
+        for index, point in enumerate(points):
+            if weights is not None:
+                kpt = Kpoint(point, weight=weights[index], logger=self._logger)
+            else:
+                # no weights supplied, so set them to 1.0
+                kpt = Kpoint(point, weight=1.0, logger=self._logger)
+            kpts.append(kpt)
+        dictionary["points"] = kpts
+        dictionary["mode"] = "explicit"
+        dictionary["num_kpoints"] = len(kpts)
+
+        return dictionary
 
     @staticmethod
     def _get_kpointsdata_explicit(kpoints_dict):
@@ -116,30 +139,6 @@ class KpParser(BaseFileParser):
         kpout.set_kpoints_mesh(mesh, offset=shifts)
 
         return kpout
-
-    @staticmethod
-    def _get_kpointsdict_explicit(kpointsdata):
-        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
-        dictionary = {}
-
-        kpts = []
-        try:
-            points, weights = kpointsdata.get_kpoints(also_weights=True)
-        except AttributeError:
-            points = kpointsdata.get_kpoints()
-            weights = None
-        for index, point in enumerate(points):
-            if weights is not None:
-                kpt = Kpoint(point, weight=weights[index])
-            else:
-                # no weights supplied, so set them to 1.0
-                kpt = Kpoint(point, weight=1.0)
-            kpts.append(kpt)
-        dictionary["points"] = kpts
-        dictionary["mode"] = "explicit"
-        dictionary["num_kpoints"] = len(kpts)
-
-        return dictionary
 
     @staticmethod
     def _get_kpointsdict_automatic(kpointsdata):

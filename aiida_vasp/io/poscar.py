@@ -58,7 +58,11 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         try:
-            return Poscar(poscar_dict=aiida_to_parsevasp(self._parsed_data['poscar-structure']), prec=self.precision, conserve_order=True)
+            return Poscar(
+                poscar_dict=self.aiida_to_parsevasp(self._parsed_data['poscar-structure']),
+                prec=self.precision,
+                conserve_order=True,
+                logger=self._logger)
         except SystemExit:
             return None
 
@@ -71,7 +75,7 @@ class PoscarParser(BaseFileParser):
 
         # pass file path to parsevasp and try to load file
         try:
-            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True)
+            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True, logger=self._logger)
         except SystemExit:
             self._logger.warning("Parsevasp exited abnormally. " "Returning None.")
             return {'poscar-structure': None}
@@ -79,6 +83,21 @@ class PoscarParser(BaseFileParser):
         result = parsevasp_to_aiida(poscar)
 
         return result
+
+    def aiida_to_parsevasp(self, structure):
+        """Convert Aiida StructureData to parsevasp's dictionary format."""
+        dictionary = {}
+        dictionary["comment"] = structure.label or structure.get_formula()
+        dictionary["unitcell"] = np.asarray(structure.cell)
+        selective = [True, True, True]
+        # As for now all Aiida-structures are in Cartesian coordinates.
+        direct = False
+        sites = []
+        for site in structure.sites:
+            sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct, logger=self._logger))
+
+        dictionary["sites"] = sites
+        return dictionary
 
 
 def parsevasp_to_aiida(poscar):
@@ -118,22 +137,6 @@ def parsevasp_to_aiida(poscar):
         result['poscar-structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
 
     return result
-
-
-def aiida_to_parsevasp(structure):
-    """Convert Aiida StructureData to parsevasp's dictionary format."""
-    dictionary = {}
-    dictionary["comment"] = structure.label or structure.get_formula()
-    dictionary["unitcell"] = np.asarray(structure.cell)
-    selective = [True, True, True]
-    # As for now all Aiida-structures are in Cartesian coordinates.
-    direct = False
-    sites = []
-    for site in structure.sites:
-        sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct))
-
-    dictionary["sites"] = sites
-    return dictionary
 
 
 def fetch_symbols_from_elements(elmnts):
