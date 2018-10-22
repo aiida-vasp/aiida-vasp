@@ -8,11 +8,8 @@ services:
 addons:
     postgresql: "9.5"
 cache: pip
-before_install:  # copied from pgtest's travis.yml
+before_install:
     - sudo apt-get install locate
-    - sudo service postgresql stop
-    - sudo apt-get remove postgresql
-    - sudo apt-get install postgresql
     - sudo updatedb
 install:
     - pip install --upgrade pip
@@ -26,7 +23,7 @@ env:
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_11
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_stable
     - TEST_TYPE="unittests" TOX_ENV=py27-aiida_dev
-script: ./run_ci_tests.sh
+script: travis_wait ./run_ci_tests.sh
 after_success:
     - coverage combine
     - coveralls
