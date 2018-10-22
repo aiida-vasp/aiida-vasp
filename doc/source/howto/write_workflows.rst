@@ -13,9 +13,9 @@ This document describes how to creae workflows for VASP using AiiDA and the AiiD
 Modularity
 ----------
 
-AiiDA workflows are modular and can be nested indefinitely. This means it makes sense to build a hierarchy of reusable workflows, where the more complex workflows reuse a set of simple ones. This example will show how to build a fairly simple one, but the process of building more complex ones is much the same.
+AiiDA workflows are modular and can be nested indefinitely. This means it makes sense to build a hierarchy of reusable workflows, where the more complex workflows reuse a set of simple ones. This example will show how to build a fairly simple one, but the process of building more complex ones is much the same. Aiida uses the terminology WorkChain, which is to be considered a single file, which in total might define a workflow, or just a single operation. We will continue to use both and hope that does not cause confusion. It should be clear from the context, what it is and the users are free to choose the terminology they desire.
 
-AiiDA-VASP already provides a VaspBaseWf (accessible via ``WorkflowFactory('vasp.base')``), which should be used to run VASP from inside other workflows, it already provides some input validation and will be extended to provide automatic restarts and error handling in the future. It also supports both AiiDA versions before and after v1.0.0 by calling the ``VaspCalculation`` in the appropriate way in both cases.
+AiiDA-VASP already provides a VaspWorkChain (accessible via ``WorkflowFactory('vasp.vasp')``), which should be used to run VASP from inside other workflows, it already provides some input validation and will be extended to provide automatic restarts and error handling in the future. It also supports both AiiDA versions before and after v1.0.0 by calling the ``VaspCalculation`` in the appropriate way in both cases.
 
 Reusable skeleton code
 ----------------------
@@ -36,8 +36,8 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          super(ExampleVaspWorkflow, cls).define(spec)
          spec.input('code', valid_type=Code)
          spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-         spec.input('potcar_family', valid_type=Str)
-         spec.input('potcar_mapping', valid_type=get_data_class('parameter'))
+         spec.input('potential_family', valid_type=Str)
+         spec.input('potential_mapping', valid_type=get_data_class('parameter'))
          spec.input('incar_overrides', valid_type=get_data_class('parameter'), required=False)
          spec.input('machines', valid_type=Int, required=False)
          spec.input('mpi_procs', valid_type=Int, required=False)
@@ -56,8 +56,8 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          self.ctx.inputs = AttributeDict()
          self.ctx.inputs.code = self.inputs.code
          self.ctx.inputs.structure = self.inputs.structure
-         self.ctx.inputs.potcar_family = self.inputs.potcar_family
-         self.ctx.inputs.potcar_mapping = self.inputs.potcar_mapping
+         self.ctx.inputs.potential_family = self.inputs.potential_family
+         self.ctx.inputs.potential_mapping = self.inputs.potential_mapping
          self.ctx.inputs.kpoints = self._generate_kpoints()
          self.ctx.inputs.incar = self._generate_incar(self.inputs.incar_overrides.get_dict())
          self.ctx.inputs.incar = self._generate_options(
@@ -68,8 +68,8 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          ## Follow the same pattern to use additional inputs like wave functions or charge densities
 
       def run_calculation(self):
-         running = submit(WorkflowFactory('vasp.base'), **self.ctx.inputs)
-         return ToContext(vasp_run=running)
+         running = self.submit(WorkflowFactory('vasp.vasp'), **self.ctx.inputs)
+         return self.to_context(vasp_run=running)
 
       def results(self):
          if 'output_structure' not in self.ctx.vasp_run.out:
@@ -99,7 +99,7 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          incar = get_data_node('parameter', dict=incar_dict)
          return incar
 
-This example uses the ``vasp.base`` workflow to run a single VASP calculation with defaults. Higher complexity can be achieved using WorkChain control flow features like conditionals, loops, etc, described in the AiiDA documentation linked above.
+This example uses the ``vasp.vasp`` workchain to run a single VASP calculation with defaults. Please also consult the example `run_vasp_lean` file, which might differ from the the example above. Please always use the example file as a base for your developments as the documentation might lag behind current developments. Aiida and aiida-vasp are still in its early stages, so rapid development is to be expected. Higher complexity can be achieved using WorkChain control flow features like conditionals, loops, etc, described in the AiiDA documentation linked above.
 
 Determine the inputs and outputs
 --------------------------------
@@ -116,30 +116,31 @@ Determine the required steps
 
 It is helpful to sketch out a flow diagram before approaching writing a workflow. How to translate such a flow diagram into a ``WorkChain`` outline should be obvious from AiiDA's documentation (linked above).
 
-As a (simple) example: Calculating a band structure requires an (optional) relaxation of the structure, followed by an SCF run, and a band structure run using the charge densities from the SCF run.
+As a (simple) example: Calculating a band structure requires an (optional) relaxation of the structure, followed by an self-consistent electronic structure run, and a band structure run using the charge densities from the previous run to extract the electron energies at specific k-points.
 
 ::
 
-   input structure -> relax -> output structure -> scf run -> chgcar -> band structure run -> band structure
+   input structure -> relax -> output structure -> sc run -> chgcar -> band structure run -> band structure
                                        |                                 ^
                                        +---------------------------------+
 
 
-Detailed usage of VaspBaseWf
-----------------------------
+.. _howto/base_wc/reference
+Detailed usage of VaspWorkChain
+-------------------------------
 
 A note about compatibility: WorkChains provide a handy pattern for interactively building input sets both under AiiDA < 1.0.0 as from AiiDA 1.0.0a1 onwards. They are very similar but different enough to recommend using a python dictionary or ``aiida.common.extendeddicts.AttributeDict`` instead in scripts where compatibility for both should be achieved.
 
 Required inputs
 ^^^^^^^^^^^^^^^
 
-The VaspBaseWf requires a number of inputs, these comprise the minimum set of information to run a VASP calculation from AiiDA.
+The VaspWorkChain requires a number of inputs, these comprise the minimum set of information to run a VASP calculation from AiiDA.
 
  * ``code``: an AiiDA ``Code``, describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
  * ``structure``: an AiiDA ``StructureData`` or ``CifData``, describes the structure on which VASP is to be run.
  * ``kpoints``: an AiiDA ``KpointsData`` instance, describing the kpoints mesh or path.
- * ``potcar_family``: an AiiDA ``Str``, the name given to a set of uploaded POTCAR files.
- * ``potcar_mapping``: an AiiDA ``ParameterData``, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potcar_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
+ * ``potential_family``: an AiiDA ``Str``, the name given to a set of uploaded POTCAR files.
+ * ``potential_mapping``: an AiiDA ``ParameterData``, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
  * ``incar``: an AiiDA ``ParameterData`` instance, containing key/value pairs that get written to INCAR as ``KEY = VALUE``, keys can be lower case and builtin python types should be used for values.
  * ``options``, an AiiDA ``ParameterData`` instance, containing at least the keys ``resources`` and ``queue_name``. More information about calculation options is available in the AiiDA documentation.
 
