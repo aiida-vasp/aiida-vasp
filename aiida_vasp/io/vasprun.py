@@ -134,7 +134,7 @@ class VasprunParser(BaseFileParser):
         # Since vasprun.xml can be fairly large, we will parse it only
         # once and store the parsevasp Xml object.
         try:
-            self._xml = Xml(file_path=path, k_before_band=True)
+            self._xml = Xml(file_path=path, k_before_band=True, logger=self._logger)
         except SystemExit:
             self._logger.warning("Parsevasp exited abruptly. Returning None.")
             self._xml = None
@@ -594,7 +594,7 @@ class VasprunParser(BaseFileParser):
                 prj.append(proj["up"])
                 prj.append(proj["down"])
             except KeyError:
-                self._logger.error("Did not detect any projectors. " "Returning.")
+                self._logger.error("Did not detect any projectors. Returning.")
         if len(prj) == 1:
             projectors.set_array('projectors', prj[0])
         else:
