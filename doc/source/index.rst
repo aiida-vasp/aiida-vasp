@@ -56,11 +56,12 @@ Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../
 Running calculations
 --------------------
 
- * Take a look at the file `example calc`_ for an example code on how to create and submit a VASP calculation from python code.
- * Take a look at the file `example workflow`_ for an example on how to do the same via an AiiDA WorkChain.
+ * Take a look at the file `example run_vasp_direct`_ for an example code on how to create and submit a VASP calculation from python code.
+ * Take a look at the file `example run_vasp_lean`_ for an example on how to do the same via an AiiDA WorkChain.
+ * Read about running structure relaxations in the `How To section <howto/relax_wc/one-off>`
 
-.. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
-.. _example workflow: https://github.com/aiida-vasp/aiida-vasp/blob/develop/examples/run_base_wf.py
+.. _example run_vasp_direct: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp_direct.py
+.. _example run_vasp_lean: https://github.com/aiida-vasp/aiida-vasp/blob/develop/examples/run_vasp_lean.py
 
 Importing non-AiiDA VASP runs
 -----------------------------
@@ -94,10 +95,10 @@ To make for example the PBE.54 family of POTCAR files available, use the ``uploa
 
    $ verdi data vasp-potcar uploadfamily --path=vasp_pot/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4"
 
-Which will allow you to pass for example the following to the base workflow::
+Which will allow you to pass for example the following to the base workchain::
 
-   $ inputs.potcar_family = Str('PBE.54')
-   $ inputs.potcar_mapping = DataFactory('parameter')(dict={'In': 'In_d', 'As': 'As'})
+   $ inputs.potential_family = Str('PBE.54')
+   $ inputs.potential_mapping = DataFactory('parameter')(dict={'In': 'In_d', 'As': 'As'})
 
 Assuming you will run VASP on an InAs structure and wish to use the ``potpaw_PBE.54/In_d/POTCAR`` and the ``potpaw_Ppotpaw_PBE.54/As/POTCAR`` potentials.
 
@@ -110,11 +111,13 @@ More information about managing POTCAR files can be found here:
 
 Creating workflows
 ------------------
+Read about how to write workflows by combining the building blocks provided as well as about the building blocks themselves.
 
 .. toctree::
    :maxdepth: 3
 
    howto/write_workflows
+   howto/use_relax_wc
 
 More
 ====
