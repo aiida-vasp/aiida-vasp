@@ -143,7 +143,7 @@ class RelaxWorkChain(WorkChain):
             required=False,
             default=get_data_node('float', 0.1),
             help="""
-                   The cutoff value for the convergence check on the lengths of the unit cell 
+                   The cutoff value for the convergence check on the lengths of the unit cell
                    vecotrs. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
@@ -198,7 +198,7 @@ class RelaxWorkChain(WorkChain):
         spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def _set_ibrion(self, parameters):
-        if self.inputs.positions.value:
+        if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
             parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
         else:
             parameters.ibrion = self.AlgoEnum.NO_UPDATE
@@ -350,11 +350,7 @@ class RelaxWorkChain(WorkChain):
         return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
-        """
-        Compare the input and output structures of the most recent relaxation run.
-
-        If volume, shape and ion positions are all within a given threshold, consider the relaxation converged.
-        """
+        """Verify and inherit exit status from child workchains."""
 
         workchain = self.ctx.workchains[-1]
         # Adopt exit status from last child workchain (supposed to be
@@ -367,10 +363,15 @@ class RelaxWorkChain(WorkChain):
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
                         'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
                                                          next_workchain_exit_status))
-            return
+        return
 
     def analyze_convergence(self):
-        """Analyze the convergence of the relaxation."""
+        """
+        Analyze the convergence of the relaxation.
+
+        Compare the input and output structures of the most recent relaxation run. If volume,
+        shape and ion positions are all within a given threshold, consider the relaxation converged.
+        """
         workchain = self.ctx.workchains[-1]
         # Double check presence of output_structure
         if 'output_structure' not in workchain.out:
