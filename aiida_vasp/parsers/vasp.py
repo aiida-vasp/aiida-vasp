@@ -25,6 +25,7 @@ DEFAULT_OPTIONS = {
     'add_hessian': False,
     'add_dynmat': False,
     'add_wavecar': False,
+    'add_forces': False,
     'file_parser_set': 'default',
 }
 

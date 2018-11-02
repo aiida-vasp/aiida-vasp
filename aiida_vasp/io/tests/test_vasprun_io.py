@@ -81,9 +81,34 @@ def test_structure_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_forces_result(vasprun_parser):
+def test_final_force_result(vasprun_parser):
     """
-    Check that the parsed forces are of type ArrayData.
+    Test that the structure result node is a StructureData instance.
+
+    Also check various other important properties.
+
+    """
+
+    quantity = vasprun_parser.get_quantity('forces')
+    data_obj = quantity['forces']
+    # check object
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    forces_check = np.array([[-0.24286901, 0., 0.], [-0.24286901, 0., 0.], [3.41460162, 0., 0.], [0.44305748, 0., 0.],
+                             [-0.73887169, 0.43727184, 0.43727184], [-0.94708885, -0.85011586, 0.85011586],
+                             [-0.94708885, 0.85011586, -0.85011586], [-0.73887169, -0.43727184, -0.43727184]])
+
+    forces = data_obj.get_array('final_forces')
+    # check first, third and last position
+    assert np.all(forces[0] == forces_check[0])
+    assert np.all(forces[2] == forces_check[2])
+    assert np.all(forces[7] == forces_check[7])
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_traj_forces_result(vasprun_parser):
+    """
+    Check that the parsed forces in TrajectoryData are of type ArrayData.
 
     Also check that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run).
@@ -111,9 +136,9 @@ def test_forces_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_forces_result_relax(vasprun_parser):
+def test_traj_forces_result_relax(vasprun_parser):
     """
-    Check that the parsed forces are of type ArrayData.
+    Check that the parsed forces in TrajectoryData are of type ArrayData.
 
     Also check that the entries are as expected, e.g. correct value and
     that the first and last entry is the same (static run).
