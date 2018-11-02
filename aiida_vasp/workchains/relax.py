@@ -143,7 +143,7 @@ class RelaxWorkChain(WorkChain):
             required=False,
             default=get_data_node('float', 0.1),
             help="""
-                   The cutoff value for the convergence check on the lengths of the unit cell 
+                   The cutoff value for the convergence check on the lengths of the unit cell
                    vecotrs. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
@@ -198,7 +198,7 @@ class RelaxWorkChain(WorkChain):
         spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def _set_ibrion(self, parameters):
-        if self.inputs.positions.value:
+        if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
             parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
         else:
             parameters.ibrion = self.AlgoEnum.NO_UPDATE
