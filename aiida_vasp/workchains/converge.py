@@ -1349,15 +1349,18 @@ class ConvergeWorkChain(WorkChain):
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
+        workchain = self.ctx.workchains[-1]
         # Adopt exit status from last child workchain (supposed to be
         # successfull)
-        next_workchain_exit_status = self.ctx.workchains[-1].exit_status
+        next_workchain_exit_status = workchain.exit_status
         if not next_workchain_exit_status:
             self.exit_status = 0
-            return
-        self.exit_status = next_workchain_exit_status
-        self.report('The child {} returned a non-zero exit status, {} inherits exit status {}'.format(
-            self._next_workchain, self.__class__.__name__, next_workchain_exit_status))
+        else:
+            self.exit_status = next_workchain_exit_status
+            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
+                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
+                                                         next_workchain_exit_status))
+
         return
 
     def results(self):
