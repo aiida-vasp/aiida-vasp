@@ -38,7 +38,7 @@ def test_parameter_results(vasprun_parser):
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
     assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
-    assert data_dict['maximum_stress'] == 28.803993008871014
+    assert data_dict['maximum_u'] == 28.803993008871014
     assert data_dict['maximum_force'] == 3.41460162
 
 
@@ -82,12 +82,7 @@ def test_structure_result(vasprun_parser):
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_final_force_result(vasprun_parser):
-    """
-    Test that the structure result node is a StructureData instance.
-
-    Also check various other important properties.
-
-    """
+    """Test that the forces are returned correctly."""
 
     quantity = vasprun_parser.get_quantity('forces')
     data_obj = quantity['forces']
@@ -98,12 +93,29 @@ def test_final_force_result(vasprun_parser):
                              [-0.73887169, 0.43727184, 0.43727184], [-0.94708885, -0.85011586, 0.85011586],
                              [-0.94708885, 0.85011586, -0.85011586], [-0.73887169, -0.43727184, -0.43727184]])
 
-    forces = data_obj.get_array('final_forces')
+    forces = data_obj.get_array('final')
     # check first, third and last position
     assert np.all(forces[0] == forces_check[0])
     assert np.all(forces[2] == forces_check[2])
     assert np.all(forces[7] == forces_check[7])
 
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_final_stress_result(vasprun_parser):
+    """Test that the stress are returned correctly."""
+
+    quantity = vasprun_parser.get_quantity('stress')
+    data_obj = quantity['stress']
+    # check object
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    stress_check = np.array([[-0.38703740,       0.00000000,       0.00000000],
+                             [0.00000000,      12.52362644,     -25.93894358], 
+                             [0.00000000, -25.93894358, 12.52362644]])
+    stress = data_obj.get_array('final')
+    # check entries
+    assert np.all(stress[0] == stress_check[0])
+    assert np.all(stress[1] == stress_check[1])
+    assert np.all(stress[2] == stress_check[2])
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_traj_forces_result(vasprun_parser):
@@ -348,7 +360,7 @@ def test_projectors_result(vasprun_parser):
 
     Also check that that the entries are as expected.
 
-    """
+u    """
 
     quantity = vasprun_parser.get_quantity('projectors')
     data_obj = quantity['projectors']
