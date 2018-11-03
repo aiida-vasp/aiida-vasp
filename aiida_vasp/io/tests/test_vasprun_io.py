@@ -360,7 +360,7 @@ def test_projectors_result(vasprun_parser):
 
     Also check that that the entries are as expected.
 
-u    """
+    """
 
     quantity = vasprun_parser.get_quantity('projectors')
     data_obj = quantity['projectors']
