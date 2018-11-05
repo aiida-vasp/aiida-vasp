@@ -294,7 +294,7 @@ def ref_retrieved_nscf():
 @pytest.fixture(params=['vasprun'])
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
-    from aiida_vasp.parsers.parser_settings import ParserSettings
+    from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)
     parser = VasprunParser(file_path=path, settings=ParserSettings({}))

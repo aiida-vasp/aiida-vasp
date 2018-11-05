@@ -11,7 +11,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
         'parameters', 'structure', 'bands', 'dos', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat', 'final_forces', 'final_stress'
+        'born_charges', 'hessian', 'dynmat', 'forces', 'stress'
     ],
     'energy_type': ['energy_no_entropy'],
     'output_params': []
@@ -76,23 +76,17 @@ class VasprunParser(BaseFileParser):
             'prerequisites': [],
             #'alternatives': ['outcar-dielectrics']
         },
-        'final_stress': {
+        'stress': {
             'inputs': [],
-            'nodeName': '',
+            'nodeName': 'stress',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
         },
-        'final_forces': {
+        'forces': {
             'inputs': [],
-            'nodeName': '',
+            'nodeName': 'forces',
             'prerequisites': [],
             #'alternatives': ['outcar-final_stress']
-        },
-        'final_structure': {
-            'inputs': [],
-            'nodeName': '',
-            'prerequisites': [],
-            #'alternatives': ['outcar-final_structure']
         },
         'born_charges': {
             'inputs': [],
@@ -363,13 +357,8 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        frs = self._xml.get_forces("final")
-        if frs is None:
-            return None
-        forces = get_data_class('array')()
-        forces.set_array('forces', frs)
-
-        return forces
+        force = self._xml.get_forces("final")
+        return force
 
     @property
     def final_forces(self):
@@ -384,10 +373,27 @@ class VasprunParser(BaseFileParser):
         return self.last_forces
 
     @property
+    def forces(self):
+        """
+        Fetch forces.
+
+        This container should contain all relevant forces.
+        Currently, it only contains the final forces, which can be obtain
+        by the id `final_forces`.
+
+        """
+
+        final_forces = self.final_forces
+        forces = get_data_class('array')()
+        forces.set_array('final', final_forces)
+
+        return forces
+
+    @property
     def maximum_force(self):
         """Fetch the maximum force of at the last ionic run."""
 
-        forces = self.final_forces.get_array('forces')
+        forces = self.final_forces
         norm = np.linalg.norm(forces, axis=1)
         return np.amax(np.abs(norm))
 
@@ -401,12 +407,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        strs = self._xml.get_stress("final")
-        if strs is None:
-            return None
-        stress = get_data_class('array')()
-        stress.set_array('stress', strs)
-
+        stress = self._xml.get_stress("final")
         return stress
 
     @property
@@ -422,10 +423,27 @@ class VasprunParser(BaseFileParser):
         return self.last_stress
 
     @property
+    def stress(self):
+        """
+        Fetch stress.
+
+        This container should contain all relevant stress.
+        Currently, it only contains the final stress, which can be obtain
+        by the id `final_stress`.
+
+        """
+
+        final_stress = self.final_stress
+        stress = get_data_class('array')()
+        stress.set_array('final', final_stress)
+
+        return stress
+
+    @property
     def maximum_stress(self):
         """Fetch the maximum stress of at the last ionic run."""
 
-        stress = self.final_stress.get_array('stress')
+        stress = self.final_stress
         norm = np.linalg.norm(stress, axis=1)
         return np.amax(np.abs(norm))
 
