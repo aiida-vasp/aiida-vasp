@@ -99,6 +99,7 @@ def test_final_force_result(vasprun_parser):
     assert np.all(forces[2] == forces_check[2])
     assert np.all(forces[7] == forces_check[7])
 
+
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_final_stress_result(vasprun_parser):
     """Test that the stress are returned correctly."""
@@ -108,14 +109,14 @@ def test_final_stress_result(vasprun_parser):
     # check object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
-    stress_check = np.array([[-0.38703740,       0.00000000,       0.00000000],
-                             [0.00000000,      12.52362644,     -25.93894358], 
+    stress_check = np.array([[-0.38703740, 0.00000000, 0.00000000], [0.00000000, 12.52362644, -25.93894358],
                              [0.00000000, -25.93894358, 12.52362644]])
     stress = data_obj.get_array('final')
     # check entries
     assert np.all(stress[0] == stress_check[0])
     assert np.all(stress[1] == stress_check[1])
     assert np.all(stress[2] == stress_check[2])
+
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_traj_forces_result(vasprun_parser):
