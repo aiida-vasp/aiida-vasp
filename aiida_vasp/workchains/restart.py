@@ -246,8 +246,8 @@ class BaseRestartWorkChain(WorkChain):
         """Handle the case when an unexpected state is detected."""
         self.exit_status = 1
         self._fail_compat(
-            exception=UnexpectedCalculationFailure('unexpected state ({}) of {}<{}>'.format(calculation.get_state(),
-                                                                                            self._calculation.__name__, calculation.pk)))
+            exception=UnexpectedCalculationFailure('unexpected state ({}) of {}<{}>'.format(calculation.get_state(), self._calculation.
+                                                                                            __name__, calculation.pk)))
 
         return
 
