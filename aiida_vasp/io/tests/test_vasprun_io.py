@@ -38,7 +38,7 @@ def test_parameter_results(vasprun_parser):
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
     assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
-    assert data_dict['maximum_u'] == 28.803993008871014
+    assert data_dict['maximum_stress'] == 28.803993008871014
     assert data_dict['maximum_force'] == 3.41460162
 
 

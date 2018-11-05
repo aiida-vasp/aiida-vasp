@@ -6,8 +6,8 @@
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
-from aiida_vasp.parsers.parser_manager import ParserManager
-from aiida_vasp.parsers.parser_settings import ParserSettings
+from aiida_vasp.parsers.manager import ParserManager
+from aiida_vasp.parsers.settings import ParserSettings
 from aiida_vasp.utils.delegates import Delegate
 
 DEFAULT_OPTIONS = {

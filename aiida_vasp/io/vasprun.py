@@ -435,7 +435,7 @@ class VasprunParser(BaseFileParser):
 
         final_stress = self.final_stress
         stress = get_data_class('array')()
-        stress.set_array('stress', final_stress)
+        stress.set_array('final', final_stress)
 
         return stress
 
