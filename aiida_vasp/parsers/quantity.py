@@ -9,6 +9,7 @@ NODES = {
     'trajectory': 'output_trajectory',
     'bands': 'output_bands',
     'dos': 'output_dos',
+    'forces': 'output_forces',
     'energies': 'output_energies',
     'projectors': 'output_projectors',
     'born_charges': 'output_born_charges',
