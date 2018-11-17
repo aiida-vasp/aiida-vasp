@@ -56,7 +56,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    run(workchain, **inputs)
 
 
 if __name__ == '__main__':
