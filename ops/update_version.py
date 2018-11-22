@@ -46,7 +46,6 @@ class VersionUpdater(object):
         """Initialize with documents that should be kept up to date and actual version."""
         self.top_level_init = py_path.local(subpath('aiida_vasp', '__init__.py'))
         self.setup_json = py_path.local(subpath('setup.json'))
-        print('JSON: ', self.setup_json)
         self.version = self.get_version()
 
     def write_to_init(self):
@@ -79,7 +78,7 @@ class VersionUpdater(object):
             describe_byte_string = subprocess.check_output(['git', 'describe', '--tags', '--match', 'v*.*.*'])
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
         except subprocess.CalledProcessError:
-            with open(self.setup_json, 'r') as setup_fo:
+            with open(self.setup_json.strpath, 'r') as setup_fo:
                 setup = json.load(setup_fo)
                 version_string = setup['version']
 
