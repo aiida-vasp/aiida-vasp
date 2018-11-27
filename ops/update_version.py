@@ -78,7 +78,7 @@ class VersionUpdater(object):
             describe_byte_string = subprocess.check_output(['git', 'describe', '--tags', '--match', 'v*.*.*'])
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
         except subprocess.CalledProcessError:
-            with open(self.setup_json, 'r') as setup_fo:
+            with open(self.setup_json.strpath, 'r') as setup_fo:
                 setup = json.load(setup_fo)
                 version_string = setup['version']
 
