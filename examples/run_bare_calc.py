@@ -2,8 +2,7 @@
 
 import click
 from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded
-from auxiliary import (example_param_set, set_structure_si,
-                       set_kpoints, set_params_simple)
+from auxiliary import (example_param_set, set_structure_si, set_kpoints, set_params_simple)
 
 
 @click.command()
@@ -19,12 +18,9 @@ def main(potential_family, queue, code, computer):
     builder.kpoints = set_kpoints()
     builder.parameters = set_params_simple()
     builder.potential = DataFactory('vasp.potcar').get_potcars_from_structure(
-        structure=builder.structure,
-        family_name=potential_family,
-        mapping={'Si': 'Si'})
+        structure=builder.structure, family_name=potential_family, mapping={'Si': 'Si'})
     builder.options.queue_name = queue
-    builder.options.resources = {'num_machines': 1,
-                                 'num_mpiprocs_per_machine': 20}
+    builder.options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     builder.label = "simple VASP run"
     builder.description = "Example - simple VASP run"
 
