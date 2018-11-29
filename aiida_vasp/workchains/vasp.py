@@ -119,15 +119,25 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
-
         self.ctx.inputs = AttributeDict()
+
+        # Set the code
         self.ctx.inputs.code = self.inputs.code
+
+        # Set the structure (poscar)
         self.ctx.inputs.structure = self.inputs.structure
+
+        # Set the kpoints (kpoints)
         self.ctx.inputs.kpoints = self.inputs.kpoints
+
+        # Set the parameters (incar)
         self.ctx.inputs.parameters = self.inputs.parameters
+
+        # Set settings
         if 'settings' in self.inputs:
             self.ctx.inputs.settings = self.inputs.settings
 
+        # Set options
         if 'options' in self.inputs:
             options = AttributeDict()
             options.update(self.inputs.options.get_dict())
@@ -136,7 +146,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             else:
                 self.ctx.inputs._options = self.inputs.options  # pylint: disable=protected-access
 
-        # Verify potcars
+        # Verify and set potentials (potcar)
         try:
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure,
@@ -150,6 +160,14 @@ class VaspWorkChain(BaseRestartWorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
+
+        # Set the charge density (chgcar)
+        if 'chgcar' in self.inputs:
+            self.ctx.inputs.charge_density = self.inputs.chgcar
+
+        # Set the wave functions (wavecar)
+        if 'wavecar' in self.inputs:
+            self.ctx.inputs.wavefunctions = self.inputs.wavecar
 
     @override
     def on_except(self, exc_info):

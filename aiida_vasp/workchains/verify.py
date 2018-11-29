@@ -39,7 +39,7 @@ class VerifyWorkChain(WorkChain):
                 cls.run_next_workchain,
                 cls.verify_next_workchain
             ),
-            cls.results,
+            #cls.results,
             cls.finalize
         )  # yapf: disable
 
@@ -62,7 +62,6 @@ class VerifyWorkChain(WorkChain):
 
     def _init_inputs(self):
         """Initialize inputs."""
-        self.ctx.inputs = self.exposed_inputs(self._next_workchain)
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:
@@ -86,6 +85,9 @@ class VerifyWorkChain(WorkChain):
             self.ctx.inputs
         except AttributeError:
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
+
+        # Add exposed inputs
+        self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to ParameterData)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
@@ -128,14 +130,10 @@ class VerifyWorkChain(WorkChain):
                                                          next_workchain_exit_status))
         return
 
-    def results(self):
-        """Attach the remaining output results."""
+    def finalize(self):
+        """Finalize the workchain."""
+
         if not self.exit_status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
-
-    def finalize(self):
-        """Finalize the workchain."""
         return self.exit_status

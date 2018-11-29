@@ -75,12 +75,12 @@ class KpParser(BaseFileParser):
         try:
             parsed_kpoints = Kpoints(file_path=self._data_obj.path, logger=self._logger)
         except SystemExit:
-            self._logger.warning("Parsevasp exitited abnormally. " "Returning None.")
+            self._logger.warning('Parsevasp exitited abnormally. Returning None.')
             return {'kpoints-kpoints': None}
 
         mode = parsed_kpoints.entries.get('mode')
         if mode == 'line':
-            self._logger.warning("The read KPOINTS contained line mode which is" "not supported. Returning None.")
+            self._logger.warning('The read KPOINTS contained line mode which is ' 'not supported. Returning None.')
             return {'kpoints-kpoints': None}
         result['kpoints-kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
 

@@ -603,6 +603,9 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.inputs = AttributeDict()
         # Structure should be the same as the initial.
         self.ctx.inputs.structure = self.inputs.structure
+        # Same with settings (now we do not do convergence, so any updates
+        # from these routines to settings can be skipped)
+        self.ctx.inputs.settings = self.inputs.settings
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()
@@ -812,7 +815,7 @@ class ConvergeWorkChain(WorkChain):
 
             # fetch bands and occupations
             bands = workchain.out.output_bands
-            #self.report('BANDS:{}'.format(bands.get_bands(also_occupations=True)))
+
             # fetch band
             _, gap = find_bandgap(bands)
             if gap is None:
@@ -822,7 +825,6 @@ class ConvergeWorkChain(WorkChain):
 
             # add stuff to the converge context
             self.ctx.converge.pw_data.append([encut, total_energy, max_force, max_valence_band, gap])
-            self.report('PW:{}'.format(self.ctx.converge.pw_data))
         else:
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
 
