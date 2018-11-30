@@ -1,7 +1,6 @@
 # pylint: disable=attribute-defined-outside-init
 """Structure relaxation workchain."""
 import enum
-from aiida.plugins.entry_point import load_entry_point_from_string
 from aiida.common.extendeddicts import AttributeDict
 from aiida.work import WorkChain
 from aiida.work.workchain import append_, while_, if_
@@ -47,9 +46,7 @@ class RelaxWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
-        spec.expose_inputs(
-            load_entry_point_from_string('aiida.workflows:' + cls._next_workchain_string),
-            exclude=('parameters', 'structure', 'relax_parameters', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'relax_parameters', 'settings'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('parameters', valid_type=get_data_class('parameter'), required=False)
         spec.input('relax_parameters', valid_type=get_data_class('parameter'), required=False)
@@ -176,26 +173,8 @@ class RelaxWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters', valid_type=get_data_class('parameter'))
-        spec.output('remote_folder', valid_type=get_data_class('remote'))
-        spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
+        spec.expose_outputs(cls._next_workchain)
         spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
-        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def _set_ibrion(self, parameters):
         if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
@@ -324,7 +303,7 @@ class RelaxWorkChain(WorkChain):
             raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
         # Add exposed inputs
-        self.ctx.inputs.update(self.exposed_inputs(load_entry_point_from_string('aiida.workflows:' + self._next_workchain_string)))
+        self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to ParameterData)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
@@ -450,25 +429,11 @@ class RelaxWorkChain(WorkChain):
             self.out('output_structure_relaxed', relaxed_structure)
 
     def results(self):
-        """Attach the outputs specified in the output specification from the last completed calculation."""
+        """Attach the remaining output results."""
 
         if not self.exit_status:
-            self.report('{}<{}> completed'.format(self.__class__.__name__, self.pid))
-
             workchain = self.ctx.workchains[-1]
-
-            for name, _ in self.spec().outputs.iteritems():
-                # if port.required and ((name not in workchain.out) or (name not in self.out)):
-                #    self.report('the spec specifying the output {} as required '
-                #                'but was not an output of {}<{}> or already stored '
-                #                'in the output of this workchain'.
-                #                format(name, self._next_workchain.__name__,
-                #                       workchain.pk))
-                if name in workchain.out:
-                    node = workchain.out[name]
-                    self.out(name, workchain.out[name])
-                    if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
         return
 

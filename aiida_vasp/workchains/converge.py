@@ -7,7 +7,6 @@ Intended to be used to control convergence checks for plane-wave calculations.
 import copy
 import numpy as np
 
-from aiida.plugins.entry_point import load_entry_point_from_string
 from aiida.work.workchain import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import WorkflowFactory
@@ -29,13 +28,10 @@ class ConvergeWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(ConvergeWorkChain, cls).define(spec)
-        spec.expose_inputs(
-            load_entry_point_from_string('aiida.workflows:' + cls._next_workchain_string),
-            exclude=('kpoints', 'parameters', 'relax_parameters', 'structure', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings'))
         spec.input('parameters', valid_type=get_data_class('parameter'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('relax_parameters', valid_type=get_data_class('parameter'), required=False)
         spec.input('settings', valid_type=get_data_class('parameter'), required=False)
         spec.input(
             'encut',
@@ -219,7 +215,6 @@ class ConvergeWorkChain(WorkChain):
                    If True, we assume testing to be performed (e.g. dummy calculations).
                    """)
 
-
         spec.outline(
             cls.initialize,
             if_(cls.run_conv_calcs)(
@@ -279,27 +274,30 @@ class ConvergeWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters', valid_type=get_data_class('parameter'))
-        spec.output('remote_folder', valid_type=get_data_class('remote'))
-        spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.expose_outputs(cls._next_workchain)
         spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
-        spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
+
+        # spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        # spec.output('remote_folder', valid_type=get_data_class('remote'))
+        # spec.output('retrieved', valid_type=get_data_class('folder'))
+        # spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
+        # spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+
+        # spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        # spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
+        # spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        # spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
+        # spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
+        # spec.output('output_dos', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_energies', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -605,6 +603,12 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.inputs = AttributeDict()
         # Structure should be the same as the initial.
         self.ctx.inputs.structure = self.inputs.structure
+        # Same with settings (now we do not do convergence, so any updates
+        # from these routines to settings can be skipped)
+        try:
+            self.ctx.inputs.settings = self.inputs.settings
+        except AttributeError:
+            pass
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()
@@ -662,7 +666,7 @@ class ConvergeWorkChain(WorkChain):
             raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
         # Add exposed inputs
-        self.ctx.inputs.update(self.exposed_inputs(load_entry_point_from_string('aiida.workflows:' + self._next_workchain_string)))
+        self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Check if we want to perform relaxation, if so, modify input
         try:
@@ -814,7 +818,7 @@ class ConvergeWorkChain(WorkChain):
 
             # fetch bands and occupations
             bands = workchain.out.output_bands
-            #self.report('BANDS:{}'.format(bands.get_bands(also_occupations=True)))
+
             # fetch band
             _, gap = find_bandgap(bands)
             if gap is None:
@@ -824,7 +828,6 @@ class ConvergeWorkChain(WorkChain):
 
             # add stuff to the converge context
             self.ctx.converge.pw_data.append([encut, total_energy, max_force, max_valence_band, gap])
-            self.report('PW:{}'.format(self.ctx.converge.pw_data))
         else:
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
 
@@ -1364,28 +1367,16 @@ class ConvergeWorkChain(WorkChain):
         return
 
     def results(self):
-        """Attach the outputs specified in the output specification from the last completed calculation."""
+        """Attach the remaining output results."""
 
         if not self.exit_status:
-            self.report('{} completed'.format(self.__class__.__name__))
-
             workchain = self.ctx.workchains[-1]
-
-            for name, port in self.spec().outputs.iteritems():
-                if port.required and name not in workchain.out:
-                    self.report('the spec specifies the output {} as required '
-                                'but was not an output of {}<{}>'.format(name, workchain.__class__.__name__, workchain.pk))
-                if name in workchain.out:
-                    node = workchain.out[name]
-                    self.out(name, workchain.out[name])
-                    if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
         return
 
     def finalize(self):
         """Finalize the workchain."""
-
         return self.exit_status
 
     def run_conv_calcs(self):
