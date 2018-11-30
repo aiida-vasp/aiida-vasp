@@ -244,7 +244,7 @@ class PotcarMetadataMixin(object):
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
-            query = cls.querybuild(label=label)
+            query = cls.querybuild(tag=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
             filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
@@ -350,7 +350,7 @@ class VersioningMixin(object):
     def old_versions_in_db(cls):
         """Determine whether there are Nodes created with an older version of the model."""
         label = 'versioned'
-        query = cls.querybuild(label=label)
+        query = cls.querybuild(tag=label)
         filters = {'attributes._MODEL_VERSION': {'<': cls._VERSION}}
         query.add_filter(label, filters)
         return bool(query.count() >= 1)
