@@ -1,7 +1,6 @@
 """Classes representing FileParsers in the VaspParser."""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
-from aiida_vasp.calcs.vasp import VaspCalculation
 
 
 class ParserManager(object):
@@ -81,14 +80,9 @@ class ParserManager(object):
                 missing_files = self._quantities.get_missing_files(quantity_name)
                 self._vasp_parser.logger.warning('{quantity} has been requested, however the '
                                                  'following files required for parsing have not been '
-                                                 'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
-                always_retrieve_list = VaspCalculation._ALWAYS_RETRIEVE_LIST  # pylint: disable=protected-access
-                for missing_file in missing_files:
-                    if missing_file not in always_retrieve_list:
-                        self._vasp_parser.logger.warning('It seems the file {missing_file} is not '
-                                                         'set in the retrieve list. Please add it to '
-                                                         'the ADDITIONAL_RETRIEVE_LIST calculation '
-                                                         'setting.'.format(missing_file=missing_file))
+                                                 'retrieved: {missing_files}. Please check that it is in '
+                                                 'the ADDITIONAL_RETRIEVE_LIST, which is an option given to settings.'.format(
+                                                     quantity=quantity_name, missing_files=missing_files))
 
     def _set_file_parsers(self):
         """Set the specific FileParsers."""
