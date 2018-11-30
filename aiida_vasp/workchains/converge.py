@@ -605,7 +605,10 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.inputs.structure = self.inputs.structure
         # Same with settings (now we do not do convergence, so any updates
         # from these routines to settings can be skipped)
-        self.ctx.inputs.settings = self.inputs.settings
+        try:
+            self.ctx.inputs.settings = self.inputs.settings
+        except AttributeError:
+            pass
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()
