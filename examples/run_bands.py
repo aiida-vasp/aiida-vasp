@@ -20,13 +20,18 @@ def main(potential_family, queue, code, computer):
     code = Code.get_from_string('{}@{}'.format(code, computer))
 
     # set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.verify')
+    workchain = WorkflowFactory('vasp.master')
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = ''
-    options.qos = ''
-    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
+    if computer == 'unity':
+        options.account = ''
+        options.qos = ''
+        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
+    elif computer == 'fram':
+        options.account = 'nn9544k'
+        options.qos = 'devel'
+        options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
@@ -55,6 +60,10 @@ def main(potential_family, queue, code, computer):
     inputs.settings = get_data_node('parameter', dict=settings)
     # set workchain related inputs
     inputs.verbose = get_data_node('bool', True)
+    # do we want to relax?
+    inputs.relax = get_data_node('bool', False)
+    # do we want to extract the band structure?
+    inputs.extract_bands = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
     run(workchain, **inputs)
 

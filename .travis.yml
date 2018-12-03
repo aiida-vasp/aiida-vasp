@@ -13,7 +13,7 @@ before_install:
     - sudo updatedb
 install:
     - pip install --upgrade pip
-    - pip install -e git+https://github.com/aiidateam/aiida_core#egg=aiida-core
+    - pip install -e git+https://github.com/aiidateam/aiida_core@300a8e234b2836aef9cd71175903583bbfd1ae8b#egg=aiida-core
     - pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
       #- pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
     - pip install -e .[regen_default_paws,graphs,dev]

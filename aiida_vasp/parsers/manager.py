@@ -80,7 +80,9 @@ class ParserManager(object):
                 missing_files = self._quantities.get_missing_files(quantity_name)
                 self._vasp_parser.logger.warning('{quantity} has been requested, however the '
                                                  'following files required for parsing have not been '
-                                                 'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
+                                                 'retrieved: {missing_files}. Please check that it is in '
+                                                 'the ADDITIONAL_RETRIEVE_LIST, which is an option given to settings.'.format(
+                                                     quantity=quantity_name, missing_files=missing_files))
 
     def _set_file_parsers(self):
         """Set the specific FileParsers."""
