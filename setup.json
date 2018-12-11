@@ -88,7 +88,7 @@
         "distro",
         "packaging",
         "distro",
-        "parsevasp >= 0.2.18"
+        "parsevasp >= 0.2.19"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 
