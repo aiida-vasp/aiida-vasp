@@ -5,9 +5,10 @@
 """AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.quantity import ParsableQuantities, NODES
+from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.manager import ParserManager
 from aiida_vasp.parsers.settings import ParserSettings
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.delegates import Delegate
 
 DEFAULT_OPTIONS = {
@@ -110,6 +111,10 @@ class VaspParser(BaseParser):
         """Add a single parsable quantity to the _parsable_quantities."""
         self.quantities.additional_quantities[quantity_name] = quantity_dict
 
+    def add_custom_node(self, node_name, node_dict):
+        """Add a custom node to the settings."""
+        self.settings.add_node(node_name, node_dict)
+
     def parse_with_retrieved(self, retrieved):
 
         def missing_critical_file():
@@ -141,19 +146,13 @@ class VaspParser(BaseParser):
             quantity = quantities_to_parse.pop(0)
             self._output_nodes.update(self.get_quantity(quantity))
 
-        # Add output nodes if the corresponding data exists.
-        for key, value in self._output_nodes.items():
-            quantity = self.quantities.get_by_name(key)
-            if not quantity.is_node:
-                # This quantity does not represent a node, continue with the next one.
-                continue
+        node_assembler = NodeComposer(vasp_parser=self)
 
-            if quantity.nodeName in self.settings.nodes and value is None:
-                # One of the requested output nodes is None, parsing has not been successful.
+        for node_name, node_dict in self.settings.nodes.items():
+            node = node_assembler.compose(node_dict.type, node_dict.quantities)
+            success = self._set_node(node_name, node)
+            if not success:
                 return self.result(success=False)
-
-            if value:
-                self._set_node(quantity.nodeName, value)
 
         # Reset the 'get_quantity' delegate
         self.get_quantity.clear()
@@ -187,10 +186,12 @@ class VaspParser(BaseParser):
         # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
         self.parsers.remove(quantity)
 
-        return self._output_nodes.get(quantity)
+        return {quantity: self._output_nodes.get(quantity)}
 
     def _set_node(self, node_name, node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
 
-        if node is not None:
-            self.add_node(NODES[node_name], node)
+        if node is None:
+            return False
+        self.add_node(self.settings.nodes[node_name].link_name, node)
+        return True

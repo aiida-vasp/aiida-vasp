@@ -64,12 +64,11 @@ def test_write_poscar(fresh_aiida_env, vasp2w90_calc_and_ref, vasp_structure_pos
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile() as temp_file:
         vasp_calc.write_poscar(inp, temp_file.name)
-        result_structure = PoscarParser(file_path=temp_file.name).get_quantity('poscar-structure', {})['poscar-structure']
-        ref_structure = vasp_structure_poscar.get_quantity('poscar-structure', {})['poscar-structure']
+        result_structure = PoscarParser(file_path=temp_file.name).structure
+        ref_structure = vasp_structure_poscar.structure
         assert result_structure.cell, ref_structure.cell
         assert result_structure.get_formula() == ref_structure.get_formula()
 
-        vasp_structure_poscar._parsed_data.update(vasp_structure_poscar.get_quantity('poscar-structure', {}))  # pylint: disable=protected-access
         ref_string = vasp_structure_poscar._parsed_object.get_string()  # pylint: disable=protected-access
         with open(temp_file.name, 'r') as poscar:
             assert_contents_equivalent(poscar.read(), ref_string)

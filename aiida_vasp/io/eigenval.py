@@ -4,7 +4,6 @@ import re
 
 import numpy as np
 
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.io.parser import BaseFileParser
 
 
@@ -12,11 +11,15 @@ class EigParser(BaseFileParser):
     """Contains regex and functions to find grammar elements in EIGENVALUE files."""
 
     PARSABLE_ITEMS = {
-        'eigenval-bands': {
-            'inputs': ['structure', 'kpoints', 'occupations'],
-            'nodeName': 'bands',
-            'prerequisites': ['structure', 'occupations'],
-            'alternatives': ['bands']
+        'eigenval-eigenvalues': {
+            'inputs': [],
+            'name': 'eigenvalues',
+            'prerequisites': [],
+        },
+        'eigenval-kpoints': {
+            'inputs': ['structure'],
+            'name': 'kpoints',
+            'prerequisites': ['structure'],
         },
     }
 
@@ -35,33 +38,9 @@ class EigParser(BaseFileParser):
         result = {}
 
         header, kpoints, bands = self._read_eigenval()
-
         result['header'] = header
-
-        bsnode = get_data_class('array.bands')()
-        kpout = get_data_class('array.kpoints')()
-
-        structure = inputs.get('structure')
-        if structure is None:
-            return {'eigenval-bands': None, 'kpoints': None}
-
-        bsnode.set_cell(structure.get_ase().get_cell())
-        kpout.set_cell(structure.get_ase().get_cell())
-
-        kpoints_inp = inputs.get('kpoints')
-        if kpoints_inp:
-            bsnode.set_kpointsdata(kpoints_inp)
-
-            if kpoints_inp.labels:
-                bsnode.labels = kpoints_inp.labels
-        else:
-            bsnode.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-
-        bsnode.set_bands(bands, occupations=inputs['occupations'])
-        kpout.set_kpoints(kpoints[:, :3], weights=kpoints[:, 3], cartesian=False)
-
-        result['eigenval-bands'] = bsnode
-        result['eigenval-kpoints'] = kpout
+        result['eigenval-eigenvalues'] = bands
+        result['eigenval-kpoints'] = kpoints
 
         return result
 

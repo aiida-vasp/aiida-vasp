@@ -1,7 +1,7 @@
 """DOSCAR (VASP format) utilities"""
 import numpy as np
 
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.io.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.
@@ -28,14 +28,14 @@ class DosParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'doscar-dos': {
             'inputs': [],
-            'nodeName': 'dos',
+            'name': 'dos',
             'prerequisites': [],
-            'alternatives': ['dos']
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(DosParser, self).__init__(*args, **kwargs)
+        self._dos = None
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
@@ -46,17 +46,15 @@ class DosParser(BaseFileParser):
 
         header, pdos, tdos = self._read_doscar()
 
+        result['doscar-dos'] = {}
         result['header'] = header
 
         for array in [pdos, tdos]:
             if array.size == 0:
                 return {'doscar-dos': None}
 
-        dosnode = get_data_class('array')()
-        dosnode.set_array('pdos', pdos)
-        dosnode.set_array('tdos', tdos)
-
-        result['doscar-dos'] = dosnode
+        result['doscar-dos']['pdos'] = pdos
+        result['doscar-dos']['tdos'] = tdos
 
         return result
 
@@ -122,3 +120,10 @@ class DosParser(BaseFileParser):
         header['weight'] = weight
 
         return header, pdos, tdos
+
+    @property
+    def dos(self):
+        if self._dos is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._dos = composer.compose('array', quantities=['doscar-dos'])
+        return self._dos

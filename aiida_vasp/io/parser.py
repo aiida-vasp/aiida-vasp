@@ -180,7 +180,7 @@ class BaseFileParser(BaseParser):
             calc_parser_cls.get_quantity.append(self.get_quantity)
             self.settings = calc_parser_cls.settings
 
-        self._parsable_items = {}
+        self.parsable_items = {}
         self._parsed_data = {}
         self._data_obj = None
 
@@ -191,7 +191,7 @@ class BaseFileParser(BaseParser):
     def _init_with_file_path(self, path):
         """Init with a file path."""
         self._data_obj = SingleFile(path=path)
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def _init_with_data(self, data):
@@ -203,7 +203,7 @@ class BaseFileParser(BaseParser):
         """
 
         self._data_obj = SingleFile(data=data)
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def _init_with_settings(self, settings):
@@ -218,7 +218,7 @@ class BaseFileParser(BaseParser):
         delegate during __init__.
         """
 
-        if quantity not in self._parsable_items:
+        if quantity not in self.parsable_items:
             return None
 
         if self._parsed_data is None or self._parsed_data.get(quantity) is None:
@@ -231,9 +231,9 @@ class BaseFileParser(BaseParser):
 
             if self._vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
-                for inp in self._parsable_items[quantity]['inputs']:
-                    inputs[inp] = self._vasp_parser.get_inputs(inp)
-                    if inputs[inp] is None and inp in self._parsable_items[quantity]['prerequisites']:
+                for inp in self.parsable_items[quantity]['inputs']:
+                    inputs.update(self._vasp_parser.get_inputs(inp))
+                    if inputs[inp] is None and inp in self.parsable_items[quantity]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity: None}
             self._parsed_data = self._parse_file(inputs)

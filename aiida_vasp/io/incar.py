@@ -368,8 +368,7 @@ class IncarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'incar': {
             'inputs': [],
-            'parsers': ['INCAR'],
-            'nodeName': '',
+            'name': 'incar',
             'prerequisites': []
         },
     }
@@ -381,7 +380,7 @@ class IncarParser(BaseFileParser):
     def _init_with_data(self, data):
         """Initialise with a given kpointsData object."""
         self._data_obj = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -415,24 +414,9 @@ class IncarParser(BaseFileParser):
             self._logger.warning("Parsevasp exitited abnormally. Returning None.")
             return {'incar': None}
 
-        result = parsevasp_to_aiida(incar)
-
+        result['incar'] = incar.get_dict()
         return result
 
-
-def parsevasp_to_aiida(incar):
-    """
-    Parsevasp to Aiida conversion.
-
-    Generate an Aiida ParameterData that contains the
-    entries found in INCAR using parsevasp.
-
-    """
-
-    incar_dict = incar.get_dict()
-
-    result = {}
-
-    result['incar'] = get_data_class('parameter')(dict=incar_dict)
-
-    return result
+    @property
+    def incar(self):
+        return self.get_quantity('incar', {})['incar']
