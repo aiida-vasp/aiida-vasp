@@ -289,3 +289,48 @@ def test_structure(request):
     positions_vasprun = np.asarray(positions_vasprun)
     positions_poscar = np.asarray(positions_poscar)
     assert np.array_equal(positions_vasprun, positions_poscar)
+
+
+# def test_parameters(request):
+#     """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
+
+#     load_dbenv_if_not_loaded()
+#     from aiida.orm import CalculationFactory, DataFactory
+#     from aiida_vasp.parsers.vasp import VaspParser
+#     calc = CalculationFactory('vasp.vasp')()
+#     # turn of everything, except parameters
+#     settings_dict = {
+#         'parser_settings': {
+#             'add_trajectory': False,
+#             'add_bands': False,
+#             'add_chgcar': False,
+#             'add_dos': False,
+#             'add_kpoints': False,
+#             'add_energies': False,
+#             'add_parameters': True,
+#             'add_structure': False,
+#             'add_projectors': False,
+#             'add_born_charges': False,
+#             'add_dielectrics': False,
+#             'add_hessian': False,
+#             'add_dynmat': False,
+#             'add_wavecar': False,
+#             'file_parser_set': 'default',
+#             'output_params': ['fermi_level', 'symmetries'],
+#             'add_outcar_parameters': True
+#         }
+#     }
+#     calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+#     # First fetch structure from vasprun
+#     parser = VaspParser(calc=calc)
+#     retrieved = DataFactory('folder')()
+#     vasprun_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/vasprun.xml')
+#     outcar_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/OUTCAR')
+#     retrieved.add_path(vasprun_file_path, '')
+#     retrieved.add_path(outcar_file_path, '')
+#     success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
+#     nodes = dict(nodes)
+#     parameters = nodes['output_parameters']
+#     print(parameters.get_dict())
+#     assert isinstance(parameters, get_data_class('parameter'))
+#     assert False

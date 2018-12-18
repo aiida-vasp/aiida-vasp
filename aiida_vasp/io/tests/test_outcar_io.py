@@ -1,24 +1,100 @@
-"""Test the OUTCAR io interface"""
+"""Test the vasprun.xml io interface"""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
+import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.io.outcar import OutcarParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-def test_parse_outcar():
-    """Parse a reference OUTCAR file with the OutcarParser and compare the result to a reference value."""
-    file_name = 'OUTCAR'
-    path = data_path('outcar', file_name)
-    parser = OutcarParser(file_path=path)
-    params = parser.get_quantity('outcar-parameters', {})
-    result = params['outcar-parameters'].get_dict()
-    assert result['outcar-volume'] == 65.94
-    assert result['outcar-efermi'] == 7.2948
-    assert result['outcar-energies']
-    assert result['symmetries']['num_space_group_operations'] == 48
-    assert result['symmetries']['num_point_group_operations'] == 48
-    assert result['symmetries']['point_symmetry'] == 'O_h'
-    assert result['symmetries']['space_group'] == 'D_2d'
+@pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
+def test_parameter_results(outcar_parser):
+    """
+    Test that the parameter node is a ParametersData instance.
+
+    Should contain the symmetries and the elastic moduli.
+
+    """
+
+    outcar_parser.settings.update_with({'add_outcar_parameters': True, 'output_params': ['symmetries', 'elastic_moduli']})
+    quantity = outcar_parser.get_quantity('outcar_parameters')
+    data_obj = quantity['outcar_parameters']
+    ref_class = get_data_class('parameter')
+    assert isinstance(data_obj, ref_class)
+    data_dict = data_obj.get_dict()
+    # test symmetries
+    test = {
+        'symmetrized_cell_type': {
+            'static': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ],
+            'dynamic': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ]
+        },
+        'num_point_group_operations': {
+            'static': [24, 8, 8, 8, 8, 8, 8, 2, 2, 2, 2, 2, 2, 4, 4, 24],
+            'dynamic': [24, 8, 8, 8, 8, 8, 8, 2, 2, 2, 2, 2, 2, 4, 4, 24]
+        },
+        'point_group': {
+            'static': [
+                'T_d', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2v.', 'C_2v.',
+                'T_d'
+            ],
+            'dynamic': [
+                'T_d', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2v.', 'C_2v.',
+                'T_d'
+            ]
+        },
+        'space_group': {
+            'static': [
+                'O_h', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'D_2h.',
+                'D_2h.', 'O_h'
+            ],
+            'dynamic': [
+                'O_h', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'D_2h.',
+                'D_2h.', 'O_h'
+            ]
+        },
+        'original_cell_type': {
+            'static': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ],
+            'dynamic': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ]
+        },
+        'num_space_group_operations': {
+            'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
+            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
+        }
+    }
+    # then elastic moduli
+    test = np.array([1674.5786, 704.739, 704.739, -0.0, 0.0, 0.0])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['symmetrized'][0], test)
+    test = np.array([0.0, 0.0, 0.0, -0.0, -0.0, 1122.6622])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['symmetrized'][5], test)
+    test = np.array([705.0238, 1674.8491, 705.0238, -0.0, -0.0, 0.0])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['non_symmetrized'][1], test)
+    test = np.array([-0.0078, -0.0495, 0.0147, 0.0, 1123.0829, -0.0])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['non_symmetrized'][4], test)
+    test = np.array([704.739, 704.739, 1674.5786, -0.0, -0.0, 0.0])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['total'][2], test)
+    test = np.array([-0.0, -0.0, -0.0, 775.8054, 0.0, -0.0])
+    np.testing.assert_allclose(data_dict['elastic_moduli']['total'][3], test)

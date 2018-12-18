@@ -26,7 +26,7 @@ def test_parameter_results(vasprun_parser):
     """
     Test that the parameter node is a ParametersData instance.
 
-    Should contain the Fermi level.
+    Should contain the Fermi level, total_energies, maximum_force and maximum_stress.
 
     """
 

@@ -110,7 +110,7 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'nodeName': 'parameters',
             'prerequisites': [],
-            'alternatives': ['outcar-parameters']
+            'alternatives': ['outcar_parameters']
         }
     }
 
@@ -278,7 +278,7 @@ class VasprunParser(BaseFileParser):
         """Assemble the 'output_params' node."""
 
         parameters = {}
-        outcar_parameters = self._parsed_data.get('outcar_parameters')
+        outcar_parameters = self._parsed_data.get('outcar-parameters')
         if outcar_parameters is not None:
             parameters.update(outcar_parameters)
         for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
@@ -632,10 +632,15 @@ class VasprunParser(BaseFileParser):
         if diel is None:
             return None
         dielectrics = get_data_class('array')()
-        energy = diel["energy"]
-        dielectrics.set_array('ediel', energy)
-        dielectrics.set_array('rdiel', diel["real"])
-        dielectrics.set_array('idiel', diel["imag"])
+        energy = diel['energy']
+        idiel = diel['imag']
+        rdiel = diel['real']
+        if energy is not None:
+            dielectrics.set_array('ediel', energy)
+        if idiel is not None:
+            dielectrics.set_array('rdiel', rdiel)
+        if rdiel is not None:
+            dielectrics.set_array('idiel', idiel)
         return dielectrics
 
     @property
