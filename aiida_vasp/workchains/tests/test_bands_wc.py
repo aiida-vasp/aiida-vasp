@@ -89,7 +89,8 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     assert seekpath_parameters['explicit_kpoints_linearcoord'][0:4] == [0.0, 0.0528887652119494, 0.105777530423899, 0.158666295635848]
     kpoints = results['output_kpoints'].get_kpoints()
     np.testing.assert_allclose(kpoints[0, 0:3], np.array([0., 0., 0.]), rtol=1e-4)
-    np.testing.assert_allclose(kpoints[5, 0:3], np.array([0.1136364, 0., 0.1136364]), rtol=1e-4)
+    np.set_printoptions(threshold=np.nan)
+    np.testing.assert_allclose(kpoints[5, 0:3], np.array([0.11363636, 0., 0.11363636]), rtol=1e-4)
     np.testing.assert_allclose(kpoints[97, 0:3], np.array([0.5, 0., 0.5]), rtol=1e-4)
     bands = results['output_bands'].get_bands()
     assert bands.shape == (1, 98, 20)
