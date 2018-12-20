@@ -1,7 +1,7 @@
 # pylint: disable=no-self-use
 """Utils for VASP KPOINTS format"""
 
-from parsevasp.kpoints import Kpoints
+from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -97,6 +97,60 @@ class KpParser(BaseFileParser):
             composer = NodeComposer(file_parsers=[self])
             self._kpoints = composer.compose('array.kpoints', quantities=['kpoints-kpoints'])
         return self._kpoints
+
+    def _get_kpointsdict_explicit(self, kpointsdata):
+        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
+        dictionary = {}
+
+        kpts = []
+        try:
+            points, weights = kpointsdata.get_kpoints(also_weights=True)
+        except AttributeError:
+            points = kpointsdata.get_kpoints()
+            weights = None
+        for index, point in enumerate(points):
+            if weights is not None:
+                kpt = Kpoint(point, weight=weights[index], logger=self._logger)
+            else:
+                # no weights supplied, so set them to 1.0
+                kpt = Kpoint(point, weight=1.0, logger=self._logger)
+            kpts.append(kpt)
+        dictionary["points"] = kpts
+        dictionary["mode"] = "explicit"
+        dictionary["num_kpoints"] = len(kpts)
+
+        return dictionary
+
+    @staticmethod
+    def _get_kpointsdata_explicit(kpoints_dict):
+        """Turn an 'explicit' kpoints dictionary into Aiida KpointsData"""
+        kpout = get_data_class('array.kpoints')()
+
+        kpoints = kpoints_dict.get('points')
+        cartesian = not kpoints[0].get_direct()
+        kpoint_list = []
+        weights = []
+        for kpoint in kpoints:
+            kpoint_list.append(kpoint.get_point().tolist())
+            weights.append(kpoint.get_weight())
+
+        if weights[0] is None:
+            weights = None
+
+        kpout.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
+
+        return kpout
+
+    @staticmethod
+    def _get_kpointsdata_automatic(kpoints_dict):
+        """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
+        kpout = get_data_class('array.kpoints')()
+
+        mesh = kpoints_dict.get('divisions')
+        shifts = kpoints_dict.get('shifts')
+        kpout.set_kpoints_mesh(mesh, offset=shifts)
+
+        return kpout
 
     @staticmethod
     def _get_kpointsdict_automatic(kpointsdata):

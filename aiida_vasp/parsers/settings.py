@@ -59,7 +59,7 @@ NODES = {
     'parameters': {
         'link_name': 'output_parameters',
         'type': 'parameter',
-        'quantities': ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries'],
+        'quantities': ['total_energies', 'symmetries', 'maximum_stress', 'maximum_force', 'fermi_level'],
     },
     'kpoints': {
         'link_name': 'output_kpoints',
@@ -70,6 +70,11 @@ NODES = {
         'link_name': 'output_structure',
         'type': 'structure',
         'quantities': ['structure'],
+    },
+    'poscar-structure': {
+        'link_name': 'output_structure',
+        'type': 'structure',
+        'quantities': ['poscar-structure'],
     },
     'trajectory': {
         'link_name': 'output_trajectory',
@@ -117,12 +122,12 @@ NODES = {
         'quantities': ['dynmat'],
     },
     'chgcar': {
-        'link_name': 'chgcar',
+        'link_name': 'output_chgcar',
         'type': 'vasp.chargedensity',
         'quantities': ['chgcar'],
     },
     'wavecar': {
-        'link_name': 'wavecar',
+        'link_name': 'output_wavecar',
         'type': 'vasp.wavefun',
         'quantities': ['wavecar'],
     },

@@ -148,6 +148,7 @@ class VaspParser(BaseParser):
 
         node_assembler = NodeComposer(vasp_parser=self)
 
+        # Assemble the nodes associated with the quantities
         for node_name, node_dict in self.settings.nodes.items():
             node = node_assembler.compose(node_dict.type, node_dict.quantities)
             success = self._set_node(node_name, node)
@@ -175,8 +176,11 @@ class VaspParser(BaseParser):
 
         # This is the first time this quantity has been requested, keep track of it.
         self._requested_quantities.append(quantity)
-
         if quantity not in self._output_nodes:
+            # Did we parse an alternative
+            for item in self.quantities.get_equivalent_quantities(quantity):
+                if item.original_name in self._output_nodes:
+                    return {quantity: self._output_nodes.get(item.original_name)}
             # The quantity is not in the output_nodes. Try to parse it
             self._output_nodes.update(self.get_quantity(quantity))
 

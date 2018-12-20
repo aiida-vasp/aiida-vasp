@@ -33,18 +33,19 @@ def test_parameter_results(vasprun_parser):
     vasprun_parser.settings.nodes.update({
         'parameters': {
             'type': 'parameter',
-            'quantities': ['fermi_level', 'energies', 'maximum_force', 'maximum_stress'],
+            'quantities': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'],
             'link_name': 'my_custom_node'
         }
     })
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('parameter', quantities=['fermi_level', 'energies', 'maximum_force', 'maximum_stress'])
+    data_obj = composer.compose('parameter', quantities=['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'])
 
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
+    assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
     assert data_dict['energies']['energy_no_entropy'][0] == -42.91113621
     assert data_dict['maximum_stress'] == 28.803993008871014
     assert data_dict['maximum_force'] == 3.41460162

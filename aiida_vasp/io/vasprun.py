@@ -11,21 +11,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
-        'structure',
-        'eigenvalues',
-        'dos',
-        'bands',
-        'kpoints',
-        'occupations',
-        'trajectory',
-        'energies',
-        'projectors',
-        'dielectrics',
-        'born_charges',
-        'hessian',
-        'dynmat',
-        'forces',
-        'stress',
+        'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupations', 'trajectory', 'energies', 'projectors', 'dielectrics',
+        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress'
     ],
     'energy_type': ['energy_no_entropy'],
     'output_params': []
@@ -75,6 +62,11 @@ class VasprunParser(BaseFileParser):
             'name': 'energies',
             'prerequisites': [],
             'alternatives': ['outcar-energies']
+        },
+        'total_energies': {
+            'inputs': [],
+            'name': 'total_energies',
+            'prerequisites': [],
         },
         'projectors': {
             'inputs': [],
@@ -380,7 +372,6 @@ class VasprunParser(BaseFileParser):
         final_stress = self.final_stress
         stress = get_data_class('array')()
         stress.set_array('final', final_stress)
-
         return stress
 
     @property
@@ -450,19 +441,31 @@ class VasprunParser(BaseFileParser):
         #return self.energies(nosc = False)
 
     @property
+    def total_energies(self):
+        """Fetch the total energies after the last ionic run."""
+
+        energies = self.energies
+        # fetch the type of energies that the user wants to extract
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        energies_dict = {}
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+            energies_dict[etype] = energies[etype][-1]
+
+        return energies_dict
+
+    @property
     def energies(self, nosc=True):
         """
         Fetch the total energies.
 
         Store as ArrayData for all calculations (i.e. ionic steps).
-
         """
 
-        # create a ArrayData object
-        enrgy = dict()
-
         # fetch the type of energies that the user wants to extract
-        for etype in self.settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+
+        enrgy = {}
+        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
 
             # this returns a list, not an ndarray due to
             # the posibility of returning the energies for all
@@ -471,7 +474,7 @@ class VasprunParser(BaseFileParser):
             # arrays
             enrgies = self._xml.get_energies(status="all", etype=etype, nosc=nosc)
             if enrgies is None:
-                continue
+                return None
             # should be a list, but convert to ndarray, here
             # staggered arrays are not a problem
             # two elements for a static run, both are similar,
@@ -479,9 +482,6 @@ class VasprunParser(BaseFileParser):
             if len(enrgies) == 2:
                 enrgies = enrgies[-1:]
             enrgy[etype] = np.asarray(enrgies)
-
-        if not enrgy:
-            return None
 
         return enrgy
 
@@ -511,6 +511,7 @@ class VasprunParser(BaseFileParser):
             projectors['projectors'] = prj[0]
         else:
             projectors['projectors'] = np.asarray(prj)
+
         return projectors
 
     @property

@@ -39,8 +39,8 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 
-    structure = PoscarParser(file_path=data_path('test_bands_wc', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
-    parameters = IncarParser(file_path=data_path('test_bands_wc', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
+    structure = PoscarParser(file_path=data_path('test_bands_wc', 'inp', 'POSCAR')).structure
+    parameters = IncarParser(file_path=data_path('test_bands_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_bands_wc'
     chgcar = get_data_node('vasp.chargedensity', file=data_path('test_bands_wc', 'inp', 'CHGCAR'))
 
