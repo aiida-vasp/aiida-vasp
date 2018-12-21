@@ -88,11 +88,12 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     assert len(seekpath_parameters['explicit_kpoints_linearcoord']) == 98
     assert seekpath_parameters['explicit_kpoints_linearcoord'][0:4] == [0.0, 0.0528887652119494, 0.105777530423899, 0.158666295635848]
     kpoints = results['output_kpoints'].get_kpoints()
-    np.testing.assert_allclose(kpoints[0, 0:3], np.array([0., 0., 0.]), rtol=1e-4)
-    np.testing.assert_allclose(kpoints[5, 0:3], np.array([1.136364e-01, -8.151526e-35, 1.136364e-01]), rtol=1e-4)
-    np.testing.assert_allclose(kpoints[97, 0:3], np.array([0.5, 0., 0.5]), rtol=1e-4)
+    np.set_printoptions(threshold=np.nan)
+    np.testing.assert_allclose(kpoints[0, 0:3], np.array([0., 0., 0.]))
+    np.testing.assert_allclose(kpoints[5, 0:3], np.array([0.11363636, 0., 0.11363636]))
+    np.testing.assert_allclose(kpoints[97, 0:3], np.array([0.5, 0., 0.5]))
     bands = results['output_bands'].get_bands()
     assert bands.shape == (1, 98, 20)
-    np.testing.assert_allclose(bands[0, 0, 0:3], np.array([-6.0753, 6.0254, 6.0254]), rtol=1e-4)
-    np.testing.assert_allclose(bands[0, 2, 0:3], np.array([-6.0386, 5.7955, 5.8737]), rtol=1e-4)
-    np.testing.assert_allclose(bands[0, 97, 0:3], np.array([-1.867, -1.867, 3.1102]), rtol=1e-4)
+    np.testing.assert_allclose(bands[0, 0, 0:3], np.array([-6.0753, 6.0254, 6.0254]))
+    np.testing.assert_allclose(bands[0, 2, 0:3], np.array([-6.0386, 5.7955, 5.8737]))
+    np.testing.assert_allclose(bands[0, 97, 0:3], np.array([-1.867, -1.867, 3.1102]))
