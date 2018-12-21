@@ -136,9 +136,7 @@ def test_parser_read_parsevasp():
 
     path = data_path('phonondb', 'INCAR')
     parser = IncarParser(file_path=path)
-    result = parser.get_quantity('incar', {})
-    assert isinstance(result['incar'], get_data_class('parameter'))
-    incar = result['incar'].get_dict()
+    incar = parser.incar
     assert incar['prec'] == 'Accurate'
     assert incar['ibrion'] == -1
     assert incar['encut'] == 359.7399
@@ -199,14 +197,12 @@ def test_write_parser(tmpdir, incar_dict_example):
     incar_params = get_data_class('parameter')(dict=incar_dict_example)
     assert isinstance(incar_params, get_data_class('parameter'))
     parser = IncarParser(data=incar_params)
-    result = parser.get_quantity('incar', {})
-    assert isinstance(result['incar'], get_data_class('parameter'))
+
     # now write
     temp_file = str(tmpdir.join('INCAR'))
     parser.write(temp_file)
     # read again
     parser_reparse = IncarParser(file_path=temp_file)
-    result = parser_reparse.get_quantity('incar', {})
-    assert isinstance(result['incar'], get_data_class('parameter'))
+    result = parser_reparse.incar
     comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
-    assert str(sorted(result['incar'].get_dict())) == str(sorted(comp_dict))
+    assert str(sorted(result)) == str(sorted(comp_dict))

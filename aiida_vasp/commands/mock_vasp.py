@@ -47,7 +47,7 @@ def mock_vasp():
     assert PoscarParser(file_path=poscar.strpath), 'POSCAR could not be parsed.'
     assert KpParser(file_path=kpoints.strpath), 'KPOINTS could not be parsed.'
 
-    system = incar_parser.get_quantity('incar', {})['incar'].get_dict().get('system', '')
+    system = incar_parser.incar.get('system', '')
     test_case = re.findall(r'test-case:(.*)$', system)
 
     if not test_case:
