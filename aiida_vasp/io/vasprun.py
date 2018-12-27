@@ -527,10 +527,9 @@ class VasprunParser(BaseFileParser):
         if diel is None:
             return None
         dielectrics = dict()
-        energy = diel["energy"]
-        dielectrics['ediel'] = energy
-        dielectrics['rdiel'] = diel["real"]
-        dielectrics['idiel'] = diel["imag"]
+        for key in diel:
+            if diel[key] is not None and type(diel[key]) is np.ndarray:
+                dielectrics[key] = diel[key]
         return dielectrics
 
     @property
