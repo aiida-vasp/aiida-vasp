@@ -101,8 +101,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
         spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
         spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
+        spec.output('output_forces', valid_type=get_data_class('array'), required=False)
+        spec.output('output_stress', valid_type=get_data_class('array'), required=False)
 
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""

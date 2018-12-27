@@ -320,10 +320,10 @@ class VasprunParser(BaseFileParser):
         """
 
         final_forces = self.final_forces
-        forces = get_data_class('array')()
-        forces.set_array('final', final_forces)
-
-        return forces
+        if final_forces is None:
+            return None
+        else:
+            return {'final': final_forces}
 
     @property
     def maximum_force(self):
@@ -370,9 +370,10 @@ class VasprunParser(BaseFileParser):
         """
 
         final_stress = self.final_stress
-        stress = get_data_class('array')()
-        stress.set_array('final', final_stress)
-        return stress
+        if final_stress is None:
+            return None
+        else:
+            return {'final': final_stress}
 
     @property
     def maximum_stress(self):
