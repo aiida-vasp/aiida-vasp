@@ -3,6 +3,7 @@
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -21,20 +22,21 @@ class KpParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'kpoints-kpoints': {
             'inputs': [],
-            'nodeName': 'kpoints',
+            'name': 'kpoints',
             'prerequisites': [],
-            'alternatives': ['kpoints']
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(KpParser, self).__init__(*args, **kwargs)
+        self._kpoints = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_data(self, data):
         """Initialise with a given kpointsData object."""
         self._data_obj = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._kpoints = data
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -46,22 +48,26 @@ class KpParser(BaseFileParser):
 
         """
 
-        # The KpointsData has not been successfully parsed yet. So let's parse it.
-        if self._data_obj.get_attrs().get('mesh'):
-            mode = 'automatic'
-        elif self._data_obj.get_attrs().get('array|kpoints'):
-            mode = 'explicit'
+        if isinstance(self._data_obj, get_data_class('array.kpoints')):
+            # The KpointsData has not been successfully parsed yet. So let's parse it.
+            if self._data_obj.get_attrs().get('mesh'):
+                mode = 'automatic'
+            elif self._data_obj.get_attrs().get('array|kpoints'):
+                mode = 'explicit'
 
-        kpoints_dict = {}
-        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
-            kpoints_dict[keyword] = None
+            kpoints_dict = {}
+            for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+                kpoints_dict[keyword] = None
 
-        kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
+            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
 
-        try:
-            return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
-        except SystemExit:
-            return None
+            try:
+                return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
+            except SystemExit:
+                return None
+
+        # _data_obj is SingleFile:
+        return self._data_obj
 
     def _parse_file(self, inputs):
         """Create a DB Node from a KPOINTS file"""
@@ -78,13 +84,19 @@ class KpParser(BaseFileParser):
             self._logger.warning('Parsevasp exitited abnormally. Returning None.')
             return {'kpoints-kpoints': None}
 
-        mode = parsed_kpoints.entries.get('mode')
-        if mode == 'line':
-            self._logger.warning('The read KPOINTS contained line mode which is ' 'not supported. Returning None.')
+        if parsed_kpoints.entries.get('mode') == 'line':
+            self._logger.warning("The read KPOINTS contained line mode which is" "not supported. Returning None.")
             return {'kpoints-kpoints': None}
-        result['kpoints-kpoints'] = getattr(self, '_get_kpointsdata_' + mode)(parsed_kpoints.entries)
+        result['kpoints-kpoints'] = parsed_kpoints.entries
 
         return result
+
+    @property
+    def kpoints(self):
+        if self._kpoints is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._kpoints = composer.compose('array.kpoints', quantities=['kpoints-kpoints'])
+        return self._kpoints
 
     def _get_kpointsdict_explicit(self, kpointsdata):
         """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""

@@ -7,6 +7,7 @@ import numpy as np
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.parsers.node_composer import NodeComposer
 
 
 @pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
@@ -18,9 +19,16 @@ def test_parameter_results(outcar_parser):
 
     """
 
-    outcar_parser.settings.update_with({'add_outcar_parameters': True, 'output_params': ['symmetries', 'elastic_moduli']})
-    quantity = outcar_parser.get_quantity('outcar_parameters')
-    data_obj = quantity['outcar_parameters']
+    outcar_parser.settings.nodes.update({
+        'parameters': {
+            'type': 'parameter',
+            'quantities': ['symmetries', 'elastic_moduli'],
+            'link_name': 'my_custom_node'
+        }
+    })
+
+    composer = NodeComposer(file_parsers=[outcar_parser])
+    data_obj = composer.compose('parameter', quantities=['symmetries', 'elastic_moduli'])
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()

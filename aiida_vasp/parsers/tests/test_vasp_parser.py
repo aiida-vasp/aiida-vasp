@@ -18,20 +18,17 @@ class ExampleFileParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'quantity1': {
             'inputs': [],
-            'nodeName': 'structure',
-            'is_alternative': 'quantity_with_alternatives',
+            'name': 'quantity_with_alternatives',
             'prerequisites': []
         },
         'quantity2': {
             'inputs': [],
-            'nodeName': 'trajectory',
-            'is_alternative': 'trajectory',
+            'name': 'trajectory',
             'prerequisites': ['quantity1']
         },
         'quantity3': {
             'inputs': [],
-            'nodeName': '',
-            'is_alternative': 'non_existing_quantity',
+            'name': 'non_existing_quantity',
             'prerequisites': ['quantity_with_alternatives']
         },
     }
@@ -55,8 +52,7 @@ class ExampleFileParser2(BaseFileParser):
     PARSABLE_ITEMS = {
         'quantity1': {
             'inputs': [],
-            'nodeName': '',
-            'is_alternative': 'quantity_with_alternatives',
+            'name': 'quantity_with_alternatives',
             'prerequisites': []
         },
     }
@@ -79,15 +75,23 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     from aiida.orm.data.parameter import ParameterData
     vasp_calc, _ = vasp_nscf_and_ref
-    vasp_calc.use_settings(ParameterData(dict={'parser_settings': {'add_quantity_with_alternatives': True, 'add_quantity2': True}}))
+    vasp_calc.use_settings(
+        ParameterData(
+            dict={
+                'parser_settings': {
+                    'add_custom': {
+                        'link_name': 'custom_node',
+                        'type': 'parameter',
+                        'quantities': ['quantity2', 'quantity_with_alternatives']
+                    }
+                }
+            }))
     parser = vasp_calc.get_parserclass()(vasp_calc)
     parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
     parser.add_parsable_quantity(
         'quantity_with_alternatives',
         {
-            'file_name': 'DUMMY',
             'inputs': [],
-            'nodeName': 'structure',
             'prerequisites': [],
         },
     )
@@ -101,9 +105,8 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
 @ONLY_ONE_CALC
 def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
-    from aiida.orm.data.parameter import ParameterData
-
     parser = vasp_parser_with_test
+
     parser.quantities.setup()
     parser.parsers.setup()
 
@@ -130,15 +133,6 @@ def test_parsable_quantities(vasp_parser_with_test):
     # check whether the additional non existing quantity has been added. This is for cases,
     # where a quantity is an alternative to another main quantity, which has not been loaded.
     assert quantities.get_by_name('non_existing_quantity') is not None
-
-
-@ONLY_ONE_CALC
-def test_node_link_names(vasp_parser_with_test):
-    """Check whether an alternative quantity representing a node will be added with the correct linkname."""
-    parser = vasp_parser_with_test
-    assert 'quantity2' in parser._output_nodes
-    # 'quantity2' is alternative to 'trajectory', which is not going to be parsed here.
-    assert 'output_trajectory' in parser.new_nodes
 
 
 @ONLY_ONE_CALC
@@ -199,7 +193,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
         from aiida.orm import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'output_params': ['fermi_level']}}
+        settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_parameters': ['fermi_level']}}
         settings_dict.update(extra_settings)
         calc.use_settings(DataFactory('parameter')(dict=settings_dict))
         parser = VaspParser(calc=calc)

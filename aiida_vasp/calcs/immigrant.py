@@ -16,10 +16,6 @@ from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 
 
-def get_quantity_node(parser, quantity):
-    return parser.get_quantity(quantity, None)[quantity]
-
-
 class VaspImmigrantJobProcess(JobProcess):
     """
     JobProcess subclass for importing non-aiida VASP runs.
@@ -72,11 +68,12 @@ class VaspImmigrantJobProcess(JobProcess):
 
 
 def get_incar_input(dir_path):
-    return get_quantity_node(IncarParser(file_path=dir_path.join('INCAR').strpath), 'incar')
+    incar = IncarParser(file_path=dir_path.join('INCAR').strpath).incar
+    return get_data_node('parameter', dict=incar)
 
 
 def get_poscar_input(dir_path):
-    return get_quantity_node(PoscarParser(file_path=dir_path.join('POSCAR').strpath), 'poscar-structure')
+    return PoscarParser(file_path=dir_path.join('POSCAR').strpath).structure
 
 
 def get_potcar_input(dir_path, structure=None, potcar_spec=None):
@@ -97,14 +94,14 @@ def get_potcar_input(dir_path, structure=None, potcar_spec=None):
 
 def get_kpoints_input(dir_path, structure=None):
     structure = structure or get_poscar_input(dir_path)
-    kpoints = get_quantity_node(KpParser(file_path=dir_path.join('KPOINTS').strpath), 'kpoints-kpoints')
+    kpoints = KpParser(file_path=dir_path.join('KPOINTS').strpath).kpoints
     kpoints.set_cell_from_structure(structure)
     return kpoints
 
 
 def get_chgcar_input(dir_path):
-    return get_quantity_node(ChgcarParser(file_path=dir_path.join('CHGCAR').strpath), 'chgcar')
+    return ChgcarParser(file_path=dir_path.join('CHGCAR').strpath).chgcar
 
 
 def get_wavecar_input(dir_path):
-    return get_quantity_node(WavecarParser(file_path=dir_path.join('WAVECAR').strpath), 'wavecar')
+    return WavecarParser(file_path=dir_path.join('WAVECAR').strpath).wavecar

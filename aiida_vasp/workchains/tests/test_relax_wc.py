@@ -4,7 +4,7 @@ Test submitting a RelaxWorkChain.
 This does not seem to work, for `submit` the daemon will not pick up the workchain
 and `run` just seems to get stuck after a while.
 """
-# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name,no-member
 from __future__ import print_function
 
 import pytest
@@ -38,9 +38,9 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     comp = mock_vasp.get_computer()
     create_authinfo(computer=comp).store()
 
-    structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).get_quantity('poscar-structure', {})['poscar-structure']
-    kpoints = KpParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).get_quantity('kpoints-kpoints', {})['kpoints-kpoints']
-    parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).get_quantity('incar', {})['incar'].get_dict()
+    structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
+    kpoints = KpParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
+    parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion']}
     parameters['system'] = 'test-case:test_relax_wc'
 

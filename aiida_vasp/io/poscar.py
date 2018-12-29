@@ -5,6 +5,7 @@ import numpy as np
 from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
 from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -33,15 +34,15 @@ class PoscarParser(BaseFileParser):
     PARSABLE_ITEMS = {
         'poscar-structure': {
             'inputs': [],
-            'nodeName': 'structure',
+            'name': 'structure',
             'prerequisites': [],
-            'alternatives': ['structure']
         },
     }
 
     def __init__(self, *args, **kwargs):
         super(PoscarParser, self).__init__(*args, **kwargs)
         self.precision = 12
+        self._structure = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_precision(self, precision):
@@ -50,26 +51,27 @@ class PoscarParser(BaseFileParser):
     def _init_with_data(self, data):
         """Init with Aiida StructureData"""
         self._data_obj = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
+        self._structure = data
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
     def _parsed_object(self):
         """Return the parsevasp object representing the POSCAR file."""
 
-        try:
-            return Poscar(
-                poscar_dict=self.aiida_to_parsevasp(self._parsed_data['poscar-structure']),
-                prec=self.precision,
-                conserve_order=True,
-                logger=self._logger)
-        except SystemExit:
-            return None
+        if isinstance(self._data_obj, get_data_class('structure')):
+            # _data_obj is StructurData, return the parsed version if possible.
+            try:
+                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj), prec=self.precision, conserve_order=True)
+            except SystemExit:
+                return None
+        # _data_obj is a SingleFile:
+        return self._data_obj
 
     def _parse_file(self, inputs):
         """Read POSCAR file format."""
 
-        # check if structure have already been loaded, in that case just return
+        # check if structure has already been loaded, in that case just return
         if isinstance(self._data_obj, get_data_class('structure')):
             return {'poscar-structure': self._data_obj}
 
@@ -83,6 +85,13 @@ class PoscarParser(BaseFileParser):
         result = parsevasp_to_aiida(poscar)
 
         return result
+
+    @property
+    def structure(self):
+        if self._structure is None:
+            composer = NodeComposer(file_parsers=[self])
+            self._structure = composer.compose('structure', quantities=['poscar-structure'])
+        return self._structure
 
     def aiida_to_parsevasp(self, structure):
         """Convert Aiida StructureData to parsevasp's dictionary format."""
@@ -116,8 +125,6 @@ def parsevasp_to_aiida(poscar):
     # generate Aiida StructureData and add results from the loaded file
     result = {}
 
-    result['poscar-structure'] = get_data_class('structure')(cell=poscar_dict['unitcell'])
-
     for site in poscar_dict['sites']:
         specie = site['specie']
         # user can specify whatever they want for the elements, but
@@ -134,7 +141,11 @@ def parsevasp_to_aiida(poscar):
             symbols[symbol]
         except KeyError:
             symbol = 'X'
-        result['poscar-structure'].append_atom(position=site['position'], symbols=symbol, name=specie)
+
+        site['symbol'] = symbol
+        site['kind_name'] = specie
+
+    result['poscar-structure'] = poscar_dict
 
     return result
 
