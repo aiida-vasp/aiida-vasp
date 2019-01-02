@@ -238,7 +238,7 @@ class VasprunParser(BaseFileParser):
     @property
     def structure(self):
         """
-        Fetch a given structure and store as StructureData.
+        Fetch a given structure.
 
         Which structure to fetch is controlled by inputs.
 
@@ -257,8 +257,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch the structure.
 
-        After or at the last recorded ionic step from parsevasp
-        and store as StructureData.
+        After or at the last recorded ionic step from parsevasp.
 
         """
 
@@ -272,8 +271,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch the structure.
 
-        After or at the last recorded ionic step from parsevasp
-        and store as StructureData. Should in
+        After or at the last recorded ionic step from parsevasp. Should in
         principle be the same as the method above.
 
         """
@@ -285,8 +283,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch forces.
 
-        After or at the last recorded ionic step from parsevasp
-        and store as ArrayData.
+        After or at the last recorded ionic step from parsevasp.
 
         """
 
@@ -298,8 +295,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch forces.
 
-        After or at the last recorded
-        ionic step from parsevasp and store as ArrayData.
+        After or at the last recorded ionic step from parsevasp.
 
         """
 
@@ -334,8 +330,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch stess.
 
-        After or at the last recorded ionic step from parsevasp
-        and store as ArrayData.
+        After or at the last recorded ionic step from parsevasp.
 
         """
 
@@ -347,8 +342,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch stress.
 
-        After or at the last recorded ionic step from parsevasp
-        and store as ArrayData.
+        After or at the last recorded ionic step from parsevasp.
 
         """
 
@@ -382,7 +376,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch unitcells, positions, species, forces and stress.
 
-        For all calculation steps from parsevasp and store as TrajectoryData.
+        For all calculation steps from parsevasp.
 
         """
 
@@ -450,11 +444,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def energies(self, nosc=True):
-        """
-        Fetch the total energies.
-
-        Store as ArrayData for all calculations (i.e. ionic steps).
-        """
+        """Fetch the total energies for all calculations (i.e. ionic steps)."""
 
         # fetch the type of energies that the user wants to extract
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
@@ -482,12 +472,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def projectors(self):
-        """
-        Fetch the projectors.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the projectors."""
 
         proj = self._xml.get_projectors()
         if proj is None:
@@ -511,37 +496,33 @@ class VasprunParser(BaseFileParser):
 
     @property
     def dielectrics(self):
-        """
-        Fetch the dielectric function.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the dielectric function."""
 
         diel = self._xml.get_dielectrics()
         if diel is None:
             return None
         dielectrics = {}
-        energy = diel['energy']
-        idiel = diel['imag']
-        rdiel = diel['real']
+        energy = diel.get('energy')
+        idiel = diel.get('imag')
+        rdiel = diel.get('real')
+        epsilon = diel.get('epsilon')
+        epsilon_ion = diel.get('epsilon_ion')
         if energy is not None:
             dielectrics['ediel'] = energy
         if idiel is not None:
             dielectrics['rdiel'] = rdiel
         if rdiel is not None:
             dielectrics['idiel'] = idiel
+        if epsilon is not None:
+            dielectrics['epsilon'] = epsilon
+        if epsilon_ion is not None:
+            dielectrics['epsilon_ion'] = epsilon_ion
 
         return dielectrics
 
     @property
     def born_charges(self):
-        """
-        Fetch the Born effective charges.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the Born effective charges."""
 
         brn = self._xml.get_born()
         if brn is None:
@@ -551,12 +532,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def hessian(self):
-        """
-        Fetch the Hessian matrix.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the Hessian matrix."""
 
         hessian = self._xml.get_hessian()
         if hessian is None:
@@ -566,12 +542,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def dynmat(self):
-        """
-        Fetch the dynamical eigenvectors and eigenvalues.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the dynamical eigenvectors and eigenvalues."""
 
         dynmat = self._xml.get_dynmat()
         if dynmat is None:
@@ -583,12 +554,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def dos(self):
-        """
-        Fetch the total density of states.
-
-        Store as ArrayData.
-
-        """
+        """Fetch the total density of states."""
 
         dos = self._xml.get_dos()
         if dos is None:
