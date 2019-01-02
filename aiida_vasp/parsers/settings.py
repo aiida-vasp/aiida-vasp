@@ -59,7 +59,7 @@ NODES = {
     'parameters': {
         'link_name': 'output_parameters',
         'type': 'parameter',
-        'quantities': ['total_energies', 'symmetries', 'maximum_stress', 'maximum_force', 'fermi_level', 'elastic_moduli'],
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries'],
     },
     'kpoints': {
         'link_name': 'output_kpoints',

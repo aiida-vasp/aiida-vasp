@@ -2,7 +2,6 @@
 import re
 
 from parsevasp.outcar import Outcar
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.io.parser import BaseFileParser, SingleFile
 from aiida_vasp.parsers.node_composer import NodeComposer
 
@@ -30,6 +29,11 @@ class OutcarParser(BaseFileParser):
             'prerequisites': []
         },
         'symmetries': {
+            'inputs': [],
+            'name': 'symmetries',
+            'prerequisites': []
+        },
+        'symmetries_extended': {
             'inputs': [],
             'name': 'symmetries',
             'prerequisites': []
@@ -87,20 +91,19 @@ class OutcarParser(BaseFileParser):
         return result
 
     @property
-    def outcar_parameters(self):
-        """Assemble the 'output_params' node."""
-
-        parameters = {}
-        for quantity in self.settings.get('output_params', DEFAULT_OPTIONS['output_params']):
-            parameters[quantity] = getattr(self, quantity)
-
-        output_parameters = get_data_node('parameter', dict=parameters)
-
-        return output_parameters
+    def symmetries(self):
+        """Fetch the symmetries, but only the point group and space group (if it exists)."""
+        detailed = self.symmetries_extended
+        sym = {'symmetries': {'point_group': detailed['point_group']}}
+        try:
+            sym.update(detailed['space_group'])
+        except AttributeError:
+            pass
+        return sym
 
     @property
-    def symmetries(self):
-        """Fetch the symmetries."""
+    def symmetries_extended(self):
+        """Fetch the symmetries, including operations etc."""
         return self._outcar.get_symmetry()
 
     @property

@@ -13,8 +13,7 @@ DEFAULT_OPTIONS = {
         'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupancies', 'trajectory', 'energies', 'projectors', 'dielectrics',
         'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress'
     ],
-    'energy_type': ['energy_no_entropy'],
-    'output_params': []
+    'energy_type': ['energy_no_entropy']
 }
 
 

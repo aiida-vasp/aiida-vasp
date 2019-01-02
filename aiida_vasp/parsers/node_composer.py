@@ -7,7 +7,7 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
-    'parameter': ['total_energies', 'maximum_forces', 'maximum_stress', 'fermi_level'],
+    'parameter': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],
@@ -22,7 +22,7 @@ class NodeComposer(object):
     """
     Prototype for a generic NodeComposer, that will compose output nodes based on parsed quantities.
 
-    Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODE_TYPES.
+    Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
     def __init__(self, **kwargs):
