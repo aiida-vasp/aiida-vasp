@@ -313,7 +313,6 @@ def test_parameters(request):
         }
     }
     calc.use_settings(DataFactory('parameter')(dict=settings_dict))
-    # First fetch structure from vasprun
     parser = VaspParser(calc=calc)
     retrieved = DataFactory('folder')()
     vasprun_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/vasprun.xml')

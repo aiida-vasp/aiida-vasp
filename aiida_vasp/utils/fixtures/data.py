@@ -309,7 +309,6 @@ def outcar_parser(request):
     file_name = 'OUTCAR'
     path = data_path(request.param, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
-    #print(parser._outcar)
     return parser
 
 
