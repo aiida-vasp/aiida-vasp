@@ -251,7 +251,7 @@ def test_dielectrics_result(vasprun_parser):
     imag = data_obj.get_array('idiel')
     real = data_obj.get_array('rdiel')
     energy = data_obj.get_array('ediel')
-    # test shape of array
+    # test shape of arrays
     assert imag.shape == (1000, 6)
     assert real.shape == (1000, 6)
     assert energy.shape == (1000,)
@@ -264,6 +264,32 @@ def test_dielectrics_result(vasprun_parser):
     assert np.all(real[500] == np.array([-0.5237, -0.5366, -0.5366, 0.0, 0.0134, 0.0]))
     assert np.all(real[999] == np.array([6.57100000e-01, 6.55100000e-01, 6.55100000e-01, 0.0, -1.00000000e-04, 0.0]))
     assert energy[500] == 10.2933
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('disp_details',)], indirect=True)
+def test_epsilon_result(vasprun_parser):
+    """
+    Check that epsilon is returned inside the dielectric node.
+
+    Also check that the entries are as expected.
+
+    """
+
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['dielectrics'])
+    # test object
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    epsilon = data_obj.get_array('epsilon')
+    epsilon_ion = data_obj.get_array('epsilon_ion')
+    # test shape of arrays
+    assert epsilon.shape == (3, 3)
+    assert epsilon_ion.shape == (3, 3)
+    # test a few entries
+    test = np.array([[13.05544887, -0., 0.], [-0., 13.05544887, -0.], [0., 0., 13.05544887]])
+    assert np.allclose(epsilon, test)
+    test = np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
+    assert np.allclose(epsilon_ion, test)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('localfield',)], indirect=True)

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+/<?xml version="1.0" encoding="ISO-8859-1"?>
 <modeling>
  <generator>
   <i name="program" type="string">vasp </i>
@@ -3010,7 +3010,7 @@
   </eigenvalues>
   <separator name="orbital magnetization" >
    <v name="MAGDIPOLOUT">      0.00000000      0.00000000      0.00000000</v>
-  </separator>OA
+  </separator>
   <dos>
    <i name="efermi">      6.17267267 </i>
    <total>
