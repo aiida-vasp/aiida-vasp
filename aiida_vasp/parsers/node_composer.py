@@ -7,11 +7,11 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
-    'parameter': ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries'],
+    'parameter': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],
-    'array.bands': ['eigenvalues', 'kpoints', 'occupations'],
+    'array.bands': ['eigenvalues', 'kpoints', 'occupancies'],
     'vasp.chargedensity': ['chgcar'],
     'vasp.wavefun': ['wavecar'],
     'array': [],
@@ -22,7 +22,7 @@ class NodeComposer(object):
     """
     Prototype for a generic NodeComposer, that will compose output nodes based on parsed quantities.
 
-    Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODE_TYPES.
+    Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
     def __init__(self, **kwargs):
@@ -113,7 +113,7 @@ class NodeComposer(object):
         kpoints = get_data_class('array.kpoints')()
         self._compose_with_array_kpoints(kpoints, {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
-        node.set_bands(inputs['eigenvalues'], occupations=inputs['occupations'])
+        node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
 
     @staticmethod
     def _compose_with_array_kpoints(node, inputs):

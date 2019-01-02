@@ -59,7 +59,7 @@ NODES = {
     'parameters': {
         'link_name': 'output_parameters',
         'type': 'parameter',
-        'quantities': ['total_energies', 'symmetries', 'maximum_stress', 'maximum_force', 'fermi_level'],
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries'],
     },
     'kpoints': {
         'link_name': 'output_kpoints',
@@ -84,7 +84,7 @@ NODES = {
     'bands': {
         'link_name': 'output_bands',
         'type': 'array.bands',
-        'quantities': ['eigenvalues', 'kpoints', 'occupations'],
+        'quantities': ['eigenvalues', 'kpoints', 'occupancies'],
     },
     'dos': {
         'link_name': 'output_dos',

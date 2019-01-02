@@ -65,8 +65,8 @@ class ParserManager(object):
         self._quantities_to_parse = []
         for quantity_name in self._settings.quantities_to_parse:
             if not self._quantities.get_by_name(quantity_name):
-                self._vasp_parser.logger.warning('{quantity} has been requested by setting '
-                                                 'add_{quantity}. However it has not been implemented. '
+                self._vasp_parser.logger.warning('{quantity} has been requested, '
+                                                 'however its parser has not been implemented. '
                                                  'Please check the docstrings in aiida_vasp.parsers.vasp.py '
                                                  'for valid input.'.format(quantity=quantity_name))
                 continue

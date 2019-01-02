@@ -16,6 +16,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.vasprun import VasprunParser
+from aiida_vasp.io.outcar import OutcarParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
@@ -298,6 +299,16 @@ def vasprun_parser(request):
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)
     parser = VasprunParser(file_path=path, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def outcar_parser(request):
+    """Return an instance of OutcarParser for a reference OUTCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = 'OUTCAR'
+    path = data_path(request.param, file_name)
+    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
     return parser
 
 

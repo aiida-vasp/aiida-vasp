@@ -66,7 +66,7 @@ class MasterWorkChain(WorkChain):
         # spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         # spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
         # spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_occupations', valid_type=get_data_class('array'), required=False)
+        # spec.output('output_occupancies', valid_type=get_data_class('array'), required=False)
         # spec.output('output_energies', valid_type=get_data_class('array'), required=False)
         # spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
         # spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)

@@ -1,13 +1,118 @@
 """Tools for parsing OUTCAR files."""
 import re
 
-from aiida_vasp.io.parser import BaseFileParser
+from parsevasp.outcar import Outcar
+from aiida_vasp.io.parser import BaseFileParser, SingleFile
 from aiida_vasp.parsers.node_composer import NodeComposer
 
-DEFAULT_OPTIONS = ['outcar-volume', 'outcar-energies', 'outcar-efermi', 'symmetries']
+DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
 
 
 class OutcarParser(BaseFileParser):
+    """
+    Interface to parsevasp's OUTCAR parser.
+
+    The quantities listed here are not yet ejected in the xml file:
+    - symmetries
+    - elastic moduli
+
+    And we can thus not fully rely on the xml parser.
+
+    No posibilities to write OUTCAR files have been implemented.
+
+    """
+
+    PARSABLE_ITEMS = {
+        'elastic_moduli': {
+            'inputs': [],
+            'name': 'elastic_moduli',
+            'prerequisites': []
+        },
+        'symmetries': {
+            'inputs': [],
+            'name': 'symmetries',
+            'prerequisites': []
+        },
+        'symmetries_extended': {
+            'inputs': [],
+            'name': 'symmetries',
+            'prerequisites': []
+        }
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(OutcarParser, self).__init__(*args, **kwargs)
+        self._outcar = None
+        self.init_with_kwargs(**kwargs)
+
+    def _init_with_file_path(self, path):
+        """Init with a filepath."""
+        self._parsed_data = {}
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._data_obj = SingleFile(path=path)
+
+        # Since OUTCAR can be fairly large, we will parse it only
+        # once and store the parsevasp Outcar object.
+        try:
+            self._outcar = Outcar(file_path=path, logger=self._logger)
+        except SystemExit:
+            self._logger.warning("Parsevasp exited abruptly. Returning None.")
+            self._outcar = None
+
+    def _init_with_data(self, data):
+        """Init with SingleFileData."""
+        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._init_with_file_path(data.get_file_abs_path())
+
+    def _parse_file(self, inputs):
+
+        # Since all quantities will be returned by properties, we can't pass
+        # inputs as a parameter, so we store them in self._parsed_data
+        for key, value in inputs.items():
+            self._parsed_data[key] = value
+
+        quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
+        if self.settings is not None and self.settings.quantities_to_parse:
+            quantities_to_parse = self.settings.quantities_to_parse
+
+        result = {}
+
+        if self._outcar is None:
+            # parsevasp threw an exception, which means OUTCAR could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self.parsable_items:
+                    result[quantity] = None
+            return result
+
+        for quantity in quantities_to_parse:
+            if quantity in self.parsable_items:
+                result[quantity] = getattr(self, quantity)
+
+        return result
+
+    @property
+    def symmetries(self):
+        """Fetch the symmetries, but only the point group and space group (if it exists)."""
+        detailed = self.symmetries_extended
+        sym = {'symmetries': {'point_group': detailed['point_group']}}
+        try:
+            sym.update(detailed['space_group'])
+        except AttributeError:
+            pass
+        return sym
+
+    @property
+    def symmetries_extended(self):
+        """Fetch the symmetries, including operations etc."""
+        return self._outcar.get_symmetry()
+
+    @property
+    def elastic_moduli(self):
+        """Fetch the elastic moduli."""
+        return self._outcar.get_elastic_moduli()
+
+
+class LegacyOutcarParser(BaseFileParser):
     """
     Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
 
@@ -45,13 +150,12 @@ class OutcarParser(BaseFileParser):
     SPACE_GROUP_PATTERN = re.compile(r'space group is (.*?)\s*\.')
 
     def __init__(self, *args, **kwargs):
+        super(LegacyOutcarParser, self).__init__(*args, **kwargs)
         self._parameter = None
-        super(OutcarParser, self).__init__(*args, **kwargs)
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
-
         result = self._read_outcar(inputs)
         return result
 

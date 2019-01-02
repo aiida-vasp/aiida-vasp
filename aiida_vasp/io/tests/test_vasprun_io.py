@@ -13,10 +13,10 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 def test_parse_vasprun(vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
-    quantity = vasprun_parser.get_quantity('occupations')
-    occ = quantity['occupations'][0]
-    occupations = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
-    assert occ.all() == occupations.all()
+    quantity = vasprun_parser.get_quantity('occupancies')
+    occ = quantity['occupancies'][0]
+    occupancies = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
+    assert occ.all() == occupancies.all()
     # eFL: How do we want to store scalar values?
     #assert  == 7.29482275
 
@@ -26,7 +26,7 @@ def test_parameter_results(vasprun_parser):
     """
     Test that the parameter node is a ParametersData instance.
 
-    Should contain the Fermi level.
+    Should contain the Fermi level, total_energies, maximum_force and maximum_stress.
 
     """
 
@@ -94,8 +94,8 @@ def test_structure_result(vasprun_parser):
 def test_final_force_result(vasprun_parser):
     """Test that the forces are returned correctly."""
 
-    quantity = vasprun_parser.get_quantity('forces')
-    data_obj = quantity['forces']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['forces'])
     # check object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -114,8 +114,8 @@ def test_final_force_result(vasprun_parser):
 def test_final_stress_result(vasprun_parser):
     """Test that the stress are returned correctly."""
 
-    quantity = vasprun_parser.get_quantity('stress')
-    data_obj = quantity['stress']
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data_obj = composer.compose('array', quantities=['stress'])
     # check object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -399,7 +399,7 @@ def test_bands_result(vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupations'])
+    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupancies'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
@@ -429,7 +429,7 @@ def test_eigenocc_spin_result(vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupations'])
+    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupancies'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
