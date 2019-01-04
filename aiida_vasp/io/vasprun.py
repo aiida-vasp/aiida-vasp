@@ -59,7 +59,6 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'energies',
             'prerequisites': [],
-            'alternatives': ['outcar-energies']
         },
         'total_energies': {
             'inputs': [],
