@@ -22,13 +22,13 @@ def test_parameter_results(outcar_parser):
     outcar_parser.settings.nodes.update({
         'parameters': {
             'type': 'parameter',
-            'quantities': ['symmetries', 'elastic_moduli'],
+            'quantities': ['symmetries_extended', 'elastic_moduli'],
             'link_name': 'my_custom_node'
         }
     })
 
     composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('parameter', quantities=['symmetries', 'elastic_moduli'])
+    data_obj = composer.compose('parameter', quantities=['symmetries_extended', 'elastic_moduli'])
     ref_class = get_data_class('parameter')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
@@ -52,21 +52,7 @@ def test_parameter_results(outcar_parser):
                 'face centered cubic supercell.'
             ]
         },
-        'num_point_group_operations': {
-            'static': [24, 8, 8, 8, 8, 8, 8, 2, 2, 2, 2, 2, 2, 4, 4, 24],
-            'dynamic': [24, 8, 8, 8, 8, 8, 8, 2, 2, 2, 2, 2, 2, 4, 4, 24]
-        },
         'point_group': {
-            'static': [
-                'T_d', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2v.', 'C_2v.',
-                'T_d'
-            ],
-            'dynamic': [
-                'T_d', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'D_2d.', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2', 'C_2v.', 'C_2v.',
-                'T_d'
-            ]
-        },
-        'space_group': {
             'static': [
                 'O_h', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'D_2h.',
                 'D_2h.', 'O_h'
@@ -91,8 +77,11 @@ def test_parameter_results(outcar_parser):
         'num_space_group_operations': {
             'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
             'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
-        }
+        },
+        'primitive_translations': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     }
+    assert set(data_dict['symmetries']) == set(test)
+
     # then elastic moduli
     test = np.array([1674.5786, 704.739, 704.739, -0.0, 0.0, 0.0])
     np.testing.assert_allclose(data_dict['elastic_moduli']['symmetrized'][0], test)

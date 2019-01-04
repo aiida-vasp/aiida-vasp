@@ -92,19 +92,23 @@ class OutcarParser(BaseFileParser):
 
     @property
     def symmetries(self):
-        """Fetch the symmetries, but only the point group and space group (if it exists)."""
-        detailed = self.symmetries_extended
-        sym = {'symmetries': {'point_group': detailed['point_group']}}
-        try:
-            sym.update(detailed['space_group'])
-        except AttributeError:
-            pass
+        """Fetch the symmetries, but only the point group (if it exists)."""
+        extended = self.symmetries_extended
+        sym = {
+            'point_group': extended['point_group'],
+            'primitive_translations': extended['primitive_translations'],
+            'num_space_group_operations': extended['num_space_group_operations']
+        }
+
         return sym
 
     @property
     def symmetries_extended(self):
         """Fetch the symmetries, including operations etc."""
-        return self._outcar.get_symmetry()
+        sym = self._outcar.get_symmetry()
+        # We do not want to store the site symmetry at origin
+        sym = {key: value for key, value in sym.items() if key != 'site_symmetry_at_origin'}
+        return sym
 
     @property
     def elastic_moduli(self):
