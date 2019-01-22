@@ -367,6 +367,8 @@ class VasprunParser(BaseFileParser):
         """Fetch the maximum stress of at the last ionic run."""
 
         stress = self.final_stress
+        if stress is None:
+            return None
         norm = np.linalg.norm(stress, axis=1)
         return np.amax(np.abs(norm))
 
