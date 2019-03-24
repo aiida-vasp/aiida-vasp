@@ -44,7 +44,7 @@ class VersionUpdater(object):
 
     def __init__(self):
         """Initialize with documents that should be kept up to date and actual version."""
-        self.top_level_init = py_path.local(subpath('aiida_vasp', '__init__.py'))
+        self.top_level_init = py_path.local(subpath('src', 't4me', '__init__.py'))
         self.setup_json = py_path.local(subpath('setup.json'))
         self.version = self.get_version()
 

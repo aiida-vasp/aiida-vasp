@@ -7,14 +7,14 @@ try:
 except ImportError:
     from chainmap import ChainMap
 
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 from aiida_vasp.io.incar import IncarIo
 from aiida_vasp.io.potcar import MultiPotcarIo
 from aiida_vasp.io.poscar import PoscarParser
 from aiida_vasp.io.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.calcs.base import VaspCalcBase, Input
+from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.utils.inheritance import update_docstring
 
 PARAMETER_CLS = DataFactory('parameter')
@@ -73,48 +73,44 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    default_parser = 'vasp.vasp'
-    parameters = Input(types='parameter', doc='VASP INCAR parameters.')
-    structure = Input(types=['structure', 'cif'])
-    potential = Input(types='vasp.potcar', param='kind')
-    kpoints = Input(types='array.kpoints')
-    settings = Input(types='parameter', doc='Additional settings for the calculation.')
-    charge_density = Input(
-        types='vasp.chargedensity',
-        doc='chargedensity node: should be obtained from the output of a selfconsistent SCF calculation (written to CHGCAR)')
-    wavefunctions = Input(types='vasp.wavefun', doc='wavefunction node: to speed up convergence for continuation jobs')
-
     _DEFAULT_PARAMETERS = {}
     _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
-    def _prepare_for_submission(self, tempfolder, inputdict):
+    @classmethod
+    def define(cls, spec):
+        super(VaspCalculation, cls).define(spec)
+        spec.input('parameters', valid_type=get_data_class('parameter'), help='The VASP input parameters (INCAR).')
+        spec.input('structure', valid_type=(get_data_class('parameter'), get_data_class('cif')), help='The input structure (POSCAR).')
+        # Need dynamic on this as it should also accept a parameter `kind`
+        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
+        spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
+        spec.input(
+            'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
+        spec.input(
+            'settings', valid_type=get_data_class('parameter'), required=False, help='Additional parameters not related to VASP itself.')
+
+    def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
-        calcinfo = super(VaspCalculation, self)._prepare_for_submission(tempfolder, inputdict)
+        calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
         try:
-            additional_retrieve_list = inputdict['settings'].get_attr('ADDITIONAL_RETRIEVE_LIST')
+            additional_retrieve_list = self.inputs.settings.get_attr('ADDITIONAL_RETRIEVE_LIST')
         except (KeyError, AttributeError):
             additional_retrieve_list = []
         calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
         return calcinfo
 
-    def verify_inputs(self, inputdict, *args, **kwargs):
-        super(VaspCalculation, self).verify_inputs(inputdict, *args, **kwargs)
-        self.check_input(inputdict, 'parameters')
-        self.check_input(inputdict, 'structure')
+    def verify_inputs(self):
+        super(VaspCalculation, self).verify_inputs()
         if 'elements' not in self.attrs():
             self._prestore()
-        for kind in self._structure().get_kind_names():
-            self.check_input(inputdict, self._get_potential_linkname(kind))
-        self.check_input(inputdict, 'kpoints', self._need_kp)
-        self.check_input(inputdict, 'charge_density', self._need_chgd)
-        self.check_input(inputdict, 'wavefunctions', self._need_wfn)
 
     def _prestore(self):
         """Set attributes prior to storing."""
         super(VaspCalculation, self)._prestore()
-        self._set_attr('elements', ordered_unique_list(self.inp.structure.get_ase().get_chemical_symbols()))
+        self._set_attr('elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
 
     @classmethod
     def _get_potential_linkname(cls, kind):
@@ -123,7 +119,7 @@ class VaspCalculation(VaspCalcBase):
 
     @property
     def _parameters(self):
-        all_parameters = ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
+        all_parameters = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
         return {k.lower(): v for k, v in all_parameters.items()}
 
     @property
@@ -175,79 +171,75 @@ class VaspCalculation(VaspCalcBase):
 
     def _structure(self):
         """Get the input structure as sorted pymatgen structure object."""
-        structure = self.inp.structure
+        structure = self.inputs.structure
         if not hasattr(structure, 'get_pymatgen'):
             structure = get_data_node('structure', ase=structure.get_ase())
         return structure
 
-    def write_additional(self, tempfolder, inputdict):
+    def write_additional(self, tempfolder):
         """Write CHGAR and WAVECAR files if needed."""
-        super(VaspCalculation, self).write_additional(tempfolder, inputdict)
+        super(VaspCalculation, self).write_additional(tempfolder)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
-            self.write_chgcar(inputdict, chgcar)
+            self.write_chgcar(chgcar)
         if self._need_wfn():
             wavecar = tempfolder.get_abs_path('WAVECAR')
-            self.write_wavecar(inputdict, wavecar)
+            self.write_wavecar(wavecar)
 
-    def write_incar(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_incar(self, dst):  # pylint: disable=unused-argument
         """
         Converts from parameters node (ParameterData) to INCAR format and writes to dst.
 
         Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
 
-        :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        incar_dict = ChainMap(self.inp.parameters.get_dict(), self._DEFAULT_PARAMETERS)
+        incar_dict = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
         incar_io = IncarIo(incar_dict=incar_dict)
         incar_io.write(dst)
 
-    def write_poscar(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_poscar(self, dst):  # pylint: disable=unused-argument
         """
         Converts from structures node (StructureData) to POSCAR format and writes to dst.
 
-        :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        settings = inputdict.get('settings')
+        settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
         writer = PoscarParser(data=self._structure(), precision=poscar_precision)
         writer.get_quantity('poscar-structure', {})
         writer.write(dst)
 
-    def write_potcar(self, inputdict, dst):
+    def write_potcar(self, dst):
         """
         Concatenates multiple POTCAR files into one in the same order as the elements appear in POSCAR.
 
-        :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
         structure = self._structure()
         pot_key = self._get_potential_linkname
-        potentials = {symbol: inputdict[pot_key(symbol)] for symbol in structure.get_kind_names()}
+        potentials = {symbol: self.inputs.get(pot_key(symbol)) for symbol in structure.get_kind_names()}
         multi_potcar = MultiPotcarIo.from_structure(structure, potentials)
         multi_potcar.write(dst)
 
-    def write_kpoints(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_kpoints(self, dst):  # pylint: disable=unused-argument
         """
         Converts from kpoints node (KpointsData) to KPOINTS format and writes to dst.
 
-        :param inputdict: required by baseclass
         :param dst: absolute path of the file to write to
         """
-        kpoints = self.inp.kpoints
+        kpoints = self.inputs.kpoints
         kpoint_parser = KpParser(data=kpoints)
         kpoint_parser.write(dst)
 
-    def write_chgcar(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_chgcar(self, dst):  # pylint: disable=unused-argument
         import shutil
-        shutil.copyfile(self.inp.charge_density.get_file_abs_path(), dst)
+        shutil.copyfile(self.inputs.charge_density.get_file_abs_path(), dst)
 
-    def write_wavecar(self, inputdict, dst):  # pylint: disable=unused-argument
+    def write_wavecar(self, dst):  # pylint: disable=unused-argument
         import shutil
-        shutil.copyfile(self.inp.wavefunctions.get_file_abs_path(), dst)
+        shutil.copyfile(self.inputs.wavefunctions.get_file_abs_path(), dst)
 
     @classmethod
     def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):

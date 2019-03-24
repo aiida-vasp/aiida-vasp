@@ -17,8 +17,8 @@ def run_example():
 @example_param_set
 def noncol(potcar_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
-    from aiida.orm import CalculationFactory, Code
-    from aiida.work import submit
+    from aiida.plugins import CalculationFactory, Code
+    from aiida.engine import submit
     if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():
@@ -81,8 +81,8 @@ def noncol_builder(potcar_family, queue, code, calc_cls):
 @example_param_set
 def simple(potcar_family, import_from, queue, code, computer, no_import):
     load_dbenv_if_not_loaded()
-    from aiida.orm import CalculationFactory, Code
-    from aiida.work import submit
+    from aiida.plugins import CalculationFactory, Code
+    from aiida.engine import submit
     if not no_import:
         click.echo('importing POTCAR files...')
         with cli_spinner():

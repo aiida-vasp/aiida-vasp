@@ -1,6 +1,6 @@
 """Utilities to modify wannier parameters in a proveniency-trackable way"""
 from aiida.orm.calculation.inline import make_inline
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 
 @make_inline

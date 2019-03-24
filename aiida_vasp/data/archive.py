@@ -5,7 +5,7 @@ import tarfile
 import os
 import StringIO
 
-from aiida.orm.data import Data
+from aiida.orm.nodes import Data
 
 
 class ArchiveData(Data):

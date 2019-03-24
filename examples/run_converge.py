@@ -13,7 +13,7 @@ os.system('verdi daemon restart')
 def main(potential_family, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
-    from aiida.work import submit, run
+    from aiida.engine import submit, run
     from aiida_vasp.utils.aiida_utils import get_data_class
 
     # fetch the code to be used (tied to a computer)

@@ -7,10 +7,10 @@ Intended to be used to control convergence checks for plane-wave calculations.
 import copy
 import numpy as np
 
-from aiida.work.workchain import WorkChain, append_, while_, if_
+from aiida.engine.workchain import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import WorkflowFactory
-from aiida.orm.data.array.bands import find_bandgap
+from aiida.orm.nodes.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs

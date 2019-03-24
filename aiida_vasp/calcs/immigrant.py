@@ -2,9 +2,9 @@
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA."""
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
-from aiida.common.exceptions import InputValidationError
+from aiida.common import InputValidationError
 from aiida.common.lang import override
-from aiida.work import JobProcess
+from aiida.engine import JobCalc
 
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.io.incar import IncarParser
@@ -16,9 +16,9 @@ from aiida_vasp.io.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 
 
-class VaspImmigrantJobProcess(JobProcess):
+class VaspImmigrantJobProcess(JobCalc):
     """
-    JobProcess subclass for importing non-aiida VASP runs.
+    JobCalc subclass for importing non-aiida VASP runs.
 
     Simulate running the VaspCalculation up to the point where it can be retrieved and parsed,
     then hand over control to the runner for the rest.
@@ -29,8 +29,8 @@ class VaspImmigrantJobProcess(JobProcess):
         import plumpy
         from aiida.common.datastructures import calc_states
         from aiida.common.links import LinkType
-        from aiida.work.job_processes import RETRIEVE_COMMAND
-        from aiida.orm.calculation.job import _input_subfolder
+        from aiida.engine.job_processes import RETRIEVE_COMMAND
+        from aiida.engine.calculation.job import _input_subfolder
 
         _ = super(VaspImmigrantJobProcess, self).run()
 

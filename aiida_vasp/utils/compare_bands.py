@@ -1,6 +1,6 @@
 """Utilities for comparing band structures"""
 from aiida.orm.calculation.inline import optional_inline
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 BANDS_CLS = DataFactory('array.bands')
 

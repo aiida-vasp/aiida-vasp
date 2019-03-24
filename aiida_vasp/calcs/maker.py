@@ -1,7 +1,7 @@
 """A utility class to simplify creating VASP-Calculations, loosely follows the builder design pattern"""
 import os
 
-from aiida.orm import CalculationFactory, DataFactory
+from aiida.plugins import CalculationFactory, DataFactory
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 from aiida_vasp.calcs.vasp import ordered_unique_list

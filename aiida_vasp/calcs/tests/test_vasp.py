@@ -5,7 +5,7 @@ import os
 import math
 
 import pytest
-from aiida.common.exceptions import ValidationError
+from aiida.common import ValidationError
 from aiida.common.folders import SandboxFolder
 
 from aiida_vasp.io.potcar import MultiPotcarIo

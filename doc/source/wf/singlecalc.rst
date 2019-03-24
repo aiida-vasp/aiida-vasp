@@ -80,8 +80,8 @@ Parameters
    - path: list, according to :py:meth:`KpointsData.set_kpoints_path <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_path>`
 * paw_family: string, name of a PAW family. Ignored if continuing.
 * paw_map: dict, mapping chemical element to PAW symbol. Ignored if continuing.
-* queue: string, same as for :py:meth:`JobCalculation.set_queue_name <aiida.orm.calculation.job.JobCalculation.set_queue_name>`, optional when continuing.
-* resources: dict, num_machines and num_mpiprocs_per_machine keys as for :py:meth:`JobCalculation.set_resources <aiida.orm.calculation.job.JobCalculation.set_resources>`, optional when continuing.
+* queue: string, same as for :py:meth:`CalcJob.set_queue_name <aiida.orm.calculation.job.CalcJob.set_queue_name>`, optional when continuing.
+* resources: dict, num_machines and num_mpiprocs_per_machine keys as for :py:meth:`CalcJob.set_resources <aiida.orm.calculation.job.CalcJob.set_resources>`, optional when continuing.
 * vasp_code or wannier_code: string, like for invoking :py:meth:`Code.get_from_string <aiida.orm.code.Code.get_from_string>`.
 
 The following set of parameters can be used to label and categorize the calculations run by the workflow:

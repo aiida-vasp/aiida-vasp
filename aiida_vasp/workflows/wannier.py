@@ -14,7 +14,7 @@ class WannierWorkflow(Workflow):
 
     def get_wannier_calc(self, win, wdat):
         """Initialize a Wannier90 calculation"""
-        from aiida.orm import CalculationFactory, Code
+        from aiida.plugins import CalculationFactory, Code
         params = self.get_parameters()
         calc = CalculationFactory('vasp.wannier')()
         code = Code.get_from_string(params['wannier_code'])
@@ -33,7 +33,7 @@ class WannierWorkflow(Workflow):
     #pylint: disable=protected-access
     def start(self):
         """Prepare and launch the Wannier90 calculation"""
-        from aiida.orm import Calculation, DataFactory, load_node
+        from aiida.plugins import Calculation, DataFactory, load_node
         from aiida_vasp.utils.win import modify_wannier_parameters_inline
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())

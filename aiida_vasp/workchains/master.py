@@ -7,7 +7,7 @@ restart depending on physical principles etc. E.g. issues that are outside the C
 or not currently checked in it. This workchain does currently nothing.
 """
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work.workchain import WorkChain, if_, append_
+from aiida.engine.workchain import WorkChain, if_, append_
 from aiida.orm import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import prepare_process_inputs

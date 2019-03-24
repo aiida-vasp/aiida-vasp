@@ -42,7 +42,7 @@ class ProjectionsWorkflow(Workflow):
     def start(self):
         """Submit the calculation"""
         from aiida_vasp.utils.win import modify_wannier_parameters_inline
-        from aiida.orm import DataFactory
+        from aiida.plugins import DataFactory
         params = self.get_parameters()
         self.append_to_report(self.helper._wf_start_msg())
         maker = self.get_calc_maker()

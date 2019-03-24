@@ -7,9 +7,9 @@ to extract the k-point path.
 """
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work.workchain import WorkChain, append_
+from aiida.engine.workchain import WorkChain, append_
 from aiida.orm import WorkflowFactory
-from aiida.work.workfunctions import workfunction
+from aiida.engine.workfunctions import workfunction
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import prepare_process_inputs
 

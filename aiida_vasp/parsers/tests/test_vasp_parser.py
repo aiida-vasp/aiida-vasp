@@ -39,10 +39,10 @@ class ExampleFileParser(BaseFileParser):
         self._parsable_data = {}
 
     def _parse_file(self, inputs):
-        from aiida.orm.data.parameter import ParameterData
+        from aiida.orm.nodes.parameter import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_ITEMS:
-            result[quantity] = ParameterData(dict={})
+            result[quantity] = Dict(dict={})
         return result
 
 
@@ -63,20 +63,20 @@ class ExampleFileParser2(BaseFileParser):
         self._parsable_data = {}
 
     def _parse_file(self, inputs):
-        from aiida.orm.data.parameter import ParameterData
+        from aiida.orm.nodes.parameter import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_ITEMS:
-            result[quantity] = ParameterData(dict={})
+            result[quantity] = Dict(dict={})
         return result
 
 
 @pytest.fixture
 def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
-    from aiida.orm.data.parameter import ParameterData
+    from aiida.orm.nodes.parameter import Dict
     vasp_calc, _ = vasp_nscf_and_ref
     vasp_calc.use_settings(
-        ParameterData(
+        Dict(
             dict={
                 'parser_settings': {
                     'add_custom': {
@@ -190,7 +190,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
         load_dbenv_if_not_loaded()
-        from aiida.orm import CalculationFactory, DataFactory
+        from aiida.plugins import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
         settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_parameters': ['fermi_level']}}
@@ -229,7 +229,7 @@ def test_structure(request):
     """Test that the structure from vasprun and POSCAR is the same."""
 
     load_dbenv_if_not_loaded()
-    from aiida.orm import CalculationFactory, DataFactory
+    from aiida.plugins import CalculationFactory, DataFactory
     from aiida_vasp.parsers.vasp import VaspParser
     calc = CalculationFactory('vasp.vasp')()
     # turn of everything, except structure
@@ -289,7 +289,7 @@ def test_parameters(request):
     """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
 
     load_dbenv_if_not_loaded()
-    from aiida.orm import CalculationFactory, DataFactory
+    from aiida.plugins import CalculationFactory, DataFactory
     from aiida_vasp.parsers.vasp import VaspParser
     calc = CalculationFactory('vasp.vasp')()
     # turn of everything, except parameters

@@ -24,6 +24,6 @@ def test_get_base_data(aiida_env):
     """Make sure we can retrieve the Bool data type through get_data_class."""
     bool_cls = get_data_class('bool')
     bool_obj = get_data_node('bool', True)
-    from aiida.orm.data.base import Bool
+    from aiida.orm.nodes.base import Bool
     assert bool_cls == Bool
     assert isinstance(bool_obj, Bool)

@@ -156,7 +156,7 @@ class WorkflowHelper(object):
 
     def _verify_paws(self, params):
         """Check the paw input parameter for availability of the indicated paw nodes in the database."""
-        from aiida.orm import DataFactory
+        from aiida.plugins import DataFactory
         paw_cls = DataFactory('vasp.paw')
         log = ''
         valid = True

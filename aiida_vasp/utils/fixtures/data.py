@@ -141,7 +141,7 @@ def potentials(potcar_family):
 def vasp_structure(request, aiida_env):
     """Fixture: StructureData or CifData"""
     from aiida_vasp.backendtests.common import subpath
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     if request.param == 'cif':
         cif_path = subpath('data', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
@@ -185,7 +185,7 @@ def vasp_structure_poscar(vasp_structure):
 @pytest.fixture(params=['mesh', 'list'])
 def vasp_kpoints(request, aiida_env):
     """Fixture: (kpoints object, resulting KPOINTS)"""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     if request.param == 'mesh':
         kpoints = DataFactory('array.kpoints')()
         kpoints.set_kpoints_mesh([2, 2, 2])
@@ -241,7 +241,7 @@ def mock_vasp(aiida_env, localhost):
 @pytest.fixture()
 def vasp_chgcar(aiida_env):
     """CHGCAR node and reference fixture"""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida_vasp.backendtests.common import subpath
     chgcar_path = subpath('data', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
@@ -253,7 +253,7 @@ def vasp_chgcar(aiida_env):
 @pytest.fixture()
 def vasp_wavecar(aiida_env):
     """WAVECAR node and reference fixture"""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida_vasp.backendtests.common import subpath
     wavecar_path = subpath('data', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
@@ -284,7 +284,7 @@ def ref_win():
 @pytest.fixture()
 def ref_retrieved_nscf():
     """Fixture: retrieved directory from an NSCF vasp run"""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida_vasp.backendtests.common import subpath
     retrieved = DataFactory('folder')()
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
@@ -328,8 +328,8 @@ def _ref_kp_mesh():
 
 @pytest.fixture
 def wannier_params():
-    from aiida.orm.data.parameter import ParameterData
-    return ParameterData(dict=dict(
+    from aiida.orm.nodes.parameter import Dict
+    return Dict(dict=dict(
         dis_num_iter=1000,
         num_bands=24,
         num_iter=0,
@@ -340,7 +340,7 @@ def wannier_params():
 
 @pytest.fixture
 def wannier_projections():
-    from aiida.orm.data.base import List
+    from aiida.orm.nodes.base import List
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections

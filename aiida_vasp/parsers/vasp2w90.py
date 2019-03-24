@@ -1,6 +1,6 @@
 """AiiDA Parser for aiida_vasp.Vasp2w90Calculation"""
-from aiida.orm import DataFactory
-from aiida.orm.data.base import List
+from aiida.plugins import DataFactory
+from aiida.orm.nodes.base import List
 
 from aiida_vasp.io.win import WinParser
 from .vasp import VaspParser

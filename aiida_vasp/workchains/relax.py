@@ -2,8 +2,8 @@
 """Structure relaxation workchain."""
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work import WorkChain
-from aiida.work.workchain import append_, while_, if_
+from aiida.engine import WorkChain
+from aiida.engine.workchain import append_, while_, if_
 from aiida.orm import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node

@@ -53,9 +53,9 @@
         "dev": [
             "pre-commit == 1.8.2",
             "prospector == 0.12.11",
-            "pylint == 1.8.4",
+            "pylint == 1.9.4",
             "flake8",
-            "yapf == 0.23.0",
+            "yapf == 0.26.0",
             "coverage == 4.5.1",
             "pytest == 3.6.3",
             "pytest-cov == 2.5.1",

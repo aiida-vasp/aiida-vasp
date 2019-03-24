@@ -9,8 +9,8 @@ from auxiliary import (example_param_set, set_structure_si, set_kpoints, set_par
 @example_param_set
 def main(potential_family, queue, code, computer):
     load_dbenv_if_not_loaded()
-    from aiida.orm import Code, DataFactory
-    from aiida.work import submit
+    from aiida.plugins import Code, DataFactory
+    from aiida.engine import submit
 
     code = Code.get_from_string('{}@{}'.format(code, computer))
     builder = code.get_builder()

@@ -3,7 +3,7 @@ import tempfile
 import os
 
 from aiida.backends.testbase import AiidaTestCase
-from aiida.orm import CalculationFactory, Code
+from aiida.plugins import CalculationFactory, Code
 from aiida.common.folders import SandboxFolder
 
 from .common import Common

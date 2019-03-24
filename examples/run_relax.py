@@ -11,7 +11,7 @@ from auxiliary import example_param_set, create_structure_perturbed, set_kpoints
 def main(potential_family, queue, code, computer):
     load_dbenv_if_not_loaded()
     from aiida.orm import WorkflowFactory, Code
-    from aiida.work import submit, run
+    from aiida.engine import submit, run
 
     # fetch the code to be used (tied to a computer)
     code = Code.get_from_string('{}@{}'.format(code, computer))

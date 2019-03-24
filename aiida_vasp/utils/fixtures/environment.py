@@ -3,7 +3,7 @@
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
-from aiida.utils.fixtures import fixture_manager
+from aiida.manage.fixtures import fixture_manager
 
 
 @pytest.fixture(scope='session')

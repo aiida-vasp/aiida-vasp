@@ -6,8 +6,8 @@ from functools import wraps
 from aiida.common.datastructures import calc_states
 from aiida.common.exceptions import AiidaException
 from aiida.common.links import LinkType
-from aiida.orm.calculation import JobCalculation
-from aiida.work.workchain import WorkChain, append_
+from aiida.orm.calculation import CalcJob
+from aiida.engine.workchain import WorkChain, append_
 from aiida_vasp.utils.workchains import prepare_process_inputs, finished_ok_compat
 
 
@@ -82,8 +82,8 @@ class BaseRestartWorkChain(WorkChain):
     def __init__(self, *args, **kwargs):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
         self.exit_status = None
-        if self._calculation is None or not issubclass(self._calculation, JobCalculation):
-            raise ValueError('no valid JobCalculation class defined for _calculation attribute')
+        if self._calculation is None or not issubclass(self._calculation, CalcJob):
+            raise ValueError('no valid CalcJob class defined for _calculation attribute')
 
         # compatibility v0.12.x <-> v1.0.0-alpha
         self._error_handlers = []
@@ -392,7 +392,7 @@ A namedtuple to define an error handler for a :class:`~aiida.work.workchain.Work
 
 The priority determines in which order the error handling methods are executed, with
 the higher priority being executed first. The method defines an unbound WorkChain method
-that takes an instance of a :class:`~aiida.orm.implementation.general.calculation.job.AbstractJobCalculation`
+that takes an instance of a :class:`~aiida.orm.implementation.general.calculation.job.AbstractCalcJob`
 as its sole argument. If the condition of the error handler is met, it should return an :class:`.ErrorHandlerReport`.
 
 :param priority: integer denoting the error handlers priority

@@ -39,7 +39,7 @@ def parse_result(request, aiida_env, vasprun_path):
 
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
-        from aiida.orm import CalculationFactory, DataFactory
+        from aiida.plugins import CalculationFactory, DataFactory
         calc = CalculationFactory('vasp.vasp')()
         settings_dict = {'pymatgen_parser': {'parse_potcar_file': False, 'exception_on_bad_xml': request.param}}
         settings_dict.update(extra_settings)
@@ -58,7 +58,7 @@ def parse_result(request, aiida_env, vasprun_path):
 @pytest.fixture()
 def parse_nac(aiida_env):
     """Give the parsing result of a retrieved NAC calculation (emulated)."""
-    from aiida.orm import CalculationFactory, DataFactory
+    from aiida.plugins import CalculationFactory, DataFactory
     calc = CalculationFactory('vasp.vasp')()
     calc.use_settings(DataFactory('parameter')(dict={'pymatgen_parser': {'parse_potcar_file': False, 'exception_on_bad_xml': False}}))
     parser = PymatgenParser(calc=calc)
@@ -76,21 +76,21 @@ def parse_nac(aiida_env):
 
 def test_kpoints_result(parse_result):
     """Test that the kpoints result node is a KpointsData instance."""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     _, nodes = parse_result()
     assert isinstance(nodes['output_kpoints'], DataFactory('array.kpoints'))
 
 
 def test_structure_result(parse_result):
     """Test that the structure result node is a StructureData instance."""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     _, nodes = parse_result()
     assert isinstance(nodes['output_structure'], DataFactory('structure'))
 
 
 def test_forces_result(parse_result):
     """Check the parsed forces result node."""
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     _, nodes = parse_result()
     out_arr = nodes['output_array']
     out_traj = nodes['output_trajectory']

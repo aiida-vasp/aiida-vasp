@@ -7,7 +7,7 @@ import tempfile
 import numpy
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
-from aiida.common.exceptions import ValidationError
+from aiida.common import ValidationError
 from aiida.common.folders import SandboxFolder
 
 from aiida_vasp.utils.fixtures import *

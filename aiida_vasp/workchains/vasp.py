@@ -6,11 +6,11 @@ Any validation and / or error handling that applies to *every* VASP run,
 should be handled on this level, so that every workchain can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
-from aiida.work.workchain import while_
-from aiida.work.job_processes import override
+from aiida.engine.workchain import while_
+from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
-from aiida.orm import Code, CalculationFactory
+from aiida.plugins import Code, CalculationFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
 from aiida_vasp.workchains.restart import BaseRestartWorkChain

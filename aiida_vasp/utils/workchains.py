@@ -2,7 +2,7 @@
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm.data.parameter import ParameterData
+from aiida.orm.nodes.parameter import Dict
 
 
 def prepare_process_inputs(inputs):
@@ -19,7 +19,7 @@ def prepare_process_inputs(inputs):
 
     for key, val in inputs.iteritems():
         if key not in ['_options', 'options'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
-            prepared_inputs[key] = ParameterData(dict=val)
+            prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
 

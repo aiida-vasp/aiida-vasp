@@ -123,7 +123,7 @@ from aiida.common import aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida.orm import Group
-from aiida.orm.data import Data
+from aiida.orm.nodes import Data
 from aiida.orm.querybuilder import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData

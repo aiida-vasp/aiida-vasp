@@ -2,10 +2,34 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
+from aiida.engine utils import instantiate_process
+from aiida.orm import Code
+from aiida.common.extendeddicts import AttributeDict
+from aiida.manage.manager import get_manager
 from aiida_vasp.utils.aiida_utils import get_data_node
 from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar, wannier_params, \
     wannier_projections, ref_win
 
+
+@pytest.fixture()
+def vasp_base_calc(fresh_aiida_env, vasp_params, vasp_structure):
+    from aiida_vasp.calcs.base import VaspCalcBase
+    manager = get_manager()
+    runner = manager.get_runner()
+    inputs = AttributeDict()
+    inputs.code = Code()
+    inputs.computer =
+    inputs.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
+    inputs.parameters = vasp_params
+    inputs.structure = vasp_structure
+    inputs.potential = potentials['In']
+    inputs.potent
+        calc.use_potential(potentials['In'], kind='In')
+        calc.use_potential(potentials['As'], kind='As')
+        calc.use_potential(potentials['In_d'], kind='In_d')
+        calc.use_structure(vasp_structure)
+
+    instantiate_process(runner, VaspCalcBase, **inputs)
 
 @pytest.fixture
 def vasp_calc_and_ref(create_calc_and_ref, ref_incar):

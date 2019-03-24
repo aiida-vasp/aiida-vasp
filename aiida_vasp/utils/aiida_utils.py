@@ -34,7 +34,7 @@ def get_data_class(data_type):
 
     compatiblity: also provide access to the orm.data.base memebers, which are loadable through the DataFactory as of 1.0.0-alpha only.
     """
-    from aiida.orm import DataFactory
+    from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingPluginError
     data_cls = None
     try:
@@ -52,7 +52,7 @@ BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str'])
 
 @dbenv
 def get_basic_data_pre_1_0(data_type):
-    from aiida.orm.data import base as base_data
+    from aiida.orm.nodes import base as base_data
     return getattr(base_data, data_type.capitalize())
 
 
@@ -82,7 +82,7 @@ def get_current_user():
 
 
 def builder_interface(calc_cls):
-    """Return the JobProcess or the JobCalculation class, depending on aiida version."""
+    """Return the JobProcess or the CalcJob class, depending on aiida version."""
     if hasattr(calc_cls, 'get_builder'):
         return True
     return False

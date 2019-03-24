@@ -1,6 +1,6 @@
 """Test common code in VaspCalcBase"""
 from aiida.backends.testbase import AiidaTestCase
-from aiida.orm import CalculationFactory, Code
+from aiida.plugins import CalculationFactory, Code
 
 
 class VaspCalcBaseTest(AiidaTestCase):

@@ -3,7 +3,7 @@ import os
 from os.path import dirname, realpath, join
 
 import numpy as np
-from aiida.orm import DataFactory
+from aiida.plugins import DataFactory
 
 
 def subpath(*args):

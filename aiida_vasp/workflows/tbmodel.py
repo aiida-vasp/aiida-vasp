@@ -1,7 +1,7 @@
 """AiiDA - VASP workflow to get tight binding model of a material using VASP and wannier90"""
 from aiida.common import aiidalogger
 from aiida.common.exceptions import NotExistent
-from aiida.orm import DataFactory, Group, CalculationFactory, Code
+from aiida.plugins import DataFactory, Group, CalculationFactory, Code
 from aiida.orm.workflow import Workflow
 
 from aiida_vasp.calcs.maker import VaspMaker

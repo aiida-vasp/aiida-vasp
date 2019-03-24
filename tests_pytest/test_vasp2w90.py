@@ -10,9 +10,9 @@ def test_vasp2w90(
         get_gaas_process_inputs,  # pylint: disable=redefined-outer-name
         assert_finished):
     """Vasp2w90 unit test"""
-    from aiida.work.run import run
-    from aiida.orm import DataFactory
-    from aiida.orm.data.base import List
+    from aiida.engine.run import run
+    from aiida.plugins import DataFactory
+    from aiida.orm.nodes.base import List
 
     process, inputs = get_gaas_process_inputs(
         calculation_string='vasp.vasp2w90', parameters={
