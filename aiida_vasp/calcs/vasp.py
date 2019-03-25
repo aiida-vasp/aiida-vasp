@@ -176,15 +176,15 @@ class VaspCalculation(VaspCalcBase):
             structure = get_data_node('structure', ase=structure.get_ase())
         return structure
 
-    def write_additional(self, tempfolder):
+    def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
-            self.write_chgcar(chgcar)
+            self.write_chgcar(chgcar, calcinfo)
         if self._need_wfn():
             wavecar = tempfolder.get_abs_path('WAVECAR')
-            self.write_wavecar(wavecar)
+            self.write_wavecar(wavecar, calcinfo)
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
         """
@@ -233,13 +233,13 @@ class VaspCalculation(VaspCalcBase):
         kpoint_parser = KpParser(data=kpoints)
         kpoint_parser.write(dst)
 
-    def write_chgcar(self, dst):  # pylint: disable=unused-argument
-        with open(dst, 'w') as out_handle, self.inputs.charge_density.open() as in_handle:
-            out_handle.writelines(line for line in in_handle)
+    def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
+        charge_density = self.inputs.charge_density
+        calcinfo.local_copy_list.append((charge_density.uuid, charge_density.filename, dst))
 
-    def write_wavecar(self, dst):  # pylint: disable=unused-argument
-        with open(dst, 'w') as out_handle, self.inputs.wavefunctions.open() as in_handle:
-            out_handle.writelines(line for line in in_handle)
+    def write_wavecar(self, dst, calcinfo):  # pylint: disable=unused-argument
+        wave_functions = self.inputs.wavefunctions
+        calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
 
     @classmethod
     def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):

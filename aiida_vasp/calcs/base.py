@@ -67,7 +67,6 @@ class VaspCalcBase(CalcJob):
         self.write_poscar(structure)
         self.write_potcar(potentials)
         self.write_kpoints(kpoints)
-        self.write_additional(tempfolder)
 
         # calcinfo
         calcinfo = CalcInfo()
@@ -78,6 +77,10 @@ class VaspCalcBase(CalcJob):
         codeinfo.code_pk = self.get_code().pk
         calcinfo.codes_info = [codeinfo]
         calcinfo.remote_copy_list = remote_copy_list
+        # here we need to do the charge density and wave function copy
+        # as we need access to the calcinfo
+        calcinfo.local_copy_list = []
+        self.write_additional(tempfolder, calcinfo)
 
         return calcinfo
 
@@ -123,7 +126,7 @@ class VaspCalcBase(CalcJob):
         """Subclass hook for updating attributes etc, just before storing"""
         pass
 
-    def write_additional(self, tempfolder):
+    def write_additional(self, tempfolder, calcinfo):
         """Subclass hook to write additional input files."""
         pass
 
