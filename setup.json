@@ -51,8 +51,8 @@
     }, 
     "extras_require": {
         "dev": [
-            "pre-commit == 1.8.2",
-            "prospector == 0.12.11",
+            "pre-commit == 1.14.4",
+            "prospector == 1.1.5",
             "pylint == 1.9.4",
             "flake8",
             "yapf == 0.26.0",

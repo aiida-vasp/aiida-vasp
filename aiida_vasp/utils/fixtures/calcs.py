@@ -2,32 +2,37 @@
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 
-from aiida.engine utils import instantiate_process
+from aiida.engine.utils import instantiate_process
 from aiida.orm import Code
 from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.manager import get_manager
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar, wannier_params, \
     wannier_projections, ref_win
 
 
 @pytest.fixture()
-def vasp_base_calc(fresh_aiida_env, vasp_params, vasp_structure):
+def base_calc(fresh_aiida_env, vasp_params, vasp_structure, potentials):
     from aiida_vasp.calcs.base import VaspCalcBase
     manager = get_manager()
     runner = manager.get_runner()
     inputs = AttributeDict()
     inputs.code = Code()
-    inputs.computer =
+    inputs.computer = 'localhost'
     inputs.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     inputs.parameters = vasp_params
     inputs.structure = vasp_structure
-    inputs.potential = potentials['In']
-    inputs.potent
-        calc.use_potential(potentials['In'], kind='In')
-        calc.use_potential(potentials['As'], kind='As')
-        calc.use_potential(potentials['In_d'], kind='In_d')
-        calc.use_structure(vasp_structure)
+    print(potentials)
+    assert False
+    sys.exit(1)
+    inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=self.inputs.structure,
+                                                                                                            family_name=self.inputs.potential_family.value,
+                                                                                                            mapping=self.inputs.potential_mapping.get_dict())   
+    
+    calc.use_potential(potentials['In'], kind='In')
+    calc.use_potential(potentials['As'], kind='As')
+    calc.use_potential(potentials['In_d'], kind='In_d')
+    calc.use_structure(vasp_structure)
 
     instantiate_process(runner, VaspCalcBase, **inputs)
 
