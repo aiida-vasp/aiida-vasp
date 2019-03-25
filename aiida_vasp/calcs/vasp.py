@@ -234,12 +234,12 @@ class VaspCalculation(VaspCalcBase):
         kpoint_parser.write(dst)
 
     def write_chgcar(self, dst):  # pylint: disable=unused-argument
-        import shutil
-        shutil.copyfile(self.inputs.charge_density.get_file_abs_path(), dst)
+        with open(dst, 'w') as out_handle, self.inputs.charge_density.open() as in_handle:
+            out_handle.writelines(line for line in in_handle)
 
     def write_wavecar(self, dst):  # pylint: disable=unused-argument
-        import shutil
-        shutil.copyfile(self.inputs.wavefunctions.get_file_abs_path(), dst)
+        with open(dst, 'w') as out_handle, self.inputs.wavefunctions.open() as in_handle:
+            out_handle.writelines(line for line in in_handle)
 
     @classmethod
     def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):

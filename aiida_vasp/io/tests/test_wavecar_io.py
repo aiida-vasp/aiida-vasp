@@ -13,7 +13,6 @@ def test_parse_wavecar():
     path = data_path('wavecar', 'WAVECAR')
     parser = WavecarParser(file_path=path)
     result = parser.wavecar
-    with open(result.get_file_abs_path(), 'r') as file_obj:
-        content = file_obj.readline()
+    content = result.get_content()
     assert result.filename == 'WAVECAR'
     assert content == 'This is a test WAVECAR file.\n'
