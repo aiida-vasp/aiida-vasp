@@ -47,7 +47,7 @@ def get_data_class(data_type):
     return data_cls
 
 
-BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str'])
+BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str', 'dict'])
 
 
 @dbenv

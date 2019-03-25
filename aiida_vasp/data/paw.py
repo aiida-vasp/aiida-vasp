@@ -5,12 +5,16 @@ Legacy PAW Pseudopotential data node.
 
 THIS MODULE IS DEPRECATED AND MAY BE REMOVED IN FUTURE VERSIONS.
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.common.utils import md5_file
 from aiida.orm import Data
 from aiida.orm.querybuilder import QueryBuilder
+import six
+from six.moves import filter
 
 
 class LegacyPawData(Data):
@@ -142,8 +146,8 @@ class LegacyPawData(Data):
             except Exception:  # pylint: disable=broad-except
                 import sys
                 err = sys.exc_info()[1]
-                print 'WARNING: skipping ' + os.path.abspath(os.path.join(family_path, pawf))
-                print '  ' + err.__class__.__name__ + ': ' + err.message
+                print('WARNING: skipping ' + os.path.abspath(os.path.join(family_path, pawf)))
+                print('  ' + err.__class__.__name__ + ': ' + err.message)
         return paw_list
 
     @property
@@ -201,7 +205,7 @@ class LegacyPawData(Data):
         """
 
         def node_filter(node):
-            for key, value in kwargs.iteritems():
+            for key, value in six.iteritems(kwargs):
                 if not node.get_attr(key) == value:
                     return False
             return True
@@ -229,7 +233,7 @@ class LegacyPawData(Data):
             query_builder = QueryBuilder()
             query_builder.append(cls, tag='paw')
             filters = {}
-            for key, value in kwargs.iteritems():
+            for key, value in six.iteritems(kwargs):
                 filters['attributes.{}'.format(key)] = {'==': value}
             query_builder.add_filter('paw', filters)
             res = [i[0] for i in query_builder.all()]
@@ -240,7 +244,7 @@ class LegacyPawData(Data):
                 created = not group.is_stored  # pylint: disable=protected-access
             try:
                 paw_filter = cls._node_filter(**kwargs)
-                res = filter(paw_filter, group.nodes)
+                res = list(filter(paw_filter, group.nodes))
             except ValueError as err:
                 if silent:
                     res = []

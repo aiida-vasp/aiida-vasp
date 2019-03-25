@@ -1,5 +1,7 @@
 """Run a vasp workflow from json input."""
 
+from __future__ import absolute_import
+from __future__ import print_function
 import argparse
 from aiida import load_dbenv
 load_dbenv()
@@ -41,7 +43,7 @@ def main():
                 raise IOError('invalid input:\n' + log)
             # ~ wf.store()
             workflow.start()
-            print '\n'.join(workflow.get_report())
+            print('\n'.join(workflow.get_report()))
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 """Unit tests for vasp-potcar command family"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
@@ -59,7 +61,7 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
-    print result.output
+    print(result.output)
 
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
