@@ -9,7 +9,7 @@ def prepare_process_inputs(inputs):
     """
     Prepare the inputs dictionary for a calculation.
 
-    Any remaining bare dictionaries in the inputs dictionary will be wrapped in a ParameterData data node
+    Any remaining bare dictionaries in the inputs dictionary will be wrapped in a Dict data node
     except for the '_options/options' key which should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
     This is the format used by input groups as in for example the explicit pseudo dictionary where the key is

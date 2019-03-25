@@ -46,7 +46,7 @@ Usage::
             data = example_file.read()
             item1 = int(re.findall(r'item1 is: (\d+)', data)[0]) * inputs['required_quantity']  # extract item 1
             item2 = [int(i) for i in re.findall(r'item2: (\d+)', data)]  # extract list of item2
-            output_node = get_data_class('parameter')(dict={  # construct ParameterData node
+            output_node = get_data_class('parameter')(dict={  # construct Dict node
                 'item1': item1,
                 'item2': item2
             }

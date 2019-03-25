@@ -91,7 +91,7 @@ To find one POTCAR for each in a list of element names, all from the same family
    potcars_for_elements = PotcarData.get_potcars_dict(
       elements=['Ac', 'Ag', ..], <family_name>, mapping=mapping)
 
-The ``mapping`` dictionary is required to decide which of the variants the set provides for each element should be chosen. The mapping can also conveniently be stored in a ``ParameterData`` node for reuse.
+The ``mapping`` dictionary is required to decide which of the variants the set provides for each element should be chosen. The mapping can also conveniently be stored in a ``Dict`` node for reuse.
 
 How to pass POTCAR potentials to a VASP run?
 --------------------------------------------

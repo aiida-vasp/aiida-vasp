@@ -79,5 +79,5 @@ Reference: vasp.relax outputs
 
 The following output nodes are created upon successful completion:
 
- * `output_parameters`, type: `ParameterData`, the default scalar / fixed dimension output properties of the final relaxation calculation. These might be used to do further sanity checks or take decisions for later stages of a more complex workchain.
+ * `output_parameters`, type: `Dict`, the default scalar / fixed dimension output properties of the final relaxation calculation. These might be used to do further sanity checks or take decisions for later stages of a more complex workchain.
  * `output_structure_relaxed`, type: `StructureData`, The relaxed structure.

@@ -109,7 +109,7 @@ class PymatgenParser(BaseParser):
             problem = 'vasprun.xml contains invalid xml'
             solution_tpl = 'try parsing it anyway using\n{example}'
             example = '\n'.join([
-                '', 'vasp_calc.use_settings(ParameterData(dict={', '    "pymatgen_parser": {', '        "exception_on_bad_xml": False',
+                '', 'vasp_calc.use_settings(Dict(dict={', '    "pymatgen_parser": {', '        "exception_on_bad_xml": False',
                 '    }', '}))', ''
             ])
             msg = msg_tpl.format(problem=problem, solution=solution_tpl.format(example=example))

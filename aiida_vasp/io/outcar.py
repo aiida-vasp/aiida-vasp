@@ -118,7 +118,7 @@ class OutcarParser(BaseFileParser):
 
 class LegacyOutcarParser(BaseFileParser):
     """
-    Parse OUTCAR into a dictionary, which is supposed to be turned into ParameterData later.
+    Parse OUTCAR into a dictionary, which is supposed to be turned into Dict later.
 
     For constructor params and more details check the documentation for ``aiida_vasp.io.parser`` and
     ``aiida_vasp.io.parser.BaseParser``.

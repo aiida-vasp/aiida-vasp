@@ -178,7 +178,7 @@ class IncarIo(object):
 
     def get_param_node(self):
         """
-        Create a ParameterData node containing the incar key/value pairs.
+        Create a Dict node containing the incar key/value pairs.
 
         :kwarg annotate: [True] store the node and add extras to preserve
             order and comments of the INCAR. Implies that the node gets stored in the process!
@@ -378,7 +378,7 @@ class IncarParser(BaseFileParser):
         self.init_with_kwargs(**kwargs)
 
     def _init_with_data(self, data):
-        """Initialise with a given ParameterData object."""
+        """Initialise with a given Dict object."""
         self._data_obj = data
         self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}

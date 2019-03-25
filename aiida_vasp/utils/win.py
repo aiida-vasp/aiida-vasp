@@ -8,8 +8,8 @@ def modify_wannier_parameters_inline(original, modifications):  # pylint: disabl
     """
     An InlineCalculation for modifying wannier parameters ('.win' file).
 
-    :key ParameterData original: base parameters, can be overridden
-    :key ParameterData modifications: additional parameters and overrides
+    :key Dict original: base parameters, can be overridden
+    :key Dict modifications: additional parameters and overrides
 
     if original comes from a VASP2WANNIER setup and num_wann is overriden,
     num_bands will automatically be set accordingly.

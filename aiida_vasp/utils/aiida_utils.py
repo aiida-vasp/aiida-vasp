@@ -89,7 +89,7 @@ def builder_interface(calc_cls):
 
 
 def copy_parameter(old_parameter):
-    """Assemble a new ParameterData."""
+    """Assemble a new Dict."""
     return get_data_node('parameter', dict=old_parameter.get_dict())
 
 

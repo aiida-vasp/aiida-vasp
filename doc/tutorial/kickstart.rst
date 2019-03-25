@@ -362,7 +362,7 @@ nodes is watched quickly in a text form by
                           |
    -- /VaspCalculation [684]-FolderData [686]
                           |
-                           \-ParameterData [687]
+                           \-Dict [687]
 
 Once a calculation could run successively, it is time to start trying
 AiiDA tutorial (http://www.aiida.net/tutorials/) with AiiDA-VASP and

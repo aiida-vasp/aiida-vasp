@@ -48,10 +48,10 @@ class VaspCalculation(VaspCalcBase):
         proc = CalculationFactory('vasp.vasp').process()
         inputs = proc.get_inputs_template()
 
-        inputs.parameter = <ParameterData with INCAR params>
+        inputs.parameter = <Dict with INCAR params>
         inputs.structure = <StructureData> or <CifData>
         inputs.kpoints = <KpointsData>
-        inputs.settings = <ParameterData with parser settings etc>
+        inputs.settings = <Dict with parser settings etc>
         inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure, ...)
         inputs.code = <Code representing vasp on your cluster>
         inputs._options = <Computer, resources, etc, AiiDA specific stuff>
@@ -60,7 +60,7 @@ class VaspCalculation(VaspCalcBase):
 
     Example Low-Level usage::
 
-        ## assuming already set up incar (ParameterData), structure, kpoints, settings, etc
+        ## assuming already set up incar (Dict), structure, kpoints, settings, etc
         calc = CalculationFactory('vasp.vasp')()
         calc.use_parameter(incar)
         calc.use_structure(structure)
@@ -188,7 +188,7 @@ class VaspCalculation(VaspCalcBase):
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
         """
-        Converts from parameters node (ParameterData) to INCAR format and writes to dst.
+        Converts from parameters node (Dict) to INCAR format and writes to dst.
 
         Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
 

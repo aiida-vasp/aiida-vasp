@@ -37,14 +37,14 @@ class VaspParser(BaseParser):
 
     This particular class manages all the specific file parsers in
     aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
-    to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
+    to the calculation based on the 'parser_settings' card in the 'settings' Dict of the
     corresponding VaspCalculation.
 
     Parser Settings usage:
 
     Parser settings can be passed through the input node `settings` as follows::
 
-        settings = ParameterData(dict={
+        settings = Dict(dict={
             'parser_settings': {
                 ...
             }

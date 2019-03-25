@@ -193,7 +193,7 @@ def test_parser_string_parsevasp():
 def test_write_parser(tmpdir, incar_dict_example):
     """Test writing an INCAR from a dict, read and compare."""
 
-    # create ParameterData instances
+    # create Dict instances
     incar_params = get_data_class('parameter')(dict=incar_dict_example)
     assert isinstance(incar_params, get_data_class('parameter'))
     parser = IncarParser(data=incar_params)

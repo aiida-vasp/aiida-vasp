@@ -150,7 +150,7 @@ class MasterWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Make sure we do not have any floating dict (convert to ParameterData)
+        # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
     def run_workchain(self):

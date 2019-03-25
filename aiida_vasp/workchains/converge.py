@@ -438,7 +438,7 @@ class ConvergeWorkChain(WorkChain):
     def _init_conv(self):
         """Initialize the convergence tests."""
 
-        # Fetch a temporary StructureData and ParameterData that we will use throughout,
+        # Fetch a temporary StructureData and Dict that we will use throughout,
         # overwrite previous inputs (they are still stored in self.inputs for later ref).
         # Since we cannot execute a calc (that seals the node on completion) we store
         # these in converge instead of input and copy them over when needed.
@@ -706,7 +706,7 @@ class ConvergeWorkChain(WorkChain):
         if self.ctx.set_input_nodes:
             self._set_input_nodes()
 
-        # Make sure we do not have any floating dict (convert to ParameterData) in the input
+        # Make sure we do not have any floating dict (convert to Dict) in the input
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
     def run_next_workchain(self):

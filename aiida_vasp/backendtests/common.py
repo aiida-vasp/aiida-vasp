@@ -67,7 +67,7 @@ class Common(object):
 
     @staticmethod
     def parameters():
-        """Create ParameterData object with common parameters"""
+        """Create Dict object with common parameters"""
         parameters = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': .05}
         return DataFactory('parameter')(dict=parameters)
 
