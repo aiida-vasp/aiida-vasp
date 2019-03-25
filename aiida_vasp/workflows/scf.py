@@ -1,5 +1,5 @@
 """AiiDA - VASP workflow to run a VASP scf calculation"""
-from aiida.common import aiidalogger
+from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.orm import Workflow
 
 from .helper import WorkflowHelper

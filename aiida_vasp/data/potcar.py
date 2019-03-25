@@ -119,10 +119,10 @@ from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
-from aiida.common import aiidalogger
+from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
-from aiida.orm import Group
+from aiida.orm import Group, GroupTypeString
 from aiida.orm.nodes import Data
 from aiida.orm.querybuilder import QueryBuilder
 

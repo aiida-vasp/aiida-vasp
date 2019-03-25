@@ -3,7 +3,8 @@ import os
 import tempfile
 
 from aiida.backends.testbase import AiidaTestCase
-from aiida.plugins import CalculationFactory, Code, DataFactory
+from aiida.plugins import CalculationFactory, DataFactory
+from aiida.orm import Code
 
 from aiida_vasp.io.incar import IncarIo
 from .common import Common

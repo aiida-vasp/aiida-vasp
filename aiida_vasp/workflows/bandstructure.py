@@ -1,5 +1,5 @@
 """AiiDA - Workflow to get bandstructure of a material using VASP"""
-from aiida.common import aiidalogger
+from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.orm.workflow import Workflow
 from aiida.plugins import DataFactory
 

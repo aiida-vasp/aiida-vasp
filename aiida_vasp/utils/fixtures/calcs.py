@@ -27,12 +27,7 @@ def base_calc(fresh_aiida_env, vasp_params, vasp_structure, potentials):
     sys.exit(1)
     inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=self.inputs.structure,
                                                                                                             family_name=self.inputs.potential_family.value,
-                                                                                                            mapping=self.inputs.potential_mapping.get_dict())   
-    
-    calc.use_potential(potentials['In'], kind='In')
-    calc.use_potential(potentials['As'], kind='As')
-    calc.use_potential(potentials['In_d'], kind='In_d')
-    calc.use_structure(vasp_structure)
+                                                                                                            mapping=self.inputs.potential_mapping.get_dict())
 
     instantiate_process(runner, VaspCalcBase, **inputs)
 

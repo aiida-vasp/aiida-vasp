@@ -14,7 +14,8 @@ class WannierWorkflow(Workflow):
 
     def get_wannier_calc(self, win, wdat):
         """Initialize a Wannier90 calculation"""
-        from aiida.plugins import CalculationFactory, Code
+        from aiida.plugins import CalculationFactory
+        from aiida.orm import Code
         params = self.get_parameters()
         calc = CalculationFactory('vasp.wannier')()
         code = Code.get_from_string(params['wannier_code'])
