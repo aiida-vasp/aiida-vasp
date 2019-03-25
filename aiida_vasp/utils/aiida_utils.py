@@ -3,6 +3,7 @@ from functools import wraps
 import numpy as np
 from packaging import version
 
+from aiida.orm import User
 
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
@@ -69,15 +70,8 @@ def backend_obj_users():
 
 @dbenv
 def get_current_user():
-    """Get current user backwards compatibly with aiida-core <= 0.12.1."""
-    current_user = None
-    if backend_obj_users():
-        from aiida.orm.backend import construct_backend  # pylint: disable=no-name-in-module
-        backend = construct_backend()
-        current_user = backend.users.get_automatic_user()
-    else:
-        from aiida.backends.utils import get_automatic_user  # pylint: disable=no-name-in-module
-        current_user = get_automatic_user()
+    """Get current user."""
+    current_user = User.objects.get_default()
     return current_user
 
 
@@ -167,29 +161,11 @@ def create_authinfo(computer, store=False):
     """
     Allow the current user to use the given computer.
 
-    Deal with backwards compatibility down to aiida 0.11
     """
-    from aiida.orm import backend as orm_backend
-    authinfo = None
-    if hasattr(orm_backend, 'construct_backend'):
-        backend = orm_backend.construct_backend()
-        authinfo = backend.authinfos.create(computer=computer, user=get_current_user())
-        if store:
-            authinfo.store()
-    else:
-        from aiida.backends.settings import BACKEND
-        from aiida.backends.profile import BACKEND_SQLA, BACKEND_DJANGO
-
-        if BACKEND == BACKEND_DJANGO:
-            from aiida.backends.djsite.db.models import DbAuthInfo
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
-        elif BACKEND == BACKEND_SQLA:
-            from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
-            from aiida.backends.sqlalchemy import get_scoped_session
-            _ = get_scoped_session()
-            authinfo = DbAuthInfo(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())
-        if store:
-            authinfo.save()
+    from aiida.orm import AuthInfo
+    authinfo = AuthInfo(computer=computer, user=get_current_user())
+    if store:
+        authinfo.store()
     return authinfo
 
 

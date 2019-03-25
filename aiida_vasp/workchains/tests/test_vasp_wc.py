@@ -31,7 +31,7 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
 
     mock_vasp.store()
     comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp).store()
+    create_authinfo(computer=comp, store=True)
 
     # ~ os_env = os.environ.copy()
     # ~ sp.call(['verdi', 'daemon', 'start'], env=os_env)

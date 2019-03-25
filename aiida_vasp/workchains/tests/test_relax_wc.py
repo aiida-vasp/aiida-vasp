@@ -36,7 +36,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
 
     mock_vasp.store()
     comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp).store()
+    create_authinfo(computer=comp, store=True)
 
     structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
     kpoints = KpParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
