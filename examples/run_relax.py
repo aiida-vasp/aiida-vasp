@@ -41,7 +41,7 @@ def main(potential_family, queue, code, computer):
     # set structure
     inputs.structure = create_structure_perturbed()
     # set parameters
-    inputs.parameters = get_data_node('parameter', dict={
+    inputs.parameters = get_data_node('dict', dict={
         'encut': 240, 'ismear': 0,
         'sigma': 0.1, 'system': 'test system',
     })  # yapf: disable
@@ -49,17 +49,17 @@ def main(potential_family, queue, code, computer):
     inputs.kpoints = set_kpoints()
     # set potentials and their mapping
     inputs.potential_family = get_data_node('str', potential_family)
-    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
+    inputs.potential_mapping = get_data_node('dict', dict={'Si': 'Si'})
     # set options
-    inputs.options = get_data_node('parameter', dict=options)
+    inputs.options = get_data_node('dict', dict=options)
     # set settings
-    inputs.settings = get_data_node('parameter', dict=settings)
+    inputs.settings = get_data_node('dict', dict=settings)
     # set workchain related inputs
     # turn relaxation on
     inputs.perform = get_data_node('bool', True)
     inputs.convergence_on = get_data_node('bool', True)
     inputs.convergence_positions = get_data_node('float', 0.1)
-    inputs.relax_parameters = get_data_node('parameter', dict={
+    inputs.relax_parameters = get_data_node('dict', dict={
         'ediffg': -0.0001
     })  # yapf: disable
     inputs.verbose = get_data_node('bool', True)

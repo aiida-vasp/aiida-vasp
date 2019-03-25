@@ -69,7 +69,7 @@ class VaspImmigrantJobProcess(JobCalc):
 
 def get_incar_input(dir_path):
     incar = IncarParser(file_path=dir_path.join('INCAR').strpath).incar
-    return get_data_node('parameter', dict=incar)
+    return get_data_node('dict', dict=incar)
 
 
 def get_poscar_input(dir_path):

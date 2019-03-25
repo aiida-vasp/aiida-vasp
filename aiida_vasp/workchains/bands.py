@@ -60,9 +60,9 @@ class BandsWorkChain(WorkChain):
         super(BandsWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'settings'))
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'))
-        spec.input('parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('bands_parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('bands_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'kpoints_distance',
             valid_type=get_data_class('float'),
@@ -122,7 +122,7 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_parameters_seekpath', valid_type=get_data_class('parameter'))
+        spec.output('output_parameters_seekpath', valid_type=get_data_class('dict'))
         spec.output('output_bands', valid_type=get_data_class('array.bands'))
         spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'))
         spec.output('output_structure_primitive', valid_type=get_data_class('structure'))
@@ -161,7 +161,7 @@ class BandsWorkChain(WorkChain):
         """Initialize inputs."""
         self.ctx.inputs.parameters = self._init_parameters()
 
-        self.ctx.inputs.seekpath_parameters = get_data_node('parameter', dict={'reference_distance': self.inputs.kpoints_distance.value})
+        self.ctx.inputs.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value

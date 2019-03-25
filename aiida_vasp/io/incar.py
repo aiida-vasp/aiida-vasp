@@ -183,7 +183,7 @@ class IncarIo(object):
         :kwarg annotate: [True] store the node and add extras to preserve
             order and comments of the INCAR. Implies that the node gets stored in the process!
         """
-        node = get_data_node('parameter', dict=self.get_dict())
+        node = get_data_node('dict', dict=self.get_dict())
         return node
 
 
@@ -405,7 +405,7 @@ class IncarParser(BaseFileParser):
         result = inputs
         result = {}
 
-        if isinstance(self._data_obj, get_data_class('parameter')):
+        if isinstance(self._data_obj, get_data_class('dict')):
             return {'incar': self._data_obj}
 
         try:

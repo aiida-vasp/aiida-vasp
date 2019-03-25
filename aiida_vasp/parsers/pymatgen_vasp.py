@@ -153,5 +153,5 @@ class PymatgenParser(BaseParser):
         output_parameter_dict = self.vasprun_adapter.output_dict
         if self.outcar_adapter:
             output_parameter_dict.update(self.outcar_adapter.output_dict)
-        output_parameters = get_data_node('parameter', dict=output_parameter_dict)
+        output_parameters = get_data_node('dict', dict=output_parameter_dict)
         return output_parameters

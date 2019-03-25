@@ -41,7 +41,7 @@ def vasp_calc_and_ref(create_calc_and_ref, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     from aiida_vasp.calcs.vasp import VaspCalculation
     calc, ref = create_calc_and_ref(VaspCalculation, ref_incar=ref_incar)
-    calc.use_settings(get_data_node('parameter', dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
+    calc.use_settings(get_data_node('dict', dict={'parser_settings': {'add_bands': True, 'add_dos': True}}))
     return calc, ref
 
 
@@ -52,7 +52,7 @@ def vasp2w90_calc_and_ref(create_calc_and_ref, ref_incar_vasp2w90, wannier_param
     calc, ref = create_calc_and_ref(Vasp2w90Calculation, ref_incar=ref_incar_vasp2w90)
     calc.use_wannier_parameters(wannier_params)
     calc.use_wannier_projections(wannier_projections)
-    calc.use_settings(get_data_node('parameter', dict={'poscar_precision': 12}))
+    calc.use_settings(get_data_node('dict', dict={'poscar_precision': 12}))
     ref['win'] = ref_win
     return calc, ref
 

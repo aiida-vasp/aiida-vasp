@@ -69,7 +69,7 @@ def set_kpoints():
 def set_params_noncol():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(
         dict={
             'SYSTEM': 'InAs',
@@ -89,12 +89,12 @@ def set_params_noncol():
 def set_params_simple():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1})
 
 
 def set_params_simple_no_encut():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(dict={'prec': 'NORMAL', 'ediff': 1E-4, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})

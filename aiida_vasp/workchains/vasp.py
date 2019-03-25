@@ -49,10 +49,10 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), required=True)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=True)
         spec.input('potential_family', valid_type=get_data_class('str'), required=True)
-        spec.input('potential_mapping', valid_type=get_data_class('parameter'), required=True)
-        spec.input('parameters', valid_type=get_data_class('parameter'), required=True)
-        spec.input('options', valid_type=get_data_class('parameter'), required=True)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('potential_mapping', valid_type=get_data_class('dict'), required=True)
+        spec.input('parameters', valid_type=get_data_class('dict'), required=True)
+        spec.input('options', valid_type=get_data_class('dict'), required=True)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.input(
@@ -84,7 +84,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        spec.output('output_parameters', valid_type=get_data_class('dict'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
@@ -115,7 +115,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             if 'icharg' in parameters:
                 parameters.icharg = 1
             if parameters != old_parameters:
-                self.ctx.inputs.parameters = get_data_node('parameter', dict=parameters)
+                self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
 
     def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""

@@ -106,7 +106,7 @@ For a single VASP run, you might use the ``vasp.base`` workflow, which takes the
 
    inputs = AttributeDict()
    inputs.potcar_famliy = Str('<name>')
-   inputs.potcar_mapping = get_data_node('parameter', dict={'In': 'In_d', 'As': 'As'})
+   inputs.potcar_mapping = get_data_node('dict', dict={'In': 'In_d', 'As': 'As'})
 
 The ``VaspBaseWf`` takes care of finding the right files and concatenating them for you.
 

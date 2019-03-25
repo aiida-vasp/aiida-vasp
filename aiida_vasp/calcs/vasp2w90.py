@@ -1,4 +1,4 @@
-# pylint: disable=abstract-method
+]# pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VASP2Wannier90 - Calculation"""
 from aiida.plugins import DataFactory
@@ -18,7 +18,7 @@ class Vasp2w90Calculation(VaspCalculation):
     @classmethod
     def define(cls, spec):
         super(Vasp2w90Calculation, cls).define(spec)
-        spec.input('wannier_parameters', valid_type=get_data_class('parameter'), help='Input parameters for the Wannier90 interface.')
+        spec.input('wannier_parameters', valid_type=get_data_class('dict'), help='Input parameters for the Wannier90 interface.')
         spec.input(
             'wannier_projections',
             valid_type=(get_data_class('orbital'), List),
@@ -31,7 +31,7 @@ class Vasp2w90Calculation(VaspCalculation):
 
     @staticmethod
     def new_wannier_parameters(**kwargs):
-        return DataFactory('parameter')(**kwargs)
+        return DataFactory('dict')(**kwargs)
 
     def write_additional(self, tempfolder):
         super(Vasp2w90Calculation, self).write_additional(tempfolder)

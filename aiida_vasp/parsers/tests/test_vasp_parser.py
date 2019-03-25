@@ -81,7 +81,7 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
                 'parser_settings': {
                     'add_custom': {
                         'link_name': 'custom_node',
-                        'type': 'parameter',
+                        'type': 'dict',
                         'quantities': ['quantity2', 'quantity_with_alternatives']
                     }
                 }
@@ -195,7 +195,7 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
         calc = CalculationFactory('vasp.vasp')()
         settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_parameters': ['fermi_level']}}
         settings_dict.update(extra_settings)
-        calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+        calc.use_settings(DataFactory('dict')(dict=settings_dict))
         parser = VaspParser(calc=calc)
         retrieved = DataFactory('folder')()
         fldr = "basic"
@@ -219,7 +219,7 @@ def test_parser_nodes(_parse_me):
     parameters = nodes['output_parameters']
     bands = nodes['output_bands']
     kpoints = nodes['output_kpoints']
-    assert isinstance(parameters, get_data_class('parameter'))
+    assert isinstance(parameters, get_data_class('dict'))
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
     assert parameters.get_dict()['fermi_level'] == 5.96764939
@@ -252,7 +252,7 @@ def test_structure(request):
             'file_parser_set': 'default'
         }
     }
-    calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+    calc.use_settings(DataFactory('dict')(dict=settings_dict))
     # First fetch structure from vasprun
     parser = VaspParser(calc=calc)
     retrieved = DataFactory('folder')()
@@ -312,7 +312,7 @@ def test_parameters(request):
             'file_parser_set': 'default',
         }
     }
-    calc.use_settings(DataFactory('parameter')(dict=settings_dict))
+    calc.use_settings(DataFactory('dict')(dict=settings_dict))
     parser = VaspParser(calc=calc)
     retrieved = DataFactory('folder')()
     vasprun_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/vasprun.xml')
@@ -322,7 +322,7 @@ def test_parameters(request):
     success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
     nodes = dict(nodes)
     parameters = nodes['output_parameters']
-    assert isinstance(parameters, get_data_class('parameter'))
+    assert isinstance(parameters, get_data_class('dict'))
     data = parameters.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so
     # only perform rudimentary checks, and the content comming from the xml file.

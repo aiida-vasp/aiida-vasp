@@ -50,11 +50,11 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
-    inputs.parameters = get_data_node('parameter', dict=parameters)
+    inputs.parameters = get_data_node('dict', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('parameter', dict=POTCAR_MAP)
+    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
     inputs.options = get_data_node(
-        'parameter',
+        'dict',
         dict={
             'withmpi': False,
             'queue_name': 'None',

@@ -17,7 +17,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.utils.inheritance import update_docstring
 
-PARAMETER_CLS = DataFactory('parameter')
+PARAMETER_CLS = DataFactory('dict')
 SINGLEFILE_CLS = DataFactory('singlefile')
 
 _IMMIGRANT_EXTRA_KWARGS = """
@@ -81,8 +81,8 @@ class VaspCalculation(VaspCalcBase):
     @classmethod
     def define(cls, spec):
         super(VaspCalculation, cls).define(spec)
-        spec.input('parameters', valid_type=get_data_class('parameter'), help='The VASP input parameters (INCAR).')
-        spec.input('structure', valid_type=(get_data_class('parameter'), get_data_class('cif')), help='The input structure (POSCAR).')
+        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
+        spec.input('structure', valid_type=(get_data_class('dict'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need dynamic on this as it should also accept a parameter `kind`
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
@@ -90,7 +90,7 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
         spec.input(
-            'settings', valid_type=get_data_class('parameter'), required=False, help='Additional parameters not related to VASP itself.')
+            'settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
 
     def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""

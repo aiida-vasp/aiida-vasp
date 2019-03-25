@@ -29,10 +29,10 @@ class ConvergeWorkChain(WorkChain):
     def define(cls, spec):
         super(ConvergeWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings'))
-        spec.input('parameters', valid_type=get_data_class('parameter'))
+        spec.input('parameters', valid_type=get_data_class('dict'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'encut',
             valid_type=get_data_class('float'),
@@ -277,7 +277,7 @@ class ConvergeWorkChain(WorkChain):
         spec.expose_outputs(cls._next_workchain)
         spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
 
-        # spec.output('output_parameters', valid_type=get_data_class('parameter'))
+        # spec.output('output_parameters', valid_type=get_data_class('dict'))
         # spec.output('remote_folder', valid_type=get_data_class('remote'))
         # spec.output('retrieved', valid_type=get_data_class('folder'))
         # spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
@@ -550,7 +550,7 @@ class ConvergeWorkChain(WorkChain):
             try:
                 converge.parameters = self.inputs.parameters.clone()
             except AttributeError:
-                converge.parameters = get_data_node('parameter')
+                converge.parameters = get_data_node('dict')
             if not supplied_kmesh and kgrid_org is None:
                 self._set_default_kgrid()
             # Turn on plane wave convergene tests.
@@ -613,7 +613,7 @@ class ConvergeWorkChain(WorkChain):
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()
         converged_parameters_dict.update({'encut': self.ctx.converge.settings.encut})
-        self.ctx.inputs.parameters = get_data_node('parameter', dict=converged_parameters_dict)
+        self.ctx.inputs.parameters = get_data_node('dict', dict=converged_parameters_dict)
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
@@ -700,7 +700,7 @@ class ConvergeWorkChain(WorkChain):
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.encut)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
             param_dict['system'] = location
-            self.ctx.converge.parameters = get_data_node('parameter', dict=param_dict)
+            self.ctx.converge.parameters = get_data_node('dict', dict=param_dict)
 
         # Set input nodes
         if self.ctx.set_input_nodes:
@@ -762,7 +762,7 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.settings.encut = encut
         parameters_dict = self.ctx.converge.parameters.get_dict()
         parameters_dict.update({'encut': self.ctx.converge.settings.encut})
-        self.ctx.converge.parameters = get_data_node('parameter', dict=parameters_dict)
+        self.ctx.converge.parameters = get_data_node('dict', dict=parameters_dict)
         self.ctx.running_pw = True
         self.ctx.running_kpoints = False
         inform_details = self.ctx.converge.settings.get('inform_details')

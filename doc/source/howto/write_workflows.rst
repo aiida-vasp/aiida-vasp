@@ -37,8 +37,8 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          spec.input('code', valid_type=Code)
          spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
          spec.input('potential_family', valid_type=Str)
-         spec.input('potential_mapping', valid_type=get_data_class('parameter'))
-         spec.input('incar_overrides', valid_type=get_data_class('parameter'), required=False)
+         spec.input('potential_mapping', valid_type=get_data_class('dict'))
+         spec.input('incar_overrides', valid_type=get_data_class('dict'), required=False)
          spec.input('machines', valid_type=Int, required=False)
          spec.input('mpi_procs', valid_type=Int, required=False)
          spec.input('queue_name', valid_type=Str, required=False)
@@ -80,7 +80,7 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          options = AttributeDict()
          options.resources = {'num_machines': machines.value, 'num_mpiprocs_per_machine': mpi_procs.value}
          options.queue_name = queue_name.value
-         return get_data_node('parameter', dict=options)
+         return get_data_node('dict', dict=options)
       
       def _generate_kpoints(self):
          """How to generate KpointData nodes is documented in AiiDA's documentation."""
@@ -96,7 +96,7 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
             ## Set defaults here
          }
          incar_dict.update(overrides)  ## Apply user provided optional overrides
-         incar = get_data_node('parameter', dict=incar_dict)
+         incar = get_data_node('dict', dict=incar_dict)
          return incar
 
 This example uses the ``vasp.vasp`` workchain to run a single VASP calculation with defaults. Please also consult the example `run_vasp_lean` file, which might differ from the the example above. Please always use the example file as a base for your developments as the documentation might lag behind current developments. Aiida and aiida-vasp are still in its early stages, so rapid development is to be expected. Higher complexity can be achieved using WorkChain control flow features like conditionals, loops, etc, described in the AiiDA documentation linked above.

@@ -155,7 +155,7 @@ class VaspCalcBase(CalcJob):
         builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': remote_path.strpath})
-        builder.settings = get_data_node('parameter', dict=settings)
+        builder.settings = get_data_node('dict', dict=settings)
         with cmp_get_transport(code.get_computer()) as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = py_path.local(sandbox.abspath)

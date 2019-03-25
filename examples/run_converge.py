@@ -51,11 +51,11 @@ def main(potential_family, queue, code, computer):
     inputs.parameters = set_params_simple()
     # set potentials and their mapping
     inputs.potential_family = get_data_class('str')(potential_family)
-    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
+    inputs.potential_mapping = get_data_node('dict', dict={'Si': 'Si'})
     # set options
-    inputs.options = get_data_node('parameter', dict=options)
+    inputs.options = get_data_node('dict', dict=options)
     # set settings
-    inputs.settings = get_data_node('parameter', dict=settings)
+    inputs.settings = get_data_node('dict', dict=settings)
     # set workchain related inputs
     inputs.relax = get_data_node('bool', False)
     inputs.converge_relax = get_data_node('bool', False)

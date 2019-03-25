@@ -48,9 +48,9 @@ class RelaxWorkChain(WorkChain):
         super(RelaxWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'relax_parameters', 'settings'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('relax_parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('relax_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'relax',
             valid_type=get_data_class('bool'),

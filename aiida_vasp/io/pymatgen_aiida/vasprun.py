@@ -77,7 +77,7 @@ class VasprunToAiida(object):
     @property
     def output_parameters(self):
         """Collect scalars and small arrays into a results Dict node."""
-        output_params = get_data_node('parameter', dict=self.output_dict)
+        output_params = get_data_node('dict', dict=self.output_dict)
         return output_params
 
     @property

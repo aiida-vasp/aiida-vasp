@@ -21,15 +21,15 @@ def test_parameter_results(outcar_parser):
 
     outcar_parser.settings.nodes.update({
         'parameters': {
-            'type': 'parameter',
+            'type': 'dict',
             'quantities': ['symmetries_extended', 'elastic_moduli'],
             'link_name': 'my_custom_node'
         }
     })
 
     composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('parameter', quantities=['symmetries_extended', 'elastic_moduli'])
-    ref_class = get_data_class('parameter')
+    data_obj = composer.compose('dict', quantities=['symmetries_extended', 'elastic_moduli'])
+    ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     # test symmetries
