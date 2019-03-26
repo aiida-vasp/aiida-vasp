@@ -140,7 +140,7 @@ def potentials(potcar_family):
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
     """Fixture: StructureData or CifData"""
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     from aiida.plugins import DataFactory
     if request.param == 'cif':
         cif_path = subpath('data', 'EntryWithCollCode43360.cif')
@@ -242,7 +242,7 @@ def mock_vasp(aiida_env, localhost):
 def vasp_chgcar(aiida_env):
     """CHGCAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     chgcar_path = subpath('data', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r') as ref_chgcar_fo:
@@ -254,7 +254,7 @@ def vasp_chgcar(aiida_env):
 def vasp_wavecar(aiida_env):
     """WAVECAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     wavecar_path = subpath('data', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r') as ref_wavecar_fo:
@@ -264,7 +264,7 @@ def vasp_wavecar(aiida_env):
 
 @pytest.fixture
 def ref_incar():
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
@@ -285,7 +285,7 @@ def ref_win():
 def ref_retrieved_nscf():
     """Fixture: retrieved directory from an NSCF vasp run"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     retrieved = DataFactory('folder')()
     for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
         retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
@@ -313,14 +313,14 @@ def outcar_parser(request):
 
 
 def _ref_kp_list():
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     with open(subpath('data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
-    from aiida_vasp.backendtests.common import subpath
+    from aiida_vasp.utils.aiida_utils import subpath
     with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list

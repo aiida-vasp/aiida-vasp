@@ -24,6 +24,10 @@ def dbenv(function):
     return decorated_function
 
 
+def subpath(*args):
+    from os.path import dirname, realpath, join
+    return realpath(join(dirname(__file__), *args))
+
 def get_data_node(data_type, *args, **kwargs):
     return get_data_class(data_type)(*args, **kwargs)
 
@@ -36,15 +40,16 @@ def get_data_class(data_type):
     """
     from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingPluginError
+    
+    BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
     data_cls = None
+    if data_type not in BASIC_DATA_TYPES:
+        raise KeyError('Please supply `bool`, `float`, `int`, `list`, `str` or `dict`.')
     try:
         data_cls = DataFactory(data_type)
     except MissingPluginError as err:
         raise err
     return data_cls
-
-
-BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str', 'dict'])
 
 
 @dbenv
