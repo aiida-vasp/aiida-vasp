@@ -17,9 +17,9 @@ def base_parser(vasp_nscf_and_ref):
 
 
 @ONLY_ONE_CALC
-def test_parse_with_retrieved(fresh_aiida_env, ref_retrieved_nscf, base_parser):
-    assert base_parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
-    assert base_parser.out_folder == ref_retrieved_nscf
+def test_parse_with_retrieved(fresh_aiida_env, ref_retrieved, base_parser):
+    assert base_parser.parse_with_retrieved({'retrieved': ref_retrieved})
+    assert base_parser.out_folder == ref_retrieved
 
 
 @ONLY_ONE_CALC
@@ -42,9 +42,9 @@ def test_add_node(fresh_aiida_env, base_parser):
 
 
 @ONLY_ONE_CALC
-def test_get_file(fresh_aiida_env, base_parser, ref_retrieved_nscf):
+def test_get_file(fresh_aiida_env, base_parser, ref_retrieved):
     """Test getting a retrieved output file."""
-    base_parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
+    base_parser.parse_with_retrieved({'retrieved': ref_retrieved})
     assert os.path.isfile(base_parser.get_file('OUTCAR'))
     assert os.path.exists(base_parser.get_file('OUTCAR'))
     assert base_parser.get_file('NonExistent') is None

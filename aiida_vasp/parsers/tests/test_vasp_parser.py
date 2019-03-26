@@ -71,7 +71,7 @@ class ExampleFileParser2(BaseFileParser):
 
 
 @pytest.fixture
-def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
+def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     from aiida.orm.nodes.parameter import Dict
     vasp_calc, _ = vasp_nscf_and_ref
@@ -95,7 +95,7 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
             'prerequisites': [],
         },
     )
-    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
+    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved})
     try:
         yield parser
     finally:

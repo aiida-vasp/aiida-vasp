@@ -149,11 +149,11 @@ def test_prepare(vasp_nscf_and_ref):
 
 
 @ONLY_ONE_CALC
-def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved_nscf):
+def test_parse_with_retrieved(vasp_nscf_and_ref, ref_retrieved):
     """Check that parsing is successful and creates the right output links"""
     vasp_calc, _ = vasp_nscf_and_ref
     parser = vasp_calc.get_parserclass()(vasp_calc)
-    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
+    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved})
     outputs = dict(outputs)
     assert success
     assert 'output_bands' in outputs

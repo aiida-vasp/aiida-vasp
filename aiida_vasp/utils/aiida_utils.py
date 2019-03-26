@@ -5,7 +5,7 @@ from packaging import version
 
 from aiida.orm import User
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'vasp.potcar']
 
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
@@ -26,10 +26,6 @@ def dbenv(function):
     return decorated_function
 
 
-def subpath(*args):
-    from os.path import dirname, realpath, join
-    return realpath(join(dirname(__file__), *args))
-
 def get_data_node(data_type, *args, **kwargs):
     return get_data_class(data_type)(*args, **kwargs)
 
@@ -44,7 +40,8 @@ def get_data_class(data_type):
 
     data_cls = None
     if data_type not in BASIC_DATA_TYPES:
-        raise KeyError('Please supply `bool`, `float`, `int`, `list`, `str` or `dict`.')
+        raise KeyError('Please supply `bool`, `float`, `int`, `list`, `str` or `dict`. The supplied '
+                       'data type `{}` is not supported.'.format(data_type))
     try:
         data_cls = DataFactory(data_type)
     except MissingPluginError as err:
