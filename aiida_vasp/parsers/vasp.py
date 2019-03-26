@@ -18,7 +18,7 @@ DEFAULT_OPTIONS = {
     'add_dos': False,
     'add_kpoints': False,
     'add_energies': False,
-    'add_parameters': True,
+    'add_misc': True,
     'add_structure': False,
     'add_projectors': False,
     'add_born_charges': False,
@@ -115,23 +115,21 @@ class VaspParser(BaseParser):
         """Add a custom node to the settings."""
         self.settings.add_node(node_name, node_dict)
 
-    def parse_with_retrieved(self, retrieved):
+    def parse(self, **kwargs):
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
+                if file_name not in self.retrieved.get_folder_list() and value_dict['is_critical']:
                     return True
             return False
 
-        self.check_state()
-        self.out_folder = self.get_folder(retrieved)
-
-        if not self.out_folder:
-            return self.result(success=False)
+        error_code = self.get_folder()
+        if error_code is not None:
+            return error_code
 
         if missing_critical_file():
             # A critical file i.e. OUTCAR does not exist. Abort parsing.
-            return self.result(success=False)
+            return self.exit_codes.ERROR_MISSING_FILE
 
         # Get the _quantities from the FileParsers.
         self.quantities.setup()
@@ -153,7 +151,7 @@ class VaspParser(BaseParser):
             node = node_assembler.compose(node_dict.type, node_dict.quantities)
             success = self._set_node(node_name, node)
             if not success:
-                return self.result(success=False)
+                return self.exit_codes.ERROR_PARSING_FILE_FAILED
 
         # Reset the 'get_quantity' delegate
         self.get_quantity.clear()
@@ -197,5 +195,5 @@ class VaspParser(BaseParser):
 
         if node is None:
             return False
-        self.add_node(self.settings.nodes[node_name].link_name, node)
+        self.out(self.settings.nodes[node_name].link_name, node)
         return True
