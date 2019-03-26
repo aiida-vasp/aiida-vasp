@@ -5,6 +5,8 @@ from packaging import version
 
 from aiida.orm import User
 
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
+
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
     from aiida.backends.utils import load_dbenv, is_dbenv_loaded
@@ -32,7 +34,6 @@ def get_data_node(data_type, *args, **kwargs):
     return get_data_class(data_type)(*args, **kwargs)
 
 
-@dbenv
 def get_data_class(data_type):
     """
     Provide access to the orm.data classes with deferred dbenv loading.
@@ -40,8 +41,7 @@ def get_data_class(data_type):
     """
     from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingPluginError
-    
-    BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
+
     data_cls = None
     if data_type not in BASIC_DATA_TYPES:
         raise KeyError('Please supply `bool`, `float`, `int`, `list`, `str` or `dict`.')
@@ -52,7 +52,6 @@ def get_data_class(data_type):
     return data_cls
 
 
-@dbenv
 def get_current_user():
     """Get current user."""
     current_user = User.objects.get_default()
