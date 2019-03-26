@@ -9,7 +9,7 @@ from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class, load_dbenv_if_not_loaded
+from aiida_vasp.utils.aiida_utils import get_data_class, dbenv
 
 
 class ExampleFileParser(BaseFileParser):
@@ -71,7 +71,7 @@ class ExampleFileParser2(BaseFileParser):
 
 
 @pytest.fixture
-def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
+def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     from aiida.orm.nodes.parameter import Dict
     vasp_calc, _ = vasp_nscf_and_ref
@@ -95,7 +95,7 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved_nscf):
             'prerequisites': [],
         },
     )
-    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved_nscf})
+    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved})
     try:
         yield parser
     finally:
@@ -186,10 +186,9 @@ def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
 
 
     """
-
+    @dbenv
     def parse(**extra_settings):
         """Run the parser using default settings updated with extra_settings."""
-        load_dbenv_if_not_loaded()
         from aiida.plugins import CalculationFactory, DataFactory
         from aiida_vasp.parsers.vasp import VaspParser
         calc = CalculationFactory('vasp.vasp')()
@@ -224,11 +223,10 @@ def test_parser_nodes(_parse_me):
     assert isinstance(kpoints, get_data_class('array.kpoints'))
     assert parameters.get_dict()['fermi_level'] == 5.96764939
 
-
+@dbenv
 def test_structure(request):
     """Test that the structure from vasprun and POSCAR is the same."""
 
-    load_dbenv_if_not_loaded()
     from aiida.plugins import CalculationFactory, DataFactory
     from aiida_vasp.parsers.vasp import VaspParser
     calc = CalculationFactory('vasp.vasp')()
@@ -284,11 +282,10 @@ def test_structure(request):
     positions_poscar = np.asarray(positions_poscar)
     assert np.array_equal(positions_vasprun, positions_poscar)
 
-
+@dbenv
 def test_parameters(request):
     """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
 
-    load_dbenv_if_not_loaded()
     from aiida.plugins import CalculationFactory, DataFactory
     from aiida_vasp.parsers.vasp import VaspParser
     calc = CalculationFactory('vasp.vasp')()

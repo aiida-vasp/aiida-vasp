@@ -10,6 +10,7 @@ import pytest
 from pymatgen.io.vasp import Poscar
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
+from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -29,42 +30,12 @@ def localhost_dir(tmpdir_factory):
 
 @pytest.fixture
 def localhost(aiida_env, localhost_dir):
-    """Fixture for a local computer called localhost"""
-    # Check whether Aiida uses the new backend interface to create collections.
-    if hasattr(aiida_env, '_backend'):
-        from aiida.common import exceptions
-        try:
-            computer = aiida_env._backend.computers.get(name='localhost')
-        except exceptions.NotExistent:
-            computer = aiida_env._backend.computers.create(
-                name='localhost',
-                description='description',
-                hostname='localhost',
-                workdir=localhost_dir.strpath,
-                transport_type='local',
-                scheduler_type='direct',
-                enabled_state=True)
-        return computer
-    else:
-        from aiida.orm import Computer
-        from aiida.orm.querybuilder import QueryBuilder
-        query_builder = QueryBuilder()
-        query_builder.append(Computer, tag='comp')
-        query_builder.add_filter('comp', {'name': {'==': 'localhost'}})
-        query_results = query_builder.all()
-        if query_results:
-            computer = query_results[0][0]
-        else:
-            computer = Computer(
-                name='localhost',
-                description='description',
-                hostname='localhost',
-                workdir=localhost_dir.strpath,
-                transport_type='local',
-                scheduler_type='direct',
-                mpirun_command=[],
-                enabled_state=True)
-        return computer
+    """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
+    try:
+        computer = Computer.objects.get(name='localhost')
+    except NotExistent:
+        computer = Computer(name='localhost', hostname='localhost', transport_type='local', scheduler_type='direct', workdir=localhost_dir.strpath).store()
+    return computer
 
 
 @pytest.fixture
@@ -140,10 +111,10 @@ def potentials(potcar_family):
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
     """Fixture: StructureData or CifData"""
-    from aiida_vasp.utils.aiida_utils import subpath
+    from aiida_vasp.utils.fixtures.testdata import data_path
     from aiida.plugins import DataFactory
     if request.param == 'cif':
-        cif_path = subpath('data', 'EntryWithCollCode43360.cif')
+        cif_path = data_path('old_data', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
         larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
@@ -242,8 +213,8 @@ def mock_vasp(aiida_env, localhost):
 def vasp_chgcar(aiida_env):
     """CHGCAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.aiida_utils import subpath
-    chgcar_path = subpath('data', 'CHGCAR')
+    from aiida_vasp.utils.fixtures.testdata import data_path
+    chgcar_path = data_path('old_data', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r') as ref_chgcar_fo:
         ref_chgcar = ref_chgcar_fo.read()
@@ -254,8 +225,8 @@ def vasp_chgcar(aiida_env):
 def vasp_wavecar(aiida_env):
     """WAVECAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.aiida_utils import subpath
-    wavecar_path = subpath('data', 'WAVECAR')
+    from aiida_vasp.utils.fixtures.testdata import data_path
+    wavecar_path = data_path('old_data', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
@@ -264,8 +235,8 @@ def vasp_wavecar(aiida_env):
 
 @pytest.fixture
 def ref_incar():
-    from aiida_vasp.utils.aiida_utils import subpath
-    with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
+    from aiida_vasp.utils.fixtures.testdata import data_path
+    with open(data_path('old_data', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
 
@@ -282,13 +253,12 @@ def ref_win():
 
 
 @pytest.fixture()
-def ref_retrieved_nscf():
+def ref_retrieved():
     """Fixture: retrieved directory from an NSCF vasp run"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.aiida_utils import subpath
+    from aiida_vasp.utils.fixtures.testdata import data_path
     retrieved = DataFactory('folder')()
-    for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
-        retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
+    retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
 
 
@@ -313,15 +283,15 @@ def outcar_parser(request):
 
 
 def _ref_kp_list():
-    from aiida_vasp.utils.aiida_utils import subpath
-    with open(subpath('data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
+    from aiida_vasp.utils.fixtures.testdata import data_path
+    with open(data_path('old_data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
-    from aiida_vasp.utils.aiida_utils import subpath
-    with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
+    from aiida_vasp.utils.fixtures.testdata import data_path
+    with open(data_path('old_data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
 

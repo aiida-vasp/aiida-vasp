@@ -13,7 +13,6 @@ def aiida_env():
     """Set up the db environment."""
     with fixture_manager() as manager:
         config_file = py_path.local(manager.root_dir).join('.aiida', 'config.json')
-        print(config_file.read())
         yield manager
 
 
