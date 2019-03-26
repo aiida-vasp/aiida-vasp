@@ -39,9 +39,9 @@ def update_docstring(method_name, content, append=True):
         """Update the method docstring and return the class."""
         if append:
             old_doc = getattr(cls, method_name).im_func.func_doc
-            getattr(cls, method_name).im_func.func_doc = dedent(old_doc) + dedent(content)
+            getattr(cls, method_name).__func__.func_doc = dedent(old_doc) + dedent(content)
         else:
-            getattr(cls, method_name).im_func.func_doc = content
+            getattr(cls, method_name).__func__.func_doc = content
         return cls
 
     return wrapper
