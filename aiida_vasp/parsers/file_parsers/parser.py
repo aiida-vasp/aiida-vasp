@@ -283,6 +283,7 @@ class SingleFile(object):
     def __init__(self, **kwargs):
         super(SingleFile, self).__init__()
         self._path = None
+        self._data = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -294,7 +295,7 @@ class SingleFile(object):
 
     def _init_with_data(self, data):
         """Initialise with SingleFileData."""
-        self._path = data.get_file_abs_path()
+        self._data = data
 
     @property
     def path(self):
@@ -302,8 +303,15 @@ class SingleFile(object):
 
     def write(self, dst):
         """Copy file to destination."""
-        import shutil
-        shutil.copyfile(self._path, dst)
+        if self._path is not None:
+            import shutil
+            shutil.copyfile(self._path, dst)
+            return
+
+        if self._data is not None:
+            with self._data.open() as input_obj, open(dst) as output_obj:
+                lines = input_obj.readlines()
+                output_obj.writelines(lines)
 
 
 class KeyValueParser(BaseParser):

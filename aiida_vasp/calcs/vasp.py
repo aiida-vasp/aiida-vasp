@@ -91,6 +91,9 @@ class VaspCalculation(VaspCalcBase):
             'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
         spec.input(
             'settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
+        spec.exit_code(100, 'ERROR_NO_RETRIEVED_FOLDER', message='The retrieved folder data node could not be accessed.')
+        spec.exit_code(200, 'ERROR_MISSING_FILE', message='An important file is missing.')
+        spec.exit_code(300, 'ERROR_PARSING_FILE_FAILED', message='Parsing a file has failed.')
 
     def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""

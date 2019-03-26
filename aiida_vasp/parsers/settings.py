@@ -56,9 +56,9 @@ FILE_PARSER_SETS = {
 }
 
 NODES = {
-    'parameters': {
+    'misc': {
         'link_name': 'output_parameters',
-        'type': 'parameter',
+        'type': 'dict',
         'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries'],
     },
     'kpoints': {

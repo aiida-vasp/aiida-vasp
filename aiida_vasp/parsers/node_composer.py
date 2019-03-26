@@ -7,7 +7,7 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
-    'parameter': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
+    'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],
@@ -77,46 +77,46 @@ class NodeComposer(object):
             inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
 
         # Call the correct specialised method for assembling.
-        getattr(self, "_compose_with_" + node_type.replace(".", "_"))(current_node, inputs)
+        getattr(self, "_compose_" + node_type.replace(".", "_"))(current_node, inputs)
 
         return current_node
 
     @staticmethod
-    def _compose_with_parameter(node, inputs):
+    def _compose_dict(node, inputs):
         node.update_dict(inputs)
 
     @staticmethod
-    def _compose_with_structure(node, inputs):
+    def _compose_structure(node, inputs):
         for key in inputs:
             node.set_cell(inputs[key]['unitcell'])
             for site in inputs[key]['sites']:
                 node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
 
     @staticmethod
-    def _compose_with_array(node, inputs):
+    def _compose_array(node, inputs):
         for item in inputs:
             for key, value in inputs[item].items():
                 node.set_array(key, value)
 
     @staticmethod
-    def _compose_with_vasp_wavefun(node, inputs):
+    def _compose_vasp_wavefun(node, inputs):
         for key in inputs:
             node.set_file(inputs[key])
 
     @staticmethod
-    def _compose_with_vasp_chargedensity(node, inputs):
+    def _compose_vasp_chargedensity(node, inputs):
         for key in inputs:
             node.set_file(inputs[key])
 
-    def _compose_with_array_bands(self, node, inputs):
+    def _compose_array_bands(self, node, inputs):
 
         kpoints = get_data_class('array.kpoints')()
-        self._compose_with_array_kpoints(kpoints, {'kpoints': inputs['kpoints']})
+        self._compose_array_kpoints(kpoints, {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
 
     @staticmethod
-    def _compose_with_array_kpoints(node, inputs):
+    def _compose_array_kpoints(node, inputs):
         """Compose an array.kpoints node based on inputs."""
         for key in inputs:
             mode = inputs[key]['mode']
@@ -140,7 +140,7 @@ class NodeComposer(object):
                 node.set_kpoints_mesh(mesh, offset=shifts)
 
     @staticmethod
-    def _compose_with_array_trajectory(node, inputs):
+    def _compose_array_trajectory(node, inputs):
         for item in inputs:
             for key, value in inputs[item].items():
                 node.set_array(key, value)
