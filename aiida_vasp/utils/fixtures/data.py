@@ -13,10 +13,10 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.io.vasprun import VasprunParser
-from aiida_vasp.io.outcar import OutcarParser
+from aiida_vasp.parsers.file_parsers.incar import IncarIo
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}

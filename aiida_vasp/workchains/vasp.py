@@ -142,10 +142,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'options' in self.inputs:
             options = AttributeDict()
             options.update(self.inputs.options.get_dict())
-            if builder_interface(CalculationFactory('vasp.vasp')):  # aiida 1.0.0+ will use this
-                self.ctx.inputs.options = options
-            else:
-                self.ctx.inputs._options = self.inputs.options  # pylint: disable=protected-access
+            self.ctx.inputs.options = options
 
         # Verify and set potentials (potcar)
         try:

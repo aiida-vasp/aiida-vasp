@@ -7,12 +7,12 @@ from aiida.common.lang import override
 from aiida.engine import JobCalc
 
 from aiida_vasp.data.potcar import PotcarData
-from aiida_vasp.io.incar import IncarParser
-from aiida_vasp.io.kpoints import KpParser
-from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.io.chgcar import ChgcarParser
-from aiida_vasp.io.wavecar import WavecarParser
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 
 

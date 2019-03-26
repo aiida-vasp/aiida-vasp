@@ -9,10 +9,10 @@ except ImportError:
 
 from aiida.plugins import DataFactory
 
-from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.potcar import MultiPotcarIo
-from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.io.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.incar import IncarIo
+from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.utils.inheritance import update_docstring

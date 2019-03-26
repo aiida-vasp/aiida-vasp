@@ -1,7 +1,7 @@
 """Utils to work with Wannier90 .win format"""
 import re
 
-from aiida_vasp.io.parser import KeyValueParser
+from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
 
 
 class WinParser(KeyValueParser):

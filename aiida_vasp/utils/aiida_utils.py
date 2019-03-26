@@ -33,7 +33,6 @@ def get_data_class(data_type):
     """
     Provide access to the orm.data classes with deferred dbenv loading.
 
-    compatiblity: also provide access to the orm.data.base memebers, which are loadable through the DataFactory as of 1.0.0-alpha only.
     """
     from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingPluginError
@@ -41,10 +40,7 @@ def get_data_class(data_type):
     try:
         data_cls = DataFactory(data_type)
     except MissingPluginError as err:
-        if data_type in BASIC_DATA_TYPES:
-            data_cls = get_basic_data_pre_1_0(data_type)
-        else:
-            raise err
+        raise err
     return data_cls
 
 
@@ -52,34 +48,10 @@ BASIC_DATA_TYPES = set(['bool', 'float', 'int', 'list', 'str', 'dict'])
 
 
 @dbenv
-def get_basic_data_pre_1_0(data_type):
-    from aiida.orm.nodes import base as base_data
-    return getattr(base_data, data_type.capitalize())
-
-
-@dbenv
-def backend_obj_users():
-    """Test if aiida accesses users through backend object."""
-    backend_obj_flag = False
-    try:
-        from aiida.backends.utils import get_automatic_user  # pylint: disable=unused-variable,no-name-in-module
-    except ImportError:
-        backend_obj_flag = True
-    return backend_obj_flag
-
-
-@dbenv
 def get_current_user():
     """Get current user."""
     current_user = User.objects.get_default()
     return current_user
-
-
-def builder_interface(calc_cls):
-    """Return the JobProcess or the CalcJob class, depending on aiida version."""
-    if hasattr(calc_cls, 'get_builder'):
-        return True
-    return False
 
 
 def copy_parameter(old_parameter):

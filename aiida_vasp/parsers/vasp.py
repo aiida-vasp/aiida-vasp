@@ -36,7 +36,7 @@ class VaspParser(BaseParser):
     Parses all Vasp calculations.
 
     This particular class manages all the specific file parsers in
-    aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
+    aiida_vasp.parsers.file_parsers. The parser will check which quantities to parse and which nodes to add
     to the calculation based on the 'parser_settings' card in the 'settings' Dict of the
     corresponding VaspCalculation.
 

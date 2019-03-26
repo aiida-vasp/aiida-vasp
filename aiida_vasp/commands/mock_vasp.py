@@ -5,10 +5,10 @@ import click
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.io.incar import IncarParser
-from aiida_vasp.io.potcar import PotcarIo
-from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.io.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpParser
 
 
 def output_file(*args):

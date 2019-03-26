@@ -2,7 +2,7 @@
 import re
 
 from parsevasp.outcar import Outcar
-from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
 from aiida_vasp.parsers.node_composer import NodeComposer
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
@@ -120,8 +120,8 @@ class LegacyOutcarParser(BaseFileParser):
     """
     Parse OUTCAR into a dictionary, which is supposed to be turned into Dict later.
 
-    For constructor params and more details check the documentation for ``aiida_vasp.io.parser`` and
-    ``aiida_vasp.io.parser.BaseParser``.
+    For constructor params and more details check the documentation for ``aiida_vasp.parsers.file_parsers.parser`` and
+    ``aiida_vasp.parsers.file_parsers.parser.BaseParser``.
     """
 
     FILE_NAME = 'OUTCAR'

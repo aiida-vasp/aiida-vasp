@@ -6,7 +6,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
-from aiida_vasp.io.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [

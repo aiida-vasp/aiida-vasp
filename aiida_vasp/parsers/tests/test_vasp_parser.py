@@ -5,7 +5,7 @@
 import pytest
 import numpy as np
 
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 from aiida_vasp.utils.fixtures.testdata import data_path

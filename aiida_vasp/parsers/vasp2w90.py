@@ -2,7 +2,7 @@
 from aiida.plugins import DataFactory
 from aiida.orm.nodes.base import List
 
-from aiida_vasp.io.win import WinParser
+from aiida_vasp.parsers.file_parsers.win import WinParser
 from .vasp import VaspParser
 
 

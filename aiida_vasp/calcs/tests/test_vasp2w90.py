@@ -61,7 +61,7 @@ def test_write_win(fresh_aiida_env, vasp2w90_calc_and_ref):
 @STRUCTURE_TYPES
 def test_write_poscar(fresh_aiida_env, vasp2w90_calc_and_ref, vasp_structure_poscar):
     """Write POSCAR input file and compare to reference."""
-    from aiida_vasp.io.poscar import PoscarParser
+    from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
     vasp_calc, _ = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
     with tempfile.NamedTemporaryFile() as temp_file:

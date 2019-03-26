@@ -4,7 +4,7 @@ import numpy as np
 
 from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
 

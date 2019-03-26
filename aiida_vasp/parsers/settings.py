@@ -1,13 +1,13 @@
 """Module defining sets of FileParsers to be used by the VaspParser"""
 
-from aiida_vasp.io.doscar import DosParser
-from aiida_vasp.io.eigenval import EigParser
-from aiida_vasp.io.kpoints import KpParser
-from aiida_vasp.io.outcar import OutcarParser
-from aiida_vasp.io.vasprun import VasprunParser
-from aiida_vasp.io.chgcar import ChgcarParser
-from aiida_vasp.io.wavecar import WavecarParser
-from aiida_vasp.io.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.doscar import DosParser
+from aiida_vasp.parsers.file_parsers.eigenval import EigParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {

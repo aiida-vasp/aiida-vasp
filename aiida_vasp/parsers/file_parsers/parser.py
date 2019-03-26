@@ -12,7 +12,7 @@ Usage::
     import py
 
     from aiida_vasp.utils.aiida_utils import get_data_class
-    from aiida_vasp.io.parser import BaseFileParser
+    from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 
     ExampleFileParser(BaseFileParser):
 
@@ -76,7 +76,7 @@ Usage::
 
     import py
 
-    from aiida_vasp.io.parser import KeyValueParser
+    from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
 
     ParamParser(KeyValueParser):
 

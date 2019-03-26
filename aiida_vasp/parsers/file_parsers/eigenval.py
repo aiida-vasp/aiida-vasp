@@ -4,7 +4,7 @@ import re
 
 import numpy as np
 
-from aiida_vasp.io.parser import BaseFileParser
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 
 
 class EigParser(BaseFileParser):
