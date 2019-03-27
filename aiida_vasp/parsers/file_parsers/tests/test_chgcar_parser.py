@@ -8,7 +8,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 
 
-def test_parse_chgcar():
+def test_parse_chgcar(aiida_env):
     """Parse a reference CHGCAR file with the ChargcarParser and compare the result to a reference string."""
     file_name = 'CHGCAR'
     path = data_path('chgcar', file_name)

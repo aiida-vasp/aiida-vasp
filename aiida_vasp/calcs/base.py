@@ -132,7 +132,7 @@ class VaspCalcBase(CalcJob):
 
     @classmethod
     def immigrant(cls, code, remote_path, **kwargs):
-
+        
         return NotImplemented('The immigrant is not yet ported to comply with AiiDA beta. In fact, '
                               'we will most likely wait until an immigrant function is present '
                               'in AiiDA core.')

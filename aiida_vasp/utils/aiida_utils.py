@@ -5,7 +5,8 @@ from packaging import version
 
 from aiida.orm import User
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'vasp.potcar']
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'vasp.potcar', 'remote', 'cif',
+                    'array.kpoints']
 
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
@@ -39,9 +40,6 @@ def get_data_class(data_type):
     from aiida.common.exceptions import MissingPluginError
 
     data_cls = None
-    if data_type not in BASIC_DATA_TYPES:
-        raise KeyError('Please supply `bool`, `float`, `int`, `list`, `str` or `dict`. The supplied '
-                       'data type `{}` is not supported.'.format(data_type))
     try:
         data_cls = DataFactory(data_type)
     except MissingPluginError as err:

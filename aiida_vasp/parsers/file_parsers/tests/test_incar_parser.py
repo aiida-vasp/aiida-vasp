@@ -6,8 +6,9 @@ import pytest
 from pytest import raises
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
+from aiida_vasp.utils.fixtures.environment import aiida_env
 from aiida_vasp.parsers.file_parsers.incar import IncarIo, IncarItem, IncarParamParser, IncarParser
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @pytest.fixture()
@@ -31,8 +32,8 @@ def test_read_incar():
     """Read an INCAR file and test that some of the keys are read correctly."""
 
     incar_path = data_path('phonondb', 'INCAR')
-    incar_io = IncarIo(file_path=incar_path)
-    incar_dict = incar_io.get_dict()
+    incar_io = IncarParser(file_path=incar_path)
+    incar_dict = incar_io.incar
     assert incar_dict['prec'] == 'Accurate'
     assert incar_dict['ibrion'] == -1
     assert incar_dict['encut'] == 359.7399
@@ -40,52 +41,20 @@ def test_read_incar():
 
 
 @pytest.mark.incar
-def test_example_incar():
-    """Read a pathological case of an INCAR file (top level example from VASP docs)."""
-
-    incar_path = data_path('incar_set', 'INCAR.copper_srf')
-    incar_io = IncarIo(file_path=incar_path)
-    incar_dict = incar_io.get_dict()
-    assert incar_dict['system'] == 'Copper surface calculation'
-
-    assert incar_dict['istart'] == 0
-    assert isinstance(incar_dict['istart'], int)
-
-    assert incar_dict['encut'] == 200.01
-    assert isinstance(incar_dict['encut'], float)
-
-    assert incar_dict['bmix'] == 2.0
-    assert isinstance(incar_dict['bmix'], float)
-
-    assert incar_dict['nelmin'] == 0
-    assert incar_dict['nelmdl'] == 3
-
-
-@pytest.mark.incar
-def test_from_dict(incar_dict):
-    incar_io = IncarIo(incar_dict=incar_dict)
-    ref_str = '\n'.join(sorted(['ENCUT = 350', 'SIGMA = 0.05', 'LREAL = .False.', 'PREC = Accurate']))
+def test_from_dict(aiida_env, incar_dict):
+    incar_io = IncarParser(data=get_data_node('dict', dict=incar_dict))
+    incar_io_dict = incar_io.incar
+    print(incar_dict)
+    print(incar_io_dict)
+    assert False
     assert str(incar_io) == ref_str
 
 
 @pytest.mark.incar
-def test_from_string():
-    """Test reading from string."""
-
-    test_str = 'TRUE = .True\nFALSE=.f.'
-    incar_io = IncarIo()
-    incar_io.read_string(test_str)
-    incar_dict = incar_io.get_dict()
-    assert incar_dict.pop('true') is True
-    assert incar_dict.pop('false') is False
-    assert not incar_dict
-
-
-@pytest.mark.incar
-def test_write_incar(tmpdir, incar_dict):
+def test_write_incar(aiida_env, tmpdir, incar_dict):
     """Test writing and INCAR file from an IncarIo object."""
 
-    incar_io = IncarIo(incar_dict=incar_dict)
+    incar_io = IncarParser(data=get_data_node('dict', dict=incar_dict))
     tempfile = str(tmpdir.join('INCAR'))
     incar_io.write(tempfile)
     assert read_file(path=tempfile) == str(incar_io)

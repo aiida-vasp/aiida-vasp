@@ -1,7 +1,7 @@
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""VASP - Calculation: Generic run using pymatgen_aiida for file preparation"""
+"""The calculation class that prepares a specific VASP calculation."""
 try:
     from collections import ChainMap
 except ImportError:
@@ -13,7 +13,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarIo
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpParser
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.utils.inheritance import update_docstring
 
@@ -173,11 +173,8 @@ class VaspCalculation(VaspCalcBase):
         return bool(istart in [1, 2, 3])
 
     def _structure(self):
-        """Get the input structure as sorted pymatgen structure object."""
-        structure = self.inputs.structure
-        if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('structure', ase=structure.get_ase())
-        return structure
+        """Get the input structure."""
+        return self.inputs.structure
 
     def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
