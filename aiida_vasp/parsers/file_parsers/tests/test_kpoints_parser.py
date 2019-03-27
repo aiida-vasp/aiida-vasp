@@ -20,14 +20,21 @@ def test_parse_kpoints(vasp_kpoints):
 
     kpoints, _ = vasp_kpoints
 
-    if kpoints.get_attrs().get('mesh'):
+    try:
+        _ = kpoints.get_attribute('mesh')
         file_path = data_path('kpoints', 'KPOINTS_mesh')
         method = 'get_kpoints_mesh'
         param = 'mesh'
-    elif kpoints.get_attrs().get('array|kpoints'):
+    except AttributeError:
+        pass
+
+    try:
+        _ = kpoints.get_attribute('array|kpoints')
         file_path = data_path('kpoints', 'KPOINTS_list')
         method = 'get_kpoints'
         param = 'list'
+    except AttributeError:
+        pass
 
     parser = KpointsParser(file_path=file_path)
     result = parser.kpoints
@@ -47,12 +54,21 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     """
 
     kpoints, _ = vasp_kpoints
-    if kpoints.get_attrs().get('mesh'):
+
+    try:
+        _ = kpoints.get_attribute('mesh')
         method = 'get_kpoints_mesh'
         param = 'mesh'
-    elif kpoints.get_attrs().get('array|kpoints'):
+    except AttributeError:
+        pass
+
+    try:
+        _ = kpoints.get_attribute('array|kpoints')
         method = 'get_kpoints'
         param = 'list'
+    except AttributeError:
+        pass
+
     parser = KpointsParser(data=kpoints)
     temp_file = str(tmpdir.join('KPOINTS'))
     parser.write(file_path=temp_file)

@@ -327,7 +327,7 @@ class PotcarMetadataMixin(object):
         if self.exists(md5=self.md5):
             raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
 
-        other_attrs = self.get_attrs()
+        other_attrs = self.attributes
         other_attrs.pop('md5')
         if self.exists(**other_attrs):
             raise UniquenessError('A {} node with these attributes but a different file exists:\n{}'.format(
@@ -519,12 +519,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
         self.set_version()
-        for attr_name in potcar_file_node.get_attrs().keys():
+        for attr_name in potcar_file_node.attributes.keys():
             self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
-        return PotcarFileData.find_one(**self.get_attrs())
+        return PotcarFileData.find_one(**self.attributes)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):

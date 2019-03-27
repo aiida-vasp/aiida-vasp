@@ -50,10 +50,17 @@ class KpointsParser(BaseFileParser):
 
         if isinstance(self._data_obj, get_data_class('array.kpoints')):
             # The KpointsData has not been successfully parsed yet. So let's parse it.
-            if self._data_obj.get_attrs().get('mesh'):
+            try:
+                _ = self._data_obj.get_attribute('mesh')
                 mode = 'automatic'
-            elif self._data_obj.get_attrs().get('array|kpoints'):
+            except AttributeError:
+                pass
+
+            try:
+                _ = self._data_obj.get_attribute('array|kpoints')
                 mode = 'explicit'
+            except AttributeError:
+                pass
 
             kpoints_dict = {}
             for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
