@@ -4,9 +4,11 @@ import numpy as np
 from packaging import version
 
 from aiida.orm import User
+from aiida.cmdline.utils.decorators import with_dbenv
 
 BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'vasp.potcar', 'remote', 'cif',
                     'array.kpoints']
+
 
 def load_dbenv_if_not_loaded(**kwargs):
     """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
@@ -31,6 +33,7 @@ def get_data_node(data_type, *args, **kwargs):
     return get_data_class(data_type)(*args, **kwargs)
 
 
+@with_dbenv()
 def get_data_class(data_type):
     """
     Provide access to the orm.data classes with deferred dbenv loading.

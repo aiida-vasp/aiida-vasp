@@ -105,7 +105,7 @@ Parses files like::
 
 """
 import re
-
+import six.moves as moves
 from six import string_types
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida_vasp.utils.delegates import delegate_method_kwargs
@@ -122,7 +122,8 @@ class BaseParser(object):
             line = fobj_or_str
         else:
             line = fobj_or_str.readline()
-        res = map(d_type, line.split())
+        # previously this was map instead of list comprehension
+        res = [d_type(item) for item in line.split()]
         if len(res) == 1:
             return res[0]
         return res

@@ -391,10 +391,10 @@ class VasprunParser(BaseFileParser):
         forces = sorted(forces.items())
         stress = sorted(stress.items())
         # convert to numpy
-        unitcell = np.asarray(map(operator.itemgetter(1), unitcell))
-        positions = np.asarray(map(operator.itemgetter(1), positions))
-        forces = np.asarray(map(operator.itemgetter(1), forces))
-        stress = np.asarray(map(operator.itemgetter(1), stress))
+        unitcell = np.asarray([item[1] for item in unitcell])
+        positions = np.asarray([item[1] for item in positions])
+        forces = np.asarray([item[1] for item in forces])
+        stress = np.asarray([item[1] for item in stress])
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species])

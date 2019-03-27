@@ -3,7 +3,7 @@
 """Archive data class: store multiple files together in a compressed archive in the repository"""
 import tarfile
 import os
-import StringIO
+from io import StringIO
 
 from aiida.orm.nodes import Data
 

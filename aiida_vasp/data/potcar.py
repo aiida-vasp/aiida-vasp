@@ -142,7 +142,7 @@ def normalize_potcar_contents(potcar_contents):
 def md5_potcar(potcar_contents):
     """Hash the contents of a POTCAR file (given as str)."""
     md5_hash = hashlib.md5()
-    md5_hash.update(normalize_potcar_contents(potcar_contents))
+    md5_hash.update(normalize_potcar_contents(potcar_contents).encode('latin-1'))
     return md5_hash.hexdigest()
 
 
