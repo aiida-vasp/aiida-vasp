@@ -119,7 +119,7 @@ class VaspParser(BaseParser):
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.retrieved.get_folder_list() and value_dict['is_critical']:
+                if file_name not in self.retrieved.repository.list_objects() and value_dict['is_critical']:
                     return True
             return False
 

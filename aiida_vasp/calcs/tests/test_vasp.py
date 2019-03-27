@@ -8,7 +8,7 @@ import pytest
 from aiida.common import ValidationError
 from aiida.common.folders import SandboxFolder
 
-from aiida_vasp.parser.file_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, STRUCTURE_TYPES
 from aiida_vasp.utils.fixtures.data import get_data_class

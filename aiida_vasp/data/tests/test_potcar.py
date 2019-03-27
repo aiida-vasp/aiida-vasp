@@ -4,7 +4,7 @@ import tarfile
 
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
-from pymatgen.parsers.file_parsers.vasp import PotcarSingle
+from pymatgen.io.vasp import PotcarSingle
 from aiida.common.exceptions import UniquenessError, NotExistent
 try:
     import subprocess32 as sp
