@@ -5,8 +5,8 @@ from collections import OrderedDict
 import pytest
 from pytest import raises
 
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
-from aiida_vasp.utils.fixtures.environment import aiida_env
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
@@ -20,7 +20,7 @@ def incar_dict_example():
 
 
 @pytest.mark.incar
-def test_parser_read_parsevasp():
+def test_parser_read_parsevasp(fresh_aiida_env):
     """Test to read a INCAR file from parsevasp."""
 
     path = data_path('phonondb', 'INCAR')
@@ -33,7 +33,7 @@ def test_parser_read_parsevasp():
 
 
 @pytest.mark.incar
-def test_parser_read_doc_parsevasp(aiida_env):
+def test_parser_read_doc_parsevasp(fresh_aiida_env):
     """
     Read example INCAR from VASP documentation.
 
@@ -50,10 +50,10 @@ def test_parser_read_doc_parsevasp(aiida_env):
 
 
 @pytest.mark.incar
-def test_parser_dict_parsevasp(incar_dict_example):
+def test_parser_dict_parsevasp(fresh_aiida_env, incar_dict_example):
     """
     Pass a dict to the INCAR parser.
-
+q
     Using parsevasp. Should return an AiiDA 
 
     """
@@ -77,7 +77,7 @@ def test_parser_string_parsevasp():
 
 
 @pytest.mark.incar
-def test_write_parser(tmpdir, incar_dict_example):
+def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     """Test writing an INCAR from a dict, read and compare."""
 
     # create Dict instances

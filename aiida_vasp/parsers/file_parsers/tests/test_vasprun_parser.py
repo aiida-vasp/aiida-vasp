@@ -10,7 +10,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.parsers.node_composer import NodeComposer
 
 
-def test_parse_vasprun(vasprun_parser):
+def test_parse_vasprun(fresh_aiida_env, vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
     quantity = vasprun_parser.get_quantity('occupancies')
@@ -22,7 +22,7 @@ def test_parse_vasprun(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_parameter_results(vasprun_parser):
+def test_parameter_results(fresh_aiida_env, vasprun_parser):
     """
     Test that the parameter node is a ParametersData instance.
 
@@ -52,7 +52,7 @@ def test_parameter_results(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_kpoints_result(vasprun_parser):
+def test_kpoints_result(fresh_aiida_env, vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
@@ -65,7 +65,7 @@ def test_kpoints_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_structure_result(vasprun_parser):
+def test_structure_result(fresh_aiida_env, vasprun_parser):
     """
     Test that the structure result node is a StructureData instance.
 
@@ -91,7 +91,7 @@ def test_structure_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_final_force_result(vasprun_parser):
+def test_final_force_result(fresh_aiida_env, vasprun_parser):
     """Test that the forces are returned correctly."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
@@ -111,7 +111,7 @@ def test_final_force_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_final_stress_result(vasprun_parser):
+def test_final_stress_result(fresh_aiida_env, vasprun_parser):
     """Test that the stress are returned correctly."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
@@ -129,7 +129,7 @@ def test_final_stress_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_traj_forces_result(vasprun_parser):
+def test_traj_forces_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed forces in TrajectoryData are of type ArrayData.
 
@@ -160,7 +160,7 @@ def test_traj_forces_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_traj_forces_result_relax(vasprun_parser):
+def test_traj_forces_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed forces in TrajectoryData are of type ArrayData.
 
@@ -185,7 +185,7 @@ def test_traj_forces_result_relax(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_unitcells_result_relax(vasprun_parser):
+def test_unitcells_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed unitcells are of type ArrayData.
 
@@ -210,7 +210,7 @@ def test_unitcells_result_relax(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_positions_result_relax(vasprun_parser):
+def test_positions_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed positions are of type ArrayData.
 
@@ -235,7 +235,7 @@ def test_positions_result_relax(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)
-def test_dielectrics_result(vasprun_parser):
+def test_dielectrics_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed dielectrics are of type ArrayData.
 
@@ -267,7 +267,7 @@ def test_dielectrics_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('disp_details',)], indirect=True)
-def test_epsilon_result(vasprun_parser):
+def test_epsilon_result(fresh_aiida_env, vasprun_parser):
     """
     Check that epsilon is returned inside the dielectric node.
 
@@ -293,7 +293,7 @@ def test_epsilon_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('localfield',)], indirect=True)
-def test_born_result(vasprun_parser):
+def test_born_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the Born effective charges are of type ArrayData.
 
@@ -316,7 +316,7 @@ def test_born_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_dos_result(vasprun_parser):
+def test_dos_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -340,7 +340,7 @@ def test_dos_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
-def test_dos_spin_result(vasprun_parser):
+def test_dos_spin_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -367,7 +367,7 @@ def test_dos_spin_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
-def test_pdos_result(vasprun_parser):
+def test_pdos_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -392,7 +392,7 @@ def test_pdos_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
-def test_projectors_result(vasprun_parser):
+def test_projectors_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the projectors are of type ArrayData.
 
@@ -415,7 +415,7 @@ def test_projectors_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_bands_result(vasprun_parser):
+def test_bands_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -445,7 +445,7 @@ def test_bands_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
-def test_eigenocc_spin_result(vasprun_parser):
+def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -481,7 +481,7 @@ def test_eigenocc_spin_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_toten_result(vasprun_parser):
+def test_toten_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the total energy are of type ArrayData.
 
@@ -502,7 +502,7 @@ def test_toten_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_totens_relax_result(vasprun_parser):
+def test_totens_relax_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the total energies are of type ArrayData.
 
@@ -525,7 +525,7 @@ def test_totens_relax_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
-def test_hessian_result(vasprun_parser):
+def test_hessian_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the Hessian matrix are of type ArrayData.
 
@@ -555,7 +555,7 @@ def test_hessian_result(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
-def test_dynmat_result(vasprun_parser):
+def test_dynmat_result(fresh_aiida_env, vasprun_parser):
     """
     Check parsing of the dynamical eigenvectors and eigenvalues.
 

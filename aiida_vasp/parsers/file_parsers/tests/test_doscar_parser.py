@@ -9,7 +9,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 
 
-def test_parse_doscar(aiida_env):
+def test_parse_doscar(fresh_aiida_env):
     """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
     file_name = 'DOSCAR'
     path = data_path('doscar', file_name)
