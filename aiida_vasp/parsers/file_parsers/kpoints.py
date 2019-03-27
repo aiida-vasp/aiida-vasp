@@ -7,14 +7,14 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-class KpParser(BaseFileParser):
+class KpointsParser(BaseFileParser):
     """
     Parser for VASP KPOINTS format.
 
     This is a wrapper for the parsevasp.kpoints parser. It will convert
     KPOINTS type files to Aiida KpointsData objects and vice versa.
 
-    The Parsing direction depends on whether the KpParser is initialised with
+    The Parsing direction depends on whether the KpointsParser is initialised with
     'path = ...' (read from file) or 'data = ...' (read from data).
 
     """
@@ -28,7 +28,7 @@ class KpParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
-        super(KpParser, self).__init__(*args, **kwargs)
+        super(KpointsParser, self).__init__(*args, **kwargs)
         self._kpoints = None
         self.init_with_kwargs(**kwargs)
 

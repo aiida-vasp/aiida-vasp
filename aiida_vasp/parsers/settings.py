@@ -2,7 +2,7 @@
 
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
@@ -23,7 +23,7 @@ FILE_PARSER_SETS = {
             'status': 'Unknown'
         },
         'IBZKPT': {
-            'parser_class': KpParser,
+            'parser_class': KpointsParser,
             'is_critical': False,
             'status': 'Unknown'
         },

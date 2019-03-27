@@ -15,10 +15,8 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 

@@ -5,7 +5,7 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 
 
 #@pytest.mark.parametrize(['vasp_kpoints'], [('list',)], indirect=True)
@@ -13,7 +13,7 @@ def test_parse_kpoints(vasp_kpoints):
     """
     Parse a reference KPOINTS file.
 
-    Using the KpParser and compare the result to a reference
+    Using the KpointsParser and compare the result to a reference
     kpoints-node.
 
     """
@@ -29,7 +29,7 @@ def test_parse_kpoints(vasp_kpoints):
         method = 'get_kpoints'
         param = 'list'
 
-    parser = KpParser(file_path=file_path)
+    parser = KpointsParser(file_path=file_path)
     result = parser.kpoints
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()
@@ -41,7 +41,7 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     """
     Parse a reference KPOINTS file.
 
-    Using the KpParser and compare the result to a reference
+    Using the KpointsParser and compare the result to a reference
     kpoints-node.
 
     """
@@ -53,10 +53,10 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     elif kpoints.get_attrs().get('array|kpoints'):
         method = 'get_kpoints'
         param = 'list'
-    parser = KpParser(data=kpoints)
+    parser = KpointsParser(data=kpoints)
     temp_file = str(tmpdir.join('KPOINTS'))
     parser.write(file_path=temp_file)
-    parser_reparse = KpParser(file_path=temp_file)
+    parser_reparse = KpointsParser(file_path=temp_file)
     result = parser_reparse.kpoints
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()
