@@ -9,10 +9,10 @@ except ImportError:
 
 from aiida.plugins import DataFactory
 
-from aiida_vasp.parsers.file_parsers.incar import IncarIo
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.utils.inheritance import update_docstring
@@ -195,7 +195,7 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         incar_dict = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
-        incar_io = IncarIo(incar_dict=incar_dict)
+        incar_io = IncarParser(data=get_data_node('dict', incar_dict))
         incar_io.write(dst)
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
@@ -230,7 +230,7 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         kpoints = self.inputs.kpoints
-        kpoint_parser = KpParser(data=kpoints)
+        kpoint_parser = KpointsParser(data=kpoints)
         kpoint_parser.write(dst)
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument

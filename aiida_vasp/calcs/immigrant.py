@@ -8,7 +8,7 @@ from aiida.engine import JobCalc
 
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
@@ -94,7 +94,7 @@ def get_potcar_input(dir_path, structure=None, potcar_spec=None):
 
 def get_kpoints_input(dir_path, structure=None):
     structure = structure or get_poscar_input(dir_path)
-    kpoints = KpParser(file_path=dir_path.join('KPOINTS').strpath).kpoints
+    kpoints = KpointsParser(file_path=dir_path.join('KPOINTS').strpath).kpoints
     kpoints.set_cell_from_structure(structure)
     return kpoints
 

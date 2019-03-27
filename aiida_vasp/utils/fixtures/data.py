@@ -14,7 +14,7 @@ from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.incar import IncarIo
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
@@ -40,8 +40,8 @@ def localhost(aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(aiida_env):
-    incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
-    return incar_io.get_param_node()
+    incar_io = IncarParser(data=get_data_class('dict', dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}))
+    return incar_io.incar
 
 
 @pytest.fixture

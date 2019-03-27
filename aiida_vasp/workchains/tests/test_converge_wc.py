@@ -15,7 +15,7 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version
-from aiida_vasp.parsers.file_parsers.kpoints import KpParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
@@ -108,7 +108,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
-    kpoints = KpParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
+    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
     #parameters['system'] = 'test-case:test_converge_wc'
 
     restart_clean_workdir = get_data_node('bool', False)

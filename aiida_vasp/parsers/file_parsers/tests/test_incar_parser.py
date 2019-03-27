@@ -7,16 +7,8 @@ from pytest import raises
 
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import aiida_env
-from aiida_vasp.parsers.file_parsers.incar import IncarIo, IncarItem, IncarParamParser, IncarParser
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-
-
-@pytest.fixture()
-def incar_dict():
-    """Create a mapping of mixed case names to mixed parsed / unparsed values."""
-
-    incar_dict = OrderedDict([('encut', 350), ('Sigma', '.5e-1 comment'), ('lreal', False), ('PREC', 'Accurate')])
-    return incar_dict
 
 
 @pytest.fixture()
@@ -25,78 +17,6 @@ def incar_dict_example():
 
     incar_dict = {'encut': 350, 'Sigma': '.5e-1 #comment', 'lreal': False, 'PREC': 'Accurate'}
     return incar_dict
-
-
-@pytest.mark.incar
-def test_read_incar():
-    """Read an INCAR file and test that some of the keys are read correctly."""
-
-    incar_path = data_path('phonondb', 'INCAR')
-    incar_io = IncarParser(file_path=incar_path)
-    incar_dict = incar_io.incar
-    assert incar_dict['prec'] == 'Accurate'
-    assert incar_dict['ibrion'] == -1
-    assert incar_dict['encut'] == 359.7399
-    assert incar_dict['lreal'] is False
-
-
-@pytest.mark.incar
-def test_from_dict(aiida_env, incar_dict):
-    incar_io = IncarParser(data=get_data_node('dict', dict=incar_dict))
-    incar_io_dict = incar_io.incar
-    print(incar_dict)
-    print(incar_io_dict)
-    assert False
-    assert str(incar_io) == ref_str
-
-
-@pytest.mark.incar
-def test_write_incar(aiida_env, tmpdir, incar_dict):
-    """Test writing and INCAR file from an IncarIo object."""
-
-    incar_io = IncarParser(data=get_data_node('dict', dict=incar_dict))
-    tempfile = str(tmpdir.join('INCAR'))
-    incar_io.write(tempfile)
-    assert read_file(path=tempfile) == str(incar_io)
-
-
-@pytest.mark.incar
-def test_incar_item():
-    """Test the incar item class used to write to file"""
-
-    test_str = 'ENCUT = 350 # test comment'
-    item = IncarItem('encut', 350, '# test comment')
-    assert item.name == 'ENCUT'
-    assert item.value == 350
-    assert item.comment == 'test comment'
-    assert str(item) == test_str
-
-    item = IncarItem(name='encut', value=350, comment='# test comment')
-    assert item.name == 'ENCUT'
-    assert item.value == 350
-    assert item.comment == 'test comment'
-    assert str(item) == test_str
-
-    item = IncarItem.from_string(test_str)
-    assert str(item) == test_str
-
-
-@pytest.mark.incar
-def test_parser():
-    """Test the parser with a pathological string example."""
-
-    test_string = '''TRUE = .True.
-    FALSE=.False. this is a comment; FLOAT\t=\t1.45e-03
-    INT = 45  # endline comment; may contain '#' and ';' NOPARAM = this is not a parameter
-    LIST = 1 2 -33 5.6
-    '''
-    parsed = IncarParamParser.parse_string(test_string)
-    assert parsed['true'] is True
-    assert parsed['false'] is False
-    assert parsed['float'] == 1.45e-3
-    assert parsed['list'] == [1, 2, -33, 5.6]
-    assert parsed['int'] == 45
-    assert 'noparam' not in parsed
 
 
 @pytest.mark.incar
@@ -113,7 +33,7 @@ def test_parser_read_parsevasp():
 
 
 @pytest.mark.incar
-def test_parser_read_doc_parsevasp():
+def test_parser_read_doc_parsevasp(aiida_env):
     """
     Read example INCAR from VASP documentation.
 
@@ -125,8 +45,8 @@ def test_parser_read_doc_parsevasp():
 
     path = data_path('incar_set', 'INCAR.copper_srf')
     parser = IncarParser(file_path=path)
-    result = parser.get_quantity('incar', {})
-    assert result['incar'] is None
+    result = parser.incar
+    assert result is None
 
 
 @pytest.mark.incar
@@ -134,14 +54,12 @@ def test_parser_dict_parsevasp(incar_dict_example):
     """
     Pass a dict to the INCAR parser.
 
-    Using parsevasp. Should fail, since passing of dict in
-    the interface is not implemented yet.
+    Using parsevasp. Should return an AiiDA 
 
     """
-
-    with raises(AttributeError):
-        IncarParser(incar_dict=incar_dict_example)
-
+    
+    parser = IncarParser(data=get_data_node('dict', dict=incar_dict_example))
+    assert isinstance(parser.incar, get_data_class('dict'))
 
 @pytest.mark.incar
 def test_parser_string_parsevasp():
