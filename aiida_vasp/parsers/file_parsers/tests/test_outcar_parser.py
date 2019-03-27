@@ -11,7 +11,7 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 
 
 @pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
-def test_parameter_results(outcar_parser):
+def test_parameter_results(aiida_env, outcar_parser):
     """
     Test that the parameter node is a ParametersData instance.
 
