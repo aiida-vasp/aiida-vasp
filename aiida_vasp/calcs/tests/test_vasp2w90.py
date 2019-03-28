@@ -80,7 +80,6 @@ def test_write_kpoints(fresh_aiida_env, vasp2w90_calc_and_ref):
     """Write KPOINTS file and compare to reference."""
     vasp_calc, reference = vasp2w90_calc_and_ref
     inp = vasp_calc.get_inputs_dict()
-    print(inp['kpoints'].get_attrs(), reference['kpoints'])
     with tempfile.NamedTemporaryFile() as temp_file:
         vasp_calc.write_kpoints(inp, temp_file.name)
         with open(temp_file.name, 'r') as result_kpoints_fo:

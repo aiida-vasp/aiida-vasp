@@ -29,7 +29,7 @@ def localhost_dir(tmpdir_factory):
 
 
 @pytest.fixture
-def localhost(aiida_env, localhost_dir):
+def localhost(fresh_aiida_env, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
         computer = Computer.objects.get(name='localhost')
@@ -45,7 +45,7 @@ def vasp_params(aiida_env):
 
 
 @pytest.fixture
-def potcar_node_pair(aiida_env):
+def potcar_node_pair(fresh_aiida_env):
     """Create a POTCAR node pair."""
     potcar_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
@@ -71,8 +71,8 @@ def duplicate_potcar_data(potcar_node):
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.set_file(potcar_file.strpath)
-        file_node._set_attr('md5', 'abcd')
-        file_node._set_attr('full_name', potcar_node.full_name)
+        file_node.set_attribute('md5', 'abcd')
+        file_node.set_attribute('full_name', potcar_node.full_name)
         file_node.store()
     data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
     return data_node
