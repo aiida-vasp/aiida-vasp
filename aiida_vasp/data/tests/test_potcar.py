@@ -48,22 +48,22 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
     potcar_path = data_path('potcar', 'As', 'POTCAR')
 
     file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    file_node._set_attr('md5', 'foo')
+    file_node.set_attribute('md5', 'foo')
     with pytest.raises(UniquenessError):
         file_node.store()
 
     file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    file_node._set_attr('symbol', 'Ta')
+    file_node.set_attribute('symbol', 'Ta')
     with pytest.raises(UniquenessError):
         file_node.store()
 
     data_node = get_data_node('vasp.potcar', potcar_file_node=potcar_node_pair['file'])
-    data_node._set_attr('md5', 'foo')
+    data_node.set_attribute('md5', 'foo')
     with pytest.raises(UniquenessError):
         data_node.store()
 
     data_node = get_data_node('vasp.potcar', potcar_file_node=potcar_node_pair['file'])
-    data_node._set_attr('symbol', 'Ta')
+    data_node.set_attribute('symbol', 'Ta')
     with pytest.raises(UniquenessError):
         data_node.store()
 

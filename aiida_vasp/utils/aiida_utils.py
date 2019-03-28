@@ -33,6 +33,30 @@ def get_data_node(data_type, *args, **kwargs):
     return get_data_class(data_type)(*args, **kwargs)
 
 
+def querybuild(cls, **kwargs):
+    """
+    Instantiates and
+    :returns: a QueryBuilder instance.
+
+    The QueryBuilder's path has one vertice so far, namely this class.
+    Additional parameters (e.g. filters or a label),
+    can be passes as keyword arguments.
+    
+    :param label: Label to give
+    :param filters: filters to apply
+    :param project: projections
+
+    """
+    
+    from aiida.orm import QueryBuilder
+
+    qb = QueryBuilder()
+    filters = kwargs.pop('filters', {})
+    filters.update({'id': cls.pk})
+    qb.append(cls, filters=filters, **kwargs)
+
+    return qb
+
 @with_dbenv()
 def get_data_class(data_type):
     """

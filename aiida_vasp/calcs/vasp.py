@@ -99,7 +99,7 @@ class VaspCalculation(VaspCalcBase):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
         try:
-            additional_retrieve_list = self.inputs.settings.get_attr('ADDITIONAL_RETRIEVE_LIST')
+            additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST')
         except (KeyError, AttributeError):
             additional_retrieve_list = []
         calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
@@ -113,7 +113,7 @@ class VaspCalculation(VaspCalcBase):
     def _prestore(self):
         """Set attributes prior to storing."""
         super(VaspCalculation, self)._prestore()
-        self._set_attr('elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
+        self.set_attribute('elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
 
     @classmethod
     def _get_potential_linkname(cls, kind):
@@ -127,7 +127,7 @@ class VaspCalculation(VaspCalcBase):
 
     @property
     def elements(self):
-        return self.get_attr('elements')
+        return self.get_attribute('elements')
 
     def _need_kp(self):
         """

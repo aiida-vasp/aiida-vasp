@@ -46,8 +46,8 @@ class VaspImmigrantJobProcess(JobCalc):
         remote_path = settings.get('import_from_path', None)
         if not remote_path:
             raise InputValidationError('immigrant calculations need an input "settings" containing a key "import_from_path"!')
-        self.calc._set_state(calc_states.SUBMITTING)  # pylint: disable=protected-access
-        self.calc._set_attr('remote_workdir', remote_path)  # pylint: disable=protected-access
+        self.calc.set_state(calc_states.SUBMITTING)  # pylint: disable=protected-access
+        self.calc.set_attribute('remote_workdir', remote_path)  # pylint: disable=protected-access
         remotedata = get_data_node('remote', computer=self.calc.get_computer(), remote_path=remote_path)
         remotedata.add_link_from(self.calc, label='remote_folder', link_type=LinkType.CREATE)
         remotedata.store()

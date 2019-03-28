@@ -123,11 +123,12 @@ from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida.orm import Group, GroupTypeString
-from aiida.orm.nodes import Data
-from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm import Data, Node
+from aiida.orm import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
-from aiida_vasp.utils.aiida_utils import get_current_user
+from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 def normalize_potcar_contents(potcar_contents):
@@ -244,7 +245,7 @@ class PotcarMetadataMixin(object):
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
-            query = cls.querybuild(tag=label)
+            query = querybuild(cls, tag=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
             filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
@@ -252,7 +253,7 @@ class PotcarMetadataMixin(object):
             filters['attributes._MODEL_VERSION'] = {'==': kwargs.get('model_version', cls._VERSION)}
         query.add_filter(label, filters)
         return query
-
+    
     @classmethod
     def find(cls, **kwargs):
         """Find nodes by POTCAR metadata attributes given in kwargs."""
@@ -285,42 +286,42 @@ class PotcarMetadataMixin(object):
     @property
     def md5(self):
         """Md5 hash of the POTCAR file (readonly)."""
-        return self.get_attr('md5')
+        return self.get_attribute('md5')
 
     @property
     def title(self):
         """Title of the POTCAR file (readonly)."""
-        return self.get_attr('title')
+        return self.get_attribute('title')
 
     @property
     def functional(self):
         """Functional class of the POTCAR potential (readonly)."""
-        return self.get_attr('functional')
+        return self.get_attribute('functional')
 
     @property
     def element(self):
         """Chemical element described by the POTCAR (readonly)."""
-        return self.get_attr('element')
+        return self.get_attribute('element')
 
     @property
     def symbol(self):
         """Element symbol property (VASP term) of the POTCAR potential (readonly)."""
-        return self.get_attr('symbol')
+        return self.get_attribute('symbol')
 
     @property
     def original_file_name(self):
         """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('original_filename')
+        return self.get_attribute('original_filename')
 
     @property
     def full_name(self):
         """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('full_name')
+        return self.get_attribute('full_name')
 
     @property
     def potential_set(self):
         """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('potential_set')
+        return self.get_attribute('potential_set')
 
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
@@ -340,17 +341,17 @@ class VersioningMixin(object):
     _VERSION = None
 
     def set_version(self):
-        self._set_attr('_MODEL_VERSION', self._VERSION)
+        self.set_attribute('_MODEL_VERSION', self._VERSION)
 
     @property
     def model_version(self):
-        return self.get_attr('_MODEL_VERSION')
+        return self.get_attribute('_MODEL_VERSION')
 
     @classmethod
     def old_versions_in_db(cls):
         """Determine whether there are Nodes created with an older version of the model."""
         label = 'versioned'
-        query = cls.querybuild(tag=label)
+        query = querybuild(cls, tag=label)
         filters = {'attributes._MODEL_VERSION': {'<': cls._VERSION}}
         query.add_filter(label, filters)
         return bool(query.count() >= 1)
@@ -375,8 +376,18 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData.'
     _VERSION = 1
 
-    def set_file(self, filepath):
-        """Initialize from a file path."""
+    def __init__(self, *args, **kwargs):
+        # remove file in kwargs as this is not accepted in the subsequent inits
+        path = kwargs.pop('file', None)
+        super(PotcarFileData, self).__init__(*args, **kwargs)
+        self.init_with_kwargs(file=path)
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_file(self, filepath):
+        """Initiqalize from a file path."""
         self.add_file(filepath)
 
     def add_file(self, src_abs, dst_filename=None):
@@ -386,17 +397,17 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
-        self._set_attr('md5', self.get_file_md5(src_abs))
+        self.set_attribute('md5', self.get_file_md5(src_abs))
         potcar = PotcarSingle.from_file(src_abs)
-        self._set_attr('title', potcar.keywords['TITEL'])
-        self._set_attr('functional', potcar.functional)
-        self._set_attr('element', potcar.element)
-        self._set_attr('symbol', potcar.symbol)
+        self.set_attribute('title', potcar.keywords['TITEL'])
+        self.set_attribute('functional', potcar.functional)
+        self.set_attribute('element', potcar.element)
+        self.set_attribute('symbol', potcar.symbol)
         src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
-        self._set_attr('original_filename', src_rel)
+        self.set_attribute('original_filename', src_rel)
         dir_name = src_path.dirpath().basename
-        self._set_attr('full_name', dir_name)
-        self._set_attr('potential_set', src_path.parts()[-3].basename)
+        self.set_attribute('full_name', dir_name)
+        self.set_attribute('potential_set', src_path.parts()[-3].basename)
 
     @classmethod
     def get_file_md5(cls, path):
@@ -520,7 +531,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """Initialize from a PotcarFileData node."""
         self.set_version()
         for attr_name in potcar_file_node.attributes.keys():
-            self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
+            self.set_attribute(attr_name, potcar_file_node.get_attribute(attr_name))
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""

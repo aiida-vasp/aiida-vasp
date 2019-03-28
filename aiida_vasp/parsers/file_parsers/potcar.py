@@ -7,27 +7,7 @@ import six
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-
-
-def delegate_method_kwargs(prefix='_init_with_'):
-    """
-    Get a kwargs delegating decorator.
-
-    :params prefix: (str) common prefix of delegate functions
-    """
-
-    def decorator(meth):
-        """Decorate a class method to delegate kwargs."""
-
-        def wrapper(*args, **kwargs):
-            for kwarg, value in kwargs.items():
-                getattr(args[0], prefix + kwarg)(value)
-            meth(*args, **kwargs)
-
-        update_wrapper(wrapper, meth)
-        return wrapper
-
-    return decorator
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 class PotcarIo(object):
