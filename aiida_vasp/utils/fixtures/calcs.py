@@ -12,6 +12,44 @@ from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structu
 
 
 @pytest.fixture()
+def calc_with_retrieved(localhost):
+    from aiida.common.links import LinkType
+    from aiida.orm import CalcJobNode, FolderData, Computer, Dict
+
+    def _inner(file_path, input_settings=None):
+        # Create a test computer
+        computer = localhost
+
+        process_type = 'aiida.calculations:{}'.format('vasp.vasp')
+
+        node = CalcJobNode(computer=computer, process_type=process_type)
+        node.set_attribute('input_filename', 'INCAR')
+        node.set_attribute('output_filename', 'OUTCAR')
+        node.set_attribute('error_filename', 'aiida.err')
+        node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        node.set_option('max_wallclock_seconds', 1800)
+        node.store()
+
+        if input_settings is None:
+            input_settings = {}
+
+        settings = Dict(dict=input_settings)
+        node.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
+        settings.store()
+
+        # Create a `FolderData` that will represent the `retrieved` folder. Store the test
+        # output fixture in there and link it.
+        retrieved = FolderData()
+        retrieved.put_object_from_tree(file_path)
+        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.store()
+
+        return node
+
+    return _inner
+
+
+@pytest.fixture()
 def base_calc(fresh_aiida_env, vasp_params, vasp_structure, potentials):
     from aiida_vasp.calcs.base import VaspCalcBase
     manager = get_manager()
@@ -22,14 +60,12 @@ def base_calc(fresh_aiida_env, vasp_params, vasp_structure, potentials):
     inputs.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     inputs.parameters = vasp_params
     inputs.structure = vasp_structure
-    print(potentials)
-    assert False
-    sys.exit(1)
     inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=self.inputs.structure,
                                                                                                             family_name=self.inputs.potential_family.value,
                                                                                                             mapping=self.inputs.potential_mapping.get_dict())
 
     instantiate_process(runner, VaspCalcBase, **inputs)
+
 
 @pytest.fixture
 def vasp_calc_and_ref(create_calc_and_ref, ref_incar):

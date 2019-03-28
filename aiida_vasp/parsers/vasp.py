@@ -11,6 +11,8 @@ from aiida_vasp.parsers.settings import ParserSettings
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.delegates import Delegate
 
+from aiida.common.exceptions import NotExistent
+
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
     'add_bands': False,
@@ -78,18 +80,23 @@ class VaspParser(BaseParser):
     is called, will only have an effect when parsing a second time.
     """
 
-    def __init__(self, calc):
-        super(VaspParser, self).__init__(calc)
+    def __init__(self, node):
+        super(VaspParser, self).__init__(node)
 
         # Initialise the 'get_quantity' delegate:
         setattr(self, 'get_quantity', Delegate())
 
         self.out_folder = None
 
-        calc_settings = self._calc.get_inputs_dict().get('settings')
+        try:
+            calc_settings = self.node.inputs.settings
+        except NotExistent:
+            calc_settings = None
+
         settings = None
         if calc_settings:
             settings = calc_settings.get_dict().get('parser_settings')
+
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
@@ -119,7 +126,7 @@ class VaspParser(BaseParser):
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.retrieved.repository.list_objects() and value_dict['is_critical']:
+                if file_name not in [item.name for item in self.retrieved.list_objects()] and value_dict['is_critical']:
                     return True
             return False
 
@@ -155,8 +162,6 @@ class VaspParser(BaseParser):
 
         # Reset the 'get_quantity' delegate
         self.get_quantity.clear()
-
-        return self.result(success=True)
 
     def get_inputs(self, quantity):
         """

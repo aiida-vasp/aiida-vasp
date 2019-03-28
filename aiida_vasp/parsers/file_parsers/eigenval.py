@@ -62,8 +62,8 @@ class EigParser(BaseFileParser):
         kpoints = np.zeros((num_kp, 4))
         bands = np.zeros((num_spins, num_kp, num_bands))
         for k, field in enumerate(data):  # iterate over data blocks
-            kpbs = filter(None, field)  # throw away empty lines
-            kpi = map(float, kpbs.pop(0))  # first line of block is kpoints -> pop
+            kpbs = [x for x in field if x]  # throw away empty lines
+            kpi = [float(x) for x in kpbs.pop(0)]  # first line of block is kpoints -> pop
             kpoints[k] = kpi
             for point in kpbs:  # rest are band energies
                 bands[:, k, int(point[0]) - 1] = point[1:num_spins + 1]  # place energy value in bands[kp, nb] (BandstrucureData format)

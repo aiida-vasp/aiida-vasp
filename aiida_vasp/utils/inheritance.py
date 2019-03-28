@@ -2,6 +2,7 @@
 from textwrap import dedent
 import six
 
+
 def update_docstring(method_name, content, append=True):
     r"""
     Update docstring of (an inherited) class method.
@@ -42,9 +43,9 @@ def update_docstring(method_name, content, append=True):
         if six.PY3:
             if append:
                 old_doc = getattr(cls, method_name).__doc__
-                getattr(cls, method_name).__doc__ = dedent(old_doc) + dedent(content)
+                getattr(cls, method_name).__func__.__doc__ = ""  # dedent(old_doc) + dedent(content)
             else:
-                getattr(cls, method_name).__doc__ = content
+                getattr(cls, method_name).__func__.__doc__ = content
         return cls
 
     return wrapper

@@ -32,7 +32,8 @@ class BaseParser(Parser):
         :return: absolute path to the retrieved file
         """
         try:
-            ofname = self.out_folder.get_abs_path(fname)
+            with self.retrieved.open(fname) as file_obj:
+                ofname = file_obj.name
             return ofname
         except OSError:
             self.logger.warning(fname + ' not found in retrieved')

@@ -40,7 +40,7 @@ def localhost(aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(aiida_env):
-    incar_io = IncarParser(data=get_data_class('dict', dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}))
+    incar_io = IncarParser(data=get_data_class('dict')( dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}))
     return incar_io.incar
 
 

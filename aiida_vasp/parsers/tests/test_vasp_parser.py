@@ -3,11 +3,12 @@
 # pylint: disable=protected-access,unused-variable,too-few-public-methods
 
 import pytest
+import os
 import numpy as np
 
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class, dbenv
 
@@ -71,23 +72,26 @@ class ExampleFileParser2(BaseFileParser):
 
 
 @pytest.fixture
-def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved):
+def vasp_parser_with_test(calc_with_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
-    from aiida.orm.nodes.parameter import Dict
-    vasp_calc, _ = vasp_nscf_and_ref
-    vasp_calc.use_settings(
-        Dict(
-            dict={
-                'parser_settings': {
-                    'add_custom': {
-                        'link_name': 'custom_node',
-                        'type': 'dict',
-                        'quantities': ['quantity2', 'quantity_with_alternatives']
-                    }
-                }
-            }))
-    parser = vasp_calc.get_parserclass()(vasp_calc)
-    parser.add_file_parser('_scheduler-stdout.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    from aiida.plugins import ParserFactory
+
+    settings_dict = {
+        'parser_settings': {
+            'add_custom': {
+                'link_name': 'custom_node',
+                'type': 'dict',
+                'quantities': ['quantity2', 'quantity_with_alternatives']
+            }
+        }
+    }
+
+    file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/test_relax_wc/out')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser = ParserFactory('vasp.vasp')(node)
+    parser.add_file_parser('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
     parser.add_parsable_quantity(
         'quantity_with_alternatives',
         {
@@ -95,14 +99,13 @@ def vasp_parser_with_test(vasp_nscf_and_ref, ref_retrieved):
             'prerequisites': [],
         },
     )
-    success, outputs = parser.parse_with_retrieved({'retrieved': ref_retrieved})
+    success = parser.parse()
     try:
         yield parser
     finally:
-        parser = vasp_calc.get_parserclass()(vasp_calc)
+        parser = ParserFactory('vasp.vasp')(node)
 
 
-@ONLY_ONE_CALC
 def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
     parser = vasp_parser_with_test
@@ -116,7 +119,6 @@ def test_quantities_to_parse(vasp_parser_with_test):
     assert 'quantity1' in quantities_to_parse
 
 
-@ONLY_ONE_CALC
 def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
@@ -135,7 +137,6 @@ def test_parsable_quantities(vasp_parser_with_test):
     assert quantities.get_by_name('non_existing_quantity') is not None
 
 
-@ONLY_ONE_CALC
 def test_quantity_uniqeness(vasp_parser_with_test):
     """Make sure non-unique quantity identifiers are detected."""
     parser = vasp_parser_with_test
@@ -165,71 +166,34 @@ def xml_truncate(index, original, tmp):
         xmlfile.write(str(truncated_content))
 
 
-@pytest.fixture(params=[0, 1])
-def _parse_me(request, tmpdir):  # pylint disable=redefined-outer-name
-    """
-    Give the result of parsing a retrieved calculation (emulated).
-
-    Returns a function which does:
-
-    1. create a calculation with parser settings
-    2. update the parser settings with the extra_settings
-    3. create a parser with the calculation
-    4. populate a fake retrieved folder and pass it to the parser
-    5. return the result
-
-    Note: This function is defined as protected to avoid pyling throwing
-    redefined-outer-name (as it still does, even though it is disabled above).
-    Pylint has some problems with pytest, there was a plugin, but maintanance is
-    flaky. See discussions here:
-    http://grokbase.com/t/python/pytest-dev/13bt9kz56y/fixtures-and-pylint-w0621
-
-
-    """
-    @dbenv
-    def parse(**extra_settings):
-        """Run the parser using default settings updated with extra_settings."""
-        from aiida.plugins import CalculationFactory, DataFactory
-        from aiida_vasp.parsers.vasp import VaspParser
-        calc = CalculationFactory('vasp.vasp')()
-        settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_parameters': ['fermi_level']}}
-        settings_dict.update(extra_settings)
-        calc.use_settings(DataFactory('dict')(dict=settings_dict))
-        parser = VaspParser(calc=calc)
-        retrieved = DataFactory('folder')()
-        fldr = "basic"
-        if "folder" in extra_settings:
-            fldr = extra_settings["folder"]
-        xml_file_path = xml_path(fldr)
-        tmp_file_path = str(tmpdir.join('vasprun.xml'))
-        xml_truncate(request.param, xml_file_path, tmp_file_path)
-        retrieved.add_path(tmp_file_path, '')
-        success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
-        nodes = dict(nodes)
-        return success, nodes
-
-    return parse
-
-
-def test_parser_nodes(_parse_me):
+def test_parser_nodes(request, calc_with_retrieved):
     """Test a few basic node items of the parser."""
+    from aiida.plugins import ParserFactory
 
-    _, nodes = _parse_me(folder='basic')
-    parameters = nodes['output_parameters']
-    bands = nodes['output_bands']
-    kpoints = nodes['output_kpoints']
+    settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['fermi_level']}}
+
+    file_path = str(request.fspath.join('..') + '../../../test_data/basic')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+
+    parameters = result['output_parameters']
+    bands = result['output_bands']
+    kpoints = result['output_kpoints']
+
     assert isinstance(parameters, get_data_class('dict'))
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
     assert parameters.get_dict()['fermi_level'] == 5.96764939
 
-@dbenv
-def test_structure(request):
-    """Test that the structure from vasprun and POSCAR is the same."""
 
-    from aiida.plugins import CalculationFactory, DataFactory
-    from aiida_vasp.parsers.vasp import VaspParser
-    calc = CalculationFactory('vasp.vasp')()
+def test_structure(request, calc_with_retrieved):
+    """Test that the structure from vasprun and POSCAR is the same."""
+    from aiida.plugins import ParserFactory
+
+
     # turn of everything, except structure
     settings_dict = {
         'parser_settings': {
@@ -250,24 +214,29 @@ def test_structure(request):
             'file_parser_set': 'default'
         }
     }
-    calc.use_settings(DataFactory('dict')(dict=settings_dict))
+
+    file_path = str(request.fspath.join('..') + '../../../test_data/basic')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+
     # First fetch structure from vasprun
-    parser = VaspParser(calc=calc)
-    retrieved = DataFactory('folder')()
-    test_file_path = str(request.fspath.join('..') + '../../../test_data/basic/vasprun.xml')
-    retrieved.add_path(test_file_path, '')
-    success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
-    nodes = dict(nodes)
-    structure_vasprun = nodes['output_structure']
+
+    structure_vasprun = result['output_structure']
     assert isinstance(structure_vasprun, get_data_class('structure'))
+
     # Then from POSCAR/CONTCAR
-    parser = VaspParser(calc=calc)
-    retrieved = DataFactory('folder')()
-    test_file_path = str(request.fspath.join('..') + '../../../test_data/basic_poscar/CONTCAR')
-    retrieved.add_path(test_file_path, '')
-    success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
-    nodes = dict(nodes)
-    structure_poscar = nodes['output_structure']
+    file_path = str(request.fspath.join('..') + '../../../test_data/basic_poscar')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+
+    structure_poscar = result['output_structure']
+
     assert isinstance(structure_poscar, get_data_class('structure'))
     assert np.array_equal(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7))
     positions_vasprun = []
@@ -282,13 +251,11 @@ def test_structure(request):
     positions_poscar = np.asarray(positions_poscar)
     assert np.array_equal(positions_vasprun, positions_poscar)
 
-@dbenv
-def test_parameters(request):
-    """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
 
-    from aiida.plugins import CalculationFactory, DataFactory
-    from aiida_vasp.parsers.vasp import VaspParser
-    calc = CalculationFactory('vasp.vasp')()
+def test_parameters(request, calc_with_retrieved):
+    """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
+    from aiida.plugins import ParserFactory
+
     # turn of everything, except parameters
     settings_dict = {
         'parser_settings': {
@@ -298,7 +265,7 @@ def test_parameters(request):
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
-            'add_parameters': ['fermi_level', 'maximum_stress', 'maximum_force', 'total_energies', 'symmetries'],
+            'add_misc': ['fermi_level', 'maximum_stress', 'maximum_force', 'total_energies', 'symmetries'],
             'add_structure': False,
             'add_projectors': False,
             'add_born_charges': False,
@@ -309,16 +276,15 @@ def test_parameters(request):
             'file_parser_set': 'default',
         }
     }
-    calc.use_settings(DataFactory('dict')(dict=settings_dict))
-    parser = VaspParser(calc=calc)
-    retrieved = DataFactory('folder')()
-    vasprun_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/vasprun.xml')
-    outcar_file_path = str(request.fspath.join('..') + '../../../test_data/disp_details/OUTCAR')
-    retrieved.add_path(vasprun_file_path, '')
-    retrieved.add_path(outcar_file_path, '')
-    success, nodes = parser.parse_with_retrieved({'retrieved': retrieved})
-    nodes = dict(nodes)
-    parameters = nodes['output_parameters']
+
+    file_path = str(request.fspath.join('..') + '../../../test_data/disp_details')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+
+    parameters = result['output_parameters']
     assert isinstance(parameters, get_data_class('dict'))
     data = parameters.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so
