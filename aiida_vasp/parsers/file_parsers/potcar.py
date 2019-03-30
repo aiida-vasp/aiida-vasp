@@ -43,6 +43,10 @@ class PotcarIo(object):
         self._init_with_potcar_file_node(node.find_file_node())
 
     def _init_with_contents(self, contents):
+        try:
+            contents = contents.encode('utf-8')
+        except AttributeError:
+            pass
         node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
         self.md5 = node.md5
 
@@ -79,7 +83,7 @@ class PotcarIo(object):
         elif isinstance(potcar, PotcarIo):
             pass
         else:
-            potcar = cls.from_(str(potcar))
+            potcar = cls.from_(potcar)
         return potcar
 
     def __eq__(self, other):
@@ -100,7 +104,7 @@ class MultiPotcarIo(object):
 
     def write(self, path):
         path = py_path.local(path)
-        with path.open('w') as dest_fo:
+        with path.open('wb') as dest_fo:
             for potcar in self._potcars:
                 dest_fo.write(potcar.content)
 

@@ -70,7 +70,7 @@ def duplicate_potcar_data(potcar_node):
     from aiida_vasp.data.potcar import temp_potcar
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
-        file_node.set_file(potcar_file.strpath)
+        file_node.add_file(potcar_file.strpath)
         file_node.set_attribute('md5', 'abcd')
         file_node.set_attribute('full_name', potcar_node.full_name)
         file_node.store()
@@ -258,7 +258,7 @@ def ref_retrieved():
     from aiida.plugins import DataFactory
     from aiida_vasp.utils.fixtures.testdata import data_path
     retrieved = DataFactory('folder')()
-    retrieved.put_object_from_tree(path=data_path('basic_run'))
+    retrieved.put_object_from_tree(path=data_path('test_relax_wc/out'))
     return retrieved
 
 
@@ -284,14 +284,14 @@ def outcar_parser(request):
 
 def _ref_kp_list():
     from aiida_vasp.utils.fixtures.testdata import data_path
-    with open(data_path('old_data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
     from aiida_vasp.utils.fixtures.testdata import data_path
-    with open(data_path('old_data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
 

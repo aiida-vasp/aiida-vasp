@@ -27,6 +27,7 @@ def test_get_data_class(aiida_env):
     with pytest.raises(KeyError) as e_info:
         get_data_class('garbage')
 
+
 def test_get_data_node(aiida_env):
     """Make sure the get_data_node returns objects for the basic data types."""
     for data_type in BASIC_DATA_TYPES:

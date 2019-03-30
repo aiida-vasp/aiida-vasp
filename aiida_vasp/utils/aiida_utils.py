@@ -6,8 +6,7 @@ from packaging import version
 from aiida.orm import User
 from aiida.cmdline.utils.decorators import with_dbenv
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'vasp.potcar', 'remote', 'cif',
-                    'array.kpoints']
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'remote', 'cif']
 
 
 def load_dbenv_if_not_loaded(**kwargs):
@@ -52,10 +51,10 @@ def querybuild(cls, **kwargs):
 
     qb = QueryBuilder()
     filters = kwargs.pop('filters', {})
-    filters.update({'id': cls.pk})
     qb.append(cls, filters=filters, **kwargs)
 
     return qb
+
 
 @with_dbenv()
 def get_data_class(data_type):

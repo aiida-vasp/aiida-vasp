@@ -13,7 +13,6 @@ from aiida_vasp.parsers.file_parsers.potcar import PotcarIo, MultiPotcarIo
 def verify_potcario(potcario):
     assert potcario.node
     assert potcario.file_node
-    assert potcario.pymatgen
     assert potcario.content
 
 
@@ -47,7 +46,7 @@ def test_potcar_from_node(potcar_family):
 def test_potcar_from_contents(potcar_family):
     """Create a PotcarIo from contents of a POTCAR file."""
     contents_as = read_file('potcar', 'As', 'POTCAR')
-    from_ctor = PotcarIo(contents=contents_as)
+    from_ctor = PotcarIo(contents=contents_as.encode('utf-8'))
     verify_potcario(from_ctor)
     assert from_ctor.node.uuid == get_data_class('vasp.potcar').find_one(element='As').uuid
     from_from = PotcarIo.from_(contents_as)
@@ -57,7 +56,7 @@ def test_potcar_from_contents(potcar_family):
 def test_file_contents_equivalence(aiida_env):
     potcar_path_as = ['potcar', 'As', 'POTCAR']
     from_file = PotcarIo(path=data_path(*potcar_path_as))
-    from_contents = PotcarIo(contents=read_file(*potcar_path_as))
+    from_contents = PotcarIo(contents=read_file(*potcar_path_as).encode('utf-8'))
     assert from_file.md5 == from_contents.md5
 
 

@@ -64,3 +64,17 @@ def mock_converge_workchain(mock_verify_workchain):
         _next_workchain = mock_verify_workchain
 
     return ConvergeWorkCHain
+
+
+def mock_factory(base_class, run_method):
+
+    class MockCalcJob(base_class):
+
+        run = run_method
+
+        @classmethod
+        def define(cls, spec):
+            super(base_class, cls).define(spec)
+            spec.outline(cls.run)
+
+    return MockCalcJob
