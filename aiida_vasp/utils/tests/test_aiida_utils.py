@@ -4,6 +4,8 @@
 
 import pytest
 from importlib import import_module
+from aiida.common.exceptions import MissingEntryPointError
+
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, dbenv, BASIC_DATA_TYPES, get_current_user
 from aiida_vasp.utils.fixtures.environment import aiida_env
 
@@ -24,7 +26,7 @@ def test_get_data_class(aiida_env):
         aiida_data_type_class = getattr(the_module_ref, data_type.capitalize())
         assert data_type_class == aiida_data_type_class
 
-    with pytest.raises(KeyError) as e_info:
+    with pytest.raises(MissingEntryPointError) as e_info:
         get_data_class('garbage')
 
 
@@ -58,6 +60,6 @@ def test_get_data_node(aiida_env):
             aiida_data_node = aiida_data_type_class(dict={})
             assert set(data_node.get_dict()) == set(aiida_data_node.get_dict())
 
-    with pytest.raises(KeyError) as e_info:
+    with pytest.raises(MissingEntryPointError) as e_info:
         get_data_node('garbage', True)
-    
+

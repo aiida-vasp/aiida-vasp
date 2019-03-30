@@ -6,7 +6,7 @@ from packaging import version
 from aiida.orm import User
 from aiida.cmdline.utils.decorators import with_dbenv
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict', 'remote', 'cif']
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
 
 
 def load_dbenv_if_not_loaded(**kwargs):

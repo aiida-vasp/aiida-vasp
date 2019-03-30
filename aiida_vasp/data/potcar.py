@@ -134,6 +134,10 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 def normalize_potcar_contents(potcar_contents):
     """Normalize whitespace in a POTCAR given as a string."""
+    try:
+        potcar_contents = potcar_contents.decode()
+    except AttributeError:
+        pass
     normalized = re.sub(r'[ \t]+', r' ', potcar_contents)  # multiple spaces
     normalized = re.sub(r'[\n\r]\s*', r'\n', normalized)  # line breaks and spaces afterwards / empty lines
     normalized = re.sub(r'^\s*', r'', normalized)  # spaces / empty lines at the very beginning
@@ -489,7 +493,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         if path.isdir():
             path = path.join(self.symbol, 'POTCAR')
         if not dry_run:
-            with path.open(mode='w', ensure=True) as dest_fo:
+            with path.open(mode='wb', ensure=True) as dest_fo:
                 dest_fo.write(self.get_content())
         return path
 
@@ -539,7 +543,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def __init__(self, **kwargs):
         potcar_file_node = kwargs.pop('potcar_file_node', None)
         super(PotcarData, self).__init__(**kwargs)
-        self.set_potcar_file_node(potcar_file_node)
+        if potcar_file_node is not None:
+            self.set_potcar_file_node(potcar_file_node)
 
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
@@ -621,9 +626,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
-        group_query.append(cls, tag='potcar_data')
         group_query.append(
-            Group, with_node='potcar_data', tag='potcar_family', filters={'type': {
+            Group, with_node='potcar_data', tag='potcar_data', filters={'type_string': {
                 '==': cls.potcar_family_type_string
             }}, project='*')
 
@@ -717,7 +721,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         query = cls.query_by_attrs(family_name=family_name, element=element)
         query.add_projection(cls._query_label, 'attributes.full_name')
-        print(query)
         return [name[0] for name in query.all()]
 
     @classmethod

@@ -114,7 +114,7 @@ def vasp_structure(request, aiida_env):
     from aiida_vasp.utils.fixtures.testdata import data_path
     from aiida.plugins import DataFactory
     if request.param == 'cif':
-        cif_path = data_path('old_data', 'EntryWithCollCode43360.cif')
+        cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
         larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
@@ -214,7 +214,7 @@ def vasp_chgcar(aiida_env):
     """CHGCAR node and reference fixture"""
     from aiida.plugins import DataFactory
     from aiida_vasp.utils.fixtures.testdata import data_path
-    chgcar_path = data_path('old_data', 'CHGCAR')
+    chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r') as ref_chgcar_fo:
         ref_chgcar = ref_chgcar_fo.read()
@@ -226,7 +226,7 @@ def vasp_wavecar(aiida_env):
     """WAVECAR node and reference fixture"""
     from aiida.plugins import DataFactory
     from aiida_vasp.utils.fixtures.testdata import data_path
-    wavecar_path = data_path('old_data', 'WAVECAR')
+    wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
@@ -236,7 +236,7 @@ def vasp_wavecar(aiida_env):
 @pytest.fixture
 def ref_incar():
     from aiida_vasp.utils.fixtures.testdata import data_path
-    with open(data_path('old_data', 'INCAR'), 'r') as reference_incar_fo:
+    with open(data_path('test_relax_wc/inp', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
 
@@ -258,7 +258,7 @@ def ref_retrieved():
     from aiida.plugins import DataFactory
     from aiida_vasp.utils.fixtures.testdata import data_path
     retrieved = DataFactory('folder')()
-    retrieved.put_object_from_tree(path=data_path('test_relax_wc/out'))
+    retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
 
 
@@ -298,7 +298,7 @@ def _ref_kp_mesh():
 
 @pytest.fixture
 def wannier_params():
-    from aiida.orm.nodes.parameter import Dict
+    from aiida.orm import Dict
     return Dict(dict=dict(
         dis_num_iter=1000,
         num_bands=24,
