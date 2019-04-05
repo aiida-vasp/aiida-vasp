@@ -7,6 +7,7 @@ from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.aiida_utils import create_authinfo, cmp_get_transport, aiida_version, cmp_version
 
 
+@pytest.mark.skip(reason="Waiting for the immigrant being moved to aiida_core")
 @pytest.fixture
 def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
@@ -26,6 +27,7 @@ def aiida_runner():
     yield work.runners.new_runner(rmq_config=None)
 
 
+@pytest.mark.skip(reason="Waiting for the immigrant being moved to aiida_core")
 @pytest.mark.xfail(reason="Removing POTCAR from calc.raw_input not implemented yet.")
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
 def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp, aiida_runner):
@@ -54,6 +56,7 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     assert banned_files.isdisjoint(input_files)
 
 
+@pytest.mark.skip(reason="Waiting for the immigrant being moved to aiida_core")
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='too many JobProcess changes')
 def test_vasp_immigrant(immigrant_with_builder, aiida_runner):
     """Test importing a calculation from the folder of a completed VASP run."""

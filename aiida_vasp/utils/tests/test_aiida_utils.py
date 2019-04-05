@@ -7,10 +7,10 @@ from importlib import import_module
 from aiida.common.exceptions import MissingEntryPointError
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, dbenv, BASIC_DATA_TYPES, get_current_user
-from aiida_vasp.utils.fixtures.environment import aiida_env
+from aiida_vasp.utils.fixtures.environment import fresh_aiida_env, aiida_env
 
 
-def test_get_current_user(aiida_env):
+def test_get_current_user(fresh_aiida_env):
     """Assert that get_current_user returns a user in all tested aiida versions."""
     user = get_current_user()
     assert user.first_name

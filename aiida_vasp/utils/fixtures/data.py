@@ -12,6 +12,7 @@ from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
+from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -40,8 +41,8 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(aiida_env):
-    incar_io = IncarParser(data=get_data_class('dict')( dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}))
-    return incar_io.incar
+    incar_io = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    return incar_io
 
 
 @pytest.fixture
@@ -169,6 +170,81 @@ def vasp_kpoints(request, aiida_env):
 
 
 @pytest.fixture()
+def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
+    """Inputs dictionary for CalcJob Processes."""
+    from aiida.orm import Dict
+
+    def inner(settings=None, parameters=None):
+
+        inputs = AttributeDict()
+
+        metadata = AttributeDict({
+            'options': {
+                'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
+            }
+        })
+
+        if settings is not None:
+            inputs.settings = Dict(dict=settings)
+
+        if isinstance(parameters, dict):
+            parameters = get_data_class('dict')(dict=parameters)
+
+        if parameters is None:
+            parameters = vasp_params
+
+        inputs.code = vasp_code
+        inputs.metadata = metadata
+        inputs.parameters = parameters
+        inputs.kpoints, _ = vasp_kpoints
+        inputs.structure = vasp_structure
+        inputs.potential = potentials
+
+        return inputs
+
+    return inner
+
+
+@pytest.fixture()
+def vasp2w90_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code, wannier_projections, wannier_params):
+    """Inputs dictionary for CalcJob Processes."""
+    from aiida.orm import Dict
+
+    def inner(settings=None, parameters=None):
+
+        inputs = AttributeDict()
+
+        metadata = AttributeDict({
+            'options': {
+                'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
+            }
+        })
+
+        if settings is not None:
+            inputs.settings = Dict(dict=settings)
+
+        if isinstance(parameters, dict):
+            parameters = get_data_class('dict')(dict=parameters)
+
+        if parameters is None:
+            parameters = vasp_params
+
+        inputs.code = vasp_code
+        inputs.metadata = metadata
+        inputs.parameters = parameters
+        inputs.kpoints, _ = vasp_kpoints
+        inputs.structure = vasp_structure
+        inputs.potential = potentials
+
+        inputs.wannier_parameters = wannier_params
+        inputs.wannier_projections = wannier_projections
+
+        return inputs
+
+    return inner
+
+
+@pytest.fixture()
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
     from aiida.orm import Code
@@ -236,7 +312,7 @@ def vasp_wavecar(aiida_env):
 @pytest.fixture
 def ref_incar():
     from aiida_vasp.utils.fixtures.testdata import data_path
-    with open(data_path('test_relax_wc/inp', 'INCAR'), 'r') as reference_incar_fo:
+    with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
         yield reference_incar_fo.read().strip()
 
 

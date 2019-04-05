@@ -735,8 +735,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         The Dictionary looks as follows::
 
             {
-                (kind1.name, ): PotcarData_for_kind1,
-                (kind2.name, ): ...
+                kind1.name: PotcarData_for_kind1,
+                kind2.name: ...
             }
 
         This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
@@ -772,7 +772,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
         kind_names = structure.get_kind_names()
-        return {(kind_name,): potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
+        potcar_dict = {kind_name: potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
+        return potcar_dict
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):

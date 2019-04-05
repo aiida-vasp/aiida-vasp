@@ -73,8 +73,8 @@ class VaspCalcBase(CalcJob):
         calcinfo.uuid = self.uuid
         calcinfo.retrieve_list = self.max_retrieve_list()
         codeinfo = CodeInfo()
-        codeinfo.code_uuid = self.get_code().uuid
-        codeinfo.code_pk = self.get_code().pk
+        codeinfo.code_uuid = self.inputs.code.uuid
+        codeinfo.code_pk = self.inputs.code.pk
         calcinfo.codes_info = [codeinfo]
         calcinfo.remote_copy_list = remote_copy_list
         # here we need to do the charge density and wave function copy
@@ -132,10 +132,6 @@ class VaspCalcBase(CalcJob):
 
     @classmethod
     def immigrant(cls, code, remote_path, **kwargs):
-        
-        return NotImplemented('The immigrant is not yet ported to comply with AiiDA beta. In fact, '
-                              'we will most likely wait until an immigrant function is present '
-                              'in AiiDA core.')
         """
         Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
 
@@ -149,29 +145,34 @@ class VaspCalcBase(CalcJob):
             mapping to find the right POTCARs.
         :param settings: dict. Used for non-default parsing instructions, etc.
         """
-        from aiida_vasp.calcs import immigrant as imgr
-        remote_path = py_path.local(remote_path)
-        proc_cls = imgr.VaspImmigrantJobProcess.build(cls)
-        builder = proc_cls.get_builder()
-        builder.code = code
-        builder.options.max_wallclock_seconds = 1  # pylint: disable=no-member
-        builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
-        settings = kwargs.get('settings', {})
-        settings.update({'import_from_path': remote_path.strpath})
-        builder.settings = get_data_node('dict', dict=settings)
-        with cmp_get_transport(code.get_computer()) as transport:
-            with SandboxFolder() as sandbox:
-                sandbox_path = py_path.local(sandbox.abspath)
-                transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
-                transport.get(remote_path.join('POSCAR').strpath, sandbox_path.strpath)
-                transport.get(remote_path.join('POTCAR').strpath, sandbox_path.strpath, ignore_nonexisting=True)
-                transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
-                builder.parameters = imgr.get_incar_input(sandbox_path)
-                builder.structure = imgr.get_poscar_input(sandbox_path)
-                builder.potential = imgr.get_potcar_input(sandbox_path, potcar_spec=kwargs.get('potcar_spec', None))
-                builder.kpoints = imgr.get_kpoints_input(sandbox_path)
-                cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
-        return proc_cls, builder
+
+        raise NotImplemented('The immigrant is not yet ported to comply with AiiDA beta. In fact, '
+                              'we will most likely wait until an immigrant function is present '
+                              'in AiiDA core.')
+
+#        from aiida_vasp.calcs import immigrant as imgr
+#        remote_path = py_path.local(remote_path)
+#        proc_cls = imgr.VaspImmigrantJobProcess.build(cls)
+#        builder = proc_cls.get_builder()
+#        builder.code = code
+#        builder.options.max_wallclock_seconds = 1  # pylint: disable=no-member
+#        builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
+#        settings = kwargs.get('settings', {})
+#        settings.update({'import_from_path': remote_path.strpath})
+#        builder.settings = get_data_node('dict', dict=settings)
+#        with cmp_get_transport(code.get_computer()) as transport:
+#            with SandboxFolder() as sandbox:
+#                sandbox_path = py_path.local(sandbox.abspath)
+#                transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
+#                transport.get(remote_path.join('POSCAR').strpath, sandbox_path.strpath)
+#                transport.get(remote_path.join('POTCAR').strpath, sandbox_path.strpath, ignore_nonexisting=True)
+#                transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
+#                builder.parameters = imgr.get_incar_input(sandbox_path)
+#                builder.structure = imgr.get_poscar_input(sandbox_path)
+#                builder.potential = imgr.get_potcar_input(sandbox_path, potcar_spec=kwargs.get('potcar_spec', None))
+#                builder.kpoints = imgr.get_kpoints_input(sandbox_path)
+#                cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
+#        return proc_cls, builder
 
     @classmethod
     def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):

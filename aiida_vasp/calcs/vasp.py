@@ -9,7 +9,7 @@ except ImportError:
 
 from aiida.plugins import DataFactory
 
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.file_parsers.incar import IncarIo
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
@@ -82,7 +82,7 @@ class VaspCalculation(VaspCalcBase):
     def define(cls, spec):
         super(VaspCalculation, cls).define(spec)
         spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
-        spec.input('structure', valid_type=(get_data_class('dict'), get_data_class('cif')), help='The input structure (POSCAR).')
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need dynamic on this as it should also accept a parameter `kind`
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
@@ -107,27 +107,18 @@ class VaspCalculation(VaspCalcBase):
 
     def verify_inputs(self):
         super(VaspCalculation, self).verify_inputs()
-        if 'elements' not in self.attrs():
+        if not hasattr(self, 'elements'):
             self._prestore()
 
     def _prestore(self):
         """Set attributes prior to storing."""
         super(VaspCalculation, self)._prestore()
-        self.set_attribute('elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
-
-    @classmethod
-    def _get_potential_linkname(cls, kind):
-        """Required for storing multiple input potential nodes."""
-        return 'potential_%s' % kind
+        setattr(self, 'elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
 
     @property
     def _parameters(self):
         all_parameters = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
         return {k.lower(): v for k, v in all_parameters.items()}
-
-    @property
-    def elements(self):
-        return self.get_attribute('elements')
 
     def _need_kp(self):
         """
@@ -168,17 +159,24 @@ class VaspCalculation(VaspCalcBase):
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
         """
-        istrt_d = 1 if self.get_inputs_dict().get('wavefunctions') else 0
+        istrt_d = 1 if self.inputs.get('wavefunctions') else 0
         istart = self._parameters.get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
     def _structure(self):
-        """Get the input structure."""
-        return self.inputs.structure
+        """
+        Get the input structure as AiiDa StructureData.
+
+        This is required in order to support CifData as input as well.
+        """
+        structure = self.inputs.structure
+        if not hasattr(structure, 'get_pymatgen'):
+            structure = get_data_node('structure', ase=structure.get_ase())
+        return structure
 
     def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
-        super(VaspCalculation, self).write_additional(tempfolder)
+        super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
         if self._need_chgd():
             chgcar = tempfolder.get_abs_path('CHGCAR')
             self.write_chgcar(chgcar, calcinfo)
@@ -191,11 +189,9 @@ class VaspCalculation(VaspCalcBase):
         Converts from parameters node (Dict) to INCAR format and writes to dst.
 
         Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
-
-        :param dst: absolute path of the file to write to
         """
         incar_dict = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
-        incar_io = IncarParser(data=get_data_node('dict', incar_dict))
+        incar_io = IncarIo(incar_dict=incar_dict)
         incar_io.write(dst)
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
@@ -208,7 +204,6 @@ class VaspCalculation(VaspCalcBase):
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
         writer = PoscarParser(data=self._structure(), precision=poscar_precision)
-        writer.get_quantity('poscar-structure', {})
         writer.write(dst)
 
     def write_potcar(self, dst):
@@ -218,9 +213,7 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the file to write to
         """
         structure = self._structure()
-        pot_key = self._get_potential_linkname
-        potentials = {symbol: self.inputs.get(pot_key(symbol)) for symbol in structure.get_kind_names()}
-        multi_potcar = MultiPotcarIo.from_structure(structure, potentials)
+        multi_potcar = MultiPotcarIo.from_structure(structure, self.inputs.potential)
         multi_potcar.write(dst)
 
     def write_kpoints(self, dst):  # pylint: disable=unused-argument

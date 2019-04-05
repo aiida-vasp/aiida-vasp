@@ -202,4 +202,4 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
 def test_call_from_vasp():
     import subprocess
     output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
-    assert 'Usage: verdi data vasp-potcar' in output
+    assert b'Usage: verdi data vasp-potcar' in output

@@ -67,6 +67,12 @@ def mock_converge_workchain(mock_verify_workchain):
 
 
 def mock_factory(base_class, run_method):
+    """
+    Return a mock-up of a class inheriting from CalcJobNode.
+
+    :param base_class: THe base class inheriting from CalcJobNode as e.g. defined in a plugin.
+    :param run_method: a method with signature run(self) that will add outputs based on the inputs to the CalcJobNode.
+    """
 
     class MockCalcJob(base_class):
 
