@@ -63,12 +63,12 @@ def get_data_class(data_type):
 
     """
     from aiida.plugins import DataFactory
-    from aiida.common.exceptions import MissingPluginError
+    from aiida.common.exceptions import MissingEntryPointError
 
     data_cls = None
     try:
         data_cls = DataFactory(data_type)
-    except MissingPluginError as err:
+    except MissingEntryPointError as err:
         raise err
     return data_cls
 

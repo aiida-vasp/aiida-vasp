@@ -4,7 +4,10 @@
 import tarfile
 import os
 import six
-from io import StringIO
+if six.PY2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 from aiida.orm.nodes import Data
 
@@ -30,10 +33,7 @@ class ArchiveData(Data):
 
     def _make_archive(self):
         """Create the archive file on disk with all it's contents"""
-        if six.PY2:
-            self.put_object_from_filelike(StringIO.StringIO(), 'archive.tar.gz')
-        else:
-            self.put_object_from_filelike(StringIO(), 'archive.tar.gz')
+        self.put_object_from_filelike(StringIO(), 'archive.tar.gz')
 
         archive = tarfile.open(fileobj=self.open('archive.tar.gz', mode='wb'), mode='w:gz')
 
