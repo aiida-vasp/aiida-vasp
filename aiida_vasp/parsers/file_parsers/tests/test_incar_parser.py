@@ -43,7 +43,7 @@ def test_parser_read_doc_parsevasp(fresh_aiida_env):
 
     """
 
-    path = data_path('incar_set', 'INCAR.copper_srf')
+    path = data_path('incar', 'INCAR.copper_srf')
     parser = IncarParser(file_path=path)
     result = parser.incar
     assert result is None

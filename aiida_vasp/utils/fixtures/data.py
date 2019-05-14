@@ -318,7 +318,7 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = py_path.local(data_path('incar_set', 'INCAR.vasp2w90'))
+    data = py_path.local(data_path('incar', 'INCAR.vasp2w90'))
     yield data.read()
 
 

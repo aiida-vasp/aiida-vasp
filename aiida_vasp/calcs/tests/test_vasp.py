@@ -54,11 +54,9 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     inputs.charge_density = chgcar
 
     calc = vasp_calc(inputs=inputs)
-
-    temp_folder = Folder(localhost_dir.dirpath())
+    temp_folder = Folder(str(localhost_dir.dirpath()))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
-    print(calcinfo.local_copy_list)
 
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
@@ -75,7 +73,7 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
 
     calc = vasp_calc(inputs=inputs)
 
-    temp_folder = Folder(localhost_dir.dirpath())
+    temp_folder = Folder(str(localhost_dir.dirpath()))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
 
@@ -97,7 +95,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(localhost_dir.dirpath())
+    temp_folder = Folder(str(localhost_dir.dirpath()))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
     input_files = temp_folder.get_content_list()
@@ -116,7 +114,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(localhost_dir.dirpath())
+    temp_folder = Folder(str(localhost_dir.dirpath()))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
 
