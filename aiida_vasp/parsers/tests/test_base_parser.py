@@ -21,4 +21,5 @@ def test_get_file(base_parser):
     """Test getting a retrieved output file."""
     assert os.path.isfile(base_parser.get_file('OUTCAR'))
     assert os.path.exists(base_parser.get_file('OUTCAR'))
-    assert base_parser.get_file('NonExistent') is None
+    with pytest.raises(IOError):
+        base_parser.get_file('NonExistent')

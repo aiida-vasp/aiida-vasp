@@ -30,7 +30,6 @@ def calc_with_retrieved(localhost):
         node.set_attribute('error_filename', 'aiida.err')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('max_wallclock_seconds', 1800)
-        node.store()
 
         if input_settings is None:
             input_settings = {}
@@ -38,7 +37,8 @@ def calc_with_retrieved(localhost):
         settings = Dict(dict=input_settings)
         node.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
-
+        node.store()
+        
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
         retrieved = FolderData()

@@ -5,7 +5,6 @@ import os
 def data_path(*args):
     """Give the path to a test data file."""
     path = os.path.realpath(os.path.join(__file__, '../../../test_data', *args))
-    print(path)
     assert os.path.exists(path)
     assert os.path.isabs(path)
     return path
