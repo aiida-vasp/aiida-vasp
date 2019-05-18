@@ -212,7 +212,6 @@ def test_export_family_folder(fresh_aiida_env, potcar_family, tmpdir):
 
     potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=True)
     assert not export_dir.listdir()
-
     files = potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=False)
     family_dir = export_dir.join(potcar_family)
     subdirs = set(str(subpath.basename) for subpath in family_dir.listdir())

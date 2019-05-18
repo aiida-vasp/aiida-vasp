@@ -90,7 +90,6 @@ class BaseRestartWorkChain(WorkChain):
         spec.exit_code(199, 'ERROR_UNKNOWN',
             message='unknown error detected in the restart workchain')
         
-        
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
         self.ctx.unexpected_failure = False
@@ -171,10 +170,10 @@ class BaseRestartWorkChain(WorkChain):
         elif calculation.process_state == ProcessState.FINISHED:
             self._handle_other(calculation)
 
-        if self.error_status:
+        if self.exit_status:
             return self.exit_status
 
-        return self.error_code.NO_ERROR
+        return self.exit_codes.NO_ERROR
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
@@ -208,17 +207,6 @@ class BaseRestartWorkChain(WorkChain):
 
         cleaned_calcs = []
 
-        # for called_descendant in self.calc.called_descendants:
-        #     if isinstance(called_descendant, orm.CalcJobNode):
-        #         try:
-        #             called_descendant.outputs.remote_folder._clean()
-        #             cleaned_calcs.append(called_descendant.pk)
-        #         except (IOError, OSError, KeyError):
-        #             pass
-
-        # if cleaned_calcs:
-        #     self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))
-
         for calculation in self.ctx.calculations.outputs(link_type=LinkType.CALL):
             try:
                 calculation.outputs.remote_folder._clean()  # pylint: disable=protected-access
@@ -234,7 +222,7 @@ class BaseRestartWorkChain(WorkChain):
         self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.exit_status = self.exit_code.NO_ERROR
+        self.exit_status = self.exit_codes.NO_ERROR
 
         return
 
@@ -243,7 +231,7 @@ class BaseRestartWorkChain(WorkChain):
         self.report(
             'reached the maximumm number of iterations {}: last ran calculation was {}<{}>'.format(
                 self.inputs.max_iterations.value, self._calculation.__name__, calculation.pk))
-        self.exit_status = self.error_code.ERROR_MAXIMUM_ITERATIONS_EXCEEDED
+        self.exit_status = self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED
 
         return
 
@@ -251,13 +239,13 @@ class BaseRestartWorkChain(WorkChain):
         """Handle the case when an unexpected state is detected."""
         self.report('unexpected state ({}) of {}<{}>'.format(
             calculation.process_state, self._calculation.__name__, calculation.pk))
-        self.exit_status = self.error_code.ERROR_UNEXPECTED_CALCULATION_STATE
+        self.exit_status = self.exit_codes.ERROR_UNEXPECTED_CALCULATION_STATE
 
         return
 
     def _handle_killed(self, calculation):
         """Handle the case when a killed state is detected, a silent fail."""
-        self.exit_status = self.error_code.NO_ERROR
+        self.exit_status = self.exit_codes.NO_ERROR
 
         return
 
@@ -289,10 +277,10 @@ class BaseRestartWorkChain(WorkChain):
         """
         if self.ctx.unexpected_failure:
             self.report('failure of {}<{}> could not be handled for the second consecutive time'.format(self._calculation.__name__, calculation.pk))
-            self.exit_status = self.error_code.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE
+            self.exit_status = self.exit_codes.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE
         else:
             self.report('failure of {}<{}> could not be handled, trying to restart'.format(self._calculation.__name__, calculation.pk))
-            self.exit_status = self.error_code.NO_ERROR
+            self.exit_status = self.exit_codes.NO_ERROR
 
         return
 
@@ -318,7 +306,7 @@ class BaseRestartWorkChain(WorkChain):
         handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
         
         if not handlers:
-            self.exit_status = self.error_code.ERROR_NO_ERROR_HANDLERS
+            self.exit_status = self.exit_codes.ERROR_NO_ERROR_HANDLERS
 
         for handler in handlers:
             handler_report = handler.method(self, calculation)
@@ -338,7 +326,7 @@ class BaseRestartWorkChain(WorkChain):
         # If none of the executed error handlers reported that they handled an
         # error, the failure reason is unknown
         if not is_handled:
-            self.exit_status = self.error_codes.ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS
+            self.exit_status = self.exit_codes.ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS
 
         return
 
@@ -353,7 +341,7 @@ class BaseRestartWorkChain(WorkChain):
         self._handle_calculation_failure(calculation)
 
         # If there is still errors, we need to just try a new resubmit
-        if self.exit_status != self.error_code.NO_ERROR:
+        if self.exit_status != self.exit_codes.NO_ERROR:
             self._handle_unexpected_failure(calculation)
             self.ctx.unexpected_failure = True
             self.ctx.restart_calc = calculation

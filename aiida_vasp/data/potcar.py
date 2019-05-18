@@ -884,7 +884,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         with temp_dir() as staging_dir:
             for file_node in all_file_nodes:
-                print(file_node)
                 new_file = file_node.export_file(staging_dir, dry_run=dry_run)
                 files_written.append(path.join(new_file.relto(staging_dir)))
             if not dry_run:
