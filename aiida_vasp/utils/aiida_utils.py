@@ -4,28 +4,9 @@ import numpy as np
 from packaging import version
 
 from aiida.orm import User
-from aiida.cmdline.utils.decorators import with_dbenv
+from aiida.cmdline.utils.decorators import with_dbenv, dbenv
 
 BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
-
-
-def load_dbenv_if_not_loaded(**kwargs):
-    """Load dbenv if necessary, run spinner meanwhile to show command hasn't crashed."""
-    from aiida.backends.utils import load_dbenv, is_dbenv_loaded
-    if not is_dbenv_loaded():
-        load_dbenv(**kwargs)
-
-
-def dbenv(function):
-    """A function decorator that loads the dbenv if necessary before running the function."""
-
-    @wraps(function)
-    def decorated_function(*args, **kwargs):
-        """Load dbenv if not yet loaded, then run the original function."""
-        load_dbenv_if_not_loaded()
-        return function(*args, **kwargs)
-
-    return decorated_function
 
 
 def get_data_node(data_type, *args, **kwargs):
@@ -153,7 +134,7 @@ def cmp_load_verdi_data():
     return verdi_data
 
 
-@dbenv
+@with_dbenv()
 def create_authinfo(computer, store=False):
     """
     Allow the current user to use the given computer.
@@ -166,7 +147,7 @@ def create_authinfo(computer, store=False):
     return authinfo
 
 
-@dbenv
+@with_dbenv()
 def cmp_get_authinfo(computer):
     """Get an existing authinfo or None for the given computer and current user."""
     if hasattr(computer, 'get_authinfo'):
@@ -187,7 +168,7 @@ def cmp_get_authinfo(computer):
     return None
 
 
-@dbenv
+@with_dbenv()
 def cmp_get_transport(computer):
     if hasattr(computer, 'get_transport'):
         return computer.get_transport()

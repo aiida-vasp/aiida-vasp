@@ -54,7 +54,6 @@ class VaspCalculation(VaspCalcBase):
         inputs.settings = <Dict with parser settings etc>
         inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure, ...)
         inputs.code = <Code representing vasp on your cluster>
-        inputs._options = <Computer, resources, etc, AiiDA specific stuff>
 
         submit(proc, **inputs)
 
@@ -81,16 +80,105 @@ class VaspCalculation(VaspCalcBase):
     @classmethod
     def define(cls, spec):
         super(VaspCalculation, cls).define(spec)
-        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
-        # Need dynamic on this as it should also accept a parameter `kind`
-        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
-        spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
-        spec.input(
-            'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
-        spec.input(
-            'settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
+        # Define the inputs.
+        # options is passed automatically.
+        spec.input('parameters',
+                   valid_type=get_data_class('dict'),
+                   help='The VASP input parameters (INCAR).')
+        spec.input('structure',
+                   valid_type=(get_data_class('structure'),
+                               get_data_class('cif')),
+                   help='The input structure (POSCAR).')
+        # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
+        # until execution.
+        spec.input_namespace('potential',
+                             valid_type=get_data_class('vasp.potcar'),
+                             help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints',
+                   valid_type=get_data_class('array.kpoints'),
+                   help='The kpoints to use (KPOINTS).')
+        spec.input('charge_density',
+                   valid_type=get_data_class('vasp.chargedensity'),
+                   required=False,
+                   help='The charge density. (CHGCAR)')
+        spec.input('wavefunctions',
+                   valid_type=get_data_class('vasp.wavefun'),
+                   required=False,
+                   help='The wave function coefficients. (WAVECAR)')
+        spec.input('settings',
+                   valid_type=get_data_class('dict'),
+                   required=False,
+                   help='Additional parameters not related to VASP itself.')
+
+        # Define outputs.
+        # remote_folder and retrieved are passed automatically
+        spec.output('output_parameters',
+                    valid_type=get_data_class('dict'),
+                    help='The output parameters containing smaller quantities that do not depend on system size.')
+        spec.output('output_structure',
+                    valid_type=get_data_class('structure'),
+                    required=False,
+                    help='The output structure.')
+        spec.output('output_kpoints',
+                    valid_type=get_data_class('array.kpoints'),
+                    required=False,
+                    help='The output k-points.')
+        spec.output('output_trajectory',
+                    valid_type=get_data_class('array.trajectory'),
+                    required=False,
+                    help='The output trajectory data.')
+        spec.output('output_chgcar',
+                    valid_type=get_data_class('vasp.chargedensity'),
+                    required=False,
+                    help='The output charge density.')
+        spec.output('output_wavecar',
+                    valid_type=get_data_class('vasp.wavefun'),
+                    required=False,
+                    help='The output file containing the plane wave coefficients.')
+        spec.output('output_bands',
+                    valid_type=get_data_class('array.bands'),
+                    required=False,
+                    help='The output band structure.')
+        spec.output('output_forces',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output forces.')
+        spec.output('output_stress',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output stress.')
+        spec.output('output_dos',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dos.')
+        spec.output('output_occupancies',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output band occupancies.')
+        spec.output('output_energies',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output total energies.')
+        spec.output('output_projectors',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output projectors of decomposition.')
+        spec.output('output_dielectrics',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dielectric functions.')
+        spec.output('output_born_charges',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output Born effective charges.')
+        spec.output('output_hessian',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output Hessian matrix.')
+        spec.output('output_dynmat',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dynamical matrix.')
         spec.exit_code(100, 'ERROR_NO_RETRIEVED_FOLDER', message='The retrieved folder data node could not be accessed.')
         spec.exit_code(200, 'ERROR_MISSING_FILE', message='An important file is missing.')
         spec.exit_code(300, 'ERROR_PARSING_FILE_FAILED', message='Parsing a file has failed.')

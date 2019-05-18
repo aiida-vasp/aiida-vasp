@@ -3,28 +3,12 @@
 from collections import namedtuple
 from functools import wraps
 
-from aiida.common.datastructures import calc_states
+from aiida.engine.processes.process import ProcessState
 from aiida.common.exceptions import AiidaException
 from aiida.common.links import LinkType
-from aiida.orm.calculation import CalcJob
-from aiida.engine.workchain import WorkChain, append_
-from aiida_vasp.utils.workchains import prepare_process_inputs, finished_ok_compat
-
-
-def finished_compat(calc):
-    if hasattr(calc, 'has_finished'):
-        return calc.has_finished()
-    elif hasattr(calc, 'is_finished'):
-        return calc.is_finished
-    return None
-
-
-class UnexpectedCalculationFailure(AiidaException):
-    """Raised when a Calculation has failed for an unknown reason."""
-
-
-class MaxIterationsFailure(AiidaException):
-    """Raised when a Calculation has failed after the maximum allowed number of tries."""
+from aiida.engine import CalcJob
+from aiida.engine import WorkChain, append_
+from aiida_vasp.utils.workchains import prepare_process_inputs
 
 
 class BaseRestartWorkChain(WorkChain):
@@ -70,31 +54,43 @@ class BaseRestartWorkChain(WorkChain):
     _verbose = False
     _calculation = None
     _error_handler_entry_point = None
-    _expected_calculation_states = [calc_states.FINISHED, calc_states.FAILED, calc_states.SUBMISSIONFAILED]
-
-    def _fail_compat(self, *args, **kwargs):
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)  # pylint: disable=no-member
+    _expected_calculation_states = [ProcessState.FINISHED, ProcessState.EXCEPTED, ProcessState.KILLED]
 
     def __init__(self, *args, **kwargs):
         super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
+        # Set exit status to None, as this triggers an error if we do not enter
+        # a method that detects and sets a particular status
         self.exit_status = None
         if self._calculation is None or not issubclass(self._calculation, CalcJob):
             raise ValueError('no valid CalcJob class defined for _calculation attribute')
 
-        # compatibility v0.12.x <-> v1.0.0-alpha
         self._error_handlers = []
-        if not hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
-            self.on_terminated = self.on_destroy
+
         return
 
     @classmethod
     def define(cls, spec):
         super(BaseRestartWorkChain, cls).define(spec)
-
+        spec.exit_code(0, 'NO_ERROR',
+            message='the sun is shining')       
+        spec.exit_code(100, 'ERROR_ITERATION_RETURNED_NO_CALCULATION',
+            message='the run_calculation step did not successfully add a calculation node to the context')
+        spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
+            message='the maximum number of iterations was exceeded')
+        spec.exit_code(102, 'ERROR_UNEXPECTED_CALCULATION_STATE',
+            message='the calculation finished with an unexpected calculation state')
+        spec.exit_code(103, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE',
+            message='the calculation failed to submit, twice in a row')
+        spec.exit_code(104, 'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
+            message='the calculation failed for an unknown reason, twice in a row')
+        spec.exit_code(197, 'ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS',
+            message='unknown error detected in the restart workchain')
+        spec.exit_code(198, 'ERROR_NO_ERROR_HANDLERS',
+            message='unknown error detected in the restart workchain')
+        spec.exit_code(199, 'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain')
+        
+        
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
         self.ctx.unexpected_failure = False
@@ -125,14 +121,9 @@ class BaseRestartWorkChain(WorkChain):
             raise ValueError('no calculation input dictionary was defined in self.ctx.inputs')
 
         inputs = prepare_process_inputs(unwrapped_inputs)
-        calculation = self._calculation.process()
-        running = self.submit(calculation, **inputs)
+        running = self.submit(self._calculation, **inputs)
 
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pid, self.ctx.iteration))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))
+        self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))
 
         return self.to_context(calculations=append_(running))
 
@@ -149,16 +140,15 @@ class BaseRestartWorkChain(WorkChain):
         try:
             calculation = self.ctx.calculations[-1]
         except IndexError:
-            self.exit_status = 1
-            self._fail_compat(
-                exception=IndexError('the first iteration finished without returning a {}'.format(self._calculation.__name__)))
-            return
-
-        # Set default to failed
-        self.exit_status = 1
+            self.report = 'The first iteration finished without returning a {}'.format(self._calculation.__name__)
+            self.exit_status = self.exit_codes.ERROR_ITERATION_RETURNED_NO_CALCULATION
+            return self.exit_status
+            
+        # Set default exit status to an unknown failure
+        self.exit_status = self.exit_codes.ERROR_UNKNOWN
 
         # Done: successful completion of last calculation
-        if finished_ok_compat(calculation):
+        if calculation.is_finished_ok:
             self._handle_succesfull(calculation)
 
         # Abort: exceeded maximum number of retries
@@ -166,33 +156,39 @@ class BaseRestartWorkChain(WorkChain):
             self._handle_max_iterations(calculation)
 
         # Abort: unexpected state of last calculation
-        elif calculation.get_state() not in self._expected_calculation_states:
-            self._handle_unexpected_state(calculation)
+        elif calculation.process_state not in self._expected_calculation_states:
+            self._handle_unexpected(calculation)
 
-        # Retry or abort: submission failed, try to restart or abort
-        elif calculation.get_state() in [calc_states.SUBMISSIONFAILED]:
-            self._handle_submission_failure(calculation)
+        # Abort: killed
+        elif calculation.process_state == ProcessState.KILLED:
+            self._handle_killed(calculation)
 
-        # Retry or abort: calculation finished or failed
-        elif calculation.get_state() in [calc_states.FINISHED, calc_states.FAILED]:
-            self._handle_all_other_cases(calculation)
+        # Abort: excepted
+        elif calculation.process_state == ProcessState.EXCEPTED:
+            self._handle_excepted(calculation)
+        
+        # Retry or abort: calculation finished or failed (but is not ok)
+        elif calculation.process_state == ProcessState.FINISHED:
+            self._handle_other(calculation)
 
-        return
+        if self.error_status:
+            return self.exit_status
+
+        return self.error_code.NO_ERROR
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
-
         if not self.exit_status:
             self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
-
+            
             for name, port in self.spec().outputs.iteritems():
-                if port.required and name not in self.ctx.restart_calc.out:
+                if port.required and name not in self.ctx.restart_calc.outputs:
                     self.report('the spec specifies the output {} as required '
                                 'but was not an output of {}<{}>'.format(name, self._calculation.__name__, self.ctx.restart_calc.pk))
 
-                if name in self.ctx.restart_calc.out:
-                    node = self.ctx.restart_calc.out[name]
-                    self.out(name, self.ctx.restart_calc.out[name])
+                if name in self.ctx.restart_calc.outputs:
+                    node = self.ctx.restart_calc.outputs[name]
+                    self.out(name, self.ctx.restart_calc.outputs[name])
                     if self._verbose:
                         self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
         else:
@@ -201,21 +197,31 @@ class BaseRestartWorkChain(WorkChain):
                                                                          self.exit_status))
         return
 
-    def on_destroy(self):
+    def on_terminated(self):
         """Clean remote folders of the calculations called in the workchain if the clean_workdir input is True."""
 
-        if hasattr(super(BaseRestartWorkChain, self), 'on_destroy'):
-            super(BaseRestartWorkChain, self).on_destroy()  # pylint: disable=no-member
-        else:
-            super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
+        super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
         # Do not clean if we do not want to or the calculation failed
         if self.exit_status or self.inputs.clean_workdir.value is False:
+            self.report('not cleaning the remote folders')
             return
 
         cleaned_calcs = []
-        for calculation in self.calc.get_outputs(link_type=LinkType.CALL):
+
+        # for called_descendant in self.calc.called_descendants:
+        #     if isinstance(called_descendant, orm.CalcJobNode):
+        #         try:
+        #             called_descendant.outputs.remote_folder._clean()
+        #             cleaned_calcs.append(called_descendant.pk)
+        #         except (IOError, OSError, KeyError):
+        #             pass
+
+        # if cleaned_calcs:
+        #     self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))
+
+        for calculation in self.ctx.calculations.outputs(link_type=LinkType.CALL):
             try:
-                calculation.out.remote_folder._clean()  # pylint: disable=protected-access
+                calculation.outputs.remote_folder._clean()  # pylint: disable=protected-access
                 cleaned_calcs.append(calculation.pk)
             except BaseException:
                 pass
@@ -228,29 +234,38 @@ class BaseRestartWorkChain(WorkChain):
         self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.exit_status = 0
+        self.exit_status = self.exit_code.NO_ERROR
 
         return
 
     def _handle_max_iterations(self, calculation):
         """Handle the case when the maximum number of iterations are reached."""
-        self.exit_status = 1
-        self._fail_compat(
-            exception=MaxIterationsFailure('reached the maximumm number of iterations '
-                                           '{}: last ran {}<{}>'.format(self.inputs.max_iterations.value, self._calculation.__name__,
-                                                                        calculation.pk)))
+        self.report(
+            'reached the maximumm number of iterations {}: last ran calculation was {}<{}>'.format(
+                self.inputs.max_iterations.value, self._calculation.__name__, calculation.pk))
+        self.exit_status = self.error_code.ERROR_MAXIMUM_ITERATIONS_EXCEEDED
 
         return
 
-    def _handle_unexpected_state(self, calculation):
+    def _handle_unexpected(self, calculation):
         """Handle the case when an unexpected state is detected."""
-        self.exit_status = 1
-        self._fail_compat(
-            exception=UnexpectedCalculationFailure('unexpected state ({}) of {}<{}>'.format(calculation.get_state(),
-                                                                                            self._calculation.__name__, calculation.pk)))
+        self.report('unexpected state ({}) of {}<{}>'.format(
+            calculation.process_state, self._calculation.__name__, calculation.pk))
+        self.exit_status = self.error_code.ERROR_UNEXPECTED_CALCULATION_STATE
 
         return
 
+    def _handle_killed(self, calculation):
+        """Handle the case when a killed state is detected, a silent fail."""
+        self.exit_status = self.error_code.NO_ERROR
+
+        return
+
+    def _handle_excepted(self, calculation):
+        """Handle the case when an excepted state is detected, a silent fail."""
+
+        return
+    
     # pylint: disable=no-self-use,unused-argument
     def _handle_calculation_sanity_checks(self, calculation):
         """
@@ -264,26 +279,7 @@ class BaseRestartWorkChain(WorkChain):
         """
         return
 
-    def _handle_submission_failure(self, calculation):
-        """
-        Handle problems during calculation submission.
-
-        The submission of the calculation has failed. If the submission_failure flag is set to true, this
-        is the second consecutive submission failure and we abort the workchain Otherwise we restart once more.
-        """
-        if self.ctx.submission_failure:
-            self.exit_status = 1
-            self._fail_compat(
-                exception=UnexpectedCalculationFailure('submission for {}<{}> failed for the second consecutive time'.format(
-                    self._calculation.__name__, calculation.pk)))
-        else:
-            self.report('submission for {}<{}> failed, trying to restart'.format(self._calculation.__name__, calculation.pk))
-
-        self.ctx.submission_failure = True
-
-        return
-
-    def _handle_unexpected_failure(self, calculation, exception=None):
+    def _handle_unexpected_failure(self, calculation):
         """
         Handle unexpected failure of a calculation.
 
@@ -291,17 +287,12 @@ class BaseRestartWorkChain(WorkChain):
         flag is true, this is the second consecutive unexpected failure and we abort the workchain.
         Otherwise we restart once more.
         """
-        if exception:
-            self.report('{}'.format(exception))
-
         if self.ctx.unexpected_failure:
-            self.exit_status = 1
-            self._fail_compat(
-                exception=UnexpectedCalculationFailure('failure of {}<{}> could not be handled for the second consecutive time'.format(
-                    self._calculation.__name__, calculation.pk)))
+            self.report('failure of {}<{}> could not be handled for the second consecutive time'.format(self._calculation.__name__, calculation.pk))
+            self.exit_status = self.error_code.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE
         else:
             self.report('failure of {}<{}> could not be handled, trying to restart'.format(self._calculation.__name__, calculation.pk))
-            self.exit_status = 0
+            self.exit_status = self.error_code.NO_ERROR
 
         return
 
@@ -314,20 +305,20 @@ class BaseRestartWorkChain(WorkChain):
         restart_calc, in all other cases we do not replace the restart_calc
         """
         try:
-            outputs = calculation.out.output_parameters.get_dict()
+            outputs = calculation.outputs.output_parameters.get_dict()
             _ = outputs['warnings']
             _ = outputs['parser_warnings']
         except (AttributeError, KeyError) as exception:
             raise UnexpectedCalculationFailure(exception)
 
         is_handled = False
-
+        handler_report = None
+        
         # Sort the handlers based on their priority in reverse order
         handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
-
+        
         if not handlers:
-            self.exit_status = 1
-            raise UnexpectedCalculationFailure('no calculation error handlers were registered')
+            self.exit_status = self.error_code.ERROR_NO_ERROR_HANDLERS
 
         for handler in handlers:
             handler_report = handler.method(self, calculation)
@@ -335,6 +326,7 @@ class BaseRestartWorkChain(WorkChain):
             # If at least one error is handled, we consider the calculation
             # failure handled
             if handler_report and handler_report.is_handled:
+                self.exit_status = NO_ERROR
                 self.ctx.restart_calc = calculation
                 is_handled = True
 
@@ -346,37 +338,25 @@ class BaseRestartWorkChain(WorkChain):
         # If none of the executed error handlers reported that they handled an
         # error, the failure reason is unknown
         if not is_handled:
-            self.exit_status = 1
-            raise UnexpectedCalculationFailure('calculation failure was not handled')
+            self.exit_status = self.error_codes.ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS
 
         return
 
-    def _handle_all_other_cases(self, calculation):
+    def _handle_other(self, calculation):
         """Handle all other cases, not represented by other _handle_*."""
-
-        # Calculation was at least submitted successfully, so we reset the flag
-        self.ctx.submission_failure = False
 
         # Check output for problems independent on calculation state and that
         # do not trigger parser warnings
         self._handle_calculation_sanity_checks(calculation)
 
-        # Calculation failed, try to salvage it or handle any unexpected
-        # failures
-        if calculation.get_state() in [calc_states.FAILED]:
-            try:
-                _ = self._handle_calculation_failure(calculation)
-            except UnexpectedCalculationFailure as exception:
-                self._handle_unexpected_failure(calculation, exception)
-                self.ctx.unexpected_failure = True
-                self.exit_status = 1
+        # Calculation failed, try to inspect error code
+        self._handle_calculation_failure(calculation)
 
-        # Calculation finished: but did not finish ok, simply try to restart
-        # from this calculation
-        else:
-            self.ctx.unexpected_failure = False
+        # If there is still errors, we need to just try a new resubmit
+        if self.exit_status != self.error_code.NO_ERROR:
+            self._handle_unexpected_failure(calculation)
+            self.ctx.unexpected_failure = True
             self.ctx.restart_calc = calculation
-            self.report('calculation terminated without errors but did not complete successfully, trying to restart')
 
         return
 

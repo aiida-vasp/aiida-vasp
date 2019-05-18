@@ -7,9 +7,9 @@ Intended to be used to control convergence checks for plane-wave calculations.
 import copy
 import numpy as np
 
-from aiida.engine.workchain import WorkChain, append_, while_, if_
+from aiida.engine import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import WorkflowFactory
+from aiida.plugins import WorkflowFactory
 from aiida.orm.nodes.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
@@ -809,7 +809,7 @@ class ConvergeWorkChain(WorkChain):
 
         encut = self.ctx.converge.settings.encut
         if not exit_status:
-            parameters = workchain.out.output_parameters.get_dict()
+            parameters = workchain.outputs.output_parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
 
@@ -817,7 +817,7 @@ class ConvergeWorkChain(WorkChain):
             max_force = parameters['maximum_force']
 
             # fetch bands and occupations
-            bands = workchain.out.output_bands
+            bands = workchain.outputs.output_bands
 
             # fetch band
             _, gap = find_bandgap(bands)
@@ -884,7 +884,7 @@ class ConvergeWorkChain(WorkChain):
         kgrid = self.ctx.converge.settings.kgrid
         encut = self.ctx.converge.settings.encut
         if not exit_status:
-            parameters = workchain.out.output_parameters.get_dict()
+            parameters = workchain.outputs.output_parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
 
@@ -892,7 +892,7 @@ class ConvergeWorkChain(WorkChain):
             max_force = parameters['maximum_force']
 
             # fetch bands and occupations
-            bands = workchain.out.output_bands
+            bands = workchain.outputs.output_bands
             # fetch band
             _, gap = find_bandgap(bands)
             if gap is None:

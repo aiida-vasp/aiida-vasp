@@ -123,7 +123,7 @@ class VaspParser(BaseParser):
         self.settings.add_node(node_name, node_dict)
 
     def parse(self, **kwargs):
-
+        """The function that triggers the parsing of a calculation."""
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
                 if file_name not in [item.name for item in self.retrieved.list_objects()] and value_dict['is_critical']:

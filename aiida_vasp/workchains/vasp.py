@@ -6,14 +6,15 @@ Any validation and / or error handling that applies to *every* VASP run,
 should be handled on this level, so that every workchain can profit from it.
 Anything related to a subset of use cases must be handled in a subclass.
 """
-from aiida.engine.workchain import while_
-from aiida.engine.job_processes import override
+from aiida.engine import while_
+from aiida.common.lang import override
+#from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.plugins import CalculationFactory
 from aiida.orm import Code
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, builder_interface
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.workchains.restart import BaseRestartWorkChain
 
 
@@ -62,16 +63,24 @@ class VaspWorkChain(BaseRestartWorkChain):
             required=False,
             default=get_data_node('int', 5),
             help="""
-                   The maximum number of iterations to perform.
-                   """)
+            The maximum number of iterations to perform.
+            """)
         spec.input(
             'clean_workdir',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', True),
             help="""
-                   If True, clean the work dir upon the completion of a successfull calculation.
-                   """)
+            If True, clean the work dir upon the completion of a successfull calculation.
+            """)
+        spec.input(
+            'verbose',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
+            If True, enable more detailed output during workchain execution.
+            """)
 
         spec.outline(
             cls.init_context,
@@ -108,7 +117,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
         if isinstance(self.ctx.restart_calc, self._calculation):
-            self.ctx.inputs.restart_folder = self.ctx.restart_calc.out.remote_folder
+            self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
             old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())
             parameters = old_parameters.copy()
             if 'istart' in parameters:
@@ -137,28 +146,42 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Set settings
         if 'settings' in self.inputs:
             self.ctx.inputs.settings = self.inputs.settings
-
+            
         # Set options
+        # Options is very special, not storable and should be
+        # wrapped in the metadata dictionary, which is also not storable
+        # and should contain an entry for options
         if 'options' in self.inputs:
-            options = AttributeDict()
-            options.update(self.inputs.options.get_dict())
-            self.ctx.inputs.options = options
+            options = {}
+            options.update(self.inputs.options)
+            self.ctx.inputs.metadata = {}
+            self.ctx.inputs.metadata['options'] = options
+            # Also make sure we specify the entry point for the
+            # default parser if that is not already specified
+            default_parser = self.ctx.inputs.metadata['options'].get('parser_name', 'vasp.vasp')
+            self.ctx.inputs.metadata['options']['parser_name'] = default_parser
 
         # Verify and set potentials (potcar)
+        if not self.inputs.potential_family.value:
+            self.report('An empty string for the potential family name was detected.')
+            return 1
         try:
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict())
         except ValueError as err:
-            self._fail_compat(exception=err)
+            self.exit_status = 1
+            self.exit_message = err
+            return
         except NotExistent as err:
-            self._fail_compat(exception=err)
+            self.exit_status = 1
+            self.exit_message = err
+            return
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
-
         # Set the charge density (chgcar)
         if 'chgcar' in self.inputs:
             self.ctx.inputs.charge_density = self.inputs.chgcar
@@ -174,8 +197,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
             if last_calc is not None:
                 self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
-                sched_err = last_calc.out.retrieved.get_file_content('_scheduler-stderr.txt')
-                sched_out = last_calc.out.retrieved.get_file_content('_scheduler-stdout.txt')
+                sched_err = last_calc.outputs.retrieved.get_file_content('_scheduler-stderr.txt')
+                sched_out = last_calc.outputs.retrieved.get_file_content('_scheduler-stdout.txt')
                 self.report('Scheduler output:\n{}'.format(sched_out or ''))
                 self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
         except AttributeError:

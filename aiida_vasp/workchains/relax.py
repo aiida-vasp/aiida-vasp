@@ -2,9 +2,8 @@
 """Structure relaxation workchain."""
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import WorkChain
-from aiida.engine.workchain import append_, while_, if_
-from aiida.orm import WorkflowFactory
+from aiida.engine import WorkChain, append_, while_, if_
+from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.workchains.restart import UnexpectedCalculationFailure
@@ -353,7 +352,7 @@ class RelaxWorkChain(WorkChain):
         """
         workchain = self.ctx.workchains[-1]
         # Double check presence of output_structure
-        if 'output_structure' not in workchain.out:
+        if 'output_structure' not in workchain.outputs:
             self._fail_compat(
                 UnexpectedCalculationFailure('The {}<{}> for the relaxation run did not have an '
                                              'output structure and most likely failed. However, '
@@ -362,7 +361,7 @@ class RelaxWorkChain(WorkChain):
             return
 
         self.ctx.previous_structure = self.ctx.current_structure
-        self.ctx.current_structure = workchain.out.output_structure
+        self.ctx.current_structure = workchain.outputs.output_structure
 
         converged = True
         if self.inputs.convergence_on.value:
@@ -378,7 +377,7 @@ class RelaxWorkChain(WorkChain):
                 converged &= self.check_shape_convergence(delta)
 
         if not converged:
-            self.ctx.current_restart_folder = workchain.out.remote_folder
+            self.ctx.current_restart_folder = workchain.outputs.remote_folder
             if self._verbose:
                 self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
         else:
@@ -422,7 +421,7 @@ class RelaxWorkChain(WorkChain):
         workchain = self.ctx.workchains[-1]
 
         if not self.exit_status:
-            relaxed_structure = workchain.out.output_structure
+            relaxed_structure = workchain.outputs.output_structure
             if self._verbose:
                 self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
                                                                        'output_structure_relaxed'))

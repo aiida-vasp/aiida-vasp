@@ -7,9 +7,8 @@ to extract the k-point path.
 """
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine.workchain import WorkChain, append_
-from aiida.orm import WorkflowFactory
-from aiida.engine.workfunctions import workfunction
+from aiida.engine import WorkChain, append_, calcfunction
+from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import prepare_process_inputs
 
@@ -58,7 +57,7 @@ class BandsWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings'))
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands_parameters', valid_type=get_data_class('dict'), required=False)
@@ -161,7 +160,9 @@ class BandsWorkChain(WorkChain):
         """Initialize inputs."""
         self.ctx.inputs.parameters = self._init_parameters()
 
-        self.ctx.inputs.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.kpoints_distance.value})
+        # Do not put the SeeKPath parameters in the inputs to avoid port checking
+        # of the next workchain
+        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value
@@ -267,7 +268,7 @@ class BandsWorkChain(WorkChain):
         routine returns a new (potentially different to the input structure) primitive
         structure. It also returns the k-point path for this structure.
         """
-        result = seekpath_structure_analysis(self.inputs.structure, self.ctx.inputs.seekpath_parameters)
+        result = seekpath_structure_analysis(self.inputs.structure, self.ctx.seekpath_parameters)
 
         self.ctx.inputs.structure = result['primitive_structure']
         self.ctx.inputs.kpoints = result['explicit_kpoints']
@@ -318,7 +319,7 @@ class BandsWorkChain(WorkChain):
         return
 
 
-@workfunction
+@calcfunction
 def seekpath_structure_analysis(structure, parameters):
     """
     Workfunction to extract k-points in the reciprocal cell.

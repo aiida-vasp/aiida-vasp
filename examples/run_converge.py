@@ -2,12 +2,14 @@ import click
 import os
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded, get_data_node
+from aiida.cmdline.utils.decorators import with_dbenv
+from aiida_vasp.utils.aiida_utils import get_data_node
 from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
 
 os.system('verdi daemon restart')
 
 
+@with_dbenv
 @click.command()
 @example_param_set
 def main(potential_family, queue, code, computer):

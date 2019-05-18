@@ -24,23 +24,31 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test with mocked vasp code."""
-    from aiida.orm import WorkflowFactory, Code
-    from aiida import work
-
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory, DataFactory
+    #from aiida import work
+    from aiida.engine import run
     rmq_config = None
-    runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
-    work.set_runner(runner)
+    inputs = AttributeDict()
+    inputs.poll_interval = 0
+    inputs.rmq_config= rmq_config
+    inputs.enable_persistence = True
+    #runner = runners.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
+    #runner = runners.Runner(**inputs)
+    #runners.set_runner(runner)
 
     workchain = WorkflowFactory('vasp.bands')
 
     mock_vasp.store()
-    comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp, store=True)
+    create_authinfo(computer=mock_vasp.computer, store=True)
 
     structure = PoscarParser(file_path=data_path('test_bands_wc', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_bands_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_bands_wc'
     chgcar = get_data_node('vasp.chargedensity', file=data_path('test_bands_wc', 'inp', 'CHGCAR'))
+    kpoints = DataFactory('array.kpoints')()
+    kpoints.set_kpoints_mesh([7, 7, 7])
+
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -49,6 +57,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.parameters = get_data_node('dict', dict=parameters)
+    inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
     inputs.options = get_data_node(
@@ -64,15 +73,10 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
         })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    inputs.converge_relax = get_data_node('bool', True)
-    inputs.relax = get_data_node('bool', True)
     inputs.verbose = get_data_node('bool', True)
-    inputs.encut_samples = get_data_node('int', 3)
-    inputs.k_samples = get_data_node('int', 3)
-    inputs.compress = get_data_node('bool', False)
-    inputs.displace = get_data_node('bool', False)
     inputs.chgcar = chgcar
-    results = work.run(workchain, **inputs)
+    #results = work.run(workchain, **inputs)
+    results = run(workchain, **inputs)
 
     assert 'output_parameters_seekpath' in results
     assert 'output_bands' in results

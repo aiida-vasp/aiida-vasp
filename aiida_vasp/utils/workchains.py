@@ -2,7 +2,7 @@
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm.nodes.parameter import Dict
+from aiida.orm import Dict
 
 
 def prepare_process_inputs(inputs):
@@ -10,7 +10,7 @@ def prepare_process_inputs(inputs):
     Prepare the inputs dictionary for a calculation.
 
     Any remaining bare dictionaries in the inputs dictionary will be wrapped in a Dict data node
-    except for the '_options/options' key which should remain a standard dictionary. Another exception are dictionaries
+    except for the 'options', 'metadata' and 'potential' key which should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
     This is the format used by input groups as in for example the explicit pseudo dictionary where the key is
     a tuple of kind to which the UpfData corresponds.
@@ -18,20 +18,12 @@ def prepare_process_inputs(inputs):
     prepared_inputs = AttributeDict()
 
     for key, val in inputs.iteritems():
-        if key not in ['_options', 'options'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
+        if key not in ['options', 'metadata', 'potential'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
 
     return prepared_inputs
-
-
-def finished_ok_compat(calc):
-    if hasattr(calc, 'has_finished_ok'):
-        return calc.has_finished_ok()
-    elif hasattr(calc, 'is_finished_ok'):
-        return calc.is_finished_ok
-    return calc.finished_ok
 
 
 def compare_structures(structure_a, structure_b):

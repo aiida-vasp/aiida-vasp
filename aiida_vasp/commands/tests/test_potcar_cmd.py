@@ -61,8 +61,6 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
-    print(result.output)
-
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
     assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]

@@ -24,19 +24,15 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     #def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
-    from aiida.orm import WorkflowFactory, Code
-    from aiida import work
-
-    rmq_config = None
-    runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
-    work.set_runner(runner)
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.relax')
     #workchain = mock_relax_wc
 
     mock_vasp.store()
-    comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp, store=True)
+    create_authinfo(computer=mock_vasp.computer, store=True)
 
     structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
     kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
@@ -69,5 +65,5 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.convergence_on = get_data_node('bool', True)
     inputs.convergence_positions = get_data_node('float', 0.1)
 
-    results = work.run(workchain, **inputs)
+    results = run(workchain, **inputs)
     assert 'output_structure_relaxed' in results
