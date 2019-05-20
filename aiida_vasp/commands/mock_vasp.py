@@ -18,9 +18,8 @@ def output_file(*args):
 @click.command('mock-vasp')
 def mock_vasp():
     """Verify input files are parseable and copy in output files."""
-    from aiida.manage.setup import AIIDA_CONFIG_FOLDER
+    from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER
     pwd = py_path.local('.')
-
     aiida_path = py_path.local(AIIDA_CONFIG_FOLDER)
     aiida_cfg = aiida_path.join('config.json')
     click.echo('DEBUG: AIIDA_PATH = {}'.format(os.environ.get('AIIDA_PATH')))
@@ -28,7 +27,6 @@ def mock_vasp():
     assert aiida_path.isdir()
     assert aiida_cfg.isfile()
     click.echo(aiida_cfg.read())
-
     incar = pwd.join('INCAR')
     assert incar.isfile(), 'INCAR input file was not found.'
 
@@ -48,8 +46,10 @@ def mock_vasp():
     assert KpointsParser(file_path=kpoints.strpath), 'KPOINTS could not be parsed.'
 
     system = incar_parser.incar.get('system', '')
-    test_case = re.findall(r'test-case:(.*)$', system)
-
+    try:
+        test_case = system.strip().split(':')[1].strip()
+    except IndexError:
+        test_case = ''
     if not test_case:
         output_file('outcar', 'OUTCAR').copy(pwd.join('OUTCAR'))
         output_file('vasprun', 'vasprun.xml').copy(pwd.join('vasprun.xml'))
@@ -59,7 +59,6 @@ def mock_vasp():
         output_file('doscar', 'DOSCAR').copy(pwd.join('DOSCAR'))
         poscar.copy(pwd.join('CONTCAR'))
     else:
-        test_case = test_case[0]
-        test_data_path = py_path.local(data_path(test_case)).join('out')
-        for out_file in test_data_path.listdir():
+        test_data_path = data_path(test_case, 'out')
+        for out_file in py_path.local(test_data_path).listdir():
             out_file.copy(pwd)

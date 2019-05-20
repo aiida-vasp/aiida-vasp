@@ -10,7 +10,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, while_, append_
 from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class VerifyWorkChain(WorkChain):
@@ -32,6 +32,8 @@ class VerifyWorkChain(WorkChain):
             help="""
                    The maximum number of iterations to perform.
                    """)
+        spec.exit_code(0, 'NO_ERROR',
+            message='the sun is shining')
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
@@ -39,7 +41,6 @@ class VerifyWorkChain(WorkChain):
                 cls.run_next_workchain,
                 cls.verify_next_workchain
             ),
-            #cls.results,
             cls.finalize
         )  # yapf: disable
 
@@ -54,6 +55,7 @@ class VerifyWorkChain(WorkChain):
 
     def _init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
+        self.ctx.exit_status = None
         self.ctx.is_finished = False
         self.ctx.iteration = 0
         self.ctx.inputs = AttributeDict()
@@ -97,12 +99,7 @@ class VerifyWorkChain(WorkChain):
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
-
+        self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
         return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
@@ -118,22 +115,23 @@ class VerifyWorkChain(WorkChain):
         self.ctx.is_finished = True
 
         workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_status =  self.exit_codes.NO_ERROR
         else:
-            self.exit_status = next_workchain_exit_status
+            self.ctx_exit_status = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
-        return
+                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
+                                                                             self.ctx.exit_status))
 
+        return self.ctx.exit_status
+    
     def finalize(self):
         """Finalize the workchain."""
-
-        if not self.exit_status:
+        if not self.ctx.exit_status.status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-        return self.exit_status
+        return self.ctx.exit_status

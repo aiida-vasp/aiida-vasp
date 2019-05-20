@@ -20,7 +20,6 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 
 
 @pytest.mark.wc
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     #def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
@@ -62,8 +61,14 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.relax_parameters = get_data_node('dict', dict=parameters)
     inputs.relax = get_data_node('bool', True)
-    inputs.convergence_on = get_data_node('bool', True)
+    inputs.convergence_on = get_data_node('bool', False)
     inputs.convergence_positions = get_data_node('float', 0.1)
-
-    results = run(workchain, **inputs)
+    inputs.verbose = get_data_node('bool', True)
+    results, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
     assert 'output_structure_relaxed' in results
+    sites = results['output_structure_relaxed'].sites
+    assert sites[0].kind_name == 'Si'
+    assert sites[1].kind_name == 'Si'
+    assert sites[0].position == (4.8125, 4.8125, 4.8125)
+    assert sites[1].position == (0.6875, 0.6875, 0.715)

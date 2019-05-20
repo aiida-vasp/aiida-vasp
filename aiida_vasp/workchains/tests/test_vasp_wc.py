@@ -16,7 +16,6 @@ from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_versi
 
 
 @pytest.mark.wc
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
@@ -29,11 +28,6 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    # ~ os_env = os.environ.copy()
-    # ~ sp.call(['verdi', 'daemon', 'start'], env=os_env)
-    # ~ print sp.check_output(['verdi', 'daemon', 'status'], env=os_env)
-    # ~ print sp.check_output(['which', 'verdi'], env=os_env)
-
     kpoints, _ = vasp_kpoints
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
@@ -53,43 +47,31 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
             },
             'max_wallclock_seconds': 3600
         })
-    #inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_structure': False, 'should_parse_CONTCAR': False}})
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-
-    # ~ running = run(workchain, **inputs)
-    running = run(workchain, **inputs)
-    # ~ running = load_node(running.pk)
-    # ~ timeout = 5
-    # ~ waiting_for = 0
-    # ~ while not running.is_terminated and waiting_for < timeout:
-    # ~ time.sleep(1)
-    # ~ waiting_for += 1
+    inputs.verbose = get_data_node('bool', True)
+    running, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
     assert 'retrieved' in running
     assert 'output_parameters' in running
     assert 'remote_folder' in running
-    # ~ assert running.is_finished_ok
-
+    parameters = running['output_parameters'].get_dict()
+    assert parameters['maximum_stress'] == 22.8499295
+    assert parameters['total_energies']['energy_no_entropy'] == -14.16209692
+    assert False
 
 @pytest.mark.wc
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
-    """Test submitting only, not correctness, with mocked vasp code."""
+    """Test submitting only, not correctness, with mocked vasp code, test fetching of the CHGCAR."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
     from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.vasp')
 
-
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
-
-    # ~ os_env = os.environ.copy()
-    # ~ sp.call(['verdi', 'daemon', 'start'], env=os_env)
-    # ~ print sp.check_output(['verdi', 'daemon', 'status'], env=os_env)
-    # ~ print sp.check_output(['which', 'verdi'], env=os_env)
 
     kpoints, _ = vasp_kpoints
     inputs = AttributeDict()
@@ -110,11 +92,11 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
             },
             'max_wallclock_seconds': 3600
         })
-    inputs.settings = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR']})
-    #inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_chgcar': True}})
-    #inputs.settings = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}})
+    inputs.settings = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}})
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    running = run(workchain, **inputs)
-    #assert 'output_chgcar' in running
-    assert True
+    inputs.verbose = get_data_node('bool', True)
+    running, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
+    assert 'output_chgcar' in running
+    assert running['output_chgcar'].get_content() == 'This is a test CHGCAR file.\n'

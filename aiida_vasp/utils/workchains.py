@@ -3,7 +3,7 @@
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict
-
+from aiida.engine import ExitCode
 
 def prepare_process_inputs(inputs):
     """
@@ -84,3 +84,8 @@ def fetch_k_grid(rec_cell, k_spacing):
     kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
 
     return kgrid.astype('int').tolist()
+
+def compose_exit_code(status, message):
+    """Compose an ExitCode instance based on a status and message."""
+    exit_code = ExitCode(status=status, message=message)
+    return exit_code

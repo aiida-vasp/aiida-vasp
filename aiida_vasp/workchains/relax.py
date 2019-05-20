@@ -6,7 +6,6 @@ from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.workchains.restart import UnexpectedCalculationFailure
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs
 
 
@@ -152,7 +151,9 @@ class RelaxWorkChain(WorkChain):
                    The cutoff value for the convergence check on the angles of the unit cell.
                    If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
                    """)
-
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(301, 'ERROR_NO_RELAXED_STRUCTURE',
+                       message='the called workchain does not contain a relaxed structure')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -230,6 +231,7 @@ class RelaxWorkChain(WorkChain):
 
     def _init_context(self):
         """Store exposed inputs in the context."""
+        self.ctx.exit_status = None
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
@@ -293,13 +295,13 @@ class RelaxWorkChain(WorkChain):
         if not self.ctx.is_converged:
             self.ctx.iteration += 1
 
-        # Set structure
-        self.ctx.inputs.structure = self.ctx.current_structure
-
         try:
             self.ctx.inputs
         except AttributeError:
             raise ValueError('no input dictionary was defined in self.ctx.inputs')
+            
+        # Set structure
+        self.ctx.inputs.structure = self.ctx.current_structure
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
@@ -313,17 +315,9 @@ class RelaxWorkChain(WorkChain):
         running = self.submit(self._next_workchain, **inputs)
 
         if not self.ctx.is_converged and self.perform_relaxation():
-            if hasattr(running, 'pid'):
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
-            else:
-                # Aiida < 1.0
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
         else:
-            if hasattr(running, 'pid'):
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-            else:
-                # Aiida < 1.0
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
@@ -331,17 +325,19 @@ class RelaxWorkChain(WorkChain):
         """Verify and inherit exit status from child workchains."""
 
         workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_status =  self.exit_codes.NO_ERROR
         else:
-            self.exit_status = next_workchain_exit_status
+            self.ctx.exit_status = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
-        return
+                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
+                                                                             self.ctx.exit_status))
+
+        return self.ctx.exit_status
 
     def analyze_convergence(self):
         """
@@ -353,12 +349,16 @@ class RelaxWorkChain(WorkChain):
         workchain = self.ctx.workchains[-1]
         # Double check presence of output_structure
         if 'output_structure' not in workchain.outputs:
-            self._fail_compat(
-                UnexpectedCalculationFailure('The {}<{}> for the relaxation run did not have an '
-                                             'output structure and most likely failed. However, '
-                                             'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk)))
-            self.exit_status = 9999
-            return
+            if not self.ctx.exit_status.status:
+                self.ctx.exit_status = self.exit_codes.ERROR_NO_RELAXED_STRUCTURE
+                self.report('The {}<{}> for the relaxation run did not have an '
+                            'output structure and most likely failed. However, '
+                            'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
+            else:
+                self.report('The {}<{}> for the relaxation run did not have an '
+                            'output structure and most likely failed. Its exit status was {}<{}>'.
+                            format(workchain.__class__.__name__, workchain.pk, self.pid, self.ctx.exit_status))
+            return self.ctx.exit_status
 
         self.ctx.previous_structure = self.ctx.current_structure
         self.ctx.current_structure = workchain.outputs.output_structure
@@ -381,13 +381,12 @@ class RelaxWorkChain(WorkChain):
             if self._verbose:
                 self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
         else:
-            if self.inputs.convergence_on.value:
-                if self._verbose:
-                    self.report('{}<{}> was converged, finishing with a final calculation.'.format(
-                        self._next_workchain.__name__, workchain.pk))
+            if self._verbose:
+                self.report('{}<{}> was converged, finishing with a final static calculation.'.format(
+                    self._next_workchain.__name__, workchain.pk))
             self.ctx.is_converged = converged
 
-        return
+        return self.ctx.exit_status
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
@@ -420,7 +419,7 @@ class RelaxWorkChain(WorkChain):
         """Store the relaxed structure."""
         workchain = self.ctx.workchains[-1]
 
-        if not self.exit_status:
+        if not self.ctx.exit_status.status:
             relaxed_structure = workchain.outputs.output_structure
             if self._verbose:
                 self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
@@ -430,7 +429,7 @@ class RelaxWorkChain(WorkChain):
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.exit_status:
+        if not self.ctx.exit_status.status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
@@ -438,17 +437,7 @@ class RelaxWorkChain(WorkChain):
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.exit_status
-
-    def _fail_compat(self, *args, **kwargs):
-        """Method to handle general failures."""
-
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)  # pylint: disable=no-member
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)  # pylint: disable=no-member
-        return
+        return self.ctx.exit_status
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""

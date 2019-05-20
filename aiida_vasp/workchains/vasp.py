@@ -164,20 +164,16 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Verify and set potentials (potcar)
         if not self.inputs.potential_family.value:
             self.report('An empty string for the potential family name was detected.')
-            return 1
+            return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME
         try:
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict())
         except ValueError as err:
-            self.exit_status = 1
-            self.exit_message = err
-            return
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, err)
         except NotExistent as err:
-            self.exit_status = 1
-            self.exit_message = err
-            return
+            return compuse_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, err)
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:

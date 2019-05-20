@@ -1,8 +1,9 @@
 import click
 import os
-from aiida.common.extendeddicts import AttributeDict
 
+from aiida.common.extendeddicts import AttributeDict
 from aiida.cmdline.utils.decorators import with_dbenv
+
 from aiida_vasp.utils.aiida_utils import get_data_node
 from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
 
