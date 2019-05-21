@@ -10,7 +10,7 @@ import numpy as np
 from aiida.engine import WorkChain, append_, while_, if_
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import WorkflowFactory
-from aiida.orm.nodes.array.bands import find_bandgap
+from aiida.orm.nodes.data.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs
@@ -449,8 +449,10 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.structure = self.inputs.structure
         # Also create a dummy KpointsData in order to calculate the reciprocal
         # unit cell
-        kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(kpoints_mesh=[1, 1, 1], cell_from_structure=self.ctx.converge.structure)
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_kpoints_mesh([1, 1, 1])
+        kpoints.set_cell_from_structure(self.ctx.converge.structure)
+        self.ctx.converge.kpoints = kpoints
         self._init_pw_conv()
         self._init_kpoints_conv()
 
@@ -593,9 +595,10 @@ class ConvergeWorkChain(WorkChain):
         kgrid = fetch_k_grid(rec_cell, k_spacing)
         converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('array.kpoints')
-        converge.kpoints = kpoints(kpoints_mesh=kgrid)
-        converge.kpoints.set_cell_from_structure(converge.structure)
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_kpoints_mesh(kgrid)
+        kpoints.set_cell_from_structure(converge.structure)
+        converge.kpoints = kpoints
 
     def init_converged(self):
         """Prepare to run the final calculation."""
@@ -617,8 +620,10 @@ class ConvergeWorkChain(WorkChain):
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
-            kpoints = get_data_class('array.kpoints')
-            self.ctx.inputs.kpoints = kpoints(kpoints_mesh=self.ctx.converge.settings.kgrid, cell_from_structure=self.ctx.inputs.structure)
+            kpoints = get_data_class('array.kpoints')()
+            kpoints.set_kpoints_mesh(self.ctx.converge.settings.kgrid)
+            kpoints.set_cell_from_structure(self.ctx.inputs.structure)
+            self.ctx.inputs.kpoints = kpoints
         else:
             self.ctx.inputs.kpoints = self.inputs.kpoints
 
@@ -842,8 +847,10 @@ class ConvergeWorkChain(WorkChain):
         kgrid = fetch_k_grid(rec_cell, kstep)
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(kpoints_mesh=kgrid, cell_from_structure=self.ctx.converge.structure)
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_kpoints_mesh(kgrid)
+        kpoints.set_cell_from_structure(self.ctx.converge.structure)
+        self.ctx.converge.kpoints = kpoints
         self.ctx.running_kpoints = True
         self.ctx.running_pw = False
         inform_details = self.ctx.converge.settings.get('inform_details')
@@ -1230,6 +1237,7 @@ class ConvergeWorkChain(WorkChain):
 
         return encut_diff_comp, kgrid_diff_comp
 
+    @calcfunction
     def store_conv(self):
         """Set up the convergence data and put it in a data node."""
         convergence = get_data_class('array')()
@@ -1262,7 +1270,7 @@ class ConvergeWorkChain(WorkChain):
             store_conv_data(convergence, 'kpoints_compression', self.ctx.converge.k_data_comp)
         except AttributeError:
             pass
-
+        
         self.out('output_convergence_data', convergence)
 
         return
@@ -1402,8 +1410,10 @@ class ConvergeWorkChain(WorkChain):
         # Apply compression and tension
         comp_structure = compressed_structure(self.ctx.converge.structure, volume_change)
         # Make sure we also reset the reciprocal cell
-        kpoints = get_data_class('array.kpoints')
-        self.ctx.converge.kpoints = kpoints(kpoints_mesh=[1, 1, 1], cell_from_structure=comp_structure)
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_kpoints_mesh([1, 1, 1])
+        kpoints.set_cell_from_structure(comp_structure)
+        self.ctx.converge.kpoints = kpoints
 
         return comp_structure
 

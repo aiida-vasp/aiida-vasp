@@ -6,7 +6,7 @@ _audit_creation_date 2000-07-15
 _audit_update_record 2009-02-01
 _chemical_name_systematic 'Indium arsenide'
 _chemical_formula_structural 'In As'
-_chemical_formula_sum 'As1 In1'
+_chemical_formula_sum 'As In1'
 _chemical_name_structure_type ZnS(cF8)
 _exptl_crystal_density_diffrn 5.67
 _publ_section_title

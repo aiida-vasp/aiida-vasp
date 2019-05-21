@@ -22,26 +22,21 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.mark.wc
-@pytest.mark.skip(reason='Travis has problems with runs that continues after 10 min. In addition, '
-                  'we cannnot run two executive tests, e.g. test_converge_wc and test_converge_pw '
-                  'as we get IntegrityError from Django. The source of this is currently unknown, '
-                  'so we disable the least detailed test.')
+# @pytest.mark.skip(reason='Travis has problems with runs that continues after 10 min. In addition, '
+#                   'we cannnot run two executive tests, e.g. test_converge_wc and test_converge_pw '
+#                   'as we get IntegrityError from Django. The source of this is currently unknown, '
+#                   'so we disable the least detailed test.')
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida import work
-
-    rmq_config = None
-    runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
-    work.set_runner(runner)
+    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.converge')
 
     mock_vasp.store()
-    comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp, store=True)
+    create_authinfo(computer=mock_vasp.computer, store=True)
 
     structure = PoscarParser(file_path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
@@ -77,8 +72,8 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.k_samples = get_data_node('int', 3)
     inputs.compress = get_data_node('bool', False)
     inputs.displace = get_data_node('bool', False)
-    results = work.run(workchain, **inputs)
-
+    results, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
     assert 'output_convergence_data' in results
     assert 'output_structure_relaxed' in results
 
@@ -98,14 +93,13 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import WorkflowFactory, Code
-    from aiida import work
-    rmq_config = None
-    runner = work.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
-    work.set_runner(runner)
+    from aiida.engine import run
+
     workchain = WorkflowFactory('vasp.converge')
+
     mock_vasp.store()
-    comp = mock_vasp.get_computer()
-    create_authinfo(computer=comp).store()
+    create_authinfo(computer=mock_vasp.computer).store()
+
     structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
@@ -143,7 +137,8 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.dispace = get_data_node('bool', False)
     inputs.encut_samples = get_data_node('int', 3)
     inputs.k_samples = get_data_node('int', 3)
-    results = work.run(workchain, **inputs)
+    results, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
     assert 'output_convergence_data' in results
     conv_data = results['output_convergence_data']
     try:
