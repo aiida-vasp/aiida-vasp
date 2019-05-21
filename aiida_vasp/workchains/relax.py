@@ -233,7 +233,7 @@ class RelaxWorkChain(WorkChain):
 
     def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.exit_status = self.exit_status.ERROR_UNKNOWN
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
