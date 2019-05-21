@@ -276,7 +276,8 @@ class ConvergeWorkChain(WorkChain):
 
         spec.expose_outputs(cls._next_workchain)
         spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
-
+        spec.exit_code(199, 'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain')
         # spec.output('output_parameters', valid_type=get_data_class('dict'))
         # spec.output('remote_folder', valid_type=get_data_class('remote'))
         # spec.output('retrieved', valid_type=get_data_class('folder'))
@@ -318,6 +319,7 @@ class ConvergeWorkChain(WorkChain):
     def _init_standard_context(self):
         """Initialize the standard content of context."""
 
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
         self.ctx.set_input_nodes = True

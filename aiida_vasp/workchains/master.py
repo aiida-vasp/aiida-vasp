@@ -77,6 +77,8 @@ class MasterWorkChain(WorkChain):
         # spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
         spec.expose_outputs(cls._bands_workchain)
+        spec.exit_code(199, 'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain')
 
     def initialize(self):
         """Initialize."""
@@ -89,6 +91,7 @@ class MasterWorkChain(WorkChain):
 
     def _init_context(self):
         """Initialize context variables."""
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
         self.ctx.inputs = AttributeDict()
 
         return

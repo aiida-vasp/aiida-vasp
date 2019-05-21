@@ -34,6 +34,8 @@ class VerifyWorkChain(WorkChain):
                    """)
         spec.exit_code(0, 'NO_ERROR',
             message='the sun is shining')
+        spec.exit_code(199, 'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain')
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
@@ -55,7 +57,7 @@ class VerifyWorkChain(WorkChain):
 
     def _init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
-        self.ctx.exit_status = None
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
         self.ctx.is_finished = False
         self.ctx.iteration = 0
         self.ctx.inputs = AttributeDict()

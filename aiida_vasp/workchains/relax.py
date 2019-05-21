@@ -154,6 +154,8 @@ class RelaxWorkChain(WorkChain):
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(301, 'ERROR_NO_RELAXED_STRUCTURE',
                        message='the called workchain does not contain a relaxed structure')
+        spec.exit_code(199, 'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -231,7 +233,7 @@ class RelaxWorkChain(WorkChain):
 
     def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.exit_status = None
+        self.ctx.exit_status = self.exit_status.ERROR_UNKNOWN
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []

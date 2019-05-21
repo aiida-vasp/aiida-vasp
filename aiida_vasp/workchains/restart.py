@@ -95,7 +95,7 @@ class BaseRestartWorkChain(WorkChain):
         
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
-        self.ctx.exit_status = None
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
         self.ctx.unexpected_failure = False
         self.ctx.submission_failure = False
         self.ctx.restart_calc = None
