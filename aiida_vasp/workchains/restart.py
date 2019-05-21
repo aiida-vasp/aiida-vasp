@@ -181,7 +181,7 @@ class BaseRestartWorkChain(WorkChain):
         """Attach the outputs specified in the output specification from the last completed calculation."""
         if not self.ctx.exit_status.status:
             self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
-            for name, port in self.spec().outputs.iteritems():
+            for name, port in self.spec().outputs.items():
                 if port.required and name not in self.ctx.restart_calc.outputs:
                     self.report('the spec specifies the output {} as required '
                                 'but was not an output of {}<{}>'.format(name, self._calculation.__name__, self.ctx.restart_calc.pk))

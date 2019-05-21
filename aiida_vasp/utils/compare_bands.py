@@ -203,7 +203,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     import numpy as np
     import aiida_vasp.utils.bands as btool
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
-    ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.iteritems()}
+    ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.items()}
     info = {}
     for wannier_bands in wannier_bands_list:
         owindow = get_outer_window(wannier_bands)

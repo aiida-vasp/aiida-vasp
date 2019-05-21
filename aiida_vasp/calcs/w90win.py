@@ -53,6 +53,6 @@ class DictToWin(object):
     def parse(cls, in_dict):
         """Parse a dictionary into win formatted string."""
         res = []
-        for key, value in in_dict.iteritems():
+        for key, value in in_dict.items():
             res += cls._item(key, value)
         return '\n'.join(res)

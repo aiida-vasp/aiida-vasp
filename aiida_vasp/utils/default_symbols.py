@@ -84,8 +84,8 @@ if __name__ == '__main__':
     DEF_GW = get_recommendations(use_gw=True)
     with open('default_paws.py', 'w') as defaults:
         defaults.write('lda = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.items()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.items()])
         defaults.write('}\n\n')

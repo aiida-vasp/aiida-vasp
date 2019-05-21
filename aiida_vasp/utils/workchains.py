@@ -17,7 +17,7 @@ def prepare_process_inputs(inputs):
     """
     prepared_inputs = AttributeDict()
 
-    for key, val in inputs.iteritems():
+    for key, val in inputs.items():
         if key not in ['options', 'metadata', 'potential'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
             prepared_inputs[key] = Dict(dict=val)
         else:
