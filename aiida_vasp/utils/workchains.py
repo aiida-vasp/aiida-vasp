@@ -15,6 +15,7 @@ def prepare_process_inputs(inputs):
     This is the format used by input groups as in for example the explicit pseudo dictionary where the key is
     a tuple of kind to which the UpfData corresponds.
     """
+    from past.builtins import basestring
     prepared_inputs = AttributeDict()
 
     for key, val in inputs.items():
