@@ -1239,7 +1239,6 @@ class ConvergeWorkChain(WorkChain):
 
         return encut_diff_comp, kgrid_diff_comp
 
-    @calcfunction
     def store_conv(self):
         """Set up the convergence data and put it in a data node."""
         convergence = get_data_class('array')()
@@ -1247,32 +1246,7 @@ class ConvergeWorkChain(WorkChain):
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
                                                                    'output_convergence_data'))
-
-        # Store regular conversion data
-        try:
-            store_conv_data(convergence, 'pw_regular', self.ctx.converge.pw_data_org)
-        except AttributeError:
-            store_conv_data(convergence, 'pw_regular', self.ctx.converge.pw_data)
-
-        try:
-            store_conv_data(convergence, 'kpoints_regular', self.ctx.converge.k_data_org)
-        except AttributeError:
-            store_conv_data(convergence, 'kpoints_regular', self.ctx.converge.k_data)
-
-        # Then possibly displacement
-        try:
-            store_conv_data(convergence, 'pw_displacement', self.ctx.converge.pw_data_displacement)
-            store_conv_data(convergence, 'kpoints_displacement', self.ctx.converge.k_data_displacement)
-        except AttributeError:
-            pass
-
-        # And finally for compression
-        try:
-            store_conv_data(convergence, 'pw_compression', self.ctx.converge.pw_data_comp)
-            store_conv_data(convergence, 'kpoints_compression', self.ctx.converge.k_data_comp)
-        except AttributeError:
-            pass
-        
+        store_conv_data(convergence, self.ctx.converge)
         self.out('output_convergence_data', convergence)
 
         return
@@ -1428,8 +1402,37 @@ def default_array(name, array):
     return array_cls
 
 
-def store_conv_data(array, key, data):
+@calcfunction
+def store_conv_data(convergence, converge):
     """Store convergence data in the array."""
+    # Store regular conversion data
+    try:
+        store_conv_data_single(convergence, 'pw_regular', converge.pw_data_org)
+    except AttributeError:
+        store_conv_data_single(convergence, 'pw_regular', converge.pw_data)
+    
+    try:
+        store_conv_data_single(convergence, 'kpoints_regular', converge.k_data_org)
+    except AttributeError:
+        store_conv_data_single(convergence, 'kpoints_regular', converge.k_data)
+
+    # Then possibly displacement
+    try:
+        store_conv_data_single(convergence, 'pw_displacement', converge.pw_data_displacement)
+        store_conv_data_single(convergence, 'kpoints_displacement', converge.k_data_displacement)
+    except AttributeError:
+        pass
+
+    # And finally for compression
+    try:
+        store_conv_data_single(convergence, 'pw_compression', converge.pw_data_comp)
+        store_conv_data_single(convergence, 'kpoints_compression', converge.k_data_comp)
+    except AttributeError:
+        pass
+
+
+def store_conv_data_single(array, key, data):
+    """Store a single convergence data entry in the array."""
     if data is not None:
         if data:
             array.set_array(key, np.array(data))
