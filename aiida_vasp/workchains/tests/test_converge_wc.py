@@ -21,6 +21,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
+@pytest.mark.skip(reason='Not yet ported to AiIDA 1.0.0b3')
 @pytest.mark.wc
 # @pytest.mark.skip(reason='Travis has problems with runs that continues after 10 min. In addition, '
 #                   'we cannnot run two executive tests, e.g. test_converge_wc and test_converge_pw '
@@ -88,6 +89,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
         pytest.fail('Did not find kpoints_regular in output_convergence_data')
 
 
+@pytest.mark.skip(reason='Not yet ported to AiIDA 1.0.0b3')
 @pytest.mark.wc
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):

@@ -19,7 +19,7 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
-
+#@pytest.mark.skip(reason='Not yet ported to AiIDA 1.0.0b3')
 @pytest.mark.wc
 @pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
@@ -28,15 +28,8 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     from aiida.plugins import WorkflowFactory, DataFactory
     #from aiida import work
     from aiida.engine import run
-    rmq_config = None
-    inputs = AttributeDict()
-    inputs.poll_interval = 0
-    inputs.rmq_config= rmq_config
-    inputs.enable_persistence = True
-    #runner = runners.Runner(poll_interval=0., rmq_config=rmq_config, enable_persistence=True)
-    #runner = runners.Runner(**inputs)
-    #runners.set_runner(runner)
 
+    inputs = AttributeDict()
     workchain = WorkflowFactory('vasp.bands')
 
     mock_vasp.store()
@@ -48,7 +41,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     chgcar = get_data_node('vasp.chargedensity', file=data_path('test_bands_wc', 'inp', 'CHGCAR'))
     kpoints = DataFactory('array.kpoints')()
     kpoints.set_kpoints_mesh([7, 7, 7])
-
+    kpoints.set_cell_from_structure(structure)
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -75,9 +68,9 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.verbose = get_data_node('bool', True)
     inputs.chgcar = chgcar
-    #results = work.run(workchain, **inputs)
-    results = run(workchain, **inputs)
+    results, node = run.get_node(workchain, **inputs)
 
+    assert node.exit_status == 0
     assert 'output_parameters_seekpath' in results
     assert 'output_bands' in results
     assert 'output_kpoints' in results

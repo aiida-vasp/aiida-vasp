@@ -24,7 +24,7 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = ''
+    options.account = 'nn2615k'
     options.qos = ''
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''

@@ -58,7 +58,6 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     parameters = running['output_parameters'].get_dict()
     assert parameters['maximum_stress'] == 22.8499295
     assert parameters['total_energies']['energy_no_entropy'] == -14.16209692
-    assert False
 
 @pytest.mark.wc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)

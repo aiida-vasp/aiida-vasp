@@ -26,7 +26,7 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = ''
+    options.account = 'nn2615k'
     options.qos = ''
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
@@ -58,7 +58,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    run(workchain, **inputs)
+    submit(workchain, **inputs)
 
 
 if __name__ == '__main__':

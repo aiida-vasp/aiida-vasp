@@ -795,10 +795,10 @@ class ConvergeWorkChain(WorkChain):
         """Fetch and store the relevant convergence parameters for each plane wave calculation."""
 
         # Check if child workchain was successfull
-        exit_status = self.ctx.pw_workchains[-1].exit_status
-        if exit_status:
+        self.ctx.exit_status = self.ctx.pw_workchains[-1].exit_status
+        if self.ctx.exit_status:
             self.report('This single convergence calculation has to be considered '
-                        'failed as the exit status from the child {} is {}'.format(self._next_workchain, exit_status))
+                        'failed as the exit status from the child {} is {}'.format(self._next_workchain, self.ctx.exit_status))
 
         # Update plane wave iteration index.
         self.ctx.converge.pw_iteration += 1
@@ -815,7 +815,7 @@ class ConvergeWorkChain(WorkChain):
             self.report('the plane wave convergence calculation finished ' 'without returning a {}'.format(self._next_workchain.__name__))
 
         encut = self.ctx.converge.settings.encut
-        if not exit_status:
+        if not self.ctx.exit_status:
             parameters = workchain.outputs.output_parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
@@ -838,7 +838,7 @@ class ConvergeWorkChain(WorkChain):
         else:
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
 
-        return
+        return self.ctx.exit_status
 
     def init_kpoints_conv_calc(self):
         """Initialize a single k-point grid convergence calculation."""
@@ -871,11 +871,11 @@ class ConvergeWorkChain(WorkChain):
         """Fetch and store the relevant convergence parameters for each k-point grid calculation."""
 
         # Check if child workchain was successfull
-        exit_status = self.ctx.kpoints_workchains[-1].exit_status
-        if exit_status:
+        self.ctx.exit_status = self.ctx.kpoints_workchains[-1].exit_status
+        if self.ctx.exit_status:
             self.report('This single convergence calculation has to be considered '
                         'failed as the exit status from a child workchain is not '
-                        'zero, exit_status:{}'.format(exit_status))
+                        'zero, exit_status:{}'.format(self.ctx.exit_status))
         # Update kpoints iteration index
         self.ctx.converge.kpoints_iteration += 1
         # Check if the index has an entry, if not, do not perform further
@@ -892,7 +892,7 @@ class ConvergeWorkChain(WorkChain):
 
         kgrid = self.ctx.converge.settings.kgrid
         encut = self.ctx.converge.settings.encut
-        if not exit_status:
+        if not self.ctx.exit_status:
             parameters = workchain.outputs.output_parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
@@ -1242,11 +1242,11 @@ class ConvergeWorkChain(WorkChain):
     def store_conv(self):
         """Set up the convergence data and put it in a data node."""
         convergence = get_data_class('array')()
-
+        convergence_context = get_data_node('dict', dict=self.ctx.converge)
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
                                                                    'output_convergence_data'))
-        store_conv_data(convergence, self.ctx.converge)
+        store_conv_data(convergence, convergence_context)
         self.out('output_convergence_data', convergence)
 
         return
@@ -1341,9 +1341,9 @@ class ConvergeWorkChain(WorkChain):
         # successfull)
         next_workchain_exit_status = workchain.exit_status
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_status = 0
         else:
-            self.exit_status = next_workchain_exit_status
+            self.ctx.exit_status = next_workchain_exit_status
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
                         'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
                                                          next_workchain_exit_status))
@@ -1353,7 +1353,7 @@ class ConvergeWorkChain(WorkChain):
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.exit_status:
+        if not self.ctx.exit_status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
@@ -1361,7 +1361,7 @@ class ConvergeWorkChain(WorkChain):
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.exit_status
+        return self.ctx.exit_status
 
     def run_conv_calcs(self):
         """Determines if convergence calcs are to be run at all."""
@@ -1403,33 +1403,33 @@ def default_array(name, array):
 
 
 @calcfunction
-def store_conv_data(convergence, converge):
+def store_conv_data(convergence, convergence_context):
     """Store convergence data in the array."""
+    converge = convegence_context.get_dict()
     # Store regular conversion data
     try:
-        store_conv_data_single(convergence, 'pw_regular', converge.pw_data_org)
+        store_conv_data_single(convergence, 'pw_regular', converge['pw_data_org'])
     except AttributeError:
-        store_conv_data_single(convergence, 'pw_regular', converge.pw_data)
+        store_conv_data_single(convergence, 'pw_regular', converge['pw_data'])
     
     try:
-        store_conv_data_single(convergence, 'kpoints_regular', converge.k_data_org)
+        store_conv_data_single(convergence, 'kpoints_regular', converge['k_data_org'])
     except AttributeError:
-        store_conv_data_single(convergence, 'kpoints_regular', converge.k_data)
+        store_conv_data_single(convergence, 'kpoints_regular', converge['k_data'])
 
     # Then possibly displacement
     try:
-        store_conv_data_single(convergence, 'pw_displacement', converge.pw_data_displacement)
-        store_conv_data_single(convergence, 'kpoints_displacement', converge.k_data_displacement)
+        store_conv_data_single(convergence, 'pw_displacement', converge['pw_data_displacement'])
+        store_conv_data_single(convergence, 'kpoints_displacement', converge['k_data_displacement'])
     except AttributeError:
         pass
 
     # And finally for compression
     try:
-        store_conv_data_single(convergence, 'pw_compression', converge.pw_data_comp)
-        store_conv_data_single(convergence, 'kpoints_compression', converge.k_data_comp)
+        store_conv_data_single(convergence, 'pw_compression', converge['pw_data_comp'])
+        store_conv_data_single(convergence, 'kpoints_compression', converge['k_data_comp'])
     except AttributeError:
         pass
-
 
 def store_conv_data_single(array, key, data):
     """Store a single convergence data entry in the array."""
