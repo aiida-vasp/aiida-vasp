@@ -4,7 +4,7 @@
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from aiida.common import InputValidationError
 from aiida.common.lang import override
-from aiida.engine import JobCalc
+from aiida.engine import CalcJob
 
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -13,16 +13,118 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 
 
-class VaspImmigrantJobProcess(JobCalc):
+class VaspImmigrant(CalcJob):
     """
-    JobCalc subclass for importing non-aiida VASP runs.
+    CalcJob subclass for importing non-aiida VASP runs.
 
     Simulate running the VaspCalculation up to the point where it can be retrieved and parsed,
     then hand over control to the runner for the rest.
     """
+
+    @classmethod
+    def define(cls, spec):
+        super(VaspImmigrant, cls).define(spec)
+        # Define inputs outside of options and code
+        spec.input('settings',
+                   valid_type=get_data_class('dict'),
+                   required=False,
+                   help='Additional parameters for the VaspImmigrant.')
+        spec.input('parameters',
+                   valid_type=get_data_class('dict'),
+                   help='The VASP input parameters (INCAR).')
+        spec.input('structure',
+                   valid_type=(get_data_class('structure'),
+                               get_data_class('cif')),
+                   help='The input structure (POSCAR).')
+        # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
+        # until execution.
+        spec.input_namespace('potential',
+                             valid_type=get_data_class('vasp.potcar'),
+                             help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints',
+                   valid_type=get_data_class('array.kpoints'),
+                   help='The kpoints to use (KPOINTS).')
+        spec.input('charge_density',
+                   valid_type=get_data_class('vasp.chargedensity'),
+                   required=False,
+                   help='The charge density. (CHGCAR)')
+        spec.input('wavefunctions',
+                   valid_type=get_data_class('vasp.wavefun'),
+                   required=False,
+                   help='The wave function coefficients. (WAVECAR)')
+
+        # Define outputs.
+        # remote_folder and retrieved are passed automatically
+        spec.output('output_parameters',
+                    valid_type=get_data_class('dict'),
+                    help='The output parameters containing smaller quantities that do not depend on system size.')
+        spec.output('output_structure',
+                    valid_type=get_data_class('structure'),
+                    required=False,
+                    help='The output structure.')
+        spec.output('output_kpoints',
+                    valid_type=get_data_class('array.kpoints'),
+                    required=False,
+                    help='The output k-points.')
+        spec.output('output_trajectory',
+                    valid_type=get_data_class('array.trajectory'),
+                    required=False,
+                    help='The output trajectory data.')
+        spec.output('output_chgcar',
+                    valid_type=get_data_class('vasp.chargedensity'),
+                    required=False,
+                    help='The output charge density.')
+        spec.output('output_wavecar',
+                    valid_type=get_data_class('vasp.wavefun'),
+                    required=False,
+                    help='The output file containing the plane wave coefficients.')
+        spec.output('output_bands',
+                    valid_type=get_data_class('array.bands'),
+                    required=False,
+                    help='The output band structure.')
+        spec.output('output_forces',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output forces.')
+        spec.output('output_stress',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output stress.')
+        spec.output('output_dos',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dos.')
+        spec.output('output_occupancies',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output band occupancies.')
+        spec.output('output_energies',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output total energies.')
+        spec.output('output_projectors',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output projectors of decomposition.')
+        spec.output('output_dielectrics',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dielectric functions.')
+        spec.output('output_born_charges',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output Born effective charges.')
+        spec.output('output_hessian',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output Hessian matrix.')
+        spec.output('output_dynmat',
+                    valid_type=get_data_class('array'),
+                    required=False,
+                    help='The output dynamical matrix.')
 
     @override
     def run(self):

@@ -11,7 +11,7 @@ from aiida.manage.fixtures import fixture_manager
 @pytest.fixture(scope='session')
 def aiida_env():
     """Set up the db environment."""
-    with fixture_manager() as manager:
+    with fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'}) as manager:
         print('The root directory of the fixture manage is: {}'.format(manager.root_dir))
         config_file = py_path.local(manager.root_dir).join('.aiida', 'config.json')
         yield manager

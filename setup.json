@@ -23,13 +23,11 @@
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
             "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
             "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
-            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData", 
-            "vasp.paw = aiida_vasp.data.paw:LegacyPawData"
+            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
-            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser", 
-            "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
+            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
         ], 
         "aiida.workflows": [
             "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain", 
@@ -37,13 +35,7 @@
             "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
 	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
-            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain", 
-            "vasp.legacy.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
-            "vasp.legacy.nscf = aiida_vasp.workflows.nscf:NscfWorkflow", 
-            "vasp.legacy.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow", 
-            "vasp.legacy.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow", 
-            "vasp.legacy.wannier = aiida_vasp.workflows.wannier:WannierWorkflow", 
-            "vasp.legacy.windows = aiida_vasp.workflows.windows:WindowsWorkflow"
+            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain" 
         ], 
         "console_scripts": [
             "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
