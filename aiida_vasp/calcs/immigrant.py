@@ -4,6 +4,7 @@
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from aiida.common import InputValidationError
 from aiida.common.lang import override
+from aiida.common.links import LinkType
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
@@ -27,45 +28,20 @@ class VaspImmigrant(VaspCalculation):
     @override
     def run(self):
         import plumpy
-        from aiida.common.datastructures import CalcJobState
-        from aiida.common.links import LinkType
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
-        import pdb; pdb.set_trace()
         _ = super(VaspImmigrant, self).run()
-        print("DONE RUNNING")
         
-        def return_empty_list():
-            return []
-
-        setattr(self.calc, '_get_retrieve_list', self.calc.max_retrieve_list)
-        setattr(self.calc, '_get_retrieve_singlefile_list', return_empty_list)
-        setattr(self.calc, '_get_retrieve_temporary_list', return_empty_list)
-
-        settings = self.calc.get_inputs_dict().get('settings', None)
+        settings = self.inputs.get('settings', None)
         settings = settings.get_dict() if settings else {}
         remote_path = settings.get('import_from_path', None)
         if not remote_path:
             raise InputValidationError('immigrant calculations need an input "settings" containing a key "import_from_path"!')
-        self.calc.set_state(CalcJobState.SUBMITTING)  # pylint: disable=protected-access
-        self.calc.set_attribute('remote_workdir', remote_path)  # pylint: disable=protected-access
-        remotedata = get_data_node('remote', computer=self.calc.get_computer(), remote_path=remote_path)
-        remotedata.add_link_from(self.calc, label='remote_folder', link_type=LinkType.CREATE)
+        self.node.set_remote_workdir(remote_path)  # pylint: disable=protected-access
+        remotedata = get_data_node('remote', computer=self.node.computer, remote_path=remote_path)
+        remotedata.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
         remotedata.store()
 
-        remote_path = py_path.local(remote_path)
-
-        # with self.calc.get_computer().get_transport() as transport:
-        #     raw_input_folder = self.calc.folder.get_subfolder(_input_subfolder, create=True)
-        #     transport.get(remote_path.join('INCAR').strpath, raw_input_folder.abspath)
-        #     transport.get(remote_path.join('KPOINTS').strpath, raw_input_folder.abspath)
-        #     transport.get(remote_path.join('POSCAR').strpath, raw_input_folder.abspath)
-        #     if 'wavefunctions' in self.inputs:
-        #         transport.get(remote_path.join('WAVECAR').strpath, raw_input_folder.abspath)
-        #     if 'charge_density' in self.inputs:
-        #         transport.get(remote_path.join('CHGCAR').strpath, raw_input_folder.abspath)
-
-        self.calc._set_state(CalcJobState.COMPUTED)  # pylint: disable=protected-access
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
 
 

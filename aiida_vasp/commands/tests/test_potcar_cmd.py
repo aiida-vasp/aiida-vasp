@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import pytest
+import six
+
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
 from monty.collections import AttrDict
@@ -199,5 +201,8 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
 
 def test_call_from_vasp():
     import subprocess
-    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
-    assert b'Usage: verdi data vasp-potcar' in output
+    if six.PY2:
+        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
+    else:
+        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
+    assert 'Usage: verdi data vasp-potcar' in output

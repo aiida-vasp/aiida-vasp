@@ -4,6 +4,7 @@
 import os
 from collections import OrderedDict
 import subprocess as sp
+import six
 
 import numpy
 import pytest
@@ -273,7 +274,12 @@ def mock_vasp(aiida_env, localhost):
         os_env = os.environ.copy()
         if not localhost.pk:
             localhost.store()
-        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env).strip()
+        if six.PY2:
+            # returns byte string
+            mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env).strip()
+        else:
+            # returns unicode (in Python 3, e.g. set_attribute fails for byte strings in AiiDA 1.0.0b3)
+            mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env, universal_newlines=True).strip()
         code = Code()
         code.label = 'mock-vasp'
         code.description = 'Mock VASP for tests'

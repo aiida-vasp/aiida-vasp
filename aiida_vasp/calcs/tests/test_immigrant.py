@@ -15,7 +15,6 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     from aiida_vasp.calcs.vasp import VaspCalculation
 
     create_authinfo(localhost, store=True)
-
     potcar_spec = {'family': POTCAR_FAMILY_NAME, 'map': POTCAR_MAP}
     proc, builder = VaspCalculation.immigrant(code=mock_vasp, remote_path=phonondb_run, potcar_spec=potcar_spec)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential'}
@@ -36,12 +35,15 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     for input_link in expected_inputs:
         assert builder.get(input_link, None) is not None, 'input link "{}" was not set!'.format(input_link)
 
-    result = run(proc, **builder)
+    result, node = run.get_node(proc, **builder)
+
+    assert node.exit_status == 0
 
     expected_files = {'INCAR', 'POSCAR', 'KPOINTS', 'CHGCAR', 'WAVECAR'}
     banned_files = {'POTCAR'}
 
-    calc = result['retrieved'].get_inputs()[0]
+    calc = result['retrieved']
+
 
     assert 'raw_input' in calc.folder.get_content_list()
     input_folder = calc.folder.get_subfolder('raw_input')
@@ -51,12 +53,14 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     assert banned_files.isdisjoint(input_files)
 
 
-#@pytest.mark.skip(reason="Waiting for the immigrant being moved to aiida_core")
 def test_vasp_immigrant(immigrant_with_builder):
     """Test importing a calculation from the folder of a completed VASP run."""
     immigrant, inputs = immigrant_with_builder
 
-    result = run(immigrant, **inputs)
+    # We need to set the parser explicitly
+    inputs.metadata['options']['parser_name'] = 'vasp.vasp'
+    result, node = run.get_node(immigrant, **inputs)
+    assert node.exit_status == 0
 
     expected_output_nodes = {'output_parameters', 'remote_folder', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))

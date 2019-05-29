@@ -269,10 +269,10 @@ class PotcarMetadataMixin(object):
         if six.PY3:
             from functools import cmp_to_key
             results.sort(key=cmp_to_key(by_older))
-            results.sort(key=cmp_to_key(by_user))
+            #results.sort(key=cmp_to_key(by_user))
         else:
             results.sort(by_older)
-            results.sort(by_user)
+            #results.sort(by_user)
         return results
 
     @classmethod
@@ -944,8 +944,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if six.PY3:
             from functools import cmp_to_key
             results.sort(key=cmp_to_key(by_older))
-            results.sort(key=cmp_to_key(by_user))
+            #results.sort(key=cmp_to_key(by_user))
         else:
             results.sort(by_older)
-            results.sort(by_user)
+            #results.sort(by_user)
         return results
