@@ -15,6 +15,7 @@ from aiida.plugins import CalculationFactory
 from aiida.orm import Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.workchains import compose_exit_code
 from aiida_vasp.workchains.restart import BaseRestartWorkChain
 
 
@@ -113,6 +114,13 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
         spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
         spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
+        spec.exit_code(190, 'ERROR_NO_POTENTIAL_FAMILY_NAME',
+        message='the user did not supply a potential family name')
+        spec.exit_code(191, 'ERROR_POTENTIAL_VALUE_ERROR',
+        message='ValueError was returned from get_potcars_from_structure')
+        spec.exit_code(191, 'ERROR_POTENTIAL_DO_NOT_EXIST',
+        message='the potential does not exist')
+
 
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
@@ -171,9 +179,9 @@ class VaspWorkChain(BaseRestartWorkChain):
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict())
         except ValueError as err:
-            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, err)
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))
         except NotExistent as err:
-            return compuse_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, err)
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:

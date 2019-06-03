@@ -54,7 +54,7 @@ def get_poscar_input(dir_path):
     return PoscarParser(file_path=dir_path.join('POSCAR').strpath).structure
 
 
-def get_potcar_input(dir_path, structure=None, potcar_spec=None):
+def get_potcar_input(dir_path, structure=None, potential_family, potential_mapping=None):
     """Read potentials from a POTCAR file or POSCAR/structure plus potcar spec {'family': ..., 'map', ...}."""
     local_potcar = dir_path.join('POTCAR')
     structure = structure or get_poscar_input(dir_path)
@@ -63,7 +63,7 @@ def get_potcar_input(dir_path, structure=None, potcar_spec=None):
         potentials = MultiPotcarIo.read(local_potcar.strpath).get_potentials_dict(structure)
         potentials = {(kind,): potentials[kind] for kind in potentials}
     elif potcar_spec:
-        potentials = PotcarData.get_potcars_from_structure(structure, potcar_spec['family'], potcar_spec['map'])
+        potentials = PotcarData.get_potcars_from_structure(structure, potential_family, potential_mapping=potential_mapping)
     else:
         raise InputValidationError('no POTCAR found in remote folder and potcar_spec was not passed')
 

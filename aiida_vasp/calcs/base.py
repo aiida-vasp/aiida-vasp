@@ -151,9 +151,12 @@ class VaspCalcBase(CalcJob):
         proc_cls = imgr.VaspImmigrant
         builder = proc_cls.get_builder()
         builder.code = code
-        builder.metadata.options.max_wallclock_seconds = 1  # pylint: disable=no-member
-        builder.metadata.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
-        print(builder)
+        builder.metadata = kwargs.get('metadata', {})
+        options = builder.metdata.get('options', {})
+        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
+        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds
+        builder.metadata['options']['resources'] = resources
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': remote_path.strpath})
         builder.settings = get_data_node('dict', dict=settings)
@@ -166,7 +169,7 @@ class VaspCalcBase(CalcJob):
                 transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
-                builder.potential = imgr.get_potcar_input(sandbox_path, potcar_spec=kwargs.get('potcar_spec', None))
+                builder.potential = imgr.get_potcar_input(sandbox_path, potential_family=kwargs.get('potential_family'))
                 builder.kpoints = imgr.get_kpoints_input(sandbox_path)
                 cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
         return proc_cls, builder
