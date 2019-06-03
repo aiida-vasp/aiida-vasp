@@ -54,7 +54,7 @@ def get_poscar_input(dir_path):
     return PoscarParser(file_path=dir_path.join('POSCAR').strpath).structure
 
 
-def get_potcar_input(dir_path, structure=None, potential_family, potential_mapping=None):
+def get_potcar_input(dir_path, potential_family, structure=None, potential_mapping=None):
     """Read potentials from a POTCAR file or POSCAR/structure plus potcar spec {'family': ..., 'map', ...}."""
     local_potcar = dir_path.join('POTCAR')
     structure = structure or get_poscar_input(dir_path)
