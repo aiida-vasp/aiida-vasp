@@ -61,7 +61,7 @@ def get_potcar_input(dir_path, potential_family, structure=None, potential_mappi
     potentials = {}
     if local_potcar.exists():
         potentials = MultiPotcarIo.read(local_potcar.strpath).get_potentials_dict(structure)
-        potentials = {(kind,): potentials[kind] for kind in potentials}
+        potentials = {kind: potentials[kind] for kind in potentials}
     elif potcar_spec:
         potentials = PotcarData.get_potcars_from_structure(structure, potential_family, potential_mapping=potential_mapping)
     else:
