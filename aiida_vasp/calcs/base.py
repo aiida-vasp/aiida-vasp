@@ -152,7 +152,7 @@ class VaspCalcBase(CalcJob):
         builder = proc_cls.get_builder()
         builder.code = code
         builder.metadata = kwargs.get('metadata', {})
-        options = builder.metdata.get('options', {})
+        options = builder.metadata.get('options', {})
         max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
         resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds
