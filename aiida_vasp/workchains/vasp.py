@@ -167,7 +167,10 @@ class VaspWorkChain(BaseRestartWorkChain):
             # Also make sure we specify the entry point for the
             # default parser if that is not already specified
             default_parser = self.ctx.inputs.metadata['options'].get('parser_name', 'vasp.vasp')
+            # Set MPI to True, unless the user specifies otherwise
+            withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['parser_name'] = default_parser
+            self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
         # Verify and set potentials (potcar)
         if not self.inputs.potential_family.value:
