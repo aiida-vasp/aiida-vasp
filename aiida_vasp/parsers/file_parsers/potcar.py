@@ -25,7 +25,7 @@ class PotcarIo(object):
     def __init__(self, **kwargs):
         """Init from Potcar object or delegate to kwargs initializers."""
         self.potcar_obj = None
-        self.md5 = None
+        self.sha512 = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -34,10 +34,10 @@ class PotcarIo(object):
 
     def _init_with_path(self, file_path):
         node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=file_path)
-        self.md5 = node.md5
+        self.sha512 = node.sha512
 
     def _init_with_potcar_file_node(self, node):
-        self.md5 = node.md5
+        self.sha512 = node.sha512
 
     def _init_with_potcar_node(self, node):
         self._init_with_potcar_file_node(node.find_file_node())
@@ -48,7 +48,7 @@ class PotcarIo(object):
         except AttributeError:
             pass
         node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
-        self.md5 = node.md5
+        self.sha512 = node.sha512
 
     @property
     def pymatgen(self):
@@ -58,11 +58,11 @@ class PotcarIo(object):
 
     @property
     def file_node(self):
-        return get_data_class('vasp.potcar').find_one(md5=self.md5).find_file_node()
+        return get_data_class('vasp.potcar').find_one(sha512=self.sha512).find_file_node()
 
     @property
     def node(self):
-        return get_data_class('vasp.potcar').find_one(md5=self.md5)
+        return get_data_class('vasp.potcar').find_one(sha512=self.sha512)
 
     @property
     def content(self):
@@ -87,7 +87,7 @@ class PotcarIo(object):
         return potcar
 
     def __eq__(self, other):
-        return self.md5 == other.md5
+        return self.sha512 == other.sha512
 
 
 class MultiPotcarIo(object):

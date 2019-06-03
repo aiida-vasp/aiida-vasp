@@ -26,13 +26,13 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
 
 
 def test_hashing(aiida_env):
-    """Ensure the file and content md5 hash equivalently for the same POTCAR."""
+    """Ensure the file and content sha512 hash equivalently for the same POTCAR."""
     potcar_file_cls = get_data_class('vasp.potcar_file')
     potcar_path = ['potcar', 'As', 'POTCAR']
 
-    file_md5 = potcar_file_cls.get_file_md5(data_path(*potcar_path))
-    content_md5 = potcar_file_cls.get_contents_md5(read_file(*potcar_path, mode='rb'))
-    assert file_md5 == content_md5
+    file_sha512 = potcar_file_cls.get_file_sha512(data_path(*potcar_path))
+    content_sha512 = potcar_file_cls.get_contents_sha512(read_file(*potcar_path, mode='rb'))
+    assert file_sha512 == content_sha512
 
 
 # pylint: disable=protected-access
@@ -42,13 +42,13 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
 
     Uniqueness constraints to test for:
 
-        * ``md5`` attribute must be unique
+        * ``sha512`` attribute must be unique
         * the combination of all other attributes must be unique
     """
     potcar_path = data_path('potcar', 'As', 'POTCAR')
 
     file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    file_node.set_attribute('md5', 'foo')
+    file_node.set_attribute('sha512', 'foo')
     with pytest.raises(UniquenessError):
         file_node.store()
 
@@ -58,7 +58,7 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
         file_node.store()
 
     data_node = get_data_node('vasp.potcar', potcar_file_node=potcar_node_pair['file'])
-    data_node.set_attribute('md5', 'foo')
+    data_node.set_attribute('sha512', 'foo')
     with pytest.raises(UniquenessError):
         data_node.store()
 
@@ -134,7 +134,7 @@ def test_file_get_or_create(fresh_aiida_env, potcar_node_pair):
     potcar_in_path = data_path('potcar', 'In_d', 'POTCAR')
     node_file_in, created_file_in = potcar_file_cls.get_or_create(potcar_in_path)
     assert created_file_in
-    assert potcar_file_cls.exists(md5=node_file_in.md5)
+    assert potcar_file_cls.exists(sha512=node_file_in.sha512)
 
 
 def test_potcar_get_or_create(fresh_aiida_env, potcar_node_pair):
@@ -150,7 +150,7 @@ def test_potcar_get_or_create(fresh_aiida_env, potcar_node_pair):
     potcar_in_path = data_path('potcar', 'In_d', 'POTCAR')
     node_potcar_in, created_potcar_in = potcar_cls.get_or_create(file_cls(file=potcar_in_path))
     assert created_potcar_in
-    assert potcar_cls.exists(md5=node_potcar_in.md5)
+    assert potcar_cls.exists(sha512=node_potcar_in.sha512)
 
 
 def test_potcar_from_file(fresh_aiida_env):
@@ -252,13 +252,13 @@ def test_create_equivalence(potcar_family):
     potcar_path = ['potcar', 'As', 'POTCAR']
     potcar_file, created = potcar_file_cls.get_or_create_from_contents(read_file(*potcar_path, mode='rb'))
     assert not created
-    assert potcar_file.md5 == potcar_file_cls.find_one(element='As').md5
+    assert potcar_file.sha512 == potcar_file_cls.find_one(element='As').sha512
     assert potcar_file.uuid == potcar_file_cls.find_one(element='As').uuid
 
     potcar_cls = get_data_class('vasp.potcar')
     potcar, created = potcar_cls.get_or_create_from_contents(read_file(*potcar_path, mode='rb'))
     assert not created
-    assert potcar.md5 == potcar_cls.find_one(element='As').md5
+    assert potcar.sha512 == potcar_cls.find_one(element='As').sha512
     assert potcar.uuid == potcar_cls.find_one(element='As').uuid
 
 

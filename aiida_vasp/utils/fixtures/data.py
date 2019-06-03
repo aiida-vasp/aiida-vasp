@@ -73,7 +73,7 @@ def duplicate_potcar_data(potcar_node):
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.add_file(potcar_file.strpath)
-        file_node.set_attribute('md5', 'abcd')
+        file_node.set_attribute('sha512', 'abcd')
         file_node.set_attribute('full_name', potcar_node.full_name)
         file_node.store()
     data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)

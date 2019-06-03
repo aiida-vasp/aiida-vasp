@@ -58,7 +58,7 @@ The mechanism for reading a POTCAR file into the Db::
             |
             v
      _----------------------------------------------_
-    ( exists for PotcarFileData with pmg_potcar.md5? )-----> no
+    ( exists for PotcarFileData with pmg_potcar.sha512? )-----> no
      ^----------------------------------------------^         |
             |                                                 v
             v                                                 create
@@ -145,11 +145,11 @@ def normalize_potcar_contents(potcar_contents):
     return normalized
 
 
-def md5_potcar(potcar_contents):
+def sha512_potcar(potcar_contents):
     """Hash the contents of a POTCAR file (given as str)."""
-    md5_hash = hashlib.md5()
-    md5_hash.update(normalize_potcar_contents(potcar_contents).encode('utf-8'))
-    return md5_hash.hexdigest()
+    sha512_hash = hashlib.sha512()
+    sha512_hash.update(normalize_potcar_contents(potcar_contents).encode('utf-8'))
+    return sha512_hash.hexdigest()
 
 
 @contextmanager
@@ -284,7 +284,7 @@ class PotcarMetadataMixin(object):
         """
         res = cls.find(**kwargs)
         if len(res) > 1:
-            if not all([True for node in res if node.md5 == res[0].md5]):
+            if not all([True for node in res if node.sha512 == res[0].sha512]):
                 raise UniquenessError('Multiple nodes found satisfying {}'.format(kwargs))
         return res[0]
 
@@ -294,9 +294,9 @@ class PotcarMetadataMixin(object):
         return bool(cls.query_by_attrs(**kwargs).count() >= 1)
 
     @property
-    def md5(self):
-        """Md5 hash of the POTCAR file (readonly)."""
-        return self.get_attribute('md5')
+    def sha512(self):
+        """Sha512 hash of the POTCAR file (readonly)."""
+        return self.get_attribute('sha512')
 
     @property
     def title(self):
@@ -336,12 +336,12 @@ class PotcarMetadataMixin(object):
     def verify_unique(self):
         from copy import deepcopy
         """Raise a UniquenessError if an equivalent node exists."""
-        if self.exists(md5=self.md5):
+        if self.exists(sha512=self.sha512):
             raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
 
         other_attrs = deepcopy(self.attributes)
 
-        other_attrs.pop('md5')
+        other_attrs.pop('sha512')
         if self.exists(**other_attrs):
             raise UniquenessError('A {} node with these attributes but a different file exists:\n{}'.format(
                 str(self.__class__), str(other_attrs)))
@@ -410,7 +410,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
-        self.set_attribute('md5', self.get_file_md5(src_abs))
+        self.set_attribute('sha512', self.get_file_sha512(src_abs))
         potcar = PotcarSingle.from_file(src_abs)
         self.set_attribute('title', potcar.keywords['TITEL'])
         self.set_attribute('functional', potcar.functional)
@@ -423,17 +423,17 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self.set_attribute('potential_set', src_path.parts()[-3].basename)
 
     @classmethod
-    def get_file_md5(cls, path):
-        """Get the md5 sum for a POTCAR file (after whitespace normalization)."""
+    def get_file_sha512(cls, path):
+        """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
         path = py_path.local(path)
         with path.open('r') as potcar_fo:
-            md5 = md5_potcar(potcar_fo.read())
-        return md5
+            sha512 = sha512_potcar(potcar_fo.read())
+        return sha512
 
     @classmethod
-    def get_contents_md5(cls, contents):
-        """Get the md5 sum for the contents of a POTCAR file (after normalization)."""
-        return md5_potcar(contents)
+    def get_contents_sha512(cls, contents):
+        """Get the sha512 sum for the contents of a POTCAR file (after normalization)."""
+        return sha512_potcar(contents)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
@@ -508,10 +508,10 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_or_create(cls, filepath):
         """Get or create (store) a PotcarFileData node."""
-        md5 = cls.get_file_md5(filepath)
-        if cls.exists(md5=md5):
+        sha512 = cls.get_file_sha512(filepath)
+        if cls.exists(sha512=sha512):
             created = False
-            node = cls.find_one(md5=md5)
+            node = cls.find_one(sha512=sha512)
         else:
             created = True
             node = cls(file=filepath)
@@ -567,9 +567,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_or_create(cls, file_node):
         """Get or create (store) a PotcarData node."""
 
-        if cls.exists(md5=file_node.md5):
+        if cls.exists(sha512=file_node.sha512):
             created = False
-            node = cls.find_one(md5=file_node.md5)
+            node = cls.find_one(sha512=file_node.sha512)
         else:
             created = True
             node = cls(potcar_file_node=file_node)
@@ -579,8 +579,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_or_create_from_file(cls, file_path):
         """Get or create (store) a PotcarData node from a POTCAR file."""
-        md5 = PotcarFileData.get_file_md5(file_path)
-        file_node = PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
+        sha512 = PotcarFileData.get_file_sha512(file_path)
+        file_node = PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else PotcarFileData(file=file_path)
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
             file_node.store()
@@ -594,8 +594,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     @classmethod
     def file_not_uploaded(cls, file_path):
-        md5 = PotcarFileData.get_file_md5(file_path)
-        return PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
+        sha512 = PotcarFileData.get_file_sha512(file_path)
+        return PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else namedtuple('potcar', ('uuid'))('-1')
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
@@ -808,7 +808,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             non-empty, a UniquenessError is raised.
         :param group_description: a string to be set as the group description.
             Overwrites previous descriptions, if the group was existing.
-        :param stop_if_existing: if True, check for the md5 of the files and,
+        :param stop_if_existing: if True, check for the sha512 of the files and,
             if the file already exists in the DB, raises a MultipleObjectsError.
             If False, simply adds the existing UPFData node to the group.
         :param dry_run: If True, do not change the database.
@@ -852,7 +852,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                     potcar = cls.file_not_uploaded(file_path)
                     created = bool(potcar.uuid == -1)
                 if stop_if_existing and not created:
-                    raise ValueError(('A POTCAR with identical MD5 to {} is already in the DB,'
+                    raise ValueError(('A POTCAR with identical SHA512 to {} is already in the DB,'
                                       'therefore it cannot be added with the stop_if_existing kwarg.').format(file_path))
                 list_created.append((potcar, created, file_path))
             except KeyError as err:

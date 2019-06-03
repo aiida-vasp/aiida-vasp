@@ -57,7 +57,7 @@ def test_file_contents_equivalence(aiida_env):
     potcar_path_as = ['potcar', 'As', 'POTCAR']
     from_file = PotcarIo(path=data_path(*potcar_path_as))
     from_contents = PotcarIo(contents=read_file(*potcar_path_as).encode('utf-8'))
-    assert from_file.md5 == from_contents.md5
+    assert from_file.sha512 == from_contents.sha512
 
 
 def test_multi_round_trip(potcar_family, tmpdir):
