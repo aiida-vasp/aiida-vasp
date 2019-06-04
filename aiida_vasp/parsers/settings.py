@@ -87,7 +87,7 @@ NODES = {
         'quantities': ['forces'],
     },
     'stress': {
-        'link_name': 'output_stres',
+        'link_name': 'output_stress',
         'type': 'array',
         'quantities': ['stress'],
     },
