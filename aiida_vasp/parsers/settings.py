@@ -81,6 +81,16 @@ NODES = {
         'type': 'array.trajectory',
         'quantities': ['trajectory'],
     },
+    'forces': {
+        'link_name': 'output_forces',
+        'type': 'array',
+        'quantities': ['forces'],
+    },
+    'stress': {
+        'link_name': 'output_stres',
+        'type': 'array',
+        'quantities': ['stress'],
+    },
     'bands': {
         'link_name': 'output_bands',
         'type': 'array.bands',

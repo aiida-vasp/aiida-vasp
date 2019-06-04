@@ -29,6 +29,7 @@ DEFAULT_OPTIONS = {
     'add_dynmat': False,
     'add_wavecar': False,
     'add_forces': False,
+    'add_stress': False,
     'file_parser_set': 'default',
 }
 
