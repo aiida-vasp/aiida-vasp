@@ -14,7 +14,7 @@ The example relaxes the ion positions only. Other degrees of freedom are availab
 Writing workflows that include a relaxation step
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Unless the workflow is solely concerned with providing a more robust or more specialized relaxation step, it is not recommended to derive from `vasp.relax`. Instead composing should be used; your workchain should set up the inputs and submit the relaxation workchain in a step function which will commit the results of the relaxation workchain to it's context. Further steps can then use the `output_structure_relaxed` result.
+Unless the workflow is solely concerned with providing a more robust or more specialized relaxation step, it is not recommended to derive from `vasp.relax`. Instead composing should be used; your workchain should set up the inputs and submit the relaxation workchain in a step function which will commit the results of the relaxation workchain to it's context. Further steps can then use the `structure_relaxed` result.
 
 .. _howto/relax_wc/inputs:
 Reference: vasp.relax inputs
@@ -79,5 +79,5 @@ Reference: vasp.relax outputs
 
 The following output nodes are created upon successful completion:
 
- * `output_parameters`, type: `Dict`, the default scalar / fixed dimension output properties of the final relaxation calculation. These might be used to do further sanity checks or take decisions for later stages of a more complex workchain.
- * `output_structure_relaxed`, type: `StructureData`, The relaxed structure.
+ * `parameters`, type: `Dict`, the default scalar / fixed dimension output properties of the final relaxation calculation. These might be used to do further sanity checks or take decisions for later stages of a more complex workchain.
+ * `structure_relaxed`, type: `StructureData`, The relaxed structure.

@@ -53,9 +53,9 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     running, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'retrieved' in running
-    assert 'output_parameters' in running
+    assert 'parameters' in running
     assert 'remote_folder' in running
-    parameters = running['output_parameters'].get_dict()
+    parameters = running['parameters'].get_dict()
     assert parameters['maximum_stress'] == 22.8499295
     assert parameters['total_energies']['energy_no_entropy'] == -14.16209692
 
@@ -97,5 +97,5 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs.verbose = get_data_node('bool', True)
     running, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'output_chgcar' in running
-    assert running['output_chgcar'].get_content() == 'This is a test CHGCAR file.\n'
+    assert 'chgcar' in running
+    assert running['chgcar'].get_content() == 'This is a test CHGCAR file.\n'

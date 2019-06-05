@@ -71,23 +71,23 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
-    assert 'output_parameters_seekpath' in results
-    assert 'output_bands' in results
-    assert 'output_kpoints' in results
-    assert 'output_structure_primitive' in results
+    assert 'parameters_seekpath' in results
+    assert 'bands' in results
+    assert 'kpoints' in results
+    assert 'structure_primitive' in results
 
-    seekpath_parameters = results['output_parameters_seekpath'].get_dict()
+    seekpath_parameters = results['parameters_seekpath'].get_dict()
     assert seekpath_parameters['bravais_lattice'] == 'cF'
     assert seekpath_parameters['path'][0] == ['GAMMA', 'X']
     assert seekpath_parameters['path'][2] == ['K', 'GAMMA']
     assert len(seekpath_parameters['explicit_kpoints_linearcoord']) == 98
     assert seekpath_parameters['explicit_kpoints_linearcoord'][0:4] == [0.0, 0.0528887652119494, 0.105777530423899, 0.158666295635848]
-    kpoints = results['output_kpoints'].get_kpoints()
+    kpoints = results['kpoints'].get_kpoints()
     np.set_printoptions(threshold=np.nan)
     np.testing.assert_allclose(kpoints[0, 0:3], np.array([0., 0., 0.]))
     #np.testing.assert_allclose(kpoints[5, 0:3], np.array([0.11363636, 0., 0.11363636]))
     np.testing.assert_allclose(kpoints[97, 0:3], np.array([0.5, 0., 0.5]))
-    bands = results['output_bands'].get_bands()
+    bands = results['bands'].get_bands()
     assert bands.shape == (1, 98, 20)
     np.testing.assert_allclose(bands[0, 0, 0:3], np.array([-6.0753, 6.0254, 6.0254]))
     np.testing.assert_allclose(bands[0, 2, 0:3], np.array([-6.0386, 5.7955, 5.8737]))

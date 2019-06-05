@@ -112,70 +112,70 @@ class VaspCalculation(VaspCalcBase):
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
-        spec.output('output_parameters',
+        spec.output('parameters',
                     valid_type=get_data_class('dict'),
                     help='The output parameters containing smaller quantities that do not depend on system size.')
-        spec.output('output_structure',
+        spec.output('structure',
                     valid_type=get_data_class('structure'),
                     required=False,
                     help='The output structure.')
-        spec.output('output_kpoints',
+        spec.output('kpoints',
                     valid_type=get_data_class('array.kpoints'),
                     required=False,
                     help='The output k-points.')
-        spec.output('output_trajectory',
+        spec.output('trajectory',
                     valid_type=get_data_class('array.trajectory'),
                     required=False,
                     help='The output trajectory data.')
-        spec.output('output_chgcar',
+        spec.output('chgcar',
                     valid_type=get_data_class('vasp.chargedensity'),
                     required=False,
                     help='The output charge density.')
-        spec.output('output_wavecar',
+        spec.output('wavecar',
                     valid_type=get_data_class('vasp.wavefun'),
                     required=False,
                     help='The output file containing the plane wave coefficients.')
-        spec.output('output_bands',
+        spec.output('bands',
                     valid_type=get_data_class('array.bands'),
                     required=False,
                     help='The output band structure.')
-        spec.output('output_forces',
+        spec.output('forces',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output forces.')
-        spec.output('output_stress',
+        spec.output('stress',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output stress.')
-        spec.output('output_dos',
+        spec.output('dos',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output dos.')
-        spec.output('output_occupancies',
+        spec.output('occupancies',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output band occupancies.')
-        spec.output('output_energies',
+        spec.output('energies',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output total energies.')
-        spec.output('output_projectors',
+        spec.output('projectors',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output projectors of decomposition.')
-        spec.output('output_dielectrics',
+        spec.output('dielectrics',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output dielectric functions.')
-        spec.output('output_born_charges',
+        spec.output('born_charges',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output Born effective charges.')
-        spec.output('output_hessian',
+        spec.output('hessian',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output Hessian matrix.')
-        spec.output('output_dynmat',
+        spec.output('dynmat',
                     valid_type=get_data_class('array'),
                     required=False,
                     help='The output dynamical matrix.')

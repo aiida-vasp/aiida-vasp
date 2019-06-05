@@ -275,30 +275,9 @@ class ConvergeWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_convergence_data', valid_type=get_data_class('array'), required=False)
+        spec.output('convergence_data', valid_type=get_data_class('array'), required=False)
         spec.exit_code(199, 'ERROR_UNKNOWN',
             message='unknown error detected in the restart workchain')
-        # spec.output('output_parameters', valid_type=get_data_class('dict'))
-        # spec.output('remote_folder', valid_type=get_data_class('remote'))
-        # spec.output('retrieved', valid_type=get_data_class('folder'))
-        # spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        # spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
-
-        # spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        # spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        # spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        # spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        # spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        # spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_occupancies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -816,7 +795,7 @@ class ConvergeWorkChain(WorkChain):
 
         encut = self.ctx.converge.settings.encut
         if not self.ctx.exit_status:
-            parameters = workchain.outputs.output_parameters.get_dict()
+            parameters = workchain.outputs.parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
 
@@ -824,7 +803,7 @@ class ConvergeWorkChain(WorkChain):
             max_force = parameters['maximum_force']
 
             # fetch bands and occupations
-            bands = workchain.outputs.output_bands
+            bands = workchain.outputs.bands
 
             # fetch band
             _, gap = find_bandgap(bands)
@@ -893,7 +872,7 @@ class ConvergeWorkChain(WorkChain):
         kgrid = self.ctx.converge.settings.kgrid
         encut = self.ctx.converge.settings.encut
         if not self.ctx.exit_status:
-            parameters = workchain.outputs.output_parameters.get_dict()
+            parameters = workchain.outputs.parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
 
@@ -901,7 +880,7 @@ class ConvergeWorkChain(WorkChain):
             max_force = parameters['maximum_force']
 
             # fetch bands and occupations
-            bands = workchain.outputs.output_bands
+            bands = workchain.outputs.bands
             # fetch band
             _, gap = find_bandgap(bands)
             if gap is None:
@@ -1245,9 +1224,9 @@ class ConvergeWorkChain(WorkChain):
         convergence_context = get_data_node('dict', dict=self.ctx.converge)
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
-                                                                   'output_convergence_data'))
+                                                                   'convergence_data'))
         store_conv_data(convergence, convergence_context)
-        self.out('output_convergence_data', convergence)
+        self.out('convergence_data', convergence)
 
         return
 

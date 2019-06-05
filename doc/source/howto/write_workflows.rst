@@ -49,7 +49,7 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
             cls.results
          )
 
-         cls.output(output_parameters)
+         cls.output(parameters)
 
       def generate_missing_inputs(self):
          """Here we create the inputs required to rune the 'vasp.base' workflow and store them in the context."""
@@ -72,9 +72,9 @@ From the AiiDA documentation you should be familiar with this code. It runs a VA
          return self.to_context(vasp_run=running)
 
       def results(self):
-         if 'output_structure' not in self.ctx.vasp_run.out:
+         if 'structure' not in self.ctx.vasp_run.out:
                 self.report('"structure" was not an output of {} (pk: {})'.format(self.ctx.vasp_run, self.ctx.vasp_run.pk))
-         self.out('structure', self.ctx.vasp_run.out.output_structure)
+         self.out('structure', self.ctx.vasp_run.out.structure)
 
       def _generate_options(self, machines=Int(1), mpi_procs=Int(1), queue_name=Str('batch')):
          options = AttributeDict()
@@ -158,7 +158,7 @@ Outputs
 
 The outputs, if no additional ones are requested using the ``settings`` input, are:
 
- * ``output_parameters``: ``Dict``, scalar and low dimensional vector quantities, like energies, forces, etc, parsed from OUTCAR and vasprun.xml
- * ``output_structure``: ``StructureData``, what VASP outputs in CONTCAR
+ * ``parameters``: ``Dict``, scalar and low dimensional vector quantities, like energies, forces, etc, parsed from OUTCAR and vasprun.xml
+ * ``structure``: ``StructureData``, what VASP outputs in CONTCAR
  * ``retrieved``: ``FolderData`` containing the retrieved files
  * ``remote_folder``: ``RemoteFolderData`` containing information about the remote work folder in which VASP was run

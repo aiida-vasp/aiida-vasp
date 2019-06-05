@@ -22,7 +22,7 @@ Usage::
                 'parsers': ['ExampleFile'], # During setup the VaspParser will check, whether ExampleFile has been retrieved
                 ## and initialise the corresponding parser, if this quantity is requested by setting any of the
                 ## 'parser_settings['add_OutputNode'] = True'
-                'nodeName': ['examples'],  # The quantity will be added to the 'output_examples' output node
+                'nodeName': ['examples'],  # The quantity will be added to the 'examples' output node
                 'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
                 'alternatives': ['alternative_quantity1', ... ] # Optional. If a quantity can be parsed from more than
                 ## one file, a list of alternative quantities can be provided here.

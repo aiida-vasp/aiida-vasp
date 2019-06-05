@@ -295,7 +295,7 @@ class BaseRestartWorkChain(WorkChain):
         restart_calc, in all other cases we do not replace the restart_calc
         """
         try:
-            outputs = calculation.outputs.output_parameters.get_dict()
+            outputs = calculation.outputs.parameters.get_dict()
             _ = outputs['warnings']
             _ = outputs['parser_warnings']
         except (AttributeError, KeyError) as exception:

@@ -176,7 +176,7 @@ class RelaxWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.output('structure_relaxed', valid_type=get_data_class('structure'), required=False)
 
     def _set_ibrion(self, parameters):
         if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
@@ -349,8 +349,8 @@ class RelaxWorkChain(WorkChain):
         shape and ion positions are all within a given threshold, consider the relaxation converged.
         """
         workchain = self.ctx.workchains[-1]
-        # Double check presence of output_structure
-        if 'output_structure' not in workchain.outputs:
+        # Double check presence of structure
+        if 'structure' not in workchain.outputs:
             if not self.ctx.exit_status.status:
                 self.ctx.exit_status = self.exit_codes.ERROR_NO_RELAXED_STRUCTURE
                 self.report('The {}<{}> for the relaxation run did not have an '
@@ -363,7 +363,7 @@ class RelaxWorkChain(WorkChain):
             return self.ctx.exit_status
 
         self.ctx.previous_structure = self.ctx.current_structure
-        self.ctx.current_structure = workchain.outputs.output_structure
+        self.ctx.current_structure = workchain.outputs.structure
 
         converged = True
         if self.inputs.convergence_on.value:
@@ -422,11 +422,11 @@ class RelaxWorkChain(WorkChain):
         workchain = self.ctx.workchains[-1]
 
         if not self.ctx.exit_status.status:
-            relaxed_structure = workchain.outputs.output_structure
+            relaxed_structure = workchain.outputs.structure
             if self._verbose:
                 self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
-                                                                       'output_structure_relaxed'))
-            self.out('output_structure_relaxed', relaxed_structure)
+                                                                       'structure_relaxed'))
+            self.out('structure_relaxed', relaxed_structure)
 
     def results(self):
         """Attach the remaining output results."""

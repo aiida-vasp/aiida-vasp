@@ -75,18 +75,18 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.displace = get_data_node('bool', False)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'output_convergence_data' in results
-    assert 'output_structure_relaxed' in results
+    assert 'convergence_data' in results
+    assert 'structure_relaxed' in results
 
-    conv_data = results['output_convergence_data']
+    conv_data = results['convergence_data']
     try:
         conv_data.get_array('pw_regular')
     except KeyError:
-        pytest.fail('Did not find pw_regular in output_convergence_data')
+        pytest.fail('Did not find pw_regular in convergence_data')
     try:
         conv_data.get_array('kpoints_regular')
     except KeyError:
-        pytest.fail('Did not find kpoints_regular in output_convergence_data')
+        pytest.fail('Did not find kpoints_regular in convergence_data')
 
 
 @pytest.mark.skip(reason='Not yet ported to AiIDA 1.0.0b3')
@@ -141,12 +141,12 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.k_samples = get_data_node('int', 3)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'output_convergence_data' in results
-    conv_data = results['output_convergence_data']
+    assert 'convergence_data' in results
+    conv_data = results['convergence_data']
     try:
         conv_data = conv_data.get_array('pw_regular')
     except KeyError:
-        pytest.fail('Did not find pw_regular in output_convergence_data')
+        pytest.fail('Did not find pw_regular in convergence_data')
     conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
                                [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
     np.testing.assert_allclose(conv_data, conv_data_test)

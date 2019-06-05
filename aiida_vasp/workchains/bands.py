@@ -121,10 +121,10 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_parameters_seekpath', valid_type=get_data_class('dict'))
-        spec.output('output_bands', valid_type=get_data_class('array.bands'))
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.output('output_structure_primitive', valid_type=get_data_class('structure'))
+        spec.output('parameters_seekpath', valid_type=get_data_class('dict'))
+        spec.output('bands', valid_type=get_data_class('array.bands'))
+        spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
+        spec.output('structure_primitive', valid_type=get_data_class('structure'))
         spec.exit_code(199, 'ERROR_UNKNOWN',
             message='unknown error detected in the restart workchain')
 
@@ -277,9 +277,9 @@ class BandsWorkChain(WorkChain):
         self.ctx.inputs.kpoints = result['explicit_kpoints']
 
         # Set the output nodes for the primitive structure and the k-point path
-        self.out('output_structure_primitive', result['primitive_structure'])
-        self.out('output_kpoints', result['explicit_kpoints'])
-        self.out('output_parameters_seekpath', result['parameters'])
+        self.out('structure_primitive', result['primitive_structure'])
+        self.out('kpoints', result['explicit_kpoints'])
+        self.out('parameters_seekpath', result['parameters'])
 
         return
 

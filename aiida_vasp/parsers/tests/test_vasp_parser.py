@@ -179,9 +179,9 @@ def test_parser_nodes(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False)
 
-    parameters = result['output_parameters']
-    bands = result['output_bands']
-    kpoints = result['output_kpoints']
+    parameters = result['parameters']
+    bands = result['bands']
+    kpoints = result['kpoints']
 
     assert isinstance(parameters, get_data_class('dict'))
     assert isinstance(bands, get_data_class('array.bands'))
@@ -224,7 +224,7 @@ def test_structure(request, calc_with_retrieved):
 
     # First fetch structure from vasprun
 
-    structure_vasprun = result['output_structure']
+    structure_vasprun = result['structure']
     assert isinstance(structure_vasprun, get_data_class('structure'))
 
     # Then from POSCAR/CONTCAR
@@ -235,7 +235,7 @@ def test_structure(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False)
 
-    structure_poscar = result['output_structure']
+    structure_poscar = result['structure']
 
     assert isinstance(structure_poscar, get_data_class('structure'))
     assert np.array_equal(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7))
@@ -284,7 +284,7 @@ def test_parameters(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False)
 
-    parameters = result['output_parameters']
+    parameters = result['parameters']
     assert isinstance(parameters, get_data_class('dict'))
     data = parameters.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so

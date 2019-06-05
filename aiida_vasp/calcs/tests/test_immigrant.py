@@ -62,5 +62,5 @@ def test_vasp_immigrant(immigrant_with_builder):
     result, node = run.get_node(immigrant, **inputs)
     assert node.exit_status == 0
 
-    expected_output_nodes = {'output_parameters', 'remote_folder', 'retrieved'}
+    expected_output_nodes = {'parameters', 'remote_folder', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))

@@ -55,27 +55,6 @@ class MasterWorkChain(WorkChain):
             ),
             cls.finalize
         )  # yapf: disable
-
-        # spec.output('output_parameters', valid_type=get_data_class('parameter'))
-        # spec.output('remote_folder', valid_type=get_data_class('remote'))
-        # spec.output('retrieved', valid_type=get_data_class('folder'))
-        # spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        # spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        # spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        # spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        # spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        # spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        # spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_occupancies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
-
         spec.expose_outputs(cls._bands_workchain)
         spec.exit_code(199, 'ERROR_UNKNOWN',
             message='unknown error detected in the restart workchain')
@@ -130,7 +109,7 @@ class MasterWorkChain(WorkChain):
         """Initialize the run to extract the band structure."""
         self._next_workchain = self._bands_workchain
         # Make sure the charge density is added from the previous run
-        self.ctx.inputs.chgcar = self.ctx.workchains[-1].outputs['output_chgcar']
+        self.ctx.inputs.chgcar = self.ctx.workchains[-1].outputs['chgcar']
         # Remove parser extraction of the charge density file
         settings = self.ctx.inputs.settings.get_dict()
         try:
