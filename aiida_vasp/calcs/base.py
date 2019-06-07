@@ -2,11 +2,9 @@
 # explanation: pylint wrongly complains about Node not implementing query
 """Base and meta classes for VASP calculations"""
 import os
-import six
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 from aiida.engine import CalcJob
-from aiida.plugins import DataFactory
 from aiida.common import CalcInfo, CodeInfo, ValidationError
 from aiida.common.folders import SandboxFolder
 
@@ -42,7 +40,7 @@ class VaspCalcBase(CalcJob):
         ]
         return retrieve_list
 
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, tempfolder):  # pylint: disable=arguments-differ
         """
         Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
 
@@ -122,13 +120,13 @@ class VaspCalcBase(CalcJob):
         self._prestore()
         super(VaspCalcBase, self).store(*args, **kwargs)
 
-    def _prestore(self):
+    def _prestore(self):  # pylint: disable=no-self-use
         """Subclass hook for updating attributes etc, just before storing"""
-        pass
+        return
 
-    def write_additional(self, tempfolder, calcinfo):
+    def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
         """Subclass hook to write additional input files."""
-        pass
+        return
 
     @classmethod
     def immigrant(cls, code, remote_path, **kwargs):
@@ -151,8 +149,9 @@ class VaspCalcBase(CalcJob):
         proc_cls = imgr.VaspImmigrant
         builder = proc_cls.get_builder()
         builder.code = code
-        builder.metadata = kwargs.get('metadata', {})
-        options = builder.metadata.get('options', {})
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        metadata = kwargs.get('metadata', {'options': options})
+        options = metadata.get('options', options)
         max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
         resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds

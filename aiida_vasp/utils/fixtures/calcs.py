@@ -38,7 +38,7 @@ def calc_with_retrieved(localhost):
         node.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
         node.store()
-        
+
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
         retrieved = FolderData()
@@ -59,11 +59,7 @@ def base_calc(fresh_aiida_env, vasp_code):
     runner = manager.get_runner()
     inputs = AttributeDict()
 
-    metadata = AttributeDict({
-        'options': {
-            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-        }
-    })
+    metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
 
     inputs.code = vasp_code
     inputs.metadata = metadata
@@ -112,6 +108,7 @@ def vasp_calc_and_ref(vasp_calc, vasp_kpoints, ref_incar):
     """Fixture for non varying setup of a vasp calculation"""
     calc = vasp_calc(settings={'parser_settings': {'add_bands': True, 'add_dos': True}})
     _, ref_kpoints = vasp_kpoints
+
     return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
 
 

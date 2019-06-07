@@ -1,12 +1,11 @@
-"""Test the Incar io interface"""
-# pylint: disable=redefined-outer-name
-from collections import OrderedDict
+"""Test the INCAR parser."""
+# pylint: disable=redefined-outer-name, unused-wildcard-import, unused-argument, wildcard-import
 
 import pytest
 from pytest import raises
 
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path, read_file
+from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
@@ -20,8 +19,8 @@ def incar_dict_example():
 
 
 @pytest.mark.incar
-def test_parser_read_parsevasp(fresh_aiida_env):
-    """Test to read a INCAR file from parsevasp."""
+def test_parser_read(fresh_aiida_env):
+    """Test to read a INCAR file."""
 
     path = data_path('phonondb', 'INCAR')
     parser = IncarParser(file_path=path)
@@ -33,7 +32,7 @@ def test_parser_read_parsevasp(fresh_aiida_env):
 
 
 @pytest.mark.incar
-def test_parser_read_doc_parsevasp(fresh_aiida_env):
+def test_parser_read_doc(fresh_aiida_env):
     """
     Read example INCAR from VASP documentation.
 
@@ -50,28 +49,29 @@ def test_parser_read_doc_parsevasp(fresh_aiida_env):
 
 
 @pytest.mark.incar
-def test_parser_dict_parsevasp(fresh_aiida_env, incar_dict_example):
+def test_parser_dict(fresh_aiida_env, incar_dict_example):
     """
     Pass a dict to the INCAR parser.
-q
-    Using parsevasp. Should return an AiiDA 
+
+    Should return an AiiDA datastructure for dict.
 
     """
-    
+
     parser = IncarParser(data=get_data_node('dict', dict=incar_dict_example))
     assert isinstance(parser.incar, get_data_class('dict'))
 
+
 @pytest.mark.incar
-def test_parser_string_parsevasp():
+def test_parser_string():
     """
     Pass a string to the INCAR parser.
 
-    Using parsevasp. Should fail, since passing of string in
+    Should fail, since passing of string in
     the interface is not implemented yet.
 
     """
 
-    test_string = 'TRUE = .True.\nFalse=.false.'
+    test_string = 'LOPTICS = .True.\nAddgrid=.false.'
     with raises(AttributeError):
         IncarParser(incar_string=test_string)
 
@@ -80,7 +80,7 @@ def test_parser_string_parsevasp():
 def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     """Test writing an INCAR from a dict, read and compare."""
 
-    # create Dict instances
+    # create AiiDA dictionary instance
     incar_params = get_data_class('dict')(dict=incar_dict_example)
     assert isinstance(incar_params, get_data_class('dict'))
     parser = IncarParser(data=incar_params)
@@ -91,5 +91,6 @@ def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     # read again
     parser_reparse = IncarParser(file_path=temp_file)
     result = parser_reparse.incar
+    # compare
     comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
     assert str(sorted(result)) == str(sorted(comp_dict))

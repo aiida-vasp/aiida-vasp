@@ -36,7 +36,8 @@ def localhost(fresh_aiida_env, localhost_dir):
     try:
         computer = Computer.objects.get(name='localhost')
     except NotExistent:
-        computer = Computer(name='localhost', hostname='localhost', transport_type='local', scheduler_type='direct', workdir=localhost_dir.strpath).store()
+        computer = Computer(
+            name='localhost', hostname='localhost', transport_type='local', scheduler_type='direct', workdir=localhost_dir.strpath).store()
     return computer
 
 
@@ -113,7 +114,6 @@ def potentials(potcar_family):
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
     """Fixture: StructureData or CifData"""
-    from aiida_vasp.utils.fixtures.testdata import data_path
     from aiida.plugins import DataFactory
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
@@ -179,11 +179,7 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
         inputs = AttributeDict()
 
-        metadata = AttributeDict({
-            'options': {
-                'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-            }
-        })
+        metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
 
         if settings is not None:
             inputs.settings = Dict(dict=settings)
@@ -207,7 +203,16 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
 
 @pytest.fixture()
-def vasp2w90_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code, wannier_projections, wannier_params):
+def vasp2w90_inputs(
+        fresh_aiida_env,
+        vasp_params,
+        vasp_kpoints,
+        vasp_structure,
+        potentials,
+        vasp_code,
+        wannier_projections,
+        wannier_params,
+):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict
 
@@ -215,11 +220,7 @@ def vasp2w90_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
 
         inputs = AttributeDict()
 
-        metadata = AttributeDict({
-            'options': {
-                'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-            }
-        })
+        metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
 
         if settings is not None:
             inputs.settings = Dict(dict=settings)
@@ -295,7 +296,6 @@ def mock_vasp(aiida_env, localhost):
 def vasp_chgcar(aiida_env):
     """CHGCAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.fixtures.testdata import data_path
     chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r') as ref_chgcar_fo:
@@ -307,7 +307,6 @@ def vasp_chgcar(aiida_env):
 def vasp_wavecar(aiida_env):
     """WAVECAR node and reference fixture"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.fixtures.testdata import data_path
     wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r') as ref_wavecar_fo:
@@ -317,9 +316,9 @@ def vasp_wavecar(aiida_env):
 
 @pytest.fixture
 def ref_incar():
-    from aiida_vasp.utils.fixtures.testdata import data_path
     with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read().strip()
+        #yield reference_incar_fo.read().strip()
+        yield reference_incar_fo.readlines()
 
 
 @pytest.fixture
@@ -338,7 +337,6 @@ def ref_win():
 def ref_retrieved():
     """Fixture: retrieved directory from an NSCF vasp run"""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.fixtures.testdata import data_path
     retrieved = DataFactory('folder')()
     retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
@@ -365,14 +363,12 @@ def outcar_parser(request):
 
 
 def _ref_kp_list():
-    from aiida_vasp.utils.fixtures.testdata import data_path
     with open(data_path('kpoints', 'KPOINTS_list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
-    from aiida_vasp.utils.fixtures.testdata import data_path
     with open(data_path('kpoints', 'KPOINTS_mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
@@ -392,7 +388,7 @@ def wannier_params():
 
 @pytest.fixture
 def wannier_projections():
-    from aiida.orm.nodes.base import List
+    from aiida.orm import List
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections

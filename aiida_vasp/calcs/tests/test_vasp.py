@@ -20,7 +20,7 @@ def test_write_incar(vasp_calc_and_ref):
     with managed_temp_file() as temp_file:
         vasp_calc.write_incar(temp_file)
         with open(temp_file, 'r') as result_incar_fo:
-            assert result_incar_fo.read() == reference['incar']
+            assert result_incar_fo.readlines() == reference['incar']
 
 
 @ONLY_ONE_CALC
@@ -47,7 +47,7 @@ def test_write_potcar(vasp_calc_and_ref):
 def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     """Test that CHGAR file is written correctly"""
     from aiida.common.folders import Folder
-    chgcar, ref_chgcar = vasp_chgcar
+    chgcar, _ = vasp_chgcar
 
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
 
@@ -65,7 +65,7 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
 def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     """Test that WAVECAR file is written correctly"""
     from aiida.common.folders import Folder
-    wavecar, ref_wavecar = vasp_wavecar
+    wavecar, _ = vasp_wavecar
 
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
 
@@ -85,8 +85,8 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
     """Check that preparing creates all necessary files"""
     from aiida.common.folders import Folder
-    wavecar, ref_wavecar = vasp_wavecar
-    chgcar, ref_chgcar = vasp_chgcar
+    wavecar, _ = vasp_wavecar
+    chgcar, _ = vasp_chgcar
 
     inputs_dict = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sima': 0.5, 'magmom': '30 * 2*0.', 'charg': 11}
 

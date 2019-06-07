@@ -1,7 +1,6 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA."""
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from aiida.common import InputValidationError
 from aiida.common.lang import override
 from aiida.common.links import LinkType
@@ -14,7 +13,7 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 class VaspImmigrant(VaspCalculation):
@@ -31,7 +30,7 @@ class VaspImmigrant(VaspCalculation):
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
         _ = super(VaspImmigrant, self).run()
-        
+
         settings = self.inputs.get('settings', None)
         settings = settings.get_dict() if settings else {}
         remote_path = settings.get('import_from_path', None)
@@ -55,17 +54,17 @@ def get_poscar_input(dir_path):
 
 
 def get_potcar_input(dir_path, potential_family, structure=None, potential_mapping=None):
-    """Read potentials from a POTCAR file or POSCAR/structure plus potcar spec {'family': ..., 'map', ...}."""
+    """Read potentials from a POTCAR file or set it up from a structure."""
     local_potcar = dir_path.join('POTCAR')
     structure = structure or get_poscar_input(dir_path)
     potentials = {}
     if local_potcar.exists():
         potentials = MultiPotcarIo.read(local_potcar.strpath).get_potentials_dict(structure)
         potentials = {kind: potentials[kind] for kind in potentials}
-    elif potcar_spec:
-        potentials = PotcarData.get_potcars_from_structure(structure, potential_family, potential_mapping=potential_mapping)
+    elif potential_family:
+        potentials = PotcarData.get_potcars_from_structure(structure, potential_family, mapping=potential_mapping)
     else:
-        raise InputValidationError('no POTCAR found in remote folder and potcar_spec was not passed')
+        raise InputValidationError('no POTCAR found in remote folder and potential_family was not passed')
 
     return potentials
 

@@ -1,4 +1,4 @@
-"""Test the Incar io interface"""
+"""Test the POTCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest

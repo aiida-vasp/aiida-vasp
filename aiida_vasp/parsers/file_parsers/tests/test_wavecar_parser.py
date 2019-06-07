@@ -1,4 +1,4 @@
-"""Test the WAVECAR io interface"""
+"""Test the WAVECAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest

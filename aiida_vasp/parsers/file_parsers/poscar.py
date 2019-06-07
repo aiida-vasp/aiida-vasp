@@ -49,8 +49,12 @@ class PoscarParser(BaseFileParser):
         self.precision = precision
 
     def _init_with_data(self, data):
-        """Init with Aiida StructureData"""
-        self._data_obj = data
+        """Initialize with an AiiDA StructureData instance."""
+        if isinstance(data, get_data_class('structure')):
+            self._data_obj = data
+        else:
+            self._logger.warning("Please supply an AiiDA StructureData datatype for `data`.")
+            self._data_obj = None
         self._structure = data
         self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}

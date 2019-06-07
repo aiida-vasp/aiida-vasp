@@ -33,8 +33,12 @@ class KpointsParser(BaseFileParser):
         self.init_with_kwargs(**kwargs)
 
     def _init_with_data(self, data):
-        """Initialise with a given kpointsData object."""
-        self._data_obj = data
+        """Initialize with a given AiiDA KpointsData instance."""
+        if isinstance(data, get_data_class('array.kpoints')):
+            self._data_obj = data
+        else:
+            self._logger.warning("Please supply an AiiDA KpointsData datatype for `data`.")
+            self._data_obj = None
         self._kpoints = data
         self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}

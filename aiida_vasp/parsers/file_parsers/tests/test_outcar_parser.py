@@ -1,4 +1,4 @@
-"""Test the vasprun.xml io interface"""
+"""Test the OUTCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
@@ -19,13 +19,12 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
 
     """
 
-    outcar_parser.settings.nodes.update({
-        'parameters': {
+    outcar_parser.settings.nodes.update(
+        {'parameters': {
             'type': 'dict',
             'quantities': ['symmetries_extended', 'elastic_moduli'],
             'link_name': 'my_custom_node'
-        }
-    })
+        }})
 
     composer = NodeComposer(file_parsers=[outcar_parser])
     data_obj = composer.compose('dict', quantities=['symmetries_extended', 'elastic_moduli'])

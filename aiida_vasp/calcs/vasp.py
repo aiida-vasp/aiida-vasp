@@ -2,14 +2,9 @@
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 """The calculation class that prepares a specific VASP calculation."""
-try:
-    from collections import ChainMap
-except ImportError:
-    from chainmap import ChainMap
-
 from aiida.plugins import DataFactory
 
-from aiida_vasp.parsers.file_parsers.incar import IncarIo
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
@@ -72,7 +67,6 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _DEFAULT_PARAMETERS = {}
     _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
@@ -82,103 +76,43 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
-        spec.input('parameters',
-                   valid_type=get_data_class('dict'),
-                   help='The VASP input parameters (INCAR).')
-        spec.input('structure',
-                   valid_type=(get_data_class('structure'),
-                               get_data_class('cif')),
-                   help='The input structure (POSCAR).')
+        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
-        spec.input_namespace('potential',
-                             valid_type=get_data_class('vasp.potcar'),
-                             help='The potentials (POTCAR).', dynamic=True)
-        spec.input('kpoints',
-                   valid_type=get_data_class('array.kpoints'),
-                   help='The kpoints to use (KPOINTS).')
-        spec.input('charge_density',
-                   valid_type=get_data_class('vasp.chargedensity'),
-                   required=False,
-                   help='The charge density. (CHGCAR)')
-        spec.input('wavefunctions',
-                   valid_type=get_data_class('vasp.wavefun'),
-                   required=False,
-                   help='The wave function coefficients. (WAVECAR)')
-        spec.input('settings',
-                   valid_type=get_data_class('dict'),
-                   required=False,
-                   help='Additional parameters not related to VASP itself.')
+        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
+        spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
+        spec.input(
+            'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
+        spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
-        spec.output('parameters',
-                    valid_type=get_data_class('dict'),
-                    help='The output parameters containing smaller quantities that do not depend on system size.')
-        spec.output('structure',
-                    valid_type=get_data_class('structure'),
-                    required=False,
-                    help='The output structure.')
-        spec.output('kpoints',
-                    valid_type=get_data_class('array.kpoints'),
-                    required=False,
-                    help='The output k-points.')
-        spec.output('trajectory',
-                    valid_type=get_data_class('array.trajectory'),
-                    required=False,
-                    help='The output trajectory data.')
-        spec.output('chgcar',
-                    valid_type=get_data_class('vasp.chargedensity'),
-                    required=False,
-                    help='The output charge density.')
-        spec.output('wavecar',
-                    valid_type=get_data_class('vasp.wavefun'),
-                    required=False,
-                    help='The output file containing the plane wave coefficients.')
-        spec.output('bands',
-                    valid_type=get_data_class('array.bands'),
-                    required=False,
-                    help='The output band structure.')
-        spec.output('forces',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output forces.')
-        spec.output('stress',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output stress.')
-        spec.output('dos',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output dos.')
-        spec.output('occupancies',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output band occupancies.')
-        spec.output('energies',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output total energies.')
-        spec.output('projectors',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output projectors of decomposition.')
-        spec.output('dielectrics',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output dielectric functions.')
-        spec.output('born_charges',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output Born effective charges.')
-        spec.output('hessian',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output Hessian matrix.')
-        spec.output('dynmat',
-                    valid_type=get_data_class('array'),
-                    required=False,
-                    help='The output dynamical matrix.')
+        spec.output(
+            'parameters',
+            valid_type=get_data_class('dict'),
+            help='The output parameters containing smaller quantities that do not depend on system size.')
+        spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
+        spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
+        spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
+        spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The output charge density.')
+        spec.output(
+            'wavecar',
+            valid_type=get_data_class('vasp.wavefun'),
+            required=False,
+            help='The output file containing the plane wave coefficients.')
+        spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
+        spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
+        spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
+        spec.output('dos', valid_type=get_data_class('array'), required=False, help='The output dos.')
+        spec.output('occupancies', valid_type=get_data_class('array'), required=False, help='The output band occupancies.')
+        spec.output('energies', valid_type=get_data_class('array'), required=False, help='The output total energies.')
+        spec.output('projectors', valid_type=get_data_class('array'), required=False, help='The output projectors of decomposition.')
+        spec.output('dielectrics', valid_type=get_data_class('array'), required=False, help='The output dielectric functions.')
+        spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
+        spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
+        spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
         spec.exit_code(100, 'ERROR_NO_RETRIEVED_FOLDER', message='The retrieved folder data node could not be accessed.')
         spec.exit_code(200, 'ERROR_MISSING_FILE', message='An important file is missing.')
         spec.exit_code(300, 'ERROR_PARSING_FILE_FAILED', message='Parsing a file has failed.')
@@ -205,7 +139,7 @@ class VaspCalculation(VaspCalcBase):
 
     @property
     def _parameters(self):
-        all_parameters = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
+        all_parameters = self.inputs.parameters.get_dict()
         return {k.lower(): v for k, v in all_parameters.items()}
 
     def _need_kp(self):
@@ -219,7 +153,7 @@ class VaspCalculation(VaspCalcBase):
         needs 'parameters' input to be set
         (py:method::VaspCalculation.use_parameters)
         """
-        return not bool('kspacing' in self._parameters and 'kgamma' in self._parameters)
+        return not bool('kspacing' in self._parameters or 'kgamma' in self._parameters)
 
     def _need_chgd(self):
         """
@@ -274,25 +208,30 @@ class VaspCalculation(VaspCalcBase):
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
         """
-        Converts from parameters node (Dict) to INCAR format and writes to dst.
+        Write the INCAR.
 
-        Unless otherwise specified, the values specified in _DEFAULT_PARAMETERS are also written to the INCAR file.
+        Passes the parameters node (Dict) from to the INCAR parser for
+        preparation and writes to dst.
+
+        :param dst: absolute path of the file to write to
         """
-        incar_dict = ChainMap(self.inputs.parameters.get_dict(), self._DEFAULT_PARAMETERS)
-        incar_io = IncarIo(incar_dict=incar_dict)
-        incar_io.write(dst)
+        incar_parser = IncarParser(data=self.inputs.parameters)
+        incar_parser.write(dst)
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
         """
-        Converts from structures node (StructureData) to POSCAR format and writes to dst.
+        Write the POSCAR.
+
+        Passes the structures node (StructureData) to the POSCAR parser for
+        preparation and writes to dst.
 
         :param dst: absolute path of the file to write to
         """
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        writer = PoscarParser(data=self._structure(), precision=poscar_precision)
-        writer.write(dst)
+        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision)
+        poscar_parser.write(dst)
 
     def write_potcar(self, dst):
         """
@@ -306,12 +245,14 @@ class VaspCalculation(VaspCalcBase):
 
     def write_kpoints(self, dst):  # pylint: disable=unused-argument
         """
-        Converts from kpoints node (KpointsData) to KPOINTS format and writes to dst.
+        Write the KPOINTS.
+
+        Passes the kpoints node (KpointsData) to the KPOINTS parser for
+        preparation and writes to dst.
 
         :param dst: absolute path of the file to write to
         """
-        kpoints = self.inputs.kpoints
-        kpoint_parser = KpointsParser(data=kpoints)
+        kpoint_parser = KpointsParser(data=self.inputs.kpoints)
         kpoint_parser.write(dst)
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument

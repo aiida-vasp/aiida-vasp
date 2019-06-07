@@ -15,8 +15,10 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     from aiida_vasp.calcs.vasp import VaspCalculation
 
     create_authinfo(localhost, store=True)
-    potcar_spec = {'family': POTCAR_FAMILY_NAME, 'map': POTCAR_MAP}
-    proc, builder = VaspCalculation.immigrant(code=mock_vasp, remote_path=phonondb_run, potcar_spec=potcar_spec)
+    potential_family = POTCAR_FAMILY_NAME
+    potential_mapping = POTCAR_MAP
+    proc, builder = VaspCalculation.immigrant(
+        code=mock_vasp, remote_path=phonondb_run, potential_family=potential_family, potential_mapping=potential_mapping)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential'}
     for input_link in expected_inputs:
         assert builder.get(input_link, None) is not None
@@ -43,7 +45,6 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     banned_files = {'POTCAR'}
 
     calc = result['retrieved']
-
 
     assert 'raw_input' in calc.folder.get_content_list()
     input_folder = calc.folder.get_subfolder('raw_input')

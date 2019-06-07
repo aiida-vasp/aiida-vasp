@@ -1,4 +1,4 @@
-"""Test the DOSCAR io interface"""
+"""Test the DOSCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
