@@ -55,8 +55,26 @@ class RelaxWorkChain(WorkChain):
             required=False,
             default=get_data_node('bool', False),
             help="""
-                   If True, perform relaxation.
-                   """)
+            If True, perform relaxation.
+            """)
+        spec.input(
+            'energy_cutoff',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The cutoff that determines when the relaxation procedure is stopped. In this
+            case it stops when the total energy between two ionic steps is less than the
+            supplied value.
+            """)
+        spec.input(
+            'force_cutoff',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The cutoff that determines when the relaxation procedure is stopped. In this
+            case it stops when all forces are smaller than than the
+            supplied value.
+            """)
         spec.input(
             'steps',
             valid_type=get_data_class('int'),
@@ -177,10 +195,20 @@ class RelaxWorkChain(WorkChain):
         spec.output('structure_relaxed', valid_type=get_data_class('structure'), required=False)
 
     def _set_ibrion(self, parameters):
+        """Set the algorithm to use for relaxation."""
         if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
             parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
         else:
             parameters.ibrion = self.AlgoEnum.NO_UPDATE
+
+    def _set_ediffg(self, parameters):
+        """Set the cutoff to use for relaxation."""
+        if self.inputs.energy_cutoff:
+            parameters.ediffg = self.inputs.energy_cutoff.value
+        if self.inputs.force_cutoff:
+            if self.inputs.energy_cutoff:
+                self.report('User supplied both a force and an energy ' 'cutoff for the relaxation. Utilizing the force cutoff.')
+            parameters.ediffg = self.inputs.force_cutoff.value
 
     def _set_nsw(self, parameters):
         """Set the number of ionic steps to perform."""
@@ -217,6 +245,7 @@ class RelaxWorkChain(WorkChain):
                 self._set_ibrion(parameters)
                 self._set_isif(parameters)
                 self._set_nsw(parameters)
+                self._set_ediffg(parameters)
 
         return parameters
 
