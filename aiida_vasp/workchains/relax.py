@@ -203,12 +203,18 @@ class RelaxWorkChain(WorkChain):
 
     def _set_ediffg(self, parameters):
         """Set the cutoff to use for relaxation."""
-        if self.inputs.energy_cutoff:
+        energy_cutoff = False
+        try:
             parameters.ediffg = self.inputs.energy_cutoff.value
-        if self.inputs.force_cutoff:
-            if self.inputs.energy_cutoff:
-                self.report('User supplied both a force and an energy ' 'cutoff for the relaxation. Utilizing the force cutoff.')
+            energy_cutoff = True
+        except AttributeError:
+            pass
+        try:
             parameters.ediffg = self.inputs.force_cutoff.value
+            if energy_cutoff:
+                self.report('User supplied both a force and an energy ' 'cutoff for the relaxation. Utilizing the force cutoff.')
+        except AttributeError:
+            pass
 
     def _set_nsw(self, parameters):
         """Set the number of ionic steps to perform."""
