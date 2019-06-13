@@ -64,7 +64,7 @@ class IncarParser(BaseFileParser):
             return {'incar': self._data_obj}
 
         try:
-            incar = Incar(file_path=self._data_obj.path)
+            incar = Incar(file_path=self._data_obj.path, logger=self._logger)
         except SystemExit:
             self._logger.warning("Parsevasp exitited abnormally. Returning None.")
             return {'incar': None}

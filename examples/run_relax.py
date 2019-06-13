@@ -24,7 +24,7 @@ def main(potential_family, queue, code, computer):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = 'nn2615k'
+    options.account = ''
     options.qos = ''
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
@@ -60,11 +60,11 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     # turn relaxation on
     inputs.relax = get_data_node('bool', True)
-    inputs.convergence_on = get_data_node('bool', True)
+    inputs.convergence_on = get_data_node('bool', False)
     inputs.convergence_positions = get_data_node('float', 0.1)
-    inputs.relax_parameters = get_data_node('dict', dict={
-        'ediffg': -0.0001
-    })  # yapf: disable
+    #inputs.relax_parameters = get_data_node('dict', dict={
+    #    'ediffg': -0.0001
+    #})  # yapf: disable
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
     run(workflow, **inputs)

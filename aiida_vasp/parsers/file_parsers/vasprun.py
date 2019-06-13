@@ -1,6 +1,5 @@
 # pylint: disable=too-many-public-methods
 """Tools for parsing vasprun.xml files."""
-import operator
 import numpy as np
 
 from parsevasp.vasprun import Xml
@@ -590,12 +589,12 @@ class VasprunParser(BaseFileParser):
 
 
 def _build_structure(lattice):
-    """Builds a structure according to Aiida spec."""
+    """Builds a structure according to AiiDA spec."""
     structure_dict = {}
     structure_dict['unitcell'] = lattice["unitcell"]
     structure_dict['sites'] = []
 
-    # Aiida wants the species as symbols, so invert
+    # AiiDA wants the species as symbols, so invert
     elements = _invert_dict(parsevaspct.elements)
     for pos, specie in zip(lattice["positions"], lattice["species"]):
         site = {}

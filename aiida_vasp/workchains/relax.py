@@ -6,7 +6,7 @@ from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs
+from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
 
 
 class RelaxWorkChain(WorkChain):
@@ -152,10 +152,8 @@ class RelaxWorkChain(WorkChain):
                    If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
                    """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(301, 'ERROR_NO_RELAXED_STRUCTURE',
-                       message='the called workchain does not contain a relaxed structure')
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
+        spec.exit_code(301, 'ERROR_NO_RELAXED_STRUCTURE', message='the called workchain does not contain a relaxed structure')
+        spec.exit_code(199, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -229,23 +227,17 @@ class RelaxWorkChain(WorkChain):
         self._init_structure()
         self._init_settings()
 
-        return
-
     def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
 
-        return
-
     def _init_structure(self):
         """Initialize the structure."""
         self.ctx.current_structure = self.inputs.structure
-
-        return
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -263,8 +255,6 @@ class RelaxWorkChain(WorkChain):
                 settings.parser_settings = dict_entry
         self.ctx.inputs.settings = settings
 
-        return
-
     def _init_inputs(self):
         """Initialize the inputs."""
         self.ctx.inputs.parameters = self._init_parameters()
@@ -272,8 +262,6 @@ class RelaxWorkChain(WorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
-
-        return
 
     def _set_default_relax_settings(self):
         """Set default settings."""
@@ -288,6 +276,11 @@ class RelaxWorkChain(WorkChain):
             if self._verbose:
                 self.report('skipping structure relaxation and forwarding input/output to the next workchain.')
         else:
+            # For the final static run we do not need to parse the output structure, which
+            # is at this point enabled.
+            settings = AttributeDict(self.ctx.inputs.settings.get_dict())
+            settings.parser_settings['add_structure'] = False
+            self.ctx.inputs.settings = settings
             if self._verbose:
                 self.report('performing a final calculation using the relaxed structure.')
 
@@ -301,7 +294,7 @@ class RelaxWorkChain(WorkChain):
             self.ctx.inputs
         except AttributeError:
             raise ValueError('no input dictionary was defined in self.ctx.inputs')
-            
+
         # Set structure
         self.ctx.inputs.structure = self.ctx.current_structure
 
@@ -332,12 +325,12 @@ class RelaxWorkChain(WorkChain):
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.ctx.exit_status =  self.exit_codes.NO_ERROR
+            self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_status = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                                             self.ctx.exit_status))
+                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk,
+                                                                             self.__class__.__name__, self.pid, self.ctx.exit_status))
 
         return self.ctx.exit_status
 
@@ -352,14 +345,14 @@ class RelaxWorkChain(WorkChain):
         # Double check presence of structure
         if 'structure' not in workchain.outputs:
             if not self.ctx.exit_status.status:
-                self.ctx.exit_status = self.exit_codes.ERROR_NO_RELAXED_STRUCTURE
+                self.ctx.exit_status = self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
                 self.report('The {}<{}> for the relaxation run did not have an '
                             'output structure and most likely failed. However, '
                             'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
             else:
                 self.report('The {}<{}> for the relaxation run did not have an '
-                            'output structure and most likely failed. Its exit status was {}<{}>'.
-                            format(workchain.__class__.__name__, workchain.pk, self.pid, self.ctx.exit_status))
+                            'output structure and most likely failed. Its exit status was {}<{}>'.format(
+                                workchain.__class__.__name__, workchain.pk, self.pid, self.ctx.exit_status))
             return self.ctx.exit_status
 
         self.ctx.previous_structure = self.ctx.current_structure
@@ -434,8 +427,6 @@ class RelaxWorkChain(WorkChain):
         if not self.ctx.exit_status.status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
 
     def finalize(self):
         """Finalize the workchain."""

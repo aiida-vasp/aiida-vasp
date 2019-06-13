@@ -4,11 +4,9 @@ from collections import namedtuple
 from functools import wraps
 
 from aiida.engine.processes.process import ProcessState
-from aiida.common.exceptions import AiidaException
-from aiida.common.links import LinkType
 from aiida.engine import CalcJob
 from aiida.engine import WorkChain, append_
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class BaseRestartWorkChain(WorkChain):
@@ -65,44 +63,34 @@ class BaseRestartWorkChain(WorkChain):
 
         self._error_handlers = []
 
-        return
-
     @classmethod
     def define(cls, spec):
         super(BaseRestartWorkChain, cls).define(spec)
-        spec.exit_code(0, 'NO_ERROR',
-            message='the sun is shining')       
-        spec.exit_code(100, 'ERROR_ITERATION_RETURNED_NO_CALCULATION',
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(
+            100,
+            'ERROR_ITERATION_RETURNED_NO_CALCULATION',
             message='the run_calculation step did not successfully add a calculation node to the context')
-        spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
-            message='the maximum number of iterations was exceeded')
-        spec.exit_code(102, 'ERROR_UNEXPECTED_CALCULATION_STATE',
-            message='the calculation finished with an unexpected calculation state')
-        spec.exit_code(103, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE',
-            message='the calculation failed to submit, twice in a row')
-        spec.exit_code(104, 'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
-            message='the calculation failed for an unknown reason, twice in a row')
-        spec.exit_code(195, 'ERROR_MISSING_REQUIRED_OUTPUT',
-            message='the calculation is missing at least one required output')
-        spec.exit_code(196, 'ERROR_CALCULLATION_EXCEPTED',
-            message='the calculation is in an excepted state')
-        spec.exit_code(197, 'ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS',
-            message='unknown error detected in the restart workchain')
-        spec.exit_code(198, 'ERROR_NO_ERROR_HANDLERS',
-            message='unknown error detected in the restart workchain')
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
-        
+        spec.exit_code(101, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED', message='the maximum number of iterations was exceeded')
+        spec.exit_code(102, 'ERROR_UNEXPECTED_CALCULATION_STATE', message='the calculation finished with an unexpected calculation state')
+        spec.exit_code(103, 'ERROR_UNEXPECTED_CALCULATION_FAILURE', message='the calculation experienced and unexpected failure')
+        spec.exit_code(104, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE', message='the calculation failed to submit, twice in a row')
+        spec.exit_code(
+            104, 'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE', message='the calculation failed for an unknown reason, twice in a row')
+        spec.exit_code(195, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the calculation is missing at least one required output')
+        spec.exit_code(196, 'ERROR_CALCULLATION_EXCEPTED', message='the calculation is in an excepted state')
+        spec.exit_code(197, 'ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS', message='unknown error detected in the restart workchain')
+        spec.exit_code(198, 'ERROR_NO_ERROR_HANDLERS', message='unknown error detected in the restart workchain')
+        spec.exit_code(199, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
+
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.unexpected_failure = False
         self.ctx.submission_failure = False
         self.ctx.restart_calc = None
         self.ctx.is_finished = False
         self.ctx.iteration = 0
-
-        return
 
     def run_calculations(self):
         """
@@ -126,7 +114,7 @@ class BaseRestartWorkChain(WorkChain):
         inputs = prepare_process_inputs(unwrapped_inputs)
         running = self.submit(self._calculation, **inputs)
 
-        self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))
+        self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))  # pylint: disable=not-callable
 
         return self.to_context(calculations=append_(running))
 
@@ -142,11 +130,11 @@ class BaseRestartWorkChain(WorkChain):
         try:
             calculation = self.ctx.calculations[-1]
         except IndexError:
-            self.report = 'The first iteration finished without returning a {}'.format(self._calculation.__name__)
-            return self.exit_codes.ERROR_ITERATION_RETURNED_NO_CALCULATION
+            self.report = 'The first iteration finished without returning a {}'.format(self._calculation.__name__)  # pylint: disable=not-callable
+            return self.exit_codes.ERROR_ITERATION_RETURNED_NO_CALCULATION  # pylint: disable=no-member
 
         # Set default exit status to an unknown failure
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
 
         # Done: successful completion of last calculation
         if calculation.is_finished_ok:
@@ -167,7 +155,7 @@ class BaseRestartWorkChain(WorkChain):
         # Abort: excepted
         elif calculation.is_excepted:
             self._handle_excepted(calculation)
-        
+
         # Retry or abort: calculation finished or failed (but is not ok)
         elif calculation.is_finished:
             self._handle_other(calculation)
@@ -175,27 +163,28 @@ class BaseRestartWorkChain(WorkChain):
         if self.ctx.exit_status.status:
             return self.ctx.exit_status
 
-        return self.exit_codes.NO_ERROR
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
         if not self.ctx.exit_status.status:
-            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))
+            self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))  # pylint: disable=not-callable
             for name, port in self.spec().outputs.items():
                 if port.required and name not in self.ctx.restart_calc.outputs:
-                    self.report('the spec specifies the output {} as required '
+                    self.report('the spec specifies the output {} as required '  # pylint: disable=not-callable
                                 'but was not an output of {}<{}>'.format(name, self._calculation.__name__, self.ctx.restart_calc.pk))
-                    return self.exit_codes.ERROR_MISSING_REQUIRED_OUTPUT
+                    return self.exit_codes.ERROR_MISSING_REQUIRED_OUTPUT  # pylint: disable=no-member
                 if name in self.ctx.restart_calc.outputs:
                     node = self.ctx.restart_calc.outputs[name]
                     self.out(name, self.ctx.restart_calc.outputs[name])
                     if self._verbose:
-                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))
+                        self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))  # pylint: disable=not-callable
         else:
-            self.report('The calculation {}<{}> returned a non-zero exit status. '
+            self.report('The calculation {}<{}> returned a non-zero exit status. '  # pylint: disable=not-callable
                         'The exit status of {} is thus set to {}'.format(self._calculation, self.pid, self.__class__.__name__,
                                                                          self.ctx.exit_status))
-        return
+
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def on_terminated(self):
         """Clean remote folders of the calculations called in the workchain if the clean_workdir input is True."""
@@ -203,12 +192,12 @@ class BaseRestartWorkChain(WorkChain):
         super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
         # Do not clean if we do not want to or the calculation failed
         if self.ctx.exit_status.status or self.inputs.clean_workdir.value is False:
-            self.report('not cleaning the remote folders')
+            self.report('not cleaning the remote folders')  # pylint: disable=not-callable
             return
 
         cleaned_calcs = []
 
-        for calculation in self.ctx.calculations.outputs(link_type=LinkType.CALL):
+        for calculation in self.ctx.calculations:
             try:
                 calculation.outputs.remote_folder._clean()  # pylint: disable=protected-access
                 cleaned_calcs.append(calculation.pk)
@@ -216,48 +205,39 @@ class BaseRestartWorkChain(WorkChain):
                 pass
 
         if cleaned_calcs:
-            self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))
+            self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))  # pylint: disable=not-callable
 
     def _handle_succesfull(self, calculation):
         """Handle the case when the calculaton was successfull."""
-        self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))
+        self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))  # pylint: disable=not-callable
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
-        self.ctx.exit_status = self.exit_codes.NO_ERROR
-
-        return
+        self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def _handle_max_iterations(self, calculation):
         """Handle the case when the maximum number of iterations are reached."""
-        self.report(
-            'reached the maximumm number of iterations {}: last ran calculation was {}<{}>'.format(
-                self.inputs.max_iterations.value, self._calculation.__name__, calculation.pk))
-        self.ctx.exit_status = self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED
-
-        return
+        self.report('reached the maximumm number of iterations {}: last ran calculation was {}<{}>'.format(  # pylint: disable=not-callable
+            self.inputs.max_iterations.value, self._calculation.__name__, calculation.pk))
+        self.ctx.exit_status = self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED  # pylint: disable=no-member
 
     def _handle_unexpected(self, calculation):
         """Handle the case when an unexpected state is detected."""
-        self.report('unexpected state ({}) of {}<{}>'.format(
-            calculation.process_state, self._calculation.__name__, calculation.pk))
-        self.ctx.exit_status = self.exit_codes.ERROR_UNEXPECTED_CALCULATION_STATE
+        self.report('unexpected state ({}) of {}<{}>'.format(  # pylint: disable=not-callable
+            calculation.process_state,
+            self._calculation.__name__,
+            calculation.pk,
+        ))
+        self.ctx.exit_status = self.exit_codes.ERROR_UNEXPECTED_CALCULATION_STATE  # pylint: disable=no-member
 
-        return
-
-    def _handle_killed(self, calculation):
+    def _handle_killed(self, calculation):  # pylint: disable=unused-argument
         """Handle the case when a killed state is detected, a silent fail."""
-        self.ctx.exit_status = self.exit_codes.NO_ERROR
+        self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
-        return
-
-    def _handle_excepted(self, calculation):
+    def _handle_excepted(self, calculation):  # pylint: disable=unused-argument
         """Handle the case when an excepted state is detected, a silent fail."""
-        self.ctx.exit_status = self.exit_codes.ERROR_CALCULLATION_EXCEPTED
+        self.ctx.exit_status = self.exit_codes.ERROR_CALCULLATION_EXCEPTED  # pylint: disable=no-member
 
-        return
-    
-    # pylint: disable=no-self-use,unused-argument
-    def _handle_calculation_sanity_checks(self, calculation):
+    def _handle_calculation_sanity_checks(self, calculation):  # pylint: disable=no-self-use,unused-argument
         """
         Perform additional sanity checks on successfully completed calculation.
 
@@ -267,7 +247,6 @@ class BaseRestartWorkChain(WorkChain):
         checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
         should go into the childs..
         """
-        return
 
     def _handle_unexpected_failure(self, calculation):
         """
@@ -278,13 +257,16 @@ class BaseRestartWorkChain(WorkChain):
         Otherwise we restart once more.
         """
         if self.ctx.unexpected_failure:
-            self.report('failure of {}<{}> could not be handled for the second consecutive time'.format(self._calculation.__name__, calculation.pk))
-            self.ctx.exit_status = self.exit_codes.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE
+            self.report('failure of {}<{}> could not be handled '  # pylint: disable=not-callable
+                        'for the second consecutive time'.format(self._calculation.__name__, calculation.pk))
+            self.ctx.exit_status = self.exit_codes.ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE  # pylint: disable=no-member
         else:
-            self.report('failure of {}<{}> could not be handled, trying to restart'.format(self._calculation.__name__, calculation.pk))
-            self.ctx.exit_status = self.exit_codes.NO_ERROR
-
-        return
+            self.report('failure of {}<{}> could not be handled, '  # pylint: disable=not-callable
+                        'trying to restart'.format(
+                            self._calculation.__name__,
+                            calculation.pk,
+                        ))
+            self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def _handle_calculation_failure(self, calculation):
         """
@@ -299,16 +281,16 @@ class BaseRestartWorkChain(WorkChain):
             _ = outputs['warnings']
             _ = outputs['parser_warnings']
         except (AttributeError, KeyError) as exception:
-            raise UnexpectedCalculationFailure(exception)
+            self.ctx.exit_status = compose_exit_code(self.exit_codes.ERROR_UNEXPECTED_CALCULATION_FAILURE.status, str(exception))  # pylint: disable=no-member
 
         is_handled = False
         handler_report = None
-        
+
         # Sort the handlers based on their priority in reverse order
         handlers = sorted(self._error_handlers, key=lambda x: x.priority, reverse=True)
-        
+
         if not handlers:
-            self.ctx.exit_status = self.exit_codes.ERROR_NO_ERROR_HANDLERS
+            self.ctx.exit_status = self.exit_codes.ERROR_NO_ERROR_HANDLERS  # pylint: disable=no-member
 
         for handler in handlers:
             handler_report = handler.method(self, calculation)
@@ -316,7 +298,7 @@ class BaseRestartWorkChain(WorkChain):
             # If at least one error is handled, we consider the calculation
             # failure handled
             if handler_report and handler_report.is_handled:
-                self.ctx.exit_status = NO_ERROR
+                self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
                 self.ctx.restart_calc = calculation
                 is_handled = True
 
@@ -328,9 +310,7 @@ class BaseRestartWorkChain(WorkChain):
         # If none of the executed error handlers reported that they handled an
         # error, the failure reason is unknown
         if not is_handled:
-            self.ctx.exit_status = self.exit_codes.ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS
-
-        return
+            self.ctx.exit_status = self.exit_codes.ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS  # pylint: disable=no-member
 
     def _handle_other(self, calculation):
         """Handle all other cases, not represented by other _handle_*."""
@@ -343,12 +323,10 @@ class BaseRestartWorkChain(WorkChain):
         self._handle_calculation_failure(calculation)
 
         # If there is still errors, we need to just try a new resubmit
-        if self.ctx.exit_status.status != self.exit_codes.NO_ERROR.status:
+        if self.ctx.exit_status.status != self.exit_codes.NO_ERROR.status:  # pylint: disable=no-member
             self._handle_unexpected_failure(calculation)
             self.ctx.unexpected_failure = True
             self.ctx.restart_calc = calculation
-
-        return
 
     def finalize(self):
         """Finalize the workchain."""
@@ -418,7 +396,7 @@ def register_error_handler(cls, priority):
         @wraps(handler)
         def error_handler(self, calculation):
             if hasattr(cls, '_verbose') and cls._verbose:
-                self.report('({}){}'.format(priority, handler.__name__))
+                self.report('({}){}'.format(priority, handler.__name__))  # pylint: disable=not-callable
             return handler(self, calculation)
 
         setattr(cls, handler.__name__, error_handler)
