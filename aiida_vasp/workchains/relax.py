@@ -173,6 +173,7 @@ class RelaxWorkChain(WorkChain):
         spec.exit_code(
             300, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the called workchain does not contain the necessary relaxed output structure')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
+        spec.exit_code(502, 'ERROR_OVERRIDE_PARAMETERS', message='there was an error overriding the parameters')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -246,7 +247,7 @@ class RelaxWorkChain(WorkChain):
                 try:
                     self._add_overrides(parameters)
                 except ValueError as err:
-                    self._fail_compat(exception=err)
+                    return compose_exit_code(self.exit_code.ERROR_OVERRIDE_PARAMETERS, str(err))
             else:
                 # Add plugin controlled flags
                 self._set_ibrion(parameters)

@@ -10,7 +10,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class BandsWorkChain(WorkChain):
@@ -135,7 +135,7 @@ class BandsWorkChain(WorkChain):
 
     def _init_context(self):
         """Initialize context variables."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.inputs = AttributeDict()
 
     def _init_settings(self):
@@ -277,36 +277,34 @@ class BandsWorkChain(WorkChain):
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
-        workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.exit_status = next_workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+
+        return self.ctx.exit_code
 
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):
         """Finalize the workchain."""
         return self.exit_status
-
-    def _fail_compat(self, *args, **kwargs):
-        """Method to handle general failures."""
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)  # pylint: disable=no-member
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)  # pylint: disable=no-member
 
 
 @calcfunction
