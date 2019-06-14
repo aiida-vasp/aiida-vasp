@@ -10,7 +10,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, if_, append_
 from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class MasterWorkChain(WorkChain):
@@ -46,18 +46,18 @@ class MasterWorkChain(WorkChain):
             cls.initialize,
             cls.init_workchain,
             cls.run_workchain,
-            cls.verify_workchain,
+            cls.verify_next_workchain,
             if_(cls.extract_bands)(
                 cls.init_bands,
                 cls.init_workchain,
                 cls.run_workchain,
-                cls.verify_workchain
+                cls.verify_next_workchain
             ),
             cls.finalize
         )  # yapf: disable
         spec.expose_outputs(cls._bands_workchain)
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the master workchain')
 
     def initialize(self):
         """Initialize."""
@@ -66,14 +66,10 @@ class MasterWorkChain(WorkChain):
         self._init_settings()
         self._set_base_workchain()
 
-        return
-
     def _init_context(self):
         """Initialize context variables."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.inputs = AttributeDict()
-
-        return
 
     def _init_inputs(self):
         """Initialize inputs."""
@@ -98,8 +94,6 @@ class MasterWorkChain(WorkChain):
             dict_entry = {'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR']}
             settings.update(dict_entry)
         self.ctx.inputs.settings = settings
-
-        return
 
     def _set_base_workchain(self):
         """Set the base workchain to be called."""
@@ -148,20 +142,26 @@ class MasterWorkChain(WorkChain):
 
         return self.to_context(workchains=append_(running))
 
-    def verify_workchain(self):
+    def verify_next_workchain(self):
         """Inherit exit status from child workchains."""
-        workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
-        workchain_exit_status = workchain.exit_status
-        if not workchain_exit_status:
-            self.exit_status = 0
+        next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
+        if not next_workchain_exit_status:
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.exit_status = workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         workchain_exit_status))
-        return
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+
+        return self.ctx.exit_code
 
     def extract_bands(self):
         """Determines if we should extract the band structure."""
@@ -170,7 +170,5 @@ class MasterWorkChain(WorkChain):
     def finalize(self):
         """Finalize the workchain."""
 
-        if not self.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-        return self.exit_status
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))

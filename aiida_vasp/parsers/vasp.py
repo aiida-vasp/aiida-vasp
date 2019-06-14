@@ -125,11 +125,13 @@ class VaspParser(BaseParser):
 
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
+
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
                 if file_name not in [item.name for item in self.retrieved.list_objects()] and value_dict['is_critical']:
                     return True
             return False
+
         error_code = self.get_folder()
         if error_code is not None:
             return error_code
@@ -161,6 +163,13 @@ class VaspParser(BaseParser):
 
         # Reset the 'get_quantity' delegate
         self.get_quantity.clear()
+
+        try:
+            return self.exit_status
+        except AttributeError:
+            pass
+
+        return self.exit_codes.NO_ERROR
 
     def get_inputs(self, quantity):
         """

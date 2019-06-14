@@ -60,6 +60,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     # turn relaxation on
     inputs.relax = get_data_node('bool', True)
+    inputs.force_cutoff = get_data_node('float', 0.01)
     inputs.convergence_on = get_data_node('bool', False)
     inputs.convergence_positions = get_data_node('float', 0.1)
     #inputs.relax_parameters = get_data_node('dict', dict={

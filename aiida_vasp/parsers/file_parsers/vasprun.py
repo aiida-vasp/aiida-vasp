@@ -175,6 +175,7 @@ class VasprunParser(BaseFileParser):
 
         if eigenvalues is None:
             # eigenvalues not present
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
 
         eigen = []
@@ -187,6 +188,7 @@ class VasprunParser(BaseFileParser):
 
         if eigen[0] is None:
             # safety, should not really happen?
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
 
         return eigen
@@ -200,6 +202,7 @@ class VasprunParser(BaseFileParser):
 
         if occupancies is None:
             # occupancies not present, should not really happen?
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
 
         occ = []
@@ -212,6 +215,7 @@ class VasprunParser(BaseFileParser):
 
         if occ[0] is None:
             # should not really happen
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
 
         return occ
@@ -260,9 +264,10 @@ class VasprunParser(BaseFileParser):
         """
 
         last_lattice = self._xml.get_lattice("final")
-        if last_lattice is not None:
-            return _build_structure(last_lattice)
-        return None
+        if last_lattice is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
+            return None
+        return _build_structure(last_lattice)
 
     @property
     def final_structure(self):
@@ -320,6 +325,9 @@ class VasprunParser(BaseFileParser):
         """Fetch the maximum force of at the last ionic run."""
 
         forces = self.final_forces
+        if forces is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
+            return None
         norm = np.linalg.norm(forces, axis=1)
         return np.amax(np.abs(norm))
 
@@ -366,6 +374,9 @@ class VasprunParser(BaseFileParser):
         """Fetch the maximum stress of at the last ionic run."""
 
         stress = self.final_stress
+        if stress is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
+            return None
         norm = np.linalg.norm(stress, axis=1)
         return np.amax(np.abs(norm))
 
@@ -410,6 +421,7 @@ class VasprunParser(BaseFileParser):
                 trajectory_data[key] = data
             return trajectory_data
 
+        self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
         return None
 
     @property
@@ -432,6 +444,9 @@ class VasprunParser(BaseFileParser):
         """Fetch the total energies after the last ionic run."""
 
         energies = self.energies
+        if energies is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
+            return None
         # fetch the type of energies that the user wants to extract
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
         energies_dict = {}
@@ -457,6 +472,7 @@ class VasprunParser(BaseFileParser):
             # arrays
             enrgies = self._xml.get_energies(status="all", etype=etype, nosc=nosc)
             if enrgies is None:
+                self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
                 return None
             # should be a list, but convert to ndarray, here
             # staggered arrays are not a problem
@@ -474,6 +490,7 @@ class VasprunParser(BaseFileParser):
 
         proj = self._xml.get_projectors()
         if proj is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         projectors = {}
         prj = []
@@ -498,6 +515,7 @@ class VasprunParser(BaseFileParser):
 
         diel = self._xml.get_dielectrics()
         if diel is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         dielectrics = {}
         energy = diel.get('energy')
@@ -524,6 +542,7 @@ class VasprunParser(BaseFileParser):
 
         brn = self._xml.get_born()
         if brn is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         born = {'born_charges': brn}
         return born
@@ -534,6 +553,7 @@ class VasprunParser(BaseFileParser):
 
         hessian = self._xml.get_hessian()
         if hessian is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         hess = {'hessian': hessian}
         return hess
@@ -544,6 +564,7 @@ class VasprunParser(BaseFileParser):
 
         dynmat = self._xml.get_dynmat()
         if dynmat is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         dyn = {}
         dyn['dynvec'] = dynmat["eigenvectors"]
@@ -556,6 +577,7 @@ class VasprunParser(BaseFileParser):
 
         dos = self._xml.get_dos()
         if dos is None:
+            self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         densta = {}
         # energy is always there, regardless of

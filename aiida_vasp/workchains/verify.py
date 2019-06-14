@@ -32,10 +32,8 @@ class VerifyWorkChain(WorkChain):
             help="""
                    The maximum number of iterations to perform.
                    """)
-        spec.exit_code(0, 'NO_ERROR',
-            message='the sun is shining')
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the verify workchain')
         spec.outline(
             cls.initialize,
             while_(cls.run_next_workchains)(
@@ -53,16 +51,12 @@ class VerifyWorkChain(WorkChain):
         self._init_context()
         self._init_inputs()
 
-        return
-
     def _init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_finished = False
         self.ctx.iteration = 0
         self.ctx.inputs = AttributeDict()
-
-        return
 
     def _init_inputs(self):
         """Initialize inputs."""
@@ -116,24 +110,26 @@ class VerifyWorkChain(WorkChain):
         # Currently only set to finished on first go.
         self.ctx.is_finished = True
 
-        workchain = self.ctx.workchains[-1]
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
         # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.ctx.exit_status =  self.exit_codes.NO_ERROR
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.ctx_exit_status = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                                             self.ctx.exit_status))
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
-        return self.ctx.exit_status
-    
+        return self.ctx.exit_code
+
     def finalize(self):
         """Finalize the workchain."""
-        if not self.ctx.exit_status.status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-        return self.ctx.exit_status
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))

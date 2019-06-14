@@ -170,8 +170,9 @@ class RelaxWorkChain(WorkChain):
                    If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
                    """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(301, 'ERROR_NO_RELAXED_STRUCTURE', message='the called workchain does not contain a relaxed structure')
-        spec.exit_code(199, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
+        spec.exit_code(
+            300, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the called workchain does not contain the necessary relaxed output structure')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -210,9 +211,9 @@ class RelaxWorkChain(WorkChain):
         except AttributeError:
             pass
         try:
-            parameters.ediffg = self.inputs.force_cutoff.value
+            parameters.ediffg = -abs(self.inputs.force_cutoff.value)
             if energy_cutoff:
-                self.report('User supplied both a force and an energy ' 'cutoff for the relaxation. Utilizing the force cutoff.')
+                self.report('User supplied both a force and an energy cutoff for the relaxation. Utilizing the force cutoff.')
         except AttributeError:
             pass
 
@@ -264,7 +265,7 @@ class RelaxWorkChain(WorkChain):
 
     def _init_context(self):
         """Store exposed inputs in the context."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
@@ -354,20 +355,24 @@ class RelaxWorkChain(WorkChain):
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
-        workchain = self.ctx.workchains[-1]
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
         # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.ctx.exit_status = self.exit_codes.NO_ERROR  # pylint: disable=no-member
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.ctx.exit_status = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {} with exit message: '.format(workchain.__class__.__name__, workchain.pk,
-                                                                             self.__class__.__name__, self.pid, self.ctx.exit_status))
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
-        return self.ctx.exit_status
+        return self.ctx.exit_code
 
     def analyze_convergence(self):
         """
@@ -379,16 +384,10 @@ class RelaxWorkChain(WorkChain):
         workchain = self.ctx.workchains[-1]
         # Double check presence of structure
         if 'structure' not in workchain.outputs:
-            if not self.ctx.exit_status.status:
-                self.ctx.exit_status = self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
-                self.report('The {}<{}> for the relaxation run did not have an '
-                            'output structure and most likely failed. However, '
-                            'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
-            else:
-                self.report('The {}<{}> for the relaxation run did not have an '
-                            'output structure and most likely failed. Its exit status was {}<{}>'.format(
-                                workchain.__class__.__name__, workchain.pk, self.pid, self.ctx.exit_status))
-            return self.ctx.exit_status
+            self.report('The {}<{}> for the relaxation run did not have an '
+                        'output structure and most likely failed. However, '
+                        'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
+            return self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
 
         self.ctx.previous_structure = self.ctx.current_structure
         self.ctx.current_structure = workchain.outputs.structure
@@ -409,14 +408,13 @@ class RelaxWorkChain(WorkChain):
         if not converged:
             self.ctx.current_restart_folder = workchain.outputs.remote_folder
             if self._verbose:
-                self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
+                self.report('Relaxation did not converge, restarting the relaxation.')
         else:
             if self._verbose:
-                self.report('{}<{}> was converged, finishing with a final static calculation.'.format(
-                    self._next_workchain.__name__, workchain.pk))
+                self.report('Relaxation is converged, finishing with a final static calculation.')
             self.ctx.is_converged = converged
 
-        return self.ctx.exit_status
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
@@ -449,23 +447,20 @@ class RelaxWorkChain(WorkChain):
         """Store the relaxed structure."""
         workchain = self.ctx.workchains[-1]
 
-        if not self.ctx.exit_status.status:
-            relaxed_structure = workchain.outputs.structure
-            if self._verbose:
-                self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
-                                                                       'structure_relaxed'))
-            self.out('structure_relaxed', relaxed_structure)
+        relaxed_structure = workchain.outputs.structure
+        if self._verbose:
+            self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
+                                                                   'structure_relaxed'))
+        self.out('structure_relaxed', relaxed_structure)
 
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.ctx.exit_status.status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.ctx.exit_status
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""

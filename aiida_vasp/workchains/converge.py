@@ -13,7 +13,7 @@ from aiida.plugins import WorkflowFactory
 from aiida.orm.nodes.data.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
-from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs
+from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs, compose_exit_code
 
 
 class ConvergeWorkChain(WorkChain):
@@ -276,8 +276,9 @@ class ConvergeWorkChain(WorkChain):
 
         spec.expose_outputs(cls._next_workchain)
         spec.output('convergence_data', valid_type=get_data_class('array'), required=False)
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the converge workchain')
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
 
     def initialize(self):
         """Initialize."""
@@ -286,24 +287,18 @@ class ConvergeWorkChain(WorkChain):
         self._init_inputs()
         self._init_settings()
 
-        return
-
     def _init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
         self._init_standard_context()
         self._init_converge_context()
 
-        return
-
     def _init_standard_context(self):
         """Initialize the standard content of context."""
 
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
         self.ctx.set_input_nodes = True
-
-        return
 
     def _init_converge_context(self):
         """Initialize the converge part of the context."""
@@ -311,8 +306,6 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.settings = AttributeDict()
         self._init_pw_context()
         self._init_kpoints_context()
-
-        return
 
     def _init_inputs(self):
         """Initialize the inputs."""
@@ -352,8 +345,6 @@ class ConvergeWorkChain(WorkChain):
             if 'settings' in self.inputs:
                 self.ctx.inputs.settings = self.inputs.settings
 
-        return
-
     def _init_pw_context(self):
         """Initialize plane wave cutoff variables and store in context."""
         settings = self.ctx.converge.settings
@@ -380,8 +371,6 @@ class ConvergeWorkChain(WorkChain):
             pass
         # We need a copy of the original encut as we will modify it
         self.ctx.converge.settings.encut_org = copy.deepcopy(settings.encut)
-
-        return
 
     def _init_kpoints_context(self):
         """Initialize the k-point grid variables and store in context."""
@@ -414,8 +403,6 @@ class ConvergeWorkChain(WorkChain):
         else:
             self.ctx.converge.settings.kgrid_org = None
 
-        return
-
     def _init_conv(self):
         """Initialize the convergence tests."""
 
@@ -437,8 +424,6 @@ class ConvergeWorkChain(WorkChain):
         self._init_pw_conv()
         self._init_kpoints_conv()
 
-        return
-
     def init_rel_conv(self):
         """Initialize the relative convergence tests."""
 
@@ -447,8 +432,6 @@ class ConvergeWorkChain(WorkChain):
         # of convergence tests.
         self.ctx.converge.pw_iteration = 0
         self.ctx.converge.kpoints_iteration = 0
-
-        return
 
     def init_disp_conv(self):
         """Initialize the displacement convergence tests."""
@@ -478,8 +461,6 @@ class ConvergeWorkChain(WorkChain):
         if settings.encut_org is None:
             if not settings.supplied_kmesh and settings.kgrid_org is None:
                 self._set_default_kgrid()
-
-        return
 
     def init_comp_conv(self):
         """Initialize the compression convergence tests."""
@@ -511,8 +492,6 @@ class ConvergeWorkChain(WorkChain):
             if not settings.supplied_kmesh and settings.kgrid_org is None:
                 self._set_default_kgrid()
 
-        return
-
     def _init_pw_conv(self):
         """Initialize the plane wave convergence tests."""
 
@@ -542,8 +521,6 @@ class ConvergeWorkChain(WorkChain):
             # make encut test vector
             converge.encut_sampling = [encut_start + x * encut_step for x in range(encut_samples)]
 
-        return
-
     def _init_kpoints_conv(self):
         """Initialize the kpoints convergence tests."""
 
@@ -565,8 +542,6 @@ class ConvergeWorkChain(WorkChain):
             # Start convergence test with a step size of 0.5/AA,
             # round values up.
             converge.k_sampling = [x * self.inputs.k_step for x in range(self.inputs.k_samples, 0, -1)]
-
-        return
 
     def _set_default_kgrid(self):
         """Sets the default k-point grid for plane wave convergence tests."""
@@ -627,8 +602,6 @@ class ConvergeWorkChain(WorkChain):
                 self.report('executing a calculation with an assumed converged '
                             'plane wave cutoff of {encut} and a supplied k-point grid'.format(encut=self.ctx.converge.settings.encut))
 
-        return
-
     def _set_input_nodes(self):
         """Replaces the ctx.input nodes from the previous calculations."""
         self.ctx.inputs.structure = self.ctx.converge.structure.clone()
@@ -641,7 +614,6 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.inputs.kpoints = self.ctx.converge.kpoints.clone()
         else:
             self.ctx.inputs.kpoints = self.inputs.kpoints
-        return
 
     def init_next_workchain(self):
         """Initialize the next workchain calculation."""
@@ -699,15 +671,11 @@ class ConvergeWorkChain(WorkChain):
         """Run next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
 
         if self.ctx.running_pw:
             return self.to_context(pw_workchains=append_(running))
-        elif self.ctx.running_kpoints:
+        if self.ctx.running_kpoints:
             return self.to_context(kpoints_workchains=append_(running))
 
         return self.to_context(workchains=append_(running))
@@ -768,16 +736,25 @@ class ConvergeWorkChain(WorkChain):
                                 kgrid2=self.ctx.converge.settings.kgrid[2],
                                 encut=encut) + inform_details)
 
-        return
-
     def results_pw_conv_calc(self):
         """Fetch and store the relevant convergence parameters for each plane wave calculation."""
 
-        # Check if child workchain was successfull
-        self.ctx.exit_status = self.ctx.pw_workchains[-1].exit_status
-        if self.ctx.exit_status:
-            self.report('This single convergence calculation has to be considered '
-                        'failed as the exit status from the child {} is {}'.format(self._next_workchain, self.ctx.exit_status))
+        # Check if there is in fact a workchain present
+        try:
+            workchain = self.ctx.pw_workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Check if called workchain was successfull
+        next_workchain_exit_status = self.ctx.pw_workchains[-1].exit_status
+        next_workchain_exit_message = self.ctx.pw_workchains[-1].exit_message
+        if next_workchain_exit_status:
+            exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited and this single plane-wave '
+                        'convergence calculation has to be considered failed. Continuing '
+                        'the convergence tests.'.format(workchain.__class__.__name__, workchain.pk, exit_code))
 
         # Update plane wave iteration index.
         self.ctx.converge.pw_iteration += 1
@@ -788,13 +765,8 @@ class ConvergeWorkChain(WorkChain):
         except IndexError:
             self.ctx.converge.run_pw_conv_calcs = False
 
-        try:
-            workchain = self.ctx.pw_workchains[-1]
-        except IndexError:
-            self.report('the plane wave convergence calculation finished ' 'without returning a {}'.format(self._next_workchain.__name__))
-
         encut = self.ctx.converge.settings.encut
-        if not self.ctx.exit_status:
+        if not next_workchain_exit_status:
             parameters = workchain.outputs.parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
@@ -815,9 +787,10 @@ class ConvergeWorkChain(WorkChain):
             # add stuff to the converge context
             self.ctx.converge.pw_data.append([encut, total_energy, max_force, max_valence_band, gap])
         else:
+            # add None entries for the failed test
             self.ctx.converge.pw_data.append([encut, None, None, None, None])
 
-        return self.ctx.exit_status
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def init_kpoints_conv_calc(self):
         """Initialize a single k-point grid convergence calculation."""
@@ -844,17 +817,25 @@ class ConvergeWorkChain(WorkChain):
                         'of {}x{}x{} for a plane wave cutoff {encut}'.format(
                             kgrid[0], kgrid[1], kgrid[2], encut=self.ctx.converge.settings.encut) + inform_details)
 
-        return
-
     def results_kpoints_conv_calc(self):
         """Fetch and store the relevant convergence parameters for each k-point grid calculation."""
 
+        try:
+            workchain = self.ctx.kpoints_workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
         # Check if child workchain was successfull
-        self.ctx.exit_status = self.ctx.kpoints_workchains[-1].exit_status
-        if self.ctx.exit_status:
-            self.report('This single convergence calculation has to be considered '
-                        'failed as the exit status from a child workchain is not '
-                        'zero, exit_status:{}'.format(self.ctx.exit_status))
+        next_workchain_exit_status = self.ctx.kpoints_workchains[-1].exit_status
+        next_workchain_exit_message = self.ctx.kpoints_workchains[-1].exit_message
+        if next_workchain_exit_status:
+            exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited and this single plane-wave '
+                        'convergence calculation has to be considered failed. Continuing '
+                        'the convergence tests.'.format(workchain.__class__.__name__, workchain.pk, exit_code))
+
         # Update kpoints iteration index
         self.ctx.converge.kpoints_iteration += 1
         # Check if the index has an entry, if not, do not perform further
@@ -864,14 +845,9 @@ class ConvergeWorkChain(WorkChain):
         except IndexError:
             self.ctx.converge.run_kpoints_conv_calcs = False
 
-        try:
-            workchain = self.ctx.kpoints_workchains[-1]
-        except IndexError:
-            self.report('the k-point grid convergence calculation ' 'finished without returning a {}'.format(self._next_workchain.__name__))
-
         kgrid = self.ctx.converge.settings.kgrid
         encut = self.ctx.converge.settings.encut
-        if not self.ctx.exit_status:
+        if not next_workchain_exit_status:
             parameters = workchain.outputs.parameters.get_dict()
             # fetch total energy
             total_energy = parameters['total_energies'][self.inputs.total_energy_type.value]
@@ -891,9 +867,10 @@ class ConvergeWorkChain(WorkChain):
             # add stuff to the converge context
             self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], encut, total_energy, max_force, max_valence_band, gap])
         else:
+            # add None entries for the failed test
             self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], encut, None, None, None, None])
 
-        return
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def analyze_pw_after_comp(self):
         """Return True if we are running compressed convergence tests."""
@@ -919,8 +896,6 @@ class ConvergeWorkChain(WorkChain):
                 self.ctx.converge.settings.encut = self.ctx.converge.pw_data[-1][0]
             else:
                 self.ctx.converge.settings.encut = encut
-
-        return
 
     def _set_encut_and_kgrid(self, encut, kgrid):
         """Sets the encut and kgrid (if mesh was not supplied)."""
@@ -976,8 +951,6 @@ class ConvergeWorkChain(WorkChain):
                 'the calculations producing results for the convergence tests. Setting '
                 'the k-point grid sampling to the highest specified value: {kgrid}'.format(kgrid=self.ctx.converge.k_data_org[-1][0:3]))
             settings.kgrid = self.ctx.converge.k_data_org[-1][0:3]
-
-        return
 
     def _analyze_conv(self):
         """
@@ -1223,12 +1196,9 @@ class ConvergeWorkChain(WorkChain):
         convergence = get_data_class('array')()
         convergence_context = get_data_node('dict', dict=self.ctx.converge)
         if self._verbose:
-            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk,
-                                                                   'convergence_data'))
+            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'convergence_data'))
         store_conv_data(convergence, convergence_context)
         self.out('convergence_data', convergence)
-
-        return
 
     def _check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
         """
@@ -1315,28 +1285,31 @@ class ConvergeWorkChain(WorkChain):
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
         workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.ctx.exit_status = 0
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.ctx.exit_status = next_workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
-        return
+        return self.ctx.exit_code
 
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.ctx.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):
         """Finalize the workchain."""
@@ -1384,13 +1357,13 @@ def default_array(name, array):
 @calcfunction
 def store_conv_data(convergence, convergence_context):
     """Store convergence data in the array."""
-    converge = convegence_context.get_dict()
+    converge = convergence_context.get_dict()
     # Store regular conversion data
     try:
         store_conv_data_single(convergence, 'pw_regular', converge['pw_data_org'])
     except AttributeError:
         store_conv_data_single(convergence, 'pw_regular', converge['pw_data'])
-    
+
     try:
         store_conv_data_single(convergence, 'kpoints_regular', converge['k_data_org'])
     except AttributeError:
@@ -1410,10 +1383,9 @@ def store_conv_data(convergence, convergence_context):
     except AttributeError:
         pass
 
+
 def store_conv_data_single(array, key, data):
     """Store a single convergence data entry in the array."""
     if data is not None:
         if data:
             array.set_array(key, np.array(data))
-
-    return

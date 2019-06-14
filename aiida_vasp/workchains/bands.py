@@ -125,8 +125,7 @@ class BandsWorkChain(WorkChain):
         spec.output('bands', valid_type=get_data_class('array.bands'))
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.output('structure_primitive', valid_type=get_data_class('structure'))
-        spec.exit_code(199, 'ERROR_UNKNOWN',
-            message='unknown error detected in the restart workchain')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
 
     def initialize(self):
         """Initialize."""
@@ -134,14 +133,10 @@ class BandsWorkChain(WorkChain):
         self._init_inputs()
         self._init_settings()
 
-        return
-
     def _init_context(self):
         """Initialize context variables."""
-        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN
+        self.ctx.exit_status = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.inputs = AttributeDict()
-
-        return
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -156,8 +151,6 @@ class BandsWorkChain(WorkChain):
         except AttributeError:
             settings.parser_settings = dict_entry
         self.ctx.inputs.settings = settings
-
-        return
 
     def _init_inputs(self):
         """Initialize inputs."""
@@ -281,8 +274,6 @@ class BandsWorkChain(WorkChain):
         self.out('kpoints', result['explicit_kpoints'])
         self.out('parameters_seekpath', result['parameters'])
 
-        return
-
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
@@ -297,7 +288,6 @@ class BandsWorkChain(WorkChain):
             self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
                         'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
                                                          next_workchain_exit_status))
-        return
 
     def results(self):
         """Attach the remaining output results."""
@@ -305,8 +295,6 @@ class BandsWorkChain(WorkChain):
         if not self.exit_status:
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
 
     def finalize(self):
         """Finalize the workchain."""
@@ -319,7 +307,6 @@ class BandsWorkChain(WorkChain):
         else:
             msg = '{}'.format(kwargs['exception'])
             self.abort_nowait(msg)  # pylint: disable=no-member
-        return
 
 
 @calcfunction

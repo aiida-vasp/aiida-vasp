@@ -114,13 +114,10 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False)
         spec.output('hessian', valid_type=get_data_class('array'), required=False)
         spec.output('dynmat', valid_type=get_data_class('array'), required=False)
-        spec.exit_code(190, 'ERROR_NO_POTENTIAL_FAMILY_NAME',
-        message='the user did not supply a potential family name')
-        spec.exit_code(191, 'ERROR_POTENTIAL_VALUE_ERROR',
-        message='ValueError was returned from get_potcars_from_structure')
-        spec.exit_code(191, 'ERROR_POTENTIAL_DO_NOT_EXIST',
-        message='the potential does not exist')
-
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
+        spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')
+        spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
 
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
@@ -154,7 +151,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Set settings
         if 'settings' in self.inputs:
             self.ctx.inputs.settings = self.inputs.settings
-            
+
         # Set options
         # Options is very special, not storable and should be
         # wrapped in the metadata dictionary, which is also not storable
@@ -174,17 +171,18 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Verify and set potentials (potcar)
         if not self.inputs.potential_family.value:
-            self.report('An empty string for the potential family name was detected.')
-            return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME
+            self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
+            return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict())
         except ValueError as err:
-            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))  # pylint: disable=no-member
         except NotExistent as err:
-            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))  # pylint: disable=no-member
+
         try:
             self._verbose = self.inputs.verbose.value
         except AttributeError:
@@ -197,18 +195,22 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'wavecar' in self.inputs:
             self.ctx.inputs.wavefunctions = self.inputs.wavecar
 
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
     @override
     def on_except(self, exc_info):
         """Handle excepted state."""
         try:
             last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
             if last_calc is not None:
-                self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))
+                self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))  # pylint: disable=not-callable
                 sched_err = last_calc.outputs.retrieved.get_file_content('_scheduler-stderr.txt')
                 sched_out = last_calc.outputs.retrieved.get_file_content('_scheduler-stdout.txt')
-                self.report('Scheduler output:\n{}'.format(sched_out or ''))
-                self.report('Scheduler stderr:\n{}'.format(sched_err or ''))
+                self.report('Scheduler output:\n{}'.format(sched_out or ''))  # pylint: disable=not-callable
+                self.report('Scheduler stderr:\n{}'.format(sched_err or ''))  # pylint: disable=not-callable
         except AttributeError:
-            self.report('No calculation was found in the context. ' 'Something really awefull happened. Please inspect messages and act.')
+            self.report('No calculation was found in the context. '  # pylint: disable=not-callable
+                        'Something really awefull happened. '
+                        'Please inspect messages and act.')
 
         return super(VaspWorkChain, self).on_except(exc_info)

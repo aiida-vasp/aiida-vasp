@@ -113,9 +113,10 @@ class VaspCalculation(VaspCalcBase):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
         spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
         spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
-        spec.exit_code(100, 'ERROR_NO_RETRIEVED_FOLDER', message='The retrieved folder data node could not be accessed.')
-        spec.exit_code(200, 'ERROR_MISSING_FILE', message='An important file is missing.')
-        spec.exit_code(300, 'ERROR_PARSING_FILE_FAILED', message='Parsing a file has failed.')
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(350, 'ERROR_NO_RETRIEVED_FOLDER', message='the retrieved folder data node could not be accessed.')
+        spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
+        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the requested quantity')
 
     def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
