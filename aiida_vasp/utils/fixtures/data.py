@@ -346,9 +346,11 @@ def ref_retrieved():
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     from aiida_vasp.parsers.settings import ParserSettings
+    from aiida_vasp.calcs.vasp import VaspCalculation
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)
     parser = VasprunParser(file_path=path, settings=ParserSettings({}))
+    parser._vasp_parser = VaspCalculation
     return parser
 
 

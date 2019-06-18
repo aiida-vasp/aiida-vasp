@@ -19,9 +19,8 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
-#@pytest.mark.skip(reason='Not yet ported to AiIDA 1.0.0b3')
+
 @pytest.mark.wc
-@pytest.mark.skipif(aiida_version() < cmp_version('1.0.0a1'), reason='work.Runner not available before 1.0.0a1')
 def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test with mocked vasp code."""
     from aiida.orm import Code
