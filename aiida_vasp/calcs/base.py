@@ -168,9 +168,6 @@ class VaspCalcBase(CalcJob):
                 transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
-                potential_family = kwargs.get('potential_family')
-                # builder.potential_family = 'immigrant' if potential_family is None else potential_family
-                # builder.potential_mapping = kwargs.get('potential_mapping')
                 builder.potential = imgr.get_potcar_input(
                     sandbox_path,
                     potential_family=kwargs.get('potential_family'),
