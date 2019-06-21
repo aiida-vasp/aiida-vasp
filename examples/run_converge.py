@@ -1,20 +1,18 @@
 import click
 import os
 from aiida.common.extendeddicts import AttributeDict
-
 from aiida.cmdline.utils.decorators import with_dbenv
+
 from aiida_vasp.utils.aiida_utils import get_data_node
 from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
 
-os.system('verdi daemon restart')
 
-
-@with_dbenv
 @click.command()
 @example_param_set
+@with_dbenv()
 def main(potential_family, queue, code, computer):
-    load_dbenv_if_not_loaded()
-    from aiida.orm import WorkflowFactory, Code
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
     from aiida.engine import submit, run
     from aiida_vasp.utils.aiida_utils import get_data_class
 
@@ -46,11 +44,11 @@ def main(potential_family, queue, code, computer):
     # set structure
     inputs.structure = set_structure_si()
     # set k-points grid density (do not supply if you want to perform convergence tests on this)
-    #inputs.kpoints = set_kpoints()
+    inputs.kpoints = set_kpoints(inputs.structure)
     # set parameters (do not supply plane wave cutoff if you want to perform convergence
     # tests on this)
-    #inputs.parameters = set_params_simple_no_encut()
-    inputs.parameters = set_params_simple()
+    inputs.parameters = set_params_simple_no_encut()
+    #inputs.parameters = set_params_simple()
     # set potentials and their mapping
     inputs.potential_family = get_data_class('str')(potential_family)
     inputs.potential_mapping = get_data_node('dict', dict={'Si': 'Si'})
@@ -61,7 +59,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.relax = get_data_node('bool', False)
     inputs.converge_relax = get_data_node('bool', False)
-    inputs.encut_samples = get_data_node('int', 3)
+    inputs.encut_samples = get_data_node('int', 2)
     inputs.k_samples = get_data_node('int', 3)
     inputs.verbose = get_data_node('bool', True)
     inputs.compress = get_data_node('bool', False)

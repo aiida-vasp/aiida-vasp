@@ -50,14 +50,16 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.verbose = get_data_node('bool', True)
-    running, node = run.get_node(workchain, **inputs)
+    results, node = run.get_node(workchain, **inputs)
+
     assert node.exit_status == 0
-    assert 'retrieved' in running
-    assert 'parameters' in running
-    assert 'remote_folder' in running
-    parameters = running['parameters'].get_dict()
+    assert 'retrieved' in results
+    assert 'parameters' in results
+    assert 'remote_folder' in results
+    parameters = results['parameters'].get_dict()
     assert parameters['maximum_stress'] == 22.8499295
     assert parameters['total_energies']['energy_no_entropy'] == -14.16209692
+
 
 @pytest.mark.wc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
@@ -95,7 +97,7 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.verbose = get_data_node('bool', True)
-    running, node = run.get_node(workchain, **inputs)
+    results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'chgcar' in running
-    assert running['chgcar'].get_content() == 'This is a test CHGCAR file.\n'
+    assert 'chgcar' in results
+    assert results['chgcar'].get_content() == 'This is a test CHGCAR file.\n'

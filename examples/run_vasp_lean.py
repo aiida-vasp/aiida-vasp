@@ -9,6 +9,7 @@ from auxiliary import example_param_set, set_structure_si, set_kpoints, set_para
 
 os.system('verdi daemon restart')
 
+
 @click.command()
 @example_param_set
 @with_dbenv()
@@ -32,7 +33,7 @@ def main(potential_family, queue, code, computer):
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
-    # organize selfettings
+    # organize settings
     settings = AttributeDict()
     parser_settings = {'output_params': ['total_energies', 'maximum_force']}
     settings.parser_settings = parser_settings

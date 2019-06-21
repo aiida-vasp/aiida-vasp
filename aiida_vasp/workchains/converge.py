@@ -541,7 +541,7 @@ class ConvergeWorkChain(WorkChain):
             # 4 AA lattice vector needs roughly 16 kpoints etc.
             # Start convergence test with a step size of 0.5/AA,
             # round values up.
-            converge.k_sampling = [x * self.inputs.k_step for x in range(self.inputs.k_samples, 0, -1)]
+            converge.k_sampling = [x * self.inputs.k_step.value for x in range(self.inputs.k_samples.value, 0, -1)]
 
     def _set_default_kgrid(self):
         """Sets the default k-point grid for plane wave convergence tests."""
@@ -671,7 +671,7 @@ class ConvergeWorkChain(WorkChain):
         """Run next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         if self.ctx.running_pw:
             return self.to_context(pw_workchains=append_(running))
@@ -1033,10 +1033,10 @@ class ConvergeWorkChain(WorkChain):
                 self.report('k-point grid: {kgrid0}x{kgrid1}x{kgrid2}'.format(kgrid0=kgrid[0], kgrid1=kgrid[1], kgrid2=kgrid[2]))
         elif self.ctx.converge.settings.supplied_kmesh:
             if self._verbose:
-                self.report('k-point grid: User supplied')
+                self.report('k-point grid: User supplied.')
         else:
             if self._verbose:
-                self.report('k-point grid: Failed')
+                self.report('k-point grid: Failed.')
 
         if self._verbose:
             self.report('for the convergence criteria '
@@ -1193,11 +1193,17 @@ class ConvergeWorkChain(WorkChain):
 
     def store_conv(self):
         """Set up the convergence data and put it in a data node."""
-        convergence = get_data_class('array')()
-        convergence_context = get_data_node('dict', dict=self.ctx.converge)
+        keys = [
+            'pw_data_org', 'pw_data', 'k_data_org', 'k_data', 'pw_data_displacement', 'k_data_displacement', 'pw_data_comp', 'k_data_comp'
+        ]
+        convergence_dict = {}
+        for key, value in self.ctx.converge.items():
+            if key in keys:
+                convergence_dict[key] = value
+        convergence_context = get_data_node('dict', dict=convergence_dict)
+        convergence = store_conv_data(convergence_context)
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'convergence_data'))
-        store_conv_data(convergence, convergence_context)
         self.out('convergence_data', convergence)
 
     def _check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
@@ -1313,7 +1319,7 @@ class ConvergeWorkChain(WorkChain):
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.ctx.exit_status
+        return self.ctx.exit_code
 
     def run_conv_calcs(self):
         """Determines if convergence calcs are to be run at all."""
@@ -1355,37 +1361,39 @@ def default_array(name, array):
 
 
 @calcfunction
-def store_conv_data(convergence, convergence_context):
+def store_conv_data(convergence_context):
     """Store convergence data in the array."""
+    convergence = get_data_class('array')()
     converge = convergence_context.get_dict()
     # Store regular conversion data
     try:
         store_conv_data_single(convergence, 'pw_regular', converge['pw_data_org'])
-    except AttributeError:
+    except KeyError:
         store_conv_data_single(convergence, 'pw_regular', converge['pw_data'])
 
     try:
         store_conv_data_single(convergence, 'kpoints_regular', converge['k_data_org'])
-    except AttributeError:
+    except KeyError:
         store_conv_data_single(convergence, 'kpoints_regular', converge['k_data'])
 
     # Then possibly displacement
     try:
         store_conv_data_single(convergence, 'pw_displacement', converge['pw_data_displacement'])
         store_conv_data_single(convergence, 'kpoints_displacement', converge['k_data_displacement'])
-    except AttributeError:
+    except KeyError:
         pass
 
     # And finally for compression
     try:
         store_conv_data_single(convergence, 'pw_compression', converge['pw_data_comp'])
         store_conv_data_single(convergence, 'kpoints_compression', converge['k_data_comp'])
-    except AttributeError:
+    except KeyError:
         pass
+
+    return convergence
 
 
 def store_conv_data_single(array, key, data):
     """Store a single convergence data entry in the array."""
-    if data is not None:
-        if data:
-            array.set_array(key, np.array(data))
+    if data:
+        array.set_array(key, np.array(data))
