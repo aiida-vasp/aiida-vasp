@@ -23,12 +23,11 @@ def try_grab_description(ctx, param, value):
     potcar_data_cls = get_data_class('vasp.potcar')
     group_name = ctx.params['name']
     existing_groups = potcar_data_cls.get_potcar_groups()
-    existing_group_names = [group.name for group in existing_groups]
+    existing_group_names = [group.label for group in existing_groups]
     if not value:
         if group_name in existing_group_names:
             return potcar_data_cls.get_potcar_group(group_name).description
-        else:
-            raise click.MissingParameter('A new group must be given a description.', param=param)
+        raise click.MissingParameter('A new group must be given a description.', param=param)
     return value
 
 
@@ -65,7 +64,7 @@ def listfamilies(element, symbol, with_description):
     if with_description:
         table[0].append('Description')
     for group in groups:
-        row = [group.name, len(group.nodes)]
+        row = [group.label, len(group.nodes)]
         if with_description:
             row.append(group.description)
         table.append(row)

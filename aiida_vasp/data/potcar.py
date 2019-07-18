@@ -113,18 +113,18 @@ import os
 import hashlib
 import tarfile
 import tempfile
-import six
 import shutil
 from contextlib import contextmanager
 from collections import namedtuple
+import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
-from aiida.orm import Group, GroupTypeString
-from aiida.orm import Data, Node
+from aiida.orm import Group
+from aiida.orm import Data
 from aiida.orm import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
@@ -187,7 +187,7 @@ def extract_tarfile(file_path):
 def by_older(left, right):
     if left.ctime < right.ctime:
         return -1
-    elif left.ctime > right.ctime:
+    if left.ctime > right.ctime:
         return 1
     return 0
 
@@ -195,12 +195,12 @@ def by_older(left, right):
 def by_user(left, right):
     if left.user.is_active and not right.user.is_active:
         return -1
-    elif not left.user.is_active and right.user.is_active:
+    if not left.user.is_active and right.user.is_active:
         return 1
     return 0
 
 
-class PotcarWalker(object):
+class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     """
     Walk the file system and find POTCAR files under a given directory.
 
@@ -228,7 +228,7 @@ class PotcarWalker(object):
         file_path = py_path.local(root).join(file_name)
         if tarfile.is_tarfile(str(file_path)):
             return self.handle_tarfile(dirs, file_path)
-        elif 'POTCAR' in file_name:
+        if 'POTCAR' in file_name:
             self.potcars.add(file_path)
         return None
 
@@ -241,7 +241,7 @@ class PotcarWalker(object):
         return new_dir
 
 
-class PotcarMetadataMixin(object):
+class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
     """Provide common Potcar metadata access and querying functionality."""
     _query_label = 'label'
 
@@ -258,7 +258,7 @@ class PotcarMetadataMixin(object):
             filters['attributes._MODEL_VERSION'] = {'==': kwargs.get('model_version', cls._VERSION)}
         query.add_filter(label, filters)
         return query
-    
+
     @classmethod
     def find(cls, **kwargs):
         """Find nodes by POTCAR metadata attributes given in kwargs."""
@@ -334,8 +334,8 @@ class PotcarMetadataMixin(object):
         return self.get_attribute('potential_set')
 
     def verify_unique(self):
-        from copy import deepcopy
         """Raise a UniquenessError if an equivalent node exists."""
+        from copy import deepcopy
         if self.exists(sha512=self.sha512):
             raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
 
@@ -347,7 +347,7 @@ class PotcarMetadataMixin(object):
                 str(self.__class__), str(other_attrs)))
 
 
-class VersioningMixin(object):
+class VersioningMixin(object):  # pylint: disable=useless-object-inheritance
     """Minimalistic Node versioning."""
     _HAS_MODEL_VERSIONING = True
     _VERSION = None
@@ -637,7 +637,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for element in filter_elements:
                 idx_has_element = []
                 for i, group in enumerate(groups):
-                    group_filters = {'label': {'==': group.name}, 'type_string': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
                     element_filters = {'attributes.element': {'==': element}}
                     elem_query = QueryBuilder()
                     elem_query.append(Group, tag='family', filters=group_filters)
@@ -650,7 +650,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for symbol in filter_symbols:
                 idx_has_symbol = []
                 for i, group in enumerate(groups):
-                    group_filters = {'label': {'==': group.name}, 'type_string': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
                     symbol_filters = {'attributes.symbol': {'==': symbol}}
                     symbol_query = QueryBuilder()
                     symbol_query.append(Group, tag='family', filters=group_filters)
@@ -784,7 +784,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             group = cls.get_potcar_group(group_name)
             group_created = bool(not group)
             if not group:
-                group = Group(name=group_name)
+                group = Group(label=group_name)
 
         if group.user.pk != get_current_user().pk:
             raise UniquenessError(

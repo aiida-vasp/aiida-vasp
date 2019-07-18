@@ -54,7 +54,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
     assert not result.exception
     assert potcar_cls.exists(element='In')
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
@@ -65,7 +65,7 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
 
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
 def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
@@ -80,7 +80,7 @@ def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
     old_work_dir.chdir()
 
@@ -200,9 +200,11 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
 
 
 def test_call_from_vasp():
+    """Test if the verdi potcar data command works."""
+
     import subprocess
     if six.PY2:
         output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
     else:
         output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
-    assert 'Usage: verdi data vasp-potcar' in output
+    assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test

@@ -190,7 +190,7 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
     assert not potcar_ga.exists()
 
     # this is supposed to return only one group, however it returns 8 (= number of uploaded files)
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [family_name]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [family_name]
 
     assert len(potcar_cls.get_potcar_group(family_name).nodes) >= 3
 
