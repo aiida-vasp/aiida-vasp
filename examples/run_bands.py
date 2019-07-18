@@ -39,8 +39,7 @@ def main(potential_family, queue, code, computer):
 
     # organize settings
     settings = AttributeDict()
-    parser_settings = {'output_params': ['total_energies', 'maximum_force']}
-    settings.parser_settings = parser_settings
+    settings.parser_settings = AttributeDict({'output_params': ['total_energies', 'maximum_force']})
 
     # set inputs for the following WorkChain execution
     inputs = AttributeDict()
@@ -66,7 +65,7 @@ def main(potential_family, queue, code, computer):
     # do we want to extract the band structure?
     inputs.extract_bands = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    run(workchain, **inputs)
+    submit(workchain, **inputs)
 
 
 if __name__ == '__main__':

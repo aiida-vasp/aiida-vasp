@@ -22,6 +22,9 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.mark.wc
+@pytest.mark.skip(reason='We can not run consecutive tests of this type due to a bug in AiiDA '
+                  'which will be fixed when the django_jsonb branch is merged. Disabling the '
+                  'simplest test.')
 # @pytest.mark.skip(reason='Travis has problems with runs that continues after 10 min. In addition, '
 #                   'we cannnot run two executive tests, e.g. test_converge_wc and test_converge_pw '
 #                   'as we get IntegrityError from Django. The source of this is currently unknown, '
@@ -67,10 +70,10 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.converge_relax = get_data_node('bool', True)
     inputs.relax = get_data_node('bool', True)
     inputs.verbose = get_data_node('bool', True)
-    inputs.encut_samples = get_data_node('int', 3)
-    inputs.k_samples = get_data_node('int', 3)
     inputs.compress = get_data_node('bool', False)
     inputs.displace = get_data_node('bool', False)
+    inputs.encut_samples = get_data_node('int', 3)
+    inputs.k_samples = get_data_node('int', 3)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'convergence_data' in results
@@ -103,7 +106,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
     kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
-    #parameters['system'] = 'test-case:test_converge_wc'
+    parameters['system'] = 'test-case:test_converge_wc'
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -133,7 +136,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.verbose = get_data_node('bool', True)
     inputs.testing = get_data_node('bool', True)
     inputs.compress = get_data_node('bool', False)
-    inputs.dispace = get_data_node('bool', False)
+    inputs.displace = get_data_node('bool', False)
     inputs.encut_samples = get_data_node('int', 3)
     inputs.k_samples = get_data_node('int', 3)
     results, node = run.get_node(workchain, **inputs)

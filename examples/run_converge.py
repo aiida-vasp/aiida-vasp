@@ -44,7 +44,7 @@ def main(potential_family, queue, code, computer):
     # set structure
     inputs.structure = set_structure_si()
     # set k-points grid density (do not supply if you want to perform convergence tests on this)
-    inputs.kpoints = set_kpoints(inputs.structure)
+    # inputs.kpoints = set_kpoints(inputs.structure)
     # set parameters (do not supply plane wave cutoff if you want to perform convergence
     # tests on this)
     inputs.parameters = set_params_simple_no_encut()
@@ -59,7 +59,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.relax = get_data_node('bool', False)
     inputs.converge_relax = get_data_node('bool', False)
-    inputs.encut_samples = get_data_node('int', 2)
+    inputs.encut_samples = get_data_node('int', 3)
     inputs.k_samples = get_data_node('int', 3)
     inputs.verbose = get_data_node('bool', True)
     inputs.compress = get_data_node('bool', False)

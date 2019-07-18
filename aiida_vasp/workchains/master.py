@@ -19,13 +19,14 @@ class MasterWorkChain(WorkChain):
     _verbose = False
     _base_workchains_string = 'vasp.converge'
     _bands_workchain_string = 'vasp.bands'
-    _base_workchains = WorkflowFactory(_base_workchains_string)
+    _base_workchain = WorkflowFactory(_base_workchains_string)
     _bands_workchain = WorkflowFactory(_bands_workchain_string)
 
     @classmethod
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._base_workchains, exclude=['extract_bands', 'settings'])
+        spec.expose_inputs(cls._base_workchain, exclude=['extract_bands', 'settings'])
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'extract_bands',
             valid_type=get_data_class('bool'),
@@ -97,7 +98,7 @@ class MasterWorkChain(WorkChain):
 
     def _set_base_workchain(self):
         """Set the base workchain to be called."""
-        self._next_workchain = self._base_workchains
+        self._next_workchain = self._base_workchain
 
     def init_bands(self):
         """Initialize the run to extract the band structure."""
@@ -134,11 +135,7 @@ class MasterWorkChain(WorkChain):
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 

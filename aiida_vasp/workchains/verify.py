@@ -23,7 +23,7 @@ class VerifyWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=['verify_max_iterations'])
+        spec.expose_inputs(cls._next_workchain, namespace='vasp', exclude=['verify_max_iterations'])
         spec.input(
             'verify_max_iterations',
             valid_type=get_data_class('int'),

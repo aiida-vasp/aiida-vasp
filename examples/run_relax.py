@@ -68,7 +68,7 @@ def main(potential_family, queue, code, computer):
     #})  # yapf: disable
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    run(workflow, **inputs)
+    submit(workflow, **inputs)
 
 
 if __name__ == '__main__':
