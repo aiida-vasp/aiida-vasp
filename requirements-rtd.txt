@@ -1,5 +1,5 @@
 tabulate
-aiida-core
+aiida-core>=1.0.0b6
 lxml
 click
 chainmap
