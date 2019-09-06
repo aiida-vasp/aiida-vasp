@@ -1,0 +1,7 @@
+tabulate
+lxml
+click
+chainmap
+six
+pyparsing
+aiida-core[atomic_tools]>=1.0.0b6
