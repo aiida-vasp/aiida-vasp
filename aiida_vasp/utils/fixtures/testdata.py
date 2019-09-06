@@ -1,4 +1,8 @@
-"""Provide convenience methods for retrieving test data."""
+""" # noqa: D205
+Test data retrieval
+-------------------
+Provide convenience methods for retrieving test data.
+"""
 import os
 
 

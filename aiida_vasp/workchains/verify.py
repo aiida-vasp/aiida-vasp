@@ -1,11 +1,13 @@
-# pylint: disable=attribute-defined-outside-init
-"""
-VerifyWorkChain.
+""" # noqa: D205
+Verify workchain
+----------------
 
 Indented to be used to verify a calculation, perform corrections in inputs files and
 restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
 or not currently checked in it. This workchain does currently nothing.
 """
+
+# pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, while_, append_
 from aiida.plugins import WorkflowFactory
@@ -23,7 +25,7 @@ class VerifyWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, namespace='vasp', exclude=['verify_max_iterations'])
+        spec.expose_inputs(cls._next_workchain, exclude=['verify_max_iterations'])
         spec.input(
             'verify_max_iterations',
             valid_type=get_data_class('int'),

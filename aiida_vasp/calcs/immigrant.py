@@ -1,6 +1,10 @@
+""" # noqa: D205
+Immigrant calculation
+---------------------
+VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA.
+"""
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA."""
 from aiida.common import InputValidationError
 from aiida.common.lang import override
 from aiida.common.links import LinkType
@@ -53,8 +57,7 @@ def get_poscar_input(dir_path):
     return PoscarParser(file_path=dir_path.join('POSCAR').strpath).structure
 
 
-def get_potcar_input(dir_path, structure=None, potential_family=None,
-                     potential_mapping=None):
+def get_potcar_input(dir_path, structure=None, potential_family=None, potential_mapping=None):
     """Read potentials from a POTCAR file or set it up from a structure."""
     local_potcar = dir_path.join('POTCAR')
     structure = structure or get_poscar_input(dir_path)
@@ -63,8 +66,7 @@ def get_potcar_input(dir_path, structure=None, potential_family=None,
         potentials = MultiPotcarIo.read(local_potcar.strpath).get_potentials_dict(structure)
         potentials = {kind: potentials[kind] for kind in potentials}
     elif potential_family:
-        potentials = PotcarData.get_potcars_from_structure(
-            structure, potential_family, mapping=potential_mapping)
+        potentials = PotcarData.get_potcars_from_structure(structure, potential_family, mapping=potential_mapping)
     else:
         raise InputValidationError('no POTCAR found in remote folder and potential_family was not passed')
 

@@ -1,6 +1,10 @@
-"""AiiDA Parser for aiida_vasp.Vasp2w90Calculation"""
+""" # noqa: D205
+VASP to Wannier90 parser
+------------------------
+AiiDA Parser for aiida_vasp.Vasp2w90Calculation.
+"""
 from aiida.plugins import DataFactory
-from aiida.orm.nodes.base import List
+from aiida.orm.nodes.data.list import List
 
 from aiida_vasp.parsers.file_parsers.win import WinParser
 from .vasp import VaspParser
@@ -10,7 +14,8 @@ class Vasp2w90Parser(VaspParser):
     """Parse a finished aiida_vasp.Vasp2w90Calculation"""
 
     def parse_with_retrieved(self, retrieved):
-        super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)
+        """The main parsing method called by AiiDA."""
+        super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)  # pylint: disable=no-member
 
         win_success, kpoints_node, param_node, proj_node = self.parse_win()
         self.set_node('wannier_parameters', param_node)
@@ -19,7 +24,7 @@ class Vasp2w90Parser(VaspParser):
 
         has_full_dat = self.has_full_dat()
 
-        return self.result(success=win_success and has_full_dat)
+        return self.result(success=win_success and has_full_dat)  # pylint: disable=no-member
 
     def parse_win(self):
         """Create the wannier90 .win file and kpoints output nodes."""
@@ -58,7 +63,7 @@ class Vasp2w90Parser(VaspParser):
     def set_node(self, name, node):
         """Add a node if it is not None"""
         if node is not None:
-            self.add_node(name, node)
+            self.add_node(name, node)  # pylint: disable=no-member
 
     def has_full_dat(self):
         success = all(self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])

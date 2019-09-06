@@ -1,4 +1,7 @@
-"""VaspCalculation fixtures"""
+""" # noqa: D205
+Fixtures for the VASP calculations
+----------------------------------
+"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
 

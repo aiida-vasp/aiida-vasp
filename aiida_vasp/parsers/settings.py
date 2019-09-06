@@ -1,4 +1,8 @@
-"""Module defining sets of FileParsers to be used by the VaspParser"""
+""" # noqa: D205
+Parser settings
+---------------
+Module defining sets of FileParsers to be used by the VaspParser.
+"""
 
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
@@ -57,7 +61,7 @@ FILE_PARSER_SETS = {
 
 NODES = {
     'misc': {
-        'link_name': 'parameters',
+        'link_name': 'misc',
         'type': 'dict',
         'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries'],
     },
@@ -144,7 +148,7 @@ NODES = {
 }
 
 
-class ParserSettings(object):
+class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
 

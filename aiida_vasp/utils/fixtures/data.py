@@ -1,4 +1,7 @@
-"""pytest-style test fixtures"""
+""" # noqa: D205
+Fixtures related to data
+------------------------
+"""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
 # pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg
 import os

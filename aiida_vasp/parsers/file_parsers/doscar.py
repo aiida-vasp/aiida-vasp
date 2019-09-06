@@ -1,4 +1,8 @@
-"""DOSCAR (VASP format) utilities"""
+""" # noqa: D205 
+DOSCAR parser
+-------------
+DOSCAR (VASP format) utilities.
+"""
 import numpy as np
 
 from aiida_vasp.parsers.node_composer import NodeComposer

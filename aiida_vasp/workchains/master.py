@@ -1,11 +1,12 @@
-# pylint: disable=attribute-defined-outside-init
-"""
-VerifyWorkChain.
+""" # noqa: D205
+Verify workchain
+----------------
 
 Indented to be used to verify a calculation, perform corrections in inputs files and
 restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
 or not currently checked in it. This workchain does currently nothing.
 """
+# pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, if_, append_
 from aiida.plugins import WorkflowFactory
@@ -25,7 +26,7 @@ class MasterWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._base_workchain, exclude=['extract_bands', 'settings'])
+        spec.expose_inputs(cls._base_workchain, exclude=['extract_bands', 'settings', 'kpoints'])
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'extract_bands',
@@ -43,15 +44,22 @@ class MasterWorkChain(WorkChain):
             help="""
             Do you want to relax the structure?
             """)
+        spec.input(
+            'kpoints_distance',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The maximum distance between k-points in inverse AA.
+            """)
         spec.outline(
             cls.initialize,
             cls.init_workchain,
-            cls.run_workchain,
+            cls.run_next_workchain,
             cls.verify_next_workchain,
             if_(cls.extract_bands)(
                 cls.init_bands,
                 cls.init_workchain,
-                cls.run_workchain,
+                cls.run_next_workchain,
                 cls.verify_next_workchain
             ),
             cls.finalize
@@ -78,6 +86,22 @@ class MasterWorkChain(WorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
+        self._init_structure()
+
+    def _init_structure(self):
+        """Initialize the structure."""
+        self.ctx.inputs.structure = self.inputs.structure
+        # Since the reciprocal lattice is set in KpointsData, we need, if not performing
+        # convergence tests to access the single StructureData, update the
+        # supplied KpointsData with the right reciprocal lattice.
+        try:
+            distance = self.inputs.kpoints_distance.value
+        except AttributeError:
+            return
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_cell_from_structure(self.ctx.inputs.structure)
+        kpoints.set_kpoints_mesh_from_density(distance)
+        self.ctx.inputs.kpoints = kpoints
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -130,8 +154,8 @@ class MasterWorkChain(WorkChain):
         # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
-    def run_workchain(self):
-        """Run the workchain."""
+    def run_next_workchain(self):
+        """Run the next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
@@ -163,6 +187,10 @@ class MasterWorkChain(WorkChain):
     def extract_bands(self):
         """Determines if we should extract the band structure."""
         return self.inputs.extract_bands.value
+
+    def loop_structures(self):
+        """Determine if we should continue to calculate structures."""
+        return len(self.ctx.structures.get_list()) > 0
 
     def finalize(self):
         """Finalize the workchain."""

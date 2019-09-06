@@ -1,10 +1,7 @@
-"""
-Base WorkChain for VASP, Error Handling enriched wrapper around VaspCalculation.
-
-Intended to be reused (launched instead of a VaspCalculation) in all other VASP workchains.
-Any validation and / or error handling that applies to *every* VASP run,
-should be handled on this level, so that every workchain can profit from it.
-Anything related to a subset of use cases must be handled in a subclass.
+""" # noqa: D205
+VASP workchain
+--------------
+Contains the VaspWorkChain class definition.
 """
 from aiida.engine import while_
 from aiida.common.lang import override
@@ -20,7 +17,9 @@ from aiida_vasp.workchains.restart import BaseRestartWorkChain
 
 
 class VaspWorkChain(BaseRestartWorkChain):
-    """
+    """ # noqa: D205
+    Test
+    ----
     Error handling enriched wrapper around VaspCalculation.
 
     Deliberately conserves most of the interface (required inputs) of the VaspCalculation class.

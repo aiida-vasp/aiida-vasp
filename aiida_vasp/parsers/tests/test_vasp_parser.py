@@ -2,15 +2,15 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 # pylint: disable=protected-access,unused-variable,too-few-public-methods
 
-import pytest
 import os
+import pytest
 import numpy as np
 
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class, dbenv
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class ExampleFileParser(BaseFileParser):
@@ -40,7 +40,7 @@ class ExampleFileParser(BaseFileParser):
         self._parsable_data = {}
 
     def _parse_file(self, inputs):
-        from aiida.orm.nodes.parameter import Dict
+        from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_ITEMS:
             result[quantity] = Dict(dict={})
@@ -64,7 +64,7 @@ class ExampleFileParser2(BaseFileParser):
         self._parsable_data = {}
 
     def _parse_file(self, inputs):
-        from aiida.orm.nodes.parameter import Dict
+        from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_ITEMS:
             result[quantity] = Dict(dict={})
@@ -179,20 +179,19 @@ def test_parser_nodes(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False)
 
-    parameters = result['parameters']
+    misc = result['misc']
     bands = result['bands']
     kpoints = result['kpoints']
 
-    assert isinstance(parameters, get_data_class('dict'))
+    assert isinstance(misc, get_data_class('dict'))
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
-    assert parameters.get_dict()['fermi_level'] == 5.96764939
+    assert misc.get_dict()['fermi_level'] == 5.96764939
 
 
 def test_structure(request, calc_with_retrieved):
     """Test that the structure from vasprun and POSCAR is the same."""
     from aiida.plugins import ParserFactory
-
 
     # turn of everything, except structure
     settings_dict = {
@@ -203,7 +202,7 @@ def test_structure(request, calc_with_retrieved):
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
-            'add_parameters': False,
+            'add_misc': False,
             'add_structure': True,
             'add_projectors': False,
             'add_born_charges': False,
@@ -252,11 +251,11 @@ def test_structure(request, calc_with_retrieved):
     assert np.array_equal(positions_vasprun, positions_poscar)
 
 
-def test_parameters(request, calc_with_retrieved):
-    """Test that it is possible to extract parameters from both vasprun and OUTCAR."""
+def test_misc(request, calc_with_retrieved):
+    """Test that it is possible to extract misc from both vasprun and OUTCAR."""
     from aiida.plugins import ParserFactory
 
-    # turn of everything, except parameters
+    # turn of everything, except misc
     settings_dict = {
         'parser_settings': {
             'add_trajectory': False,
@@ -284,9 +283,9 @@ def test_parameters(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False)
 
-    parameters = result['parameters']
-    assert isinstance(parameters, get_data_class('dict'))
-    data = parameters.get_dict()
+    misc = result['misc']
+    assert isinstance(misc, get_data_class('dict'))
+    data = misc.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so
     # only perform rudimentary checks, and the content comming from the xml file.
     assert data['fermi_level'] == 6.17267267

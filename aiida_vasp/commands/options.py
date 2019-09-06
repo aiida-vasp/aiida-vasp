@@ -1,11 +1,15 @@
-"""Common click options for verdi commands"""
+""" # noqa: D205
+Common click options for verdi
+------------------------------
+Common click options for verdi commands.
+"""
 import click
 
 try:
     from aiida.cmdline.params.options import OverridableOption, FORCE, DESCRIPTION  # pylint: disable=unused-import
 except ImportError:
     # pylint: disable=too-few-public-methods
-    class OverridableOption(object):
+    class OverridableOption(object):  # pylint: disable=useless-object-inheritance
         """
         Wrapper around click option that increases reusability
 

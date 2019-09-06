@@ -1,5 +1,9 @@
+""" # noqa: D205
+Relax workchain
+---------------
+Structure relaxation workchain.
+"""
 # pylint: disable=attribute-defined-outside-init
-"""Structure relaxation workchain."""
 import enum
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, while_, if_

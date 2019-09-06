@@ -1,5 +1,10 @@
-How to relax a structure using vasp.relax
-=========================================
+.. _relax_workchain:
+
+Relax workchain
+===============
+.. aiida-workchain:: RelaxWorkChain
+   :module: aiida_vasp.workchains.relax
+				 
 
 Running a single relaxation
 ----------------------------
@@ -17,6 +22,7 @@ Writing workflows that include a relaxation step
 Unless the workflow is solely concerned with providing a more robust or more specialized relaxation step, it is not recommended to derive from `vasp.relax`. Instead composing should be used; your workchain should set up the inputs and submit the relaxation workchain in a step function which will commit the results of the relaxation workchain to it's context. Further steps can then use the `structure_relaxed` result.
 
 .. _howto/relax_wc/inputs:
+
 Reference: vasp.relax inputs
 ----------------------------
 
@@ -62,8 +68,8 @@ All of these inputs are optional
  * `convergence_volume`, type: `Float`, default: 0.01 (allow a maximum of 1 % change of the unitcell volume from the previous relaxation)
  * `convergence_positions`, type: `Float`, default: 0.01 (allow a maximum of 1 % displacement (L2 norm) of the positions from the previous relaxation)
 
- Exposed from `vasp.vasp`
- ^^^^^^^^^^^^^^^^^^^^^^^^
+Exposed from `vasp.vasp`
+^^^^^^^^^^^^^^^^^^^^^^^^
 
  The following inputs will be passed straight through to a `vasp.vasp` workchain. See the `reference there <howto/base_wf/reference>`_ for how to use them.
 

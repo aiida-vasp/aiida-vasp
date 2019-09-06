@@ -1,4 +1,8 @@
-"""Utilities for choosing appropriate element symbols for a chemical element"""
+""" # noqa: D205
+Utils for setting symbols on chemical elements
+----------------------------------------------
+Utilities for choosing appropriate element symbols for a chemical element.
+"""
 from lxml import html
 import requests
 
@@ -33,7 +37,7 @@ def get_recommendations(version_nr='latest', use_gw=False):
 
 
 # pylint: disable=too-few-public-methods
-class PawInfo(object):
+class PawInfo(object):  # pylint: disable=useless-object-inheritance
     """Simple class to bundle and pass around info about a PAW"""
 
     def __init__(self, symbol, default_enmax, valency):

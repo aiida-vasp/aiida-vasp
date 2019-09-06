@@ -1,4 +1,8 @@
-"""Provides INCAR file interface and utilities."""
+""" # noqa: D205
+INCAR parser
+------------
+Provides INCAR file interface and utilities.
+"""
 from parsevasp.incar import Incar
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 

@@ -1,5 +1,8 @@
-"""Tools for parsing CHGCAR files."""
-
+""" # noqa: D205
+WAVECAR parser
+--------------
+Tools for parsing CHGCAR files.
+"""
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 

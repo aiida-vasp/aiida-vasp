@@ -1,5 +1,8 @@
 # pylint: disable=abstract-method
-"""
+""" # noqa: D205
+Representation of the POTCAR files
+----------------------------------
+
 Attempt to create a convenient but licence-respecting storage system that also guarantees provenience.
 
 Consists of two classes, PotcarData and PotcarFileData. Between the two data node classes exists a

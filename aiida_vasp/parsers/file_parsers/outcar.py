@@ -1,4 +1,8 @@
-"""Tools for parsing OUTCAR files."""
+""" # noqa: D205
+OUTCAR parser
+-------------
+Tools for parsing OUTCAR files.
+"""
 import re
 
 from parsevasp.outcar import Outcar

@@ -1,4 +1,8 @@
-"""Common code for parsers"""
+""" # noqa: D205
+Common code for parsers
+-----------------------
+
+"""
 from aiida.parsers.parser import Parser
 from aiida.common.exceptions import NotExistent
 
@@ -15,11 +19,12 @@ class BaseParser(Parser):
         error_code = self.get_folder()
         if error_code is not None:
             return error_code
+        return None
 
     def get_folder(self):
         """Convenient access to the retrieved folder."""
         try:
-            output_folder = self.retrieved
+            _ = self.retrieved
             return None
         except NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
@@ -38,4 +43,3 @@ class BaseParser(Parser):
         except OSError:
             self.logger.warning(fname + ' not found in retrieved')
             return None
-

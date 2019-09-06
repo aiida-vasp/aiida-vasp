@@ -1,4 +1,8 @@
-"""Classes representing quantities and a list of quantities."""
+""" # noqa: D205
+Parser quantity configuration
+-----------------------------
+Classes representing quantities and a list of quantities.
+"""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
@@ -28,7 +32,7 @@ class ParsableQuantity(DictWithAttributes):
         self.missing_files = missing_files
 
 
-class ParsableQuantities(object):
+class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 

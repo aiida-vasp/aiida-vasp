@@ -1,6 +1,10 @@
+""" # noqa: D205
+Base calculation class
+----------------------
+Base and meta classes for VASP calculations.
+"""
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
-"""Base and meta classes for VASP calculations"""
 import os
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
@@ -154,8 +158,8 @@ class VaspCalcBase(CalcJob):
         options = metadata.get('options', options)
         max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
         resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds
-        builder.metadata['options']['resources'] = resources
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
+        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': remote_path.strpath})
         builder.settings = get_data_node('dict', dict=settings)
@@ -169,9 +173,7 @@ class VaspCalcBase(CalcJob):
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
                 builder.potential = imgr.get_potcar_input(
-                    sandbox_path,
-                    potential_family=kwargs.get('potential_family'),
-                    potential_mapping=kwargs.get('potential_mapping'))
+                    sandbox_path, potential_family=kwargs.get('potential_family'), potential_mapping=kwargs.get('potential_mapping'))
                 builder.kpoints = imgr.get_kpoints_input(sandbox_path)
                 cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
         return proc_cls, builder

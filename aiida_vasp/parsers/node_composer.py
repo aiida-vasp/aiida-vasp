@@ -1,5 +1,9 @@
-"""A Node Composer for Aiida data nodes."""
-# pylint: disable=no-member
+""" # noqa: D205
+Node composer
+-------------
+A Node Composer for Aiida data nodes.
+"""
+# pylint: disable=no-member, useless-object-inheritance
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -79,12 +83,14 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_dict(node_type, inputs):
+        """Compose the dictionary node."""
         node = get_data_class(node_type)()
         node.update_dict(inputs)
         return node
 
     @staticmethod
     def _compose_structure(node_type, inputs):
+        """Compose a structure node."""
         node = get_data_class(node_type)()
         for key in inputs:
             node.set_cell(inputs[key]['unitcell'])
@@ -94,6 +100,7 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_array(node_type, inputs):
+        """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():
@@ -102,6 +109,7 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_vasp_wavefun(node_type, inputs):
+        """Compose a wave function node."""
         node = None
         for key in inputs:
             # Technically this dictionary has only one key. to
@@ -111,6 +119,7 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_vasp_chargedensity(node_type, inputs):
+        """Compose a charge density node."""
         node = None
         for key in inputs:
             # Technically this dictionary has only one key. to
@@ -119,6 +128,7 @@ class NodeComposer(object):
         return node
 
     def _compose_array_bands(self, node_type, inputs):
+        """Compose a bands node."""
         node = get_data_class(node_type)()
         kpoints = self._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
@@ -153,6 +163,7 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_array_trajectory(node_type, inputs):
+        """Compose a trajectory node."""
         node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():

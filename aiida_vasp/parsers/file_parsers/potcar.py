@@ -1,5 +1,8 @@
-"""Find, import, compose and write POTCAR files."""
-from functools import update_wrapper
+""" # noqa: D205
+POTCAR parser
+-------------
+Find, import, compose and write POTCAR files.
+"""
 from itertools import groupby
 import re
 import six
@@ -10,7 +13,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
-class PotcarIo(object):
+class PotcarIo(object):  # pylint: disable=useless-object-inheritance
     """
     Use pymatgen.io.vasp.Potcar to deal with VASP pseudopotential IO.
 
@@ -20,6 +23,7 @@ class PotcarIo(object):
     :param path: (string) absolute path to the POTCAR file
     :param potcar_node: a PotcarData node
     :param potcar_file_node: a PotcarFileNode
+    :param contents: a string with the POTCAR content
     """
 
     def __init__(self, **kwargs):
@@ -33,16 +37,20 @@ class PotcarIo(object):
         """Delegate initialization to _init_with - methods."""
 
     def _init_with_path(self, file_path):
+        """Initialize with a path."""
         node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=file_path)
         self.sha512 = node.sha512
 
     def _init_with_potcar_file_node(self, node):
+        """Initialize with an existing potential file node."""
         self.sha512 = node.sha512
 
     def _init_with_potcar_node(self, node):
+        """Initialize with an existing potential node."""
         self._init_with_potcar_file_node(node.find_file_node())
 
     def _init_with_contents(self, contents):
+        """Initialize with a string."""
         try:
             contents = contents.encode('utf-8')
         except AttributeError:
@@ -90,7 +98,7 @@ class PotcarIo(object):
         return self.sha512 == other.sha512
 
 
-class MultiPotcarIo(object):
+class MultiPotcarIo(object):  # pylint: disable=useless-object-inheritance
     """Handle file i/o for POTCAR files with one or more potentials."""
 
     def __init__(self, potcars=None):

@@ -1,4 +1,8 @@
-"""Extensions of Pythons standard dict as well as Aiida's extendedDicts."""
+""" # noqa: D205
+Extensions of dictionaries
+--------------------------
+Extensions of Pythons standard dict as well as Aiida's extendedDicts.
+"""
 
 from aiida.common.extendeddicts import AttributeDict
 

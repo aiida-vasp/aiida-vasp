@@ -1,5 +1,9 @@
+""" # noqa: D205
+vasprun parser
+--------------
+Tools for parsing vasprun.xml files.
+"""
 # pylint: disable=too-many-public-methods
-"""Tools for parsing vasprun.xml files."""
 import numpy as np
 
 from parsevasp.vasprun import Xml

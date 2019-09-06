@@ -1,7 +1,11 @@
-"""Utility to convert raw input data to .win format"""
+""" # noqa: D205
+Utilities for Wannier90
+-----------------------
+Utility to convert raw input data to .win format.
+"""
 
 
-class DictToWin(object):
+class DictToWin(object):  # pylint: disable=useless-object-inheritance
     """Format parameters given in a dictionary into Wannier90 .win format"""
 
     @classmethod
@@ -35,11 +39,11 @@ class DictToWin(object):
     @classmethod
     def _value(cls, val):
         """String format a value of any compatible scalar type"""
-        if isinstance(val, (str, unicode)):
+        if isinstance(val, (str, unicode)):  # pylint: disable=undefined-variable
             return val
-        elif isinstance(val, bool):
+        if isinstance(val, bool):
             return cls._bool(val)
-        elif isinstance(val, (list, tuple)):
+        if isinstance(val, (list, tuple)):
             return cls._seq(val)
         return str(val)
 

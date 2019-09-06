@@ -1,9 +1,14 @@
-"""Auxiliary routines that are not part of any of the workchain classes."""
+""" # noqa: D205
+Utils for the workchains
+------------------------
+Auxiliary routines that are not part of any of the workchain classes.
+"""
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict
-from aiida.engine import ExitCode
+from aiida.common.exit_codes import ExitCode
+
 
 def prepare_process_inputs(inputs):
     """
@@ -19,7 +24,9 @@ def prepare_process_inputs(inputs):
     prepared_inputs = AttributeDict()
 
     for key, val in inputs.items():
-        if key not in ['options', 'metadata', 'potential'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
+        if key not in ['options', 'metadata', 'potential'] and \
+           isinstance(val, dict) and \
+           all([isinstance(k, (basestring)) for k in val.keys()]):
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
@@ -85,6 +92,7 @@ def fetch_k_grid(rec_cell, k_spacing):
     kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
 
     return kgrid.astype('int').tolist()
+
 
 def compose_exit_code(status, message):
     """Compose an ExitCode instance based on a status and message."""

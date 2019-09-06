@@ -1,9 +1,10 @@
-# pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init
-"""
-ConvergenceWorkChain.
+""" # noqa: D205
+Convergence workchain
+---------------------
 
 Intended to be used to control convergence checks for plane-wave calculations.
 """
+# pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init
 import copy
 import numpy as np
 
@@ -72,18 +73,26 @@ class ConvergeWorkChain(WorkChain):
                    The number of plane-wave cutoff samples.
                    """)
         spec.input(
-            'k_step',
+            'k_dense',
             valid_type=get_data_class('float'),
             required=False,
-            default=get_data_node('float', 0.1),
+            default=get_data_node('float', 0.07),
             help="""
-                   The k-point step size in inverse AA.
+                   The target k-point stepping at the densest grid in inverse AA.
+                   """)
+        spec.input(
+            'k_course',
+            valid_type=get_data_class('float'),
+            required=False,
+            default=get_data_node('float', 0.35),
+            help="""
+                   The target k-point stepping at the coursest grid in inverse AA.
                    """)
         spec.input(
             'k_spacing',
             valid_type=get_data_class('float'),
             required=False,
-            default=get_data_node('float', 0.5),
+            default=get_data_node('float', 0.1),
             help="""
                    The default k-point spacing in inverse AA.
                    """)
@@ -541,12 +550,13 @@ class ConvergeWorkChain(WorkChain):
             # 4 AA lattice vector needs roughly 16 kpoints etc.
             # Start convergence test with a step size of 0.5/AA,
             # round values up.
-            converge.k_sampling = [x * self.inputs.k_step.value for x in range(self.inputs.k_samples.value, 0, -1)]
+            stepping = (self.inputs.k_course.value - self.inputs.k_dense.value) / self.inputs.k_samples.value
+            converge.k_sampling = [self.inputs.k_course.value - x * stepping for x in range(self.inputs.k_samples.value + 1)]
 
     def _set_default_kgrid(self):
         """Sets the default k-point grid for plane wave convergence tests."""
         converge = self.ctx.converge
-        rec_cell = converge.kpoints.cell
+        rec_cell = converge.kpoints.reciprocal_cell
         k_spacing = self.inputs.k_spacing.value
         kgrid = fetch_k_grid(rec_cell, k_spacing)
         converge.settings.kgrid = kgrid
@@ -797,7 +807,7 @@ class ConvergeWorkChain(WorkChain):
 
         # Fetch k-point grid by using the distance between each point
         kstep = self.ctx.converge.k_sampling[self.ctx.converge.kpoints_iteration]
-        rec_cell = self.ctx.converge.kpoints.cell
+        rec_cell = self.ctx.converge.kpoints.reciprocal_cell
         kgrid = fetch_k_grid(rec_cell, kstep)
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.

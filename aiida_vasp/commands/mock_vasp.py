@@ -1,6 +1,10 @@
-"""Separate cli interface for commands useful in development and testing."""
+""" # noqa: D205
+Mock vasp command
+-----------------
+
+Separate cli interface for commands useful in development and testing.
+"""
 import os
-import re
 import click
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 

@@ -1,5 +1,9 @@
+""" # noqa: D205
+POSCAR parser
+-------------
+Tools for parsing POSCAR files.
+"""
 # pylint: disable=no-self-use
-"""Tools for parsing POSCAR files."""
 import numpy as np
 
 from parsevasp.poscar import Poscar, Site

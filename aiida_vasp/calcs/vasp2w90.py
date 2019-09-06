@@ -1,11 +1,16 @@
+""" # noqa: D205
+VASP to Wannier90 calculation
+-----------------------------
+VASP2Wannier90 - Calculation.
+"""
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""VASP2Wannier90 - Calculation"""
 from aiida.plugins import DataFactory
 from aiida.orm import List
 
-from aiida_wannier90.io import write_win
+from aiida_wannier90.io import write_win  # pylint: disable=import-error
 from aiida_vasp.calcs.vasp import VaspCalculation
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class Vasp2w90Calculation(VaspCalculation):
@@ -25,8 +30,7 @@ class Vasp2w90Calculation(VaspCalculation):
 
     def write_win(self, dst):
         """Write Wannier90 input file"""
-        write_win(
-            filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
+        write_win(filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
 
     @staticmethod
     def new_wannier_parameters(**kwargs):

@@ -31,7 +31,7 @@ def main(potential_family, queue, code, computer):
     options.qos = ''
     options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
     options.queue_name = ''
-    options.max_wallclock_seconds = 3600
+    options.max_wallclock_seconds = 1000
 
     # organize settings
     settings = AttributeDict()
@@ -59,7 +59,7 @@ def main(potential_family, queue, code, computer):
     # set workchain related inputs
     inputs.verbose = get_data_node('bool', True)
     # submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    run(workchain, **inputs)
 
 
 if __name__ == '__main__':

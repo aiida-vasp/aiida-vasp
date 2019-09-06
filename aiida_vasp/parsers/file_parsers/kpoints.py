@@ -1,5 +1,9 @@
+""" # noqa: D205
+KPOINTS parser
+--------------
+Utils for VASP KPOINTS format.
+"""
 # pylint: disable=no-self-use
-"""Utils for VASP KPOINTS format"""
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser

@@ -1,4 +1,8 @@
-"""Commandline util for dealing with potcar files"""
+""" # noqa: D205
+Commands for the potential interface
+------------------------------------
+Commandline util for dealing with potcar files.
+"""
 import click
 from click_spinner import spinner as cli_spinner
 import tabulate

@@ -1,10 +1,13 @@
-"""Utilities for working with aiida in general"""
-from functools import wraps
+""" # noqa: D205
+Utils for AiiDA
+---------------
+Utilities for working with aiida in general.
+"""
 import numpy as np
 from packaging import version
 
 from aiida.orm import User
-from aiida.cmdline.utils.decorators import with_dbenv, dbenv
+from aiida.cmdline.utils.decorators import with_dbenv
 
 BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
 
@@ -15,34 +18,30 @@ def get_data_node(data_type, *args, **kwargs):
 
 def querybuild(cls, **kwargs):
     """
-    Instantiates and
-    :returns: a QueryBuilder instance.
+    Instantiates and returns a QueryBuilder instance.
 
     The QueryBuilder's path has one vertice so far, namely this class.
     Additional parameters (e.g. filters or a label),
     can be passes as keyword arguments.
-    
+
     :param label: Label to give
     :param filters: filters to apply
     :param project: projections
-
+    :returns: a QueryBuilder instance.
     """
-    
+
     from aiida.orm import QueryBuilder
 
-    qb = QueryBuilder()
+    query_builder = QueryBuilder()
     filters = kwargs.pop('filters', {})
-    qb.append(cls, filters=filters, **kwargs)
+    query_builder.append(cls, filters=filters, **kwargs)
 
-    return qb
+    return query_builder
 
 
 @with_dbenv()
 def get_data_class(data_type):
-    """
-    Provide access to the orm.data classes with deferred dbenv loading.
-
-    """
+    """Provide access to the orm.data classes with deferred dbenv loading."""
     from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingEntryPointError
 
@@ -136,10 +135,7 @@ def cmp_load_verdi_data():
 
 @with_dbenv()
 def create_authinfo(computer, store=False):
-    """
-    Allow the current user to use the given computer.
-
-    """
+    """Allow the current user to use the given computer."""
     from aiida.orm import AuthInfo
     authinfo = AuthInfo(computer=computer, user=get_current_user())
     if store:
@@ -150,22 +146,7 @@ def create_authinfo(computer, store=False):
 @with_dbenv()
 def cmp_get_authinfo(computer):
     """Get an existing authinfo or None for the given computer and current user."""
-    if hasattr(computer, 'get_authinfo'):
-        return computer.get_authinfo(get_current_user())
-    else:
-        from aiida.backends.settings import BACKEND
-        from aiida.backends.profile import BACKEND_SQLA, BACKEND_DJANGO
-
-        if BACKEND == BACKEND_DJANGO:
-            from aiida.backends.djsite.db.models import DbAuthInfo
-            return DbAuthInfo.objects.get(dbcomputer=computer.dbcomputer, aiidauser=get_current_user())  # pylint: disable=no-member
-        elif BACKEND == BACKEND_SQLA:
-            from aiida.backends.sqlalchemy.models.authinfo import DbAuthInfo
-            from aiida.backends.sqlalchemy import get_scoped_session
-            session = get_scoped_session()
-            return session.query(DbAuthInfo).filter(DbAuthInfo.dbcomputer == computer.dbcomputer).filter(
-                DbAuthInfo.aiidauser == get_current_user())
-    return None
+    return computer.get_authinfo(get_current_user())
 
 
 @with_dbenv()

@@ -1,4 +1,8 @@
-"""Contains tools to read kpoints and bands from EIGENVALUE files."""
+""" # noqa: D205
+EIGENVAL parser
+---------------
+Contains tools to read kpoints and bands from EIGENVALUE files.
+"""
 
 import re
 

@@ -1,6 +1,10 @@
-"""Utilities for comparing band structures"""
-from aiida.orm.calculation.inline import optional_inline
+""" # noqa: D205
+Utils for comparing band structures
+-----------------------------------
+Utilities for comparing band structures.
+"""
 from aiida.plugins import DataFactory
+from aiida.engine import calcfunction
 
 BANDS_CLS = DataFactory('array.bands')
 
@@ -14,7 +18,7 @@ def _firstspin(bands):
     return bands
 
 
-@optional_inline
+@calcfunction
 # pylint: disable=too-many-locals
 def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     """
@@ -103,12 +107,10 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            msg = ('Missing window parameters in input to ' 'parent calculation:\n') + err.message
-            raise KeyError(msg)
+            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err))
     except AttributeError as err:
         if not silent:
-            msg = ('bands_node is not an output of an appropriate calc node.' + err.message)
-            raise AttributeError(msg)
+            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err))
     return owindow
 
 
@@ -184,7 +186,7 @@ def bands_error(bands1, bands2):
     for band_idx in range(nbands):
         b1_i = bands_1[:, band_idx]
         b2_i = bands_2[:, band_idx]
-        sq_err = np.square(b1_i - b2_i)
+        sq_err = np.square(b1_i - b2_i)  # pylint: disable=assignment-from-no-return
         m_err = sq_err.sum() / len(sq_err)
         err[band_idx] = np.sqrt(m_err)
     return err

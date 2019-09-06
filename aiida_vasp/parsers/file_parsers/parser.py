@@ -1,117 +1,14 @@
-r"""
-Base classes for vasp file parsers.
-
-BaseFileParser
---------------
-This baseclass makes no assumptions about the format of the file to be parsed.
-
-Usage::
-
-    import re
-
-    import py
-
-    from aiida_vasp.utils.aiida_utils import get_data_class
-    from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-
-    ExampleFileParser(BaseFileParser):
-
-        PARSABLE_ITEMS = {
-            'item1': { # The name of a quantity. It should be unique among all of the FileParsers.
-                'inputs': ['required_quantity'],  # This quantity will be parsed first and made available in time if possible
-                'parsers': ['ExampleFile'], # During setup the VaspParser will check, whether ExampleFile has been retrieved
-                ## and initialise the corresponding parser, if this quantity is requested by setting any of the
-                ## 'parser_settings['add_OutputNode'] = True'
-                'nodeName': ['examples'],  # The quantity will be added to the 'examples' output node
-                'prerequisites: ['required_quantity'],  # This prohibits the parser from trying to parse item1 without ``required_quantity``
-                'alternatives': ['alternative_quantity1', ... ] # Optional. If a quantity can be parsed from more than
-                ## one file, a list of alternative quantities can be provided here.
-                'is_alternative': another_quantity # Optional. If this quantity is an alternative to another_quantity
-                ## set this flag. The VaspParser will automatically add this quantity to another_quantities alternatives.
-            }
-            'item2': {
-                'inputs': [],
-                'parsers': ['ExampleFile'],
-                'nodeName': ['examples'],
-                'prerequisites': [],
-            }
-        }
-
-        def __init__(self, *args, **kwargs):
-            super(ExampleFileParser, self).__init__(*args, **kwargs)
-            self.init_with_kwargs(**kwargs)
-
-        def _parse_file(self, inputs):
-            example_file = py.path.local(self._file_path)  # self._file_path is set by the superclass
-            data = example_file.read()
-            item1 = int(re.findall(r'item1 is: (\d+)', data)[0]) * inputs['required_quantity']  # extract item 1
-            item2 = [int(i) for i in re.findall(r'item2: (\d+)', data)]  # extract list of item2
-            output_node = get_data_class('dict')(dict={  # construct Dict node
-                'item1': item1,
-                'item2': item2
-            }
-            return {'examples': output_node}  # each of the ``nodeName``s from above must be a key in the returned dict
-
-    example_parser = ExampleFileParser('example_file')
-    item1 = example_parser.get_quantity('item1', inputs={'required_quantity': 1})
-    item2 = example_parser.get_quantities('item2, inputs=None)
-
-Parses Files like::
-
-    item1 is: 213
-    item2: 1
-    item2: 2
-    item2: 4
-
-KeyValueParser
---------------
-This baseclass has some utility functions for parsing files that are (mostly) in a `key` = `value` format.
-
-This class does not integrate with the VaspParser class currently.
-
-A simple example, which tries to convert values to python objects on a best effort basis:
-Usage::
-
-    import re
-
-    import py
-
-    from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
-
-    ParamParser(KeyValueParser):
-
-        def __init__(self, file_path):
-            self._file_path = py.path.local(file_path)
-            super(WinParser, self).__init__()
-            self.result = {}
-
-        def convert_or_not(self, value):
-            for converter in self.get_converter_iter():
-                converted = self.try_convert(value, converter)
-                if converted and 'value' in converted:
-                    return converted['value']
-            return value
-
-        def parse_file(self):
-            assignments = re.findall(self.assignment, self._file_path.read())
-            return {key: self.convert_or_not(value)}
-
-Parses files like::
-
-    StrParam = value_1
-    FloatParam = 1.0
-    BoolParam = True
-
-
+r""" # noqa: D205
+Base classes for the VASP file parsers
+--------------------------------------
 """
 import re
-import six.moves as moves
 from six import string_types
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
-class BaseParser(object):
+class BaseParser(object):  # pylint: disable=useless-object-inheritance
     """Common codebase for all parser utilities"""
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
@@ -274,7 +171,7 @@ class BaseFileParser(BaseParser):
         raise NotImplementedError('{classname} does not implement a _parse_file() ' 'method.'.format(classname=self.__class__.__name__))
 
 
-class SingleFile(object):
+class SingleFile(object):  # pylint: disable=useless-object-inheritance
     """
     Datastructure for a singleFile file providing a write method.
 
@@ -316,7 +213,44 @@ class SingleFile(object):
 
 
 class KeyValueParser(BaseParser):
-    """Contains regex and functions to find grammar elements in vasp input and output files."""
+    """ # noqa: D205
+    Key and value parser
+    --------------------
+    This baseclass has some utility functions for parsing files that are (mostly) in a `key` = `value` format.
+
+    This class does not integrate with the VaspParser class currently.
+
+    A simple example, which tries to convert values to python objects on a best effort basis. Usage::
+
+        import re
+        import py
+
+        from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
+
+        ParamParser(KeyValueParser):
+
+            def __init__(self, file_path):
+                self._file_path = py.path.local(file_path)
+                super(WinParser, self).__init__()
+                self.result = {}
+
+            def convert_or_not(self, value):
+                for converter in self.get_converter_iter():
+                    converted = self.try_convert(value, converter)
+                    if converted and 'value' in converted:
+                        return converted['value']
+                return value
+
+            def parse_file(self):
+                assignments = re.findall(self.assignment, self._file_path.read())
+                return {key: self.convert_or_not(value)}
+
+    Parses files like::
+
+        StrParam = value_1
+        FloatParam = 1.0
+        BoolParam = True
+    """
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     bool_true = re.compile(r'^T$')
     bool_false = re.compile(r'^F$')

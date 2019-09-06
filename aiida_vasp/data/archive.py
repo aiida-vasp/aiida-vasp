@@ -1,15 +1,19 @@
+""" # noqa: D205
+A general archive class
+-----------------------
+
+Archive data class: store multiple files together in a compressed archive in the repository.
+"""
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""Archive data class: store multiple files together in a compressed archive in the repository"""
 import tarfile
 import os
 import six
+from aiida.orm.nodes import Data
 if six.PY2:
-    from StringIO import StringIO
+    from StringIO import StringIO  # pylint: disable=import-error
 else:
     from io import StringIO
-
-from aiida.orm.nodes import Data
 
 
 class ArchiveData(Data):

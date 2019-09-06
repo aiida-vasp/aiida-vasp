@@ -1,4 +1,7 @@
-"""
+""" # noqa: D205
+Default mapping between atomic element and potential
+----------------------------------------------------
+
 Provides dictionaries with mappings element -> default potential
 
 For the following pseudopotential types

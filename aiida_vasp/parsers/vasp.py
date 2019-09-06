@@ -1,8 +1,11 @@
+""" # noqa: D205
+VASP parser
+-----------
+AiiDA parser for a aiida_vasp.VaspCalculation.
+"""
 #encoding: utf-8
-
 # pylint: disable=no-member
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
-"""AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
@@ -57,7 +60,7 @@ class VaspParser(BaseParser):
 
     * `add_<quantity>`, where quantity is one of:
 
-        'parameters': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
+        'misc': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'structure':  (Default) StructureData node parsed from CONTCAR
         'bands':      Band structure node parsed from EIGENVAL.
         'dos':        ArrayData node containing the DOS parsed from DOSCAR.
@@ -65,7 +68,7 @@ class VaspParser(BaseParser):
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
 
-    * `output_params`: A list of quantities, that should be added to the 'parameters' node.
+    * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
     * `file_parser_set`: String (DEFAULT = 'default').
 

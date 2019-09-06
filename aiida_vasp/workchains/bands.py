@@ -1,10 +1,11 @@
-# pylint: disable=attribute-defined-outside-init
-"""
-BandsWorkChain.
-
+""" # noqa: D205
+Bands workchain
+---------------
 Intended to be used to extract the band structure using SeeKpath as a preprossesor
 to extract the k-point path.
 """
+
+# pylint: disable=attribute-defined-outside-init
 import enum
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction

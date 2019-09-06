@@ -1,7 +1,11 @@
+""" # noqa: D205
+VASP calculation
+----------------
+The calculation class that prepares a specific VASP calculation.
+"""
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-"""The calculation class that prepares a specific VASP calculation."""
 from aiida.plugins import DataFactory
 
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -25,8 +29,9 @@ vasp.vasp specific kwargs:
 
 @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 class VaspCalculation(VaspCalcBase):
-    """
-    General-purpose VASP calculation.
+    """ # noqa: D205
+    General-purpose VASP calculation
+    --------------------------------
 
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR' and Wannier90 input / output files,
     but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
@@ -42,7 +47,6 @@ class VaspCalculation(VaspCalcBase):
 
         proc = CalculationFactory('vasp.vasp').process()
         inputs = proc.get_inputs_template()
-
         inputs.parameter = <Dict with INCAR params>
         inputs.structure = <StructureData> or <CifData>
         inputs.kpoints = <KpointsData>

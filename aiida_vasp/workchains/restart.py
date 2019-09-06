@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Workchain subclass with utilities for restarting, taken from AiiDA-QuantumEspresso."""
+""" # noqa: D205
+Restart workchain
+-----------------
+Workchain subclass with utilities for restarting, taken and extended a bit from
+the QuantumEspresso plugin.
+"""
 from collections import namedtuple
 from functools import wraps
 

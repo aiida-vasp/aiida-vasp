@@ -1,11 +1,18 @@
+=======
+Authors
+=======
+
 AiiDA-VASP is now maintained by Espen Flage-Larsen, SINTEF Materials Physics, Norway.
 
-## Development Team
+
+Development Team
+----------------
 * Espen Flage-Larsen, SINTEF (maintainer)
 * Martin Callsen, Gent University
 
-## Thanks
-Special thanks go to the following individuals and organizations that helped in the development.
+Acknowledgements
+----------------
+Special thanks go to the following individuals and organizations that helps or helped in the development.
 
 * Rico Häuselmann, THEOS, EPFL (big thanks for the inital design and implementation of the plugin)
 * Atsushi Togo, Kyoto University for discussions, advice and finding many issues

@@ -1,120 +1,95 @@
+.. _getting_started:
+
 =================
-AiiDA Vasp Plugin
+AiiDA VASP plugin
 =================
 
 .. image:: https://travis-ci.org/aiida-vasp/aiida-vasp.svg?branch=develop
-    :target: https://travis-ci.org/aiida-vasp/aiida-vasp
-
+   :target: https://travis-ci.org/aiida-vasp/aiida-vasp
+			
 .. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-
+   
 .. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
    :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
+      
+This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
 
-This is a plugin to `AiiDA <www.aiida.net/?page_id=264>`_ to run calculations with the ab-initio program `VASP <https://www.vasp.at/>`_.
+Please have a look at the `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`_ for additional details.
 
-* `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`_
-* `Changelog <https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md>`_
+Starting to use the plugin
+--------------------------
 
-Install and usage:
-------------------
+1. If you are already using `AiiDA`_, simply activate the virtual environment associated with it, here assumed to be located in ``~/env/aiida-vasp``::
+     
+   $ source ~/env/aiida-vasp/bin/activate
 
-Install AiiDA
-~~~~~~~~~~~~~
+And skip to step 4 and continue from there.
 
-* Install and make sure the `AiiDA prerequisites  <https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/prerequisites.html>`_ work.
+2. Otherwise, set up a new virtual environment::
 
-* Setup the virtual Python environment as described in the `AiiDA installation instructions <https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/installation.html>`_ and enable it.
+   $ python -m venv ~/env/aiida-vasp
 
-* Download latest `AiiDA from GitHub  <https://github.com/aiidateam/aiida_core>`_ by cloning the repository. We suggest to put this into the root folder of the virtual environment. This will be the `aiida_core`.
+3. Enable the newly installed virtual environment::
 
-* Make sure you are on the `develop` branch (should be the default) by issuing in the cloned directory of `aiida_core`::
+   $ source ~/env/aiida-vasp/bin/activate
 
-    git checkout develop
+4. Install the plugin::
 
-* Install latest `aiida_core` by following the `AiiDA installation instructions <https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/installation.html>`_. In the instruction, the optional packages are descibed. To summarize issue the following in the cloned `aiida_core` directory::
+   $ (aiida-vasp) pip install aiida-vasp
 
-    pip install -e .[option1,option2]
+5. Update the entry points that `AiiDA`_ are using::
 
-    
-Install stable version of the plugin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   $ (aiida-vasp) reentry scan -r aiida
 
-A stable version of this plugin is no longer maintained. The current branch `migration_beta` is soon to be merged into `master` and will become our future stable version. Please see next step.
+This will automatically install the `AiiDA`_ python package(s) as well as any other dependencies of the plugin and register all the plugin classes with `AiiDA`_. Follow the steps in the `AiiDA documentation`_ to complete setting up `AiiDA`_ in case you have not yet completed these steps. This involves setting up a `profile`, a `computer` and a `code`.
 
+After setting up these, you might want to run an example `VASP_` calculation to check that everything works as expected. In order to do so, we need to fetch the examples from the GitHub repository. We believe it is good practice to put things related to a specific virtual environment in its associated folders.
+
+6. Download the full AiiDA-VASP repository, which includes the examples::
+
+   $ (aiida-vasp) cd ~/env/aiida-vasp
+   $ (aiida-vasp) git clone https://github.com/aiida-vasp/aiida-vasp.git
+
+The examples are located inside the ``examples`` directory. The most simple example ``run_vasp_lean`` is what you need for testing at this point.
+
+But before we can execute a calculation, we need to upload the potentials, or the POTCAR files. We know you are keen on getting the first calculation done, but how the plugin handles the potentials are important to understand as they are covered by the license. Please consult :ref:`potentials`.
+
+7. We now assume that you are in the root folder of a offically supported potential family bundle supplied by the `VASP`_ team called ``paw_gga_pbe_54`` located in the folder ``~/potentials`` of the user. This potential family can now be uploaded using::
   
-Install development version of the plugin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Download the latest VASP plugin for AiiDA by cloning the 'aiida-vasp <https://github.com/aiida-vasp/aiida-vasp>`_ repository. Again we suggest to put this in the root folder of the virtual environment. This will from here on be referred to as `aiida-vasp`.
-
-* Make sure you are on the `migration_beta` branch (is not the default) by issuing in the cloned directory of `aiida-vasp`::
-
-    git checkout migration_beta
-
-* Install lastest `aiida-vasp` by issuing the following in the cloned `aiida-vasp` directory::
-
-    pip install -e .
-
-* If you want to take part in development and for instance submit a pull request you should issue::
-
-    pip install -e .[dev]
+   $ cd ~/potentials/paw_gga_pbe_54
+   $ (aiida-vasp) verdi data vasp-potcar uploadfamily --name=PBE.54 --description="The PBE 5.4 potentials"
 
 
-Troubleshoot
-~~~~~~~~~~~~
-
-To test wether the installation was successful issue::
-
-   $ verdi plugin aiida.calculation list
-
-   # example output:
-
-   * artithmetic.add
-   * templatereplacer
-   * vasp.vasp
-   * vasp.vasp2w90
-
-You should see vasp.* in the list. There could of course be more plugins listed then what is shown above, depending on your AiiDA plugin stack.
-
-Configure AiiDA
-~~~~~~~~~~~~~~~
-
-* See the documentation on how to install `AiiDA plugins <https://aiida.readthedocs.io/projects/aiida-core/en/latest/get_started/index.html>`_ and make sure that you issue the following command, and restart the daemon after `aiida-vasp` have been installed with `pip`::
-
-  reentry scan -r aiida
-  verdi daemon restart
-
-* Set up the computers by following the `AiiDA installation guide for computers <https://aiida.readthedocs.io/projects/aiida-core/en/latest/get_started/computers.html>`_. This is typically the login node of you cluster computers. It is also possible to configure a local computer, if you for instance want to run VASP locally (then of course, VASP need to be installed locally).
-
-* Set up the VASP code by following the `AiiDA installation guide for codes <https://aiida.readthedocs.io/projects/aiida-core/en/latest/get_started/codes.html>`_. When you are asked for the plugin, please enter `vasp.vasp`, which is the entry point for the VASP plugin. This is how AiiDA loads plugin related properties. Each code is associated with a computer, so you need to add a separate VASP code entry to every computer.
-
-Uploading potentials
-~~~~~~~~~~~~~~~~~~~~
-
-Before using the plugin and VASP, we need to give the plugin access to the potentials. The simples approach to uppload a directory of potentials, say the PAW PBE GW ready potentials you enter the directory where those are present at the local computer. In this directory you would then have the elemental folders, like `Si`, `Si_GW` etc. Then you issue::
-
-  verdi data vasp-potcar uploadfamily --name=some_short_name --description="some_description"
-
-Where `some_short_name` is a name, or a tag that you give this potential family. Typically, it could be `PBE_GW_54` or something similar, depending on the potential you upload. Keep the name rather short, but open for the flexibility to extend with additional families. There in an extra description entry, where `some_description` can be a longer description of this family. By issuing this command the plugin uploads the potentials to the database. The potentials are also protected in VASP by license, so in order to make sure the potentials are not stored for each calculation in the database, only a link to the used potentials is stored, in addition to its SHA512 checksum. The potentials are stored in the database, but not per calculations. If one exports a calculation, there is no potential attached and thus the calculation can be shared with other non-VASP users as well.
+The plugin will then traverse the folder you are in and look for POTCAR files. If you want you could also pass an argument that points to the folder, instead of changing the directory, e.g::
   
-Using the plugin
-~~~~~~~~~~~~~~~~
+   $ (aiida-vasp) verdi data vasp-potcar uploadfamily --path=~/potentials/paw_gga_pbe_54 --name=PBE.54 --description="The PBE 5.4 potentials
 
-The plugin is supplied with examples in the `examples` folder. These execute `AiiDA workchains <https://aiida.readthedocs.io/projects/aiida-core/en/latest/working/workflows.html#working-workchains>`_ for a few simple operations that one typically perform using VASP.
+Or you could also just use the ``tar`` file directly::
 
-The most simple example is the `run_vasp_lean.py` script. This sets up a simple Si cell, with a 9x9x9 k-point grid and some standard INCAR parameters.
+   $ (aiida-vasp) verdi data vasp-potcar uploadfamily --path=~/paw_gga_pbe_54.tar --name=PBE.54 --description="The PBE 5.4 potentials
+   
+This will probably take some time. Give it time to finish. You will get a warning that the formatting is off for one of the POTCAR_H files, but you can ignore that. Additional details regarding the handling of the POTCAR files can be found here :ref:`potentials`.
 
-To execute this calculation, you need to have configure a computer and a code associated with this computer. Please make sure you have testet the connection to the computer. Then issue::
+8. Finally we are ready to launch a test calculation. Change to the ``examples`` directory in the plugin's root directory and run the command::
+     
+   $ (aiida-vasp) cd ~/env/aiida-vasp/aiida-vasp/examples
+   $ (aiida-vasp) python run_vasp_lean.py <code> <computer> --potential-family=PBE.54
 
-  python run_vasp_lean.py codename computername --potential-family=some_short_name
+Where ``<code>`` is the PK or name of the `code` you set up in `AiiDA`_ for running `VASP`_ and ``<computer>`` is the PK or name of the `computer` you set up in AiiDA for running `VASP`_ on. The attribute ``potential-family`` is the name you used when uploading the potential family.
 
-The plugin then prepares a VASP calculation and submits its setup to the AiiDA daemon, which again sets this up on the specified `computername` with the core `codename`.
+In the ``examples`` folder you will find additional example files that executes certain sets of workchains, which again executes `VASP`_ accordingly when needed. Currently, the following is bundled with the distribution:
 
-You can then inspect the output by issuing the command::
+ * ``run_vasp_lean`` - a clean execution of `VASP`_ with minimal functionality
+ * ``run_relax`` - runs structure relaxations on top of ``run_relax``
+ * ``run_converge`` - runs k-point and plane wave cutoff convergence tests on top of ``run_relax``
+ * ``run_bands`` - an example of how to use the ``master`` workchain to perfom a more composed set of calculation with dependencies between each step (in this case ``CHGCAR`` among other things)
 
-  verdi process list -a
+The idea is that one should always run ``run_converge`` for all calculations. That serves as an entry point to a `VASP`_ calculation. As you can see in the documentation for the convergence and relaxation workchain, the actual convergence calculation can be skipped if the necessary parameters are given.
 
-More details will follow...
+Please consult the navigation bar for additional details on how to use the plugin.
 
+.. _AiiDA: https://www.aiida.net
+.. _VASP: https://www.vasp.at
+.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
