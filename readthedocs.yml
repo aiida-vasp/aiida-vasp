@@ -8,10 +8,6 @@ version: 2
 sphinx:
   configuration: doc/conf.py
 
-# Set the format (can be all)
-formats: 
-  - html
-
 # Optionally set the version of Python and requirements required to build your docs
 python:
   version: 3.7
