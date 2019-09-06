@@ -13,7 +13,6 @@ formats: html
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-  version: 3.6
+  version: 3.7
   install:
-    - requirements: requirements-rtd.txt
-    - requirements: requirements-aiida.txt
+    - requirements: doc/requirement.txt
