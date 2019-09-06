@@ -1,7 +1,0 @@
-pre-commit
-prospector
-pylint
-flake8
-yapf
-coverage
-fastentrypoints
