@@ -67,9 +67,9 @@
     "include_package_data": true, 
     "install_requires": [
         "aiida-core[atomic_tools] == 1.0.0b6", 
-        "ase == 3.17.0", 
+        "ase", 
         "scipy", 
-        "pymatgen == 2018.12.12", 
+        "pymatgen", 
         "subprocess32", 
         "click", 
         "chainmap", 
