@@ -5,3 +5,4 @@ chainmap
 six
 pyparsing
 aiida-core[atomic_tools]>=1.0.0b6
+sphinx==2.2.0
