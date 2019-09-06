@@ -9,7 +9,8 @@ sphinx:
   configuration: doc/conf.py
 
 # Set the format (can be all)
-formats: html
+formats: 
+  - html
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
