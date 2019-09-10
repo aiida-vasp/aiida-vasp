@@ -94,7 +94,7 @@ class VaspCalculation(VaspCalcBase):
         # Define outputs.
         # remote_folder and retrieved are passed automatically
         spec.output(
-            'parameters',
+            'misc',
             valid_type=get_data_class('dict'),
             help='The output parameters containing smaller quantities that do not depend on system size.')
         spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')

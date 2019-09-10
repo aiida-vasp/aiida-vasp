@@ -94,7 +94,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('parameters', valid_type=get_data_class('dict'))
+        spec.output('misc', valid_type=get_data_class('dict'))
         spec.output('remote_folder', valid_type=get_data_class('remote'))
         spec.output('retrieved', valid_type=get_data_class('folder'))
         spec.output('structure', valid_type=get_data_class('structure'), required=False)
