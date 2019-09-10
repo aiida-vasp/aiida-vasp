@@ -7,7 +7,7 @@ Auxiliary routines that are not part of any of the workchain classes.
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict
-from aiida.common.exit_codes import ExitCode
+from aiida.engine.processes.exit_code import ExitCode
 
 
 def prepare_process_inputs(inputs):
