@@ -29,6 +29,7 @@ Tested with VASP 5.4.4.
    :hidden:
 
    getting_started/index
+   getting_started/conda
 
 .. toctree::
    :maxdepth: 1
