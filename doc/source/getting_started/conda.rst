@@ -1,8 +1,8 @@
 .. _conda:
 
-==============================================
-AiiDA-VASP calculations in a Conda environment
-==============================================
+======================
+In a Conda environment
+======================
 
 AiiDA-core and AiiDA-VASP may be installed on your home
 directory. Because AiiDA core and AiiDA-VASP are still under the acitive

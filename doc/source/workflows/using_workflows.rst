@@ -11,3 +11,6 @@ In the following we will given an example of using the convergence workflow by e
 Performing a VASP calculation using the convergence workflow
 ------------------------------------------------------------
 
+.. _VASP: https://www.vasp.at
+
+
