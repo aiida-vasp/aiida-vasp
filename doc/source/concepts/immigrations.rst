@@ -3,7 +3,7 @@
 Immigrations
 ============
 
-Sometimes it is usefull or necessary to import `VASP`_ calculations that have not been executed in `AiiDA`_ or with the AiiDA-VASP plugin. For these cases we an existing `VASP`_ calculation need to be imported, or immigrated into the AiiDA-VASP realm. To make this process simple, we have designed am particular calculation that perform an immigration called :ref:`immigrator_calculation`.
+Sometimes it is usefull or necessary to import `VASP`_ calculations that have not been executed in `AiiDA`_ or with the AiiDA-VASP plugin. For these cases, existing `VASP`_ calculations can be imported, or immigrated into the AiiDA-VASP realm. To make this process simple, we have designed am particular calculation that performs the data immigration task called :ref:`immigrator_calculation`.
 
 Working principles
 ------------------
@@ -18,15 +18,15 @@ This strategy is very convenient as it gives full data provenance.
 Basic process
 -------------
 
-The following will assume that you have
+The followings are assumed:
 
- * `AiiDA`_ and AiiDA-VASP installed and a profile set up
- * added ``<computer>`` to your profile
- * added a `VASP`_ ``<code>`` (does not have to be runnable in principle) associated with an existing computer ``<computer>`` to your profile
- * a working understanding of how to run calculations in `AiiDA`_
- * a directory where `VASP`_ have previously been executed that you want to immigrate.
+* `AiiDA`_ and AiiDA-VASP are installed with a profile set-up.
+* A ``<computer>`` is in the profile.
+* A `VASP`_ ``<code>`` (does not have to be runnable in principle) is associated with an existing ``<computer>`` in the profile.
+* How to run calculations in `AiiDA` is understood.
+* A directory where `VASP`_ was executed exists on the remote (or local) ``<computer>``, for which any readable direction that ssh can reach is possible.
 
-Assuming you ran `VASP`_ in ``/scratch/<user>/<runfolder>/`` on the remote (or local) computer ``<computer>``, the following python snippet will help you integrate that run into your `AiiDA`_ profile database::
+Assuming you ran `VASP`_ in ``/scratch/<user>/<runfolder>/`` on the remote (or local) ``<computer>``, the following python snippet will help you to run into your `AiiDA`_ profile database::
 
    from aiida.orm import Code
    from aiida.plugins import CalculationFactory
@@ -60,9 +60,9 @@ Missing POTCAR file
 
 Requires:
 
- * You have the POTCAR potentials to be used uploaded to your profile (see :ref:`potentials`)
+ * You have the POTCAR potentials to be used uploaded to your profile (see :ref:`potentials`).
 
-In case you have removed the POTCAR files (e.g. to save space storing many runs), you need to specify which potcars to choose from the ones uploaded to your database::
+In case you have removed the POTCAR files in your VASP calculation directories (e.g. to save disk space), you need to specify suitable potentials from the ones uploaded to your database::
 
    potential_mapping = {'Si': 'Si'}
    potential_family = 'PBE.54'
@@ -73,7 +73,7 @@ This will use the chosen Si potential. It will fail if the POSCAR does not speci
 Additional input files
 ----------------------
 
-For CHGCAR and/or WAVECAR it can not always be inferred from the INCAR, whether they are input or output files. If they are not automatically recognized as inputs, you may pass additional arguments to the `immigrant` method which support those inputs::
+For CHGCAR and/or WAVECAR it can not always be inferred from the INCAR, whether they are input or output files. If they are not automatically recognized as inputs, you may pass additional arguments to the `immigrant` method which supports those inputs::
 
    process, inputs = CalculationFactory('vasp.vasp').immigrant(..., use_chgcar=True, use_wavecar=True)
 
