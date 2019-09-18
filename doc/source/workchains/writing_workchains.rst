@@ -25,57 +25,57 @@ From the `AiiDA documentation`_ you should be familiar with this code. It runs t
 
    class ExampleVaspWorkchain(WorkChain):
 
-      _next_workchain = WorkflowFactory('vasp.vasp')
-      
-      @classmethod
-      def define(cls, spec):
-         super(ExampleVaspWorkchain, cls).define(spec)
-	 spec.expose_inputs(cls._next_workchain, exclude=['structure'])
-	 spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-	 cls.outline(
-            cls.generate_inputs,
-	    cls.generate_structure,
-            cls.run_next_workchain,
-            cls.verify_next_workchain,
-	    cls.results
-         )
-	 spec.expose_outputs(cls._next_workchain)
-	 spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
+       _next_workchain = WorkflowFactory('vasp.vasp')
+
+       @classmethod
+       def define(cls, spec):
+           super(ExampleVaspWorkchain, cls).define(spec)
+           spec.expose_inputs(cls._next_workchain, exclude=['structure'])
+           spec.input('structure', valid_type=(DataFactory('structure'), DataFactory('cif'))
+           cls.outline(
+               cls.generate_inputs,
+               cls.generate_structure,
+               cls.run_next_workchain,
+               cls.verify_next_workchain,
+               cls.results
+           )
+           spec.expose_outputs(cls._next_workchain)
+           spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
 
       def generate_missing_inputs(self):
-         """Here we create the inputs required to run the 'vasp.vasp' workchain and store them in the context."""
-         self.ctx.inputs = AttributeDict()
-         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
+          """Here we create the inputs required to run the 'vasp.vasp' workchain and store them in the context."""
+          self.ctx.inputs = AttributeDict()
+          self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
       def generate_structure(self):
-         """Here we generate the structure if it is missing from the input."""
-	 try:
-	     self.ctx.inputs.structure = self.inputs.structure
-	 except AttributeError:
-	     # Generate an example silicon structure
-	     structure_class = DataFactory('structure')
-	     alat = 5.4
-	     structure = structure_class(cell=numpy.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat)
-	     structure.append_atom(position=numpy.array([0.0, 0.0, 0.0]) * alat, symbols='Si')
-	     structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
-	     self.ctx.inputs.structure = structure
-	 
+          """Here we generate the structure if it is missing from the input."""
+          try:
+              self.ctx.inputs.structure = self.inputs.structure
+          except AttributeError:
+              # Generate an example silicon structure
+              structure_class = DataFactory('structure')
+              alat = 5.4
+              structure = structure_class(cell=numpy.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat)
+              structure.append_atom(position=numpy.array([0.0, 0.0, 0.0]) * alat, symbols='Si')
+              structure.append_atom(position=numpy.array([.25, .25, .25]) * alat, symbols='Si')
+              self.ctx.inputs.structure = structure
+
       def run_next_workchain(self):
-         running = self.submit(self._next_workchain, **self.ctx.inputs)
-         return self.to_context(workchains=running)
+          running = self.submit(self._next_workchain, **self.ctx.inputs)
+          return self.to_context(workchains=running)
 
       def verify_next_workchain(self):
-         """Make sure we attach all results coming from next_workchain to this workchain."""
-	 try:
-	     workchain = self.ctx.workchains[-1]
-	 except IndexError:
-	     self.report("Could not find the next_workchain.")
-	     return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN
+          """Make sure we attach all results coming from next_workchain to this workchain."""
+          try:
+              workchain = self.ctx.workchains[-1]
+          except IndexError:
+              self.report("Could not find the next_workchain.")
+              return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN
 
       def results(self):
           """Attach all outputs from next_workchain to this workchain."""
-	  workchain = self.ctx.workchains[-1]
-	  self.out_many(self.exposed_ouputs(workchain, self._next_workchain))
+          workchain = self.ctx.workchains[-1]
+          self.out_many(self.exposed_ouputs(workchain, self._next_workchain))
 
 This example uses the :ref:`VASP workchain` to run a single `VASP`_ calculation with its defaults. Please also consult the example files in the ``examples`` folder, which calls the bundled workchains.
 

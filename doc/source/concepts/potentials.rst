@@ -28,7 +28,7 @@ The command line tools for these tasks are written as plugins to `AiiDA`_, and c
 
    Options:
      -h, --help  Show this message and exit.
-   
+
    Commands:
      exportfamily  Export a POTCAR family into a compressed tar...
      listfamilies  List available families of VASP potcar files.
@@ -94,7 +94,7 @@ Use::
 
 which returns a list of all stored ``PotcarData`` instances fullfilling the criteria. Some important supported ``<property>`` entries are:
 
-   * ``md5`` - An MD5 hash of the file contents
+   * ``sha512`` - An SHA512 hash of the file contents
    * ``title`` - Title of the potential, typically the title of the POTCAR
    * ``element`` - The chemical element described by this potential
    * ``full_name`` - The name of the containing folder from which it was uploaded. This is used to specify a potential inside a family. Example: ``Zn_sv_GW``
@@ -124,8 +124,6 @@ For a single `VASP`_ calculation run, you should at the very minimum use the :re
    from aiida.plugins import DataFactory
    from aiida.common.extendeddicts import AttributeDict
    from aiida.orm import Str
-
-   from aiida_vasp.utils.aiida_utils import get_data_node
 
    inputs = AttributeDict()
    inputs.potential_family = Str('<potential_family>')

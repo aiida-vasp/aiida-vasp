@@ -1,23 +1,41 @@
-import click
-from click_spinner import spinner as cli_spinner
-
+import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.cmdline.utils.decorators import with_dbenv
+from aiida.orm import Code, Bool, Str, Float
+from aiida.plugins import DataFactory, WorkflowFactory
+from aiida.engine import submit, run
+from aiida import load_profile
+load_profile()
 
-from aiida_vasp.utils.aiida_utils import get_data_node
-from auxiliary import example_param_set, create_structure_perturbed, set_kpoints, set_params_simple
+
+def get_structure_Si():
+    """Set up Si primitive cell
+
+    Si
+       5.431
+         0.0000000000000000    0.5000000000000000    0.5000000000000000
+         0.5000000000000000    0.0000000000000000    0.5000000000000000
+         0.5000000000000000    0.5000000000000000    0.0000000000000000
+    Si
+       2
+    Direct
+      0.8750000000000000  0.8750000000000000  0.8750000000000000
+      0.1250000000000000  0.1250000000000000  0.1250000000000000
+
+    """
+
+    StructureData = DataFactory('structure')
+    alat = 5.431
+    lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
+    structure = StructureData(cell=lattice)
+    for pos_direct in ([0.875, 0.875, 0.875],
+                       [0.125, 0.125, 0.125]):
+        pos_cartesian = np.dot(pos_direct, lattice)
+        structure.append_atom(position=pos_cartesian, symbols='Si')
+    return structure
 
 
-@click.command()
-@example_param_set
-@with_dbenv()
-def main(potential_family, queue, code, computer):
-    from aiida.orm import Code
-    from aiida.plugins import WorkflowFactory
-    from aiida.engine import submit, run
-
-    # fetch the code to be used (tied to a computer)
-    code = Code.get_from_string('{}@{}'.format(code, computer))
+def main(code_string, potential_family, resources):
+    Dict = DataFactory('dict')
 
     # set the WorkChain you would like to call
     workflow = WorkflowFactory('vasp.relax')
@@ -26,7 +44,7 @@ def main(potential_family, queue, code, computer):
     options = AttributeDict()
     options.account = ''
     options.qos = ''
-    options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
+    options.resources = resources
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
 
@@ -40,36 +58,52 @@ def main(potential_family, queue, code, computer):
 
     inputs = AttributeDict()
     # set code
-    inputs.code = code
+    inputs.code = Code.get_from_string(code_string)
     # set structure
-    inputs.structure = create_structure_perturbed()
+    inputs.structure = get_structure_Si()
     # set parameters
-    inputs.parameters = get_data_node('dict', dict={
-        'encut': 240, 'ismear': 0,
-        'sigma': 0.1, 'system': 'test system',
-    })  # yapf: disable
+    inputs.parameters = Dict(dict={'encut': 240,
+                                   'ismear': 0,
+                                   'sigma': 0.1,
+                                   'system': 'test system'})
     # set k-point grid density
-    inputs.kpoints = set_kpoints(inputs.structure)
+    KpointsData = DataFactory("array.kpoints")
+    kpoints = KpointsData()
+    kpoints.set_kpoints_mesh([9, 9, 9])
+    inputs.kpoints = kpoints
     # set potentials and their mapping
-    inputs.potential_family = get_data_node('str', potential_family)
-    inputs.potential_mapping = get_data_node('dict', dict={'Si': 'Si'})
+    inputs.potential_family = Str(potential_family)
+    inputs.potential_mapping = Dict(dict={'Si': 'Si'})
     # set options
-    inputs.options = get_data_node('dict', dict=options)
+    inputs.options = Dict(dict=options)
     # set settings
-    inputs.settings = get_data_node('dict', dict=settings)
+    inputs.settings = Dict(dict=settings)
     # set workchain related inputs
     # turn relaxation on
-    inputs.relax = get_data_node('bool', True)
-    inputs.force_cutoff = get_data_node('float', 0.01)
-    inputs.convergence_on = get_data_node('bool', False)
-    inputs.convergence_positions = get_data_node('float', 0.1)
-    #inputs.relax_parameters = get_data_node('dict', dict={
-    #    'ediffg': -0.0001
-    #})  # yapf: disable
-    inputs.verbose = get_data_node('bool', True)
+    inputs.relax = Bool(True)
+    inputs.force_cutoff = Float(0.01)
+    inputs.convergence_on = Bool(False)
+    inputs.convergence_positions = Float(0.1)
+    inputs.relax_parameters = Dict(dict={'ediffg': -0.0001,
+                                         'ibrion': 2,
+                                         'nsw': 10,
+                                         'isif': 3})
+    inputs.verbose = Bool(True)
     # submit the requested workchain with the supplied inputs
     submit(workflow, **inputs)
 
 
 if __name__ == '__main__':
-    main()
+    # code_string is chosen among the list given by 'verdi code list'
+    code_string = 'vasp544mpi@mycomputer'
+
+    # potential_family is chosen among the list given by
+    # 'verdi data vasp-potcar listfamilies'
+    potential_family = 'PBE.54'
+
+    # metadata.options.resources
+    # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
+    resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
+    # resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
+
+    main(code_string, potential_family, resources)

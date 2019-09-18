@@ -5,38 +5,42 @@ In a Conda environment
 ======================
 
 AiiDA-core and AiiDA-VASP may be installed on your home
-directory. Because AiiDA core and AiiDA-VASP are still under the acitive
-development, they are updated frequently and you may be needed to test
-across different versions. It is a good idea to manage your
+directory. Because AiiDA core and AiiDA-VASP are still under the
+acitive development, they are updated frequently and you may be needed
+to test across different versions. It is a good idea to manage your
 AiiDA systems of different versions and/or settings separately. This
-becomes possible to use a virtual environment in Python or the conda environment
-functionality.
+becomes possible to use a virtual environment in Python or the conda
+environment functionality.
 
-In this guide, the conda environment is used to explain to establish creating your
-AiiDA system. The reason to use Conda is that it is easy to manage and install PostgreSQL
-and RabbitMQ as a non-privileged user, both being requirements of AiiDA core (hereafter AiiDA).
+In this guide, the conda environment is used to explain to establish
+creating your AiiDA system. The reason to use Conda is that it is easy
+to manage and install PostgreSQL as a non-privileged user being a
+requirement of AiiDA core (hereafter AiiDA). Here RabbitMQ, that is
+also a requirement of AiiDA, is assumed already installed on the
+system.
 
-In the following, the preparation of AiiDA and AiiDA-VASP on a Linux system is
-explained in a step-by-step fashion. We assume Conda is installed and operational.
+In the following, the preparation of AiiDA and AiiDA-VASP on a Linux
+system is explained in a step-by-step fashion. We assume Conda is
+installed and operational.
 
 Preparing the Conda environment
 -------------------------------
 
-Each installation of AiiDA (and its settings) is isolated by first creating
-a containing directory (in the following we call this ``myaiida`` placed in the
-root home folder of the active user). In it, AiiDA, AiiDA-VASP plugin,
-and PostgreSQL database are installed:
+Each installation of AiiDA (and its settings) is isolated by first
+creating a containing directory (in the following we call this
+``myaiida`` placed in the root home folder of the active user). In it,
+AiiDA, AiiDA-VASP plugin, and PostgreSQL database are installed:
 
 ::
 
    % cd ~
    % mkdir myaiida
    % cd myaiida
-   % conda create -n myaiida python=2.7
+   % conda create -n myaiida python=3
    % source activate myaiida
    % conda install gcc_linux-64 gxx_linux-64 ipython
 
-``source activate myaiida`` enables the Conda environment ``myaiida``.
+``conda activate myaiida`` enables the Conda environment ``myaiida``.
 All the settings, installs or running are always done in this conda
 environment. It is mandatory to activate this every time logging to
 this computer. Please also remember to activate this everytime you
@@ -47,13 +51,14 @@ you would like to have installed.
 
 Setting up the PostgreSQL database
 ----------------------------------
-Next we install and setup PostgreSQL. Below, ``mypassword`` is used as the
-PostgreSQL user password for a database user ``aiida``. For the time being,
-we assume that the database user is not the same or correlated with the system
-users. Please also consider that ``mypassword`` is not hidden and stored in clear
-text. It is thus recommended to use a non-critical password that you do not use
-for something else. Let us install and setup the first database called ``aiidadb``
-by issuing the following commands:
+Next we install and setup PostgreSQL. Below, ``mypassword`` is used as
+the PostgreSQL user password for a database user ``aiida``. For the
+time being, we assume that the database user is not the same or
+correlated with the system users. Please also consider that
+``mypassword`` is not hidden and stored in clear text. It is thus
+recommended to use a non-critical password that you do not use for
+something else. Let us install and setup the first database called
+``aiidadb`` by issuing the following commands:
 
 ::
 
@@ -67,54 +72,60 @@ by issuing the following commands:
    aiidadb=# \q
 
 The last two lines are executed in the PostgreSQL interactive terminal
-invoked by the `psql` command. If a user wants, it is fully possible to have
-sevaral AiiDA databases running (also using the same user and password). In AiiDA
-it is possible to change which database to use. Keep that in mind, in case a use
-case should present itself to you, where this makes sense.
+invoked by the `psql` command. If a user wants, it is fully possible
+to have sevaral AiiDA databases running (also using the same user and
+password). In AiiDA it is possible to change which database to
+use. Keep that in mind, in case a use case should present itself to
+you, where this makes sense.
 
 Install AiiDA and setup a profile
 ---------------------------------
 
-We are now ready to install AiiDA. Here we use AiiDA release of `v1.0.0a5`. Until
-AiiDA makes an offical `v1.x` release we recommend to clone the Git repository
-and use the developer install option for ``pip``. When doing this, when you later
-issue ``git pull`` in the AiiDA directory, your installation is automatically updated
-(unless there has been any big changes, which are not likely to happen at this point).
-We can install AiiDA by issuing the following commands (make sure you are still in the
-root of the ``myaiida`` directory, which you should be, unless you have diverted from
-this guide):
+We are now ready to install AiiDA. Here we use AiiDA release of
+`v1.0.0b6`. Until AiiDA makes an offical `v1.x` release we recommend
+to clone the Git repository and use the developer install option for
+``pip``. When doing this, when you later issue ``git pull`` in the
+AiiDA directory, your installation is automatically updated (unless
+there has been any big changes, which are not likely to happen at this
+point).  We can install AiiDA by issuing the following commands (make
+sure you are still in the root of the ``myaiida`` directory, which you
+should be, unless you have diverted from this guide):
 
 ::
 
-   % git clone https://github.com/aiidateam/aiida_core
+   % git clone https://github.com/aiidateam/aiida-core.git
    % cd aiida_core
-   % git checkout v1.0.0a5
+   % git checkout v1.0.0b6
    % pip install -e .
 
-Now we create the AiiDA setup with the profile name ``myaiida`` (i.e. the same name
-as used for the Conda environment folder) as follows (replace whatever suits your needs)::
+Now we create the AiiDA setup with the profile name ``myaiida``
+(i.e. the same name as used for the Conda environment folder) as
+follows (replace whatever suits your needs)::
 
-   % verdi setup myaiida
-   Email Address (identifies your data when sharing): mymail@address.com
+   % export AIIDA_PATH=~/myaiida
+   % verdi setup
+   Info: enter "?" for help
+   Profile name: myaiida
+   User email: mymail@address.com
    First name: MyFirstName
    Last name: MyLastName
-   Institution: Kyoto university
-   Setting up profile myaiida.
-   AiiDA backend (available: django, sqlalchemy - sqlalchemy is in beta mode): django
-   Default user email: mymail@address.com
-   Database engine (available: postgresql_psycopg2, mysql - mysql is deprecated): postgresql_psycopg2
-   PostgreSQL host: localhost
-   PostgreSQL port: 5432
-   AiiDA Database name: aiidadb
-   AiiDA Database user: aiida
-   AiiDA Database password: mypassword
-   AiiDA repository directory: /home/username/myaiida/.aiida/repository-myaiida/
+   Institution: My university
+   Password [***]:
+   Database engine (postgresql_psycopg2) [postgresql_psycopg2]:
+   Database backend (django, sqlalchemy) [django]:
+   Database hostname [localhost]:
+   Database port [5432]:
+   Database name: aiidadb
+   Database username: aiida
+   Database password: mypassword
+   Repository directory [/home/username/myaiida/.aiida/repository/migration]:
 
-The command ``verdi`` controlls AiiDA and gives access points from the command line.
-Of course you can also use AiiDA directly from Python, but sometimes ``verdi`` is
-easier and faster to use. To use AiiDA ``verdi`` command with tab completion, the file
-``$CONDA_PREFIX/etc/conda/activate.d/env_vars.sh`` need to be created with the following
-content::
+The command ``verdi`` controlls AiiDA and gives access points from the
+command line.  Of course you can also use AiiDA directly from Python,
+but sometimes ``verdi`` is easier and faster to use. To use AiiDA
+``verdi`` command with tab completion, the file
+``$CONDA_PREFIX/etc/conda/activate.d/env_vars.sh`` needs to be created
+with the following content::
 
    #!/bin/sh
    export AIIDA_PATH=~/myaiida
@@ -126,16 +137,17 @@ and ``$CONDA_PREFIX/etc/conda/deactivate.d/env_vars.sh`` containing::
    #!/bin/sh
    export HOST=`hostname`
 
-In order to enable the recently placed files, we need to reactivate the Conda environment
-by issuing the following:
+In order to enable the recently placed files, we need to reactivate
+the Conda environment by issuing the following:
 
 ::
 
-   % source deactivate
-   % source activate myaiida
+   % conda deactivate
+   % conda activate myaiida
 
-AiiDA relies on a daemon that monitors and controlls your calculations. You should now be able
-to start the AiiDA daemon by issuing:
+AiiDA relies on a daemon that monitors and controlls your
+calculations. You should now be able to start the AiiDA daemon by
+issuing:
 
 ::
 
@@ -159,22 +171,25 @@ simply just an install, which is done as follows::
    % pip install -e .
    % reentry scan -r aiida
 
-If you are a bit familiar with Git you will see that we here install a particular commit.
-This is due to the fact that AiiDA-VASP is not yet released as a beta.
+If you are a bit familiar with Git you will see that we here install a
+particular commit.  This is due to the fact that AiiDA-VASP is not yet
+released as a beta.
 
-   
+
 Setup up a computer in AiiDA
 -----------------------------
 
-In order to execute any calculations, AiiDA need a ``computer``. This can be
-a local computer, cluster, super computer. Let us configure a cluster and call
-it ``mycluster``. We will utilize SSH as the transport (e.g. how AiiDA talks to
-the computer) and the Torque sheduler (AiiDA also supports the popular Slurm and PBS).
-In the process you also need to specify the working directory on the cluster, which
-is typically where you calculations are executed on the cluster. Typically, this is
-different from your home directory on your cluster. Remember you can enter `?` to get help
-at any point. Let us now add the cluster computer
-to AiiDA by executing the following commands:
+In order to execute any calculations, AiiDA needs a ``computer``. This
+can be a local computer, cluster, super computer. Let us configure a
+cluster and call it ``mycluster``. We will utilize SSH as the
+transport (e.g. how AiiDA talks to the computer) and the Torque
+sheduler (AiiDA also supports the popular Slurm and PBS).  In the
+process you also need to specify the working directory on the cluster,
+which is typically where you calculations are executed on the
+cluster. Typically, this is different from your home directory on your
+cluster. Remember you can enter `?` to get help at any point. Let us
+now add the cluster computer to AiiDA by executing the following
+commands:
 
 ::
 
@@ -186,14 +201,15 @@ to AiiDA by executing the following commands:
    Enable the computer? [True]:
    Transport plugin: ssh
    Scheduler plugin: torque
-   Shebang line (first line of each script, starting with #!) [#!/bin/bash]: #!/bin/bash
+   Shebang line (first line of each script, starting with #!) [#!/bin/bash]:
    Work directory on the computer [/scratch/{username}/aiida/]: /home/username/aiida/
-   Mpirun command [mpirun -np {tot_num_mpiprocs}]: mpirun -np {tot_num_mpiprocs}
+   Mpirun command [mpirun -np {tot_num_mpiprocs}]:
    Success: Computer<1> mycluster created
    Info: Note: before the computer can be used, it has to be configured with the command:
    Info:   verdi computer configure ssh mycluster
 
-We are not entirely done, as we also need to configure the SSH transport, which is done by:
+We are not entirely done, as we also need to configure the SSH
+transport, which is done by:
 
 ::
 
@@ -255,10 +271,10 @@ works and is accessible from AiiDA by
 Setup a code in AiiDA
 ---------------------
 
-Now we need to add the code (in this case VASP) to AiiDA.
-The subcommand ``code`` describes by which code our calculations run. The code has to
-be installed on the location of ``computer``, i.e., if it is a
-computer cluster, the code has to be installed properly to run
+Now we need to add the code (in this case VASP) to AiiDA.  The
+subcommand ``code`` describes by which code our calculations run. The
+code has to be installed on the location of ``computer``, i.e., if it
+is a computer cluster, the code has to be installed properly to run
 there. The setup is done as follows::
 
    % verdi code setup
@@ -268,15 +284,10 @@ there. The setup is done as follows::
    Default calculation input plugin: ?
    Info: Default calculation plugin to use for this code.
    Select one of:
-        calculation
-        function
-        inline
-        job
-        simpleplugins.arithmetic.add
-        simpleplugins.templatereplacer
-        vasp.vasp
-        vasp.vasp2w90
-        work
+           arithmetic.add
+           templatereplacer
+           vasp.vasp
+           vasp.vasp2w90
    Default calculation input plugin: vasp.vasp
    Installed on target computer? [True]:
    Computer: mycluster
@@ -284,7 +295,7 @@ there. The setup is done as follows::
    Success: Code<1> vasp544mpi@mycluster created
 
 We can check if the code is now listed by issuing:
-   
+
 ::
 
    % verdi code list
@@ -294,7 +305,7 @@ We can check if the code is now listed by issuing:
    # No codes found matching the specified criteria.
 
 And look at its details. These commands are also available for the computers.
-   
+
 ::
 
    % verdi code show vasp544mpi@mycluster
@@ -315,41 +326,49 @@ And look at its details. These commands are also available for the computers.
 Upload potential dataset to the AiiDA database
 ----------------------------------------------
 
-To run VASP calculation, PAW potentials have to be written into ``POTCAR``
-file. This is done automatically by the AiiDA-VASP plugin. For this, PAW datasets (i.e.
-the content of the POTCAR files) are stored in AiiDA database. In order to make the
-plugin work, we need to upload the potentials we will use as follows::
+To run VASP calculation, PAW potentials have to be written into
+``POTCAR`` file. This is done automatically by the AiiDA-VASP
+plugin. For this, PAW datasets (i.e.  the content of the POTCAR files)
+are stored in AiiDA database. In order to make the plugin work, we
+need to upload the potentials we will use as follows::
 
    % verdi data vasp-potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4"
    skipping file /home/username/potpaw_PBE.54/H_AE/POTCAR - uploading raised <type 'exceptions.IndexError'>list index out of range
    POTCAR files found: 327. New files uploaded: 326, Added to Family: 326
 
 
-The ``name`` and ``description`` are not optional and have to be specified.
-The ``path`` could be either an archive, or one could use a folder name.
-It is also possible, not to specify path, but then you have issue the command
-in the root folder of the potential folder structure you want to upload.
-   
-In the example above, it is assumed that the PBE.54 package of the PAW datasets
-is put at ``$HOME/myaiida/potpaw_PBE.54.tar`` as a tar archive.
+The ``name`` and ``description`` are not optional and have to be
+specified.  The ``path`` could be either an archive, or one could use
+a folder name.  It is also possible, not to specify path, but then you
+have issue the command in the root folder of the potential folder
+structure you want to upload.
 
-Please ignore the message about the hydrogen all electron ``POTCAR``. It is harmless.
+In the example above, it is assumed that the PBE.54 package of the PAW
+datasets is put at ``$HOME/myaiida/potpaw_PBE.54.tar`` as a tar
+archive.
+
+Please ignore the message about the hydrogen all electron
+``POTCAR``. It is harmless.
 
 
 Run an AiiDA-VASP calculation
 -----------------------------
 
-AiiDA relies mainly on the concept of ``workchain`` which is a composition
-of a setup and teardown of a calculation (or calls to other ``workchain``).
-A ``workchain`` can be composed into one or multiple `workflows`. A
-small amount of basic ``workchain``'s are included in AiiDA-VASP. Users are
-encouraged to develop new, or complementig ``workchain``'s and submitting them
-to the repository to increase the efficiency of all VASP users.
+AiiDA relies mainly on the concept of ``workchain`` which is a
+composition of a setup and teardown of a calculation (or calls to
+other ``workchain``).  A ``workchain`` can be composed into one or
+multiple `workflows`. A small amount of basic ``workchain``'s are
+included in AiiDA-VASP. Users are encouraged to develop new, or
+complementig ``workchain``'s and submitting them to the repository to
+increase the efficiency of all VASP users.
 
-An example of a ``workchain`` calculation, which perform relaxation is copied from
-the ``example`` directory.
+An example of a ``workchain`` calculation, which performs relaxation,
+is copied from the ``example`` directory.
+
+::
 
    % cd ~
+   % mkdir run_example && cd run_example
    % cp ~/myaiida/aiida-vasp/examples/run_relax.py .
    % cp ~/myaiida/aiida-vasp/examples/auxiliary.py .
 
@@ -362,7 +381,9 @@ this example, such as the queueing system job setting:
                             'num_mpiprocs_per_machine': 16,
                             'tot_num_mpiprocs': 16}
 
-maybe also setting the ``qos`` or the ``account`` etc.
+maybe also setting the ``qos`` or the ``account`` etc., see the
+available parameters at `AiiDA documentation
+<https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html>`_.
 
 Command options of ``run_relax.py`` are handled by the code written in
 ``auxiliary.py`` and the calculation is sent to AiiDA daemon by executing:
@@ -378,29 +399,30 @@ The status of the execution of this ``workchain`` can be checked by
 ::
 
    % verdi report list
-   PK    Created    Process label      Process State    Process status
-   ----  ---------  -----------------  ---------------  --------------------
-   6637    15s ago    RelaxWorkChain     ⏵ Running
-   6640    10s ago    VerifyWorkChain    ⏵ Running
-   6641    7s ago     VaspWorkChain      ⏵ Running
-   6642    2s ago     VaspCalculation    ⏵ Running
+     PK  Created    Process label      Process State    Process status
+   ----  ---------  -----------------  ---------------  ----------------------------------
+   6637  15s ago    RelaxWorkChain      Waiting         Waiting for child processes: 6640
+   6640  10s ago    VerifyWorkChain     Waiting         Waiting for child processes: 6641
+   6641  7s ago     VaspWorkChain       Waiting         Waiting for child processes: 6642
+   6642  2s ago     VaspCalculation     Waiting         Waiting for transport task: upload
 
-When executing ``run_relax.py``, in fact, three ``workchain`` are executed. This is
-typically how you build workflows. In this case, only ``VaspWorkChain`` calls a
-``VaspCalculation`` process, which again is responsible for calling VASP itself. When
-the execution is complete, the graph can be created and inspected.
+When executing ``run_relax.py``, in fact, three ``workchain`` are
+executed. This is typically how you build workflows. In this case,
+only ``VaspWorkChain`` calls a ``VaspCalculation`` process, which
+again is responsible for calling VASP itself. When the execution is
+complete, the graph can be created and inspected.
 
 ::
 
 
 
-Once the example calculation above executed successively, it is time to start trying
-AiiDA tutorial (http://www.aiida.net/tutorials/) with AiiDA-VASP and
-reading AiiDA documentation
+Once the example calculation above executed successively, it is time
+to start trying AiiDA tutorial (http://www.aiida.net/tutorials/) with
+AiiDA-VASP and reading AiiDA documentation
 (https://aiida-core.readthedocs.io/en/latest/). By using this example
 calculation, we can learn how to interact with our data using
 ``verdi`` command and python interactive shell (ipython invoked by
 ``verdi shell``). Although the amount of AiiDA documentation is large,
 it should be understood from a viewpoint of to designing workflows and
-managing data. That is after all the main purpose of AiiDA. Currently many
-details of AiiDA are not yet documentated.
+managing data. That is after all the main purpose of AiiDA. Currently
+many details of AiiDA are not yet documentated.

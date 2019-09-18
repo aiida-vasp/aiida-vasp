@@ -6,7 +6,7 @@ VASP calculation
 
 .. aiida-calcjob:: VaspCalculation
    :module: aiida_vasp.calcs.vasp
-				 
+				
 
 Inputs
 ------
@@ -98,23 +98,17 @@ Look at the class documentation for :py:class:`KpointsData <aiida.orm.nodes.data
 
 structure
 ^^^^^^^^^
-The structure of the atomic layout. This is of the `AiiDA`_ data type :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>` or :py:class:`CifData<aiida.orm.nodes.data.cif.CifData>`. The conversion (parsing) to and from ``structure`` to and from a `VASP`_ POSCAR file is handled by :py:class:`Poscar<parsevasp.poscar.Poscar>`.
+The structure of the atomic layout. This is of the `AiiDA`_ data type :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>` or :py:class:`CifData<aiida.orm.nodes.data.cif.CifData>`. The conversion (parsing) to (from) ``structure`` from (to) a `VASP`_ POSCAR file is handled by :py:class:`Poscar<parsevasp.poscar.Poscar>`.
 
 .. _vasp-input-potential:
 
 potcar
 ^^^^^^
-The potential to use for each element (the POTCAR files). This is of the AiiDA-VASP data type :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>`. `VASP`_ POTCAR files can be uploaded to the database using::
-
-  verdi data vasp-potcar uploadfamily.
-
-Once uploaded they can be obtained as follows::
+The potential to use for each element (the POTCAR files). This is of the AiiDA-VASP data type :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>`. How to upload `VASP`_ POTCAR files can be found at :ref:`potentials`. Once uploaded they can be obtained as follows::
 
    # input_structure is InAs
    potcar_mapping = {'In': 'In_d', 'As': 'As'}
-   potcars = PotcarData.load_paw(family='PBE', structure=input_structure, mapping=potcar_mapping)
-
-If for example ``potpaw_PBE/`` was uploaded with the family name "PBE".
+   potcars = PotcarData.get_potcars_from_structure(structure=input_structure, family_name='PBE.54', mapping=potcar_mapping)
 
 One POTCAR input node must be given to the calculations for each element in the system.
 The calculations take responsibility for ordering the elements consistently between POSCAR and POTCAR.
@@ -123,7 +117,7 @@ The calculations take responsibility for ordering the elements consistently betw
 
 charge_density
 ^^^^^^^^^^^^^^
-The charge density of the electrons defined in the POTCAR files used (the CHGCAR file). This is of the AiiDA-VASP data type :py:class:`ChargedensityData<aiida_vasp.data.chargedensity.ChargedensityData>` and contains a CHGCAR file from a previous (self-consistent) run. This input is optional.
+The charge density of the electrons (the CHGCAR file). This is of the AiiDA-VASP data type :py:class:`ChargedensityData<aiida_vasp.data.chargedensity.ChargedensityData>` and contains a CHGCAR file from a previous (self-consistent) run. This input is optional.
 
 .. _vasp-input-wave:
 
@@ -135,7 +129,7 @@ The plane wave coefficients (the WAVECAR file). This is of the AiiDA-VASP data t
 
 wannier_parameters
 ^^^^^^^^^^^^^^^^^^
-:py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` containing information that would be given to Wannier90 in a `VASP`_ run with LWANNIER90 = TRUE.
+:py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` containing information that would be given to Wannier90 in a `VASP`_ run with ``LWANNIER90 = TRUE``.
 
 Keyword parameters are mapped to key-value pairs, begin-end blocks are represented as lists with an entry per line.
 Numerical and boolean values can be given as python or string representations of the respective type.
@@ -150,20 +144,16 @@ An example::
       ]
    })
 
-  
+
 Outputs
 -------
 
-* :ref:`misc <vasp-output-misc>`
-* :ref:`bands <vasp-output-bands>`
-* :ref:`dos <vasp-output-dos>`
-
-
 Each `Calculation`_ in `AiiDA`_ has at least the following two output nodes:
-* ``retrieved``: An `AiiDA`_ data type :py:class:`FolderData<aiida.orm.nodes.data.folder.FolderData>`, containing information about the folder in the file repository holding the retrieved files after a run of a `Calculation`_ is completed (e.g. a regular `VASP`_ run). Each successfully completed `VASP`_ calculation will retrieve at least the OUTCAR, typically more files.
-* ``remote_folder``: An `AiiDA`_ data type :py:class:`RemoteData<aiida.orm.nodes.data.remote.RemoteData>`, containing info about the folder on the remote computer the `Calculation`_ ran on.
 
-In addition and depending on the specific `Calculation`_ and it's input parameters, a number of `VASP`_ specific output nodes may be generated.
+* ``retrieved``: An `AiiDA`_ data type :py:class:`FolderData<aiida.orm.nodes.data.folder.FolderData>`, containing information about the folder in the file repository holding the retrieved files after a run of a `Calculation`_ is completed (e.g. a regular `VASP`_ run). Each successfully completed `VASP`_ calculation will retrieve at least vasprun.xml and typically more files.
+* ``remote_folder``: An `AiiDA`_ data type :py:class:`RemoteData<aiida.orm.nodes.data.remote.RemoteData>`, containing infomation about the directory on the remote computer where the `Calculation`_ ran.
+
+In addition to input parameters, a number of `VASP`_ specific output nodes may be generated depending on the specific `Calculation`_.
 
 .. _vasp-output-misc:
 
@@ -172,7 +162,7 @@ misc
 A dictionary container that houses all system size independent properties. It is of an `AiiDA`_ data type
 :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` and contains the keys for the maximum force, stress and total energies.
 
-    
+
 .. _vasp-output-kpoints:
 
 kpoints
@@ -181,6 +171,7 @@ kpoints
 This node contains a list of k-points which can be passed to other codes or used to construct input kpoints for a `VASP`_ calculation with hybrid functionals.
 
 Applies to:
+
 * :py:class:`ScfCalculation <aiida_vasp.calcs.scf.ScfCalculation>`
 * :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -189,9 +180,10 @@ Applies to:
 
 chargedensities
 ^^^^^^^^^^^^^^^
-py:class:`ChargeDensity <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing the CHGCAR output file.
+:py:class:`ChargeDensity <aiida.orm.data.vasp.chargedensity.ChargedensityData>` containing the CHGCAR output file.
 
 Applies to:
+
 * :py:class:`ScfCalculation <aiida_vasp.calcs.scf.ScfCalculation>`
 * :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -204,6 +196,7 @@ wavefunctions
 This input only applies to :py:class:`NscfCalculations <aiida_vasp.calcs.NscfCalculation` and derivates.
 
 Applies to:
+
 * :py:class:`ScfCalculation <aiida_vasp.calcs.scf.ScfCalculation>`
 * :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -215,6 +208,7 @@ bands
 :py:class:`BandsData <aiida.orm.data.array.bands.BandsData>` containing the bands information read from EIGENVAL and/or vasprun.xml.
 
 Applies to:
+
 * :py:class:`NscfCalculations <aiida_vasp.calcs.NscfCalculation`
 * :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -226,6 +220,7 @@ dos
 :py:class:`ArrayData <aiida.orm.data.array.ArrayData>` containing the DOS information read from DOSCAR and/or vasprun.xml.
 
 Applies to:
+
 * :py:class:`NscfCalculations <aiida_vasp.calcs.NscfCalculation`
 * :py:class:`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -239,6 +234,7 @@ with a representation of the wannier90.win file generated by the VASP2Wannier90 
 an input parameter.
 
 Applies to:
+
 * :py:class:`NscfCalculations <aiida_vasp.calcs.NscfCalculation`
 * :py:class:`AmnCalculation <aiida_vasp.calcs.amn.AmnCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -250,6 +246,7 @@ wannier_data
 :py:class:`ArchiveData <aiida.orm.data.vasp.archive.ArchiveData>`, holding a compressed tar archive of the wannier_setup output files.
 
 Applies to:
+
 * :py:class:`NscfCalculations <aiida_vasp.calcs.NscfCalculation`
 * :py:class:`AmnCalculation <aiida_vasp.calcs.amn.AmnCalculation>`
 * :py:class:`Vasp2w90Calculation <aiida_vasp.calcs.vasp.VaspCalculation>`
@@ -258,4 +255,3 @@ Applies to:
 .. _Calculation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/calculations.html
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp
-
