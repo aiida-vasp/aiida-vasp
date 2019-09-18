@@ -1,6 +1,6 @@
 notifications:
     email: false
-dist: trusty
+dist: xenial 
 language: python
 python: 
     - 3.7
