@@ -22,8 +22,8 @@ def aiida_env():
     fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'})
     where it is possible to set the explicit location.
     """
-    #with fixture_manager() as manager:
-    with fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'}) as manager:
+    with fixture_manager() as manager:
+        #with fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'}) as manager:
         print('The root directory of the fixture manage is: {}'.format(manager.root_dir))
         # config_file = py_path.local(manager.root_dir).join('.aiida', 'config.json')
         yield manager
