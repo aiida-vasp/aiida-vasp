@@ -54,11 +54,11 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
 
     assert node.exit_status == 0
     assert 'retrieved' in results
-    assert 'parameters' in results
+    assert 'misc' in results
     assert 'remote_folder' in results
-    parameters = results['parameters'].get_dict()
-    assert parameters['maximum_stress'] == 22.8499295
-    assert parameters['total_energies']['energy_no_entropy'] == -14.16209692
+    misc = results['misc'].get_dict()
+    assert misc['maximum_stress'] == 22.8499295
+    assert misc['total_energies']['energy_no_entropy'] == -14.16209692
 
 
 @pytest.mark.wc

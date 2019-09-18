@@ -20,6 +20,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
+@pytest.mark.skip(reason="Takes forever")
 @pytest.mark.wc
 def test_bands_wc(fresh_aiida_env, potentials, vasp_kpoints, mock_vasp):
     """Test with mocked vasp code."""

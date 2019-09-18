@@ -90,6 +90,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
         pytest.fail('Did not find kpoints_regular in convergence_data')
 
 
+@pytest.mark.skip(reason='Too slow')
 @pytest.mark.wc
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""

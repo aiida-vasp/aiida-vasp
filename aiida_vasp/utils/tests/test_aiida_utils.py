@@ -1,12 +1,11 @@
-
 """Test aiida_utils functionss."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member
 
-import pytest
 from importlib import import_module
+import pytest
 from aiida.common.exceptions import MissingEntryPointError
 
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, dbenv, BASIC_DATA_TYPES, get_current_user
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, BASIC_DATA_TYPES, get_current_user
 from aiida_vasp.utils.fixtures.environment import fresh_aiida_env, aiida_env
 
 
@@ -22,18 +21,18 @@ def test_get_data_class(aiida_env):
     """Make sure the get_data_class accept valid types."""
     for data_type in BASIC_DATA_TYPES:
         data_type_class = get_data_class(data_type)
-        the_module_ref =  __import__('aiida.orm', fromlist=[data_type.capitalize()])
+        the_module_ref = __import__('aiida.orm', fromlist=[data_type.capitalize()])
         aiida_data_type_class = getattr(the_module_ref, data_type.capitalize())
         assert data_type_class == aiida_data_type_class
 
-    with pytest.raises(MissingEntryPointError) as e_info:
+    with pytest.raises(MissingEntryPointError):
         get_data_class('garbage')
 
 
 def test_get_data_node(aiida_env):
     """Make sure the get_data_node returns objects for the basic data types."""
     for data_type in BASIC_DATA_TYPES:
-        the_module_ref =  __import__('aiida.orm', fromlist=[data_type.capitalize()])
+        the_module_ref = __import__('aiida.orm', fromlist=[data_type.capitalize()])
         aiida_data_type_class = getattr(the_module_ref, data_type.capitalize())
         if data_type == 'bool':
             data_node = get_data_node(data_type, True)
@@ -60,6 +59,5 @@ def test_get_data_node(aiida_env):
             aiida_data_node = aiida_data_type_class(dict={})
             assert set(data_node.get_dict()) == set(aiida_data_node.get_dict())
 
-    with pytest.raises(MissingEntryPointError) as e_info:
+    with pytest.raises(MissingEntryPointError):
         get_data_node('garbage', True)
-
