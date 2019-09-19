@@ -9,11 +9,11 @@ Relax workchain
 Running a single relaxation
 ----------------------------
 
-An example containing necessary steps. Can be found in `example run_relax file`_. This includes creating sample input data and connecting it to the inputs of the workchain and finally how to submit the workchain The only steps not covered are the setup of AiiDA, which is documented in the `AiiDA docs`_
+An example containing necessary steps. Can be found in `run_relax`_ file in the examples folder. This includes creating sample input data and connecting it to the inputs of the workchain and finally how to submit the workchain The only steps not covered are the setup of AiiDA, which is documented in the `AiiDA docs`_
 
-The example relaxes the ion positions only. Other degrees of freedom are available, see the detailed `input reference <howto/relax_wc/inputs>`
+The example relaxes the ion positions only. Other degrees of freedom are available, see the detailed `input reference <relax_workchain/inputs>`
 
-.. _example run_relax file: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_relax.py
+.. _run_relax: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_relax.py
 .. _AiiDA docs: https://aiida-core.readthedocs.io/en/stable/work/index.html
 
 Writing workflows that include a relaxation step
@@ -21,7 +21,7 @@ Writing workflows that include a relaxation step
 
 Unless the workflow is solely concerned with providing a more robust or more specialized relaxation step, it is not recommended to derive from `vasp.relax`. Instead composing should be used; your workchain should set up the inputs and submit the relaxation workchain in a step function which will commit the results of the relaxation workchain to it's context. Further steps can then use the `structure_relaxed` result.
 
-.. _howto/relax_wc/inputs:
+.. _relax_workchain/inputs:
 
 Reference: vasp.relax inputs
 ----------------------------
@@ -71,7 +71,7 @@ All of these inputs are optional
 Exposed from `vasp.vasp`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
- The following inputs will be passed straight through to a `vasp.vasp` workchain. See the `reference there <howto/base_wf/reference>`_ for how to use them.
+ The following inputs will be passed straight through to the :ref:`vasp_workchain`.
 
  * `code`
  * `potential_family`
