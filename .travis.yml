@@ -11,6 +11,7 @@ addons:
     postgresql: "9.6"
 cache: pip
 before_install:
+    - sudo .ci/enable_ssh_localhost.sh
     - sudo apt-get install locate
     - sudo updatedb
 install:
@@ -23,7 +24,7 @@ install:
 env:
     #- TEST_TYPE="pre-commit"
     - TEST_TYPE="unittests" TOX_ENV=py37-aiida_dev
-script: travis_wait ./run_ci_tests.sh
+script: travis_wait .ci/run_ci_tests.sh
 after_success:
     - coverage combine
     - coveralls
