@@ -6,6 +6,8 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
 
+from aiida_vasp.utils.fixtures import *  # pylint: disable=wildcard-import, unused-wildcard-import
+
 
 def test_generate_base_calc(base_calc):
     """Test that it is possible to generate an instance of the base calculation class."""
