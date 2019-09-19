@@ -5,5 +5,5 @@ chainmap
 six
 pyparsing
 aiida-core[atomic_tools]>=1.0.0b6
--e git@github.com:aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
+-e git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
 sphinx==2.2.0
