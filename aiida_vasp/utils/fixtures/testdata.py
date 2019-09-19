@@ -1,4 +1,8 @@
-"""Provide convenience methods for retrieving test data."""
+""" # noqa: D205
+Test data retrieval
+-------------------
+Provide convenience methods for retrieving test data.
+"""
 import os
 
 
@@ -13,8 +17,11 @@ def data_path(*args):
 def read_file(*args, **kwargs):
     """Give the content (string) of a test data file."""
     path = kwargs.get('path', None)
+    mode = kwargs.pop('mode', None)
+    if not mode:
+        mode = 'r'
     if not path:
         path = data_path(*args)
-    with open(path, 'r') as testdata_fo:
+    with open(path, mode) as testdata_fo:
         testdata_content = testdata_fo.read()
     return testdata_content

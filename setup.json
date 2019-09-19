@@ -1,6 +1,6 @@
 {
-    "author": "Rico H\u00e4uselmann", 
-    "author_email": "haeuselm@epfl.ch", 
+    "author": "Espen Flage-Larsen", 
+    "author_email": "espen.flage-larsen@sintef.no", 
     "classifiers": [
         "Development Status :: 3 - Alpha", 
         "Environment :: Plugins", 
@@ -23,13 +23,11 @@
             "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
             "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
             "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
-            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData", 
-            "vasp.paw = aiida_vasp.data.paw:LegacyPawData"
+            "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
         ], 
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
-            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser", 
-            "vasp.pymatgen = aiida_vasp.parsers.pymatgen_vasp:PymatgenParser"
+            "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
         ], 
         "aiida.workflows": [
             "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain", 
@@ -37,13 +35,7 @@
             "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
 	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
-            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain", 
-            "vasp.legacy.scf = aiida_vasp.workflows.scf:ScfWorkflow", 
-            "vasp.legacy.nscf = aiida_vasp.workflows.nscf:NscfWorkflow", 
-            "vasp.legacy.projections = aiida_vasp.workflows.projections:ProjectionsWorkflow", 
-            "vasp.legacy.autowindows = aiida_vasp.workflows.autowindows:AutowindowsWorkflow", 
-            "vasp.legacy.wannier = aiida_vasp.workflows.wannier:WannierWorkflow", 
-            "vasp.legacy.windows = aiida_vasp.workflows.windows:WindowsWorkflow"
+            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain" 
         ], 
         "console_scripts": [
             "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
@@ -51,15 +43,15 @@
     }, 
     "extras_require": {
         "dev": [
-            "pre-commit == 1.8.2",
-            "prospector == 0.12.11",
-            "pylint == 1.8.4",
+            "pre-commit == 1.14.4",
+            "prospector == 1.1.5",
+            "pylint == 1.9.4",
             "flake8",
-            "yapf == 0.23.0",
-            "coverage == 4.5.1",
-            "pytest == 3.6.3",
-            "pytest-cov == 2.5.1",
-            "pgtest == 1.1.0",
+            "yapf == 0.26.0",
+            "coverage == 4.5.2",
+            "pytest == 4.3.0",
+            "pytest-cov == 2.6.1",
+            "pgtest == 1.2.0",
             "packaging"
         ], 
         "graphs": [
@@ -74,10 +66,10 @@
     }, 
     "include_package_data": true, 
     "install_requires": [
-        "aiida-core[atomic_tools] >= 0.11.0", 
-        "ase == 3.12.0", 
+        "aiida-core[atomic_tools] == 1.0.0b6", 
+        "ase", 
         "scipy", 
-        "pymatgen == 2018.4.20", 
+        "pymatgen", 
         "subprocess32", 
         "click", 
         "chainmap", 
@@ -88,7 +80,7 @@
         "distro",
         "packaging",
         "distro",
-        "parsevasp >= 0.2.22"
+        "parsevasp >= 0.4.2"
     ], 
     "license": "MIT License, see LICENSE.txt file.", 
     "name": "aiida-vasp", 

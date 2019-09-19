@@ -1,13 +1,17 @@
-"""Module defining sets of FileParsers to be used by the VaspParser"""
+""" # noqa: D205
+Parser settings
+---------------
+Module defining sets of FileParsers to be used by the VaspParser.
+"""
 
-from aiida_vasp.io.doscar import DosParser
-from aiida_vasp.io.eigenval import EigParser
-from aiida_vasp.io.kpoints import KpParser
-from aiida_vasp.io.outcar import OutcarParser
-from aiida_vasp.io.vasprun import VasprunParser
-from aiida_vasp.io.chgcar import ChgcarParser
-from aiida_vasp.io.wavecar import WavecarParser
-from aiida_vasp.io.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.doscar import DosParser
+from aiida_vasp.parsers.file_parsers.eigenval import EigParser
+from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {
@@ -23,7 +27,7 @@ FILE_PARSER_SETS = {
             'status': 'Unknown'
         },
         'IBZKPT': {
-            'parser_class': KpParser,
+            'parser_class': KpointsParser,
             'is_critical': False,
             'status': 'Unknown'
         },
@@ -56,85 +60,95 @@ FILE_PARSER_SETS = {
 }
 
 NODES = {
-    'parameters': {
-        'link_name': 'output_parameters',
-        'type': 'parameter',
+    'misc': {
+        'link_name': 'misc',
+        'type': 'dict',
         'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries'],
     },
     'kpoints': {
-        'link_name': 'output_kpoints',
+        'link_name': 'kpoints',
         'type': 'array.kpoints',
         'quantities': ['kpoints'],
     },
     'structure': {
-        'link_name': 'output_structure',
+        'link_name': 'structure',
         'type': 'structure',
         'quantities': ['structure'],
     },
     'poscar-structure': {
-        'link_name': 'output_structure',
+        'link_name': 'structure',
         'type': 'structure',
         'quantities': ['poscar-structure'],
     },
     'trajectory': {
-        'link_name': 'output_trajectory',
+        'link_name': 'trajectory',
         'type': 'array.trajectory',
         'quantities': ['trajectory'],
     },
+    'forces': {
+        'link_name': 'forces',
+        'type': 'array',
+        'quantities': ['forces'],
+    },
+    'stress': {
+        'link_name': 'stress',
+        'type': 'array',
+        'quantities': ['stress'],
+    },
     'bands': {
-        'link_name': 'output_bands',
+        'link_name': 'bands',
         'type': 'array.bands',
         'quantities': ['eigenvalues', 'kpoints', 'occupancies'],
     },
     'dos': {
-        'link_name': 'output_dos',
+        'link_name': 'dos',
         'type': 'array',
         'quantities': ['dos'],
     },
     'energies': {
-        'link_name': 'output_energies',
+        'link_name': 'energies',
         'type': 'array',
         'quantities': ['energies'],
     },
     'projectors': {
-        'link_name': 'output_projectors',
+        'link_name': 'projectors',
         'type': 'array',
         'quantities': ['projectors'],
     },
     'born_charges': {
-        'link_name': 'output_born_charges',
+        'link_name': 'born_charges',
         'type': 'array',
         'quantities': ['born_charges'],
     },
     'dielectrics': {
-        'link_name': 'output_dielectrics',
+        'link_name': 'dielectrics',
         'type': 'array',
         'quantities': ['dielectrics'],
     },
     'hessian': {
-        'link_name': 'output_hessian',
+        'link_name': 'hessian',
         'type': 'array',
         'quantities': ['hessian'],
     },
     'dynmat': {
-        'link_name': 'output_dynmat',
+        'link_name': 'dynmat',
         'type': 'array',
         'quantities': ['dynmat'],
     },
     'chgcar': {
-        'link_name': 'output_chgcar',
+        'link_name': 'chgcar',
         'type': 'vasp.chargedensity',
         'quantities': ['chgcar'],
     },
     'wavecar': {
-        'link_name': 'output_wavecar',
+        'link_name': 'wavecar',
         'type': 'vasp.wavefun',
         'quantities': ['wavecar'],
     },
 }
 
 
-class ParserSettings(object):
+class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
 

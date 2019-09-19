@@ -1,5 +1,9 @@
-"""A Node Composer for Aiida data nodes."""
-# pylint: disable=no-member
+""" # noqa: D205
+Node composer
+-------------
+A Node Composer for Aiida data nodes.
+"""
+# pylint: disable=no-member, useless-object-inheritance
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -7,7 +11,7 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
-    'parameter': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
+    'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],
@@ -69,55 +73,72 @@ class NodeComposer(object):
         if quantities is None:
             quantities = NODES_TYPES.get(node_type)
 
-        current_node = get_data_class(node_type)()
-
         inputs = {}
         for quantity_name in quantities:
             quantity = self.quantites.get_by_name(quantity_name)
             inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
 
         # Call the correct specialised method for assembling.
-        getattr(self, "_compose_with_" + node_type.replace(".", "_"))(current_node, inputs)
-
-        return current_node
+        return getattr(self, "_compose_" + node_type.replace(".", "_"))(node_type, inputs)
 
     @staticmethod
-    def _compose_with_parameter(node, inputs):
+    def _compose_dict(node_type, inputs):
+        """Compose the dictionary node."""
+        node = get_data_class(node_type)()
         node.update_dict(inputs)
+        return node
 
     @staticmethod
-    def _compose_with_structure(node, inputs):
+    def _compose_structure(node_type, inputs):
+        """Compose a structure node."""
+        node = get_data_class(node_type)()
         for key in inputs:
             node.set_cell(inputs[key]['unitcell'])
             for site in inputs[key]['sites']:
                 node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
+        return node
 
     @staticmethod
-    def _compose_with_array(node, inputs):
+    def _compose_array(node_type, inputs):
+        """Compose an array node."""
+        node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():
                 node.set_array(key, value)
+        return node
 
     @staticmethod
-    def _compose_with_vasp_wavefun(node, inputs):
+    def _compose_vasp_wavefun(node_type, inputs):
+        """Compose a wave function node."""
+        node = None
         for key in inputs:
-            node.set_file(inputs[key])
+            # Technically this dictionary has only one key. to
+            # avoid problems with python 2/3 it is done with the loop.
+            node = get_data_class(node_type)(file=inputs[key])
+        return node
 
     @staticmethod
-    def _compose_with_vasp_chargedensity(node, inputs):
+    def _compose_vasp_chargedensity(node_type, inputs):
+        """Compose a charge density node."""
+        node = None
         for key in inputs:
-            node.set_file(inputs[key])
+            # Technically this dictionary has only one key. to
+            # avoid problems with python 2/3 it is done with the loop.
+            node = get_data_class(node_type)(file=inputs[key])
+        return node
 
-    def _compose_with_array_bands(self, node, inputs):
-
-        kpoints = get_data_class('array.kpoints')()
-        self._compose_with_array_kpoints(kpoints, {'kpoints': inputs['kpoints']})
+    def _compose_array_bands(self, node_type, inputs):
+        """Compose a bands node."""
+        node = get_data_class(node_type)()
+        kpoints = self._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
+        return node
 
     @staticmethod
-    def _compose_with_array_kpoints(node, inputs):
+    def _compose_array_kpoints(node_type, inputs):
         """Compose an array.kpoints node based on inputs."""
+        node = get_data_class(node_type)()
         for key in inputs:
             mode = inputs[key]['mode']
             if mode == 'explicit':
@@ -138,9 +159,13 @@ class NodeComposer(object):
                 mesh = inputs[key].get('divisions')
                 shifts = inputs[key].get('shifts')
                 node.set_kpoints_mesh(mesh, offset=shifts)
+        return node
 
     @staticmethod
-    def _compose_with_array_trajectory(node, inputs):
+    def _compose_array_trajectory(node_type, inputs):
+        """Compose a trajectory node."""
+        node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():
                 node.set_array(key, value)
+        return node

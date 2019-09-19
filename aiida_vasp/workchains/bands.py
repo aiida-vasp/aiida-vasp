@@ -1,17 +1,17 @@
-# pylint: disable=attribute-defined-outside-init
-"""
-BandsWorkChain.
-
+""" # noqa: D205
+Bands workchain
+---------------
 Intended to be used to extract the band structure using SeeKpath as a preprossesor
 to extract the k-point path.
 """
+
+# pylint: disable=attribute-defined-outside-init
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work.workchain import WorkChain, append_
-from aiida.orm import WorkflowFactory
-from aiida.work.workfunctions import workfunction
+from aiida.engine import WorkChain, append_, calcfunction
+from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class BandsWorkChain(WorkChain):
@@ -58,11 +58,11 @@ class BandsWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings'))
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'))
-        spec.input('parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('bands_parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('bands_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'kpoints_distance',
             valid_type=get_data_class('float'),
@@ -122,10 +122,11 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_parameters_seekpath', valid_type=get_data_class('parameter'))
-        spec.output('output_bands', valid_type=get_data_class('array.bands'))
-        spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.output('output_structure_primitive', valid_type=get_data_class('structure'))
+        spec.output('parameters_seekpath', valid_type=get_data_class('dict'))
+        spec.output('bands', valid_type=get_data_class('array.bands'))
+        spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
+        spec.output('structure_primitive', valid_type=get_data_class('structure'))
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
 
     def initialize(self):
         """Initialize."""
@@ -133,13 +134,10 @@ class BandsWorkChain(WorkChain):
         self._init_inputs()
         self._init_settings()
 
-        return
-
     def _init_context(self):
         """Initialize context variables."""
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.inputs = AttributeDict()
-
-        return
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -155,13 +153,13 @@ class BandsWorkChain(WorkChain):
             settings.parser_settings = dict_entry
         self.ctx.inputs.settings = settings
 
-        return
-
     def _init_inputs(self):
         """Initialize inputs."""
         self.ctx.inputs.parameters = self._init_parameters()
 
-        self.ctx.inputs.seekpath_parameters = get_data_node('parameter', dict={'reference_distance': self.inputs.kpoints_distance.value})
+        # Do not put the SeeKPath parameters in the inputs to avoid port checking
+        # of the next workchain
+        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value
@@ -243,7 +241,7 @@ class BandsWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Make sure we do not have any floating dict (convert to ParameterData)
+        # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
     def run_next_workchain(self):
@@ -267,58 +265,50 @@ class BandsWorkChain(WorkChain):
         routine returns a new (potentially different to the input structure) primitive
         structure. It also returns the k-point path for this structure.
         """
-        result = seekpath_structure_analysis(self.inputs.structure, self.ctx.inputs.seekpath_parameters)
+        result = seekpath_structure_analysis(self.inputs.structure, self.ctx.seekpath_parameters)
 
         self.ctx.inputs.structure = result['primitive_structure']
         self.ctx.inputs.kpoints = result['explicit_kpoints']
 
         # Set the output nodes for the primitive structure and the k-point path
-        self.out('output_structure_primitive', result['primitive_structure'])
-        self.out('output_kpoints', result['explicit_kpoints'])
-        self.out('output_parameters_seekpath', result['parameters'])
-
-        return
+        self.out('structure_primitive', result['primitive_structure'])
+        self.out('kpoints', result['explicit_kpoints'])
+        self.out('parameters_seekpath', result['parameters'])
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
-        workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.exit_status = next_workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
-        return
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+
+        return self.ctx.exit_code
 
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):
         """Finalize the workchain."""
         return self.exit_status
 
-    def _fail_compat(self, *args, **kwargs):
-        """Method to handle general failures."""
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)  # pylint: disable=no-member
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)  # pylint: disable=no-member
-        return
 
-
-@workfunction
+@calcfunction
 def seekpath_structure_analysis(structure, parameters):
     """
     Workfunction to extract k-points in the reciprocal cell.

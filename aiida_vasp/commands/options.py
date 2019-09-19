@@ -1,13 +1,17 @@
-"""Common click options for verdi commands"""
+""" # noqa: D205
+Common click options for verdi
+------------------------------
+Common click options for verdi commands.
+"""
 import click
 
 try:
     from aiida.cmdline.params.options import OverridableOption, FORCE, DESCRIPTION  # pylint: disable=unused-import
 except ImportError:
     # pylint: disable=too-few-public-methods
-    class OverridableOption(object):
+    class OverridableOption(object):  # pylint: disable=useless-object-inheritance
         """
-        Wrapper around click option that increases reusability
+        Wrapper around click option that increases reusability.
 
         Click options are reusable already but sometimes it can improve the user interface to for example customize a help message
         for an option on a per-command basis. Sometimes the option should be prompted for if it is not given. On some commands an option

@@ -1,9 +1,13 @@
-"""Classes representing FileParsers in the VaspParser."""
+""" # noqa: D205
+Parser manager
+--------------
+Classes representing FileParsers in the VaspParser.
+"""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
-class ParserManager(object):
+class ParserManager(object):  # pylint: disable=useless-object-inheritance
     """
     A manager for FileParsers.
 

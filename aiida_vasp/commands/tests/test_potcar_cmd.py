@@ -1,7 +1,11 @@
-"""Unit tests for vasp-potcar command family"""
+"""Unit tests for vasp-potcar command family."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pytest
+import six
+
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
 from monty.collections import AttrDict
@@ -50,20 +54,18 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
     assert not result.exception
     assert potcar_cls.exists(element='In')
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
-    """Give a tar file as the source"""
+    """Give a tar file as the source."""
     path_option = '--path={}'.format(py_path.local(cmd_params.POTCAR_PATH).join('Ga.tar'))
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
-    print result.output
-
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
 def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
@@ -78,7 +80,7 @@ def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
-    assert [g.name for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
+    assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
     old_work_dir.chdir()
 
@@ -112,7 +114,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
 
 
 def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
-    """Make sure --dry-run does not affect the db"""
+    """Make sure --dry-run does not affect the db."""
     from aiida.orm import Node, Group
     from aiida.orm.querybuilder import QueryBuilder
 
@@ -198,6 +200,11 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
 
 
 def test_call_from_vasp():
+    """Test if the verdi potcar data command works."""
+
     import subprocess
-    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
-    assert 'Usage: verdi data vasp-potcar' in output
+    if six.PY2:
+        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
+    else:
+        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
+    assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test

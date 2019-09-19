@@ -1,19 +1,19 @@
 import click
 import os
 from aiida.common.extendeddicts import AttributeDict
+from aiida.cmdline.utils.decorators import with_dbenv
 
-from aiida_vasp.utils.aiida_utils import load_dbenv_if_not_loaded, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from auxiliary import example_param_set, set_structure_si, set_kpoints, set_params_simple, set_params_simple_no_encut
-
-os.system('verdi daemon restart')
 
 
 @click.command()
 @example_param_set
+@with_dbenv()
 def main(potential_family, queue, code, computer):
-    load_dbenv_if_not_loaded()
-    from aiida.orm import WorkflowFactory, Code
-    from aiida.work import submit, run
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import submit, run
     from aiida_vasp.utils.aiida_utils import get_data_class
 
     # fetch the code to be used (tied to a computer)
@@ -44,18 +44,18 @@ def main(potential_family, queue, code, computer):
     # set structure
     inputs.structure = set_structure_si()
     # set k-points grid density (do not supply if you want to perform convergence tests on this)
-    #inputs.kpoints = set_kpoints()
+    # inputs.kpoints = set_kpoints(inputs.structure)
     # set parameters (do not supply plane wave cutoff if you want to perform convergence
     # tests on this)
-    #inputs.parameters = set_params_simple_no_encut()
-    inputs.parameters = set_params_simple()
+    inputs.parameters = set_params_simple_no_encut()
+    #inputs.parameters = set_params_simple()
     # set potentials and their mapping
     inputs.potential_family = get_data_class('str')(potential_family)
-    inputs.potential_mapping = get_data_node('parameter', dict={'Si': 'Si'})
+    inputs.potential_mapping = get_data_node('dict', dict={'Si': 'Si'})
     # set options
-    inputs.options = get_data_node('parameter', dict=options)
+    inputs.options = get_data_node('dict', dict=options)
     # set settings
-    inputs.settings = get_data_node('parameter', dict=settings)
+    inputs.settings = get_data_node('dict', dict=settings)
     # set workchain related inputs
     inputs.relax = get_data_node('bool', False)
     inputs.converge_relax = get_data_node('bool', False)

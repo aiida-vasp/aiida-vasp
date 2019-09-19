@@ -1,16 +1,17 @@
-# pylint: disable=attribute-defined-outside-init
-"""
-VerifyWorkChain.
+""" # noqa: D205
+Verify workchain
+----------------
 
 Indented to be used to verify a calculation, perform corrections in inputs files and
 restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
 or not currently checked in it. This workchain does currently nothing.
 """
+# pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work.workchain import WorkChain, if_, append_
-from aiida.orm import WorkflowFactory
+from aiida.engine import WorkChain, if_, append_
+from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class MasterWorkChain(WorkChain):
@@ -19,13 +20,14 @@ class MasterWorkChain(WorkChain):
     _verbose = False
     _base_workchains_string = 'vasp.converge'
     _bands_workchain_string = 'vasp.bands'
-    _base_workchains = WorkflowFactory(_base_workchains_string)
+    _base_workchain = WorkflowFactory(_base_workchains_string)
     _bands_workchain = WorkflowFactory(_bands_workchain_string)
 
     @classmethod
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._base_workchains, exclude=['extract_bands', 'settings'])
+        spec.expose_inputs(cls._base_workchain, exclude=['extract_bands', 'settings', 'kpoints'])
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'extract_bands',
             valid_type=get_data_class('bool'),
@@ -42,41 +44,29 @@ class MasterWorkChain(WorkChain):
             help="""
             Do you want to relax the structure?
             """)
+        spec.input(
+            'kpoints_distance',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The maximum distance between k-points in inverse AA.
+            """)
         spec.outline(
             cls.initialize,
             cls.init_workchain,
-            cls.run_workchain,
-            cls.verify_workchain,
+            cls.run_next_workchain,
+            cls.verify_next_workchain,
             if_(cls.extract_bands)(
                 cls.init_bands,
                 cls.init_workchain,
-                cls.run_workchain,
-                cls.verify_workchain
+                cls.run_next_workchain,
+                cls.verify_next_workchain
             ),
             cls.finalize
         )  # yapf: disable
-
-        # spec.output('output_parameters', valid_type=get_data_class('parameter'))
-        # spec.output('remote_folder', valid_type=get_data_class('remote'))
-        # spec.output('retrieved', valid_type=get_data_class('folder'))
-        # spec.output('output_structure', valid_type=get_data_class('structure'), required=False)
-        # spec.output('output_kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        # spec.output('output_trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        # spec.output('output_chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        # spec.output('output_wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        # spec.output('output_bands', valid_type=get_data_class('array.bands'), required=False)
-        # spec.output('output_dos', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_occupancies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_energies', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_projectors', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dielectrics', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_born_charges', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_hessian', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_dynmat', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_forces', valid_type=get_data_class('array'), required=False)
-        # spec.output('output_final_stress', valid_type=get_data_class('array'), required=False)
-
         spec.expose_outputs(cls._bands_workchain)
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the master workchain')
 
     def initialize(self):
         """Initialize."""
@@ -85,13 +75,10 @@ class MasterWorkChain(WorkChain):
         self._init_settings()
         self._set_base_workchain()
 
-        return
-
     def _init_context(self):
         """Initialize context variables."""
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.inputs = AttributeDict()
-
-        return
 
     def _init_inputs(self):
         """Initialize inputs."""
@@ -99,6 +86,22 @@ class MasterWorkChain(WorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
+        self._init_structure()
+
+    def _init_structure(self):
+        """Initialize the structure."""
+        self.ctx.inputs.structure = self.inputs.structure
+        # Since the reciprocal lattice is set in KpointsData, we need, if not performing
+        # convergence tests to access the single StructureData, update the
+        # supplied KpointsData with the right reciprocal lattice.
+        try:
+            distance = self.inputs.kpoints_distance.value
+        except AttributeError:
+            return
+        kpoints = get_data_class('array.kpoints')()
+        kpoints.set_cell_from_structure(self.ctx.inputs.structure)
+        kpoints.set_kpoints_mesh_from_density(distance)
+        self.ctx.inputs.kpoints = kpoints
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -117,17 +120,15 @@ class MasterWorkChain(WorkChain):
             settings.update(dict_entry)
         self.ctx.inputs.settings = settings
 
-        return
-
     def _set_base_workchain(self):
         """Set the base workchain to be called."""
-        self._next_workchain = self._base_workchains
+        self._next_workchain = self._base_workchain
 
     def init_bands(self):
         """Initialize the run to extract the band structure."""
         self._next_workchain = self._bands_workchain
         # Make sure the charge density is added from the previous run
-        self.ctx.inputs.chgcar = self.ctx.workchains[-1].out['output_chgcar']
+        self.ctx.inputs.chgcar = self.ctx.workchains[-1].outputs['chgcar']
         # Remove parser extraction of the charge density file
         settings = self.ctx.inputs.settings.get_dict()
         try:
@@ -150,45 +151,49 @@ class MasterWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Make sure we do not have any floating dict (convert to ParameterData)
+        # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
-    def run_workchain(self):
-        """Run the workchain."""
+    def run_next_workchain(self):
+        """Run the next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
-    def verify_workchain(self):
+    def verify_next_workchain(self):
         """Inherit exit status from child workchains."""
-        workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
-        workchain_exit_status = workchain.exit_status
-        if not workchain_exit_status:
-            self.exit_status = 0
+        next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
+        if not next_workchain_exit_status:
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.exit_status = workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         workchain_exit_status))
-        return
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+
+        return self.ctx.exit_code
 
     def extract_bands(self):
         """Determines if we should extract the band structure."""
         return self.inputs.extract_bands.value
 
+    def loop_structures(self):
+        """Determine if we should continue to calculate structures."""
+        return len(self.ctx.structures.get_list()) > 0
+
     def finalize(self):
         """Finalize the workchain."""
 
-        if not self.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-        return self.exit_status
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))

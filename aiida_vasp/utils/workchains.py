@@ -1,37 +1,37 @@
-"""Auxiliary routines that are not part of any of the workchain classes."""
+""" # noqa: D205
+Utils for the workchains
+------------------------
+Auxiliary routines that are not part of any of the workchain classes.
+"""
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm.data.parameter import ParameterData
+from aiida.orm import Dict
+from aiida.engine.processes.exit_code import ExitCode
 
 
 def prepare_process_inputs(inputs):
     """
     Prepare the inputs dictionary for a calculation.
 
-    Any remaining bare dictionaries in the inputs dictionary will be wrapped in a ParameterData data node
-    except for the '_options/options' key which should remain a standard dictionary. Another exception are dictionaries
+    Any remaining bare dictionaries in the inputs dictionary will be wrapped in a Dict data node
+    except for the 'options', 'metadata' and 'potential' key which should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
     This is the format used by input groups as in for example the explicit pseudo dictionary where the key is
     a tuple of kind to which the UpfData corresponds.
     """
+    from past.builtins import basestring
     prepared_inputs = AttributeDict()
 
-    for key, val in inputs.iteritems():
-        if key not in ['_options', 'options'] and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()]):
-            prepared_inputs[key] = ParameterData(dict=val)
+    for key, val in inputs.items():
+        if key not in ['options', 'metadata', 'potential'] and \
+           isinstance(val, dict) and \
+           all([isinstance(k, (basestring)) for k in val.keys()]):
+            prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
 
     return prepared_inputs
-
-
-def finished_ok_compat(calc):
-    if hasattr(calc, 'has_finished_ok'):
-        return calc.has_finished_ok()
-    elif hasattr(calc, 'is_finished_ok'):
-        return calc.is_finished_ok
-    return calc.finished_ok
 
 
 def compare_structures(structure_a, structure_b):
@@ -69,21 +69,11 @@ def fetch_k_grid(rec_cell, k_spacing):
     """
     Suggest a sensible k-point sampling based on a supplied spacing.
 
-    Parameters
-    ----------
-    rec_cell : ndarray
-        A two dimensional ndarray of floats defining the reciprocal lattice with each
-        vector as row elements.
-    k_spacing : float
-        The k-point spacing.
+    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector as row elements.
+    :param k_spacing: The k-point spacing.
 
-    Returns
-    -------
-    kgrid : (3) list of int
-        The k-point grid given the supplied `rec_cell` and `kstep`
+    :return kgrid: The k-point grid given the supplied `rec_cell` and `kstep`
 
-    Notes
-    -----
     This is usable for instance when performing
     plane wave cutoff convergence tests without a base k-point grid.
 
@@ -92,3 +82,9 @@ def fetch_k_grid(rec_cell, k_spacing):
     kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
 
     return kgrid.astype('int').tolist()
+
+
+def compose_exit_code(status, message):
+    """Compose an ExitCode instance based on a status and message."""
+    exit_code = ExitCode(status=status, message=message)
+    return exit_code

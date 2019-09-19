@@ -1,4 +1,8 @@
-"""Classes representing quantities and a list of quantities."""
+""" # noqa: D205
+Parser quantity configuration
+-----------------------------
+Classes representing quantities and a list of quantities.
+"""
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
@@ -28,7 +32,7 @@ class ParsableQuantity(DictWithAttributes):
         self.missing_files = missing_files
 
 
-class ParsableQuantities(object):
+class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 
@@ -69,7 +73,7 @@ class ParsableQuantities(object):
     def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        retrieved = self._vasp_parser.out_folder.get_folder_list()
+        retrieved = [item.name for item in self._vasp_parser.retrieved.list_objects()]
 
         # check uniqueness and add parsable quantities
         self._check_uniqueness_add_parsable(retrieved)
@@ -107,7 +111,7 @@ class ParsableQuantities(object):
 
         # Make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
-        parsable_quantities = copy.deepcopy(self._quantities.keys())
+        parsable_quantities = copy.deepcopy([item for item in self._quantities])
 
         # Setup all alternatives:
         for quantity in parsable_quantities:

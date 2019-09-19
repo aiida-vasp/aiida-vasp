@@ -1,8 +1,11 @@
+""" # noqa: D205
+VASP parser
+-----------
+AiiDA parser for a aiida_vasp.VaspCalculation.
+"""
 #encoding: utf-8
-
 # pylint: disable=no-member
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
-"""AiiDA Parser for a aiida_vasp.VaspCalculation"""
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
@@ -11,6 +14,8 @@ from aiida_vasp.parsers.settings import ParserSettings
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.delegates import Delegate
 
+from aiida.common.exceptions import NotExistent
+
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
     'add_bands': False,
@@ -18,7 +23,7 @@ DEFAULT_OPTIONS = {
     'add_dos': False,
     'add_kpoints': False,
     'add_energies': False,
-    'add_parameters': True,
+    'add_misc': True,
     'add_structure': False,
     'add_projectors': False,
     'add_born_charges': False,
@@ -27,6 +32,7 @@ DEFAULT_OPTIONS = {
     'add_dynmat': False,
     'add_wavecar': False,
     'add_forces': False,
+    'add_stress': False,
     'file_parser_set': 'default',
 }
 
@@ -36,15 +42,15 @@ class VaspParser(BaseParser):
     Parses all Vasp calculations.
 
     This particular class manages all the specific file parsers in
-    aiida_vasp.io. The parser will check which quantities to parse and which nodes to add
-    to the calculation based on the 'parser_settings' card in the 'settings' ParameterData of the
+    aiida_vasp.parsers.file_parsers. The parser will check which quantities to parse and which nodes to add
+    to the calculation based on the 'parser_settings' card in the 'settings' Dict of the
     corresponding VaspCalculation.
 
     Parser Settings usage:
 
     Parser settings can be passed through the input node `settings` as follows::
 
-        settings = ParameterData(dict={
+        settings = Dict(dict={
             'parser_settings': {
                 ...
             }
@@ -54,7 +60,7 @@ class VaspParser(BaseParser):
 
     * `add_<quantity>`, where quantity is one of:
 
-        'parameters': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
+        'misc': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
         'structure':  (Default) StructureData node parsed from CONTCAR
         'bands':      Band structure node parsed from EIGENVAL.
         'dos':        ArrayData node containing the DOS parsed from DOSCAR.
@@ -62,7 +68,7 @@ class VaspParser(BaseParser):
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
 
-    * `output_params`: A list of quantities, that should be added to the 'output_parameters' node.
+    * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
     * `file_parser_set`: String (DEFAULT = 'default').
 
@@ -78,18 +84,23 @@ class VaspParser(BaseParser):
     is called, will only have an effect when parsing a second time.
     """
 
-    def __init__(self, calc):
-        super(VaspParser, self).__init__(calc)
+    def __init__(self, node):
+        super(VaspParser, self).__init__(node)
 
         # Initialise the 'get_quantity' delegate:
         setattr(self, 'get_quantity', Delegate())
 
         self.out_folder = None
 
-        calc_settings = self._calc.get_inputs_dict().get('settings')
+        try:
+            calc_settings = self.node.inputs.settings
+        except NotExistent:
+            calc_settings = None
+
         settings = None
         if calc_settings:
             settings = calc_settings.get_dict().get('parser_settings')
+
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
@@ -115,23 +126,21 @@ class VaspParser(BaseParser):
         """Add a custom node to the settings."""
         self.settings.add_node(node_name, node_dict)
 
-    def parse_with_retrieved(self, retrieved):
+    def parse(self, **kwargs):
+        """The function that triggers the parsing of a calculation."""
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.out_folder.get_folder_list() and value_dict['is_critical']:
+                if file_name not in [item.name for item in self.retrieved.list_objects()] and value_dict['is_critical']:
                     return True
             return False
 
-        self.check_state()
-        self.out_folder = self.get_folder(retrieved)
-
-        if not self.out_folder:
-            return self.result(success=False)
-
+        error_code = self.get_folder()
+        if error_code is not None:
+            return error_code
         if missing_critical_file():
             # A critical file i.e. OUTCAR does not exist. Abort parsing.
-            return self.result(success=False)
+            return self.exit_codes.ERROR_MISSING_FILE
 
         # Get the _quantities from the FileParsers.
         self.quantities.setup()
@@ -153,12 +162,17 @@ class VaspParser(BaseParser):
             node = node_assembler.compose(node_dict.type, node_dict.quantities)
             success = self._set_node(node_name, node)
             if not success:
-                return self.result(success=False)
+                return self.exit_codes.ERROR_PARSING_FILE_FAILED
 
         # Reset the 'get_quantity' delegate
         self.get_quantity.clear()
 
-        return self.result(success=True)
+        try:
+            return self.exit_status
+        except AttributeError:
+            pass
+
+        return self.exit_codes.NO_ERROR
 
     def get_inputs(self, quantity):
         """
@@ -193,9 +207,9 @@ class VaspParser(BaseParser):
         return {quantity: self._output_nodes.get(quantity)}
 
     def _set_node(self, node_name, node):
-        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
+        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
 
         if node is None:
             return False
-        self.add_node(self.settings.nodes[node_name].link_name, node)
+        self.out(self.settings.nodes[node_name].link_name, node)
         return True

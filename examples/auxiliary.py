@@ -9,7 +9,7 @@ def example_param_set(cmd_function):
     """Define the command line options."""
 
     @click.option(
-        '--potential-family', type=str, default='vasp-test', help='Name for a Potcar family to upload to (or to look for if --no-import).')
+        '--potential-family', type=str, default='', help='Name for a Potcar family to upload to (or to look for if --no-import).')
     @click.option('--queue', type=str, default='', help='Name of the compute queue if your scheduler requires it')
     @click.argument('code', type=str)
     @click.argument('computer', type=str)
@@ -59,17 +59,18 @@ def set_structure_si():
     return structure
 
 
-def set_kpoints():
+def set_kpoints(structure):
     """Set a simple kpoint sampling."""
 
-    kpoints_cls = get_data_class('array.kpoints')
-    return kpoints_cls(kpoints_mesh=[8, 8, 8])
-
+    kpoints = get_data_class('array.kpoints')()
+    kpoints.set_cell_from_structure(structure)
+    kpoints.set_kpoints_mesh([9,9,9])
+    return kpoints
 
 def set_params_noncol():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(
         dict={
             'SYSTEM': 'InAs',
@@ -89,12 +90,12 @@ def set_params_noncol():
 def set_params_simple():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1})
 
 
 def set_params_simple_no_encut():
     """Set INCAR parameters."""
 
-    param_cls = get_data_class('parameter')
+    param_cls = get_data_class('dict')
     return param_cls(dict={'prec': 'NORMAL', 'ediff': 1E-4, 'ialgo': 38, 'ismear': 0, 'sigma': 0.1})

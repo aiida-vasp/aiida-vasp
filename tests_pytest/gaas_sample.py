@@ -14,7 +14,7 @@ def get_gaas_process_inputs(configure, get_process_inputs, sample):  # pylint: d
     """Test fixture: sets up a calculation to be tested"""
 
     def inner(calculation_string, parameters=None):  # pylint: disable=missing-docstring
-        from aiida.orm import DataFactory
+        from aiida.plugins import DataFactory
 
         parameters = parameters if parameters else {}
 

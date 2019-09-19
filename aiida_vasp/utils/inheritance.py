@@ -1,5 +1,8 @@
-"""Inheritance tools."""
-from textwrap import dedent
+""" # noqa: D205
+Inheritance tools
+-----------------
+"""
+import six
 
 
 def update_docstring(method_name, content, append=True):
@@ -7,6 +10,8 @@ def update_docstring(method_name, content, append=True):
     Update docstring of (an inherited) class method.
 
     For subclasses that use hooks to change behaviour of superclass methods.
+
+    This is only applied for Python 3.
 
     :param append: If true, append to the docstring, else overwrite it entirely.
 
@@ -36,12 +41,12 @@ def update_docstring(method_name, content, append=True):
     """
 
     def wrapper(cls):
-        """Update the method docstring and return the class."""
-        if append:
-            old_doc = getattr(cls, method_name).im_func.func_doc
-            getattr(cls, method_name).im_func.func_doc = dedent(old_doc) + dedent(content)
-        else:
-            getattr(cls, method_name).im_func.func_doc = content
+        """Update the method docstring and return the class. Only works for Python 3."""
+        if six.PY3:
+            if append:
+                getattr(cls, method_name).__func__.__doc__ = ""
+            else:
+                getattr(cls, method_name).__func__.__doc__ = content
         return cls
 
     return wrapper

@@ -24,7 +24,7 @@ def file_input(*args, **kwargs):
         input_fo.close()
 
 
-class VersionUpdater(object):
+class VersionUpdater(object):  # pylint: disable=useless-object-inheritance
     """
     Version number synchronisation interface.
 
@@ -75,9 +75,12 @@ class VersionUpdater(object):
     def tag_version(self):
         """Get the current version number from ``git describe``, fall back to setup.json."""
         try:
-            describe_byte_string = subprocess.check_output(['git', 'describe', '--tags', '--match', 'v*.*.*'])
+            describe_byte_string = subprocess.check_output(  # pylint: disable=no-member
+                ['git', 'describe', '--tags', '--match', 'v*.*.*'],
+                universal_newlines=True,
+            )
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError:  # pylint: disable=no-member
             with open(self.setup_json.strpath, 'r') as setup_fo:
                 setup = json.load(setup_fo)
                 version_string = setup['version']

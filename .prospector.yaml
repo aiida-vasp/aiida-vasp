@@ -1,13 +1,13 @@
 doc-warnings: true
 
 ignore-paths:
-    - doc
-    - examples
-    - test
-    - utils
+  - doc
+  - examples
+  - test
+  - utils
 
 pylint:
-    max-line-length: 140
+  max-line-length: 140
 
 pyflakes:
   run: false

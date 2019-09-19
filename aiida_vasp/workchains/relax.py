@@ -1,14 +1,16 @@
+""" # noqa: D205
+Relax workchain
+---------------
+Structure relaxation workchain.
+"""
 # pylint: disable=attribute-defined-outside-init
-"""Structure relaxation workchain."""
 import enum
 from aiida.common.extendeddicts import AttributeDict
-from aiida.work import WorkChain
-from aiida.work.workchain import append_, while_, if_
-from aiida.orm import WorkflowFactory
+from aiida.engine import WorkChain, append_, while_, if_
+from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.workchains.restart import UnexpectedCalculationFailure
-from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs
+from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
 
 
 class RelaxWorkChain(WorkChain):
@@ -48,17 +50,35 @@ class RelaxWorkChain(WorkChain):
         super(RelaxWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'relax_parameters', 'settings'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('relax_parameters', valid_type=get_data_class('parameter'), required=False)
-        spec.input('settings', valid_type=get_data_class('parameter'), required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('relax_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
             'relax',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
             help="""
-                   If True, perform relaxation.
-                   """)
+            If True, perform relaxation.
+            """)
+        spec.input(
+            'energy_cutoff',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The cutoff that determines when the relaxation procedure is stopped. In this
+            case it stops when the total energy between two ionic steps is less than the
+            supplied value.
+            """)
+        spec.input(
+            'force_cutoff',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
+            The cutoff that determines when the relaxation procedure is stopped. In this
+            case it stops when all forces are smaller than than the
+            supplied value.
+            """)
         spec.input(
             'steps',
             valid_type=get_data_class('int'),
@@ -153,7 +173,11 @@ class RelaxWorkChain(WorkChain):
                    The cutoff value for the convergence check on the angles of the unit cell.
                    If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
                    """)
-
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(
+            300, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the called workchain does not contain the necessary relaxed output structure')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
+        spec.exit_code(502, 'ERROR_OVERRIDE_PARAMETERS', message='there was an error overriding the parameters')
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -174,13 +198,29 @@ class RelaxWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('output_structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.output('structure_relaxed', valid_type=get_data_class('structure'), required=False)
 
     def _set_ibrion(self, parameters):
+        """Set the algorithm to use for relaxation."""
         if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
             parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
         else:
             parameters.ibrion = self.AlgoEnum.NO_UPDATE
+
+    def _set_ediffg(self, parameters):
+        """Set the cutoff to use for relaxation."""
+        energy_cutoff = False
+        try:
+            parameters.ediffg = self.inputs.energy_cutoff.value
+            energy_cutoff = True
+        except AttributeError:
+            pass
+        try:
+            parameters.ediffg = -abs(self.inputs.force_cutoff.value)
+            if energy_cutoff:
+                self.report('User supplied both a force and an energy cutoff for the relaxation. Utilizing the force cutoff.')
+        except AttributeError:
+            pass
 
     def _set_nsw(self, parameters):
         """Set the number of ionic steps to perform."""
@@ -211,12 +251,13 @@ class RelaxWorkChain(WorkChain):
                 try:
                     self._add_overrides(parameters)
                 except ValueError as err:
-                    self._fail_compat(exception=err)
+                    return compose_exit_code(self.exit_code.ERROR_OVERRIDE_PARAMETERS, str(err))
             else:
                 # Add plugin controlled flags
                 self._set_ibrion(parameters)
                 self._set_isif(parameters)
                 self._set_nsw(parameters)
+                self._set_ediffg(parameters)
 
         return parameters
 
@@ -227,22 +268,17 @@ class RelaxWorkChain(WorkChain):
         self._init_structure()
         self._init_settings()
 
-        return
-
     def _init_context(self):
         """Store exposed inputs in the context."""
+        self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
 
-        return
-
     def _init_structure(self):
         """Initialize the structure."""
         self.ctx.current_structure = self.inputs.structure
-
-        return
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -260,8 +296,6 @@ class RelaxWorkChain(WorkChain):
                 settings.parser_settings = dict_entry
         self.ctx.inputs.settings = settings
 
-        return
-
     def _init_inputs(self):
         """Initialize the inputs."""
         self.ctx.inputs.parameters = self._init_parameters()
@@ -269,8 +303,6 @@ class RelaxWorkChain(WorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
-
-        return
 
     def _set_default_relax_settings(self):
         """Set default settings."""
@@ -285,6 +317,11 @@ class RelaxWorkChain(WorkChain):
             if self._verbose:
                 self.report('skipping structure relaxation and forwarding input/output to the next workchain.')
         else:
+            # For the final static run we do not need to parse the output structure, which
+            # is at this point enabled.
+            settings = AttributeDict(self.ctx.inputs.settings.get_dict())
+            settings.parser_settings['add_structure'] = False
+            self.ctx.inputs.settings = settings
             if self._verbose:
                 self.report('performing a final calculation using the relaxed structure.')
 
@@ -294,18 +331,18 @@ class RelaxWorkChain(WorkChain):
         if not self.ctx.is_converged:
             self.ctx.iteration += 1
 
-        # Set structure
-        self.ctx.inputs.structure = self.ctx.current_structure
-
         try:
             self.ctx.inputs
         except AttributeError:
             raise ValueError('no input dictionary was defined in self.ctx.inputs')
 
+        # Set structure
+        self.ctx.inputs.structure = self.ctx.current_structure
+
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Make sure we do not have any floating dict (convert to ParameterData)
+        # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
     def run_next_workchain(self):
@@ -314,35 +351,33 @@ class RelaxWorkChain(WorkChain):
         running = self.submit(self._next_workchain, **inputs)
 
         if not self.ctx.is_converged and self.perform_relaxation():
-            if hasattr(running, 'pid'):
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pid, self.ctx.iteration))
-            else:
-                # Aiida < 1.0
-                self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
         else:
-            if hasattr(running, 'pid'):
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-            else:
-                # Aiida < 1.0
-                self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
 
-        workchain = self.ctx.workchains[-1]
-        # Adopt exit status from last child workchain (supposed to be
+        try:
+            workchain = self.ctx.workchains[-1]
+        except IndexError:
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
+
+        # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
-            self.exit_status = 0
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
-            self.exit_status = next_workchain_exit_status
-            self.report('The child {}<{}> returned a non-zero exit status, {}<{}> '
-                        'inherits exit status {}'.format(workchain.__class__.__name__, workchain.pk, self.__class__.__name__, self.pid,
-                                                         next_workchain_exit_status))
-        return
+            self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+
+        return self.ctx.exit_code
 
     def analyze_convergence(self):
         """
@@ -352,17 +387,15 @@ class RelaxWorkChain(WorkChain):
         shape and ion positions are all within a given threshold, consider the relaxation converged.
         """
         workchain = self.ctx.workchains[-1]
-        # Double check presence of output_structure
-        if 'output_structure' not in workchain.out:
-            self._fail_compat(
-                UnexpectedCalculationFailure('The {}<{}> for the relaxation run did not have an '
-                                             'output structure and most likely failed. However, '
-                                             'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk)))
-            self.exit_status = 9999
-            return
+        # Double check presence of structure
+        if 'structure' not in workchain.outputs:
+            self.report('The {}<{}> for the relaxation run did not have an '
+                        'output structure and most likely failed. However, '
+                        'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
+            return self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
 
         self.ctx.previous_structure = self.ctx.current_structure
-        self.ctx.current_structure = workchain.out.output_structure
+        self.ctx.current_structure = workchain.outputs.structure
 
         converged = True
         if self.inputs.convergence_on.value:
@@ -378,17 +411,15 @@ class RelaxWorkChain(WorkChain):
                 converged &= self.check_shape_convergence(delta)
 
         if not converged:
-            self.ctx.current_restart_folder = workchain.out.remote_folder
+            self.ctx.current_restart_folder = workchain.outputs.remote_folder
             if self._verbose:
-                self.report('{}<{}> was not converged, restarting the relaxation.'.format(self._next_workchain.__name__, workchain.pk))
+                self.report('Relaxation did not converge, restarting the relaxation.')
         else:
-            if self.inputs.convergence_on.value:
-                if self._verbose:
-                    self.report('{}<{}> was converged, finishing with a final calculation.'.format(
-                        self._next_workchain.__name__, workchain.pk))
+            if self._verbose:
+                self.report('Relaxation is converged, finishing with a final static calculation.')
             self.ctx.is_converged = converged
 
-        return
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
@@ -421,35 +452,20 @@ class RelaxWorkChain(WorkChain):
         """Store the relaxed structure."""
         workchain = self.ctx.workchains[-1]
 
-        if not self.exit_status:
-            relaxed_structure = workchain.out.output_structure
-            if self._verbose:
-                self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
-                                                                       'output_structure_relaxed'))
-            self.out('output_structure_relaxed', relaxed_structure)
+        relaxed_structure = workchain.outputs.structure
+        if self._verbose:
+            self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
+                                                                   'structure_relaxed'))
+        self.out('structure_relaxed', relaxed_structure)
 
     def results(self):
         """Attach the remaining output results."""
 
-        if not self.exit_status:
-            workchain = self.ctx.workchains[-1]
-            self.out_many(self.exposed_outputs(workchain, self._next_workchain))
-
-        return
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.exit_status
-
-    def _fail_compat(self, *args, **kwargs):
-        """Method to handle general failures."""
-
-        if hasattr(self, 'fail'):
-            self.fail(*args, **kwargs)  # pylint: disable=no-member
-        else:
-            msg = '{}'.format(kwargs['exception'])
-            self.abort_nowait(msg)  # pylint: disable=no-member
-        return
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""

@@ -1,4 +1,8 @@
-"""Utilities for choosing appropriate element symbols for a chemical element"""
+""" # noqa: D205
+Utils for setting symbols on chemical elements
+----------------------------------------------
+Utilities for choosing appropriate element symbols for a chemical element.
+"""
 from lxml import html
 import requests
 
@@ -13,7 +17,7 @@ VERSION = {
 
 def get_recommendations(version_nr='latest', use_gw=False):
     """
-    Get recommendations for a certain type of PAW
+    Get recommendations for a certain type of PAW.
 
     :param version_nr: VASP version number
     :param use_gw: get recommendations for GW instead LDA pseudopotentials
@@ -33,8 +37,8 @@ def get_recommendations(version_nr='latest', use_gw=False):
 
 
 # pylint: disable=too-few-public-methods
-class PawInfo(object):
-    """Simple class to bundle and pass around info about a PAW"""
+class PawInfo(object):  # pylint: disable=useless-object-inheritance
+    """Simple class to bundle and pass around info about a PAW."""
 
     def __init__(self, symbol, default_enmax, valency):
         self.symbol = symbol
@@ -50,7 +54,7 @@ class PawInfo(object):
 
 def get_all(version_nr='latest', use_gw=False):
     """
-    Get recommendations for all symbols
+    Get recommendations for all symbols.
 
     :param version_nr: VASP version number
     :param use_gw:  Get recommendations for GW (default: LDA)
@@ -84,8 +88,8 @@ if __name__ == '__main__':
     DEF_GW = get_recommendations(use_gw=True)
     with open('default_paws.py', 'w') as defaults:
         defaults.write('lda = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.items()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.iteritems()])
+        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.items()])
         defaults.write('}\n\n')

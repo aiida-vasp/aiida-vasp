@@ -1,4 +1,8 @@
-"""Utilities for working with band structures"""
+""" # noqa: D205
+Utils for bands structures
+--------------------------
+Utilities for working with band structures.
+"""
 try:
     import matplotlib
     matplotlib.use('TKAgg')
@@ -69,7 +73,7 @@ def get_kp_labels(bands_node, kpoints_node=None):
 
 
 def get_efermi(calc):
-    """Get the fermi energy from a finished calculation"""
+    """Get the fermi energy from a finished calculation."""
     efermi = None
     if calc:
         p_res = calc.get_outputs_dict().get('results')
@@ -131,7 +135,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
 
 
 def plot_bands(bands_node, **kwargs):
-    """Plot a bandstructure node using matplotlib"""
+    """Plot a bandstructure node using matplotlib."""
     import numpy as np
 
     bands = bands_node.get_bands()
@@ -146,6 +150,6 @@ def plot_bands(bands_node, **kwargs):
         import itertools
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
-            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)
+            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member
     else:
         plt.plot(bands, **kwargs)
