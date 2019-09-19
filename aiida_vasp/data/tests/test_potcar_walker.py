@@ -1,5 +1,5 @@
 """
-Unit tests for data.potcar.PotcarWalker
+Unit tests for data.potcar.PotcarWalker.
 
 PotcarWalker recursively walks a directory and it's subdirectories,
 searching for POTCAR files, when it encounters a tar archive, it should be extracted to

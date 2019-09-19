@@ -107,7 +107,7 @@ def potcar_family(aiida_env, temp_pot_folder):
 
 @pytest.fixture
 def potentials(potcar_family):
-    """Fixture for two incomplete POTPAW potentials"""
+    """Fixture for two incomplete POTPAW potentials."""
     potcar_cls = get_data_class('vasp.potcar')
     potentials = potcar_cls.get_potcars_dict(['In', 'In_d', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
 
@@ -116,7 +116,7 @@ def potentials(potcar_family):
 
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, aiida_env):
-    """Fixture: StructureData or CifData"""
+    """Fixture: StructureData or CifData."""
     from aiida.plugins import DataFactory
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
@@ -149,7 +149,7 @@ def vasp_structure(request, aiida_env):
 
 @pytest.fixture()
 def vasp_structure_poscar(vasp_structure):
-    """Fixture: Well formed POSCAR contents"""
+    """Fixture: Well formed POSCAR contents."""
     aiida_structure = vasp_structure
     if isinstance(vasp_structure, get_data_class('cif')):
         ase_structure = vasp_structure.get_ase()
@@ -160,7 +160,7 @@ def vasp_structure_poscar(vasp_structure):
 
 @pytest.fixture(params=['mesh', 'list'])
 def vasp_kpoints(request, aiida_env):
-    """Fixture: (kpoints object, resulting KPOINTS)"""
+    """Fixture: (kpoints object, resulting KPOINTS)."""
     from aiida.plugins import DataFactory
     if request.param == 'mesh':
         kpoints = DataFactory('array.kpoints')()
@@ -297,7 +297,7 @@ def mock_vasp(aiida_env, localhost):
 
 @pytest.fixture()
 def vasp_chgcar(aiida_env):
-    """CHGCAR node and reference fixture"""
+    """CHGCAR node and reference fixture."""
     from aiida.plugins import DataFactory
     chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
@@ -308,7 +308,7 @@ def vasp_chgcar(aiida_env):
 
 @pytest.fixture()
 def vasp_wavecar(aiida_env):
-    """WAVECAR node and reference fixture"""
+    """WAVECAR node and reference fixture."""
     from aiida.plugins import DataFactory
     wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
@@ -338,7 +338,7 @@ def ref_win():
 
 @pytest.fixture()
 def ref_retrieved():
-    """Fixture: retrieved directory from an NSCF vasp run"""
+    """Fixture: retrieved directory from an NSCF vasp run."""
     from aiida.plugins import DataFactory
     retrieved = DataFactory('folder')()
     retrieved.put_object_from_tree(path=data_path('basic_run'))

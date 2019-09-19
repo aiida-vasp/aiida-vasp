@@ -263,7 +263,7 @@ def test_create_equivalence(potcar_family):
 
 
 def test_get_poctcars_dict(potcar_family):
-    """Test the keys are the same as the input element names"""
+    """Test the keys are the same as the input element names."""
     potcar_cls = get_data_class('vasp.potcar')
     elements = POTCAR_MAP.keys()
     mapping = POTCAR_MAP

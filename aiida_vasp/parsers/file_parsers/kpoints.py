@@ -85,7 +85,7 @@ class KpointsParser(BaseFileParser):
         return self._data_obj
 
     def _parse_file(self, inputs):
-        """Create a DB Node from a KPOINTS file"""
+        """Create a DB Node from a KPOINTS file."""
 
         result = inputs
         result = {}
@@ -138,7 +138,7 @@ class KpointsParser(BaseFileParser):
 
     @staticmethod
     def _get_kpointsdata_explicit(kpoints_dict):
-        """Turn an 'explicit' kpoints dictionary into Aiida KpointsData"""
+        """Turn an 'explicit' kpoints dictionary into Aiida KpointsData."""
         kpout = get_data_class('array.kpoints')()
 
         kpoints = kpoints_dict.get('points')

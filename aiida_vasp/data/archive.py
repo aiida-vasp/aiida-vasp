@@ -17,7 +17,7 @@ else:
 
 
 class ArchiveData(Data):
-    """Compressed archive data node, contains a group of files that don't need to be readily accessible on their own"""
+    """Compressed archive data node, contains a group of files that don't need to be readily accessible on their own."""
 
     def __init__(self, *args, **kwargs):
         self._filelist = []
@@ -36,7 +36,7 @@ class ArchiveData(Data):
         self._filelist.append((src_abs, dst_filename))
 
     def _make_archive(self):
-        """Create the archive file on disk with all it's contents"""
+        """Create the archive file on disk with all it's contents."""
         self.put_object_from_filelike(StringIO(), 'archive.tar.gz')
 
         archive = tarfile.open(fileobj=self.open('archive.tar.gz', mode='wb'), mode='w:gz')

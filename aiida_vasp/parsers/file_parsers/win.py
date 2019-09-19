@@ -1,4 +1,4 @@
-"""Utils to work with Wannier90 .win format"""
+"""Utils to work with Wannier90 .win format."""
 import re
 
 from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
@@ -19,7 +19,7 @@ class WinParser(KeyValueParser):
 
     @classmethod
     def parse_win(cls, fobj_or_str):
-        """Parse a wannier90 .win file"""
+        """Parse a wannier90 .win file."""
         if isinstance(fobj_or_str, str):
             content = fobj_or_str
         else:

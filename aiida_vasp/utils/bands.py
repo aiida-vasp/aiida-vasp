@@ -73,7 +73,7 @@ def get_kp_labels(bands_node, kpoints_node=None):
 
 
 def get_efermi(calc):
-    """Get the fermi energy from a finished calculation"""
+    """Get the fermi energy from a finished calculation."""
     efermi = None
     if calc:
         p_res = calc.get_outputs_dict().get('results')
@@ -135,7 +135,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
 
 
 def plot_bands(bands_node, **kwargs):
-    """Plot a bandstructure node using matplotlib"""
+    """Plot a bandstructure node using matplotlib."""
     import numpy as np
 
     bands = bands_node.get_bands()

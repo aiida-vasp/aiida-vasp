@@ -1,4 +1,4 @@
-"""Unittests for VaspCalculation"""
+"""Unittests for VaspCalculation."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import contextlib
 import os
@@ -25,7 +25,7 @@ def test_write_incar(vasp_calc_and_ref):
 
 @ONLY_ONE_CALC
 def test_write_potcar(vasp_calc_and_ref):
-    """Check that POTCAR is written correctly"""
+    """Check that POTCAR is written correctly."""
     vasp_calc, _ = vasp_calc_and_ref
 
     with managed_temp_file() as temp_file:
@@ -45,7 +45,7 @@ def test_write_potcar(vasp_calc_and_ref):
 
 @ONLY_ONE_CALC
 def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
-    """Test that CHGAR file is written correctly"""
+    """Test that CHGAR file is written correctly."""
     from aiida.common.folders import Folder
     chgcar, _ = vasp_chgcar
 
@@ -63,7 +63,7 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
 
 @ONLY_ONE_CALC
 def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
-    """Test that WAVECAR file is written correctly"""
+    """Test that WAVECAR file is written correctly."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
 
@@ -83,7 +83,7 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
 # pylint: disable=protected-access
 @ONLY_ONE_CALC
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
-    """Check that preparing creates all necessary files"""
+    """Check that preparing creates all necessary files."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
@@ -123,14 +123,14 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
 
 @ONLY_ONE_CALC
 def test_verify_success(vasp_calc_and_ref):
-    """Check that correct inputs are successfully verified"""
+    """Check that correct inputs are successfully verified."""
     vasp_calc, _ = vasp_calc_and_ref
     vasp_calc.verify_inputs()
 
 
 @ONLY_ONE_CALC
 def test_verify_fail(vasp_calc, vasp_inputs):
-    """Check that incorrect inputs are not verified"""
+    """Check that incorrect inputs are not verified."""
     inputs = vasp_inputs()
     inputs.pop('kpoints')
 

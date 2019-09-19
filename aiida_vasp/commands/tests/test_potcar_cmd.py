@@ -1,4 +1,4 @@
-"""Unit tests for vasp-potcar command family"""
+"""Unit tests for vasp-potcar command family."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 from __future__ import absolute_import
 from __future__ import print_function
@@ -58,7 +58,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
 
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
-    """Give a tar file as the source"""
+    """Give a tar file as the source."""
     path_option = '--path={}'.format(py_path.local(cmd_params.POTCAR_PATH).join('Ga.tar'))
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
@@ -114,7 +114,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
 
 
 def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
-    """Make sure --dry-run does not affect the db"""
+    """Make sure --dry-run does not affect the db."""
     from aiida.orm import Node, Group
     from aiida.orm.querybuilder import QueryBuilder
 

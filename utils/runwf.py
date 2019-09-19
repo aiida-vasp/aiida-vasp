@@ -8,7 +8,7 @@ load_dbenv()
 
 
 def get_parser():
-    """Create a cmdline parser for the tool"""
+    """Create a cmdline parser for the tool."""
     parser = argparse.ArgumentParser(description=('Run a vasp workflow reading parameters ' 'from a json file'))
     parser.add_argument(
         '--store-template', action='store_true', help=('store an input template '
@@ -22,10 +22,10 @@ def get_parser():
 
 
 def main():
-    """Write or read a workflow input file and start a workflow if requested"""
+    """Write or read a workflow input file and start a workflow if requested."""
     parser = get_parser()
     args = parser.parse_args()
-    from aiida.orm import WorkflowFactory
+    from aiida.plugins import WorkflowFactory
     from os.path import expanduser, abspath
     import json
     workflow_cls = WorkflowFactory(args.workflow)

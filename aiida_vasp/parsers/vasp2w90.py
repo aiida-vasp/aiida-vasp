@@ -11,7 +11,7 @@ from .vasp import VaspParser
 
 
 class Vasp2w90Parser(VaspParser):
-    """Parse a finished aiida_vasp.Vasp2w90Calculation"""
+    """Parse a finished aiida_vasp.Vasp2w90Calculation."""
 
     def parse_with_retrieved(self, retrieved):
         """The main parsing method called by AiiDA."""
@@ -61,7 +61,7 @@ class Vasp2w90Parser(VaspParser):
         return True, kpoints_node
 
     def set_node(self, name, node):
-        """Add a node if it is not None"""
+        """Add a node if it is not None."""
         if node is not None:
             self.add_node(name, node)  # pylint: disable=no-member
 

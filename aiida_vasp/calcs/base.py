@@ -125,7 +125,7 @@ class VaspCalcBase(CalcJob):
         super(VaspCalcBase, self).store(*args, **kwargs)
 
     def _prestore(self):  # pylint: disable=no-self-use
-        """Subclass hook for updating attributes etc, just before storing"""
+        """Subclass hook for updating attributes etc, just before storing."""
         return
 
     def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,

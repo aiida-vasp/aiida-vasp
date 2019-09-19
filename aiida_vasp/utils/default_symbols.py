@@ -17,7 +17,7 @@ VERSION = {
 
 def get_recommendations(version_nr='latest', use_gw=False):
     """
-    Get recommendations for a certain type of PAW
+    Get recommendations for a certain type of PAW.
 
     :param version_nr: VASP version number
     :param use_gw: get recommendations for GW instead LDA pseudopotentials
@@ -38,7 +38,7 @@ def get_recommendations(version_nr='latest', use_gw=False):
 
 # pylint: disable=too-few-public-methods
 class PawInfo(object):  # pylint: disable=useless-object-inheritance
-    """Simple class to bundle and pass around info about a PAW"""
+    """Simple class to bundle and pass around info about a PAW."""
 
     def __init__(self, symbol, default_enmax, valency):
         self.symbol = symbol
@@ -54,7 +54,7 @@ class PawInfo(object):  # pylint: disable=useless-object-inheritance
 
 def get_all(version_nr='latest', use_gw=False):
     """
-    Get recommendations for all symbols
+    Get recommendations for all symbols.
 
     :param version_nr: VASP version number
     :param use_gw:  Get recommendations for GW (default: LDA)

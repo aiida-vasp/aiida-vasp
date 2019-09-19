@@ -10,7 +10,7 @@ BANDS_CLS = DataFactory('array.bands')
 
 
 def _firstspin(bands):
-    """Get only the bands for the first spin if multiple are contained"""
+    """Get only the bands for the first spin if multiple are contained."""
     if bands.ndim not in [2, 3]:
         raise ValueError('invalid input')
     if bands.ndim == 3:
@@ -195,7 +195,7 @@ def bands_error(bands1, bands2):
 # pylint: disable=too-many-locals
 def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     """
-    Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters
+    Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters.
 
     :param vasp_bands: band structure output node from vasp calculation
     :param wannier_bands_list: list of band structure output nodes from wannier90 calculations
@@ -249,14 +249,14 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
 
 
 def compare_from_window_wf(workflow, **kwargs):
-    """Find the relevant bands in the window workflow and compare them"""
+    """Find the relevant bands in the window workflow and compare them."""
     wblist = [v for k, v in workflow.get_results().iteritems() if 'bands_' in k]
     vbands = workflow.get_result('reference_bands')
     return compare_bands(vasp_bands=vbands, wannier_bands_list=wblist, **kwargs)
 
 
 def plot_errors_vs_iwsize(comparison_info):
-    """Plot Band structure errors versus size of the inner window parameter for wannier90"""
+    """Plot Band structure errors versus size of the inner window parameter for wannier90."""
     import numpy as np
     import aiida_vasp.utils.bands as btool
     ows = []

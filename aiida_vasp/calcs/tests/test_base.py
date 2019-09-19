@@ -1,7 +1,6 @@
-"""Unit tests for aiida_vasp.calcs.base"""
+"""Unit tests for aiida_vasp.calcs.base."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest
-from aiida_vasp.utils.fixtures import *
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
@@ -17,16 +16,9 @@ def test_generate_base_calc(base_calc):
     runner = manager.get_runner()
     inputs = AttributeDict()
 
-    metadata = AttributeDict({
-        'options': {
-            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
-        }
-    })
+    metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
 
     inputs.metadata = metadata
 
     with pytest.raises(ValueError):
         instantiate_process(runner, VaspCalcBase, **inputs)
-
-
-

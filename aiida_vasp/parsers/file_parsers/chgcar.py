@@ -25,7 +25,7 @@ class ChgcarParser(BaseFileParser):
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
-        """Create a DB Node for the CHGCAR file"""
+        """Create a DB Node for the CHGCAR file."""
         result = inputs
         result = {}
 

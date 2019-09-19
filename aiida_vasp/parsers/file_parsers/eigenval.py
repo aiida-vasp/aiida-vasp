@@ -36,7 +36,7 @@ class EigParser(BaseFileParser):
         return self._data_obj
 
     def _parse_file(self, inputs):
-        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
+        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array."""
 
         result = inputs.get('settings', {})
         result = {}
@@ -50,7 +50,7 @@ class EigParser(BaseFileParser):
 
     # pylint: disable=too-many-locals
     def _read_eigenval(self):
-        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array"""
+        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array."""
 
         with open(self._data_obj.path) as eig:
             line_0 = self.line(eig, int)  # read header

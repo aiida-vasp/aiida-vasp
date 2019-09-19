@@ -323,17 +323,17 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def original_file_name(self):
-        """The name of the original file uploaded into AiiDA"""
+        """The name of the original file uploaded into AiiDA."""
         return self.get_attribute('original_filename')
 
     @property
     def full_name(self):
-        """The name of the original file uploaded into AiiDA"""
+        """The name of the original file uploaded into AiiDA."""
         return self.get_attribute('full_name')
 
     @property
     def potential_set(self):
-        """The name of the original file uploaded into AiiDA"""
+        """The name of the original file uploaded into AiiDA."""
         return self.get_attribute('potential_set')
 
     def verify_unique(self):

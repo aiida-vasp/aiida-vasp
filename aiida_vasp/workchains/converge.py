@@ -1220,10 +1220,7 @@ class ConvergeWorkChain(WorkChain):
         """
         Check if plane wave cutoffs are converged to the specified value.
 
-        Returns
-        -------
-        encut : float
-            The converged plane wave cutoff in eV
+        :return encut: The converged plane wave cutoff in eV
 
         """
 
@@ -1262,10 +1259,7 @@ class ConvergeWorkChain(WorkChain):
         """
         Check if the k-point grid are converged to the specified value.
 
-        Returns
-        -------
-        kgrid : (3) list of int
-            The converged k-point grid sampling in each direction.
+        :return kgrid: The converged k-point grid sampling in each direction.
 
         """
         if k_data is None:

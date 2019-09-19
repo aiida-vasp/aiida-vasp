@@ -108,7 +108,7 @@ def vasp2w90_calc(vasp_inputs):
 
 @pytest.fixture
 def vasp_calc_and_ref(vasp_calc, vasp_kpoints, ref_incar):
-    """Fixture for non varying setup of a vasp calculation"""
+    """Fixture for non varying setup of a vasp calculation."""
     calc = vasp_calc(settings={'parser_settings': {'add_bands': True, 'add_dos': True}})
     _, ref_kpoints = vasp_kpoints
 
@@ -117,7 +117,7 @@ def vasp_calc_and_ref(vasp_calc, vasp_kpoints, ref_incar):
 
 @pytest.fixture
 def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_incar_vasp2w90, ref_win):
-    """Fixture for non varying setup of a vasp2w90 calculation"""
+    """Fixture for non varying setup of a vasp2w90 calculation."""
 
     inputs = vasp2w90_inputs(settings={'parser_settings': {'add_bands': True, 'add_dos': True, 'poscar_precision': 12}})
 
@@ -129,7 +129,7 @@ def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_inca
 
 @pytest.fixture()
 def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
-    """Fixture: vasp calc with chgcar and wavecar given"""
+    """Fixture: vasp calc with chgcar and wavecar given."""
     calc, ref = vasp_calc_and_ref
     chgcar, ref_chgcar = vasp_chgcar
     wavecar, ref_wavecar = vasp_wavecar

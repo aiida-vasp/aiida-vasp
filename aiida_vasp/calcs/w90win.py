@@ -6,7 +6,7 @@ Utility to convert raw input data to .win format.
 
 
 class DictToWin(object):  # pylint: disable=useless-object-inheritance
-    """Format parameters given in a dictionary into Wannier90 .win format"""
+    """Format parameters given in a dictionary into Wannier90 .win format."""
 
     @classmethod
     def _bool(cls, val):
@@ -14,7 +14,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def _seq(cls, val):
-        """String format a sequence"""
+        """String format a sequence."""
         res = []
         for i in val:
             if not isinstance(i, (list, tuple)):
@@ -38,7 +38,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def _value(cls, val):
-        """String format a value of any compatible scalar type"""
+        """String format a value of any compatible scalar type."""
         if isinstance(val, (str, unicode)):  # pylint: disable=undefined-variable
             return val
         if isinstance(val, bool):

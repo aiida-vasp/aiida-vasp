@@ -69,21 +69,11 @@ def fetch_k_grid(rec_cell, k_spacing):
     """
     Suggest a sensible k-point sampling based on a supplied spacing.
 
-    Parameters
-    ----------
-    rec_cell : ndarray
-        A two dimensional ndarray of floats defining the reciprocal lattice with each
-        vector as row elements.
-    k_spacing : float
-        The k-point spacing.
+    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector as row elements.
+    :param k_spacing: The k-point spacing.
 
-    Returns
-    -------
-    kgrid : (3) list of int
-        The k-point grid given the supplied `rec_cell` and `kstep`
+    :return kgrid: The k-point grid given the supplied `rec_cell` and `kstep`
 
-    Notes
-    -----
     This is usable for instance when performing
     plane wave cutoff convergence tests without a base k-point grid.
 

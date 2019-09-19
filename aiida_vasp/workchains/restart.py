@@ -16,7 +16,7 @@ from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_cod
 
 class BaseRestartWorkChain(WorkChain):
     """
-    Base restart workchain
+    Base restart workchain.
 
     This workchain serves as the starting point for more complex workchains that will be designed to
     run a calculation that might need multiple restarts to come to a successful end. These restarts

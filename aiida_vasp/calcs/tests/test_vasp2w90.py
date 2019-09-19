@@ -1,4 +1,4 @@
-"""Unittests for Vasp2w90Calculation"""
+"""Unittests for Vasp2w90Calculation."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 from __future__ import absolute_import
 from __future__ import print_function

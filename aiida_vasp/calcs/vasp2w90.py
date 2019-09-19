@@ -29,7 +29,7 @@ class Vasp2w90Calculation(VaspCalculation):
             help='Projections to be defined in the Wannier90 input file.')
 
     def write_win(self, dst):
-        """Write Wannier90 input file"""
+        """Write Wannier90 input file."""
         write_win(filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
 
     @staticmethod

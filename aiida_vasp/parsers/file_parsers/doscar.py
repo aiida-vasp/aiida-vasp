@@ -43,7 +43,7 @@ class DosParser(BaseFileParser):
         self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
-        """Read a VASP DOSCAR file and extract metadata and a density of states data array"""
+        """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
 
         result = inputs
         result = {}
@@ -64,7 +64,7 @@ class DosParser(BaseFileParser):
 
     # pylint: disable=too-many-locals
     def _read_doscar(self):
-        """Read a VASP DOSCAR file and extract metadata and a density of states data array"""
+        """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
 
         with open(self._data_obj.path) as dos:
             num_ions, num_atoms, p00, p01 = self.line(dos, int)

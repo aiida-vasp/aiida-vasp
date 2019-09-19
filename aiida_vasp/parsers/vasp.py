@@ -207,7 +207,7 @@ class VaspParser(BaseParser):
         return {quantity: self._output_nodes.get(quantity)}
 
     def _set_node(self, node_name, node):
-        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname"""
+        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
 
         if node is None:
             return False

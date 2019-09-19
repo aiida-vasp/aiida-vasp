@@ -9,12 +9,12 @@ from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 class BaseParser(object):  # pylint: disable=useless-object-inheritance
-    """Common codebase for all parser utilities"""
+    """Common codebase for all parser utilities."""
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
     @classmethod
     def line(cls, fobj_or_str, d_type=str):
-        """Grab a line from a file object or string and convert it to d_type (default: str)"""
+        """Grab a line from a file object or string and convert it to d_type (default: str)."""
         if isinstance(fobj_or_str, str):
             line = fobj_or_str
         else:
@@ -37,7 +37,9 @@ class BaseParser(object):  # pylint: disable=useless-object-inheritance
 
 class BaseFileParser(BaseParser):
     """
-    Abstract base class for the individual file parsers. It provides the following interface to be used by the VaspParser:
+    Abstract base class for the individual file parsers.
+
+    It provides the following interface to be used by the VaspParser:
 
         - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
           as the required information on how to extract those.
@@ -290,7 +292,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def float_unit(cls, string_):
-        """Parse string into a float number with attached unit"""
+        """Parse string into a float number with attached unit."""
         vals = string_.split()
         value = float(vals.pop(0))
         unit = vals.pop(0) if vals else ''
@@ -324,7 +326,7 @@ class KeyValueParser(BaseParser):
 
     @classmethod
     def bool(cls, string_):
-        """Parse string into a boolean value"""
+        """Parse string into a boolean value."""
         vals = string_.split()
         bool_str = vals.pop(0)
         if re.match(cls.bool_true, bool_str):

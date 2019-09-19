@@ -1,4 +1,4 @@
-"""Test the BaseFileParser"""
+"""Test the BaseFileParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,protected-access
 
 import pytest
