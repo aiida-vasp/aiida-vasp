@@ -91,6 +91,9 @@ todo_include_todos = True
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
     html_theme = 'default'
+    from aiida.manage import configuration
+    configuration.IN_RT_DOC_MODE = True
+    configuration.BACKEND = 'django'
 else:
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
