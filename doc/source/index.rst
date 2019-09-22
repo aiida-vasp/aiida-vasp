@@ -33,6 +33,20 @@ Tested with VASP 5.4.4.
 
 .. toctree::
    :maxdepth: 1
+   :caption: Tutorials
+   :hidden:
+
+   tutorials/python_introduction
+   tutorials/core_concepts
+   tutorials/a_daily_life
+   tutorials/bulk_modulus
+   tutorials/relaxations
+   tutorials/convergence_tests
+   tutorials/band_structure_electrons
+   tutorials/band_structure_phonons
+
+.. toctree::
+   :maxdepth: 1
    :caption: Concepts
    :hidden:
 
