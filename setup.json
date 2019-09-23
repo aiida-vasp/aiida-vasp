@@ -33,8 +33,8 @@
             "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain",
             "vasp.verify = aiida_vasp.workchains.verify:VerifyWorkChain",
             "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
-	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
-	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
+            "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
+            "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
             "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain",
             "vasp.bulkmodulus = aiida_vasp.workchains.bulkmodulus:BulkModulusWorkChain"
         ],
@@ -93,5 +93,5 @@
         "reentry"
     ],
     "url": "https://github.com/aiida-vasp/aiida-vasp",
-    "version": "0.2.4"
+    "version": "0.3.0"
 }
