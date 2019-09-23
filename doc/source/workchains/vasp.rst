@@ -4,9 +4,6 @@
 VASP workchain
 ==============
 
-.. aiida-workchain:: VaspWorkChain
-   :module: aiida_vasp.workchains.vasp
-
 Required inputs
 ^^^^^^^^^^^^^^^
 
