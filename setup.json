@@ -1,46 +1,47 @@
 {
-    "author": "Espen Flage-Larsen", 
-    "author_email": "espen.flage-larsen@sintef.no", 
+    "author": "Espen Flage-Larsen",
+    "author_email": "espen.flage-larsen@sintef.no",
     "classifiers": [
-        "Development Status :: 3 - Alpha", 
-        "Environment :: Plugins", 
+        "Development Status :: 3 - Alpha",
+        "Environment :: Plugins",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License", 
-        "Programming Language :: Python :: 2.7", 
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 2.7",
         "Topic :: Scientific/Engineering :: Physics"
-    ], 
-    "description": "AiiDA Plugin for running VASP calculations.", 
+    ],
+    "description": "AiiDA Plugin for running VASP calculations.",
     "entry_points": {
         "aiida.calculations": [
-            "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation", 
+            "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation",
             "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
-        ], 
+        ],
         "aiida.cmdline.data": [
             "vasp-potcar = aiida_vasp.commands.potcar:potcar"
-        ], 
+        ],
         "aiida.data": [
-            "vasp.archive = aiida_vasp.data.archive:ArchiveData", 
-            "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData", 
-            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData", 
-            "vasp.potcar = aiida_vasp.data.potcar:PotcarData", 
+            "vasp.archive = aiida_vasp.data.archive:ArchiveData",
+            "vasp.chargedensity = aiida_vasp.data.chargedensity:ChargedensityData",
+            "vasp.wavefun = aiida_vasp.data.wavefun:WavefunData",
+            "vasp.potcar = aiida_vasp.data.potcar:PotcarData",
             "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
-        ], 
+        ],
         "aiida.parsers": [
-            "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser", 
+            "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser",
             "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
-        ], 
+        ],
         "aiida.workflows": [
-            "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain", 
-            "vasp.verify = aiida_vasp.workchains.verify:VerifyWorkChain", 
+            "vasp.vasp = aiida_vasp.workchains.vasp:VaspWorkChain",
+            "vasp.verify = aiida_vasp.workchains.verify:VerifyWorkChain",
             "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
 	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
-            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain" 
-        ], 
+            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain",
+            "vasp.bulkmodulus = aiida_vasp.workchains.bulkmodulus:BulkModulusWorkChain"
+        ],
         "console_scripts": [
             "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
         ]
-    }, 
+    },
     "extras_require": {
         "dev": [
             "pre-commit == 1.14.4",
@@ -53,44 +54,44 @@
             "pytest-cov == 2.6.1",
             "pgtest == 1.2.0",
             "packaging"
-        ], 
+        ],
         "graphs": [
             "matplotlib"
-        ], 
+        ],
         "regen_default_paws": [
             "lxml"
-        ], 
+        ],
         "wannier": [
             "aiida-wannier90"
         ]
-    }, 
-    "include_package_data": true, 
+    },
+    "include_package_data": true,
     "install_requires": [
-        "aiida-core[atomic_tools] == 1.0.0b6", 
-        "ase", 
-        "scipy", 
-        "pymatgen", 
-        "subprocess32", 
-        "click", 
-        "chainmap", 
-        "six", 
+        "aiida-core[atomic_tools] == 1.0.0b6",
+        "ase",
+        "scipy",
+        "pymatgen",
+        "subprocess32",
+        "click",
+        "chainmap",
+        "six",
         "pyparsing",
         "py == 1.5.4",
-        "lxml", 
+        "lxml",
         "distro",
         "packaging",
         "distro",
         "parsevasp >= 0.4.2"
-    ], 
-    "license": "MIT License, see LICENSE.txt file.", 
-    "name": "aiida-vasp", 
-    "reentry_register": true, 
+    ],
+    "license": "MIT License, see LICENSE.txt file.",
+    "name": "aiida-vasp",
+    "reentry_register": true,
     "scripts": [
         "utils/runwf.py"
-    ], 
+    ],
     "setup_requires": [
         "reentry"
-    ], 
-    "url": "https://github.com/aiida-vasp/aiida-vasp", 
+    ],
+    "url": "https://github.com/aiida-vasp/aiida-vasp",
     "version": "0.2.4"
 }
