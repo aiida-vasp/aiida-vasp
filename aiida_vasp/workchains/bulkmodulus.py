@@ -45,65 +45,56 @@ class BulkModulusWorkChain(WorkChain):
         super(BulkModulusWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain)
         spec.outline(
+            cls.initialize,
             cls.run_relax,
             cls.run_two_volumes,
-            cls.calc_bulk_modulus
+            cls.calc_bulk_modulus,
         )
         spec.output('bulk_modulus', valid_type=Float)
 
-    def run_relax(self):
+    def initialize(self):
+        self.report("initialize")
         self.ctx.inputs = AttributeDict()
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
+
+    def run_relax(self):
         self.report("run_relax")
         Workflow = WorkflowFactory('vasp.relax')
         builder = Workflow.get_builder()
-        builder.code = self.ctx.inputs.code
-        builder.parameters = self.ctx.inputs.parameters
-        builder.structure = self.ctx.inputs.structure
-        builder.settings = self.ctx.inputs.settings
-        builder.potential_family = self.ctx.inputs.potential_family
-        builder.potential_mapping = self.ctx.inputs.potential_mapping
-        builder.kpoints = self.ctx.inputs.kpoints
-        builder.options = self.ctx.inputs.options
-        builder.metadata.label = self.ctx.inputs.metadata.label + " relax"
-        builder.metadata.description = self.ctx.inputs.metadata.label + " relax"
-        builder.clean_workdir = self.ctx.inputs.clean_workdir
-        builder.relax = Bool(True)
-        builder.force_cutoff = self.ctx.inputs.force_cutoff
-        builder.convergence_on = self.ctx.inputs.convergence_on
-        builder.convergence_volume = self.ctx.inputs.convergence_volume
-        builder.convergence_max_iterations = self.ctx.inputs.convergence_max_iterations
-        builder.relax_parameters = self.ctx.inputs.relax_parameters
-        builder.verbose = self.ctx.inputs.verbose
+        for key in self.ctx.inputs:
+            builder[key] = self.ctx.inputs[key]
+        if 'label' in self.ctx.inputs.metadata:
+            label = self.ctx.inputs.metadata['label'] + " relax"
+            builder.metadata['label'] = label
+        if 'description' in self.ctx.inputs.metadata:
+            description = self.ctx.inputs.metadata['description'] + " relax"
+            builder.metadata['description'] = description
         future = self.submit(builder)
         self.to_context(**{'relax': future})
 
     def run_two_volumes(self):
         self.report("run_two_volumes")
         for strain, future_name in zip((0.99, 1.01), ('minus', 'plus')):
-            Workflow = WorkflowFactory('vasp.verify')
+            Workflow = WorkflowFactory('vasp.relax')
             builder = Workflow.get_builder()
-            builder.code = self.ctx.inputs.code
-            parameters_dict = self.ctx.inputs.parameters.get_dict()
-            relax_parameters_dict = self.ctx.inputs.relax_parameters.get_dict()
-            parameters_dict.update(relax_parameters_dict)
-            parameters_dict.update({'IBRION': 2,
-                                    'ISIF': 4})
+            for key in self.ctx.inputs:
+                builder[key] = self.ctx.inputs[key]
+            if 'label' in self.ctx.inputs.metadata:
+                label = self.ctx.inputs.metadata['label'] + " " + future_name
+                builder.metadata['label'] = label
+            if 'description' in self.ctx.inputs.metadata:
+                description = self.ctx.inputs.metadata['description']
+                description += " " + future_name
+                builder.metadata['description'] = description
             structure = get_strained_structure(
                 self.ctx['relax'].outputs.structure_relaxed,
                 Float(strain))
-            builder.parameters = Dict(dict=parameters_dict)
             builder.structure = structure
-            builder.settings = self.ctx.inputs.settings
-            builder.potential_family = self.ctx.inputs.potential_family
-            builder.potential_mapping = self.ctx.inputs.potential_mapping
-            builder.kpoints = self.ctx.inputs.kpoints
-            builder.options = self.ctx.inputs.options
-            label = self.ctx.inputs.metadata.label + " %s" % future_name
-            builder.metadata.label = label
-            builder.metadata.description = label
-            builder.clean_workdir = self.ctx.inputs.clean_workdir
-            builder.verbose = self.ctx.inputs.verbose
+            builder.force_cutoff = Float(1e-8)
+            builder.positions = Bool(True)
+            builder.shape = Bool(True)
+            builder.volume = Bool(False)
+            builder.convergence_on = Bool(False)
             future = self.submit(builder)
             self.to_context(**{future_name: future})
 
