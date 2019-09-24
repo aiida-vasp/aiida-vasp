@@ -15,7 +15,7 @@ General comments about the user documentation and support
 
 If you already use Python chances are you have a working system to manage your virtual environments. Please note that `AiiDA`_ as well as this plugin are tested with both ``virtualenv``, ``conda`` and ``virtualenvwrapper``. Since Python 2 is soon to be deprecated the documentation are written assuming Python 3.6 or later is present and working. However, `AiiDA`_ and AiiDA-VASP are compatible with Python 2 in case you prefer. If that is the case you should be able to translate the procedures that are different to Python 2. In the documentation we will assume you are working with ``virtualenv``. which is also bundled with Python 3.
 
-Tested with VASP 5.4.4. 
+Tested with VASP 5.4.4.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
@@ -44,6 +44,7 @@ Tested with VASP 5.4.4.
    tutorials/band_structure_electrons
    tutorials/band_structure_phonons
    tutorials/bulk_modulus
+   tutorials/bulk_modulus_2
 
 .. toctree::
    :maxdepth: 1
@@ -61,7 +62,7 @@ Tested with VASP 5.4.4.
    :maxdepth: 1
    :caption: Workflows
    :hidden:
-      
+
    workflows/using_workflows
    workflows/designing_workflows
 
@@ -73,7 +74,7 @@ Tested with VASP 5.4.4.
    calculations/vasp
    calculations/wannier
    calculations/immigrator
-   
+
 .. toctree::
    :maxdepth: 1
    :caption: Workchains
@@ -101,4 +102,3 @@ Tested with VASP 5.4.4.
    :hidden:
 
    api/aiida_vasp
-      

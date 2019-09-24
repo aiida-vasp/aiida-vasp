@@ -1,8 +1,8 @@
 .. _a_daily_life:
 
-========================================
-A daily life with AiiDA-VASP calculation
-========================================
+============================
+A daily life with AiiDA-VASP
+============================
 
 
 Here some tips are presented to make our AiiDA-VASP life easy. These
@@ -114,7 +114,7 @@ the verdi tab-completion following `this documentation
                  val.attributes_keys           val.clear_extras
 
 DataFactory and WorkflowFactory
-----------------------------------------
+-------------------------------
 
 These are methods that return classes. These method names have
 "Factory" in them. This is from the factory method pattern, one of the
@@ -181,3 +181,33 @@ attributes, i.e.,
 instead of writing ``inputs['label'] = "My label"``. The advantage of
 use of ProcessBuilder is that we can use tab completion on the
 interactive mode.
+
+
+Group and QueryBuilder
+----------------------
+
+Once we start daily use of AiiDA to run VASP calculations, we will
+meet the problem how to remember the location of results. We are
+familier with handling files in directories/folders on conventional
+file system, but the data in AiiDA are stored in the database.
+
+Group
+^^^^^
+
+The initial easiest choice to get similar feeling to directories is
+the use of Group. We make groups (``verdi group create``) and put
+workchain nodes into them. The details are found at the `official
+documentation
+<https://aiida-core.readthedocs.io/en/latest/working_with_aiida/groups.html>`_.
+
+QueryBuilder
+^^^^^^^^^^^^
+
+The next step is the use of QueryBuilder. This offers to search nodes
+with given hints such as label, created time, and node type. This
+definitely provides flexible search of data. For the begginers, it may
+be painful to use it, however we have to learn how to use it for our
+vigorous life. The official documentation for QueryBuilder is found
+`here
+<https://aiida-core.readthedocs.io/en/latest/working_with_aiida/index.html#querying-data>`_,
+but the `tutorial material <https://aiida-tutorials.readthedocs.io/en/tutorial_sintef/pages/2019_SINTEF/sections/querybuilder.html>`_ would give a better catch.

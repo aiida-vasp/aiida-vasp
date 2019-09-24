@@ -1,50 +1,28 @@
 .. _bulk_modulus:
 
-=================================
-Example: Bulk modulus calculation
-=================================
+===========================
+Writing bulk modulus script
+===========================
+
+This section presents an example to calculate bulk modulus of wurtzite
+AlN using a python script with launching several AiiDA-VASP
+workchains. In the script, QueryBuilder and Group are used to manage
+the workflow of this calculation.
 
 
-Use of Group and QueryBuilder of AiiDA
----------------------------------------
-
-Once we start daily use of AiiDA to run VASP calculations, we will
-meet the problem how to remember the location of results. We are
-familier with handling files in directories/folders on conventional
-file system, but the data in AiiDA are stored in the database.
-
-Group
-^^^^^
-
-The initial easiest choice to get similar feeling to directories is
-the use of Group. We make groups (``verdi group create``) and put
-workchain nodes into them. The details are found at the `official
-documentation
-<https://aiida-core.readthedocs.io/en/latest/working_with_aiida/groups.html>`_.
-
-QueryBuilder
-^^^^^^^^^^^^
-
-The next step is the use of QueryBuilder. This offers to search nodes
-with given hints such as label, created time, and node type. This
-definitely provides flexible search of data. For the begginers, it may
-be painful to use it, however we have to learn how to use it for our
-vigorous life. The official documentation for QueryBuilder is found
-`here
-<https://aiida-core.readthedocs.io/en/latest/working_with_aiida/index.html#querying-data>`_,
-but the `tutorial material <https://aiida-tutorials.readthedocs.io/en/tutorial_sintef/pages/2019_SINTEF/sections/querybuilder.html>`_ would give a better catch.
-
-Running VASP calculations after VASP relax calculation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Workflow
+--------
 
 Here one example is presented. Bulk modulus is calculated by the
 following steps (the full script is attached at the end of this page):
 
-1. Run VASP relax workchain
+1. Run a relax workchain to fully relax crystal structure
 2. Wait until (1) finishes
-3. Submit two VASP calculations with ``ISIF=4`` to get stresses at volume
-   ratios of 0.99 and 1.01 with respect to the relaxed structure.
-4. Compute bulk modulus as a post process by the formula :math:`K \simeq -V_0
+3. Create two structures at fixed volumes with +/- 1% from the relaxed
+   structure obtained at the step (1).
+4. Submit two relax workchains to relax shapes of the crystal
+   structures created at the step (3).
+5. Compute bulk modulus as a post process by the formula :math:`K \simeq -V_0
    \frac{\Delta P}{\Delta  V}`
 
 If this calculation will be done repeated and robustly, the workflow
