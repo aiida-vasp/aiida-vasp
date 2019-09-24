@@ -1,9 +1,5 @@
 .. _relax_workchain:
 
-.. aiida-workchain:: RelaxWorkChain
-    :module: aiida_vasp.workchains.relax
-    :hide-nondb-inputs:
-
 Relax workchain
 ===============
 

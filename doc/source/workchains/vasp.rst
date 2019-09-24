@@ -1,9 +1,5 @@
 .. _vasp_workchain:
 
-.. aiida-workchain:: VaspWorkChain
-    :module: aiida_vasp.workchains.vasp
-    :hide-nondb-inputs:
-
 ==============
 VASP workchain
 ==============
