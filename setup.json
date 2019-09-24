@@ -35,8 +35,7 @@
             "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
             "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
             "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
-            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain",
-            "vasp.bulkmodulus = aiida_vasp.workchains.bulkmodulus:BulkModulusWorkChain"
+            "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain"
         ],
         "console_scripts": [
             "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
