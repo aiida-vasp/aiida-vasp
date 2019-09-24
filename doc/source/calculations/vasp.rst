@@ -4,10 +4,6 @@
 VASP calculation
 ================
 
-.. aiida-calcjob:: VaspCalculation
-   :module: aiida_vasp.calcs.vasp
-				
-
 Inputs
 ------
 

@@ -2,9 +2,6 @@
 
 Relax workchain
 ===============
-.. aiida-workchain:: RelaxWorkChain
-   :module: aiida_vasp.workchains.relax
-				 
 
 Running a single relaxation
 ----------------------------
