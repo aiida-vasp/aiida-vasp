@@ -36,14 +36,14 @@ Tested with VASP 5.4.4.
    :caption: Tutorials
    :hidden:
 
-   tutorials/python_introduction
    tutorials/core_concepts
    tutorials/a_daily_life
-   tutorials/bulk_modulus
+   tutorials/run_vasp
    tutorials/relaxations
    tutorials/convergence_tests
    tutorials/band_structure_electrons
    tutorials/band_structure_phonons
+   tutorials/bulk_modulus
 
 .. toctree::
    :maxdepth: 1

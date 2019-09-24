@@ -5,6 +5,11 @@ A daily life with AiiDA-VASP calculation
 ========================================
 
 
+Here some tips are presented to make our AiiDA-VASP life easy. These
+below are all explained in AiiDA documentation and also in AiiDA
+tutorials, but some of them are picked up here.
+
+
 Python interactive shell and ipython
 ------------------------------------
 
@@ -45,8 +50,8 @@ as explained below, ``ipython`` is used via ``verdi shell`` command
 to interact with AiiDA.
 
 
-``verdi shell``
----------------
+verdi shell
+-----------
 
 If AiiDA core is properly installed and set-up, we are ready to use
 ``verdi shell`` command. This invokes ``ipython`` with loading AiiDA
@@ -108,7 +113,7 @@ the verdi tab-completion following `this documentation
                  val.attributes_items          val.clear_attributes
                  val.attributes_keys           val.clear_extras
 
-``DataFactory`` and ``WorkflowFactory``
+DataFactory and WorkflowFactory
 ----------------------------------------
 
 These are methods that return classes. These method names have
@@ -133,7 +138,7 @@ AiiDA Dict, we have to instantiate it by::
 
 
 
-``ProcessBuilder``
+ProcessBuilder
 ------------------
 
 For WorkChain and CalcJob, we can take so called ProcessBuilder,
@@ -176,89 +181,3 @@ attributes, i.e.,
 instead of writing ``inputs['label'] = "My label"``. The advantage of
 use of ProcessBuilder is that we can use tab completion on the
 interactive mode.
-
-
-Symmetrization of crystal structure
------------------------------------
-
-It is recommended to well symmetrize the crystal strucutre of interest
-if the space group type is known. This can be done by using
-spglib. Spglib with python interface can be installed either pip or
-conda, e.g.::
-
-   % pip install spglib
-
-or::
-
-   % conda install -c conda-forge spglib
-
-The usage of spglib is found at https://atztogo.github.io/spglib/.
-
-For example, POSCAR of wurtzite-AlN structure can be obtained from
-the Materials project database,
-https://materialsproject.org/materials/mp-661/#, which is::
-
-   Al2 N2
-   1.0
-   3.128588 0.000000 0.000000
-   -1.564294 2.709437 0.000000
-   0.000000 0.000000 5.016955
-   Al N
-   2 2
-   direct
-   0.333333 0.666667 0.999287 Al
-   0.666667 0.333333 0.499287 Al
-   0.333333 0.666667 0.380713 N
-   0.666667 0.333333 0.880713 N
-
-This is already symmetrized but we can symmetrize more if we
-want more number of digits for :math:`\sqrt{3}` and
-:math:`\frac{1}{3}` that appear in hexagonal crystals.
-An ad-hoc script to symmetrize this may be::
-
-   import numpy as np
-   import spglib
-
-   poscar_lines = """ Al2 N2
-   1.0
-   3.128588 0.000000 0.000000
-   -1.564294 2.709437 0.000000
-   0.000000 0.000000 5.016955
-   Al N
-   2 2
-   direct
-   0.333333 0.666667 0.999287 Al
-   0.666667 0.333333 0.499287 Al
-   0.333333 0.666667 0.380713 N
-   0.666667 0.333333 0.880713 N""".splitlines()
-
-   lattice = np.genfromtxt(poscar_lines[2:5]).reshape(3, 3)
-   points = np.genfromtxt(poscar_lines[8:12]).reshape(4, -1)[:, :3]
-   numbers = [13, 13, 7, 7]
-   cell = (lattice, points, numbers)
-
-   sym_cell = spglib.refine_cell(cell)
-
-The space group type is found by
-``print(spglib.get_spacegroup(cell))``, which should give ``P6_3mc
-(186)``  in this example, and we have to be sure at least that this is
-the correct one. Then, with::
-
-   np.set_printoptions(precision=15)
-   [print(sym_cell[i]) for i in range(3)]
-
-we see::
-
-   [[ 3.128588135976751  0.                 0.               ]
-    [-1.564294067988376  2.70943680373447   0.               ]
-    [ 0.                 0.                 5.016955         ]]
-   [[0.333333333333333 0.666666666666667 0.999287         ]
-    [0.666666666666667 0.333333333333333 0.499287         ]
-    [0.333333333333333 0.666666666666667 0.380713         ]
-    [0.666666666666667 0.333333333333333 0.880713         ]]
-   [13 13  7  7]
-
-The third value of the atomic position, e.g., ``0.999287``, may be
-expected to be zero by feeling, but this is not possible to be done by
-spglib, because it has freedome against rigid shift along c that
-doesn't alter the symmetry.
