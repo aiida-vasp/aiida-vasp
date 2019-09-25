@@ -28,7 +28,19 @@ Please follow these steps to get set up AiiDA-VASP.
 
      pip install aiida-vasp
 
-8. Now we need to upload the potentials. For this tutorial we only need the VASP tutorial POTCAR files.
+8. Now we need to upload the potentials. For this tutorial we only need the VASP tutorial POTCAR files::
 
+     wget https://github.com/aiida-vasp/aiida-vasp/blob/develop/tutorials/vasp_potentials.tar.gz
+
+9. Untar it::
+
+     tar xvzf vasp_potentials.tar.gz
+
+10. Go into the ``vasp_potentials`` directory. We will now upload the potentials using the custom commands created for the POTCAR data types.::
+
+      verdi data vasp-potcar uploadfamily --name pbe --description "A few tutorial PBE potentials"
+
+11. This will upload the potentials into the database and hash them. E.g. you will not be able to have multiple entries of one potential in the database. Also, in the calculations, only the hash is used such that the POTCAR data (which is covered by license) is not revealed. This should complete with a message that 3 potentials was found and uploaded. You are now ready to try a few calculations in AiiDA-VASP.
+   
 .. _reset your password: https://www.metacenter.no/user/reset/
 .. _AiiDA part of the workshop: https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/index.html 
