@@ -42,11 +42,12 @@ def main(code_string, potential_family, resources):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = ''
+    options.account = 'nn9995k'
     options.qos = ''
     options.resources = resources
     options.queue_name = ''
     options.max_wallclock_seconds = 3600
+    options.max_memory_kb = 1024000
 
     # organize settings
     settings = AttributeDict()
@@ -82,16 +83,16 @@ def main(code_string, potential_family, resources):
     # set workchain related inputs
     inputs.verbose = Bool(True)
     # submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    run(workchain, **inputs)
 
 
 if __name__ == '__main__':
     # code_string is chosen among the list given by 'verdi code list'
-    code_string = 'vasp544mpi@mycomputer'
+    code_string = 'vasp@saga'
 
     # potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'
-    potential_family = 'PBE.54'
+    potential_family = 'pbe'
 
     # metadata.options.resources
     # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html

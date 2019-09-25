@@ -36,7 +36,7 @@ Tested with VASP 5.4.4.
    :caption: Tutorials
    :hidden:
 
-   tutorials/core_concepts
+   tutorials/oslo
    tutorials/a_daily_life
    tutorials/run_vasp
    tutorials/relaxations
