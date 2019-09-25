@@ -1,35 +1,31 @@
-.. _bulk_modulus:
+.. _bulk_modulus_script:
 
 ==============================
 4. Writing bulk modulus script
 ==============================
 
 This section presents an example to calculate bulk modulus of
-wurtzite-type SiC using a python script with launching several
-AiiDA-VASP workchains. In the script, QueryBuilder and Group are used
-to manage the workflow of this calculation.
+wurtzite-type SiC. This tutorial is divided in two; in the first part we will calculate the bulk modulus in the usual way by inspecting the VASP output files manually, while in the second part we will make a simple script that depend on AiiDA and AiiDA-VASP to perform the same calculation.
+
+In the script, ``QueryBuilder`` and ``Group`` are used to manage the workflow of this calculation.
 
 
 Workflow
 --------
 
-Here one example is presented. Bulk modulus is calculated by the
-following steps (the full script is attached at the end of this page):
+It is always nice to try to sketch the outline of the steps needed to investigate a property, phenomena or something else. These steps typically then define the workflow.
 
-1. Run a relax workchain to fully relax crystal structure
-2. Wait until (1) finishes
-3. Create two structures at fixed volumes with +/- 1% from the relaxed
+Here we take a rather simple example to illustrate the flow of thought. We typically calculate the bulk modulus by following the following steps (the full script is attached at the end of this page):
+
+1. `Relax` the crystal structure
+2. `Wait` until (1) finishes
+3. `Create two structures` at fixed volumes with +/- 1% from the relaxed
    structure obtained at the step (1).
-4. Submit two relax workchains to relax shapes of the crystal
-   structures created at the step (3).
-5. Compute bulk modulus as a post process by the formula :math:`K \simeq -V_0
+4. `Relax the shape` of the structures generated in step (3).
+5. `Compute bulk modulus` as a post process by the formula :math:`K \simeq -V_0
    \frac{\Delta P}{\Delta  V}`
 
-If this calculation will be done repeated and robustly, the workflow
-should be written as a workchain. But as an attempt calculation as a
-part of the process of daily research, writing a simple script like
-following is useful by employing basic AiiDA features.
-
+Let us now try to perform these steps using VASP.
 
 Bulk modulus calculation without using AiiDA-VASP
 --------------------------------------------------
@@ -108,17 +104,16 @@ Using this setting files, we get CONTCAR::
 Steps 3 and 4
 ^^^^^^^^^^^^^
 
-We create two sets of the VASP calculation inputs. The 2nd line of
-CONTCAR obtained at the step (1) is modified by the strain=0.99 (i.e.,
-the 2nd line value is :math:`0.99^{1/3}` = 0.9966554934125964) and
-strain=1.01 (i.e., the 2nd line value is :math:`1.01^{1/3}` =
-1.0033222835420892) to change the volumes of the cells and saved as
-POSCAR. INCAR is modified to have ``ISIF = 4`` to relax the cells with
-keeping the volumes.
+We now need to create two sets of VASP inputs. The 2nd line of
+``CONTCAR`` obtained at step (1) is modified by applying a strain of 0.99 (i.e.,
+the 2nd line value is :math:`0.99^{1/3}` = 0.9966554934125964) and 1.01 (i.e., the 2nd line value is :math:`1.01^{1/3}` =
+1.0033222835420892). This yields two different ``POSCAR`` files. We now need to tell VASP to relax the volumes of these ``POSCAR`` files. ``INCAR`` thus need to be modified such that ``ISIF = 4`` to perform a volume restricted relaxation.
 
-After running VASP calculations, we find the following values in the vasprun.xml's:
+Execute the VASP calculation for both of the ``POSCAR`` files, respectively.
 
-- strain=0.99 (volume = 41.01394436)::
+After the VASP calculations are complete, we find the following values in the respective ``vasprun.xml`` files:
+
+- strain of 0.99 (volume = 41.01394436)::
 
        <varray name="stress" >
         <v>      22.73458454       0.00000000       0.00000000 </v>
@@ -126,7 +121,7 @@ After running VASP calculations, we find the following values in the vasprun.xml
         <v>       0.00000000       0.00000000      22.73469456 </v>
        </varray>
 
-- strain=1.01 (volume = 41.84250889)::
+- strain of 1.01 (volume = 41.84250889)::
 
        <varray name="stress" >
         <v>     -21.66753480      -0.00000000      -0.00000000 </v>
@@ -137,16 +132,16 @@ After running VASP calculations, we find the following values in the vasprun.xml
 Step 5
 ^^^^^^
 
-The bulk modulus is obtained from these results as
+The bulk modulus can now be calculated from these results as
 
 ::
 
    In [1]: -(41.84250889 + 41.01394436) / 2 * ((-21.66753480 * 2 - 21.66848806) / 3 - (22.73458454 * 2 + 22.73469456) / 3) / (41.84250889 - 41.01394436) / 10
    Out[1]: 222.0123695032054
 
-So we should get bulk modulus of ~222 GPa by using AiiDA-VASP, too, as
-shown below.
+We thus obtain the bulk modulus of ~222 GPa for this calculation.
 
+If there is any intention to perform this calculation in a repeatedly and robustly manner, the workflow above should be define more formally. AiiDA comes into play with the concept of workflows. Let us try to perform the same calculation with some simple AiiDA assistance. 
 
 AiiDA-VASP script
 -----------------
@@ -179,7 +174,7 @@ AiiDA-VASP script
            print("Relaxation calculation failed.")
 
 
-From the result of this calculation, the bulk modulus is computed by::
+The functions ``launch_aiida_full_relax`` and ``launch_aiida_relax_shape`` are defined further down. Running this script, the bulk modulus can computed by yet another script::
 
    import numpy as np
    from aiida.manage.configuration import load_profile
@@ -219,19 +214,8 @@ We get the value::
 
    Bulk modules: 222.016084 GPa
 
-
-Migration from a simple script to the WorkChain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the calculation above, the VASP full relax workchain and the two
-VASP relax workchain at constant volue are performed independently and
-those nodes are just grouped. This means the workflow in ``main``
-method is lost. To keep the workflow, the next challenge will be
-writing a workchain of this workflow. This migration from the simple
-script to the workchain will be straightforward, once we confirm the
-simple script starts to work.
-
-
+Below you can find the full script to perform the calculation. Please study and play with it.
+   
 Full script to compute bulk modulus
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

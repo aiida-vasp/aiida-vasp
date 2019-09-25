@@ -1,8 +1,26 @@
-.. _bulk_modulus_workchain
+.. _bulk_modulus_workchain:
 
 =================================
 5. Writing bulk modulus workchain
 =================================
+
+In the previous :ref:`bulk_modulus_script`, the initial relaxation and the two volume restricted
+relaxations are performed independently. The resulting nodes are just grouped and
+we execute a calculation of the bulk modulus by fetching these nodes later.
+This means the workflow in ``main``
+method is not very transparent. In fact we would like it to follow the stepwize
+definition at the top as closely as possible.
+
+Can we do better than the scripts above? Of course. AiiDA has the concept of a WorkChain which
+basically is a container for a workflow. Not only would we like to write this WorkChain
+as modular and reusable as possible, such that
+ultimately several WorkChains can be cherry picked into a bigger composition of some kind
+of master piece of a workchain to solve some given problem.
+
+Let us try to preserve the workflow. The next challenge will be
+writing a suitable WorkChain of this workflow. This migration from the
+script to the workchain will be straightforward. But first, please study and try the script
+below, which is the complete script to calculate the bulk modulus.
 
 This section again presents an example to calculate bulk modulus of
 wurtzite-type SiC by writing a workchain. We migrate what we did in the

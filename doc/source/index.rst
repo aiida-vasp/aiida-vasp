@@ -37,8 +37,8 @@ Tested with VASP 5.4.4.
    :hidden:
 
    tutorials/oslo
-   tutorials/tutorial2
-   tutorials/run_vasp
+   tutorials/run_vasp_inputs
+   tutorials/run_vasp_builder
    tutorials/bulk_modulus
    tutorials/bulk_modulus_2
    tutorials/band_structure_electrons
