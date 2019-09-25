@@ -1,8 +1,8 @@
 .. _run_vasp:
 
-========================
-Running VASP calculation
-========================
+=======================================
+3. Running VASP calculations explicitly
+=======================================
 
 An example of one-shot VASP calculation for wurtzite-AlN is
 given. Then this example is slightly modified to use the relax

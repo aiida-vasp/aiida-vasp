@@ -37,14 +37,12 @@ Tested with VASP 5.4.4.
    :hidden:
 
    tutorials/oslo
-   tutorials/a_daily_life
+   tutorials/tutorial2
    tutorials/run_vasp
-   tutorials/relaxations
-   tutorials/convergence_tests
-   tutorials/band_structure_electrons
-   tutorials/band_structure_phonons
    tutorials/bulk_modulus
    tutorials/bulk_modulus_2
+   tutorials/band_structure_electrons
+   tutorials/a_daily_life
 
 .. toctree::
    :maxdepth: 1

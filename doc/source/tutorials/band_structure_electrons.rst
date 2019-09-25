@@ -1,5 +1,5 @@
 .. _band_structure_electrons:
 
-================================
-Band structure for the electrons
-================================
+===================================
+6. Band structure for the electrons
+===================================

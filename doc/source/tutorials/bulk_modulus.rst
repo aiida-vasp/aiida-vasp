@@ -1,8 +1,8 @@
 .. _bulk_modulus:
 
-===========================
-Writing bulk modulus script
-===========================
+==============================
+4. Writing bulk modulus script
+==============================
 
 This section presents an example to calculate bulk modulus of
 rutile-type SnO2 using a python script with launching several

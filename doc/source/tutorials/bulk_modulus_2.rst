@@ -1,8 +1,8 @@
 .. _bulk_modulus_workchain
 
-==============================
-Writing bulk modulus workchain
-==============================
+=================================
+5. Writing bulk modulus workchain
+=================================
 
 This section again presents an example to calculate bulk modulus of
 rutile-type SnO2 by writing a workchain. We migrate what we did in the
