@@ -4,13 +4,13 @@
 Writing bulk modulus workchain
 ==============================
 
-This section again presents an example to calculate bulk modulus of wurtzite
-AlN by writing a workchain. We migrate what we did in the :ref:`last
-section <bulk_modulus>`.
+This section again presents an example to calculate bulk modulus of
+rutile-type SnO2 by writing a workchain. We migrate what we did in the
+:ref:`last section <bulk_modulus>` to a WorkChain.
 
 At https://github.com/atztogo/aiida-vasp-bm, the WorkChain
 (``aiida_vasp_bm/workchains/bulkmodulus.py``) and the launch script
-(``aiida_vasp_bm/example/submit.py``) shown below are obtained.
+(``aiida_vasp_bm/example/submit_SnO2.py``) shown below are obtained.
 
 
 Workflow
@@ -64,18 +64,18 @@ Implementation of Workchain
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import WorkChain, calcfunction
    from aiida.common.extendeddicts import AttributeDict
-   
+
    Float = DataFactory('float')
-   
-   
+
+
    @calcfunction
    def get_strained_structure(structure, strain):
        new_structure = structure.clone()
        new_structure.set_cell(
            np.array(new_structure.cell) * strain.value ** (1.0 / 3))
        return new_structure
-   
-   
+
+
    @calcfunction
    def calculate_bulk_modulus(stress_minus, stress_plus,
                               structure_minus, structure_plus):
@@ -91,14 +91,14 @@ Implementation of Workchain
        v0 = (volumes[0] + volumes[1]) / 2
        bulk_modulus = - d_s / d_v * v0 / 10  # GPa
        return Float(bulk_modulus)
-   
-   
+
+
    class BulkModulusWorkChain(WorkChain):
        """WorkChain to compute bulk modulus using VASP."""
-   
+
        _next_workchain_string = 'vasp.relax'
        _next_workchain = WorkflowFactory(_next_workchain_string)
-   
+
        @classmethod
        def define(cls, spec):
            super(BulkModulusWorkChain, cls).define(spec)
@@ -111,12 +111,12 @@ Implementation of Workchain
                cls.calc_bulk_modulus,
            )
            spec.output('bulk_modulus', valid_type=Float)
-   
+
        def initialize(self):
            self.report("initialize")
            self.ctx.inputs = AttributeDict()
            self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
-   
+
        def run_relax(self):
            self.report("run_relax")
            Workflow = WorkflowFactory('vasp.relax')
@@ -131,7 +131,7 @@ Implementation of Workchain
                builder.metadata['description'] = description
            future = self.submit(builder)
            self.to_context(**{'relax': future})
-   
+
        def create_two_structures(self):
            self.report("create_two_structures")
            for strain, name in zip((0.99, 1.01), ('minus', 'plus')):
@@ -139,7 +139,7 @@ Implementation of Workchain
                    self.ctx['relax'].outputs.structure_relaxed, Float(strain))
                structure.label = name
                self.ctx['structure_%s' % name] = structure
-   
+
        def run_two_volumes(self):
            self.report("run_two_volumes")
            for strain, future_name in zip((0.99, 1.01), ('minus', 'plus')):
@@ -162,7 +162,7 @@ Implementation of Workchain
                builder.convergence_on = Bool(False)
                future = self.submit(builder)
                self.to_context(**{future_name: future})
-   
+
        def calc_bulk_modulus(self):
            self.report("calc_bulk_modulus")
            bulk_modulus = calculate_bulk_modulus(
@@ -182,18 +182,18 @@ Launch script
 
    import numpy as np
    from aiida.manage.configuration import load_profile
-   from aiida.orm import Bool, Str, Code, Int, Float, WorkChainNode, QueryBuilder, Group
+   from aiida.orm import Bool, Str, Code, Int, Float
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import submit
-   
+
    load_profile()
-   
+
    Dict = DataFactory('dict')
    KpointsData = DataFactory("array.kpoints")
-   
-   
+
+
    def launch_aiida_bulk_modulus(structure, code_string, resources,
-                                 label="AlN VASP relax calculation"):
+                                 label="VASP bulk modulus calculation"):
        incar_dict = {
            'PREC': 'Accurate',
            'EDIFF': 1e-8,
@@ -208,20 +208,20 @@ Launch script
            'LCHARG': False,
            'LWAVE': False,
        }
-   
+
        kpoints = KpointsData()
-       kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
-   
+       kpoints.set_kpoints_mesh([4, 4, 6], offset=[0.5, 0.5, 0.5])
+
        options = {'resources': resources,
                   'max_wallclock_seconds': 3600 * 10}
-   
+
        potential_family = 'PBE.54'
-       potential_mapping = {'Al': 'Al', 'N': 'N'}
-   
+       potential_mapping = {'Sn': 'Sn', 'O': 'O'}
+
        parser_settings = {'add_energies': True,
                           'add_forces': True,
                           'add_stress': True}
-   
+
        code = Code.get_from_string(code_string)
        Workflow = WorkflowFactory('vasp_bm.bulkmodulus')
        builder = Workflow.get_builder()
@@ -246,54 +246,69 @@ Launch script
        builder.convergence_volume = Float(1e-8)
        builder.convergence_max_iterations = Int(2)
        builder.verbose = Bool(True)
-   
+
        node = submit(builder)
        return node
-   
-   
-   def get_structure_AlN():
-       """Set up AlN primitive cell
-   
-        Al N
+
+
+   def get_structure_SnO2():
+       """Set up SnO2 structure
+
+       SnO2
           1.0
-            3.1100000000000000    0.0000000000000000    0.0000000000000000
-           -1.5550000000000000    2.6933390057696038    0.0000000000000000
-            0.0000000000000000    0.0000000000000000    4.9800000000000000
-        Al N
-          2   2
+            4.77 0.00 0.00
+            0.00 4.77 0.00
+            0.00 0.00 3.22
+        Sn O
+          2 4
        Direct
-          0.3333333333333333  0.6666666666666665  0.0000000000000000
-          0.6666666666666667  0.3333333333333333  0.5000000000000000
-          0.3333333333333333  0.6666666666666665  0.6190000000000000
-          0.6666666666666667  0.3333333333333333  0.1190000000000000
-   
+          0.000 0.000 0.000
+          0.500 0.500 0.500
+          0.306 0.306 0.000
+          0.694 0.694 0.000
+          0.194 0.806 0.500
+          0.806 0.194 0.500
+
        """
-   
+
        StructureData = DataFactory('structure')
-       a = 3.11
-       c = 4.98
+       a = 4.77
+       c = 3.22
        lattice = [[a, 0, 0],
-                  [-a / 2, a / 2 * np.sqrt(3), 0],
+                  [0, a, 0],
                   [0, 0, c]]
        structure = StructureData(cell=lattice)
+       u = 0.306
        for pos_direct, symbol in zip(
-               ([1. / 3, 2. / 3, 0],
-                [2. / 3, 1. / 3, 0.5],
-                [1. / 3, 2. / 3, 0.619],
-                [2. / 3, 1. / 3, 0.119]), ('Al', 'Al', 'N', 'N')):
+               ([0, 0, 0],
+                [0.5, 0.5, 0.5],
+                [u, u, 0],
+                [1 - u, 1 - u, 0],
+                [0.5 - u, 0.5 + u, 0.5],
+                [0.5 + u, 0.5 - u, 0.5]), ('Sn', 'Sn', 'O', 'O', 'O', 'O')):
            pos_cartesian = np.dot(pos_direct, lattice)
            structure.append_atom(position=pos_cartesian, symbols=symbol)
        return structure
-   
-   
+
+
    def main(code_string, resources):
-       structure = get_structure_AlN()
-       node = launch_aiida_bulk_modulus(structure, code_string, resources,
-                                        label="AlN VASP calc")
+       structure = get_structure_SnO2()
+       node = launch_aiida_bulk_modulus(
+           structure, code_string, resources,
+           label="SnO2 VASP bulk modulus calculation")
        print(node)
-   
-   
+
+
    if __name__ == '__main__':
        code_string = 'vasp544mpi@gpu'
        resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
        main(code_string, resources)
+
+After running this calculation, we get the bulk modulus by
+
+::
+
+   In [1]: n = load_node(<PK>)
+
+   In [2]: n.outputs.bulk_modulus.value
+   Out[2]: 193.57380984981

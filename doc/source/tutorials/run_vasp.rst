@@ -23,11 +23,12 @@ or::
 
    % conda install -c conda-forge spglib
 
-The usage of spglib is found at https://atztogo.github.io/spglib/.
+The usage of spglib is found at
+https://atztogo.github.io/spglib/. Let's take an example of POSCAR of
+wurtzite-type AlN structure, which can be obtained from the Materials
+project database, https://materialsproject.org/materials/mp-661/
 
-For example, POSCAR of wurtzite-AlN structure can be obtained from
-the Materials project database,
-https://materialsproject.org/materials/mp-661/#, which is::
+::
 
    Al2 N2
    1.0
@@ -42,10 +43,12 @@ https://materialsproject.org/materials/mp-661/#, which is::
    0.333333 0.666667 0.380713 N
    0.666667 0.333333 0.880713 N
 
-This is already symmetrized but we can symmetrize more if we
-want more number of digits for :math:`\sqrt{3}` and
-:math:`\frac{1}{3}` that appear in hexagonal crystals.
-An ad-hoc script to symmetrize this may be::
+This is already symmetrized but we can symmetrize more if we want more
+number of digits for :math:`\sqrt{3}` and :math:`1/3` that often
+appear in hexagonal crystals. An ad-hoc script to symmetrize this may
+be like
+
+::
 
    import numpy as np
    import spglib
@@ -98,25 +101,26 @@ doesn't alter the symmetry.
 Use of AiiDA-VASP
 -----------------
 
-A typical script to launch a VASP caluculation is something like::
+A typical script to launch a VASP caluculation (rutile-type SnO2) is
+something like::
 
    import numpy as np
    from aiida.manage.configuration import load_profile
-   from aiida.orm import Bool, Str, Code
+   from aiida.orm import Bool, Float, Int, Str, Code
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import submit
    load_profile()
 
 
    def launch_aiida(structure, code_string, resources,
-                    label="AlN VASP calculation"):
+                    label="SnO2 VASP calculation"):
        Dict = DataFactory('dict')
        KpointsData = DataFactory("array.kpoints")
 
        incar_dict = {
            'PREC': 'Accurate',
            'IBRION': -1,
-           'EDIFF': 1e-8,
+           'EDIFF': 1e-5,
            'NELMIN': 5,
            'NELM': 100,
            'ENCUT': 500,
@@ -130,13 +134,13 @@ A typical script to launch a VASP caluculation is something like::
        }
 
        kpoints = KpointsData()
-       kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
+       kpoints.set_kpoints_mesh([4, 4, 6], offset=[0.5, 0.5, 0.5])
 
        options = {'resources': resources,
                   'max_wallclock_seconds': 3600 * 10}
 
        potential_family = 'PBE.54'
-       potential_mapping = {'Al': 'Al', 'N': 'N'}
+       potential_mapping = {'Sn': 'Sn', 'O': 'O'}
 
        parser_settings = {'add_energies': True,
                           'add_forces': True,
@@ -161,43 +165,48 @@ A typical script to launch a VASP caluculation is something like::
        return node
 
 
-   def get_structure_AlN():
-       """Set up AlN primitive cell
+   def get_structure_SnO2():
+       """Set up SnO2 structure
 
-        Al N
+       SnO2
           1.0
-            3.1100000000000000    0.0000000000000000    0.0000000000000000
-           -1.5550000000000000    2.6933390057696038    0.0000000000000000
-            0.0000000000000000    0.0000000000000000    4.9800000000000000
-        Al N
-          2   2
+            4.77 0.00 0.00
+            0.00 4.77 0.00
+            0.00 0.00 3.22
+        Sn O
+          2 4
        Direct
-          0.3333333333333333  0.6666666666666665  0.0000000000000000
-          0.6666666666666667  0.3333333333333333  0.5000000000000000
-          0.3333333333333333  0.6666666666666665  0.6190000000000000
-          0.6666666666666667  0.3333333333333333  0.1190000000000000
+          0.000 0.000 0.000
+          0.500 0.500 0.500
+          0.306 0.306 0.000
+          0.694 0.694 0.000
+          0.194 0.806 0.500
+          0.806 0.194 0.500
 
        """
 
        StructureData = DataFactory('structure')
-       a = 3.11
-       c = 4.98
+       a = 4.77
+       c = 3.22
        lattice = [[a, 0, 0],
-                  [-a / 2, a / 2 * np.sqrt(3), 0],
+                  [0, a, 0],
                   [0, 0, c]]
        structure = StructureData(cell=lattice)
+       u = 0.306
        for pos_direct, symbol in zip(
-               ([1. / 3, 2. / 3, 0],
-                [2. / 3, 1. / 3, 0.5],
-                [1. / 3, 2. / 3, 0.619],
-                [2. / 3, 1. / 3, 0.119]), ('Al', 'Al', 'N', 'N')):
+               ([0, 0, 0],
+                [0.5, 0.5, 0.5],
+                [u, u, 0],
+                [1 - u, 1 - u, 0],
+                [0.5 - u, 0.5 + u, 0.5],
+                [0.5 + u, 0.5 - u, 0.5]), ('Sn', 'Sn', 'O', 'O', 'O', 'O')):
            pos_cartesian = np.dot(pos_direct, lattice)
            structure.append_atom(position=pos_cartesian, symbols=symbol)
        return structure
 
 
    def main(code_string, resources):
-       structure = get_structure_AlN()
+       structure = get_structure_SnO2()
        launch_aiida(structure, code_string, resources)
 
 
@@ -206,11 +215,32 @@ A typical script to launch a VASP caluculation is something like::
        resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
        main(code_string, resources)
 
+Once the calculation is done, with your PK, we can watch the results::
+
+   In [1]: n = load_node(<PK>)
+
+   In [2]: n.outputs.energies
+   Out[2]: <ArrayData: uuid: 7fbf60d5-fd7c-4d45-9adb-af81e7348921 (pk: 165915)>
+
+   In [3]: n.outputs.energies.get_arraynames()
+   Out[3]: ['energy_no_entropy']
+
+   In [4]: n.outputs.energies.get_array('energy_no_entropy')
+   Out[4]: array([-39.90289213])
+
+   In [5]: n.outputs.stress.get_arraynames()
+   Out[5]: ['final']
+
+   In [6]: n.outputs.stress.get_array('final')
+   Out[6]:
+   array([[ 2.65188465, -0.        ,  0.        ],
+          [ 0.        ,  2.65188465,  0.        ],
+          [ 0.        ,  0.        , -2.54327698]])
 
 When we want to fully relax a crystal structure, the above script is
 modified as follows:
 
-1. ``WorkflowFactory('vasp.relax')``
+1. Replace ``WorkflowFactory('vasp.vasp')`` by ``WorkflowFactory('vasp.relax')``
 2. Remove ``IBRION`` from ``incar_dict``
 3. Add the following setting::
 
@@ -222,6 +252,19 @@ modified as follows:
        builder.volume = Bool(True)     # Relax volume
        builder.verbose = Bool(True)
 
+The lattice parameters of the relax crystal structure is found by
+
+::
+
+   In [1]: n = load_node(<PK>)
+
+   In [2]: n.outputs.structure_relaxed.cell
+   Out[2]: [[4.77533981, 0.0, 0.0], [0.0, 4.77533981, 0.0], [0.0, 0.0, 3.21639965]]
+
+There are more options for the relax workchain, e.g., running VASP
+several time iteratively until convergence, which is used in the bulk
+modulus example in the next section.
+
 After the relaxation, sometimes the crystal symmetry can be slightly
-broken by the VASP calculation, especially for hexagonal crystals. It
-is recommended to symmetrize the final structure if this is minded.
+broken by the VASP calculation, especially for hexagonal crystals. So
+it is recommended to symmetrize the final structure if this is the case.

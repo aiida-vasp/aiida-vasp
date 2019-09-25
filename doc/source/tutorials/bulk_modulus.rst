@@ -4,10 +4,10 @@
 Writing bulk modulus script
 ===========================
 
-This section presents an example to calculate bulk modulus of wurtzite
-AlN using a python script with launching several AiiDA-VASP
-workchains. In the script, QueryBuilder and Group are used to manage
-the workflow of this calculation.
+This section presents an example to calculate bulk modulus of
+rutile-type SnO2 using a python script with launching several
+AiiDA-VASP workchains. In the script, QueryBuilder and Group are used
+to manage the workflow of this calculation.
 
 
 Workflow
@@ -32,20 +32,11 @@ following is useful by employing basic AiiDA features.
 
 ::
 
-   def main(code_string, resources,
-            group_name="Bulk modulues example",
-            sleep_seconds=60):
-       qb = QueryBuilder()
-       qb.append(Group, filters={'label': {'==': group_name}})
-       if qb.count() == 0:
-           group = Group(label=group_name)
-           group.store()
-           print("Group %s was created." % group_name)
-       else:
-           group = load_group(group_name)
-       structure = get_structure_AlN()
-       node_relax = launch_aiida_relax(structure, code_string, resources,
-                                       label="AlN VASP calc to relax volume")
+   def main(code_string, resources, group_name, sleep_seconds=60):
+       group = load_group(group_name)
+       structure = get_structure_SnO2()
+       node_relax = launch_aiida_full_relax(structure, code_string, resources,
+                                            "SnO2 VASP calc to relax volume")
        group.add_nodes(node_relax)
 
        while True:
@@ -55,11 +46,12 @@ following is useful by employing basic AiiDA features.
            sleep(sleep_seconds)
 
        if node_relax.is_finished_ok:
-           for strain, comment in zip((0.99, 1.01), ('minus', 'plus')):
+           for strain, label in zip((0.99, 1.01), ("minus", "plus")):
                structure = node_relax.outputs.structure_relaxed.clone()
                structure.set_cell(np.array(structure.cell) * strain ** (1.0 / 3))
-               label = "AlN VASP calc at %s volume (%f)" % (comment, strain)
-               node = launch_aiida(structure, code_string, resources, label=label)
+               node = launch_aiida_relax_shape(
+                   structure, code_string, resources,
+                   "SnO2 VASP relax shape at %s volume (%f)" % (label, strain))
                group.add_nodes(node)
                print(node)
        else:
@@ -104,19 +96,19 @@ From the result of this calculation, the bulk modulus is computed by::
 
 We get the value::
 
-   Bulk modules: 201.982655 GPa
+   Bulk modules: 193.577285 GPa
 
 
-From a simple script to workchain
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Migration from a simple script to the WorkChain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the calculation above, the VASP relax calculation and the two VASP
-calculations are independently calculated and just grouped. This means
-the workflow is lost. The next challenge will be writing the workchain
-of this workflow.
-
-Migration will be straightforward, once this simple script starts to
-work and how to design and write workchains are understood.
+In the calculation above, the VASP full relax workchain and the two
+VASP relax workchain at constant volue are performed independently and
+those nodes are just grouped. This means the workflow in ``main``
+method is lost. To keep the workflow, the next challenge will be
+writing a workchain of this workflow. This migration from the simple
+script to the workchain will be straightforward, once we confirm the
+simple script starts to work.
 
 
 Full script to compute bulk modulus
@@ -133,41 +125,6 @@ Full script to compute bulk modulus
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import submit
    load_profile()
-
-
-   def get_structure_AlN(strain=1.0):
-       """Set up AlN primitive cell
-
-        Al N
-          1.0
-            3.1100000000000000    0.0000000000000000    0.0000000000000000
-           -1.5550000000000000    2.6933390057696038    0.0000000000000000
-            0.0000000000000000    0.0000000000000000    4.9800000000000000
-        Al N
-          2   2
-       Direct
-          0.3333333333333333  0.6666666666666665  0.0000000000000000
-          0.6666666666666667  0.3333333333333333  0.5000000000000000
-          0.3333333333333333  0.6666666666666665  0.6190000000000000
-          0.6666666666666667  0.3333333333333333  0.1190000000000000
-
-       """
-
-       StructureData = DataFactory('structure')
-       a = 3.11
-       c = 4.98
-       lattice = np.array([[a, 0, 0],
-                           [-a / 2, a / 2 * np.sqrt(3), 0],
-                           [0, 0, c]]) * (strain ** (1. / 3))
-       structure = StructureData(cell=lattice)
-       for pos_direct, symbol in zip(
-               ([1. / 3, 2. / 3, 0],
-                [2. / 3, 1. / 3, 0.5],
-                [1. / 3, 2. / 3, 0.619],
-                [2. / 3, 1. / 3, 0.119]), ('Al', 'Al', 'N', 'N')):
-           pos_cartesian = np.dot(pos_direct, lattice)
-           structure.append_atom(position=pos_cartesian, symbols=symbol)
-       return structure
 
 
    def launch_aiida_relax_shape(structure, code_string, resources, label):
@@ -191,7 +148,7 @@ Full script to compute bulk modulus
        base_config = {'code_string': code_string,
                       'kpoints_density': 0.5,  # k-point density,
                       'potential_family': 'PBE.54',
-                      'potential_mapping': {'Al': 'Al', 'N': 'N'},
+                      'potential_mapping': {'Sn': 'Sn', 'O': 'O'},
                       'options': {'resources': resources,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
@@ -207,8 +164,7 @@ Full script to compute bulk modulus
        builder.potential_family = Str(base_config['potential_family'])
        builder.potential_mapping = Dict(dict=base_config['potential_mapping'])
        kpoints = KpointsData()
-       # kpoints.set_cell_from_structure(structure)
-       kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
+       kpoints.set_kpoints_mesh([4, 4, 6], offset=[0.5, 0.5, 0.5])
        builder.kpoints = kpoints
        builder.options = Dict(dict=base_config['options'])
        builder.metadata.label = label
@@ -246,7 +202,7 @@ Full script to compute bulk modulus
        base_config = {'code_string': code_string,
                       'kpoints_density': 0.5,  # k-point density,
                       'potential_family': 'PBE.54',
-                      'potential_mapping': {'Al': 'Al', 'N': 'N'},
+                      'potential_mapping': {'Sn': 'Sn', 'O': 'O'},
                       'options': {'resources': resources,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
@@ -262,7 +218,7 @@ Full script to compute bulk modulus
        builder.potential_family = Str(base_config['potential_family'])
        builder.potential_mapping = Dict(dict=base_config['potential_mapping'])
        kpoints = KpointsData()
-       kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
+       kpoints.set_kpoints_mesh([4, 4, 6], offset=[0.5, 0.5, 0.5])
        builder.kpoints = kpoints
        builder.options = Dict(dict=base_config['options'])
        builder.metadata.label = label
@@ -283,11 +239,76 @@ Full script to compute bulk modulus
        return node
 
 
+   def get_structure_SnO2():
+       """Set up SnO2 structure
+
+       SnO2
+          1.0
+            4.77 0.00 0.00
+            0.00 4.77 0.00
+            0.00 0.00 3.22
+        Sn O
+          2 4
+       Direct
+          0.000 0.000 0.000
+          0.500 0.500 0.500
+          0.306 0.306 0.000
+          0.694 0.694 0.000
+          0.194 0.806 0.500
+          0.806 0.194 0.500
+
+       """
+
+       StructureData = DataFactory('structure')
+       a = 4.77
+       c = 3.22
+       lattice = [[a, 0, 0],
+                  [0, a, 0],
+                  [0, 0, c]]
+       structure = StructureData(cell=lattice)
+       u = 0.306
+       for pos_direct, symbol in zip(
+               ([0, 0, 0],
+                [0.5, 0.5, 0.5],
+                [u, u, 0],
+                [1 - u, 1 - u, 0],
+                [0.5 - u, 0.5 + u, 0.5],
+                [0.5 + u, 0.5 - u, 0.5]), ('Sn', 'Sn', 'O', 'O', 'O', 'O')):
+           pos_cartesian = np.dot(pos_direct, lattice)
+           structure.append_atom(position=pos_cartesian, symbols=symbol)
+       return structure
+
+
+   def calc_bulk_modulus(group_name):
+       qb = QueryBuilder()
+       qb.append(Group, filters={'label': {'==': group_name}})
+       if qb.count() == 0:
+           raise RuntimeError("Group %s doesn't exist." % group_name)
+
+       stresses = []
+       volumes = []
+       for comment in ("minus", "plus"):
+           qb = QueryBuilder()
+           qb.append(Group, filters={'label': {'==': group_name}}, tag='group')
+           qb.append(WorkChainNode, with_group='group',
+                     filters={'label': {'ilike': '%' + comment + '%'}})
+           node = qb.first()[0]
+           stresses.append(np.trace(node.outputs.stress.get_array('final')) / 3)
+           volumes.append(np.linalg.det(node.inputs.structure.cell))
+
+       d_s = stresses[1] - stresses[0]
+       d_v = volumes[1] - volumes[0]
+       v0 = (volumes[0] + volumes[1]) / 2
+       bulk_modulus = - d_s / d_v * v0
+
+       print("Bulk modules: %f GPa" % (bulk_modulus / 10))
+
+
    def main(code_string, resources, group_name, sleep_seconds=60):
        group = load_group(group_name)
-       structure = get_structure_AlN()
+       structure = get_structure_SnO2()
        node_relax = launch_aiida_full_relax(structure, code_string, resources,
-                                            "AlN VASP calc to relax volume")
+                                            "SnO2 VASP calc to relax volume")
        group.add_nodes(node_relax)
 
        while True:
@@ -302,48 +323,24 @@ Full script to compute bulk modulus
                structure.set_cell(np.array(structure.cell) * strain ** (1.0 / 3))
                node = launch_aiida_relax_shape(
                    structure, code_string, resources,
-                   "AlN VASP relax shape at %s volume (%f)" % (label, strain))
+                   "SnO2 VASP relax shape at %s volume (%f)" % (label, strain))
                group.add_nodes(node)
                print(node)
        else:
            print("Relaxation calculation failed.")
 
 
-   def calc_bulk_modulus(group_name):
-       stresses = []
-       volumes = []
-       for label in ("minus", "plus"):
-           qb = QueryBuilder()
-           qb.append(Group, filters={'label': group_name}, tag='group')
-           qb.append(WorkChainNode, with_group='group',
-                     filters={'label': {'ilike': '%' + label + '%'}})
-           node = qb.first()[0]
-           stresses.append(np.trace(node.outputs.stress.get_array('final')) / 3)
-           volumes.append(np.linalg.det(node.inputs.structure.cell))
-
-       d_s = stresses[1] - stresses[0]
-       d_v = volumes[1] - volumes[0]
-       v0 = (volumes[0] + volumes[1]) / 2
-       bulk_modulus = - d_s / d_v * v0
-
-       print("Bulk modules: %f GPa" % (bulk_modulus / 10))
-
-
    if __name__ == '__main__':
        # code_string is chosen among the list given by 'verdi code list'
        code_string = 'vasp544mpi@gpu'
-
-       # potential_family is chosen among the list given by
-       # 'verdi data vasp-potcar listfamilies'
-       potential_family = 'PBE.54'
 
        # metadata.options.resources
        # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
        # resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
        resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
 
-       # Here it assumes existance of the group "Bulk_modulus_AlN_test",
-       # made by 'verdi group creat "Bulk_modulus_AlN_test"'.
-       group_name  = "Bulk_modulus_AlN_test"
-       main(code_string, resources, group_name)
-       # calc_bulk_modulus(group_name)
+       # Here it assumes existance of the group "Bulk_modulus_SnO2_test",
+       # made by 'verdi group creat "Bulk_modulus_SnO2_test"'.
+       group_name  = "Bulk_modulus_SnO_test"
+       # main(code_string, resources, group_name)
+       calc_bulk_modulus(group_name)
