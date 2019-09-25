@@ -5,12 +5,12 @@ Writing bulk modulus workchain
 ==============================
 
 This section again presents an example to calculate bulk modulus of
-rutile-type SnO2 by writing a workchain. We migrate what we did in the
+wurtzite-type SiC by writing a workchain. We migrate what we did in the
 :ref:`last section <bulk_modulus>` to a WorkChain.
 
 At https://github.com/atztogo/aiida-vasp-bm, the WorkChain
 (``aiida_vasp_bm/workchains/bulkmodulus.py``) and the launch script
-(``aiida_vasp_bm/example/submit_SnO2.py``) shown below are obtained.
+(``aiida_vasp_bm/example/submit_SiC.py``) shown below are obtained.
 
 
 Workflow
@@ -182,7 +182,7 @@ Launch script
 
    import numpy as np
    from aiida.manage.configuration import load_profile
-   from aiida.orm import Bool, Str, Code, Int, Float
+   from aiida.orm import Bool, Str, Code, Int, Float, WorkChainNode, QueryBuilder, Group
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import submit
 
@@ -210,13 +210,13 @@ Launch script
        }
 
        kpoints = KpointsData()
-       kpoints.set_kpoints_mesh([4, 4, 6], offset=[0.5, 0.5, 0.5])
+       kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
 
        options = {'resources': resources,
                   'max_wallclock_seconds': 3600 * 10}
 
        potential_family = 'PBE.54'
-       potential_mapping = {'Sn': 'Sn', 'O': 'O'}
+       potential_mapping = {'Si': 'Si', 'C': 'C'}
 
        parser_settings = {'add_energies': True,
                           'add_forces': True,
@@ -251,51 +251,45 @@ Launch script
        return node
 
 
-   def get_structure_SnO2():
-       """Set up SnO2 structure
+   def get_structure_SiC():
+       """Set up SiC cell
 
-       SnO2
+       Si C
           1.0
-            4.77 0.00 0.00
-            0.00 4.77 0.00
-            0.00 0.00 3.22
-        Sn O
-          2 4
+            3.0920072935808083    0.0000000000000000    0.0000000000000000
+           -1.5460036467904041    2.6777568649277486    0.0000000000000000
+            0.0000000000000000    0.0000000000000000    5.0733470000000001
+        Si C
+          2   2
        Direct
-          0.000 0.000 0.000
-          0.500 0.500 0.500
-          0.306 0.306 0.000
-          0.694 0.694 0.000
-          0.194 0.806 0.500
-          0.806 0.194 0.500
+          0.3333333333333333  0.6666666666666665  0.4995889999999998
+          0.6666666666666667  0.3333333333333333  0.9995889999999998
+          0.3333333333333333  0.6666666666666665  0.8754109999999998
+          0.6666666666666667  0.3333333333333333  0.3754109999999997
 
        """
 
        StructureData = DataFactory('structure')
-       a = 4.77
-       c = 3.22
+       a = 3.092
+       c = 5.073
        lattice = [[a, 0, 0],
-                  [0, a, 0],
+                  [-a / 2, a / 2 * np.sqrt(3), 0],
                   [0, 0, c]]
        structure = StructureData(cell=lattice)
-       u = 0.306
        for pos_direct, symbol in zip(
-               ([0, 0, 0],
-                [0.5, 0.5, 0.5],
-                [u, u, 0],
-                [1 - u, 1 - u, 0],
-                [0.5 - u, 0.5 + u, 0.5],
-                [0.5 + u, 0.5 - u, 0.5]), ('Sn', 'Sn', 'O', 'O', 'O', 'O')):
+               ([1. / 3, 2. / 3, 0],
+                [2. / 3, 1. / 3, 0.5],
+                [1. / 3, 2. / 3, 0.375822],
+                [2. / 3, 1. / 3, 0.875822]), ('Si', 'Si', 'C', 'C')):
            pos_cartesian = np.dot(pos_direct, lattice)
            structure.append_atom(position=pos_cartesian, symbols=symbol)
        return structure
 
 
    def main(code_string, resources):
-       structure = get_structure_SnO2()
-       node = launch_aiida_bulk_modulus(
-           structure, code_string, resources,
-           label="SnO2 VASP bulk modulus calculation")
+       structure = get_structure_SiC()
+       node = launch_aiida_bulk_modulus(structure, code_string, resources,
+                                        label="SiC VASP bulk modulus calculation")
        print(node)
 
 
@@ -311,4 +305,4 @@ After running this calculation, we get the bulk modulus by
    In [1]: n = load_node(<PK>)
 
    In [2]: n.outputs.bulk_modulus.value
-   Out[2]: 193.57380984981
+   Out[2]: 222.01637836634
