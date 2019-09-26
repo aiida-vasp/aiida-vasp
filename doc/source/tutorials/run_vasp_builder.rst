@@ -137,6 +137,8 @@ something like::
        kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
 
        options = {'resources': resources,
+                  'account': 'nn9995k',
+		  'max_memory_kb': 1024000,
                   'max_wallclock_seconds': 3600 * 10}
 
        potential_family = 'pbe'
@@ -206,7 +208,7 @@ something like::
 
 
    if __name__ == '__main__':
-       code_string = 'vasp544mpi@gpu'
+       code_string = 'vasp@saga'
        resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
        main(code_string, resources)
 

@@ -291,6 +291,8 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
+		                  'account': 'nn9995k',
+				  'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
                                'add_forces': True,
@@ -344,6 +346,8 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
+		                  'account': 'nn9995k',
+				  'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
                                'add_forces': True,
@@ -427,7 +431,7 @@ Full script to compute bulk modulus
 
    if __name__ == '__main__':
        # code_string is chosen among the list given by 'verdi code list'
-       code_string = 'vasp544mpi@gpu'
+       code_string = 'vasp@saga'
 
        # metadata.options.resources
        # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
