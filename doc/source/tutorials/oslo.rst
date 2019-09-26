@@ -24,6 +24,13 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
      ssh-copy-id -i ~/.ssh/aiida_tutorial username@saga.sigma2.no
 
+5. If you have problems with non-existing ``.ssh`` or ``authorized_keys`` files, please set it by first logging in with your password and then executing::
+
+     mkdir ~/.ssh
+     chmod 700 ~/.ssh
+     touch ~/.ssh/authorized_keys
+     chmod 600 ~/.ssh/authorized_keys
+     
 5. Log out from the cluster and log in again and make sure you do not need to enter the password.
 
 6. Log into the AWS service and try the same with the command::
