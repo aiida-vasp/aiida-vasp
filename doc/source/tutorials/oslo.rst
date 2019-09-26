@@ -43,7 +43,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
 8. Let us now add the Saga computer and VASP code resource. First we need to fetch the config files::
 
-     wget https://github.com/aiida-vasp/aiida-vasp/blob/develop/tutorials/vasp_configs.tar.gz?raw=true
+     wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/vasp_configs.tar.gz
 
 9. Untar it::
 
@@ -67,7 +67,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
 14. Now we need to upload the potentials. For this tutorial we only need the VASP tutorial POTCAR files::
 
-     wget https://github.com/aiida-vasp/aiida-vasp/blob/develop/tutorials/vasp_potentials.tar.gz?raw=true
+     wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/vasp_potentials.tar.gz
 
 15. Untar it::
 

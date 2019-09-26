@@ -8,7 +8,7 @@ In this part we will simply launch a VASP calculation of silicon using the stand
 
 1. Please fetch the ``run_vasp_lean.py`` example::
 
-     wget https://github.com/aiida-vasp/aiida-vasp/blob/develop/examples/run_vasp_lean.py
+     wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/examples/run_vasp_lean.py
 
 2. First, make sure your AiiDA daemon is running::
 
