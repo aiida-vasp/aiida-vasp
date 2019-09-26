@@ -24,7 +24,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
      ssh-copy-id -i ~/.ssh/aiida_tutorial username@saga.sigma2.no
 
-5. If you have problems with non-existing ``.ssh`` or ``authorized_keys`` files, please set it by first logging in with your password and then executing::
+5. If you have problems with non-existing ``.ssh`` or ``authorized_keys`` files, please set it by first logging in with your password and then executing (in your root home folder on Saga)::
 
      mkdir ~/.ssh
      chmod 700 ~/.ssh
@@ -36,8 +36,8 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 6. Log into the AWS service and try the same with the command::
 
      ssh -i ~/.ssh/aiida_tutorial username@saga.sigma2.no
-
-7. Install AiiDA-VASP with the command::
+     
+7. Log into the AWS resource and make sure you active that AiiDA environment by issuing ``workon aiida``. Then install AiiDA-VASP with the command::
 
      pip install aiida-vasp
 
