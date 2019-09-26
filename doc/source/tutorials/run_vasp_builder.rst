@@ -139,7 +139,7 @@ something like::
        options = {'resources': resources,
                   'max_wallclock_seconds': 3600 * 10}
 
-       potential_family = 'PBE.54'
+       potential_family = 'pbe'
        potential_mapping = {'Si': 'Si', 'C': 'C'}
 
        parser_settings = {'add_energies': True,
@@ -207,7 +207,7 @@ something like::
 
    if __name__ == '__main__':
        code_string = 'vasp544mpi@gpu'
-       resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
+       resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
        main(code_string, resources)
 
 Once the calculation is done, with your PK, we can watch the results::

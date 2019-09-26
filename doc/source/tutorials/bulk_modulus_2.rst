@@ -230,7 +230,7 @@ Launch script
        options = {'resources': resources,
                   'max_wallclock_seconds': 3600 * 10}
 
-       potential_family = 'PBE.54'
+       potential_family = 'pbe'
        potential_mapping = {'Si': 'Si', 'C': 'C'}
 
        parser_settings = {'add_energies': True,

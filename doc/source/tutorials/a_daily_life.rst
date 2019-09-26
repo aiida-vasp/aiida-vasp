@@ -71,7 +71,7 @@ is used instead of ``ipython``.
    help      -> Python's own help system.
    object?   -> Details about 'object', use 'object??' for extra details.
 
-   In [1]: Str("PBE.54")
+   In [1]: Str("pbe")
    Out[1]: <Str: uuid: 9f2e8b02-c3e6-491e-ba0a-b3fcd529a35e (unstored) value: PBE.54>
 
    In [2]:

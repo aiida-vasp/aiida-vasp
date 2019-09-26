@@ -288,7 +288,7 @@ Full script to compute bulk modulus
        }
 
        base_config = {'code_string': code_string,
-                      'potential_family': 'PBE.54',
+                      'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
                                   'max_wallclock_seconds': 3600 * 10}}
@@ -341,7 +341,7 @@ Full script to compute bulk modulus
        }
 
        base_config = {'code_string': code_string,
-                      'potential_family': 'PBE.54',
+                      'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
                                   'max_wallclock_seconds': 3600 * 10}}
