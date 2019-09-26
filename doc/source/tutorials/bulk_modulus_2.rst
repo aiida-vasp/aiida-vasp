@@ -4,34 +4,60 @@ exi.. _bulk_modulus_workchain:
 5. Writing bulk modulus workchain
 =================================
 
-In the :ref:`previous tutorial <bulk_modulus_script>`, the initial relaxation and the two volume restricted
-relaxations are performed independently. The resulting nodes are just grouped and
-we execute a calculation of the bulk modulus by fetching these nodes later.
-This means the workflow in ``main``
-method is not very transparent. In fact we would like it to follow the stepwize
-definition at the top as closely as possible.
+In the :ref:`previous tutorial <bulk_modulus_script>`, the initial
+relaxation and the two volume restricted relaxations are performed
+independently. The resulting nodes are just grouped and we execute a
+calculation of the bulk modulus by fetching these nodes later.  This
+means the workflow in ``main`` method is not very transparent. In fact
+we would like it to follow the stepwize definition at the top as
+closely as possible.
 
-Can we do better than the scripts above? Of course. AiiDA has the concept of a WorkChain which
-basically is a container for a workflow. Not only would we like to write this WorkChain
-as modular and reusable as possible, such that
-ultimately several WorkChains can be cherry picked into a bigger composition of some kind
-of master piece of a workchain to solve some given problem.
+Can we do better than the scripts above? Of course. AiiDA has the
+concept of a WorkChain which basically is a container for a
+workflow. Not only would we like to write this WorkChain as modular
+and reusable as possible, such that ultimately several WorkChains can
+be cherry picked into a bigger composition of some kind of master
+piece of a workchain to solve some given problem.
 
 Let us try to preserve the workflow. The next challenge will be
 writing a suitable WorkChain of this workflow. This migration from the
-:ref:`script <bulk_modulus>` to a WorkChain will be rather straightforward.
+:ref:`script <bulk_modulus>` to a WorkChain will be rather
+straightforward.
 
-We will in this tutorial also show how it is possible to a plugin that contains a WorkChain. This nicely demonstrate the modularity of AiiDA.
-     
-A https://github.com/atztogo/aiida-vasp-bm, the WorkChain
+We will in this tutorial also show how it is possible to a plugin that
+contains a WorkChain. This nicely demonstrate the modularity of AiiDA.
+
+At https://github.com/atztogo/aiida-vasp-bm, the WorkChain
 (``aiida_vasp_bm/workchains/bulkmodulus.py``) and the launch script
 (``aiida_vasp_bm/example/submit_SiC.py``) shown below are obtained.
+
+The important note about running workchain is found in `AiiDA
+documentation
+<https://aiida-core.readthedocs.io/en/latest/working/workflows.html#launching-work-chains>`_
+or `AiiDA tutorial (see scrolling down to Warning block )
+<https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/sections/workflows.html#workchains-or-how-not-to-get-lost-if-your-computer-shuts-down-or-crashes>`_. As
+written these documentations, written WorkChains have to be exposed as a
+python module to be seen from AiiDA daemon. This is also
+achieved by making the AiiDA plugin and installing it by ``pip``. To
+make the plugin, use of AiiDA plugin cutter
+(https://github.com/aiidateam/aiida-plugin-cutter) is the recommended
+starting point. In this way, aiida-vasp-bm was created and this can be
+installed by
+
+::
+
+   git clone https://github.com/atztogo/aiida-vasp-bm.git
+   cd aiida-vasp-bm
+   pip install -e .
+   reentry scan
 
 
 Workflow 2.0
 ------------
 
-The workflow is same as the :ref:`previous one<workflow_bulk_modulus>`, but we will now be a bit more explicit to comply with a typical implementation of a WorkChain::
+The workflow is same as the :ref:`previous
+one<workflow_bulk_modulus>`, but we will now be a bit more explicit to
+comply with a typical implementation of a WorkChain::
 
 1. ``initialize`` Initialize whatever needs initializing
 2. ``run_relax`` Run a relax workchain to fully relax crystal structure
@@ -44,9 +70,10 @@ The workflow is same as the :ref:`previous one<workflow_bulk_modulus>`, but we w
    pressure :math:`P \equiv \mathrm{Tr}(\sigma)/3` follows the VASP
    convention where :math:`\sigma` is the stress tensor.
 
-The names, i.e. ``initialize`` above are the Python method (or function)
-names in the bulk modulus WorkChain shown below. The concept Because of WorkChain,
-the step (3) is executed after finishing the step (2).
+The names, i.e. ``initialize`` above are the Python method (or
+function) names in the bulk modulus WorkChain shown below. The concept
+Because of WorkChain, the step (3) is executed after finishing the
+step (2).
 
 Implementation of Workchain
 ---------------------------
@@ -67,10 +94,11 @@ Implementation of Workchain
     )
 
 - Data created inside WorkChain should be connected to the
-  workflow. This is often done by calcfuntion. For this purpose, the strained crystal
-  structures are created in ``get_strained_structure`` and the bulk
-  modulus is calculated in ``calculate_bulk_modulus`` with decorated
-  by ``@calcfunction``, and these are called from the methods in WorkChain.
+  workflow. This is often done by calcfuntion. For this purpose, the
+  strained crystal structures are created in
+  ``get_strained_structure`` and the bulk modulus is calculated in
+  ``calculate_bulk_modulus`` with decorated by ``@calcfunction``, and
+  these are called from the methods in WorkChain.
 
 ::
 
@@ -229,7 +257,7 @@ Launch script
 
        options = {'resources': resources,
                   'account:' 'nn9995k',
-		  'max_memory_kb:': 10240000,
+                  'max_memory_kb:': 10240000,
                   'max_wallclock_seconds': 3600 * 10}
 
        potential_family = 'pbe'
