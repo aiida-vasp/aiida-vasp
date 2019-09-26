@@ -13,6 +13,8 @@ In the script, ``QueryBuilder`` and ``Group`` are used to manage the workflow of
 Workflow
 --------
 
+.. _workflow_bulk_modulus:
+
 It is always nice to try to sketch the outline of the steps needed to investigate a property, phenomena or something else. These steps typically then define the workflow.
 
 Here we take a rather simple example to illustrate the flow of thought. We typically calculate the bulk modulus by following the following steps (the full script is attached at the end of this page):

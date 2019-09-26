@@ -4,7 +4,7 @@
 5. Writing bulk modulus workchain
 =================================
 
-In the previous :ref:`bulk_modulus_script`, the initial relaxation and the two volume restricted
+In the :ref:`previous tutorial <bulk_modulus_script>`, the initial relaxation and the two volume restricted
 relaxations are performed independently. The resulting nodes are just grouped and
 we execute a calculation of the bulk modulus by fetching these nodes later.
 This means the workflow in ``main``
@@ -19,37 +19,34 @@ of master piece of a workchain to solve some given problem.
 
 Let us try to preserve the workflow. The next challenge will be
 writing a suitable WorkChain of this workflow. This migration from the
-script to the workchain will be straightforward. But first, please study and try the script
-below, which is the complete script to calculate the bulk modulus.
+:ref:`script <bulk_modulus>` to a WorkChain will be rather straightforward.
 
-This section again presents an example to calculate bulk modulus of
-wurtzite-type SiC by writing a workchain. We migrate what we did in the
-:ref:`last section <bulk_modulus>` to a WorkChain.
-
-At https://github.com/atztogo/aiida-vasp-bm, the WorkChain
+We will in this tutorial also show how it is possible to a plugin that contains a WorkChain. This nicely demonstrate the modularity of AiiDA.
+     
+A https://github.com/atztogo/aiida-vasp-bm, the WorkChain
 (``aiida_vasp_bm/workchains/bulkmodulus.py``) and the launch script
 (``aiida_vasp_bm/example/submit_SiC.py``) shown below are obtained.
 
 
-Workflow
---------
+Workflow 2.0
+------------
 
-The workflow is same as the previous one, but the steps are put in
-WorkChain:
+The workflow is same as the :ref:`previous one<workflow_bulk_modulus>`, but we will now be a bit more explicit to comply with a typical implementation of a WorkChain::
 
-1. [``run_relax``] Run a relax workchain to fully relax crystal structure
-2. [``create_two_structures``] Create two structures at fixed volumes
-   with +/- 1% from the relaxed structure obtained at the step (1).
-3. [``run_two_volumes``] Submit two relax workchains to relax shapes of the crystal
-   structures created at the step (2).
-4. [``run_two_volumes``] Compute bulk modulus as a post process by the
+1. ``initialize`` Initialize whatever needs initializing
+2. ``run_relax`` Run a relax workchain to fully relax crystal structure
+3. ``create_two_structures`` Create two structures with a +/- 1% change
+   in the volume from the relaxed structure obtained at step (2).
+4. ``run_two_volumes`` Submit two relaxations to relax the shape of the
+   structures created at step (3).
+5. ``calc_bulk_modulus`` Compute bulk modulus as a post process by using the
    formula :math:`K \simeq -V_0 \frac{\Delta P}{\Delta V}`, where the
-   pressure :math:`P \equiv \mathrm{Tr}(\sigma)/3` following the VASP
-   convention with :math:`\sigma` as the stress tensor.
+   pressure :math:`P \equiv \mathrm{Tr}(\sigma)/3` follows the VASP
+   convention where :math:`\sigma` is the stress tensor.
 
-The names just after the numbers in the above list are the method
-names in the bulk modulus workchain shown below. Because of WorkChain,
-the step (2) is executed after finishing the step (1).
+The names, i.e. ``initialize`` above are the Python method (or function)
+names in the bulk modulus WorkChain shown below. The concept Because of WorkChain,
+the step (3) is executed after finishing the step (2).
 
 Implementation of Workchain
 ---------------------------
