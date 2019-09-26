@@ -10,7 +10,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
 0. If you have not yet attended the first day of the AiiDA tutorial, you should complete the recipe for `getting access to the AWS services`_ and second complete the `first taste tutorial`_. When that is done we will continue with the AiiDA-VASP part.
 
-1. You need to `reset your password`_ that is set randomly at the computing cluster. This is different from the Jupyter instance you have been using so far. Your ``username`` in this session should be the one you entered as a username. Then you will receive an SMS with a new password that you should use in the next steps. Hopefully you entered a valid telephone number during submission of the application.
+1. You need to `reset your password`_ that is set randomly at the computing cluster. This is different from the Jupyter instance you have been using so far. Your ``username`` in this session should be the one you entered as a username. Also, the computer/resource you select is Saga. Then you will receive an SMS with a new password that you should use in the next steps. Hopefully you entered a valid telephone number during submission of the application.
 
 2. When the password is reset you need to take your private key ``aiida_tutorial_NN`` and ``aiida_tutorial_NN.pub`` and upload the files to the ``/home/max/.ssh/`` folder at the AWS resources and make sure you rename them to ``aiida_tutorial`` and ``aiida_tutorial.pub``
 
