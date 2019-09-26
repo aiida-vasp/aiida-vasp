@@ -41,7 +41,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
      pip install aiida-vasp
 
-8. Let us now add the Saga computer and VASP code resource. First we need to fetch the config files::
+8. Then issue ``reentry scan``. Let us now add the Saga computer and VASP code resource. First we need to fetch the config files::
 
      wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/vasp_configs.tar.gz
 
