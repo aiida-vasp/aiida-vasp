@@ -431,8 +431,7 @@ Full script to compute bulk modulus
 
        # metadata.options.resources
        # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
-       # resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
-       resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
+       resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
 
        # Here it assumes existance of the group "Bulk_modulus_SiC_test",
        # made by 'verdi group creat "Bulk_modulus_SiC_test"'.

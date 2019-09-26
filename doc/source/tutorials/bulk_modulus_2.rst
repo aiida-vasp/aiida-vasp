@@ -1,4 +1,4 @@
-.. _bulk_modulus_workchain:
+exi.. _bulk_modulus_workchain:
 
 =================================
 5. Writing bulk modulus workchain
@@ -310,7 +310,7 @@ Launch script
 
    if __name__ == '__main__':
        code_string = 'vasp544mpi@gpu'
-       resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
+       resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
        main(code_string, resources)
 
 After running this calculation, we get the bulk modulus by
