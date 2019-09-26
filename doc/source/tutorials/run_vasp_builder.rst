@@ -106,7 +106,7 @@ something like::
 
    import numpy as np
    from aiida.manage.configuration import load_profile
-   from aiida.orm import Bool, Str, Code
+   from aiida.orm import Bool, Str, Code, Int, Float
    from aiida.plugins import DataFactory, WorkflowFactory
    from aiida.engine import submit
    load_profile()
