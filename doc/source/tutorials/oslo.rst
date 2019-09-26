@@ -14,11 +14,15 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 
 2. When the password is reset you need to take your private key ``aiida_tutorial_NN`` and ``aiida_tutorial_NN.pub`` and upload the files to the ``/home/max/.ssh/`` folder at the AWS resources and make sure you rename them to ``aiida_tutorial`` and ``aiida_tutorial.pub``
 
+3. Also make sure the ``aiida_tutorial`` and ``aiida_tutorial.pub`` files are present in you ``~/.ssh`` folder on your local computer or that is present PyttyGen on Windows.
+   
 3. Then you need to log in to the Saga computing cluster in Norway using your ``username`` and the password you received on SMS.::
 
      ssh username@saga.sigma2.no
 
-4. Answer  yes if it ask you a question. And put the content of ``aiida_tutorial_NN.pub`` into the ``authorized_keys`` file that you find in the ``~/.ssh`` folder on the Saga cluster.
+4. Answer  yes if it ask you a question. And put the content of ``aiida_tutorial_NN.pub`` into the ``authorized_keys`` file that you find in the ``~/.ssh`` folder on the Sage cluster. There is an alternative way to do this by running::
+
+     ssh-copy-id -i ~/.ssh/aiida_tutorial username@saga.sigma2.no
 
 5. Log out from the cluster and log in again and make sure you do not need to enter the password.
 
