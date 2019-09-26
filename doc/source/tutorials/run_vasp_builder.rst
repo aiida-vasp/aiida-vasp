@@ -212,9 +212,18 @@ something like::
        resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
        main(code_string, resources)
 
-Once the calculation is done, with your PK, we can watch the results::
+Once the calculation is done, we locate the ``<pk>`` by using::
+  
+  verdi process list
 
-   In [1]: n = load_node(<PK>)
+Pick the most recent ``VaspWorkChain`` process and then we can watch the results using
+for instance the verdi shell::
+
+  verdi shell
+
+And then we load the node::
+
+   In [1]: n = load_node(<pk>)
 
    In [2]: n.outputs.energies.get_array('energy_no_entropy')
    Out[2]: array([-31.80518222])
