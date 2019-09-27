@@ -143,7 +143,7 @@ The bulk modulus can now be calculated from these results as
 
 We thus obtain the bulk modulus of ~222 GPa for this calculation.
 
-If there is any intention to perform this calculation in a repeatedly and robustly manner, the workflow above should be define more formally. AiiDA comes into play with the concept of workflows. Let us try to perform the same calculation with some simple AiiDA assistance. 
+If there is any intention to perform this calculation in a repeatedly and robustly manner, the workflow above should be define more formally. AiiDA comes into play with the concept of workflows. Let us try to perform the same calculation with some simple AiiDA assistance.
 
 AiiDA-VASP script
 -----------------
@@ -176,7 +176,9 @@ AiiDA-VASP script
            print("Relaxation calculation failed.")
 
 
-The functions ``launch_aiida_full_relax`` and ``launch_aiida_relax_shape`` are defined further down. Running this script, the bulk modulus can computed by yet another script::
+The functions ``launch_aiida_full_relax`` and
+``launch_aiida_relax_shape`` are defined further down. Running this
+script, the bulk modulus can be computed by yet another script::
 
    import numpy as np
    from aiida.manage.configuration import load_profile
@@ -217,7 +219,7 @@ We get the value::
    Bulk modules: 222.016084 GPa
 
 Below you can find the full script to perform the calculation. Please study and play with it.
-   
+
 Full script to compute bulk modulus
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -291,8 +293,8 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
-		                  'account': 'nn9995k',
-				  'max_memory_kb': 1024000,
+                                  'account': 'nn9995k',
+                                  'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
                                'add_forces': True,
@@ -346,8 +348,8 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
-		                  'account': 'nn9995k',
-				  'max_memory_kb': 1024000,
+                                  'account': 'nn9995k',
+                                  'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
                                'add_forces': True,
@@ -438,7 +440,33 @@ Full script to compute bulk modulus
        resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
 
        # Here it assumes existance of the group "Bulk_modulus_SiC_test",
-       # made by 'verdi group creat "Bulk_modulus_SiC_test"'.
+       # made by 'verdi group create "Bulk_modulus_SiC_test"'.
        group_name  = "Bulk_modulus_SiC_test"
        main(code_string, resources, group_name)
        # calc_bulk_modulus(group_name)
+
+This bulk modulus script assumes the AiiDA Group named
+"Bulk_modulus_SiC_test" already exists. This group is created by
+
+::
+
+   verdi group create "Bulk_modulus_SiC_test"
+
+and we can see if the Group is created or not by
+
+::
+
+   verdi group list
+
+Then watching the last lines of the script, this way::
+
+       main(code_string, resources, group_name)
+       #calc_bulk_modulus(group_name)
+
+the bulk modulus calculation is launched and this way::
+
+       #main(code_string, resources, group_name)
+       calc_bulk_modulus(group_name)
+
+the bulk modulus is calculated fetching calculatied data from AiiDA
+database.
