@@ -50,6 +50,7 @@ installed by
    cd aiida-vasp-bm
    pip install -e .
    reentry scan
+   verdi daemon restart
 
 
 Workflow 2.0
