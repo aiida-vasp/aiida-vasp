@@ -1,4 +1,4 @@
-.. AiiDA-VASP documentation master file, created by
+ .. AiiDA-VASP documentation master file, created by
    sphinx-quickstart on Mon Feb 12 09:24:45 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -20,7 +20,7 @@ Tested with VASP 5.4.4.
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _VASP wiki: https://cms.mpi.univie.ac.at/wiki/index.php
-.. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
+.. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
 
 
 .. toctree::
@@ -30,6 +30,11 @@ Tested with VASP 5.4.4.
 
    getting_started/python
    getting_started/conda
+   getting_started/rabbitmq
+   getting_started/database
+   getting_started/profile
+   getting_started/computer
+   getting_started/code
    getting_started/potentials
 
 .. toctree::
