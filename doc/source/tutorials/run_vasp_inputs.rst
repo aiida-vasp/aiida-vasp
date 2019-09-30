@@ -1,7 +1,7 @@
-.. _tutorial2:
+.. _tutorial_test_inputs:
 
 =================================
-2. Test launch a VASP calculation 
+1. Test launch a VASP calculation 
 =================================
 
 In this part we will simply launch a VASP calculation of silicon using the standard PBE silicon potential that you now should have sitting in your database.

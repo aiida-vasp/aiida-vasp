@@ -1,8 +1,8 @@
 .. _conda:
 
-======================
-In a Conda environment
-======================
+============================
+Setup in a Conda environment
+============================
 
 AiiDA-core and AiiDA-VASP may be installed on your home
 directory. Because AiiDA core and AiiDA-VASP are still under the
@@ -163,18 +163,8 @@ Install AiiDA-VASP plugin
 The AiiDA-VASP plugin does not need to be configured, or a profile created. It is
 simply just an install, which is done as follows::
 
-   % cd ~/myaiida
-   % git clone https://github.com/aiida-vasp/aiida-vasp.git
-   % cd aiida-vasp
-   % git rev-parse HEAD
-   0bf6b0dd6af2b0dda3dbd45a4d10f3b795a02db6
-   % pip install -e .
+   % pip install aiida-vasp
    % reentry scan -r aiida
-
-If you are a bit familiar with Git you will see that we here install a
-particular commit.  This is due to the fact that AiiDA-VASP is not yet
-released as a beta.
-
 
 Setup up a computer in AiiDA
 -----------------------------
@@ -321,34 +311,6 @@ And look at its details. These commands are also available for the computers.
    Prepend text          No prepend text
    Append text           No append text
    --------------------  ------------------------------------
-
-
-Upload potential dataset to the AiiDA database
-----------------------------------------------
-
-To run VASP calculation, PAW potentials have to be written into
-``POTCAR`` file. This is done automatically by the AiiDA-VASP
-plugin. For this, PAW datasets (i.e.  the content of the POTCAR files)
-are stored in AiiDA database. In order to make the plugin work, we
-need to upload the potentials we will use as follows::
-
-   % verdi data vasp-potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4"
-   skipping file /home/username/potpaw_PBE.54/H_AE/POTCAR - uploading raised <type 'exceptions.IndexError'>list index out of range
-   POTCAR files found: 327. New files uploaded: 326, Added to Family: 326
-
-
-The ``name`` and ``description`` are not optional and have to be
-specified.  The ``path`` could be either an archive, or one could use
-a folder name.  It is also possible, not to specify path, but then you
-have issue the command in the root folder of the potential folder
-structure you want to upload.
-
-In the example above, it is assumed that the PBE.54 package of the PAW
-datasets is put at ``$HOME/myaiida/potpaw_PBE.54.tar`` as a tar
-archive.
-
-Please ignore the message about the hydrogen all electron
-``POTCAR``. It is harmless.
 
 
 Run an AiiDA-VASP calculation

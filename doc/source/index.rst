@@ -6,9 +6,9 @@
 Welcome to AiiDA-VASP's documentation!
 ======================================
 
-AiiDA-VASP is a plug-in for the workflow management and data provenance tracking framework `AiiDA`_. It provides the classes `AiiDA`_ needs to run simulations using `VASP`_ (Vienna Ab initio Simulation Package). `VASP`_ is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles. For detailed documentation on using `VASP`_ take a look in their `VASP_wiki`_.
+AiiDA-VASP is a plug-in for the workflow management and data provenance tracking framework `AiiDA`_. It provides the classes `AiiDA`_ needs to run simulations using `VASP`_ (Vienna Ab initio Simulation Package). `VASP`_ is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles. For detailed documentation on using `VASP`_ take a look in their `VASP wiki`_.
 
-AiiDA-VASP is under active development, check out the :changelog:
+AiiDA-VASP is under active development, check out the `changelog`_.
 
 General comments about the user documentation and support
 =========================================================
@@ -19,7 +19,7 @@ Tested with VASP 5.4.4.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
-.. _VASP_wiki: https://cms.mpi.univie.ac.at/wiki/index.php
+.. _VASP wiki: https://cms.mpi.univie.ac.at/wiki/index.php
 .. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 
 
@@ -28,15 +28,15 @@ Tested with VASP 5.4.4.
    :caption: Getting started
    :hidden:
 
-   getting_started/index
+   getting_started/python
    getting_started/conda
+   getting_started/potentials
 
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
    :hidden:
 
-   tutorials/oslo
    tutorials/run_vasp_inputs
    tutorials/run_vasp_builder
    tutorials/bulk_modulus

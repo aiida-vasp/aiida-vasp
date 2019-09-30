@@ -1,7 +1,7 @@
-.. _run_vasp:
+.. _run_vasp_builder:
 
 =======================================
-3. Running VASP calculations explicitly
+2. Running VASP calculations explicitly
 =======================================
 
 An example of one-shot VASP calculation for wurtzite-AlN is
