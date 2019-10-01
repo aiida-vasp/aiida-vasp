@@ -1,8 +1,8 @@
 .. _rabbitmq:
 
-================
-Install RabbitMQ
-================
+===================
+3. Install RabbitMQ
+===================
 
 `AiiDA`_ relies on `RabbitMQ`_. The installation of this requires super user privileges. On Fedora 30 or later you typically install this with::
 

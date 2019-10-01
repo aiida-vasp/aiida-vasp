@@ -16,6 +16,8 @@ from aiida_vasp.utils.delegates import Delegate
 
 from aiida.common.exceptions import NotExistent
 
+# defaults
+
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
     'add_bands': False,

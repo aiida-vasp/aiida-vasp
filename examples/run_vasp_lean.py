@@ -27,8 +27,7 @@ def get_structure_Si():
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = StructureData(cell=lattice)
-    for pos_direct in ([0.875, 0.875, 0.875],
-                       [0.125, 0.125, 0.125]):
+    for pos_direct in ([0.875, 0.875, 0.875], [0.125, 0.125, 0.125]):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols='Si')
     return structure
@@ -42,7 +41,7 @@ def main(code_string, potential_family, resources):
 
     # organize options (needs a bit of special care)
     options = AttributeDict()
-    options.account = 'nn9995k'
+    options.account = ''
     options.qos = ''
     options.resources = resources
     options.queue_name = ''
@@ -67,12 +66,7 @@ def main(code_string, potential_family, resources):
     kpoints.set_kpoints_mesh([9, 9, 9])
     inputs.kpoints = kpoints
     # set parameters
-    inputs.parameters = Dict(dict={'prec': 'NORMAL',
-                                   'encut': 200,
-                                   'ediff': 1E-4,
-                                   'ialgo': 38,
-                                   'ismear': -5,
-                                   'sigma': 0.1})
+    inputs.parameters = Dict(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1})
     # set potentials and their mapping
     inputs.potential_family = Str(potential_family)
     inputs.potential_mapping = Dict(dict={'Si': 'Si'})
@@ -83,12 +77,12 @@ def main(code_string, potential_family, resources):
     # set workchain related inputs
     inputs.verbose = Bool(True)
     # submit the requested workchain with the supplied inputs
-    run(workchain, **inputs)
+    submit(workchain, **inputs)
 
 
 if __name__ == '__main__':
     # code_string is chosen among the list given by 'verdi code list'
-    code_string = 'vasp@saga'
+    code_string = 'vasp@mycluster'
 
     # potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'

@@ -10,39 +10,54 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 
 AiiDA-VASP is under active development, check out the `changelog`_.
 
+The plugin is only tested with VASP 5.4.4.
+
 General comments about the user documentation and support
 =========================================================
 
-If you already use Python chances are you have a working system to manage your virtual environments. Please note that `AiiDA`_ as well as this plugin are tested with both ``virtualenv``, ``conda`` and ``virtualenvwrapper``. Since Python 2 is soon to be deprecated the documentation are written assuming Python 3.6 or later is present and working. However, `AiiDA`_ and AiiDA-VASP are compatible with Python 2 in case you prefer. If that is the case you should be able to translate the procedures that are different to Python 2. In the documentation we will assume you are working with ``virtualenv``. which is also bundled with Python 3.
+.. _convention:
 
-Tested with VASP 5.4.4.
+We will try to keep the documentation updated for both the standard Python and the `Conda`_ virtual environment. In order to make this as clear as possible, we have opted for the following syntax::
+
+  $ commands in a standard Linux console, used together with the standard Python virtual environment
+
+  % commands in the Conda console, used together with the Conda virtual environment
+
+  # commands executed in the Postgresql interactive terminal
+
+As such, whenever needed, we will try to keep parallel documentation on this. If you are on a Conda
+platform, please follow the commands prepended with ``%``. Similarly you follow the commands with
+a ``$`` prepended if you are using the standard Python virtual enviroments. The commands executed in
+the Postgresql interactive terminal (``psql``) should be similar between the two.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _VASP wiki: https://cms.mpi.univie.ac.at/wiki/index.php
 .. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
-
+.. _Conda: https://docs.conda.io/en/latest/
 
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
    :hidden:
 
+   getting_started/general
    getting_started/python
    getting_started/conda
    getting_started/rabbitmq
    getting_started/database
+   getting_started/interact
    getting_started/profile
    getting_started/computer
    getting_started/code
    getting_started/potentials
+   getting_started/test_run
 
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
    :hidden:
 
-   tutorials/run_vasp_inputs
    tutorials/run_vasp_builder
    tutorials/bulk_modulus
    tutorials/bulk_modulus_2

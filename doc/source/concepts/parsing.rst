@@ -3,20 +3,22 @@
 =======
 Parsing
 =======
-AiiDA-VASP provides flexible parsing of VASP output files and storing those raw data in the AiiDA database as data nodes.
+AiiDA-VASP provides flexible parsing of `VASP`_ output files to store data in the `AiiDA`_ database and repository.
 
-Customizing output nodes
-------------------------
-The quantities used for an output node are now fully customisable. The user interface for that is defined in ``settings['parser_settings']`` and can/should be adjusted later. The defualt ``parser_settings`` is found at ``aiida_vasp.parsers.vasp.DEFAULT_OPTIONS``. There are now in total four ways to interact with nodes as follows.
+The quantities that can be parsed are now fully customisable. The user interface for configuring the parsing settings takes place in the ``settings['parser_settings']`` dictionary entry. The defualt ``parser_settings`` is presently:
 
-(1) bool
-^^^^^^^^
+.. literalinclude:: aiida_vasp.parsers.vasp
+   :start-after: defaults
+   :lines: 42
 
-::
+There are four ways to interact and set the parser properties.
 
-  'add_<node_name>': True
+#. Using a boolean::
 
-This will request the ``<node_name>`` as defined in ``aiida_vasp.parsers.settings.NODES``.
+     settings['parser_settings'] = {'add_<node_name>': True}
+
+  This will set the name of the output to ``<node_name>`` as defined
+  in ``aiida_vasp.parsers.settings.NODES``.
 
 (2) list
 ^^^^^^^^
@@ -139,3 +141,6 @@ Open issues
       return new_node
 
 Initially there is a concern was that this very strict requirement on the format of quantities would make writing new FileParsers more complicated. Or we would have to implement conversion functions that require approximately the same amount of code than the current solution. However, we are already now doing something very similar in requiring a specific format for the quantities. Therefore it would not even be that much of change.
+
+.. _VASP: https://www.vasp.at
+.. _AiiDA: https://www.aiida.net
