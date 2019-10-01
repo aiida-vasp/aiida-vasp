@@ -34,7 +34,7 @@ FILE_PARSER_SETS = {
         'OUTCAR': {
             'parser_class': OutcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+           'status': 'Unknown'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
@@ -58,6 +58,8 @@ FILE_PARSER_SETS = {
         },
     },
 }
+
+""" NODES """
 
 NODES = {
     'misc': {

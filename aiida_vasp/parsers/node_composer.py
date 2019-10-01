@@ -10,6 +10,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 
+""" NODE_TYPES """
+
 NODES_TYPES = {
     'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
     'array.kpoints': ['kpoints'],
