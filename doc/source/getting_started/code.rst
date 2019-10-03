@@ -36,27 +36,27 @@ in `AiiDA`_, please make sure it runs and functions as normal on ``mycluster``.
    
 #. We can now check if the code is present by issuing::
 
-   % verdi code list
-   # List of configured codes:
-   # (use 'verdi code show CODEID' to see the details)
-   * pk 1 - vasp@mycluster
-   # No codes found matching the specified criteria.
+    % verdi code list
+    # List of configured codes:
+    # (use 'verdi code show CODEID' to see the details)
+    * pk 1 - vasp@mycluster
+    # No codes found matching the specified criteria.
 
 #. And look at its details::
 
-   % verdi code show vasp@mycluster
-   --------------------  ------------------------------------
-   PK                    1
-   UUID                  bafec878-3ca5-4f30-9bb1-0144fb760fa0
-   Label                 vasp
-   Description
-   Default plugin        vasp.vasp
-   Type                  remote
-   Remote machine        boston
-   Remote absolute path  /usr/local/calc/vasp/vasp
-   Prepend text          No prepend text
-   Append text           No append text
-   --------------------  ------------------------------------
+    % verdi code show vasp@mycluster
+    --------------------  ------------------------------------
+    PK                    1
+    UUID                  bafec878-3ca5-4f30-9bb1-0144fb760fa0
+    Label                 vasp
+    Description
+    Default plugin        vasp.vasp
+    Type                  remote
+    Remote machine        boston
+    Remote absolute path  /usr/local/calc/vasp/vasp
+    Prepend text          No prepend text
+    Append text           No append text
+    --------------------  ------------------------------------
 
 .. _VASP: https://www.vasp.at
 .. _AiiDA: https://www.aiida.net
