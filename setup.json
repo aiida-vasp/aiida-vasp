@@ -85,9 +85,6 @@
     "license": "MIT License, see LICENSE.txt file.",
     "name": "aiida-vasp",
     "reentry_register": true,
-    "scripts": [
-        "utils/runwf.py"
-    ],
     "setup_requires": [
         "reentry"
     ],
