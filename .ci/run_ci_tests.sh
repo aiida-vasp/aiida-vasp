@@ -1,5 +1,5 @@
 set -ev
-case "$TEST_TYPE" in 
+case "$TEST_TYPE" in
     unittests)
         tox -e $TOX_ENV
         ;;

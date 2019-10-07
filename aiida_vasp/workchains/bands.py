@@ -126,6 +126,7 @@ class BandsWorkChain(WorkChain):
         spec.output('bands', valid_type=get_data_class('array.bands'))
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.output('structure_primitive', valid_type=get_data_class('structure'))
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
 
     def initialize(self):

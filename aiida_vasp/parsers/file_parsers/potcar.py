@@ -122,7 +122,7 @@ class MultiPotcarIo(object):  # pylint: disable=useless-object-inheritance
         potcars = cls()
         path = py_path.local(path)
         with path.open('r') as potcar_fo:
-            potcar_strings = re.compile(r"\n?(\s*.*?End of Dataset\n)", re.S).findall(potcar_fo.read())
+            potcar_strings = re.compile(r'\n?(\s*.*?End of Dataset\n)', re.S).findall(potcar_fo.read())
 
         for potcar_contents in potcar_strings:
             potcars.append(PotcarIo.from_(potcar_contents))

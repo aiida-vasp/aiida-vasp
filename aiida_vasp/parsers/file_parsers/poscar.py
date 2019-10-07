@@ -57,7 +57,7 @@ class PoscarParser(BaseFileParser):
         if isinstance(data, get_data_class('structure')):
             self._data_obj = data
         else:
-            self._logger.warning("Please supply an AiiDA StructureData datatype for `data`.")
+            self._logger.warning('Please supply an AiiDA StructureData datatype for `data`.')
             self._data_obj = None
         self._structure = data
         self.parsable_items = self.__class__.PARSABLE_ITEMS
@@ -88,7 +88,7 @@ class PoscarParser(BaseFileParser):
         try:
             poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True, logger=self._logger)
         except SystemExit:
-            self._logger.warning("Parsevasp exited abnormally. " "Returning None.")
+            self._logger.warning('Parsevasp exited abnormally. ' 'Returning None.')
             return {'poscar-structure': None}
 
         result = parsevasp_to_aiida(poscar)
@@ -105,8 +105,8 @@ class PoscarParser(BaseFileParser):
     def aiida_to_parsevasp(self, structure):
         """Convert Aiida StructureData to parsevasp's dictionary format."""
         dictionary = {}
-        dictionary["comment"] = structure.label or structure.get_formula()
-        dictionary["unitcell"] = np.asarray(structure.cell)
+        dictionary['comment'] = structure.label or structure.get_formula()
+        dictionary['unitcell'] = np.asarray(structure.cell)
         selective = [True, True, True]
         # As for now all Aiida-structures are in Cartesian coordinates.
         direct = False
@@ -114,7 +114,7 @@ class PoscarParser(BaseFileParser):
         for site in structure.sites:
             sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct, logger=self._logger))
 
-        dictionary["sites"] = sites
+        dictionary['sites'] = sites
         return dictionary
 
 

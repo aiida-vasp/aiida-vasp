@@ -11,7 +11,7 @@ the `computer`, i.e. in this case ``mycluster``. Before configuring the code
 in `AiiDA`_, please make sure it runs and functions as normal on ``mycluster``.
 
 #. Let us now add the code, which we will call ``vasp`` as follows::
-     
+
      % verdi code setup
      Info: enter "?" for help
      Label: vasp
@@ -33,7 +33,7 @@ in `AiiDA`_, please make sure it runs and functions as normal on ``mycluster``.
    This is any command you would run before your code is executed. For most cluster
    systems you would need to load the correct modules in the prepend text. In the append
    text section you typically enter cleanup routines etc.
-   
+
 #. We can now check if the code is present by issuing::
 
    % verdi code list

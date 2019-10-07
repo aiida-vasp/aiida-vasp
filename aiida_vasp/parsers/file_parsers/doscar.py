@@ -1,4 +1,4 @@
-""" # noqa: D205 
+""" # noqa: D205
 DOSCAR parser
 -------------
 DOSCAR (VASP format) utilities.

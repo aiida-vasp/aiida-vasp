@@ -66,6 +66,7 @@ class MasterWorkChain(WorkChain):
         )  # yapf: disable
         spec.expose_outputs(cls._bands_workchain)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the master workchain')
 
     def initialize(self):

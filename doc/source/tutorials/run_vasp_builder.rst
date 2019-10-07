@@ -4,9 +4,10 @@
 2. Running VASP calculations explicitly
 =======================================
 
-An example of one-shot VASP calculation for wurtzite-AlN is
-given. Then this example is slightly modified to use the relax
-workchain.
+We will now try to build a simple call script that executes a workchain,
+basically a of one-shot VASP calculation for wurtzite-AlN. When that is done,
+we will modify this example is to also use the relax
+workchain, which enables relaxations of the structure.
 
 
 Before running VASP calculation
@@ -213,7 +214,7 @@ something like::
        main(code_string, resources)
 
 Once the calculation is done, we locate the ``<pk>`` by using::
-  
+
   verdi process list
 
 Pick the most recent ``VaspWorkChain`` process and then we can watch the results using

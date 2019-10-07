@@ -16,7 +16,7 @@ The same applies in a lesser degree to workflows, as they are not exported from 
 together with the calculation and data nodes. However, care must be taken not to mislead users
 by changing the behaviour of a public workflow.
 
-In order to adapt and / or extend the plug-in's workflows and calculations, one should be 
+In order to adapt and / or extend the plug-in's workflows and calculations, one should be
 familiar with the following parts of the official AiiDA documentation:
 
 * :doc:`Developping Calculations <aiida:developer_guide/devel_tutorial/code_plugin_int_sum>`

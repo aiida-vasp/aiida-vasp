@@ -44,14 +44,14 @@ The output (if any) follows:
  running on   20 total cores
  distrk:  each k-point on   20 cores,    1 groups
  distr:  one band on    1 cores,   20 groups
- using from now: INCAR     
- vasp.5.4.4.18Apr17-6-g9f103f2a35 (build Jun 11 2017 22:27:55) complex          
-  
+ using from now: INCAR
+ vasp.5.4.4.18Apr17-6-g9f103f2a35 (build Jun 11 2017 22:27:55) complex
+
  POSCAR found type information on POSCAR  P  S  Zn
  POSCAR found :  3 types and      26 ions
  scaLAPACK will be used
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
 |           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
@@ -70,10 +70,10 @@ The output (if any) follows:
 |      Unfortunately you need to use the default for GW and RPA calculations. |
 |      (for HF NCORE is supported but not extensively tested yet)             |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
 |                                                                             |
@@ -83,10 +83,10 @@ The output (if any) follows:
 |      Mind:          For very  accurate calculation you might also keep the  |
 |      reciprocal projection scheme          (i.e. LREAL=.FALSE.)             |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
 |                                                                             |
@@ -94,7 +94,7 @@ The output (if any) follows:
 |      a different type was found on the POTCAR file                          |
 |          I HOPE YOU KNOW, WHAT YOU ARE  DOING                               |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
  LDA part: xc-table for Pade appr. of Perdew
  POSCAR, INCAR and KPOINTS ok, starting setup
@@ -316,4 +316,3 @@ RMM:  20    -0.796581629004E+01    0.71229E-04    0.16664E-03  3198   0.204E-03 
 PS:
 
 Read file <err.log> for stderr output of this job.
-

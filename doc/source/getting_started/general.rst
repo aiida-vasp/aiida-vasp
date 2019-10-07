@@ -21,7 +21,7 @@ If at any point you need more information, please consult the general `AiiDA-VAS
 .. _VASP: https://www.vasp.at
 .. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
-.. _Conda: https://docs.conda.io/en/latest/ 
+.. _Conda: https://docs.conda.io/en/latest/
 .. _CentOS: https://www.centos.org/?
 .. _Fedora: https://getfedora.org/
 .. _Ubuntu: https://ubuntu.com/

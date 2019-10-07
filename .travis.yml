@@ -2,7 +2,7 @@ notifications:
     email: false
 dist: xenial
 language: python
-python: 
+python:
   - 3.7
 services:
   - postgresql

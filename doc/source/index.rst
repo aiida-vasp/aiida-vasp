@@ -58,6 +58,9 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :caption: Tutorials
    :hidden:
 
+   tutorials/fcc_si_step1
+   tutorials/fcc_si_step2
+   tutorials/fcc_si_step3
    tutorials/run_vasp_builder
    tutorials/bulk_modulus
    tutorials/bulk_modulus_2

@@ -16,9 +16,8 @@ Required inputs
 * ``potential_mapping``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
 * ``parameters``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing key/value pairs that is later written to an INCAR file as ``KEY =VALUE``. Keys and values can be lower case and the standard built-in Python data types should be used for values.
 * ``options``, an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
-		       
+
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
 .. _Workchain: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/workflows.html#work-chains
-

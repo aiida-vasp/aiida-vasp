@@ -79,7 +79,7 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
     assert result.sites[2].position == structure.sites[2].position
 
 
-@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason="Element X only present in Aiida >= 1.x")
+@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
 def test_parse_poscar_silly_read(fresh_aiida_env):
     """
     Parse (read) a reference POSCAR with silly elemental names.
@@ -99,7 +99,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
     assert symbols == set(['X', 'X'])
 
 
-@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason="Element X only present in Aiida >= 1.x")
+@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
 @pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
 def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     """

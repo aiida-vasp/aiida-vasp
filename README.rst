@@ -6,14 +6,14 @@ AiiDA VASP plugin
 
 .. image:: https://travis-ci.org/aiida-vasp/aiida-vasp.svg?branch=develop
    :target: https://travis-ci.org/aiida-vasp/aiida-vasp
-			
+
 .. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-   
+
 .. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
    :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
-      
+
 This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
 
 Please have a look at the `AiiDA-VASP documentation`_ for instructions on how to install and use the plugin.
@@ -22,7 +22,7 @@ Installing the plugin
 ---------------------
 
 1. If you are already using `AiiDA`_, simply activate the virtual environment associated with it, here assumed to be located in ``~/env/aiida-vasp``::
-     
+
    $ source ~/env/aiida-vasp/bin/activate
 
 2. Otherwise, set up a new virtual environment::

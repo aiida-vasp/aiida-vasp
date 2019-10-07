@@ -15,7 +15,7 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 #. When the password is reset you need to take your private key ``aiida_tutorial_NN`` and ``aiida_tutorial_NN.pub`` and upload the files to the ``/home/max/.ssh/`` folder at the AWS resources and make sure you rename them to ``aiida_tutorial`` and ``aiida_tutorial.pub``
 
 #. Also make sure the ``aiida_tutorial`` and ``aiida_tutorial.pub`` files are present in you ``~/.ssh`` folder on your local computer or that is present PyttyGen on Windows.
-   
+
 #. Then you need to log in to the Saga computing cluster in Norway using your ``username`` and the password you received on SMS.::
 
      ssh username@saga.sigma2.no
@@ -30,13 +30,13 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
      chmod 700 ~/.ssh
      touch ~/.ssh/authorized_keys
      chmod 600 ~/.ssh/authorized_keys
-     
+
 #. Log out from the cluster and log in again and make sure you do not need to enter the password.
 
 #. Log into the AWS service and try the same with the command::
 
      ssh -i ~/.ssh/aiida_tutorial username@saga.sigma2.no
-     
+
 #. Log into the AWS resource.
 
 #. Make sure you active the AiiDA environment by issuing::
@@ -95,4 +95,4 @@ Please follow the following steps to start using AiiDA-VASP for this tutorial.
 .. _getting access to the AWS services: https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/sections/setup.html
 .. _first taste tutorial: https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/sections/first_taste.html
 .. _reset your password: https://www.metacenter.no/user/reset/
-.. _AiiDA part of the workshop: https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/index.html 
+.. _AiiDA part of the workshop: https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/index.html

@@ -176,6 +176,7 @@ class RelaxWorkChain(WorkChain):
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(
             300, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the called workchain does not contain the necessary relaxed output structure')
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
         spec.exit_code(502, 'ERROR_OVERRIDE_PARAMETERS', message='there was an error overriding the parameters')
         spec.outline(

@@ -10,7 +10,7 @@ and follow :ref:`production_potentials`. If not, you are probably following a tu
 so please follow :ref:`tutorial_potentials`.
 
 .. _tutorial_potentials:
-     
+
 Tutorial potentials
 -------------------
 
@@ -25,7 +25,7 @@ for you do download. Let us go trough the procedure of uploading this set of pot
 #. Untar it::
 
      tar xvzf vasp_potentials.tar.gz
-   
+
 #. Go into the ``vasp_potentials`` directory. We will now upload the potentials
 using the custom commands created for the POTCAR data types::
 
@@ -34,22 +34,22 @@ using the custom commands created for the POTCAR data types::
 #. This will upload the potentials into the database and hash them. E.g. you will not be able to have multiple entries of one potential in the database. Also, in the calculations, only the hash is used such that the POTCAR data (which is covered by license) is not revealed. This should complete with a message that three potentials was found and uploaded.
 
 .. _production_potentials:
-   
+
 Production ready potentials
 ---------------------------
-   
+
 Usually, most VASP users have a potential set (or several) they like to use. Here we assume this is
 the modified PBE potential that are GW ready and was supplied with VASP.5.4.4. First, make sure
 you have the archive, ``potpaw_PBE.54.tar`` located somewhere. Here we assume it is placed in
 here ``$HOME/myaiida/potpaw_PBE.54.tar``. Execute the following command to upload the whole
 family to the database::
-  
+
   verdi data vasp-potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4.4"
   skipping file /home/username/potpaw_PBE.54/H_AE/POTCAR - uploading raised <type 'exceptions.IndexError'>list index out of range
   POTCAR files found: 327. New files uploaded: 326, Added to Family: 326
 
 You can ignore the error, which is caused by one of the potentials not complying to the usual standard.
-  
+
 The ``name`` and ``description`` are not optional and have to be
 specified. The ``path`` could be either an archive, or one could use
 a folder name.  It is also possible, not to specify path, but then you the plugin will

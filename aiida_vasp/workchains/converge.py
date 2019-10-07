@@ -135,8 +135,8 @@ class ConvergeWorkChain(WorkChain):
             help="""
                    The relative cutoff value to be used. When the difference between two convergence
                    calculations are within this value for ``cutoff_type``, then it is
-                   considered converged. However, in this case the cutoff value is the difference 
-                   between `cutoff_type` for the input structure and an atomic displacement or a 
+                   considered converged. However, in this case the cutoff value is the difference
+                   between `cutoff_type` for the input structure and an atomic displacement or a
                    compression of the unitcell.
                    """)
         spec.input(

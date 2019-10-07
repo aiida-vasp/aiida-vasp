@@ -26,7 +26,7 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     return proc, builder
 
 
-@pytest.mark.xfail(reason="Removing POTCAR from calc.raw_input not implemented yet.")
+@pytest.mark.xfail(reason='Removing POTCAR from calc.raw_input not implemented yet.')
 def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
     from aiida_vasp.calcs.vasp import VaspCalculation

@@ -5,6 +5,7 @@ ignore-paths:
   - examples
   - test
   - utils
+  - cookiecutters
 
 pylint:
   max-line-length: 140
@@ -14,7 +15,7 @@ pyflakes:
 
 pep257:
   run: true
-  disable: 
+  disable:
     - D104
     - D105
     - D107

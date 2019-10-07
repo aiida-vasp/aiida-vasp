@@ -25,7 +25,7 @@ def assert_contents_equivalent(contents_a, contents_b):
     assert normalize_contents(contents_a) == normalize_contents(contents_b)
 
 
-@pytest.mark.skip(reason="aiida_wannier90 has not been migrated yet")
+@pytest.mark.skip(reason='aiida_wannier90 has not been migrated yet')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'list')], indirect=True)
 def test_store(vasp2w90_calc_and_ref):
     vasp_calc, _ = vasp2w90_calc_and_ref
@@ -33,7 +33,7 @@ def test_store(vasp2w90_calc_and_ref):
     assert vasp_calc.pk is not None
 
 
-@pytest.mark.skip(reason="aiida_wannier90 has not been migrated yet")
+@pytest.mark.skip(reason='aiida_wannier90 has not been migrated yet')
 @ONLY_ONE_CALC
 def test_write_incar(vasp2w90_calc_and_ref):
     """Write INCAR reference file and compare to reference."""
@@ -44,7 +44,7 @@ def test_write_incar(vasp2w90_calc_and_ref):
             assert result_incar_fo.read() == reference['incar']
 
 
-@pytest.mark.skip(reason="aiida_wannier90 has not been migrated yet")
+@pytest.mark.skip(reason='aiida_wannier90 has not been migrated yet')
 @ONLY_ONE_CALC
 def test_write_win(vasp2w90_calc_and_ref):
     """Write wannier90.win input file and compare to reference."""

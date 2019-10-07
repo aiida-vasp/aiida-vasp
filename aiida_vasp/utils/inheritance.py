@@ -44,7 +44,7 @@ def update_docstring(method_name, content, append=True):
         """Update the method docstring and return the class. Only works for Python 3."""
         if six.PY3:
             if append:
-                getattr(cls, method_name).__func__.__doc__ = ""
+                getattr(cls, method_name).__func__.__doc__ = ''
             else:
                 getattr(cls, method_name).__func__.__doc__ = content
         return cls

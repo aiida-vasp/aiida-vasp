@@ -35,6 +35,7 @@ class VerifyWorkChain(WorkChain):
                    The maximum number of iterations to perform.
                    """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the verify workchain')
         spec.outline(
             cls.initialize,
@@ -54,7 +55,7 @@ class VerifyWorkChain(WorkChain):
         self._init_inputs()
 
     def _init_context(self):
-        """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
+        """Initialize context variables that are used during the logical flow."""
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_finished = False
         self.ctx.iteration = 0

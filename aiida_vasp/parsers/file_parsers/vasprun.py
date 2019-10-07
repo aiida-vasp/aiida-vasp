@@ -136,7 +136,7 @@ class VasprunParser(BaseFileParser):
         try:
             self._xml = Xml(file_path=path, k_before_band=True, logger=self._logger)
         except SystemExit:
-            self._logger.warning("Parsevasp exited abruptly. Returning None.")
+            self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._xml = None
 
     def _init_with_data(self, data):
@@ -183,12 +183,12 @@ class VasprunParser(BaseFileParser):
             return None
 
         eigen = []
-        eigen.append(eigenvalues.get("total"))
+        eigen.append(eigenvalues.get('total'))
 
         if eigen[0] is None:
             # spin decomposed?
-            eigen[0] = eigenvalues.get("up")
-            eigen.append(eigenvalues.get("down"))
+            eigen[0] = eigenvalues.get('up')
+            eigen.append(eigenvalues.get('down'))
 
         if eigen[0] is None:
             # safety, should not really happen?
@@ -210,12 +210,12 @@ class VasprunParser(BaseFileParser):
             return None
 
         occ = []
-        occ.append(occupancies.get("total"))
+        occ.append(occupancies.get('total'))
 
         if occ[0] is None:
             # spin decomposed
-            occ[0] = occupancies.get("up")
-            occ.append(occupancies.get("down"))
+            occ[0] = occupancies.get('up')
+            occ.append(occupancies.get('down'))
 
         if occ[0] is None:
             # should not really happen
@@ -267,7 +267,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        last_lattice = self._xml.get_lattice("final")
+        last_lattice = self._xml.get_lattice('final')
         if last_lattice is None:
             self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
@@ -294,7 +294,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        force = self._xml.get_forces("final")
+        force = self._xml.get_forces('final')
         return force
 
     @property
@@ -344,7 +344,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        stress = self._xml.get_stress("final")
+        stress = self._xml.get_stress('final')
         return stress
 
     @property
@@ -393,11 +393,11 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        unitcell = self._xml.get_unitcell("all")
-        positions = self._xml.get_positions("all")
+        unitcell = self._xml.get_unitcell('all')
+        positions = self._xml.get_positions('all')
         species = self._xml.get_species()
-        forces = self._xml.get_forces("all")
-        stress = self._xml.get_stress("all")
+        forces = self._xml.get_forces('all')
+        stress = self._xml.get_stress('all')
         # make sure all are sorted, first to last calculation
         # (species is constant)
         unitcell = sorted(unitcell.items())
@@ -474,7 +474,7 @@ class VasprunParser(BaseFileParser):
             # self consistent steps, which contain a different
             # number of elements, not supported by Numpy's std.
             # arrays
-            enrgies = self._xml.get_energies(status="all", etype=etype, nosc=nosc)
+            enrgies = self._xml.get_energies(status='all', etype=etype, nosc=nosc)
             if enrgies is None:
                 self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
                 return None
@@ -499,13 +499,13 @@ class VasprunParser(BaseFileParser):
         projectors = {}
         prj = []
         try:
-            prj.append(proj["total"])
+            prj.append(proj['total'])
         except KeyError:
             try:
-                prj.append(proj["up"])
-                prj.append(proj["down"])
+                prj.append(proj['up'])
+                prj.append(proj['down'])
             except KeyError:
-                self._logger.error("Did not detect any projectors. Returning.")
+                self._logger.error('Did not detect any projectors. Returning.')
         if len(prj) == 1:
             projectors['projectors'] = prj[0]
         else:
@@ -571,8 +571,8 @@ class VasprunParser(BaseFileParser):
             self._vasp_parser.exit_status = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY
             return None
         dyn = {}
-        dyn['dynvec'] = dynmat["eigenvectors"]
-        dyn['dyneig'] = dynmat["eigenvalues"]
+        dyn['dynvec'] = dynmat['eigenvectors']
+        dyn['dyneig'] = dynmat['eigenvalues']
         return dyn
 
     @property
@@ -586,21 +586,21 @@ class VasprunParser(BaseFileParser):
         densta = {}
         # energy is always there, regardless of
         # total, spin or partial
-        energy = dos["total"]["energy"]
+        energy = dos['total']['energy']
         densta['energy'] = energy
         tdos = None
         pdos = None
-        upspin = dos.get("up")
-        downspin = dos.get("down")
-        total = dos.get("total")
+        upspin = dos.get('up')
+        downspin = dos.get('down')
+        total = dos.get('total')
         if (upspin is not None) and (downspin is not None):
-            tdos = np.stack((upspin["total"], downspin["total"]))
-            if (upspin["partial"] is not None) and \
-               (downspin["partial"] is not None):
-                pdos = np.stack((upspin["partial"], downspin["partial"]))
+            tdos = np.stack((upspin['total'], downspin['total']))
+            if (upspin['partial'] is not None) and \
+               (downspin['partial'] is not None):
+                pdos = np.stack((upspin['partial'], downspin['partial']))
         else:
-            tdos = total["total"]
-            pdos = total["partial"]
+            tdos = total['total']
+            pdos = total['partial']
         densta['tdos'] = tdos
         if pdos is not None:
             densta['pdos'] = pdos
@@ -617,14 +617,14 @@ class VasprunParser(BaseFileParser):
 def _build_structure(lattice):
     """Builds a structure according to AiiDA spec."""
     structure_dict = {}
-    structure_dict['unitcell'] = lattice["unitcell"]
+    structure_dict['unitcell'] = lattice['unitcell']
     structure_dict['sites'] = []
 
     # AiiDA wants the species as symbols, so invert
     elements = _invert_dict(parsevaspct.elements)
-    for pos, specie in zip(lattice["positions"], lattice["species"]):
+    for pos, specie in zip(lattice['positions'], lattice['species']):
         site = {}
-        site['position'] = np.dot(pos, lattice["unitcell"])
+        site['position'] = np.dot(pos, lattice['unitcell'])
         site['symbol'] = elements[specie].title()
         site['kind_name'] = elements[specie].title()
         structure_dict['sites'].append(site)

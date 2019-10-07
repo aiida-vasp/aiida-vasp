@@ -1,5 +1,5 @@
-  PAW_PBE Si 11Jan1111                   
-   11.1111111111111     
+  PAW_PBE Si 11Jan1111
+   11.1111111111111
 
  parameters from PSCTR are:
    VRHFIN =Si: s1p1
@@ -23,7 +23,7 @@
    RAUG   =    1.111    factor for augmentation sphere
    RDEP   =    1.111    radius for radial grids
    RDEPT  =    1.111    core radius for aug-charge
- 
+
    Atomic configuration
     1 entries
      n  l   j            E        occ.

@@ -37,7 +37,7 @@ class IncarParser(BaseFileParser):
         if isinstance(data, get_data_class('dict')):
             self._data_obj = data
         else:
-            self._logger.warning("Please supply an AiiDA Dict datatype for `data`.")
+            self._logger.warning('Please supply an AiiDA Dict datatype for `data`.')
             self._data_obj = None
         self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
@@ -70,7 +70,7 @@ class IncarParser(BaseFileParser):
         try:
             incar = Incar(file_path=self._data_obj.path, logger=self._logger)
         except SystemExit:
-            self._logger.warning("Parsevasp exitited abnormally. Returning None.")
+            self._logger.warning('Parsevasp exitited abnormally. Returning None.')
             return {'incar': None}
 
         result['incar'] = incar.get_dict()

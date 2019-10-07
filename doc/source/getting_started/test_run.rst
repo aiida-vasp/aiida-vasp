@@ -1,7 +1,7 @@
 .. _test_run:
 
 ==================================
-11. Test launch a VASP calculation 
+11. Test launch a VASP calculation
 ==================================
 
 In this part we will simply launch a `VASP`_ calculation of silicon using the standard PBE silicon potential that you now should have sitting in your database at this point.
@@ -43,9 +43,9 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
      ----  ---------  ---------------  ----------------  ----------------
      34  6h ago     VaspWorkChain    ⏹ Finished [0]
      35  6h ago     VaspCalculation  ⏹ Finished [0]
-     
+
      Total results: 5
-     
+
      Info: last time an entry changed state: 6h ago (at 15:00:40 on 2019-09-25)
 
    `AiiDA`_ relies mainly on the concept of ref:`workchains` which is a
@@ -55,7 +55,7 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
    included in `AiiDA-VASP`_. Users are encouraged to develop new, or
    complementig :ref:`workchains` and submitting them to the repository to
    increase the efficiency of all `VASP`_ users.
-     
+
    The test calculation above launched one :ref:`workchains` and one :ref:`calculations`. For
    `AiiDA-VASP`_ we would like users to only think about and use the :ref:`workchains` and not
    the :ref:`calculations`. The latter is there only to facilitate the execution of the `VASP`_
@@ -87,11 +87,11 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
      process state  Finished
      exit status    0
      computer       [2] saga
-     
+
      Called by      PK  Type
      -----------  ----  -------------
      CALL           33  WorkChainNode
-     
+
      Inputs               PK  Type
      -----------------  ----  -------------
      clean_workdir        31  Bool
@@ -105,17 +105,17 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
      settings             28  Dict
      structure            22  StructureData
      verbose              29  Bool
-     
+
      Outputs          PK  Type
      -------------  ----  ----------
      misc             38  Dict
      remote_folder    36  RemoteData
      retrieved        37  FolderData
-     
+
      Called      PK  Type
      --------  ----  -----------
      CALL        35  CalcJobNode
-     
+
      Log messages
      ---------------------------------------------
      There are 7 log messages for this calculation

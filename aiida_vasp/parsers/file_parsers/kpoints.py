@@ -41,7 +41,7 @@ class KpointsParser(BaseFileParser):
         if isinstance(data, get_data_class('array.kpoints')):
             self._data_obj = data
         else:
-            self._logger.warning("Please supply an AiiDA KpointsData datatype for `data`.")
+            self._logger.warning('Please supply an AiiDA KpointsData datatype for `data`.')
             self._data_obj = None
         self._kpoints = data
         self.parsable_items = self.__class__.PARSABLE_ITEMS
@@ -100,7 +100,7 @@ class KpointsParser(BaseFileParser):
             return {'kpoints-kpoints': None}
 
         if parsed_kpoints.entries.get('mode') == 'line':
-            self._logger.warning("The read KPOINTS contained line mode which is" "not supported. Returning None.")
+            self._logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
             return {'kpoints-kpoints': None}
         result['kpoints-kpoints'] = parsed_kpoints.entries
 
@@ -130,9 +130,9 @@ class KpointsParser(BaseFileParser):
                 # no weights supplied, so set them to 1.0
                 kpt = Kpoint(point, weight=1.0, logger=self._logger)
             kpts.append(kpt)
-        dictionary["points"] = kpts
-        dictionary["mode"] = "explicit"
-        dictionary["num_kpoints"] = len(kpts)
+        dictionary['points'] = kpts
+        dictionary['mode'] = 'explicit'
+        dictionary['num_kpoints'] = len(kpts)
 
         return dictionary
 
@@ -173,13 +173,13 @@ class KpointsParser(BaseFileParser):
         dictionary = {}
         # automatic mode
         mesh = kpointsdata.get_kpoints_mesh()
-        dictionary["divisions"] = mesh[0]
-        dictionary["shifts"] = mesh[1]
-        dictionary["mode"] = "automatic"
+        dictionary['divisions'] = mesh[0]
+        dictionary['shifts'] = mesh[1]
+        dictionary['mode'] = 'automatic'
         # here we need to make a choice, so should
         # add more to Aiida to make this better
         # defined
-        dictionary["centering"] = "Gamma"
-        dictionary["num_kpoints"] = 0
+        dictionary['centering'] = 'Gamma'
+        dictionary['num_kpoints'] = 0
 
         return dictionary

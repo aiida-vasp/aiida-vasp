@@ -34,8 +34,8 @@ First, create the key pair with ``ssh-keygen``:
    $ ssh-keygen
    Generating public/private rsa key pair.
    Enter file in which to save the key (/home/efl/.ssh/id_rsa):
-   Enter passphrase (empty for no passphrase): 
-   Enter same passphrase again: 
+   Enter passphrase (empty for no passphrase):
+   Enter same passphrase again:
    Your identification has been saved in id_rsa.
    Your public key has been saved in id_rsa.pub.
    The key fingerprint is:
@@ -73,7 +73,7 @@ Please make sure you enter a reasonably long passphrase of your liking. You need
 
 #. Try to login to ``mycluster``. You should now (maybe after being asked to unlock the key pair)
    be able to access it without typing a password.
-   
+
 #. If you have problems, e.g. still have to enter the password please check the permissions
    of the ``~/.ssh/id_rsa`` file (local computer), ``~/.ssh/id_rsa.pub`` file (local computer),
    ``~/.ssh`` directory (both local and on server) and the ``~/.ssh/authorized_keys`` file (on server).
@@ -183,7 +183,7 @@ works and is accessible from `AiiDA`_ by executing:
    Test completed (all 4 tests succeeded)
 
 Great. Now the computer seems to work. Let us move on to the code.
-   
+
 .. _AiiDA: https://www.aiida.net
 .. _Slurm: https://slurm.schedmd.com/
 .. _Torque: https://www.adaptivecomputing.com/products/torque

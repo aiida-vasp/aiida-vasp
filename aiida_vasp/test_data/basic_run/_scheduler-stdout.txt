@@ -5,14 +5,14 @@ module load fftw/3.3.3
  running on   24 total cores
  distrk:  each k-point on   24 cores,    1 groups
  distr:  one band on    1 cores,   24 groups
- using from now: INCAR     
- vasp.5.3.5 31Mar14 (build Jul 23 2014 14:06:12) complex                        
-  
+ using from now: INCAR
+ vasp.5.3.5 31Mar14 (build Jul 23 2014 14:06:12) complex
+
  POSCAR found type information on POSCAR  In As
  POSCAR found :  2 types and       8 ions
  scaLAPACK will be used
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
 |           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
@@ -31,7 +31,7 @@ module load fftw/3.3.3
 |      Unfortunately you need to use the default for GW and RPA calculations. |
 |      (for HF NCORE is supported but not extensively tested yet)             |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
  LDA part: xc-table for Ceperly-Alder, standard interpolation
  found WAVECAR, reading the header
@@ -41,7 +41,7 @@ module load fftw/3.3.3
  reading WAVECAR
  the WAVECAR file was read successfully
  reading imaginary part of occupancies ...
- charge-density read from file: unknown                                 
+ charge-density read from file: unknown
  entering main loop
        N       E                     dE             d eps       ncg     rms          rms(c)
 DAV:   1    -0.360967701069E+02   -0.36097E+02   -0.79673E-04  1128   0.139E-01

@@ -60,7 +60,7 @@ class OutcarParser(BaseFileParser):
         try:
             self._outcar = Outcar(file_path=path, logger=self._logger)
         except SystemExit:
-            self._logger.warning("Parsevasp exited abruptly. Returning None.")
+            self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._outcar = None
 
     def _init_with_data(self, data):

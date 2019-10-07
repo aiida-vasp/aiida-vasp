@@ -99,4 +99,3 @@ Workflows
 * :py:class:`NscfWorkflow <aiida_vasp.workflows.legacy.nscf.NscfWorkflow>`, Obsolete
 * :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.legacy.projections.ProjectionsWorkflow>`, Obsolete
 * :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.legacy.wannier.WannierWorkflow>`, Obsolete
-

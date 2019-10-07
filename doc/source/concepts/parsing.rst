@@ -19,6 +19,13 @@ The quantities that can be parsed are now fully customisable. The user interface
    :start-after: NODES
    :end-before: ParserSettings
 
+As you can see, the ``<node_name>`` named ``bands`` is composed of three quantities,
+the ``eigenvalues``, the ``kpoints`` and the ``occupancies``. You typically need all three
+when you analyze the band structure. Similarly it is possible to customize the output stored by
+composing different ``quantities``. However, the regular user should not need to utilize these
+functions. It is more usefull when developing new workchains, where it makes sense to introduce a
+new output container which does not already exists.
+
 There are four ways to interact and set the parser properties.
 
 #. Using a boolean::
@@ -64,7 +71,7 @@ where either a ``VaspParser`` object or a list of ``FileParser`` objects are req
   data_obj = composer.compose('array.kpoints', quantities=['kpoints'])
 
 For most node types there are default quantities defined as::
-  
+
 .. literalinclude:: ../../../aiida_vasp/parsers/node_composer.py
    :start-after: NODE_TYPES
    :end-before: NodeComposer

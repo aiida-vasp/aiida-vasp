@@ -1,14 +1,21 @@
+"""
+An example call script that performs a single static VASP calculation.
+
+Performs a self consistent electron convergence run using the standard silicon structure.
+"""
+# pylint: disable=too-many-arguments
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Code, Bool, Str
 from aiida.plugins import DataFactory, WorkflowFactory
-from aiida.engine import submit, run
+from aiida.engine import submit
 from aiida import load_profile
 load_profile()
 
 
-def get_structure_Si():
-    """Set up Si primitive cell
+def get_structure():
+    """
+    Set up Si primitive cell
 
     Si
        5.431
@@ -23,74 +30,94 @@ def get_structure_Si():
 
     """
 
-    StructureData = DataFactory('structure')
+    structure_data = DataFactory('structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
-    structure = StructureData(cell=lattice)
+    structure = structure_data(cell=lattice)
     for pos_direct in ([0.875, 0.875, 0.875], [0.125, 0.125, 0.125]):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols='Si')
     return structure
 
 
-def main(code_string, potential_family, resources):
-    Dict = DataFactory('dict')
+def main(code_string, incar, kmesh, structure, potential_family, potential_mapping, options):
+    """Main method to setup the calculation."""
 
-    # set the workchain you would like to call
+    # First, we need to fetch the AiiDA datatypes which will
+    # house the inputs to our calculation
+    dict_data = DataFactory('dict')
+    kpoints_data = DataFactory('array.kpoints')
+
+    # Then, we set the workchain you would like to call
     workchain = WorkflowFactory('vasp.verify')
 
-    # organize options (needs a bit of special care)
-    options = AttributeDict()
-    options.account = ''
-    options.qos = ''
-    options.resources = resources
-    options.queue_name = ''
-    options.max_wallclock_seconds = 3600
-    options.max_memory_kb = 1024000
-
-    # organize settings
+    # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
-    parser_settings = {'output_params': ['total_energies', 'maximum_force']}
-    settings.parser_settings = parser_settings
-
-    # set inputs for the following WorkChain execution
-
     inputs = AttributeDict()
-    # set code
+
+    # Organize settings
+    settings.parser_settings = {'output_params': ['total_energies', 'maximum_force']}
+
+    # Set inputs for the following WorkChain execution
+    # Set code
     inputs.code = Code.get_from_string(code_string)
-    # set structure
-    inputs.structure = get_structure_Si()
-    # set k-points grid density
-    KpointsData = DataFactory("array.kpoints")
-    kpoints = KpointsData()
-    kpoints.set_kpoints_mesh([9, 9, 9])
+    # Set structure
+    inputs.structure = structure
+    # Set k-points grid density
+    kpoints = kpoints_data()
+    kpoints.set_kpoints_mesh(kmesh)
     inputs.kpoints = kpoints
-    # set parameters
-    inputs.parameters = Dict(dict={'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1})
-    # set potentials and their mapping
+    # Set parameters
+    inputs.parameters = dict_data(dict=incar)
+    # Set potentials and their mapping
     inputs.potential_family = Str(potential_family)
-    inputs.potential_mapping = Dict(dict={'Si': 'Si'})
-    # set options
-    inputs.options = Dict(dict=options)
-    # set settings
-    inputs.settings = Dict(dict=settings)
-    # set workchain related inputs
+    inputs.potential_mapping = dict_data(dict=potential_mapping)
+    # Set options
+    inputs.options = dict_data(dict=options)
+    # Set settings
+    inputs.settings = dict_data(dict=settings)
+    # Set workchain related inputs, in this case, give more explicit output to report
     inputs.verbose = Bool(True)
-    # submit the requested workchain with the supplied inputs
+    # Submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 
 
 if __name__ == '__main__':
-    # code_string is chosen among the list given by 'verdi code list'
-    code_string = 'vasp@mycluster'
+    # Code_string is chosen among the list given by 'verdi code list'
+    CODE_STRING = 'vasp@mycluster'
 
-    # potential_family is chosen among the list given by
+    # POSCAR equivalent
+    # Set the silicon structure
+    STRUCTURE = get_structure()
+
+    # INCAR equivalent
+    # Set input parameters
+    INCAR = {'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}
+
+    # KPOINTS equivalent
+    # Set kpoint mesh
+    KMESH = [9, 9, 9]
+
+    # POTCAR equivalent
+    # Potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'
-    potential_family = 'pbe'
+    POTENTIAL_FAMILY = 'pbe'
+    # The potential mapping selects which potential to use, here we use the standard
+    # for silicon, this could for instance be {'Si': 'Si_GW'} to use the GW ready
+    # potential instead
+    POTENTIAL_MAPPING = {'Si': 'Si'}
 
-    # metadata.options.resources
+    # Jobfile equivalent
+    # In options, we typically set scheduler options.
     # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
-    resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 20}
-    # resources = {'parallel_env': 'mpi*', 'tot_num_mpiprocs': 12}
+    # AttributeDict is just a special dictionary with the extra benefit that
+    # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
+    OPTIONS = AttributeDict()
+    OPTIONS.account = ''
+    OPTIONS.qos = ''
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.queue_name = ''
+    OPTIONS.max_wallclock_seconds = 3600
+    OPTIONS.max_memory_kb = 1024000
 
-    main(code_string, potential_family, resources)
+    main(CODE_STRING, INCAR, KMESH, STRUCTURE, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)

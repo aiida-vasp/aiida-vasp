@@ -9,8 +9,7 @@ A Node Composer for Aiida data nodes.
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
-
-""" NODE_TYPES """
+"""NODE_TYPES"""  # pylint: disable=pointless-string-statement
 
 NODES_TYPES = {
     'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries'],
@@ -81,7 +80,7 @@ class NodeComposer(object):
             inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
 
         # Call the correct specialised method for assembling.
-        return getattr(self, "_compose_" + node_type.replace(".", "_"))(node_type, inputs)
+        return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
 
     @staticmethod
     def _compose_dict(node_type, inputs):

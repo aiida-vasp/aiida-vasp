@@ -40,7 +40,7 @@ On Fedora 30, please follow these steps to configure a usable database for `AiiD
 
      $ sudo systemctl enable postgresql
      $ sudo systemctl start postgresql
-     
+
 #. The installation created the user ``postgres`` which you can use to administer the databases, users etc.
    Let us now add the database ``aiidadb`` and the user ``aiida`` and give them the necessary privileges and passwords.
    First, let us get into the `PostgreSQL`_ interactive terminal::
@@ -50,7 +50,7 @@ On Fedora 30, please follow these steps to configure a usable database for `AiiD
 
 #. Now we need to do something important. We need to change the ``ident`` entries in the ``pg_hba.conf`` file to ``md5``.
    In order to locate this file, let us ask `PostgreSQL`_::
-     
+
      # SHOW hba_file;
 
 #. Say the location is ``/var/lib/pgsql/data/pg_hba.conf``, which is pretty typical on Fedora 30. Exit the
