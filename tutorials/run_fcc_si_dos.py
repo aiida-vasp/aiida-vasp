@@ -1,60 +1,27 @@
 """
-Call script to calculate the total energies for different volumes of the silicon structure.
+Call script to calculate the total energies for one volume of standard silicon.
 
-This particular call script calls the workchain that handles the execution of the
-calculation of each structure. In this script we only supply a dictionary of different
-structures as an input to the workchain, in addition to the standard inputs required by
-the AiiDA-VASP workchain stack.
+This particular call script set up a standard calculation that execute a calculation for
+the fcc silicon structure.
 """
-# pylint: disable=too-many-arguments
-import numpy as np
-
+# pylint: disable=too-many-arguments, invalid-name
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory
+from aiida.plugins import DataFactory, WorkflowFactory
 from aiida.engine import submit
 from aiida import load_profile
-from eos import EosWorkChain
 load_profile()
 
 
-def get_structure(alat):
-    """
-    Set up Si primitive cell
-
-    fcc Si:
-       alat
-       0.5000000000000000    0.5000000000000000    0.0000000000000000
-       0.0000000000000000    0.5000000000000000    0.5000000000000000
-       0.5000000000000000    0.0000000000000000    0.5000000000000000
-    Si
-       1
-    Cartesian
-    0.0000000000000000  0.0000000000000000  0.0000000000000000
-
-    """
-
-    structure_data = DataFactory('structure')
-    lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
-    structure = structure_data(cell=lattice)
-    positions = [[0.0, 0.0, 0.0]]
-    for pos_direct in positions:
-        pos_cartesian = np.dot(pos_direct, lattice)
-        structure.append_atom(position=pos_cartesian, symbols='Si')
-        structure.label = 'silicon_at_{}'.format(str(alat).replace('.', '_'))
-    return structure
+def get_structure(label):
+    from aiida.orm import QueryBuilder
+    qb = QueryBuilder()
+    qb.append(DataFactory('structure'), filters={'label': {'==': label}}, tag='structure')
+    # Pick any structure with this label, here, just the first
+    return qb.all()[0][0]
 
 
-def get_structures(lattice_constants):
-    """Build a dictionary of structures using different lattice constants."""
-    structures = {}
-    for lattice_constant in lattice_constants:
-        # use the lattice constant as a key
-        structures['silicon_at_{}'.format(str(lattice_constant).replace('.', '_'))] = get_structure(lattice_constant)
-    return structures
-
-
-def main(code_string, incar, kmesh, structures, potential_family, potential_mapping, options):
+def main(code_string, incar, kmesh, structure, potential_family, potential_mapping, options):
     """Main method to setup the calculation."""
 
     # First, we need to fetch the AiiDA datatypes which will
@@ -63,21 +30,20 @@ def main(code_string, incar, kmesh, structures, potential_family, potential_mapp
     kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
-    #workchain = WorkflowFactory('vasp.verify')
-    workchain = EosWorkChain
+    workchain = WorkflowFactory('vasp.verify')
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
     inputs = AttributeDict()
 
     # organize settings
-    settings.parser_settings = {'output_params': ['total_energies', 'maximum_force']}
+    settings.parser_settings = {'add_dos': True}
 
     # set inputs for the following WorkChain execution
     # set code
     inputs.code = Code.get_from_string(code_string)
-    # set structures
-    inputs.structures = structures
+    # set structure
+    inputs.structure = structure
     # set k-points grid density
     kpoints = kpoints_data()
     kpoints.set_kpoints_mesh(kmesh)
@@ -103,11 +69,11 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'istart': 0, 'icharg': 2, 'encut': 240, 'ismear': 0, 'sigma': 0.1}
+    INCAR = {'encut': 240, 'ismear': -5, 'lorbit': 11}
 
     # KPOINTS equivalent
     # Set kpoint mesh
-    KMESH = [11, 11, 11]
+    KMESH = [21, 21, 21]
 
     # POTCAR equivalent
     # Potential_family is chosen among the list given by
@@ -133,7 +99,6 @@ if __name__ == '__main__':
 
     # POSCAR equivalent
     # Set the silicon structure
-    LATTICE_CONSTANTS = [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3]
-    STRUCTURES = get_structures(LATTICE_CONSTANTS)
+    STRUCTURE = get_structure('silicon_at_3_9')
 
-    main(CODE_STRING, INCAR, KMESH, STRUCTURES, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)
+    main(CODE_STRING, INCAR, KMESH, STRUCTURE, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)

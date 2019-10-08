@@ -10,6 +10,8 @@ The data is saved and the energy minimum is calculated and stored.
 # pylint: disable=attribute-defined-outside-init
 import random
 import numpy as np
+from scipy.optimize import minimize
+from scipy.interpolate import interp1d
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import calcfunction, WorkChain, while_, append_
@@ -53,7 +55,7 @@ class EosWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.output('eos', valid_type=DataFactory('array'), help='a list containing the cell volumes and total energies')
-        spec.expose_outputs(cls._next_workchain)
+        spec.output('eos_minimum', valid_type=DataFactory('dict'), help='a dictionary containing the cell volume at energy minimum')
 
     def initialize(self):
         """Initialize the eos workchain."""
@@ -188,14 +190,49 @@ class EosWorkChain(WorkChain):
         # not been passed through a calcfunction, workfunction or a workchain. Create this now.
         total_energies = store_total_energies(DataFactory('list')(list=self.ctx.total_energies))
 
+        # Let us also try to find a better minimum, just as an example using the power of Python
+        energy = locate_minimum(total_energies)
+
         # And then store the output on the workchain
         self.out('eos', total_energies)
+        self.out('eos_minimum', energy)
 
 
 @calcfunction
 def store_total_energies(total_energies):
     """Stores the total energies in ArrayData to keep data provenance."""
     total_energies_list = total_energies.get_list()
-    total_energies_array = DataFactory('array')()
-    total_energies_array.set_array('eos', np.array(total_energies_list))
-    return total_energies_array
+    # Let us also sort by volume as we picked the entries in the structures by random
+    # above
+    total_energies_array = np.array(total_energies_list)
+    total_energies_array_sorted = total_energies_array[total_energies_array[:, 0].argsort()]
+    array_data = DataFactory('array')()
+    array_data.set_array('eos', total_energies_array_sorted)
+
+    return array_data
+
+
+@calcfunction
+def locate_minimum(total_energies):
+    """Locate the volume with the lowest energy using interpolation."""
+    total_energies_array = total_energies.get_array('eos')
+    volumes = total_energies_array[:, 0]
+    energies = total_energies_array[:, 1]
+
+    # Establish some initial guess (take lowest energy point from the original dataset)
+    min_energy_guess_index = np.argmin(energies)
+
+    # Create the function that can be used to extract interpolated values
+    # Using cubic interpolation here, which is not necessarly physically correct,
+    # only serves as an example. Please have a look at the theory behind more realiastic
+    # models that can be used to fit such data.
+    new_energies = interp1d(volumes, energies, kind='cubic')
+
+    # Use minimize from scipy to locate the minimal point that can be ejected by the
+    # interpolation routines
+    minimized_point = minimize(new_energies, volumes[min_energy_guess_index], tol=1e-3)
+
+    # Create a dictionary to house the results and return
+    dict_data = DataFactory('dict')(dict={'volume': minimized_point.x[0], 'energy': minimized_point.fun})
+
+    return dict_data

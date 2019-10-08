@@ -14,18 +14,17 @@ sure you have completed the :ref:`previous tutorial<tutorial_fcc_si_step1>` befo
 
      %/$ wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/run_fcc_si_multiple_volumes.py
 
-#. Inspect the file, which has the following changes compared to the file used in the
-   :ref:`previous tutorial<tutorial_fcc_si_step1>`::
+#. Inspect the file, which has the following changes compared to the file used in the :ref:`previous tutorial<tutorial_fcc_si_step1>`
 
-.. literalinclude:: ../../../tutorials/run_fcc_si_multiple_volumes.py
-   :diff: ../../../tutorials/run_fcc_si_one_volume.py
-
+   .. literalinclude:: ../../../tutorials/run_fcc_si_multiple_volumes.py
+      :diff: ../../../tutorials/run_fcc_si_one_volume.py
+	
    As you can see, we did only minimal changes, all which should be self explanatory.
 
 #. Change the ``options`` and ``code_string`` as you did in the :ref:`previous tutorial<tutorial_fcc_si_step1>`.
-
-.. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
-	     that the `AiiDA`_ daemon is running before continuing.
+   
+   .. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
+		that the `AiiDA`_ daemon is running before continuing.
 
 #. Save and execute the resulting run script by issuing::
 
@@ -104,13 +103,15 @@ sure you have completed the :ref:`previous tutorial<tutorial_fcc_si_step1>` befo
 
    All processes are in a finished state and we can extract the total energies for each step.
    However, it should be obvious that extracting the total energies from ``misc`` from each
-   step manually seems to be a waste of time. Let us do another modification to the run script
-   above, namely::
+   step manually seems to be a waste of time. One could query (AiiDA has shortcuts for this), but
+   one would still need to look up the values in some way. Maybe it is easier to be able to access
+   them directly when all the calculations are complete? Let us do another modification to the
+   run script above, namely:
 
-.. literalinclude:: ../../../tutorials/run_fcc_si_multiple_volumes_eos.py
-   :diff: ../../../tutorials/run_fcc_si_multiple_volumes.py
+   .. literalinclude:: ../../../tutorials/run_fcc_si_multiple_volumes_eos.py
+      :diff: ../../../tutorials/run_fcc_si_multiple_volumes.py
 
-   Save the new file as ``run_fcc_si_multiple_volumes_eos.py`` or fetch it with::
+Save the new file as ``run_fcc_si_multiple_volumes_eos.py`` or fetch it with::
 
      wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/run_fcc_si_multiple_volumes_eos.py
 
