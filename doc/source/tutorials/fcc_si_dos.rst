@@ -99,6 +99,11 @@ In this case we will not modify the structure, so we will simply use the unmodif
 
    And as you can see, ``dos`` is now listed in the output.
 
+   Now, as you may already know, running with such a dense k-point grid for the initial
+   calculation is usually not a good idea. It is more efficient to pre-converge the
+   electronic states using a more sparse k-point grid and then restart the calculation
+   using a more dense k-point grid when calculating the density of states.
+
 .. _AiiDA: https://www.aiida.net
 .. _density of states for FCC Si: https://cms.mpi.univie.ac.at/wiki/index.php/Fcc_Si_DOS
 .. _VASP: https://www.vasp.at

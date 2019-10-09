@@ -63,7 +63,6 @@ def main(code_string, incar, kmesh, structures, potential_family, potential_mapp
     kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
-    #workchain = WorkflowFactory('vasp.verify')
     workchain = EosWorkChain
 
     # And finally, we declare the options, settings and input containers

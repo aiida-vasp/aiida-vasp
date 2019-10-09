@@ -111,6 +111,19 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
    .. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
 		that the `AiiDA`_ daemon is running before continuing.
 
+#. Now we need to make sure the daemon can pick up the workchain. We can do this by
+   making sure the daemon sees the directory where ``eos.py`` and ``run_fcc_si_workchain.py`` is
+   located. The simplest approach is to add the following, to your virtual environment ``activate``
+   script (assuming you do not use Conda)::
+
+     $ echo "export PYTHONPATH=$PYTHONPATH:<yourdirectory>" >> ~/env/aiida-vasp/bin/activate
+
+   assuming ``<yourdirectory>`` is the directory containing the ``eos.py`` and
+   ``run_fcc_si_workchain.py`` files. The location of the ``activate`` is assumed from the
+   previous steps in the tutorial. If you use Conda, please do::
+
+     % echo "export PYTHONPATH=$PYTHONPATH:<yourdirectory>" >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+		
 #. Submit the workchain by running the call script::
 
      %/$ python run_fcc_si_workchain.py
