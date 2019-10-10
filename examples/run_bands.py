@@ -82,7 +82,9 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Master, convergence and relaxation related parameters that is passed to the master,
     # convergence and relaxation workchain, respectively
     # Turn of relaxation
-    inputs.relax = Bool(False)
+    relax = AttributeDict()
+    relax.perform = Bool(False)
+    inputs.relax = relax
     # Extract electronic band structure
     inputs.extract_bands = Bool(True)
     # Submit the requested workchain with the supplied inputs

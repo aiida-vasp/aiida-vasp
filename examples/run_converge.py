@@ -85,7 +85,9 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Convergence and relaxation related parameters that is passed to the convergence
     # and relaxation workchain, respectively
     # Turn of final relaxation (after convergence tests)
-    inputs.relax = Bool(False)
+    relax = AttributeDict()
+    relax.perform = Bool(False)
+    inputs.relax = relax
     # Submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 
@@ -122,11 +124,11 @@ if __name__ == '__main__':
     # AttributeDict is just a special dictionary with the extra benefit that
     # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
     OPTIONS = AttributeDict()
-    OPTIONS.account = ''
+    OPTIONS.account = 'nn9995k'
     OPTIONS.qos = ''
     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
     OPTIONS.queue_name = ''
-    OPTIONS.max_wallclock_seconds = 3600
-    OPTIONS.max_memory_kb = 1024000
+    OPTIONS.max_wallclock_seconds = 86400
+    OPTIONS.max_memory_kb = 9000000
 
     main(CODE_STRING, INCAR, KMESH, STRUCTURE, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)

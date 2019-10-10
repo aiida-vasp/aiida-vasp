@@ -6,7 +6,7 @@ Performs a relaxation of the standard silicon structure.
 # pylint: disable=too-many-arguments
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str, Int
+from aiida.orm import Code
 from aiida.plugins import DataFactory, WorkflowFactory
 from aiida.engine import submit
 from aiida import load_profile
@@ -43,12 +43,7 @@ def get_structure():
 def main(code_string, incar, kmesh, structure, potential_family, potential_mapping, options):
     """Main method to setup the calculation."""
 
-    # First, we need to fetch the AiiDA datatypes which will
-    # house the inputs to our calculation
-    dict_data = DataFactory('dict')
-    kpoints_data = DataFactory('array.kpoints')
-
-    # Then, we set the workchain you would like to call
+    # We set the workchain you would like to call
     workchain = WorkflowFactory('vasp.relax')
 
     # And finally, we declare the options, settings and input containers
@@ -64,42 +59,46 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set structure
     inputs.structure = structure
     # Set k-points grid density
-    kpoints = kpoints_data()
+    kpoints = DataFactory('array.kpoints')()
     kpoints.set_kpoints_mesh(kmesh)
     inputs.kpoints = kpoints
     # Set parameters
-    inputs.parameters = dict_data(dict=incar)
+    inputs.parameters = DataFactory('dict')(dict=incar)
     # Set potentials and their mapping
-    inputs.potential_family = Str(potential_family)
-    inputs.potential_mapping = dict_data(dict=potential_mapping)
+    inputs.potential_family = DataFactory('str')(potential_family)
+    inputs.potential_mapping = DataFactory('dict')(dict=potential_mapping)
     # Set options
-    inputs.options = dict_data(dict=options)
+    inputs.options = DataFactory('dict')(dict=options)
     # Set settings
-    inputs.settings = dict_data(dict=settings)
+    inputs.settings = DataFactory('dict')(dict=settings)
     # Set workchain related inputs, in this case, give more explicit output to report
-    inputs.verbose = Bool(True)
+    inputs.verbose = DataFactory('bool')(True)
 
     # Relaxation related parameters that is passed to the relax workchain
+    relax = AttributeDict()
     # Turn on relaxation
-    inputs.relax = Bool(True)
+    relax.perform = DataFactory('bool')(True)
+    #relax.parameters = DataFactory('dict')(dict={'encut': 240})
     # Set force cutoff limit (EDIFFG, but no sign needed)
-    inputs.force_cutoff = 0.01
+    relax.force_cutoff = DataFactory('float')(0.01)
     # Turn on relaxation of positions (strictly not needed as the default is on)
     # The three next parameters correspond to the well known ISIF=3 setting
-    inputs.positions = Bool(True)
+    relax.positions = DataFactory('bool')(True)
     # Turn on relaxation of the cell shape (defaults to False)
-    inputs.shape = Bool(True)
+    relax.shape = DataFactory('bool')(True)
     # Turn on relaxation of the volume (defaults to False)
-    inputs.volume = Bool(True)
+    relax.volume = DataFactory('bool')(True)
     # Set maximum number of ionic steps
-    inputs.steps = Int(100)
+    relax.steps = DataFactory('int')(100)
+    # Set the relaxation parameters on the inputs
+    inputs.relax = relax
     # Submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 
 
 if __name__ == '__main__':
     # Code_string is chosen among the list given by 'verdi code list'
-    CODE_STRING = 'vasp@mycomputer'
+    CODE_STRING = 'vasp@mycluster'
 
     # POSCAR equivalent
     # Set the silicon structure
@@ -128,7 +127,7 @@ if __name__ == '__main__':
     # AttributeDict is just a special dictionary with the extra benefit that
     # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
     OPTIONS = AttributeDict()
-    OPTIONS.account = ''
+    OPTIONS.account = 'nn9995k'
     OPTIONS.qos = ''
     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
     OPTIONS.queue_name = ''

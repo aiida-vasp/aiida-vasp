@@ -106,6 +106,7 @@ A typical script to launch a VASP caluculation (wurtzite-type SiC) is
 something like::
 
    import numpy as np
+   from aiida.common.extendeddicts import AttributeDict
    from aiida.manage.configuration import load_profile
    from aiida.orm import Bool, Str, Code, Int, Float
    from aiida.plugins import DataFactory, WorkflowFactory
@@ -242,12 +243,14 @@ modified as follows:
 2. Remove ``IBRION`` from ``incar_dict``
 3. Add the following setting::
 
-       builder.relax = Bool(True)
-       builder.force_cutoff = Float(1e-5)
-       builder.steps = Int(10)
-       builder.positions = Bool(True)  # Relax atomic positions
-       builder.shape = Bool(True)      # Relax cell shape (alpha, beta, gamma)
-       builder.volume = Bool(True)     # Relax volume
+       relax = AttributeDict()
+       relax.perform = Bool(True)        # Turn on relaxation of the structure
+       relax.force_cutoff = Float(1e-5)  # Relax force cutoff
+       relax.steps = Int(10)             # Relax number of ionic steps
+       relax.positions = Bool(True)      # Relax atomic positions
+       relax.shape = Bool(True)          # Relax cell shape (alpha, beta, gamma)
+       relax.volume = Bool(True)         # Relax volume
+       builder.relax = relax
        builder.verbose = Bool(True)
 
 The lattice parameters of the relax crystal structure is found by

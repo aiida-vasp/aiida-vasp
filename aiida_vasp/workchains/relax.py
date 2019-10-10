@@ -15,7 +15,6 @@ from aiida_vasp.utils.workchains import compare_structures, prepare_process_inpu
 
 class RelaxWorkChain(WorkChain):
     """Structure relaxation workchain."""
-
     _verbose = False
     _next_workchain_string = 'vasp.verify'
     _next_workchain = WorkflowFactory(_next_workchain_string)
@@ -48,13 +47,13 @@ class RelaxWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'relax_parameters', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'settings'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
-        spec.input('relax_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('relax.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
-            'relax',
+            'relax.perform',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -62,7 +61,7 @@ class RelaxWorkChain(WorkChain):
             If True, perform relaxation.
             """)
         spec.input(
-            'energy_cutoff',
+            'relax.energy_cutoff',
             valid_type=get_data_class('float'),
             required=False,
             help="""
@@ -71,7 +70,7 @@ class RelaxWorkChain(WorkChain):
             supplied value.
             """)
         spec.input(
-            'force_cutoff',
+            'relax.force_cutoff',
             valid_type=get_data_class('float'),
             required=False,
             help="""
@@ -80,7 +79,7 @@ class RelaxWorkChain(WorkChain):
             supplied value.
             """)
         spec.input(
-            'steps',
+            'relax.steps',
             valid_type=get_data_class('int'),
             required=False,
             default=get_data_node('int', 60),
@@ -89,7 +88,7 @@ class RelaxWorkChain(WorkChain):
             unit cell size or shape).
                    """)
         spec.input(
-            'positions',
+            'relax.positions',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', True),
@@ -97,7 +96,7 @@ class RelaxWorkChain(WorkChain):
                    If True, perform relaxation of the atomic positions.
                    """)
         spec.input(
-            'shape',
+            'relax.shape',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -105,7 +104,7 @@ class RelaxWorkChain(WorkChain):
                    If True, perform relaxation of the unit cell shape.
                    """)
         spec.input(
-            'volume',
+            'relax.volume',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -113,7 +112,7 @@ class RelaxWorkChain(WorkChain):
                    If True, perform relaxation of the unit cell volume..
                    """)
         spec.input(
-            'convergence_on',
+            'relax.convergence_on',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -121,7 +120,7 @@ class RelaxWorkChain(WorkChain):
                    If True, test convergence based on selected criterias set.
                    """)
         spec.input(
-            'convergence_absolute',
+            'relax.convergence_absolute',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -129,7 +128,7 @@ class RelaxWorkChain(WorkChain):
                    If True, test convergence based on absolute differences.
                    """)
         spec.input(
-            'convergence_max_iterations',
+            'relax.convergence_max_iterations',
             valid_type=get_data_class('int'),
             required=False,
             default=get_data_node('int', 5),
@@ -137,7 +136,7 @@ class RelaxWorkChain(WorkChain):
                    The number of iterations to perform if the convergence criteria is not met.
                    """)
         spec.input(
-            'convergence_volume',
+            'relax.convergence_volume',
             valid_type=get_data_class('float'),
             required=False,
             default=get_data_node('float', 0.01),
@@ -146,7 +145,7 @@ class RelaxWorkChain(WorkChain):
                    is True in AA, otherwise in relative.
                    """)
         spec.input(
-            'convergence_positions',
+            'relax.convergence_positions',
             valid_type=get_data_class('float'),
             required=False,
             default=get_data_node('float', 0.01),
@@ -155,7 +154,7 @@ class RelaxWorkChain(WorkChain):
                    is True in AA, otherwise in relative difference.
                    """)
         spec.input(
-            'convergence_shape_lengths',
+            'relax.convergence_shape_lengths',
             valid_type=get_data_class('float'),
             required=False,
             default=get_data_node('float', 0.1),
@@ -165,7 +164,7 @@ class RelaxWorkChain(WorkChain):
                    is True in AA, otherwise in relative difference.
                    """)
         spec.input(
-            'convergence_shape_angles',
+            'relax.convergence_shape_angles',
             valid_type=get_data_class('float'),
             required=False,
             default=get_data_node('float', 0.1),
@@ -203,7 +202,7 @@ class RelaxWorkChain(WorkChain):
 
     def _set_ibrion(self, parameters):
         """Set the algorithm to use for relaxation."""
-        if self.inputs.positions.value or self.inputs.shape.value or self.inputs.volume.value:
+        if self.inputs.relax.positions.value or self.inputs.relax.shape.value or self.inputs.relax.volume.value:
             parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
         else:
             parameters.ibrion = self.AlgoEnum.NO_UPDATE
@@ -212,12 +211,12 @@ class RelaxWorkChain(WorkChain):
         """Set the cutoff to use for relaxation."""
         energy_cutoff = False
         try:
-            parameters.ediffg = self.inputs.energy_cutoff.value
+            parameters.ediffg = self.inputs.relax.energy_cutoff.value
             energy_cutoff = True
         except AttributeError:
             pass
         try:
-            parameters.ediffg = -abs(self.inputs.force_cutoff.value)
+            parameters.ediffg = -abs(self.inputs.relax.force_cutoff.value)
             if energy_cutoff:
                 self.report('User supplied both a force and an energy cutoff for the relaxation. Utilizing the force cutoff.')
         except AttributeError:
@@ -225,16 +224,16 @@ class RelaxWorkChain(WorkChain):
 
     def _set_nsw(self, parameters):
         """Set the number of ionic steps to perform."""
-        parameters.nsw = self.inputs.steps.value
+        parameters.nsw = self.inputs.relax.steps.value
 
     def _set_isif(self, parameters):
         """Set relaxation mode according to the chosen degrees of freedom."""
         parameters.isif = self.ModeEnum.get_from_dof(
-            positions=self.inputs.positions.value, shape=self.inputs.shape.value, volume=self.inputs.volume.value)
+            positions=self.inputs.relax.positions.value, shape=self.inputs.relax.shape.value, volume=self.inputs.relax.volume.value)
 
     def _add_overrides(self, parameters):
         """Add parameters tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax_parameters.get_dict().items()})
+        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.parameters.get_dict().items()})
         parameters.update(overrides)
 
     def _init_parameters(self):
@@ -247,7 +246,7 @@ class RelaxWorkChain(WorkChain):
         except AttributeError:
             pass
         if self.perform_relaxation():
-            if 'relax_parameters' in self.inputs:
+            if 'parameters' in self.inputs.relax:
                 # Add override parameters (user force what to use)
                 try:
                     self._add_overrides(parameters)
@@ -309,7 +308,7 @@ class RelaxWorkChain(WorkChain):
         """Set default settings."""
 
     def run_next_workchains(self):
-        within_max_iterations = bool(self.ctx.iteration < self.inputs.convergence_max_iterations)
+        within_max_iterations = bool(self.ctx.iteration < self.inputs.relax.convergence_max_iterations)
         return bool(within_max_iterations and not self.ctx.is_converged)
 
     def init_relaxed(self):
@@ -400,16 +399,16 @@ class RelaxWorkChain(WorkChain):
         self.ctx.current_structure = workchain.outputs.structure
 
         converged = True
-        if self.inputs.convergence_on.value:
+        if self.inputs.relax.convergence_on.value:
             if self._verbose:
                 self.report('Checking the convergence of the relaxation.')
             comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
-            delta = comparison.absolute if self.inputs.convergence_absolute.value else comparison.relative
-            if self.inputs.positions.value:
+            delta = comparison.absolute if self.inputs.relax.convergence_absolute.value else comparison.relative
+            if self.inputs.relax.positions.value:
                 converged &= self.check_positions_convergence(delta)
-            if self.inputs.volume.value:
+            if self.inputs.relax.volume.value:
                 converged &= self.check_volume_convergence(delta)
-            if self.inputs.shape.value:
+            if self.inputs.relax.shape.value:
                 converged &= self.check_shape_convergence(delta)
 
         if not converged:
@@ -425,29 +424,29 @@ class RelaxWorkChain(WorkChain):
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
-        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.convergence_shape_lengths.value)
+        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.relax.convergence_shape_lengths.value)
         if not lengths_converged:
             self.report('cell lengths changed by max {}, tolerance is {}'.format(delta.cell_lengths.max(),
-                                                                                 self.inputs.convergence_shape_lengths.value))
+                                                                                 self.inputs.relax.convergence_shape_lengths.value))
 
-        angles_converged = bool(delta.cell_angles.max() <= self.inputs.convergence_shape_angles.value)
+        angles_converged = bool(delta.cell_angles.max() <= self.inputs.relax.convergence_shape_angles.value)
         if not angles_converged:
             self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
-                                                                                self.inputs.convergence_shape_angles.value))
+                                                                                self.inputs.relax.convergence_shape_angles.value))
 
         return bool(lengths_converged and angles_converged)
 
     def check_volume_convergence(self, delta):
-        volume_converged = bool(delta.volume <= self.inputs.convergence_volume.value)
+        volume_converged = bool(delta.volume <= self.inputs.relax.convergence_volume.value)
         if not volume_converged:
-            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.convergence_volume.value))
+            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.relax.convergence_volume.value))
         return volume_converged
 
     def check_positions_convergence(self, delta):
-        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.convergence_positions.value)
+        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.relax.convergence_positions.value)
         if not positions_converged:
             self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(),
-                                                                                 self.inputs.convergence_positions.value))
+                                                                                 self.inputs.relax.convergence_positions.value))
         return positions_converged
 
     def store_relaxed(self):
@@ -471,7 +470,7 @@ class RelaxWorkChain(WorkChain):
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""
-        return self.inputs.relax.value
+        return self.inputs.relax.perform.value
 
 
 def check_parameters_relax_entries(parameters):
@@ -483,4 +482,4 @@ def check_parameters_relax_entries(parameters):
     if 'isif' in overrides:
         raise ValueError('overriding ISIF not allowed, use inputs to control')
     if 'nsw' in overrides:
-        raise ValueError('overriding NSW not allowed, use inputs.steps to control')
+        raise ValueError('overriding NSW not allowed, use inputs to control')

@@ -59,10 +59,12 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    inputs.relax_parameters = get_data_node('dict', dict=parameters)
-    inputs.relax = get_data_node('bool', True)
-    inputs.convergence_on = get_data_node('bool', False)
-    inputs.convergence_positions = get_data_node('float', 0.1)
+    relax = AttributeDict()
+    relax.parameters = get_data_node('dict', dict=parameters)
+    relax.perform = get_data_node('bool', True)
+    relax.convergence_on = get_data_node('bool', False)
+    relax.convergence_positions = get_data_node('float', 0.1)
+    inputs.relax = relax
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0

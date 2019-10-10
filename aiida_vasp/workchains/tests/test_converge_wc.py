@@ -67,13 +67,17 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
         })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    inputs.converge_relax = get_data_node('bool', True)
-    inputs.relax = get_data_node('bool', True)
+    relax = AttributeDict()
+    converge = AttributeDict()
+    converge.converge_relax = get_data_node('bool', True)
+    converge.compress = get_data_node('bool', False)
+    converge.displace = get_data_node('bool', False)
+    converge.encut_samples = get_data_node('int', 3)
+    converge.k_samples = get_data_node('int', 3)
+    relax.perform = get_data_node('bool', True)
+    inputs.relax = relax
+    inputs.converge = converge
     inputs.verbose = get_data_node('bool', True)
-    inputs.compress = get_data_node('bool', False)
-    inputs.displace = get_data_node('bool', False)
-    inputs.encut_samples = get_data_node('int', 3)
-    inputs.k_samples = get_data_node('int', 3)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'convergence_data' in results
@@ -132,14 +136,18 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    inputs.relax = get_data_node('bool', False)
-    inputs.converge_relax = get_data_node('bool', False)
+    relax = AttributeDict()
+    converge = AttributeDict()
+    relax.perform = get_data_node('bool', False)
+    converge.converge_relax = get_data_node('bool', False)
+    converge.testing = get_data_node('bool', True)
+    converge.compress = get_data_node('bool', False)
+    converge.displace = get_data_node('bool', False)
+    converge.encut_samples = get_data_node('int', 3)
+    converge.k_samples = get_data_node('int', 3)
+    inputs.relax = relax
+    inputs.converge = converge
     inputs.verbose = get_data_node('bool', True)
-    inputs.testing = get_data_node('bool', True)
-    inputs.compress = get_data_node('bool', False)
-    inputs.displace = get_data_node('bool', False)
-    inputs.encut_samples = get_data_node('int', 3)
-    inputs.k_samples = get_data_node('int', 3)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'convergence_data' in results
