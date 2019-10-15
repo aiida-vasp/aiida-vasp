@@ -13,21 +13,21 @@ we would like it to follow the stepwize definition at the top as
 closely as possible.
 
 Can we do better than the scripts above? Of course. AiiDA has the
-concept of a WorkChain which basically is a container for a
-workflow. Not only would we like to write this WorkChain as modular
-and reusable as possible, such that ultimately several WorkChains can
+concept of a :ref:`workchains` which basically is a container for a
+workflow. Not only would we like to write this workchain as modular
+and reusable as possible, such that ultimately several :ref:`WorkChains` can
 be cherry picked into a bigger composition of some kind of master
 piece of a workchain to solve some given problem.
 
 Let us try to preserve the workflow. The next challenge will be
-writing a suitable WorkChain of this workflow. This migration from the
-:ref:`script <bulk_modulus>` to a WorkChain will be rather
+writing a suitable workchain of this workflow. The migration from the
+:ref:`previous script <bulk_modulus_script>` to a  will be rather
 straightforward.
 
 We will in this tutorial also show how it is possible to a plugin that
-contains a WorkChain. This nicely demonstrate the modularity of AiiDA.
+contains a workchain. This nicely demonstrate the modularity of AiiDA.
 
-At https://github.com/atztogo/aiida-vasp-bm, the WorkChain
+At https://github.com/atztogo/aiida-vasp-bm, the workchain
 (``aiida_vasp_bm/workchains/bulkmodulus.py``) and the launch script
 (``aiida_vasp_bm/example/submit_SiC.py``) shown below are obtained.
 
@@ -36,7 +36,7 @@ documentation
 <https://aiida-core.readthedocs.io/en/latest/working/workflows.html#launching-work-chains>`_
 or `AiiDA tutorial (see scrolling down to Warning block )
 <https://aiida-tutorials.readthedocs.io/en/latest/pages/2019_SINTEF/sections/workflows.html#workchains-or-how-not-to-get-lost-if-your-computer-shuts-down-or-crashes>`_. As
-written these documentations, written WorkChains have to be exposed as a
+written these documentations, written :ref:`workchains` have to be exposed as a
 python module to be seen from AiiDA daemon. This is also
 achieved by making the AiiDA plugin and installing it by ``pip``. To
 make the plugin, use of AiiDA plugin cutter

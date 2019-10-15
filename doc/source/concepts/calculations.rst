@@ -10,7 +10,7 @@ There are three types of `Calculation`_ classes for `VASP`_, an all-purpose one 
 
   $ some_calc = CalculationFactory('<plugin_namespace>.<calculation_name>')
 
-from the ``verdi shell``. If you want to load it from a python script, please have a look at `verdi_shell`_. The ``<plugin_namespace>`` is always ``vasp`` for the AiiDA-VASP plugin. The ``<calculation_name>`` is the name of the file containing the module. For instance, for the :ref:`VASP calculation` we would issue::
+from the ``verdi shell``. If you want to load it from a python script, please have a look at `verdi_shell`_. The ``<plugin_namespace>`` is always ``vasp`` for the AiiDA-VASP plugin. The ``<calculation_name>`` is the name of the file containing the module. For instance, for the :ref:`vasp_calculation` we would issue::
 
   $ vasp_calc = CalculationFactory('vasp.vasp')
 

@@ -10,7 +10,7 @@ A `Workchain`_ can be loaded by utilizing the :py:class:`aiida.plugins.WorkflowF
 
   $ some_workchain = WorkflowFactory('<plugin_namespace>.<workchain_name>')
 
-from the ``verdi shell``. If you want to load it from a python script, please have a look at `verdi_shell`_. The ``<plugin_namespace>`` is always ``vasp`` for the AiiDA-VASP plugin. The ``<workchain_name>`` is the name of the file containing the module. For instance, for the :ref:`VASP workchain` we would issue::
+from the ``verdi shell``. If you want to load it from a python script, please have a look at `verdi_shell`_. The ``<plugin_namespace>`` is always ``vasp`` for the AiiDA-VASP plugin. The ``<workchain_name>`` is the name of the file containing the module. For instance, for the :ref:`vasp_workchain` we would issue::
 
   $ vasp_workchain = WorkflowFactory('vasp.vasp')
 
