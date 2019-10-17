@@ -58,6 +58,13 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.input(
+            'restart_folder',
+            valid_type=get_data_class('remote'),
+            required=False,
+            help="""
+            The restart folder from a previous workchain run that is going to be used.
+            """)
+        spec.input(
             'max_iterations',
             valid_type=get_data_class('int'),
             required=False,
@@ -120,6 +127,11 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
+        # Check first if the calling workchain wants a restart in the same folder
+        if 'restart_folder' in self.inputs:
+            self.ctx.inputs.restart_folder = self.inputs.restart_folder
+
+        # Then check if we the restart workchain wants a restart
         if isinstance(self.ctx.restart_calc, self._calculation):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
             old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())

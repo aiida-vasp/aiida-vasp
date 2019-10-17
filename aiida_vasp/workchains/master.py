@@ -26,7 +26,7 @@ class MasterWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._base_workchain, exclude=['settings'])
+        spec.expose_inputs(cls._base_workchain, exclude=['settings', 'clean_workdir'])
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input(
@@ -96,6 +96,9 @@ class MasterWorkChain(WorkChain):
             self._verbose = self.inputs.verbose.value
         except AttributeError:
             pass
+        # If we want to keep previous files for relaunch, do not clean remote folders
+        if self.extract_bands() or self.extract_dos():
+            self.ctx.inputs.clean_workdir = get_data_node('bool', False)
         self._init_structure()
         self._init_kpoints()
 
@@ -131,20 +134,8 @@ class MasterWorkChain(WorkChain):
 
     def _init_settings(self):
         """Initialize the settings."""
-        # Make sure we parse the charge density from the previous run
         if 'settings' in self.inputs:
-            settings = AttributeDict(self.inputs.settings.get_dict())
-        else:
-            settings = AttributeDict({'parser_settings': {}})
-        if self.extract_bands():
-            dict_entry = {'add_chgcar': True}
-            try:
-                settings.parser_settings.update(dict_entry)
-            except AttributeError:
-                settings.parser_settings = dict_entry
-            dict_entry = {'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR']}
-            settings.update(dict_entry)
-        self.ctx.inputs.settings = settings
+            self.ctx.inputs.settings = self.inputs.settings
 
     def _set_base_workchain(self):
         """Set the base workchain to be called."""
@@ -153,19 +144,11 @@ class MasterWorkChain(WorkChain):
     def init_bands(self):
         """Initialize the run to extract the band structure."""
         self._next_workchain = self._bands_workchain
-        # Make sure the charge density is added from the previous run
-        self.ctx.inputs.chgcar = self.ctx.workchains[-1].outputs['chgcar']
-        # Remove parser extraction of the charge density file
-        settings = self.ctx.inputs.settings.get_dict()
-        try:
-            del settings['ADDITIONAL_RETRIEVE_LIST']
-        except AttributeError:
-            pass
-        try:
-            del settings['parser_settings']['add_chgcar']
-        except AttributeError:
-            pass
-        self.ctx.inputs.settings = settings
+        # Make sure we set the restart folder (the charge density file is not
+        # copied locally, but is present in the folder of the previous remote directory)
+        self.ctx.inputs.restart_folder = self.ctx.workchains[-1].outputs.remote_folder
+        # Also enable the clean_workdir again
+        self.ctx.inputs.clean_workdir = get_data_node('bool', True)
 
     def init_workchain(self):
         """Initialize the base workchain."""

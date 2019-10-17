@@ -59,7 +59,6 @@ class BandsWorkChain(WorkChain):
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings'))
-        spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
@@ -122,7 +121,7 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('parameters_seekpath', valid_type=get_data_class('dict'))
+        spec.output('seekpath.parameters', valid_type=get_data_class('dict'))
         spec.output('bands', valid_type=get_data_class('array.bands'))
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.output('structure_primitive', valid_type=get_data_class('structure'))
@@ -275,7 +274,7 @@ class BandsWorkChain(WorkChain):
         # Set the output nodes for the primitive structure and the k-point path
         self.out('structure_primitive', result['primitive_structure'])
         self.out('kpoints', result['explicit_kpoints'])
-        self.out('parameters_seekpath', result['parameters'])
+        self.out('seekpath.parameters', result['parameters'])
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""

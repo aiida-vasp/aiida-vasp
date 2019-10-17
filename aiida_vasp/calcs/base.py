@@ -108,8 +108,7 @@ class VaspCalcBase(CalcJob):
     def check_restart_folder(self):
         restart_folder = self.inputs.get('restart_folder', None)
         if restart_folder:
-            previous_calc = restart_folder.get_inputs(node_type=CalcJob)[0]
-            if not self.get_computer().pk == previous_calc.get_computer().pk:
+            if not self.computer.pk == restart_folder.computer.pk:
                 raise ValidationError('Calculation can not be restarted on another computer')
 
     def _is_restart(self):
