@@ -178,10 +178,11 @@ class MasterWorkChain(WorkChain):
         exclude = []
         if self.extract_bands:
             exclude = exclude + ['converge', 'relax', 'verify']
-        self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
+        inputs = AttributeDict({k: v for k, v in self.exposed_inputs(self._next_workchain).items() if k not in exclude})
+        self.ctx.inputs.update(inputs)
 
         # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge'])
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge', 'verify'])
 
     def run_next_workchain(self):
         """Run the next workchain."""

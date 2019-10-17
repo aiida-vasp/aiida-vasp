@@ -160,7 +160,7 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.kpoints_distance.value})
+        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value
@@ -270,6 +270,7 @@ class BandsWorkChain(WorkChain):
 
         self.ctx.inputs.structure = result['primitive_structure']
         self.ctx.inputs.kpoints = result['explicit_kpoints']
+        self.report('explicit kpoints:{}'.format(result['explicit_kpoints']))
 
         # Set the output nodes for the primitive structure and the k-point path
         self.out('structure_primitive', result['primitive_structure'])

@@ -679,7 +679,7 @@ class ConvergeWorkChain(WorkChain):
             self._set_input_nodes()
 
         # Make sure we do not have any floating dict (convert to Dict) in the input
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax'])
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'verify'])
 
     def run_next_workchain(self):
         """Run next workchain."""
