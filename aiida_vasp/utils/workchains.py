@@ -10,21 +10,26 @@ from aiida.orm import Dict
 from aiida.engine.processes.exit_code import ExitCode
 
 
-def prepare_process_inputs(inputs):
+def prepare_process_inputs(inputs, namespaces=None):
     """
     Prepare the inputs dictionary for a calculation.
 
     Any remaining bare dictionaries in the inputs dictionary will be wrapped in a Dict data node
-    except for the 'options', 'metadata' and 'potential' key which should remain a standard dictionary. Another exception are dictionaries
+    except for the 'options', 'metadata', 'potential' and any key specified in the parameters
+    namespaces. They all should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
-    This is the format used by input groups as in for example the explicit pseudo dictionary where the key is
-    a tuple of kind to which the UpfData corresponds.
     """
     from past.builtins import basestring
     prepared_inputs = AttributeDict()
 
+    if namespaces is None:
+        namespaces = []
+
+    exclude = ['options', 'metadata', 'potential']
+    exclude = exclude + namespaces
+
     for key, val in inputs.items():
-        if key not in ['options', 'metadata', 'potential'] and \
+        if key not in exclude and \
            isinstance(val, dict) and \
            all([isinstance(k, (basestring)) for k in val.keys()]):
             prepared_inputs[key] = Dict(dict=val)

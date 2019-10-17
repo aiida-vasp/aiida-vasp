@@ -679,7 +679,7 @@ class ConvergeWorkChain(WorkChain):
             self._set_input_nodes()
 
         # Make sure we do not have any floating dict (convert to Dict) in the input
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax'])
 
     def run_next_workchain(self):
         """Run next workchain."""
@@ -813,6 +813,11 @@ class ConvergeWorkChain(WorkChain):
         kstep = self.ctx.converge.k_sampling[self.ctx.converge.kpoints_iteration]
         rec_cell = self.ctx.converge.kpoints.reciprocal_cell
         kgrid = fetch_k_grid(rec_cell, kstep)
+        # Check if the existing entry already exists from the previous run (can
+        # happen for low grid densities due to roundoff)
+        if kgrid == self.ctx.converge.settings.kgrid:
+            # Increment all entries by one
+            kgrid = [element + 1 for element in kgrid]
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.
         kpoints = get_data_class('array.kpoints')()
@@ -978,10 +983,13 @@ class ConvergeWorkChain(WorkChain):
         cutoff_type = self.inputs.converge.cutoff_type.value
         cutoff_value = self.inputs.converge.cutoff_value.value
 
+        # Already stored
         encut = settings.encut
-        k_data = self.ctx.converge.k_data
+        # Also notice that the data resides in k_data_org in order to open for
+        # relative comparisons in a flexible manner
+        k_data = self.ctx.converge.k_data_org
         if self._verbose:
-            self.report('No atomic displacements or compression were performed.' 'The convergence test suggests:')
+            self.report('No atomic displacements or compression were performed. The convergence test suggests:')
         if settings.encut_org is None:
             if self._verbose:
                 self.report('plane wave cutoff: {encut} eV.'.format(encut=encut))
@@ -1245,6 +1253,8 @@ class ConvergeWorkChain(WorkChain):
         encut_okey = False
         index = 0
         criteria = self._ALLOWED_CUTOFF_TYPES[cutoff_type]
+        # Here we only check two consecutive steps, consider to at least check three,
+        # and pick the first if both steps are within the criteria
         for encut in range(1, len(pw_data)):
             delta = abs(pw_data[encut][criteria + 1] - pw_data[encut - 1][criteria + 1])
             if delta < cutoff_value:
@@ -1266,6 +1276,7 @@ class ConvergeWorkChain(WorkChain):
         :return kgrid: The converged k-point grid sampling in each direction.
 
         """
+
         if k_data is None:
             k_data = self.ctx.converge.k_data
         if cutoff_type is None:
@@ -1283,6 +1294,8 @@ class ConvergeWorkChain(WorkChain):
         k_cut_okey = False
         index = 0
         criteria = self._ALLOWED_CUTOFF_TYPES[cutoff_type]
+        # Here we only check two consecutive steps, consider to at least check three,
+        # and pick the first if both steps are within the criteria
         for k in range(1, len(k_data)):
             delta = abs(k_data[k][criteria + 4] - k_data[k - 1][criteria + 4])
             if delta < cutoff_value:
