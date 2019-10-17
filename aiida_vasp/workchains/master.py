@@ -26,8 +26,9 @@ class MasterWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._base_workchain, exclude=['extract_bands', 'settings', 'kpoints'])
+        spec.expose_inputs(cls._base_workchain, exclude=['settings'])
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input(
             'extract_bands',
             valid_type=get_data_class('bool'),
@@ -37,7 +38,15 @@ class MasterWorkChain(WorkChain):
             Do you want to extract the band structure?
             """)
         spec.input(
-            'relax',
+            'extract_dos',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
+            Do you want to extract the density of states?
+            """)
+        spec.input(
+            'relax.perform',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -88,21 +97,37 @@ class MasterWorkChain(WorkChain):
         except AttributeError:
             pass
         self._init_structure()
+        self._init_kpoints()
 
     def _init_structure(self):
         """Initialize the structure."""
         self.ctx.inputs.structure = self.inputs.structure
-        # Since the reciprocal lattice is set in KpointsData, we need, if not performing
-        # convergence tests to access the single StructureData, update the
-        # supplied KpointsData with the right reciprocal lattice.
+
+    def _init_kpoints(self):
+        """
+        Initialize the kpoints.
+
+        Since the reciprocal lattice is set in KpointsData, we need, if not performing
+        convergence tests to access the single StructureData, update the
+        supplied KpointsData with the right reciprocal lattice.
+
+        """
+
+        # First check if a k-point distance is supplied
         try:
             distance = self.inputs.kpoints_distance.value
         except AttributeError:
+            # Then check if a KpointsData has been supplied
+            try:
+                kpoints = self.inputs.kpoints
+            except AttributeError:
+                # If neither, return, we need to run convergence tests
+                return
+            self.ctx.inputs.kpoints = kpoints
             return
         kpoints = get_data_class('array.kpoints')()
         kpoints.set_cell_from_structure(self.ctx.inputs.structure)
         kpoints.set_kpoints_mesh_from_density(distance)
-        self.ctx.inputs.kpoints = kpoints
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -150,10 +175,13 @@ class MasterWorkChain(WorkChain):
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
         # Add exposed inputs
+        exclude = []
+        if self.extract_bands:
+            exclude = exclude + ['converge', 'relax', 'verify']
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge'])
 
     def run_next_workchain(self):
         """Run the next workchain."""

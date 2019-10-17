@@ -61,10 +61,10 @@ class BandsWorkChain(WorkChain):
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings'))
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
-        spec.input('bands_parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input(
-            'kpoints_distance',
+            'bands.kpoints_distance',
             valid_type=get_data_class('float'),
             required=False,
             default=get_data_node('float', 0.05),
@@ -72,7 +72,7 @@ class BandsWorkChain(WorkChain):
             The distance between each k-point along each high-symmetry line.
             """)
         spec.input(
-            'decompose_bands',
+            'bands.decompose_bands',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -80,7 +80,7 @@ class BandsWorkChain(WorkChain):
             Decompose the band structure on each atom.
             """)
         spec.input(
-            'decompose_wave',
+            'bands.decompose_wave',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -88,7 +88,7 @@ class BandsWorkChain(WorkChain):
             Decompose the wave function.
             """)
         spec.input(
-            'lm',
+            'bands.lm',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -96,7 +96,7 @@ class BandsWorkChain(WorkChain):
             Further decompose the decomposition into l- and m-states.
             """)
         spec.input(
-            'phase',
+            'bands.phase',
             valid_type=get_data_class('bool'),
             required=False,
             default=get_data_node('bool', False),
@@ -104,7 +104,7 @@ class BandsWorkChain(WorkChain):
             Further decompose the l- and m-state decomposition into phases.
             """)
         spec.input(
-            'wigner_seitz_radius',
+            'bands.wigner_seitz_radius',
             valid_type=get_data_class('list'),
             required=False,
             default=get_data_node('list', list=[False]),
@@ -169,7 +169,7 @@ class BandsWorkChain(WorkChain):
 
     def _add_overrides(self, parameters):
         """Add parameters tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.bands_parameters.get_dict().items()})
+        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.bands.parameters.get_dict().items()})
         parameters.update(overrides)
 
     def _init_parameters(self):
@@ -213,23 +213,23 @@ class BandsWorkChain(WorkChain):
 
     def _set_wigner_seitz_radius(self, parameters):
         """Set the Wigner Seitz radius that is used to project/decompose."""
-        wigner_seitz_radius = self.inputs.wigner_seitz_radius.get_list()
+        wigner_seitz_radius = self.inputs.bands.wigner_seitz_radius.get_list()
         if wigner_seitz_radius[0]:
             parameters.rwigs = wigner_seitz_radius
 
     def _set_lorbit(self, parameters):
         """Set the flag that controls the projectors/decomposition onto orbitals."""
-        if self.inputs.decompose_bands:
-            if self.inputs.decompose_wave:
+        if self.inputs.bands.decompose_bands:
+            if self.inputs.bands.decompose_wave:
                 # Issue a warning that one can only use either or
                 raise ValueError('Only projections/decompositions on the bands or the ' 'wave function are allowed.')
             wigner_seitz_radius = False
-            if self.inputs.wigner_seitz_radius.value[0]:
+            if self.inputs.bands.wigner_seitz_radius.value[0]:
                 wigner_seitz_radius = True
             parameters.lorbit = self.OrbitEnum.get_from_combination(
-                lm=self.inputs.lm.value, phase=self.inputs.phase.value, wigner_seitz_radius=wigner_seitz_radius)
+                lm=self.inputs.bands.lm.value, phase=self.inputs.bands.phase.value, wigner_seitz_radius=wigner_seitz_radius)
         else:
-            if self.inputs.decompose_wave:
+            if self.inputs.bands.decompose_wave:
                 parameters.lorbit = self.OrbitEnum.ATOM_LM_WAVE
 
     def init_next_workchain(self):

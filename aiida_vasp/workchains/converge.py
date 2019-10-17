@@ -604,7 +604,7 @@ class ConvergeWorkChain(WorkChain):
         if self._verbose:
             if not self.ctx.converge.settings.supplied_kmesh:
                 self.report('executing a calculation with an assumed converged '
-                            'plane wave cutoff of {encut} and a {kgrid0}x{kgrid1}x{kgrid2} '
+                            'plane wave cutoff of {encut} eV and a {kgrid0}x{kgrid1}x{kgrid2} '
                             'k-point grid'.format(
                                 encut=self.ctx.converge.settings.encut,
                                 kgrid0=self.ctx.converge.settings.kgrid[0],
@@ -612,7 +612,7 @@ class ConvergeWorkChain(WorkChain):
                                 kgrid2=self.ctx.converge.settings.kgrid[2]))
             else:
                 self.report('executing a calculation with an assumed converged '
-                            'plane wave cutoff of {encut} and a supplied k-point grid'.format(encut=self.ctx.converge.settings.encut))
+                            'plane wave cutoff of {encut} eV and a supplied k-point grid'.format(encut=self.ctx.converge.settings.encut))
 
     def _set_input_nodes(self):
         """Replaces the ctx.input nodes from the previous calculations."""
@@ -741,10 +741,10 @@ class ConvergeWorkChain(WorkChain):
         if self._verbose:
             if self.ctx.converge.settings.supplied_kmesh:
                 self.report('running plane wave convergence test on the supplied k-point '
-                            'mesh for a plane wave cutoff {encut}'.format(encut=encut) + inform_details)
+                            'mesh for a plane wave cutoff of {encut} eV'.format(encut=encut) + inform_details)
             else:
                 self.report('running plane wave convergence test for k-point sampling '
-                            'of {kgrid0}x{kgrid1}x{kgrid2} for a plane wave cutoff {encut}'.format(
+                            'of {kgrid0}x{kgrid1}x{kgrid2} for a plane wave cutoff of {encut} eV'.format(
                                 kgrid0=self.ctx.converge.settings.kgrid[0],
                                 kgrid1=self.ctx.converge.settings.kgrid[1],
                                 kgrid2=self.ctx.converge.settings.kgrid[2],
@@ -833,7 +833,7 @@ class ConvergeWorkChain(WorkChain):
         # inform user
         if self._verbose:
             self.report('running k-point convergence test for k-point sampling '
-                        'of {}x{}x{} for a plane wave cutoff {encut}'.format(
+                        'of {}x{}x{} for a plane wave cutoff of {encut} eV'.format(
                             kgrid[0], kgrid[1], kgrid[2], encut=self.ctx.converge.settings.encut) + inform_details)
 
     def results_kpoints_conv_calc(self):

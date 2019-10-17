@@ -25,9 +25,9 @@ class VerifyWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=['verify_max_iterations'])
+        spec.expose_inputs(cls._next_workchain)
         spec.input(
-            'verify_max_iterations',
+            'verify.max_iterations',
             valid_type=get_data_class('int'),
             required=False,
             default=get_data_node('int', 1),
@@ -75,7 +75,7 @@ class VerifyWorkChain(WorkChain):
         This is the case as long as the last calculation has not finished successfully and the maximum number of restarts
         has not yet been exceeded.
         """
-        return not self.ctx.is_finished and self.ctx.iteration <= self.inputs.verify_max_iterations.value
+        return not self.ctx.is_finished and self.ctx.iteration <= self.inputs.verify.max_iterations.value
 
     def init_next_workchain(self):
         """Initialize the next workchain."""
