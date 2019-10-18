@@ -21,13 +21,9 @@ class VaspCalcBase(CalcJob):
 
     * Defines internal parameters common to all vasp calculations.
     * provides a basic, extendable implementation of _prepare_for_submission
-    * provides hooks, so subclasses can extend the behaviour without
-
-    having to reimplement common functionality
+    * provides hooks, so subclasses can extend the behaviour without having to reimplement common functionality
     """
 
-    _INPUT_FILE_NAME = 'INCAR'
-    _OUTPUT_FILE_NAME = 'OUTCAR'
     _default_parser = 'vasp.vasp'
 
     @classmethod
@@ -89,7 +85,7 @@ class VaspCalcBase(CalcJob):
     def remote_copy_restart_folder(self):
         """Add all files required for restart to the list of files to be copied from the previous calculation."""
         restart_folder = self.inputs.restart_folder
-        computer = self.get_computer()
+        computer = self.node.computer
         excluded = ['INCAR', '_aiidasubmit.sh', '.aiida']
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.')
                      for name in restart_folder.listdir()
@@ -108,7 +104,7 @@ class VaspCalcBase(CalcJob):
     def check_restart_folder(self):
         restart_folder = self.inputs.get('restart_folder', None)
         if restart_folder:
-            if not self.computer.pk == restart_folder.computer.pk:
+            if not self.node.computer.pk == restart_folder.computer.pk:
                 raise ValidationError('Calculation can not be restarted on another computer')
 
     def _is_restart(self):
@@ -171,8 +167,9 @@ class VaspCalcBase(CalcJob):
                 transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
-                builder.potential = imgr.get_potcar_input(
-                    sandbox_path, potential_family=kwargs.get('potential_family'), potential_mapping=kwargs.get('potential_mapping'))
+                builder.potential = imgr.get_potcar_input(sandbox_path,
+                                                          potential_family=kwargs.get('potential_family'),
+                                                          potential_mapping=kwargs.get('potential_mapping'))
                 builder.kpoints = imgr.get_kpoints_input(sandbox_path)
                 cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
         return proc_cls, builder

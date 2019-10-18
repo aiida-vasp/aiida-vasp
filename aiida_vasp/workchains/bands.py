@@ -62,52 +62,46 @@ class BandsWorkChain(WorkChain):
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input(
-            'bands.kpoints_distance',
-            valid_type=get_data_class('float'),
-            required=False,
-            default=get_data_node('float', 0.05),
-            help="""
+        spec.input('bands.kpoints_distance',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.05),
+                   help="""
             The distance between each k-point along each high-symmetry line.
             """)
-        spec.input(
-            'bands.decompose_bands',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('bands.decompose_bands',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             Decompose the band structure on each atom.
             """)
-        spec.input(
-            'bands.decompose_wave',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('bands.decompose_wave',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             Decompose the wave function.
             """)
-        spec.input(
-            'bands.lm',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('bands.lm',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             Further decompose the decomposition into l- and m-states.
             """)
-        spec.input(
-            'bands.phase',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('bands.phase',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             Further decompose the l- and m-state decomposition into phases.
             """)
-        spec.input(
-            'bands.wigner_seitz_radius',
-            valid_type=get_data_class('list'),
-            required=False,
-            default=get_data_node('list', list=[False]),
-            help="""
+        spec.input('bands.wigner_seitz_radius',
+                   valid_type=get_data_class('list'),
+                   required=False,
+                   default=get_data_node('list', list=[False]),
+                   help="""
             The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilzed.
             """)
         spec.outline(
@@ -121,10 +115,11 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('seekpath.parameters', valid_type=get_data_class('dict'))
+        spec.output('seekparam', valid_type=get_data_class('dict'))
         spec.output('bands', valid_type=get_data_class('array.bands'))
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
         spec.output('structure_primitive', valid_type=get_data_class('structure'))
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
 
@@ -225,8 +220,9 @@ class BandsWorkChain(WorkChain):
             wigner_seitz_radius = False
             if self.inputs.bands.wigner_seitz_radius.value[0]:
                 wigner_seitz_radius = True
-            parameters.lorbit = self.OrbitEnum.get_from_combination(
-                lm=self.inputs.bands.lm.value, phase=self.inputs.bands.phase.value, wigner_seitz_radius=wigner_seitz_radius)
+            parameters.lorbit = self.OrbitEnum.get_from_combination(lm=self.inputs.bands.lm.value,
+                                                                    phase=self.inputs.bands.phase.value,
+                                                                    wigner_seitz_radius=wigner_seitz_radius)
         else:
             if self.inputs.bands.decompose_wave:
                 parameters.lorbit = self.OrbitEnum.ATOM_LM_WAVE
@@ -268,13 +264,15 @@ class BandsWorkChain(WorkChain):
         result = seekpath_structure_analysis(self.inputs.structure, self.ctx.seekpath_parameters)
 
         self.ctx.inputs.structure = result['primitive_structure']
+        self.report('explicit points:{}'.format(result['explicit_kpoints']))
         self.ctx.inputs.kpoints = result['explicit_kpoints']
-        self.report('explicit kpoints:{}'.format(result['explicit_kpoints']))
+        self.report('input kpoints:{}'.format(self.ctx.inputs.kpoints))
 
-        # Set the output nodes for the primitive structure and the k-point path
+        # Set the output nodes for the primitive structure and the seekpath parameters
+        #if self._verbose:
+        #    self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))  # pylint: disable=not-callable
         self.out('structure_primitive', result['primitive_structure'])
-        self.out('kpoints', result['explicit_kpoints'])
-        self.out('seekpath.parameters', result['parameters'])
+        self.out('seekparam', result['parameters'])
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
@@ -306,7 +304,7 @@ class BandsWorkChain(WorkChain):
 
     def finalize(self):
         """Finalize the workchain."""
-        return self.exit_status
+        return self.ctx.exit_code
 
 
 @calcfunction

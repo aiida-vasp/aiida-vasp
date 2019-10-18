@@ -87,25 +87,25 @@ class VaspCalculation(VaspCalcBase):
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
         spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
-        spec.input(
-            'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
+        spec.input('wavefunctions',
+                   valid_type=get_data_class('vasp.wavefun'),
+                   required=False,
+                   help='The wave function coefficients. (WAVECAR)')
         spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
-        spec.output(
-            'misc',
-            valid_type=get_data_class('dict'),
-            help='The output parameters containing smaller quantities that do not depend on system size.')
+        spec.output('misc',
+                    valid_type=get_data_class('dict'),
+                    help='The output parameters containing smaller quantities that do not depend on system size.')
         spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
         spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
         spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The output charge density.')
-        spec.output(
-            'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
-            required=False,
-            help='The output file containing the plane wave coefficients.')
+        spec.output('wavecar',
+                    valid_type=get_data_class('vasp.wavefun'),
+                    required=False,
+                    help='The output file containing the plane wave coefficients.')
         spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
@@ -160,7 +160,7 @@ class VaspCalculation(VaspCalcBase):
         """
         return not bool('kspacing' in self._parameters or 'kgamma' in self._parameters)
 
-    def _need_chgd(self):
+    def _need_chgcar(self):
         """
         Test wether an charge_densities input is needed or not.
 
@@ -171,11 +171,31 @@ class VaspCalculation(VaspCalcBase):
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
         """
-        ichrg_d = 0 if self._need_wfn() else 2
+        ichrg_d = 0 if self._need_wavecar() else 2
         icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
-    def _need_wfn(self):
+    def _check_chgcar(self, remote_folder):  # pylint: disable=no-self-use
+        """
+        Check if the CHGCAR file is present in the remote folder.
+
+        This is only a very rudimentary test, e.g. we only check the
+        presence of a file, not if its content is valid.
+        """
+
+        return 'CHGCAR' in remote_folder.listdir()
+
+    def _check_wavecar(self, remote_folder):  # pylint: disable=no-self-use
+        """
+        Check if the WAVECAR file is present in the remote folder.
+
+        This is only a very rudimentary test, e.g. we only check the
+        presence of a file, not if its content is valid.
+        """
+
+        return 'WAVECAR' in remote_folder.listdir()
+
+    def _need_wavecar(self):
         """
         Test wether a wavefunctions input is needed or not.
 
@@ -204,12 +224,26 @@ class VaspCalculation(VaspCalcBase):
     def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
-        if self._need_chgd():
-            chgcar = tempfolder.get_abs_path('CHGCAR')
-            self.write_chgcar(chgcar, calcinfo)
-        if self._need_wfn():
-            wavecar = tempfolder.get_abs_path('WAVECAR')
-            self.write_wavecar(wavecar, calcinfo)
+        if self._need_chgcar():
+            # If we restart, we do not require inputs, but we should have a basic check
+            # that the CHGCAR file is present
+            if not self._is_restart():
+                chgcar = tempfolder.get_abs_path('CHGCAR')
+                self.write_chgcar(chgcar, calcinfo)
+            else:
+                remote_folder = self.inputs.restart_folder
+                if not self._check_chgcar(remote_folder):
+                    raise FileNotFoundError('Could not find CHGCAR in {}'.format(remote_folder.get_remote_path()))
+        if self._need_wavecar():
+            # If we restart, we do not require inputs, but we should have a basic check
+            # that the WAVECAR file is present
+            if not self._is_restart():
+                wavecar = tempfolder.get_abs_path('WAVECAR')
+                self.write_wavecar(wavecar, calcinfo)
+            else:
+                remote_folder = self.inputs.restart_folder
+                if not self._check_wavecar(remote_folder):
+                    raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
         """
