@@ -8,7 +8,7 @@ We will now set up a standard Python virtual environment called ``aiida-vasp``.
 
 .. include:: ../../../README.rst
    :start-line: 22
-   :end-line: 36
+   :end-line: 35
 
 Please make sure that your virtual environment is activated at all times when performing
 operations that depends on it, or you want to install into it.
@@ -26,5 +26,3 @@ where we have assumed you virtual environment is located in ``~/env/aiida-vasp``
 In addition to this, we would like to enable tab completion, which you can do by::
 
   $ echo 'eval "$(_VERDI_COMPLETE=source verdi)"' >> ~/env/aiida-vasp/bin/activate
-
-.. _AiiDA: https://www.aiida.net

@@ -10,7 +10,7 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 
 AiiDA-VASP is under active development, check out the `changelog`_.
 
-The plugin is only tested with VASP 5.4.4.
+The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.5.
 
 General comments about the user documentation and support
 =========================================================
@@ -23,11 +23,14 @@ We will try to keep the documentation updated for both the standard Python and t
 
   % commands in the Conda console, used together with the Conda virtual environment
 
+  %/$ same commands in the Conda console or standard Linux console
+
   # commands executed in the Postgresql interactive terminal
 
 As such, whenever needed, we will try to keep parallel documentation on this. If you are on a Conda
 platform, please follow the commands prepended with ``%``. Similarly you follow the commands with
-a ``$`` prepended if you are using the standard Python virtual enviroments. The commands executed in
+a ``$`` prepended if you are using the standard Python virtual enviroments. In case the commands are
+the same for both cases, ``%/$`` is prepended to the commands. The commands executed in
 the Postgresql interactive terminal (``psql``) should be similar between the two.
 
 .. _AiiDA: https://www.aiida.net
@@ -46,6 +49,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    getting_started/conda
    getting_started/rabbitmq
    getting_started/database
+   getting_started/install
    getting_started/interact
    getting_started/profile
    getting_started/computer
