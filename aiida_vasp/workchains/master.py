@@ -20,8 +20,10 @@ class MasterWorkChain(WorkChain):
     _verbose = False
     _base_workchains_string = 'vasp.converge'
     _bands_workchain_string = 'vasp.bands'
+    _dos_workchain_string = 'vasp.vasp'
     _base_workchain = WorkflowFactory(_base_workchains_string)
     _bands_workchain = WorkflowFactory(_bands_workchain_string)
+    _dos_workchain = WorkflowFactory(_dos_workchain_string)
 
     @classmethod
     def define(cls, spec):
@@ -34,21 +36,34 @@ class MasterWorkChain(WorkChain):
                    required=False,
                    default=get_data_node('bool', False),
                    help="""
-            Do you want to extract the band structure?
-            """)
+                   Do you want to extract the band structure?
+                   """)
         spec.input('extract_dos',
                    valid_type=get_data_class('bool'),
                    required=False,
                    default=get_data_node('bool', False),
                    help="""
-            Do you want to extract the density of states?
-            """)
+                   Do you want to extract the density of states?
+                   """)
+        spec.input('dos.kpoints_distance',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.1),
+                   help="""
+                   The target k-point distance for density of states extraction.
+                   """)
+        spec.input('dos.kpoints',
+                   valid_type=get_data_class('array.kpoints'),
+                   required=False,
+                   help="""
+                   The target k-point distance for density of states extraction.
+                   """)
         spec.input('kpoints_distance',
                    valid_type=get_data_class('float'),
                    required=False,
                    help="""
-            The maximum distance between k-points in inverse AA.
-            """)
+                   The maximum distance between k-points in inverse AA.
+                   """)
         spec.outline(
             cls.initialize,
             cls.init_workchain,
@@ -60,9 +75,16 @@ class MasterWorkChain(WorkChain):
                 cls.run_next_workchain,
                 cls.verify_next_workchain
             ),
+            if_(cls.extract_dos)(
+                cls.init_dos,
+                cls.init_workchain,
+                cls.run_next_workchain,
+                cls.verify_next_workchain
+            ),
             cls.finalize
         )  # yapf: disable
-        spec.expose_outputs(cls._bands_workchain)
+        spec.expose_outputs(cls._bands_workchain, namespace='bands', namespace_options={'required': False, 'populate_defaults': False})
+        spec.expose_outputs(cls._dos_workchain, namespace='dos', namespace_options={'required': False, 'populate_defaults': False})
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the master workchain')
@@ -102,24 +124,30 @@ class MasterWorkChain(WorkChain):
         Since the reciprocal lattice is set in KpointsData, we need, if not performing
         convergence tests to access the single StructureData, update the
         supplied KpointsData with the right reciprocal lattice.
-
         """
 
+        kpoints = self._get_kpoints(self.inputs)
+        if kpoints is not None:
+            self.inputs.kpoints = kpoints
+
+    def _get_kpoints(self, inputs):
+        """Decides if we are going to generate the k-point grid based on spacing or mesh."""
         # First check if a k-point distance is supplied
         try:
-            distance = self.inputs.kpoints_distance.value
+            distance = inputs.kpoints_distance.value
         except AttributeError:
             # Then check if a KpointsData has been supplied
             try:
-                kpoints = self.inputs.kpoints
+                kpoints = inputs.kpoints
             except AttributeError:
                 # If neither, return, we need to run convergence tests
-                return
-            self.ctx.inputs.kpoints = kpoints
-            return
+                return None
+            return kpoints
         kpoints = get_data_class('array.kpoints')()
         kpoints.set_cell_from_structure(self.ctx.inputs.structure)
         kpoints.set_kpoints_mesh_from_density(distance)
+
+        return kpoints
 
     def _init_settings(self):
         """Initialize the settings."""
@@ -133,11 +161,41 @@ class MasterWorkChain(WorkChain):
     def init_bands(self):
         """Initialize the run to extract the band structure."""
         self._next_workchain = self._bands_workchain
+        self._enable_charge_density_restart()
+        self._clean_inputs(exclude=['converge', 'relax', 'verify', 'kpoints'])
+
+    def init_dos(self):
+        """Initialize the run to extract the density of states at a denser k-point grid."""
+        self._next_workchain = self._dos_workchain
+        self._enable_charge_density_restart()
+        self._clean_inputs(exclude=['converge', 'relax', 'verify', 'dos'])
+        # Fetch density of states k-points
+        self.ctx.inputs.kpoints = self._get_kpoints(self.inputs.dos)
+        # Make sure we parse the density of states
+        if 'settings' in self.inputs:
+            settings = AttributeDict(self.inputs.settings.get_dict())
+        else:
+            settings = AttributeDict({'parser_settings': {}})
+        dict_entry = {'add_dos': True}
+        try:
+            settings.parser_settings.update(dict_entry)
+        except AttributeError:
+            settings.parser_settings = dict_entry
+        self.ctx.inputs.settings = settings
+
+    def _enable_charge_density_restart(self):
+        """Enables a restart from a previous charge density file."""
         # Make sure we set the restart folder (the charge density file is not
         # copied locally, but is present in the folder of the previous remote directory)
         self.ctx.inputs.restart_folder = self.ctx.workchains[-1].outputs.remote_folder
         # Also enable the clean_workdir again
         self.ctx.inputs.clean_workdir = get_data_node('bool', True)
+
+    def _clean_inputs(self, exclude):
+        """Clean the inputs for the next workchain in order not to pass redundant inputs."""
+        # Now make sure we clean the inputs for redundant inputs not needed for the bands workchain
+        exclude = ['converge', 'relax', 'verify', 'kpoints']
+        self.ctx.inputs = AttributeDict({k: v for k, v in self.ctx.inputs.items() if k not in exclude})
 
     def init_workchain(self):
         """Initialize the base workchain."""
@@ -147,11 +205,7 @@ class MasterWorkChain(WorkChain):
             raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
         # Add exposed inputs
-        exclude = []
-        if self.extract_bands:
-            exclude = exclude + ['converge', 'relax', 'verify']
-        inputs = AttributeDict({k: v for k, v in self.exposed_inputs(self._next_workchain).items() if k not in exclude})
-        self.ctx.inputs.update(inputs)
+        self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge', 'verify'])
@@ -190,6 +244,10 @@ class MasterWorkChain(WorkChain):
         """Determines if we should extract the band structure."""
         return self.inputs.extract_bands.value
 
+    def extract_dos(self):
+        """Determines if we should extract the density of states."""
+        return self.inputs.extract_dos.value
+
     def loop_structures(self):
         """Determine if we should continue to calculate structures."""
         return len(self.ctx.structures.get_list()) > 0
@@ -198,4 +256,7 @@ class MasterWorkChain(WorkChain):
         """Finalize the workchain."""
 
         workchain = self.ctx.workchains[-1]
-        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        if self.extract_bands():
+            self.out_many(self.exposed_outputs(workchain, self._bands_workchain, namespace='bands'))
+        if self.extract_dos():
+            self.out_many(self.exposed_outputs(workchain, self._dos_workchain, namespace='dos'))

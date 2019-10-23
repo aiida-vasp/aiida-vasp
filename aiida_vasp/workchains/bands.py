@@ -58,7 +58,7 @@ class BandsWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings', 'kpoints'))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
@@ -115,10 +115,7 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('seekparam', valid_type=get_data_class('dict'))
         spec.output('bands', valid_type=get_data_class('array.bands'))
-        spec.output('kpoints', valid_type=get_data_class('array.kpoints'))
-        spec.output('structure_primitive', valid_type=get_data_class('structure'))
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
@@ -262,17 +259,7 @@ class BandsWorkChain(WorkChain):
         structure. It also returns the k-point path for this structure.
         """
         result = seekpath_structure_analysis(self.inputs.structure, self.ctx.seekpath_parameters)
-
-        self.ctx.inputs.structure = result['primitive_structure']
-        self.report('explicit points:{}'.format(result['explicit_kpoints']))
         self.ctx.inputs.kpoints = result['explicit_kpoints']
-        self.report('input kpoints:{}'.format(self.ctx.inputs.kpoints))
-
-        # Set the output nodes for the primitive structure and the seekpath parameters
-        #if self._verbose:
-        #    self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))  # pylint: disable=not-callable
-        self.out('structure_primitive', result['primitive_structure'])
-        self.out('seekparam', result['parameters'])
 
     def verify_next_workchain(self):
         """Verify and inherit exit status from child workchains."""
