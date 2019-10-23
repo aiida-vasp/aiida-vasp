@@ -8,8 +8,17 @@ Please consider that `AiiDA`_ have prerequisites that needs to be installed and 
 
 Please consider to work on a bleeding distribution of `Fedora`_ or `Ubuntu`_. You can make it work on `CentOS`_ or other long term stable releases, but it requires more knowledge of the users to update system packages.
 
-`AiiDA`_ and `AiiDA-VASP`_ relies heavily on the Python framework and it is thus recommended to install it into a virtual environment that is dedicated to it. If you already use Python chances are you have a working system to manage your virtual environments, maybe even a favorite. Note that `AiiDA`_ as well `AiiDA-VASP`_ are tested with both ``virtualenv``, ``conda`` and ``virtualenvwrapper``. Since Python 2 is soon to be deprecated the documentation is written assuming Python 3.6 or later is present and working. However, `AiiDA`_ and `AiiDA-VASP`_ are compatible with Python 2 in case you prefer (we suggest you not). If that is the case you should be able to translate the procedures that are different to Python 2. As previously :ref:`mentioned <convention>` we will try to give commands valid for both the regular Python ``virtualenv`` and `Conda`_ virtual environments. One reason to use `Conda`_ is that it is easy
-to manage and install a `PostgreSQL`_ database as a non-privileged user. However, the user still needs to be a privileged user to install `RabbitMQ`_. We thus believe the choice of using the standard ``virtualenv`` or `Conda`_ is more dependent on other activities you are doing.
+`AiiDA`_ and `AiiDA-VASP`_ relies heavily on the Python framework and it is thus recommended to install it into a virtual environment that is dedicated to it. If you already use Python chances are you have a working system to manage your virtual environments, maybe even a favorite. Note that `AiiDA`_ as well `AiiDA-VASP`_ are tested with both ``virtualenv``, ``conda`` and ``virtualenvwrapper``. Since Python 2 is soon to be deprecated the documentation is written assuming Python 3.5 or later is present and working. However, `AiiDA`_ is compatible with Python 2, while the plugin `AiiDA-VASP`_ is not.
+
+.. note::
+
+   As previously :ref:`mentioned <convention>` we will try to give commands valid for both the
+   regular Python ``virtualenv`` and `Conda`_ virtual environments. Users would have to choose
+   which approach to use based on their computer setup and personal/institutional preferences.
+   One reason to use `Conda`_ is that it is easy to manage and install a `PostgreSQL`_ database
+   as a non-privileged user. However, the user still needs to be a privileged user to install
+   `RabbitMQ`_. We thus believe the choice of using the standard ``virtualenv`` or `Conda`_
+   is more dependent on other activities you are doing.
 
 
 When the virtual environment, the required prerequisites for `AiiDA`_ and `AiiDA`_ itself are installed and configured, a `profile`, a `computer` and a `code` needs to be configured in `AiiDA`_.
