@@ -43,6 +43,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
+    inputs.parameters = get_data_node('dict', dict={'algo': 'normal'})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
     inputs.options = get_data_node(
@@ -60,7 +61,6 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
-    relax.parameters = get_data_node('dict', dict=parameters)
     relax.perform = get_data_node('bool', True)
     relax.convergence_on = get_data_node('bool', False)
     relax.convergence_positions = get_data_node('float', 0.1)
