@@ -21,6 +21,6 @@ def test_generate_base_calc(base_calc):
     metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
     inputs.metadata = metadata
 
-    # Need more input, so we will get a KeyError because we do not pass code
-    with pytest.raises(KeyError):
+    # Need more input, so we will get a ValueError because we do not pass code
+    with pytest.raises(ValueError):
         instantiate_process(runner, VaspCalcBase, **inputs)

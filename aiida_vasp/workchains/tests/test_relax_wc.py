@@ -36,40 +36,39 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
     kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
     parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
-    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion']}
+    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw']}
     parameters['system'] = 'test-case:test_relax_wc'
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
-    inputs.parameters = get_data_node('dict', dict={'algo': 'normal'})
+    inputs.parameters = get_data_node('dict', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node(
-        'dict',
-        dict={
-            'withmpi': False,
-            'queue_name': 'None',
-            'max_wallclock_seconds': 1,
-            'import_sys_environment': True,
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-        })
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'max_wallclock_seconds': 1,
+                                       'import_sys_environment': True,
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                   })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
     relax.perform = get_data_node('bool', True)
-    relax.convergence_on = get_data_node('bool', False)
-    relax.convergence_positions = get_data_node('float', 0.1)
     inputs.relax = relax
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'structure_relaxed' in results
-    sites = results['structure_relaxed'].sites
+    assert 'relax' in results
+    relax = results['relax']
+    assert 'structure' in relax
+    sites = relax['structure'].sites
     assert sites[0].kind_name == 'Si'
     assert sites[1].kind_name == 'Si'
     assert sites[0].position == (4.8125, 4.8125, 4.8125)

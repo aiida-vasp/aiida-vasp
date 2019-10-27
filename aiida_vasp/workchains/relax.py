@@ -52,129 +52,116 @@ class RelaxWorkChain(WorkChain):
         spec.input('parameters', valid_type=get_data_class('dict'))
         spec.input('relax.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input(
-            'relax.perform',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('relax.perform',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             If True, perform relaxation.
             """)
-        spec.input(
-            'relax.energy_cutoff',
-            valid_type=get_data_class('float'),
-            required=False,
-            help="""
+        spec.input('relax.energy_cutoff',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
             case it stops when the total energy between two ionic steps is less than the
             supplied value.
             """)
-        spec.input(
-            'relax.force_cutoff',
-            valid_type=get_data_class('float'),
-            required=False,
-            help="""
+        spec.input('relax.force_cutoff',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
             case it stops when all forces are smaller than than the
             supplied value.
             """)
-        spec.input(
-            'relax.steps',
-            valid_type=get_data_class('int'),
-            required=False,
-            default=get_data_node('int', 60),
-            help="""
+        spec.input('relax.steps',
+                   valid_type=get_data_class('int'),
+                   required=False,
+                   default=get_data_node('int', 60),
+                   help="""
                    The number of relaxation steps to perform (updates to the atomic positions,
             unit cell size or shape).
                    """)
-        spec.input(
-            'relax.positions',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', True),
-            help="""
+        spec.input('relax.positions',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', True),
+                   help="""
                    If True, perform relaxation of the atomic positions.
                    """)
-        spec.input(
-            'relax.shape',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('relax.shape',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
                    If True, perform relaxation of the unit cell shape.
                    """)
-        spec.input(
-            'relax.volume',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('relax.volume',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
                    If True, perform relaxation of the unit cell volume..
                    """)
-        spec.input(
-            'relax.convergence_on',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('relax.convergence_on',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
                    If True, test convergence based on selected criterias set.
                    """)
-        spec.input(
-            'relax.convergence_absolute',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('relax.convergence_absolute',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
                    If True, test convergence based on absolute differences.
                    """)
-        spec.input(
-            'relax.convergence_max_iterations',
-            valid_type=get_data_class('int'),
-            required=False,
-            default=get_data_node('int', 5),
-            help="""
+        spec.input('relax.convergence_max_iterations',
+                   valid_type=get_data_class('int'),
+                   required=False,
+                   default=get_data_node('int', 5),
+                   help="""
                    The number of iterations to perform if the convergence criteria is not met.
                    """)
-        spec.input(
-            'relax.convergence_volume',
-            valid_type=get_data_class('float'),
-            required=False,
-            default=get_data_node('float', 0.01),
-            help="""
+        spec.input('relax.convergence_volume',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.01),
+                   help="""
                    The cutoff value for the convergence check on volume. If ``convergence_absolute``
                    is True in AA, otherwise in relative.
                    """)
-        spec.input(
-            'relax.convergence_positions',
-            valid_type=get_data_class('float'),
-            required=False,
-            default=get_data_node('float', 0.01),
-            help="""
+        spec.input('relax.convergence_positions',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.01),
+                   help="""
                    The cutoff value for the convergence check on positions. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
-        spec.input(
-            'relax.convergence_shape_lengths',
-            valid_type=get_data_class('float'),
-            required=False,
-            default=get_data_node('float', 0.1),
-            help="""
+        spec.input('relax.convergence_shape_lengths',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.1),
+                   help="""
                    The cutoff value for the convergence check on the lengths of the unit cell
                    vecotrs. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
-        spec.input(
-            'relax.convergence_shape_angles',
-            valid_type=get_data_class('float'),
-            required=False,
-            default=get_data_node('float', 0.1),
-            help="""
+        spec.input('relax.convergence_shape_angles',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=get_data_node('float', 0.1),
+                   help="""
                    The cutoff value for the convergence check on the angles of the unit cell.
                    If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
                    """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(
-            300, 'ERROR_MISSING_REQUIRED_OUTPUT', message='the called workchain does not contain the necessary relaxed output structure')
+        spec.exit_code(300,
+                       'ERROR_MISSING_REQUIRED_OUTPUT',
+                       message='the called workchain does not contain the necessary relaxed output structure')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
         spec.exit_code(502, 'ERROR_OVERRIDE_PARAMETERS', message='there was an error overriding the parameters')
@@ -198,7 +185,7 @@ class RelaxWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('structure_relaxed', valid_type=get_data_class('structure'), required=False)
+        spec.output('relax.structure', valid_type=get_data_class('structure'), required=False)
 
     def _set_ibrion(self, parameters):
         """Set the algorithm to use for relaxation."""
@@ -228,8 +215,9 @@ class RelaxWorkChain(WorkChain):
 
     def _set_isif(self, parameters):
         """Set relaxation mode according to the chosen degrees of freedom."""
-        parameters.isif = self.ModeEnum.get_from_dof(
-            positions=self.inputs.relax.positions.value, shape=self.inputs.relax.shape.value, volume=self.inputs.relax.volume.value)
+        parameters.isif = self.ModeEnum.get_from_dof(positions=self.inputs.relax.positions.value,
+                                                     shape=self.inputs.relax.shape.value,
+                                                     volume=self.inputs.relax.volume.value)
 
     def _add_overrides(self, parameters):
         """Add parameters tag overrides, except the ones controlled by other inputs (for provenance)."""
@@ -456,8 +444,8 @@ class RelaxWorkChain(WorkChain):
         relaxed_structure = workchain.outputs.structure
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
-                                                                   'structure_relaxed'))
-        self.out('structure_relaxed', relaxed_structure)
+                                                                   'relax.structure'))
+        self.out('relax.structure', relaxed_structure)
 
     def results(self):
         """Attach the remaining output results."""
