@@ -113,7 +113,7 @@ if __name__ == '__main__':
     # AttributeDict is just a special dictionary with the extra benefit that
     # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
     OPTIONS = AttributeDict()
-    OPTIONS.account = 'nn9995k'
+    OPTIONS.account = ''
     OPTIONS.qos = ''
     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
     OPTIONS.queue_name = ''
