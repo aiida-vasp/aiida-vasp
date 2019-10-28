@@ -62,7 +62,7 @@
     },
     "include_package_data": true,
     "install_requires": [
-        "aiida-core[atomic_tools] == 1.0.0b6",
+        "aiida-core[atomic_tools] >= 1.0.0b6",
         "ase",
         "scipy",
         "pymatgen",
