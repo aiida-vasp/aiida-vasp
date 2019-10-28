@@ -62,46 +62,52 @@ class BandsWorkChain(WorkChain):
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('bands.kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=get_data_node('float', 0.05),
-                   help="""
+        spec.input(
+            'bands.kpoints_distance',
+            valid_type=get_data_class('float'),
+            required=False,
+            default=get_data_node('float', 0.05),
+            help="""
             The distance between each k-point along each high-symmetry line.
             """)
-        spec.input('bands.decompose_bands',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'bands.decompose_bands',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
             Decompose the band structure on each atom.
             """)
-        spec.input('bands.decompose_wave',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'bands.decompose_wave',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
             Decompose the wave function.
             """)
-        spec.input('bands.lm',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'bands.lm',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
             Further decompose the decomposition into l- and m-states.
             """)
-        spec.input('bands.phase',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'bands.phase',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
             Further decompose the l- and m-state decomposition into phases.
             """)
-        spec.input('bands.wigner_seitz_radius',
-                   valid_type=get_data_class('list'),
-                   required=False,
-                   default=get_data_node('list', list=[False]),
-                   help="""
+        spec.input(
+            'bands.wigner_seitz_radius',
+            valid_type=get_data_class('list'),
+            required=False,
+            default=get_data_node('list', list=[False]),
+            help="""
             The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilzed.
             """)
         spec.outline(
@@ -155,6 +161,7 @@ class BandsWorkChain(WorkChain):
 
         try:
             self._verbose = self.inputs.verbose.value
+            self.ctx.inputs.verbose = self.inputs.verbose
         except AttributeError:
             pass
 
@@ -217,9 +224,8 @@ class BandsWorkChain(WorkChain):
             wigner_seitz_radius = False
             if self.inputs.bands.wigner_seitz_radius.value[0]:
                 wigner_seitz_radius = True
-            parameters.lorbit = self.OrbitEnum.get_from_combination(lm=self.inputs.bands.lm.value,
-                                                                    phase=self.inputs.bands.phase.value,
-                                                                    wigner_seitz_radius=wigner_seitz_radius)
+            parameters.lorbit = self.OrbitEnum.get_from_combination(
+                lm=self.inputs.bands.lm.value, phase=self.inputs.bands.phase.value, wigner_seitz_radius=wigner_seitz_radius)
         else:
             if self.inputs.bands.decompose_wave:
                 parameters.lorbit = self.OrbitEnum.ATOM_LM_WAVE
@@ -242,11 +248,7 @@ class BandsWorkChain(WorkChain):
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        if hasattr(running, 'pid'):
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pid))
-        else:
-            # Aiida < 1.0
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 

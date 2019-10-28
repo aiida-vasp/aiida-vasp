@@ -8,12 +8,8 @@ Archive data class: store multiple files together in a compressed archive in the
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import tarfile
 import os
-import six
+from io import StringIO
 from aiida.orm.nodes import Data
-if six.PY2:
-    from StringIO import StringIO  # pylint: disable=import-error
-else:
-    from io import StringIO
 
 
 class ArchiveData(Data):

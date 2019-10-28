@@ -320,6 +320,7 @@ class ConvergeWorkChain(WorkChain):
         """Initialize the inputs."""
         try:
             self._verbose = self.inputs.verbose.value
+            self.ctx.inputs.verbose = self.inputs.verbose
         except AttributeError:
             pass
 

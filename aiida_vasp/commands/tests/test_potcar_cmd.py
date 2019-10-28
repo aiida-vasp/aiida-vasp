@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import pytest
-import six
 
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
@@ -203,8 +202,5 @@ def test_call_from_vasp():
     """Test if the verdi potcar data command works."""
 
     import subprocess
-    if six.PY2:
-        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'])
-    else:
-        output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
+    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
     assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test

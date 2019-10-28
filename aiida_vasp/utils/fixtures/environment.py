@@ -21,12 +21,10 @@ def aiida_env():
     call to the fixture manager below by
     fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'})
     where it is possible to set the explicit location.
-    Also, at times, Postgresql raises the required reserved connections. Default is now
-    11, but 14 is needed for 11.5 for instance.
     """
-    with fixture_manager(pgtest={'max_connections': 14}) as manager:
-        #with fixture_manager() as manager:
-        #with fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'}) as manager:
+
+    #with fixture_manager() as manager:
+    with fixture_manager(pgtest={'pg_ctl': '/usr/pgsql-9.6/bin/pg_ctl'}) as manager:
         print('The root directory of the fixture manage is: {}'.format(manager.root_dir))
         # config_file = py_path.local(manager.root_dir).join('.aiida', 'config.json')
         yield manager

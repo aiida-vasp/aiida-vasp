@@ -119,7 +119,6 @@ import tempfile
 import shutil
 from contextlib import contextmanager
 from collections import namedtuple
-import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
@@ -269,13 +268,8 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         if not query_builder.count():
             raise NotExistent()
         results = [result[0] for result in query_builder.all()]
-        if six.PY3:
-            from functools import cmp_to_key
-            results.sort(key=cmp_to_key(by_older))
-            #results.sort(key=cmp_to_key(by_user))
-        else:
-            results.sort(by_older)
-            #results.sort(by_user)
+        from functools import cmp_to_key
+        results.sort(key=cmp_to_key(by_older))
         return results
 
     @classmethod
@@ -698,7 +692,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
                 raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
-            elif len(potcars_of_kind) > 1:
+            if len(potcars_of_kind) > 1:
                 result_potcars[element] = cls.find(family=family_name, full_name=full_name)[0]
             else:
                 result_potcars[element] = potcars_of_kind[0]
@@ -944,11 +938,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not query.count():
             raise NotExistent()
         results = [result[0] for result in query.all()]
-        if six.PY3:
-            from functools import cmp_to_key
-            results.sort(key=cmp_to_key(by_older))
-            #results.sort(key=cmp_to_key(by_user))
-        else:
-            results.sort(by_older)
-            #results.sort(by_user)
+        from functools import cmp_to_key
+        results.sort(key=cmp_to_key(by_older))
         return results

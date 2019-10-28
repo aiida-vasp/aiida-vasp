@@ -31,37 +31,42 @@ class MasterWorkChain(WorkChain):
         spec.expose_inputs(cls._base_workchain, exclude=['settings', 'clean_workdir'])
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('extract_bands',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'extract_bands',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
                    Do you want to extract the band structure?
                    """)
-        spec.input('extract_dos',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'extract_dos',
+            valid_type=get_data_class('bool'),
+            required=False,
+            default=get_data_node('bool', False),
+            help="""
                    Do you want to extract the density of states?
                    """)
-        spec.input('dos.kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=get_data_node('float', 0.1),
-                   help="""
+        spec.input(
+            'dos.kpoints_distance',
+            valid_type=get_data_class('float'),
+            required=False,
+            default=get_data_node('float', 0.1),
+            help="""
                    The target k-point distance for density of states extraction.
                    """)
-        spec.input('dos.kpoints',
-                   valid_type=get_data_class('array.kpoints'),
-                   required=False,
-                   help="""
+        spec.input(
+            'dos.kpoints',
+            valid_type=get_data_class('array.kpoints'),
+            required=False,
+            help="""
                    The target k-point distance for density of states extraction.
                    """)
-        spec.input('kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help="""
+        spec.input(
+            'kpoints_distance',
+            valid_type=get_data_class('float'),
+            required=False,
+            help="""
                    The maximum distance between k-points in inverse AA.
                    """)
         spec.outline(
@@ -105,6 +110,7 @@ class MasterWorkChain(WorkChain):
         """Initialize inputs."""
         try:
             self._verbose = self.inputs.verbose.value
+            self.ctx.inputs.verbose = self.inputs.verbose
         except AttributeError:
             pass
         # If we want to keep previous files for relaunch, do not clean remote folders

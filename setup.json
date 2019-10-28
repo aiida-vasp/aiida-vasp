@@ -44,14 +44,14 @@
     "extras_require": {
         "dev": [
             "pre-commit == 1.14.4",
-            "prospector == 1.1.5",
-            "pylint == 1.9.4",
+            "prospector == 1.1.7",
+            "pylint == 2.3.1",
             "flake8",
             "yapf == 0.26.0",
             "coverage == 4.5.2",
             "pytest == 4.3.0",
             "pytest-cov == 2.6.1",
-            "pgtest == 1.2.0",
+            "pgtest == 1.3.1",
             "packaging"
         ],
         "graphs": [
@@ -73,7 +73,6 @@
         "subprocess32",
         "click",
         "chainmap",
-        "six",
         "pyparsing",
         "py == 1.5.4",
         "lxml",

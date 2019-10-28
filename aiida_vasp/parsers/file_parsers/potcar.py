@@ -5,7 +5,6 @@ Find, import, compose and write POTCAR files.
 """
 from itertools import groupby
 import re
-import six
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
@@ -79,7 +78,7 @@ class PotcarIo(object):  # pylint: disable=useless-object-inheritance
     @classmethod
     def from_(cls, potcar):
         """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
-        if isinstance(potcar, (six.string_types)):
+        if isinstance(potcar, str):
             if py_path.local(potcar).exists():
                 potcar = cls(path=potcar)
             else:

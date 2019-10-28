@@ -3,7 +3,6 @@ Base classes for the VASP file parsers
 --------------------------------------
 """
 import re
-from six import string_types
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -368,7 +367,7 @@ class KeyValueParser(BaseParser):
     @classmethod
     def try_convert(cls, input_value, converter):
         """Try to convert the input string into a python value given a conversion function."""
-        if not isinstance(input_value, string_types):
+        if not isinstance(input_value, str):
             return {'value': input_value}
         try:
             cleaned_value = converter(input_value)

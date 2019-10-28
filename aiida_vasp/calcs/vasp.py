@@ -87,25 +87,25 @@ class VaspCalculation(VaspCalcBase):
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
         spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
-        spec.input('wavefunctions',
-                   valid_type=get_data_class('vasp.wavefun'),
-                   required=False,
-                   help='The wave function coefficients. (WAVECAR)')
+        spec.input(
+            'wavefunctions', valid_type=get_data_class('vasp.wavefun'), required=False, help='The wave function coefficients. (WAVECAR)')
         spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
-        spec.output('misc',
-                    valid_type=get_data_class('dict'),
-                    help='The output parameters containing smaller quantities that do not depend on system size.')
+        spec.output(
+            'misc',
+            valid_type=get_data_class('dict'),
+            help='The output parameters containing smaller quantities that do not depend on system size.')
         spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
         spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
         spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The output charge density.')
-        spec.output('wavecar',
-                    valid_type=get_data_class('vasp.wavefun'),
-                    required=False,
-                    help='The output file containing the plane wave coefficients.')
+        spec.output(
+            'wavecar',
+            valid_type=get_data_class('vasp.wavefun'),
+            required=False,
+            help='The output file containing the plane wave coefficients.')
         spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
