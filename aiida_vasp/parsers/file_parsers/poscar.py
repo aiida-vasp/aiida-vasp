@@ -70,8 +70,10 @@ class PoscarParser(BaseFileParser):
         if isinstance(self._data_obj, get_data_class('structure')):
             # _data_obj is StructurData, return the parsed version if possible.
             try:
-                return Poscar(
-                    poscar_dict=self.aiida_to_parsevasp(self._data_obj), prec=self.precision, conserve_order=True, logger=self._logger)
+                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj),
+                              prec=self.precision,
+                              conserve_order=True,
+                              logger=self._logger)
             except SystemExit:
                 return None
         # _data_obj is a SingleFile:

@@ -17,8 +17,10 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     create_authinfo(localhost, store=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    proc, builder = VaspCalculation.immigrant(
-        code=mock_vasp, remote_path=phonondb_run, potential_family=potential_family, potential_mapping=potential_mapping)
+    proc, builder = VaspCalculation.immigrant(code=mock_vasp,
+                                              remote_path=phonondb_run,
+                                              potential_family=potential_family,
+                                              potential_mapping=potential_mapping)
     # Make sure clean_workdir is not done for the immigrant (we do not want to remove the imported data)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential'}
     for input_link in expected_inputs:
@@ -32,8 +34,11 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)
     potcar_spec = {'family': POTCAR_FAMILY_NAME, 'map': POTCAR_MAP}
-    proc, builder = VaspCalculation.immigrant(
-        code=mock_vasp, remote_path=phonondb_run, potcar_spec=potcar_spec, use_chgcar=True, use_wavecar=True)
+    proc, builder = VaspCalculation.immigrant(code=mock_vasp,
+                                              remote_path=phonondb_run,
+                                              potcar_spec=potcar_spec,
+                                              use_chgcar=True,
+                                              use_wavecar=True)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
         assert builder.get(input_link, None) is not None, 'input link "{}" was not set!'.format(input_link)

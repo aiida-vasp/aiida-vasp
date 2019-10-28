@@ -23,10 +23,9 @@ class Vasp2w90Calculation(VaspCalculation):
     def define(cls, spec):
         super(Vasp2w90Calculation, cls).define(spec)
         spec.input('wannier_parameters', valid_type=get_data_class('dict'), help='Input parameters for the Wannier90 interface.')
-        spec.input(
-            'wannier_projections',
-            valid_type=(get_data_class('orbital'), List),
-            help='Projections to be defined in the Wannier90 input file.')
+        spec.input('wannier_projections',
+                   valid_type=(get_data_class('orbital'), List),
+                   help='Projections to be defined in the Wannier90 input file.')
 
     def write_win(self, dst):
         """Write Wannier90 input file."""

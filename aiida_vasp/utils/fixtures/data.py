@@ -38,8 +38,11 @@ def localhost(fresh_aiida_env, localhost_dir):
     try:
         computer = Computer.objects.get(name='localhost')
     except NotExistent:
-        computer = Computer(
-            name='localhost', hostname='localhost', transport_type='local', scheduler_type='direct', workdir=localhost_dir.strpath).store()
+        computer = Computer(name='localhost',
+                            hostname='localhost',
+                            transport_type='local',
+                            scheduler_type='direct',
+                            workdir=localhost_dir.strpath).store()
     return computer
 
 

@@ -623,10 +623,13 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
-        group_query.append(
-            Group, with_node='potcar_data', tag='potcar_data', filters={'type_string': {
-                '==': cls.potcar_family_type_string
-            }}, project='*')
+        group_query.append(Group,
+                           with_node='potcar_data',
+                           tag='potcar_data',
+                           filters={'type_string': {
+                               '==': cls.potcar_family_type_string
+                           }},
+                           project='*')
 
         groups = [group_list[0] for group_list in group_query.all()]
 

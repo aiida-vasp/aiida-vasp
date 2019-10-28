@@ -54,17 +54,16 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.parameters = get_data_node('dict', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node(
-        'dict',
-        dict={
-            'withmpi': False,
-            'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
-        })
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
@@ -123,17 +122,16 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.parameters = get_data_node('dict', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node(
-        'dict',
-        dict={
-            'withmpi': False,
-            'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
-        })
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()

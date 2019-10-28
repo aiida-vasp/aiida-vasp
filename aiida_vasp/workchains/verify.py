@@ -26,12 +26,11 @@ class VerifyWorkChain(WorkChain):
     def define(cls, spec):
         super(VerifyWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain)
-        spec.input(
-            'verify.max_iterations',
-            valid_type=get_data_class('int'),
-            required=False,
-            default=get_data_node('int', 1),
-            help="""
+        spec.input('verify.max_iterations',
+                   valid_type=get_data_class('int'),
+                   required=False,
+                   default=get_data_node('int', 1),
+                   help="""
                    The maximum number of iterations to perform.
                    """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')

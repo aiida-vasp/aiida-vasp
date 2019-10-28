@@ -11,18 +11,18 @@ from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 # Map from number of columns in DOSCAR to dtype.
 DTYPES = {
     3:
-    np.dtype([('energy', float), ('total', float), ('integrated', float)]),
+        np.dtype([('energy', float), ('total', float), ('integrated', float)]),
     5:
-    np.dtype([('energy', float), ('total', float, (2,)), ('integrated', float, (2,))]),
+        np.dtype([('energy', float), ('total', float, (2,)), ('integrated', float, (2,))]),
     10:
-    np.dtype([('energy', float), ('s', float), ('py', float), ('px', float), ('pz', float), ('dxy', float), ('dyz', float), ('dz2', float),
-              ('dxz', float), ('x2-y2', float)]),
+        np.dtype([('energy', float), ('s', float), ('py', float), ('px', float), ('pz', float), ('dxy', float), ('dyz', float),
+                  ('dz2', float), ('dxz', float), ('x2-y2', float)]),
     19:
-    np.dtype([('energy', float), ('s', float, (2,)), ('py', float, (2,)), ('px', float, (2,)), ('pz', float, (2,)), ('dxy', float, (2,)),
-              ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('x2-y2', float, (2,))]),
+        np.dtype([('energy', float), ('s', float, (2,)), ('py', float, (2,)), ('px', float, (2,)), ('pz', float, (2,)),
+                  ('dxy', float, (2,)), ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('x2-y2', float, (2,))]),
     37:
-    np.dtype([('energy', float), ('s', float, (4,)), ('py', float, (4,)), ('px', float, (4,)), ('pz', float, (4,)), ('dxy', float, (4,)),
-              ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('x2-y2', float, (4,))])
+        np.dtype([('energy', float), ('s', float, (4,)), ('py', float, (4,)), ('px', float, (4,)), ('pz', float, (4,)),
+                  ('dxy', float, (4,)), ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('x2-y2', float, (4,))])
 }
 
 

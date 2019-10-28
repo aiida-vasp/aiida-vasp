@@ -36,17 +36,16 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node(
-        'dict',
-        dict={
-            'withmpi': False,
-            'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
-        })
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     inputs.verbose = get_data_node('bool', True)
@@ -82,17 +81,16 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node(
-        'dict',
-        dict={
-            'withmpi': False,
-            'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
-        })
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
     inputs.settings = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}})
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)

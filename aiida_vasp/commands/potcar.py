@@ -46,8 +46,11 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 
     potcar_data_cls = get_data_class('vasp.potcar')
     with cli_spinner():
-        num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
-            path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run)
+        num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(path,
+                                                                                  name,
+                                                                                  description,
+                                                                                  stop_if_existing=stop_if_existing,
+                                                                                  dry_run=dry_run)
 
     click.echo('POTCAR files found: {}. New files uploaded: {}, Added to Family: {}'.format(num_found, num_uploaded, num_added))
     if dry_run:

@@ -57,35 +57,31 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.input(
-            'restart_folder',
-            valid_type=get_data_class('remote'),
-            required=False,
-            help="""
+        spec.input('restart_folder',
+                   valid_type=get_data_class('remote'),
+                   required=False,
+                   help="""
             The restart folder from a previous workchain run that is going to be used.
             """)
-        spec.input(
-            'max_iterations',
-            valid_type=get_data_class('int'),
-            required=False,
-            default=get_data_node('int', 5),
-            help="""
+        spec.input('max_iterations',
+                   valid_type=get_data_class('int'),
+                   required=False,
+                   default=get_data_node('int', 5),
+                   help="""
             The maximum number of iterations to perform.
             """)
-        spec.input(
-            'clean_workdir',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', True),
-            help="""
+        spec.input('clean_workdir',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', True),
+                   help="""
             If True, clean the work dir upon the completion of a successfull calculation.
             """)
-        spec.input(
-            'verbose',
-            valid_type=get_data_class('bool'),
-            required=False,
-            default=get_data_node('bool', False),
-            help="""
+        spec.input('verbose',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=get_data_node('bool', False),
+                   help="""
             If True, enable more detailed output during workchain execution.
             """)
 
