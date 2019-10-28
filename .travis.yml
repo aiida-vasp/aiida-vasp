@@ -24,6 +24,10 @@ install:
   #- pip install -e git+https://github.com/greschd/aiida_pytest#egg=aiida_pytest
   - pip install -e .[regen_default_paws,graphs,dev]
   - pip install tox-travis coveralls
+  - prospector --version
+  - yapf --version
+  - pylint --version
+  - pre-commit --version
 env:
   - TEST_TYPE="pre-commit"
   - TEST_TYPE="unittests" TOX_ENV=py37-aiida_dev
