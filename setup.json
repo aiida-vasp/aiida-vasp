@@ -57,9 +57,6 @@
         "graphs": [
             "matplotlib"
         ],
-        "regen_default_paws": [
-            "lxml"
-        ],
         "wannier": [
             "aiida-wannier90"
         ]
