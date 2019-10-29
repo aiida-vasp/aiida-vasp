@@ -1,7 +1,7 @@
-""" # noqa: D205
-Common code for parsers
------------------------
+"""
+Common code for parsers.
 
+------------------------
 """
 from aiida.parsers.parser import Parser
 from aiida.common.exceptions import NotExistent

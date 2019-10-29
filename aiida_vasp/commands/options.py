@@ -1,6 +1,7 @@
-""" # noqa: D205
-Common click options for verdi
-------------------------------
+"""
+Common click options for verdi.
+
+-------------------------------
 Common click options for verdi commands.
 """
 import click

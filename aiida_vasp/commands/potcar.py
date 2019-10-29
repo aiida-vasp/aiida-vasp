@@ -1,6 +1,7 @@
-""" # noqa: D205
-Commands for the potential interface
-------------------------------------
+"""
+Commands for the potential interface.
+
+-------------------------------------
 Commandline util for dealing with potcar files.
 """
 import click

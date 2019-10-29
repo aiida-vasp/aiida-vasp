@@ -1,7 +1,8 @@
-""" # noqa: D205
-Node composer
--------------
-A Node Composer for Aiida data nodes.
+"""
+Node composer.
+
+--------------
+A composer that composes different quantities onto AiiDA data nodes.
 """
 # pylint: disable=no-member, useless-object-inheritance
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.

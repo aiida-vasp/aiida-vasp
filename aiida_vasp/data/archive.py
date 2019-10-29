@@ -1,7 +1,7 @@
-""" # noqa: D205
-A general archive class
------------------------
+"""
+A general archive class.
 
+------------------------
 Archive data class: store multiple files together in a compressed archive in the repository.
 """
 # pylint: disable=abstract-method

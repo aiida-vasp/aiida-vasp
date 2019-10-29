@@ -1,6 +1,7 @@
-""" # noqa: D205
-Utils for setting symbols on chemical elements
-----------------------------------------------
+"""
+Utils for setting symbols on chemical elements.
+
+-----------------------------------------------
 Utilities for choosing appropriate element symbols for a chemical element.
 """
 from lxml import html

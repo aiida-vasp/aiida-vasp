@@ -1,7 +1,8 @@
-""" # noqa: D205
-POSCAR parser
--------------
-Tools for parsing POSCAR files.
+"""
+POSCAR parser.
+
+--------------
+The file parser that handles the parsing of POSCAR and CONTCAR files.
 """
 # pylint: disable=no-self-use
 import numpy as np

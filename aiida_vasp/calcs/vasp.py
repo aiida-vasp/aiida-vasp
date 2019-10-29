@@ -1,6 +1,7 @@
-""" # noqa: D205
-VASP calculation
-----------------
+"""
+VASP calculation.
+
+-----------------
 The calculation class that prepares a specific VASP calculation.
 """
 #encoding: utf-8
@@ -29,16 +30,20 @@ vasp.vasp specific kwargs:
 
 @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 class VaspCalculation(VaspCalcBase):
-    """ # noqa: D205
-    General-purpose VASP calculation
-    --------------------------------
+    """
+    General-purpose VASP calculation.
 
-    By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR' and Wannier90 input / output files,
-    but additional retrieve files can be specified via the ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
+    ---------------------------------
+    By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR'
+    and Wannier90 input / output files,
+    but additional retrieve files can be specified via the
+    ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
 
-    Floating point precision for writing POSCAR files can be adjusted using ``settings['poscar_precision']``, default: 10
+    Floating point precision for writing POSCAR files can be adjusted using
+    ``settings['poscar_precision']``, default: 10
 
-    The following assumes you are familiar with the AiiDA data structures and how to set up and run an AiiDA calculation in general.
+    The following assumes you are familiar with the AiiDA data structures and
+    how to set up and run an AiiDA calculation in general.
 
     Example usage::
 
@@ -48,26 +53,15 @@ class VaspCalculation(VaspCalcBase):
         proc = CalculationFactory('vasp.vasp').process()
         inputs = proc.get_inputs_template()
         inputs.parameter = <Dict with INCAR params>
-        inputs.structure = <StructureData> or <CifData>
+        inputs.structure = <StructureData>
         inputs.kpoints = <KpointsData>
-        inputs.settings = <Dict with parser settings etc>
+        inputs.settings = <Dict with parser settings etc.>
         inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure, ...)
         inputs.code = <Code representing vasp on your cluster>
 
         submit(proc, **inputs)
 
-    Example Low-Level usage::
-
-        ## assuming already set up incar (Dict), structure, kpoints, settings, etc
-        calc = CalculationFactory('vasp.vasp')()
-        calc.use_parameter(incar)
-        calc.use_structure(structure)
-        calc.use_kpoints(kpoints)
-        calc.use_settings(settings)
-        calc.use_potential(potential_kind_1, kind=<kind 1>)
-        calc.use_potential(potential_kind_2, kind=<kind 2>)
-        ## unspecific to this calculation: set computer, resources, etc
-        calc.submit()
+    Which is very similar to the workchain example.
 
     """
 

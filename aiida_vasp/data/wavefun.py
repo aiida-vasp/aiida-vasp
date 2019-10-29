@@ -1,7 +1,8 @@
-""" # noqa: D205
-Representation of WAVECAR and WAVEDER files
--------------------------------------------
-Wave function data node (stores WAVECAR and WAVEDER files).
+"""
+Representation of WAVECAR and WAVEDER files.
+
+--------------------------------------------
+Wave function data node (stores WAVECAR and WAVEDER files in the repository).
 """
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query

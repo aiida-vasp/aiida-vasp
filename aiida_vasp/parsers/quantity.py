@@ -1,7 +1,8 @@
-""" # noqa: D205
-Parser quantity configuration
------------------------------
-Classes representing quantities and a list of quantities.
+"""
+Parser quantity configuration.
+
+------------------------------
+Contains the representation of quantities that users want to parse.
 """
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes

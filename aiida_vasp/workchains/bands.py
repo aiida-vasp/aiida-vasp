@@ -1,6 +1,7 @@
-""" # noqa: D205
-Bands workchain
----------------
+"""
+Bands workchain.
+
+----------------
 Intended to be used to extract the band structure using SeeKpath as a preprossesor
 to extract the k-point path.
 """

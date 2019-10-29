@@ -1,7 +1,8 @@
-""" # noqa: D205
-VASP workchain
---------------
-Contains the VaspWorkChain class definition.
+"""
+VASP workchain.
+
+---------------
+Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 """
 from aiida.engine import while_
 from aiida.common.lang import override
@@ -17,29 +18,32 @@ from aiida_vasp.workchains.restart import BaseRestartWorkChain
 
 
 class VaspWorkChain(BaseRestartWorkChain):
-    """ # noqa: D205
-    Test
-    ----
+    """
+    The VASP workchain.
+
+    -------------------
     Error handling enriched wrapper around VaspCalculation.
 
-    Deliberately conserves most of the interface (required inputs) of the VaspCalculation class.
+    Deliberately conserves most of the interface (required inputs) of the VaspCalculation class, but
+    makes it possible for a user to interact with a workchain and not a calculation.
 
-    This is intended to be used instead of directly submitting a VaspCalculation, so that future features like
-    automatic restarting, error checking etc. can be propagated to higher level workchains automatically by implementing them here.
+    This is intended to be used instead of directly submitting a VaspCalculation,
+    so that future features like
+    automatic restarting, error checking etc. can be propagated to higher level workchains
+    automatically by implementing them here.
 
     Usage::
 
         from aiida.common.extendeddicts import AttributeDict
         from aiida.work import submit
-        basevasp = WorkflowFactory('vasp.base')
-        inputs = basevasp.get_inputs_template  ## AiiDA < 1.0.0a1
-        inputs = basevasp.get_builder() ## AiiDA >= 1.0.0a1
-        inputs = AttributeDict()  ## all versions (no tab-completion)
-        ## ... set inputs (documented at aiida.readthedocs.io)
+        basevasp = WorkflowFactory('vasp.vasp')
+        inputs = basevasp.get_builder()
+        inputs = AttributeDict()
+        ## ... set inputs
         submit(basevasp, **inputs)
 
-    To see working examples, including generation of input nodes from scratch, please refer to ``examples/run_base_wf.py``
-    and ``examples/run_vasp.py``.
+    To see a working example, including generation of input nodes from scratch, please
+    refer to ``examples/run_vasp_lean.py``.
     """
     _verbose = False
     _calculation = CalculationFactory('vasp.vasp')

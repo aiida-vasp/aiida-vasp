@@ -1,6 +1,8 @@
-r""" # noqa: D205
-Base classes for the VASP file parsers
---------------------------------------
+r"""
+Base classes for the VASP file parsers.
+
+---------------------------------------
+Contains the base classes for the VASP file parsers.
 """
 import re
 from aiida.common import AIIDA_LOGGER as aiidalogger
@@ -214,10 +216,12 @@ class SingleFile(object):  # pylint: disable=useless-object-inheritance
 
 
 class KeyValueParser(BaseParser):
-    """ # noqa: D205
-    Key and value parser
-    --------------------
-    This baseclass has some utility functions for parsing files that are (mostly) in a `key` = `value` format.
+    """
+    Key and value parser.
+
+    ---------------------
+    This baseclass has some utility functions for parsing files that are
+    (mostly) in a `key` = `value` format.
 
     This class does not integrate with the VaspParser class currently.
 

@@ -1,7 +1,10 @@
-""" # noqa: D205
-Relax workchain
----------------
-Structure relaxation workchain.
+"""
+Relax workchain.
+
+----------------
+Structure relaxation workchain, which performs the regular duties of relaxing a structure.
+It has been designed such that calling workchains should try to use human readable
+parameters instead of the code dependent variables.
 """
 # pylint: disable=attribute-defined-outside-init
 import enum

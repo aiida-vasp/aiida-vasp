@@ -1,12 +1,17 @@
-""" # noqa: D205
-VASP parser
------------
-AiiDA parser for a aiida_vasp.VaspCalculation.
+"""
+VASP parser.
+
+------------
+The main driver routine for parsing VASP related files. The parser is very modular and
+contains several modules:
+
+- ``node_composer`` handles the quantity composition of nodes
+- ``quantity`` the actual quantity to parse and what file parsers to use to obtain it
+- ``settings`` general parser settings
+- ``manager`` takes the quantity definitions and executes the actual parsing needed
 """
 #encoding: utf-8
 # pylint: disable=no-member
-# Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
-
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.manager import ParserManager
@@ -41,12 +46,12 @@ DEFAULT_OPTIONS = {
 
 class VaspParser(BaseParser):
     """
-    Parses all Vasp calculations.
+    Parses all VASP calculations.
 
     This particular class manages all the specific file parsers in
-    aiida_vasp.parsers.file_parsers. The parser will check which quantities to parse and which nodes to add
-    to the calculation based on the 'parser_settings' card in the 'settings' Dict of the
-    corresponding VaspCalculation.
+    aiida_vasp.parsers.file_parsers. The parser will check which quantities to parse
+    and which nodes to add to the calculation based on the 'parser_settings' card in
+    the 'settings' Dict of the corresponding VaspCalculation.
 
     Parser Settings usage:
 

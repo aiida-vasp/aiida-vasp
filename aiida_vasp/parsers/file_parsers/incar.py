@@ -1,7 +1,8 @@
-""" # noqa: D205
-INCAR parser
-------------
-Provides INCAR file interface and utilities.
+"""
+INCAR parser.
+
+-------------
+The file parser that handles the parsing of INCAR files.
 """
 from parsevasp.incar import Incar
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser

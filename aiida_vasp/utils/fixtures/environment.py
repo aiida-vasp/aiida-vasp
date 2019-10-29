@@ -1,6 +1,11 @@
-""" # noqa: D205
-Fixtures related to environments
---------------------------------
+"""
+Fixtures related to environments.
+
+---------------------------------
+Here we set up pytest fixtures that yield the correct AiiDA environment
+to run our tests. In particular, the fresh_aiida_env is crucial in order
+to set up a dummy database and configuration that can be used during
+testing. AiiDA contributes with its own fixture manager, which we use.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 from __future__ import absolute_import

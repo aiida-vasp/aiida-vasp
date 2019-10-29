@@ -1,6 +1,10 @@
-""" # noqa: D205
-Inheritance tools
------------------
+"""
+Inheritance tools.
+
+------------------
+This sets up inheritance of the docstrings for use when we inherit
+classes. This makses it simple to add further details to or replace the
+docstring present on the base class.
 """
 
 

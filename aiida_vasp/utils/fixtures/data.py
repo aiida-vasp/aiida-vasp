@@ -1,6 +1,11 @@
-""" # noqa: D205
-Fixtures related to data
-------------------------
+"""
+Fixtures related to data.
+
+-------------------------
+Here different pytest fixtures are set up. They typically contain computers,
+VASP inputs etc. which you would need to mock a VASP job in this plugin. It
+also contains the set up of the mock VASP executable, which is used to test the
+workchains.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
 # pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg

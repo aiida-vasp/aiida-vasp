@@ -1,7 +1,8 @@
-""" # noqa: D205
-Base calculation class
-----------------------
-Base and meta classes for VASP calculations.
+"""
+Base calculation class.
+
+-----------------------
+Base and meta classes for VASP calculation classes.
 """
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query

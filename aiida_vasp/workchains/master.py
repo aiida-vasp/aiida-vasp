@@ -1,10 +1,9 @@
-""" # noqa: D205
-Verify workchain
-----------------
+"""
+Master workchain.
 
-Indented to be used to verify a calculation, perform corrections in inputs files and
-restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
-or not currently checked in it. This workchain does currently nothing.
+-----------------
+This is the master workchain, which most users should call when issuing day-day
+calculations.
 """
 # pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict

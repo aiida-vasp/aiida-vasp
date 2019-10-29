@@ -1,7 +1,10 @@
-""" # noqa: D205
-Utils for AiiDA
----------------
-Utilities for working with aiida in general.
+"""
+Utils for AiiDA.
+
+----------------
+Utilities for making working against AiiDA a bit easier. Mostly here due to
+historical reasons when AiiDA was rapidly developed. In the future most routines
+that have now standardized in AiiDA will be removed.
 """
 import numpy as np
 from packaging import version

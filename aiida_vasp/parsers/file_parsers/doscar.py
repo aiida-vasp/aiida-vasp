@@ -1,7 +1,8 @@
-""" # noqa: D205
-DOSCAR parser
--------------
-DOSCAR (VASP format) utilities.
+"""
+DOSCAR parser.
+
+--------------
+The file parser that handles the parsing of DOSCAR files.
 """
 import numpy as np
 

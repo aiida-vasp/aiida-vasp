@@ -1,7 +1,9 @@
-""" # noqa: D205
-POTCAR parser
--------------
-Find, import, compose and write POTCAR files.
+"""
+POTCAR parser.
+
+--------------
+The file parser that handles the parsing of POTCAR files. Also contains methods to
+find, import, compose and write POTCAR files.
 """
 from itertools import groupby
 import re

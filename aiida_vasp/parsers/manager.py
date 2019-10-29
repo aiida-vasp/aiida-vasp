@@ -1,7 +1,9 @@
-""" # noqa: D205
-Parser manager
---------------
-Classes representing FileParsers in the VaspParser.
+"""
+Parser manager.
+
+---------------
+Manages the parsing and executes the actual parsing by locating which file parsers
+to use for each defined quantity.
 """
 
 from aiida_vasp.utils.extended_dicts import DictWithAttributes

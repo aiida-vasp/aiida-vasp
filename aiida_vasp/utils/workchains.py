@@ -1,7 +1,9 @@
-""" # noqa: D205
-Utils for the workchains
-------------------------
-Auxiliary routines that are not part of any of the workchain classes.
+"""
+Utils for the workchains.
+
+-------------------------
+Auxiliary routines that are not part of any of the workchain classes, but needed
+to make code more compact in the workchains.
 """
 
 import numpy as np

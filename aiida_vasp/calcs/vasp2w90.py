@@ -1,6 +1,7 @@
-""" # noqa: D205
-VASP to Wannier90 calculation
------------------------------
+"""
+VASP to Wannier90 calculation.
+
+------------------------------
 VASP2Wannier90 - Calculation.
 """
 # pylint: disable=abstract-method

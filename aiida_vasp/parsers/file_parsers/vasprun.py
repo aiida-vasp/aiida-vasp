@@ -1,7 +1,8 @@
-""" # noqa: D205
-vasprun parser
---------------
-Tools for parsing vasprun.xml files.
+"""
+vasprun parser.
+
+---------------
+The file parser that handles the parsing of vasprun.xml files.
 """
 # pylint: disable=too-many-public-methods
 import numpy as np

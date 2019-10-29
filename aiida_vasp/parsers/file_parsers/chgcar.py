@@ -1,7 +1,8 @@
-""" # noqa: D205
-CHGCAR parser
--------------
-Tools for parsing CHGCAR files.
+"""
+CHGCAR parser.
+
+--------------
+The file parser that handles the parsing of CHGCAR files.
 """
 
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser

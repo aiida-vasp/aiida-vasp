@@ -1,7 +1,8 @@
-""" # noqa: D205
-OUTCAR parser
--------------
-Tools for parsing OUTCAR files.
+"""
+OUTCAR parser.
+
+--------------
+The file parser that handles the parsing of OUTCAR files.
 """
 import re
 

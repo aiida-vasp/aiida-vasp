@@ -1,12 +1,10 @@
-""" # noqa: D205
-Default mapping between atomic element and potential
-----------------------------------------------------
+"""
+Default mapping between atomic element and potential.
 
-Provides dictionaries with mappings element -> default potential
+-----------------------------------------------------
+Provides dictionaries with mappings element to the default potential.
 
-For the following pseudopotential types
-* LDA
-* GW
+Currently the default for LDA and PBE GW is included.
 """
 DEFAULT_LDA = {
     'Ru': 'Ru_pv',

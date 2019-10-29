@@ -1,6 +1,9 @@
-""" # noqa: D205
-Fixtures for the VASP calculations
-----------------------------------
+"""
+Fixtures for the VASP calculations.
+
+-----------------------------------
+Here we set up different pytest fixtures that are used to represent various VASP
+calculations on which one can for instance test parsing etc.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import pytest

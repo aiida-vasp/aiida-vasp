@@ -1,7 +1,8 @@
-""" # noqa: D205
-EIGENVAL parser
----------------
-Contains tools to read kpoints and bands from EIGENVALUE files.
+"""
+EIGENVAL parser.
+
+----------------
+The file parser that handles the parsing of EIGENVAL files.
 """
 
 import re

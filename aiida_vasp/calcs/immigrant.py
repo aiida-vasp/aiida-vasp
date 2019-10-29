@@ -1,7 +1,8 @@
-""" # noqa: D205
-Immigrant calculation
----------------------
-VaspImmigrant calculation: Immigrate externally run VASP calculations into AiiDA.
+"""
+Immigrant calculation.
+
+----------------------
+Enables the immigration of  externally run VASP calculations into AiiDA.
 """
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query

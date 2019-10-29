@@ -1,7 +1,7 @@
-""" # noqa: D205
-Mock vasp command
------------------
+"""
+Mock vasp command.
 
+------------------
 Separate cli interface for commands useful in development and testing.
 """
 import os

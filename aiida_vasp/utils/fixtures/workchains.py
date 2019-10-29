@@ -1,8 +1,8 @@
-""" # noqa: D205
-Fixtures for workchains
------------------------
-Fixtures representing WorkChains, for usage in tests.
+"""
+Fixtures for workchains.
 
+------------------------
+Fixtures representing WorkChains, for usage in tests.
 This can be either Top level workchains using mock-ups of low level WorkChains
 for testing complex WorkChains, or the mock-ups themselves.
 """

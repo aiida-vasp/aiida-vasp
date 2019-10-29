@@ -1,6 +1,7 @@
-""" # noqa: D205
-VASP to Wannier90 parser
-------------------------
+"""
+VASP to Wannier90 parser.
+
+-------------------------
 AiiDA Parser for aiida_vasp.Vasp2w90Calculation.
 """
 from aiida.plugins import DataFactory

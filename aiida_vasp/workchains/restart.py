@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-""" # noqa: D205
-Restart workchain
------------------
+"""
+Restart workchain.
+
+------------------
 Workchain subclass with utilities for restarting, taken and extended a bit from
 the QuantumEspresso plugin.
 """

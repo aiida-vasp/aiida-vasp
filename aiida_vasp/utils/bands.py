@@ -1,7 +1,9 @@
-""" # noqa: D205
-Utils for bands structures
---------------------------
-Utilities for working with band structures.
+"""
+Utils for bands structures.
+
+---------------------------
+Utilities for working with band structures. Currently this is legacy and will be
+rewritten or moved.
 """
 try:
     import matplotlib

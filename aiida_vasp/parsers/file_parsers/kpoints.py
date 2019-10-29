@@ -1,7 +1,8 @@
-""" # noqa: D205
-KPOINTS parser
---------------
-Utils for VASP KPOINTS format.
+"""
+KPOINTS parser.
+
+---------------
+The file parser that handles the parsing of KPOINTS files.
 """
 # pylint: disable=no-self-use
 

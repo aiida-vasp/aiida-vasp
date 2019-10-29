@@ -1,7 +1,7 @@
-""" # noqa: D205
-Convergence workchain
----------------------
+"""
+Convergence workchain.
 
+----------------------
 Intended to be used to control convergence checks for plane-wave calculations.
 """
 # pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init

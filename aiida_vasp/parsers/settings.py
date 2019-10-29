@@ -1,7 +1,9 @@
-""" # noqa: D205
-Parser settings
----------------
-Module defining sets of FileParsers to be used by the VaspParser.
+"""
+Parser settings.
+
+----------------
+Defines the file associated with each file parser and the default node
+compositions of quantities.
 """
 
 from aiida_vasp.parsers.file_parsers.doscar import DosParser

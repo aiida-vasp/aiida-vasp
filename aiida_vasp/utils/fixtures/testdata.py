@@ -1,7 +1,8 @@
-""" # noqa: D205
-Test data retrieval
--------------------
-Provide convenience methods for retrieving test data.
+"""
+Test data retrieval.
+
+--------------------
+Here we provide pytest fixtures to make it more convenient to retrieving test data.
 """
 import os
 
