@@ -13,7 +13,7 @@ except ImportError:
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
-from aiida_vasp.utils.fixtures.environment import aiida_env, fresh_aiida_env
+from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP
 
 
@@ -25,7 +25,7 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
     assert file_node.pk == potcar_node_pair['file'].pk
 
 
-def test_hashing(aiida_env):
+def test_hashing(fresh_aiida_env):
     """Ensure the file and content sha512 hash equivalently for the same POTCAR."""
     potcar_file_cls = get_data_class('vasp.potcar_file')
     potcar_path = ['potcar', 'As', 'POTCAR']

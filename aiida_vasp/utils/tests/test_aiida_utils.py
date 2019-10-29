@@ -6,7 +6,7 @@ import pytest
 from aiida.common.exceptions import MissingEntryPointError
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, BASIC_DATA_TYPES, get_current_user
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env, aiida_env
+from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 
 
 def test_get_current_user(fresh_aiida_env):
@@ -17,7 +17,7 @@ def test_get_current_user(fresh_aiida_env):
     assert user.email
 
 
-def test_get_data_class(aiida_env):
+def test_get_data_class(fresh_aiida_env):
     """Make sure the get_data_class accept valid types."""
     for data_type in BASIC_DATA_TYPES:
         data_type_class = get_data_class(data_type)
@@ -29,7 +29,7 @@ def test_get_data_class(aiida_env):
         get_data_class('garbage')
 
 
-def test_get_data_node(aiida_env):
+def test_get_data_node(fresh_aiida_env):
     """Make sure the get_data_node returns objects for the basic data types."""
     for data_type in BASIC_DATA_TYPES:
         the_module_ref = __import__('aiida.orm', fromlist=[data_type.capitalize()])

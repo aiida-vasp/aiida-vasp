@@ -52,7 +52,7 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 
 @pytest.fixture
-def vasp_params(aiida_env):
+def vasp_params(fresh_aiida_env):
     incar_io = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_io
 
@@ -92,7 +92,7 @@ def duplicate_potcar_data(potcar_node):
 
 
 @pytest.fixture
-def potcar_family(aiida_env, temp_pot_folder):
+def potcar_family(fresh_aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     family_name = POTCAR_FAMILY_NAME
@@ -122,7 +122,7 @@ def potentials(potcar_family):
 
 
 @pytest.fixture(params=['cif', 'str'])
-def vasp_structure(request, aiida_env):
+def vasp_structure(request, fresh_aiida_env):
     """Fixture: StructureData or CifData."""
     from aiida.plugins import DataFactory
     if request.param == 'cif':
@@ -166,7 +166,7 @@ def vasp_structure_poscar(vasp_structure):
 
 
 @pytest.fixture(params=['mesh', 'list'])
-def vasp_kpoints(request, aiida_env):
+def vasp_kpoints(request, fresh_aiida_env):
     """Fixture: (kpoints object, resulting KPOINTS)."""
     from aiida.plugins import DataFactory
     if request.param == 'mesh':
@@ -271,7 +271,7 @@ def vasp_code(localhost):
 
 
 @pytest.fixture()
-def mock_vasp(aiida_env, localhost):
+def mock_vasp(fresh_aiida_env, localhost):
     """Points to a mock-up of a VASP executable."""
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
@@ -292,14 +292,14 @@ def mock_vasp(aiida_env, localhost):
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
-        aiidapath = py_path.local(aiida_env.root_dir).join('.aiida')
+        aiidapath = py_path.local(fresh_aiida_env.root_dir).join('.aiida')
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
 
     return code
 
 
 @pytest.fixture()
-def vasp_chgcar(aiida_env):
+def vasp_chgcar(fresh_aiida_env):
     """CHGCAR node and reference fixture."""
     from aiida.plugins import DataFactory
     chgcar_path = data_path('chgcar', 'CHGCAR')
@@ -310,7 +310,7 @@ def vasp_chgcar(aiida_env):
 
 
 @pytest.fixture()
-def vasp_wavecar(aiida_env):
+def vasp_wavecar(fresh_aiida_env):
     """WAVECAR node and reference fixture."""
     from aiida.plugins import DataFactory
     wavecar_path = data_path('wavecar', 'WAVECAR')

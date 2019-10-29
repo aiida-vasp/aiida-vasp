@@ -8,7 +8,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 
 
-def test_parse_wavecar(aiida_env):
+def test_parse_wavecar(fresh_aiida_env):
     """Parse a reference CHGCAR file with the ChargcarParser and compare the result to a reference string."""
     path = data_path('wavecar', 'WAVECAR')
     parser = WavecarParser(file_path=path)
