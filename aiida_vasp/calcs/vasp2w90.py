@@ -8,9 +8,9 @@ VASP2Wannier90 - Calculation.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.plugins import DataFactory
 from aiida.orm import List
+from aiida_wannier90.io import write_win  # pylint: disable=import-error
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_wannier90.io import write_win  # pylint: disable=import-error
 
 
 class Vasp2w90Calculation(VaspCalculation):

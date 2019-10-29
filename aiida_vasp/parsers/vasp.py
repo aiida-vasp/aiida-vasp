@@ -12,14 +12,13 @@ contains several modules:
 """
 #encoding: utf-8
 # pylint: disable=no-member
+from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.manager import ParserManager
 from aiida_vasp.parsers.settings import ParserSettings
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.delegates import Delegate
-
-from aiida.common.exceptions import NotExistent
 
 # defaults
 
