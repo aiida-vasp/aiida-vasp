@@ -292,7 +292,7 @@ def mock_vasp(fresh_aiida_env, localhost):
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
-        aiidapath = py_path.local(fresh_aiida_env.root_dir).join('.aiida')
+        aiidapath = py_path.local(fresh_aiida_env._manager.root_dir).join('.aiida')
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
 
     return code

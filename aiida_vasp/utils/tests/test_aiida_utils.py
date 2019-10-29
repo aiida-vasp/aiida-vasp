@@ -12,8 +12,8 @@ from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 def test_get_current_user(fresh_aiida_env):
     """Assert that get_current_user returns a user in all tested aiida versions."""
     user = get_current_user()
-    assert user.first_name == ''
-    assert user.last_name == ''
+    assert user.first_name == 'AiiDA'
+    assert user.last_name == 'Plugintest'
     assert user.email
 
 
