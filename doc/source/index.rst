@@ -126,6 +126,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :hidden:
 
    developments/developments
+   developments/running_tests
    changelog
 
 .. toctree::
