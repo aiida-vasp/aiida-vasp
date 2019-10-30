@@ -29,23 +29,36 @@ class RelaxWorkChain(WorkChain):
         IONIC_RELAXATION_CG = 2
 
     class ModeEnum(enum.IntEnum):
-        """Encode values for mode of relaxation descriptively in enum."""
+        """
+        Encode values for mode of relaxation descriptively in enum.
+
+        Values can be found here: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
+        """
+
         POS_ONLY = 1
         POS_SHAPE_VOL = 3
         POS_SHAPE = 4
         SHAPE_ONLY = 5
+        SHAPE_VOL = 6
+        VOL_ONLY = 7
 
         @classmethod
         def get_from_dof(cls, **kwargs):
             """Get the correct mode of relaxation for the given degrees of freedom."""
-            dof = tuple(kwargs[i] for i in ['positions', 'shape', 'volume'])
+            RELAX_POSSIBILITIES = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
+            dof = tuple(kwargs[i] for i in RELAX_POSSIBILITIES)
             value_from_dof = {
                 (True, False, False): cls.POS_ONLY,
                 (True, True, True): cls.POS_SHAPE_VOL,
                 (True, True, False): cls.POS_SHAPE,
-                (False, True, False): cls.SHAPE_ONLY
+                (False, True, False): cls.SHAPE_ONLY,
+                (False, True, True): cls.SHAPE_VOL,
+                (False, False, True): cls.VOL_ONLY
             }
-            return value_from_dof[dof]
+            try:
+                return value_from_dof[dof]
+            except KeyError:
+                raise ValueError('Invalid combination for degrees of freedom: {}'.format(dict(zip(RELAX_POSSIBILITIES, dof))))
 
     @classmethod
     def define(cls, spec):

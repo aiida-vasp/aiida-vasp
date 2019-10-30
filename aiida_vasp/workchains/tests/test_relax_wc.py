@@ -21,7 +21,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 
 @pytest.mark.wc
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
-    #def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
+    # def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
@@ -72,3 +72,19 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     assert sites[1].kind_name == 'Si'
     assert sites[0].position == (4.8125, 4.8125, 4.8125)
     assert sites[1].position == (0.6875, 0.6875, 0.715)
+
+
+def test_mode_values():
+    """Test that geometry relaxation modes either return a value or raise a ValueError"""
+    from aiida_vasp.workchains.relax import RelaxWorkChain
+
+    for pos in (True, False):
+        for shape in (True, False):
+            for volume in (True, False):
+                try:
+                    RelaxWorkChain.ModeEnum.get_from_dof(**{'positions': pos, 'shape': shape, 'volume': volume})
+                except ValueError:
+                    pass
+                except Exception as exc:  # pylint: disable=broad-except
+                    assert 'Get from DOF function has to either return the correct value or raise a ValueError ' \
+                           'for invalid combinations, instead got {} exception'.format(type(exc))
