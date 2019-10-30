@@ -10,6 +10,7 @@ import numpy as np
 from packaging import version
 
 from aiida.orm import User
+
 from aiida.cmdline.utils.decorators import with_dbenv
 
 BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
@@ -136,7 +137,6 @@ def cmp_load_verdi_data():
     return verdi_data
 
 
-@with_dbenv()
 def create_authinfo(computer, store=False):
     """Allow the current user to use the given computer."""
     from aiida.orm import AuthInfo
@@ -146,13 +146,11 @@ def create_authinfo(computer, store=False):
     return authinfo
 
 
-@with_dbenv()
 def cmp_get_authinfo(computer):
     """Get an existing authinfo or None for the given computer and current user."""
     return computer.get_authinfo(get_current_user())
 
 
-@with_dbenv()
 def cmp_get_transport(computer):
     if hasattr(computer, 'get_transport'):
         return computer.get_transport()
