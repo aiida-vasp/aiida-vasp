@@ -448,10 +448,22 @@ class RelaxWorkChain(WorkChain):
         return volume_converged
 
     def check_positions_convergence(self, delta):
-        positions_converged = bool(delta.pos_lengths.max() <= self.inputs.relax.convergence_positions.value)
+        try:
+            positions_converged = bool(delta.pos_lengths.nanmax() <= self.inputs.relax.convergence_positions.value)
+        except RuntimeWarning:
+            # Here we encountered the case of having one atom centered at the origin, so
+            # we do not know if it is converged, so settings it to False
+            self.report('there is NaN entries in the relative comparison for '
+                        'the positions during relaxation, assuming position is not converged')
+            position_converged = False
+
         if not positions_converged:
-            self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.max(),
-                                                                                 self.inputs.relax.convergence_positions.value))
+            try:
+                self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.nanmax(),
+                                                                                     self.inputs.relax.convergence_positions.value))
+            except RuntimeWarning:
+                pass
+
         return positions_converged
 
     def store_relaxed(self):

@@ -180,7 +180,7 @@ class ConvergeWorkChain(WorkChain):
                    help="""
                    The volume change in direct coordinates for each lattice vector.
                    """)
-        spec.input('converge.converge_relax',
+        spec.input('converge.relax',
                    valid_type=get_data_class('bool'),
                    required=False,
                    default=get_data_node('bool', False),
@@ -560,6 +560,11 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.inputs.settings = self.inputs.settings
         except AttributeError:
             pass
+        # We also pass along relaxation parameters
+        try:
+            self.ctx.inputs.relax = self.inputs.relax
+        except AttributeError:
+            pass        
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()
@@ -617,16 +622,6 @@ class ConvergeWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Check if we want to perform relaxation, if so, modify input
-        try:
-            relax = self.inputs.converge.converge_relax.value
-            if relax:
-                relax = AttributeDict()
-                relax.perform = get_data_node('bool', True)
-                self.ctx.inputs.relax = relax
-        except AttributeError:
-            pass
-
         # If we are running tests, set the system flag in parameters to contain
         # information, such that it is possible to locate different runs
         if self.inputs.converge.testing.value:
@@ -655,6 +650,16 @@ class ConvergeWorkChain(WorkChain):
 
         # Set input nodes
         if self.ctx.set_input_nodes:
+            # Check if we want to perform relaxation, if so, modify input and
+            # include relax parameters
+            try:
+                relax = self.inputs.converge.relax.value
+                if relax:
+                    relax = AttributeDict()
+                    relax.perform = get_data_node('bool', True)
+                    self.ctx.inputs.relax = relax
+            except AttributeError:
+                pass
             self._set_input_nodes()
 
         # Make sure we do not have any floating dict (convert to Dict) in the input
