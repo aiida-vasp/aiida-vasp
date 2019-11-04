@@ -36,8 +36,34 @@ class VaspCalcBase(CalcJob):
     def max_retrieve_list(cls):
         """Return a list of all possible output files from a VASP run."""
         retrieve_list = [
-            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR', 'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
-            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR', ['wannier90*', '.', 0], 'vasprun.xml'
+            'CHG',
+            'CHGCAR',
+            'AECCAR0',
+            'AECCAR1',
+            'AECCAR2',
+            'ELFCAR',
+            'PARCHG',  # Density related
+            'CONTCAR',
+            'XDATCAR',
+            'PCDAT',  # Structure related
+            'DOSCAR',
+            'EIGENVAL',
+            'PROCAR',  # Electronic structure related
+            'IBZKPT',  # Irreducible k-points
+            'LOCPOT',  # Potential related
+            'BSEFATBAND',  # Eigenvectors of the BSE matrix
+            'WAVECAR',
+            'WAVEDER',
+            'PROOUT',
+            'TMPCAR',
+            'W*.tmp',
+            'WFULL*.tmp',  # Wave function related properties
+            'wannier90*',  # Wannier90 related
+            'OSZICAR',  # Convergence related
+            'REPORT',  # Output of molecular dynamics runs
+            'STOPCAR',  # Controlled stopping file
+            'vasprun.xml',
+            'OUTCAR'
         ]
         return retrieve_list
 
