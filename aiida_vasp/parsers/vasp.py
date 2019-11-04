@@ -96,8 +96,6 @@ class VaspParser(BaseParser):
         # Initialise the 'get_quantity' delegate:
         setattr(self, 'get_quantity', Delegate())
 
-        self.out_folder = None
-
         try:
             calc_settings = self.node.inputs.settings
         except NotExistent:
@@ -137,16 +135,17 @@ class VaspParser(BaseParser):
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in [item.name for item in self.retrieved.list_objects()] and value_dict['is_critical']:
+                if file_name not in self.retrieved_content.keys() and value_dict['is_critical']:
                     return True
             return False
 
-        error_code = self.get_folder()
+        error_code = self.check_folders(kwargs)
         if error_code is not None:
             return error_code
         if missing_critical_file():
-            # A critical file i.e. OUTCAR does not exist. Abort parsing.
-            return self.exit_codes.ERROR_MISSING_FILE
+            # A critical file is missing. Abort parsing
+            # in case we do not find this or other files marked with is_critical
+            return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
         # Get the _quantities from the FileParsers.
         self.quantities.setup()

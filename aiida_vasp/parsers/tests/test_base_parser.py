@@ -19,6 +19,7 @@ def base_parser(calc_with_retrieved):
 
 def test_get_file(base_parser):
     """Test getting a retrieved output file."""
+    base_parser.check_folders()
     assert os.path.isfile(base_parser.get_file('OUTCAR'))
     assert os.path.exists(base_parser.get_file('OUTCAR'))
     # This should now not eject an OSError as this is handled by the logger

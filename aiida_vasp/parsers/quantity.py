@@ -74,10 +74,8 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        retrieved = [item.name for item in self._vasp_parser.retrieved.list_objects()]
-
         # check uniqueness and add parsable quantities
-        self._check_uniqueness_add_parsable(retrieved)
+        self._check_uniqueness_add_parsable(self._vasp_parser.retrieved_content.keys())
 
         # check consistency, that the quantity is parsable and
         # alternatives

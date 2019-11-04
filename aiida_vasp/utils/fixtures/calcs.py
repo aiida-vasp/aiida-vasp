@@ -12,15 +12,15 @@ from aiida.engine.utils import instantiate_process
 from aiida.orm import Code
 from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.manager import get_manager
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
+from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, create_authinfo
 
 from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar, wannier_params, \
-    wannier_projections, ref_win
+    wannier_projections, ref_win, POTCAR_FAMILY_NAME, POTCAR_MAP
 
 
 @pytest.fixture()
 def calc_with_retrieved(localhost):
-    """A rigged CalcJobNode for testing the parser."""
+    """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
     from aiida.orm import CalcJobNode, FolderData, Computer, Dict
 
@@ -142,6 +142,45 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
     ref['chgcar'] = ref_chgcar
     ref['wavecar'] = ref_wavecar
     return calc, ref
+
+
+@pytest.fixture()
+def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
+    """Setup and standard VASP calculation with the mock executable that accepts input overrides."""
+
+    def inner(inputs=None, settings=None):
+        from aiida.plugins import CalculationFactory
+        from aiida.engine import run
+        calculation = CalculationFactory('vasp.vasp')
+        mock_vasp.store()
+        create_authinfo(computer=mock_vasp.computer, store=True)
+        kpoints, _ = vasp_kpoints
+        inpts = AttributeDict()
+        inpts.code = Code.get_from_string('mock-vasp@localhost')
+        inpts.structure = vasp_structure
+        inpts.parameters = vasp_params
+        inpts.kpoints = kpoints
+        inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
+                                                                                   family_name=POTCAR_FAMILY_NAME,
+                                                                                   mapping=POTCAR_MAP)
+        options = {
+            'parser_name': 'vasp.vasp',
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        }
+        inpts.metadata = {}
+        inpts.metadata['options'] = options
+        if inputs is not None:
+            inpts.update(inputs)
+        results_and_node = run.get_node(calculation, **inpts)
+        return results_and_node
+
+    return inner
 
 
 ONLY_ONE_CALC = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
