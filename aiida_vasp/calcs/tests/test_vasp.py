@@ -6,11 +6,14 @@ import math
 
 import pytest
 from aiida.common.folders import SandboxFolder
+from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
-from aiida_vasp.utils.fixtures.data import get_data_class
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, create_authinfo
 
 
 @ONLY_ONE_CALC
@@ -66,15 +69,10 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     """Test that WAVECAR file is written correctly."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
-
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
-
     inputs.wavefunctions = wavecar
-
     calc = vasp_calc(inputs=inputs)
-
     temp_folder = Folder(str(localhost_dir.dirpath()))
-
     calcinfo = calc.prepare_for_submission(temp_folder)
 
     assert 'WAVECAR' in [item[1] for item in calcinfo.local_copy_list]
@@ -103,9 +101,9 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     for file_name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
         assert file_name in input_files
 
-    assert 'EIGENVAL' in calcinfo.retrieve_list
-    assert 'DOSCAR' in calcinfo.retrieve_list
-    assert ('wannier90*', '.', 0) in calcinfo.retrieve_list
+    assert 'EIGENVAL' in calcinfo.retrieve_temporary_list
+    assert 'DOSCAR' in calcinfo.retrieve_temporary_list
+    assert 'wannier90*' in calcinfo.retrieve_temporary_list
 
     inputs_dict.update({'icharg': 2})
 
@@ -149,15 +147,52 @@ def managed_temp_file():
         os.remove(temp_file)
 
 
-@contextlib.contextmanager
-def working_directory(new_work_dir):
-    """Change working dir in a with context, change back at the end."""
-    work_dir = os.getcwd()
-    try:
-        if os.path.isdir(new_work_dir):
-            os.chdir(new_work_dir)
-        else:
-            os.chdir(os.path.dirname(new_work_dir))
-        yield
-    finally:
-        os.chdir(work_dir)
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_calc(run_vasp_calc):
+    """Test a run of a basic VASP calculation and its details."""
+    from aiida_vasp.calcs.vasp import VaspCalculation
+    results, node = run_vasp_calc()
+    assert node.exit_status == 0
+
+    # Check that the standard output is there
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
+
+    # Also, we need to check that there is some minimum content in misc, as it will contain
+    # None if parsing somehow failed.
+    misc = results['misc'].get_dict()
+    assert 'total_energies' in misc
+    assert 'maximum_stress' in misc
+
+    # Check that the retrieve lists are as expected (delete everything except scheduler stdout
+    # and stderr after parse)
+    retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_TEMPORARY_LIST
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    retrieve_temporary_list = node.get_retrieve_temporary_list()
+    retrieve_list = node.get_retrieve_list()
+    for element in retrieve_temporary_list_ref:
+        assert element in retrieve_temporary_list
+    for element in retrieve_list_ref:
+        assert element in retrieve_list
+    files = node.outputs.retrieved.list_objects()
+    file_names = [single_file.name for single_file in files]
+    assert set(file_names) == set(retrieve_list_ref)
+
+
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_no_delete(run_vasp_calc):
+    """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
+    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    # and check if it is actually there
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    inputs = {}
+    extra_file_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
+    _, node = run_vasp_calc(inputs)
+    files = node.outputs.retrieved.list_objects()
+    file_names = [single_file.name for single_file in files]
+    retrieve_list_ref.append(extra_file_to_keep)
+    assert set(file_names) == set(retrieve_list_ref)

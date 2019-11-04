@@ -75,8 +75,10 @@ class ExampleFileParser2(BaseFileParser):
 def vasp_parser_with_test(calc_with_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     from aiida.plugins import ParserFactory
+    from aiida.plugins import CalculationFactory
 
     settings_dict = {
+        #'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_TEMPORARY_LIST,
         'parser_settings': {
             'add_custom': {
                 'link_name': 'custom_node',
@@ -99,7 +101,7 @@ def vasp_parser_with_test(calc_with_retrieved):
             'prerequisites': [],
         },
     )
-    success = parser.parse()
+    success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
     finally:
@@ -177,7 +179,7 @@ def test_parser_nodes(request, calc_with_retrieved):
     node = calc_with_retrieved(file_path, settings_dict)
 
     parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     misc = result['misc']
     bands = result['bands']
@@ -219,7 +221,7 @@ def test_structure(request, calc_with_retrieved):
     node = calc_with_retrieved(file_path, settings_dict)
 
     parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     # First fetch structure from vasprun
 
@@ -232,7 +234,7 @@ def test_structure(request, calc_with_retrieved):
     node = calc_with_retrieved(file_path, settings_dict)
 
     parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     structure_poscar = result['structure']
 
@@ -281,7 +283,7 @@ def test_misc(request, calc_with_retrieved):
     node = calc_with_retrieved(file_path, settings_dict)
 
     parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False)
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     misc = result['misc']
     assert isinstance(misc, get_data_class('dict'))

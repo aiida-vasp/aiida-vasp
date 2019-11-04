@@ -35,9 +35,11 @@ class VaspCalculation(VaspCalcBase):
 
     ---------------------------------
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR'
-    and Wannier90 input / output files,
-    but additional retrieve files can be specified via the
-    ``settings['ADDITIONAL_RETRIEVE_LIST']`` input.
+    and Wannier90 input / output files. These files are deleted after parsing.
+    Additional retrieve files can be specified via the
+    ``settings['ADDITIONAL_RETRIEVE_TEMPORARY_LIST']`` input. In addition, if you want to keep
+    any files after parsing, put them in ``settings['ADDITIONAL_RETRIEVE_LIST']`` which is empty
+    by default.
 
     Floating point precision for writing POSCAR files can be adjusted using
     ``settings['poscar_precision']``, default: 10
@@ -65,7 +67,8 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', ('wannier90*', '.', 0)]
+    _ALWAYS_RETRIEVE_LIST = []
+    _ALWAYS_RETRIEVE_TEMPORARY_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
@@ -113,6 +116,10 @@ class VaspCalculation(VaspCalcBase):
         spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(350, 'ERROR_NO_RETRIEVED_FOLDER', message='the retrieved folder data node could not be accessed.')
+        spec.exit_code(351,
+                       'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
+                       message='the retrieved_temporary folder data node could not be accessed.')
+        spec.exit_code(352, 'ERROR_CRITICAL_MISSING_FILE', message='a file that is marked by the parser as critical is missing.')
         spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
         spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the requested quantity')
 
@@ -123,7 +130,12 @@ class VaspCalculation(VaspCalcBase):
             additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST')
         except (KeyError, AttributeError):
             additional_retrieve_list = []
+        try:
+            additional_retrieve_temporary_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST')  # pylint: disable=invalid-name
+        except (KeyError, AttributeError):
+            additional_retrieve_temporary_list = []  # pylint: disable=invalid-name
         calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
+        calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_TEMPORARY_LIST + additional_retrieve_temporary_list))
         return calcinfo
 
     def verify_inputs(self):
