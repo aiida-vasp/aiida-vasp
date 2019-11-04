@@ -564,7 +564,7 @@ class ConvergeWorkChain(WorkChain):
         try:
             self.ctx.inputs.relax = self.inputs.relax
         except AttributeError:
-            pass        
+            pass
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
         converged_parameters_dict = self.inputs.parameters.get_dict()

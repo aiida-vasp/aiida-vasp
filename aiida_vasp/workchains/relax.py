@@ -442,12 +442,14 @@ class RelaxWorkChain(WorkChain):
         return bool(lengths_converged and angles_converged)
 
     def check_volume_convergence(self, delta):
+        """Check the convergence of the volume, given a cutoff."""
         volume_converged = bool(delta.volume <= self.inputs.relax.convergence_volume.value)
         if not volume_converged:
             self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.relax.convergence_volume.value))
         return volume_converged
 
     def check_positions_convergence(self, delta):
+        """Check the convergence of the atomic positions, given a cutoff."""
         try:
             positions_converged = bool(delta.pos_lengths.nanmax() <= self.inputs.relax.convergence_positions.value)
         except RuntimeWarning:
@@ -455,7 +457,7 @@ class RelaxWorkChain(WorkChain):
             # we do not know if it is converged, so settings it to False
             self.report('there is NaN entries in the relative comparison for '
                         'the positions during relaxation, assuming position is not converged')
-            position_converged = False
+            positions_converged = False
 
         if not positions_converged:
             try:
