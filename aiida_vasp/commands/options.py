@@ -47,10 +47,15 @@ except ImportError:
             kw_copy.update(kwargs)
             return click.option(*self.args, **kw_copy)
 
-    FORCE = OverridableOption('-f', '--force', is_flag=True, help='Do not ask for confirmation')
-    DESCRIPTION = OverridableOption('-D', '--description', help='(text) description')
+    FORCE = OverridableOption('-f', '--force', is_flag=True, help='Do not ask for confirmation.')
+    DESCRIPTION = OverridableOption('-d', '--description', help='(text) description')
 
-FAMILY_NAME = OverridableOption('--name', required=True, help='Name of the POTCAR family')
-PATH = OverridableOption('--path', default='.', type=click.Path(exists=True), help='Path to the folder')
+FAMILY_NAME = OverridableOption('-n',
+                                '--name',
+                                required=True,
+                                help='The name you want to give this family of potential(s). '
+                                'This is the name you will use in the future when telling which potentials to use '
+                                'for a specific calculation or workflow.')
+PATH = OverridableOption('-p', '--path', default='.', type=click.Path(exists=True), help='Path to the folder.')
 
-DRY_RUN = OverridableOption('--dry-run', is_flag=True, is_eager=True, help='do not commit to database or modify configuration files')
+DRY_RUN = OverridableOption('--dry-run', is_flag=True, is_eager=True, help='Do not commit to database or modify configuration files.')

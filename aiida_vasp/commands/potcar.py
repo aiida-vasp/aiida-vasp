@@ -37,10 +37,12 @@ def try_grab_description(ctx, param, value):
 
 
 @potcar.command()
-@options.PATH(help='Path to a folder or archive containing the POTCAR files')
+@options.PATH(help='Path to a folder or archive containing the POTCAR files. '
+              'You can supply the archive that you downloaded from the VASP server. '
+              'The path does not need to be specified, if that is the case, the current path is used.')
 @options.FAMILY_NAME()
-@options.DESCRIPTION(help='A description for the family', callback=try_grab_description)
-@click.option('--stop-if-existing', is_flag=True, help='Abort when encountering a previously uploaded POTCAR file')
+@options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
+@click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
 @options.DRY_RUN()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
@@ -61,19 +63,19 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 @potcar.command()
 @click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
-@click.option('-d', '--with-description', is_flag=True)
-def listfamilies(element, symbol, with_description):
+@click.option('-d', '--description', is_flag=True, help='Also show the description.')
+def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
 
     potcar_data_cls = get_data_class('vasp.potcar')
     groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
 
     table = [['Family', 'Num Potentials']]
-    if with_description:
+    if description:
         table[0].append('Description')
     for group in groups:
         row = [group.label, len(group.nodes)]
-        if with_description:
+        if description:
             row.append(group.description)
         table.append(row)
     if len(table) > 1:
