@@ -146,7 +146,7 @@ def test_listfamilies_nofilter(fresh_aiida_env, potcar_family):
     assert potcar_family in result.output
 
     family_group = get_data_class('vasp.potcar').get_potcar_group(potcar_family)
-    result = run_cmd('listfamilies', ['--with-description'])
+    result = run_cmd('listfamilies', ['--description'])
     assert not result.exception
     assert 'Description' in result.output
     assert family_group.description in result.output
