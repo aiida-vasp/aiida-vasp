@@ -1209,8 +1209,8 @@ class ConvergeWorkChain(WorkChain):
         convergence_context = get_data_node('dict', dict=convergence_dict)
         convergence = store_conv_data(convergence_context)
         if self._verbose:
-            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'convergence_data'))
-        self.out('convergence_data', convergence)
+            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'converge.data'))
+        self.out('converge.data', convergence)
 
     def _check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
         """
