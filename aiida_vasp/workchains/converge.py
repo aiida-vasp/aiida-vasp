@@ -29,17 +29,18 @@ class ConvergeWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(ConvergeWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings'))
+        spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings', 'relax'))
         spec.input('parameters', valid_type=get_data_class('dict'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
+        spec.input_namespace('relax', required=False, dynamic=True)
         spec.input('converge.encut',
                    valid_type=get_data_class('float'),
                    required=False,
                    help="""
                    The plane-wave cutoff to be used during convergence tests in electron volts.
-            """)
+                   """)
         spec.input('converge.kgrid',
                    valid_type=get_data_class('array'),
                    required=False,
@@ -600,12 +601,35 @@ class ConvergeWorkChain(WorkChain):
 
     def _set_input_nodes(self):
         """Replaces the ctx.input nodes from the previous calculations."""
+
+        # First we analyze and set the relax namespace
+        try:
+            relax_parameters = AttributeDict(self.inputs.relax)
+        except KeyError:
+            relax_parameters = AttributeDict()
+            relax_parameters.perform = get_data_node('bool', False)
+
+        # We need to check if relaxation is turned on, disable it during
+        # the convergence tests (unless converge.relax is set to True)
+        # It is reenabled when we initialize the final calculation
+        if relax_parameters.perform.value and not self.inputs.converge.relax.value:
+            relax_parameters.perform = get_data_node('bool', False)
+
+        # If we want relaxation during convergence tests, it overrides
+        if self.inputs.converge.relax.value:
+            relax_parameters.perform = get_data_node('bool', True)
+        self.ctx.inputs.relax = relax_parameters
+
+        # Then the structure
         self.ctx.inputs.structure = self.ctx.converge.structure.clone()
+
+        # Plane wave cutoff and parameters
         if self.ctx.converge.settings.encut_org is None or self.inputs.converge.testing.value:
             self.ctx.inputs.parameters = self.ctx.converge.parameters.clone()
         else:
             self.ctx.inputs.parameters = self.inputs.parameters
-        # Only the k-points if no mesh was supplied
+
+        # And then the k-points if no mesh was supplied
         if not self.ctx.converge.settings.supplied_kmesh:
             self.ctx.inputs.kpoints = self.ctx.converge.kpoints.clone()
         else:
@@ -650,16 +674,6 @@ class ConvergeWorkChain(WorkChain):
 
         # Set input nodes
         if self.ctx.set_input_nodes:
-            # Check if we want to perform relaxation, if so, modify input and
-            # include relax parameters
-            try:
-                relax = self.inputs.converge.relax.value
-                if relax:
-                    relax = AttributeDict()
-                    relax.perform = get_data_node('bool', True)
-                    self.ctx.inputs.relax = relax
-            except AttributeError:
-                pass
             self._set_input_nodes()
 
         # Make sure we do not have any floating dict (convert to Dict) in the input
@@ -973,7 +987,7 @@ class ConvergeWorkChain(WorkChain):
         # relative comparisons in a flexible manner
         k_data = self.ctx.converge.k_data_org
         if self._verbose:
-            self.report('No atomic displacements or compression were performed. The convergence test suggests:')
+            self.report('No atomic displacements or compressions were performed. The convergence test suggests:')
         if settings.encut_org is None:
             if self._verbose:
                 self.report('plane wave cutoff: {encut} eV.'.format(encut=encut))
