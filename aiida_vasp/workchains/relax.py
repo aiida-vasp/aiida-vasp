@@ -8,6 +8,8 @@ parameters instead of the code dependent variables.
 """
 # pylint: disable=attribute-defined-outside-init
 import enum
+import numpy as np
+
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
@@ -451,7 +453,7 @@ class RelaxWorkChain(WorkChain):
     def check_positions_convergence(self, delta):
         """Check the convergence of the atomic positions, given a cutoff."""
         try:
-            positions_converged = bool(delta.pos_lengths.nanmax() <= self.inputs.relax.convergence_positions.value)
+            positions_converged = bool(np.nanmax(delta.pos_lengths) <= self.inputs.relax.convergence_positions.value)
         except RuntimeWarning:
             # Here we encountered the case of having one atom centered at the origin, so
             # we do not know if it is converged, so settings it to False
@@ -461,7 +463,7 @@ class RelaxWorkChain(WorkChain):
 
         if not positions_converged:
             try:
-                self.report('max site position change is {}, tolerance is {}'.format(delta.pos_lengths.nanmax(),
+                self.report('max site position change is {}, tolerance is {}'.format(np.nanmax(delta.pos_lengths),
                                                                                      self.inputs.relax.convergence_positions.value))
             except RuntimeWarning:
                 pass
