@@ -37,7 +37,7 @@ class RelaxWorkChain(WorkChain):
         Values can be found here: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
         """
 
-        POS_ONLY = 1
+        POS_ONLY = 2
         POS_SHAPE_VOL = 3
         POS_SHAPE = 4
         SHAPE_ONLY = 5
