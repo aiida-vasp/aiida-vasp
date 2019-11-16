@@ -30,6 +30,7 @@ class MasterWorkChain(WorkChain):
         spec.expose_inputs(cls._base_workchain, exclude=['settings', 'clean_workdir'])
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input_namespace('relax', required=False, dynamic=True)
         spec.input('extract_bands',
                    valid_type=get_data_class('bool'),
                    required=False,
@@ -206,6 +207,12 @@ class MasterWorkChain(WorkChain):
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
+
+        # Add relax inputs
+        try:
+            self.ctx.inputs.relax = self.inputs.relax
+        except KeyError:
+            pass
 
         # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge', 'verify'])
