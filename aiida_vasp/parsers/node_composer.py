@@ -169,5 +169,8 @@ class NodeComposer(object):
         node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():
-                node.set_array(key, value)
+                if key == 'symbols':
+                    node.set_attribute(key, value)
+                else:
+                    node.set_array(key, value)
         return node
