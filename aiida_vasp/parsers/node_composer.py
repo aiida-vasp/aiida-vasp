@@ -165,9 +165,31 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_array_trajectory(node_type, inputs):
-        """Compose a trajectory node."""
+        """
+        Compose a trajectory node.
+
+        Parameters
+        ----------
+        node_type : str
+            'array.trajectory'
+        inputs : dict
+            trajectory data is stored at VasprunParser. The keys are
+            'cells', 'positions', 'symbols', 'forces', 'stress', 'steps'.
+
+        Returns
+        -------
+        node : TrajectoryData
+            To store the data, due to the definition of TrajectoryData in
+            aiida-core v1.0.0, data, using the same keys are those from inputs,
+            for 'symbols', the value is stored by set_attribute and
+            for the others, the values are stored by by set_array.
+
+        """
         node = get_data_class(node_type)()
         for item in inputs:
             for key, value in inputs[item].items():
-                node.set_array(key, value)
+                if key == 'symbols':
+                    node.set_attribute(key, value)
+                else:
+                    node.set_array(key, value)
         return node
