@@ -165,7 +165,8 @@ class NodeComposer(object):
 
     @staticmethod
     def _compose_array_trajectory(node_type, inputs):
-        """Compose a trajectory node.
+        """
+        Compose a trajectory node.
 
         Parameters
         ----------
