@@ -79,18 +79,18 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'convergence_data' in results
+    assert 'convergence.data' in results
     assert 'structure_relaxed' in results
 
-    conv_data = results['convergence_data']
+    conv_data = results['convergence.data']
     try:
         conv_data.get_array('pw_regular')
     except KeyError:
-        pytest.fail('Did not find pw_regular in convergence_data')
+        pytest.fail('Did not find pw_regular in convergence.data')
     try:
         conv_data.get_array('kpoints_regular')
     except KeyError:
-        pytest.fail('Did not find kpoints_regular in convergence_data')
+        pytest.fail('Did not find kpoints_regular in convergence.data')
 
 
 @pytest.mark.skip(reason='Too slow')
@@ -148,12 +148,12 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
-    assert 'convergence_data' in results
-    conv_data = results['convergence_data']
+    assert 'convergence.data' in results
+    conv_data = results['convergence.data']
     try:
         conv_data = conv_data.get_array('pw_regular')
     except KeyError:
-        pytest.fail('Did not find pw_regular in convergence_data')
+        pytest.fail('Did not find pw_regular in convergence.data')
     conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
                                [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
     np.testing.assert_allclose(conv_data, conv_data_test)

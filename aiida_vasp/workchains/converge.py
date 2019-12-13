@@ -264,7 +264,7 @@ class ConvergeWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('convergence_data', valid_type=get_data_class('array'), required=False)
+        spec.output('convergence.data', valid_type=get_data_class('array'), required=False)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the converge workchain')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
