@@ -1,5 +1,5 @@
 """Unittests for VaspCalculation."""
-# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
+# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
 import math

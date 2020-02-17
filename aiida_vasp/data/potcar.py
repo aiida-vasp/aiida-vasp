@@ -109,6 +109,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+# pylint: disable=import-outside-toplevel
 from __future__ import print_function
 
 import re
@@ -770,9 +771,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 mapping=custom_mapping
             )
         """
-        # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
         kind_names = structure.get_kind_names()
-        potcar_dict = {kind_name: potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
+        potcar_dict = {kind_name: value
+                       for kind_name, value in cls.get_potcars_dict(kind_names, # pylint: disable=unnecessary-comprehension
+                                                                    family_name,
+                                                                    mapping=mapping).items()}  # yapf: disable
         return potcar_dict
 
     @classmethod

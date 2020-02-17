@@ -310,7 +310,7 @@ class VaspCalculation(VaspCalcBase):
 
     @classmethod
     def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):
-        from aiida_vasp.calcs.immigrant import get_chgcar_input, get_wavecar_input
+        from aiida_vasp.calcs.immigrant import get_chgcar_input, get_wavecar_input  # pylint: disable=import-outside-toplevel
         add_wavecar = kwargs.get('use_wavecar') or bool(builder.parameters.get_dict().get('istart', 0))
         add_chgcar = kwargs.get('use_chgcar') or builder.parameters.get_dict().get('icharg', -1) in [1, 11]
         if add_chgcar:

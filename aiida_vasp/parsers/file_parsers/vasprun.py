@@ -430,21 +430,6 @@ class VasprunParser(BaseFileParser):
         return None
 
     @property
-    def energies_sc(self):
-        """
-        Fetch the total energies.
-
-        Store in ArrayData for all self-consistent electronic steps.
-
-        """
-
-        # raise error due to lack of knowledge if
-        # the Aiida data structure support for instance
-        # lists of ndarrays.
-        raise NotImplementedError
-        #return self.energies(nosc = False)
-
-    @property
     def total_energies(self):
         """Fetch the total energies after the last ionic run."""
 
@@ -461,7 +446,25 @@ class VasprunParser(BaseFileParser):
         return energies_dict
 
     @property
-    def energies(self, nosc=True):
+    def energies(self):
+        return self._energies(nosc=True)
+
+    @property
+    def energies_sc(self):
+        """
+        Fetch the total energies.
+
+        Store in ArrayData for all self-consistent electronic steps.
+
+        """
+
+        # raise error due to lack of knowledge if
+        # the Aiida data structure support for instance
+        # lists of ndarrays.
+        raise NotImplementedError
+        #return self.energies(nosc = False)
+
+    def _energies(self, nosc):
         """Fetch the total energies for all calculations (i.e. ionic steps)."""
 
         # fetch the type of energies that the user wants to extract

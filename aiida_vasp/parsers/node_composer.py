@@ -4,7 +4,7 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
-# pylint: disable=no-member, useless-object-inheritance
+# pylint: disable=no-member, useless-object-inheritance, import-outside-toplevel
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
 from aiida_vasp.utils.aiida_utils import get_data_class

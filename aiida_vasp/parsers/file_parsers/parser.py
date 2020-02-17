@@ -4,6 +4,7 @@ Base classes for the VASP file parsers.
 ---------------------------------------
 Contains the base classes for the VASP file parsers.
 """
+# pylint: disable=import-outside-toplevel
 import re
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida_vasp.utils.delegates import delegate_method_kwargs

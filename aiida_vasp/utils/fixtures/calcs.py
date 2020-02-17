@@ -5,7 +5,7 @@ Fixtures for the VASP calculations.
 Here we set up different pytest fixtures that are used to represent various VASP
 calculations on which one can for instance test parsing etc.
 """
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 
 from aiida.engine.utils import instantiate_process

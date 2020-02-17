@@ -4,7 +4,7 @@ Immigrant calculation.
 ----------------------
 Enables the immigration of  externally run VASP calculations into AiiDA.
 """
-# pylint: disable=abstract-method
+# pylint: disable=abstract-method, import-outside-toplevel
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.common import InputValidationError
 from aiida.common.lang import override

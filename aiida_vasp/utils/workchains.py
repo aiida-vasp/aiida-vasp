@@ -5,7 +5,7 @@ Utils for the workchains.
 Auxiliary routines that are not part of any of the workchain classes, but needed
 to make code more compact in the workchains.
 """
-
+# pylint: disable=import-outside-toplevel
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict

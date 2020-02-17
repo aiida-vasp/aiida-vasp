@@ -1,6 +1,6 @@
 """Unittests for VaspParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
-# pylint: disable=protected-access,unused-variable,too-few-public-methods
+# pylint: disable=protected-access,unused-variable,too-few-public-methods, import-outside-toplevel
 
 import os
 import pytest

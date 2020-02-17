@@ -6,7 +6,7 @@ Fixtures representing WorkChains, for usage in tests.
 This can be either Top level workchains using mock-ups of low level WorkChains
 for testing complex WorkChains, or the mock-ups themselves.
 """
-# pylint: disable=too-few-public-methods, redefined-outer-name
+# pylint: disable=too-few-public-methods, redefined-outer-name, import-outside-toplevel
 
 import pytest
 

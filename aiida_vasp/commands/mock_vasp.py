@@ -22,7 +22,7 @@ def output_file(*args):
 @click.command('mock-vasp')
 def mock_vasp():
     """Verify input files are parseable and copy in output files."""
-    from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER
+    from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
 
     pwd = py_path.local('.')
     aiida_path = py_path.local(AIIDA_CONFIG_FOLDER)

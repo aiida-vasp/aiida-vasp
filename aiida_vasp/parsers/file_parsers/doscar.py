@@ -4,6 +4,7 @@ DOSCAR parser.
 --------------
 The file parser that handles the parsing of DOSCAR files.
 """
+# pylint: disable=unsubscriptable-object  # pylint/issues/3139
 import numpy as np
 
 from aiida_vasp.parsers.node_composer import NodeComposer
