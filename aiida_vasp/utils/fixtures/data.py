@@ -8,7 +8,7 @@ also contains the set up of the mock VASP executable, which is used to test the
 workchains.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
-# pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg
+# pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg, import-outside-toplevel
 import os
 from collections import OrderedDict
 import subprocess as sp

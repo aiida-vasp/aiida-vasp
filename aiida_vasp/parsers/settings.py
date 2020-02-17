@@ -5,7 +5,7 @@ Parser settings.
 Defines the file associated with each file parser and the default node
 compositions of quantities.
 """
-
+# pylint: disable=import-outside-toplevel
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser

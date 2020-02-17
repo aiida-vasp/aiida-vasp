@@ -4,7 +4,7 @@ Parser quantity configuration.
 ------------------------------
 Contains the representation of quantities that users want to parse.
 """
-
+# pylint: disable=import-outside-toplevel
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 
@@ -110,7 +110,9 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
         # Make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
-        parsable_quantities = copy.deepcopy([item for item in self._quantities])
+        # Also, ParsableQuantity does not have copy definitions, hence the seemingly
+        # unnecessary comprehension
+        parsable_quantities = copy.deepcopy([item for item in self._quantities])  # pylint: disable=unnecessary-comprehension
 
         # Setup all alternatives:
         for quantity in parsable_quantities:

@@ -5,7 +5,7 @@ PotcarWalker recursively walks a directory and it's subdirectories,
 searching for POTCAR files, when it encounters a tar archive, it should be extracted to
 a folder on the same level as the archive and the extracted folder added to the search.
 """
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 

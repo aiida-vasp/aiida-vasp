@@ -5,6 +5,7 @@ Utils for bands structures.
 Utilities for working with band structures. Currently this is legacy and will be
 rewritten or moved.
 """
+# pylint: disable=import-outside-toplevel
 try:
     import matplotlib
     matplotlib.use('TKAgg')

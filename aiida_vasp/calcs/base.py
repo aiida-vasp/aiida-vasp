@@ -170,7 +170,7 @@ class VaspCalcBase(CalcJob):
         :param settings: dict. Used for non-default parsing instructions, etc.
         """
 
-        from aiida_vasp.calcs import immigrant as imgr
+        from aiida_vasp.calcs import immigrant as imgr  # pylint: disable=import-outside-toplevel
         remote_path = py_path.local(remote_path)
         proc_cls = imgr.VaspImmigrant
         builder = proc_cls.get_builder()
