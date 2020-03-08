@@ -20,8 +20,8 @@ def get_structure():
     Si
        5.431
          0.0000000000000000    0.5000000000000000    0.5000000000000000
-         0.5000000000000000    0.0000000000000000    0.5000000000000000
-         0.5000000000000000    0.5000000000000000    0.0000000000000000
+         0.4900000000000000    0.0000000000000000    0.4800000000000000
+         0.5000000000000000    0.5000000000000000    0.0100000000000000
     Si
        2
     Direct
@@ -78,7 +78,8 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     relax = AttributeDict()
     # Turn on relaxation
     relax.perform = DataFactory('bool')(True)
-    #relax.parameters = DataFactory('dict')(dict={'encut': 240})
+    # Select relaxation algorithm
+    relax.algo = DataFactory('str')('cg')
     # Set force cutoff limit (EDIFFG, but no sign needed)
     relax.force_cutoff = DataFactory('float')(0.01)
     # Turn on relaxation of positions (strictly not needed as the default is on)
@@ -129,7 +130,7 @@ if __name__ == '__main__':
     OPTIONS = AttributeDict()
     OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600
     OPTIONS.max_memory_kb = 1024000

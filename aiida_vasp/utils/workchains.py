@@ -6,13 +6,18 @@ Auxiliary routines that are not part of any of the workchain classes, but needed
 to make code more compact in the workchains.
 """
 # pylint: disable=import-outside-toplevel
+from copy import deepcopy
 import numpy as np
+
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict
 from aiida.engine.processes.exit_code import ExitCode
+from aiida.plugins import DataFactory
+
+from aiida_vasp.utils.extended_dicts import delete_keys_from_dict
 
 
-def prepare_process_inputs(inputs, namespaces=None):
+def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     """
     Prepare the inputs dictionary for a calculation.
 
@@ -27,16 +32,40 @@ def prepare_process_inputs(inputs, namespaces=None):
     if namespaces is None:
         namespaces = []
 
-    exclude = ['options', 'metadata', 'potential']
-    exclude = exclude + namespaces
+    if exclude_parameters is None:
+        exclude_parameters = []
 
+    no_dict = ['options', 'metadata', 'potential', 'parameters']
+    no_dict = no_dict + namespaces
+
+    # Copy and convert dict
     for key, val in inputs.items():
-        if key not in exclude and \
+        if key not in no_dict and \
            isinstance(val, dict) and \
            all([isinstance(k, (basestring)) for k in val.keys()]):
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
+
+    try:
+        # Remove excluded entries for parameters
+        parameters = prepared_inputs.parameters
+        if exclude_parameters:
+            # First make sure we have a proper copy so that any removal does not havoc elements in the dictionary
+            if isinstance(parameters, DataFactory('dict')):
+                parameters = prepared_inputs.parameters.clone()
+                # Unpack in case the parameters is a Dict data structure
+                parameters = parameters.get_dict()
+            else:
+                parameters = deepcopy(prepared_inputs.parameters)
+            delete_keys_from_dict(parameters, exclude_parameters)
+        if not isinstance(parameters, DataFactory('dict')):
+            # Convert parameters to Dict
+            parameters = DataFactory('dict')(dict=parameters)
+        prepared_inputs.parameters = parameters
+    except AttributeError:
+        # In case parameters is not present at all
+        pass
 
     return prepared_inputs
 

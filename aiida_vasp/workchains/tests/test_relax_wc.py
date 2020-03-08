@@ -35,8 +35,12 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
     kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
     parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
-    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw']}
+    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}
     parameters['system'] = 'test-case:test_relax_wc'
+    parameters['relax'] = {}
+    parameters['relax']['perform'] = True
+    parameters['relax']['algo'] = 'cg'
+    parameters['relax']['force_cutoff'] = 0.01
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
@@ -58,10 +62,8 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
                                    })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
-    relax = AttributeDict()
-    relax.perform = get_data_node('bool', True)
-    inputs.relax = relax
     inputs.verbose = get_data_node('bool', True)
+    #raise ValueError(inputs.parameters.get_dict())
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'relax' in results
