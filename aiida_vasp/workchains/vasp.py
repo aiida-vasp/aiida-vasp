@@ -15,6 +15,7 @@ from aiida.orm import Code
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 from aiida_vasp.workchains.restart import BaseRestartWorkChain
+from aiida_vasp.utils.parameters import ParametersMassage
 
 
 class VaspWorkChain(BaseRestartWorkChain):
@@ -124,6 +125,12 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
         spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')
         spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
+        spec.exit_code(703,
+                       'ERROR_INVALID_PARAMETER_DETECTED',
+                       message='the parameter massager found invalid tags in the input parameters.')
+        spec.exit_code(704,
+                       'ERROR_MISSING_PARAMETER_DETECTED',
+                       message='the parameter massager did not find expected tags in the input parameters.')
 
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
@@ -156,8 +163,13 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Set the kpoints (kpoints)
         self.ctx.inputs.kpoints = self.inputs.kpoints
 
-        # Set the parameters (incar)
-        self.ctx.inputs.parameters = self.inputs.parameters
+        # Perform inputs massage to accommodate generalization in higher lying workchains
+        # and set parameters
+        parameters_massager = ParametersMassage(self, self.inputs.parameters)
+        # Check exit codes from the parameter massager and set it if it exists
+        if parameters_massager.exit_code is not None:
+            return parameters_massager.exit_code
+        self.ctx.inputs.parameters = parameters_massager.parameters
 
         # Set settings
         if 'settings' in self.inputs:

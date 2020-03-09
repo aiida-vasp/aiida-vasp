@@ -7,7 +7,6 @@ It has been designed such that calling workchains should try to use human readab
 parameters instead of the code dependent variables.
 """
 # pylint: disable=attribute-defined-outside-init
-import enum
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
@@ -16,6 +15,7 @@ from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
+from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 
 class RelaxWorkChain(WorkChain):
@@ -24,51 +24,12 @@ class RelaxWorkChain(WorkChain):
     _next_workchain_string = 'vasp.verify'
     _next_workchain = WorkflowFactory(_next_workchain_string)
 
-    class AlgoEnum(enum.IntEnum):
-        """Encode values for algorithm descriptively in enum."""
-        NO_UPDATE = -1
-        IONIC_RELAXATION_RMM_DIIS = 1
-        IONIC_RELAXATION_CG = 2
-
-    class ModeEnum(enum.IntEnum):
-        """
-        Encode values for mode of relaxation descriptively in enum.
-
-        Values can be found here: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
-        """
-
-        POS_ONLY = 2
-        POS_SHAPE_VOL = 3
-        POS_SHAPE = 4
-        SHAPE_ONLY = 5
-        SHAPE_VOL = 6
-        VOL_ONLY = 7
-
-        @classmethod
-        def get_from_dof(cls, **kwargs):
-            """Get the correct mode of relaxation for the given degrees of freedom."""
-            RELAX_POSSIBILITIES = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
-            dof = tuple(kwargs[i] for i in RELAX_POSSIBILITIES)
-            value_from_dof = {
-                (True, False, False): cls.POS_ONLY,
-                (True, True, True): cls.POS_SHAPE_VOL,
-                (True, True, False): cls.POS_SHAPE,
-                (False, True, False): cls.SHAPE_ONLY,
-                (False, True, True): cls.SHAPE_VOL,
-                (False, False, True): cls.VOL_ONLY
-            }
-            try:
-                return value_from_dof[dof]
-            except KeyError:
-                raise ValueError('Invalid combination for degrees of freedom: {}'.format(dict(zip(RELAX_POSSIBILITIES, dof))))
-
     @classmethod
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'settings'))
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
         spec.input('parameters', valid_type=get_data_class('dict'))
-        spec.input('relax.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('relax.perform',
                    valid_type=get_data_class('bool'),
@@ -76,6 +37,12 @@ class RelaxWorkChain(WorkChain):
                    default=get_data_node('bool', False),
                    help="""
             If True, perform relaxation.
+            """)
+        spec.input('relax.algo',
+                   valid_type=get_data_class('str'),
+                   default=get_data_node('str', 'cg'),
+                   help="""
+            The algorithm to use during relaxation.
             """)
         spec.input('relax.energy_cutoff',
                    valid_type=get_data_class('float'),
@@ -205,68 +172,6 @@ class RelaxWorkChain(WorkChain):
         spec.expose_outputs(cls._next_workchain)
         spec.output('relax.structure', valid_type=get_data_class('structure'), required=False)
 
-    def _set_ibrion(self, parameters):
-        """Set the algorithm to use for relaxation."""
-        if self.inputs.relax.positions.value or self.inputs.relax.shape.value or self.inputs.relax.volume.value:
-            parameters.ibrion = self.AlgoEnum.IONIC_RELAXATION_CG
-        else:
-            parameters.ibrion = self.AlgoEnum.NO_UPDATE
-
-    def _set_ediffg(self, parameters):
-        """Set the cutoff to use for relaxation."""
-        energy_cutoff = False
-        try:
-            parameters.ediffg = self.inputs.relax.energy_cutoff.value
-            energy_cutoff = True
-        except AttributeError:
-            pass
-        try:
-            parameters.ediffg = -abs(self.inputs.relax.force_cutoff.value)
-            if energy_cutoff:
-                self.report('User supplied both a force and an energy cutoff for the relaxation. Utilizing the force cutoff.')
-        except AttributeError:
-            pass
-
-    def _set_nsw(self, parameters):
-        """Set the number of ionic steps to perform."""
-        parameters.nsw = self.inputs.relax.steps.value
-
-    def _set_isif(self, parameters):
-        """Set relaxation mode according to the chosen degrees of freedom."""
-        parameters.isif = self.ModeEnum.get_from_dof(positions=self.inputs.relax.positions.value,
-                                                     shape=self.inputs.relax.shape.value,
-                                                     volume=self.inputs.relax.volume.value)
-
-    def _add_overrides(self, parameters):
-        """Add parameters tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.relax.parameters.get_dict().items()})
-        parameters.update(overrides)
-
-    def _init_parameters(self):
-        """Set parameters parameters based on other inputs."""
-        parameters = AttributeDict()
-        try:
-            input_parameters = self.inputs.parameters.get_dict()
-            check_parameters_relax_entries(input_parameters)
-            parameters.update(input_parameters)
-        except AttributeError:
-            pass
-        if self.perform_relaxation():
-            if 'parameters' in self.inputs.relax:
-                # Add override parameters (user force what to use)
-                try:
-                    self._add_overrides(parameters)
-                except ValueError as err:
-                    return compose_exit_code(self.exit_code.ERROR_OVERRIDE_PARAMETERS, str(err))
-            else:
-                # Add plugin controlled flags
-                self._set_ibrion(parameters)
-                self._set_isif(parameters)
-                self._set_nsw(parameters)
-                self._set_ediffg(parameters)
-
-        return parameters
-
     def initialize(self):
         """Initialize."""
         self._init_context()
@@ -278,9 +183,19 @@ class RelaxWorkChain(WorkChain):
         """Store exposed inputs in the context."""
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
+        self.ctx.relax = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
+
+    def _init_inputs(self):
+        """Initialize the inputs."""
+        self.ctx.inputs.parameters = self._init_parameters()
+        try:
+            self._verbose = self.inputs.verbose.value
+            self.ctx.inputs.verbose = self.inputs.verbose
+        except AttributeError:
+            pass
 
     def _init_structure(self):
         """Initialize the structure."""
@@ -302,14 +217,35 @@ class RelaxWorkChain(WorkChain):
                 settings.parser_settings = dict_entry
         self.ctx.inputs.settings = settings
 
-    def _init_inputs(self):
-        """Initialize the inputs."""
-        self.ctx.inputs.parameters = self._init_parameters()
-        try:
-            self._verbose = self.inputs.verbose.value
-            self.ctx.inputs.verbose = self.inputs.verbose
-        except AttributeError:
-            pass
+    def _init_parameters(self):
+        """Collect input to the workchain in the relax namespace and put that into the parameters."""
+
+        # At some point we will replace this with possibly input checking using the PortNamespace on
+        # a dict parameter type. As such we remove the workchain input parameters as node entities. Much of
+        # the following is just a workaround until that is in place in AiiDA core.
+
+        # First collect input that is under the relax namespace defined on the workchain itself and
+        # put that into parameters.
+        parameters = AttributeDict()
+        parameters.relax = AttributeDict()
+        for key, item in self.inputs.relax.items():
+            # Make sure we do not store AiiDA nodes (hence the use of value)
+            parameters.relax[key] = item.value
+        # Now get the input parameters and update the dictionary. This means,
+        # any supplied parameters in the relax namespace will override what is supplied to the workchain
+        # in the relax namespace.
+        input_parameters = AttributeDict(self.inputs.parameters.get_dict())
+        # We cannot use update here, as we only want to replace each key if it exists, if a key
+        # contains a new dict we need to traverse that, hence we have a function to perform this update
+        update_nested_dict(parameters, input_parameters)
+        # Need to save the parameter that controls if relaxation should be performed
+        self.ctx.relax = parameters.relax.perform
+        if not parameters.relax.perform:
+            # Make sure we do not expose the relax namespace in the input parameters (
+            # basically setting no code tags related to relaxation unless user overrides)
+            del parameters.relax
+
+        return parameters
 
     def _set_default_relax_settings(self):
         """Set default settings."""
@@ -322,14 +258,20 @@ class RelaxWorkChain(WorkChain):
         """Initialize a calculation based on a relaxed or assumed relaxed structure."""
         if not self.perform_relaxation():
             if self._verbose:
-                self.report('skipping structure relaxation and forwarding input/output to the next workchain.')
+                self.report('skipping structure relaxation and forwarding input to the next workchain.')
         else:
             # For the final static run we do not need to parse the output structure, which
             # is at this point enabled.
-            settings = AttributeDict(self.ctx.inputs.settings.get_dict())
-            settings.parser_settings['add_structure'] = False
-            self.ctx.inputs.settings = settings
-            self.ctx.inputs.parameters = self.inputs.parameters
+            self.ctx.inputs.settings.parser_settings.add_structure = False
+            try:
+                self.ctx.inputs.settings.parser_settings.add_structure = False
+            except AttributeError:
+                pass
+            # Remove relaxation parameters if they exist
+            try:
+                del self.ctx.inputs.parameters.relax
+            except AttributeError:
+                pass
             if self._verbose:
                 self.report('performing a final calculation using the relaxed structure.')
 
@@ -350,12 +292,12 @@ class RelaxWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'])
+        # Make sure we do not have any floating dict (convert to Dict etc.)
+        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'])
 
     def run_next_workchain(self):
         """Run the next workchain."""
-        inputs = self.ctx.inputs
+        inputs = self.ctx.inputs_ready
         running = self.submit(self._next_workchain, **inputs)
 
         if not self.ctx.is_converged and self.perform_relaxation():
@@ -406,16 +348,16 @@ class RelaxWorkChain(WorkChain):
         self.ctx.current_structure = workchain.outputs.structure
 
         converged = True
-        if self.inputs.relax.convergence_on.value:
+        if self.ctx.inputs.parameters.relax.convergence_on:
             if self._verbose:
                 self.report('Checking the convergence of the relaxation.')
             comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
-            delta = comparison.absolute if self.inputs.relax.convergence_absolute.value else comparison.relative
-            if self.inputs.relax.positions.value:
+            delta = comparison.absolute if self.ctx.inputs.parameters.relax.convergence_absolute else comparison.relative
+            if self.ctx.inputs.parameters.relax.positions:
                 converged &= self.check_positions_convergence(delta)
-            if self.inputs.relax.volume.value:
+            if self.ctx.inputs.parameters.relax.volume:
                 converged &= self.check_volume_convergence(delta)
-            if self.inputs.relax.shape.value:
+            if self.ctx.inputs.parameters.relax.shape:
                 converged &= self.check_shape_convergence(delta)
 
         if not converged:
@@ -431,29 +373,30 @@ class RelaxWorkChain(WorkChain):
 
     def check_shape_convergence(self, delta):
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
-        lengths_converged = bool(delta.cell_lengths.max() <= self.inputs.relax.convergence_shape_lengths.value)
+        lengths_converged = bool(delta.cell_lengths.max() <= self.ctx.inputs.parameters.relax.convergence_shape_lengths)
         if not lengths_converged:
-            self.report('cell lengths changed by max {}, tolerance is {}'.format(delta.cell_lengths.max(),
-                                                                                 self.inputs.relax.convergence_shape_lengths.value))
+            self.report('cell lengths changed by max {}, tolerance is {}'.format(
+                delta.cell_lengths.max(), self.ctx.inputs.parameters.relax.convergence_shape_lengths))
 
-        angles_converged = bool(delta.cell_angles.max() <= self.inputs.relax.convergence_shape_angles.value)
+        angles_converged = bool(delta.cell_angles.max() <= self.ctx.inputs.parameters.relax.convergence_shape_angles)
         if not angles_converged:
             self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
-                                                                                self.inputs.relax.convergence_shape_angles.value))
+                                                                                self.ctx.inputs.parameters.relax.convergence_shape_angles))
 
         return bool(lengths_converged and angles_converged)
 
     def check_volume_convergence(self, delta):
         """Check the convergence of the volume, given a cutoff."""
-        volume_converged = bool(delta.volume <= self.inputs.relax.convergence_volume.value)
+        volume_converged = bool(delta.volume <= self.ctx.inputs.parameters.relax.convergence_volume)
         if not volume_converged:
-            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume, self.inputs.relax.convergence_volume.value))
+            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume,
+                                                                            self.ctx.inputs.parameters.relax.convergence_volume))
         return volume_converged
 
     def check_positions_convergence(self, delta):
         """Check the convergence of the atomic positions, given a cutoff."""
         try:
-            positions_converged = bool(np.nanmax(delta.pos_lengths) <= self.inputs.relax.convergence_positions.value)
+            positions_converged = bool(np.nanmax(delta.pos_lengths) <= self.ctx.inputs.parameters.relax.convergence_positions)
         except RuntimeWarning:
             # Here we encountered the case of having one atom centered at the origin, so
             # we do not know if it is converged, so settings it to False
@@ -463,8 +406,8 @@ class RelaxWorkChain(WorkChain):
 
         if not positions_converged:
             try:
-                self.report('max site position change is {}, tolerance is {}'.format(np.nanmax(delta.pos_lengths),
-                                                                                     self.inputs.relax.convergence_positions.value))
+                self.report('max site position change is {}, tolerance is {}'.format(np.nanmax(
+                    delta.pos_lengths), self.ctx.inputs.parameters.relax.convergence_positions))
             except RuntimeWarning:
                 pass
 
@@ -491,16 +434,4 @@ class RelaxWorkChain(WorkChain):
 
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""
-        return self.inputs.relax.perform.value
-
-
-def check_parameters_relax_entries(parameters):
-    """Check that some relaxation flags are not present in the parameters (no override is allowed)."""
-
-    overrides = AttributeDict({k.lower(): v for k, v in parameters.items()})
-    if 'ibrion' in overrides:
-        raise ValueError('overriding IBRION not allowed, use inputs to control')
-    if 'isif' in overrides:
-        raise ValueError('overriding ISIF not allowed, use inputs to control')
-    if 'nsw' in overrides:
-        raise ValueError('overriding NSW not allowed, use inputs to control')
+        return self.ctx.relax

@@ -126,7 +126,7 @@ if __name__ == '__main__':
     OPTIONS = AttributeDict()
     OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 86400
     OPTIONS.max_memory_kb = 9000000

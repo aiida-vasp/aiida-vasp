@@ -115,9 +115,9 @@ if __name__ == '__main__':
     OPTIONS = AttributeDict()
     OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600
-    OPTIONS.max_memory_kb = 1024000
+    OPTIONS.max_memory_kb = 10240000
 
     main(CODE_STRING, INCAR, KMESH, STRUCTURE, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)
