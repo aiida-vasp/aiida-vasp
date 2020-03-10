@@ -196,3 +196,15 @@ def test_vasp_calc_no_delete(run_vasp_calc):
     file_names = [single_file.name for single_file in files]
     retrieve_list_ref.append(extra_file_to_keep)
     assert set(file_names) == set(retrieve_list_ref)
+
+
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_no_potcar_in_repo(run_vasp_calc):
+    """Test a VASP run to verify that there is no POTCAR file in the repository."""
+    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    # and check if it is actually there
+    inputs = {}
+    _, node = run_vasp_calc(inputs)
+    repo_filenames = node.list_object_names()
+    assert 'POTCAR' not in repo_filenames

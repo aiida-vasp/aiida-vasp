@@ -126,16 +126,25 @@ class VaspCalculation(VaspCalcBase):
     def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
+        # Still need the exceptions in case settings is not defined
         try:
-            additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST')
-        except (KeyError, AttributeError):
+            additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST', default=[])
+        except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temporary_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST')  # pylint: disable=invalid-name
-        except (KeyError, AttributeError):
-            additional_retrieve_temporary_list = []  # pylint: disable=invalid-name
+            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
+                                                                               default=[])  # pylint: disable=invalid-name
+        except AttributeError:
+            additional_retrieve_temp_list = []
         calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
-        calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_TEMPORARY_LIST + additional_retrieve_temporary_list))
+        calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_TEMPORARY_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+        try:
+            provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
+        except AttributeError:
+            provenance_exclude_list = []
+        # Always include POTCAR in the exclude list (not added to the repository)
+        calcinfo.provenance_exclude_list = list(set(provenance_exclude_list + ['POTCAR']))
+
         return calcinfo
 
     def verify_inputs(self):
