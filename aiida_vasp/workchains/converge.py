@@ -51,56 +51,56 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.pwcutoff_start',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 200.0),
+                   default=lambda: get_data_node('float', 200.0),
                    help="""
                    The plane-wave cutoff in electron volts.
                    """)
         spec.input('converge.pwcutoff_step',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 50.0),
+                   default=lambda: get_data_node('float', 50.0),
                    help="""
                    The plane-wave cutoff step (increment) in electron volts.
                    """)
         spec.input('converge.pwcutoff_samples',
                    valid_type=get_data_class('int'),
                    required=False,
-                   default=get_data_node('int', 10),
+                   default=lambda: get_data_node('int', 10),
                    help="""
                    The number of plane-wave cutoff samples.
                    """)
         spec.input('converge.k_dense',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.07),
+                   default=lambda: get_data_node('float', 0.07),
                    help="""
                    The target k-point stepping at the densest grid in inverse AA.
                    """)
         spec.input('converge.k_course',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.35),
+                   default=lambda: get_data_node('float', 0.35),
                    help="""
                    The target k-point stepping at the coursest grid in inverse AA.
                    """)
         spec.input('converge.k_spacing',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.1),
+                   default=lambda: get_data_node('float', 0.1),
                    help="""
                    The default k-point spacing in inverse AA.
                    """)
         spec.input('converge.k_samples',
                    valid_type=get_data_class('int'),
                    required=False,
-                   default=get_data_node('int', 10),
+                   default=lambda: get_data_node('int', 10),
                    help="""
                    The number of k-point samples.
                    """)
         spec.input('converge.cutoff_type',
                    valid_type=get_data_class('str'),
                    required=False,
-                   default=get_data_node('str', 'energy'),
+                   default=lambda: get_data_node('str', 'energy'),
                    help="""
                    The cutoff_type to check convergence against. Currently the following
                    options are accepted:
@@ -112,7 +112,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.cutoff_value',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.01),
+                   default=lambda: get_data_node('float', 0.01),
                    help="""
                    The cutoff value to be used. When the difference between two convergence
                    calculations are within this value for ``cutoff_type``, then it is
@@ -121,7 +121,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.cutoff_value_r',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.01),
+                   default=lambda: get_data_node('float', 0.01),
                    help="""
                    The relative cutoff value to be used. When the difference between two convergence
                    calculations are within this value for ``cutoff_type``, then it is
@@ -132,7 +132,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.compress',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    If True, a convergence test of the compressed structure is also
                    performed. The difference of the ``cutoff_type`` values for each
@@ -143,7 +143,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.displace',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    If True, a convergence test of the displaced structure is also
                    performed. The difference of the ``cutoff_type`` values for each
@@ -154,7 +154,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.displacement_vector',
                    valid_type=get_data_class('array'),
                    required=False,
-                   default=default_array('array', np.array([1.0, 1.0, 1.0])),
+                   default=lambda: default_array('array', np.array([1.0, 1.0, 1.0])),
                    help="""
                    The displacement unit vector for the displacement test. Sets the direction
                    of displacement.
@@ -162,7 +162,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.displacement_distance',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.2),
+                   default=lambda: get_data_node('float', 0.2),
                    help="""
                    The displacement distance (L2 norm) for the displacement test in AA. Follows
                    the direction of ``displacement_vector``.
@@ -170,7 +170,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.displacement_atom',
                    valid_type=get_data_class('int'),
                    required=False,
-                   default=get_data_node('int', 1),
+                   default=lambda: get_data_node('int', 1),
                    help="""
                    Which atom to displace? Index starts from 1 and follows the sequence for the
                    sites in the Aiida ``structure`` object.
@@ -178,21 +178,21 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.volume_change',
                    valid_type=get_data_class('array'),
                    required=False,
-                   default=default_array('array', np.array([1.05, 1.05, 1.05])),
+                   default=lambda: default_array('array', np.array([1.05, 1.05, 1.05])),
                    help="""
                    The volume change in direct coordinates for each lattice vector.
                    """)
         spec.input('converge.relax',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    If True, we relax for each convergence test.
                    """)
         spec.input('converge.total_energy_type',
                    valid_type=get_data_class('str'),
                    required=False,
-                   default=get_data_node('str', 'energy_no_entropy'),
+                   default=lambda: get_data_node('str', 'energy_no_entropy'),
                    help="""
                    The energy type that is used when ``cutoff_type`` is set to `energy`.
                    Consult the options available in the parser for the current version.
@@ -200,7 +200,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.testing',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    If True, we assume testing to be performed (e.g. dummy calculations).
                    """)

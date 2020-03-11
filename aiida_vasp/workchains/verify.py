@@ -29,7 +29,7 @@ class VerifyWorkChain(WorkChain):
         spec.input('verify.max_iterations',
                    valid_type=get_data_class('int'),
                    required=False,
-                   default=get_data_node('int', 1),
+                   default=lambda: get_data_node('int', 1),
                    help="""
                    The maximum number of iterations to perform.
                    """)
