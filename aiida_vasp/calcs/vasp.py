@@ -67,8 +67,8 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _ALWAYS_RETRIEVE_LIST = []
-    _ALWAYS_RETRIEVE_TEMPORARY_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
+    _ALWAYS_RETRIEVE_TEMPORARY_LIST = []
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
