@@ -126,6 +126,9 @@ class VaspCalcBase(CalcJob):
         Is called once before submission.
         """
         self.check_restart_folder()
+        parser_name = self.inputs.metadata.options.get('parser_name')
+        if parser_name is None:
+            raise ValidationError("Please specify 'parser_name': {} in metadata.options".format(self._default_parser))
         return True
 
     def check_restart_folder(self):
