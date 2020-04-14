@@ -50,14 +50,17 @@ class BaseParser(Parser):
 
         # Store the retrieved content
         self.retrieved_content = retrieved
-        return exit_code_temporary if not None else exit_code_permanent
+        # OK if a least one of the folders are present
+        if exit_code_permanent is None or exit_code_temporary is None:
+            return None
+        else:
+            # Both are not present, exit code of teh temporary folder take precedence  
+            return exit_code_temporary if not None else exit_code_permanent
 
     def check_temporary_folder(self, parser_kwargs):
         """Convenient check of the retrieved_temporary folder."""
-        try:
-            self.retrieved_temporary = parser_kwargs['retrieved_temporary_folder']
-            return None
-        except AttributeError:
+        self.retrieved_temporary = parser_kwargs.get('retrieved_temporary_folder', None)
+        if self.retrieved_temporary is None:
             return self.exit_codes.ERROR_NO_RETRIEVED_TEMPORARY_FOLDER
 
     def check_folder(self):
