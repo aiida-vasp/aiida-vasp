@@ -119,8 +119,10 @@ class ParametersMassage():
             pass
         # If we find any raw code input key directly on parameter root, override whatever we have set until now
         # Also, make sure it is lowercase
-        if self._parameters.get(key) or self._parameters.get(key.upper()):
+        if self._parameters.get(key):
             self._massage[key] = self._parameters[key]
+        elif self._parameters.get(key.upper()):
+            self._massage[key] = self._parameters[key.upper()]
 
     @property
     def parameters(self):
