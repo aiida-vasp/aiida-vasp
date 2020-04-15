@@ -67,8 +67,7 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _ALWAYS_RETRIEVE_LIST = []
-    _ALWAYS_RETRIEVE_TEMPORARY_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
@@ -126,7 +125,12 @@ class VaspCalculation(VaspCalcBase):
     def prepare_for_submission(self, tempfolder):
         """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
-        # Still need the exceptions in case settings is not defined
+        # Still need the exceptions in case settings is not defined on inputs
+        # Check if we want to store all always retrieve files
+        try:
+            store = self.inputs.settings.get_attribute('ALWAYS_STORE', default=True)
+        except AttributeError:
+            store = True
         try:
             additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST', default=[])
         except AttributeError:
@@ -136,8 +140,12 @@ class VaspCalculation(VaspCalcBase):
                                                                                default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
-        calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
-        calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_TEMPORARY_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+        if store:
+            calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
+            calcinfo.retrieve_temporary_list = additional_retrieve_temp_list  # pylint: disable=invalid-name
+        else:
+            calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+            calcinfo.retrieve_list = additional_retrieve_list
         try:
             provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
         except AttributeError:
