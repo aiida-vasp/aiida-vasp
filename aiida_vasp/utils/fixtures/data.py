@@ -99,7 +99,6 @@ def potcar_family(fresh_aiida_env, temp_pot_folder):
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
     potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
-    print(potcar_cls)
     if len(potcar_cls.find(full_name='In_d')) == 1:
         family_group = potcar_cls.get_potcar_group(POTCAR_FAMILY_NAME)
         in_d = potcar_cls.find(full_name='In_d')[0]
