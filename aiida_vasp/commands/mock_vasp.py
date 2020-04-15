@@ -32,6 +32,7 @@ def mock_vasp():
     assert aiida_path.isdir()
     assert aiida_cfg.isfile()
     click.echo(aiida_cfg.read())
+
     incar = pwd.join('INCAR')
     assert incar.isfile(), 'INCAR input file was not found.'
 
