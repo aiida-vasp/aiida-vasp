@@ -25,6 +25,9 @@
             "vasp.potcar = aiida_vasp.data.potcar:PotcarData",
             "vasp.potcar_file = aiida_vasp.data.potcar:PotcarFileData"
         ],
+        "aiida.groups": [
+            "vasp.potcar_family = aiida_vasp.groups.potcar_family:PotcarFamily"
+        ],
         "aiida.parsers": [
             "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser",
             "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"

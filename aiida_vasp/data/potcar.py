@@ -126,11 +126,11 @@ from pymatgen.io.vasp import PotcarSingle
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
-from aiida.orm import Group
 from aiida.orm import Data
 from aiida.orm import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+from aiida_vasp.groups.potcar_family import PotcarFamily
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -597,7 +597,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
-        return [group.label for group in Group.query(nodes=self, type_string=self.potcar_family_type_string)]
+        return [group.label for group in PotcarFamily.query(nodes=self)]
 
     @classproperty
     def potcar_family_type_string(cls):  # pylint: disable=no-self-argument
@@ -607,7 +607,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_potcar_group(cls, group_name):
         """Return the PotcarFamily group with the given name."""
         try:
-            group = Group.get(label=group_name, type_string=cls.potcar_family_type_string)
+            group = PotcarFamily.get(label=group_name)
         except NotExistent:
             group = None
         return group
@@ -624,12 +624,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
-        group_query.append(Group,
+        group_query.append(PotcarFamily,
                            with_node='potcar_data',
                            tag='potcar_data',
-                           filters={'type_string': {
-                               '==': cls.potcar_family_type_string
-                           }},
                            project='*')
 
         groups = [group_list[0] for group_list in group_query.all()]
@@ -638,10 +635,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for element in filter_elements:
                 idx_has_element = []
                 for i, group in enumerate(groups):
-                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}}
                     element_filters = {'attributes.element': {'==': element}}
                     elem_query = QueryBuilder()
-                    elem_query.append(Group, tag='family', filters=group_filters)
+                    elem_query.append(PotcarFamily, tag='family', filters=group_filters)
                     elem_query.append(cls, tag='potcar', with_group='family', filters=element_filters)
                     if elem_query.count() > 0:
                         idx_has_element.append(i)
@@ -651,10 +648,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for symbol in filter_symbols:
                 idx_has_symbol = []
                 for i, group in enumerate(groups):
-                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}}
                     symbol_filters = {'attributes.symbol': {'==': symbol}}
                     symbol_query = QueryBuilder()
-                    symbol_query.append(Group, tag='family', filters=group_filters)
+                    symbol_query.append(PotcarFamily, tag='family', filters=group_filters)
                     symbol_query.append(cls, tag='potcar', with_group='family', filters=symbol_filters)
                     if symbol_query.count() > 0:
                         idx_has_symbol.append(i)
@@ -681,10 +678,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         if not mapping:
             mapping = {element: element for element in elements}
-        group_filters = {'label': {'==': family_name}, 'type_string': {'==': cls.potcar_family_type_string}}
+        group_filters = {'label': {'==': family_name}}
         element_filters = {'attributes.full_name': {'in': [mapping[element] for element in elements]}}
         query = QueryBuilder()
-        query.append(Group, tag='family', filters=group_filters)
+        query.append(PotcarFamily, tag='family', filters=group_filters)
         query.append(cls, tag='potcar', with_group='family', filters=element_filters)
 
         result_potcars = {}
@@ -707,9 +704,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def query_by_attrs(cls, query=None, **kwargs):
         family_name = kwargs.pop('family_name', None)
         if family_name:
-            group_filters = {'label': {'==': family_name}, 'type_string': {'==': cls.potcar_family_type_string}}
+            group_filters = {'label': {'==': family_name}}
             query = QueryBuilder()
-            query.append(Group, tag='family', filters=group_filters)
+            query.append(PotcarFamily, tag='family', filters=group_filters)
             query.append(cls, tag=cls._query_label, with_group='family')
         return super(PotcarData, cls).query_by_attrs(query=query, **kwargs)
 
@@ -782,12 +779,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
         """Prepare a (possibly new) group to upload a POTCAR family to."""
         if not dry_run:
-            group, group_created = Group.objects.get_or_create(label=group_name, type_string=cls.potcar_family_type_string)
+            group, group_created = PotcarFamily.objects.get_or_create(label=group_name)
         else:
             group = cls.get_potcar_group(group_name)
             group_created = bool(not group)
             if not group:
-                group = Group(label=group_name)
+                group = PotcarFamily(label=group_name)
 
         if group.user.pk != get_current_user().pk:
             raise UniquenessError(
@@ -938,8 +935,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not family:
             return super(PotcarData, cls).find(**kwargs)
         query = cls.query_by_attrs(**kwargs)
-        group_filters = {'label': {'==': family}, 'type_string': {'==': cls.potcar_family_type_string}}
-        query.append(Group, tag='family', filters=group_filters, with_node=cls._query_label)
+        group_filters = {'label': {'==': family}}
+        query.append(PotcarFamily, tag='family', filters=group_filters, with_node=cls._query_label)
         query.add_projection(cls._query_label, '*')
         if not query.count():
             raise NotExistent()
