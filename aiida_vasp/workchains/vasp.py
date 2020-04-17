@@ -191,6 +191,9 @@ class VaspWorkChain(BaseRestartWorkChain):
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['parser_name'] = default_parser
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
+        # Utilise default input/output selections
+        self.ctx.inputs.metadata['options']['input_filename'] = 'INCAR'
+        self.ctx.inputs.metadata['options']['output_filename'] = 'OUTCAR'
         # Set the CalcJobNode to have the same label as the WorkChain
         self.ctx.inputs.metadata['label'] = self.inputs.metadata.get('label', '')
 
