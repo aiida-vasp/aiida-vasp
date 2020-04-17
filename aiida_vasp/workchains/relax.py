@@ -21,7 +21,7 @@ from aiida_vasp.utils.extended_dicts import update_nested_dict
 class RelaxWorkChain(WorkChain):
     """Structure relaxation workchain."""
     _verbose = False
-    _next_workchain_string = 'vasp.verify'
+    _next_workchain_string = 'vasp.vasp'
     _next_workchain = WorkflowFactory(_next_workchain_string)
 
     @classmethod
