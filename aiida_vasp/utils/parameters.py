@@ -83,6 +83,10 @@ class ParametersMassage():
         else:
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
+
+        # Internally, make sure the keys in self._parameters are all in lower case as standard
+        self._parameters = AttributeDict({key.lower(): value for key, value in self._parameters.items()})
+
         self._load_valid_params()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
         self._prepare_parameters()
@@ -117,12 +121,9 @@ class ParametersMassage():
                 self.exit_code = exit_code
         except AttributeError:
             pass
-        # If we find any raw code input key directly on parameter root, override whatever we have set until now
-        # Also, make sure it is lowercase
-        if self._parameters.get(key):
+        # NOTE: All keys in self._parameters are ready converged to lower case
+        if key in self._parameters:
             self._massage[key] = self._parameters[key]
-        elif self._parameters.get(key.upper()):
-            self._massage[key] = self._parameters[key.upper()]
 
     @property
     def parameters(self):
