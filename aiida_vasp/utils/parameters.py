@@ -121,9 +121,13 @@ class ParametersMassage():
                 self.exit_code = exit_code
         except AttributeError:
             pass
-        # NOTE: All keys in self._parameters are ready converged to lower case
+
+        # If we find any raw code input key directly on parameter root, override whatever we have set until now
+        # Note that the key may be in upper case, so we test both
         if key in self._parameters:
             self._massage[key] = self._parameters[key]
+        elif key.upper() in self._parameters:
+            self._massage[key] = self._parameters[key.upper()]
 
     @property
     def parameters(self):

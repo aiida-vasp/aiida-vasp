@@ -101,9 +101,9 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     for file_name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
         assert file_name in input_files
 
-    assert 'EIGENVAL' in calcinfo.retrieve_temporary_list
-    assert 'DOSCAR' in calcinfo.retrieve_temporary_list
-    assert 'wannier90*' in calcinfo.retrieve_temporary_list
+    assert 'EIGENVAL' in calcinfo.retrieve_list
+    assert 'DOSCAR' in calcinfo.retrieve_list
+    assert 'wannier90*' in calcinfo.retrieve_list
 
     inputs_dict.update({'icharg': 2})
 
@@ -166,16 +166,28 @@ def test_vasp_calc(run_vasp_calc):
     assert 'total_energies' in misc
     assert 'maximum_stress' in misc
 
-    # Check that the retrieve lists are as expected (delete everything except scheduler stdout
-    # and stderr after parse)
-    retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_TEMPORARY_LIST
-    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    # By default we should store all always retrieve files
+    retrieve_temporary_list_ref = []
+    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     retrieve_list = node.get_retrieve_list()
-    for element in retrieve_temporary_list_ref:
-        assert element in retrieve_temporary_list
-    for element in retrieve_list_ref:
-        assert element in retrieve_list
+    assert retrieve_temporary_list == retrieve_temporary_list_ref
+    assert set(retrieve_list_ref) == set(retrieve_list)
+    files = node.outputs.retrieved.list_objects()
+    file_names = [single_file.name for single_file in files]
+    # Exclude Wannier files as they are not in the test set
+    retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
+    assert set(file_names) == set(retrieve_list_ref_no_wannier)
+
+
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_delete(run_vasp_calc):
+    """Test a run of a basic VASP calculation where one does not want to store the always retrieved files after parsing."""
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    inputs = {}
+    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False})
+    _, node = run_vasp_calc(inputs)
     files = node.outputs.retrieved.list_objects()
     file_names = [single_file.name for single_file in files]
     assert set(file_names) == set(retrieve_list_ref)
@@ -183,18 +195,72 @@ def test_vasp_calc(run_vasp_calc):
 
 @pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_no_delete(run_vasp_calc):
+def test_vasp_calc_extra(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
     # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
     # and check if it is actually there
-    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    from aiida_vasp.calcs.vasp import VaspCalculation
     inputs = {}
     extra_file_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
     _, node = run_vasp_calc(inputs)
+    retrieve_temporary_list_ref = []
+    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
+    retrieve_temporary_list = node.get_retrieve_temporary_list()
+    retrieve_list = node.get_retrieve_list()
+    assert retrieve_temporary_list == retrieve_temporary_list_ref
+    assert set(retrieve_list_ref) == set(retrieve_list)
     files = node.outputs.retrieved.list_objects()
     file_names = [single_file.name for single_file in files]
-    retrieve_list_ref.append(extra_file_to_keep)
+    # Exclude Wannier files as they are not in the test set
+    retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
+    assert set(file_names) == set(retrieve_list_ref_no_wannier)
+
+
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_delete_extra(run_vasp_calc):
+    """Test a run of a basic VASP calculation where one wants to retrieve additional files but not store them after parsing."""
+    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    # and check if it is actually there
+    from aiida_vasp.calcs.vasp import VaspCalculation
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    inputs = {}
+    extra_file_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_file_to_keep]})
+    _, node = run_vasp_calc(inputs)
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['POSCAR']
+    retrieve_list = node.get_retrieve_list()
+    retrieve_temporary_list = node.get_retrieve_temporary_list()
+    assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
+    assert set(retrieve_list) == set(retrieve_list_ref)
+    files = node.outputs.retrieved.list_objects()
+    file_names = [single_file.name for single_file in files]
+    assert set(file_names) == set(retrieve_list_ref)
+
+
+@pytest.mark.calc
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_del_str_ext(run_vasp_calc):
+    """Test a run of a basic VASP calculation where one wants to retrieve additional files and store only those."""
+    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    # and check if it is actually there
+    from aiida_vasp.calcs.vasp import VaspCalculation
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    inputs = {}
+    extra_file_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
+    _, node = run_vasp_calc(inputs)
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
+    retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST
+    retrieve_list = node.get_retrieve_list()
+    retrieve_temporary_list = node.get_retrieve_temporary_list()
+    assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
+    assert set(retrieve_list_ref) == set(retrieve_list)
+    retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
+    files = node.outputs.retrieved.list_objects()
+    file_names = [single_file.name for single_file in files]
     assert set(file_names) == set(retrieve_list_ref)
 
 

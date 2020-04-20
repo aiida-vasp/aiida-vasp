@@ -78,7 +78,7 @@ def vasp_parser_with_test(calc_with_retrieved):
     from aiida.plugins import CalculationFactory
 
     settings_dict = {
-        #'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_TEMPORARY_LIST,
+        #'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
         'parser_settings': {
             'add_custom': {
                 'link_name': 'custom_node',

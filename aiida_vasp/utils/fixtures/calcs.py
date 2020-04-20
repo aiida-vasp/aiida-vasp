@@ -164,7 +164,6 @@ def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_s
                                                                                    family_name=POTCAR_FAMILY_NAME,
                                                                                    mapping=POTCAR_MAP)
         options = {
-            'parser_name': 'vasp.vasp',
             'withmpi': False,
             'queue_name': 'None',
             'resources': {
