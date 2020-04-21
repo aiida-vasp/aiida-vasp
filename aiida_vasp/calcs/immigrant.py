@@ -33,8 +33,13 @@ class VaspImmigrant(VaspCalculation):
     def run(self):
         import plumpy
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
+        from aiida.common.folders import SandboxFolder
 
         _ = super(VaspImmigrant, self).run()
+
+        # Make sure the retrieve list is set (done in presubmit so we need to call that also)
+        with SandboxFolder() as folder:
+            _, _ = self.presubmit(folder)
 
         settings = self.inputs.get('settings', None)
         settings = settings.get_dict() if settings else {}
