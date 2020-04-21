@@ -88,6 +88,7 @@ class VaspCalculation(VaspCalcBase):
                    required=False,
                    help='The wave function coefficients. (WAVECAR)')
         spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
+        spec.input('metadata.options.parser_name', default='vasp.vasp')
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
