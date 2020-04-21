@@ -55,6 +55,10 @@ class IntSmearingEnum(enum.IntEnum):
     PARTIAL = -2
     TETRA = -5
 
+# Name spaces that are know to be valid and will be further processed by
+# ParameterSetFunctions
+KNOWN_NAMESPACES = ['relax']
+
 
 class OrbitEnum(enum.IntEnum):
     """
@@ -158,14 +162,13 @@ class ParametersMassage():
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
         self._load_valid_params()
-        self._check_parameters()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
         self._set_parameters()
         self._set_vasp_parameters()
+        # No point to proceed if the override parameters already contains an invalid keys, or the set process trigger another exit code
+        if self.exit_code is not None:
+            return
         self._validate_parameters()
-
-    def _check_parameters(self):
-        """Check that any directly supplied VASP parameters is valid."""
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
@@ -187,19 +190,35 @@ class ParametersMassage():
         """Set the any supplied override parameters."""
         try:
             for key, item in self._parameters.vasp.items():
-                # Make sure key is lowercase on storage
-                self._massage[key.lower()] = item
+                # Sweep the override input parameters to check if they are valid VASP tags
+                key = key.lower()
+                if self._valid_vasp_parameter(key):
+                    self._massage[key] = item
+                else:
+                    break
         except AttributeError:
-            # Might not be supplied
+            # The vasp namespace might not be supplied (no override)
             pass
 
-    def _validate_parameters(self):
-        """Make sure all the massaged values are to VASP spec."""
-        if list(self._massage.keys()).sort() != self._valid_parameters.sort() and self.exit_code is None:
-            self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+    def _valid_vasp_parameter(self, key):
+        """Make sure a key are recognized as a valid VASP input parameter."""
+        if key not in self._valid_parameters:
+            msg = 'Found an invalid key for the INCAR parameters: {}'.format(key)
+            if self._workchain is not None:
+                self._workchain.report(msg)
+                self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+            else:
+                self.exit_code = True
+            return False
 
-    def _validate_vasp_parameters(self):
-        """Validate the supplied VASP override parameters."""
+        return True
+
+    def _validate_parameters(self):
+        """Make sure all the massaged values are recognized as valid VASP input parameters."""
+        for key in self._massage:
+            key = key.lower()
+            if not self._valid_vasp_parameter(key):
+                break
 
     def _set(self, key):
         """Call the necessary function to set each parameter."""
