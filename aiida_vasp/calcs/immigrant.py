@@ -39,7 +39,7 @@ class VaspImmigrant(VaspCalculation):
 
         # Make sure the retrieve list is set (done in presubmit so we need to call that also)
         with SandboxFolder() as folder:
-            _, _ = self.presubmit(folder)
+            self.presubmit(folder)
 
         settings = self.inputs.get('settings', None)
         settings = settings.get_dict() if settings else {}
