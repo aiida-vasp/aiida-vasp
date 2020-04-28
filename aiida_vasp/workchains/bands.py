@@ -63,45 +63,51 @@ class BandsWorkChain(WorkChain):
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
+        spec.input('restart_folder',
+                   valid_type=get_data_class('remote'),
+                   required=True,
+                   help="""
+            The folder to restart in, which contains the files from the prerun to extract the charge density.
+            """)
         spec.input('bands.kpoints_distance',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.05),
+                   default=lambda: get_data_node('float', 0.05),
                    help="""
             The distance between each k-point along each high-symmetry line.
             """)
         spec.input('bands.decompose_bands',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
             Decompose the band structure on each atom.
             """)
         spec.input('bands.decompose_wave',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
             Decompose the wave function.
             """)
         spec.input('bands.lm',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
             Further decompose the decomposition into l- and m-states.
             """)
         spec.input('bands.phase',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
             Further decompose the l- and m-state decomposition into phases.
             """)
         spec.input('bands.wigner_seitz_radius',
                    valid_type=get_data_class('list'),
                    required=False,
-                   default=get_data_node('list', list=[False]),
+                   default=lambda: get_data_node('list', list=[False]),
                    help="""
             The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilzed.
             """)

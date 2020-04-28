@@ -34,21 +34,21 @@ class MasterWorkChain(WorkChain):
         spec.input('extract_bands',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    Do you want to extract the band structure?
                    """)
         spec.input('extract_dos',
                    valid_type=get_data_class('bool'),
                    required=False,
-                   default=get_data_node('bool', False),
+                   default=lambda: get_data_node('bool', False),
                    help="""
                    Do you want to extract the density of states?
                    """)
         spec.input('dos.kpoints_distance',
                    valid_type=get_data_class('float'),
                    required=False,
-                   default=get_data_node('float', 0.1),
+                   default=lambda: get_data_node('float', 0.1),
                    help="""
                    The target k-point distance for density of states extraction.
                    """)
@@ -66,6 +66,7 @@ class MasterWorkChain(WorkChain):
                    """)
         spec.outline(
             cls.initialize,
+            cls.init_prerun,
             cls.init_workchain,
             cls.run_next_workchain,
             cls.verify_next_workchain,
@@ -159,6 +160,14 @@ class MasterWorkChain(WorkChain):
         """Set the base workchain to be called."""
         self._next_workchain = self._base_workchain
 
+    def init_prerun(self):
+        """Initialize the prerun."""
+        # Add relax inputs if they exists on the input
+        try:
+            self.ctx.inputs.relax = self.inputs.relax
+        except KeyError:
+            pass
+
     def init_bands(self):
         """Initialize the run to extract the band structure."""
         self._next_workchain = self._bands_workchain
@@ -192,10 +201,11 @@ class MasterWorkChain(WorkChain):
         # Also enable the clean_workdir again
         self.ctx.inputs.clean_workdir = get_data_node('bool', True)
 
-    def _clean_inputs(self, exclude):
+    def _clean_inputs(self, exclude=None):
         """Clean the inputs for the next workchain in order not to pass redundant inputs."""
         # Now make sure we clean the inputs for redundant inputs not needed for the bands workchain
-        exclude = ['converge', 'relax', 'verify', 'kpoints']
+        if exclude is None:
+            exclude = ['converge', 'relax', 'verify', 'kpoints']
         self.ctx.inputs = AttributeDict({k: v for k, v in self.ctx.inputs.items() if k not in exclude})
 
     def init_workchain(self):
@@ -208,12 +218,6 @@ class MasterWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
-        # Add relax inputs
-        try:
-            self.ctx.inputs.relax = self.inputs.relax
-        except KeyError:
-            pass
-
         # Make sure we do not have any floating dict (convert to Dict)
         self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge', 'verify'])
 
@@ -221,7 +225,6 @@ class MasterWorkChain(WorkChain):
         """Run the next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-
         self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
