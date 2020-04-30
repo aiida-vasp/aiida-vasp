@@ -1,7 +1,7 @@
 exi.. _bulk_modulus_workchain:
 
 =================================
-5. Writing bulk modulus workchain
+7. Writing bulk modulus workchain
 =================================
 
 In the :ref:`previous tutorial <bulk_modulus_script>`, the initial

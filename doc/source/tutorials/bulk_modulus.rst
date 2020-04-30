@@ -1,7 +1,7 @@
 .. _bulk_modulus_script:
 
 ==============================
-4. Writing bulk modulus script
+6. Writing bulk modulus script
 ==============================
 
 This section presents an example to calculate bulk modulus of

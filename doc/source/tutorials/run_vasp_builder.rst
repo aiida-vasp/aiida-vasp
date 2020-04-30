@@ -1,7 +1,7 @@
 .. _run_vasp_builder:
 
 =======================================
-2. Running VASP calculations explicitly
+5. Running VASP calculations explicitly
 =======================================
 
 We will now try to build a simple call script that executes a workchain,
