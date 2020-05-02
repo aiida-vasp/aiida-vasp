@@ -165,7 +165,7 @@ AiiDA-VASP script
 
        if node_relax.is_finished_ok:
            for strain, label in zip((0.99, 1.01), ("minus", "plus")):
-               structure = node_relax.outputs.structure_relaxed.clone()
+               structure = node_relax.outputs.relax__structure.clone()
                structure.set_cell(np.array(structure.cell) * strain ** (1.0 / 3))
                node = launch_aiida_relax_shape(
                    structure, code_string, resources,
@@ -294,7 +294,7 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
-                                  'account': 'nn9995k',
+                                  'account': '',
                                   'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
@@ -351,7 +351,7 @@ Full script to compute bulk modulus
                       'potential_family': 'pbe',
                       'potential_mapping': {'Si': 'Si', 'C': 'C'},
                       'options': {'resources': resources,
-                                  'account': 'nn9995k',
+                                  'account': '',
                                   'max_memory_kb': 1024000,
                                   'max_wallclock_seconds': 3600 * 10}}
        base_parser_settings = {'add_energies': True,
@@ -405,7 +405,7 @@ Full script to compute bulk modulus
 
        if node_relax.is_finished_ok:
            for strain, label in zip((0.99, 1.01), ("minus", "plus")):
-               structure = node_relax.outputs.structure_relaxed.clone()
+               structure = node_relax.outputs.relax__structure.clone()
                structure.set_cell(np.array(structure.cell) * strain ** (1.0 / 3))
                node = launch_aiida_relax_shape(
                    structure, code_string, resources,
