@@ -61,7 +61,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.verbose = get_data_node('bool', True)
     # Also set the restart folder as we assume a bands data will start from
     # a previous calculation that is sitting in the restart folder
-    inputs.restart_folder = RemoteData(computer=inputs.code.computer, remote_path='/home/espenfl/Downloads/wannier')
+    inputs.restart_folder = RemoteData(computer=inputs.code.computer, remote_path=data_path('test_bands_wc', 'inp'))
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'bands' in results
