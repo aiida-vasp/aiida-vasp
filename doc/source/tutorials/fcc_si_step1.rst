@@ -47,6 +47,9 @@ calculations at different volumes.
      options.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
      options.queue_name = ''
 
+   For example, if you use a SGE scheduler, you need to modify `resources` as follows::
+     resources = {'num_machines': 1, 'tot_num_mpiprocs': 16, 'parallel_env': 'mpi*'}  # for SGE
+
 #. Save and execute the resulting run script by issuing::
 
      %/$ python run_fcc_si_one_volume.py
