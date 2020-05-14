@@ -288,22 +288,22 @@ class ParameterSetFunctions():
 
         try:
             if self._parameters.smearing.gaussian:
-                self._set_simple('ismear', self.IntSmearingEnum.GAUSSIAN)
+                self._set_simple('ismear', IntSmearingEnum.GAUSSIAN.value)
         except AttributeError:
             pass
         try:
             if self._parameters.smearing.fermi:
-                self._set_simple('ismear', self.IntSmearingEnum.FERMI)
+                self._set_simple('ismear', IntSmearingEnum.FERMI.value)
         except AttributeError:
             pass
         try:
             if self._parameters.smearing.mp:
-                self._set_simple('ismear', self.IntSmearingEnum.MP * abs(int(self._parameters.smearing.mp)))
+                self._set_simple('ismear', IntSmearingEnum.MP.value * abs(int(self._parameters.smearing.mp)))
         except AttributeError:
             pass
         try:
             if self._parameters.smearing.tetra:
-                self._set_simple('ismear', self.IntSmearingEnum.TETRA)
+                self._set_simple('ismear', IntSmearingEnum.TETRA.value)
         except AttributeError:
             pass
 
@@ -315,63 +315,78 @@ class ParameterSetFunctions():
         """
         try:
             if self._parameters.charge.from_wave:
-                self._set_simple('icharg', self.ChargeEnum.WAVE)
+                self._set_simple('icharg', ChargeEnum.WAVE.value)
         except AttributeError:
             pass
         try:
             if self._parameters.charge.from_charge:
-                self._set_simple('icharg', self.ChargeEnum.CHARGE)
+                self._set_simple('icharg', ChargeEnum.CHARGE.value)
         except AttributeError:
             pass
         try:
             if self._parameters.charge.from_atomic:
-                self._set_simple('icharg', self.ChargeEnum.ATOMIC)
+                self._set_simple('icharg', ChargeEnum.ATOMIC.value)
         except AttributeError:
             pass
         try:
             if self._parameters.charge.from_potential:
-                self._set_simple('icharg', self.ChargeEnum.POTENTIAL)
+                self._set_simple('icharg', ChargeEnum.POTENTIAL.value)
         except AttributeError:
             pass
         try:
             if self._parameters.charge.constant_charge:
-                self._set_simple('icharg', self.ChargeEnum.CONSTANT_CHARGE)
+                self._set_simple('icharg', ChargeEnum.CONSTANT_CHARGE.value)
         except AttributeError:
             pass
         try:
             if self._parameters.charge.constant_atomic:
-                self._set_simple('icharg', self.ChargeEnum.CONSTANT_ATOMIC)
+                self._set_simple('icharg', ChargeEnum.CONSTANT_ATOMIC.value)
         except AttributeError:
             pass
 
-    def set_lorbit(self):
+    def set_lorbit(self):  # noqa: MC0001
         """
         Set the flag that controls the projectors/decomposition onto orbitals.
 
         See: https://www.vasp.at/wiki/index.php/LORBIT
         """
         self._set_wigner_seitz_radius()
-        if self._parameters.bands.decompose_bands:
-            if self._parameters.bands.decompose_wave:
-                # Issue a warning that one can only use either or
-                raise ValueError('Only projections/decompositions on the bands or the wave function are allowed.')
-            wigner_seitz_radius = False
+        try:
+            if self._parameters.bands.decompose_bands:
+                if self._parameters.bands.decompose_wave:
+                    # Issue a warning that one can only use either or
+                    raise ValueError('Only projections/decompositions on the bands or the wave function are allowed.')
+                wigner_seitz_radius = False
+                try:
+                    if abs(self._massage.rwigs[0]) > 1E-8:
+                        wigner_seitz_radius = True
+                except AttributeError:
+                    pass
+                if self._parameters.bands.decompose_auto:
+                    self._set_simple('lorbit', OrbitEnum.NO_RWIGS_ATOM_LM_PHASE_AUTO.value)
+                else:
+                    try:
+                        lm = self._parameters.bands.lm  # pylint: disable=invalid-name
+                    except AttributeError:
+                        lm = False  # pylint: disable=invalid-name
+                    try:
+                        phase = self._parameters.bands.phase
+                    except AttributeError:
+                        phase = False
+                    lorbit = OrbitEnum.get_lorbit_from_combination(lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius).value
+                    self._set_simple('lorbit', lorbit)
+            else:
+                try:
+                    if self._parameters.bands.decompose_wave:
+                        self._set_simple('lorbit', OrbitEnum.ATOM_LM_WAVE.value)
+                except AttributeError:
+                    pass
+        except AttributeError:
             try:
-                if self._massage.rwigs.value[0]:
-                    wigner_seitz_radius = True
+                if self._parameters.bands.decompose_wave:
+                    self._set_simple('lorbit', OrbitEnum.ATOM_LM_WAVE.value)
             except AttributeError:
                 pass
-            if self._parameters.bands.decompose_auto:
-                self._set_simple('lorbit', OrbitEnum.NO_RWIGS_ATOM_LM_PHASE_AUTO)
-            else:
-                self._set_simple(
-                    'lorbit',
-                    OrbitEnum.get_lorbit_from_combination(lm=self._parameters.bands.lm.value,
-                                                          phase=self._parameters.bands.phase.value,
-                                                          wigner_seitz_radius=wigner_seitz_radius))
-        else:
-            if self._parameters.bands.decompose_wave:
-                self._set_simple('lorbit', OrbitEnum.ATOM_LM_WAVE)
 
     def _set_wigner_seitz_radius(self):
         """
@@ -380,9 +395,13 @@ class ParameterSetFunctions():
         See: https://www.vasp.at/wiki/index.php/RWIGS
         """
         try:
-            wigner_seitz_radius = self._parameters.bands.wigner_seitz_radius.get_list()
-            if wigner_seitz_radius[0]:
-                self._set_simple('rwigs', wigner_seitz_radius)
+            wigner_seitz_radius = self._parameters.bands.wigner_seitz_radius
+            # Check that it is defined as a list
+            if isinstance(wigner_seitz_radius, list):
+                if wigner_seitz_radius[0]:
+                    self._set_simple('rwigs', wigner_seitz_radius)
+            else:
+                raise ValueError('The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.')
         except AttributeError:
             pass
 
