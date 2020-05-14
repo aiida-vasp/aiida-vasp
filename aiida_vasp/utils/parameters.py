@@ -4,24 +4,98 @@ Parameter related utils
 -----------------------
 Contains utils and definitions that are used together with the parameters.
 """
+
 import enum
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
+from aiida_vasp.utils.extended_dicts import update_nested_dict
+
+FUNCTIONAL_PARAMETERS = {
+    'charge': {
+        'wave': True,
+        'charge': True,
+        'potential': True,
+        'constant_charge': True,
+        'constant_atomic': True
+    },
+    'smearing': {
+        'mp': True,
+        'gaussian': True,
+        'fermi': True,
+        'partial': True,
+        'tetra': True
+    }
+}
 
 
-def find_key_in_dicts(dictionary, supplied_key):
-    """Find a key in a nested dictionary."""
-    for key, value in dictionary.items():
-        if key == supplied_key:
-            yield value
-        elif isinstance(value, dict):
-            for result in find_key_in_dicts(value, supplied_key):
-                yield result
+class ChargeEnum(enum.IntEnum):
+    """
+    Encode values for the initial charge density.
+
+    See: https://www.vasp.at/wiki/index.php/ICHARG
+    """
+    WAVE = 0
+    CHARGE = 1
+    ATOMIC = 2
+    POTENTIAL = 4
+    CONSTANT_CHARGE = 11
+    CONSTANT_ATOMIC = 12
+
+
+class IntSmearingEnum(enum.IntEnum):
+    """
+    Encode values for the smearing used during integration in reciprocal space.
+
+    See: https://www.vasp.at/wiki/index.php/ISMEAR.
+    """
+    MP = 1  # pylint: disable=invalid-name
+    GAUSSIAN = 0
+    FERMI = -1
+    PARTIAL = -2
+    TETRA = -5
+
+
+class OrbitEnum(enum.IntEnum):
+    """
+    Encode values for the projector information.
+
+    See: https://www.vasp.at/wiki/index.php/LORBIT
+    """
+    ATOM = 0
+    ATOM_LM = 1
+    ATOM_LM_PHASE = 2
+    NO_RWIGS_ATOM = 10
+    NO_RWIGS_ATOM_LM = 11
+    NO_RWIGS_ATOM_LM_PHASE = 12
+    NO_RWIGS_ATOM_LM_PHASE_AUTO = 14
+    ATOM_LM_WAVE = 5
+
+    @classmethod
+    def get_lorbit_from_combination(cls, **kwargs):
+        """Get the correct mode of the projectors/decomposition."""
+        combination = tuple(kwargs[i] for i in ['lm', 'phase', 'wigner_seitz_radius'])
+        value_from_combinations = {
+            (False, False, True): cls.ATOM,
+            (True, False, True): cls.ATOM_LM,
+            (True, True, True): cls.ATOM_LM_PHASE,
+            (False, False, False): cls.NO_RWIGS_ATOM,
+            (True, False, False): cls.NO_RWIGS_ATOM_LM,
+            (True, True, False): cls.NO_RWIGS_ATOM_LM_PHASE,
+            # Not supported, so also calculate lm decomposed
+            (False, True, True): cls.ATOM_LM_PHASE,
+            # Not supported, so also calculate lm decomposed
+            (False, True, False): cls.NO_RWIGS_ATOM_LM_PHASE
+        }
+        return value_from_combinations[combination]
 
 
 class RelaxAlgoEnum(enum.IntEnum):
-    """Encode values for algorithm descriptively in enum."""
+    """
+    Encode values for algorithm descriptively.
+
+    See: https://www.vasp.at/wiki/index.php/ALGO
+    """
     NO_UPDATE = -1
     IONIC_RELAXATION_RMM_DIIS = 1
     IONIC_RELAXATION_CG = 2
@@ -29,9 +103,9 @@ class RelaxAlgoEnum(enum.IntEnum):
 
 class RelaxModeEnum(enum.IntEnum):
     """
-    Encode values for mode of relaxation descriptively in enum.
+    Encode values for degrees of freedom mode of relaxation descriptively.
 
-    Values can be found here: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
+    See: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
     """
 
     POS_ONLY = 2
@@ -42,7 +116,7 @@ class RelaxModeEnum(enum.IntEnum):
     VOL_ONLY = 7
 
     @classmethod
-    def get_from_dof(cls, **kwargs):
+    def get_isif_from_dof(cls, **kwargs):
         """Get the correct mode of relaxation for the given degrees of freedom."""
         RELAX_POSSIBILITIES = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
         dof = tuple(kwargs[i] for i in RELAX_POSSIBILITIES)
@@ -83,10 +157,14 @@ class ParametersMassage():
         else:
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
+        self._check_parameters()
         self._load_valid_params()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
         self._prepare_parameters()
-        self._check_parameters()
+        self._validate_parameters()
+
+    def _check_parameters(self):
+        """Check the valid parameters for this plugin."""
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
@@ -104,7 +182,7 @@ class ParametersMassage():
             if self.exit_code is not None:
                 return
 
-    def _check_parameters(self):
+    def _validate_parameters(self):
         """Make sure all the massaged values are to VASP spec."""
         if list(self._massage.keys()).sort() != self._valid_parameters.sort() and self.exit_code is None:
             self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
@@ -139,7 +217,11 @@ class ParameterSetFunctions():
         self._massage = massage
 
     def set_ibrion(self):
-        """Set which algorithm to use for ionic movements."""
+        """
+        Set which algorithm to use for ionic movements.
+
+        See: https://www.vasp.at/wiki/index.php/IBRION
+        """
         if self._relax():
             try:
                 if self._parameters.relax.algo == 'cg':
@@ -156,7 +238,11 @@ class ParameterSetFunctions():
         return None
 
     def set_ediffg(self):
-        """Set the cutoff to use for relaxation."""
+        """
+        Set the cutoff to use for relaxation.
+
+        See: https://www.vasp.at/wiki/index.php/EDIFFG
+        """
         if not self._relax():
             return
         energy_cutoff = False
@@ -173,17 +259,151 @@ class ParameterSetFunctions():
             pass
 
     def set_nsw(self):
-        """Set the number of ionic steps to perform."""
+        """
+        Set the number of ionic steps to perform.
+
+        See: https://www.vasp.at/wiki/index.php/NSW
+        """
         if self._relax():
             self._set_simple('nsw', self._parameters.relax.steps)
 
     def set_isif(self):
-        """Set relaxation mode according to the chosen degrees of freedom."""
+        """
+        Set relaxation mode according to the chosen degrees of freedom.
+
+        See: https://www.vasp.at/wiki/index.php/ISIF
+        """
         positions = self._parameters.get('relax', {}).get('positions', False)
         shape = self._parameters.get('relax', {}).get('shape', False)
         volume = self._parameters.get('relax', {}).get('volume', False)
         if positions or shape or volume:
-            self._massage.isif = RelaxModeEnum.get_from_dof(positions=positions, shape=shape, volume=volume).value
+            self._massage.isif = RelaxModeEnum.get_isif_from_dof(positions=positions, shape=shape, volume=volume).value
+
+    def set_ismear(self):
+        """
+        Make sure we do not supply invalid integration methods when running explicit k-point grids.
+
+        See: https://www.vasp.at/wiki/index.php/ISMEAR
+        """
+
+        try:
+            if self._parameters.smearing.gaussian:
+                self._set_simple('ismear', IntSmearingEnum.GAUSSIAN.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.smearing.fermi:
+                self._set_simple('ismear', IntSmearingEnum.FERMI.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.smearing.mp:
+                self._set_simple('ismear', IntSmearingEnum.MP.value * abs(int(self._parameters.smearing.mp)))
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.smearing.tetra:
+                self._set_simple('ismear', IntSmearingEnum.TETRA.value)
+        except AttributeError:
+            pass
+
+    def set_icharg(self):  # noqa: MC0001
+        """
+        Set the flag to start from input charge density and keep it constant.
+
+        See: https://www.vasp.at/wiki/index.php/ICHARG
+        """
+        try:
+            if self._parameters.charge.from_wave:
+                self._set_simple('icharg', ChargeEnum.WAVE.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.charge.from_charge:
+                self._set_simple('icharg', ChargeEnum.CHARGE.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.charge.from_atomic:
+                self._set_simple('icharg', ChargeEnum.ATOMIC.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.charge.from_potential:
+                self._set_simple('icharg', ChargeEnum.POTENTIAL.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.charge.constant_charge:
+                self._set_simple('icharg', ChargeEnum.CONSTANT_CHARGE.value)
+        except AttributeError:
+            pass
+        try:
+            if self._parameters.charge.constant_atomic:
+                self._set_simple('icharg', ChargeEnum.CONSTANT_ATOMIC.value)
+        except AttributeError:
+            pass
+
+    def set_lorbit(self):  # noqa: MC0001
+        """
+        Set the flag that controls the projectors/decomposition onto orbitals.
+
+        See: https://www.vasp.at/wiki/index.php/LORBIT
+        """
+        self._set_wigner_seitz_radius()
+        try:
+            if self._parameters.bands.decompose_bands:
+                if self._parameters.bands.decompose_wave:
+                    # Issue a warning that one can only use either or
+                    raise ValueError('Only projections/decompositions on the bands or the wave function are allowed.')
+                wigner_seitz_radius = False
+                try:
+                    if abs(self._massage.rwigs[0]) > 1E-8:
+                        wigner_seitz_radius = True
+                except AttributeError:
+                    pass
+                if self._parameters.bands.decompose_auto:
+                    self._set_simple('lorbit', OrbitEnum.NO_RWIGS_ATOM_LM_PHASE_AUTO.value)
+                else:
+                    try:
+                        lm = self._parameters.bands.lm  # pylint: disable=invalid-name
+                    except AttributeError:
+                        lm = False  # pylint: disable=invalid-name
+                    try:
+                        phase = self._parameters.bands.phase
+                    except AttributeError:
+                        phase = False
+                    lorbit = OrbitEnum.get_lorbit_from_combination(lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius).value
+                    self._set_simple('lorbit', lorbit)
+            else:
+                try:
+                    if self._parameters.bands.decompose_wave:
+                        self._set_simple('lorbit', OrbitEnum.ATOM_LM_WAVE.value)
+                except AttributeError:
+                    pass
+        except AttributeError:
+            try:
+                if self._parameters.bands.decompose_wave:
+                    self._set_simple('lorbit', OrbitEnum.ATOM_LM_WAVE.value)
+            except AttributeError:
+                pass
+
+    def _set_wigner_seitz_radius(self):
+        """
+        Set the Wigner Seitz radius that is used to project/decompose.
+
+        See: https://www.vasp.at/wiki/index.php/RWIGS
+        """
+        try:
+            wigner_seitz_radius = self._parameters.bands.wigner_seitz_radius
+            # Check that it is defined as a list
+            if isinstance(wigner_seitz_radius, list):
+                if wigner_seitz_radius[0]:
+                    self._set_simple('rwigs', wigner_seitz_radius)
+            else:
+                raise ValueError('The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.')
+        except AttributeError:
+            pass
 
     def _relax(self):
         """Check if we have enabled relaxation."""
@@ -197,3 +417,41 @@ class ParameterSetFunctions():
             self._massage[target] = value
         except AttributeError:
             pass
+
+
+def inherit_and_merge_parameters(inputs):
+    """
+    Goes trough the inputs namespaces and the namespaces in the inputs.parameters and merge them.
+
+    Note that parameters specified in the inputs.parameters will override what is supplied as workchain input,
+    in case there is overlap.
+    """
+    parameters = AttributeDict()
+    namespaces = ['bands', 'smearing', 'charge', 'relax']
+    for namespace in namespaces:
+        parameters[namespace] = AttributeDict()
+        try:
+            for key, item in inputs[namespace].items():
+                if isinstance(item, DataFactory('array')):
+                    # Break hard on Array since we need to know the array name to fetch the content
+                    raise ValueError(
+                        'There is an array supplied in the parameters, this needs custom handling, please take care of this manually.')
+                if isinstance(item, DataFactory('dict')):
+                    parameters[namespace][key] = item.get_dict()
+                elif isinstance(item, DataFactory('list')):
+                    parameters[namespace][key] = item.get_list()
+                else:
+                    parameters[namespace][key] = item.value
+        except KeyError:
+            pass
+
+    # Now get the input parameters and update the dictionary. This means,
+    # any supplied parameters in the bands namespace will override what is supplied to the workchain
+    # input band namespace.
+    input_parameters = AttributeDict(inputs.parameters.get_dict())
+
+    # We cannot use regular update here, as we only want to replace each key if it exists, if a key
+    # contains a new dict we need to traverse that, hence we have a function to perform this update
+    update_nested_dict(parameters, input_parameters)
+
+    return parameters
