@@ -1,0 +1,7 @@
+# File containing the errors
+
+- shortname: 'ibzkpt'
+  regex: 'internal error in subroutine IBZKPT'
+  message: 'Error with Kpoints'
+  critical: false
+  suggestion: 'Lower kpoints slightly or ignore'
