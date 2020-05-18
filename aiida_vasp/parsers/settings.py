@@ -14,6 +14,7 @@ from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.stdout import StdoutParser
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {
@@ -58,6 +59,11 @@ FILE_PARSER_SETS = {
             'is_critical': False,
             'status': 'Unknown'
         },
+        'STDOUT': {
+            'parser_class': StdoutParser,
+            'is_critical': False,
+            'status': 'Unkonwn'
+        }
     },
 }
 """ NODES """
@@ -66,7 +72,7 @@ NODES = {
     'misc': {
         'link_name': 'misc',
         'type': 'dict',
-        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization'],
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'stdout_error'],
     },
     'kpoints': {
         'link_name': 'kpoints',

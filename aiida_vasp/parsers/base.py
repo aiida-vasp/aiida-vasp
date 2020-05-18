@@ -89,6 +89,10 @@ class BaseParser(Parser):
         :param fname: name of the file
         :return: absolute path to the retrieved file
         """
+        # Here I treat STDOUT as a special case, since the exact name of the
+        # diverted stdout can be customised in the options of the CalcJobNode
+        if fname == 'STDOUT':
+            fname = self.node.get_option('scheduler_stdout')
 
         try:
             if self.retrieved_content[fname]['status'] == 'permanent':
