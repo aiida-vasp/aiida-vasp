@@ -48,7 +48,7 @@ class StdoutParser(BaseFileParser):
         result = {}
         if 'stdout_error' in quantities_to_parse:
             with open(self._data_obj.path, 'r') as fhandle:
-                scanner = ErrorScanner(fhandle)
+                scanner = ErrorScanner(fhandle, ftype='STDOUT')
                 scanner.scan()
                 errors = scanner.get_errors()
             # Construct the error dict from ErrorRecord named tuple
