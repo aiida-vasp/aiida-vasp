@@ -21,6 +21,6 @@ def test_stdout_error(fresh_aiida_env, stdout_parser):
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     # test error
-    test_dict = {'stdout_error': [{'shortname': 'zpotrf', 'message': 'Error in Lapack ZPOTRF', 'critical': True, 'suggestion': ''}]}
+    test_dict = {'stdout_error': [{'shortname': 'zpotrf', 'message': 'Error in Lapack ZPOTRF', 'critical': True}]}
 
     assert data_dict == test_dict
