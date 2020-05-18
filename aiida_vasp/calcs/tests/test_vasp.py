@@ -195,6 +195,15 @@ def test_vasp_calc(run_vasp_calc):
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
+    # Check for the parsing of stdout errors
+    with node.outputs.retrieved.open('_scheduler-stdout.txt', 'w') as fhandle:
+        fhandle.write('LAPACK: Routine ZPOTRF')
+    from aiida_vasp.parsers.vasp import VaspParser
+    misc = VaspParser.parse_from_node(node)[0]['misc']
+    errors = misc.get_dict()['stdout_error']
+    assert errors[0]['shortname'] == 'zpotrf'
+    assert len(errors) == 1
+
 
 @pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
