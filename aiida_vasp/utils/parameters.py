@@ -55,10 +55,6 @@ class IntSmearingEnum(enum.IntEnum):
     PARTIAL = -2
     TETRA = -5
 
-# Name spaces that are know to be valid and will be further processed by
-# ParameterSetFunctions
-KNOWN_NAMESPACES = ['relax']
-
 
 class OrbitEnum(enum.IntEnum):
     """
