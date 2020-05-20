@@ -78,6 +78,14 @@ def test_relax_parameters_all_set(init_relax_parameters):
     assert parameters.isif == 3
 
 
+def test_catch_invalid_tags(init_relax_parameters, init_simple_workchain):
+    init_relax_parameters.vasp = AttributeDict()
+    mock_workchain = init_simple_workchain
+    init_relax_parameters.vasp.smear = 1  # This is an invalid tag
+    massager = ParametersMassage(mock_workchain, init_relax_parameters)
+    assert massager.exit_code is not None
+
+
 def test_relax_parameters_energy(init_relax_parameters):
     """Test no provided force cutoff. It should be set to a default value."""
     del init_relax_parameters.relax.force_cutoff
