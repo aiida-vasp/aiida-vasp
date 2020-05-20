@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'prec': 'NORMAL', 'pwcutoff': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}
+    INCAR = {'vasp': {'prec': 'NORMAL', 'pwcutoff': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
 
     # KPOINTS equivalent
     # Set kpoint mesh

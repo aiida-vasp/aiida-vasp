@@ -27,7 +27,6 @@ class BandsWorkChain(WorkChain):
         super(BandsWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings', 'kpoints'))
         spec.input('parameters', valid_type=get_data_class('dict'), required=False)
-        spec.input('bands.parameters', valid_type=get_data_class('dict'), required=False)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('smearing.gaussian', valid_type=get_data_class('bool'), required=False, default=lambda: get_data_node('bool', True))
         spec.input('smearing.sigma', valid_type=get_data_class('float'), required=False, default=lambda: get_data_node('float', 0.05))
@@ -133,11 +132,6 @@ class BandsWorkChain(WorkChain):
             self.ctx.inputs.verbose = self.inputs.verbose
         except AttributeError:
             pass
-
-    def _add_overrides(self, parameters):
-        """Add parameters tag overrides, except the ones controlled by other inputs (for provenance)."""
-        overrides = AttributeDict({k.lower(): v for k, v in self.inputs.bands.parameters.get_dict().items()})
-        parameters.update(overrides)
 
     def _init_parameters(self):
         """Collect input to the workchain in the relax namespace and put that into the parameters."""
