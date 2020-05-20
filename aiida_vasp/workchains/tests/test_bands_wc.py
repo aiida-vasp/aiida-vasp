@@ -36,9 +36,10 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_bands_wc', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_bands_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_bands_wc'
-    # make sure we replace encut with pwcutoff
+    # Make sure we replace encut with pwcutoff
     del parameters['encut']
-    parameters['pwcutoff'] = 200
+    parameters = {'vasp': parameters}
+    parameters['electronic'] = {'pwcutoff': 200}
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')

@@ -157,14 +157,15 @@ class ParametersMassage():
         else:
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
-        self._check_parameters()
         self._load_valid_params()
+        self._check_parameters()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
-        self._prepare_parameters()
+        self._set_parameters()
+        self._set_vasp_parameters()
         self._validate_parameters()
 
     def _check_parameters(self):
-        """Check the valid parameters for this plugin."""
+        """Check that any directly supplied VASP parameters is valid."""
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
@@ -174,7 +175,7 @@ class ParametersMassage():
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
 
-    def _prepare_parameters(self):
+    def _set_parameters(self):
         """Iterate over the valid parameters and call the set function associated with that parameter."""
         for key in self._valid_parameters:
             self._set(key)
@@ -182,10 +183,23 @@ class ParametersMassage():
             if self.exit_code is not None:
                 return
 
+    def _set_vasp_parameters(self):
+        """Set the any supplied override parameters."""
+        try:
+            for key, item in self._parameters.vasp.items():
+                # Make sure key is lowercase on storage
+                self._massage[key.lower()] = item
+        except AttributeError:
+            # Might not be supplied
+            pass
+
     def _validate_parameters(self):
         """Make sure all the massaged values are to VASP spec."""
         if list(self._massage.keys()).sort() != self._valid_parameters.sort() and self.exit_code is None:
             self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+
+    def _validate_vasp_parameters(self):
+        """Validate the supplied VASP override parameters."""
 
     def _set(self, key):
         """Call the necessary function to set each parameter."""
@@ -427,16 +441,20 @@ def inherit_and_merge_parameters(inputs):
     in case there is overlap.
     """
     parameters = AttributeDict()
-    namespaces = ['bands', 'smearing', 'charge', 'relax']
-    for namespace in namespaces:
+    namespaces = ['electronic', 'bands', 'smearing', 'charge', 'relax', 'converge']
+    for namespace in namespaces:  # pylint: disable=too-many-nested-blocks
         parameters[namespace] = AttributeDict()
         try:
             for key, item in inputs[namespace].items():
                 if isinstance(item, DataFactory('array')):
-                    # Break hard on Array since we need to know the array name to fetch the content
-                    raise ValueError(
-                        'There is an array supplied in the parameters, this needs custom handling, please take care of this manually.')
-                if isinstance(item, DataFactory('dict')):
+                    # Only allow one array per input
+                    if len(item.get_arraynames()) > 1:
+                        raise IndexError(
+                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
+                            .format(key))
+                    for array in item.get_arraynames():
+                        parameters[namespace][key] = item.get_array(array)
+                elif isinstance(item, DataFactory('dict')):
                     parameters[namespace][key] = item.get_dict()
                 elif isinstance(item, DataFactory('list')):
                     parameters[namespace][key] = item.get_list()
@@ -446,9 +464,20 @@ def inherit_and_merge_parameters(inputs):
             pass
 
     # Now get the input parameters and update the dictionary. This means,
-    # any supplied parameters in the bands namespace will override what is supplied to the workchain
-    # input band namespace.
-    input_parameters = AttributeDict(inputs.parameters.get_dict())
+    # any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what is supplied to the workchain
+    # input namespace (i.e. inputs.somekey).
+    try:
+        # inputs might not have parameters, or parameters might be empty
+        input_parameters = AttributeDict(inputs.parameters.get_dict())
+    except AttributeError:
+        input_parameters = {}
+
+    # Now check that no loose keys are residing on the root of input_parameters, everything should be in
+    # the vasp or aiida namespace
+    #valid_keys = ['vasp', 'aiida']
+    #if not list(input_parameters.keys()).sort() == valid_keys.sort():
+    #    raise ValueError('Unsupported keys detected on parameter root. '
+    #                     'Please make sure all keys reside inside the vasp or aiida namespace.')
 
     # We cannot use regular update here, as we only want to replace each key if it exists, if a key
     # contains a new dict we need to traverse that, hence we have a function to perform this update

@@ -15,7 +15,7 @@ from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.extended_dicts import update_nested_dict
+from aiida_vasp.utils.parameters import inherit_and_merge_parameters
 
 
 class RelaxWorkChain(WorkChain):
@@ -223,21 +223,8 @@ class RelaxWorkChain(WorkChain):
         # At some point we will replace this with possibly input checking using the PortNamespace on
         # a dict parameter type. As such we remove the workchain input parameters as node entities. Much of
         # the following is just a workaround until that is in place in AiiDA core.
+        parameters = inherit_and_merge_parameters(self.inputs)
 
-        # First collect input that is under the relax namespace defined on the workchain itself and
-        # put that into parameters.
-        parameters = AttributeDict()
-        parameters.relax = AttributeDict()
-        for key, item in self.inputs.relax.items():
-            # Make sure we do not store AiiDA nodes (hence the use of value)
-            parameters.relax[key] = item.value
-        # Now get the input parameters and update the dictionary. This means,
-        # any supplied parameters in the relax namespace will override what is supplied to the workchain
-        # in the relax namespace.
-        input_parameters = AttributeDict(self.inputs.parameters.get_dict())
-        # We cannot use update here, as we only want to replace each key if it exists, if a key
-        # contains a new dict we need to traverse that, hence we have a function to perform this update
-        update_nested_dict(parameters, input_parameters)
         # Need to save the parameter that controls if relaxation should be performed
         self.ctx.relax = parameters.relax.perform
         if not parameters.relax.perform:

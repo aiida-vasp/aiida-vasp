@@ -168,8 +168,12 @@ class VaspCalculation(VaspCalcBase):
 
     @property
     def _parameters(self):
+        """Make sure all parameters are lowercase."""
         all_parameters = self.inputs.parameters.get_dict()
-        return {k.lower(): v for k, v in all_parameters.items()}
+        try:
+            return {k.lower(): v for k, v in all_parameters.items()}
+        except KeyError:
+            return {}
 
     def _need_kp(self):
         """
