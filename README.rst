@@ -11,8 +11,8 @@ AiiDA VASP plugin
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
-   :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
+.. image:: https://codecov.io/gh/espenfl/aiida-vasp/branch/develop/graph/badge.svg
+  :target: https://codecov.io/gh/espenfl/aiida-vasp
 
 This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
 
