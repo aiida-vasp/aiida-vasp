@@ -6,8 +6,8 @@ Performs a self consistent electron convergence run using the standard silicon s
 # pylint: disable=too-many-arguments
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
+from aiida.orm import Code
+from aiida.plugins import DataFactory, CalculationFactory
 from aiida.engine import submit
 from aiida import load_profile
 load_profile()
@@ -49,7 +49,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.master')
+    calculation = CalculationFactory('vasp.vasp2w90')
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
@@ -58,7 +58,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Organize settings
     settings.parser_settings = {'output_params': ['total_energies', 'maximum_force']}
 
-    # Set inputs for the following WorkChain execution
+    # Set inputs
     # Set code
     inputs.code = Code.get_from_string(code_string)
     # Set structure
@@ -70,25 +70,17 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set parameters
     inputs.parameters = dict_data(dict=incar)
     # Set potentials and their mapping
-    inputs.potential_family = Str(potential_family)
-    inputs.potential_mapping = dict_data(dict=potential_mapping)
+    inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure=inputs.structure,
+                                                                             family_name=potential_family,
+                                                                             mapping=potential_mapping)
     # Set options
-    inputs.options = dict_data(dict=options)
+    inputs.metadata = AttributeDict({'options': options})
     # Set settings
     inputs.settings = dict_data(dict=settings)
-    # Set workchain related inputs, in this case, give more explicit output to repor
-    inputs.verbose = Bool(True)
-
-    # Master, convergence and relaxation related parameters that is passed to the master,
-    # convergence and relaxation workchain, respectively
-    # Turn of relaxation
-    relax = AttributeDict()
-    relax.perform = Bool(False)
-    inputs.relax = relax
-    # Extract electronic band structure
-    inputs.extract_bands = Bool(True)
-    # Submit the requested workchain with the supplied inputs
-    submit(workchain, **inputs)
+    # Set Wannier90 projectors
+    inputs.wannier_projections = DataFactory('list')(list=['Si: sp3'])
+    # Submit the requested calculation with the supplied inputs
+    submit(calculation, **inputs)
 
 
 if __name__ == '__main__':
@@ -101,7 +93,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'prec': 'NORMAL', 'pwcutoff': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}
+    INCAR = {'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}
 
     # KPOINTS equivalent
     # Set kpoint mesh
@@ -122,11 +114,11 @@ if __name__ == '__main__':
     # AttributeDict is just a special dictionary with the extra benefit that
     # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
     OPTIONS = AttributeDict()
-    OPTIONS.account = 'nn9995k'
+    OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600
-    OPTIONS.max_memory_kb = 1024000
+    OPTIONS.max_memory_kb = 10240000
 
     main(CODE_STRING, INCAR, KMESH, STRUCTURE, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)

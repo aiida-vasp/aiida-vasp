@@ -62,10 +62,20 @@ def delete_nested_key(dictionary, keys):
 
 
 def update_nested_dict(dict1, dict2):
-    """Updated a nested dictionary."""
+    """Updated a nested dictionary, where dict1 is updated with values in dict2."""
     for key, value in dict2.items():
         dict1_value = dict1.get(key)
         if isinstance(value, collections.Mapping) and isinstance(dict1_value, collections.Mapping):
             update_nested_dict(dict1_value, value)
         else:
             dict1[key] = deepcopy(value)
+
+
+def find_key_in_dicts(dictionary, supplied_key):
+    """Find a key in a nested dictionary."""
+    for key, value in dictionary.items():
+        if key == supplied_key:
+            yield value
+        elif isinstance(value, dict):
+            for result in find_key_in_dicts(value, supplied_key):
+                yield result

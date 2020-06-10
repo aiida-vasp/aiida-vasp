@@ -30,6 +30,9 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
      options.queue_name = '' # modify it to contain your queue name, if the cluster needs it
      resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16} # modify it to relect your cluster
 
+   For example, if you use a SGE scheduler, you need to modify `resources` as follows::
+     resources = {'num_machines': 1, 'tot_num_mpiprocs': 16, 'parallel_env': 'mpi*'}  # for SGE
+
    Modify these and save the file.
 
 4. Submit the `VASP`_ calculation by executing::

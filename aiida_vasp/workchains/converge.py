@@ -396,7 +396,7 @@ class ConvergeWorkChain(WorkChain):
         except AttributeError:
             pass
         # Check if pwcutoff is supplied in the parameters input, this takes presence over
-        # the pwcutoff supplied in the inputs
+        # the pwcutoff supplied in the workchain inputs.
         try:
             parameters_dict = self.inputs.parameters.get_dict()
             pwcutoff = parameters_dict.get('pwcutoff', None)

@@ -1,7 +1,7 @@
 exi.. _bulk_modulus_workchain:
 
 =================================
-5. Writing bulk modulus workchain
+7. Writing bulk modulus workchain
 =================================
 
 In the :ref:`previous tutorial <bulk_modulus_script>`, the initial
@@ -180,7 +180,7 @@ Implementation of Workchain
            self.report("create_two_structures")
            for strain, name in zip((0.99, 1.01), ('minus', 'plus')):
                structure = get_strained_structure(
-                   self.ctx['relax'].outputs.structure_relaxed, Float(strain))
+                   self.ctx['relax'].outputs['relax__structure'], Float(strain))
                structure.label = name
                self.ctx['structure_%s' % name] = structure
 
@@ -199,11 +199,14 @@ Implementation of Workchain
                    description += " " + future_name
                    builder.metadata['description'] = description
                builder.structure = self.ctx['structure_%s' % future_name]
-               builder.force_cutoff = Float(1e-8)
-               builder.positions = Bool(True)
-               builder.shape = Bool(True)
-               builder.volume = Bool(False)
-               builder.convergence_on = Bool(False)
+               relax = AttributeDict()
+               relax.perform = Bool(True)
+               relax.force_cutoff = Float(1e-8)
+               relax.positions = Bool(True)
+               relax.shape = Bool(True)
+               relax.volume = Bool(False)
+               relax.convergence_on = Bool(False)
+               builder.relax = relax
                future = self.submit(builder)
                self.to_context(**{future_name: future})
 
@@ -258,8 +261,8 @@ Launch script
        kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
 
        options = {'resources': resources,
-                  'account:' 'nn9995k',
-                  'max_memory_kb:': 10240000,
+                  'account': '',
+                  'max_memory_kb': 10240000,
                   'max_wallclock_seconds': 3600 * 10}
 
        potential_family = 'pbe'

@@ -27,6 +27,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.file_parsers.stdout import StdoutParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
@@ -53,8 +54,15 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_io = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
-    return incar_io
+    incar_data = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    return incar_data
+
+
+@pytest.fixture
+def vasp2w90_params(fresh_aiida_env, vasp_params):
+    vasp_params_data = vasp_params()
+    incar_data = get_data_class('dict')(dict=vasp_params_data.get_dict().update({'lwannier90': True}))
+    return incar_data
 
 
 @pytest.fixture
@@ -329,7 +337,7 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = py_path.local(data_path('incar', 'INCAR.vasp2w90'))
+    data = py_path.local(data_path('wannier', 'INCAR'))
     yield data.read()
 
 
@@ -367,6 +375,16 @@ def outcar_parser(request):
     file_name = 'OUTCAR'
     path = data_path(request.param, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture(params=['stdout'])
+def stdout_parser(request):
+    """Return an instance of StdoutParser for a reference STDOUT capture"""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = '_scheduler-stdout.txt'
+    path = data_path(request.param, file_name)
+    parser = StdoutParser(file_path=path, settings=ParserSettings({}))
     return parser
 
 

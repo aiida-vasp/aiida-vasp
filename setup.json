@@ -7,7 +7,8 @@
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2.7",
-        "Topic :: Scientific/Engineering :: Physics"
+        "Topic :: Scientific/Engineering :: Physics",
+	"Framework :: AiiDA"
     ],
     "description": "AiiDA Plugin for running VASP calculations.",
     "entry_points": {
@@ -67,7 +68,7 @@
     },
     "include_package_data": true,
     "install_requires": [
-        "aiida-core[atomic_tools] >= 1.0.1",
+        "aiida-core[atomic_tools] >= 1.1.0",
         "subprocess32",
         "py == 1.5.4",
         "lxml",
