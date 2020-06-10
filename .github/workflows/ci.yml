@@ -49,7 +49,6 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
         run: |
-          sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
           curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
           sudo apt update
           sudo .ci/enable_ssh_localhost.sh
