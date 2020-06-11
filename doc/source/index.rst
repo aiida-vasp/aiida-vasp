@@ -10,13 +10,7 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 
 AiiDA-VASP is under active development, check out the `changelog`_.
 
-The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.5.
-
-.. warning:: If you export any calculation done with the plugin the POTCAR file will be in the export file. Please remember that
-   this file is protected by license and make sure all your actions in this process does not void this license.
-   We take no responsibility and making sure the license if obeyed at all times is a user responsibility. We are currently
-   working on a solution where it is going to be possible to export data that does not contain the POTCAR file (but
-   it will re-link itself to the right POTCAR content on import, assuming the exact same file is present in the database).
+The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.6.
 
 General comments about the user documentation and support
 =========================================================
