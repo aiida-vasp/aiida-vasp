@@ -47,7 +47,12 @@ class OutcarParser(BaseFileParser):
             'inputs': [],
             'name': 'magnetization',
             'prerequisites': []
-        }
+        },
+        'site_magnetization': {
+            'inputs': [],
+            'name': 'site_magnetization',
+            'prerequisites': []
+        },
     }
 
     def __init__(self, *args, **kwargs):
@@ -127,7 +132,12 @@ class OutcarParser(BaseFileParser):
 
     @property
     def magnetization(self):
-        """Fetch the magnetization."""
+        """Fetch the full cell magnetization."""
+        return self._outcar.get_magnetization()['full_cell']
+
+    @property
+    def site_magnetization(self):
+        """Fetch the site dependent magnetization."""
         return self._outcar.get_magnetization()
 
 

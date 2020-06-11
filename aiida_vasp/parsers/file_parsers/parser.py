@@ -1,4 +1,4 @@
-r"""
+"""
 Base classes for the VASP file parsers.
 
 ---------------------------------------
