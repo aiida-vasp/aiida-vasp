@@ -3,6 +3,7 @@
 
 import pytest
 from pytest import raises
+from aiida.common import InputValidationError
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -94,3 +95,11 @@ def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     # compare
     comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
     assert str(sorted(result)) == str(sorted(comp_dict))
+
+    # Test validation
+    with_invalid = dict(incar_dict_example)
+    with_invalid.update(foo='bar')
+    incar_params = get_data_class('dict')(dict=with_invalid)
+    parser = IncarParser(data=incar_params)
+    with pytest.raises(InputValidationError):
+        parser.write(temp_file)
