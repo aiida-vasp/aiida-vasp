@@ -4,32 +4,46 @@
 AiiDA VASP plugin
 =================
 
-.. image:: https://img.shields.io/pypi/v/aiida-vasp
+.. |version| image:: https://img.shields.io/pypi/v/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
    :alt: Stable version
 
-.. image:: https://img.shields.io/pypi/status/aiida-vasp
+.. |status| image:: https://img.shields.io/pypi/status/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
    :alt: PyPI - Status
 
-.. image:: https://img.shields.io/pypi/pyversions/aiida-vasp
+.. |versions| image:: https://img.shields.io/pypi/pyversions/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
    :alt: Supported Python versions
 
-.. image:: https://github.com/aiida-vasp/aiida-vasp/workflows/aiida-vasp/badge.svg
-  :target: https://github.com/aiida-vasp/aiida-vasp/action
-  :alt: Build status
+.. |build| image:: https://github.com/aiida-vasp/aiida-vasp/workflows/aiida-vasp/badge.svg
+   :target: https://github.com/aiida-vasp/aiida-vasp/action
+   :alt: Build status
 
-.. image:: https://codecov.io/gh/espenfl/aiida-vasp/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/espenfl/aiida-vasp
-  :alt: Test coverage
+.. |coverage| image:: https://codecov.io/gh/espenfl/aiida-vasp/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/espenfl/aiida-vasp
+   :alt: Test coverage
 
-.. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
+.. |doc| image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://img.shields.io/pypi/dm/aiida-vasp
+.. |downloads| image:: https://img.shields.io/pypi/dm/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
    :alt: PyPI - Downloads/month
 
-.. image:: https://img.shields.io/github/commit-activity/m/aiida-vasp/aiida-vasp
+.. |commits| image:: https://img.shields.io/github/commit-activity/m/aiida-vasp/aiida-vasp
+   :target: https://github.com/aiida-vasp/aiida-vasp/commits/develop
    :alt: GitHub commit activity
+
++---------+-------------------------------+
+| Release | |version| |status| |versions| |
++---------+-------------------------------+
+| Build   | |build| |coverage| |doc|      |
++---------+-------------------------------+
+| Stats   | |downloads| |commits|         |
++---------+-------------------------------+
+
 
 This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
 
