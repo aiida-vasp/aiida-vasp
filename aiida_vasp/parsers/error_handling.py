@@ -7,6 +7,8 @@ errors.
 import os
 import re
 from collections import namedtuple
+from pathlib import Path
+
 import yaml
 
 from aiida.common.links import LinkType
@@ -61,7 +63,7 @@ class VaspGeneralError(VaspError):
         mch = self.regex.search(line)
         if mch:
             # Record the group as the error message
-            message = mch.group(1)
+            message = mch.group(0)
             return ErrorRecord(self, self.shortname, message, self.critical, self.suggestion)
         return None
 
@@ -84,14 +86,27 @@ class ErrorScanner:
                   critical=True),
         VaspGeneralError(),
     ]
+    DEFAULT_ERROR_FILE = 'vasp_errors.yaml'
 
     @classmethod
-    def load_from_yml(cls, fname):
+    def load_from_yml(cls, fname=None):
         """Read the errors from yml and save it as the class method"""
+        if fname is None:
+            fname = Path(__file__).parent / cls.DEFAULT_ERROR_FILE
+
         with open(fname) as fhd:
             data = yaml.safe_load(fhd)
         for entry in data:
             cls.ERRORS.append(VaspError(**entry))
+
+        # Remove any general errors, and append one at the end
+        generals = []
+        for error in cls.ERRORS:
+            if isinstance(error, VaspGeneralError):
+                generals.append(error)
+        for error in generals:
+            cls.ERRORS.remove(error)
+        cls.ERRORS.append(VaspGeneralError())
 
     def __init__(self, fhandle, ftype='STDOUT'):
         """
@@ -117,6 +132,8 @@ class ErrorScanner:
                 error_rec = error.check_line(line)
                 if error_rec:
                     self.errors_found.add(error_rec)
+                    # Once the error is found, no point to continue
+                    break
 
         self.has_scanned = True
 
@@ -146,8 +163,8 @@ class ErrorScanner:
         return f'<ErrorScanner with {len(self.errors_found)} found errors>'
 
 
-# This loads the error defined in the vasp_errors.yml placed in the same directory
-ErrorScanner.load_from_yml(os.path.join(os.path.split(__file__)[0], 'vasp_errors.yml'))
+# This loads the error defined in the vasp_errors.yaml placed in the same directory
+ErrorScanner.load_from_yml(os.path.join(os.path.split(__file__)[0], 'vasp_errors.yaml'))
 
 
 class NodeErrorScanner(ErrorScanner):
