@@ -330,7 +330,7 @@ def vasp_wavecar(fresh_aiida_env):
 @pytest.fixture
 def ref_incar():
     with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
-        #yield reference_incar_fo.read().strip()
+        # yield reference_incar_fo.read().strip()
         yield reference_incar_fo.readlines()
 
 
@@ -372,6 +372,27 @@ def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'OUTCAR'
+    path = data_path(request.param, file_name)
+    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def magnetization_parser(request):
+    """Return an instance of OutcarParser for a reference OUTCAR in the case of magnetic calculations."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = 'OUTCAR'
+    path = data_path(request.param, file_name)
+    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def magnetization_single_parser(request):
+    """Return an instance of OutcarParser for a reference OUTCAR in the case of
+    magnetic calculations when there is a single atom in the unit cell"""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = 'OUTCAR_SINGLE'
     path = data_path(request.param, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
     return parser
