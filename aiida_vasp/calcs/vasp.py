@@ -152,7 +152,7 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
+            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST',
                                                                                default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
@@ -160,7 +160,8 @@ class VaspCalculation(VaspCalcBase):
             calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
             calcinfo.retrieve_temporary_list = additional_retrieve_temp_list  # pylint: disable=invalid-name
         else:
-            calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+            calcinfo.retrieve_temporary_list = list(
+                set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
             calcinfo.retrieve_list = additional_retrieve_list
         try:
             provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
