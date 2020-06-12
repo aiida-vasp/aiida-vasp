@@ -14,6 +14,14 @@
         "Framework :: AiiDA"
     ],
     "description": "AiiDA Plugin for running VASP calculations.",
+    "license": "MIT License, see LICENSE.txt file.",
+    "name": "aiida-vasp",
+    "version": "1.0.0",
+    "url": "https://github.com/aiida-vasp/aiida-vasp",
+    "setup_requires": [
+        "reentry"
+    ],
+    "reentry_register": true,
     "entry_points": {
         "aiida.calculations": [
             "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation",
@@ -77,13 +85,5 @@
         "lxml",
         "packaging",
         "parsevasp >= 1.0.0"
-    ],
-    "license": "MIT License, see LICENSE.txt file.",
-    "name": "aiida-vasp",
-    "reentry_register": true,
-    "setup_requires": [
-        "reentry"
-    ],
-    "url": "https://github.com/aiida-vasp/aiida-vasp",
-    "version": "0.3.0"
+    ]
 }
