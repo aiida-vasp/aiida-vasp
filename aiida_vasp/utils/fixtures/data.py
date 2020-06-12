@@ -377,26 +377,6 @@ def outcar_parser(request):
     return parser
 
 
-@pytest.fixture()
-def magnetization_parser(request):
-    """An instance of OutcarParser for a reference OUTCAR in the case of magnetic calculations."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'OUTCAR'
-    path = data_path(request.param, file_name)
-    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
-    return parser
-
-
-@pytest.fixture()
-def magnetization_single_parser(request):
-    """An instance of OutcarParser for a reference OUTCAR for magnetic calculations for a single atom."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'OUTCAR_SINGLE'
-    path = data_path(request.param, file_name)
-    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
-    return parser
-
-
 def _ref_kp_list():
     with open(data_path('kpoints', 'KPOINTS_list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()

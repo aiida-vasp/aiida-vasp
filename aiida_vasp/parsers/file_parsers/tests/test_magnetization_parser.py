@@ -10,8 +10,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.parsers.node_composer import NodeComposer
 
 
-@pytest.mark.parametrize('magnetization_parser', ['magnetization'], indirect=True)
-def test_magnetization_parser(fresh_aiida_env, magnetization_parser):
+@pytest.mark.parametrize('outcar_parser', ['magnetization'], indirect=True)
+def test_magnetization_parser(fresh_aiida_env, outcar_parser):
     """
     Test that the magnetization node is a ParametersData instance.
 
@@ -19,14 +19,14 @@ def test_magnetization_parser(fresh_aiida_env, magnetization_parser):
 
     """
 
-    magnetization_parser.settings.nodes.update(
+    outcar_parser.settings.nodes.update(
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',
             'quantities': ['site_magnetization']
         }})
 
-    composer = NodeComposer(file_parsers=[magnetization_parser])
+    composer = NodeComposer(file_parsers=[outcar_parser])
     data_obj = composer.compose('dict', quantities=['site_magnetization'])
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
@@ -82,8 +82,8 @@ def test_magnetization_parser(fresh_aiida_env, magnetization_parser):
     assert set(data_dict['site_magnetization']) == set(test)
 
 
-@pytest.mark.parametrize('magnetization_single_parser', ['magnetization'], indirect=True)
-def test_magnetization_single_parser(fresh_aiida_env, magnetization_single_parser):  # pylint: disable=invalid-name
+@pytest.mark.parametrize('outcar_parser', ['magnetization_single'], indirect=True)
+def test_magnetization_single_parser(fresh_aiida_env, outcar_parser):  # pylint: disable=invalid-name
     """
     Test that the magnetization node is a ParametersData instance.
 
@@ -92,14 +92,14 @@ def test_magnetization_single_parser(fresh_aiida_env, magnetization_single_parse
 
     """
 
-    magnetization_single_parser.settings.nodes.update(
+    outcar_parser.settings.nodes.update(
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',
             'quantities': ['site_magnetization']
         }})
 
-    composer = NodeComposer(file_parsers=[magnetization_single_parser])
+    composer = NodeComposer(file_parsers=[outcar_parser])
     data_obj = composer.compose('dict', quantities=['site_magnetization'])
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
