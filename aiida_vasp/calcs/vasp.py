@@ -138,7 +138,7 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST',
+            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
                                                                                default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
