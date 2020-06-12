@@ -114,6 +114,7 @@ class VaspCalculation(VaspCalcBase):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
         spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
         spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
+        spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False, help='The output of the site magnetization')
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(350, 'ERROR_NO_RETRIEVED_FOLDER', message='the retrieved folder data node could not be accessed.')
         spec.exit_code(351,

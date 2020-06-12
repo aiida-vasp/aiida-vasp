@@ -330,7 +330,7 @@ def vasp_wavecar(fresh_aiida_env):
 @pytest.fixture
 def ref_incar():
     with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
-        #yield reference_incar_fo.read().strip()
+        # yield reference_incar_fo.read().strip()
         yield reference_incar_fo.readlines()
 
 
