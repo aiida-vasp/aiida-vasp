@@ -1,92 +1,84 @@
+.. _getting_started:
+
 =================
-AiiDA Vasp Plugin
+AiiDA VASP plugin
 =================
 
-.. image:: https://travis-ci.org/aiida-vasp/aiida-vasp.svg?branch=develop
-    :target: https://travis-ci.org/aiida-vasp/aiida-vasp
+.. |version| image:: https://img.shields.io/pypi/v/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: Stable version
 
-.. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
+.. |status| image:: https://img.shields.io/pypi/status/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: PyPI - Status
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: Supported Python versions
+
+.. |build| image:: https://github.com/aiida-vasp/aiida-vasp/workflows/aiida-vasp/badge.svg
+   :target: https://github.com/aiida-vasp/aiida-vasp/action
+   :alt: Build status
+
+.. |coverage| image:: https://codecov.io/gh/espenfl/aiida-vasp/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/espenfl/aiida-vasp
+   :alt: Test coverage
+
+.. |doc| image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
-   :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
+.. |downloads| image:: https://img.shields.io/pypi/dm/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: PyPI - Downloads/month
 
-This is a plugin to `AiiDA <www.aiida.net/?page_id=264>`_ to run calculations with the ab-initio program `VASP <https://www.vasp.at/>`_.
+.. |commits| image:: https://img.shields.io/github/commit-activity/m/aiida-vasp/aiida-vasp
+   :target: https://github.com/aiida-vasp/aiida-vasp/commits/develop
+   :alt: GitHub commit activity
 
-* `Documentation <https://aiida-vasp.readthedocs.org/en/latest>`_
-* `Changelog <https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md>`_
-
-Install and usage:
-------------------
-
-Install AiiDA
-~~~~~~~~~~~~~
-
-* Download, install and setup -> `aiida's documentation <http://aiida-core.readthedocs.org/en/stable/>`_
-
-Install stable version of the plugin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-   $ pip install aiida-vasp
-  
-Install development version of the plugin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-From the aiida-vasp folder use::
-
-   $ pip install .
-   # or
-   $ pip install -e . # <-- for plugin developers
-
-Troubleshoot
-~~~~~~~~~~~~
-
-To test wether the installation was successful use::
-
-   $ verdi calculation plugins 
-
-   # example output:
-
-   ## Pass as a further parameter one (or more) plugin names
-   ## to get more details on a given plugin.
-   * codtools.cifcellcontents
-   * codtools.cifcodcheck
-   * codtools.cifcodnumbers
-   * codtools.ciffilter
-   * codtools.cifsplitprimitive
-   * quantumespresso.cp
-   * quantumespresso.pw
-   * quantumespresso.pwimmigrant
-   * simpleplugins.templatereplacer
-   * vasp.amn
-   * vasp.scf
-   * vasp.nscf
-   * vasp.vasp
-   * vasp.wannier
-
-You should see vasp.* in the list
-
-Configure the code
-~~~~~~~~~~~~~~~~~~
-
-See `aiida docs <http://aiida-core.readthedocs.org/en/stable/setup/computerandcodes.html#computer-setup-and-configuration>`_
-on how to set up computers and codes. Note that you need at least one computer configured and a VASP executable on it
-in order to use this plugin.
-
-Using this plugin
-~~~~~~~~~~~~~~~~~
-
-For a tryout session, use the script ``run_vasp.py`` in the examples folder. Assuming you have already set up a code and computer, usage is as follows::
-
-   $ python run_vasp.py --help  # shows help message
-   $ # first time you need to import the potentials
-   $ python run_vasp.py --import-from=<path-to-potentials-folder> --queue=<your-compute-queue> <code> <computer>
-     ... will take a while the first time due to importing potentials
-   $ # from  now on you can simply run
-   $ # python run_vasp.py --queue=<queue> <code> <computer>
-   $ verdi calculation list
-     .. should contain a vasp calculation
++---------+-------------------------------+
+| Release | |version| |status| |versions| |
++---------+-------------------------------+
+| Build   | |build| |coverage| |doc|      |
++---------+-------------------------------+
+| Stats   | |downloads| |commits|         |
++---------+-------------------------------+
 
 
+This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
+
+Please have a look at the `AiiDA-VASP documentation`_ for instructions on how to install and use the plugin.
+
+Installing the plugin
+---------------------
+
+#. If you are already using `AiiDA`_, simply activate the virtual environment associated with it, here assumed to be located in ``~/env/aiida-vasp``::
+
+   $ source ~/env/aiida-vasp/bin/activate
+
+#. Otherwise, set up a new virtual environment::
+
+   $ python -m venv ~/env/aiida-vasp
+
+#. And then enable the newly installed virtual environment::
+
+   $ source ~/env/aiida-vasp/bin/activate
+
+#. Install the `AiiDA-VASP`_ plugin (and `AiiDA`_ if that is not already installed)::
+
+   $ (aiida-vasp) pip install aiida-vasp
+
+#. Update the entry points that `AiiDA`_ are using::
+
+   $ (aiida-vasp) reentry scan -r aiida
+
+This will automatically install the `AiiDA`_ python package(s) as well as any other dependencies of the plugin and register all the plugin classes with `AiiDA`_.
+
+Please consider that `AiiDA`_ have prerequisite that needs to be installed and ensured working. The steps above will not take care of this for you. Please consult `AiiDA prerequisites`_ and follow the instructions therein.
+
+.. _AiiDA: https://www.aiida.net
+.. _VASP: https://www.vasp.at
+.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
+.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
+.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
+.. _AiiDA prerequisites: https://aiida-core.readthedocs.io/en/latest/install/prerequisites.html

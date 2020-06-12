@@ -1,0 +1,91 @@
+name: aiida-vasp
+
+on: [push, pull_request]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        python: ['3.8']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Upgrade pip
+        run: |
+          pip install --upgrade pip
+          pip --version
+      - name: Install AiiDA-VASP
+        run:
+          pip install -e .[graphs,dev]
+          pip freeze
+      - name: Run pre-commit
+        run: pre-commit run --all-files || ( git diff; git status; exit 1; )
+  tests:
+    needs: [pre-commit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:10
+        ports:
+          - 5432:5432
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
+    strategy:
+      matrix:
+        python: ['3.6', '3.7', '3.8']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install system dependencies
+        run: |
+          curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+          sudo apt update
+          sudo .ci/enable_ssh_localhost.sh
+          sudo apt install locate
+          sudo updatedb
+          sudo apt install postgresql-10
+      - name: Upgrade pip
+        run: |
+          pip install --upgrade pip
+          pip --version
+      - name: Install Tox
+        run: pip install tox
+      - name: Install Coveralls
+        if: ${{ matrix.python }} == '3.8'
+        run: pip install coveralls
+      - name: Install AiiDA
+        run: pip install -e git+https://github.com/aiidateam/aiida_core#egg=aiida-core
+      - name: Install AiiDA-Wannier90
+        run: pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
+      - name: Install AiiDA-VASP
+        run: |
+          pip install -e .[graphs,dev]
+          pip freeze
+      - name: Remove dot in Python version for passing version to tox
+        uses: frabert/replace-string-action@master
+        id: tox
+        with:
+          pattern: '\.'
+          string: ${{ matrix.python }}
+          replace-with: ''
+      - name: Run tox
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
+      - name: Run coverage from coverage-python by running pytest yet again
+        if: ${{ matrix.python }} == '3.8'
+        run: pytest --cov-report=xml --cov-append --cov=aiida_vasp
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.7
+        with:
+          name: aiida-vasp
+          fail_ci_if_error: true

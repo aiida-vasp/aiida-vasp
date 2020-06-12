@@ -1,5 +1,14 @@
-"""pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args
+"""
+Fixtures related to data.
+
+-------------------------
+Here different pytest fixtures are set up. They typically contain computers,
+VASP inputs etc. which you would need to mock a VASP job in this plugin. It
+also contains the set up of the mock VASP executable, which is used to test the
+workchains.
+"""
+# pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
+# pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg, import-outside-toplevel
 import os
 from collections import OrderedDict
 import subprocess as sp
@@ -9,11 +18,15 @@ import pytest
 from pymatgen.io.vasp import Poscar
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
+from aiida.orm import Computer, FolderData
+from aiida.common.exceptions import NotExistent
+from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.io.incar import IncarIo
-from aiida_vasp.io.poscar import PoscarParser
-from aiida_vasp.io.vasprun import VasprunParser
+from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
@@ -25,37 +38,34 @@ def localhost_dir(tmpdir_factory):
 
 
 @pytest.fixture
-def localhost(aiida_env, localhost_dir):
-    """Fixture for a local computer called localhost"""
-    from aiida.orm import Computer
-    from aiida.orm.querybuilder import QueryBuilder
-    query_builder = QueryBuilder()
-    query_builder.append(Computer, tag='comp')
-    query_builder.add_filter('comp', {'name': {'==': 'localhost'}})
-    query_results = query_builder.all()
-    if query_results:
-        computer = query_results[0][0]
-    else:
-        computer = Computer(
-            name='localhost',
-            description='description',
-            hostname='localhost',
-            workdir=localhost_dir.strpath,
-            transport_type='local',
-            scheduler_type='direct',
-            mpirun_command=[],
-            enabled_state=True)
+def localhost(fresh_aiida_env, localhost_dir):
+    """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
+    try:
+        computer = Computer.objects.get(name='localhost')
+    except NotExistent:
+        computer = Computer(name='localhost',
+                            hostname='localhost',
+                            transport_type='local',
+                            scheduler_type='direct',
+                            workdir=localhost_dir.strpath).store()
     return computer
 
 
 @pytest.fixture
-def vasp_params(aiida_env):
-    incar_io = IncarIo(incar_dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
-    return incar_io.get_param_node()
+def vasp_params(fresh_aiida_env):
+    incar_data = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    return incar_data
 
 
 @pytest.fixture
-def potcar_node_pair(aiida_env):
+def vasp2w90_params(fresh_aiida_env, vasp_params):
+    vasp_params_data = vasp_params()
+    incar_data = get_data_class('dict')(dict=vasp_params_data.get_dict().update({'lwannier90': True}))
+    return incar_data
+
+
+@pytest.fixture
+def potcar_node_pair(fresh_aiida_env):
     """Create a POTCAR node pair."""
     potcar_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
@@ -67,10 +77,9 @@ def potcar_node_pair(aiida_env):
 def temp_pot_folder(tmpdir):
     """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
-    print potcar_ga.strpath
     assert not potcar_ga.exists()
     pot_archive = py_path.local(data_path('potcar'))
-    target = tmpdir.join('potcar')
+    target = tmpdir.join('potentials')
     pot_archive.copy(target)
     return target
 
@@ -81,16 +90,16 @@ def duplicate_potcar_data(potcar_node):
     from aiida_vasp.data.potcar import temp_potcar
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
-        file_node.set_file(potcar_file.strpath)
-        file_node._set_attr('md5', 'abcd')
-        file_node._set_attr('full_name', potcar_node.full_name)
+        file_node.add_file(potcar_file.strpath)
+        file_node.set_attribute('sha512', 'abcd')
+        file_node.set_attribute('full_name', potcar_node.full_name)
         file_node.store()
     data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
     return data_node
 
 
 @pytest.fixture
-def potcar_family(aiida_env, temp_pot_folder):
+def potcar_family(fresh_aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
     potcar_ga = py_path.local(data_path('potcar')).join('Ga')
     family_name = POTCAR_FAMILY_NAME
@@ -112,7 +121,7 @@ def potcar_family(aiida_env, temp_pot_folder):
 
 @pytest.fixture
 def potentials(potcar_family):
-    """Fixture for two incomplete POTPAW potentials"""
+    """Fixture for two incomplete POTPAW potentials."""
     potcar_cls = get_data_class('vasp.potcar')
     potentials = potcar_cls.get_potcars_dict(['In', 'In_d', 'As'], family_name=potcar_family, mapping=POTCAR_MAP)
 
@@ -120,12 +129,11 @@ def potentials(potcar_family):
 
 
 @pytest.fixture(params=['cif', 'str'])
-def vasp_structure(request, aiida_env):
-    """Fixture: StructureData or CifData"""
-    from aiida_vasp.backendtests.common import subpath
-    from aiida.orm import DataFactory
+def vasp_structure(request, fresh_aiida_env):
+    """Fixture: StructureData or CifData."""
+    from aiida.plugins import DataFactory
     if request.param == 'cif':
-        cif_path = subpath('data', 'EntryWithCollCode43360.cif')
+        cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
         structure = DataFactory('cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
         larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
@@ -155,7 +163,7 @@ def vasp_structure(request, aiida_env):
 
 @pytest.fixture()
 def vasp_structure_poscar(vasp_structure):
-    """Fixture: Well formed POSCAR contents"""
+    """Fixture: Well formed POSCAR contents."""
     aiida_structure = vasp_structure
     if isinstance(vasp_structure, get_data_class('cif')):
         ase_structure = vasp_structure.get_ase()
@@ -165,9 +173,9 @@ def vasp_structure_poscar(vasp_structure):
 
 
 @pytest.fixture(params=['mesh', 'list'])
-def vasp_kpoints(request, aiida_env):
-    """Fixture: (kpoints object, resulting KPOINTS)"""
-    from aiida.orm import DataFactory
+def vasp_kpoints(request, fresh_aiida_env):
+    """Fixture: (kpoints object, resulting KPOINTS)."""
+    from aiida.plugins import DataFactory
     if request.param == 'mesh':
         kpoints = DataFactory('array.kpoints')()
         kpoints.set_kpoints_mesh([2, 2, 2])
@@ -177,6 +185,82 @@ def vasp_kpoints(request, aiida_env):
         kpoints.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
         ref_kpoints = _ref_kp_list()
     return kpoints, ref_kpoints
+
+
+@pytest.fixture()
+def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
+    """Inputs dictionary for CalcJob Processes."""
+    from aiida.orm import Dict
+
+    def inner(settings=None, parameters=None):
+
+        inputs = AttributeDict()
+
+        metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
+
+        if settings is not None:
+            inputs.settings = Dict(dict=settings)
+
+        if isinstance(parameters, dict):
+            parameters = get_data_class('dict')(dict=parameters)
+
+        if parameters is None:
+            parameters = vasp_params
+
+        inputs.code = vasp_code
+        inputs.metadata = metadata
+        inputs.parameters = parameters
+        inputs.kpoints, _ = vasp_kpoints
+        inputs.structure = vasp_structure
+        inputs.potential = potentials
+
+        return inputs
+
+    return inner
+
+
+@pytest.fixture()
+def vasp2w90_inputs(
+        fresh_aiida_env,
+        vasp_params,
+        vasp_kpoints,
+        vasp_structure,
+        potentials,
+        vasp_code,
+        wannier_projections,
+        wannier_params,
+):  # pylint: disable=too-many-arguments
+    """Inputs dictionary for CalcJob Processes."""
+    from aiida.orm import Dict
+
+    def inner(settings=None, parameters=None):
+
+        inputs = AttributeDict()
+
+        metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
+
+        if settings is not None:
+            inputs.settings = Dict(dict=settings)
+
+        if isinstance(parameters, dict):
+            parameters = get_data_class('dict')(dict=parameters)
+
+        if parameters is None:
+            parameters = vasp_params
+
+        inputs.code = vasp_code
+        inputs.metadata = metadata
+        inputs.parameters = parameters
+        inputs.kpoints, _ = vasp_kpoints
+        inputs.structure = vasp_structure
+        inputs.potential = potentials
+
+        inputs.wannier_parameters = wannier_params
+        inputs.wannier_projections = wannier_projections
+
+        return inputs
+
+    return inner
 
 
 @pytest.fixture()
@@ -194,7 +278,7 @@ def vasp_code(localhost):
 
 
 @pytest.fixture()
-def mock_vasp(aiida_env, localhost):
+def mock_vasp(fresh_aiida_env, localhost):
     """Points to a mock-up of a VASP executable."""
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
@@ -208,23 +292,24 @@ def mock_vasp(aiida_env, localhost):
         os_env = os.environ.copy()
         if not localhost.pk:
             localhost.store()
-        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env).strip()
+        # returns unicode
+        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env, universal_newlines=True).strip()
         code = Code()
         code.label = 'mock-vasp'
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
-        aiidapath = py_path.local(aiida_env.root_dir).join('.aiida')
+        aiidapath = py_path.local(fresh_aiida_env._manager.root_dir).join('.aiida')
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
+
     return code
 
 
 @pytest.fixture()
-def vasp_chgcar(aiida_env):
-    """CHGCAR node and reference fixture"""
-    from aiida.orm import DataFactory
-    from aiida_vasp.backendtests.common import subpath
-    chgcar_path = subpath('data', 'CHGCAR')
+def vasp_chgcar(fresh_aiida_env):
+    """CHGCAR node and reference fixture."""
+    from aiida.plugins import DataFactory
+    chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r') as ref_chgcar_fo:
         ref_chgcar = ref_chgcar_fo.read()
@@ -232,11 +317,10 @@ def vasp_chgcar(aiida_env):
 
 
 @pytest.fixture()
-def vasp_wavecar(aiida_env):
-    """WAVECAR node and reference fixture"""
-    from aiida.orm import DataFactory
-    from aiida_vasp.backendtests.common import subpath
-    wavecar_path = subpath('data', 'WAVECAR')
+def vasp_wavecar(fresh_aiida_env):
+    """WAVECAR node and reference fixture."""
+    from aiida.plugins import DataFactory
+    wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
@@ -245,14 +329,14 @@ def vasp_wavecar(aiida_env):
 
 @pytest.fixture
 def ref_incar():
-    from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data', 'INCAR'), 'r') as reference_incar_fo:
-        yield reference_incar_fo.read().strip()
+    with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
+        # yield reference_incar_fo.read().strip()
+        yield reference_incar_fo.readlines()
 
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = py_path.local(data_path('incar_set', 'INCAR.vasp2w90'))
+    data = py_path.local(data_path('wannier', 'INCAR'))
     yield data.read()
 
 
@@ -263,44 +347,52 @@ def ref_win():
 
 
 @pytest.fixture()
-def ref_retrieved_nscf():
-    """Fixture: retrieved directory from an NSCF vasp run"""
-    from aiida.orm import DataFactory
-    from aiida_vasp.backendtests.common import subpath
+def ref_retrieved():
+    """Fixture: retrieved directory from an NSCF vasp run."""
+    from aiida.plugins import DataFactory
     retrieved = DataFactory('folder')()
-    for fname in os.listdir(subpath('data', 'retrieved_nscf', 'path')):
-        retrieved.add_path(subpath('data', 'retrieved_nscf', 'path', fname), '')
+    retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
 
 
 @pytest.fixture(params=['vasprun'])
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
-    from aiida_vasp.parsers.parser_settings import ParserSettings
+    from aiida_vasp.parsers.settings import ParserSettings
+    from aiida_vasp.calcs.vasp import VaspCalculation
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)
     parser = VasprunParser(file_path=path, settings=ParserSettings({}))
+    parser._vasp_parser = VaspCalculation
+    return parser
+
+
+@pytest.fixture()
+def outcar_parser(request):
+    """Return an instance of OutcarParser for a reference OUTCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = 'OUTCAR'
+    path = data_path(request.param, file_name)
+    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
     return parser
 
 
 def _ref_kp_list():
-    from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data', 'KPOINTS.list'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_list'), 'r') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
-    from aiida_vasp.backendtests.common import subpath
-    with open(subpath('data', 'KPOINTS.mesh'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_mesh'), 'r') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
 
 
 @pytest.fixture
 def wannier_params():
-    from aiida.orm.data.parameter import ParameterData
-    return ParameterData(dict=dict(
+    from aiida.orm import Dict
+    return Dict(dict=dict(
         dis_num_iter=1000,
         num_bands=24,
         num_iter=0,
@@ -311,7 +403,7 @@ def wannier_params():
 
 @pytest.fixture
 def wannier_projections():
-    from aiida.orm.data.base import List
+    from aiida.orm import List
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections

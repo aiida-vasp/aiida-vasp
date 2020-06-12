@@ -1,0 +1,5 @@
+{
+    "workchain_name": "testchain",
+    "workchain_docstring": "This workchain is a testchain",
+    "next_workchain_to_call": "vasp.vasp"
+}

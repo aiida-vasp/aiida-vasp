@@ -106,4 +106,3 @@ The following parameters are specific to this calculation or have changed semant
 * windows: list of dicts, each dict follows the format {'outer': [min, max], 'inner': [min, max]}
 * wannier_resources: overrides resources for wannier calculations
 * wannier_queue: overrides queue for wannier calculations (it's possible to have VASP and wannier on separate computers)
-

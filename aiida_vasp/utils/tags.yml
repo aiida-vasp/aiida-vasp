@@ -1,0 +1,3516 @@
+---
+addgrid:
+  default: false
+  description: ADDGRID determines whether an additional support grid is used for the
+    evaluation of the augmentation charges.
+  type: null
+  values:
+  - true
+  - false
+aexx:
+  default: null
+  description: AEXX specifies the fraction of exact exchange in a Hartree-Fock/DFT
+    hybrid functional type calculation.
+  type: float
+  values: null
+aggac:
+  default: '1.0'
+  description: AGGAC specifies the fraction of gradient corrections to the correlation
+    in a Hartree-Fock/DFT hybrid functional type calculation.
+  type: float
+  values: null
+aggax:
+  default: 1.0-AEXX
+  description: AGGAX specifies the fraction of gradient corrections to the exchange
+    in a Hartree-Fock/DFT hybrid functional type calculation.
+  type: float
+  values: null
+aldac:
+  default: '1.0'
+  description: ALDAC specifies the fraction of LDA correlation in a Hartree-Fock/DFT
+    hybrid functional type calculation.
+  type: float
+  values: null
+aldax:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+algo:
+  default: Normal
+  description: the ALGO tag is a convenient option to specify the electronic minimisation
+    algorithm (as of VASP.4.5) and/or to select the type of [[GW calculations]].
+  type: null
+  values:
+  - Normal
+  - VeryFast
+  - Fast
+  - Conjugate
+  - All
+  - Damped
+  - Subrot
+  - Eigenval
+  - Exact
+  - None
+  - Nothing
+  - CHI
+  - G0W0
+  - GW0
+  - GW
+  - scGW0
+  - scGW
+  - G0W0R
+  - GW0R
+  - GWR
+  - scGW0R
+  - scGWR
+  - ACFDT
+  - RPA
+  - ACFDTR
+  - RPAR
+  - BSE
+  - TDHF
+amin:
+  default: min(0.1,AMIX,AMIX_MAG)
+  description: AMIN specifies the minimal mixing parameter in Kerker's<ref name="kerker:prb:81"/>
+    initial approximation to the charge dielectric function used in the Broyden<ref
+    name="bluegel:thesis:88"/><ref name="johnson:prb:88"/>/Pulay<ref name="pulay:cpl:80"/>
+    mixing scheme (IMIX=4, INIMIX=1).
+  type: float
+  values: null
+amix:
+  default: null
+  description: AMIX specifies the linear mixing parameter.
+  type: float
+  values: null
+amix_mag:
+  default: '1.6'
+  description: AMIX_MAG linear mixing parameter for the magnetization density.
+  type: float
+  values: null
+andersen_prob:
+  default: '0'
+  description: ANDERSEN_PROB sets the collision probability for the Anderson thermostat
+    (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+antires:
+  default: '0'
+  description: The flag ANTIRES determines whether the Tamm-Dancoff approximation
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+apaco:
+  default: '16'
+  description: APACO sets the maximum distance in the evaluation of the pair-correlation
+    function (in &Aring;).
+  type: float
+  values: null
+auger_bmax_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_bmax_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_bmin_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_bmin_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_ecblo:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_edens:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_efermi:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_emax_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_emax_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_emin_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_emin_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_evbhi:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_ewidth:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_hdens:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_occ_fac_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_occ_fac_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+auger_temp:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+avecconst:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+avgap:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+bconst:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+bext:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+bmix:
+  default: '1.0'
+  description: BMIX sets the cutoff wave vector for Kerker mixing scheme<ref name="kerker:prb:81"/>
+    (IMIX=1 and/or INIMIX=1).
+  type: float
+  values: null
+bmix_mag:
+  default: '1.0'
+  description: BMIX_MAG sets the cutoff wave vector for Kerker mixing scheme<ref name="kerker:prb:81"/>
+    (IMIX=1 and/or INIMIX=1) for the magnetization density.
+  type: float
+  values: null
+bparam:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ch_amplification:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ch_jdoscorehole:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ch_lspec:
+  default: false
+  description: This flag controls whether the imaginary part of the dielectric function
+    for a selected core electron is calculated and written to the OUTCAR file.
+  type: null
+  values: null
+ch_nedos:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ch_sigma:
+  default: '1.0'
+  description: This tag specifies the broadening in eV of the imaginary dielectric
+    function for a core electron.
+  type: float
+  values: null
+cll:
+  default: null
+  description: CLL selects the angular (l) quantum number of the excited electron
+    when using ICORELEVEL.
+  type: integer
+  values: null
+cln:
+  default: null
+  description: CLN selects the main quantum number of the excited electron when using
+    ICORELEVEL.
+  type: integer
+  values: null
+clnt:
+  default: null
+  description: CLNT selects for which species the core levels are calculated using
+    the tag ICORELEVEL.
+  type: integer
+  values: null
+clz:
+  default: null
+  description: CLZ selects the electron count of the excited electron when using ICORELEVEL.
+  type: float
+  values: null
+cmbj:
+  default: calculated selfconsistently
+  description: defined the ''c'' parameter in the modified Becke-Johnson meta-GGA
+    potential.
+  type: null
+  values: null
+cmbja:
+  default: '&minus;0.012'
+  description: sets the &alpha; parameter in the modified Becke-Johnson meta-GGA potential.
+  type: float
+  values: null
+cmbjb:
+  default: '1.023'
+  description: sets the &beta; parameter in the modified Becke-Johnson meta-GGA potential.
+  type: float
+  values: null
+cnexp:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+cparam:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+cshift:
+  default: null
+  description: CSHIFT sets the (small) complex shift &eta; in the [[LOPTICS#kramerskronig|Kramers-Kronig
+    transformation]].
+  type: float
+  values: null
+darwinr:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+darwinv:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+deg_threshold:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+deper:
+  default: '0.3'
+  description: DEPER specifies a relative stopping criterion for the optimization
+    of an eigenvalue.
+  type: float
+  values: null
+dfield:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dim:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dimer_dist:
+  default: '0.01'
+  description: The flag DIMER_DIST defines the step size for the numerical differentiation
+    (in <math>\AA</math>) for the Improved Dimer Method.
+  type: float
+  values: null
+dipol:
+  default: null
+  description: specifies the center of the cell in direct lattice coordinates with
+    respect to which the total dipole-moment in the cell is calculated.
+  type: float list
+  values: null
+dq:
+  default: '0.001'
+  description: step size for the finite difference ''k''-space derivative in the linear
+    response calculation of chemical shifts.
+  type: float
+  values: null
+dummy_k:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dummy_mass:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dummy_positions:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dummy_r0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvdelta0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvehistory:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvmaxpotim:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvminpotim:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvminus:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+dvvvnorm0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ebreak:
+  default: EDIFF/NBANDS/4
+  description: EBREAK specifies an absolute stopping criterion for the optimization
+    of an eigenvalue.
+  type: float
+  values: null
+ediff:
+  default: <math>10^-4</math>
+  description: EDIFF specifies the global break condition for the electronic SC-loop.
+  type: float
+  values: null
+ediffg:
+  default: EDIFF&times;10
+  description: EDIFFG defines the break condition for the ionic relaxation loop.
+  type: float
+  values: null
+efermi:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+efield:
+  default: null
+  description: EFIELD controls the size of the applied electric field.
+  type: float
+  values: null
+efield_pead:
+  default: null
+  description: EFIELD_PEAD specifies the homogeneous electric field in the electric
+    enthalpy functional used to compute the [[Berry_phases_and_finite_electric_fields#Self-consistent_response_to_finite_electric_fields|self-consistent
+    response to finite electric fields]].
+  type: float list
+  values: null
+eint:
+  default: not set
+  description: Specifies the energy range of the bands that are used for the evaluation
+    of the partial charge density needed in Band decomposed charge densities. Check
+    also NBMOD and IBAND.
+  type: null
+  values: null
+emax:
+  default: null
+  description: EMAX specifies the  upper boundary of the energy range
+  type: float
+  values: null
+emin:
+  default: null
+  description: EMAX specifies the  lower boundary of the energy range
+  type: float
+  values: null
+enaug:
+  default: largest EAUG read from the FILE
+  description: ENAUG specifies the cut-off energy of the plane wave representation
+    of the augmentation charges in eV.
+  type: float
+  values: null
+enchg:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+encut:
+  default: null
+  description: ENCUT specifies the cutoff energy for the planewave basis set in eV.
+  type: float
+  values: null
+encut4o:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+encutae:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+encutfock:
+  default: null
+  description: The ENCUTFOCK tag sets the energy cutoff that determines the FFT grids
+    used by the Hartree-Fock routines.
+  type: float
+  values: null
+encutgw:
+  default: 2/3 ENCUT
+  description: The tag ENCUTGW sets the energy cutoff for response function. It controls
+    the basis set for the response functions
+  type: float
+  values: null
+encutgwlow:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+encutgwsoft:
+  default: null
+  description: null
+  type: float
+  values: null
+encutlf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+encutsubrotscf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+engine:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+enini:
+  default: ENCUT
+  description: ENINI controls the cutoff during the initial (steepest descent) phase
+    for IALGO=48.
+  type: float
+  values: null
+enmax:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+epsilon:
+  default: '1'
+  description: EPSILON sets the dielectric constant of the medium.
+  type: float
+  values: null
+equi_regime:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+eref:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+esemicore:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+estop:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+evenonly:
+  default: false
+  description: EVENONLY=.TRUE. selects a subset of '''k'''-points for the representation
+    of the Fock exchange potential, with ''C''<sub>1</sub>=''C''<sub>2</sub>=''C''<sub>3</sub>=1,
+    and ''n''<sub>1</sub>+''n''<sub>2</sub>+''n''<sub>3</sub> even.
+  type: null
+  values:
+  - true
+  - false
+evenonlygw:
+  default: false
+  description: EVENONLYGW allows to restrict the k-points in the evaluation of response
+    functions (in GW calculations) to even values.
+  type: null
+  values: null
+external_pressure:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+external_stress:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+exxoep:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+fbias_a:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+fbias_d:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+fbias_r0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ferdo:
+  default: null
+  description: FERDO sets the occupancies of the states in the down-spin channel for
+    ISMEAR=-2 and ISPIN=2.
+  type: float list
+  values: null
+ferwe:
+  default: null
+  description: FERWE sets the occupancies of the states for ISMEAR=-2.
+  type: float list
+  values: null
+findiff:
+  default: '1'
+  description: The flag DIMER_DIST defines whether a forward (FINDIFF=1) or a central
+    (FINDIFF=2) difference formula for the numerical differentiation to compute the
+    curvature along the dimer direction is used in the Improved Dimer Method.
+  type: integer
+  values: null
+fletcher_reeves:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+fourorbit:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+gga:
+  default: type of exchange-correlation in accordance with the FILE
+  description: GGA specifies the type of generalized-gradient-approximation one wishes
+    to use.
+  type: null
+  values:
+  - '91'
+  - PE
+  - RP
+  - PS
+  - AM
+gga_compat:
+  default: true
+  description: This flag restores the full lattice symmetry for gradient corrected
+    functionals.
+  type: null
+  values:
+  - true
+  - false
+griddeviation:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hfalpha:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hfkident:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hflmax:
+  default: '4'
+  description: To be compatible w.r.t. old releases, VASP also reads the flag HFLMAX
+    to the same effect as LMAXFOCK.
+  type: integer
+  values: null
+hfrcut:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hfscreen:
+  default: none
+  description: HFSCREEN specifies the range-separation parameter in [[Hartree-Fock_and_HF/DFT_hybrid_functionals#range_separated|range
+    separated hybrid functionals]].
+  type: float
+  values: null
+hfscreenc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_andersen_prob:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_bin:
+  default: NSW
+  description: HILLS_BIN sets the number of steps after which the bias potential is
+    updated in a metadynamics run (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+hills_h:
+  default: <math>10^-3</math>
+  description: HILLS_H specifies the height of the Gaussian hill (in eV) used in metadynamics
+    (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+hills_k:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_m:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_maxstride:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_position:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_sqq:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_stride:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_temperature:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_variable_w:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_velocity:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_w:
+  default: <math>10^-3</math>
+  description: HILLS_W specifies the width of the Gaussian hill (in units of the corresponding
+    collective variable) used in metadynamics (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+hills_wall_lower:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hills_wall_upper:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+hitoler:
+  default: <math>5\times10^-5</math>
+  description: HITOLER specifies the convergence parameter for iterative Hirschfeld
+    partitioning (DFT-TS/HI).
+  type: float
+  values: null
+i_constrained_m:
+  default: none
+  description: I_CONSTRAINED_M switches on the constrained local moments approach.
+  type: null
+  values:
+  - '1'
+  - '2'
+ialgo:
+  default: null
+  description: IALGO selects the algorithm used to optimize the orbitals.
+  type: null
+  values:
+  - '-1'
+  - 2-4
+  - 5-8
+  - 15-18
+  - '28'
+  - '38'
+  - 44-48
+  - 53-58
+iband:
+  default: null
+  description: Controls which bands are used in the calculation of Band decomposed
+    charge densities. Check also NBMOD and EINT.
+  type: integer list
+  values: null
+ibrion:
+  default: null
+  description: IBRION determines how the ions are updated and moved.
+  type: null
+  values:
+  - '-1'
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '44'
+ibse:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+icharg:
+  default: null
+  description: ICHARG determines how VASP constructs the ''initial'' charge density.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '4'
+ichibare:
+  default: '1'
+  description: determines the order of the finite difference stencil used to calculate
+    the magnetic susceptibility.
+  type: null
+  values:
+  - '1'
+  - '2'
+  - '3'
+icorelevel:
+  default: '0'
+  description: ICORELEVEL controls whether the core energies are explicitely calculated
+    or not and how they are calculated.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+idiot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+idipol:
+  default: null
+  description: IDIPOL switches on monopole/dipole and quadrupole corrections to the
+    total energy.
+  type: null
+  values:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+iepsilon:
+  default: null
+  description: The flag IEPSILON determines along which Cartesien the
+  type: null
+  values:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+igpar:
+  default: null
+  description: NPPSTR specifies the number of k-points on the strings in the IGPAR
+    direction.
+  type: integer
+  values: null
+images:
+  default: '0'
+  description: IMAGES defines the number of interpolated geometries between the initial
+    and final state in Elastic Band calculations
+  type: integer
+  values: null
+imix:
+  default: '4'
+  description: IMIX specifies the type of mixing.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '4'
+increm:
+  default: '0'
+  description: INCREM controls the transformation velocity in the slow-growth approach
+    (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: float list
+  values: null
+inimix:
+  default: '1'
+  description: INIMIX determines the functional form of the initial mixing matrix
+    in the Broyden scheme (IMIX=4).
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+iniwav:
+  default: null
+  description: INIWAV specifies how to set up the initial orbitals in case ISTART=0.
+  type: null
+  values:
+  - '0'
+  - '1'
+interactive:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ipead:
+  default: '4'
+  description: IPEAD specifies the order of the finite difference stencil used to
+    compute the derivative of the cell-periodic part of the orbitals w.r.t. '''k''',
+    |&nabla;<sub>'''k'''</sub>u<sub>n'''k'''</sub>&rang; (LPEAD=.TRUE.), and the derivative
+    of the polarization w.r.t. the orbitals, &delta;'''P'''/&delta;&lang;&psi;<sub>n'''k'''</sub>|
+    for (LCALCEPS=.TRUE., or EFIELD_PEAD&ne;'''0''').
+  type: null
+  values:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+irc_delta0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irc_direction:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irc_maxstep:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irc_minstep:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irc_stop:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irc_vnorm0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+irestart:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+isif:
+  default: null
+  description: ISIF determines whether the stress tensor is calculated and which principal
+    degrees-of-freedom are allowed to change in relaxation and molecular dynamics
+    runs.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+ismear:
+  default: '1'
+  description: ISMEAR determines how the partial occupancies ''f''<sub>n'''k'''</sub>
+    are set for each orbital. SIGMA determines the width of the smearing in eV.
+  type: null
+  values:
+  - '-5'
+  - '-4'
+  - '-3'
+  - '-2'
+  - '-1'
+  - '0'
+  - '[integer]>0'
+isp_index:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+isp_out:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ispin:
+  default: '1'
+  description: ISPIN specifies spin polarization.
+  type: null
+  values:
+  - '1'
+  - '2'
+istart:
+  default: null
+  description: ISTART determines whether or not to read the WAVECAR file.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+isym:
+  default: null
+  description: ISYM determines the way VASP treats symmetry.
+  type: null
+  values:
+  - '-1'
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+itim:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+itmaxlsq:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ivdw:
+  default: '0'
+  description: This tag controls whether vdW corrections are calculated or not. If
+    they are calculated IVDW controls how they are calculated.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '10'
+  - '11'
+  - '12'
+  - '2'
+  - '20'
+  - '21'
+  - '202'
+  - '4'
+iwavpr:
+  default: null
+  description: IWAVPR determines how orbitals and/or charge densities
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+jatom:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kblock:
+  default: NSW
+  description: After KBLOCK*NBLOCK main loops the averaged pair correlation function
+    and DOS are written to the files PCDAT  and DOSCAR
+  type: integer
+  values: null
+kblowup:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kgamma:
+  default: false
+  description: This tag controls whether the frequency dependent self-energy is calculated
+    or not.
+  type: null
+  values: null
+kimages:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kinter:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kpar:
+  default: '1'
+  description: KPAR determines the number of '''k'''-points that are to be treated
+    in parallel (available as of VASP.5.3.2).
+  type: integer
+  values: null
+kpoint_bse:
+  default: null
+  description: null
+  type: null
+  values: null
+kproj_threshold:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kpts_index:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kpts_out:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+kpuse:
+  default: not set
+  description: Specifies which k-points are used in the evaluation of the partial
+    dos (Band decomposed charge densities).
+  type: integer list
+  values: null
+kspacing:
+  default: '0.5'
+  description: The tag  KSPACING determines the number of k-points if the KPOINTS
+    file
+  type: float
+  values: null
+l2order:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+l_wr_density:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+l_wr_moments:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ladaptelin:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ladder:
+  default: .NOT. LRPA
+  description: Controls whether the ladder diagrams are included in the BSE calculation.
+    Note that the default
+  type: null
+  values: null
+laddherm:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+laechg:
+  default: false
+  description: when LAECHG=.TRUE. the ''all-electron'' charge density will be reconstructed
+    explicitly and written out to file.
+  type: null
+  values:
+  - true
+  - false
+lambda:
+  default: '0'
+  description: LAMBDA sets the weight with which the penalty terms of the constrained
+    local moment approach enter into the total energy expression and the Hamiltonian.
+  type: float
+  values: null
+langevin_gamma:
+  default: NTYP&times;0
+  description: LANGEVIN_GAMMA specifies the friction coefficients (in ps<sup>-1</sup>)
+    for atomic degrees-of-freedom when using a Langevin thermostat (in case VASP was
+    compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+langevin_gamma_l:
+  default: '0'
+  description: LANGEVIN_GAMMA_L specifies the friction coefficient (in ps<sup>-1</sup>)
+    for lattice degrees-of-freedom in case of Parrinello-Rahman dynamics (in case
+    VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+lasph:
+  default: false
+  description: include non-spherical contributions related to the gradient of the
+    density in the PAW spheres.
+  type: null
+  values:
+  - true
+  - false
+lasync:
+  default: false
+  description: This tag controls the overlap in communication.
+  type: null
+  values: null
+lattice_constraints:
+  default: null
+  description: The tag LATTICE_CONSTRAINTS determines whether the lattice dynamics
+    are released (LATTICE_CONSTRAINTS=''.TRUE.'') in the given directions or not in
+    the Interface pinning method.
+  type: null
+  values: null
+lauger:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lauger_collect:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lauger_dhdk:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lauger_eeh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lauger_ehh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lauger_jit:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lbeefbas:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lbeefens:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lberry:
+  default: false
+  description: This tag is used in the the evaluation of the Berry phase expression
+    for the electronic polarization of an insulating system.
+  type: null
+  values: null
+lbfconst:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lblueout:
+  default: false
+  description: for LBLUEOUT=.TRUE., VASP writes output for the free-energy gradient
+    calculation to the REPORT-file (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values:
+  - true
+  - false
+lbone:
+  default: false
+  description: LBONE calculates the two-center contributions to the chemical shift
+    tensor.
+  type: null
+  values:
+  - true
+  - false
+lcalceps:
+  default: false
+  description: for LCALCEPS=.TRUE. the macroscopic ion-clamped static dielectric tensor,
+    Born effective charge tensors, and the ion-clamped piezoelectric tensor of the
+    system are determined from the response to finite electric fields.
+  type: null
+  values:
+  - true
+  - false
+lcalcpol:
+  default: false
+  description: LCALCPOL=.TRUE.  switches on the evaluation of the Berry phase expressions
+    for the macroscopic electronic polarization in accordance with the so-called [[Berry_phases_and_finite_electric_fields#Modern_Theory_of_Polarization|Modern
+    Theory of Polarization]].
+  type: null
+  values:
+  - true
+  - false
+lcfdm:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lcharg:
+  default: true
+  description: LCHARG determines whether the charge densities (files CHGCAR and CHG)
+    are written.
+  type: null
+  values: null
+lchargh5:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lchgfit:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lchimag:
+  default: false
+  description: calculate the chemical shifts by means of linear response.
+  type: null
+  values:
+  - true
+  - false
+lcompat:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lcorr:
+  default: true
+  description: Controls whether Harris corrections are calculated or not.
+  type: null
+  values: null
+lcrpaplot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldau:
+  default: false
+  description: LDAU=.TRUE. switches on the L(S)DA+U.
+  type: null
+  values:
+  - true
+  - false
+ldauj:
+  default: NTYP*0.0
+  description: LDAUJ specifies the strength of the effective on-site exchange interactions.
+  type: float list
+  values: null
+ldaul:
+  default: NTYP*2
+  description: LDAUL specifies the ''l''-quantum number for which the on-site interaction
+    is added.
+  type: integer list
+  values: null
+ldauprint:
+  default: '0'
+  description: LDAUPRINT controls the verbosity of the L(S)DA+U routines.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+ldautype:
+  default: '2'
+  description: LDAUTYPE specifies which type of L(S)DA+U approach will be used.
+  type: null
+  values:
+  - '1'
+  - '2'
+  - '4'
+ldauu:
+  default: NTYP*0.0
+  description: LDAUU specifies the strength of the effective on-site Coulomb interactions.
+  type: float list
+  values: null
+ldiag:
+  default: true
+  description: This tag determines whether a subspace diagonalization is performed
+    or not within the main algorithm selected by IALGO.
+  type: null
+  values: null
+ldipol:
+  default: false
+  description: LDIPOL switches on corrections to the potential and forces in VASP.
+    Can be applied for charged molecules and  molecules and slabs with a net dipole
+    moment.
+  type: null
+  values:
+  - true
+  - false
+ldisentangled:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldmatrix:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldmp1:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldownsample:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldrude:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ldyson:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lefg:
+  default: false
+  description: The LEFG Computes the Electric Field Gradient at positions of the atomic
+    nuclei.
+  type: null
+  values:
+  - true
+  - false
+lelf:
+  default: false
+  description: LELF determines whether to create an
+  type: null
+  values:
+  - true
+  - false
+lelph:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lelph_testing:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lepsilon:
+  default: false
+  description: LEPSILON=.TRUE. determines the static dielectric matrix, ion-clamped
+    piezoelectric tensor and the Born effective charges using density functional perturbation
+    theory.
+  type: null
+  values:
+  - true
+  - false
+lfciinput:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfermigw:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfinite_temperature:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfockace:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfockaedft:
+  default: false
+  description: LFOCKAEDFT forces VASP to use the same charge augmentation
+  type: null
+  values: null
+lfxc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfxceps:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lfxheg:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lgauge:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lgausrc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lgwlf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lh5:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lhartree:
+  default: true
+  description: Controls whether the bubble diagrams are included in the BSE calculation.
+  type: null
+  values: null
+lhfcalc:
+  default: false
+  description: LHFCALC specifies whether Hartree-Fock/DFT hybrid functional type calculations
+    are performed.
+  type: null
+  values:
+  - true
+  - false
+lhfone:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lhyperfine:
+  default: false
+  description: compute the hyperfine tensors at the atomic sites (available as of
+    vasp.5.3.2).
+  type: null
+  values:
+  - true
+  - false
+lidm_selective:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ligrids:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+linterfast:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_conductivity:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_kpath:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_kpath_orb:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_orb:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_velocity:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lintpol_wpot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lj_epsilon:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lj_only:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lj_radius:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lj_sigma:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lkotani:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lkproj:
+  default: false
+  description: switches on the '''k'''-point projection scheme.
+  type: null
+  values:
+  - true
+  - false
+llraug:
+  default: false
+  description: LLRAUG adds the small ''B''-component to the chemical shift tensor.
+  type: null
+  values:
+  - true
+  - false
+lmagbloch:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmatchrw:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmaxfock:
+  default: '4'
+  description: LMAXFOCK sets the maximum angular momentum quantum number ''L'' for
+    the augmentation of charge densities in Hartree-Fock type routines.
+  type: integer
+  values: null
+lmaxfockae:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmaxmix:
+  default: '2'
+  description: LMAXMIX controls up to which ''l''-quantum number the one-center PAW
+    charge densities are passed through the charge density mixer and written to the
+    CHGCAR file.
+  type: integer
+  values: null
+lmaxmp2:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmaxpaw:
+  default: 2''l''<sub> max</sub>, where ''l''<sub> max</sub> is the maximum angular
+    quantum number of the PAW partial waves in the FILE
+  description: LMAXPAW sets the maximum ''l'' -quantum number for the evaluation of
+    the one-center terms on the radial support grids in the PAW method.
+  type: integer
+  values: null
+lmaxtau:
+  default: null
+  description: LMAXTAU is the maximum ''l''-quantum number included in the PAW one-center
+    expansion of the kinetic energy density.
+  type: integer
+  values: null
+lmetagga:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmimicfc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmixtau:
+  default: false
+  description: send the kinetic energy density through the density mixer as well.
+  type: null
+  values:
+  - true
+  - false
+lmodelhf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmono:
+  default: false
+  description: LMONO switches on monopole-monopole corrections for the total energy.
+  type: null
+  values:
+  - true
+  - false
+lmp2lt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lmusic:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lnabla:
+  default: false
+  description: LNABLA=.TRUE. evaluates the transversal expression for the frequency
+    dependent dielectric matrix.
+  type: null
+  values:
+  - true
+  - false
+lnicsall:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lnlrpa:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lnmr_sym_red:
+  default: false
+  description: discard symmetry operations that are not consistent with the way ''k''-space
+    derivative are calculated in the linear response calculations of chemical shifts.
+  type: null
+  values:
+  - true
+  - false
+lnoncollinear:
+  default: false
+  description: LNONCOLLINEAR specifies whether fully non-collinear magnetic calculations
+    are performed.
+  type: null
+  values:
+  - true
+  - false
+localize:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+localized_basis:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+locproj:
+  default: None
+  description: by means of the LOCPROJ-tag one may specify a (set of) local function(s)
+    on which the orbitals are to be projected. These projections are written to the
+    PROJCAR, LOCPROJ, and vasprun.xml files.
+  type: null
+  values: null
+lonlysemicore:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+loptics:
+  default: false
+  description: LOPTICS=.TRUE. calculates the frequency dependent dielectric matrix
+    after the electronic ground state has been determined.
+  type: null
+  values:
+  - true
+  - false
+lorbit:
+  default: None
+  description: LORBIT, together with an appropriate RWIGS, determines whether the
+    PROCAR or PROOUT files are written.
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '5'
+  - '10'
+  - '11'
+  - '12'
+lorbitalreal:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lorbmom:
+  default: false
+  description: LORBMOM specifies whether the orbital moments are written out or not
+    (in a calculation using LSORBIT=.TRUE.).
+  type: null
+  values:
+  - true
+  - false
+lpade_fit:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lpard:
+  default: false
+  description: Determines whether partial (band or k-point decomposed) charge densities
+    are evaluated. See also Band decomposed charge densities.
+  type: null
+  values: null
+lpead:
+  default: false
+  description: for LPEAD=.TRUE., the derivative of the cell-periodic part of the orbitals
+    w.r.t. '''k''', |&nabla;<sub>'''k'''</sub>u<sub>n'''k'''</sub>&rang;, is calculated
+    using finite differences.
+  type: null
+  values:
+  - true
+  - .FALSE
+lpead_sym_red:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lphon:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lphon_polar:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lplane:
+  default: true
+  description: LPLANE switches on the plane-wise data distribution in real space.
+  type: null
+  values: null
+lplotdis:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lprojected:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrctype:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lread_amn:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lread_eigenvalues:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lreal:
+  default: false
+  description: LREAL determines whether the projection operators are evaluated in
+    real-space or in reciprocal space.
+  type: null
+  values:
+  - true
+  - false
+  - On (or O)
+  - Auto (or A)
+lregularize:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrelcor:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrelvol:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrhfatm:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrhfcalc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrpa:
+  default: false
+  description: LRPA=.TRUE. includes local field effect on the Hartree level only.
+  type: null
+  values:
+  - true
+  - false
+lrpaforce:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrscor:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lrsrpa:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lscaaware:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lscalapack:
+  default: null
+  description: LSCALAPACK controls the use of scaLAPACK.
+  type: null
+  values: null
+lscaler0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lscalu:
+  default: false
+  description: LSCALU switches on the parallel LU decomposition (using scaLAPACK)
+    in the orthonormalization of the wave functions.
+  type: null
+  values: null
+lscsgrad:
+  default: false
+  description: '{{TAGDEF|LSCSGRAD decides whether to compute gradients in the calculation
+    of the MBD dispersion energy.'
+  type: null
+  values:
+  - true
+  - false
+lselfenergy:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lsepb:
+  default: false
+  description: Specifies whether the charge density is calculated for every band separately
+    and written to a file PARCHG.nb.* (LSEPB=''.TRUE.'') or whether charge density
+    is merged for all selected bands and written to the files PARCHG.ALLB.* or PARCHG.
+  type: null
+  values: null
+lsepk:
+  default: false
+  description: Specifies whether the charge density of every k-point is write to the
+    files PARCHG.*.nk (LSEPK=''.TRUE.'') or whether it is merged to a single file.
+    If the merged file is written, then the weight of each k-point is determined from
+    the KPOINTS file, otherwise the k-point weights of one are chosen.
+  type: null
+  values: null
+lsingles:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lsmp2lt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lsorbit:
+  default: false
+  description: LSORBIT specifies whether spin-orbit coupling is taken into account.
+  type: null
+  values:
+  - true
+  - false
+lspectral:
+  default: null
+  description: LSPECTRAL specifies to use the spectral method.
+  type: null
+  values:
+  - false
+  - true
+lspectralgw:
+  default: false
+  description: LSPECTRALGW specifies to use the spectral method for calculating the
+    self-energy.
+  type: null
+  values:
+  - false
+  - true
+lspiral:
+  default: false
+  description: set LSPIRAL=.TRUE. to represent spin spirals by means of a generalized
+    Bloch condition.
+  type: null
+  values:
+  - true
+  - false
+lstockholder:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lsubrot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lsymgrad:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ltctc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ltcte:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ltemper:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ltete:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lthomas:
+  default: false
+  description: LTHOMAS selects a decomposition of the exchange functional based on
+    Thomas-Fermi screening.
+  type: null
+  values:
+  - true
+  - false
+ltriplet:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ltssurf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+luse_vdw:
+  default: false
+  description: The flag LUSE_VDW determines whether the VdW-DF functional of Langreth
+    and Lundqvist et al. is used or not.
+  type: null
+  values: null
+luseorth_locprojs:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lusew:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvcader:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvdw:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvdw_ewald:
+  default: false
+  description: LVDW_EWALD decides whether lattice summation in <math>E_{disp</math>
+    expression by means of Ewald's summation is computed in the DFT-D2 method (available
+    in VASP.5.3.4 and later).
+  type: null
+  values: null
+lvdw_onecell:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvdw_relvolone:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvdw_sametype:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvdwexpansion:
+  default: false
+  description: '{{TAGDEF|LVDWEXPANSION decides whether to write the two- to six- body
+    contributions to MBD dispersion energy in the OUTCAR file.'
+  type: null
+  values:
+  - true
+  - false
+lvdwscs:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvel:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvhar:
+  default: false
+  description: This tag determines whether the total local potential (saved in the
+    file LOCPOT contains the entire local potential (ionic + Hartree + exchange correlation)
+    or the electrostatic contributions only (ionic +  Hartree).
+  type: null
+  values: null
+lvpot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lvtot:
+  default: false
+  description: LVTOT determines whether the total local potential is written to the
+    LOCPOT file.
+  type: null
+  values: null
+lwannier:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwannier90:
+  default: false
+  description: LWANNIER90=.TRUE. switches on the interface between VASP and [http://www.wannier.org
+    WANNIER90].
+  type: null
+  values:
+  - true
+  - false
+lwannier90_run:
+  default: false
+  description: LWANNIER90_RUN executes <tt>wannier_setup</tt> (see LWANNIER90=.TRUE.)
+    and subsequently runs [http://www.wannier.org WANNIER90] in library mode (<tt>wannier_run</tt>).
+  type: null
+  values:
+  - true
+  - false
+lwannierinterpol:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwave:
+  default: true
+  description: LWAVE determines whether the wavefunctions are written to the WAVECAR
+    file at the end of a run.
+  type: null
+  values: null
+lwaveh5:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lweighted:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwpot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwrite_mmn_amn:
+  default: null
+  description: LWRITE_MMN_AMN=.TRUE. tells the VASP2WANNIER90 interface to write the
+    wannier90.mmn and wannier90.amn files.
+  type: null
+  values:
+  - true
+  - false
+lwrite_unk:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwrite_wanproj:
+  default: false
+  description: LWRITE_WANPROJ determines whether the Wannier projection fille WANPROJ
+    is written.
+  type: null
+  values: null
+lwrtcur:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lwswq:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+lzeroz:
+  default: false
+  description: for LZEROZ=.TRUE. the ''z''-component of the spin-spiral magnetisation
+    density will be forced to be and to remain zero.
+  type: null
+  values:
+  - true
+  - false
+lzora:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+m_constr:
+  default: 3*NIONS*0.0
+  description: M_CONSTR specifies the desired local magnetic moment (size and/or direction)
+    for the constrained local moments approach.
+  type: float list
+  values: null
+magatom:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+magdipol:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+magmom:
+  default: null
+  description: MAGMOM Specifies the initial magnetic moment for each atom, if and
+    only if ICHARG=2, or if  ICHARG=1 and the CHGCAR file contains no magnetisation
+    density
+  type: float list
+  values: null
+magpos:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+maxlie:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+maxmem:
+  default: '2800'
+  description: MAXMEM specifies the maximum memory one core will attempt to allocate
+    (in MByte).
+  type: integer
+  values: null
+maxmix:
+  default: '-45'
+  description: MAXMIX specifies the maximum number steps stored in Broyden mixer (IMIX=4).
+  type: integer
+  values: null
+maxpwamp:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+mbd_beta:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+mcalpha:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+mdalgo:
+  default: '0'
+  description: MDALGO specifies the molecular dynamics simulation protocol (in case
+    IBRION=0 and VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+  - '11'
+  - '21'
+  - '13'
+metagga:
+  default: none
+  description: selects one of various meta-GGA functionals.
+  type: null
+  values:
+  - TPSS
+  - RTPSS
+  - M06L
+  - MBJL
+  - SCAN
+  - MS0
+  - MS1
+  - MS2
+minrot:
+  default: '0.01'
+  description: The flag MINROT defines the value for which the dimer is rotated only
+    if the predicted rotation angle is greater than MINROT (rad.) in the Improved
+    Dimer Method.
+  type: float
+  values: null
+mixfirst:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+mixpre:
+  default: '1'
+  description: MIXPRE specifies the metric in the Broyden mixing scheme(IMIX=4).
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+model_alpha:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+model_eps0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+model_gw:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+mremove:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+naturalo:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbands:
+  default: null
+  description: NBANDS determines the actual number of bands in the calculation.
+  type: integer
+  values: null
+nbands_index:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbands_out:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandsexact:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandsgw:
+  default: twice the number of occupied states
+  description: The flag determines how many QP energies are calculated and updated
+    in GW type calculations.
+  type: integer
+  values: null
+nbandsgwlow:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandshigh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandslf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandslow:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbandso:
+  default: null
+  description: NBANDSO determines how many occupied orbitals are included in the
+  type: integer
+  values: null
+nbandsv:
+  default: null
+  description: NBANDSV determines how many unoccupied orbitals are included in the
+    Casida/[[BSE calculations]] or [[timepropagation]].
+  type: integer
+  values: null
+nbconopt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nblk:
+  default: null
+  description: NBLK determines the blocking factor in many BLAS level 3 routines.
+  type: integer
+  values: null
+nblock:
+  default: '1'
+  description: after NBLOCK  ionic steps the pair correlation function and the DOS
+    are calculated
+  type: integer
+  values: null
+nblock_fock:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nbmod:
+  default: '-1'
+  description: null
+  type: integer
+  values: null
+nbseeig:
+  default: '1'
+  description: NBSEEIG sets the number number of BSE eigenvectors written to the BSEFATBAND
+    output file.
+  type: integer
+  values: null
+nbvalopt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ncore:
+  default: '1'
+  description: NCORE determines the number of compute cores that work on an individual
+    orbital (available as of VASP.5.2.13).
+  type: integer
+  values: null
+ncore_in_image1:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ncores_per_band:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ncrpa_bands:
+  default: null
+  description: Controls which bands are excluded in CRPA. Check also NTARGET_STATES.
+  type: integer list
+  values: null
+ncshmem:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ncycles:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ndatalsq:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ndav:
+  default: '4'
+  description: NDAV sets the maximum number of iterative steps per bands per RMM-DIIS
+    step (IALGO=4X).
+  type: integer
+  values: null
+nedos:
+  default: <math>301</math>
+  description: NEDOS specifies number of gridpoints on which the DOS is evaluated
+  type: integer
+  values: null
+nelect:
+  default: number of valence electrons
+  description: NELECT sets the number of electrons.
+  type: float
+  values: null
+nelm:
+  default: '60'
+  description: NELM sets the maximum number of electronic SC (selfconsistency) steps
+    which may be performed.
+  type: integer
+  values: null
+nelmall:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nelmdl:
+  default: null
+  description: NELMDL specifies the number of non-selfconsistent steps at the beginning.
+  type: integer
+  values: null
+nelmhf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nelmin:
+  default: '2'
+  description: NELMIN specifies the minimum number of electronic SCF steps.
+  type: integer
+  values: null
+nfree:
+  default: null
+  description: depending on IBRION, NFREE specifies the number of remembered steps
+    in the history of ionic convergence runs, or the number of ionic displacements
+    in frozen phonon calculations.
+  type: integer
+  values: null
+ngaus:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ngx:
+  default: set in accordance with PREC and ENCUT
+  description: NGX sets the number of grid points in the FFT-grid along the first
+    lattice vector.
+  type: integer
+  values: null
+ngxf:
+  default: set in accordance with PREC, NGX, ENCUT and ENAUG
+  description: NGXF sets the number of grid points in the "fine" FFT-grid along the
+    first lattice vector.
+  type: integer
+  values: null
+ngy:
+  default: set in accordance with PREC and ENCUT
+  description: NGY sets the number of grid points in the FFT-grid along the second
+    lattice vector.
+  type: integer
+  values: null
+ngyf:
+  default: set in accordance with PREC, NGY, ENCUT and ENAUG
+  description: NGYF sets the number of grid points in the "fine" FFT-grid along the
+    second lattice vector.
+  type: integer
+  values: null
+ngyromag:
+  default: NTYP*1.0
+  description: NGYROMAG specifies the nuclear gyromagnetic ratios (in MHz, for H<sub>0</sub>
+    = 1 T) for the atomic types on the POTCAR file.
+  type: float list
+  values: null
+ngz:
+  default: set in accordance with PREC and ENCUT
+  description: NGZ sets the number of grid points in the FFT-grid along the third
+    lattice vector.
+  type: integer
+  values: null
+ngzf:
+  default: set in accordance with PREC, NGZ, ENCUT and ENAUG
+  description: NGZF sets the number of grid points in the "fine" FFT-grid along the
+    first lattice vector.
+  type: integer
+  values: null
+nkoffopt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkopt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkred:
+  default: '1'
+  description: NKRED specifies an uniform reduction factor for the '''q'''-point grid
+    representation of the exact exchange potential and the correlation part in GW
+    calculations.
+  type: integer
+  values: null
+nkredlf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkredlfx:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkredlfy:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkredlfz:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nkredx:
+  default: '1'
+  description: NKREDX specifies a reduction factor for the '''q'''-point grid representation
+    of the exact exchange potential along reciprocal space direction '''b'''<sub>1</sub>.
+  type: integer
+  values: null
+nkredy:
+  default: '1'
+  description: NKREDY specifies a reduction factor for the '''q'''-point grid representation
+    of the exact exchange potential along reciprocal space direction '''b'''<sub>2</sub>.
+  type: integer
+  values: null
+nkredz:
+  default: '1'
+  description: NKREDZ specifies a reduction factor for the '''q'''-point grid representation
+    of the exact exchange potential along reciprocal space direction '''b'''<sub>3</sub>.
+  type: integer
+  values: null
+nlspline:
+  default: false
+  description: construct the PAW projectors in reciprocal space using spline interpolation
+    so that they are ''k''-differentiable.
+  type: null
+  values:
+  - true
+  - false
+nmaxalt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nmaxfockae:
+  default: null
+  description: '''''''NMAXFOCKAE'''''' and ''''''LMAXFOCKAE'''''' determine whether'
+  type: null
+  values:
+  - '1'
+  - '2'
+nmin:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nomega:
+  default: null
+  description: NOMEGA specifies the number of frequency grid points.
+  type: integer
+  values: null
+nomega_dump:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nomega_index:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nomega_out:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nomegaadd:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nomegapar:
+  default: null
+  description: NOMEGAPAR available as of VASP.6, specifies the number of processor
+    groups sharing imaginary frequency grid points.
+  type: integer
+  values: null
+nomegar:
+  default: null
+  description: NOMEGAR specifies the number of frequency grid points along the real
+    axis.
+  type: integer
+  values: null
+npaco:
+  default: '256'
+  description: NPACO sets the number of slots in the pair-correlation function written
+    to PCDAT.
+  type: integer
+  values: null
+npar:
+  default: number of cores
+  description: NPAR determines the number of bands that are treated in parallel.
+  type: integer
+  values: null
+nppstr:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nreboot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nrmm:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nscorrel:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nsim:
+  default: '4'
+  description: NSIM sets the number of bands that are optimized simultaneously by
+    the RMM-DIIS algorithm.
+  type: integer
+  values: null
+nstorb:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nsubsys:
+  default: null
+  description: NSUBSYS defines the atomic subsystems in calculations with multiple
+    Anderson thermostats (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: integer list
+  values: null
+nsw:
+  default: '0'
+  description: NSW sets the maximum number of ionic steps.
+  type: integer
+  values: null
+ntarget_states:
+  default: null
+  description: Controls which Wannier states are excluded in CRPA. Check also NCRPA_BANDS.
+  type: integer list
+  values: null
+ntaupar:
+  default: null
+  description: NTAUPAR available as of VASP.6, specifies the number of processor groups
+    sharing imaginary time grid points.
+  type: integer
+  values: null
+ntemper:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nthreads_a2a:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nthreads_hi:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nthreads_lo:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nthreads_mu:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nthreads_rproj:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nucind:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nupdown:
+  default: not set
+  description: Sets the difference between the number of electrons in the up and down
+    spin components.
+  type: integer
+  values: null
+nwhigh:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nwlow:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+nwrite:
+  default: '2'
+  description: This flag determines how much will be written to the file OUTCAR ('verbosity
+    flag').
+  type: null
+  values:
+  - '0'
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+oddonly:
+  default: false
+  description: ODDONLY=.TRUE. selects a subset of '''k'''-points for the representation
+    of the Fock exchange potential, with ''C''<sub>1</sub>=''C''<sub>2</sub>=''C''<sub>3</sub>=1,
+    and ''n''<sub>1</sub>+''n''<sub>2</sub>+''n''<sub>3</sub> odd.
+  type: null
+  values:
+  - true
+  - false
+oddonlygw:
+  default: false
+  description: ODDONLYGW allows to avoid the inclusion of the <math>\Gamma</math>
+    point in the evaluation of response functions (in GW calculations).
+  type: null
+  values: null
+ofield_a:
+  default: null
+  description: The flag OFIELD_A sets the desired order parameter <math>Q_6</math>
+    in the Interface pinning method.
+  type: float
+  values: null
+ofield_k:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ofield_kappa:
+  default: null
+  description: The flag OFIELD_KAPPA sets the strength of bias potential in <math>\textrm{eV/(\textrm{unit
+    \,\, \textrm{ of \,\, Q)^2</math> in the Interface pinning method.
+  type: float
+  values: null
+ofield_q6_far:
+  default: null
+  description: The flag OFIELD_Q6_FAR sets the far fading distance (in <math>\AA</math>)
+    for the computation of a continuous <math>Q_6</math> parameter in the Interface
+    pinning method.
+  type: float
+  values: null
+ofield_q6_near:
+  default: null
+  description: The flag OFIELD_Q6_NEAR sets the near fading distance (in <math>\AA</math>)
+    for the computation of a continuous <math>Q_6</math> parameter in the Interface
+    pinning method.
+  type: float
+  values: null
+omega_acont_start:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+omega_acont_stop:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+omegagrid:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+omegamax:
+  default: outermost node in dielectric function <math>\epsilon(\omega)</math>/1.3
+  description: OMEGAMAX specifies the maximum frequency for dense part of the frequency
+    grid. For CRPA calculations, OMEGAMAX is the frequency point of the interaction.
+  type: float
+  values: null
+omegamin:
+  default: minimum transition energy (0.05 for metals)
+  description: OMEGAMAX minimum frequency in the frequency grid.
+  type: float
+  values: null
+omegatl:
+  default: 10 <math>\times</math> outermost node in dielectric function <math>\epsilon(\omega)</math>
+  description: OMEGATL specifies the maximum frequency for coarse part of the frequency
+    grid.
+  type: float
+  values: null
+orbitalmag:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+pairpot:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+param1:
+  default: null
+  description: The flag PARAM1 determines the first parameter used in the enhancement
+    factor of the optPBE-vdW and optB88-vdW functional.
+  type: float
+  values: null
+param2:
+  default: null
+  description: The flag PARAM2 determines the second parameter used in the enhancement
+    factor of the optPBE-vdW and optB88-vdW functional.
+  type: float
+  values: null
+param3:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+pflat:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_atom_indices:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_born_charges:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_dielectric:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_g_cutoff:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_lbose:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_lmc:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_nstruct:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+phon_tlist:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+plevel:
+  default: null
+  description: Control flag for the output of the profiling routines.
+  type: integer
+  values: null
+pmass:
+  default: '1000'
+  description: PMASS assigns a fictitious mass (in amu) to the lattice degrees-of-freedom
+    in case of Parrinello-Rahman dynamics (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+pomass:
+  default: values read from POTCAR
+  description: POMASS describes the mass of each atomic sphere in atomic units.
+  type: float
+  values: null
+potim:
+  default: null
+  description: POTIM sets the time step (MD) or step width scaling (ionic relaxations).
+  type: float
+  values: null
+prec:
+  default: null
+  description: PREC specifies the "precision"-mode.
+  type: null
+  values:
+  - Low
+  - Medium
+  - High
+  - Normal
+  - Single
+  - Accurate
+precfock:
+  default: Normal
+  description: PRECFOCK controls the FFT grids used in the exact exchange routines
+    (Hartree-Fock and hybrid functionals).
+  type: null
+  values:
+  - Low
+  - Medium
+  - Fast
+  - Normal
+  - Accurate
+proutine:
+  default: null
+  description: Control flag for the output of the profiling routines.
+  type: integer
+  values: null
+pstress:
+  default: null
+  description: This flag controls whether Pulay corrections are added to the stress
+    tensor or not.
+  type: float
+  values: null
+psubsys:
+  default: null
+  description: PSUBSYS sets the collision probabilities for the atoms in each atomic
+    subsystem in calculations with multiple Anderson thermostats (in case VASP was
+    compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: float list
+  values: null
+pthreshold:
+  default: null
+  description: Control flag for the output of the profiling routines.
+  type: float
+  values: null
+qmaxfockae:
+  default: null
+  description: The parameter QMAXFOCKAE controls at which wave vectors the local augmentation
+  type: float list
+  values: null
+qspiral:
+  default: 3*0.0
+  description: the QSPIRAL-tag specifies the spin spiral propagation vector.
+  type: float list
+  values: null
+quad_efg:
+  default: NTYP*1.0
+  description: nuclear quadrupole moment (in millbarn) for the atomic types on the
+    POTCAR file.
+  type: float list
+  values: null
+radeq:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+random_seed:
+  default: based on the system clock
+  description: RANDOM_SEED specifies the seed of the random-number-generator (in case
+    VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: integer list
+  values: null
+rcmix:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rcndl:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rcrep:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rcrhocut:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rcstrd:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+restartcg:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rgaus:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+ropt:
+  default: POTCAR file
+  description: ROPT determines how precise the projectors are represented in real
+    space.
+  type: null
+  values: null
+rtime:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+rwigs:
+  default: read from the POTCAR file
+  description: RWIGS specifies the Wigner-Seitz radius for each atom type.
+  type: float list
+  values: null
+saxis:
+  default: (0+, 0, 1)
+  description: SAXIS specifies the quantisation axis for noncollinear spins.
+  type: float list
+  values: null
+scalee:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+scaling:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+scissor:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+scsrad:
+  default: '120'
+  description: SCSRAD defines the cutoff radius (in <math>\AA</math>) used in the
+    calculation of <math>$\tau_{ij$</math> within the Tkatchenko-Scheffler method
+    Self-consistent screening in Tkatchenko-Scheffler method.
+  type: float
+  values: null
+shakemaxiter:
+  default: '1000'
+  description: SHAKEMAXITER specifies the maximum number of iterations in the SHAKE
+    algorithm (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+shakesca:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+shaketol:
+  default: <math>10^-5</math>
+  description: SHAKETOL specifies the tolerance for the SHAKE algorithm (in case VASP
+    was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: null
+  values: null
+shaketolsoft:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+shiftred:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+sigma:
+  default: '0.2'
+  description: SIGMA specifies the width of the smearing in eV.
+  type: float
+  values: null
+skip_edotp:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+skip_scf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+smass:
+  default: '-3'
+  description: SMASS controls the velocities during an ab-initio molecular dynamics
+    run.
+  type: null
+  values:
+  - '-3'
+  - '-2'
+  - '-1'
+  - '[real] &ge; 0'
+smearings:
+  default: not set
+  description: SMEARINGS defines the smearing parameters for ISMEAR=''-3'' in the
+    calculation of the partial occupancies.
+  type: integer list
+  values: null
+spring:
+  default: '-5'
+  description: SPRING gives the ''spring constant'' between the images as used in
+    the elastic band method
+  type: integer
+  values: null
+spring_k:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+spring_r0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+spring_v0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+step_max:
+  default: '0.1'
+  description: The flag STEP_MAX defines the trust radius (upper limit) for the optimization
+    step (in <math>\AA</math> ) in the Improved Dimer Method.
+  type: float
+  values: null
+step_size:
+  default: '0.01'
+  description: The flag STEP_SIZE defines the trial step size for the optimization
+    step (in <math>\AA</math> ) in the Improved Dimer Method.
+  type: float
+  values: null
+stm:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+switch:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+symprec:
+  default: <math>10^-5</math>
+  description: SYMPREC determines to which accuracy the positions in the POSCAR file
+    must be specified (as of VASP.4.4.4).
+  type: float
+  values: null
+system:
+  default: unknown system
+  description: The "title string" defined by SYSTEM is for the user only and should
+    help the user to identify what he wants to do with this specific input file.
+  type: string
+  values: null
+tau0:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+tebeg:
+  default: '0'
+  description: TEBEG sets the start temperature for an ab-initio molecular dynamics
+    run (IBRION=0).
+  type: float
+  values: null
+teend:
+  default: TEBEG
+  description: TEEND sets the final temperature for an ab-initio molecular dynamics
+    run (IBRION=0; SMASS=&minus;1).
+  type: float
+  values: null
+telescope:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+thermostat:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+time:
+  default: '0.4'
+  description: TIME controls the time step for IALGO=5X and for the initial (steepest
+    descent) phase of IALGO=4X.
+  type: float
+  values: null
+tmbpt:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+tsubsys:
+  default: null
+  description: TSUBSYS sets the temperatures for the atomic subsystems in calculations
+    with multiple Anderson thermostats (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: float list
+  values: null
+turbo:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+value_max:
+  default: null
+  description: VALUE_MAX sets the upper limits for the monitoring of geometric parameters
+    (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: float list
+  values: null
+value_min:
+  default: null
+  description: VALUE_MIN sets the lower limits for the monitoring of geometric parameters
+    (in case VASP was compiled with [[Precompiler_flags|-Dtbdyn]]).
+  type: float list
+  values: null
+vca:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vcaimages:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vcutoff:
+  default: 1.1 ENCUTGW
+  description: The parameter VCUTOFF sets the energy cutoff for bare Coulomb matrix
+    elements and controls the basis set for the bare Coulomb interaction.
+  type: float
+  values: null
+vdw_a1:
+  default: '1.0'
+  description: VDW_A1 defines the damping function parameter <math>a_{1</math> in
+    the DFT-D3 method.
+  type: float
+  values: null
+vdw_a2:
+  default: null
+  description: VDW_A2 defines the damping function parameter <math>a_{2</math> in
+    the DFT-D3 method.
+  type: float
+  values: null
+vdw_alpha:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_c6:
+  default: null
+  description: VDW_C6 defines the <math>C_6</math> parameters (<math>\mathrm{Jnm^{6\mathrm{mol^{-1</math>)
+    for each species defined in the POSCAR file within the DFT-D2 method.
+  type: null
+  values: null
+vdw_c6au:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_cnradius:
+  default: null
+  description: VDW_CNRADIUS defines the cutoff radius (in <math>\AA</math>) for the
+    calculation of the coordination numbers used in the DFT-D3 method.
+  type: float
+  values: null
+vdw_d:
+  default: '20'
+  description: VDW_D defines the damping parameter <math>d</math>  in the DFT-D2method.
+  type: float
+  values: null
+vdw_idampf:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_mbd_size:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_r0:
+  default: null
+  description: VDW_R0 defines the <math>R_0</math> parameters (<math>\AA</math>) for
+    each species defined in the POSCAR file within the DFT-D2 method.
+  type: null
+  values: null
+vdw_r0au:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_radius:
+  default: null
+  description: VDW_RADIUS defines the cutoff radius (in <math>\AA</math>) for the
+    pair interactions used in the DFT-D2 and DFT-D3 method.
+  type: float
+  values: null
+vdw_refstate:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_s6:
+  default: '0.75'
+  description: VDW_S6 defines the global scaling factor <math>s_{6</math> in the DFT-D2
+    method.
+  type: float
+  values: null
+vdw_s8:
+  default: '1.0'
+  description: VDW_S8 defines the damping function parameter <math>s_{8</math> in
+    the DFT-D3 method.
+  type: float
+  values: null
+vdw_scaling:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+vdw_sr:
+  default: '1.0'
+  description: VDW_SR defines the damping function parameter <math>s_{R</math> (or
+    scaling factor) in the DFT-D2 and DFT-D3 method.
+  type: float
+  values: null
+voskown:
+  default: '0'
+  description: Determines whether Vosko-Wilk-Nusair interpolation is used or not.
+  type: null
+  values:
+  - '0'
+  - '1'
+wanproj:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+wanproj_e:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+wanproj_i:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+wanproj_l:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+wc:
+  default: '1000.'
+  description: WC specifies the weight factor for each step in Broyden mixing scheme
+    (IMIX=4).
+  type: float
+  values: null
+weimin:
+  default: null
+  description: WEIMIN specifies the maximum weight for a band to be considered empty.
+  type: float
+  values: null
+wplasma:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+wplasmai:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+zab_vdw:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+zct:
+  default: null
+  description: Undocumented
+  type: null
+  values: null
+zval:
+  default: values read from POTCAR
+  description: ZVAL describes the valency of each atomic sphere.
+  type: float
+  values: null
