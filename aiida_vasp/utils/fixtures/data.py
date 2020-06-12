@@ -379,7 +379,7 @@ def outcar_parser(request):
 
 @pytest.fixture()
 def magnetization_parser(request):
-    """Return an instance of OutcarParser for a reference OUTCAR in the case of magnetic calculations."""
+    """An instance of OutcarParser for a reference OUTCAR in the case of magnetic calculations."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'OUTCAR'
     path = data_path(request.param, file_name)
@@ -389,8 +389,7 @@ def magnetization_parser(request):
 
 @pytest.fixture()
 def magnetization_single_parser(request):
-    """Return an instance of OutcarParser for a reference OUTCAR in the case of
-    magnetic calculations when there is a single atom in the unit cell"""
+    """An instance of OutcarParser for a reference OUTCAR for magnetic calculations for a single atom."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'OUTCAR_SINGLE'
     path = data_path(request.param, file_name)
