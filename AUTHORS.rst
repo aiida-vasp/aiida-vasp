@@ -8,15 +8,14 @@ AiiDA-VASP is now maintained by Espen Flage-Larsen, SINTEF Materials Physics, No
 Development Team
 ----------------
 * Espen Flage-Larsen, SINTEF (maintainer)
-* Atsushi Togo, NIMS, Japan
+* Martin Callsen, Gent University
 
 Acknowledgements
 ----------------
 Special thanks go to the following individuals and organizations that helps or helped in the development.
 
-* Jonathan Chico, Sandvik Coromant, Sweden, parsing of magnetization
 * Rico Häuselmann, THEOS, EPFL (big thanks for the inital design and implementation of the plugin)
-* Martin Callsen, Gent University, parser and general code migration to AiiDA core 1.x
+* Atsushi Togo, Kyoto University for discussions, advice and finding many issues
 * Dominik Gresch, ITP, ETHZ
 * Abel Carreras, Kyoto University for testing and finding many issues
 * Georg Wolfgang Winkler, ITP, ETHZ for testing in the early stages
