@@ -7,6 +7,13 @@ All notable changes to this project after version 0.1.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v1.0.0]
+--------
+Continues from v0.3.0 with even more rewrites due to the AiiDA core 1.x release. Backwards compatibility is broken.
+Due to the extensive number of updates and breaking changes we will not include the descriptions here. But starting this
+release we will focus on semantic versioning, backwards compatibility if possible. This version is considered the first
+production release.
+
 [v0.3.0]
 --------
 This is a major rewrite to be compatible with AiiDA core beta release. Backwards compatibility is broken.
