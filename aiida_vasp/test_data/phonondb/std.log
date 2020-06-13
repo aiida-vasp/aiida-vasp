@@ -44,14 +44,14 @@ The output (if any) follows:
  running on   20 total cores
  distrk:  each k-point on   20 cores,    1 groups
  distr:  one band on    5 cores,    4 groups
- using from now: INCAR     
- vasp.5.4.1 05Feb16 (build Apr 29 2016 10:46:48) complex                        
-  
+ using from now: INCAR
+ vasp.5.4.1 05Feb16 (build Apr 29 2016 10:46:48) complex
+
  POSCAR found type information on POSCAR  P  S  Zn
  POSCAR found :  3 types and     104 ions
  scaLAPACK will be used
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
 |                                                                             |
@@ -63,10 +63,10 @@ The output (if any) follows:
 |      want to do an extremely  accurate calculation you might also keep the  |
 |      reciprocal projection scheme          (i.e. LREAL=.FALSE.)             |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
 
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 |                                                                             |
 |  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
 |                                                                             |
@@ -74,7 +74,7 @@ The output (if any) follows:
 |      a different type was found on the POTCAR file                          |
 |          I HOPE YOU KNOW, WHAT YOU ARE  DOING                               |
 |                                                                             |
- ----------------------------------------------------------------------------- 
+ -----------------------------------------------------------------------------
 
  LDA part: xc-table for Pade appr. of Perdew
  POSCAR, INCAR and KPOINTS ok, starting setup
@@ -115,4 +115,3 @@ DAV:  27    -0.459876141304E+03   -0.61846E-09   -0.43685E-10  1008   0.733E-05
 PS:
 
 Read file <err.log> for stderr output of this job.
-

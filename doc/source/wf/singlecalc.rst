@@ -70,7 +70,7 @@ Parameters
 **********
 
 * continue_from: string, uuid of an appropriate calculation to continue from.
-* parameters: dict, is wrapped into a :py:class:`ParameterData <aiida.orm.data.parameters.ParameterData>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
+* parameters: dict, is wrapped into a :py:class:`Dict <aiida.orm.data.parameters.Dict>` and passed to the calculation. Optional when continuing with a VASP calculation from a previous vasp calculation (can be used to add / orverride keys).
 * use_wannier: bool, switches on LWANNIER90 as well as checking for wannier output files in results.
 * wannier_parameters: dict, analog to parameters for the wannier_parameters input parameter.
 * structure: path to a .cif or POSCAR file. Ignored when continuing from a previous calculation.
@@ -80,8 +80,8 @@ Parameters
    - path: list, according to :py:meth:`KpointsData.set_kpoints_path <aiida.orm.data.array.kpoints.KpointsData.set_kpoints_path>`
 * paw_family: string, name of a PAW family. Ignored if continuing.
 * paw_map: dict, mapping chemical element to PAW symbol. Ignored if continuing.
-* queue: string, same as for :py:meth:`JobCalculation.set_queue_name <aiida.orm.calculation.job.JobCalculation.set_queue_name>`, optional when continuing.
-* resources: dict, num_machines and num_mpiprocs_per_machine keys as for :py:meth:`JobCalculation.set_resources <aiida.orm.calculation.job.JobCalculation.set_resources>`, optional when continuing.
+* queue: string, same as for :py:meth:`CalcJob.set_queue_name <aiida.orm.calculation.job.CalcJob.set_queue_name>`, optional when continuing.
+* resources: dict, num_machines and num_mpiprocs_per_machine keys as for :py:meth:`CalcJob.set_resources <aiida.orm.calculation.job.CalcJob.set_resources>`, optional when continuing.
 * vasp_code or wannier_code: string, like for invoking :py:meth:`Code.get_from_string <aiida.orm.code.Code.get_from_string>`.
 
 The following set of parameters can be used to label and categorize the calculations run by the workflow:
@@ -99,4 +99,3 @@ Workflows
 * :py:class:`NscfWorkflow <aiida_vasp.workflows.legacy.nscf.NscfWorkflow>`, Obsolete
 * :py:class:`ProjectionsWorkflow <aiida_vasp.workflows.legacy.projections.ProjectionsWorkflow>`, Obsolete
 * :py:class:`WannieWannierrWorkflow <aiida_vasp.workflows.legacy.wannier.WannierWorkflow>`, Obsolete
-

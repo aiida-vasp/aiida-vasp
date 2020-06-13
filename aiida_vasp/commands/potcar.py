@@ -1,4 +1,9 @@
-"""Commandline util for dealing with potcar files"""
+"""
+Commands for the potential interface.
+
+-------------------------------------
+Commandline util for dealing with potcar files.
+"""
 import click
 from click_spinner import spinner as cli_spinner
 import tabulate
@@ -23,28 +28,32 @@ def try_grab_description(ctx, param, value):
     potcar_data_cls = get_data_class('vasp.potcar')
     group_name = ctx.params['name']
     existing_groups = potcar_data_cls.get_potcar_groups()
-    existing_group_names = [group.name for group in existing_groups]
+    existing_group_names = [group.label for group in existing_groups]
     if not value:
         if group_name in existing_group_names:
             return potcar_data_cls.get_potcar_group(group_name).description
-        else:
-            raise click.MissingParameter('A new group must be given a description.', param=param)
+        raise click.MissingParameter('A new group must be given a description.', param=param)
     return value
 
 
 @potcar.command()
-@options.PATH(help='Path to a folder or archive containing the POTCAR files')
+@options.PATH(help='Path to a folder or archive containing the POTCAR files. '
+              'You can supply the archive that you downloaded from the VASP server. '
+              'The path does not need to be specified, if that is the case, the current path is used.')
 @options.FAMILY_NAME()
-@options.DESCRIPTION(help='A description for the family', callback=try_grab_description)
-@click.option('--stop-if-existing', is_flag=True, help='Abort when encountering a previously uploaded POTCAR file')
+@options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
+@click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
 @options.DRY_RUN()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
     potcar_data_cls = get_data_class('vasp.potcar')
     with cli_spinner():
-        num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
-            path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run)
+        num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(path,
+                                                                                  name,
+                                                                                  description,
+                                                                                  stop_if_existing=stop_if_existing,
+                                                                                  dry_run=dry_run)
 
     click.echo('POTCAR files found: {}. New files uploaded: {}, Added to Family: {}'.format(num_found, num_uploaded, num_added))
     if dry_run:
@@ -54,19 +63,19 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 @potcar.command()
 @click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
-@click.option('-d', '--with-description', is_flag=True)
-def listfamilies(element, symbol, with_description):
+@click.option('-d', '--description', is_flag=True, help='Also show the description.')
+def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
 
     potcar_data_cls = get_data_class('vasp.potcar')
     groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
 
     table = [['Family', 'Num Potentials']]
-    if with_description:
+    if description:
         table[0].append('Description')
     for group in groups:
-        row = [group.name, len(group.nodes)]
-        if with_description:
+        row = [group.label, len(group.nodes)]
+        if description:
             row.append(group.description)
         table.append(row)
     if len(table) > 1:

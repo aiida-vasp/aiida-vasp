@@ -78,4 +78,3 @@ by parameters controlling the automatic generation of windows.
 * owindows-increment: float, size difference between any two outer windows.
 * num_iwindows: int, number of inner windows to generate.
 * iwindows-increment: float, size difference between any two inner windows.
-

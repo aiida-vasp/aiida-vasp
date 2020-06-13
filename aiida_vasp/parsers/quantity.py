@@ -1,23 +1,11 @@
-"""Classes representing quantities and a list of quantities."""
+"""
+Parser quantity configuration.
 
+------------------------------
+Contains the representation of quantities that users want to parse.
+"""
+# pylint: disable=import-outside-toplevel
 from aiida_vasp.utils.extended_dicts import DictWithAttributes
-
-NODES = {
-    'parameters': 'output_parameters',
-    'kpoints': 'output_kpoints',
-    'structure': 'output_structure',
-    'trajectory': 'output_trajectory',
-    'bands': 'output_bands',
-    'dos': 'output_dos',
-    'energies': 'output_energies',
-    'projectors': 'output_projectors',
-    'born_charges': 'output_born_charges',
-    'dielectrics': 'output_dielectrics',
-    'hessian': 'output_hessian',
-    'dynmat': 'output_dynmat',
-    'chgcar': 'chgcar',
-    'wavecar': 'wavecar',
-}
 
 
 class ParsableQuantity(DictWithAttributes):
@@ -26,9 +14,16 @@ class ParsableQuantity(DictWithAttributes):
     def __init__(self, name, init, files_list):
         # assign default values for optional attributes
         self.alternatives = []
+        self.prerequisites = []
+        self.original_name = name
 
         super(ParsableQuantity, self).__init__(init)
-        self.name = name
+
+        if self.get('name') is None:
+            self.name = name
+
+        if self.get('file_name') is None:
+            self.file_name = 'MISSING_FILE_NAME'
 
         # Check whether the file required for parsing this quantity have been retrieved.
         missing_files = []
@@ -37,11 +32,8 @@ class ParsableQuantity(DictWithAttributes):
             missing_files.append(self.file_name)
         self.missing_files = missing_files
 
-        # Check whether this quantity represents a node
-        self.is_node = self.nodeName in NODES
 
-
-class ParsableQuantities(object):
+class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 
@@ -82,10 +74,8 @@ class ParsableQuantities(object):
     def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        retrieved = self._vasp_parser.out_folder.get_folder_list()
-
         # check uniqueness and add parsable quantities
-        self._check_uniqueness_add_parsable(retrieved)
+        self._check_uniqueness_add_parsable(self._vasp_parser.retrieved_content.keys())
 
         # check consistency, that the quantity is parsable and
         # alternatives
@@ -120,24 +110,33 @@ class ParsableQuantities(object):
 
         # Make a local copy of parsable_quantities, because during the next step
         # dummy quantities for missing quantities might be added.
-        parsable_quantities = copy.deepcopy(self._quantities.keys())
+        # Also, ParsableQuantity does not have copy definitions, hence the seemingly
+        # unnecessary comprehension
+        parsable_quantities = copy.deepcopy([item for item in self._quantities])  # pylint: disable=unnecessary-comprehension
 
-        # Check for every quantity, whether all of the prerequisites are parsable, and whether
-        # they are alternatives for another quantity.
+        # Setup all alternatives:
         for quantity in parsable_quantities:
             value = self._quantities[quantity]
+            if quantity != value.name:
+                # This quantity is an alternative to value.name.
+                if value.name not in self._quantities:
+                    # The quantity which this quantity is an alternative to is not in _parsable_quantities.
+                    # Add a dummy quantity for it.
+                    self.add_parsable_quantity(value.name, {})
+                if quantity not in self._quantities[value.name].alternatives:
+                    self._quantities[value.name].alternatives.append(quantity)
+
+        # Check for every quantity, whether all of the prerequisites are parsable.
+        for quantity in self._quantities:
+            value = self._quantities[quantity]
             is_parsable = True
+
             for prereq in value.prerequisites:
+
+                if self._quantities.get(prereq) is None:
+                    is_parsable = False
+                    continue
                 if self._quantities[prereq].missing_files:
                     is_parsable = False
+
             value.is_parsable = is_parsable and not value.missing_files
-
-            # Add this quantity to the list of alternatives of another quantity.
-            if value.is_alternative is not None:
-                if value.is_alternative not in self._quantities:
-                    # The quantity which this quantity is an alternative to is not in _parsable_quantities.
-                    # Add an unparsable dummy quantity for it.
-                    self.add_parsable_quantity(value.is_alternative, {'alternatives': [], 'nodeName': self._quantities[quantity].nodeName})
-
-                if quantity not in self._quantities[value.is_alternative].alternatives:
-                    self._quantities[value.is_alternative].alternatives.append(quantity)

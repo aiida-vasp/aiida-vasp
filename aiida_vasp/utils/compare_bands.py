@@ -1,12 +1,19 @@
-"""Utilities for comparing band structures"""
-from aiida.orm.calculation.inline import optional_inline
-from aiida.orm import DataFactory
+"""
+Utils for comparing band structures.
+
+------------------------------------
+Utilities for comparing band structures. Mostly present for legacy purposes. Will be rewritten
+or moved in the future.
+"""
+# pylint: disable=import-outside-toplevel
+from aiida.plugins import DataFactory
+from aiida.engine import calcfunction
 
 BANDS_CLS = DataFactory('array.bands')
 
 
 def _firstspin(bands):
-    """Get only the bands for the first spin if multiple are contained"""
+    """Get only the bands for the first spin if multiple are contained."""
     if bands.ndim not in [2, 3]:
         raise ValueError('invalid input')
     if bands.ndim == 3:
@@ -14,7 +21,7 @@ def _firstspin(bands):
     return bands
 
 
-@optional_inline
+@calcfunction
 # pylint: disable=too-many-locals
 def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     """
@@ -103,12 +110,10 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            msg = ('Missing window parameters in input to ' 'parent calculation:\n') + err.message
-            raise KeyError(msg)
+            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err))
     except AttributeError as err:
         if not silent:
-            msg = ('bands_node is not an output of an appropriate calc node.' + err.message)
-            raise AttributeError(msg)
+            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err))
     return owindow
 
 
@@ -184,7 +189,7 @@ def bands_error(bands1, bands2):
     for band_idx in range(nbands):
         b1_i = bands_1[:, band_idx]
         b2_i = bands_2[:, band_idx]
-        sq_err = np.square(b1_i - b2_i)
+        sq_err = np.square(b1_i - b2_i)  # pylint: disable=assignment-from-no-return
         m_err = sq_err.sum() / len(sq_err)
         err[band_idx] = np.sqrt(m_err)
     return err
@@ -193,7 +198,7 @@ def bands_error(bands1, bands2):
 # pylint: disable=too-many-locals
 def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     """
-    Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters
+    Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters.
 
     :param vasp_bands: band structure output node from vasp calculation
     :param wannier_bands_list: list of band structure output nodes from wannier90 calculations
@@ -203,7 +208,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     import numpy as np
     import aiida_vasp.utils.bands as btool
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
-    ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.iteritems()}
+    ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.items()}
     info = {}
     for wannier_bands in wannier_bands_list:
         owindow = get_outer_window(wannier_bands)
@@ -247,14 +252,14 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
 
 
 def compare_from_window_wf(workflow, **kwargs):
-    """Find the relevant bands in the window workflow and compare them"""
+    """Find the relevant bands in the window workflow and compare them."""
     wblist = [v for k, v in workflow.get_results().iteritems() if 'bands_' in k]
     vbands = workflow.get_result('reference_bands')
     return compare_bands(vasp_bands=vbands, wannier_bands_list=wblist, **kwargs)
 
 
 def plot_errors_vs_iwsize(comparison_info):
-    """Plot Band structure errors versus size of the inner window parameter for wannier90"""
+    """Plot Band structure errors versus size of the inner window parameter for wannier90."""
     import numpy as np
     import aiida_vasp.utils.bands as btool
     ows = []

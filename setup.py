@@ -17,8 +17,7 @@ with open(README_PATH, 'r') as readme:
 if __name__ == '__main__':
     with open(SETUP_JSON_PATH, 'r') as info:
         SETUP_KWARGS = json.load(info)
-    setup(
-        packages=find_packages(exclude=['aiida']),
-        keywords='vasp, aiida, wannier90, workflow, materials',
-        long_description=LONG_DESCRIPTION,
-        **SETUP_KWARGS)
+    setup(packages=find_packages(exclude=['aiida']),
+          keywords='vasp, aiida, wannier90, workflow, materials',
+          long_description=LONG_DESCRIPTION,
+          **SETUP_KWARGS)
