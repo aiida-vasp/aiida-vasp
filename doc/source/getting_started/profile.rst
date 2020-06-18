@@ -18,4 +18,11 @@ In the rest of this getting started guide we will assume the user registered wit
 address ``mymail@address.com``, which is later used as an identifier (check e.g. next step when
 we test the computer connection).
 
+After setting up your profile, now AiiDA daemon can be started by
+
+::
+
+   $ verdi daemon start
+   Starting the daemon... RUNNING
+
 .. _AiiDA profile: https://aiida-core.readthedocs.io/en/latest/install/installation.html#setup-instructions
