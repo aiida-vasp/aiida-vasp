@@ -1,4 +1,4 @@
-.. AiiDA-VASP documentation master file, created by
+ .. AiiDA-VASP documentation master file, created by
    sphinx-quickstart on Mon Feb 12 09:24:45 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -6,132 +6,126 @@
 Welcome to AiiDA-VASP's documentation!
 ======================================
 
-AiiDA-VASP is a plug-in for the workflow management and data provenance tracking framework `AiiDA`_. It provides the classes `AiiDA`_ needs to run simulations using `VASP`_ (Vienna Ab initio Simulation Package). `VASP`_ is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles.  For more info and a list of features look `here`_. For detailed documentation about using VASP take a look at the `documentation page`_ or the `wiki`_
+AiiDA-VASP is a plug-in for the workflow management and data provenance tracking framework `AiiDA`_. It provides the classes `AiiDA`_ needs to run simulations using `VASP`_ (Vienna Ab initio Simulation Package). `VASP`_ is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles. For detailed documentation on using `VASP`_ take a look in their `VASP wiki`_.
 
-AiiDA-VASP is under active development, check out the newest changes here: `changelog`_
+AiiDA-VASP is under active development, check out the `changelog`_.
+
+The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.6.
+
+General comments about the user documentation and support
+=========================================================
+
+.. _convention:
+
+We will try to keep the documentation updated for both the standard Python and the `Conda`_ virtual environment. In order to make this as clear as possible, we have opted for the following syntax::
+
+  $ commands in a standard Linux console, used together with the standard Python virtual environment
+
+  % commands in the Conda console, used together with the Conda virtual environment
+
+  %/$ same commands in the Conda console or standard Linux console
+
+  # commands executed in the Postgresql interactive terminal
+
+As such, whenever needed, we will try to keep parallel documentation on this. If you are on a Conda
+platform, please follow the commands prepended with ``%``. Similarly you follow the commands with
+a ``$`` prepended if you are using the standard Python virtual enviroments. In case the commands are
+the same for both cases, ``%/$`` is prepended to the commands. The commands executed in
+the Postgresql interactive terminal (``psql``) should be similar between the two.
 
 .. _AiiDA: https://www.aiida.net
-.. _VASP: https://www.vasp.at/
-.. _here: https://www.vasp.at/index.php/about-vasp/59-about-vasp
-.. _documentation page: https://www.vasp.at/index.php/documentation
-.. _wiki: http://cms.mpi.univie.ac.at/wiki/index.php/The_VASP_Manual
-.. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
-
-.. _main-quickstart:
-
-Getting started
-===============
-
-If you use python for other things chances are you have a working system to manage your virtual environments. Please note that AiiDA as well as this plug-in are tested with both ``conda`` as well as ``virtualenvwrapper``.
-
-If you are already using AiiDA, simply activate the virtualenv you are using it in. Otherwise, set up a python virtualenv::
-
-   $ pip install virtualenvwrapper
-   $ mkvirtualenv --python=python2.7 aiida-vasp-env
-   $ workon aiida-vasp-env
-
-Or using conda::
-
-   $ conda create -n aiida-vasp-env python=2
-   $ source activate aiida-vasp-env
-
-Install the plug-in using::
-
-   $ pip install aiida-vasp
-   $ reentry scan -r aiida  # (not necessary if using 'develop' branch of aiida)
-
-This will automatically install the AiiDA python package(s) as well as any other dependencies of the plug-in and register all the plugin classes with AiiDA. Follow the steps in the `AiiDA documentation`_ to complete setting up AiiDA. Of course, if you had AiiDA already set up, you don't need to do that.
-
-After setting up the database and profile and configuring the compute resources, you might want to run an example VASP calculation.
-
-   $ (aiida-venv) git clone github.com/aiida-vasp/aiida-vasp
-   $ (aiida-venv) python aiida-vasp/examples/run_vasp simple --import-from <POTCAR-path> <code> <computer>
-
-Where ``<POTCAR-path>`` is the path to a set of POTCAR files (for example ``.../vasp_pot/potpaw_PBE``), ``<code>`` is the PK or name of the code you set up in AiiDA for running VASP, ``<computer>`` is the PK or name of the computer you set up in AiiDA for running VASP on.
-
-.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/stable/
-
-.. _main-running:
-
-Running calculations
---------------------
-
- * Take a look at the file `example calc`_ for an example code on how to create and submit a VASP calculation from python code.
- * Take a look at the file `example workflow`_ for an example on how to do the same via an AiiDA WorkChain.
-
-.. _example calc: https://github.com/aiidateam/aiida-vasp/blob/develop/examples/run_vasp.py
-.. _example workflow: https://github.com/aiida-vasp/aiida-vasp/blob/develop/examples/run_base_wf.py
-
-Importing non-AiiDA VASP runs
------------------------------
+.. _VASP: https://www.vasp.at
+.. _VASP wiki: https://cms.mpi.univie.ac.at/wiki/index.php
+.. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
+.. _Conda: https://docs.conda.io/en/latest/
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Getting started
+   :hidden:
 
-   howto/immigrate
-
-Managing potcar files
----------------------
-
-AiiDA-VASP takes care of managing your POTCAR files, but because they are part of the VASP licence, you need to obtain them separately and make them available to AiiDA-VASP. You should have recieved a folder (``tar`` archive) containing multiple subfolders (``tar`` archives), each representing a set of POTCAR files intended to be used together. AiiDA-VASP allows you to upload only the sets (or even individual potentials) you require, and keep them grouped in so called "families".
-
-The command line tools for these tasks are written as plugins to AiiDA, they can be called through AiiDA's ``verdi`` command like so::
-
-   $ verdi data vasp-potcar --help
-   Usage: verdi data vasp-potcar [OPTIONS] COMMAND [ARGS]...
-
-      Top level command for handling VASP POTCAR files.
-
-   Options:
-     --help  Show this message and exit.
-   
-   Commands:
-     exportfamily  Export a POTCAR family into a compressed tar...
-     listfamilies  List available families of VASP potcar files.
-     uploadfamily  Upload a family of VASP potcar files.
-
-To make for example the PBE.54 family of POTCAR files available, use the ``uploadfamily`` command like so::
-
-   $ verdi data vasp-potcar uploadfamily --path=vasp_pot/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials for version 5.4"
-
-Which will allow you to pass for example the following to the base workflow::
-
-   $ inputs.potcar_family = Str('PBE.54')
-   $ inputs.potcar_mapping = DataFactory('parameter')(dict={'In': 'In_d', 'As': 'As'})
-
-Assuming you will run VASP on an InAs structure and wish to use the ``potpaw_PBE.54/In_d/POTCAR`` and the ``potpaw_Ppotpaw_PBE.54/As/POTCAR`` potentials.
-
-More information about managing POTCAR files can be found here:
+   getting_started/general
+   getting_started/python
+   getting_started/conda
+   getting_started/rabbitmq
+   getting_started/database
+   getting_started/install
+   getting_started/interact
+   getting_started/profile
+   getting_started/computer
+   getting_started/code
+   getting_started/potentials
+   getting_started/test_run
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Tutorials
+   :hidden:
 
-   howto/upload_potcars
-
-Creating workflows
-------------------
-
-.. toctree::
-   :maxdepth: 3
-
-   howto/write_workflows
-
-More
-====
-
-.. The following may be partially outdated and is in the process of being brought up to date
+   tutorials/fcc_si_step1
+   tutorials/fcc_si_step2
+   tutorials/fcc_si_step3
+   tutorials/fcc_si_dos
+   tutorials/run_vasp_builder
+   tutorials/bulk_modulus
+   tutorials/bulk_modulus_2
+   tutorials/band_structure_electrons
+   tutorials/a_daily_life
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Concepts
+   :hidden:
 
-   index_old
+   concepts/potentials
+   concepts/calculations
+   concepts/workchains
+   concepts/workflows
+   concepts/parsing
+   concepts/immigrations
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Workflows
+   :hidden:
 
+   workflows/using_workflows
+   workflows/designing_workflows
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 1
+   :caption: Calculations
+   :hidden:
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   calculations/vasp
+   calculations/wannier
+   calculations/immigrator
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Workchains
+   :hidden:
+
+   workchains/vasp
+   workchains/verify
+   workchains/relax
+   workchains/converge
+   workchains/bands
+   workchains/master
+   workchains/writing_workchains
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developments
+   :hidden:
+
+   developments/developments
+   developments/running_tests
+   changelog
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API reference
+   :hidden:
+
+   api/aiida_vasp

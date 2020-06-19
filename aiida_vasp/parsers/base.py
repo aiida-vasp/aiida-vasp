@@ -1,64 +1,102 @@
-"""Common code for parsers"""
+"""
+Common code for parsers.
+
+------------------------
+"""
+import os
+
 from aiida.parsers.parser import Parser
-from aiida.common.datastructures import calc_states as cstat
+from aiida.common.exceptions import NotExistent
 
 
 class BaseParser(Parser):
     """Does common tasks all parsers carry out and provides convenience methods."""
 
-    def __init__(self, calc):
-        self._new_nodes = {}
-        super(BaseParser, self).__init__(calc)
-        self.out_folder = None
+    def __init__(self, node):
+        super(BaseParser, self).__init__(node)
+        self.retrieved_content = None
+        self.retrieved_temporary = None
 
-    def parse_with_retrieved(self, retrieved):
-        """Set the out_folder attribute for use in extending parsers."""
-        self.out_folder = self.get_folder(retrieved)
-        return self.result(success=bool(self.out_folder is not None))
+    def parse(self, **kwargs):
+        """Check the folders and set the retrieved_content for use in extending parsers."""
+        error_code = self.check_folders(kwargs)
+        if error_code is not None:
+            return error_code
+        return None
 
-    def check_state(self):
-        """Log an error if the calculation being parsed is not in PARSING state."""
-        if self._calc.get_state() != cstat.PARSING:
-            self.logger.error('Calculation not in parsing state')
-            # ~ raise InvalidOperation('Calculation not in parsing state')
+    def check_folders(self, parser_kwargs=None):
+        """
+        Convenient check to see if the retrieved and retrieved temp folder is present.
 
-    def get_folder(self, retrieved):
-        """Convenient access to the retrieved folder."""
-        try:
-            out_folder = retrieved[self._calc._get_linkname_retrieved()]
-            return out_folder
-        except KeyError:
-            self.logger.error('No retrieved folder found')
+        This routine also builds a dictionary containing the content of both the retrieved folder and
+        the retrieved_temporary folder, accessible from retrieved_content. The error for the temporary
+        folder takes presence as this is the one we mostly rely on.
+        """
+
+        retrieved = {}
+        exit_code_permanent = self.check_folder()
+        if exit_code_permanent is None:
+            # Retrieved folder exists, add content and tag to dictionary
+            for retrieved_file in self.retrieved.list_objects():
+                retrieved[retrieved_file.name] = {'path': '', 'status': 'permanent'}
+
+        exit_code_temporary = None
+        if parser_kwargs is not None:
+            exit_code_temporary = self.check_temporary_folder(parser_kwargs)
+            if exit_code_temporary is None:
+                # Retrieved_temporary folder exists, add content and tag to dictionary
+                for retrieved_file in os.listdir(self.retrieved_temporary):
+                    retrieved[retrieved_file] = {'path': self.retrieved_temporary, 'status': 'temporary'}
+
+        # Store the retrieved content
+        self.retrieved_content = retrieved
+        # OK if a least one of the folders are present
+        if exit_code_permanent is None or exit_code_temporary is None:
             return None
+        # Both are not present, exit code of teh temporary folder take precedence
+        return exit_code_temporary if not None else exit_code_permanent
 
-    def result(self, success):
-        """
-        Return a success flag as well as the new output nodes added to the parser's internal list of output nodes during parsing.
+    def check_temporary_folder(self, parser_kwargs):
+        """Convenient check of the retrieved_temporary folder."""
+        self.retrieved_temporary = parser_kwargs.get('retrieved_temporary_folder', None)
+        if self.retrieved_temporary is None:
+            return self.exit_codes.ERROR_NO_RETRIEVED_TEMPORARY_FOLDER
+        return None
 
-        :param bool success: wether the parsing was successful
-        :return: (sucess, new_nodes), the expected return values of a parser
-        """
-        return bool(success), self.new_nodes.items()
+    def check_folder(self):
+        """Convenient check of the retrieved folder."""
+        try:
+            _ = self.retrieved
+            return None
+        except NotExistent:
+            return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
     def get_file(self, fname):
         """
-        Convenient access to retrieved files.
+        Convenient access to retrieved and retrieved_temporary files.
 
         :param fname: name of the file
         :return: absolute path to the retrieved file
         """
+
         try:
-            ofname = self.out_folder.get_abs_path(fname)
-            return ofname
-        except OSError:
-            self.logger.warning(fname + ' not found in retrieved')
+            if self.retrieved_content[fname]['status'] == 'permanent':
+                try:
+                    with self.retrieved.open(fname) as file_obj:
+                        ofname = file_obj.name
+                    return ofname
+                except OSError:
+                    self.logger.warning(fname + ' not found in retrieved')
+                    return None
+            else:
+                path = self.retrieved_content[fname]['path']
+                file_path = os.path.join(path, fname)
+                try:
+                    with open(file_path, 'r') as file_obj:
+                        ofname = file_path
+                    return ofname
+                except OSError:
+                    self.logger.warning(fname + ' not found in retrieved_temporary')
+                    return None
+        except KeyError:
             return None
-
-    def add_node(self, linkname, node):
-        """Add a node to the internal list of output nodes."""
-        self._new_nodes[linkname] = node
-
-    @property
-    def new_nodes(self):
-        """Returns a dict of parsed output nodes."""
-        return self._new_nodes

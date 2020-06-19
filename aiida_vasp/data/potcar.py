@@ -1,5 +1,8 @@
 # pylint: disable=abstract-method
 """
+Representation of the POTCAR files.
+
+-----------------------------------
 Attempt to create a convenient but licence-respecting storage system that also guarantees provenience.
 
 Consists of two classes, PotcarData and PotcarFileData. Between the two data node classes exists a
@@ -58,7 +61,7 @@ The mechanism for reading a POTCAR file into the Db::
             |
             v
      _----------------------------------------------_
-    ( exists for PotcarFileData with pmg_potcar.md5? )-----> no
+    ( exists for PotcarFileData with pmg_potcar.sha512? )-----> no
      ^----------------------------------------------^         |
             |                                                 v
             v                                                 create
@@ -106,6 +109,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
             use Potcar.write_file
 
 """
+# pylint: disable=import-outside-toplevel
 from __future__ import print_function
 
 import re
@@ -119,19 +123,24 @@ from collections import namedtuple
 
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 from pymatgen.io.vasp import PotcarSingle
-from aiida.common import aiidalogger
+from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida.orm import Group
-from aiida.orm.data import Data
-from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm import Data
+from aiida.orm import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
-from aiida_vasp.utils.aiida_utils import get_current_user
+from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
+from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
 def normalize_potcar_contents(potcar_contents):
     """Normalize whitespace in a POTCAR given as a string."""
+    try:
+        potcar_contents = potcar_contents.decode()
+    except AttributeError:
+        pass
     normalized = re.sub(r'[ \t]+', r' ', potcar_contents)  # multiple spaces
     normalized = re.sub(r'[\n\r]\s*', r'\n', normalized)  # line breaks and spaces afterwards / empty lines
     normalized = re.sub(r'^\s*', r'', normalized)  # spaces / empty lines at the very beginning
@@ -139,11 +148,11 @@ def normalize_potcar_contents(potcar_contents):
     return normalized
 
 
-def md5_potcar(potcar_contents):
+def sha512_potcar(potcar_contents):
     """Hash the contents of a POTCAR file (given as str)."""
-    md5_hash = hashlib.md5()
-    md5_hash.update(normalize_potcar_contents(potcar_contents))
-    return md5_hash.hexdigest()
+    sha512_hash = hashlib.sha512()
+    sha512_hash.update(normalize_potcar_contents(potcar_contents).encode('utf-8'))
+    return sha512_hash.hexdigest()
 
 
 @contextmanager
@@ -161,7 +170,7 @@ def temp_potcar(contents):
     """Temporary POTCAR file from contents."""
     with temp_dir() as tempdir:
         potcar_file = tempdir.join('POTCAR')
-        with potcar_file.open('w') as potcar_fo:
+        with potcar_file.open('wb') as potcar_fo:
             potcar_fo.write(contents)
         yield potcar_file
 
@@ -181,20 +190,20 @@ def extract_tarfile(file_path):
 def by_older(left, right):
     if left.ctime < right.ctime:
         return -1
-    elif left.ctime > right.ctime:
+    if left.ctime > right.ctime:
         return 1
     return 0
 
 
 def by_user(left, right):
-    if left.get_user().is_active and not right.get_user().is_active:
+    if left.user.is_active and not right.user.is_active:
         return -1
-    elif not left.get_user().is_active and right.get_user().is_active:
+    if not left.user.is_active and right.user.is_active:
         return 1
     return 0
 
 
-class PotcarWalker(object):
+class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     """
     Walk the file system and find POTCAR files under a given directory.
 
@@ -222,7 +231,7 @@ class PotcarWalker(object):
         file_path = py_path.local(root).join(file_name)
         if tarfile.is_tarfile(str(file_path)):
             return self.handle_tarfile(dirs, file_path)
-        elif 'POTCAR' in file_name:
+        if 'POTCAR' in file_name:
             self.potcars.add(file_path)
         return None
 
@@ -235,7 +244,7 @@ class PotcarWalker(object):
         return new_dir
 
 
-class PotcarMetadataMixin(object):
+class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
     """Provide common Potcar metadata access and querying functionality."""
     _query_label = 'label'
 
@@ -244,7 +253,7 @@ class PotcarMetadataMixin(object):
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
-            query = cls.querybuild(label=label)
+            query = querybuild(cls, tag=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
             filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
@@ -260,8 +269,8 @@ class PotcarMetadataMixin(object):
         if not query_builder.count():
             raise NotExistent()
         results = [result[0] for result in query_builder.all()]
-        results.sort(by_older)
-        results.sort(by_user)
+        from functools import cmp_to_key
+        results.sort(key=cmp_to_key(by_older))
         return results
 
     @classmethod
@@ -273,7 +282,7 @@ class PotcarMetadataMixin(object):
         """
         res = cls.find(**kwargs)
         if len(res) > 1:
-            if not all([True for node in res if node.md5 == res[0].md5]):
+            if not all([True for node in res if node.sha512 == res[0].sha512]):
                 raise UniquenessError('Multiple nodes found satisfying {}'.format(kwargs))
         return res[0]
 
@@ -283,74 +292,76 @@ class PotcarMetadataMixin(object):
         return bool(cls.query_by_attrs(**kwargs).count() >= 1)
 
     @property
-    def md5(self):
-        """Md5 hash of the POTCAR file (readonly)."""
-        return self.get_attr('md5')
+    def sha512(self):
+        """Sha512 hash of the POTCAR file (readonly)."""
+        return self.get_attribute('sha512')
 
     @property
     def title(self):
         """Title of the POTCAR file (readonly)."""
-        return self.get_attr('title')
+        return self.get_attribute('title')
 
     @property
     def functional(self):
         """Functional class of the POTCAR potential (readonly)."""
-        return self.get_attr('functional')
+        return self.get_attribute('functional')
 
     @property
     def element(self):
         """Chemical element described by the POTCAR (readonly)."""
-        return self.get_attr('element')
+        return self.get_attribute('element')
 
     @property
     def symbol(self):
         """Element symbol property (VASP term) of the POTCAR potential (readonly)."""
-        return self.get_attr('symbol')
+        return self.get_attribute('symbol')
 
     @property
     def original_file_name(self):
-        """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('original_filename')
+        """The name of the original file uploaded into AiiDA."""
+        return self.get_attribute('original_filename')
 
     @property
     def full_name(self):
-        """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('full_name')
+        """The name of the original file uploaded into AiiDA."""
+        return self.get_attribute('full_name')
 
     @property
     def potential_set(self):
-        """The name of the original file uploaded into AiiDA"""
-        return self.get_attr('potential_set')
+        """The name of the original file uploaded into AiiDA."""
+        return self.get_attribute('potential_set')
 
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
-        if self.exists(md5=self.md5):
+        from copy import deepcopy
+        if self.exists(sha512=self.sha512):
             raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
 
-        other_attrs = self.get_attrs()
-        other_attrs.pop('md5')
+        other_attrs = deepcopy(self.attributes)
+
+        other_attrs.pop('sha512')
         if self.exists(**other_attrs):
             raise UniquenessError('A {} node with these attributes but a different file exists:\n{}'.format(
                 str(self.__class__), str(other_attrs)))
 
 
-class VersioningMixin(object):
+class VersioningMixin(object):  # pylint: disable=useless-object-inheritance
     """Minimalistic Node versioning."""
     _HAS_MODEL_VERSIONING = True
     _VERSION = None
 
     def set_version(self):
-        self._set_attr('_MODEL_VERSION', self._VERSION)
+        self.set_attribute('_MODEL_VERSION', self._VERSION)
 
     @property
     def model_version(self):
-        return self.get_attr('_MODEL_VERSION')
+        return self.get_attribute('_MODEL_VERSION')
 
     @classmethod
     def old_versions_in_db(cls):
         """Determine whether there are Nodes created with an older version of the model."""
         label = 'versioned'
-        query = cls.querybuild(label=label)
+        query = querybuild(cls, tag=label)
         filters = {'attributes._MODEL_VERSION': {'<': cls._VERSION}}
         query.add_filter(label, filters)
         return bool(query.count() >= 1)
@@ -358,7 +369,7 @@ class VersioningMixin(object):
 
 class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     """
-    Store a POTCAR file in the db, never use as input to a calculation or workflow.
+    Store a POTCAR file in the db, never use as input to a calculation or workchain.
 
     .. warning:: Warning! Sharing nodes of this type may be illegal!
 
@@ -366,7 +377,8 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     by the VASP group to VASP licence holders. Take care to not share such licenced data
     with non-licence holders.
 
-    When writing a calculation plugin or workflow, do not use this as an input type, use :class:`aiida_vasp.data.potcar.PotcarData` instead!
+    When writing a calculation plugin or workchain, do not use this as an input type,
+    use :class:`aiida_vasp.data.potcar.PotcarData` instead!
     """
 
     _query_label = 'potcar_file'
@@ -374,8 +386,19 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData.'
     _VERSION = 1
 
-    def set_file(self, filepath):
-        """Initialize from a file path."""
+    def __init__(self, *args, **kwargs):
+        # remove file in kwargs as this is not accepted in the subsequent inits
+        path = kwargs.pop('file', None)
+        super(PotcarFileData, self).__init__(*args, **kwargs)
+        if path is not None:
+            self.init_with_kwargs(file=path)
+
+    @delegate_method_kwargs(prefix='_init_with_')
+    def init_with_kwargs(self, **kwargs):
+        """Delegate initialization to _init_with - methods."""
+
+    def _init_with_file(self, filepath):
+        """Initiqalize from a file path."""
         self.add_file(filepath)
 
     def add_file(self, src_abs, dst_filename=None):
@@ -385,30 +408,30 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
-        self._set_attr('md5', self.get_file_md5(src_abs))
+        self.set_attribute('sha512', self.get_file_sha512(src_abs))
         potcar = PotcarSingle.from_file(src_abs)
-        self._set_attr('title', potcar.keywords['TITEL'])
-        self._set_attr('functional', potcar.functional)
-        self._set_attr('element', potcar.element)
-        self._set_attr('symbol', potcar.symbol)
+        self.set_attribute('title', potcar.keywords['TITEL'])
+        self.set_attribute('functional', potcar.functional)
+        self.set_attribute('element', potcar.element)
+        self.set_attribute('symbol', potcar.symbol)
         src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
-        self._set_attr('original_filename', src_rel)
+        self.set_attribute('original_filename', src_rel)
         dir_name = src_path.dirpath().basename
-        self._set_attr('full_name', dir_name)
-        self._set_attr('potential_set', src_path.parts()[-3].basename)
+        self.set_attribute('full_name', dir_name)
+        self.set_attribute('potential_set', src_path.parts()[-3].basename)
 
     @classmethod
-    def get_file_md5(cls, path):
-        """Get the md5 sum for a POTCAR file (after whitespace normalization)."""
+    def get_file_sha512(cls, path):
+        """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
         path = py_path.local(path)
         with path.open('r') as potcar_fo:
-            md5 = md5_potcar(potcar_fo.read())
-        return md5
+            sha512 = sha512_potcar(potcar_fo.read())
+        return sha512
 
     @classmethod
-    def get_contents_md5(cls, contents):
-        """Get the md5 sum for the contents of a POTCAR file (after normalization)."""
-        return md5_potcar(contents)
+    def get_contents_sha512(cls, contents):
+        """Get the sha512 sum for the contents of a POTCAR file (after normalization)."""
+        return sha512_potcar(contents)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
@@ -468,7 +491,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         if path.isdir():
             path = path.join(self.symbol, 'POTCAR')
         if not dry_run:
-            with path.open(mode='w', ensure=True) as dest_fo:
+            with path.open(mode='wb', ensure=True) as dest_fo:
                 dest_fo.write(self.get_content())
         return path
 
@@ -483,10 +506,10 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_or_create(cls, filepath):
         """Get or create (store) a PotcarFileData node."""
-        md5 = cls.get_file_md5(filepath)
-        if cls.exists(md5=md5):
+        sha512 = cls.get_file_sha512(filepath)
+        if cls.exists(sha512=sha512):
             created = False
-            node = cls.find_one(md5=md5)
+            node = cls.find_one(sha512=sha512)
         else:
             created = True
             node = cls(file=filepath)
@@ -497,7 +520,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     def get_or_create_from_contents(cls, contents):
         """Get or create (store) a PotcarFileData node from a string containing the POTCAR contents."""
         with temp_potcar(contents) as potcar_file:
-            return cls.get_or_create(str(potcar_file))
+            return cls.get_or_create(potcar_file)
 
 
 class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
@@ -515,15 +538,21 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     GROUP_TYPE = 'data.vasp.potcar.family'
 
+    def __init__(self, **kwargs):
+        potcar_file_node = kwargs.pop('potcar_file_node', None)
+        super(PotcarData, self).__init__(**kwargs)
+        if potcar_file_node is not None:
+            self.set_potcar_file_node(potcar_file_node)
+
     def set_potcar_file_node(self, potcar_file_node):
         """Initialize from a PotcarFileData node."""
         self.set_version()
-        for attr_name in potcar_file_node.get_attrs().keys():
-            self._set_attr(attr_name, potcar_file_node.get_attr(attr_name))
+        for attr_name in potcar_file_node.attributes.keys():
+            self.set_attribute(attr_name, potcar_file_node.get_attribute(attr_name))
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
-        return PotcarFileData.find_one(**self.get_attrs())
+        return PotcarFileData.find_one(**self.attributes)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
@@ -535,9 +564,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_or_create(cls, file_node):
         """Get or create (store) a PotcarData node."""
-        if cls.exists(md5=file_node.md5):
+
+        if cls.exists(sha512=file_node.sha512):
             created = False
-            node = cls.find_one(md5=file_node.md5)
+            node = cls.find_one(sha512=file_node.sha512)
         else:
             created = True
             node = cls(potcar_file_node=file_node)
@@ -547,8 +577,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def get_or_create_from_file(cls, file_path):
         """Get or create (store) a PotcarData node from a POTCAR file."""
-        md5 = PotcarFileData.get_file_md5(file_path)
-        file_node = PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else PotcarFileData(file=file_path)
+        sha512 = PotcarFileData.get_file_sha512(file_path)
+        file_node = PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else PotcarFileData(file=file_path)
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
             file_node.store()
@@ -562,12 +592,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     @classmethod
     def file_not_uploaded(cls, file_path):
-        md5 = PotcarFileData.get_file_md5(file_path)
-        return PotcarFileData.find_one(md5=md5) if PotcarFileData.exists(md5=md5) else namedtuple('potcar', ('uuid'))('-1')
+        sha512 = PotcarFileData.get_file_sha512(file_path)
+        return PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else namedtuple('potcar', ('uuid'))('-1')
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
-        return [group.name for group in Group.query(nodes=self, type_string=self.potcar_family_type_string)]
+        return [group.label for group in Group.query(nodes=self, type_string=self.potcar_family_type_string)]
 
     @classproperty
     def potcar_family_type_string(cls):  # pylint: disable=no-self-argument
@@ -577,7 +607,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_potcar_group(cls, group_name):
         """Return the PotcarFamily group with the given name."""
         try:
-            group = Group.get(name=group_name, type_string=cls.potcar_family_type_string)
+            group = Group.get(label=group_name, type_string=cls.potcar_family_type_string)
         except NotExistent:
             group = None
         return group
@@ -594,11 +624,13 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
-        group_query.append(cls, tag='potcar_data')
-        group_query.append(
-            Group, group_of='potcar_data', tag='potcar_family', filters={'type': {
-                '==': cls.potcar_family_type_string
-            }}, project='*')
+        group_query.append(Group,
+                           with_node='potcar_data',
+                           tag='potcar_data',
+                           filters={'type_string': {
+                               '==': cls.potcar_family_type_string
+                           }},
+                           project='*')
 
         groups = [group_list[0] for group_list in group_query.all()]
 
@@ -606,11 +638,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for element in filter_elements:
                 idx_has_element = []
                 for i, group in enumerate(groups):
-                    group_filters = {'name': {'==': group.name}, 'type': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
                     element_filters = {'attributes.element': {'==': element}}
                     elem_query = QueryBuilder()
                     elem_query.append(Group, tag='family', filters=group_filters)
-                    elem_query.append(cls, tag='potcar', member_of='family', filters=element_filters)
+                    elem_query.append(cls, tag='potcar', with_group='family', filters=element_filters)
                     if elem_query.count() > 0:
                         idx_has_element.append(i)
                 groups = [groups[i] for i in range(len(groups)) if i in idx_has_element]
@@ -619,11 +651,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             for symbol in filter_symbols:
                 idx_has_symbol = []
                 for i, group in enumerate(groups):
-                    group_filters = {'name': {'==': group.name}, 'type': {'==': cls.potcar_family_type_string}}
+                    group_filters = {'label': {'==': group.label}, 'type_string': {'==': cls.potcar_family_type_string}}
                     symbol_filters = {'attributes.symbol': {'==': symbol}}
                     symbol_query = QueryBuilder()
                     symbol_query.append(Group, tag='family', filters=group_filters)
-                    symbol_query.append(cls, tag='potcar', member_of='family', filters=symbol_filters)
+                    symbol_query.append(cls, tag='potcar', with_group='family', filters=symbol_filters)
                     if symbol_query.count() > 0:
                         idx_has_symbol.append(i)
                 groups = [groups[i] for i in range(len(groups)) if i in idx_has_symbol]
@@ -649,11 +681,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         if not mapping:
             mapping = {element: element for element in elements}
-        group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
+        group_filters = {'label': {'==': family_name}, 'type_string': {'==': cls.potcar_family_type_string}}
         element_filters = {'attributes.full_name': {'in': [mapping[element] for element in elements]}}
         query = QueryBuilder()
         query.append(Group, tag='family', filters=group_filters)
-        query.append(cls, tag='potcar', member_of='family', filters=element_filters)
+        query.append(cls, tag='potcar', with_group='family', filters=element_filters)
 
         result_potcars = {}
         for element in elements:
@@ -664,7 +696,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
                 raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
-            elif len(potcars_of_kind) > 1:
+            if len(potcars_of_kind) > 1:
                 result_potcars[element] = cls.find(family=family_name, full_name=full_name)[0]
             else:
                 result_potcars[element] = potcars_of_kind[0]
@@ -675,10 +707,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def query_by_attrs(cls, query=None, **kwargs):
         family_name = kwargs.pop('family_name', None)
         if family_name:
-            group_filters = {'name': {'==': family_name}, 'type': {'==': cls.potcar_family_type_string}}
+            group_filters = {'label': {'==': family_name}, 'type_string': {'==': cls.potcar_family_type_string}}
             query = QueryBuilder()
             query.append(Group, tag='family', filters=group_filters)
-            query.append(cls, tag=cls._query_label, member_of='family')
+            query.append(cls, tag=cls._query_label, with_group='family')
         return super(PotcarData, cls).query_by_attrs(query=query, **kwargs)
 
     @classmethod
@@ -704,8 +736,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         The Dictionary looks as follows::
 
             {
-                (kind1.name, ): PotcarData_for_kind1,
-                (kind2.name, ): ...
+                kind1.name: PotcarData_for_kind1,
+                kind2.name: ...
             }
 
         This is to make the output of this function suitable for giving directly as input to VaspCalculation.process() instances.
@@ -739,20 +771,23 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 mapping=custom_mapping
             )
         """
-        # elements_to_name = {kind.symbol: kind.name for kind in structure.kinds}
         kind_names = structure.get_kind_names()
-        return {(kind_name,): potcar for kind_name, potcar in cls.get_potcars_dict(kind_names, family_name, mapping=mapping).items()}
+        potcar_dict = {kind_name: value
+                       for kind_name, value in cls.get_potcars_dict(kind_names, # pylint: disable=unnecessary-comprehension
+                                                                    family_name,
+                                                                    mapping=mapping).items()}  # yapf: disable
+        return potcar_dict
 
     @classmethod
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
         """Prepare a (possibly new) group to upload a POTCAR family to."""
         if not dry_run:
-            group, group_created = Group.get_or_create(name=group_name, type_string=cls.potcar_family_type_string)
+            group, group_created = Group.objects.get_or_create(label=group_name, type_string=cls.potcar_family_type_string)
         else:
             group = cls.get_potcar_group(group_name)
             group_created = bool(not group)
             if not group:
-                group = Group(name=group_name)
+                group = Group(label=group_name)
 
         if group.user.pk != get_current_user().pk:
             raise UniquenessError(
@@ -776,7 +811,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             non-empty, a UniquenessError is raised.
         :param group_description: a string to be set as the group description.
             Overwrites previous descriptions, if the group was existing.
-        :param stop_if_existing: if True, check for the md5 of the files and,
+        :param stop_if_existing: if True, check for the sha512 of the files and,
             if the file already exists in the DB, raises a MultipleObjectsError.
             If False, simply adds the existing UPFData node to the group.
         :param dry_run: If True, do not change the database.
@@ -820,7 +855,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                     potcar = cls.file_not_uploaded(file_path)
                     created = bool(potcar.uuid == -1)
                 if stop_if_existing and not created:
-                    raise ValueError(('A POTCAR with identical MD5 to {} is already in the DB,'
+                    raise ValueError(('A POTCAR with identical SHA512 to {} is already in the DB,'
                                       'therefore it cannot be added with the stop_if_existing kwarg.').format(file_path))
                 list_created.append((potcar, created, file_path))
             except KeyError as err:
@@ -903,12 +938,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not family:
             return super(PotcarData, cls).find(**kwargs)
         query = cls.query_by_attrs(**kwargs)
-        group_filters = {'name': {'==': family}, 'type': {'==': cls.potcar_family_type_string}}
-        query.append(Group, tag='family', filters=group_filters, group_of=cls._query_label)
+        group_filters = {'label': {'==': family}, 'type_string': {'==': cls.potcar_family_type_string}}
+        query.append(Group, tag='family', filters=group_filters, with_node=cls._query_label)
         query.add_projection(cls._query_label, '*')
         if not query.count():
             raise NotExistent()
         results = [result[0] for result in query.all()]
-        results.sort(by_older)
-        results.sort(by_user)
+        from functools import cmp_to_key
+        results.sort(key=cmp_to_key(by_older))
         return results

@@ -6,7 +6,7 @@ import pytest
 from aiida_vasp.utils.delegates import Delegate
 
 
-class VaspParser(object):
+class VaspParser(object):  # pylint: disable=useless-object-inheritance
 
     def __init__(self):
         super(VaspParser, self).__init__()
@@ -15,7 +15,7 @@ class VaspParser(object):
         setattr(self, 'get_quantity', Delegate())
 
 
-class FileParser(object):
+class FileParser(object):  # pylint: disable=useless-object-inheritance
 
     def __init__(self, cls):
         self._vasp_parser = cls
@@ -27,7 +27,7 @@ class FileParser(object):
 
 
 def test_delegate():
-    """Test the functionality of the Delegate class wrapper"""
+    """Test the functionality of the Delegate class wrapper."""
 
     vasp_parser = VaspParser()
     assert not vasp_parser.get_quantity

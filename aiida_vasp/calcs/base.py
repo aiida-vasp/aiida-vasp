@@ -1,199 +1,73 @@
-# pylint: disable=abstract-method,invalid-metaclass
+"""
+Base calculation class.
+
+-----------------------
+Base and meta classes for VASP calculation classes.
+"""
+# pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
-"""Base and meta classes for VASP calculations"""
 import os
 from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
-from aiida.orm import JobCalculation, DataFactory
-from aiida.common.utils import classproperty
-from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.common.exceptions import ValidationError
+from aiida.engine import CalcJob
+from aiida.common import CalcInfo, CodeInfo, ValidationError
 from aiida.common.folders import SandboxFolder
 
-from aiida_vasp.utils.aiida_utils import get_data_node, cmp_get_transport
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, cmp_get_transport
 
 
-def make_use_methods(inputs, bases):
-    """
-    Create the _use_methods classproperty from a list of base classes as well as :py:class:`Input` instances.
-
-    For use in :py:class:`CalcMeta` during class creation.
-    """
-
-    @classproperty
-    # pylint: disable=protected-access,no-member
-    def _use_methods(cls):
-        """Automatically generated _use_methods function."""
-        retdict = JobCalculation._use_methods
-        for base_class in bases:
-            if hasattr(base_class, '_use_methods'):
-                retdict.update(base_class._use_methods)
-        for _, dct in inputs.iteritems():
-            link_name = dct['linkname']
-            if isinstance(link_name, classmethod):
-                dct['linkname'] = getattr(cls, link_name.__func__.__name__)
-        retdict.update(inputs)
-        return retdict
-
-    return _use_methods
-
-
-def make_init_internal(cls, **kwargs):  # pylint: disable=unused-argument
-    """Returns a _update internal_params method, required in class creation by :py:class:`CalcMeta`."""
-
-    def _update_internal_params(self):
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
-
-    return _update_internal_params
-
-
-def seqify(seq_arg):
-    if not isinstance(seq_arg, list) and not isinstance(seq_arg, tuple):
-        seq_arg = [seq_arg]
-    return tuple(seq_arg)
-
-
-def datify(type_or_str):
-    if isinstance(type_or_str, str):
-        return DataFactory(type_or_str)
-    return type_or_str
-
-
-class Input(object):
-    """
-    Utility class that handles mapping between CalcMeta's and Calculation's interfaces for defining input nodes.
-
-    Examples::
-
-        parameters = Input(types='parameter', doc='input parameters.')
-        structure = Input(types=['structure', 'cif'], doc='input structure')
-        potential = Input(types='vasp.potcar', param='kind')
-
-    Usage::
-
-        MyCalculation(JobCalculation):
-            __metaclass__ = CalcMeta
-            potential = Input(types='vasp.potcar', param='kind')
-
-        my_calc = MyCalculation
-        potential = load_node(...)
-        my_calc.use_potential(potential, kind='In')
-    """
-
-    def __init__(self, types, param=None, ln=None, doc=''):
-        self.types = tuple(map(datify, seqify(types)))
-        self.param = param
-        self._ln = ln
-        self.doc = doc
-
-    def set_ln(self, value):
-        if not self._ln:
-            self._ln = value
-
-    def get_dict(self):
-        """Create a dictionary representation of this input"""
-        ret = {'valid_types': self.types, 'additional_parameter': self.param, 'linkname': self._ln, 'docstring': self.doc}
-        return ret
-
-    @classmethod
-    def it_filter(cls, item):
-        return isinstance(item[1], Input)
-
-    @classmethod
-    def filter_classdict(cls, classdict):
-        return filter(cls.it_filter, classdict.iteritems())
-
-
-class IntParam(object):
-    """Utility class that handles mapping between CalcMeta's and Calculation's internal parameter interfaces."""
-
-    pmap = {'default_parser': '_default_parser', 'input_file_name': '_INPUT_FILE_NAME', 'output_file_name': '_OUTPUT_FILE_NAME'}
-
-    @classmethod
-    def it_filter(cls, item):
-        return item[0] in cls.pmap
-
-    @classmethod
-    def filter_classdict(cls, classdict):
-        return filter(cls.it_filter, classdict.iteritems())
-
-    @classmethod
-    def map_param(cls, item):
-        key, value = item
-        return (cls.pmap[key], value)
-
-    @classmethod
-    def map_params(cls, classdict):
-        return map(cls.map_param, cls.filter_classdict(classdict))
-
-    @classmethod
-    def k_filter(cls, key):
-        return key in cls.pmap
-
-    @classmethod
-    def get_keylist(cls, classdict):
-        return filter(cls.k_filter, classdict)
-
-
-class CalcMeta(JobCalculation.__metaclass__):
-    """
-    Metaclass that allows simpler and clearer Calculation class writing.
-
-    Takes :py:class:`Input` instances from the class and converts it to
-    the correct entries in the finished class's _use_methods classproperty.
-    finds class attributes corresponding to 'internal parameters'
-    and creates the finished class's _update_internal_params method.
-    """
-
-    def __new__(mcs, name, bases, classdict):
-        inputs = {}
-        delete = []
-        inputobj = Input.filter_classdict(classdict)
-        for key, value in inputobj:
-            if not value.param:
-                value.set_ln(key)
-            else:
-                value.set_ln(classdict['_get_{}_linkname'.format(key)])
-            inputs[key] = value.get_dict()
-            delete.append(key)
-        internals = dict(IntParam.map_params(classdict))
-        delete.extend(IntParam.get_keylist(classdict))
-        classdict['_use_methods'] = make_use_methods(inputs, bases)
-        classdict['_update_internal_params'] = make_init_internal(mcs, **internals)
-        for key in delete:
-            classdict.pop(key)
-        calc_cls = super(CalcMeta, mcs).__new__(mcs, name, bases, classdict)
-        return calc_cls
-
-
-class VaspCalcBase(JobCalculation):
+class VaspCalcBase(CalcJob):
     """
     Base class of all calculations utilizing VASP.
 
-    * sets :py:class:`CalcMeta` as it's __metaclass__
     * Defines internal parameters common to all vasp calculations.
     * provides a basic, extendable implementation of _prepare_for_submission
-    * provides hooks, so subclasses can extend the behaviour without
-
-    having to reimplement common functionality
+    * provides hooks, so subclasses can extend the behaviour without having to reimplement common functionality
     """
-    __metaclass__ = CalcMeta
-    input_file_name = 'INCAR'
-    output_file_name = 'OUTCAR'
 
-    restart_folder = Input(types='remote', doc='A remote folder to restart from after crashing')
+    _default_parser = 'vasp.vasp'
+
+    @classmethod
+    def define(cls, spec):
+        super(VaspCalcBase, cls).define(spec)
+        spec.input('restart_folder', valid_type=get_data_class('remote'), help='A remote folder to restart from if need be', required=False)
 
     @classmethod
     def max_retrieve_list(cls):
         """Return a list of all possible output files from a VASP run."""
         retrieve_list = [
-            'CHG', 'CHGCAR', 'CONTCAR', 'DOSCAR', 'EIGENVAL', 'ELFCAR', 'IBZKPT', 'LOCPOT', 'OSZICAR', 'OUTCAR', 'PCDAT', 'PROCAR',
-            'PROOUT', 'STOPCAR', 'TMPCAR', 'WAVECAR', 'XDATCAR', ['wannier90*', '.', 0], 'vasprun.xml'
+            'CHG',
+            'CHGCAR',
+            'AECCAR0',
+            'AECCAR1',
+            'AECCAR2',
+            'ELFCAR',
+            'PARCHG',  # Density related
+            'CONTCAR',
+            'XDATCAR',
+            'PCDAT',  # Structure related
+            'DOSCAR',
+            'EIGENVAL',
+            'PROCAR',  # Electronic structure related
+            'IBZKPT',  # Irreducible k-points
+            'LOCPOT',  # Potential related
+            'BSEFATBAND',  # Eigenvectors of the BSE matrix
+            'WAVECAR',
+            'WAVEDER',
+            'PROOUT',
+            'TMPCAR',
+            'W*.tmp',
+            'WFULL*.tmp',  # Wave function related properties
+            'wannier90*',  # Wannier90 related
+            'OSZICAR',  # Convergence related
+            'REPORT',  # Output of molecular dynamics runs
+            'STOPCAR',  # Controlled stopping file
+            'vasprun.xml',
+            'OUTCAR'
         ]
         return retrieve_list
 
-    def _prepare_for_submission(self, tempfolder, inputdict):
+    def prepare_for_submission(self, tempfolder):  # pylint: disable=arguments-differ
         """
         Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
 
@@ -211,80 +85,57 @@ class VaspCalcBase(JobCalculation):
 
         remote_copy_list = []
 
-        self.verify_inputs(inputdict)
-        if self._is_restart(inputdict):
-            remote_copy_list.extend(self.remote_copy_restart_folder(inputdict))
-        self.write_incar(inputdict, incar)
-        self.write_poscar(inputdict, structure)
-        self.write_potcar(inputdict, potentials)
-        self.write_kpoints(inputdict, kpoints)
-        self.write_additional(tempfolder, inputdict)
+        self.verify_inputs()
+        if self._is_restart():
+            remote_copy_list.extend(self.remote_copy_restart_folder())
+        self.write_incar(incar)
+        self.write_poscar(structure)
+        self.write_potcar(potentials)
+        self.write_kpoints(kpoints)
 
         # calcinfo
         calcinfo = CalcInfo()
         calcinfo.uuid = self.uuid
         calcinfo.retrieve_list = self.max_retrieve_list()
         codeinfo = CodeInfo()
-        codeinfo.code_uuid = self.get_code().uuid
-        codeinfo.code_pk = self.get_code().pk
+        codeinfo.code_uuid = self.inputs.code.uuid
+        codeinfo.code_pk = self.inputs.code.pk
         calcinfo.codes_info = [codeinfo]
         calcinfo.remote_copy_list = remote_copy_list
+        # here we need to do the charge density and wave function copy
+        # as we need access to the calcinfo
+        calcinfo.local_copy_list = []
+        self.write_additional(tempfolder, calcinfo)
 
         return calcinfo
 
-    def _init_internal_params(self):
-        """Must be present on all JobCalculation subclasses, that set internal parameters."""
-        super(VaspCalcBase, self)._init_internal_params()
-        self._update_internal_params()
-
-    def remote_copy_restart_folder(self, inputdict):
+    def remote_copy_restart_folder(self):
         """Add all files required for restart to the list of files to be copied from the previous calculation."""
-        restart_folder = inputdict['restart_folder']
-        computer = self.get_computer()
-        excluded = ['INCAR', '_aiidasubmit.sh', '.aiida']
+        restart_folder = self.inputs.restart_folder
+        computer = self.node.computer
+        excluded = ['KPOINTS', 'POSCAR', 'INCAR', 'POTCAR', '_aiidasubmit.sh', '.aiida']
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.')
                      for name in restart_folder.listdir()
                      if name not in excluded]
         return copy_list
 
-    def verify_inputs(self, inputdict, *args, **kwargs):  # pylint: disable=unused-argument
+    def verify_inputs(self):
         """
         Hook to be extended by subclasses with checks for input nodes.
 
         Is called once before submission.
         """
-        self.check_input(inputdict, 'code')
-        self.check_restart_folder(inputdict)
+        self.check_restart_folder()
         return True
 
-    @staticmethod
-    def check_input(inputdict, linkname, check_fn=lambda: True):
-        """
-        Check wether the given linkname is in the inputdict.
-
-        This is meant to be called prior to submission and will raise an
-        Exception if no input node is found for the linkname.
-
-        :param function check_fn: A function that returns True if the
-            check should be performed or False if not.
-
-        """
-        notset_msg = 'input not set: %s'
-        if check_fn():
-            if linkname not in inputdict:
-                raise ValidationError(notset_msg % linkname)
-        return True
-
-    def check_restart_folder(self, inputdict):
-        restart_folder = inputdict.get('restart_folder', None)
+    def check_restart_folder(self):
+        restart_folder = self.inputs.get('restart_folder', None)
         if restart_folder:
-            previous_calc = restart_folder.get_inputs(node_type=JobCalculation)[0]
-            if not self.get_computer().pk == previous_calc.get_computer().pk:
+            if not self.node.computer.pk == restart_folder.computer.pk:
                 raise ValidationError('Calculation can not be restarted on another computer')
 
-    # pylint: disable=no-self-use
-    def _is_restart(self, inputdict):
-        restart_folder = inputdict.get('restart_folder', None)
+    def _is_restart(self):
+        restart_folder = self.inputs.get('restart_folder', None)
         is_restart = False
         if restart_folder:
             is_restart = True
@@ -295,13 +146,13 @@ class VaspCalcBase(JobCalculation):
         self._prestore()
         super(VaspCalcBase, self).store(*args, **kwargs)
 
-    def _prestore(self):
-        """Subclass hook for updating attributes etc, just before storing"""
-        pass
+    def _prestore(self):  # pylint: disable=no-self-use
+        """Subclass hook for updating attributes etc, just before storing."""
+        return
 
-    def write_additional(self, tempfolder, inputdict):
+    def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
         """Subclass hook to write additional input files."""
-        pass
+        return
 
     @classmethod
     def immigrant(cls, code, remote_path, **kwargs):
@@ -318,16 +169,23 @@ class VaspCalcBase(JobCalculation):
             mapping to find the right POTCARs.
         :param settings: dict. Used for non-default parsing instructions, etc.
         """
-        from aiida_vasp.calcs import immigrant as imgr
+
+        from aiida_vasp.calcs import immigrant as imgr  # pylint: disable=import-outside-toplevel
         remote_path = py_path.local(remote_path)
-        proc_cls = imgr.VaspImmigrantJobProcess.build(cls)
+        proc_cls = imgr.VaspImmigrant
         builder = proc_cls.get_builder()
         builder.code = code
-        builder.options.resources = kwargs.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})  # pylint: disable=no-member
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        metadata = kwargs.get('metadata', {'options': options})
+        options = metadata.get('options', options)
+        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
+        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
+        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': remote_path.strpath})
-        builder.settings = get_data_node('parameter', dict=settings)
-        with cmp_get_transport(code.get_computer()) as transport:
+        builder.settings = get_data_node('dict', dict=settings)
+        with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = py_path.local(sandbox.abspath)
                 transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
@@ -336,7 +194,9 @@ class VaspCalcBase(JobCalculation):
                 transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
-                builder.potential = imgr.get_potcar_input(sandbox_path, potcar_spec=kwargs.get('potcar_spec', None))
+                builder.potential = imgr.get_potcar_input(sandbox_path,
+                                                          potential_family=kwargs.get('potential_family'),
+                                                          potential_mapping=kwargs.get('potential_mapping'))
                 builder.kpoints = imgr.get_kpoints_input(sandbox_path)
                 cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
         return proc_cls, builder

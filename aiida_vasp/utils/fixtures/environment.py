@@ -1,27 +1,22 @@
-"""pytest-style test fixtures"""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
-import os
-import json
+"""
+Fixtures related to environments.
 
+---------------------------------
+Here we set up pytest fixtures that yield the correct AiiDA environment
+to run our tests. In particular, the fresh_aiida_env is crucial in order
+to set up a dummy database and configuration that can be used during
+testing. AiiDA contributes with its own fixture manager, which we use.
+"""
+# pylint: disable=unused-import,unused-argument,redefined-outer-name
+from __future__ import absolute_import
+from __future__ import print_function
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
-from aiida import __version__ as aiidav
-from aiida.utils.fixtures import fixture_manager
-
-
-@pytest.fixture(scope='session')
-def aiida_env():
-    """Set up the db environment."""
-    with fixture_manager() as manager:
-        config_file = py_path.local(manager.root_dir).join('.aiida', 'config.json')
-        print config_file.read()
-        yield manager
-
 
 @pytest.fixture()
-def fresh_aiida_env(aiida_env):
+def fresh_aiida_env(aiida_profile):
     """Reset the database before and after the test function."""
-    aiida_env.reset_db()
-    yield aiida_env
-    aiida_env.reset_db()
+    print('The root directory of the fixture manager is: {}'.format(aiida_profile._manager.root_dir))  # pylint: disable=protected-access
+    yield aiida_profile
+    aiida_profile.reset_db()

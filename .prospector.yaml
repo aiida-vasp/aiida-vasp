@@ -1,20 +1,21 @@
 doc-warnings: true
 
 ignore-paths:
-    - doc
-    - examples
-    - test
-    - utils
+  - doc
+  - examples
+  - test
+  - utils
+  - cookiecutters
 
 pylint:
-    max-line-length: 140
+  max-line-length: 140
 
 pyflakes:
   run: false
 
 pep257:
   run: true
-  disable: 
+  disable:
     - D104
     - D105
     - D107
@@ -26,3 +27,5 @@ pep257:
     - D407
     - D412
     - D413
+    - D415
+    - D416

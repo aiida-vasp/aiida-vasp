@@ -1,5 +1,11 @@
-"""Inheritance tools."""
-from textwrap import dedent
+"""
+Inheritance tools.
+
+------------------
+This sets up inheritance of the docstrings for use when we inherit
+classes. This makses it simple to add further details to or replace the
+docstring present on the base class.
+"""
 
 
 def update_docstring(method_name, content, append=True):
@@ -38,10 +44,9 @@ def update_docstring(method_name, content, append=True):
     def wrapper(cls):
         """Update the method docstring and return the class."""
         if append:
-            old_doc = getattr(cls, method_name).im_func.func_doc
-            getattr(cls, method_name).im_func.func_doc = dedent(old_doc) + dedent(content)
+            getattr(cls, method_name).__func__.__doc__ = ''
         else:
-            getattr(cls, method_name).im_func.func_doc = content
+            getattr(cls, method_name).__func__.__doc__ = content
         return cls
 
     return wrapper

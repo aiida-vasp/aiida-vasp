@@ -1,17 +1,29 @@
+exclude: '^(doc)|(cookiecutters)|(aiida_vasp/test_data)'
 repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-json
+  - id: check-added-large-files
+  - id: double-quote-string-fixer
+  - id: forbid-new-submodules
+
 - repo: git://github.com/pre-commit/mirrors-yapf
-  sha: v0.22.0
+  rev: v0.28.0
   hooks:
   - id: yapf
     language: system
-    exclude: '^(doc/source/conf.py)'
+    types: [python]
 
-- repo: git://github.com/guykisel/prospector-mirror
-  sha: b27f281eb9398fc8504415d7fbdabf119ea8c5e1
+- repo: https://github.com/PyCQA/prospector
+  rev: 1.1.7
   hooks:
   - id: prospector
     language: system
-    exclude: '^(test/)|(aiida-vasp/utils/)|(examples/)|(conftest.py)|(doc/source/conf.py)|(tests_pytest/*)'
+    types: [python]
 
 - repo: local
   hooks:
@@ -22,7 +34,12 @@ repos:
     language: ruby
     additional_dependencies: ['travis']
   - id: version-updater
-    name: version
+    name: updating version entries
     language: system
     entry: python ops/update_version.py
     always_run: true
+
+- repo: git://github.com/Lucas-C/pre-commit-hooks-markup
+  rev: v1.0.0
+  hooks:
+  - id: rst-linter

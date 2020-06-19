@@ -1,15 +1,15 @@
 """
-Unit tests for data.potcar.PotcarWalker
+Unit tests for data.potcar.PotcarWalker.
 
 PotcarWalker recursively walks a directory and it's subdirectories,
 searching for POTCAR files, when it encounters a tar archive, it should be extracted to
 a folder on the same level as the archive and the extracted folder added to the search.
 """
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
-from aiida_vasp.utils.fixtures import aiida_env
+from aiida_vasp.utils.fixtures import fresh_aiida_env
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.fixtures.data import temp_pot_folder
 
@@ -22,7 +22,7 @@ def temp_data_folder(tmpdir):
 
 
 @pytest.fixture
-def potcar_walker_cls(aiida_env):
+def potcar_walker_cls(fresh_aiida_env):
     from aiida_vasp.data.potcar import PotcarWalker
     return PotcarWalker
 
