@@ -1,4 +1,4 @@
-.. _rabbitmq:
+.. _messaging:
 
 ===================
 3. Install RabbitMQ

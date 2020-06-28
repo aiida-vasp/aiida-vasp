@@ -36,8 +36,8 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
 
     structure = PoscarParser(file_path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
-    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
     parameters['system'] = 'test-case:test_converge_wc'
+    parameters = {'vasp': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}}
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -102,9 +102,9 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
 
     structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
-    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
-    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
     parameters['system'] = 'test-case:test_converge_wc'
+    parameters = {'vasp': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}}
+    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -150,6 +150,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         conv_data = conv_data.get_array('pw_regular')
     except KeyError:
         pytest.fail('Did not find pw_regular in converge.data')
+    print(conv_data)
     conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
                                [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
     np.testing.assert_allclose(conv_data, conv_data_test)

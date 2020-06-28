@@ -23,7 +23,7 @@ class OutcarParser(BaseFileParser):
 
     And we can thus not fully rely on the xml parser.
 
-    No posibilities to write OUTCAR files have been implemented.
+    No possibilities to write OUTCAR files have been implemented.
 
     """
 
@@ -42,7 +42,17 @@ class OutcarParser(BaseFileParser):
             'inputs': [],
             'name': 'symmetries',
             'prerequisites': []
-        }
+        },
+        'magnetization': {
+            'inputs': [],
+            'name': 'magnetization',
+            'prerequisites': []
+        },
+        'site_magnetization': {
+            'inputs': [],
+            'name': 'site_magnetization',
+            'prerequisites': []
+        },
     }
 
     def __init__(self, *args, **kwargs):
@@ -119,6 +129,16 @@ class OutcarParser(BaseFileParser):
     def elastic_moduli(self):
         """Fetch the elastic moduli."""
         return self._outcar.get_elastic_moduli()
+
+    @property
+    def magnetization(self):
+        """Fetch the full cell magnetization."""
+        return self._outcar.get_magnetization()['full_cell']
+
+    @property
+    def site_magnetization(self):
+        """Fetch the site dependent magnetization."""
+        return self._outcar.get_magnetization()
 
 
 class LegacyOutcarParser(BaseFileParser):

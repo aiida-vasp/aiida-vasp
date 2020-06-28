@@ -49,7 +49,7 @@ class IncarParser(BaseFileParser):
         """
         Return an instance of parsevasp.incar.Incar.
 
-        Corresponds to the stored data in inputs.parameters.incar.
+        Corresponds to the stored data in inputs.parameters.
 
         """
 

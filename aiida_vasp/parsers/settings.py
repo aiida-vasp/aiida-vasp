@@ -72,7 +72,7 @@ NODES = {
     'misc': {
         'link_name': 'misc',
         'type': 'dict',
-        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'stdout_error'],
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'stdout_error'],
     },
     'kpoints': {
         'link_name': 'kpoints',
@@ -153,6 +153,11 @@ NODES = {
         'link_name': 'wavecar',
         'type': 'vasp.wavefun',
         'quantities': ['wavecar'],
+    },
+    'site_magnetization': {
+        'link_name': 'site_magnetization',
+        'type': 'dict',
+        'quantities': ['site_magnetization'],
     },
 }
 

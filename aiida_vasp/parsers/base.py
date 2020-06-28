@@ -29,7 +29,7 @@ class BaseParser(Parser):
         Convenient check to see if the retrieved and retrieved temp folder is present.
 
         This routine also builds a dictionary containing the content of both the retrieved folder and
-        the retrieved_temporary folder, accesible from retrieved_content. The error for the temporary
+        the retrieved_temporary folder, accessible from retrieved_content. The error for the temporary
         folder takes presence as this is the one we mostly rely on.
         """
 

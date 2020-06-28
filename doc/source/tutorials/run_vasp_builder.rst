@@ -1,7 +1,7 @@
 .. _run_vasp_builder:
 
 =======================================
-2. Running VASP calculations explicitly
+5. Running VASP calculations explicitly
 =======================================
 
 We will now try to build a simple call script that executes a workchain,
@@ -139,7 +139,7 @@ something like::
        kpoints.set_kpoints_mesh([6, 6, 4], offset=[0, 0, 0.5])
 
        options = {'resources': resources,
-                  'account': 'nn9995k',
+                  'account': '',
 		  'max_memory_kb': 1024000,
                   'max_wallclock_seconds': 3600 * 10}
 
@@ -259,7 +259,7 @@ The lattice parameters of the relax crystal structure is found by
 
    In [1]: n = load_node(<PK>)
 
-   In [2]: n.outputs.structure_relaxed.cell
+   In [2]: n.outputs.relax__structure.cell
    Out[2]:
    [[3.07798535, 0.0, 0.0],
     [-1.53899268, 2.66561351, 0.0],

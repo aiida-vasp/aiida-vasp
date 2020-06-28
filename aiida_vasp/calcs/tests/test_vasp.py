@@ -83,7 +83,6 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     """Test incar with invaid tags raises exception"""
     from aiida.common import InputValidationError
     from aiida.common.folders import Folder
-
     inputs_dict = {
         'gga': 'PE',
         'smear': 3  # <- Invalid tag

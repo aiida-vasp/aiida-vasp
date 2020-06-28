@@ -30,7 +30,7 @@ with the following content:
 
    #!/bin/sh
    export AIIDA_PATH=~/aiida-vasp
-   eval "$(_VERDI_COMPLETE=source-bash verdi)"
+   eval "$(_VERDI_COMPLETE=source verdi)"
    export HOST=`hostname`
 
 and ``$CONDA_PREFIX/etc/conda/deactivate.d/env_vars.sh`` containing::

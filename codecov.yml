@@ -1,0 +1,13 @@
+codecov:
+  notify:
+    wait_for_ci: yes # default
+  require_ci_to_pass: yes # default
+
+coverage:
+  precision: 2  # default
+  round: up
+  range: "70...100"  # default
+  status:
+    project:
+      default:
+        threshold: 0.02%

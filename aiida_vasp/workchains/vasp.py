@@ -121,6 +121,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False)
         spec.output('hessian', valid_type=get_data_class('array'), required=False)
         spec.output('dynmat', valid_type=get_data_class('array'), required=False)
+        spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
         spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')

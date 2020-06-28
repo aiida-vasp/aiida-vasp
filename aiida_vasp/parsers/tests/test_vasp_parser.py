@@ -78,7 +78,7 @@ def vasp_parser_with_test(calc_with_retrieved):
     from aiida.plugins import CalculationFactory
 
     settings_dict = {
-        #'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
+        # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
         'parser_settings': {
             'add_custom': {
                 'link_name': 'custom_node',
@@ -212,6 +212,7 @@ def test_structure(request, calc_with_retrieved):
             'add_hessian': False,
             'add_dynmat': False,
             'add_wavecar': False,
+            'add_site_magnetization': False,
             'file_parser_set': 'default'
         }
     }
@@ -274,6 +275,7 @@ def test_misc(request, calc_with_retrieved):
             'add_hessian': False,
             'add_dynmat': False,
             'add_wavecar': False,
+            'add_site_magnetization': False,
             'file_parser_set': 'default',
         }
     }

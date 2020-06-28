@@ -39,6 +39,7 @@ DEFAULT_OPTIONS = {
     'add_wavecar': False,
     'add_forces': False,
     'add_stress': False,
+    'add_site_magnetization': False,
     'file_parser_set': 'default',
 }
 
