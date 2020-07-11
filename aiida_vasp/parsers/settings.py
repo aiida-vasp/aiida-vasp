@@ -113,6 +113,11 @@ NODES = {
         'type': 'array',
         'quantities': ['energies'],
     },
+    'energies_sc': {
+        'type': 'array',
+        'link_name': 'energies_sc',
+        'quantities': ['energies_sc'],
+    },
     'projectors': {
         'link_name': 'projectors',
         'type': 'array',

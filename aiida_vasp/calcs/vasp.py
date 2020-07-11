@@ -109,6 +109,7 @@ class VaspCalculation(VaspCalcBase):
         spec.output('dos', valid_type=get_data_class('array'), required=False, help='The output dos.')
         spec.output('occupancies', valid_type=get_data_class('array'), required=False, help='The output band occupancies.')
         spec.output('energies', valid_type=get_data_class('array'), required=False, help='The output total energies.')
+        spec.output('energies_sc', valid_type=get_data_class('array'), required=False, help='The output total energies at all SCF steps.')
         spec.output('projectors', valid_type=get_data_class('array'), required=False, help='The output projectors of decomposition.')
         spec.output('dielectrics', valid_type=get_data_class('array'), required=False, help='The output dielectric functions.')
         spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')

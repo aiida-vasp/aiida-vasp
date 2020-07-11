@@ -116,6 +116,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.output('dos', valid_type=get_data_class('array'), required=False)
         spec.output('occupancies', valid_type=get_data_class('array'), required=False)
         spec.output('energies', valid_type=get_data_class('array'), required=False)
+        spec.output('energies_sc', valid_type=get_data_class('array'), required=False)
         spec.output('projectors', valid_type=get_data_class('array'), required=False)
         spec.output('dielectrics', valid_type=get_data_class('array'), required=False)
         spec.output('born_charges', valid_type=get_data_class('array'), required=False)
