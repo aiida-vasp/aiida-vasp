@@ -29,7 +29,7 @@ def test_error_record():
 def test_vasp_error(vasp_error_example):
     """Test the VaspError Class"""
     error = vasp_error_example
-    assert isinstance(error.regex, re.Pattern)
+    assert isinstance(error.regex, type(re.compile('a')))
 
     error.__repr__()
     erec = error.check_line('BAD NEWS: There is an error')
