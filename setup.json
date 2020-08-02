@@ -84,8 +84,5 @@
         "lxml",
         "packaging",
         "parsevasp >= 1.0.0"
-    ],
-    "package_data": {
-        "aiida_vasp": ["parsers/vasp_errors.yaml", "utils/tags.yml"]
-    }
+    ]
 }
