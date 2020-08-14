@@ -81,7 +81,7 @@ class VaspCalculation(VaspCalcBase):
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The kpoints to use (KPOINTS).')
         spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
         spec.input('wavefunctions',
                    valid_type=get_data_class('vasp.wavefun'),
@@ -320,8 +320,9 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the file to write to
         """
-        kpoint_parser = KpointsParser(data=self.inputs.kpoints)
-        kpoint_parser.write(dst)
+        if self._need_kp():
+            kpoint_parser = KpointsParser(data=self.inputs.kpoints)
+            kpoint_parser.write(dst)
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
         charge_density = self.inputs.charge_density
