@@ -40,6 +40,7 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
+    'add_notifications': True,
     'file_parser_set': 'default',
 }
 
