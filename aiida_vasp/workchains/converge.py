@@ -752,7 +752,7 @@ class ConvergeWorkChain(WorkChain):
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
-        # Check if called workchain was successfull
+        # Check if called workchain was successful
         next_workchain_exit_status = self.ctx.pw_workchains[-1].exit_status
         next_workchain_exit_message = self.ctx.pw_workchains[-1].exit_message
         if next_workchain_exit_status:

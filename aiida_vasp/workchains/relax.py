@@ -245,7 +245,7 @@ class RelaxWorkChain(WorkChain):
         """Initialize a calculation based on a relaxed or assumed relaxed structure."""
         if not self.perform_relaxation():
             if self._verbose:
-                self.report('skipping structure relaxation and forwarding input to the next workchain.')
+                self.report('skipping structure relaxation and forwarding to the next workchain.')
         else:
             # For the final static run we do not need to parse the output structure, which
             # is at this point enabled.
@@ -347,13 +347,15 @@ class RelaxWorkChain(WorkChain):
             if self.ctx.inputs.parameters.relax.shape:
                 converged &= self.check_shape_convergence(delta)
 
-        if not converged:
-            self.ctx.current_restart_folder = workchain.outputs.remote_folder
-            if self._verbose:
-                self.report('Relaxation did not converge, restarting the relaxation.')
-        else:
-            if self._verbose:
-                self.report('Relaxation is converged, finishing with a final static calculation.')
+            if not converged:
+                self.ctx.current_restart_folder = workchain.outputs.remote_folder
+                if self._verbose:
+                    self.report('Relaxation did not converge, restarting the relaxation.')
+            else:
+                if self._verbose:
+                    self.report('Relaxation is considered converged.')
+
+        if converged:
             self.ctx.is_converged = converged
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
