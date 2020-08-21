@@ -343,3 +343,12 @@ def test_inherit_and_merge():
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters.bands.somekey = False
     assert parameters == test_parameters
+
+
+def test_pwcutoff_to_encut():
+    """Test that the pwcutoff is converted to encut."""
+    parameters = AttributeDict()
+    parameters.pwcutoff = 200
+    massager = ParametersMassage(None, parameters)
+    assert massager.exit_code is None
+    assert massager.parameters.encut == parameters.pwcutoff

@@ -160,7 +160,8 @@ class ParametersMassage():
         self._load_valid_params()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
         self._set_parameters()
-        self._set_vasp_parameters()
+        # Override any parameter set so far by parameters in the vasp namespace.
+        self._set_override_parameters()
         # No point to proceed if the override parameters already contains an invalid keys, or the set process trigger another exit code
         if self.exit_code is not None:
             return
@@ -182,7 +183,7 @@ class ParametersMassage():
             if self.exit_code is not None:
                 return
 
-    def _set_vasp_parameters(self):
+    def _set_override_parameters(self):
         """Set the any supplied override parameters."""
         try:
             for key, item in self._parameters.vasp.items():
@@ -244,6 +245,19 @@ class ParameterSetFunctions():
         self._parameters = parameters
         self._workchain = workchain
         self._massage = massage
+
+    def set_encut(self):
+        """
+        Set which plane wave cutoff to use.
+
+        See https://www.vasp.at/wiki/index.php/ENCUT
+
+        """
+        try:
+            self._massage.encut = self._parameters.pwcutoff
+        except AttributeError:
+            # VASP accepts defaults
+            pass
 
     def set_ibrion(self):
         """
