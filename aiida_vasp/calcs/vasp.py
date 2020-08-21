@@ -121,11 +121,19 @@ class VaspCalculation(VaspCalcBase):
                        'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
                        message='the retrieved_temporary folder data node could not be accessed.')
         spec.exit_code(352, 'ERROR_CRITICAL_MISSING_FILE', message='a file that is marked by the parser as critical is missing.')
+        spec.exit_code(333,
+                       'ERROR_VASP_DID_NOT_EXECUTE',
+                       message='VASP did not produce any output files and did likely not execute properly.')
         spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
         spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the requested quantity')
 
     def prepare_for_submission(self, tempfolder):
-        """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
+        """
+        Add all files to the list of files to be retrieved.
+
+        Notice that we here utilize both the retrieve batch of files, which are always stored after retrieval and
+        the temporary retrieve list which is automatically cleared after parsing.
+        """
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve files
@@ -152,7 +160,7 @@ class VaspCalculation(VaspCalcBase):
             provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
         except AttributeError:
             provenance_exclude_list = []
-        # Always include POTCAR in the exclude list (not added to the repository)
+        # Always include POTCAR in the exclude list (not added to the repository, regardless of store)
         calcinfo.provenance_exclude_list = list(set(provenance_exclude_list + ['POTCAR']))
 
         return calcinfo
