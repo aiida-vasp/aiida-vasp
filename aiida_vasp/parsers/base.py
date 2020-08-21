@@ -52,7 +52,7 @@ class BaseParser(Parser):
         # if there are any files in the retrieved_temporary. If not, return an error.
         aiida_required_files = [self.node.get_attribute('scheduler_stderr'), self.node.get_attribute('scheduler_stdout')]
         vasp_output_files_present = False
-        for file_name in retrieved.keys():
+        for file_name in retrieved:
             if file_name not in aiida_required_files:
                 vasp_output_files_present = True
 
