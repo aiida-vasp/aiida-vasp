@@ -23,6 +23,11 @@ jobs:
         run:
           pip install -e .[graphs,dev]
           pip freeze
+      - name: Dump versions
+        run:
+          prospector --version
+          yapf --version
+          pylint --version
       - name: Run pre-commit
         run: pre-commit run --all-files || ( git diff; git status; exit 1; )
   tests:

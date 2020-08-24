@@ -15,7 +15,7 @@ from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class RelaxWorkChain(WorkChain):

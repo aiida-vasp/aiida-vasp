@@ -5,7 +5,7 @@ import pytest
 
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.parameters import ParametersMassage
+from aiida_vasp.assistant.parameters import ParametersMassage
 
 
 @pytest.fixture
@@ -303,7 +303,7 @@ def test_vasp_parameter_override(init_relax_parameters):
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
     from aiida.plugins import DataFactory
-    from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+    from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
     inputs = AttributeDict()
     inputs.bands = AttributeDict()
@@ -343,6 +343,41 @@ def test_inherit_and_merge():
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters.bands.somekey = False
     assert parameters == test_parameters
+
+
+def test_unsupported_fail_override():
+    """Test that any supplied unsupported parameters in the regular parameters dictionary yield error."""
+    parameters = AttributeDict()
+    parameters.vasp = AttributeDict()
+    parameters.vasp.not_valid = 200
+    massager = ParametersMassage(None, parameters)
+    assert massager.exit_code
+
+
+def test_unsupported_fail():
+    """Test that any supplied unsupported parameters in the regular overload parameters dictionary does not yield an error."""
+    parameters = AttributeDict()
+    parameters.not_valid = 200
+    massager = ParametersMassage(None, parameters)
+    # The not valid parameter was never set as there is no setter function for it.
+    assert massager.parameters == {}
+
+
+def test_unsupported_parameters():
+    """Test that it is possibly to supply unsupported parameters."""
+    parameters = AttributeDict()
+    parameters.not_valid = 200
+    massager = ParametersMassage(
+        None,
+        parameters,
+        unsupported_parameters={'not_valid': {
+            'default': 1.0,
+            'description': 'Something',
+            'type': float,
+            'values': [1.0, 2.0]
+        }})
+    assert massager.exit_code is None
+    assert massager.parameters.not_valid == parameters.not_valid
 
 
 def test_pwcutoff_to_encut():
