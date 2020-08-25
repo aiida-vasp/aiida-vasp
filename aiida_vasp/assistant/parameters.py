@@ -145,9 +145,16 @@ class ParametersMassage():
     that can be dumped using the parsers in the respective CalcJob plugins.
     """
 
-    def __init__(self, workchain, parameters):
+    def __init__(self, workchain, parameters, unsupported_parameters=None):
         # First of all make sure parameters is a not a AiiDA Dict datatype
         self.exit_code = None
+        if unsupported_parameters is None:
+            self._unsupported_parameters = {}
+        else:
+            if not isinstance(unsupported_parameters, dict):
+                raise ValueError(
+                    f'The supplied value for unsupported_parameters is not of list, but of type {type(unsupported_parameters)}')
+            self._unsupported_parameters = unsupported_parameters
         self._workchain = workchain
         self._massage = AttributeDict()
         if isinstance(parameters, DataFactory('dict')):
@@ -171,9 +178,17 @@ class ParametersMassage():
         """Import a list of valid parameters for VASP. This is generated from the manual."""
         from os import path  # pylint: disable=import-outside-toplevel
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
-        with open(path.join(path.dirname(path.realpath(__file__)), 'tags.yml'), 'r') as file_handler:
+        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r') as file_handler:
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
+        # Now add any unsupported parameter to the list
+        for key, item in self._unsupported_parameters.items():
+            key = key.lower()
+            try:
+                _ = self._massage[key]
+                raise ValueError(f'The supplied unsupported_parameters with key {key} is already a supported parameter.')
+            except KeyError:
+                self._valid_parameters.append(key)
 
     def _set_parameters(self):
         """Iterate over the valid parameters and call the set function associated with that parameter."""

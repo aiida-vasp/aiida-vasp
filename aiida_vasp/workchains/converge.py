@@ -15,7 +15,7 @@ from aiida.orm.nodes.data.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class ConvergeWorkChain(WorkChain):

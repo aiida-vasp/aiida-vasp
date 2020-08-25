@@ -15,7 +15,7 @@ from aiida.orm import Code
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 from aiida_vasp.workchains.restart import BaseRestartWorkChain
-from aiida_vasp.utils.parameters import ParametersMassage
+from aiida_vasp.assistant.parameters import ParametersMassage
 
 
 class VaspWorkChain(BaseRestartWorkChain):
@@ -164,17 +164,23 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Set the kpoints (kpoints)
         self.ctx.inputs.kpoints = self.inputs.kpoints
 
+        # Set settings
+        unsupported_parameters = None
+        if 'settings' in self.inputs:
+            self.ctx.inputs.settings = self.inputs.settings
+            # Also check if the user supplied additional tags that is not in the supported file.
+            try:
+                unsupported_parameters = self.ctx.inputs.settings.unsupported_parameters
+            except AttributeError:
+                pass
+
         # Perform inputs massage to accommodate generalization in higher lying workchains
-        # and set parameters
-        parameters_massager = ParametersMassage(self, self.inputs.parameters)
+        # and set parameters.
+        parameters_massager = ParametersMassage(self, self.inputs.parameters, unsupported_parameters)
         # Check exit codes from the parameter massager and set it if it exists
         if parameters_massager.exit_code is not None:
             return parameters_massager.exit_code
         self.ctx.inputs.parameters = parameters_massager.parameters
-
-        # Set settings
-        if 'settings' in self.inputs:
-            self.ctx.inputs.settings = self.inputs.settings
 
         # Set options
         # Options is very special, not storable and should be
