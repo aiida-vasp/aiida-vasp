@@ -1,4 +1,3 @@
 include setup.json
 include aiida_vasp/assistant/parameters.yml
-include aiida_vasp/assistant/errors.yml
 recursive-include aiida_vasp/test_data *
