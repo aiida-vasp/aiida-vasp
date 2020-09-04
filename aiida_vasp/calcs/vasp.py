@@ -67,7 +67,8 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
+    _VASP_OUTPUT = 'vasp_output'
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*', _VASP_OUTPUT]
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
@@ -135,6 +136,11 @@ class VaspCalculation(VaspCalcBase):
         the temporary retrieve list which is automatically cleared after parsing.
         """
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
+
+        # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
+        calcinfo.stdout_name = self._VASP_OUTPUT
+        calcinfo.join_files = True
+
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve files
         try:

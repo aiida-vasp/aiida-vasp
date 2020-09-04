@@ -150,7 +150,6 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
         conv_data = conv_data.get_array('pw_regular')
     except KeyError:
         pytest.fail('Did not find pw_regular in converge.data')
-    print(conv_data)
     conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
                                [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
     np.testing.assert_allclose(conv_data, conv_data_test)

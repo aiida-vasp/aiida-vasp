@@ -83,6 +83,6 @@
         "subprocess32",
         "lxml",
         "packaging",
-        "parsevasp >= 1.1.0"
+        "parsevasp >= 1.1.1"
     ]
 }

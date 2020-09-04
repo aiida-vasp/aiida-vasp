@@ -296,3 +296,176 @@ def test_misc(request, calc_with_retrieved):
     assert data['maximum_stress'] == 42.96872956444064
     assert data['maximum_force'] == 0.21326679
     assert data['total_energies']['energy_no_entropy'] == -10.823296
+
+
+@pytest.mark.parametrize(
+    'config',
+    [
+        None,
+        {
+            'random_error': {
+                'kind': 'ERROR',
+                'regex': 'I AM A WELL DEFINED ERROR',
+                'message': 'Okey, this error you do not want.',
+                'suggestion': '',
+                'location': 'STDOUT',
+                'recover': False
+            }
+        },
+        {
+            'random_warning': {
+                'kind': 'WARNING',
+                'regex': 'I AM A WELL DEFINED WARNING',
+                'message': 'Okey, this warning is nasty.',
+                'suggestion': '',
+                'location': 'STDOUT',
+                'recover': False
+            }
+        }  # pylint: disable=too-many-statements, too-many-branches
+    ])
+@pytest.mark.parametrize('misc_input', [[], ['errors'], ['warnings'], ['errors', 'warnings']])
+def test_stream(misc_input, config, request, calc_with_retrieved):
+    """Test that the stream parser works and gets stored on a node."""
+    from aiida.plugins import ParserFactory
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout')
+
+    # turn of everything, except misc
+    settings_dict = {
+        'parser_settings': {
+            'add_trajectory': False,
+            'add_bands': False,
+            'add_chgcar': False,
+            'add_dos': False,
+            'add_kpoints': False,
+            'add_energies': False,
+            'add_misc': misc_input,
+            'add_structure': False,
+            'add_projectors': False,
+            'add_born_charges': False,
+            'add_dielectrics': False,
+            'add_hessian': False,
+            'add_dynmat': False,
+            'add_wavecar': False,
+            'add_site_magnetization': False,
+            'file_parser_set': 'default',
+            'stream_config': config
+        }
+    }
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    ibzkpt_error = ('(ERROR) ibzkpt: There is an error when creating the irreducible k-point grid, '
+                    'most likely the symmetry of the cell does not match the k-point sampling.')
+    random_error = '(ERROR) random_error: Okey, this error you do not want.'
+    random_warning = '(WARNING) random_warning: Okey, this warning is nasty.'
+
+    if misc_input == []:
+        # Test empty misc specification, yields no misc output node
+        with pytest.raises(KeyError) as error:
+            misc = result['misc']
+    else:
+        misc = result['misc']
+        misc_dict = misc.get_dict()
+        if misc_input == ['errors']:
+            # Test that entries only yield errors if the user only requests this
+            with pytest.raises(KeyError) as error:
+                assert misc_dict['warnings']
+            if config is not None:
+                if 'random_error' in config:
+                    assert len(misc_dict['errors']) == 2
+                    assert str(misc_dict['errors'][0]) == ibzkpt_error
+                    assert str(misc_dict['errors'][1]) == random_error
+                if 'random_warning' in config:
+                    assert len(misc_dict['errors']) == 1
+                    assert str(misc_dict['errors'][0]) == ibzkpt_error
+            else:
+                assert len(misc_dict['errors']) == 1
+                assert str(misc_dict['errors'][0]) == ibzkpt_error
+
+        if misc_input == ['warnings']:
+            # Test that the entries only yield warnings if that user only requests this
+            with pytest.raises(KeyError) as error:
+                assert misc_dict['errors']
+            if config is not None:
+                if 'random_error' in config:
+                    assert len(misc_dict['warnings']) == 0
+                if 'random_warning' in config:
+                    assert len(misc_dict['warnings']) == 1
+                    assert str(misc_dict['warnings'][0]) == random_warning
+
+        if misc_input == ['errors', 'warnings']:
+            # Test that we get both errors and warnings if the user specifies this
+            if config is not None:
+                if 'random_error' in config:
+                    assert len(misc_dict['errors']) == 2
+                    assert str(misc_dict['errors'][0]) == ibzkpt_error
+                    assert str(misc_dict['errors'][1]) == random_error
+                if 'random_warning' in config:
+                    assert len(misc_dict['errors']) == 1
+                    assert len(misc_dict['warnings']) == 1
+                    assert str(misc_dict['errors'][0]) == ibzkpt_error
+                    assert str(misc_dict['warnings'][0]) == random_warning
+            else:
+                assert len(misc_dict['errors']) == 1
+                assert len(misc_dict['warnings']) == 0
+                assert not misc_dict['warnings']
+
+
+def test_stream_history(request, calc_with_retrieved):
+    """Test that the stream parser keeps history."""
+    from aiida.plugins import ParserFactory
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout')
+
+    # turn of everything, except misc
+    settings_dict = {
+        'parser_settings': {
+            'add_trajectory': False,
+            'add_bands': False,
+            'add_chgcar': False,
+            'add_dos': False,
+            'add_kpoints': False,
+            'add_energies': False,
+            'add_misc': ['errors', 'warnings'],
+            'add_structure': False,
+            'add_projectors': False,
+            'add_born_charges': False,
+            'add_dielectrics': False,
+            'add_hessian': False,
+            'add_dynmat': False,
+            'add_wavecar': False,
+            'add_site_magnetization': False,
+            'file_parser_set': 'default',
+            'stream_config': {
+                'random_error': {
+                    'kind': 'ERROR',
+                    'regex': 'I AM A WELL DEFINED ERROR',
+                    'message': 'Okey, this error you do not want.',
+                    'suggestion': '',
+                    'location': 'STDOUT',
+                    'recover': False
+                }
+            },
+            'stream_history': True
+        }
+    }
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    ibzkpt_error = ('(ERROR) ibzkpt: There is an error when creating the irreducible k-point grid, '
+                    'most likely the symmetry of the cell does not match the k-point sampling.')
+    random_error = '(ERROR) random_error: Okey, this error you do not want.'
+
+    misc = result['misc']
+    misc_dict = misc.get_dict()
+
+    assert len(misc_dict['errors']) == 3
+    assert str(misc_dict['errors'][0]) == ibzkpt_error
+    assert str(misc_dict['errors'][1]) == random_error
+    assert str(misc_dict['errors'][2]) == random_error
+    assert len(misc_dict['warnings']) == 0
