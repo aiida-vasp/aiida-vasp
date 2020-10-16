@@ -208,7 +208,11 @@ class BandsWorkChain(WorkChain):
         """Attach the remaining output results."""
 
         workchain = self.ctx.workchains[-1]
-        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        out_dict = self.exposed_outputs(workchain, self._next_workchain)
+        bands = out_dict.pop('bands', None)
+        self.out_many(out_dict)
+        if bands is not None:
+            self.out('bands', attach_labels(bands, self.ctx.inputs.kpoints))
 
     def finalize(self):
         """Finalize the workchain."""
@@ -227,3 +231,10 @@ def seekpath_structure_analysis(structure, parameters):
     """
     from aiida.tools import get_explicit_kpoints_path
     return get_explicit_kpoints_path(structure, **parameters.get_dict())
+
+
+@calcfunction
+def attach_labels(bands, kpoints):
+    bands_with_labels = bands.clone()
+    bands_with_labels.labels = kpoints.labels
+    return bands_with_labels
