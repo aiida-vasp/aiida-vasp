@@ -93,8 +93,7 @@ class BandsWorkChain(WorkChain):
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
-        spec.exit_code(2001, 'ERROR_BANDSDATA_NOT_FOUND',
-                       message='BandsData not found in exposed_ouputs')
+        spec.exit_code(2001, 'ERROR_BANDSDATA_NOT_FOUND', message='BandsData not found in exposed_ouputs')
 
     def initialize(self):
         """Initialize."""
@@ -214,9 +213,12 @@ class BandsWorkChain(WorkChain):
         bands = out_dict.pop('bands', None)
         self.out_many(out_dict)
         if bands is None:
-            return self.exit_codes.ERROR_BANDSDATA_NOT_FOUND
+            self.ctx.exit_code = self.exit_codes.ERROR_BANDSDATA_NOT_FOUND  # pylint: disable=no-member
         else:
             self.out('bands', attach_labels(bands, self.ctx.inputs.kpoints))
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
+        return self.ctx.exit_code
 
     def finalize(self):
         """Finalize the workchain."""
