@@ -145,9 +145,16 @@ class ParametersMassage():
     that can be dumped using the parsers in the respective CalcJob plugins.
     """
 
-    def __init__(self, workchain, parameters):
+    def __init__(self, workchain, parameters, unsupported_parameters=None):
         # First of all make sure parameters is a not a AiiDA Dict datatype
         self.exit_code = None
+        if unsupported_parameters is None:
+            self._unsupported_parameters = {}
+        else:
+            if not isinstance(unsupported_parameters, dict):
+                raise ValueError(
+                    f'The supplied value for unsupported_parameters is not of list, but of type {type(unsupported_parameters)}')
+            self._unsupported_parameters = unsupported_parameters
         self._workchain = workchain
         self._massage = AttributeDict()
         if isinstance(parameters, DataFactory('dict')):
@@ -157,24 +164,33 @@ class ParametersMassage():
         else:
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
-        self._check_parameters()
         self._load_valid_params()
         self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
-        self._prepare_parameters()
+        self._set_parameters()
+        # Override any parameter set so far by parameters in the vasp namespace.
+        self._set_override_parameters()
+        # No point to proceed if the override parameters already contains an invalid keys, or the set process trigger another exit code
+        if self.exit_code is not None:
+            return
         self._validate_parameters()
-
-    def _check_parameters(self):
-        """Check the valid parameters for this plugin."""
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
         from os import path  # pylint: disable=import-outside-toplevel
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
-        with open(path.join(path.dirname(path.realpath(__file__)), 'tags.yml'), 'r') as file_handler:
+        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r') as file_handler:
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
+        # Now add any unsupported parameter to the list
+        for key, item in self._unsupported_parameters.items():
+            key = key.lower()
+            try:
+                _ = self._massage[key]
+                raise ValueError(f'The supplied unsupported_parameters with key {key} is already a supported parameter.')
+            except KeyError:
+                self._valid_parameters.append(key)
 
-    def _prepare_parameters(self):
+    def _set_parameters(self):
         """Iterate over the valid parameters and call the set function associated with that parameter."""
         for key in self._valid_parameters:
             self._set(key)
@@ -182,10 +198,39 @@ class ParametersMassage():
             if self.exit_code is not None:
                 return
 
+    def _set_override_parameters(self):
+        """Set the any supplied override parameters."""
+        try:
+            for key, item in self._parameters.vasp.items():
+                # Sweep the override input parameters to check if they are valid VASP tags
+                key = key.lower()
+                if self._valid_vasp_parameter(key):
+                    self._massage[key] = item
+                else:
+                    break
+        except AttributeError:
+            # The vasp namespace might not be supplied (no override)
+            pass
+
+    def _valid_vasp_parameter(self, key):
+        """Make sure a key are recognized as a valid VASP input parameter."""
+        if key not in self._valid_parameters:
+            msg = 'Found an invalid key for the INCAR parameters: {}'.format(key)
+            if self._workchain is not None:
+                self._workchain.report(msg)
+                self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+            else:
+                self.exit_code = True
+            return False
+
+        return True
+
     def _validate_parameters(self):
-        """Make sure all the massaged values are to VASP spec."""
-        if list(self._massage.keys()).sort() != self._valid_parameters.sort() and self.exit_code is None:
-            self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+        """Make sure all the massaged values are recognized as valid VASP input parameters."""
+        for key in self._massage:
+            key = key.lower()
+            if not self._valid_vasp_parameter(key):
+                break
 
     def _set(self, key):
         """Call the necessary function to set each parameter."""
@@ -215,6 +260,19 @@ class ParameterSetFunctions():
         self._parameters = parameters
         self._workchain = workchain
         self._massage = massage
+
+    def set_encut(self):
+        """
+        Set which plane wave cutoff to use.
+
+        See https://www.vasp.at/wiki/index.php/ENCUT
+
+        """
+        try:
+            self._massage.encut = self._parameters.pwcutoff
+        except AttributeError:
+            # VASP accepts defaults
+            pass
 
     def set_ibrion(self):
         """
@@ -427,16 +485,20 @@ def inherit_and_merge_parameters(inputs):
     in case there is overlap.
     """
     parameters = AttributeDict()
-    namespaces = ['bands', 'smearing', 'charge', 'relax']
-    for namespace in namespaces:
+    namespaces = ['electronic', 'bands', 'smearing', 'charge', 'relax', 'converge']
+    for namespace in namespaces:  # pylint: disable=too-many-nested-blocks
         parameters[namespace] = AttributeDict()
         try:
             for key, item in inputs[namespace].items():
                 if isinstance(item, DataFactory('array')):
-                    # Break hard on Array since we need to know the array name to fetch the content
-                    raise ValueError(
-                        'There is an array supplied in the parameters, this needs custom handling, please take care of this manually.')
-                if isinstance(item, DataFactory('dict')):
+                    # Only allow one array per input
+                    if len(item.get_arraynames()) > 1:
+                        raise IndexError(
+                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
+                            .format(key))
+                    for array in item.get_arraynames():
+                        parameters[namespace][key] = item.get_array(array)
+                elif isinstance(item, DataFactory('dict')):
                     parameters[namespace][key] = item.get_dict()
                 elif isinstance(item, DataFactory('list')):
                     parameters[namespace][key] = item.get_list()
@@ -446,9 +508,20 @@ def inherit_and_merge_parameters(inputs):
             pass
 
     # Now get the input parameters and update the dictionary. This means,
-    # any supplied parameters in the bands namespace will override what is supplied to the workchain
-    # input band namespace.
-    input_parameters = AttributeDict(inputs.parameters.get_dict())
+    # any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what is supplied to the workchain
+    # input namespace (i.e. inputs.somekey).
+    try:
+        # inputs might not have parameters, or parameters might be empty
+        input_parameters = AttributeDict(inputs.parameters.get_dict())
+    except AttributeError:
+        input_parameters = {}
+
+    # Now check that no loose keys are residing on the root of input_parameters, everything should be in
+    # the vasp or aiida namespace
+    #valid_keys = ['vasp', 'aiida']
+    #if not list(input_parameters.keys()).sort() == valid_keys.sort():
+    #    raise ValueError('Unsupported keys detected on parameter root. '
+    #                     'Please make sure all keys reside inside the vasp or aiida namespace.')
 
     # We cannot use regular update here, as we only want to replace each key if it exists, if a key
     # contains a new dict we need to traverse that, hence we have a function to perform this update

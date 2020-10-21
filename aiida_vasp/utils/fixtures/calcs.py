@@ -33,7 +33,9 @@ def calc_with_retrieved(localhost):
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.set_attribute('input_filename', 'INCAR')
         node.set_attribute('output_filename', 'OUTCAR')
-        node.set_attribute('error_filename', 'aiida.err')
+        #node.set_attribute('error_filename', 'aiida.err')
+        node.set_attribute('scheduler_stderr', '_scheduler-stderr.txt')
+        node.set_attribute('scheduler_stdout', '_scheduler-stdout.txt')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('max_wallclock_seconds', 1800)
 

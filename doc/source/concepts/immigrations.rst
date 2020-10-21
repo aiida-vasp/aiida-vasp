@@ -21,7 +21,14 @@ Basic process
 The followings are assumed:
 
 * `AiiDA`_ and AiiDA-VASP are installed with a profile set-up.
-* A ``<computer>`` is in the profile.
+* A local ``<computer>`` is in the profile. Remote ``<computer>`` can
+  not be used currently. The local ``<computer>`` setup may have the
+  following properties::
+
+     * Hostname:       localhost
+     * Transport type: local
+     * Scheduler type: direct
+
 * A `VASP`_ ``<code>`` (does not have to be runnable in principle) is associated with an existing ``<computer>`` in the profile.
 * How to run calculations in `AiiDA` is understood.
 * A directory where `VASP`_ was executed exists on the remote (or local) ``<computer>``, for which any readable direction that ssh can reach is possible.

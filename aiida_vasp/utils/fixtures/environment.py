@@ -11,7 +11,6 @@ testing. AiiDA contributes with its own fixture manager, which we use.
 from __future__ import absolute_import
 from __future__ import print_function
 import pytest
-from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 
 @pytest.fixture()

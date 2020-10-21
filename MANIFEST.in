@@ -1,2 +1,3 @@
 include setup.json
+include aiida_vasp/utils/parameters.yml
 recursive-include aiida_vasp/test_data *

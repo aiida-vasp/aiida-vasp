@@ -1,11 +1,11 @@
 """Test aiida_parameters."""
-# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member
+# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 
 import pytest
 
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.parameters import ParametersMassage
+from aiida_vasp.assistant.parameters import ParametersMassage
 
 
 @pytest.fixture
@@ -76,6 +76,14 @@ def test_relax_parameters_all_set(init_relax_parameters):
     assert parameters.ibrion == 2
     assert parameters.nsw == 60
     assert parameters.isif == 3
+
+
+def test_catch_invalid_tags(init_relax_parameters, init_simple_workchain):
+    init_relax_parameters.vasp = AttributeDict()
+    mock_workchain = init_simple_workchain
+    init_relax_parameters.vasp.smear = 1  # This is an invalid tag
+    massager = ParametersMassage(mock_workchain, init_relax_parameters)
+    assert massager.exit_code is not None
 
 
 def test_relax_parameters_energy(init_relax_parameters):
@@ -280,3 +288,102 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     parameters.bands.wigner_seitz_radius = 2.0
     with pytest.raises(ValueError):
         massager = ParametersMassage(None, parameters)
+
+
+def test_vasp_parameter_override(init_relax_parameters):
+    """Test of the override functionality works as intended."""
+    init_relax_parameters.vasp = AttributeDict()
+    # Redefine to from 3 to 0.
+    init_relax_parameters.vasp.isif = 0
+    massager = ParametersMassage(None, init_relax_parameters)
+    assert massager.exit_code is None
+    assert massager.parameters.isif == 0
+
+
+def test_inherit_and_merge():
+    """Test the inherit and merge functionality for the parameters and inputs."""
+    from aiida.plugins import DataFactory
+    from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
+
+    inputs = AttributeDict()
+    inputs.bands = AttributeDict()
+    inputs.bands.somekey = DataFactory('bool')(True)
+    inputs.relax = AttributeDict()
+    inputs.relax.somekey = DataFactory('bool')(True)
+    inputs.smearing = AttributeDict()
+    inputs.smearing.somekey = DataFactory('bool')(True)
+    inputs.charge = AttributeDict()
+    inputs.charge.somekey = DataFactory('bool')(True)
+    inputs.converge = AttributeDict()
+    inputs.converge.somekey = DataFactory('bool')(True)
+    inputs.electronic = AttributeDict()
+    inputs.electronic.somekey = DataFactory('bool')(True)
+    # Check that parameters does not have to be present
+    parameters = inherit_and_merge_parameters(inputs)
+    # Check that an empty parameters is allowed
+    inputs.parameters = DataFactory('dict')(dict={})
+    parameters = inherit_and_merge_parameters(inputs)
+    print(parameters)
+    test_parameters = AttributeDict({
+        'electronic': AttributeDict({'somekey': True}),
+        'bands': AttributeDict({'somekey': True}),
+        'smearing': AttributeDict({'somekey': True}),
+        'charge': AttributeDict({'somekey': True}),
+        'relax': AttributeDict({'somekey': True}),
+        'converge': AttributeDict({'somekey': True})
+    })
+    assert parameters == test_parameters
+    # Test ignored
+    inputs.ignored = AttributeDict()
+    inputs.ignored.ignored = DataFactory('bool')(True)
+    parameters = inherit_and_merge_parameters(inputs)
+    assert parameters == test_parameters
+    # Test to override inputs.bands.somekey
+    inputs.parameters = DataFactory('dict')(dict={'bands': {'somekey': False}})
+    parameters = inherit_and_merge_parameters(inputs)
+    test_parameters.bands.somekey = False
+    assert parameters == test_parameters
+
+
+def test_unsupported_fail_override():
+    """Test that any supplied unsupported parameters in the regular parameters dictionary yield error."""
+    parameters = AttributeDict()
+    parameters.vasp = AttributeDict()
+    parameters.vasp.not_valid = 200
+    massager = ParametersMassage(None, parameters)
+    assert massager.exit_code
+
+
+def test_unsupported_fail():
+    """Test that any supplied unsupported parameters in the regular overload parameters dictionary does not yield an error."""
+    parameters = AttributeDict()
+    parameters.not_valid = 200
+    massager = ParametersMassage(None, parameters)
+    # The not valid parameter was never set as there is no setter function for it.
+    assert massager.parameters == {}
+
+
+def test_unsupported_parameters():
+    """Test that it is possibly to supply unsupported parameters."""
+    parameters = AttributeDict()
+    parameters.not_valid = 200
+    massager = ParametersMassage(
+        None,
+        parameters,
+        unsupported_parameters={'not_valid': {
+            'default': 1.0,
+            'description': 'Something',
+            'type': float,
+            'values': [1.0, 2.0]
+        }})
+    assert massager.exit_code is None
+    assert massager.parameters.not_valid == parameters.not_valid
+
+
+def test_pwcutoff_to_encut():
+    """Test that the pwcutoff is converted to encut."""
+    parameters = AttributeDict()
+    parameters.pwcutoff = 200
+    massager = ParametersMassage(None, parameters)
+    assert massager.exit_code is None
+    assert massager.parameters.encut == parameters.pwcutoff

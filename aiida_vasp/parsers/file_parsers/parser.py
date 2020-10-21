@@ -229,7 +229,6 @@ class KeyValueParser(BaseParser):
     A simple example, which tries to convert values to python objects on a best effort basis. Usage::
 
         import re
-        import py
 
         from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
 

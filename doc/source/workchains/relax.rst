@@ -3,6 +3,10 @@
 Relax workchain
 ===============
 
+.. warning::
+   Please not that this documentation is not up to date. Please consult the example ``run_relax.py`` and the
+   documentation in the code of ``RelaxWorkChain``.
+
 Running a single relaxation
 ----------------------------
 

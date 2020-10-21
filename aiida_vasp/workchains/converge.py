@@ -10,12 +10,12 @@ import numpy as np
 
 from aiida.engine import WorkChain, append_, while_, if_, calcfunction
 from aiida.common.extendeddicts import AttributeDict
-from aiida.plugins import WorkflowFactory, DataFactory
+from aiida.plugins import WorkflowFactory
 from aiida.orm.nodes.data.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.extended_dicts import update_nested_dict
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class ConvergeWorkChain(WorkChain):
@@ -283,39 +283,7 @@ class ConvergeWorkChain(WorkChain):
         # At some point we will replace this with possibly input checking using the PortNamespace on
         # a dict parameter type. As such we remove the workchain input parameters as node entities. Much of
         # the following is just a workaround until that is in place in AiiDA core.
-
-        # First collect input that is under the converge namespace defined on the workchain itself and
-        # put that into parameters.
-        parameters = AttributeDict()
-        parameters.converge = AttributeDict()
-        for key, item in self.inputs.converge.items():
-            # Make sure we unwrap the AiiDA data nodes
-            if isinstance(item, DataFactory('array')):
-                parameters.converge[key] = item.get_array('array')
-            else:
-                # Assume only Str, Int, Float except ArrayData
-                parameters.converge[key] = item.value
-        # Second collect input that is under the relax namespace defined on the workchain itself and
-        # put that into parameters.
-        parameters.relax = AttributeDict()
-        for key, item in self.inputs.relax.items():
-            # Make sure we unwrap the AiiDA data nodes
-            if isinstance(item, DataFactory('array')):
-                parameters.relax[key] = item.get_array('array')
-            else:
-                # Assume only Str, Int, Float except ArrayData
-                parameters.relax[key] = item.value
-
-        # Now get the input parameters and update the dictionary. This means,
-        # any supplied parameters in the converge namespace will override what is supplied to the workchain
-        # in the converge and relax namespace.
-        try:
-            input_parameters = AttributeDict(self.inputs.parameters.get_dict())
-            # We cannot use update here, as we only want to replace each key if it exists, if a key
-            # contains a new dict we need to traverse that, hence we have a function to perform this update
-            update_nested_dict(parameters, input_parameters)
-        except AttributeError:
-            pass
+        parameters = inherit_and_merge_parameters(self.inputs)
 
         return parameters
 
@@ -390,17 +358,12 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.pwcutoff_sampling = None
         self.ctx.converge.pw_iteration = 0
         settings.pwcutoff = None
-        # Set supplied pwcutoff
         try:
-            settings.pwcutoff = copy.deepcopy(self.inputs.converge.pwcutoff.value)
-        except AttributeError:
-            pass
-        # Check if pwcutoff is supplied in the parameters input, this takes presence over
-        # the pwcutoff supplied in the workchain inputs.
-        try:
-            parameters_dict = self.inputs.parameters.get_dict()
-            pwcutoff = parameters_dict.get('pwcutoff', None)
-            settings.pwcutoff = pwcutoff
+            parameters_dict = self.ctx.inputs.parameters.get_dict()
+            electronic = parameters_dict.get('electronic', None)
+            if electronic is not None:
+                pwcutoff = electronic.get('pwcutoff', None)
+                settings.pwcutoff = pwcutoff
         except AttributeError:
             pass
         # We need a copy of the original pwcutoff as we will modify it
@@ -609,7 +572,7 @@ class ConvergeWorkChain(WorkChain):
             pass
         # The plane wave cutoff needs to be updated in the parameters to the set
         # value.
-        self.ctx.inputs.parameters.update({'pwcutoff': self.ctx.converge.settings.pwcutoff})
+        self.ctx.inputs.parameters.update({'electronic': {'pwcutoff': self.ctx.converge.settings.pwcutoff}})
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
@@ -700,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
                 else:
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
-            param_dict['system'] = location
+            param_dict['vasp'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
         # Set input nodes
@@ -789,7 +752,7 @@ class ConvergeWorkChain(WorkChain):
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
-        # Check if called workchain was successfull
+        # Check if called workchain was successful
         next_workchain_exit_status = self.ctx.pw_workchains[-1].exit_status
         next_workchain_exit_message = self.ctx.pw_workchains[-1].exit_message
         if next_workchain_exit_status:

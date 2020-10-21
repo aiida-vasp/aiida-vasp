@@ -95,7 +95,6 @@ def listfamilies(element, symbol, description):
 @click.option('-v', '--verbose', is_flag=True, help='Print the names of all created files.')
 def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
-
     potcar_data_cls = get_data_class('vasp.potcar')
 
     if not as_archive:

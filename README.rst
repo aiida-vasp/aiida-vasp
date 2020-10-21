@@ -4,15 +4,46 @@
 AiiDA VASP plugin
 =================
 
-.. image:: https://travis-ci.org/aiida-vasp/aiida-vasp.svg?branch=develop
-   :target: https://travis-ci.org/aiida-vasp/aiida-vasp
+.. |version| image:: https://img.shields.io/pypi/v/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: Stable version
 
-.. image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
+.. |status| image:: https://img.shields.io/pypi/status/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: PyPI - Status
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: Supported Python versions
+
+.. |build| image:: https://github.com/aiida-vasp/aiida-vasp/workflows/aiida-vasp/badge.svg
+   :target: https://github.com/aiida-vasp/aiida-vasp/action
+   :alt: Build status
+
+.. |coverage| image:: https://codecov.io/gh/espenfl/aiida-vasp/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/espenfl/aiida-vasp
+   :alt: Test coverage
+
+.. |doc| image:: https://readthedocs.org/projects/aiida-vasp/badge/?version=latest
    :target: http://aiida-vasp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/aiida-vasp/aiida-vasp/badge.svg?branch=develop
-   :target: https://coveralls.io/github/aiida-vasp/aiida-vasp?branch=develop
+.. |downloads| image:: https://img.shields.io/pypi/dm/aiida-vasp
+   :target: https://pypi.org/project/aiida-vasp/
+   :alt: PyPI - Downloads/month
+
+.. |commits| image:: https://img.shields.io/github/commit-activity/m/aiida-vasp/aiida-vasp
+   :target: https://github.com/aiida-vasp/aiida-vasp/commits/develop
+   :alt: GitHub commit activity
+
++---------+-------------------------------+
+| Release | |version| |status| |versions| |
++---------+-------------------------------+
+| Build   | |build| |coverage| |doc|      |
++---------+-------------------------------+
+| Stats   | |downloads| |commits|         |
++---------+-------------------------------+
+
 
 This is a plugin to `AiiDA`_ to run calculations with the ab-initio program `VASP`_.
 
@@ -35,7 +66,7 @@ Installing the plugin
 
 #. Install the `AiiDA-VASP`_ plugin (and `AiiDA`_ if that is not already installed)::
 
-   $ (aiida-vasp) pip install aiida-vasp --pre
+   $ (aiida-vasp) pip install aiida-vasp
 
 #. Update the entry points that `AiiDA`_ are using::
 

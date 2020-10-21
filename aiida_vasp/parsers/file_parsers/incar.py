@@ -5,8 +5,9 @@ INCAR parser.
 The file parser that handles the parsing of INCAR files.
 """
 from parsevasp.incar import Incar
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida.common import InputValidationError
 
+from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -48,7 +49,7 @@ class IncarParser(BaseFileParser):
         """
         Return an instance of parsevasp.incar.Incar.
 
-        Corresponds to the stored data in inputs.parameters.incar.
+        Corresponds to the stored data in inputs.parameters.
 
         """
 
@@ -56,8 +57,8 @@ class IncarParser(BaseFileParser):
 
         try:
             return Incar(incar_dict=incar_dict, logger=self._logger)
-        except SystemExit:
-            return None
+        except SystemExit as error:
+            raise InputValidationError(error.args[0])
 
     def _parse_file(self, inputs):
         """Create a DB Node from an INCAR file."""

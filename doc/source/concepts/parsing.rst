@@ -7,6 +7,9 @@ AiiDA-VASP provides flexible parsing of `VASP`_ output files to store data in th
 
 The quantities that can be parsed are now fully customisable. The user interface for configuring the parsing settings takes place in the ``settings['parser_settings']`` dictionary entry. The default ``parser_settings`` is presently:
 
+.. warning::
+   Notice however, that even though the parser and the `node composer` is configurable, the output check in `AiiDA`_ will complain that your newly added custom node is not detected in the ``spec`` definitions of for instance your ``VaspCalculation``. If you do add additional nodes outside the ones defined in the code already, please consider to also add it to the ``spec.output`` section in the ``VaspCalculation`` class and potentially also to workchains if need be.
+
 .. literalinclude:: ../../../aiida_vasp/parsers/vasp.py
    :start-after: defaults
    :end-before: VaspParser

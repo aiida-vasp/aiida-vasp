@@ -3,9 +3,9 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+from pathlib import Path, PurePath
 import pytest
 
-from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 from click.testing import CliRunner
 from monty.collections import AttrDict
 from packaging import version
@@ -21,7 +21,7 @@ from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, te
 def cmd_params(temp_pot_folder):
     """Common building blocks for ``uploadfamily`` calls."""
     params = AttrDict()
-    params.POTCAR_PATH = temp_pot_folder.strpath
+    params.POTCAR_PATH = str(temp_pot_folder)
     params.FAMILY_NAME = POTCAR_FAMILY_NAME
     params.PATH_OPTION = '--path={}'.format(params.POTCAR_PATH)
     params.NAME_OPTION = '--name={}'.format(params.FAMILY_NAME)
@@ -58,7 +58,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     """Give a tar file as the source."""
-    path_option = '--path={}'.format(py_path.local(cmd_params.POTCAR_PATH).join('Ga.tar'))
+    path_option = '--path={}'.format(str(Path(cmd_params.POTCAR_PATH) / 'Ga.tar'))
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
@@ -70,8 +70,10 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
 def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
     """Upload the test potcar family from the working env."""
 
-    potcar_dir = py_path.local(cmd_params.POTCAR_PATH)
-    old_work_dir = potcar_dir.chdir()
+    potcar_dir = Path(cmd_params.POTCAR_PATH)
+    old_work_dir = Path().cwd()
+    os.chdir(str(potcar_dir))
+    assert str(potcar_dir) == str(Path().cwd())
 
     result = run_cmd('uploadfamily', [cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
 
@@ -81,7 +83,9 @@ def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
     assert potcar_cls.exists(element='In')
     assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
-    old_work_dir.chdir()
+    os.chdir(str(old_work_dir))
+
+    assert str(old_work_dir) == str(Path().cwd())
 
 
 def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
@@ -173,27 +177,28 @@ def test_listfamilies_filtering(fresh_aiida_env, potcar_family):
     assert potcar_family not in result.output
 
 
-def test_exportfamilies(fresh_aiida_env, potcar_family, tmpdir):
+def test_exportfamilies(fresh_aiida_env, potcar_family, tmp_path):
     """Test exporting potcar family."""
-    result = run_cmd('exportfamily', ['--name', potcar_family, '--path', str(tmpdir)])
+    result = run_cmd('exportfamily', ['--name', potcar_family, '--path', str(tmp_path)])
     assert not result.exception
-    export_path = tmpdir.join(potcar_family)
-    assert export_path.isdir()
+    export_path = tmp_path / potcar_family
+    assert export_path.is_dir()
     assert export_path.exists()
 
-    new_dir = tmpdir.join('new_dir')
-    result = run_cmd('exportfamily', ['--dry-run', '--name', potcar_family, '--path', str(new_dir)])
+    new_dir = tmp_path / 'new_dir'
+    result = run_cmd('exportfamily', ['--dry-run', '--name', potcar_family, '--path', new_dir])
     assert not result.exception
     assert not new_dir.exists()
 
-    result = run_cmd('exportfamily', ['--as-archive', '--name', potcar_family, '--path', str(tmpdir)])
+    result = run_cmd('exportfamily', ['--as-archive', '--name', potcar_family, '--path', tmp_path])
     assert not result.exception
-    export_path = tmpdir.join(potcar_family + '.tar.gz')
-    assert export_path.isfile()
+    name = potcar_family + '.tar.gz'
+    export_path = tmp_path / name
+    assert export_path.is_file()
     assert export_path.exists()
 
-    new_arch = tmpdir.join('export.tar.gz')
-    result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', str(new_arch)])
+    new_arch = tmp_path / 'export.tar.gz'
+    result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', new_arch])
     assert not result.exception
     assert not new_arch.exists()
 
