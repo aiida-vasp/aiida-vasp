@@ -102,3 +102,5 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     np.testing.assert_allclose(bands[0, 0, 0:3], np.array([-6.0753, 6.0254, 6.0254]))
     np.testing.assert_allclose(bands[0, 2, 0:3], np.array([-6.0386, 5.7955, 5.8737]))
     np.testing.assert_allclose(bands[0, 97, 0:3], np.array([-1.867, -1.867, 3.1102]))
+
+    assert results['bands'].labels
