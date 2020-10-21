@@ -30,7 +30,9 @@ def test_potcar_from_file_node(potcar_family):
     potcar_file_in = get_data_class('vasp.potcar_file').find_one(element='In')
     from_ctor = PotcarIo(potcar_file_node=potcar_file_in)
     verify_potcario(from_ctor)
+    #print("in:", type(potcar_file_in))
     from_from = PotcarIo.from_(potcar_file_in)
+    #assert False
     assert from_ctor == from_from
 
 
@@ -40,6 +42,8 @@ def test_potcar_from_node(potcar_family):
     from_ctor = PotcarIo(potcar_node=potcar_ga)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_ga)
+    #print(type(potcar_ga))
+    #assert False
     assert from_ctor == from_from
 
 
@@ -49,7 +53,9 @@ def test_potcar_from_contents(potcar_family):
     from_ctor = PotcarIo(contents=contents_as.encode('utf-8'))
     verify_potcario(from_ctor)
     assert from_ctor.node.uuid == get_data_class('vasp.potcar').find_one(element='As').uuid
+    #print(type(contents_as))
     from_from = PotcarIo.from_(contents_as)
+    #assert False
     assert from_ctor == from_from
 
 
@@ -60,12 +66,13 @@ def test_file_contents_equivalence(fresh_aiida_env):
     assert from_file.sha512 == from_contents.sha512
 
 
-def test_multi_round_trip(potcar_family, tmpdir):
+def test_multi_round_trip(potcar_family, tmp_path):
     """Write multiple POTCAR potentials to a file and recover the nodes stored in the db."""
-    test_dir = tmpdir.mkdir('round_trip')
+    test_dir = tmp_path / 'round_trip'
+    test_dir.mkdir()
     potcar_cls = get_data_class('vasp.potcar')
     multi = MultiPotcarIo(potcar_cls.get_potcars_dict(elements=POTCAR_MAP.keys(), family_name=potcar_family, mapping=POTCAR_MAP).values())
-    tempfile = test_dir.join('POTCAR')
+    tempfile = test_dir / 'POTCAR'
     multi.write(tempfile)
     recovered = multi.read(tempfile)
     uuids_start = [potcar.node.uuid for potcar in multi.potcars]

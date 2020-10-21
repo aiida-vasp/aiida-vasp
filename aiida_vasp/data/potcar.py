@@ -121,7 +121,7 @@ import shutil
 from contextlib import contextmanager
 from collections import namedtuple
 
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+from pathlib import Path
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.utils import classproperty
@@ -160,7 +160,7 @@ def temp_dir():
     """Temporary directory context manager that deletes the tempdir after use."""
     try:
         tempdir = tempfile.mkdtemp()
-        yield py_path.local(tempdir)
+        yield Path(tempdir)
     finally:
         shutil.rmtree(tempdir)
 
@@ -169,7 +169,7 @@ def temp_dir():
 def temp_potcar(contents):
     """Temporary POTCAR file from contents."""
     with temp_dir() as tempdir:
-        potcar_file = tempdir.join('POTCAR')
+        potcar_file = tempdir / 'POTCAR'
         with potcar_file.open('wb') as potcar_fo:
             potcar_fo.write(contents)
         yield potcar_file
@@ -179,8 +179,8 @@ def extract_tarfile(file_path):
     """Extract a .tar archive into an appropriately named folder, return the path of the folder, avoid extracting if folder exists."""
     new_path = None
     with tarfile.open(str(file_path)) as archive:
-        new_dir = file_path.basename.split('.tar')[0]
-        new_path = file_path.dirpath().join(new_dir)
+        new_dir = file_path.name.split('.tar')[0]
+        new_path = file_path.parent / new_dir
         if not new_path.exists():
             archive.extractall(str(new_path))
 
@@ -211,13 +211,19 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     """
 
     def __init__(self, path):
-        self.path = py_path.local(path)
+        # Only accept a Path object or a string
+        if isinstance(path, Path):
+            self.path = path
+        elif isinstance(path, str):
+            self.path = Path(path)
+        else:
+            raise ValueError('The supplied path is not a Path object or a string.')
         self.potcars = set()
 
     def walk(self):
         """Walk the folder tree to find POTCAR, extracting any tar archives along the way."""
-        if self.path.isfile():
-            extracted = self.file_dispatch(self.path.dirname, [], self.path.basename)
+        if self.path.is_file():
+            extracted = self.file_dispatch(self.path.parent, [], self.path.name)
             if extracted:
                 self.path = extracted
                 self.walk()
@@ -228,7 +234,7 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
 
     def file_dispatch(self, root, dirs, file_name):
         """Add POTCAR files to the list and dispatch handling of different kinds of files to other methods."""
-        file_path = py_path.local(root).join(file_name)
+        file_path = Path(root) / file_name
         if tarfile.is_tarfile(str(file_path)):
             return self.handle_tarfile(dirs, file_path)
         if 'POTCAR' in file_name:
@@ -391,7 +397,13 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         path = kwargs.pop('file', None)
         super(PotcarFileData, self).__init__(*args, **kwargs)
         if path is not None:
-            self.init_with_kwargs(file=path)
+            # Only allow a Path object or a string
+            if isinstance(path, Path):
+                self.init_with_kwargs(file=path)
+            elif isinstance(path, str):
+                self.init_with_kwargs(file=Path(path))
+            else:
+                raise ValueError('The supplied argument for file is not a Path object or a string.')
 
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
@@ -403,27 +415,30 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
-        src_path = py_path.local(src_abs)
         self.set_version()
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
         super(PotcarFileData, self).add_file(src_abs, dst_filename)
         self.set_attribute('sha512', self.get_file_sha512(src_abs))
-        potcar = PotcarSingle.from_file(src_abs)
+        # PotcarSingle needs a string for path
+        potcar = PotcarSingle.from_file(str(src_abs))
         self.set_attribute('title', potcar.keywords['TITEL'])
         self.set_attribute('functional', potcar.functional)
         self.set_attribute('element', potcar.element)
         self.set_attribute('symbol', potcar.symbol)
-        src_rel = src_path.relto(src_path.join('..', '..', '..'))  # familyfolder/Element/POTCAR
-        self.set_attribute('original_filename', src_rel)
-        dir_name = src_path.dirpath().basename
-        self.set_attribute('full_name', dir_name)
-        self.set_attribute('potential_set', src_path.parts()[-3].basename)
+        src_path = src_abs.resolve()
+        src_rel = src_path.relative_to(src_path.parents[2])  # familyfolder/Element/POTCAR
+        # Make sure we store string elements of Path in the attributes
+        self.set_attribute('original_filename', str(src_rel))
+        dir_name = src_path.parent
+        dir_name = dir_name.name
+        self.set_attribute('full_name', str(dir_name))
+        self.set_attribute('potential_set', str(src_path.parts[-3]))
 
     @classmethod
     def get_file_sha512(cls, path):
         """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
-        path = py_path.local(path)
+        path = Path(path)
         with path.open('r') as potcar_fo:
             sha512 = sha512_potcar(potcar_fo.read())
         return sha512
@@ -466,7 +481,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         """
         Write the contents of the stored POTCAR file to a destination on the local file system.
 
-        :param path: path to the destination file or folder
+        :param path: path to the destination file or folder as a Path or string object
 
         When given a folder, the destination file will be created in a subdirectory with the name of the symbol.
         This is for conveniently exporting multiple files into the same folder structure as the POTCARs are
@@ -487,11 +502,14 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
             ##           |-Si_d/
             ##                 |-POTCAR
         """
-        path = py_path.local(path)
-        if path.isdir():
-            path = path.join(self.symbol, 'POTCAR')
+        path = Path(path)
+        if path.is_dir():
+            path = path / self.symbol / 'POTCAR'
         if not dry_run:
-            with path.open(mode='wb', ensure=True) as dest_fo:
+            # Make sure the directory exists
+            path_dir = path.parent
+            path_dir.mkdir(parents=True, exist_ok=True)
+            with path.open(mode='wb') as dest_fo:
                 dest_fo.write(self.get_content())
         return path
 
@@ -806,7 +824,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """
         Upload a set of POTCAR potentials as a family.
 
-        :param folder: a path containing all POTCAR files to be added.
+        :param source: a path containing all POTCAR files to be added.
         :param group_name: the name of the group to create. If it exists and is
             non-empty, a UniquenessError is raised.
         :param group_description: a string to be set as the group description.
@@ -868,19 +886,27 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return list_created
 
     @classmethod
-    def export_family_folder(cls, family_name, path='.', dry_run=False):
+    def export_family_folder(cls, family_name, path=None, dry_run=False):
         """
         Export a family of POTCAR nodes into a file hierarchy similar to the one POTCARs are distributed in.
 
         :param family_name: name of the POTCAR family
-        :param path: path to a local directory
+        :param path: path to a local directory, either a string or Path object, default to current directory
         :param dry_run: bool, if True, only collect the names of files that would otherwise be written.
 
         If ``path`` already exists, everything will be written into a subdirectory with the name of the family.
         """
-        path = py_path.local(path)
+        # Only allow Path or string
+        if path is not None:
+            if isinstance(path, (Path, str)):
+                path = Path(path)
+            else:
+                raise ValueError('The supplied path is not a Path object or a string.')
+        else:
+            path = Path()
+
         if path.exists():
-            path = path.join(family_name)
+            path = path / family_name
         group = cls.get_potcar_group(family_name)
         all_file_nodes = [potcar.find_file_node() for potcar in group.nodes]
         files_written = []
@@ -888,22 +914,31 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         with temp_dir() as staging_dir:
             for file_node in all_file_nodes:
                 new_file = file_node.export_file(staging_dir, dry_run=dry_run)
-                files_written.append(path.join(new_file.relto(staging_dir)))
+                files_written.append(path / new_file.relative_to(staging_dir))
             if not dry_run:
-                staging_dir.copy(path, stat=True)
+                # copytree uses copy2 which conserves all metadata as well
+                shutil.copytree(staging_dir, path)
 
         return files_written
 
     @classmethod
-    def export_family_archive(cls, family_name, path='.', dry_run=False):
+    def export_family_archive(cls, family_name, path=None, dry_run=False):
         """Export a family of POTCAR nodes into a compressed archive."""
-        path = py_path.local(path)
+        # Only allow Path or string
+        if path is not None:
+            if isinstance(path, (Path, str)):
+                path = Path(path)
+            else:
+                raise ValueError('The supplied path is not a Path object or a string.')
+        else:
+            path = Path()
 
-        if path.isdir():
-            path = path.join(family_name)
+        if path.is_dir():
+            path = path / family_name
 
-        if not path.ext:
-            path = path.dirpath().join(path.basename + '.tar.gz')
+        if not path.suffix:
+            name = path.name + '.tar.gz'
+            path = path.parent / name
 
         archive = tarfile.open(str(path), 'w:gz') if not dry_run else None
         group = cls.get_potcar_group(family_name)

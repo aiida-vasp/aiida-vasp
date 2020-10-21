@@ -7,8 +7,9 @@ find, import, compose and write POTCAR files.
 """
 from itertools import groupby
 import re
+import os
 
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+from pathlib import Path
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs
@@ -81,7 +82,13 @@ class PotcarIo(object):  # pylint: disable=useless-object-inheritance
     def from_(cls, potcar):
         """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
         if isinstance(potcar, str):
-            if py_path.local(potcar).exists():
+            try:
+                path_exists = Path(potcar).exists()
+            except OSError:
+                # We failed possibly due to a too long filename or that the potcar content is in fact
+                # potcar content, revert to the os module to check if it exists
+                path_exists = os.path.exists(potcar)
+            if path_exists:
                 potcar = cls(path=potcar)
             else:
                 potcar = cls(contents=potcar)
@@ -112,7 +119,7 @@ class MultiPotcarIo(object):  # pylint: disable=useless-object-inheritance
         self._potcars.append(PotcarIo.from_(potcar))
 
     def write(self, path):
-        path = py_path.local(path)
+        path = Path(path)
         with path.open('wb') as dest_fo:
             for potcar in self._potcars:
                 dest_fo.write(potcar.content)
@@ -121,7 +128,7 @@ class MultiPotcarIo(object):  # pylint: disable=useless-object-inheritance
     def read(cls, path):
         """Read a POTCAR file that may contain one or more potentials into a list of PotcarIo objects."""
         potcars = cls()
-        path = py_path.local(path)
+        path = Path(path)
         with path.open('r') as potcar_fo:
             potcar_strings = re.compile(r'\n?(\s*.*?End of Dataset\n)', re.S).findall(potcar_fo.read())
 
