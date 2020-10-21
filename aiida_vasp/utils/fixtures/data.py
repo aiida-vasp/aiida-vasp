@@ -12,11 +12,11 @@ workchains.
 import os
 from collections import OrderedDict
 import subprocess as sp
+from pathlib import Path
 
 import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
-from py import path as py_path  # pylint: disable=no-member,no-name-in-module
 
 from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
@@ -27,14 +27,15 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.utils.general import copytree
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
 
 
 @pytest.fixture(scope='session')
-def localhost_dir(tmpdir_factory):
-    return tmpdir_factory.mktemp('localhost_work')
+def localhost_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp('localhost_work')
 
 
 @pytest.fixture
@@ -47,7 +48,7 @@ def localhost(fresh_aiida_env, localhost_dir):
                             hostname='localhost',
                             transport_type='local',
                             scheduler_type='direct',
-                            workdir=localhost_dir.strpath).store()
+                            workdir=str(localhost_dir)).store()
     return computer
 
 
@@ -74,13 +75,13 @@ def potcar_node_pair(fresh_aiida_env):
 
 
 @pytest.fixture
-def temp_pot_folder(tmpdir):
+def temp_pot_folder(tmp_path):
     """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
-    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    potcar_ga = Path(data_path('potcar')) / 'Ga'
     assert not potcar_ga.exists()
-    pot_archive = py_path.local(data_path('potcar'))
-    target = tmpdir.join('potentials')
-    pot_archive.copy(target)
+    pot_archive = Path(data_path('potcar'))
+    target = tmp_path / 'potentials'
+    copytree(pot_archive, target)
     return target
 
 
@@ -90,7 +91,7 @@ def duplicate_potcar_data(potcar_node):
     from aiida_vasp.data.potcar import temp_potcar
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
-        file_node.add_file(potcar_file.strpath)
+        file_node.add_file(potcar_file)
         file_node.set_attribute('sha512', 'abcd')
         file_node.set_attribute('full_name', potcar_node.full_name)
         file_node.store()
@@ -101,11 +102,11 @@ def duplicate_potcar_data(potcar_node):
 @pytest.fixture
 def potcar_family(fresh_aiida_env, temp_pot_folder):
     """Create a POTCAR family."""
-    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    potcar_ga = Path(data_path('potcar')) / 'Ga'
     family_name = POTCAR_FAMILY_NAME
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = get_data_class('vasp.potcar')
-    potcar_cls.upload_potcar_family(temp_pot_folder.strpath, family_name, family_desc, stop_if_existing=False)
+    potcar_cls.upload_potcar_family(str(temp_pot_folder), family_name, family_desc, stop_if_existing=False)
     if len(potcar_cls.find(full_name='In_d')) == 1:
         family_group = potcar_cls.get_potcar_group(POTCAR_FAMILY_NAME)
         in_d = potcar_cls.find(full_name='In_d')[0]
@@ -299,7 +300,7 @@ def mock_vasp(fresh_aiida_env, localhost):
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
-        aiidapath = py_path.local(fresh_aiida_env._manager.root_dir).join('.aiida')
+        aiidapath = Path(fresh_aiida_env._manager.root_dir) / '.aiida'
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
 
     return code
@@ -336,14 +337,14 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = py_path.local(data_path('wannier', 'INCAR'))
-    yield data.read()
+    data = Path(data_path('wannier')) / 'INCAR'
+    yield data.read_text()
 
 
 @pytest.fixture
 def ref_win():
-    data = py_path.local(data_path('wannier90.win'))
-    yield data.read()
+    data = Path(data_path('wannier90.win'))
+    yield data.read_text()
 
 
 @pytest.fixture()
@@ -410,7 +411,7 @@ def wannier_projections():
 
 
 @pytest.fixture
-def phonondb_run(tmpdir):
-    phonondb = py_path.local(data_path('phonondb'))
-    phonondb.copy(tmpdir)
-    yield tmpdir
+def phonondb_run(tmp_path):
+    phonondb = Path(data_path('phonondb'))
+    copytree(phonondb, tmp_path)
+    yield tmp_path

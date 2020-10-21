@@ -1,9 +1,9 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import tarfile
-
+from pathlib import Path
 import pytest
-from py import path as py_path  # pylint: disable=no-member,no-name-in-module
+
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.exceptions import UniquenessError, NotExistent
 try:
@@ -71,9 +71,9 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
     assert get_data_class('vasp.potcar_file').find_one(symbol='As')
 
 
-def test_export_import(fresh_aiida_env, potcar_node_pair, tmpdir):
+def test_export_import(fresh_aiida_env, potcar_node_pair, tmp_path):
     """Exporting and importing back may not store duplicates."""
-    tempfile = tmpdir.join('potcar.aiida')
+    tempfile = tmp_path / 'potcar.aiida'
 
     sp.call(['verdi', 'export', 'create',
              '-n', str(potcar_node_pair['file'].pk),
@@ -103,8 +103,8 @@ def test_find(fresh_aiida_env, potcar_node_pair):
 
 def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     file_node_as = potcar_node_pair['file']
-    original_file = py_path.local(data_path(file_node_as.original_file_name))
-    assert original_file.read() == file_node_as.get_content().decode()
+    original_file = Path(data_path(file_node_as.original_file_name))
+    assert original_file.read_text() == file_node_as.get_content().decode()
 
 
 #def test_file_get_pymatgen(fresh_aiida_env, potcar_node_pair):
@@ -178,8 +178,8 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
     family_name = 'test_family'
     family_desc = 'Test Family'
     potcar_cls = get_data_class('vasp.potcar')
-    pot_dir = temp_pot_folder.strpath
-    potcar_ga = py_path.local(data_path('potcar')).join('Ga')
+    pot_dir = str(temp_pot_folder)
+    potcar_ga = Path(data_path('potcar')) / 'Ga'
     assert not potcar_ga.exists()
 
     potcar_cls.upload_potcar_family(pot_dir, family_name, family_desc)
@@ -205,36 +205,49 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
     assert not potcar_ga.exists()
 
 
-def test_export_family_folder(fresh_aiida_env, potcar_family, tmpdir):
+def test_export_family_folder(fresh_aiida_env, potcar_family, tmp_path):
     """Test exporting to folder."""
-    export_dir = tmpdir.mkdir('export')
+    export_dir = tmp_path / 'export'
+    export_dir.mkdir()
     potcar_cls = get_data_class('vasp.potcar')
 
+    # Check that dry run works and does not leave anything in the directory
     potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=True)
-    assert not export_dir.listdir()
-    files = potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=False)
-    family_dir = export_dir.join(potcar_family)
-    subdirs = set(str(subpath.basename) for subpath in family_dir.listdir())
-    assert set(['Ga', 'As', 'In_d']).issubset(subdirs)
-    potcar_ga = family_dir.join('Ga', 'POTCAR')
-    assert str(potcar_ga) in files
-    assert len(files) >= 3
-    assert potcar_ga.isfile()
-    assert 'TITEL' in potcar_ga.read()
+    elements = []
+    for item in export_dir.iterdir():
+        elements.append(item)
+    assert not elements
 
-    new_dir = export_dir.join('new_dir')
+    # Start check for actual export
+    files = potcar_cls.export_family_folder(potcar_family, path=export_dir, dry_run=False)
+    family_dir = export_dir / potcar_family
+    subdirs = set(str(subpath.name) for subpath in family_dir.iterdir())
+    assert set(['Ga', 'As', 'In_d']).issubset(subdirs)
+    potcar_ga = family_dir / 'Ga' / 'POTCAR'
+    assert potcar_ga in files
+    assert len(files) >= 3
+    assert potcar_ga.is_file()
+    assert 'TITEL' in potcar_ga.read_text()
+
+    new_dir = export_dir / 'new_dir'
     potcar_cls.export_family_folder(potcar_family, path=new_dir, dry_run=False)
     assert new_dir.exists()
 
 
-def test_export_family_archive(fresh_aiida_env, potcar_family, tmpdir):
+def test_export_family_archive(fresh_aiida_env, potcar_family, tmp_path):
     """Test exporting to archive."""
-    export_dir = tmpdir.mkdir('export')
+    export_dir = tmp_path / 'export'
+    export_dir.mkdir()
     potcar_cls = get_data_class('vasp.potcar')
 
+    # Check that dry run works and does not leave anything in the directory
     potcar_cls.export_family_archive(potcar_family, path=export_dir, dry_run=True)
-    assert not export_dir.listdir()
+    elements = []
+    for item in export_dir.iterdir():
+        elements.append(item)
+    assert not elements
 
+    # Start check for actual export
     ar_path, _ = potcar_cls.export_family_archive(potcar_family, path=export_dir, dry_run=False)
     archive = tarfile.open(str(ar_path))
     assert set(['Ga/POTCAR', 'As/POTCAR', 'In_d/POTCAR']).issubset(set(archive.getnames()))

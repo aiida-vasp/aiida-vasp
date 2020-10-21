@@ -7,7 +7,7 @@ Base and meta classes for VASP calculation classes.
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
 import os
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
+from pathlib import Path
 
 from aiida.engine import CalcJob
 from aiida.common import CalcInfo, CodeInfo, ValidationError
@@ -171,7 +171,7 @@ class VaspCalcBase(CalcJob):
         """
 
         from aiida_vasp.calcs import immigrant as imgr  # pylint: disable=import-outside-toplevel
-        remote_path = py_path.local(remote_path)
+        remote_path = Path(remote_path)
         proc_cls = imgr.VaspImmigrant
         builder = proc_cls.get_builder()
         builder.code = code
@@ -183,15 +183,15 @@ class VaspCalcBase(CalcJob):
         builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
         builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
-        settings.update({'import_from_path': remote_path.strpath})
+        settings.update({'import_from_path': str(remote_path)})
         builder.settings = get_data_node('dict', dict=settings)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
-                sandbox_path = py_path.local(sandbox.abspath)
-                transport.get(remote_path.join('INCAR').strpath, sandbox_path.strpath)
-                transport.get(remote_path.join('POSCAR').strpath, sandbox_path.strpath)
-                transport.get(remote_path.join('POTCAR').strpath, sandbox_path.strpath, ignore_nonexisting=True)
-                transport.get(remote_path.join('KPOINTS').strpath, sandbox_path.strpath)
+                sandbox_path = Path(sandbox.abspath)
+                transport.get(str(remote_path / 'INCAR'), str(sandbox_path))
+                transport.get(str(remote_path / 'POSCAR'), str(sandbox_path))
+                transport.get(str(remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
+                transport.get(str(remote_path / 'KPOINTS'), str(sandbox_path))
                 builder.parameters = imgr.get_incar_input(sandbox_path)
                 builder.structure = imgr.get_poscar_input(sandbox_path)
                 builder.potential = imgr.get_potcar_input(sandbox_path,

@@ -345,10 +345,10 @@ class VaspCalculation(VaspCalcBase):
         add_wavecar = kwargs.get('use_wavecar') or bool(builder.parameters.get_dict().get('istart', 0))
         add_chgcar = kwargs.get('use_chgcar') or builder.parameters.get_dict().get('icharg', -1) in [1, 11]
         if add_chgcar:
-            transport.get(remote_path.join('CHGCAR').strpath, sandbox_path.strpath)
+            transport.get(str(remote_path / 'CHGCAR'), str(sandbox_path))
             builder.charge_density = get_chgcar_input(sandbox_path)
         if add_wavecar:
-            transport.get(remote_path.join('WAVECAR').strpath, sandbox_path.strpath)
+            transport.get(str(remote_path / 'WAVECAR'), str(sandbox_path))
             builder.wavefunctions = get_wavecar_input(sandbox_path)
 
 

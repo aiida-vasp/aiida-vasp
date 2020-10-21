@@ -81,7 +81,6 @@
     "install_requires": [
         "aiida-core[atomic_tools] >= 1.2.1",
         "subprocess32",
-        "py == 1.5.4",
         "lxml",
         "packaging",
         "parsevasp >= 1.0.0"

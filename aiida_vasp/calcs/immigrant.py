@@ -55,21 +55,21 @@ class VaspImmigrant(VaspCalculation):
 
 
 def get_incar_input(dir_path):
-    incar = IncarParser(file_path=dir_path.join('INCAR').strpath).incar
+    incar = IncarParser(file_path=str(dir_path / 'INCAR')).incar
     return get_data_node('dict', dict=incar)
 
 
 def get_poscar_input(dir_path):
-    return PoscarParser(file_path=dir_path.join('POSCAR').strpath).structure
+    return PoscarParser(file_path=str(dir_path / 'POSCAR')).structure
 
 
 def get_potcar_input(dir_path, structure=None, potential_family=None, potential_mapping=None):
     """Read potentials from a POTCAR file or set it up from a structure."""
-    local_potcar = dir_path.join('POTCAR')
+    local_potcar = dir_path / 'POTCAR'
     structure = structure or get_poscar_input(dir_path)
     potentials = {}
     if local_potcar.exists():
-        potentials = MultiPotcarIo.read(local_potcar.strpath).get_potentials_dict(structure)
+        potentials = MultiPotcarIo.read(str(local_potcar)).get_potentials_dict(structure)
         potentials = {kind: potentials[kind] for kind in potentials}
     elif potential_family:
         potentials = PotcarData.get_potcars_from_structure(structure, potential_family, mapping=potential_mapping)
@@ -81,14 +81,14 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
 
 def get_kpoints_input(dir_path, structure=None):
     structure = structure or get_poscar_input(dir_path)
-    kpoints = KpointsParser(file_path=dir_path.join('KPOINTS').strpath).kpoints
+    kpoints = KpointsParser(file_path=str(dir_path / 'KPOINTS')).kpoints
     kpoints.set_cell_from_structure(structure)
     return kpoints
 
 
 def get_chgcar_input(dir_path):
-    return ChgcarParser(file_path=dir_path.join('CHGCAR').strpath).chgcar
+    return ChgcarParser(file_path=str(dir_path / 'CHGCAR')).chgcar
 
 
 def get_wavecar_input(dir_path):
-    return WavecarParser(file_path=dir_path.join('WAVECAR').strpath).wavecar
+    return WavecarParser(file_path=str(dir_path / 'WAVECAR')).wavecar

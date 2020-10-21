@@ -57,7 +57,7 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     inputs.charge_density = chgcar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
 
@@ -72,7 +72,7 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     calcinfo = calc.prepare_for_submission(temp_folder)
 
     assert 'WAVECAR' in [item[1] for item in calcinfo.local_copy_list]
@@ -90,7 +90,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
 
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     with pytest.raises(InputValidationError):
         calc.prepare_for_submission(temp_folder)
 
@@ -110,7 +110,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     calcinfo = calc.prepare_for_submission(temp_folder)
     input_files = temp_folder.get_content_list()
 
@@ -128,7 +128,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
 

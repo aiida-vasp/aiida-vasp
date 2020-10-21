@@ -4,10 +4,10 @@ import re
 import json
 import fileinput
 import contextlib
+from pathlib import Path
 import subprocess32 as subprocess
 
 from packaging import version
-from py import path as py_path  # pylint: disable=no-name-in-module,no-member
 
 
 def subpath(*args):
@@ -44,29 +44,30 @@ class VersionUpdater(object):  # pylint: disable=useless-object-inheritance
 
     def __init__(self):
         """Initialize with documents that should be kept up to date and actual version."""
-        self.top_level_init = py_path.local(subpath('aiida_vasp', '__init__.py'))
-        self.setup_json = py_path.local(subpath('setup.json'))
+        self.top_level_init = Path(subpath('aiida_vasp', '__init__.py'))
+        self.setup_json = Path(subpath('setup.json'))
         self.version = self.get_version()
 
     def write_to_init(self):
-        init_content = self.top_level_init.read()
-        self.top_level_init.write(
+        init_content = self.top_level_init.read_text()
+        self.top_level_init.write_text(
             re.sub(self.init_version_pat, r'\1\g<2>{}\4'.format(str(self.version)), init_content, re.DOTALL | re.MULTILINE))
 
     def write_to_setup(self):
         """Write the updated version number to the setup file."""
-        setup = json.load(self.setup_json)
+        setup = json.load(str(self.setup_json))
         setup['version'] = str(self.version)
-        with open(self.setup_json.strpath, 'w') as setup_fo:
+        with open(str(self.setup_json), 'w') as setup_fo:
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
     @property
     def setup_version(self):
-        return version.parse(json.load(self.setup_json)['version'])
+        with self.setup_json.open() as file_object:
+            return version.parse(json.load(file_object)['version'])
 
     @property
     def init_version(self):
-        match = re.search(self.init_version_pat, self.top_level_init.read())
+        match = re.search(self.init_version_pat, self.top_level_init.read_text())
         if not match:
             raise AttributeError('No __version__ found in top-level __init__.py')
         return version.parse(match.groups()[2])
@@ -81,7 +82,7 @@ class VersionUpdater(object):  # pylint: disable=useless-object-inheritance
             )
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
         except subprocess.CalledProcessError:  # pylint: disable=no-member
-            with open(self.setup_json.strpath, 'r') as setup_fo:
+            with open(str(self.setup_json), 'r') as setup_fo:
                 setup = json.load(setup_fo)
                 version_string = setup['version']
 
