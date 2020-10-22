@@ -74,16 +74,8 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     def setup(self):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        # Handle the STDOUT file - the exact file name of STDOUT can be customised by the options
-        stdout_file = self._vasp_parser.node.get_option('scheduler_stdout')
-        retrieved = list(self._vasp_parser.retrieved_content.keys())
-        # We add the 'STDOUT' item in list of retrieved file to signal that STDOUT is avalaible
-        # Method for mapping STDOUT to the actual file name is implemented in BaseParser.get_file method
-        if stdout_file in retrieved:
-            retrieved.append('STDOUT')
-
         # check uniqueness and add parsable quantities
-        self._check_uniqueness_add_parsable(retrieved)
+        self._check_uniqueness_add_parsable(self._vasp_parser.retrieved_content.keys())
 
         # check consistency, that the quantity is parsable and
         # alternatives
