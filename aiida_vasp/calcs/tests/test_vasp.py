@@ -163,7 +163,6 @@ def managed_temp_file():
         os.remove(temp_file)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc(run_vasp_calc):
     """Test a run of a basic VASP calculation and its details."""
@@ -195,17 +194,11 @@ def test_vasp_calc(run_vasp_calc):
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
-    # Check for the parsing of stdout errors
-    with node.outputs.retrieved.open('_scheduler-stdout.txt', 'w') as fhandle:
-        fhandle.write('LAPACK: Routine ZPOTRF')
-    from aiida_vasp.parsers.vasp import VaspParser
-    misc = VaspParser.parse_from_node(node)[0]['misc']
-    errors = misc.get_dict()['stdout_error']
-    assert errors[0]['shortname'] == 'zpotrf'
-    assert len(errors) == 1
+    # Check that we do not have any error or warning messages
+    assert not misc['errors']
+    assert not misc['warnings']
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete(run_vasp_calc):
     """Test a run of a basic VASP calculation where one does not want to store the always retrieved files after parsing."""
@@ -218,7 +211,6 @@ def test_vasp_calc_delete(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_extra(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
@@ -242,7 +234,6 @@ def test_vasp_calc_extra(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete_extra(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files but not store them after parsing."""
@@ -265,7 +256,6 @@ def test_vasp_calc_delete_extra(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_del_str_ext(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files and store only those."""
@@ -289,7 +279,6 @@ def test_vasp_calc_del_str_ext(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_no_potcar_in_repo(run_vasp_calc):
     """Test a VASP run to verify that there is no POTCAR file in the repository."""

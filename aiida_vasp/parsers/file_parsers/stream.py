@@ -43,9 +43,9 @@ class StreamParser(BaseFileParser):
         # once and store the parsevasp Stream object.
         # First get any special config from the parser settings, else use the default
         stream_config = None
+        history = False
         if self.settings is not None:
             stream_config = self.settings.get('stream_config', None)
-            history = self.settings.get('stream_history', False)
         try:
             self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
         except SystemExit:

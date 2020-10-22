@@ -19,7 +19,6 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 
 
-@pytest.mark.wc
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     # def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""

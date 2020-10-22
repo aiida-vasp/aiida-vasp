@@ -61,6 +61,7 @@ def mock_vasp():
         shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
         shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
         shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+        shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
         shutil.copy(poscar, pwd / 'CONTCAR')
     else:
         test_data_path = data_path(test_case, 'out')

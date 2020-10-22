@@ -379,12 +379,12 @@ def outcar_parser(request):
     return parser
 
 
-@pytest.fixture(params=['stdout'])
+@pytest.fixture(params=[['stdout', 'out']])
 def stream_parser(request):
     """Return an instance of StreamParser for a reference stream capture."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'vasp_output'
-    path = data_path(request.param, file_name)
+    path = data_path(*request.param, file_name)
     parser = StreamParser(file_path=path, settings=ParserSettings({}))
     return parser
 

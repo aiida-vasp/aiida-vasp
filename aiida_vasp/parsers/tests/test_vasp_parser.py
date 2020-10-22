@@ -327,7 +327,7 @@ def test_misc(request, calc_with_retrieved):
 def test_stream(misc_input, config, request, calc_with_retrieved):
     """Test that the stream parser works and gets stored on a node."""
     from aiida.plugins import ParserFactory
-    file_path = str(request.fspath.join('..') + '../../../test_data/stdout')
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
 
     # turn of everything, except misc
     settings_dict = {
@@ -417,7 +417,7 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 def test_stream_history(request, calc_with_retrieved):
     """Test that the stream parser keeps history."""
     from aiida.plugins import ParserFactory
-    file_path = str(request.fspath.join('..') + '../../../test_data/stdout')
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
 
     # turn of everything, except misc
     settings_dict = {

@@ -21,8 +21,6 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
-#@pytest.mark.skip(reason='Can not run two consecutive workchain tests. Disabling convergence tests. They run fine separately.')
-@pytest.mark.wc
 def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import Code
@@ -87,8 +85,6 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
         pytest.fail('Did not find kpoints_regular in converge.data')
 
 
-#@pytest.mark.skip(reason='Can not run two consecutive workchain tests. Disabling convergence tests. They run fine separately.')
-@pytest.mark.wc
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test convergence workflow using mock code."""
     from aiida.orm import Code
