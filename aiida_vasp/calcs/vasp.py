@@ -265,8 +265,7 @@ class VaspCalculation(VaspCalcBase):
             # If we restart, we do not require inputs, but we should have a basic check
             # that the CHGCAR file is present
             if not self._is_restart():
-                chgcar = tempfolder.get_abs_path('CHGCAR')
-                self.write_chgcar(chgcar, calcinfo)
+                self.write_chgcar('CHGCAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
                 if not self._check_chgcar(remote_folder):
@@ -275,8 +274,7 @@ class VaspCalculation(VaspCalcBase):
             # If we restart, we do not require inputs, but we should have a basic check
             # that the WAVECAR file is present
             if not self._is_restart():
-                wavecar = tempfolder.get_abs_path('WAVECAR')
-                self.write_wavecar(wavecar, calcinfo)
+                self.write_wavecar('WAVECAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
                 if not self._check_wavecar(remote_folder):
