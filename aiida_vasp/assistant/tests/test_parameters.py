@@ -268,21 +268,21 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     parameters.bands.phase = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 0
+    assert massager.parameters.vasp.lorbit == 0
     print(massager.parameters.rwigs)
-    assert int(massager.parameters.rwigs[0]) == 2
+    assert int(massager.parameters.vasp.rwigs[0]) == 2
     parameters.bands.lm = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 1
+    assert massager.parameters.vasp.lorbit == 1
     parameters.bands.phase = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 2
+    assert massager.parameters.vasp.lorbit == 2
     parameters.bands.lm = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 2
+    assert massager.parameters.vasp.lorbit == 2
 
     # Should raise ValueError if Wigner-Seitz radius is not defined as a list.
     parameters.bands.wigner_seitz_radius = 2.0
@@ -297,7 +297,7 @@ def test_vasp_parameter_override(init_relax_parameters):
     init_relax_parameters.vasp.isif = 0
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    assert massager.parameters.isif == 0
+    assert massager.parameters.vasp.isif == 0
 
 
 def test_inherit_and_merge():
@@ -318,6 +318,8 @@ def test_inherit_and_merge():
     inputs.converge.somekey = DataFactory('bool')(True)
     inputs.electronic = AttributeDict()
     inputs.electronic.somekey = DataFactory('bool')(True)
+    inputs.dynamics = AttributeDict()
+    inputs.dynamics.somekey = DataFactory('bool')(True)
     # Check that parameters does not have to be present
     parameters = inherit_and_merge_parameters(inputs)
     # Check that an empty parameters is allowed
@@ -325,6 +327,7 @@ def test_inherit_and_merge():
     parameters = inherit_and_merge_parameters(inputs)
     print(parameters)
     test_parameters = AttributeDict({
+        'vasp': AttributeDict(),
         'electronic': AttributeDict({'somekey': True}),
         'bands': AttributeDict({'somekey': True}),
         'smearing': AttributeDict({'somekey': True}),
@@ -361,7 +364,7 @@ def test_unsupported_fail():
     parameters.not_valid = 200
     massager = ParametersMassage(None, parameters)
     # The not valid parameter was never set as there is no setter function for it.
-    assert massager.parameters == {}
+    assert massager.parameters.vasp == {}
 
 
 def test_unsupported_parameters():
@@ -378,7 +381,7 @@ def test_unsupported_parameters():
             'values': [1.0, 2.0]
         }})
     assert massager.exit_code is None
-    assert massager.parameters.not_valid == parameters.not_valid
+    assert massager.parameters.vasp.not_valid == parameters.not_valid
 
 
 def test_pwcutoff_to_encut():
@@ -387,4 +390,4 @@ def test_pwcutoff_to_encut():
     parameters.pwcutoff = 200
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.encut == parameters.pwcutoff
+    assert massager.parameters.vasp.encut == parameters.pwcutoff
