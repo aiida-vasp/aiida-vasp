@@ -146,6 +146,9 @@ class BaseRestartWorkChain(WorkChain):
             exit_code = compose_exit_code(calculation.exit_status, calculation.exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '  # pylint: disable=not-callable
                         'The exit status {} is inherited'.format(calculation.__class__.__name__, calculation.pk, exit_code))
+            # Make sure at the very minimum we attach the misc node that contains notifications and other
+            # quantities that can be salvaged
+            self.out('misc', calculation.outputs['misc'])
             return exit_code
 
         # Set default exit status to an unknown failure
