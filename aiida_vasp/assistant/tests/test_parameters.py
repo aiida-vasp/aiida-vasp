@@ -269,7 +269,7 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
     assert massager.parameters.vasp.lorbit == 0
-    print(massager.parameters.rwigs)
+    print(massager.parameters.vasp.rwigs)
     assert int(massager.parameters.vasp.rwigs[0]) == 2
     parameters.bands.lm = True
     massager = ParametersMassage(None, parameters)
