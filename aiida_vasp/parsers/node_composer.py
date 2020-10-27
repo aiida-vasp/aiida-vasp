@@ -13,9 +13,7 @@ from aiida_vasp.parsers.quantity import ParsableQuantities
 """NODE_TYPES"""  # pylint: disable=pointless-string-statement
 
 NODES_TYPES = {
-    'dict': [
-        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'errors', 'warnings'
-    ],
+    'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications'],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],

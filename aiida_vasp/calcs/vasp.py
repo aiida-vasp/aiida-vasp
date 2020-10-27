@@ -126,7 +126,13 @@ class VaspCalculation(VaspCalcBase):
                        'ERROR_VASP_DID_NOT_EXECUTE',
                        message='VASP did not produce any output files and did likely not execute properly.')
         spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
-        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the requested quantity')
+        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the {quantity} quantity')
+        spec.exit_code(
+            1003,
+            'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
+            message=
+            'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
+            'very likely the VASP calculation did not run properly')
 
     def prepare_for_submission(self, tempfolder):
         """

@@ -72,7 +72,7 @@ NODES = {
     'misc': {
         'link_name': 'misc',
         'type': 'dict',
-        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'errors', 'warnings']
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'notifications']
     },
     'kpoints': {
         'link_name': 'kpoints',

@@ -5,25 +5,21 @@ Standard stream parser for the VASP output.
 A parser that analyses standard output for VASP related notification, warnings and
 errors. Typically this is contained in the scheduler standard output.
 """
+import re
 
 from parsevasp.stream import Stream
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
 
-DEFAULT_OPTIONS = {'quantities_to_parse': ['errors', 'warnings']}
+DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
 
 
 class StreamParser(BaseFileParser):
     """Parser used for parsing errors and warnings from VASP."""
 
     PARSABLE_ITEMS = {
-        'errors': {
+        'notifications': {
             'inputs': [],
-            'name': 'errors',
-            'prerequisites': [],
-        },
-        'warnings': {
-            'inputs': [],
-            'name': 'warnings',
+            'name': 'notifications',
             'prerequisites': [],
         }
     }
@@ -46,6 +42,7 @@ class StreamParser(BaseFileParser):
         history = False
         if self.settings is not None:
             stream_config = self.settings.get('stream_config', None)
+            history = self.settings.get('stream_history', False)
         try:
             self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
@@ -83,6 +80,22 @@ class StreamParser(BaseFileParser):
                 result[quantity] = getattr(self, quantity)
 
         return result
+
+    @property
+    def notifications(self):
+        """Fetch the notifications from parsevasp."""
+        # Parsevasp returns VaspStream objects, which we cannot serialize. We could serialize this, but
+        # eventually, we would like to move to a dedicated node for the notifications with its own data class.
+        # This should be fixed in AiiDA core and coordinated across many plugins. For now, we convert the relevant info
+        # into dict entries explicitly.
+        notifications = {}
+        for item in self._stream.entries:
+            if isinstance(item.regex, re.Pattern):
+                regex = item.regex.pattern
+            else:
+                regex = item.regex
+            notifications[item.shortname] = {'kind': item.kind, 'message': item.message, 'regex': regex}
+        return notifications
 
     @property
     def errors(self):

@@ -194,9 +194,8 @@ def test_vasp_calc(run_vasp_calc):
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
-    # Check that we do not have any error or warning messages
-    assert not misc['errors']
-    assert not misc['warnings']
+    # Check that we do not have any notifications
+    assert not misc['notifications']
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
