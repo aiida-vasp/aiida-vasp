@@ -53,6 +53,9 @@ class PoscarParser(BaseFileParser):
     def _init_with_precision(self, precision):
         self.precision = precision
 
+    def _init_with_poscar_options(self, poscar_options):
+        self.poscar_options = poscar_options
+
     def _init_with_data(self, data):
         """Initialize with an AiiDA StructureData instance."""
         if isinstance(data, get_data_class('structure')):
@@ -69,12 +72,15 @@ class PoscarParser(BaseFileParser):
         """Return the parsevasp object representing the POSCAR file."""
 
         if isinstance(self._data_obj, get_data_class('structure')):
-            # _data_obj is StructurData, return the parsed version if possible.
+            # _data_obj is StructureData, return the parsed version if possible.
             try:
-                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj),
-                              prec=self.precision,
-                              conserve_order=True,
-                              logger=self._logger)
+                return Poscar(
+                    poscar_dict=self.aiida_to_parsevasp(
+                        self._data_obj, poscar=self.poscar_options
+                    ),
+                    prec=self.precision,
+                    conserve_order=True,
+                    logger=self._logger)
             except SystemExit:
                 return None
         # _data_obj is a SingleFile:
@@ -98,27 +104,41 @@ class PoscarParser(BaseFileParser):
 
         return result
 
-    @property
+    @ property
     def structure(self):
         if self._structure is None:
             composer = NodeComposer(file_parsers=[self])
             self._structure = composer.compose('structure', quantities=['poscar-structure'])
         return self._structure
 
-    def aiida_to_parsevasp(self, structure):
+    def aiida_to_parsevasp(self, structure, poscar=None):
         """Convert Aiida StructureData to parsevasp's dictionary format."""
         dictionary = {}
         dictionary['comment'] = structure.label or structure.get_formula()
         dictionary['unitcell'] = np.asarray(structure.cell)
-        selective = [True, True, True]
         # As for now all Aiida-structures are in Cartesian coordinates.
         direct = False
         sites = []
-        for site in structure.sites:
-            sites.append(Site(site.kind_name, site.position, selective=selective, direct=direct, logger=self._logger))
+        _transform_to_bool = np.vectorize(self.transform_to_bool)
+        for index, site in enumerate(structure.sites):
+            if poscar is None:
+                _selective = [True, True, True]
+            try:
+                _selective = _transform_to_bool(
+                    np.array(poscar['selective_dynamics'])[index, :]
+                )
+            except KeyError:
+                _selective = [True, True, True]
+            sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))
 
         dictionary['sites'] = sites
         return dictionary
+
+    def transform_to_bool(self, value):
+        if value in [0, 'F', 'f']:
+            return False
+        if value in [1, 'T', 't']:
+            return True
 
 
 def parsevasp_to_aiida(poscar):
