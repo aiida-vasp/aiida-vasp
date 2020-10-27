@@ -15,7 +15,7 @@ from aiida.orm import Code
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 from aiida_vasp.workchains.restart import BaseRestartWorkChain
-from aiida_vasp.assistant.parameters import ParametersMassage
+from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 
 
 class VaspWorkChain(BaseRestartWorkChain):
@@ -89,6 +89,12 @@ class VaspWorkChain(BaseRestartWorkChain):
                    help="""
             If True, enable more detailed output during workchain execution.
             """)
+        spec.input('dynamics.selective_dynamics',
+                   valid_type=get_data_class('array'),
+                   required=False,
+                   help="""
+            Site dependent flag for selective dynamics when performing relaxation
+            """)
 
         spec.outline(
             cls.init_context,
@@ -133,12 +139,22 @@ class VaspWorkChain(BaseRestartWorkChain):
                        'ERROR_MISSING_PARAMETER_DETECTED',
                        message='the parameter massager did not find expected tags in the input parameters.')
 
+    def _init_parameters(self):
+        """Collect input to the workchain in the converge namespace and put that into the parameters."""
+
+        # At some point we will replace this with possibly input checking using the PortNamespace on
+        # a dict parameter type. As such we remove the workchain input parameters as node entities. Much of
+        # the following is just a workaround until that is in place in AiiDA core.
+        parameters = inherit_and_merge_parameters(self.inputs)
+
+        return parameters
+
     def init_calculation(self):
         """Set the restart folder and set parameters tags for a restart."""
         # Check first if the calling workchain wants a restart in the same folder
         if 'restart_folder' in self.inputs:
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
-
+        self.ctx.inputs.parameters = self._init_parameters()
         # Then check if we the restart workchain wants a restart
         if isinstance(self.ctx.restart_calc, self._calculation):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
@@ -154,7 +170,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
         self.ctx.inputs = AttributeDict()
-
+        self.ctx.inputs.parameters = self._init_parameters()
         # Set the code
         self.ctx.inputs.code = self.inputs.code
 
@@ -176,12 +192,11 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Perform inputs massage to accommodate generalization in higher lying workchains
         # and set parameters.
-        parameters_massager = ParametersMassage(self, self.inputs.parameters, unsupported_parameters)
+        parameters_massager = ParametersMassage(self, self.ctx.inputs.parameters, unsupported_parameters)
         # Check exit codes from the parameter massager and set it if it exists
         if parameters_massager.exit_code is not None:
             return parameters_massager.exit_code
         self.ctx.inputs.parameters = parameters_massager.parameters
-
         # Set options
         # Options is very special, not storable and should be
         # wrapped in the metadata dictionary, which is also not storable
@@ -244,3 +259,11 @@ class VaspWorkChain(BaseRestartWorkChain):
                         'Please inspect messages and act.')
 
         return super(VaspWorkChain, self).on_except(exc_info)
+
+
+def default_array(name, array):
+    """Used to set ArrayData for spec.input."""
+    array_cls = get_data_node('array')
+    array_cls.set_array(name, array)
+
+    return array_cls

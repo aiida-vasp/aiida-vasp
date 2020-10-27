@@ -62,7 +62,7 @@ def vasp_params(fresh_aiida_env):
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('dict')(dict=vasp_params_data.get_dict().update({'lwannier90': True}))
+    incar_data = get_data_class('dict')(dict=vasp_params_data.vasp.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
@@ -207,8 +207,9 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = vasp_params
-
+            parameters = AttributeDict()
+            parameters.vasp = vasp_params.get_dict()
+            parameters = get_data_class('dict')(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
         inputs.parameters = parameters
@@ -223,14 +224,14 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
 @pytest.fixture()
 def vasp2w90_inputs(
-        fresh_aiida_env,
-        vasp_params,
-        vasp_kpoints,
-        vasp_structure,
-        potentials,
-        vasp_code,
-        wannier_projections,
-        wannier_params,
+        fresh_aiida_env,  # yapf: disable
+        vasp_params,  # yapf: disable
+        vasp_kpoints,  # yapf: disable
+        vasp_structure,  # yapf: disable
+        potentials,  # yapf: disable
+        vasp_code,  # yapf: disable
+        wannier_projections,  # yapf: disable
+        wannier_params  # yapf: disable
 ):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict
@@ -248,7 +249,9 @@ def vasp2w90_inputs(
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = vasp_params
+            parameters = AttributeDict()
+            parameters.vasp = vasp_params.get_dict()
+            parameters = get_data_class('dict')(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -338,8 +341,8 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = Path(data_path('wannier')) / 'INCAR'
-    yield data.read_text()
+    with open(data_path('wannier', 'INCAR'), 'r') as reference_incar_wannier:
+        yield reference_incar_wannier.readlines()
 
 
 @pytest.fixture

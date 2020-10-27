@@ -157,6 +157,7 @@ class ParametersMassage():
             self._unsupported_parameters = unsupported_parameters
         self._workchain = workchain
         self._massage = AttributeDict()
+        self._massage.vasp = AttributeDict()
         if isinstance(parameters, DataFactory('dict')):
             self._parameters = AttributeDict(parameters.get_dict())
         elif isinstance(parameters, AttributeDict):
@@ -165,11 +166,12 @@ class ParametersMassage():
             raise TypeError('The supplied type: {} of parameters is not supported. '
                             'Supply either a Dict or an AttributeDict'.format(type(parameters)))
         self._load_valid_params()
-        self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
+        self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage.vasp)
         self._set_parameters()
         # Override any parameter set so far by parameters in the vasp namespace.
         self._set_override_parameters()
         # No point to proceed if the override parameters already contains an invalid keys, or the set process trigger another exit code
+        self._set_extra_parameters()
         if self.exit_code is not None:
             return
         self._validate_parameters()
@@ -182,7 +184,7 @@ class ParametersMassage():
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
-        for key, item in self._unsupported_parameters.items():
+        for key, _ in self._unsupported_parameters.items():
             key = key.lower()
             try:
                 _ = self._massage[key]
@@ -201,15 +203,31 @@ class ParametersMassage():
     def _set_override_parameters(self):
         """Set the any supplied override parameters."""
         try:
+            if self._parameters.vasp:
+                self._massage.vasp = AttributeDict()
             for key, item in self._parameters.vasp.items():
                 # Sweep the override input parameters to check if they are valid VASP tags
                 key = key.lower()
                 if self._valid_vasp_parameter(key):
-                    self._massage[key] = item
+                    self._massage.vasp[key] = item
                 else:
                     break
         except AttributeError:
             # The vasp namespace might not be supplied (no override)
+            pass
+
+    def _set_extra_parameters(self):
+        """Find if there are any extra parameters that are not part of the INCAR which should still be passed to the workchai"""
+        try:
+            if self._parameters.dynamics:
+                self._massage.dynamics = AttributeDict()
+            for key, item in self._parameters.dynamics.items():
+                key = key.lower()
+                if key in ['selective_dynamics']:
+                    self._massage.dynamics[key] = item
+                else:
+                    break
+        except AttributeError:
             pass
 
     def _valid_vasp_parameter(self, key):
@@ -227,7 +245,7 @@ class ParametersMassage():
 
     def _validate_parameters(self):
         """Make sure all the massaged values are recognized as valid VASP input parameters."""
-        for key in self._massage:
+        for key in self._massage.vasp:
             key = key.lower()
             if not self._valid_vasp_parameter(key):
                 break
@@ -243,9 +261,9 @@ class ParametersMassage():
         # If we find any raw code input key directly on parameter root, override whatever we have set until now
         # Note that the key may be in upper case, so we test both
         if key in self._parameters:
-            self._massage[key] = self._parameters[key]
+            self._massage.vasp[key] = self._parameters[key]
         elif key.upper() in self._parameters:
-            self._massage[key] = self._parameters[key.upper()]
+            self._massage.vasp[key] = self._parameters[key.upper()]
 
     @property
     def parameters(self):
@@ -485,7 +503,7 @@ def inherit_and_merge_parameters(inputs):
     in case there is overlap.
     """
     parameters = AttributeDict()
-    namespaces = ['electronic', 'bands', 'smearing', 'charge', 'relax', 'converge']
+    namespaces = ['electronic', 'bands', 'smearing', 'charge', 'relax', 'converge', 'dynamics']
     for namespace in namespaces:  # pylint: disable=too-many-nested-blocks
         parameters[namespace] = AttributeDict()
         try:
@@ -510,16 +528,11 @@ def inherit_and_merge_parameters(inputs):
     # Now get the input parameters and update the dictionary. This means,
     # any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what is supplied to the workchain
     # input namespace (i.e. inputs.somekey).
-    try:
-        # inputs might not have parameters, or parameters might be empty
-        input_parameters = AttributeDict(inputs.parameters.get_dict())
-    except AttributeError:
-        input_parameters = {}
-
+    input_parameters = vasp_parameter_nesting(inputs=inputs, namespaces=namespaces)
     # Now check that no loose keys are residing on the root of input_parameters, everything should be in
     # the vasp or aiida namespace
     #valid_keys = ['vasp', 'aiida']
-    #if not list(input_parameters.keys()).sort() == valid_keys.sort():
+    # if not list(input_parameters.keys()).sort() == valid_keys.sort():
     #    raise ValueError('Unsupported keys detected on parameter root. '
     #                     'Please make sure all keys reside inside the vasp or aiida namespace.')
 
@@ -528,3 +541,24 @@ def inherit_and_merge_parameters(inputs):
     update_nested_dict(parameters, input_parameters)
 
     return parameters
+
+
+def vasp_parameter_nesting(inputs, namespaces):
+    """Helper function to make sure that the namespaces are properly handled when they are nested."""
+    try:
+        # inputs might not have parameters, or parameters might be empty
+        if 'vasp' in inputs.parameters.get_dict():
+            input_parameters = AttributeDict(inputs.parameters.get_dict())
+        else:
+            _parameters = AttributeDict()
+            _parameters.vasp = AttributeDict()
+            for key, item in inputs.parameters.get_dict().items():
+                if key in namespaces:
+                    _parameters[key] = item
+                else:
+                    _parameters.vasp[key] = item
+            input_parameters = _parameters
+    except AttributeError:
+        input_parameters = {}
+
+    return input_parameters

@@ -280,7 +280,7 @@ class RelaxWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
-        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'])
+        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'])
 
     def run_next_workchain(self):
         """Run the next workchain."""
