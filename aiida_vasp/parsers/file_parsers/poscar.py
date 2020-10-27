@@ -48,6 +48,7 @@ class PoscarParser(BaseFileParser):
         super(PoscarParser, self).__init__(*args, **kwargs)
         self.precision = 12
         self._structure = None
+        self.poscar_options = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_precision(self, precision):
@@ -74,13 +75,10 @@ class PoscarParser(BaseFileParser):
         if isinstance(self._data_obj, get_data_class('structure')):
             # _data_obj is StructureData, return the parsed version if possible.
             try:
-                return Poscar(
-                    poscar_dict=self.aiida_to_parsevasp(
-                        self._data_obj, poscar=self.poscar_options
-                    ),
-                    prec=self.precision,
-                    conserve_order=True,
-                    logger=self._logger)
+                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, poscar=self.poscar_options),
+                              prec=self.precision,
+                              conserve_order=True,
+                              logger=self._logger)
             except SystemExit:
                 return None
         # _data_obj is a SingleFile:
@@ -104,7 +102,7 @@ class PoscarParser(BaseFileParser):
 
         return result
 
-    @ property
+    @property
     def structure(self):
         if self._structure is None:
             composer = NodeComposer(file_parsers=[self])
@@ -124,9 +122,7 @@ class PoscarParser(BaseFileParser):
             if poscar is None:
                 _selective = [True, True, True]
             try:
-                _selective = _transform_to_bool(
-                    np.array(poscar['selective_dynamics'])[index, :]
-                )
+                _selective = _transform_to_bool(np.array(poscar['selective_dynamics'])[index, :])
             except KeyError:
                 _selective = [True, True, True]
             sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))
@@ -135,10 +131,12 @@ class PoscarParser(BaseFileParser):
         return dictionary
 
     def transform_to_bool(self, value):
+        """Helper function to transform the dictionary from strings or integers to bools"""
         if value in [0, 'F', 'f']:
             return False
         if value in [1, 'T', 't']:
             return True
+        return True
 
 
 def parsevasp_to_aiida(poscar):

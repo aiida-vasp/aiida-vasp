@@ -222,14 +222,14 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
 @pytest.fixture()
 def vasp2w90_inputs(
-        fresh_aiida_env,
-        vasp_params,
-        vasp_kpoints,
-        vasp_structure,
-        potentials,
-        vasp_code,
-        wannier_projections,
-        wannier_params,
+        fresh_aiida_env,  # yapf: disable
+        vasp_params,  # yapf: disable
+        vasp_kpoints,  # yapf: disable
+        vasp_structure,  # yapf: disable
+        potentials,  # yapf: disable
+        vasp_code,  # yapf: disable
+        wannier_projections,  # yapf: disable
+        wannier_params  # yapf: disable
 ):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict

@@ -184,7 +184,7 @@ class ParametersMassage():
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
-        for key, item in self._unsupported_parameters.items():
+        for key, _ in self._unsupported_parameters.items():
             key = key.lower()
             try:
                 _ = self._massage[key]
@@ -217,8 +217,7 @@ class ParametersMassage():
             pass
 
     def _set_extra_parameters(self):
-        """Find if there are any extra parameters that are not part of the
-        INCAR which should still be passed to the workchain"""
+        """Find if there are any extra parameters that are not part of the INCAR which should still be passed to the workchai"""
         try:
             if self._parameters.dynamics:
                 self._massage.dynamics = AttributeDict()

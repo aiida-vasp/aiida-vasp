@@ -4,14 +4,13 @@ VASP workchain.
 ---------------
 Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 """
-import numpy as np
 from aiida.engine import while_
 from aiida.common.lang import override
 #from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.plugins import CalculationFactory
-from aiida.orm import Code, Dict
+from aiida.orm import Code
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
