@@ -67,7 +67,7 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
-
+    print(calcinfo.local_copy_list)
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
 

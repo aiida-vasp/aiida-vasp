@@ -61,7 +61,7 @@ def vasp_params(fresh_aiida_env):
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('dict')(dict=vasp_params_data.get_dict().update({'lwannier90': True}))
+    incar_data = get_data_class('dict')(dict=vasp_params_data.vasp.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
@@ -248,7 +248,9 @@ def vasp2w90_inputs(
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = vasp_params
+            parameters = AttributeDict()
+            parameters.vasp = vasp_params.get_dict()
+            parameters = get_data_class('dict')(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -338,8 +340,8 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = Path(data_path('wannier')) / 'INCAR'
-    yield data.read_text()
+    with open(data_path('wannier', 'INCAR'), 'r') as reference_incar_wannier:
+        yield reference_incar_wannier.readlines()
 
 
 @pytest.fixture
