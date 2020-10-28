@@ -528,15 +528,7 @@ def inherit_and_merge_parameters(inputs):
     # Now get the input parameters and update the dictionary. This means,
     # any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what is supplied to the workchain
     # input namespace (i.e. inputs.somekey).
-    try:
-        # inputs might not have parameters, or parameters might be empty
-        if 'vasp' in inputs.parameters.get_dict():
-            input_parameters = AttributeDict(inputs.parameters.get_dict())
-        else:
-            input_parameters = AttributeDict({'vasp': inputs.parameters.get_dict()})
-    except AttributeError:
-        input_parameters = {}
-
+    input_parameters = vasp_parameter_nesting(inputs=inputs, namespaces=namespaces)
     # Now check that no loose keys are residing on the root of input_parameters, everything should be in
     # the vasp or aiida namespace
     #valid_keys = ['vasp', 'aiida']
@@ -549,3 +541,24 @@ def inherit_and_merge_parameters(inputs):
     update_nested_dict(parameters, input_parameters)
 
     return parameters
+
+
+def vasp_parameter_nesting(inputs, namespaces):
+    """Helper function to make sure that the namespaces are properly handled when they are nested."""
+    try:
+        # inputs might not have parameters, or parameters might be empty
+        if 'vasp' in inputs.parameters.get_dict():
+            input_parameters = AttributeDict(inputs.parameters.get_dict())
+        else:
+            _parameters = AttributeDict()
+            _parameters.vasp = AttributeDict()
+            for key, item in inputs.parameters.get_dict().items():
+                if key in namespaces:
+                    _parameters[key] = item
+                else:
+                    _parameters.vasp[key] = item
+            input_parameters = _parameters
+    except AttributeError:
+        input_parameters = {}
+
+    return input_parameters

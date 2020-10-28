@@ -121,10 +121,11 @@ class PoscarParser(BaseFileParser):
         for index, site in enumerate(structure.sites):
             if poscar is None:
                 _selective = [True, True, True]
-            try:
-                _selective = _transform_to_bool(np.array(poscar['selective_dynamics'])[index, :])
-            except KeyError:
-                _selective = [True, True, True]
+            else:
+                try:
+                    _selective = _transform_to_bool(np.array(poscar['selective_dynamics'])[index, :])
+                except KeyError:
+                    _selective = [True, True, True]
             sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))
 
         dictionary['sites'] = sites

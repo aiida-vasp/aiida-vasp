@@ -23,7 +23,7 @@ def test_write_incar(vasp_calc_and_ref):
     with managed_temp_file() as temp_file:
         vasp_calc.write_incar(temp_file)
         with open(temp_file, 'r') as result_incar_fo:
-            assert result_incar_fo.readlines() == reference['incar']
+            assert result_incar_fo.readlines() == reference['vasp']
 
 
 @ONLY_ONE_CALC
@@ -52,10 +52,17 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     from aiida.common.folders import Folder
     chgcar, _ = vasp_chgcar
 
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
+    inputs = vasp_inputs(
+        parameters={'vasp': {
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'icharg': 1
+        }})
 
     inputs.charge_density = chgcar
-
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
 
@@ -69,7 +76,15 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     """Test that WAVECAR file is written correctly."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
+    inputs = vasp_inputs(
+        parameters={'vasp': {
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'istart': 1
+        }})
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
@@ -84,8 +99,10 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     from aiida.common import InputValidationError
     from aiida.common.folders import Folder
     inputs_dict = {
-        'gga': 'PE',
-        'smear': 3  # <- Invalid tag
+        'vasp': {
+            'gga': 'PE',
+            'smear': 3  # <- Invalid tag
+        }
     }
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
@@ -103,7 +120,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
-    inputs_dict = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 11}
+    inputs_dict = {'vasp': {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 11}}
 
     inputs = vasp_inputs(parameters=inputs_dict)
     inputs.charge_density = chgcar

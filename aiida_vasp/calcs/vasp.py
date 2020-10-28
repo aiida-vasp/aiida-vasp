@@ -307,9 +307,8 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        poscar_parser = PoscarParser(data=self._structure(),
-                                     precision=poscar_precision,
-                                     poscar_options=self.inputs.parameters.dict.dynamics)
+        dynamics = self.inputs.parameters.get_dict().get('dynamics', None)
+        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, poscar_options=dynamics)
         poscar_parser.write(dst)
 
     def write_potcar(self, dst):

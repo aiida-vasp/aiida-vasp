@@ -84,7 +84,6 @@ def vasp_calc(vasp_inputs):
 
         if inputs is None:
             inputs = vasp_inputs(settings)
-
         manager = get_manager()
         runner = manager.get_runner()
 
@@ -117,7 +116,7 @@ def vasp_calc_and_ref(vasp_calc, vasp_kpoints, ref_incar):
     calc = vasp_calc(settings={'parser_settings': {'add_bands': True, 'add_dos': True}})
     _, ref_kpoints = vasp_kpoints
 
-    return calc, {'kpoints': ref_kpoints, 'incar': ref_incar}
+    return calc, {'kpoints': ref_kpoints, 'vasp': ref_incar}
 
 
 @pytest.fixture
@@ -157,10 +156,12 @@ def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_s
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
         kpoints, _ = vasp_kpoints
+        parameters = AttributeDict()
+        parameters.vasp = vasp_params.get_dict()
         inpts = AttributeDict()
         inpts.code = Code.get_from_string('mock-vasp@localhost')
         inpts.structure = vasp_structure
-        inpts.parameters = vasp_params
+        inpts.parameters = get_data_class('dict')(dict=parameters)
         inpts.kpoints = kpoints
         inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
                                                                                    family_name=POTCAR_FAMILY_NAME,
