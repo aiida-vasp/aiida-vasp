@@ -357,10 +357,6 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
-    ibzkpt_error = ('(ERROR) ibzkpt: There is an error when creating the irreducible k-point grid, '
-                    'most likely the symmetry of the cell does not match the k-point sampling.')
-    random_error = '(ERROR) random_error: Okey, this error you do not want.'
-    random_warning = '(WARNING) random_warning: Okey, this warning is nasty.'
     if misc_input == []:
         # Test empty misc specification, yields no misc output node
         with pytest.raises(KeyError) as error:
@@ -371,15 +367,25 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         if config is not None:
             if 'random_error' in config:
                 assert len(misc_dict['notifications']) == 2
-                assert str(misc_dict['notifications'][0]) == ibzkpt_error
-                assert str(misc_dict['notifications'][1]) == random_error
+                assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+                assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+                assert misc_dict['notifications'][1]['name'] == 'random_error'
+                assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
             if 'random_warning' in config:
                 assert len(misc_dict['notifications']) == 2
-                assert str(misc_dict['notifications'][0]) == ibzkpt_error
-                assert str(misc_dict['notifications'][1]) == random_warning
+                assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+                assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+                assert misc_dict['notifications'][1]['name'] == 'random_warning'
+                assert misc_dict['notifications'][1]['kind'] == 'WARNING'
+                assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED WARNING'
         else:
             assert len(misc_dict['notifications']) == 1
-            assert str(misc_dict['notifications'][0]) == ibzkpt_error
+            assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+            assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+            assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
 
 
 def test_stream_history(request, calc_with_retrieved):
@@ -425,15 +431,17 @@ def test_stream_history(request, calc_with_retrieved):
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
-    ibzkpt_error = ('(ERROR) ibzkpt: There is an error when creating the irreducible k-point grid, '
-                    'most likely the symmetry of the cell does not match the k-point sampling.')
-    random_error = '(ERROR) random_error: Okey, this error you do not want.'
-
     misc = result['misc']
     misc_dict = misc.get_dict()
     assert len(misc_dict['notifications']) == 3
-    assert str(misc_dict['notifications'][0]) == ibzkpt_error
-    assert str(misc_dict['notifications'][1]) == random_error
-    assert str(misc_dict['notifications'][2]) == random_error
+    assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+    assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+    assert misc_dict['notifications'][1]['name'] == 'random_error'
+    assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
+    assert misc_dict['notifications'][2]['name'] == 'random_error'
+    assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
     for item in misc_dict['notifications']:
-        assert item.kind != 'WARNING'
+        assert item['kind'] != 'WARNING'
