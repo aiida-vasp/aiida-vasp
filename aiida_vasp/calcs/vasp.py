@@ -209,7 +209,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         ichrg_d = 0 if self._need_wavecar() else 2
-        icharg = self._parameters.get('icharg', ichrg_d)
+        icharg = self._parameters['vasp'].get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
     def _check_chgcar(self, remote_folder):  # pylint: disable=no-self-use
@@ -244,7 +244,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         istrt_d = 1 if self.inputs.get('wavefunctions') else 0
-        istart = self._parameters.get('istart', istrt_d)
+        istart = self._parameters['vasp'].get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
     def _structure(self):
