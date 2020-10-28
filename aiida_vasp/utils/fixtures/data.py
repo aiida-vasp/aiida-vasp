@@ -195,8 +195,6 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
     def inner(settings=None, parameters=None):
 
-        print('VASP INPUTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-        print(parameters)
         inputs = AttributeDict()
 
         metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
@@ -211,8 +209,6 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             parameters = AttributeDict()
             parameters.vasp = vasp_params.get_dict()
             parameters = get_data_class('dict')(dict=parameters)
-        print('AFTER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-        print(parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
         inputs.parameters = parameters

@@ -128,7 +128,7 @@ def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_inca
     calc = vasp2w90_calc(inputs=inputs)
     _, ref_kpoints = vasp_kpoints
 
-    return calc, {'kpoints': ref_kpoints, 'incar': ref_incar_vasp2w90, 'win': ref_win}
+    return calc, {'kpoints': ref_kpoints, 'vasp': ref_incar_vasp2w90, 'win': ref_win}
 
 
 @pytest.fixture()
