@@ -88,13 +88,14 @@ class StreamParser(BaseFileParser):
         # eventually, we would like to move to a dedicated node for the notifications with its own data class.
         # This should be fixed in AiiDA core and coordinated across many plugins. For now, we convert the relevant info
         # into dict entries explicitly.
-        notifications = {}
+        notifications = []
         for item in self._stream.entries:
-            if isinstance(item.regex, re.Pattern):
+            if isinstance(item.regex, type(re.compile(''))):
                 regex = item.regex.pattern
             else:
                 regex = item.regex
-            notifications[item.shortname] = {'kind': item.kind, 'message': item.message, 'regex': regex}
+            notifications.append({'name': item.shortname, 'kind': item.kind, 'message': item.message, 'regex': regex})
+
         return notifications
 
     @property
