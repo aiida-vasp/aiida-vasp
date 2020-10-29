@@ -28,6 +28,7 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
 from aiida_vasp.utils.general import copytree
+from aiida_vasp.parsers.file_parsers.stream import StreamParser
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
@@ -375,6 +376,16 @@ def outcar_parser(request):
     file_name = 'OUTCAR'
     path = data_path(request.param, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture(params=[['stdout', 'out']])
+def stream_parser(request):
+    """Return an instance of StreamParser for a reference stream capture."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    file_name = 'vasp_output'
+    path = data_path(*request.param, file_name)
+    parser = StreamParser(file_path=path, settings=ParserSettings({}))
     return parser
 
 

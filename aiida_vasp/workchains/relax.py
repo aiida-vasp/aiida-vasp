@@ -313,6 +313,9 @@ class RelaxWorkChain(WorkChain):
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '
                         'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            # Make sure at the very minimum we attach the misc node that contains notifications and other
+            # quantities that can be salvaged
+            self.out('misc', workchain.outputs['misc'])
 
         return self.ctx.exit_code
 
