@@ -19,7 +19,6 @@ def incar_dict_example():
     return incar_dict
 
 
-@pytest.mark.incar
 def test_parser_read(fresh_aiida_env):
     """Test to read a INCAR file."""
 
@@ -32,7 +31,6 @@ def test_parser_read(fresh_aiida_env):
     assert incar['lreal'] is False
 
 
-@pytest.mark.incar
 def test_parser_read_doc(fresh_aiida_env):
     """
     Read example INCAR from VASP documentation.
@@ -49,7 +47,6 @@ def test_parser_read_doc(fresh_aiida_env):
     assert result is None
 
 
-@pytest.mark.incar
 def test_parser_dict(fresh_aiida_env, incar_dict_example):
     """
     Pass a dict to the INCAR parser.
@@ -62,7 +59,6 @@ def test_parser_dict(fresh_aiida_env, incar_dict_example):
     assert isinstance(parser.incar, get_data_class('dict'))
 
 
-@pytest.mark.incar
 def test_parser_string():
     """
     Pass a string to the INCAR parser.
@@ -77,7 +73,6 @@ def test_parser_string():
         IncarParser(incar_string=test_string)
 
 
-@pytest.mark.incar
 def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     """Test writing an INCAR from a dict, read and compare."""
 

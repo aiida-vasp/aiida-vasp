@@ -269,7 +269,6 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
     assert massager.parameters.vasp.lorbit == 0
-    print(massager.parameters.vasp.rwigs)
     assert int(massager.parameters.vasp.rwigs[0]) == 2
     parameters.bands.lm = True
     massager = ParametersMassage(None, parameters)
@@ -325,7 +324,6 @@ def test_inherit_and_merge():
     # Check that an empty parameters is allowed
     inputs.parameters = DataFactory('dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
-    print(parameters)
     test_parameters = AttributeDict({
         'vasp': AttributeDict(),
         'electronic': AttributeDict({'somekey': True}),

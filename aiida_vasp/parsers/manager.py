@@ -84,11 +84,21 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
                 # Gather a list of all the missing files and issue a warning.
                 missing_files = self._quantities.get_missing_files(quantity_name)
-                self._vasp_parser.logger.warning('{quantity} has been requested, however the '
-                                                 'following files required for parsing have not been '
-                                                 'retrieved: {missing_files}. Please check that it is in '
-                                                 'the ADDITIONAL_RETRIEVE_LIST, which is an option given to settings.'.format(
-                                                     quantity=quantity_name, missing_files=missing_files))
+                # Check if the missing files are defined in the retrieve list
+                retrieve_list = self._vasp_parser.node.get_retrieve_temporary_list() + self._vasp_parser.node.get_retrieve_list()
+                not_in_retrieve_list = None
+                for item in missing_files:
+                    if item not in retrieve_list:
+                        not_in_retrieve_list = item
+                self._vasp_parser.logger.warning('The quantity {quantity} has been requested for parsing, however the '
+                                                 'following files required for parsing it have not been '
+                                                 'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
+                if not_in_retrieve_list is not None:
+                    self._vasp_parser.logger.warning(
+                        'The file {not_in_retrieve_list} is not present '
+                        'in the list of files to be retrieved. If you want to add additional '
+                        'files, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
+                        'which is an option given to calculation settings.'.format(not_in_retrieve_list=not_in_retrieve_list))
 
     def _set_file_parsers(self):
         """Set the specific FileParsers."""

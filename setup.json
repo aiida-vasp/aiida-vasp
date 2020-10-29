@@ -79,10 +79,10 @@
     },
     "include_package_data": true,
     "install_requires": [
-        "aiida-core[atomic_tools] >= 1.2.1",
+        "aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1",
         "subprocess32",
         "lxml",
         "packaging",
-        "parsevasp >= 1.0.0"
+        "parsevasp >= 1.1.2"
     ]
 }

@@ -15,7 +15,6 @@ from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
 
 
-@pytest.mark.wc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code."""
@@ -60,7 +59,6 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     assert misc['total_energies']['energy_no_entropy'] == -14.16209692
 
 
-@pytest.mark.wc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Test submitting only, not correctness, with mocked vasp code, test fetching of the CHGCAR."""
