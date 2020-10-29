@@ -79,7 +79,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
         # check consistency, that the quantity is parsable and
         # alternatives
-        self._check_consitency_and_alternatives()
+        self._check_consistency_and_alternatives()
 
     def _check_uniqueness_add_parsable(self, retrieved):
         """Check uniqueness and add parsable quantities."""
@@ -103,7 +103,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
                 quantity_dict['file_name'] = file_name
                 self.add_parsable_quantity(quantity, quantity_dict, retrieved)
 
-    def _check_consitency_and_alternatives(self):
+    def _check_consistency_and_alternatives(self):
         """Check the consistency and alternatives."""
 
         import copy

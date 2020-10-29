@@ -43,6 +43,8 @@ DEFAULT_OPTIONS = {
     'file_parser_set': 'default',
 }
 
+DEFAULT_QUANTITY_PARAMETER_DEPS = {'stress': {'isif': 0}}
+
 
 class VaspParser(BaseParser):
     """

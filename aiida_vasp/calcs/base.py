@@ -117,6 +117,7 @@ class VaspCalcBase(CalcJob):
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.')
                      for name in restart_folder.listdir()
                      if name not in excluded]
+
         return copy_list
 
     def verify_inputs(self):
@@ -125,8 +126,14 @@ class VaspCalcBase(CalcJob):
 
         Is called once before submission.
         """
+        self.check_quantity_parameter_dep()
         self.check_restart_folder()
+
         return True
+
+    def check_quantity_parameter_dep(self):  # pylint: disable=no-self-use
+        """Check that we have the required parameters for the requested quantities set."""
+        return
 
     def check_restart_folder(self):
         restart_folder = self.inputs.get('restart_folder', None)
@@ -135,10 +142,12 @@ class VaspCalcBase(CalcJob):
                 raise ValidationError('Calculation can not be restarted on another computer')
 
     def _is_restart(self):
+        """Check if a restart folder has been set in the inputs."""
         restart_folder = self.inputs.get('restart_folder', None)
         is_restart = False
         if restart_folder:
             is_restart = True
+
         return is_restart
 
     def store(self, *args, **kwargs):
@@ -199,6 +208,7 @@ class VaspCalcBase(CalcJob):
                                                           potential_mapping=kwargs.get('potential_mapping'))
                 builder.kpoints = imgr.get_kpoints_input(sandbox_path)
                 cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
+
         return proc_cls, builder
 
     @classmethod

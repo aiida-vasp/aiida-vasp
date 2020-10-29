@@ -95,6 +95,25 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
         calc.prepare_for_submission(temp_folder)
 
 
+@ONLY_ONE_CALC
+def test_quantity_parameter_deps(vasp_calc, vasp_inputs, localhost_dir):
+    """Check that the check for required parameters for given parsable quantities is."""
+    from aiida.common import InputValidationError
+    from aiida.common.folders import Folder
+    # Add stress as a quantity
+    settings_dict = {'parser_settings': {'add_stress': True}}
+    inputs_dict = {
+        'gga': 'PE',
+        'isif': 0  # <- Invalid tag, we require isif!=0 for stress calculations
+    }
+    inputs = vasp_inputs(parameters=inputs_dict, settings=settings_dict)
+    calc = vasp_calc(inputs=inputs)
+
+    temp_folder = Folder(str(localhost_dir.parent))
+    with pytest.raises(InputValidationError):
+        calc.prepare_for_submission(temp_folder)
+
+
 # pylint: disable=protected-access
 @ONLY_ONE_CALC
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):

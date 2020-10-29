@@ -8,6 +8,7 @@ The calculation class that prepares a specific VASP calculation.
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.plugins import DataFactory
+from aiida.common import InputValidationError
 
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
@@ -15,6 +16,7 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.parsers.vasp import DEFAULT_QUANTITY_PARAMETER_DEPS
 from aiida_vasp.utils.inheritance import update_docstring
 
 PARAMETER_CLS = DataFactory('dict')
@@ -169,6 +171,21 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, self).verify_inputs()
         if not hasattr(self, 'elements'):
             self._prestore()
+
+    def check_quantity_parameter_deps(self):
+        """Check that we have the required parameters for the requested quantities set."""
+        try:
+            parameters = self.inputs.parameters
+        except AttributeError:
+            return
+        parameter_keys = list(parameters.keys())
+        quantity_parameters_deps = dict(DEFAULT_QUANTITY_PARAMETER_DEPS)
+        quantity_parameters_deps.update(self.inputs.settings.get_attribute('QUANTITY_PARAMETER_DEPS', default={}))
+        for quantity, deps in quantity_parameters_deps.items():
+            for parameter, value in deps.items():
+                if parameter not in parameter_keys or value != parameters[parameter]:
+                    # If the required parameter is not in the parameters and if the value is different from the required value
+                    raise InputValidationError(f'The quantity {quantity} requires the missing parameter {parameter}.')
 
     def _prestore(self):
         """Set attributes prior to storing."""
