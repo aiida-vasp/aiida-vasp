@@ -65,6 +65,11 @@ class VasprunParser(BaseFileParser):
             'name': 'energies',
             'prerequisites': [],
         },
+        'energies_sc': {
+            'inputs': [],
+            'name': 'energies_sc',
+            'prerequisites': [],
+        },
         'total_energies': {
             'inputs': [],
             'name': 'total_energies',
@@ -486,11 +491,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        # raise error due to lack of knowledge if
-        # the Aiida data structure support for instance
-        # lists of ndarrays.
-        raise NotImplementedError
-        #return self.energies(nosc = False)
+        return self._energies(nosc=False)
 
     def _energies(self, nosc):
         """Fetch the total energies for all calculations (i.e. ionic steps)."""
@@ -510,12 +511,18 @@ class VasprunParser(BaseFileParser):
                 self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
                     quantity=str(sys._getframe().f_code.co_name))
                 return None
-            # should be a list, but convert to ndarray, here
-            # staggered arrays are not a problem
-            # two elements for a static run, both are similar,
-            # only take the last
-            if len(enrgies) == 2:
-                enrgies = enrgies[-1:]
+
+            if isinstance(enrgies[0], np.ndarray):
+                # This must be the same for all etypes, so overwritten for multiple etypes.
+                enrgy['sc_iters'] = np.array([len(sc_e) for sc_e in enrgies], dtype=int)
+                enrgies = np.concatenate(enrgies)
+            else:
+                # should be a list, but convert to ndarray, here
+                # staggered arrays are not a problem
+                # two elements for a static run, both are similar,
+                # only take the last
+                if len(enrgies) == 2:
+                    enrgies = enrgies[-1:]
             enrgy[etype] = np.asarray(enrgies)
 
         return enrgy

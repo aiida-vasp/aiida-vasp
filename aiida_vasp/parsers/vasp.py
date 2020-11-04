@@ -29,6 +29,7 @@ DEFAULT_OPTIONS = {
     'add_dos': False,
     'add_kpoints': False,
     'add_energies': False,
+    'add_energies_sc': False,
     'add_misc': True,
     'add_structure': False,
     'add_projectors': False,
