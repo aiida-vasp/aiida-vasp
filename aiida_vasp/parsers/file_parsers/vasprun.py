@@ -15,8 +15,26 @@ from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
-        'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupancies', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress'
+        'structure',
+        'eigenvalues',
+        'dos',
+        'bands',
+        'kpoints',
+        'occupancies',
+        'trajectory',
+        'energies',
+        'projectors',
+        'dielectrics',
+        'born_charges',
+        'hessian',
+        'dynmat',
+        'forces',
+        'stress',
+        'total_energies',
+        'maximum_force',
+        'maximum_stress',
+        'band_properties',
+        'run_status',
     ],
     'energy_type': ['energy_no_entropy']
 }
@@ -119,6 +137,16 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'maximum_stress',
             'prerequisites': []
+        },
+        'band_properties': {
+            'inputs': [],
+            'name': 'band_properties',
+            'prerequisites': [],
+        },
+        'run_status': {
+            'inputs': [],
+            'name': 'run_status',
+            'prerequisites': [],
         },
     }
 
@@ -650,6 +678,58 @@ class VasprunParser(BaseFileParser):
         """Fetch Fermi level."""
 
         return self._xml.get_fermi_level()
+
+    @property
+    def band_properties(self):
+        """Fetch miscellaneous electronic structure data"""
+
+        eigenvalues = self._xml.get_eigenvalues()
+        occupations = self._xml.get_occupancies()
+        if eigenvalues is None:
+            return None
+
+        info = {}
+        vbm = -float('inf')
+        cbm = float('inf')
+        vbm_kpt = None
+        cbm_kpt = None
+        for spin, occ in occupations.items():
+            eign = eigenvalues[spin]
+            occupied = occ > 1e-8
+            this_vbm = eign[occupied].max()
+            this_cbm = eign[~occupied].min()
+            if this_vbm > vbm:
+                vbm = this_vbm
+                vbm_kpt = np.where(eign == this_vbm)[1][0]
+            if this_cbm < cbm:
+                cbm = this_cbm
+                cbm_kpt = np.where(eign == this_cbm)[1][0]
+
+        info['cbm'] = float(cbm)
+        info['vbm'] = float(vbm)
+        info['is_direct_gap'] = bool(cbm_kpt == vbm_kpt)
+        info['band_gap'] = float(max(cbm - vbm, 0))
+
+        return info
+
+    @property
+    def run_status(self):
+        """Fetch run_status information"""
+        info = {}
+        nosc_energies = self._xml.get_energies('final', nosc=True)
+        parameters = self._xml.get_parameters()
+        info['vasp_finished'] = not self._xml_truncated
+        # Only set to true for untruncated run to avoid false positives
+        if len(nosc_energies) < parameters['nelm'] and not self._xml_truncated:
+            info['electronic_converged'] = True
+        else:
+            info['electronic_converged'] = False
+        all_energies = self._xml.get_energies('all', nosc=False)
+        if len(all_energies) < parameters['nsw'] and not self._xml_truncated:
+            info['ionic_converged'] = True
+        else:
+            info['ionic_converged'] = False
+        return info
 
 
 def _build_structure(lattice):

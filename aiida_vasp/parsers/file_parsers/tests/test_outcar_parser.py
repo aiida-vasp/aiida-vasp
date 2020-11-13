@@ -22,12 +22,12 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     outcar_parser.settings.nodes.update(
         {'misc': {
             'type': 'dict',
-            'quantities': ['symmetries_extended', 'elastic_moduli'],
+            'quantities': ['symmetries_extended', 'elastic_moduli', 'run_stats'],
             'link_name': 'my_custom_node'
         }})
 
     composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('dict', quantities=['symmetries_extended', 'elastic_moduli'])
+    data_obj = composer.compose('dict', quantities=['symmetries_extended', 'elastic_moduli', 'run_stats'])
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
@@ -94,3 +94,7 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     np.testing.assert_allclose(data_dict['elastic_moduli']['total'][2], test)
     test = np.array([-0.0, -0.0, -0.0, 775.8054, 0.0, -0.0])
     np.testing.assert_allclose(data_dict['elastic_moduli']['total'][3], test)
+
+    assert data_dict['run_stats']
+    assert data_dict['run_stats']['total_cpu_time_used'] == 89.795
+    assert data_dict['run_stats']['average_memory_used'] == 0.0
