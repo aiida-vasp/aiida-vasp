@@ -445,6 +445,18 @@ def test_bands_result(fresh_aiida_env, vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
+def test_band_properties_result(fresh_aiida_env, vasprun_parser):
+    """Test the result of band_properties"""
+
+    composer = NodeComposer(file_parsers=[vasprun_parser])
+    data = composer.compose('dict', quantities=['band_properties']).get_dict()['band_properties']
+    assert data['cbm'] == 6.5536
+    assert data['vbm'] == 6.5105
+    assert data['is_direct_gap'] is False
+    assert data['band_gap'] == pytest.approx(0.04310, rel=1e-3)
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
 def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
