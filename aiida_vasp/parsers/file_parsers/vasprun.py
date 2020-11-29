@@ -700,10 +700,10 @@ class VasprunParser(BaseFileParser):
             this_cbm = eign[~occupied].min()
             if this_vbm > vbm:
                 vbm = this_vbm
-                vbm_kpt = np.where(eign == this_vbm)[1][0]
+                vbm_kpt = np.where(eign == this_vbm)[0][0]
             if this_cbm < cbm:
                 cbm = this_cbm
-                cbm_kpt = np.where(eign == this_cbm)[1][0]
+                cbm_kpt = np.where(eign == this_cbm)[0][0]
 
         info['cbm'] = float(cbm)
         info['vbm'] = float(vbm)

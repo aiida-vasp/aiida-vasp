@@ -283,3 +283,75 @@ def plot_errors_vs_iwsize(comparison_info):
     lines = btool.plt.plot(iws_i, plot_data, figure=fig)
     btool.plt.legend(lines, ows_i)
     return fig, zip(ows, iws, data)
+
+
+def get_bands_info_from_bands_data(bandsdata):
+    """
+    Acquire bands information from BandsData
+
+    Parameters
+    ----------
+    bandsdata : BandsData
+        A BandsData node to be processed
+
+    Returns
+    -------
+    bands_info : dict
+        Same output as get_bands_info
+    """
+
+    eigenvalues, occupations = bandsdata.get_bands(also_occupations=True)
+    return get_bands_info(eigenvalues, occupations)
+
+
+def get_bands_info(eigenvalues, occupations):
+    """
+    Get some auxiliary information about the band structure
+
+    Parameters
+    ----------
+    eigenvalues : np.ndarray
+        The eigenvalue array has shape (NS, NB, NK) or (NB, NK), where NS is the number of spins,
+        NB is the number of bands and NK is the number of kpoints.
+
+    occupations: np.ndarray
+        Same format as eigenvalues but instead holds occupation numbers.
+
+    Returns
+    -------
+    bands_info : dict
+        A dictionary holds information about VBM and CBM locations and bandgaps.
+
+    """
+    import numpy as np
+
+    info = {}
+    vbm = -float('inf')
+    cbm = float('inf')
+    vbm_kpt = None
+    cbm_kpt = None
+    # Add the spin dimension if it is missing
+    if len(eigenvalues.shape) == 2:
+        eigenvalues = eigenvalues.reshape((1,) + eigenvalues.shape)
+    if len(occupations.shape) == 2:
+        occupations = occupations.reshape((1,) + occupations.shape)
+
+    # NOTE: this may not correctly handle multiple degenerate VBM/CBM levels
+    for spin, occ in enumerate(occupations):
+        eign = eigenvalues[spin]
+        occupied = occ > 1e-8
+        this_vbm = eign[occupied].max()
+        this_cbm = eign[~occupied].min()
+        if this_vbm > vbm:
+            vbm = this_vbm
+            vbm_kpt = np.where(eign == this_vbm)[0][0]
+        if this_cbm < cbm:
+            cbm = this_cbm
+            cbm_kpt = np.where(eign == this_cbm)[0][0]
+
+    info['cbm'] = float(cbm)
+    info['vbm'] = float(vbm)
+    info['is_direct_gap'] = bool(cbm_kpt == vbm_kpt)
+    info['band_gap'] = float(max(cbm - vbm, 0))
+
+    return info
