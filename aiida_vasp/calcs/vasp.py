@@ -7,6 +7,7 @@ The calculation class that prepares a specific VASP calculation.
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
+import os
 from aiida.plugins import DataFactory
 
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -224,26 +225,6 @@ class VaspCalculation(VaspCalcBase):
         icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
-    def _check_chgcar(self, remote_folder):  # pylint: disable=no-self-use
-        """
-        Check if the CHGCAR file is present in the remote folder.
-
-        This is only a very rudimentary test, e.g. we only check the
-        presence of a file, not if its content is valid.
-        """
-
-        return 'CHGCAR' in remote_folder.listdir()
-
-    def _check_wavecar(self, remote_folder):  # pylint: disable=no-self-use
-        """
-        Check if the WAVECAR file is present in the remote folder.
-
-        This is only a very rudimentary test, e.g. we only check the
-        presence of a file, not if its content is valid.
-        """
-
-        return 'WAVECAR' in remote_folder.listdir()
-
     def _need_wavecar(self):
         """
         Test wether a wavefunctions input is needed or not.
@@ -273,6 +254,8 @@ class VaspCalculation(VaspCalcBase):
     def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
+        # a list of file names to be copied
+        remote_copy_fnames = [os.path.split(entry[1])[1] for entry in calcinfo.remote_copy_list]
         if self._need_chgcar():
             # If we restart, we do not require inputs, but we should have a basic check
             # that the CHGCAR file is present
@@ -280,7 +263,7 @@ class VaspCalculation(VaspCalcBase):
                 self.write_chgcar('CHGCAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
-                if not self._check_chgcar(remote_folder):
+                if 'CHGCAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find CHGCAR in {}'.format(remote_folder.get_remote_path()))
         if self._need_wavecar():
             # If we restart, we do not require inputs, but we should have a basic check
@@ -289,7 +272,7 @@ class VaspCalculation(VaspCalcBase):
                 self.write_wavecar('WAVECAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
-                if not self._check_wavecar(remote_folder):
+                if 'WAVECAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
