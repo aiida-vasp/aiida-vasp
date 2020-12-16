@@ -7,6 +7,7 @@ Archive data class: store multiple files together in a compressed archive in the
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import tarfile
+from contextlib import contextmanager
 import os
 from io import StringIO
 from aiida.orm.nodes import Data
@@ -19,12 +20,19 @@ class ArchiveData(Data):
         self._filelist = []
         super(ArchiveData, self).__init__(*args, **kwargs)
 
+    @contextmanager
     def get_archive(self):
-        return tarfile.open(fileobj=self.open('archive.tar.gz', mode='rb'), mode='r:gz')
+        with self.open('archive.tar.gz', mode='rb') as fobj:
+            yield tarfile.open(fileobj=fobj, mode='r:gz')
+
+    @contextmanager
+    def archive(self):
+        with self.open('archive.tar.gz', mode='rb') as fobj:
+            yield tarfile.open(fileobj=fobj, mode='r:gz')
 
     def get_archive_list(self):
-        archive = self.get_archive()
-        archive.list()
+        with self.get_archive() as archive:
+            return archive.list()
 
     def add_file(self, src_abs, dst_filename=None):
         if not dst_filename:
@@ -34,20 +42,14 @@ class ArchiveData(Data):
     def _make_archive(self):
         """Create the archive file on disk with all it's contents."""
         self.put_object_from_filelike(StringIO(), 'archive.tar.gz')
+        with self.open('archive.tar.gz', mode='wb') as fobj:
+            archive = tarfile.open(fileobj=fobj, mode='w:gz')
 
-        archive = tarfile.open(fileobj=self.open('archive.tar.gz', mode='wb'), mode='w:gz')
-
-        for src, dstn in self._filelist:
-            archive.add(src, arcname=dstn)
-
-        archive.close()
+            for src, dstn in self._filelist:
+                archive.add(src, arcname=dstn)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
         self._make_archive()
         del self._filelist
         super(ArchiveData, self).store(*args, **kwargs)
-
-    @property
-    def archive(self):
-        return self.get_archive()
