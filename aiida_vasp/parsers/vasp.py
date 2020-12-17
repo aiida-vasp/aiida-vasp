@@ -110,7 +110,7 @@ class VaspParser(BaseParser):
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
 
         self.quantities = ParsableQuantities(vasp_parser=self)
-        self.parsers = ParserManager(vasp_parser=self)
+        self.parser_manager = ParserManager(vasp_parser=self)
 
         self._output_nodes = {}
 
@@ -119,10 +119,10 @@ class VaspParser(BaseParser):
         self._requested_quantities = []
 
     def add_file_parser(self, parser_name, parser_dict):
-        """Add the definition of a fileParser to self.settings and self.parsers."""
+        """Add the definition of a fileParser to self.settings and self.parser_manager."""
 
         self.settings.parser_definitions[parser_name] = parser_dict
-        self.parsers.add_file_parser(parser_name, parser_dict)
+        self.parser_manager.add_file_parser(parser_name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
@@ -154,8 +154,8 @@ class VaspParser(BaseParser):
 
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
-        self.parsers.setup()
-        quantities_to_parse = self.parsers.get_quantities_to_parse()
+        self.parser_manager.setup()
+        quantities_to_parse = self.parser_manager.get_quantities_to_parse()
 
         # Parse all implemented quantities in the quantities_to_parse list.
         while quantities_to_parse:
@@ -209,7 +209,7 @@ class VaspParser(BaseParser):
         self._requested_quantities.remove(quantity)
 
         # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
-        self.parsers.remove(quantity)
+        self.parser_manager.remove(quantity)
 
         return {quantity: self._output_nodes.get(quantity)}
 

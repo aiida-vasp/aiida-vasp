@@ -113,9 +113,9 @@ def test_quantities_to_parse(vasp_parser_with_test):
     parser = vasp_parser_with_test
 
     parser.quantities.setup()
-    parser.parsers.setup()
+    parser.parser_manager.setup()
 
-    quantities_to_parse = parser.parsers.get_quantities_to_parse()
+    quantities_to_parse = parser.parser_manager.get_quantities_to_parse()
     assert 'quantity2' in quantities_to_parse
     assert 'quantity_with_alternatives' not in quantities_to_parse
     assert 'quantity1' in quantities_to_parse
