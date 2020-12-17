@@ -34,7 +34,7 @@ class NodeComposer(object):
     def __init__(self, **kwargs):
         # create the delegate for getting quantities.
         setattr(self, 'get_quantity', Delegate())
-        self.quantites = None
+        self.quantities = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -48,19 +48,19 @@ class NodeComposer(object):
         if not file_parsers:
             return
 
-        self.quantites = ParsableQuantities()
+        self.quantities = ParsableQuantities()
 
         # Add all the FileParsers get_quantity methods to our get_quantity delegate.
         for parser in file_parsers:
             for key, value in parser.parsable_items.items():
-                self.quantites.add_parsable_quantity(key, deepcopy(value))
+                self.quantities.add_parsable_quantity(key, deepcopy(value))
 
             self.get_quantity.append(parser.get_quantity)
 
     def _init_with_vasp_parser(self, vasp_parser):
         """Init with a VaspParser object."""
         self.get_quantity.append(vasp_parser.get_inputs)
-        self.quantites = vasp_parser.quantities
+        self.quantities = vasp_parser.quantities
 
     def compose(self, node_type, quantities=None):
         """
@@ -77,7 +77,7 @@ class NodeComposer(object):
 
         inputs = {}
         for quantity_name in quantities:
-            quantity = self.quantites.get_by_name(quantity_name)
+            quantity = self.quantities.get_by_name(quantity_name)
             inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
 
         # Call the correct specialised method for assembling.
