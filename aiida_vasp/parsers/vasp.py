@@ -29,7 +29,6 @@ DEFAULT_OPTIONS = {
     'add_dos': False,
     'add_kpoints': False,
     'add_energies': False,
-    'add_energies_sc': False,
     'add_misc': True,
     'add_structure': False,
     'add_projectors': False,
@@ -42,6 +41,7 @@ DEFAULT_OPTIONS = {
     'add_stress': False,
     'add_site_magnetization': False,
     'file_parser_set': 'default',
+    'store_energies_sc': False,
 }
 
 

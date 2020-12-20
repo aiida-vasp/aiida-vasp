@@ -65,11 +65,6 @@ class VasprunParser(BaseFileParser):
             'name': 'energies',
             'prerequisites': [],
         },
-        'energies_sc': {
-            'inputs': [],
-            'name': 'energies_sc',
-            'prerequisites': [],
-        },
         'total_energies': {
             'inputs': [],
             'name': 'total_energies',
@@ -480,18 +475,15 @@ class VasprunParser(BaseFileParser):
 
     @property
     def energies(self):
-        return self._energies(nosc=True)
-
-    @property
-    def energies_sc(self):
-        """
-        Fetch the total energies.
-
-        Store in ArrayData for all self-consistent electronic steps.
-
-        """
-
-        return self._energies(nosc=False)
+        """Fetch the total energies for all calculations (i.e. ionic steps)."""
+        if self.settings.get('store_energies_sc'):
+            res = self._energies(nosc=True)
+            res_sc = self._energies(nosc=False)
+            for key, val in res_sc.items():
+                res[key + '_sc'] = val
+        else:
+            res = self._energies(nosc=True)
+        return res
 
     def _energies(self, nosc):
         """Fetch the total energies for all calculations (i.e. ionic steps)."""
@@ -514,7 +506,7 @@ class VasprunParser(BaseFileParser):
 
             if isinstance(enrgies[0], np.ndarray):
                 # This must be the same for all etypes, so overwritten for multiple etypes.
-                enrgy['sc_iters'] = np.array([len(sc_e) for sc_e in enrgies], dtype=int)
+                enrgy['iters'] = np.array([len(sc_e) for sc_e in enrgies], dtype=int)
                 enrgies = np.concatenate(enrgies)
             else:
                 # should be a list, but convert to ndarray, here
