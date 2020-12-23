@@ -18,11 +18,12 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
     :param settings: A dictionary holding the 'parser_settings'.
     """
 
-    def __init__(self, vasp_parser=None):
+    def __init__(self, node=None, quantities=None, vasp_parser_logger=None):
         self._parsers = {}
         self._quantities_to_parse = []
-
-        self._vasp_parser = vasp_parser
+        self._node = node
+        self._quantities = quantities
+        self._vasp_parser_logger = vasp_parser_logger
 
     @property
     def parsers(self):
@@ -67,38 +68,39 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
         for key, value in parser_definitions.items():
             self.add_file_parser(key, value)
 
-        self._set_quantities_to_parse(quantities_to_parse, self._vasp_parser.node, self._vasp_parser.quantities, self._vasp_parser.logger)
+        self._set_quantities_to_parse(quantities_to_parse)
 
-    def _set_quantities_to_parse(self, quantities_to_parse, node, quantities, logger):
+    def _set_quantities_to_parse(self, quantities_to_parse):
         """Set the quantities to parse list."""
 
         self._quantities_to_parse = []
         for quantity_name in quantities_to_parse:
-            if not quantities.get_by_name(quantity_name):
-                logger.warning('{quantity} has been requested, '
-                               'however its parser has not been implemented. '
-                               'Please check the docstrings in aiida_vasp.parsers.vasp.py '
-                               'for valid input.'.format(quantity=quantity_name))
+            if not self._quantities.get_by_name(quantity_name):
+                self._vasp_parser_logger.warning('{quantity} has been requested, '
+                                                 'however its parser has not been implemented. '
+                                                 'Please check the docstrings in aiida_vasp.parsers.vasp.py '
+                                                 'for valid input.'.format(quantity=quantity_name))
                 continue
 
             # Add this quantity or one of its alternatives to the quantities to parse.
-            success = self.add_quantity_to_parse(quantities.get_equivalent_quantities(quantity_name))
+            success = self.add_quantity_to_parse(self._quantities.get_equivalent_quantities(quantity_name))
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
                 # Gather a list of all the missing files and issue a warning.
-                missing_files = quantities.get_missing_files(quantity_name)
+                missing_files = self._quantities.get_missing_files(quantity_name)
                 # Check if the missing files are defined in the retrieve list
-                retrieve_list = node.get_retrieve_temporary_list() + node.get_retrieve_list()
+                retrieve_list = self._node.get_retrieve_temporary_list() + self._node.get_retrieve_list()
                 not_in_retrieve_list = None
                 for item in missing_files:
                     if item not in retrieve_list:
                         not_in_retrieve_list = item
-                logger.warning('The quantity {quantity} has been requested for parsing, however the '
-                               'following files required for parsing it have not been '
-                               'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
+                self._vasp_parser_logger.warning('The quantity {quantity} has been requested for parsing, however the '
+                                                 'following files required for parsing it have not been '
+                                                 'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
                 if not_in_retrieve_list is not None:
-                    logger.warning('The file {not_in_retrieve_list} is not present '
-                                   'in the list of files to be retrieved. If you want to add additional '
-                                   'files, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
-                                   'which is an option given to calculation settings.'.format(not_in_retrieve_list=not_in_retrieve_list))
+                    self._vasp_parser_logger.warning(
+                        'The file {not_in_retrieve_list} is not present '
+                        'in the list of files to be retrieved. If you want to add additional '
+                        'files, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
+                        'which is an option given to calculation settings.'.format(not_in_retrieve_list=not_in_retrieve_list))

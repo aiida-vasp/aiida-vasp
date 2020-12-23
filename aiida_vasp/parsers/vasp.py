@@ -109,8 +109,7 @@ class VaspParser(BaseParser):
 
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
         self.quantities = ParsableQuantities()
-        self.parser_manager = ParserManager(vasp_parser=self)
-
+        self.parser_manager = ParserManager(node=self.node, quantities=self.quantities, vasp_parser_logger=self.logger)
         self._output_nodes = {}
 
         # this list is for bookkeeping, to check whether a quantity has been requested
@@ -156,7 +155,7 @@ class VaspParser(BaseParser):
         # the corresponding files do not exist.
         self.parser_manager.setup(parser_definitions=self.settings.parser_definitions,
                                   quantities_to_parse=self.settings.quantities_to_parse)
-        self._set_file_parsers(self.parser_manager.parsers, self.parser_manager.quantities_to_parse)
+        self._set_file_parsers()
 
         quantities_to_parse = self.parser_manager.get_quantities_to_parse()
 
@@ -223,14 +222,15 @@ class VaspParser(BaseParser):
         self.out(self.settings.output_nodes_dict[node_name].link_name, node)
         return True
 
-    def _set_file_parsers(self, parsers, quantities_to_parse):
+    def _set_file_parsers(self):
         """Set the specific FileParsers."""
 
-        for quantity in quantities_to_parse:
+        for quantity in self.parser_manager.quantities_to_parse:
             file_name = self.quantities.get_by_name(quantity).file_name
-            if parsers[file_name].parser is not None:
+            if self.parser_manager.parsers[file_name].parser is not None:
                 # This parser has already been checked, i.e. take the first
                 # available in the list that can be parsed (i.e. file exists)
                 continue
             file_to_parse = self.get_file(file_name)
-            parsers[file_name].parser = parsers[file_name]['parser_class'](self, file_path=file_to_parse)
+            parser = self.parser_manager.parsers[file_name]['parser_class'](self, file_path=file_to_parse)
+            self.parser_manager.parsers[file_name].parser = parser
