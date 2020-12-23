@@ -113,7 +113,8 @@ def test_quantities_to_parse(vasp_parser_with_test):
     parser = vasp_parser_with_test
 
     parser.quantities.setup(retrieved_filenames=parser._retrieved_content.keys(), parser_definitions=parser.settings.parser_definitions)
-    parser.parser_manager.setup()
+    parser.parser_manager.setup(parser_definitions=parser.settings.parser_definitions,
+                                quantities_to_parse=parser.settings.quantities_to_parse)
 
     quantities_to_parse = parser.parser_manager.get_quantities_to_parse()
     assert 'quantity2' in quantities_to_parse

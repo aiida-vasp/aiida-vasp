@@ -154,12 +154,14 @@ class VaspParser(BaseParser):
 
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
-        self.parser_manager.setup()
+        self.parser_manager.setup(parser_definitions=self.settings.parser_definitions,
+                                  quantities_to_parse=self.settings.quantities_to_parse)
+        self._set_file_parsers(self.parser_manager.parsers, self.parser_manager.quantities_to_parse)
+
         quantities_to_parse = self.parser_manager.get_quantities_to_parse()
 
         # Parse all implemented quantities in the quantities_to_parse list.
-        while quantities_to_parse:
-            quantity = quantities_to_parse.pop(0)
+        for quantity in quantities_to_parse:
             self._output_nodes.update(self.get_quantity(quantity))
 
         node_assembler = NodeComposer(vasp_parser=self)
@@ -220,3 +222,15 @@ class VaspParser(BaseParser):
             return False
         self.out(self.settings.output_nodes_dict[node_name].link_name, node)
         return True
+
+    def _set_file_parsers(self, parsers, quantities_to_parse):
+        """Set the specific FileParsers."""
+
+        for quantity in quantities_to_parse:
+            file_name = self.quantities.get_by_name(quantity).file_name
+            if parsers[file_name].parser is not None:
+                # This parser has already been checked, i.e. take the first
+                # available in the list that can be parsed (i.e. file exists)
+                continue
+            file_to_parse = self.get_file(file_name)
+            parsers[file_name].parser = parsers[file_name]['parser_class'](self, file_path=file_to_parse)
