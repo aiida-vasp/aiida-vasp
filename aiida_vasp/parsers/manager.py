@@ -18,12 +18,11 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
     :param settings: A dictionary holding the 'parser_settings'.
     """
 
-    def __init__(self, node=None, quantities=None, vasp_parser_logger=None):
+    def __init__(self, node=None, vasp_parser_logger=None):
+        self._node = node
+        self._vasp_parser_logger = vasp_parser_logger
         self._parsers = {}
         self._quantities_to_parse = []
-        self._node = node
-        self._quantities = quantities
-        self._vasp_parser_logger = vasp_parser_logger
 
     @property
     def parsers(self):
@@ -63,19 +62,19 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
                 return True
         return False
 
-    def setup(self, parser_definitions=None, quantities_to_parse=None):
+    def setup(self, parser_definitions=None, quantities_to_parse=None, quantities=None):
         # Add all FileParsers from the requested set.
         for key, value in parser_definitions.items():
             self.add_file_parser(key, value)
 
-        self._set_quantities_to_parse(quantities_to_parse)
+        self._set_quantities_to_parse(quantities_to_parse, quantities)
 
-    def _set_quantities_to_parse(self, quantities_to_parse):
+    def _set_quantities_to_parse(self, quantities_to_parse, quantities):
         """Set the quantities to parse list."""
 
         self._quantities_to_parse = []
         for quantity_name in quantities_to_parse:
-            if not self._quantities.get_by_name(quantity_name):
+            if not quantities.get_by_name(quantity_name):
                 self._vasp_parser_logger.warning('{quantity} has been requested, '
                                                  'however its parser has not been implemented. '
                                                  'Please check the docstrings in aiida_vasp.parsers.vasp.py '
@@ -83,12 +82,12 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
                 continue
 
             # Add this quantity or one of its alternatives to the quantities to parse.
-            success = self.add_quantity_to_parse(self._quantities.get_equivalent_quantities(quantity_name))
+            success = self.add_quantity_to_parse(quantities.get_equivalent_quantities(quantity_name))
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
                 # Gather a list of all the missing files and issue a warning.
-                missing_files = self._quantities.get_missing_files(quantity_name)
+                missing_files = quantities.get_missing_files(quantity_name)
                 # Check if the missing files are defined in the retrieve list
                 retrieve_list = self._node.get_retrieve_temporary_list() + self._node.get_retrieve_list()
                 not_in_retrieve_list = None
