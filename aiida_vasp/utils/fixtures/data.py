@@ -82,6 +82,8 @@ def temp_pot_folder(tmp_path):
     assert not potcar_ga.exists()
     pot_archive = Path(data_path('potcar'))
     target = tmp_path / 'potentials'
+    # Ensure that the target path exists
+    Path(target).mkdir(exist_ok=True)
     copytree(pot_archive, target)
     return target
 
