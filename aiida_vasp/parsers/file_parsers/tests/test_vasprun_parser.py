@@ -30,7 +30,7 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
 
     """
 
-    vasprun_parser.settings.nodes.update({
+    vasprun_parser.settings.output_nodes_dict.update({
         'misc': {
             'type': 'dict',
             'quantities': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'],

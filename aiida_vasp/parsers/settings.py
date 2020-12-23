@@ -171,9 +171,10 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
     This provides the following properties to other components of the VaspParser:
 
-        * nodes: A list with all requested output nodes.
-
+        * nodes_dict: A list with all requested output nodes.
         * parser_definitions: A Dict with the FileParser definitions.
+        * quantities_to_parse: Collection of quantities in nodes_dict.
+
     """
 
     def __init__(self, settings, default_settings=None):
@@ -185,13 +186,48 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         if default_settings is not None:
             self.update_with(default_settings)
 
-        self.nodes = {}
-        self.set_nodes()
+        self.output_nodes_dict = {}
+        self._init_output_nodes_dict()
 
         self.parser_definitions = {}
-        self.set_parser_definitions(self._settings.get('file_parser_set'))
+        self._init_parser_definitions(self._settings.get('file_parser_set'))
 
-    def set_nodes(self):
+    @property
+    def quantities_to_parse(self):
+        """Return the combined list of all the quantities, required for the current nodes."""
+        quantities = []
+        for value in self.output_nodes_dict.values():
+            for quantity in value['quantities']:
+                if quantity in quantities:
+                    continue
+                quantities.append(quantity)
+        return quantities
+
+    def add_output_node(self, node_name, node_dict=None):
+        """Add a definition of node to the nodes dictionary."""
+        from copy import deepcopy
+
+        if node_dict is None:
+            # Try to get a node_dict from NODES.
+            node_dict = deepcopy(NODES.get(node_name, {}))
+
+        # Check, whether the node_dict contains required keys 'type' and 'quantities'
+        for key in ['type', 'quantities']:
+            if node_dict.get(key) is None:
+                return
+
+        self.output_nodes_dict[node_name] = DictWithAttributes(node_dict)
+
+    def update_with(self, update_dict):
+        """Selectively update keys from one Dictionary to another."""
+        for key, value in update_dict.items():
+            if key not in self._settings:
+                self._settings[key] = value
+
+    def get(self, item, default=None):
+        return self._settings.get(item, default)
+
+    def _init_output_nodes_dict(self):
         """
         Set the 'nodes' card of a settings object.
 
@@ -215,7 +251,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         """
         from copy import deepcopy
 
-        self.nodes = {}
+        self.output_nodes_dict = {}
 
         # First, find all the nodes, that should be added.
         for key, value in self._settings.items():
@@ -238,33 +274,9 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             if 'link_name' not in node_dict:
                 node_dict['link_name'] = node_name
 
-            self.add_node(node_name, node_dict)
+            self.add_output_node(node_name, node_dict)
 
-    def add_node(self, node_name, node_dict=None):
-        """Add a definition of node to the nodes dictionary."""
-        from copy import deepcopy
-
-        if node_dict is None:
-            # Try to get a node_dict from NODES.
-            node_dict = deepcopy(NODES.get(node_name, {}))
-
-        # Check, whether the node_dict contains required keys 'type' and 'quantities'
-        for key in ['type', 'quantities']:
-            if node_dict.get(key) is None:
-                return
-
-        self.nodes[node_name] = DictWithAttributes(node_dict)
-
-    def update_with(self, update_dict):
-        """Selectively update keys from one Dictionary to another."""
-        for key, value in update_dict.items():
-            if key not in self._settings:
-                self._settings[key] = value
-
-    def get(self, item, default=None):
-        return self._settings.get(item, default)
-
-    def set_parser_definitions(self, file_parser_set='default'):
+    def _init_parser_definitions(self, file_parser_set='default'):
         """Load the parser definitions."""
         from copy import deepcopy
 
@@ -272,14 +284,3 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             return
         for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
             self.parser_definitions[file_name] = deepcopy(parser_dict)
-
-    @property
-    def quantities_to_parse(self):
-        """Return the combined list of all the quantities, required for the current nodes."""
-        quantities = []
-        for value in self.nodes.values():
-            for quantity in value['quantities']:
-                if quantity in quantities:
-                    continue
-                quantities.append(quantity)
-        return quantities

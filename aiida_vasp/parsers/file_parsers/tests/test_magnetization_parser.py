@@ -19,7 +19,7 @@ def test_magnetization_parser(fresh_aiida_env, outcar_parser):
 
     """
 
-    outcar_parser.settings.nodes.update(
+    outcar_parser.settings.output_nodes_dict.update(
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',
@@ -92,7 +92,7 @@ def test_magnetization_single_parser(fresh_aiida_env, outcar_parser):  # pylint:
 
     """
 
-    outcar_parser.settings.nodes.update(
+    outcar_parser.settings.output_nodes_dict.update(
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',

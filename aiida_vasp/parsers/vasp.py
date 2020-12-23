@@ -108,8 +108,7 @@ class VaspParser(BaseParser):
             settings = calc_settings.get_dict().get('parser_settings')
 
         self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
-
-        self.quantities = ParsableQuantities(vasp_parser=self)
+        self.quantities = ParsableQuantities()
         self.parser_manager = ParserManager(vasp_parser=self)
 
         self._output_nodes = {}
@@ -130,18 +129,19 @@ class VaspParser(BaseParser):
 
     def add_custom_node(self, node_name, node_dict):
         """Add a custom node to the settings."""
-        self.settings.add_node(node_name, node_dict)
+        self.settings.add_output_node(node_name, node_dict)
 
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
         def missing_critical_file():
             for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.retrieved_content.keys() and value_dict['is_critical']:
+                if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
                     return True
             return False
 
-        error_code = self.check_folders(kwargs)
+        error_code = self.compose_retrieved_content(kwargs)
+
         if error_code is not None:
             return error_code
         if missing_critical_file():
@@ -150,7 +150,7 @@ class VaspParser(BaseParser):
             return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
         # Get the _quantities from the FileParsers.
-        self.quantities.setup()
+        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.settings.parser_definitions)
 
         # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
         # the corresponding files do not exist.
@@ -165,7 +165,7 @@ class VaspParser(BaseParser):
         node_assembler = NodeComposer(vasp_parser=self)
 
         # Assemble the nodes associated with the quantities
-        for node_name, node_dict in self.settings.nodes.items():
+        for node_name, node_dict in self.settings.output_nodes_dict.items():
             node = node_assembler.compose(node_dict.type, node_dict.quantities)
             success = self._set_node(node_name, node)
             if not success:
@@ -218,5 +218,5 @@ class VaspParser(BaseParser):
 
         if node is None:
             return False
-        self.out(self.settings.nodes[node_name].link_name, node)
+        self.out(self.settings.output_nodes_dict[node_name].link_name, node)
         return True
