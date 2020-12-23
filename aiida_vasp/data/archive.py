@@ -9,7 +9,7 @@ Archive data class: store multiple files together in a compressed archive in the
 import tarfile
 from contextlib import contextmanager
 import os
-from io import StringIO
+import tempfile
 from aiida.orm.nodes import Data
 
 
@@ -23,12 +23,14 @@ class ArchiveData(Data):
     @contextmanager
     def get_archive(self):
         with self.open('archive.tar.gz', mode='rb') as fobj:
-            yield tarfile.open(fileobj=fobj, mode='r:gz')
+            with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
+                yield tar
 
     @contextmanager
     def archive(self):
         with self.open('archive.tar.gz', mode='rb') as fobj:
-            yield tarfile.open(fileobj=fobj, mode='r:gz')
+            with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
+                yield tar
 
     def get_archive_list(self):
         with self.get_archive() as archive:
@@ -41,12 +43,14 @@ class ArchiveData(Data):
 
     def _make_archive(self):
         """Create the archive file on disk with all it's contents."""
-        self.put_object_from_filelike(StringIO(), 'archive.tar.gz')
-        with self.open('archive.tar.gz', mode='wb') as fobj:
-            archive = tarfile.open(fileobj=fobj, mode='w:gz')
-
-            for src, dstn in self._filelist:
-                archive.add(src, arcname=dstn)
+        _, path = tempfile.mkstemp()
+        try:
+            with tarfile.open(path, mode='w:gz') as archive:
+                for src, dstn in self._filelist:
+                    archive.add(src, arcname=dstn)
+            self.put_object_from_file(path, path='archive.tar.gz')
+        finally:
+            os.remove(path)
 
     # pylint: disable=arguments-differ
     def store(self, *args, **kwargs):
