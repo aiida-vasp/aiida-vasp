@@ -12,6 +12,7 @@ from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.utils.compare_bands import get_band_properties
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
@@ -683,34 +684,12 @@ class VasprunParser(BaseFileParser):
     def band_properties(self):
         """Fetch miscellaneous electronic structure data"""
 
-        eigenvalues = self._xml.get_eigenvalues()
-        occupations = self._xml.get_occupancies()
+        eigenvalues = self.eigenvalues
+        occupations = self.occupancies
         if eigenvalues is None:
             return None
 
-        info = {}
-        vbm = -float('inf')
-        cbm = float('inf')
-        vbm_kpt = None
-        cbm_kpt = None
-        for spin, occ in occupations.items():
-            eign = eigenvalues[spin]
-            occupied = occ > 1e-8
-            this_vbm = eign[occupied].max()
-            this_cbm = eign[~occupied].min()
-            if this_vbm > vbm:
-                vbm = this_vbm
-                vbm_kpt = np.where(eign == this_vbm)[0][0]
-            if this_cbm < cbm:
-                cbm = this_cbm
-                cbm_kpt = np.where(eign == this_cbm)[0][0]
-
-        info['cbm'] = float(cbm)
-        info['vbm'] = float(vbm)
-        info['is_direct_gap'] = bool(cbm_kpt == vbm_kpt)
-        info['band_gap'] = float(max(cbm - vbm, 0))
-
-        return info
+        return get_band_properties(eigenvalues, occupations)
 
     @property
     def run_status(self):

@@ -285,7 +285,7 @@ def plot_errors_vs_iwsize(comparison_info):
     return fig, zip(ows, iws, data)
 
 
-def get_bands_info_from_bands_data(bandsdata):
+def get_band_properties_from_data(bandsdata):
     """
     Acquire bands information from BandsData
 
@@ -297,14 +297,14 @@ def get_bands_info_from_bands_data(bandsdata):
     Returns
     -------
     bands_info : dict
-        Same output as get_bands_info
+        Same output as get_band_properties
     """
 
     eigenvalues, occupations = bandsdata.get_bands(also_occupations=True)
-    return get_bands_info(eigenvalues, occupations)
+    return get_band_properties(eigenvalues, occupations)
 
 
-def get_bands_info(eigenvalues, occupations):
+def get_band_properties(eigenvalues, occupations):
     """
     Get some auxiliary information about the band structure
 
