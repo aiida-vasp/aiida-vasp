@@ -158,22 +158,22 @@ class VaspParser(BaseParser):
                                   quantities=self.quantities)
 
         # Parse all implemented quantities in the quantities_to_parse list.
-        for quantity in self.parser_manager.quantities_to_parse:
-            file_name = self.quantities.get_by_name(quantity).file_name
-            if self.parser_manager.parsers[file_name].parser is not None:
-                # This parser has already been checked, i.e. take the first
-                # available in the list that can be parsed (i.e. file exists)
-                continue
+        quantity_name_to_file_name = {}
+        for quantity_name in self.parser_manager.quantities_to_parse:
+            file_name = self.quantities.get_by_name(quantity_name).file_name
+            if quantity_name not in quantity_name_to_file_name:
+                quantity_name_to_file_name[quantity_name] = file_name
+
+        for quantity_name in self.parser_manager.quantities_to_parse:
+            file_name = quantity_name_to_file_name[quantity_name]
             file_to_parse = self.get_file(file_name)
             parser = self.parser_manager.parsers[file_name]['parser_class'](self, file_path=file_to_parse)
-            self.parser_manager.parsers[file_name].parser = parser
-
-        for quantity in self.parser_manager.quantities_to_parse:
-            self._output_nodes.update(self.get_quantity(quantity))
-
-        node_assembler = NodeComposer(vasp_parser=self)
+            parsed_data = parser.get_quantity(quantity_name)
+            if parsed_data and parsed_data[quantity_name] is not None:
+                self._output_nodes.update(parsed_data)
 
         # Assemble the nodes associated with the quantities
+        node_assembler = NodeComposer(vasp_parser=self)
         for node_name, node_dict in self.settings.output_nodes_dict.items():
             node = node_assembler.compose(node_dict.type, node_dict.quantities)
             success = self._set_node(node_name, node)

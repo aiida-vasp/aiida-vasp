@@ -79,7 +79,7 @@ class BaseFileParser(BaseParser):
         self.settings = None
 
         if calc_parser_cls is not None:
-            calc_parser_cls.get_quantity.append(self.get_quantity)
+            # calc_parser_cls.get_quantity.append(self.get_quantity)
             self.settings = calc_parser_cls.settings
 
         self.parsable_items = {}
@@ -112,7 +112,7 @@ class BaseFileParser(BaseParser):
         """Init with settings."""
         self.settings = settings
 
-    def get_quantity(self, quantity, inputs=None):
+    def get_quantity(self, quantity_name, inputs=None):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
@@ -120,27 +120,22 @@ class BaseFileParser(BaseParser):
         delegate during __init__.
         """
 
-        if quantity not in self.parsable_items:
+        if quantity_name not in self.parsable_items:
             return None
 
-        if self._parsed_data is None or self._parsed_data.get(quantity) is None:
-            # The file has not been parsed yet, or the quantity has not
-            # been parsed yet, due to lack of required inputs..
-
-            # gather everything required for parsing this component.
+        if self._parsed_data.get(quantity_name) is None:
             if inputs is None:
                 inputs = {}
-
             if self._vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
-                for inp in self.parsable_items[quantity]['inputs']:
+                for inp in self.parsable_items[quantity_name]['inputs']:
                     inputs.update(self._vasp_parser.get_inputs(inp))
-                    if inputs[inp] is None and inp in self.parsable_items[quantity]['prerequisites']:
+                    if inputs[inp] is None and inp in self.parsable_items[quantity_name]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
-                        return {quantity: None}
+                        return {quantity_name: None}
             self._parsed_data = self._parse_file(inputs)
 
-        return {quantity: self._parsed_data.get(quantity)}
+        return {quantity_name: self._parsed_data.get(quantity_name)}
 
     def write(self, file_path):
         """
@@ -150,6 +145,9 @@ class BaseFileParser(BaseParser):
         """
         if self._parsed_object is not None:
             self._parsed_object.write(file_path)
+
+    def parse_file(self, inputs):
+        self._parse_file(inputs)
 
     @property
     def _parsed_object(self):
