@@ -87,8 +87,8 @@ class OutcarParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self.settings is not None and self.settings.quantities_to_parse:
-            quantities_to_parse = self.settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantities_to_parse:
+            quantities_to_parse = self._settings.quantities_to_parse
 
         result = {}
 

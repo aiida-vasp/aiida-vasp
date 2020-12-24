@@ -19,7 +19,7 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
 
     """
 
-    outcar_parser.settings.output_nodes_dict.update(
+    outcar_parser._settings.output_nodes_dict.update(
         {'misc': {
             'type': 'dict',
             'quantities': ['symmetries_extended', 'elastic_moduli'],

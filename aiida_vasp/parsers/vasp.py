@@ -167,10 +167,13 @@ class VaspParser(BaseParser):
         for quantity_name in self.parser_manager.quantities_to_parse:
             file_name = quantity_name_to_file_name[quantity_name]
             file_to_parse = self.get_file(file_name)
-            parser = self.parser_manager.parsers[file_name]['parser_class'](self, file_path=file_to_parse)
+            parser = self.parser_manager.parsers[file_name]['parser_class'](settings=self.settings,
+                                                                            exit_codes=self.exit_codes,
+                                                                            file_path=file_to_parse)
             parsed_data = parser.get_quantity(quantity_name)
             if parsed_data and parsed_data[quantity_name] is not None:
                 self._output_nodes.update(parsed_data)
+            self.exit_code = parser.exit_code
 
         # Assemble the nodes associated with the quantities
         node_assembler = NodeComposer(vasp_parser=self)

@@ -72,16 +72,12 @@ class BaseFileParser(BaseParser):
 
     PARSABLE_ITEMS = {}
 
-    def __init__(self, calc_parser_cls=None, **kwargs):  # pylint: disable=unused-argument
+    def __init__(self, **kwargs):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
+        self._settings = kwargs.get('settings', None)
+        self._exit_codes = kwargs.get('exit_codes', None)
         self._logger = aiidalogger.getChild(self.__class__.__name__)
-        self._vasp_parser = calc_parser_cls
-        self.settings = None
-
-        if calc_parser_cls is not None:
-            # calc_parser_cls.get_quantity.append(self.get_quantity)
-            self.settings = calc_parser_cls.settings
-
+        self._exit_code = None
         self.parsable_items = {}
         self._parsed_data = {}
         self._data_obj = None
@@ -89,6 +85,27 @@ class BaseFileParser(BaseParser):
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
+
+    def _init_with_settings(self, settings):
+        """
+
+        self._settings is set at __init__(). But this is needed because of
+        two reasons:
+
+        1) This method is called by init_with_kwargs in each file parser.
+        2) self._settings is used in some _init_with_something_.
+           So this has to be set before init_with_kwargs is called.
+
+        """
+        pass
+
+    def _init_with_exit_codes(self, exit_codes):
+        """See docstring of _init_with_settings."""
+        pass
+
+    @property
+    def exit_code(self):
+        return self._exit_code
 
     def _init_with_file_path(self, path):
         """Init with a file path."""
@@ -108,10 +125,6 @@ class BaseFileParser(BaseParser):
         self.parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
-    def _init_with_settings(self, settings):
-        """Init with settings."""
-        self.settings = settings
-
     def get_quantity(self, quantity_name, inputs=None):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
@@ -124,12 +137,21 @@ class BaseFileParser(BaseParser):
             return None
 
         if self._parsed_data.get(quantity_name) is None:
+            self._parsed_data = self._parse_file({})
+
+        return {quantity_name: self._parsed_data.get(quantity_name)}
+
+    def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
+        if quantity_name not in self.parsable_items:
+            return None
+
+        if self._parsed_data.get(quantity_name) is None:
             if inputs is None:
                 inputs = {}
-            if self._vasp_parser is not None:
+            if vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
                 for inp in self.parsable_items[quantity_name]['inputs']:
-                    inputs.update(self._vasp_parser.get_inputs(inp))
+                    inputs.update(vasp_parser.get_inputs(inp))
                     if inputs[inp] is None and inp in self.parsable_items[quantity_name]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity_name: None}
@@ -145,9 +167,6 @@ class BaseFileParser(BaseParser):
         """
         if self._parsed_object is not None:
             self._parsed_object.write(file_path)
-
-    def parse_file(self, inputs):
-        self._parse_file(inputs)
 
     @property
     def _parsed_object(self):

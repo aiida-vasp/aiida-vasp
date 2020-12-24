@@ -40,9 +40,9 @@ class StreamParser(BaseFileParser):
         # First get any special config from the parser settings, else use the default
         stream_config = None
         history = False
-        if self.settings is not None:
-            stream_config = self.settings.get('stream_config', None)
-            history = self.settings.get('stream_history', False)
+        if self._settings is not None:
+            stream_config = self._settings.get('stream_config', None)
+            history = self._settings.get('stream_history', False)
         try:
             self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
@@ -63,8 +63,8 @@ class StreamParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self.settings is not None and self.settings.quantities_to_parse:
-            quantities_to_parse = self.settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantities_to_parse:
+            quantities_to_parse = self._settings.quantities_to_parse
 
         result = {}
 

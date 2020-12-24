@@ -158,8 +158,8 @@ class VasprunParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self.settings is not None and self.settings.quantities_to_parse:
-            quantities_to_parse = self.settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantities_to_parse:
+            quantities_to_parse = self._settings.quantities_to_parse
 
         result = {}
 
@@ -177,15 +177,11 @@ class VasprunParser(BaseFileParser):
         # Now we make sure that if some of the requested quantities sets an error during parsing and
         # the xml file is in recover mode, the calculation is simply garbage. Also, exit_code is not always set, or
         # its status can be zero.
-        try:
-            exit_code = self._vasp_parser.exit_code
-        except AttributeError:
-            exit_code = self._vasp_parser.exit_codes.NO_ERROR
-        if exit_code.status:
-            if (self._xml_truncated and
-                    self._vasp_parser.exit_code.status == self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.status):
-                self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_RECOVERY_PARSING_OF_XML_FAILED.format(
-                    quantities=list(result.keys()))
+        if self._exit_code is None:
+            self._exit_code = self._exit_codes.NO_ERROR
+        if self._exit_code.status:
+            if (self._xml_truncated and self._exit_code.status == self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.status):
+                self._exit_code = self._exit_codes.ERROR_RECOVERY_PARSING_OF_XML_FAILED.format(quantities=list(result.keys()))
 
         return result
 
@@ -198,8 +194,7 @@ class VasprunParser(BaseFileParser):
 
         if eigenvalues is None:
             # eigenvalues not present
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
 
         eigen = []
@@ -212,8 +207,7 @@ class VasprunParser(BaseFileParser):
 
         if eigen[0] is None:
             # safety, should not really happen?
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
 
         return eigen
@@ -227,8 +221,7 @@ class VasprunParser(BaseFileParser):
 
         if occupancies is None:
             # occupancies not present, should not really happen?
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
 
         occ = []
@@ -241,8 +234,7 @@ class VasprunParser(BaseFileParser):
 
         if occ[0] is None:
             # should not really happen
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
 
         return occ
@@ -292,8 +284,7 @@ class VasprunParser(BaseFileParser):
 
         last_lattice = self._xml.get_lattice('final')
         if last_lattice is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         return _build_structure(last_lattice)
 
@@ -354,8 +345,7 @@ class VasprunParser(BaseFileParser):
 
         forces = self.final_forces
         if forces is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         norm = np.linalg.norm(forces, axis=1)
         return np.amax(np.abs(norm))
@@ -404,8 +394,7 @@ class VasprunParser(BaseFileParser):
 
         stress = self.final_stress
         if stress is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         norm = np.linalg.norm(stress, axis=1)
         return np.amax(np.abs(norm))
@@ -451,8 +440,7 @@ class VasprunParser(BaseFileParser):
                 trajectory_data[key] = data
             return trajectory_data
 
-        self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-            quantity=sys._getframe().f_code.co_name)
+        self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
 
         return None
 
@@ -462,8 +450,7 @@ class VasprunParser(BaseFileParser):
 
         energies = self.energies
         if energies is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         # fetch the type of energies that the user wants to extract
         settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
@@ -476,7 +463,7 @@ class VasprunParser(BaseFileParser):
     @property
     def energies(self):
         """Fetch the total energies for all calculations (i.e. ionic steps)."""
-        if self.settings.get('store_energies_sc'):
+        if self._settings.get('store_energies_sc'):
             res = self._energies(nosc=True)
             res_sc = self._energies(nosc=False)
             for key, val in res_sc.items():
@@ -500,8 +487,7 @@ class VasprunParser(BaseFileParser):
             # arrays
             enrgies = self._xml.get_energies(status='all', etype=etype, nosc=nosc)
             if enrgies is None:
-                self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                    quantity=str(sys._getframe().f_code.co_name))
+                self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=str(sys._getframe().f_code.co_name))
                 return None
 
             if isinstance(enrgies[0], np.ndarray):
@@ -525,8 +511,7 @@ class VasprunParser(BaseFileParser):
 
         proj = self._xml.get_projectors()
         if proj is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         projectors = {}
         prj = []
@@ -551,8 +536,7 @@ class VasprunParser(BaseFileParser):
 
         diel = self._xml.get_dielectrics()
         if diel is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         dielectrics = {}
         energy = diel.get('energy')
@@ -579,8 +563,7 @@ class VasprunParser(BaseFileParser):
 
         brn = self._xml.get_born()
         if brn is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         born = {'born_charges': brn}
         return born
@@ -591,8 +574,7 @@ class VasprunParser(BaseFileParser):
 
         hessian = self._xml.get_hessian()
         if hessian is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         hess = {'hessian': hessian}
         return hess
@@ -603,8 +585,7 @@ class VasprunParser(BaseFileParser):
 
         dynmat = self._xml.get_dynmat()
         if dynmat is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         dyn = {}
         dyn['dynvec'] = dynmat['eigenvectors']
@@ -617,8 +598,7 @@ class VasprunParser(BaseFileParser):
 
         dos = self._xml.get_dos()
         if dos is None:
-            self._vasp_parser.exit_code = self._vasp_parser.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=sys._getframe().f_code.co_name)
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         densta = {}
         # energy is always there, regardless of

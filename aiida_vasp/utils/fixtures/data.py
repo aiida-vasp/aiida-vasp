@@ -364,8 +364,7 @@ def vasprun_parser(request):
     from aiida_vasp.calcs.vasp import VaspCalculation
     file_name = 'vasprun.xml'
     path = data_path(request.param, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings({}))
-    parser._vasp_parser = VaspCalculation
+    parser = VasprunParser(file_path=path, settings=ParserSettings({}), exit_codes=VaspCalculation.exit_codes)
     return parser
 
 

@@ -17,5 +17,5 @@ def test_parse_eigenval():
     bands = numpy.array([[[-1.439825, 2.964373, 2.964373, 2.964373, 7.254542, 7.254542, 7.254542, 11.451811, 11.670398, 11.670398]]])
     inputs = {}
 
-    result = parser.get_quantity('eigenval-eigenvalues', inputs)
+    result = parser.get_quantity_from_inputs('eigenval-eigenvalues', inputs, None)
     assert result['eigenval-eigenvalues'].all() == bands.all()
