@@ -103,11 +103,11 @@ class VaspParser(BaseParser):
         except NotExistent:
             calc_settings = None
 
-        settings = None
+        parser_settings = None
         if calc_settings:
-            settings = calc_settings.get_dict().get('parser_settings')
+            parser_settings = calc_settings.get_dict().get('parser_settings')
 
-        self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
+        self.settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
         self.quantities = ParsableQuantities()
         self.parser_manager = ParserManager(node=self.node, vasp_parser_logger=self.logger)
         self._output_nodes = {}
@@ -164,8 +164,7 @@ class VaspParser(BaseParser):
             if quantity_name not in quantity_name_to_file_name:
                 quantity_name_to_file_name[quantity_name] = file_name
 
-        for quantity_name in self.parser_manager.quantities_to_parse:
-            file_name = quantity_name_to_file_name[quantity_name]
+        for quantity_name, file_name in quantity_name_to_file_name.items():
             file_to_parse = self.get_file(file_name)
             parser = self.parser_manager.parsers[file_name]['parser_class'](settings=self.settings,
                                                                             exit_codes=self.exit_codes,
