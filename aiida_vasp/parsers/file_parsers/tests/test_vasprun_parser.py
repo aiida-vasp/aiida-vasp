@@ -39,7 +39,7 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
     })
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('dict', quantities=['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'])
+    data_obj = composer.compose('dict', quantity_names=['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'])
 
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
@@ -56,7 +56,7 @@ def test_kpoints_result(fresh_aiida_env, vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.kpoints', quantities=['kpoints'])
+    data_obj = composer.compose('array.kpoints', quantity_names=['kpoints'])
 
     ref_class = get_data_class('array.kpoints')
     assert isinstance(data_obj, ref_class)
@@ -74,7 +74,7 @@ def test_structure_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('structure', quantities=['structure'])
+    data_obj = composer.compose('structure', quantity_names=['structure'])
     # check object
     ref_obj = get_data_class('structure')
     assert isinstance(data_obj, ref_obj)
@@ -95,7 +95,7 @@ def test_final_force_result(fresh_aiida_env, vasprun_parser):
     """Test that the forces are returned correctly."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['forces'])
+    data_obj = composer.compose('array', quantity_names=['forces'])
     # check object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -115,7 +115,7 @@ def test_final_stress_result(fresh_aiida_env, vasprun_parser):
     """Test that the stress are returned correctly."""
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['stress'])
+    data_obj = composer.compose('array', quantity_names=['stress'])
     # check object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -139,7 +139,7 @@ def test_traj_forces_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
+    data_obj = composer.compose('array.trajectory', quantity_names=['trajectory'])
 
     # test object
     ref_obj = get_data_class('array.trajectory')
@@ -170,7 +170,7 @@ def test_traj_forces_result_relax(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
+    data_obj = composer.compose('array.trajectory', quantity_names=['trajectory'])
     # test object
     ref_obj = get_data_class('array.trajectory')
     assert isinstance(data_obj, ref_obj)
@@ -195,7 +195,7 @@ def test_unitcells_result_relax(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
+    data_obj = composer.compose('array.trajectory', quantity_names=['trajectory'])
     # test object
     ref_obj = get_data_class('array.trajectory')
     assert isinstance(data_obj, ref_obj)
@@ -220,7 +220,7 @@ def test_positions_result_relax(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.trajectory', quantities=['trajectory'])
+    data_obj = composer.compose('array.trajectory', quantity_names=['trajectory'])
     # test object
     ref_obj = get_data_class('array.trajectory')
     assert isinstance(data_obj, ref_obj)
@@ -244,7 +244,7 @@ def test_dielectrics_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dielectrics'])
+    data_obj = composer.compose('array', quantity_names=['dielectrics'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -276,7 +276,7 @@ def test_epsilon_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dielectrics'])
+    data_obj = composer.compose('array', quantity_names=['dielectrics'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -302,7 +302,7 @@ def test_born_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['born_charges'])
+    data_obj = composer.compose('array', quantity_names=['born_charges'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -325,7 +325,7 @@ def test_dos_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dos'])
+    data_obj = composer.compose('array', quantity_names=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -351,7 +351,7 @@ def test_dos_spin_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dos'])
+    data_obj = composer.compose('array', quantity_names=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -376,7 +376,7 @@ def test_pdos_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dos'])
+    data_obj = composer.compose('array', quantity_names=['dos'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -401,7 +401,7 @@ def test_projectors_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['projectors'])
+    data_obj = composer.compose('array', quantity_names=['projectors'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -425,7 +425,7 @@ def test_bands_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupancies'])
+    data_obj = composer.compose('array.bands', quantity_names=['eigenvalues', 'kpoints', 'occupancies'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
@@ -455,7 +455,7 @@ def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array.bands', quantities=['eigenvalues', 'kpoints', 'occupancies'])
+    data_obj = composer.compose('array.bands', quantity_names=['eigenvalues', 'kpoints', 'occupancies'])
     # test object
     ref_obj = get_data_class('array.bands')
     assert isinstance(data_obj, ref_obj)
@@ -490,7 +490,7 @@ def test_toten_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['energies'])
+    data_obj = composer.compose('array', quantity_names=['energies'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -511,7 +511,7 @@ def test_totens_relax_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['energies'])
+    data_obj = composer.compose('array', quantity_names=['energies'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -534,7 +534,7 @@ def test_hessian_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['hessian'])
+    data_obj = composer.compose('array', quantity_names=['hessian'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
@@ -564,7 +564,7 @@ def test_dynmat_result(fresh_aiida_env, vasprun_parser):
     """
 
     composer = NodeComposer(file_parsers=[vasprun_parser])
-    data_obj = composer.compose('array', quantities=['dynmat'])
+    data_obj = composer.compose('array', quantity_names=['dynmat'])
     # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)

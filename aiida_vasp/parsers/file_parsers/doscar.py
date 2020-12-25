@@ -131,5 +131,5 @@ class DosParser(BaseFileParser):
     def dos(self):
         if self._dos is None:
             composer = NodeComposer(file_parsers=[self])
-            self._dos = composer.compose('array', quantities=['doscar-dos'])
+            self._dos = composer.compose('array', quantity_names=['doscar-dos'])
         return self._dos

@@ -32,9 +32,8 @@ class NodeComposer(object):
     """
 
     def __init__(self, **kwargs):
-        # create the delegate for getting quantities.
-        setattr(self, 'get_quantity', Delegate())
-        self.quantities = None
+        self._quantities = None
+        self._output_nodes = {}
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -48,21 +47,21 @@ class NodeComposer(object):
         if not file_parsers:
             return
 
-        self.quantities = ParsableQuantities()
-
-        # Add all the FileParsers get_quantity methods to our get_quantity delegate.
+        self._quantities = ParsableQuantities()
         for parser in file_parsers:
             for key, value in parser.parsable_items.items():
-                self.quantities.add_parsable_quantity(key, deepcopy(value))
+                self._quantities.add_parsable_quantity(key, deepcopy(value))
+                parsed_data = parser.get_quantity(key)
+                self._output_nodes.update(parsed_data)
 
-            self.get_quantity.append(parser.get_quantity)
+    def _init_with_quantities(self, quantities):
+        """Init with a ParsableQuantities object."""
+        self._quantities = quantities
 
-    def _init_with_vasp_parser(self, vasp_parser):
-        """Init with a VaspParser object."""
-        self.get_quantity.append(vasp_parser.get_inputs)
-        self.quantities = vasp_parser.quantities
+    def _init_with_output_nodes(self, output_nodes):
+        self._output_nodes = output_nodes
 
-    def compose(self, node_type, quantities=None):
+    def compose(self, node_type, quantity_names=None):
         """
         A wrapper for compose_node with a node definition taken from NODES.
 
@@ -72,13 +71,21 @@ class NodeComposer(object):
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
-        if quantities is None:
-            quantities = NODES_TYPES.get(node_type)
+        if quantity_names is None:
+            _quantity_names = NODES_TYPES.get(node_type)
+        else:
+            _quantity_names = quantity_names
 
         inputs = {}
-        for quantity_name in quantities:
-            quantity = self.quantities.get_by_name(quantity_name)
-            inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
+        for quantity_name in _quantity_names:
+            quantity = self._quantities.get_by_name(quantity_name)
+            output_node = self._output_nodes.get(quantity_name)
+            if output_node is None:
+                for item in self._quantities.get_equivalent_quantities(quantity_name):
+                    if item.original_name in self._output_nodes:
+                        inputs[quantity.name] = self._output_nodes.get(item.original_name)
+            else:
+                inputs[quantity.name] = output_node
 
         # Call the correct specialised method for assembling.
         return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)

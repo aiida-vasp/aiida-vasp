@@ -19,12 +19,12 @@ class BaseParser(Parser):
 
     def parse(self, **kwargs):
         """Check the folders and set the retrieved_content for use in extending parsers."""
-        error_code = self.compose_retrieved_content(kwargs)
+        error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
         return None
 
-    def compose_retrieved_content(self, parser_kwargs=None):
+    def _compose_retrieved_content(self, parser_kwargs=None):
         """
         Convenient check to see if the retrieved and retrieved temp folder is present.
 

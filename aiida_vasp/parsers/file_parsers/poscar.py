@@ -102,7 +102,7 @@ class PoscarParser(BaseFileParser):
     def structure(self):
         if self._structure is None:
             composer = NodeComposer(file_parsers=[self])
-            self._structure = composer.compose('structure', quantities=['poscar-structure'])
+            self._structure = composer.compose('structure', quantity_names=['poscar-structure'])
         return self._structure
 
     def aiida_to_parsevasp(self, structure):

@@ -246,5 +246,5 @@ class LegacyOutcarParser(BaseFileParser):
     def parameter(self):
         if self._parameter is None:
             composer = NodeComposer(file_parsers=[self])
-            self._parameter = composer.compose('parameter', quantities=DEFAULT_OPTIONS)
+            self._parameter = composer.compose('parameter', quantity_names=DEFAULT_OPTIONS)
         return self._parameter

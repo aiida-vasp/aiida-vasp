@@ -27,7 +27,7 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
         }})
 
     composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('dict', quantities=['symmetries_extended', 'elastic_moduli'])
+    data_obj = composer.compose('dict', quantity_names=['symmetries_extended', 'elastic_moduli'])
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()

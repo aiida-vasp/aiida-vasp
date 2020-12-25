@@ -95,9 +95,6 @@ class VaspParser(BaseParser):
     def __init__(self, node):
         super(VaspParser, self).__init__(node)
 
-        # Initialise the 'get_quantity' delegate:
-        setattr(self, 'get_quantity', Delegate())
-
         try:
             calc_settings = self.node.inputs.settings
         except NotExistent:
@@ -139,7 +136,7 @@ class VaspParser(BaseParser):
                     return True
             return False
 
-        error_code = self.compose_retrieved_content(kwargs)
+        error_code = self._compose_retrieved_content(kwargs)
 
         if error_code is not None:
             return error_code
@@ -148,14 +145,8 @@ class VaspParser(BaseParser):
             # in case we do not find this or other files marked with is_critical
             return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
-        # Get the _quantities from the FileParsers.
-        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.settings.parser_definitions)
-
-        # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
-        # the corresponding files do not exist.
-        self.parser_manager.setup(parser_definitions=self.settings.parser_definitions,
-                                  quantities_to_parse=self.settings.quantities_to_parse,
-                                  quantities=self.quantities)
+        self._setup_quantities()
+        self._setup_parser_manager()
 
         # Parse all implemented quantities in the quantities_to_parse list.
         quantity_name_to_file_name = {}
@@ -166,24 +157,20 @@ class VaspParser(BaseParser):
 
         for quantity_name, file_name in quantity_name_to_file_name.items():
             file_to_parse = self.get_file(file_name)
-            parser = self.parser_manager.parsers[file_name]['parser_class'](settings=self.settings,
-                                                                            exit_codes=self.exit_codes,
-                                                                            file_path=file_to_parse)
+            FileParserClass = self.parser_manager.parsers[file_name]['parser_class']
+            parser = FileParserClass(settings=self.settings, exit_codes=self.exit_codes, file_path=file_to_parse)
             parsed_data = parser.get_quantity(quantity_name)
             if parsed_data and parsed_data[quantity_name] is not None:
                 self._output_nodes.update(parsed_data)
             self.exit_code = parser.exit_code
 
         # Assemble the nodes associated with the quantities
-        node_assembler = NodeComposer(vasp_parser=self)
+        node_assembler = NodeComposer(output_nodes=self._output_nodes, quantities=self.quantities)
         for node_name, node_dict in self.settings.output_nodes_dict.items():
-            node = node_assembler.compose(node_dict.type, node_dict.quantities)
+            node = node_assembler.compose(node_dict.type, quantity_names=node_dict.quantities)
             success = self._set_node(node_name, node)
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
-
-        # Reset the 'get_quantity' delegate
-        self.get_quantity.clear()
 
         try:
             return self.exit_code
@@ -192,38 +179,6 @@ class VaspParser(BaseParser):
 
         return self.exit_codes.NO_ERROR
 
-    def get_inputs(self, quantity):
-        """
-        Return a quantity required as input for another quantity.
-
-        This method will be called by the FileParsers in order to get a required input quantity
-        from self._output_nodes. If the quantity is not in the dictionary the VaspParser will
-        try to parse it. If a quantiy has been requested this way two times, parsing will be
-        aborted because there is a cyclic dependency of the parsable items.
-        """
-        if quantity in self._requested_quantities:
-            raise RuntimeError('{quantity} has been requested for parsing a second time. '
-                               'There is probably a cycle in the prerequisites of the '
-                               'parsable_items in the single FileParsers.'.format(quantity=quantity))
-
-        # This is the first time this quantity has been requested, keep track of it.
-        self._requested_quantities.append(quantity)
-        if quantity not in self._output_nodes:
-            # Did we parse an alternative
-            for item in self.quantities.get_equivalent_quantities(quantity):
-                if item.original_name in self._output_nodes:
-                    return {quantity: self._output_nodes.get(item.original_name)}
-            # The quantity is not in the output_nodes. Try to parse it
-            self._output_nodes.update(self.get_quantity(quantity))
-
-        # parsing the quantity without requesting it a second time was successful, remove it from requested_quantities.
-        self._requested_quantities.remove(quantity)
-
-        # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
-        self.parser_manager.remove(quantity)
-
-        return {quantity: self._output_nodes.get(quantity)}
-
     def _set_node(self, node_name, node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
 
@@ -231,3 +186,11 @@ class VaspParser(BaseParser):
             return False
         self.out(self.settings.output_nodes_dict[node_name].link_name, node)
         return True
+
+    def _setup_quantities(self):
+        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.settings.parser_definitions)
+
+    def _setup_parser_manager(self):
+        self.parser_manager.setup(parser_definitions=self.settings.parser_definitions,
+                                  quantities_to_parse=self.settings.quantities_to_parse,
+                                  quantities=self.quantities)

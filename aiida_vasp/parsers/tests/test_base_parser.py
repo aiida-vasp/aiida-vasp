@@ -19,7 +19,7 @@ def base_parser(calc_with_retrieved):
 
 def test_get_file(base_parser):
     """Test getting a retrieved output file."""
-    base_parser.compose_retrieved_content()
+    base_parser._compose_retrieved_content()
     assert os.path.isfile(base_parser.get_file('OUTCAR'))
     assert os.path.exists(base_parser.get_file('OUTCAR'))
     # This should now not eject an OSError as this is handled by the logger

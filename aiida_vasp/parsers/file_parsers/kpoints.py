@@ -111,7 +111,7 @@ class KpointsParser(BaseFileParser):
     def kpoints(self):
         if self._kpoints is None:
             composer = NodeComposer(file_parsers=[self])
-            self._kpoints = composer.compose('array.kpoints', quantities=['kpoints-kpoints'])
+            self._kpoints = composer.compose('array.kpoints', quantity_names=['kpoints-kpoints'])
         return self._kpoints
 
     def _get_kpointsdict_explicit(self, kpointsdata):
