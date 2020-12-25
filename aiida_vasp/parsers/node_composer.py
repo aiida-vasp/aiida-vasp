@@ -7,8 +7,8 @@ A composer that composes different quantities onto AiiDA data nodes.
 # pylint: disable=no-member, useless-object-inheritance, import-outside-toplevel
 # Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
+from copy import deepcopy
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
 from aiida_vasp.parsers.quantity import ParsableQuantities
 """NODE_TYPES"""  # pylint: disable=pointless-string-statement
 
@@ -31,35 +31,21 @@ class NodeComposer(object):
     Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
-    def __init__(self, **kwargs):
-        self._quantities = None
-        self._output_nodes = {}
-        self.init_with_kwargs(**kwargs)
-
-    @delegate_method_kwargs(prefix='_init_with_')
-    def init_with_kwargs(self, **kwargs):
-        """Delegate initialization to _init_with - methods."""
+    def __init__(self, quantities=None, output_nodes=None, file_parsers=None):
+        self._quantities = quantities
+        self._output_nodes = output_nodes
+        if file_parsers is not None:
+            self._init_with_file_parsers(file_parsers)
 
     def _init_with_file_parsers(self, file_parsers):
         """Init with a list of file parsers."""
-        from copy import deepcopy
-
-        if not file_parsers:
-            return
-
         self._quantities = ParsableQuantities()
+        self._output_nodes = {}
         for parser in file_parsers:
             for key, value in parser.parsable_items.items():
                 self._quantities.add_parsable_quantity(key, deepcopy(value))
                 parsed_data = parser.get_quantity(key)
                 self._output_nodes.update(parsed_data)
-
-    def _init_with_quantities(self, quantities):
-        """Init with a ParsableQuantities object."""
-        self._quantities = quantities
-
-    def _init_with_output_nodes(self, output_nodes):
-        self._output_nodes = output_nodes
 
     def compose(self, node_type, quantity_names=None):
         """

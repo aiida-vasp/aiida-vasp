@@ -16,9 +16,8 @@ from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.manager import ParserManager
-from aiida_vasp.parsers.settings import ParserSettings
+from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
 from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.utils.delegates import Delegate
 
 # defaults
 
@@ -40,7 +39,6 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
-    'file_parser_set': 'default',
     'store_energies_sc': False,
 }
 
@@ -80,7 +78,7 @@ class VaspParser(BaseParser):
 
     * `file_parser_set`: String (DEFAULT = 'default').
 
-        By this option the default set of FileParsers can be chosen. See parser_settings.py
+        By this option the default set of FileParsers can be chosen. See settings.py
         for available options.
 
     Additional FileParsers can be added to the VaspParser by using
@@ -104,20 +102,15 @@ class VaspParser(BaseParser):
         if calc_settings:
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
+        self.definitions = ParserDefinitions()
         self.settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
         self.quantities = ParsableQuantities()
         self.parser_manager = ParserManager(node=self.node, vasp_parser_logger=self.logger)
         self._output_nodes = {}
 
-        # this list is for bookkeeping, to check whether a quantity has been requested
-        # twice during the parsing cycle.
-        self._requested_quantities = []
-
-    def add_file_parser(self, parser_name, parser_dict):
+    def add_parser_definition(self, parser_name, parser_dict):
         """Add the definition of a fileParser to self.settings and self.parser_manager."""
-
-        self.settings.parser_definitions[parser_name] = parser_dict
-        self.parser_manager.add_file_parser(parser_name, parser_dict)
+        self.definitions.add_parser_definition(parser_name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
@@ -131,7 +124,7 @@ class VaspParser(BaseParser):
         """The function that triggers the parsing of a calculation."""
 
         def missing_critical_file():
-            for file_name, value_dict in self.settings.parser_definitions.items():
+            for file_name, value_dict in self.definitions.parser_definitions.items():
                 if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
                     return True
             return False
@@ -157,7 +150,7 @@ class VaspParser(BaseParser):
 
         for quantity_name, file_name in quantity_name_to_file_name.items():
             file_to_parse = self.get_file(file_name)
-            FileParserClass = self.parser_manager.parsers[file_name]['parser_class']
+            FileParserClass = self.definitions.parser_definitions[file_name]['parser_class']
             parser = FileParserClass(settings=self.settings, exit_codes=self.exit_codes, file_path=file_to_parse)
             parsed_data = parser.get_quantity(quantity_name)
             if parsed_data and parsed_data[quantity_name] is not None:
@@ -188,9 +181,7 @@ class VaspParser(BaseParser):
         return True
 
     def _setup_quantities(self):
-        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.settings.parser_definitions)
+        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.definitions.parser_definitions)
 
     def _setup_parser_manager(self):
-        self.parser_manager.setup(parser_definitions=self.settings.parser_definitions,
-                                  quantities_to_parse=self.settings.quantities_to_parse,
-                                  quantities=self.quantities)
+        self.parser_manager.setup(quantities_to_parse=self.settings.quantities_to_parse, quantities=self.quantities)

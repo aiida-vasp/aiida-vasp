@@ -93,7 +93,7 @@ def vasp_parser_with_test(calc_with_retrieved):
     node = calc_with_retrieved(file_path, settings_dict)
 
     parser = ParserFactory('vasp.vasp')(node)
-    parser.add_file_parser('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
     parser.add_parsable_quantity(
         'quantity_with_alternatives',
         {
@@ -140,9 +140,9 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     """Make sure non-unique quantity identifiers are detected."""
     parser = vasp_parser_with_test
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
-    parser.add_file_parser('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
+    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
-        parser.quantities.setup(retrieved_filenames=parser._retrieved_content.keys(), parser_definitions=parser.settings.parser_definitions)
+        parser._setup_quantities()
     assert 'quantity1' in str(excinfo.value)
 
 
@@ -210,7 +210,6 @@ def test_structure(request, calc_with_retrieved):
             'add_dynmat': False,
             'add_wavecar': False,
             'add_site_magnetization': False,
-            'file_parser_set': 'default'
         }
     }
 
@@ -273,7 +272,6 @@ def test_misc(request, calc_with_retrieved):
             'add_dynmat': False,
             'add_wavecar': False,
             'add_site_magnetization': False,
-            'file_parser_set': 'default',
         }
     }
 
@@ -344,7 +342,6 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
             'add_dynmat': False,
             'add_wavecar': False,
             'add_site_magnetization': False,
-            'file_parser_set': 'default',
             'stream_config': config
         }
     }
@@ -408,7 +405,6 @@ def test_stream_history(request, calc_with_retrieved):
             'add_dynmat': False,
             'add_wavecar': False,
             'add_site_magnetization': False,
-            'file_parser_set': 'default',
             'stream_config': {
                 'random_error': {
                     'kind': 'ERROR',

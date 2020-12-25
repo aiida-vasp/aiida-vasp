@@ -162,6 +162,29 @@ NODES = {
 }
 
 
+class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
+
+    def __init__(self, file_parser_set='default'):
+        self._parser_definitions = {}
+        self._init_parser_definitions(file_parser_set)
+
+    @property
+    def parser_definitions(self):
+        return self._parser_definitions
+
+    def add_parser_definition(self, parser_name, parser_dict):
+        self._parser_definitions[parser_name] = parser_dict
+
+    def _init_parser_definitions(self, file_parser_set):
+        """Load the parser definitions."""
+        from copy import deepcopy
+
+        if file_parser_set not in FILE_PARSER_SETS:
+            return
+        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
+            self._parser_definitions[file_name] = deepcopy(parser_dict)
+
+
 class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
@@ -178,19 +201,19 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
 
     def __init__(self, settings, default_settings=None):
-
-        self.alternatives = {}
         if settings is None:
-            settings = {}
-        self._settings = settings
+            self._settings = {}
+        else:
+            self._settings = settings
         if default_settings is not None:
             self.update_with(default_settings)
 
-        self.output_nodes_dict = {}
+        self._output_nodes_dict = {}
         self._init_output_nodes_dict()
 
-        self.parser_definitions = {}
-        self._init_parser_definitions(self._settings.get('file_parser_set'))
+    @property
+    def output_nodes_dict(self):
+        return self._output_nodes_dict
 
     @property
     def quantities_to_parse(self):
@@ -251,7 +274,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         """
         from copy import deepcopy
 
-        self.output_nodes_dict = {}
+        self._output_nodes_dict = {}
 
         # First, find all the nodes, that should be added.
         for key, value in self._settings.items():
@@ -275,12 +298,3 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
                 node_dict['link_name'] = node_name
 
             self.add_output_node(node_name, node_dict)
-
-    def _init_parser_definitions(self, file_parser_set='default'):
-        """Load the parser definitions."""
-        from copy import deepcopy
-
-        if file_parser_set not in FILE_PARSER_SETS:
-            return
-        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self.parser_definitions[file_name] = deepcopy(parser_dict)

@@ -21,53 +21,26 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
     def __init__(self, node=None, vasp_parser_logger=None):
         self._node = node
         self._vasp_parser_logger = vasp_parser_logger
-        self._parsers = {}
         self._quantities_to_parse = []
-
-    @property
-    def parsers(self):
-        return self._parsers
 
     @property
     def quantities_to_parse(self):
         return self._quantities_to_parse
 
-    def get_quantities_to_parse(self):
-        return self.quantities_to_parse
-
     def remove(self, quantity):
         if quantity in self._quantities_to_parse:
             self._quantities_to_parse.remove(quantity)
 
-    def add_file_parser(self, parser_name, parser_dict):
-        """
-        Add the definition of a fileParser to self._parsers.
+    def setup(self, quantities_to_parse=None, quantities=None):
+        self._set_quantities_to_parse(quantities_to_parse, quantities)
 
-        :param parser_name: Unique identifier of this parser. At the moment this coincides with the file name.
-        :param parser_dict: Dict holding the FileParser definition.
-
-        The required tags for the parser_dict can be found in PARSABLE_FILES. The FileParser must inherit
-        from BaseFileParser and it will replace another previously defined fileParser with the same name.
-        """
-
-        parser_dict['parser'] = None
-        parser_dict['quantities_to_parse'] = []
-        self._parsers[parser_name] = DictWithAttributes(parser_dict)
-
-    def add_quantity_to_parse(self, quantities):
+    def _add_quantity_to_parse(self, quantities):
         """Check, whether a quantity or it's alternatives can be added."""
         for quantity in quantities:
             if quantity.is_parsable:
                 self._quantities_to_parse.append(quantity.original_name)
                 return True
         return False
-
-    def setup(self, parser_definitions=None, quantities_to_parse=None, quantities=None):
-        # Add all FileParsers from the requested set.
-        for key, value in parser_definitions.items():
-            self.add_file_parser(key, value)
-
-        self._set_quantities_to_parse(quantities_to_parse, quantities)
 
     def _set_quantities_to_parse(self, quantities_to_parse, quantities):
         """Set the quantities to parse list."""
@@ -82,7 +55,7 @@ class ParserManager(object):  # pylint: disable=useless-object-inheritance
                 continue
 
             # Add this quantity or one of its alternatives to the quantities to parse.
-            success = self.add_quantity_to_parse(quantities.get_equivalent_quantities(quantity_name))
+            success = self._add_quantity_to_parse(quantities.get_equivalent_quantities(quantity_name))
 
             if not success:
                 # Neither the quantity nor it's alternatives could be added to the quantities_to_parse.
