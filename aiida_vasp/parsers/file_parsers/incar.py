@@ -41,7 +41,7 @@ class IncarParser(BaseFileParser):
         else:
             self._logger.warning('Please supply an AiiDA Dict datatype for `data`.')
             self._data_obj = None
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -80,4 +80,4 @@ class IncarParser(BaseFileParser):
 
     @property
     def incar(self):
-        return self.get_quantity('incar', {})['incar']
+        return self.get_quantity('incar', {})

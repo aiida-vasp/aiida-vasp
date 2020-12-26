@@ -112,7 +112,7 @@ def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
     parser = vasp_parser_with_test
 
-    quantities_to_parse = parser.parser_manager.quantities_to_parse
+    quantities_to_parse = parser._manager.quantities_to_parse
     assert 'quantity2' in quantities_to_parse
     assert 'quantity_with_alternatives' not in quantities_to_parse
     assert 'quantity1' in quantities_to_parse
@@ -121,7 +121,7 @@ def test_quantities_to_parse(vasp_parser_with_test):
 def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
-    quantities = parser.quantities
+    quantities = parser._parsable_quantities
     # Check whether all quantities from the added ExampleFileParser have been added.
     for quantity in ExampleFileParser.PARSABLE_ITEMS:
         assert quantities.get_by_name(quantity) is not None
@@ -142,7 +142,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
     parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
-        parser._setup_quantities()
+        parser._setup_parsable_quantities()
     assert 'quantity1' in str(excinfo.value)
 
 

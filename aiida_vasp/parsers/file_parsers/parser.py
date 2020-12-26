@@ -78,7 +78,7 @@ class BaseFileParser(BaseParser):
         self._exit_codes = kwargs.get('exit_codes', None)
         self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._exit_code = None
-        self.parsable_items = {}
+        self._parsable_items = {}
         self._parsed_data = {}
         self._data_obj = None
 
@@ -104,13 +104,17 @@ class BaseFileParser(BaseParser):
         pass
 
     @property
+    def parsable_items(self):
+        return self._parsable_items
+
+    @property
     def exit_code(self):
         return self._exit_code
 
     def _init_with_file_path(self, path):
         """Init with a file path."""
         self._data_obj = SingleFile(path=path)
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def _init_with_data(self, data):
@@ -122,7 +126,7 @@ class BaseFileParser(BaseParser):
         """
 
         self._data_obj = SingleFile(data=data)
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     def get_quantity(self, quantity_name, inputs=None):
@@ -133,16 +137,16 @@ class BaseFileParser(BaseParser):
         delegate during __init__.
         """
 
-        if quantity_name not in self.parsable_items:
+        if quantity_name not in self._parsable_items:
             return None
 
         if self._parsed_data.get(quantity_name) is None:
             self._parsed_data = self._parse_file({})
 
-        return {quantity_name: self._parsed_data.get(quantity_name)}
+        return self._parsed_data.get(quantity_name)
 
     def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
-        if quantity_name not in self.parsable_items:
+        if quantity_name not in self._parsable_items:
             return None
 
         if self._parsed_data.get(quantity_name) is None:
@@ -150,9 +154,9 @@ class BaseFileParser(BaseParser):
                 inputs = {}
             if vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
-                for inp in self.parsable_items[quantity_name]['inputs']:
+                for inp in self._parsable_items[quantity_name]['inputs']:
                     inputs.update(vasp_parser.get_inputs(inp))
-                    if inputs[inp] is None and inp in self.parsable_items[quantity_name]['prerequisites']:
+                    if inputs[inp] is None and inp in self._parsable_items[quantity_name]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return {quantity_name: None}
             self._parsed_data = self._parse_file(inputs)

@@ -14,7 +14,7 @@ def test_parse_vasprun(fresh_aiida_env, vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
     quantity = vasprun_parser.get_quantity('occupancies')
-    occ = quantity['occupancies'][0]
+    occ = quantity[0]
     occupancies = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
     assert occ.all() == occupancies.all()
     # eFL: How do we want to store scalar values?

@@ -31,21 +31,20 @@ class NodeComposer(object):
     Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
-    def __init__(self, quantities=None, output_nodes=None, file_parsers=None):
-        self._quantities = quantities
-        self._output_nodes = output_nodes
+    def __init__(self, parsable_quantities=None, parsed_quantities=None, file_parsers=None):
+        self._parsable_quantities = parsable_quantities
+        self._parsed_quantities = parsed_quantities
         if file_parsers is not None:
             self._init_with_file_parsers(file_parsers)
 
     def _init_with_file_parsers(self, file_parsers):
         """Init with a list of file parsers."""
-        self._quantities = ParsableQuantities()
-        self._output_nodes = {}
+        self._parsable_quantities = ParsableQuantities()
+        self._parsed_quantities = {}
         for parser in file_parsers:
             for key, value in parser.parsable_items.items():
-                self._quantities.add_parsable_quantity(key, deepcopy(value))
-                parsed_data = parser.get_quantity(key)
-                self._output_nodes.update(parsed_data)
+                self._parsable_quantities.add_parsable_quantity(key, deepcopy(value))
+                self._parsed_quantities[key] = parser.get_quantity(key)
 
     def compose(self, node_type, quantity_names=None):
         """
@@ -64,12 +63,12 @@ class NodeComposer(object):
 
         inputs = {}
         for quantity_name in _quantity_names:
-            quantity = self._quantities.get_by_name(quantity_name)
-            output_node = self._output_nodes.get(quantity_name)
+            quantity = self._parsable_quantities.get_by_name(quantity_name)
+            output_node = self._parsed_quantities.get(quantity_name)
             if output_node is None:
-                for item in self._quantities.get_equivalent_quantities(quantity_name):
-                    if item.original_name in self._output_nodes:
-                        inputs[quantity.name] = self._output_nodes.get(item.original_name)
+                for item in self._parsable_quantities.get_equivalent_quantities(quantity_name):
+                    if item.original_name in self._parsed_quantities:
+                        inputs[quantity.name] = self._parsed_quantities.get(item.original_name)
             else:
                 inputs[quantity.name] = output_node
 

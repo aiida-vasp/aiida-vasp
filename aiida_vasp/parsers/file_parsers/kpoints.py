@@ -45,7 +45,7 @@ class KpointsParser(BaseFileParser):
             self._logger.warning('Please supply an AiiDA KpointsData datatype for `data`.')
             self._data_obj = None
         self._kpoints = data
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property

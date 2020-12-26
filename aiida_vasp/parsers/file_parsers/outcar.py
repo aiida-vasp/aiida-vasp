@@ -63,7 +63,7 @@ class OutcarParser(BaseFileParser):
     def _init_with_file_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._data_obj = SingleFile(path=path)
 
         # Since OUTCAR can be fairly large, we will parse it only
@@ -76,7 +76,7 @@ class OutcarParser(BaseFileParser):
 
     def _init_with_data(self, data):
         """Init with SingleFileData."""
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):

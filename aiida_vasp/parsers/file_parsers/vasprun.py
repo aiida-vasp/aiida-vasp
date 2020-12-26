@@ -131,7 +131,7 @@ class VasprunParser(BaseFileParser):
     def _init_with_file_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._data_obj = SingleFile(path=path)
 
         # Since vasprun.xml can be fairly large, we will parse it only
@@ -147,7 +147,7 @@ class VasprunParser(BaseFileParser):
 
     def _init_with_data(self, data):
         """Init with SingleFileData."""
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
@@ -166,12 +166,12 @@ class VasprunParser(BaseFileParser):
         if self._xml is None:
             # parsevasp threw an exception, which means vasprun.xml could not be parsed.
             for quantity in quantities_to_parse:
-                if quantity in self.parsable_items:
+                if quantity in self._parsable_items:
                     result[quantity] = None
             return result
 
         for quantity in quantities_to_parse:
-            if quantity in self.parsable_items:
+            if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)
 
         # Now we make sure that if some of the requested quantities sets an error during parsing and

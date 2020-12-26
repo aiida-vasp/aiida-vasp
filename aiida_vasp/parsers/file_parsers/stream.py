@@ -32,7 +32,7 @@ class StreamParser(BaseFileParser):
     def _init_with_file_path(self, path):
         """Init with a file path."""
         self._parsed_data = {}
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._data_obj = SingleFile(path=path)
 
         # Since the VASP output can be fairly large, we will parse it only
@@ -51,7 +51,7 @@ class StreamParser(BaseFileParser):
 
     def _init_with_data(self, data):
         """Init with SingleFileData."""
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
@@ -71,12 +71,12 @@ class StreamParser(BaseFileParser):
         if self._stream is None:
             # parsevasp threw an exception, which means the standard stream could not be parsed.
             for quantity in quantities_to_parse:
-                if quantity in self.parsable_items:
+                if quantity in self._parsable_items:
                     result[quantity] = None
             return result
 
         for quantity in quantities_to_parse:
-            if quantity in self.parsable_items:
+            if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)
 
         return result

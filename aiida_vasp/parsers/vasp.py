@@ -102,29 +102,29 @@ class VaspParser(BaseParser):
         if calc_settings:
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
-        self.definitions = ParserDefinitions()
-        self.settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
-        self.quantities = ParsableQuantities()
-        self.parser_manager = ParserManager(node=self.node, vasp_parser_logger=self.logger)
-        self._output_nodes = {}
+        self._definitions = ParserDefinitions()
+        self._settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
+        self._parsable_quantities = ParsableQuantities()
+        self._manager = ParserManager(node=self.node, vasp_parser_logger=self.logger)
+        self._parsed_quantities = {}
 
     def add_parser_definition(self, parser_name, parser_dict):
-        """Add the definition of a fileParser to self.settings and self.parser_manager."""
-        self.definitions.add_parser_definition(parser_name, parser_dict)
+        """Add the definition of a fileParser to self._definitions."""
+        self._definitions.add_parser_definition(parser_name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
-        self.quantities.additional_quantities[quantity_name] = quantity_dict
+        self._parsable_quantities.additional_quantities[quantity_name] = quantity_dict
 
     def add_custom_node(self, node_name, node_dict):
         """Add a custom node to the settings."""
-        self.settings.add_output_node(node_name, node_dict)
+        self._settings.add_output_node(node_name, node_dict)
 
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
         def missing_critical_file():
-            for file_name, value_dict in self.definitions.parser_definitions.items():
+            for file_name, value_dict in self._definitions.parser_definitions.items():
                 if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
                     return True
             return False
@@ -138,29 +138,29 @@ class VaspParser(BaseParser):
             # in case we do not find this or other files marked with is_critical
             return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
-        self._setup_quantities()
-        self._setup_parser_manager()
+        self._setup_parsable_quantities()
+        self._setup_manager()
 
         # Parse all implemented quantities in the quantities_to_parse list.
         quantity_name_to_file_name = {}
-        for quantity_name in self.parser_manager.quantities_to_parse:
-            file_name = self.quantities.get_by_name(quantity_name).file_name
+        for quantity_name in self._manager.quantities_to_parse:
+            file_name = self._parsable_quantities.get_by_name(quantity_name).file_name
             if quantity_name not in quantity_name_to_file_name:
                 quantity_name_to_file_name[quantity_name] = file_name
 
         for quantity_name, file_name in quantity_name_to_file_name.items():
             file_to_parse = self.get_file(file_name)
-            FileParserClass = self.definitions.parser_definitions[file_name]['parser_class']
-            parser = FileParserClass(settings=self.settings, exit_codes=self.exit_codes, file_path=file_to_parse)
-            parsed_data = parser.get_quantity(quantity_name)
-            if parsed_data and parsed_data[quantity_name] is not None:
-                self._output_nodes.update(parsed_data)
+            FileParserClass = self._definitions.parser_definitions[file_name]['parser_class']
+            parser = FileParserClass(settings=self._settings, exit_codes=self.exit_codes, file_path=file_to_parse)
+            parsed_quantity = parser.get_quantity(quantity_name)
+            if parsed_quantity is not None:
+                self._parsed_quantities[quantity_name] = parsed_quantity
             self.exit_code = parser.exit_code
 
         # Assemble the nodes associated with the quantities
-        node_assembler = NodeComposer(output_nodes=self._output_nodes, quantities=self.quantities)
-        for node_name, node_dict in self.settings.output_nodes_dict.items():
-            node = node_assembler.compose(node_dict.type, quantity_names=node_dict.quantities)
+        node_composer = NodeComposer(parsed_quantities=self._parsed_quantities, parsable_quantities=self._parsable_quantities)
+        for node_name, node_dict in self._settings.output_nodes_dict.items():
+            node = node_composer.compose(node_dict.type, quantity_names=node_dict.quantities)
             success = self._set_node(node_name, node)
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
@@ -177,11 +177,12 @@ class VaspParser(BaseParser):
 
         if node is None:
             return False
-        self.out(self.settings.output_nodes_dict[node_name].link_name, node)
+        self.out(self._settings.output_nodes_dict[node_name].link_name, node)
         return True
 
-    def _setup_quantities(self):
-        self.quantities.setup(retrieved_filenames=self._retrieved_content.keys(), parser_definitions=self.definitions.parser_definitions)
+    def _setup_parsable_quantities(self):
+        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
+                                        parser_definitions=self._definitions.parser_definitions)
 
-    def _setup_parser_manager(self):
-        self.parser_manager.setup(quantities_to_parse=self.settings.quantities_to_parse, quantities=self.quantities)
+    def _setup_manager(self):
+        self._manager.setup(quantities_to_parse=self._settings.quantities_to_parse, quantities=self._parsable_quantities)
