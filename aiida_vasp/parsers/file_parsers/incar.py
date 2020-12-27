@@ -80,4 +80,4 @@ class IncarParser(BaseFileParser):
 
     @property
     def incar(self):
-        return self.get_quantity('incar', {})
+        return self.get_quantity('incar')

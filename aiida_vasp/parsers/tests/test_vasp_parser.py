@@ -94,13 +94,10 @@ def vasp_parser_with_test(calc_with_retrieved):
 
     parser = ParserFactory('vasp.vasp')(node)
     parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
-    parser.add_parsable_quantity(
-        'quantity_with_alternatives',
-        {
-            'inputs': [],
-            'prerequisites': [],
-        },
-    )
+    parser.add_parsable_quantity('quantity_with_alternatives', {
+        'inputs': [],
+        'prerequisites': [],
+    })
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser

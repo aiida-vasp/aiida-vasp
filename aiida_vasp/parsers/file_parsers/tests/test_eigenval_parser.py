@@ -18,4 +18,4 @@ def test_parse_eigenval():
     inputs = {}
 
     result = parser.get_quantity_from_inputs('eigenval-eigenvalues', inputs, None)
-    assert result['eigenval-eigenvalues'].all() == bands.all()
+    assert result.all() == bands.all()

@@ -64,26 +64,30 @@ class NodeComposer(object):
         inputs = {}
         for quantity_name in _quantity_names:
             quantity = self._parsable_quantities.get_by_name(quantity_name)
-            output_node = self._parsed_quantities.get(quantity_name)
-            if output_node is None:
-                for item in self._parsable_quantities.get_equivalent_quantities(quantity_name):
-                    if item.original_name in self._parsed_quantities:
-                        inputs[quantity.name] = self._parsed_quantities.get(item.original_name)
+            parsed_quantity = self._parsed_quantities.get(quantity_name)
+            if parsed_quantity is None:
+                inputs.update(self._get_alternative_parsed_quantity(quantity_name, quantity))
             else:
-                inputs[quantity.name] = output_node
+                inputs[quantity.name] = parsed_quantity
 
         # Call the correct specialised method for assembling.
         return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
 
-    @staticmethod
-    def _compose_dict(node_type, inputs):
+    def _get_alternative_parsed_quantity(self, quantity_name, quantity):
+        inputs = {}
+        for parsable_quantity in self._parsable_quantities.get_equivalent_quantities(quantity_name):
+            original_name = parsable_quantity.original_name
+            if original_name in self._parsed_quantities:
+                inputs[quantity.name] = self._parsed_quantities.get(original_name)
+        return inputs
+
+    def _compose_dict(self, node_type, inputs):
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
         node.update_dict(inputs)
         return node
 
-    @staticmethod
-    def _compose_structure(node_type, inputs):
+    def _compose_structure(self, node_type, inputs):
         """Compose a structure node."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -92,8 +96,7 @@ class NodeComposer(object):
                 node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
         return node
 
-    @staticmethod
-    def _compose_array(node_type, inputs):
+    def _compose_array(self, node_type, inputs):
         """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
@@ -101,8 +104,7 @@ class NodeComposer(object):
                 node.set_array(key, value)
         return node
 
-    @staticmethod
-    def _compose_vasp_wavefun(node_type, inputs):
+    def _compose_vasp_wavefun(self, node_type, inputs):
         """Compose a wave function node."""
         node = None
         for key in inputs:
@@ -111,8 +113,7 @@ class NodeComposer(object):
             node = get_data_class(node_type)(file=inputs[key])
         return node
 
-    @staticmethod
-    def _compose_vasp_chargedensity(node_type, inputs):
+    def _compose_vasp_chargedensity(self, node_type, inputs):
         """Compose a charge density node."""
         node = None
         for key in inputs:
@@ -129,8 +130,7 @@ class NodeComposer(object):
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
         return node
 
-    @staticmethod
-    def _compose_array_kpoints(node_type, inputs):
+    def _compose_array_kpoints(self, node_type, inputs):
         """Compose an array.kpoints node based on inputs."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -155,8 +155,7 @@ class NodeComposer(object):
                 node.set_kpoints_mesh(mesh, offset=shifts)
         return node
 
-    @staticmethod
-    def _compose_array_trajectory(node_type, inputs):
+    def _compose_array_trajectory(self, node_type, inputs):
         """
         Compose a trajectory node.
 

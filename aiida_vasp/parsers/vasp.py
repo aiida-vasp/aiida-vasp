@@ -159,9 +159,9 @@ class VaspParser(BaseParser):
 
         # Assemble the nodes associated with the quantities
         node_composer = NodeComposer(parsed_quantities=self._parsed_quantities, parsable_quantities=self._parsable_quantities)
-        for node_name, node_dict in self._settings.output_nodes_dict.items():
+        for node_key, node_dict in self._settings.output_nodes_dict.items():
             node = node_composer.compose(node_dict.type, quantity_names=node_dict.quantities)
-            success = self._set_node(node_name, node)
+            success = self._set_node(node_key, node)
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
 
@@ -172,12 +172,12 @@ class VaspParser(BaseParser):
 
         return self.exit_codes.NO_ERROR
 
-    def _set_node(self, node_name, node):
+    def _set_node(self, node_key, node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
 
         if node is None:
             return False
-        self.out(self._settings.output_nodes_dict[node_name].link_name, node)
+        self.out(self._settings.output_nodes_dict[node_key].link_name, node)
         return True
 
     def _setup_parsable_quantities(self):
