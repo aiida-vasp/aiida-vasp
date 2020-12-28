@@ -34,7 +34,7 @@ class BaseParser(object):  # pylint: disable=useless-object-inheritance
             lines = fobj_or_str.split('\n')
         else:
             lines = fobj_or_str.readlines()
-        return [cls.line(l, d_type) for l in lines]
+        return [cls.line(line, d_type) for line in lines]
 
 
 class BaseFileParser(BaseParser):

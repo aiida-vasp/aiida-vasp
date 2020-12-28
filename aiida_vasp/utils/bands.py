@@ -123,7 +123,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
 
     if efermi:
         plt.hlines(efermi, plt.xlim()[0], nkp - 1, linestyles='dashed')
-        plt.yticks(list(plt.yticks()[0]) + [efermi], [str(l) for l in plt.yticks()[0]] + [r'$E_{fermi}$'])
+        plt.yticks(list(plt.yticks()[0]) + [efermi], [str(line) for line in plt.yticks()[0]] + [r'$E_{fermi}$'])
 
     try:
         kpx, kpl = get_kp_labels(bands_node, kpoints_node)

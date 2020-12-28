@@ -159,8 +159,8 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
-                                                                               default=[])  # pylint: disable=invalid-name
+            additional_retrieve_temp_list =\
+                self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
@@ -222,7 +222,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         ichrg_d = 0 if self._need_wavecar() else 2
-        icharg = self._parameters.get('icharg', ichrg_d)
+        icharg = self._parameters['code'].get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
     def _need_wavecar(self):
@@ -237,7 +237,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         istrt_d = 1 if self.inputs.get('wavefunctions') else 0
-        istart = self._parameters.get('istart', istrt_d)
+        istart = self._parameters['code'].get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
     def _structure(self):
@@ -284,7 +284,8 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the file to write to
         """
-        incar_parser = IncarParser(data=self.inputs.parameters)
+        dict_data = DataFactory('dict')
+        incar_parser = IncarParser(data=dict_data(dict=self.inputs.parameters.dict.code))
         incar_parser.write(dst)
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
@@ -299,7 +300,9 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision)
+        options = self.inputs.parameters.get_dict().get('dynamics', None)
+        print(options)
+        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 
     def write_potcar(self, dst):

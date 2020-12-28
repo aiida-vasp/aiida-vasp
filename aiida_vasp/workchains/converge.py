@@ -663,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
                 else:
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
-            param_dict['vasp'] = {'system': location}
+            param_dict['code'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
         # Set input nodes
@@ -673,7 +673,7 @@ class ConvergeWorkChain(WorkChain):
         # Make sure we do not have any floating dict (convert to Dict) in the input
         # Also, make sure we do not pass the converge parameter namespace as there are no relevant
         # code specific parameters there
-        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'], exclude_parameters=['converge'])
+        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'], exclude_parameters=['converge'])
 
     def run_next_workchain(self):
         """Run next workchain."""
