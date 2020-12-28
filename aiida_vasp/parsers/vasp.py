@@ -105,7 +105,7 @@ class VaspParser(BaseParser):
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities()
-        self._manager = ParserManager(node=self.node, vasp_parser_logger=self.logger)
+        self._manager = ParserManager(vasp_parser_logger=self.logger)
         self._parsed_quantities = {}
 
     def add_parser_definition(self, parser_name, parser_dict):
@@ -123,25 +123,15 @@ class VaspParser(BaseParser):
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
-        def missing_critical_file():
-            for file_name, value_dict in self._definitions.parser_definitions.items():
-                if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
-                    return True
-            return False
-
+        exit_code = None
         error_code = self._compose_retrieved_content(kwargs)
-
         if error_code is not None:
             return error_code
-        if missing_critical_file():
-            # A critical file is missing. Abort parsing
-            # in case we do not find this or other files marked with is_critical
+        if self._missing_critical_file():
             return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
         self._setup_parsable_quantities()
-        self._setup_manager()
 
-        # Parse all implemented quantities in the quantities_to_parse list.
         quantity_name_to_file_name = {}
         for quantity_name in self._manager.quantities_to_parse:
             file_name = self._parsable_quantities.get_by_name(quantity_name).file_name
@@ -150,12 +140,12 @@ class VaspParser(BaseParser):
 
         for quantity_name, file_name in quantity_name_to_file_name.items():
             file_to_parse = self.get_file(file_name)
-            FileParserClass = self._definitions.parser_definitions[file_name]['parser_class']
-            parser = FileParserClass(settings=self._settings, exit_codes=self.exit_codes, file_path=file_to_parse)
+            file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
+            parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=file_to_parse)
             parsed_quantity = parser.get_quantity(quantity_name)
             if parsed_quantity is not None:
                 self._parsed_quantities[quantity_name] = parsed_quantity
-            self.exit_code = parser.exit_code
+            exit_code = parser.exit_code
 
         # Assemble the nodes associated with the quantities
         node_composer = NodeComposer(parsed_quantities=self._parsed_quantities, parsable_quantities=self._parsable_quantities)
@@ -165,12 +155,24 @@ class VaspParser(BaseParser):
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
 
-        try:
-            return self.exit_code
-        except AttributeError:
-            pass
+        if exit_code is not None:
+            return exit_code
 
         return self.exit_codes.NO_ERROR
+
+    def _setup_parsable_quantities(self):
+        """Screen possible quantities to parsable quantities"""
+
+        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
+                                        parser_definitions=self._definitions.parser_definitions)
+        retrieve_list = []
+        if self.node.get_retrieve_temporary_list():
+            retrieve_list += self.node.get_retrieve_temporary_list()
+        if self.node.get_retrieve_list():
+            retrieve_list += self.node.get_retrieve_list()
+        self._manager.setup(quantities_to_parse=self._settings.quantities_to_parse,
+                            quantities=self._parsable_quantities,
+                            retrieve_list=retrieve_list)
 
     def _set_node(self, node_key, node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
@@ -180,9 +182,8 @@ class VaspParser(BaseParser):
         self.out(self._settings.output_nodes_dict[node_key].link_name, node)
         return True
 
-    def _setup_parsable_quantities(self):
-        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
-                                        parser_definitions=self._definitions.parser_definitions)
-
-    def _setup_manager(self):
-        self._manager.setup(quantities_to_parse=self._settings.quantities_to_parse, quantities=self._parsable_quantities)
+    def _missing_critical_file(self):
+        for file_name, value_dict in self._definitions.parser_definitions.items():
+            if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
+                return True
+        return False

@@ -140,6 +140,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
         parser._setup_parsable_quantities()
+
     assert 'quantity1' in str(excinfo.value)
 
 
