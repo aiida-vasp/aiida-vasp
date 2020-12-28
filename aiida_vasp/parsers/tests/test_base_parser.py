@@ -19,9 +19,9 @@ def base_parser(calc_with_retrieved):
 
 def test_get_file(base_parser):
     """Test getting a retrieved output file."""
-    base_parser._compose_retrieved_content()
-    assert os.path.isfile(base_parser.get_file('OUTCAR'))
-    assert os.path.exists(base_parser.get_file('OUTCAR'))
+    base_parser._compose_retrieved_content()  # pylint: disable=protected-access
+    assert os.path.isfile(base_parser._get_file('OUTCAR'))  # pylint: disable=protected-access
+    assert os.path.exists(base_parser._get_file('OUTCAR'))  # pylint: disable=protected-access
     # This should now not eject an OSError as this is handled by the logger
     # and None is returned.
-    assert base_parser.get_file('NonExistent') is None
+    assert base_parser._get_file('NonExistent') is None  # pylint: disable=protected-access

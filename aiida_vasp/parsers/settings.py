@@ -163,6 +163,7 @@ NODES = {
 
 
 class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
+    """Container of parser definitions"""
 
     def __init__(self, file_parser_set='default'):
         self._parser_definitions = {}
@@ -216,15 +217,15 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         return self._output_nodes_dict
 
     @property
-    def quantities_to_parse(self):
+    def quantity_keys_to_parse(self):
         """Return the combined list of all the quantities, required for the current nodes."""
-        quantities = []
-        for value in self.output_nodes_dict.values():
-            for quantity in value['quantities']:
-                if quantity in quantities:
+        quantity_keys_to_parse = []
+        for node_dict in self.output_nodes_dict.values():
+            for quantity_key in node_dict['quantities']:
+                if quantity_key in quantity_keys_to_parse:
                     continue
-                quantities.append(quantity)
-        return quantities
+                quantity_keys_to_parse.append(quantity_key)
+        return quantity_keys_to_parse
 
     def add_output_node(self, node_name, node_dict=None):
         """Add a definition of node to the nodes dictionary."""

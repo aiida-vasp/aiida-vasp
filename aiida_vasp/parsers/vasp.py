@@ -15,11 +15,8 @@ contains several modules:
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
-from aiida_vasp.parsers.manager import ParserManager
 from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
 from aiida_vasp.parsers.node_composer import NodeComposer
-
-# defaults
 
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
@@ -104,9 +101,7 @@ class VaspParser(BaseParser):
 
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
-        self._parsable_quantities = ParsableQuantities()
-        self._manager = ParserManager(vasp_parser_logger=self.logger)
-        self._parsed_quantities = {}
+        self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
     def add_parser_definition(self, parser_name, parser_dict):
         """Add the definition of a fileParser to self._definitions."""
@@ -132,26 +127,25 @@ class VaspParser(BaseParser):
 
         self._setup_parsable_quantities()
 
-        quantity_name_to_file_name = {}
-        for quantity_name in self._manager.quantities_to_parse:
-            file_name = self._parsable_quantities.get_by_name(quantity_name).file_name
-            if quantity_name not in quantity_name_to_file_name:
-                quantity_name_to_file_name[quantity_name] = file_name
+        quantity_key_to_file_name = {}
+        for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
+            file_name = self._parsable_quantities.get_by_name(quantity_key).file_name
+            if quantity_key not in quantity_key_to_file_name:
+                quantity_key_to_file_name[quantity_key] = file_name
 
-        for quantity_name, file_name in quantity_name_to_file_name.items():
-            file_to_parse = self.get_file(file_name)
+        parsed_quantities = {}
+        for quantity_key, file_name in quantity_key_to_file_name.items():
             file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
-            parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=file_to_parse)
-            parsed_quantity = parser.get_quantity(quantity_name)
+            parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+            parsed_quantity = parser.get_quantity(quantity_key)
             if parsed_quantity is not None:
-                self._parsed_quantities[quantity_name] = parsed_quantity
+                parsed_quantities[quantity_key] = parsed_quantity
             exit_code = parser.exit_code
 
-        # Assemble the nodes associated with the quantities
-        node_composer = NodeComposer(parsed_quantities=self._parsed_quantities, parsable_quantities=self._parsable_quantities)
-        for node_key, node_dict in self._settings.output_nodes_dict.items():
-            node = node_composer.compose(node_dict.type, quantity_names=node_dict.quantities)
-            success = self._set_node(node_key, node)
+        node_composer = NodeComposer(parsed_quantities=parsed_quantities, parsable_quantities=self._parsable_quantities)
+        for node_name, node_dict in self._settings.output_nodes_dict.items():
+            aiida_node = node_composer.compose(node_dict.type, quantity_names=node_dict.quantities)
+            success = self._set_node(node_name, aiida_node)
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
 
@@ -170,16 +164,15 @@ class VaspParser(BaseParser):
             retrieve_list += self.node.get_retrieve_temporary_list()
         if self.node.get_retrieve_list():
             retrieve_list += self.node.get_retrieve_list()
-        self._manager.setup(quantities_to_parse=self._settings.quantities_to_parse,
-                            quantities=self._parsable_quantities,
-                            retrieve_list=retrieve_list)
+        self._parsable_quantities.screen_quantity_keys_to_parse(quantity_keys_to_parse=self._settings.quantity_keys_to_parse,
+                                                                retrieve_list=retrieve_list)
 
-    def _set_node(self, node_key, node):
+    def _set_node(self, node_name, aiida_node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
 
-        if node is None:
+        if aiida_node is None:
             return False
-        self.out(self._settings.output_nodes_dict[node_key].link_name, node)
+        self.out(self._settings.output_nodes_dict[node_name].link_name, aiida_node)
         return True
 
     def _missing_critical_file(self):

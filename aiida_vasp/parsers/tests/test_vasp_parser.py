@@ -109,7 +109,7 @@ def test_quantities_to_parse(vasp_parser_with_test):
     """Check if quantities are added to quantities to parse correctly."""
     parser = vasp_parser_with_test
 
-    quantities_to_parse = parser._manager.quantities_to_parse
+    quantities_to_parse = parser._parsable_quantities.quantity_keys_to_parse
     assert 'quantity2' in quantities_to_parse
     assert 'quantity_with_alternatives' not in quantities_to_parse
     assert 'quantity1' in quantities_to_parse

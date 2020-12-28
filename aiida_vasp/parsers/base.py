@@ -82,7 +82,7 @@ class BaseParser(Parser):
         except NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
-    def get_file(self, fname):
+    def _get_file(self, fname):
         """
         Convenient access to retrieved and retrieved_temporary files.
 

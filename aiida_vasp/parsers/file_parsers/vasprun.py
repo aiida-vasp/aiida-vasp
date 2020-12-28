@@ -155,8 +155,8 @@ class VasprunParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self._settings is not None and self._settings.quantities_to_parse:
-            quantities_to_parse = self._settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantity_keys_to_parse:
+            quantities_to_parse = self._settings.quantity_keys_to_parse
 
         result = {}
 
@@ -423,7 +423,7 @@ class VasprunParser(BaseFileParser):
         stress = np.asarray([item[1] for item in stress])
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
-        symbols = np.asarray([elements[item].title() for item in species])
+        symbols = np.asarray([elements[item].title() for item in species])  # pylint: disable=not-an-iterable
 
         if (unitcell is not None) and (positions is not None) and \
            (species is not None) and (forces is not None) and \
@@ -513,11 +513,11 @@ class VasprunParser(BaseFileParser):
         projectors = {}
         prj = []
         try:
-            prj.append(proj['total'])
+            prj.append(proj['total'])  # pylint: disable=unsubscriptable-object
         except KeyError:
             try:
-                prj.append(proj['up'])
-                prj.append(proj['down'])
+                prj.append(proj['up'])  # pylint: disable=unsubscriptable-object
+                prj.append(proj['down'])  # pylint: disable=unsubscriptable-object
             except KeyError:
                 self._logger.error('Did not detect any projectors. Returning.')
         if len(prj) == 1:
@@ -585,8 +585,8 @@ class VasprunParser(BaseFileParser):
             self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
         dyn = {}
-        dyn['dynvec'] = dynmat['eigenvectors']
-        dyn['dyneig'] = dynmat['eigenvalues']
+        dyn['dynvec'] = dynmat['eigenvectors']  # pylint: disable=unsubscriptable-object
+        dyn['dyneig'] = dynmat['eigenvalues']  # pylint: disable=unsubscriptable-object
         return dyn
 
     @property
@@ -600,7 +600,7 @@ class VasprunParser(BaseFileParser):
         densta = {}
         # energy is always there, regardless of
         # total, spin or partial
-        energy = dos['total']['energy']
+        energy = dos['total']['energy']  # pylint: disable=unsubscriptable-object
         densta['energy'] = energy
         tdos = None
         pdos = None

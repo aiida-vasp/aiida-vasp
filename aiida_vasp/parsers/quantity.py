@@ -59,8 +59,14 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     - Provide ways to get parsable quantities.
     """
 
-    def __init__(self):
+    def __init__(self, vasp_parser_logger=None):
         self._parsable_quantities = {}
+        self._vasp_parser_logger = vasp_parser_logger
+        self._quantity_keys_to_parse = []
+
+    @property
+    def quantity_keys_to_parse(self):
+        return self._quantity_keys_to_parse
 
     def add_parsable_quantity(self, quantity_key, quantity_dict, retrieved_files=None):
         self._parsable_quantities[quantity_key] = ParsableQuantity(quantity_key, quantity_dict, retrieved_files)
@@ -137,3 +143,45 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
                     is_parsable = False
 
             quantity.is_parsable = is_parsable and not quantity.missing_files
+
+    def screen_quantity_keys_to_parse(self, quantity_keys_to_parse=None, retrieve_list=None):
+        """Collect quantity keys in quantity_keys_to_parse"""
+
+        self._quantity_keys_to_parse = []
+        for quantity_key in quantity_keys_to_parse:
+            if self.get_by_name(quantity_key):
+                any_parsable = False
+                for quantity in self.get_equivalent_quantities(quantity_key):
+                    if quantity.is_parsable:
+                        self._quantity_keys_to_parse.append(quantity.original_name)
+                        any_parsable = True
+                if not any_parsable:
+                    self._issue_warning(self.get_missing_files(quantity_key), retrieve_list, quantity_key)
+            else:
+                self._vasp_parser_logger.warning('{quantity} has been requested, '
+                                                 'however its parser has not been implemented. '
+                                                 'Please check the docstrings in aiida_vasp.parsers.vasp.py '
+                                                 'for valid input.'.format(quantity=quantity_key))
+
+    def _issue_warning(self, missing_files, retrieve_list, quantity_key):
+        """
+        Issue warning when no parsable quantity is found.
+
+        Neither the quantity nor it's alternatives could be added to the quantity_keys_to_parse.
+        Gather a list of all the missing files and issue a warning.
+        Check if the missing files are defined in the retrieve list
+
+        """
+        not_in_retrieve_list = None
+        for item in missing_files:
+            if item not in retrieve_list:
+                not_in_retrieve_list = item
+        self._vasp_parser_logger.warning('The quantity {quantity} has been requested for parsing, however the '
+                                         'following files required for parsing it have not been '
+                                         'retrieved: {missing_files}.'.format(quantity=quantity_key, missing_files=missing_files))
+        if not_in_retrieve_list is not None:
+            self._vasp_parser_logger.warning(
+                'The file {not_in_retrieve_list} is not present '
+                'in the list of files to be retrieved. If you want to add additional '
+                'files, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
+                'which is an option given to calculation settings.'.format(not_in_retrieve_list=not_in_retrieve_list))
