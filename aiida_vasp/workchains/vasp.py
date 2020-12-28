@@ -89,8 +89,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                    help="""
             If True, enable more detailed output during workchain execution.
             """)
-        spec.input('dynamics.selective_dynamics',
-                   valid_type=get_data_class('array'),
+        spec.input('dynamics.positions_dof',
+                   valid_type=get_data_class('list'),
                    required=False,
                    help="""
             Site dependent flag for selective dynamics when performing relaxation
@@ -154,7 +154,6 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check first if the calling workchain wants a restart in the same folder
         if 'restart_folder' in self.inputs:
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
-        self.ctx.inputs.parameters = self._init_parameters()
         # Then check if we the restart workchain wants a restart
         if isinstance(self.ctx.restart_calc, self._calculation):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
@@ -259,11 +258,3 @@ class VaspWorkChain(BaseRestartWorkChain):
                         'Please inspect messages and act.')
 
         return super(VaspWorkChain, self).on_except(exc_info)
-
-
-def default_array(name, array):
-    """Used to set ArrayData for spec.input."""
-    array_cls = get_data_node('array')
-    array_cls.set_array(name, array)
-
-    return array_cls

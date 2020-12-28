@@ -663,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
                 else:
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
-            param_dict['vasp'] = {'system': location}
+            param_dict['code'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
         # Set input nodes

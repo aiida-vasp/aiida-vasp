@@ -7,8 +7,8 @@ The file parser that handles the parsing of POSCAR and CONTCAR files.
 # pylint: disable=no-self-use
 import numpy as np
 
-from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
+from parsevasp.poscar import Poscar, Site
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -48,14 +48,14 @@ class PoscarParser(BaseFileParser):
         super(PoscarParser, self).__init__(*args, **kwargs)
         self.precision = 12
         self._structure = None
-        self.poscar_options = None
+        self.options = None
         self.init_with_kwargs(**kwargs)
 
     def _init_with_precision(self, precision):
         self.precision = precision
 
-    def _init_with_poscar_options(self, poscar_options):
-        self.poscar_options = poscar_options
+    def _init_with_options(self, options):
+        self.options = options
 
     def _init_with_data(self, data):
         """Initialize with an AiiDA StructureData instance."""
@@ -75,7 +75,7 @@ class PoscarParser(BaseFileParser):
         if isinstance(self._data_obj, get_data_class('structure')):
             # _data_obj is StructureData, return the parsed version if possible.
             try:
-                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, poscar=self.poscar_options),
+                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, options=self.options),
                               prec=self.precision,
                               conserve_order=True,
                               logger=self._logger)
@@ -109,7 +109,7 @@ class PoscarParser(BaseFileParser):
             self._structure = composer.compose('structure', quantities=['poscar-structure'])
         return self._structure
 
-    def aiida_to_parsevasp(self, structure, poscar=None):
+    def aiida_to_parsevasp(self, structure, options=None):
         """Convert Aiida StructureData to parsevasp's dictionary format."""
         dictionary = {}
         dictionary['comment'] = structure.label or structure.get_formula()
@@ -119,11 +119,11 @@ class PoscarParser(BaseFileParser):
         sites = []
         _transform_to_bool = np.vectorize(self.transform_to_bool)
         for index, site in enumerate(structure.sites):
-            if poscar is None:
+            if options is None:
                 _selective = [True, True, True]
             else:
                 try:
-                    _selective = _transform_to_bool(np.array(poscar['selective_dynamics'])[index, :])
+                    _selective = _transform_to_bool(np.array(options['positions_dof'])[index, :])
                 except KeyError:
                     _selective = [True, True, True]
             sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))

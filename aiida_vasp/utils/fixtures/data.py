@@ -62,7 +62,7 @@ def vasp_params(fresh_aiida_env):
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('dict')(dict=vasp_params_data.vasp.get_dict().update({'lwannier90': True}))
+    incar_data = get_data_class('dict')(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
@@ -208,7 +208,7 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
         if parameters is None:
             parameters = AttributeDict()
-            parameters.vasp = vasp_params.get_dict()
+            parameters.code = vasp_params.get_dict()
             parameters = get_data_class('dict')(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -250,7 +250,7 @@ def vasp2w90_inputs(
 
         if parameters is None:
             parameters = AttributeDict()
-            parameters.vasp = vasp_params.get_dict()
+            parameters.code = vasp_params.get_dict()
             parameters = get_data_class('dict')(dict=parameters)
 
         inputs.code = vasp_code
