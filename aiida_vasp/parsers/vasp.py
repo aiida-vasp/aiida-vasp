@@ -114,7 +114,7 @@ class VaspParser(BaseParser):
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
-        self._parsable_quantities.additional_quantities[quantity_name] = quantity_dict
+        self._parsable_quantities.add_parsable_quantity(quantity_name, quantity_dict)
 
     def add_custom_node(self, node_name, node_dict):
         """Add a custom node to the settings."""

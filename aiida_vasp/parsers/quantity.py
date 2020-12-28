@@ -60,11 +60,6 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
     def __init__(self):
         self._parsable_quantities = {}
-        self._additional_quantities = {}
-
-    @property
-    def additional_quantities(self):
-        return self._additional_quantities
 
     def add_parsable_quantity(self, quantity_name, quantity_dict, retrieved_files=None):
         self._parsable_quantities[quantity_name] = ParsableQuantity(quantity_name, quantity_dict, retrieved_files)
@@ -93,21 +88,13 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     def setup(self, retrieved_filenames=None, parser_definitions=None):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
-        # check uniqueness and add parsable quantities
         self._check_uniqueness_add_parsable(retrieved_filenames, parser_definitions)
-
-        # check consistency, that the quantity is parsable and
-        # alternatives
         self._check_consitency_and_alternatives()
 
     def _check_uniqueness_add_parsable(self, retrieved_filenames, parser_definitions):
         """Check uniqueness and add parsable quantities."""
 
         self._parsable_quantities = {}
-
-        # Add all the additional quantities that have been added by the user.
-        for key, value in self._additional_quantities.items():
-            self.add_parsable_quantity(key, value, retrieved_filenames)
 
         # Gather all parsable items as defined in the file parsers.
         for file_name, value in parser_definitions.items():
