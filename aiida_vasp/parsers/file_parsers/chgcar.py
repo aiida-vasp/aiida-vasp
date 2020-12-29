@@ -6,7 +6,7 @@ The file parser that handles the parsing of CHGCAR files.
 """
 
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
 
 
 class ChgcarParser(BaseFileParser):
@@ -41,6 +41,6 @@ class ChgcarParser(BaseFileParser):
     @property
     def chgcar(self):
         if self._chgcar is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._chgcar = composer.compose('vasp.chargedensity')
+            inputs = get_node_composer_inputs(node_type='vasp.chargedensity', file_parser=self)
+            self._chgcar = NodeComposer.compose('vasp.chargedensity', inputs)
         return self._chgcar

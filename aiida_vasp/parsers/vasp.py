@@ -16,7 +16,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
 
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
@@ -142,9 +142,12 @@ class VaspParser(BaseParser):
                 parsed_quantities[quantity_key] = parsed_quantity
             exit_code = parser.exit_code
 
-        node_composer = NodeComposer(parsed_quantities=parsed_quantities, parsable_quantities=self._parsable_quantities)
+        # node_composer = NodeComposer()
         for node_name, node_dict in self._settings.output_nodes_dict.items():
-            aiida_node = node_composer.compose(node_dict.type, quantity_names=node_dict.quantities)
+            inputs = get_node_composer_inputs(parsable_quantities=self._parsable_quantities,
+                                              parsed_quantities=parsed_quantities,
+                                              quantity_names=node_dict.quantities)
+            aiida_node = NodeComposer.compose(node_dict.type, inputs)
             success = self._set_node(node_name, aiida_node)
             if not success:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
@@ -156,22 +159,12 @@ class VaspParser(BaseParser):
 
     def _setup_parsable_quantities(self):
         """Screen possible quantities to parsable quantities"""
-
         self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
-                                        parser_definitions=self._definitions.parser_definitions)
-        self._parsable_quantities.screen_quantity_keys_to_parse(quantity_keys_to_parse=self._settings.quantity_keys_to_parse,
-                                                                retrieve_list=self._retrieved_content.keys())
-        # retrieve_list = []
-        # if self.node.get_retrieve_temporary_list():
-        #     retrieve_list += self.node.get_retrieve_temporary_list()
-        # if self.node.get_retrieve_list():
-        #     retrieve_list += self.node.get_retrieve_list()
-        # self._parsable_quantities.screen_quantity_keys_to_parse(quantity_keys_to_parse=self._settings.quantity_keys_to_parse,
-        #                                                         retrieve_list=retrieve_list)
+                                        parser_definitions=self._definitions.parser_definitions,
+                                        quantity_keys_to_parse=self._settings.quantity_keys_to_parse)
 
     def _set_node(self, node_name, aiida_node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
-
         if aiida_node is None:
             return False
         self.out(self._settings.output_nodes_dict[node_name].link_name, aiida_node)

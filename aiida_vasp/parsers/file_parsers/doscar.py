@@ -7,7 +7,7 @@ The file parser that handles the parsing of DOSCAR files.
 # pylint: disable=unsubscriptable-object  # pylint/issues/3139
 import numpy as np
 
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.
@@ -130,6 +130,6 @@ class DosParser(BaseFileParser):
     @property
     def dos(self):
         if self._dos is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._dos = composer.compose('array', quantity_names=['doscar-dos'])
+            inputs = get_node_composer_inputs(quantity_names=['doscar-dos'], file_parser=self)
+            self._dos = NodeComposer.compose('array', inputs)
         return self._dos

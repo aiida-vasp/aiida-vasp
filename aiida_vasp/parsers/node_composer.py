@@ -4,13 +4,10 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
-# pylint: disable=no-member, useless-object-inheritance, import-outside-toplevel
-# Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
 from copy import deepcopy
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.parsers.quantity import ParsableQuantities
-"""NODE_TYPES"""  # pylint: disable=pointless-string-statement
 
 NODES_TYPES = {
     'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications'],
@@ -24,29 +21,65 @@ NODES_TYPES = {
 }
 
 
-class NodeComposer(object):
+def get_node_composer_inputs(parsable_quantities=None, parsed_quantities=None, file_parser=None, node_type=None, quantity_names=None):
+    """Node composer inputs from file parsers"""
+    if file_parser is None:
+        _parsable_quantities = parsable_quantities
+        _parsed_quantities = parsed_quantities
+    else:
+        _parsable_quantities, _parsed_quantities = _get_quantities_from_file_parser(file_parser)
+
+    return _collect_quantity_data(_parsable_quantities, _parsed_quantities, node_type=node_type, quantity_names=quantity_names)
+
+
+def _get_quantities_from_file_parser(file_parser):
+    """Assemble necessary data from file_parser"""
+    parsable_quantities = ParsableQuantities()
+    parsed_quantities = {}
+    for key, value in file_parser.parsable_items.items():
+        parsable_quantities.add_parsable_quantity(key, deepcopy(value))
+        parsed_quantities[key] = file_parser.get_quantity(key)
+    return parsable_quantities, parsed_quantities
+
+
+def _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=None, quantity_names=None):
+    """Collect data into inputs"""
+    if quantity_names is None:
+        _quantity_names = NODES_TYPES.get(node_type)
+    else:
+        _quantity_names = quantity_names
+
+    inputs = {}
+    for quantity_name in _quantity_names:
+        quantity = parsable_quantities.get_by_name(quantity_name)
+        parsed_quantity = parsed_quantities.get(quantity_name)
+        if parsed_quantity is None:
+            inputs.update(_get_alternative_parsed_quantity(quantity_name, quantity, parsable_quantities, parsed_quantities))
+        else:
+            inputs[quantity.name] = parsed_quantity
+
+    return inputs
+
+
+def _get_alternative_parsed_quantity(quantity_name, quantity, parsable_quantities, parsed_quantities):
+    """Return alternative quantities"""
+    inputs = {}
+    for parsable_quantity in parsable_quantities.get_equivalent_quantities(quantity_name):
+        original_name = parsable_quantity.original_name
+        if original_name in parsed_quantities:
+            inputs[quantity.name] = parsed_quantities.get(original_name)
+    return inputs
+
+
+class NodeComposer:
     """
     Prototype for a generic NodeComposer, that will compose output nodes based on parsed quantities.
 
     Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
-    def __init__(self, parsable_quantities=None, parsed_quantities=None, file_parsers=None):
-        self._parsable_quantities = parsable_quantities
-        self._parsed_quantities = parsed_quantities
-        if file_parsers is not None:
-            self._init_with_file_parsers(file_parsers)
-
-    def _init_with_file_parsers(self, file_parsers):
-        """Init with a list of file parsers."""
-        self._parsable_quantities = ParsableQuantities()
-        self._parsed_quantities = {}
-        for parser in file_parsers:
-            for key, value in parser.parsable_items.items():
-                self._parsable_quantities.add_parsable_quantity(key, deepcopy(value))
-                self._parsed_quantities[key] = parser.get_quantity(key)
-
-    def compose(self, node_type, quantity_names=None):
+    @classmethod
+    def compose(cls, node_type, inputs):
         """
         A wrapper for compose_node with a node definition taken from NODES.
 
@@ -56,39 +89,18 @@ class NodeComposer(object):
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
-        if quantity_names is None:
-            _quantity_names = NODES_TYPES.get(node_type)
-        else:
-            _quantity_names = quantity_names
-
-        inputs = {}
-        for quantity_name in _quantity_names:
-            quantity = self._parsable_quantities.get_by_name(quantity_name)
-            parsed_quantity = self._parsed_quantities.get(quantity_name)
-            if parsed_quantity is None:
-                inputs.update(self._get_alternative_parsed_quantity(quantity_name, quantity))
-            else:
-                inputs[quantity.name] = parsed_quantity
-
         # Call the correct specialised method for assembling.
-        return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
+        return getattr(cls, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
 
-    def _get_alternative_parsed_quantity(self, quantity_name, quantity):
-        """Return alternative quantities"""
-        inputs = {}
-        for parsable_quantity in self._parsable_quantities.get_equivalent_quantities(quantity_name):
-            original_name = parsable_quantity.original_name
-            if original_name in self._parsed_quantities:
-                inputs[quantity.name] = self._parsed_quantities.get(original_name)
-        return inputs
-
-    def _compose_dict(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_dict(node_type, inputs):
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
         node.update_dict(inputs)
         return node
 
-    def _compose_structure(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_structure(node_type, inputs):
         """Compose a structure node."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -97,7 +109,8 @@ class NodeComposer(object):
                 node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
         return node
 
-    def _compose_array(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_array(node_type, inputs):
         """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
@@ -105,7 +118,8 @@ class NodeComposer(object):
                 node.set_array(key, value)
         return node
 
-    def _compose_vasp_wavefun(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_vasp_wavefun(node_type, inputs):
         """Compose a wave function node."""
         node = None
         for key in inputs:
@@ -114,7 +128,8 @@ class NodeComposer(object):
             node = get_data_class(node_type)(file=inputs[key])
         return node
 
-    def _compose_vasp_chargedensity(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_vasp_chargedensity(node_type, inputs):
         """Compose a charge density node."""
         node = None
         for key in inputs:
@@ -123,15 +138,17 @@ class NodeComposer(object):
             node = get_data_class(node_type)(file=inputs[key])
         return node
 
-    def _compose_array_bands(self, node_type, inputs):
+    @classmethod
+    def _compose_array_bands(cls, node_type, inputs):
         """Compose a bands node."""
         node = get_data_class(node_type)()
-        kpoints = self._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
+        kpoints = cls._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
         return node
 
-    def _compose_array_kpoints(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_array_kpoints(node_type, inputs):
         """Compose an array.kpoints node based on inputs."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -156,7 +173,8 @@ class NodeComposer(object):
                 node.set_kpoints_mesh(mesh, offset=shifts)
         return node
 
-    def _compose_array_trajectory(self, node_type, inputs):  # pylint: disable=no-self-use
+    @staticmethod
+    def _compose_array_trajectory(node_type, inputs):
         """
         Compose a trajectory node.
 
