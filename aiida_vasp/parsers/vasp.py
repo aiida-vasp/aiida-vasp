@@ -122,10 +122,14 @@ class VaspParser(BaseParser):
         error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
-        if self._missing_critical_file():
-            return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
-        self._setup_parsable_quantities()
+        for file_name, value_dict in self._definitions.parser_definitions.items():
+            if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
+                return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
+
+        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
+                                        parser_definitions=self._definitions.parser_definitions,
+                                        quantity_keys_to_parse=self._settings.quantity_keys_to_parse)
 
         quantity_key_to_file_name = {}
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
@@ -142,36 +146,16 @@ class VaspParser(BaseParser):
                 parsed_quantities[quantity_key] = parsed_quantity
             exit_code = parser.exit_code
 
-        # node_composer = NodeComposer()
         for node_name, node_dict in self._settings.output_nodes_dict.items():
             inputs = get_node_composer_inputs(parsable_quantities=self._parsable_quantities,
                                               parsed_quantities=parsed_quantities,
                                               quantity_names=node_dict.quantities)
             aiida_node = NodeComposer.compose(node_dict.type, inputs)
-            success = self._set_node(node_name, aiida_node)
-            if not success:
+            if aiida_node is None:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
+            self.out(self._settings.output_nodes_dict[node_name].link_name, aiida_node)
 
         if exit_code is not None:
             return exit_code
 
         return self.exit_codes.NO_ERROR
-
-    def _setup_parsable_quantities(self):
-        """Screen possible quantities to parsable quantities"""
-        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
-                                        parser_definitions=self._definitions.parser_definitions,
-                                        quantity_keys_to_parse=self._settings.quantity_keys_to_parse)
-
-    def _set_node(self, node_name, aiida_node):
-        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
-        if aiida_node is None:
-            return False
-        self.out(self._settings.output_nodes_dict[node_name].link_name, aiida_node)
-        return True
-
-    def _missing_critical_file(self):
-        for file_name, value_dict in self._definitions.parser_definitions.items():
-            if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
-                return True
-        return False
