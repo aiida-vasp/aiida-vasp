@@ -85,10 +85,10 @@ class BaseFileParser(BaseParser):
     @delegate_method_kwargs(prefix='_init_with_')
     def init_with_kwargs(self, **kwargs):
         """Delegate initialization to _init_with - methods."""
-        pass
 
     def _init_with_settings(self, settings):
         """
+        Dummy method to be called for doing nothing
 
         self._settings is set at __init__(). But this is needed because of
         two reasons:
@@ -98,11 +98,9 @@ class BaseFileParser(BaseParser):
            So this has to be set before init_with_kwargs is called.
 
         """
-        pass
 
     def _init_with_exit_codes(self, exit_codes):
         """See docstring of _init_with_settings."""
-        pass
 
     def _init_with_file_path(self, path):
         """Init with a file path."""
@@ -143,6 +141,8 @@ class BaseFileParser(BaseParser):
         return self._parsed_data.get(quantity_name)
 
     def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
+        """Method to handle inputs (to be removed)"""
+
         if quantity_name not in self._parsable_items:
             return None
 

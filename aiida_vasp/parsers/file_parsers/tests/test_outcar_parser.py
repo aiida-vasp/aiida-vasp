@@ -19,7 +19,7 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
 
     """
 
-    outcar_parser._settings._output_nodes_dict.update(
+    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
         {'misc': {
             'type': 'dict',
             'quantities': ['symmetries_extended', 'elastic_moduli'],

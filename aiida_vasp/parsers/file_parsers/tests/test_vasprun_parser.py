@@ -30,7 +30,7 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
 
     """
 
-    vasprun_parser._settings._output_nodes_dict.update({
+    vasprun_parser._settings._output_nodes_dict.update({  # pylint: disable=protected-access
         'misc': {
             'type': 'dict',
             'quantities': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'],

@@ -74,6 +74,7 @@ class NodeComposer(object):
         return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
 
     def _get_alternative_parsed_quantity(self, quantity_name, quantity):
+        """Return alternative quantities"""
         inputs = {}
         for parsable_quantity in self._parsable_quantities.get_equivalent_quantities(quantity_name):
             original_name = parsable_quantity.original_name
@@ -81,13 +82,13 @@ class NodeComposer(object):
                 inputs[quantity.name] = self._parsed_quantities.get(original_name)
         return inputs
 
-    def _compose_dict(self, node_type, inputs):
+    def _compose_dict(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
         node.update_dict(inputs)
         return node
 
-    def _compose_structure(self, node_type, inputs):
+    def _compose_structure(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose a structure node."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -96,7 +97,7 @@ class NodeComposer(object):
                 node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
         return node
 
-    def _compose_array(self, node_type, inputs):
+    def _compose_array(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
@@ -104,7 +105,7 @@ class NodeComposer(object):
                 node.set_array(key, value)
         return node
 
-    def _compose_vasp_wavefun(self, node_type, inputs):
+    def _compose_vasp_wavefun(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose a wave function node."""
         node = None
         for key in inputs:
@@ -113,7 +114,7 @@ class NodeComposer(object):
             node = get_data_class(node_type)(file=inputs[key])
         return node
 
-    def _compose_vasp_chargedensity(self, node_type, inputs):
+    def _compose_vasp_chargedensity(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose a charge density node."""
         node = None
         for key in inputs:
@@ -130,7 +131,7 @@ class NodeComposer(object):
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
         return node
 
-    def _compose_array_kpoints(self, node_type, inputs):
+    def _compose_array_kpoints(self, node_type, inputs):  # pylint: disable=no-self-use
         """Compose an array.kpoints node based on inputs."""
         node = get_data_class(node_type)()
         for key in inputs:
@@ -155,7 +156,7 @@ class NodeComposer(object):
                 node.set_kpoints_mesh(mesh, offset=shifts)
         return node
 
-    def _compose_array_trajectory(self, node_type, inputs):
+    def _compose_array_trajectory(self, node_type, inputs):  # pylint: disable=no-self-use
         """
         Compose a trajectory node.
 

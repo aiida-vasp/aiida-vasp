@@ -159,13 +159,15 @@ class VaspParser(BaseParser):
 
         self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
                                         parser_definitions=self._definitions.parser_definitions)
-        retrieve_list = []
-        if self.node.get_retrieve_temporary_list():
-            retrieve_list += self.node.get_retrieve_temporary_list()
-        if self.node.get_retrieve_list():
-            retrieve_list += self.node.get_retrieve_list()
         self._parsable_quantities.screen_quantity_keys_to_parse(quantity_keys_to_parse=self._settings.quantity_keys_to_parse,
-                                                                retrieve_list=retrieve_list)
+                                                                retrieve_list=self._retrieved_content.keys())
+        # retrieve_list = []
+        # if self.node.get_retrieve_temporary_list():
+        #     retrieve_list += self.node.get_retrieve_temporary_list()
+        # if self.node.get_retrieve_list():
+        #     retrieve_list += self.node.get_retrieve_list()
+        # self._parsable_quantities.screen_quantity_keys_to_parse(quantity_keys_to_parse=self._settings.quantity_keys_to_parse,
+        #                                                         retrieve_list=retrieve_list)
 
     def _set_node(self, node_name, aiida_node):
         """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
