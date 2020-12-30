@@ -25,30 +25,21 @@ class ParsableQuantity(DictWithAttributes):
         parsable_quantity = ParsableQuantity(key, value, None)
 
     self.file_name may be originated from keys of FILE_PARSER_SETS
-    files_list may come from parser._retrieved_content.keys(), i.e.,
-    [retrieved_file.name for retrieved_file in parser.retrieved.list_objects()].
+    self.name corresponds to link name.
 
     """
 
-    def __init__(self, name, init_dict, files_list):
-        self.original_name = name
-
-        # The following items are given from init_dict.
+    def __init__(self, original_name, init_dict):
+        self.original_name = original_name
         self.alternatives = []
         self.prerequisites = []
         self.inputs = []
         self.name = None
+        self.file_name = None
         super(ParsableQuantity, self).__init__(init_dict)
 
         if self.get('name') is None:
-            self.name = name
-        if self.get('file_name') is None:
-            self.file_name = 'MISSING_FILE_NAME'
-
-        # Check whether the file required for parsing this quantity have been retrieved.
-        self.missing_files = []
-        if files_list is None or self.file_name not in files_list:
-            self.missing_files.append(self.file_name)
+            self.name = original_name
 
 
 class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
@@ -63,108 +54,166 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         self._parsable_quantities = {}
         self._vasp_parser_logger = vasp_parser_logger
         self._quantity_keys_to_parse = []
+        self._missing_filenames = {}
+        self._quantity_keys = None
+        self._equiv_node_keys = {}
+        self._waiting_quantity_items = {}
+        self._quantity_items = {}
+        self._quantity_keys_to_filenames = {}
 
     @property
     def quantity_keys_to_parse(self):
         return self._quantity_keys_to_parse
 
-    def add_parsable_quantity(self, quantity_key, quantity_dict, retrieved_files=None):
-        self._parsable_quantities[quantity_key] = ParsableQuantity(quantity_key, quantity_dict, retrieved_files)
+    def add_parsable_quantity(self, quantity_key, quantity_dict):
+        self._waiting_quantity_items[quantity_key] = quantity_dict
 
     def remove_parsable_quantity(self, quantity_key):
         _ = self._parsable_quantities.pop(quantity_key, None)
 
-    def get_equivalent_quantities(self, quantity_key):
+    def get_equivalent_quantities(self, quantity_name):
         """Get a list of equivalent quantities."""
-        quantity = self._parsable_quantities[quantity_key]
-        return [quantity] + [self._parsable_quantities[alternative_quantity_key] for alternative_quantity_key in quantity.alternatives]
+        return [self._parsable_quantities[alt_quantity_key] for alt_quantity_key in self._alternatives[quantity_name]]
 
     def get_by_name(self, quantity_key):
         """Get a quantity by name."""
         return self._parsable_quantities.get(quantity_key)
 
-    def get_missing_files(self, quantity_key):
-        """Return a list with all missing files for a quantity."""
-        missing_files = []
-        for quantity in self.get_equivalent_quantities(quantity_key):
-            for missing_file in quantity.missing_files:
-                missing_files.append(missing_file)
-
-        return missing_files
-
     def setup(self, retrieved_filenames=None, parser_definitions=None, quantity_keys_to_parse=None):
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
-
-        self._add_parsable(retrieved_filenames, parser_definitions)
-        self._collect_alternatives()
+        self._add_quantities_in_definitions(parser_definitions)
+        self._create_containers_of_equiv_node_keys()
+        self._show(self._quantity_keys)
+        self._put_alternatives_in_equiv_node_keys()
+        self._show(self._equiv_node_keys)
+        self._set_missing_filenames(retrieved_filenames)
+        self._debug_show(self._missing_filenames)
+        self._check_parsable(retrieved_filenames)
         self._screen_quantity_keys_to_parse(quantity_keys_to_parse, retrieved_filenames)
 
-    def _add_parsable(self, retrieved_filenames, parser_definitions):
-        """Gather all parsable items as defined in the file parsers."""
+    def _show(self, x):
+        print('---debug---')
+        if isinstance(x, dict):
+            for key, value in x.items():
+                print(key, value)
+        elif isinstance(x, list):
+            for value in x:
+                print(value)
+        print('---debug---')
 
-        self._parsable_quantities = {}
-        for file_name, value in parser_definitions.items():
+    def _debug_show(self, x):
+        self._show(x)
+        raise
+
+    def _add_quantities_in_definitions(self, parser_definitions):
+        """Gather all quantity keys in definitions of the file parsers."""
+        for filename, value in parser_definitions.items():
             for quantity_key, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
-                if quantity_key in self._parsable_quantities:
-                    # This quantity has already been added so it is not unique.
-                    raise RuntimeError('The quantity {quantity} defined in {filename} has been '
-                                       'defined by two FileParser classes. Quantity names must '
-                                       'be unique. If both quantities are equivalent, define one '
-                                       'as an alternative for the other.'.format(quantity=quantity_key, filename=file_name))
-                # Create quantity objects.
-                quantity_dict['file_name'] = file_name
-                self.add_parsable_quantity(quantity_key, quantity_dict, retrieved_filenames)
+                self._add_quantity(quantity_key, quantity_dict, filename)
 
-    def _collect_alternatives(self):
-        """Check the consistency and collect alternatives."""
+        for quantity_key, quantity_dict in self._waiting_quantity_items.items():
+            if 'file_name' in quantity_dict:
+                self._add_quantity(quantity_key, quantity_dict, quantity_dict['file_name'])
+            else:
+                raise RuntimeError('The added quantity {quantity} has to contain file_name entry.'.format(quantity=quantity_key))
 
-        parsable_quantity_keys = list(self._parsable_quantities.keys())
+        self._quantity_keys = list(self._quantity_items.keys())
 
-        # Setup all alternatives:
-        for quantity_key in parsable_quantity_keys:
-            quantity = self._parsable_quantities[quantity_key]
-            if quantity_key != quantity.name:
-                # This quantity is considered as an alternative to quantity.name.
-                if quantity.name not in self._parsable_quantities:
-                    # Add a dummy quantity for it.
-                    self.add_parsable_quantity(quantity.name, {})
-                if quantity_key not in self._parsable_quantities[quantity.name].alternatives:
-                    self._parsable_quantities[quantity.name].alternatives.append(quantity_key)
+    def _add_quantity(self, quantity_key, quantity_dict, filename):
+        if quantity_key in self._quantity_items:
+            # This quantity has already been added so it is not unique.
+            raise RuntimeError('The quantity {quantity} defined in {filename} has been '
+                               'defined by two FileParser classes. Quantity names must '
+                               'be unique. If both quantities are equivalent, define one '
+                               'as an alternative for the other.'.format(quantity=quantity_key, filename=filename))
+        self._quantity_keys_to_filenames[quantity_key] = filename
+        self._quantity_items[quantity_key] = quantity_dict
 
-        # Check for every quantity, whether all of the prerequisites are parsable.
+    def _create_containers_of_equiv_node_keys(self):
+        """
+        Create containars of quantity keys to equivalent node keys
+
+        Put the first entry for each node key.
+        The first entry of each container is that with quantity_key == quantity['name'] if found.
+
+        """
+        for quantity_key in self._quantity_keys:
+            quantity_dict = self._quantity_items[quantity_key]
+            if 'name' in quantity_dict:
+                name = quantity_dict['name']
+            else:
+                name = quantity_key
+            if name not in self._equiv_node_keys:
+                self._equiv_node_keys[name] = []
+            if quantity_key == name and name not in self._equiv_node_keys[name]:
+                self._equiv_node_keys[name].append(quantity_key)
+
+        for quantity_key in self._quantity_keys:
+            quantity_dict = self._quantity_items[quantity_key]
+            if 'name' in quantity_dict:
+                name = quantity_dict['name']
+                if quantity_key not in self._equiv_node_keys[name]:
+                    self._equiv_node_keys[name].append(quantity_key)
+
+    def _put_alternatives_in_equiv_node_keys(self):
+        """Put alternative node keys to equiv_node_keys"""
+
+        for quantity_key in self._quantity_keys:
+            quantity_dict = self._quantity_items[quantity_key]
+            for node_key in self._equiv_node_keys:
+                if 'name' in quantity_dict:
+                    name = quantity_dict['name']
+                else:
+                    name = quantity_key
+                if name == node_key:
+                    if 'alternatives' in quantity_dict:
+                        for alt_node_key in quantity_dict['alternatives']:
+                            if alt_node_key not in self._equiv_node_keys[node_key]:
+                                self._equiv_node_keys[node_key].append(alt_node_key)
+
+    def _set_missing_filenames(self, retrieved_filenames):
+        """Collect lists of all missing files for quantities."""
+        for quantity_key in self._quantity_keys:
+            missing_filenames = []
+            filename = self._quantity_keys_to_filenames[quantity_key]
+            if filename not in retrieved_filenames:
+                if filename not in missing_filenames:
+                    missing_filenames.append(filename)
+            self._missing_filenames[quantity_key] = missing_filenames
+
+    def _check_parsable(self, retrieved_filenames):
+        """Check for every quantity, whether all of the prerequisites are parsable."""
         for quantity_key in self._parsable_quantities:
             quantity = self._parsable_quantities[quantity_key]
             is_parsable = True
-
             for prereq in quantity.prerequisites:
                 if self._parsable_quantities.get(prereq) is None:
                     is_parsable = False
-                    continue
-                if self._parsable_quantities[prereq].missing_files:
+                elif self._missing_filenames[prereq]:
                     is_parsable = False
-
-            quantity.is_parsable = is_parsable and not quantity.missing_files
+            quantity.is_parsable = is_parsable and not self._missing_filenames[quantity_key]
 
     def _screen_quantity_keys_to_parse(self, quantity_keys_to_parse, retrieve_filenames):
         """Collect quantity keys in quantity_keys_to_parse"""
-
         self._quantity_keys_to_parse = []
         for quantity_key in quantity_keys_to_parse:
             if self.get_by_name(quantity_key):
                 any_parsable = False
-                for quantity in self.get_equivalent_quantities(quantity_key):
+                quantity_name = self._parsable_quantities[quantity_key].name
+                for quantity in self.get_equivalent_quantities(quantity_name):
                     if quantity.is_parsable:
-                        self._quantity_keys_to_parse.append(quantity.original_name)
+                        self._quantity_keys_to_parse.append(quantity_key)
                         any_parsable = True
+                        break
                 if not any_parsable:
-                    self._issue_warning(self.get_missing_files(quantity_key), retrieve_filenames, quantity_key)
+                    self._issue_warning(retrieve_filenames, quantity_key)
             else:
                 self._vasp_parser_logger.warning('{quantity} has been requested, '
                                                  'however its parser has not been implemented. '
                                                  'Please check the docstrings in aiida_vasp.parsers.vasp.py '
                                                  'for valid input.'.format(quantity=quantity_key))
 
-    def _issue_warning(self, missing_files, retrieve_filenames, quantity_key):
+    def _issue_warning(self, retrieve_filenames, quantity_key):
         """
         Issue warning when no parsable quantity is found.
 
@@ -173,6 +222,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         Check if the missing files are defined in the retrieve list
 
         """
+        missing_files = self._missing_filenames[quantity_key]
         not_in_retrieve_filenames = None
         for item in missing_files:
             if item not in retrieve_filenames:

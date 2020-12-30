@@ -6,6 +6,8 @@ import os
 import pytest
 import numpy as np
 
+from aiida.plugins import ParserFactory
+from aiida.plugins import CalculationFactory
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
@@ -71,12 +73,8 @@ class ExampleFileParser2(BaseFileParser):
         return result
 
 
-@pytest.fixture
-def vasp_parser_with_test(calc_with_retrieved):
-    """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
-    from aiida.plugins import ParserFactory
-    from aiida.plugins import CalculationFactory
-
+def _get_vasp_parser(calc_with_retrieved):
+    """Return vasp parser before parsing"""
     settings_dict = {
         # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
         'parser_settings': {
@@ -87,22 +85,28 @@ def vasp_parser_with_test(calc_with_retrieved):
             }
         }
     }
-
     file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/basic_run')
-
     node = calc_with_retrieved(file_path, settings_dict)
-
     parser = ParserFactory('vasp.vasp')(node)
+    return parser, file_path, node
+
+
+@pytest.fixture
+def vasp_parser_with_test(calc_with_retrieved):
+    """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
     parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
-    parser.add_parsable_quantity('quantity_with_alternatives', {
-        'inputs': [],
-        'prerequisites': [],
-    })
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
     finally:
         parser = ParserFactory('vasp.vasp')(node)
+
+
+@pytest.fixture
+def vasp_parser_without_parsing(calc_with_retrieved):
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    return parser, file_path
 
 
 def test_quantities_to_parse(vasp_parser_with_test):
@@ -111,8 +115,32 @@ def test_quantities_to_parse(vasp_parser_with_test):
 
     quantities_to_parse = parser._parsable_quantities.quantity_keys_to_parse
     assert 'quantity2' in quantities_to_parse
-    assert 'quantity_with_alternatives' not in quantities_to_parse
     assert 'quantity1' in quantities_to_parse
+
+
+def test_add_parser_quantity_fail(vasp_parser_without_parsing):
+    """add_parsable_quantity without file_name must fail"""
+    parser, file_path = vasp_parser_without_parsing
+    parser.add_parsable_quantity('quantity_with_alternatives', {
+        'inputs': [],
+        'prerequisites': [],
+    })
+    with pytest.raises(RuntimeError):
+        parser.parse(retrieved_temporary_folder=file_path)
+
+
+def test_add_parser_quantity(vasp_parser_without_parsing):
+    """add_parsable_quantity with file_name succeeds."""
+    parser, file_path = vasp_parser_without_parsing
+    parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
+    parser.parse(retrieved_temporary_folder=file_path)
+
+
+def test_add_parser_definition(vasp_parser_with_test):
+    """Check if parser definition is passed to parser."""
+    parser = vasp_parser_with_test
+    parser_dict = parser._definitions.parser_definitions['_scheduler-stderr.txt']
+    assert parser_dict['parser_class'] == ExampleFileParser
 
 
 def test_parsable_quantities(vasp_parser_with_test):
@@ -123,9 +151,9 @@ def test_parsable_quantities(vasp_parser_with_test):
     for quantity in ExampleFileParser.PARSABLE_ITEMS:
         assert quantities.get_by_name(quantity) is not None
     # Check whether quantities have been set up correctly.
-    assert not quantities.get_by_name('quantity1').missing_files
+    assert not quantities._missing_filenames['quantity1']
     assert quantities.get_by_name('quantity1').is_parsable
-    assert quantities.get_by_name('quantity_with_alternatives').missing_files
+    assert quantities._missing_filenames['quantity_with_alternatives']
     assert quantities.get_by_name('quantity2').is_parsable
     assert not quantities.get_by_name('quantity3').is_parsable
     # check whether the additional non existing quantity has been added. This is for cases,
@@ -167,8 +195,6 @@ def xml_truncate(index, original, tmp):
 
 def test_parser_nodes(request, calc_with_retrieved):
     """Test a few basic node items of the parser."""
-    from aiida.plugins import ParserFactory
-
     settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['fermi_level']}}
 
     file_path = str(request.fspath.join('..') + '../../../test_data/basic')
@@ -190,8 +216,6 @@ def test_parser_nodes(request, calc_with_retrieved):
 
 def test_structure(request, calc_with_retrieved):
     """Test that the structure from vasprun and POSCAR is the same."""
-    from aiida.plugins import ParserFactory
-
     # turn of everything, except structure
     settings_dict = {
         'parser_settings': {
@@ -252,8 +276,6 @@ def test_structure(request, calc_with_retrieved):
 
 def test_misc(request, calc_with_retrieved):
     """Test that it is possible to extract misc from both vasprun and OUTCAR."""
-    from aiida.plugins import ParserFactory
-
     # turn of everything, except misc
     settings_dict = {
         'parser_settings': {
@@ -321,7 +343,6 @@ def test_misc(request, calc_with_retrieved):
 @pytest.mark.parametrize('misc_input', [[], ['notifications']])
 def test_stream(misc_input, config, request, calc_with_retrieved):
     """Test that the stream parser works and gets stored on a node."""
-    from aiida.plugins import ParserFactory
     file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
 
     # turn of everything, except misc
@@ -384,7 +405,6 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 
 def test_stream_history(request, calc_with_retrieved):
     """Test that the stream parser keeps history."""
-    from aiida.plugins import ParserFactory
     file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
 
     # turn of everything, except misc

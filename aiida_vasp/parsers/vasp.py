@@ -103,9 +103,9 @@ class VaspParser(BaseParser):
         self._settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
-    def add_parser_definition(self, parser_name, parser_dict):
+    def add_parser_definition(self, filename, parser_dict):
         """Add the definition of a fileParser to self._definitions."""
-        self._definitions.add_parser_definition(parser_name, parser_dict)
+        self._definitions.add_parser_definition(filename, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""

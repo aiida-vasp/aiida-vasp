@@ -173,17 +173,16 @@ class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
     def parser_definitions(self):
         return self._parser_definitions
 
-    def add_parser_definition(self, parser_name, parser_dict):
-        self._parser_definitions[parser_name] = parser_dict
+    def add_parser_definition(self, filename, parser_dict):
+        """Add custum parser definition"""
+        self._parser_definitions[filename] = parser_dict
 
     def _init_parser_definitions(self, file_parser_set):
-        """Load the parser definitions."""
-        from copy import deepcopy
-
+        """Load a set of parser definitions."""
         if file_parser_set not in FILE_PARSER_SETS:
             return
         for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self._parser_definitions[file_name] = deepcopy(parser_dict)
+            self._parser_definitions[file_name] = parser_dict
 
 
 class ParserSettings(object):  # pylint: disable=useless-object-inheritance

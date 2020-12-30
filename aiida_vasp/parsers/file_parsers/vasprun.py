@@ -77,7 +77,7 @@ class VasprunParser(BaseFileParser):
         },
         'dielectrics': {
             'inputs': [],
-            'nodeName': 'dielectrics',
+            'name': 'dielectrics',
             'prerequisites': [],
         },
         'stress': {
@@ -87,7 +87,7 @@ class VasprunParser(BaseFileParser):
         },
         'forces': {
             'inputs': [],
-            'nodeName': 'forces',
+            'name': 'forces',
             'prerequisites': [],
         },
         'born_charges': {
