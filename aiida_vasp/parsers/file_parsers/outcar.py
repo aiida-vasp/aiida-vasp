@@ -8,7 +8,7 @@ import re
 
 from parsevasp.outcar import Outcar
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
 
@@ -87,8 +87,8 @@ class OutcarParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self._settings is not None and self._settings.quantity_keys_to_parse:
-            quantities_to_parse = self._settings.quantity_keys_to_parse
+        if self._settings is not None and self._settings.quantity_names_to_parse:
+            quantities_to_parse = self._settings.quantity_names_to_parse
 
         result = {}
 
@@ -245,6 +245,6 @@ class LegacyOutcarParser(BaseFileParser):
     @property
     def parameter(self):
         if self._parameter is None:
-            inputs = get_node_composer_inputs(quantity_names=DEFAULT_OPTIONS['quantities_to_parse'], file_parser=self)
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=DEFAULT_OPTIONS['quantities_to_parse'])
             self._parameter = NodeComposer.compose('dict', inputs)
         return self._parameter

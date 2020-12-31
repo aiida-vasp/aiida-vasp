@@ -100,7 +100,7 @@ class VaspParser(BaseParser):
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
         self._definitions = ParserDefinitions()
-        self._settings = ParserSettings(parser_settings, DEFAULT_OPTIONS)
+        self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
     def add_parser_definition(self, filename, parser_dict):
@@ -129,16 +129,11 @@ class VaspParser(BaseParser):
 
         self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
                                         parser_definitions=self._definitions.parser_definitions,
-                                        quantity_keys_to_parse=self._settings.quantity_keys_to_parse)
-
-        quantity_key_to_file_name = {}
-        for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
-            file_name = self._parsable_quantities.get_by_name(quantity_key).file_name
-            if quantity_key not in quantity_key_to_file_name:
-                quantity_key_to_file_name[quantity_key] = file_name
+                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
         parsed_quantities = {}
-        for quantity_key, file_name in quantity_key_to_file_name.items():
+        for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
+            file_name = self._parsable_quantities.quantity_keys_to_filenames[quantity_key]
             file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
             parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
             parsed_quantity = parser.get_quantity(quantity_key)

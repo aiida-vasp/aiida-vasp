@@ -6,6 +6,7 @@ Defines the file associated with each file parser and the default node
 compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
+from copy import deepcopy
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
@@ -182,7 +183,7 @@ class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
         if file_parser_set not in FILE_PARSER_SETS:
             return
         for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self._parser_definitions[file_name] = parser_dict
+            self._parser_definitions[file_name] = deepcopy(parser_dict)
 
 
 class ParserSettings(object):  # pylint: disable=useless-object-inheritance
@@ -206,7 +207,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         else:
             self._settings = settings
         if default_settings is not None:
-            self.update_with(default_settings)
+            self._update_with(default_settings)
 
         self._output_nodes_dict = {}
         self._init_output_nodes_dict()
@@ -216,20 +217,18 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         return self._output_nodes_dict
 
     @property
-    def quantity_keys_to_parse(self):
+    def quantity_names_to_parse(self):
         """Return the combined list of all the quantities, required for the current nodes."""
-        quantity_keys_to_parse = []
+        quantity_names_to_parse = []
         for node_dict in self.output_nodes_dict.values():
             for quantity_key in node_dict['quantities']:
-                if quantity_key in quantity_keys_to_parse:
+                if quantity_key in quantity_names_to_parse:
                     continue
-                quantity_keys_to_parse.append(quantity_key)
-        return quantity_keys_to_parse
+                quantity_names_to_parse.append(quantity_key)
+        return quantity_names_to_parse
 
     def add_output_node(self, node_name, node_dict=None):
         """Add a definition of node to the nodes dictionary."""
-        from copy import deepcopy
-
         if node_dict is None:
             # Try to get a node_dict from NODES.
             node_dict = deepcopy(NODES.get(node_name, {}))
@@ -240,12 +239,6 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
                 return
 
         self.output_nodes_dict[node_name] = DictWithAttributes(node_dict)
-
-    def update_with(self, update_dict):
-        """Selectively update keys from one Dictionary to another."""
-        for key, value in update_dict.items():
-            if key not in self._settings:
-                self._settings[key] = value
 
     def get(self, item, default=None):
         return self._settings.get(item, default)
@@ -272,8 +265,6 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
                 'add_custom_node': {'type': 'parameter', 'quantities': ['efermi', 'forces'], 'link_name': 'my_custom_node'}
         """
-        from copy import deepcopy
-
         self._output_nodes_dict = {}
 
         # First, find all the nodes, that should be added.
@@ -298,3 +289,9 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
                 node_dict['link_name'] = node_name
 
             self.add_output_node(node_name, node_dict)
+
+    def _update_with(self, update_dict):
+        """Selectively update keys from one Dictionary to another."""
+        for key, value in update_dict.items():
+            if key not in self._settings:
+                self._settings[key] = value

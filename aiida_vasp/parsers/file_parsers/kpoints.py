@@ -8,7 +8,7 @@ The file parser that handles the parsing of KPOINTS files.
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -110,7 +110,7 @@ class KpointsParser(BaseFileParser):
     @property
     def kpoints(self):
         if self._kpoints is None:
-            inputs = get_node_composer_inputs(quantity_names=['kpoints-kpoints'], file_parser=self)
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=['kpoints-kpoints'])
             self._kpoints = NodeComposer.compose('array.kpoints', inputs)
         return self._kpoints
 
