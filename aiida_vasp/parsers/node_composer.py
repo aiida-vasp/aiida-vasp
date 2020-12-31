@@ -5,9 +5,7 @@ Node composer.
 A composer that composes different quantities onto AiiDA data nodes.
 """
 
-from copy import deepcopy
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.quantity import ParsableQuantities
 
 NODES_TYPES = {
     'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications'],
@@ -21,25 +19,20 @@ NODES_TYPES = {
 }
 
 
-def get_node_composer_inputs(parsable_quantities=None, parsed_quantities=None, file_parser=None, node_type=None, quantity_names=None):
-    """Node composer inputs from file parsers"""
-    if file_parser is None:
-        _parsable_quantities = parsable_quantities
-        _parsed_quantities = parsed_quantities
-    else:
-        _parsable_quantities, _parsed_quantities = _get_quantities_from_file_parser(file_parser)
-
-    return _collect_quantity_data(_parsable_quantities, _parsed_quantities, node_type=node_type, quantity_names=quantity_names)
+def get_node_composer_inputs(parsable_quantities=None, parsed_quantities=None, node_type=None, quantity_names=None):
+    """Node composer inputs"""
+    return _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=node_type, quantity_names=quantity_names)
 
 
-def _get_quantities_from_file_parser(file_parser):
+def get_node_composer_inputs_from_file_parser(file_parser, quantity_names=None):  # pylint: disable=invalid-name
     """Assemble necessary data from file_parser"""
-    parsable_quantities = ParsableQuantities()
-    parsed_quantities = {}
+    inputs = {}
     for key, value in file_parser.parsable_items.items():
-        parsable_quantities.add_parsable_quantity(key, deepcopy(value))
-        parsed_quantities[key] = file_parser.get_quantity(key)
-    return parsable_quantities, parsed_quantities
+        if quantity_names is not None:
+            if key not in quantity_names:
+                continue
+        inputs[value['name']] = file_parser.get_quantity(key)
+    return inputs
 
 
 def _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=None, quantity_names=None):
@@ -49,25 +42,14 @@ def _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=Non
     else:
         _quantity_names = quantity_names
 
+    eq_quantity_keys = parsable_quantities.equivalent_quantity_keys
+
     inputs = {}
-    for quantity_name in _quantity_names:
-        quantity = parsable_quantities.get_by_name(quantity_name)
-        parsed_quantity = parsed_quantities.get(quantity_name)
-        if parsed_quantity is None:
-            inputs.update(_get_alternative_parsed_quantity(quantity_name, quantity, parsable_quantities, parsed_quantities))
-        else:
-            inputs[quantity.name] = parsed_quantity
-
-    return inputs
-
-
-def _get_alternative_parsed_quantity(quantity_name, quantity, parsable_quantities, parsed_quantities):
-    """Return alternative quantities"""
-    inputs = {}
-    for parsable_quantity in parsable_quantities.get_equivalent_quantities(quantity_name):
-        original_name = parsable_quantity.original_name
-        if original_name in parsed_quantities:
-            inputs[quantity.name] = parsed_quantities.get(original_name)
+    for quantity_key in parsed_quantities:
+        for quantity_name in _quantity_names:
+            if quantity_name in eq_quantity_keys:
+                if quantity_key in eq_quantity_keys[quantity_name]:
+                    inputs[quantity_name] = parsed_quantities[quantity_key]
     return inputs
 
 

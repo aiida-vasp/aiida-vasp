@@ -8,12 +8,13 @@ and `run` just seems to get stuck after a while.
 from __future__ import print_function
 
 import pytest
+import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
+from aiida_vasp.utils.aiida_utils import get_data_node, create_authinfo
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -70,8 +71,8 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     sites = relax['structure'].sites
     assert sites[0].kind_name == 'Si'
     assert sites[1].kind_name == 'Si'
-    assert sites[0].position == (4.8125, 4.8125, 4.8125)
-    assert sites[1].position == (0.6875, 0.6875, 0.715)
+    np.testing.assert_allclose(sites[0].position, [4.8125, 4.8125, 4.8125])
+    np.testing.assert_allclose(sites[1].position, [0.6875, 0.6875, 0.715])
 
 
 def test_mode_values():

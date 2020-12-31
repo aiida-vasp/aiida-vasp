@@ -10,7 +10,7 @@ import numpy as np
 from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -101,7 +101,7 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         if self._structure is None:
-            inputs = get_node_composer_inputs(quantity_names=['poscar-structure'], file_parser=self)
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=['poscar-structure'])
             self._structure = NodeComposer.compose('structure', inputs)
         return self._structure
 
