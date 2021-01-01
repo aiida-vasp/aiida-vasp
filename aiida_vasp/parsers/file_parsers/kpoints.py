@@ -110,7 +110,7 @@ class KpointsParser(BaseFileParser):
     @property
     def kpoints(self):
         if self._kpoints is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=['kpoints-kpoints'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['kpoints-kpoints'])
             self._kpoints = NodeComposer.compose('array.kpoints', inputs)
         return self._kpoints
 

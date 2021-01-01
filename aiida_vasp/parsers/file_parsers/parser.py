@@ -124,7 +124,7 @@ class BaseFileParser(BaseParser):
     def exit_code(self):
         return self._exit_code
 
-    def get_quantity(self, quantity_name):
+    def get_quantity(self, quantity_key):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
@@ -132,13 +132,13 @@ class BaseFileParser(BaseParser):
         delegate during __init__.
         """
 
-        if quantity_name not in self._parsable_items:
+        if quantity_key not in self._parsable_items:
             return None
 
-        if self._parsed_data.get(quantity_name) is None:
+        if self._parsed_data.get(quantity_key) is None:
             self._parsed_data = self._parse_file({})
 
-        return self._parsed_data.get(quantity_name)
+        return self._parsed_data.get(quantity_key)
 
     def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
         """Method to handle inputs (to be removed)"""

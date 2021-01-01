@@ -130,6 +130,6 @@ class DosParser(BaseFileParser):
     @property
     def dos(self):
         if self._dos is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=['doscar-dos'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['doscar-dos'])
             self._dos = NodeComposer.compose('array', inputs)
         return self._dos

@@ -245,6 +245,6 @@ class LegacyOutcarParser(BaseFileParser):
     @property
     def parameter(self):
         if self._parameter is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=DEFAULT_OPTIONS['quantities_to_parse'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=DEFAULT_OPTIONS['quantities_to_parse'])
             self._parameter = NodeComposer.compose('dict', inputs)
         return self._parameter

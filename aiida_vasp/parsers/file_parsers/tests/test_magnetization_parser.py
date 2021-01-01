@@ -25,7 +25,7 @@ def test_magnetization_parser(fresh_aiida_env, outcar_parser):
             'quantities': ['site_magnetization']
         }})
 
-    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_names=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
     data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
@@ -98,7 +98,7 @@ def test_magnetization_single_parser(fresh_aiida_env, outcar_parser):  # pylint:
             'quantities': ['site_magnetization']
         }})
 
-    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_names=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
     data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)

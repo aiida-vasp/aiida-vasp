@@ -56,7 +56,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
         def _show(var, var_name):
-            print('---debug %s ---' % var_name)
+            print('---%s ---' % var_name)
             if isinstance(var, dict):
                 for key, value in var.items():
                     print(key, value)
@@ -65,9 +65,9 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
                     print(value)
             else:
                 print(var)
-            print('---debug %s ---' % var_name)
+            print('---%s ---' % var_name)
 
-        show_screening_steps = True
+        show_screening_steps = False
 
         self._quantity_items, self._quantity_keys_to_filenames = self._get_quantity_items_from_definitions(parser_definitions)
         if show_screening_steps:
@@ -78,22 +78,21 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         if show_screening_steps:
             _show(self._equiv_quantity_keys, 'self._equiv_quantity_keys')
 
-        if retrieved_filenames is not None:
-            self._missing_filenames = self._identify_missing_filenames(retrieved_filenames, parser_definitions.keys())
-            if show_screening_steps:
-                _show(retrieved_filenames, 'retrieved_filenames')
-                _show(parser_definitions.keys(), 'parser_definitions.keys()')
-                _show(self._missing_filenames, 'self._missing_filenames')
+        self._missing_filenames = self._identify_missing_filenames(retrieved_filenames, parser_definitions.keys())
+        if show_screening_steps:
+            _show(retrieved_filenames, 'retrieved_filenames')
+            _show(parser_definitions.keys(), 'parser_definitions.keys()')
+            _show(self._missing_filenames, 'self._missing_filenames')
 
-            parsable_quantity_keys = self._get_parsable_quantity_keys()
-            if show_screening_steps:
-                _show(parsable_quantity_keys, 'parsable_quantity_keys')
+        parsable_quantity_keys = self._get_parsable_quantity_keys()
+        if show_screening_steps:
+            _show(parsable_quantity_keys, 'parsable_quantity_keys')
 
-            self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse,
-                                                                            retrieved_filenames)
-            if show_screening_steps:
-                _show(quantity_names_to_parse, 'quantity_names_to_parse')
-                _show(self._quantity_keys_to_parse, 'self._quantity_keys_to_parse')
+        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse,
+                                                                        retrieved_filenames)
+        if show_screening_steps:
+            _show(quantity_names_to_parse, 'quantity_names_to_parse')
+            _show(self._quantity_keys_to_parse, 'self._quantity_keys_to_parse')
 
     def _get_quantity_items_from_definitions(self, parser_definitions):
         """

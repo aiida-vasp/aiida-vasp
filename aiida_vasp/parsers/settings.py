@@ -16,7 +16,6 @@ from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.stream import StreamParser
-from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {
     'default': {
@@ -238,7 +237,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             if node_dict.get(key) is None:
                 return
 
-        self.output_nodes_dict[node_name] = DictWithAttributes(node_dict)
+        self._output_nodes_dict[node_name] = node_dict
 
     def get(self, item, default=None):
         return self._settings.get(item, default)

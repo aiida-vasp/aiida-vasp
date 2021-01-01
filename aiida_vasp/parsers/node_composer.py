@@ -19,37 +19,25 @@ NODES_TYPES = {
 }
 
 
-def get_node_composer_inputs(parsable_quantities=None, parsed_quantities=None, node_type=None, quantity_names=None):
+def get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, quantity_names_in_node_dict):
     """Node composer inputs"""
-    return _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=node_type, quantity_names=quantity_names)
-
-
-def get_node_composer_inputs_from_file_parser(file_parser, quantity_names=None):  # pylint: disable=invalid-name
-    """Assemble necessary data from file_parser"""
     inputs = {}
-    for key, value in file_parser.parsable_items.items():
-        if quantity_names is not None:
-            if key not in quantity_names:
-                continue
-        inputs[value['name']] = file_parser.get_quantity(key)
+    for quantity_name in quantity_names_in_node_dict:
+        if quantity_name in equivalent_quantity_keys:
+            for quantity_key in equivalent_quantity_keys[quantity_name]:
+                if quantity_key in parsed_quantities:
+                    inputs[quantity_name] = parsed_quantities[quantity_key]
     return inputs
 
 
-def _collect_quantity_data(parsable_quantities, parsed_quantities, node_type=None, quantity_names=None):
-    """Collect data into inputs"""
-    if quantity_names is None:
-        _quantity_names = NODES_TYPES.get(node_type)
-    else:
-        _quantity_names = quantity_names
-
-    eq_quantity_keys = parsable_quantities.equivalent_quantity_keys
-
+def get_node_composer_inputs_from_file_parser(file_parser, quantity_keys=None):  # pylint: disable=invalid-name
+    """Assemble necessary data from file_parser"""
     inputs = {}
-    for quantity_key in parsed_quantities:
-        for quantity_name in _quantity_names:
-            if quantity_name in eq_quantity_keys:
-                if quantity_key in eq_quantity_keys[quantity_name]:
-                    inputs[quantity_name] = parsed_quantities[quantity_key]
+    for key, value in file_parser.parsable_items.items():
+        if quantity_keys is not None:
+            if key not in quantity_keys:
+                continue
+        inputs[value['name']] = file_parser.get_quantity(key)
     return inputs
 
 
@@ -72,7 +60,8 @@ class NodeComposer:
         """
 
         # Call the correct specialised method for assembling.
-        return getattr(cls, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
+        method_name = '_compose_' + node_type.replace('.', '_')
+        return getattr(cls, method_name)(node_type, inputs)
 
     @staticmethod
     def _compose_dict(node_type, inputs):

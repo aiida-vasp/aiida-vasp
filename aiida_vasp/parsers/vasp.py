@@ -141,14 +141,13 @@ class VaspParser(BaseParser):
                 parsed_quantities[quantity_key] = parsed_quantity
             exit_code = parser.exit_code
 
-        for node_name, node_dict in self._settings.output_nodes_dict.items():
-            inputs = get_node_composer_inputs(parsable_quantities=self._parsable_quantities,
-                                              parsed_quantities=parsed_quantities,
-                                              quantity_names=node_dict.quantities)
-            aiida_node = NodeComposer.compose(node_dict.type, inputs)
+        for _, node_dict in self._settings.output_nodes_dict.items():
+            equivalent_quantity_keys = self._parsable_quantities.equivalent_quantity_keys
+            inputs = get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, node_dict['quantities'])
+            aiida_node = NodeComposer.compose(node_dict['type'], inputs)
             if aiida_node is None:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
-            self.out(self._settings.output_nodes_dict[node_name].link_name, aiida_node)
+            self.out(node_dict['link_name'], aiida_node)
 
         if exit_code is not None:
             return exit_code

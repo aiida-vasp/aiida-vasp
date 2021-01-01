@@ -101,7 +101,7 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         if self._structure is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_names=['poscar-structure'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['poscar-structure'])
             self._structure = NodeComposer.compose('structure', inputs)
         return self._structure
 

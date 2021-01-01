@@ -296,7 +296,6 @@ class ConvergeWorkChain(WorkChain):
         """Initialize the standard content of context."""
 
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
-        self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
         self.ctx.set_input_nodes = True
 
@@ -351,7 +350,6 @@ class ConvergeWorkChain(WorkChain):
         """Initialize plane wave cutoff variables and store in context."""
         settings = self.ctx.converge.settings
         self.ctx.running_pw = False
-        self.ctx.pw_workchains = []
         self.ctx.converge.pw_data = None
         self.ctx.converge.run_pw_conv_calcs = False
         self.ctx.converge.run_pw_conv_calcs_org = False
@@ -373,7 +371,6 @@ class ConvergeWorkChain(WorkChain):
         """Initialize the k-point grid variables and store in context."""
         settings = self.ctx.converge.settings
         self.ctx.running_kpoints = False
-        self.ctx.kpoints_workchains = []
         self.ctx.converge.k_data = None
         self.ctx.converge.run_kpoints_conv_calcs = False
         self.ctx.converge.run_kpoints_conv_calcs_org = False

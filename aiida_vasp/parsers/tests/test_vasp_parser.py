@@ -256,7 +256,7 @@ def test_structure(request, calc_with_retrieved):
     structure_poscar = result['structure']
 
     assert isinstance(structure_poscar, get_data_class('structure'))
-    assert np.array_equal(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7))
+    np.testing.assert_allclose(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7), rtol=0, atol=1e-8)
     positions_vasprun = []
     positions_poscar = []
     for site in structure_vasprun.sites:
@@ -267,7 +267,7 @@ def test_structure(request, calc_with_retrieved):
         positions_poscar.append(pos)
     positions_vasprun = np.asarray(positions_vasprun)
     positions_poscar = np.asarray(positions_poscar)
-    assert np.array_equal(positions_vasprun, positions_poscar)
+    np.testing.assert_allclose(positions_vasprun, positions_poscar, rtol=0, atol=1e-8)
 
 
 def test_misc(request, calc_with_retrieved):
