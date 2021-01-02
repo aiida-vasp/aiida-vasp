@@ -138,7 +138,13 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         _quantity_items[quantity_key] = _quantity_dict
 
     def _create_containers_of_equiv_quantity_keys(self):
-        """Create containars of quantity keys equivalent to the same quantity names"""
+        """
+        Create containars of quantity keys equivalent to the same quantity names
+
+        The order to append can be important. Here the appending is done in
+        three steps of the following three for loops.
+
+        """
 
         _equiv_quantity_keys = {}
 
@@ -150,7 +156,6 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
                 _equiv_quantity_keys[name].append(quantity_key)
 
         for quantity_key, quantity_dict in self._quantity_items.items():
-            quantity_dict = self._quantity_items[quantity_key]
             name = quantity_dict['name']
             if quantity_key not in _equiv_quantity_keys[name]:
                 _equiv_quantity_keys[name].append(quantity_key)

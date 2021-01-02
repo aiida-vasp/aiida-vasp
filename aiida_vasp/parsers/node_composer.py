@@ -20,13 +20,20 @@ NODES_TYPES = {
 
 
 def get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, quantity_names_in_node_dict):
-    """Node composer inputs"""
+    """
+    Collect parsed quantities for the NodeCompoer input.
+
+    When multiple equivalent quantities are found, the first one found in the
+    equivalent_quantity_keys is chosen.
+
+    """
     inputs = {}
     for quantity_name in quantity_names_in_node_dict:
         if quantity_name in equivalent_quantity_keys:
             for quantity_key in equivalent_quantity_keys[quantity_name]:
                 if quantity_key in parsed_quantities:
                     inputs[quantity_name] = parsed_quantities[quantity_key]
+                    break
     return inputs
 
 
