@@ -192,7 +192,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.total_energy_type',
                    valid_type=get_data_class('str'),
                    required=False,
-                   default=lambda: get_data_node('str', 'energy_no_entropy'),
+                   default=lambda: get_data_node('str', 'energy_extrapolated'),
                    help="""
                    The energy type that is used when ``cutoff_type`` is set to `energy`.
                    Consult the options available in the parser for the current version.

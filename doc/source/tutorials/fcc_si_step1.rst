@@ -173,7 +173,7 @@ calculations at different volumes.
 	     ]
 	 },
 	 "total_energies": {
-             "energy_no_entropy": -4.87588342
+             "energy_extrapolated": -4.87588342
 	 }
      }
 

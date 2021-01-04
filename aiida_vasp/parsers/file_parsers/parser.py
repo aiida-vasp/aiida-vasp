@@ -77,7 +77,6 @@ class BaseFileParser(BaseParser):
         self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
         self.settings = None
-
         if calc_parser_cls is not None:
             calc_parser_cls.get_quantity.append(self.get_quantity)
             self.settings = calc_parser_cls.settings

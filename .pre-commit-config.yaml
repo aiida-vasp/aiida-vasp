@@ -12,27 +12,33 @@ repos:
   - id: forbid-new-submodules
 
 - repo: https://github.com/pre-commit/mirrors-yapf
-  rev: v0.28.0
+  rev: v0.30.0
   hooks:
   - id: yapf
     language: system
     types: [python]
-
-- repo: https://github.com/PyCQA/prospector
-  rev: 1.1.7
-  hooks:
-  - id: prospector
-    language: system
-    types: [python]
+    exclude: &exclude_files >
+      (?x)^(
+        doc/.*|
+          )$
+    args: ['-i']
 
 - repo: local
   hooks:
+  - id: pylint
+    name: pylint
+    entry: pylint
+    types: [python]
+    language: system
+    exclude: ^tutorials/
+
   - id: travis-linter
     name: travis
     entry: travis lint
     files: .travis.yml
     language: ruby
     additional_dependencies: ['travis']
+
   - id: version-updater
     name: updating version entries
     language: system
