@@ -2,18 +2,13 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
-import math
 
 import pytest
-from aiida.common.folders import SandboxFolder
-from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, create_authinfo
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @ONLY_ONE_CALC
@@ -23,7 +18,7 @@ def test_write_incar(vasp_calc_and_ref):
     with managed_temp_file() as temp_file:
         vasp_calc.write_incar(temp_file)
         with open(temp_file, 'r') as result_incar_fo:
-            assert result_incar_fo.readlines() == reference['incar']
+            assert result_incar_fo.readlines() == reference['code']
 
 
 @ONLY_ONE_CALC
@@ -52,15 +47,21 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     from aiida.common.folders import Folder
     chgcar, _ = vasp_chgcar
 
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
+    inputs = vasp_inputs(
+        parameters={'code': {
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'icharg': 1
+        }})
 
     inputs.charge_density = chgcar
-
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
-
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
 
@@ -69,7 +70,15 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     """Test that WAVECAR file is written correctly."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
+    inputs = vasp_inputs(
+        parameters={'code': {
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'istart': 1
+        }})
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
@@ -84,8 +93,10 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     from aiida.common import InputValidationError
     from aiida.common.folders import Folder
     inputs_dict = {
-        'gga': 'PE',
-        'smear': 3  # <- Invalid tag
+        'code': {
+            'gga': 'PE',
+            'smear': 3  # <- Invalid tag
+        }
     }
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
@@ -103,7 +114,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
-    inputs_dict = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 11}
+    inputs_dict = {'code': {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 11}}
 
     inputs = vasp_inputs(parameters=inputs_dict)
     inputs.charge_density = chgcar

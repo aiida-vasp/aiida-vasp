@@ -9,6 +9,12 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 
 
+def test_version(fresh_aiida_env, vasprun_parser):
+    """Parse a reference vasprun.xml and fetch the VASP version."""
+    quantity = vasprun_parser.get_quantity('version')
+    assert quantity == '5.4.4'
+
+
 def test_parse_vasprun(fresh_aiida_env, vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
@@ -20,7 +26,7 @@ def test_parse_vasprun(fresh_aiida_env, vasprun_parser):
     #assert  == 7.29482275
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
 def test_parameter_results(fresh_aiida_env, vasprun_parser):
     """
     Test that the parameter node is a ParametersData instance.
@@ -45,14 +51,14 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
     assert data_dict['fermi_level'] == 5.96764939
-    assert data_dict['total_energies']['energy_no_entropy'] == -42.91113621
-    assert data_dict['energies']['energy_no_entropy'][0] == -42.91113621
+    assert data_dict['total_energies']['energy_extrapolated'] == -42.91113621
+    assert data_dict['energies']['energy_extrapolated'][0] == -42.91113621
     assert data_dict['maximum_stress'] == 28.803993008871014
     assert data_dict['maximum_force'] == 3.41460162
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_kpoints_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_kpoints(fresh_aiida_env, vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['kpoints'])
@@ -64,8 +70,8 @@ def test_kpoints_result(fresh_aiida_env, vasprun_parser):
     assert np.all(data_obj.get_kpoints()[-1] == np.array([0.42857143, -0.42857143, 0.42857143]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_structure_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_structure(fresh_aiida_env, vasprun_parser):
     """
     Test that the structure result node is a StructureData instance.
 
@@ -90,8 +96,8 @@ def test_structure_result(fresh_aiida_env, vasprun_parser):
     assert data_obj.get_cell_volume() == np.float(163.22171870360754)
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_final_force_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_final_force(fresh_aiida_env, vasprun_parser):
     """Test that the forces are returned correctly."""
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['forces'])
@@ -110,8 +116,8 @@ def test_final_force_result(fresh_aiida_env, vasprun_parser):
     assert np.all(forces[7] == forces_check[7])
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_final_stress_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_final_stress(fresh_aiida_env, vasprun_parser):
     """Test that the stress are returned correctly."""
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['stress'])
@@ -128,8 +134,8 @@ def test_final_stress_result(fresh_aiida_env, vasprun_parser):
     assert np.all(stress[2] == stress_check[2])
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_traj_forces_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_traj_forces(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed forces in TrajectoryData are of type ArrayData.
 
@@ -159,7 +165,7 @@ def test_traj_forces_result(fresh_aiida_env, vasprun_parser):
     assert np.all(data_obj[0][0] == data_obj[1][0])
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+@pytest.mark.parametrize('vasprun_parser', [('relax', {})], indirect=True)
 def test_traj_forces_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed forces in TrajectoryData are of type ArrayData.
@@ -184,7 +190,7 @@ def test_traj_forces_result_relax(fresh_aiida_env, vasprun_parser):
     assert np.all(data_obj_arr[-1][-1] == np.array([-1.75970000e-03, 1.12150000e-04, 1.12150000e-04]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+@pytest.mark.parametrize('vasprun_parser', [('relax', {})], indirect=True)
 def test_unitcells_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed unitcells are of type ArrayData.
@@ -209,7 +215,7 @@ def test_unitcells_result_relax(fresh_aiida_env, vasprun_parser):
     assert np.all(data_obj_arr[-1][-1] == np.array([0.0, 2.19104000e-03, 5.46705225e+00]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
+@pytest.mark.parametrize('vasprun_parser', [('relax', {})], indirect=True)
 def test_positions_result_relax(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed positions are of type ArrayData.
@@ -234,8 +240,8 @@ def test_positions_result_relax(fresh_aiida_env, vasprun_parser):
     assert np.all(data_obj_arr[-1][-1] == np.array([0.7437189, 0.74989833, 0.24989833]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)
-def test_dielectrics_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('dielectric', {})], indirect=True)
+def test_dielectrics(fresh_aiida_env, vasprun_parser):
     """
     Check that the parsed dielectrics are of type ArrayData.
 
@@ -266,8 +272,8 @@ def test_dielectrics_result(fresh_aiida_env, vasprun_parser):
     assert energy[500] == 10.2933
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('disp_details',)], indirect=True)
-def test_epsilon_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('disp_details', {})], indirect=True)
+def test_epsilon(fresh_aiida_env, vasprun_parser):
     """
     Check that epsilon is returned inside the dielectric node.
 
@@ -292,8 +298,8 @@ def test_epsilon_result(fresh_aiida_env, vasprun_parser):
     assert np.allclose(epsilon_ion, test)
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('localfield',)], indirect=True)
-def test_born_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('localfield', {})], indirect=True)
+def test_born(fresh_aiida_env, vasprun_parser):
     """
     Check that the Born effective charges are of type ArrayData.
 
@@ -315,8 +321,8 @@ def test_born_result(fresh_aiida_env, vasprun_parser):
     assert np.all(born[4][0] == np.array([1.68565200e-01, -2.92058000e-02, -2.92058000e-02]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_dos_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_dos(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -339,8 +345,8 @@ def test_dos_result(fresh_aiida_env, vasprun_parser):
     assert energy[150] == 2.3373
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
-def test_dos_spin_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
+def test_dos_spin(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -366,8 +372,8 @@ def test_dos_spin_result(fresh_aiida_env, vasprun_parser):
     assert dos[1, 500] == 0.9844
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
-def test_pdos_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('partial', {})], indirect=True)
+def test_pdos(fresh_aiida_env, vasprun_parser):
     """
     Check that the density of states are of type ArrayData.
 
@@ -391,8 +397,8 @@ def test_pdos_result(fresh_aiida_env, vasprun_parser):
     assert energy[500] == 0.01
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('partial',)], indirect=True)
-def test_projectors_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('partial', {})], indirect=True)
+def test_projectors(fresh_aiida_env, vasprun_parser):
     """
     Check that the projectors are of type ArrayData.
 
@@ -414,8 +420,8 @@ def test_projectors_result(fresh_aiida_env, vasprun_parser):
     assert np.all(proj[4, 3, 5] == np.array([0.2033, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_bands_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_bands(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -444,8 +450,8 @@ def test_bands_result(fresh_aiida_env, vasprun_parser):
     assert occ[0, 6, 4] == 1.0
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
-def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
+def test_eigenocc_spin(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
@@ -480,8 +486,8 @@ def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     assert occ[1, 6, 4] == 1.0
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
-def test_toten_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
+def test_toten(fresh_aiida_env, vasprun_parser):
     """
     Check that the total energy are of type ArrayData.
 
@@ -491,20 +497,51 @@ def test_toten_result(fresh_aiida_env, vasprun_parser):
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['energies'])
     data_obj = NodeComposer.compose('array', inputs)
-    # test object
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
-    energies = data_obj.get_array('energy_no_entropy')
-    # test number of entries
+    # Test that the default arrays are present
+    assert set(data_obj.get_arraynames()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
+    energies = data_obj.get_array('energy_extrapolated')
+    test_array = np.array([-42.91113621])
+    assert np.allclose(test_array, energies)
+    # Test number of entries
     assert energies.shape == (1,)
-    # check energy
-    assert energies[0] == -42.91113621
+    # Electronic steps should be one
+    test_array = np.array([1])
+    assert np.allclose(test_array, data_obj.get_array('electronic_steps'))
+    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    test_array = np.array([-0.00236711])
+    assert np.allclose(test_array, data_obj.get_array('energy_extrapolated_final'))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
-def test_totens_relax_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('basic', {'energy_type': ['energy_free', 'energy_no_entropy']})], indirect=True)
+def test_toten_multiple(fresh_aiida_env, vasprun_parser):
     """
-    Check that the total energies are of type ArrayData.
+    Check that the total energy are of type ArrayData and that we can extract multiple total energies.
+
+    Also check that the entries are as expected.
+
+    """
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['energies'])
+    data_obj = NodeComposer.compose('array', inputs)
+    # Test that the object is of the right type
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    assert set(data_obj.get_arraynames()) == set(
+        ['electronic_steps', 'energy_free', 'energy_free_final', 'energy_no_entropy', 'energy_no_entropy_final'])
+    test_array = np.array([-42.91231976])
+    assert np.allclose(test_array, data_obj.get_array('energy_free'))
+    assert np.allclose(test_array, data_obj.get_array('energy_free_final'))
+    test_array = np.array([-42.90995265])
+    assert np.allclose(test_array, data_obj.get_array('energy_no_entropy'))
+    test_array = np.array([-42.91113621])
+    assert np.allclose(test_array, data_obj.get_array('energy_no_entropy_final'))
+
+
+@pytest.mark.parametrize('vasprun_parser', [('basic', {'electronic_step_energies': True})], indirect=True)
+def test_toten_electronic(fresh_aiida_env, vasprun_parser):
+    """
+    Check that the total energy are of type ArrayData and that we have entries per electronic step
 
     Also check that the entries are as expected.
 
@@ -512,20 +549,118 @@ def test_totens_relax_result(fresh_aiida_env, vasprun_parser):
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['energies'])
     data_obj = NodeComposer.compose('array', inputs)
-    # test object
+    # Test that the object is of the right type
     ref_obj = get_data_class('array')
     assert isinstance(data_obj, ref_obj)
-    energies = data_obj.get_array('energy_no_entropy')
-    # test number of entries
-    assert energies.shape == (19,)
-    # test a few entries
-    assert energies[0] == -42.91113348
-    assert energies[3] == -43.37734069
-    assert energies[-1] == -43.39087657
+    # Test that the default arrays are present
+    assert set(data_obj.get_arraynames()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
+    energies = data_obj.get_array('energy_extrapolated')
+    test_array = np.array([-42.91113666, -42.91113621])
+    assert np.allclose(test_array, energies)
+    # Test number of entries
+    assert energies.shape == (2,)
+    # Electronic steps should be two
+    test_array = np.array([2])
+    assert np.allclose(test_array, data_obj.get_array('electronic_steps'))
+    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    test_array = np.array([-0.00236711])
+    assert np.allclose(test_array, data_obj.get_array('energy_extrapolated_final'))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
-def test_hessian_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('relax', {})], indirect=True)
+def test_toten_relax(fresh_aiida_env, vasprun_parser):
+    """
+    Check that the total energies are of type ArrayData for runs with multiple ionic steps.
+
+    Also check that the entries are as expected.
+
+    """
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['energies'])
+    data_obj = NodeComposer.compose('array', inputs)
+    # Test that the object is of the right type
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    assert set(data_obj.get_arraynames()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
+    energies = data_obj.get_array('energy_extrapolated')
+    test_array = np.array([
+        -42.91113348, -43.27757545, -43.36648855, -43.37734069, -43.38062479, -43.38334165, -43.38753003, -43.38708193, -43.38641449,
+        -43.38701639, -43.38699488, -43.38773717, -43.38988315, -43.3898822, -43.39011239, -43.39020751, -43.39034244, -43.39044584,
+        -43.39087657
+    ])
+    # Test energies
+    assert np.allclose(test_array, energies)
+    # Test number of entries
+    assert energies.shape == test_array.shape
+    # Electronic steps should be entries times one
+    assert np.allclose(np.ones(19, dtype=int), data_obj.get_array('electronic_steps'))
+    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    test_array = np.array([
+        -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806, -0.00042762, -0.00043875,
+        -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078, -0.00043053, -0.00043149, -0.00043417
+    ])
+    assert np.allclose(test_array, data_obj.get_array('energy_extrapolated_final'))
+
+
+@pytest.mark.parametrize('vasprun_parser', [('relax', {'electronic_step_energies': True})], indirect=True)
+def test_toten_relax_electronic(fresh_aiida_env, vasprun_parser):
+    """
+    Check that the total energies are of type ArrayData for runs with multiple ionic steps and electronic steps.
+
+    Also check that the entries are as expected.
+
+    """
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['energies'])
+    data_obj = NodeComposer.compose('array', inputs)
+    # Test that the object is of the right type
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    assert set(data_obj.get_arraynames()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
+    energies = data_obj.get_array('energy_extrapolated')
+    test_array_energies = [
+        np.array([
+            163.37398579, 14.26925896, -23.05190509, -34.91615104, -40.20080347, -42.18390876, -42.97469852, -43.31556073, -43.60169068,
+            -43.61723125, -43.61871511, -43.61879751, -43.12548175, -42.90647187, -42.91031846, -42.91099027, -42.91111107, -42.91113348
+        ]),
+        np.array([-43.34236449, -43.31102002, -43.27768275, -43.27791002, -43.27761357, -43.27757545]),
+        np.array([-43.40320524, -43.38084022, -43.36835045, -43.36666248, -43.36666583, -43.36649036, -43.36648855]),
+        np.array([-43.37749056, -43.37749102, -43.37734414, -43.37734069]),
+        np.array([-43.38117265, -43.38082881, -43.38063293, -43.38062479]),
+        np.array([-43.38337336, -43.38334165]),
+        np.array([-43.38778922, -43.38766017, -43.38752953, -43.38753003]),
+        np.array([-43.38714489, -43.38708193]),
+        np.array([-43.38640951, -43.38641449]),
+        np.array([-43.3874799, -43.3871553, -43.38701949, -43.38701639]),
+        np.array([-43.38790942, -43.38727062, -43.38700335, -43.38699488]),
+        np.array([-43.38774394, -43.38773717]),
+        np.array([-43.38984942, -43.3899134, -43.38988315]),
+        np.array([-43.38988117, -43.3898822]),
+        np.array([-43.39032165, -43.39017866, -43.39011239]),
+        np.array([-43.39021044, -43.39020751]),
+        np.array([-43.39034135, -43.39034244]),
+        np.array([-43.39044466, -43.39044584]),
+        np.array([-43.39084354, -43.39088709, -43.39087657])
+    ]
+    test_array_steps = np.array([18, 6, 7, 4, 4, 2, 4, 2, 2, 4, 4, 2, 3, 2, 3, 2, 2, 2, 3])
+    # Build a flattened array (not using flatten from NumPy as the content is staggered) and
+    # test number of electronic steps per ionic step
+    test_array_energies_flattened = np.array([])
+    for ionic_step in test_array_energies:
+        test_array_energies_flattened = np.append(test_array_energies_flattened, ionic_step)
+    assert energies.shape == test_array_energies_flattened.shape
+    assert np.allclose(test_array_energies_flattened, energies)
+    assert np.allclose(test_array_steps, data_obj.get_array('electronic_steps'))
+    test_array_energies = np.array([
+        -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806, -0.00042762, -0.00043875,
+        -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078, -0.00043053, -0.00043149, -0.00043417
+    ])
+    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    assert np.allclose(test_array_energies, data_obj.get_array('energy_extrapolated_final'))
+
+
+@pytest.mark.parametrize('vasprun_parser', [('disp', {})], indirect=True)
+def test_hessian(fresh_aiida_env, vasprun_parser):
     """
     Check that the Hessian matrix are of type ArrayData.
 
@@ -554,8 +689,8 @@ def test_hessian_result(fresh_aiida_env, vasprun_parser):
     ]))
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
-def test_dynmat_result(fresh_aiida_env, vasprun_parser):
+@pytest.mark.parametrize('vasprun_parser', [('disp', {})], indirect=True)
+def test_dynmat(fresh_aiida_env, vasprun_parser):
     """
     Check parsing of the dynamical eigenvectors and eigenvalues.
 

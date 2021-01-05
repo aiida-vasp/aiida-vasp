@@ -30,9 +30,7 @@ def test_potcar_from_file_node(potcar_family):
     potcar_file_in = get_data_class('vasp.potcar_file').find_one(element='In')
     from_ctor = PotcarIo(potcar_file_node=potcar_file_in)
     verify_potcario(from_ctor)
-    #print("in:", type(potcar_file_in))
     from_from = PotcarIo.from_(potcar_file_in)
-    #assert False
     assert from_ctor == from_from
 
 
@@ -42,8 +40,6 @@ def test_potcar_from_node(potcar_family):
     from_ctor = PotcarIo(potcar_node=potcar_ga)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_ga)
-    #print(type(potcar_ga))
-    #assert False
     assert from_ctor == from_from
 
 
@@ -53,9 +49,7 @@ def test_potcar_from_contents(potcar_family):
     from_ctor = PotcarIo(contents=contents_as.encode('utf-8'))
     verify_potcario(from_ctor)
     assert from_ctor.node.uuid == get_data_class('vasp.potcar').find_one(element='As').uuid
-    #print(type(contents_as))
     from_from = PotcarIo.from_(contents_as)
-    #assert False
     assert from_ctor == from_from
 
 
