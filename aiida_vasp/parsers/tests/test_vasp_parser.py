@@ -295,7 +295,7 @@ def test_misc(request, calc_with_retrieved):
     assert data['fermi_level'] == 6.17267267
     assert data['maximum_stress'] == 42.96872956444064
     assert data['maximum_force'] == 0.21326679
-    assert data['total_energies']['energy_no_entropy'] == -10.823296
+    assert data['total_energies']['energy_extrapolated'] == -10.823296
 
 
 @pytest.mark.parametrize(

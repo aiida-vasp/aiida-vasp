@@ -362,14 +362,15 @@ def ref_retrieved():
     return retrieved
 
 
-@pytest.fixture(params=['vasprun'])
+@pytest.fixture(params=[('vasprun', {})])
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     from aiida_vasp.parsers.settings import ParserSettings
     from aiida_vasp.calcs.vasp import VaspCalculation
     file_name = 'vasprun.xml'
-    path = data_path(request.param, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings({}))
+    path_to_file, settings = request.param
+    path = data_path(path_to_file, file_name)
+    parser = VasprunParser(file_path=path, settings=ParserSettings(settings))
     parser._vasp_parser = VaspCalculation
     return parser
 

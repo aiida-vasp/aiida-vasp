@@ -227,7 +227,7 @@ And then we load the node::
 
    In [1]: n = load_node(<pk>)
 
-   In [2]: n.outputs.energies.get_array('energy_no_entropy')
+   In [2]: n.outputs.energies.get_array('energy_extrapolated')
    Out[2]: array([-31.80518222])
 
    In [3]: n.outputs.stress.get_array('final')

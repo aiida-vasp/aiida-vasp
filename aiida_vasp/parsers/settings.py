@@ -72,7 +72,7 @@ NODES = {
     'misc': {
         'link_name': 'misc',
         'type': 'dict',
-        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'notifications']
+        'quantities': ['total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'notifications', 'version']
     },
     'kpoints': {
         'link_name': 'kpoints',
@@ -177,7 +177,6 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
 
     def __init__(self, settings, default_settings=None):
-
         self.alternatives = {}
         if settings is None:
             settings = {}

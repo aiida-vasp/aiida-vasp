@@ -586,7 +586,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """Find and return the matching PotcarFileData node."""
         return PotcarFileData.find_one(**self.attributes)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ,signature-differs
     def store(self, *args, **kwargs):
         """Ensure uniqueness before storing."""
         self.set_version()
