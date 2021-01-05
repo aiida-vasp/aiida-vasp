@@ -1,7 +1,7 @@
 exclude: '^(doc)|(cookiecutters)|(aiida_vasp/test_data)'
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.3.0
+  rev: v2.5.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -15,13 +15,10 @@ repos:
   rev: v0.30.0
   hooks:
   - id: yapf
-    language: system
+    name: yapf
     types: [python]
-    exclude: &exclude_files >
-      (?x)^(
-        doc/.*|
-          )$
     args: ['-i']
+
 
 - repo: local
   hooks:
@@ -30,14 +27,11 @@ repos:
     entry: pylint
     types: [python]
     language: system
-    exclude: ^tutorials/
-
-  - id: travis-linter
-    name: travis
-    entry: travis lint
-    files: .travis.yml
-    language: ruby
-    additional_dependencies: ['travis']
+    exclude: |
+      (?x)(
+      ^tutorials/|
+      ^examples/
+      )
 
   - id: version-updater
     name: updating version entries
@@ -46,6 +40,6 @@ repos:
     always_run: true
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks-markup
-  rev: v1.0.0
+  rev: v1.0.1
   hooks:
   - id: rst-linter
