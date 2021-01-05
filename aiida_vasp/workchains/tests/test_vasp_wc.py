@@ -56,7 +56,7 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     assert 'remote_folder' in results
     misc = results['misc'].get_dict()
     assert misc['maximum_stress'] == 22.8499295
-    assert misc['total_energies']['energy_no_entropy'] == -14.16209692
+    assert misc['total_energies']['energy_extrapolated'] == -14.16209692
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)

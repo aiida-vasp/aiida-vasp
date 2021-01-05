@@ -71,7 +71,7 @@ def test_relax_parameters_all_set(init_relax_parameters):
     """Test all standard relaxation parameters are set."""
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.ediffg == -0.01
     assert parameters.ibrion == 2
     assert parameters.nsw == 60
@@ -79,9 +79,9 @@ def test_relax_parameters_all_set(init_relax_parameters):
 
 
 def test_catch_invalid_tags(init_relax_parameters, init_simple_workchain):
-    init_relax_parameters.vasp = AttributeDict()
+    init_relax_parameters.code = AttributeDict()
     mock_workchain = init_simple_workchain
-    init_relax_parameters.vasp.smear = 1  # This is an invalid tag
+    init_relax_parameters.code.smear = 1  # This is an invalid tag
     massager = ParametersMassage(mock_workchain, init_relax_parameters)
     assert massager.exit_code is not None
 
@@ -91,7 +91,7 @@ def test_relax_parameters_energy(init_relax_parameters):
     del init_relax_parameters.relax.force_cutoff
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.ediffg == 0.01
 
 
@@ -108,7 +108,7 @@ def test_relax_parameters_vol_shape(init_relax_parameters):
     del init_relax_parameters.relax.positions
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == 6
 
 
@@ -117,7 +117,7 @@ def test_relax_parameters_pos_shape(init_relax_parameters):
     del init_relax_parameters.relax.volume
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == 4
 
 
@@ -127,7 +127,7 @@ def test_relax_parameters_vol(init_relax_parameters):
     del init_relax_parameters.relax.shape
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == 7
 
 
@@ -137,7 +137,7 @@ def test_relax_parameters_pos(init_relax_parameters):
     del init_relax_parameters.relax.shape
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == 2
 
 
@@ -147,7 +147,7 @@ def test_relax_parameters_shape(init_relax_parameters):
     del init_relax_parameters.relax.positions
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == 5
 
 
@@ -158,7 +158,7 @@ def test_relax_parameters_nothing(init_relax_parameters):
     del init_relax_parameters.relax.shape
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters == AttributeDict()
 
 
@@ -168,7 +168,7 @@ def test_relax_parameters_override(init_relax_parameters):
     init_relax_parameters.isif = value
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    parameters = massager.parameters
+    parameters = massager.parameters.code
     assert parameters.isif == value
 
 
@@ -179,22 +179,22 @@ def test_smearing_parameters():
     parameters.smearing.gaussian = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.ismear == 0
+    assert massager.parameters.code.ismear == 0
     parameters.smearing.gaussian = False
     parameters.smearing.fermi = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.ismear == -1
+    assert massager.parameters.code.ismear == -1
     parameters.smearing.fermi = False
     parameters.smearing.tetra = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.ismear == -5
+    assert massager.parameters.code.ismear == -5
     parameters.smearing.tetra = False
     parameters.smearing.mp = 4
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.ismear == 4
+    assert massager.parameters.code.ismear == 4
 
 
 def test_charge_parameters():
@@ -208,27 +208,27 @@ def test_charge_parameters():
     parameters.charge.from_charge = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.icharg == 1
+    assert massager.parameters.code.icharg == 1
     parameters.charge.from_charge = False
     parameters.charge.from_atomic = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.icharg == 2
+    assert massager.parameters.code.icharg == 2
     parameters.charge.from_atomic = False
     parameters.charge.from_potential = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.icharg == 4
+    assert massager.parameters.code.icharg == 4
     parameters.charge.from_potential = False
     parameters.charge.constant_charge = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.icharg == 11
+    assert massager.parameters.code.icharg == 11
     parameters.charge.constant_charge = False
     parameters.charge.constant_atomic = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.icharg == 12
+    assert massager.parameters.code.icharg == 12
 
 
 def test_orbital_projections():  # pylint: disable=too-many-statements
@@ -238,29 +238,29 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     parameters.bands.decompose_wave = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 5
+    assert massager.parameters.code.lorbit == 5
     parameters.bands.decompose_wave = False
     parameters.bands.decompose_bands = True
     parameters.bands.decompose_auto = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 14
+    assert massager.parameters.code.lorbit == 14
     parameters.bands.decompose_auto = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 10
+    assert massager.parameters.code.lorbit == 10
     parameters.bands.lm = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 11
+    assert massager.parameters.code.lorbit == 11
     parameters.bands.phase = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 12
+    assert massager.parameters.code.lorbit == 12
     parameters.bands.lm = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 12
+    assert massager.parameters.code.lorbit == 12
 
     # Now do the once with a Wigner-Seitz radius supplied
     parameters.bands.wigner_seitz_radius = [2.0]
@@ -268,20 +268,20 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
     parameters.bands.phase = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 0
-    assert int(massager.parameters.rwigs[0]) == 2
+    assert massager.parameters.code.lorbit == 0
+    assert int(massager.parameters.code.rwigs[0]) == 2
     parameters.bands.lm = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 1
+    assert massager.parameters.code.lorbit == 1
     parameters.bands.phase = True
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 2
+    assert massager.parameters.code.lorbit == 2
     parameters.bands.lm = False
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.lorbit == 2
+    assert massager.parameters.code.lorbit == 2
 
     # Should raise ValueError if Wigner-Seitz radius is not defined as a list.
     parameters.bands.wigner_seitz_radius = 2.0
@@ -291,12 +291,12 @@ def test_orbital_projections():  # pylint: disable=too-many-statements
 
 def test_vasp_parameter_override(init_relax_parameters):
     """Test of the override functionality works as intended."""
-    init_relax_parameters.vasp = AttributeDict()
+    init_relax_parameters.code = AttributeDict()
     # Redefine to from 3 to 0.
-    init_relax_parameters.vasp.isif = 0
+    init_relax_parameters.code.isif = 0
     massager = ParametersMassage(None, init_relax_parameters)
     assert massager.exit_code is None
-    assert massager.parameters.isif == 0
+    assert massager.parameters.code.isif == 0
 
 
 def test_inherit_and_merge():
@@ -317,18 +317,22 @@ def test_inherit_and_merge():
     inputs.converge.somekey = DataFactory('bool')(True)
     inputs.electronic = AttributeDict()
     inputs.electronic.somekey = DataFactory('bool')(True)
+    inputs.dynamics = AttributeDict()
+    inputs.dynamics.somekey = DataFactory('bool')(True)
     # Check that parameters does not have to be present
     parameters = inherit_and_merge_parameters(inputs)
     # Check that an empty parameters is allowed
     inputs.parameters = DataFactory('dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters = AttributeDict({
+        'code': AttributeDict(),
         'electronic': AttributeDict({'somekey': True}),
         'bands': AttributeDict({'somekey': True}),
         'smearing': AttributeDict({'somekey': True}),
         'charge': AttributeDict({'somekey': True}),
         'relax': AttributeDict({'somekey': True}),
-        'converge': AttributeDict({'somekey': True})
+        'converge': AttributeDict({'somekey': True}),
+        'dynamics': AttributeDict({'somekey': True})
     })
     assert parameters == test_parameters
     # Test ignored
@@ -346,8 +350,8 @@ def test_inherit_and_merge():
 def test_unsupported_fail_override():
     """Test that any supplied unsupported parameters in the regular parameters dictionary yield error."""
     parameters = AttributeDict()
-    parameters.vasp = AttributeDict()
-    parameters.vasp.not_valid = 200
+    parameters.code = AttributeDict()
+    parameters.code.not_valid = 200
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code
 
@@ -358,7 +362,7 @@ def test_unsupported_fail():
     parameters.not_valid = 200
     massager = ParametersMassage(None, parameters)
     # The not valid parameter was never set as there is no setter function for it.
-    assert massager.parameters == {}
+    assert massager.parameters.code == {}
 
 
 def test_unsupported_parameters():
@@ -375,7 +379,7 @@ def test_unsupported_parameters():
             'values': [1.0, 2.0]
         }})
     assert massager.exit_code is None
-    assert massager.parameters.not_valid == parameters.not_valid
+    assert massager.parameters.code.not_valid == parameters.not_valid
 
 
 def test_pwcutoff_to_encut():
@@ -384,4 +388,4 @@ def test_pwcutoff_to_encut():
     parameters.pwcutoff = 200
     massager = ParametersMassage(None, parameters)
     assert massager.exit_code is None
-    assert massager.parameters.encut == parameters.pwcutoff
+    assert massager.parameters.code.encut == parameters.pwcutoff

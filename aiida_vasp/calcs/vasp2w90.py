@@ -38,7 +38,7 @@ class Vasp2w90Calculation(VaspCalculation):
         # that the Wannier90 files are created. Execution of Wannier90 itself is to be done after the execution
         # of this calculation with the aiida-wannier90 plugins calculation.
         parameters = self.inputs.parameters.get_dict()
-        parameters.update({'lwannier90': True})
+        parameters['code'].update({'lwannier90': True})
         self.inputs.parameters = DataFactory('dict')(dict=parameters)
         # Check if any Wannier90 parameters are given
         try:

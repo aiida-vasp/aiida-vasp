@@ -8,7 +8,9 @@ A composer that composes different quantities onto AiiDA data nodes.
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {
-    'dict': ['total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications'],
+    'dict': [
+        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications', 'version'
+    ],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],

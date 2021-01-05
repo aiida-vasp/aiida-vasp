@@ -16,9 +16,10 @@ from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
         'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupancies', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress'
+        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress', 'version'
     ],
-    'energy_type': ['energy_no_entropy']
+    'energy_type': ['energy_extrapolated'],
+    'electronic_step_energies': False
 }
 
 
@@ -120,6 +121,11 @@ class VasprunParser(BaseFileParser):
             'name': 'maximum_stress',
             'prerequisites': []
         },
+        'version': {
+            'inputs': [],
+            'name': 'version',
+            'prerequisites': [],
+        }
     }
 
     def __init__(self, *args, **kwargs):
@@ -181,6 +187,20 @@ class VasprunParser(BaseFileParser):
                 self._exit_code = self._exit_codes.ERROR_RECOVERY_PARSING_OF_XML_FAILED.format(quantities=list(result.keys()))
 
         return result
+
+    @property
+    def version(self):
+        """Fetch the VASP version from parsevasp and return it as a string object."""
+
+        # fetch version
+        version = self._xml.get_version()
+
+        if version is None:
+            # version not present
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
+            return None
+
+        return version
 
     @property
     def eigenvalues(self):
@@ -279,7 +299,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        last_lattice = self._xml.get_lattice('final')
+        last_lattice = self._xml.get_lattice('last')
         if last_lattice is None:
             self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
@@ -306,7 +326,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        force = self._xml.get_forces('final')
+        force = self._xml.get_forces('last')
         return force
 
     @property
@@ -356,7 +376,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        stress = self._xml.get_stress('final')
+        stress = self._xml.get_stress('last')
         return stress
 
     @property
@@ -423,7 +443,7 @@ class VasprunParser(BaseFileParser):
         stress = np.asarray([item[1] for item in stress])
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
-        symbols = np.asarray([elements[item].title() for item in species])  # pylint: disable=not-an-iterable
+        symbols = np.asarray([elements[item].title() for item in species.tolist()])
 
         if (unitcell is not None) and (positions is not None) and \
            (species is not None) and (forces is not None) and \
@@ -444,63 +464,41 @@ class VasprunParser(BaseFileParser):
     @property
     def total_energies(self):
         """Fetch the total energies after the last ionic run."""
-
         energies = self.energies
         if energies is None:
             self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=sys._getframe().f_code.co_name)
             return None
-        # fetch the type of energies that the user wants to extract
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
         energies_dict = {}
-        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+        for etype in self._settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
             energies_dict[etype] = energies[etype][-1]
 
         return energies_dict
 
     @property
     def energies(self):
-        """Fetch the total energies for all calculations (i.e. ionic steps)."""
-        if self._settings.get('store_energies_sc'):
-            res = self._energies(nosc=True)
-            res_sc = self._energies(nosc=False)
-            for key, val in res_sc.items():
-                res[key + '_sc'] = val
-        else:
-            res = self._energies(nosc=True)
-        return res
+        """Fetch the total energies."""
+        # Check if we want total energy entries for each electronic step.
+        electronic_step_energies = self._settings.get('electronic_step_energies', DEFAULT_OPTIONS['electronic_step_energies'])
+
+        return self._energies(nosc=not electronic_step_energies)
 
     def _energies(self, nosc):
-        """Fetch the total energies for all calculations (i.e. ionic steps)."""
-        # fetch the type of energies that the user wants to extract
-        settings = self._parsed_data.get('settings', DEFAULT_OPTIONS)
+        """
+        Fetch the total energies for all energy types, calculations (ionic steps) and electronic steps.
 
-        enrgy = {}
-        for etype in settings.get('energy_type', DEFAULT_OPTIONS['energy_type']):
+        The returned dict from the parser contains the total energy types as a key (plus the _final, which is
+        the final total energy ejected by VASP after the closure of the electronic steps). The energies can then
+        be found in the flattened ndarray where the key `electronic_steps` indicate how many electronic steps
+        there is per ionic step. Using the combination, one can rebuild the electronic step energy per ionic step etc.
 
-            # this returns a list, not an ndarray due to
-            # the posibility of returning the energies for all
-            # self consistent steps, which contain a different
-            # number of elements, not supported by Numpy's std.
-            # arrays
-            enrgies = self._xml.get_energies(status='all', etype=etype, nosc=nosc)
-            if enrgies is None:
-                self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=str(sys._getframe().f_code.co_name))
-                return None
+        """
+        etype = self._settings.get('energy_type', DEFAULT_OPTIONS['energy_type'])
+        energies = self._xml.get_energies(status='all', etype=etype, nosc=nosc)
+        if energies is None:
+            self._exit_code = self._exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=str(sys._getframe().f_code.co_name))
+            return None
 
-            if isinstance(enrgies[0], np.ndarray):
-                # This must be the same for all etypes, so overwritten for multiple etypes.
-                enrgy['iters'] = np.array([len(sc_e) for sc_e in enrgies], dtype=int)
-                enrgies = np.concatenate(enrgies)
-            else:
-                # should be a list, but convert to ndarray, here
-                # staggered arrays are not a problem
-                # two elements for a static run, both are similar,
-                # only take the last
-                if len(enrgies) == 2:
-                    enrgies = enrgies[-1:]
-            enrgy[etype] = np.asarray(enrgies)
-
-        return enrgy
+        return energies
 
     @property
     def projectors(self):

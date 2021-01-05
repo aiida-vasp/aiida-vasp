@@ -172,7 +172,7 @@ class EosWorkChain(WorkChain):
 
         # Fetch the total energy
         misc = workchain.outputs.misc.get_dict()
-        total_energy = misc['total_energies']['energy_no_entropy']
+        total_energy = misc['total_energies']['energy_extrapolated']
 
         # Fetch the volume
         volume = self.ctx.inputs.structure.get_cell_volume()
