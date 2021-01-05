@@ -36,7 +36,6 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
-    'store_energies_sc': False,
 }
 
 
