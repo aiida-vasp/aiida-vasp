@@ -56,8 +56,7 @@
     "extras_require": {
 	"pre-commit": [
 	    "pre-commit~=2.2",
-	    "pylint~=2.5.0",
-	    "yapf==0.28.0"
+	    "pylint~=2.5.0"
 	],
 	"tests": [
 	    "aiida-export-migration-tests==0.9.0",
@@ -82,6 +81,7 @@
     "install_requires": [
 	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1",
 	"subprocess32",
+	"pymatgen<=2020.12.3",
 	"lxml",
 	"packaging",
 	"parsevasp >= 2.0.0"

@@ -4,6 +4,7 @@ Parameter related utils
 -----------------------
 Contains utils and definitions that are used together with the parameters.
 """
+# pylint: disable=too-many-branches
 
 import enum
 

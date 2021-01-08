@@ -84,7 +84,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
 
 if __name__ == '__main__':
     # Code_string is chosen among the list given by 'verdi code list'
-    CODE_STRING = 'vasp@mycluster'
+    CODE_STRING = 'vasp5@localhost'
 
     # POSCAR equivalent
     # Set the silicon structure
