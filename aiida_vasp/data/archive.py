@@ -52,7 +52,7 @@ class ArchiveData(Data):
         finally:
             os.remove(path)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ, signature-differs
     def store(self, *args, **kwargs):
         self._make_archive()
         del self._filelist
