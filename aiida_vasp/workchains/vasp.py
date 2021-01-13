@@ -132,12 +132,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
         spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')
         spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
-        spec.exit_code(703,
-                       'ERROR_INVALID_PARAMETER_DETECTED',
-                       message='the parameter massager found invalid tags in the input parameters.')
-        spec.exit_code(704,
-                       'ERROR_MISSING_PARAMETER_DETECTED',
-                       message='the parameter massager did not find expected tags in the input parameters.')
+        spec.exit_code(703, 'ERROR_IN_PARAMETER_MASSAGER', message='the exception: {exception} was thrown while massaging the parameters')
 
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
@@ -191,11 +186,20 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Perform inputs massage to accommodate generalization in higher lying workchains
         # and set parameters.
-        parameters_massager = ParametersMassage(self, self.ctx.inputs.parameters, unsupported_parameters)
-        # Check exit codes from the parameter massager and set it if it exists
-        if parameters_massager.exit_code is not None:
-            return parameters_massager.exit_code
-        self.ctx.inputs.parameters = parameters_massager.parameters
+        try:
+            parameters_massager = ParametersMassage(self.ctx.inputs.parameters, unsupported_parameters)
+        except Exception as exception:  # pylint: disable=broad-except
+            return self.exit_codes.ERROR_IN_PARAMETER_MASSAGER.format(exception=exception)  # pylint: disable=no-member
+        try:
+            # Only set if they exists
+            # Set any INCAR tags
+            self.ctx.inputs.parameters = parameters_massager.parameters.incar
+            # Set any dynamics input (currently only for selective dynamics, e.g. custom write to POSCAR)
+            self.ctx.inputs.dynamics = parameters_massager.parameters.dynamics
+            # Here we could set additional override flags, but those are not relevant for this VASP plugin
+        except AttributeError:
+            pass
+
         # Set options
         # Options is very special, not storable and should be
         # wrapped in the metadata dictionary, which is also not storable

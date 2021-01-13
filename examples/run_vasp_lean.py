@@ -84,7 +84,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
 
 if __name__ == '__main__':
     # Code_string is chosen among the list given by 'verdi code list'
-    CODE_STRING = 'vasp5@localhost'
+    CODE_STRING = 'vasp@mycluster'
 
     # POSCAR equivalent
     # Set the silicon structure
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'code': {'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
+    INCAR = {'incar': {'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
 
     # KPOINTS equivalent
     # Set kpoint mesh

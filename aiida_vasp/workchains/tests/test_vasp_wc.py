@@ -31,7 +31,7 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
-    inputs.parameters = vasp_params
+    inputs.parameters = get_data_node('dict', dict={'incar': vasp_params.get_dict()})
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
@@ -75,7 +75,7 @@ def test_vasp_wc_chgcar(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = vasp_structure
-    inputs.parameters = vasp_params
+    inputs.parameters = get_data_node('dict', dict={'incar': vasp_params.get_dict()})
     inputs.kpoints = kpoints
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)

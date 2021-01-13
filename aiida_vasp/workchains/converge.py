@@ -663,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
                 else:
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
-            param_dict['code'] = {'system': location}
+            param_dict['incar'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
         # Set input nodes
@@ -723,7 +723,7 @@ class ConvergeWorkChain(WorkChain):
         pwcutoff = self.ctx.converge.pwcutoff_sampling[self.ctx.converge.pw_iteration]
         self.ctx.converge.settings.pwcutoff = pwcutoff
         parameters_dict = self.ctx.converge.parameters
-        parameters_dict.update({'pwcutoff': self.ctx.converge.settings.pwcutoff})
+        parameters_dict['electronic'] = {'pwcutoff': self.ctx.converge.settings.pwcutoff}
         self.ctx.running_pw = True
         self.ctx.running_kpoints = False
         inform_details = self.ctx.converge.settings.get('inform_details')
