@@ -56,7 +56,7 @@ class VaspImmigrant(VaspCalculation):
 
 def get_incar_input(dir_path):
     incar = IncarParser(file_path=str(dir_path / 'INCAR')).incar
-    return get_data_node('dict', dict={'code': incar})
+    return get_data_node('dict', dict=incar)
 
 
 def get_poscar_input(dir_path):

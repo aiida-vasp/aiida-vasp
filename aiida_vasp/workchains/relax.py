@@ -10,6 +10,7 @@ parameters instead of the code dependent variables.
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
+from aiida.common.exceptions import NotExistent
 from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
 
@@ -313,9 +314,12 @@ class RelaxWorkChain(WorkChain):
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '
                         'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
-            # Make sure at the very minimum we attach the misc node that contains notifications and other
+            # Make sure at the very minimum we attach the misc node (if it exists) that contains notifications and other
             # quantities that can be salvaged
-            self.out('misc', workchain.outputs['misc'])
+            try:
+                self.out('misc', workchain.outputs['misc'])
+            except NotExistent:
+                pass
 
         return self.ctx.exit_code
 

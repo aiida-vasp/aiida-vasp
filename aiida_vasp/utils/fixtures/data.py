@@ -209,8 +209,7 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = AttributeDict()
-            parameters.code = vasp_params.get_dict()
+            parameters = AttributeDict(vasp_params.get_dict())
             parameters = get_data_class('dict')(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -251,8 +250,7 @@ def vasp2w90_inputs(
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = AttributeDict()
-            parameters.code = vasp_params.get_dict()
+            parameters = AttributeDict(vasp_params.get_dict())
             parameters = get_data_class('dict')(dict=parameters)
 
         inputs.code = vasp_code

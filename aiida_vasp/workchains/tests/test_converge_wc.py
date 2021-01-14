@@ -35,7 +35,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_converge_wc'
-    parameters = {'code': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}}
+    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -43,7 +43,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
-    inputs.parameters = get_data_node('dict', dict=parameters)
+    inputs.parameters = get_data_node('dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
     inputs.options = get_data_node('dict',
@@ -99,7 +99,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
     parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_converge_wc'
-    parameters = {'code': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}}
+    parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
     kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
 
     restart_clean_workdir = get_data_node('bool', False)
@@ -109,7 +109,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
-    inputs.parameters = get_data_node('dict', dict=parameters)
+    inputs.parameters = get_data_node('dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
     inputs.options = get_data_node('dict',
