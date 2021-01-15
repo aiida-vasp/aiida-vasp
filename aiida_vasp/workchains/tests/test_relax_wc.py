@@ -36,7 +36,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
     parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_relax_wc'
-    parameters = {'code': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
+    parameters = {'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
     parameters['relax'] = {}
     parameters['relax']['perform'] = True
     parameters['relax']['algo'] = 'cg'

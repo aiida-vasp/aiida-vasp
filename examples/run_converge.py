@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # INCAR equivalent
     # Set input parameters (make sure we do not set ENCUT in order to run convergence tests
     # on the plane wave cutoff)
-    INCAR = {'code': {'prec': 'NORMAL', 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
+    INCAR = {'incar': {'prec': 'NORMAL', 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
 
     # KPOINTS equivalent
     # Set kpoint mesh
