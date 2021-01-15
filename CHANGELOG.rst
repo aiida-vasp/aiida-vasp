@@ -7,6 +7,36 @@ All notable changes to this project after version 1.0.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v2.0.0]
+--------
+
+**Added**
+- A new dedicated parameter namespace ``incar`` override namespace that is to be used when utilizing the existing workchain stack to supply ``INCAR`` tags directly (needs to be valid).
+
+- Possibility to control selective dynamics with the ``positions_dof`` flag.
+
+- Added possibility to parse magnetization.
+
+- Added framework to parse errors and warnings (notifications) from VASP.
+
+- Nightly test runs against AiiDA core develop.
+
+- Symbols are properly attached to ``BandsData``.
+
+**Changed**
+- Updated dependencies, in particular ``parsevasp`` to enable additional parsing of streams, selective dynamics and magnetization.
+
+- Renamed override parameter namespace from ``vasp`` to ``incar``.
+
+- Fixed warnings related to missing context on file open etc.
+- We now instead use a positive match when copying files from the restart folder so that only the required files are copying. This removes possible failures related to the restarted job failing while the parser believes the vasprun.xml etc. is okey (but in reality is from the previous run).
+
+- Fixed missing yaml files.
+
+- We do not allow the install of AiiDA core 1.4.0 and 1.4.1 due to a bug that caused ``POTCAR`` to be present in the repository.
+
+- Removed ``py`` dependencies.
+
 [v1.0.1]
 --------
 This is to be consider the first production release. Backwards compatibility is broken.

@@ -14,6 +14,7 @@ Acknowledgements
 ----------------
 Special thanks go to the following individuals and organizations that helps or helped in the development.
 
+* Jonathan Chico, adding parsing of magnetization and selective dynamics
 * Martin Callsen, Gent University (for extensive work on the parser)
 * Rico Häuselmann, THEOS, EPFL (big thanks for the inital design and implementation of the plugin)
 * Dominik Gresch, ITP, ETHZ
