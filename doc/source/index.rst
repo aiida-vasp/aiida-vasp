@@ -83,6 +83,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :caption: Concepts
    :hidden:
 
+   concepts/parameters
    concepts/potentials
    concepts/calculations
    concepts/workchains

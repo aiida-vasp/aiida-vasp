@@ -14,7 +14,7 @@ Required inputs
 * ``kpoints``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.KpointsData` instance, describing the kpoints mesh or path.
 * ``potential_family``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Str` instance, the name given to a set of uploaded POTCAR files.
 * ``potential_mapping``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
-* ``parameters``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing key/value pairs that is later written to an INCAR file as ``KEY =VALUE``. Keys and values can be lower case and the standard built-in Python data types should be used for values.
+* ``parameters``: an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
 * ``options``, an `AiiDA`_ :py:class:`aiida.orm.nodes.data.Dict` instance, containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
 
 .. _AiiDA: https://www.aiida.net

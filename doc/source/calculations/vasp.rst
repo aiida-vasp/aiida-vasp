@@ -8,6 +8,7 @@ Inputs
 ------
 
 * :ref:`parameters <vasp-input-parameters>`
+* :ref:`dynamics <vasp-input-dynamics>`
 * :ref:`structure <vasp-input-structure>`
 * :ref:`potential <vasp-input-potential>`
 * :ref:`kpoints <vasp-input-kpoints>`
@@ -30,7 +31,19 @@ The input parameters (the content of the INCAR file). This is of the `AiiDA`_ da
 
 Key names are case-insensitive, which should be considered when querying the database. Values can be given in their python representation or as strings (strings also may include unit specifications).
 
-.. _vasp-input-kpoints:
+.. _vasp-input-dynamics:
+
+dynamics
+^^^^^^^^
+A dictionary containing information about how the calculation should obey the dynamics of the system. Currently only one flag is respected, that is the ``positions_dof`` which contains a list, one entry per position which contains another list, e.g. ``[True, True, False]`` that describes the flags to set in ``POSCAR`` after each position in order to control the selective dynamics. Example::
+
+  dynamics = Dict(dict={'positions_dof':
+    [[True, True, True],
+     [False, True, False]
+    ]}
+  )
+
+.. _vasp-input-kpoint:
 
 kpoints
 ^^^^^^^
@@ -98,15 +111,15 @@ The structure of the atomic layout. This is of the `AiiDA`_ data type :py:class:
 
 .. _vasp-input-potential:
 
-potcar
-^^^^^^
-The potential to use for each element (the POTCAR files). This is of the AiiDA-VASP data type :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>`. How to upload `VASP`_ POTCAR files can be found at :ref:`potentials`. Once uploaded they can be obtained as follows::
+potential
+^^^^^^^^^
+A namespace containing the potentials to use for each element (the POTCAR files). This is of the AiiDA-VASP data type :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>`. How to upload `VASP`_ POTCAR files can be found at :ref:`potentials`. Once uploaded they can be obtained as follows::
 
-   # input_structure is InAs
+   # input_structure is for instance InAs
    potcar_mapping = {'In': 'In_d', 'As': 'As'}
    potcars = PotcarData.get_potcars_from_structure(structure=input_structure, family_name='PBE.54', mapping=potcar_mapping)
 
-One POTCAR input node must be given to the calculations for each element in the system.
+One POTCAR node must be given to the calculations for each element in the system.
 The calculations take responsibility for ordering the elements consistently between POSCAR and POTCAR.
 
 .. _vasp-input-charge:
