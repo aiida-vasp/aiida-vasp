@@ -128,7 +128,7 @@ if __name__ == '__main__':
         # The output are stored as AiiDA datatypes, which is Dict in this case. To obtain a regular
         # dictionary, we use get_dict
         misc = output['misc'].get_dict()
-        EOS.append([lattice_constant, misc['total_energies']['energy_no_entropy']])
+        EOS.append([lattice_constant, misc['total_energies']['energy_extrapolated']])
     # Write volume and total energies to file
     with open('eos', 'w') as file_object:
         for item in EOS:

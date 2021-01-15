@@ -33,7 +33,9 @@ def calc_with_retrieved(localhost):
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.set_attribute('input_filename', 'INCAR')
         node.set_attribute('output_filename', 'OUTCAR')
-        node.set_attribute('error_filename', 'aiida.err')
+        #node.set_attribute('error_filename', 'aiida.err')
+        node.set_attribute('scheduler_stderr', '_scheduler-stderr.txt')
+        node.set_attribute('scheduler_stdout', '_scheduler-stdout.txt')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('max_wallclock_seconds', 1800)
 
@@ -82,7 +84,6 @@ def vasp_calc(vasp_inputs):
 
         if inputs is None:
             inputs = vasp_inputs(settings)
-
         manager = get_manager()
         runner = manager.get_runner()
 
@@ -155,10 +156,12 @@ def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_s
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
         kpoints, _ = vasp_kpoints
+        parameters = AttributeDict()
+        parameters = vasp_params.get_dict()
         inpts = AttributeDict()
         inpts.code = Code.get_from_string('mock-vasp@localhost')
         inpts.structure = vasp_structure
-        inpts.parameters = vasp_params
+        inpts.parameters = get_data_class('dict')(dict=parameters)
         inpts.kpoints = kpoints
         inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
                                                                                    family_name=POTCAR_FAMILY_NAME,

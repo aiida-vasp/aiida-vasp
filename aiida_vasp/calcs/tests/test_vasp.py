@@ -55,12 +55,10 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
 
     inputs.charge_density = chgcar
-
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
-
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
 
@@ -72,7 +70,7 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     calcinfo = calc.prepare_for_submission(temp_folder)
 
     assert 'WAVECAR' in [item[1] for item in calcinfo.local_copy_list]
@@ -90,7 +88,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
 
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     with pytest.raises(InputValidationError):
         calc.prepare_for_submission(temp_folder)
 
@@ -110,7 +108,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
     calcinfo = calc.prepare_for_submission(temp_folder)
     input_files = temp_folder.get_content_list()
 
@@ -128,7 +126,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir.dirpath()))
+    temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
 
@@ -163,7 +161,6 @@ def managed_temp_file():
         os.remove(temp_file)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc(run_vasp_calc):
     """Test a run of a basic VASP calculation and its details."""
@@ -195,8 +192,10 @@ def test_vasp_calc(run_vasp_calc):
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
+    # Check that we do not have any notifications
+    assert not misc['notifications']
 
-@pytest.mark.calc
+
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete(run_vasp_calc):
     """Test a run of a basic VASP calculation where one does not want to store the always retrieved files after parsing."""
@@ -209,7 +208,6 @@ def test_vasp_calc_delete(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_extra(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
@@ -233,7 +231,6 @@ def test_vasp_calc_extra(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref_no_wannier)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete_extra(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files but not store them after parsing."""
@@ -256,7 +253,6 @@ def test_vasp_calc_delete_extra(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_del_str_ext(run_vasp_calc):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files and store only those."""
@@ -280,7 +276,6 @@ def test_vasp_calc_del_str_ext(run_vasp_calc):
     assert set(file_names) == set(retrieve_list_ref)
 
 
-@pytest.mark.calc
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_no_potcar_in_repo(run_vasp_calc):
     """Test a VASP run to verify that there is no POTCAR file in the repository."""

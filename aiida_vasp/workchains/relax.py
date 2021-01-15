@@ -10,12 +10,13 @@ parameters instead of the code dependent variables.
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
+from aiida.common.exceptions import NotExistent
 from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class RelaxWorkChain(WorkChain):
@@ -245,7 +246,7 @@ class RelaxWorkChain(WorkChain):
         """Initialize a calculation based on a relaxed or assumed relaxed structure."""
         if not self.perform_relaxation():
             if self._verbose:
-                self.report('skipping structure relaxation and forwarding input to the next workchain.')
+                self.report('skipping structure relaxation and forwarding to the next workchain.')
         else:
             # For the final static run we do not need to parse the output structure, which
             # is at this point enabled.
@@ -280,7 +281,7 @@ class RelaxWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
-        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'])
+        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'])
 
     def run_next_workchain(self):
         """Run the next workchain."""
@@ -313,6 +314,12 @@ class RelaxWorkChain(WorkChain):
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '
                         'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            # Make sure at the very minimum we attach the misc node (if it exists) that contains notifications and other
+            # quantities that can be salvaged
+            try:
+                self.out('misc', workchain.outputs['misc'])
+            except NotExistent:
+                pass
 
         return self.ctx.exit_code
 
@@ -347,13 +354,15 @@ class RelaxWorkChain(WorkChain):
             if self.ctx.inputs.parameters.relax.shape:
                 converged &= self.check_shape_convergence(delta)
 
-        if not converged:
-            self.ctx.current_restart_folder = workchain.outputs.remote_folder
-            if self._verbose:
-                self.report('Relaxation did not converge, restarting the relaxation.')
-        else:
-            if self._verbose:
-                self.report('Relaxation is converged, finishing with a final static calculation.')
+            if not converged:
+                self.ctx.current_restart_folder = workchain.outputs.remote_folder
+                if self._verbose:
+                    self.report('Relaxation did not converge, restarting the relaxation.')
+            else:
+                if self._verbose:
+                    self.report('Relaxation is considered converged.')
+
+        if converged:
             self.ctx.is_converged = converged
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member

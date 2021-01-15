@@ -34,7 +34,7 @@ class BaseParser(object):  # pylint: disable=useless-object-inheritance
             lines = fobj_or_str.split('\n')
         else:
             lines = fobj_or_str.readlines()
-        return [cls.line(l, d_type) for l in lines]
+        return [cls.line(line, d_type) for line in lines]
 
 
 class BaseFileParser(BaseParser):
@@ -77,7 +77,6 @@ class BaseFileParser(BaseParser):
         self._logger = aiidalogger.getChild(self.__class__.__name__)
         self._vasp_parser = calc_parser_cls
         self.settings = None
-
         if calc_parser_cls is not None:
             calc_parser_cls.get_quantity.append(self.get_quantity)
             self.settings = calc_parser_cls.settings
@@ -229,7 +228,6 @@ class KeyValueParser(BaseParser):
     A simple example, which tries to convert values to python objects on a best effort basis. Usage::
 
         import re
-        import py
 
         from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
 

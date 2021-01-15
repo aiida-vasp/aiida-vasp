@@ -37,12 +37,9 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
 
     no_dict = ['options', 'metadata', 'potential', 'parameters']
     no_dict = no_dict + namespaces
-
     # Copy and convert dict
     for key, val in inputs.items():
-        if key not in no_dict and \
-           isinstance(val, dict) and \
-           all([isinstance(k, (basestring)) for k in val.keys()]):
+        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()])):
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
@@ -71,7 +68,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
 
 
 def compare_structures(structure_a, structure_b):
-    """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
+    """Compare two StructureData objects A, B and return a delta (A - B) of the relevant properties."""
 
     delta = AttributeDict()
     delta.absolute = AttributeDict()

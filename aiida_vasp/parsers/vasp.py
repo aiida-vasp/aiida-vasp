@@ -174,7 +174,7 @@ class VaspParser(BaseParser):
         self.get_quantity.clear()
 
         try:
-            return self.exit_status
+            return self.exit_code
         except AttributeError:
             pass
 

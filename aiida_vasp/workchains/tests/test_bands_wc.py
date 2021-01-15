@@ -20,7 +20,7 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
-#@pytest.mark.skip(reason='Currently fails, need to find a better way to eject logs etc.')
+# @pytest.mark.skip(reason='Currently fails, need to find a better way to eject logs etc.')
 @pytest.mark.wc
 def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test with mocked vasp code."""
@@ -38,7 +38,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     parameters['system'] = 'test-case:test_bands_wc'
     # Make sure we replace encut with pwcutoff
     del parameters['encut']
-    parameters = {'vasp': parameters}
+    parameters = {'incar': parameters}
     parameters['electronic'] = {'pwcutoff': 200}
 
     inputs = AttributeDict()
@@ -102,3 +102,5 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     np.testing.assert_allclose(bands[0, 0, 0:3], np.array([-6.0753, 6.0254, 6.0254]))
     np.testing.assert_allclose(bands[0, 2, 0:3], np.array([-6.0386, 5.7955, 5.8737]))
     np.testing.assert_allclose(bands[0, 97, 0:3], np.array([-1.867, -1.867, 3.1102]))
+
+    assert results['bands'].labels

@@ -15,7 +15,7 @@ from aiida.orm.nodes.data.array.bands import find_bandgap
 
 from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
 from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class ConvergeWorkChain(WorkChain):
@@ -192,7 +192,7 @@ class ConvergeWorkChain(WorkChain):
         spec.input('converge.total_energy_type',
                    valid_type=get_data_class('str'),
                    required=False,
-                   default=lambda: get_data_node('str', 'energy_no_entropy'),
+                   default=lambda: get_data_node('str', 'energy_extrapolated'),
                    help="""
                    The energy type that is used when ``cutoff_type`` is set to `energy`.
                    Consult the options available in the parser for the current version.
@@ -663,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
                 else:
                     location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(settings.kgrid[0]) + '_' + str(
                         settings.kgrid[1]) + '_' + str(settings.kgrid[2])
-            param_dict['vasp'] = {'system': location}
+            param_dict['incar'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
         # Set input nodes
@@ -673,7 +673,7 @@ class ConvergeWorkChain(WorkChain):
         # Make sure we do not have any floating dict (convert to Dict) in the input
         # Also, make sure we do not pass the converge parameter namespace as there are no relevant
         # code specific parameters there
-        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify'], exclude_parameters=['converge'])
+        self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'], exclude_parameters=['converge'])
 
     def run_next_workchain(self):
         """Run next workchain."""
@@ -723,7 +723,7 @@ class ConvergeWorkChain(WorkChain):
         pwcutoff = self.ctx.converge.pwcutoff_sampling[self.ctx.converge.pw_iteration]
         self.ctx.converge.settings.pwcutoff = pwcutoff
         parameters_dict = self.ctx.converge.parameters
-        parameters_dict.update({'pwcutoff': self.ctx.converge.settings.pwcutoff})
+        parameters_dict['electronic'] = {'pwcutoff': self.ctx.converge.settings.pwcutoff}
         self.ctx.running_pw = True
         self.ctx.running_kpoints = False
         inform_details = self.ctx.converge.settings.get('inform_details')
@@ -752,7 +752,7 @@ class ConvergeWorkChain(WorkChain):
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
-        # Check if called workchain was successfull
+        # Check if called workchain was successful
         next_workchain_exit_status = self.ctx.pw_workchains[-1].exit_status
         next_workchain_exit_message = self.ctx.pw_workchains[-1].exit_message
         if next_workchain_exit_status:

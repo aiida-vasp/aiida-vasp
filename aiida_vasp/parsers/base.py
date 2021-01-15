@@ -48,12 +48,23 @@ class BaseParser(Parser):
                 for retrieved_file in os.listdir(self.retrieved_temporary):
                     retrieved[retrieved_file] = {'path': self.retrieved_temporary, 'status': 'temporary'}
 
+        # Check if there are other files than the AiiDA generated scheduler files in retrieved and
+        # if there are any files in the retrieved_temporary. If not, return an error.
+        aiida_required_files = [self.node.get_attribute('scheduler_stderr'), self.node.get_attribute('scheduler_stdout')]
+        vasp_output_files_present = False
+        for file_name in retrieved:
+            if file_name not in aiida_required_files:
+                vasp_output_files_present = True
+
+        if not vasp_output_files_present:
+            return self.exit_codes.ERROR_VASP_DID_NOT_EXECUTE
+
         # Store the retrieved content
         self.retrieved_content = retrieved
         # OK if a least one of the folders are present
         if exit_code_permanent is None or exit_code_temporary is None:
             return None
-        # Both are not present, exit code of teh temporary folder take precedence
+        # Both are not present, exit code of the temporary folder take precedence
         return exit_code_temporary if not None else exit_code_permanent
 
     def check_temporary_folder(self, parser_kwargs):

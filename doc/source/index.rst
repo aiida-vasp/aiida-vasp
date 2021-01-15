@@ -12,6 +12,12 @@ AiiDA-VASP is under active development, check out the `changelog`_.
 
 The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.6.
 
+.. warning: Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to open an issue or even better, submit a pull requests, where you try to fix the issue yourself. You can do this on our Github repository. 
+
+.. note:
+   We are currently looking for additional developers. If you are interested, please open an issue on our repository on Github.
+
+
 General comments about the user documentation and support
 =========================================================
 
@@ -77,6 +83,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :caption: Concepts
    :hidden:
 
+   concepts/parameters
    concepts/potentials
    concepts/calculations
    concepts/workchains
@@ -119,6 +126,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :caption: Developments
    :hidden:
 
+   developments/general
    developments/developments
    developments/running_tests
    changelog

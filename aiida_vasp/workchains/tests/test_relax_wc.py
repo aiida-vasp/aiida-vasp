@@ -19,7 +19,6 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 
 
-@pytest.mark.wc
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     # def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
@@ -36,7 +35,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
     parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_relax_wc'
-    parameters = {'vasp': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
+    parameters = {'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
     parameters['relax'] = {}
     parameters['relax']['perform'] = True
     parameters['relax']['algo'] = 'cg'

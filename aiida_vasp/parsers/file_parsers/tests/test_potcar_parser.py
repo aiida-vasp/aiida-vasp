@@ -60,12 +60,13 @@ def test_file_contents_equivalence(fresh_aiida_env):
     assert from_file.sha512 == from_contents.sha512
 
 
-def test_multi_round_trip(potcar_family, tmpdir):
+def test_multi_round_trip(potcar_family, tmp_path):
     """Write multiple POTCAR potentials to a file and recover the nodes stored in the db."""
-    test_dir = tmpdir.mkdir('round_trip')
+    test_dir = tmp_path / 'round_trip'
+    test_dir.mkdir()
     potcar_cls = get_data_class('vasp.potcar')
     multi = MultiPotcarIo(potcar_cls.get_potcars_dict(elements=POTCAR_MAP.keys(), family_name=potcar_family, mapping=POTCAR_MAP).values())
-    tempfile = test_dir.join('POTCAR')
+    tempfile = test_dir / 'POTCAR'
     multi.write(tempfile)
     recovered = multi.read(tempfile)
     uuids_start = [potcar.node.uuid for potcar in multi.potcars]

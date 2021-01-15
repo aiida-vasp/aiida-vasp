@@ -7,6 +7,7 @@ The calculation class that prepares a specific VASP calculation.
 #encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
+import os
 from aiida.plugins import DataFactory
 
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -67,7 +68,8 @@ class VaspCalculation(VaspCalcBase):
 
     """
 
-    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*']
+    _VASP_OUTPUT = 'vasp_output'
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*', _VASP_OUTPUT]
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
@@ -77,6 +79,10 @@ class VaspCalculation(VaspCalcBase):
         # Define the inputs.
         # options is passed automatically.
         spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
+        spec.input('dynamics',
+                   valid_type=get_data_class('dict'),
+                   help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
+                   required=False)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
@@ -121,12 +127,31 @@ class VaspCalculation(VaspCalcBase):
                        'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
                        message='the retrieved_temporary folder data node could not be accessed.')
         spec.exit_code(352, 'ERROR_CRITICAL_MISSING_FILE', message='a file that is marked by the parser as critical is missing.')
+        spec.exit_code(333,
+                       'ERROR_VASP_DID_NOT_EXECUTE',
+                       message='VASP did not produce any output files and did likely not execute properly.')
         spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
-        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the requested quantity')
+        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the {quantity} quantity')
+        spec.exit_code(
+            1003,
+            'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
+            message=
+            'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
+            'very likely the VASP calculation did not run properly')
 
     def prepare_for_submission(self, tempfolder):
-        """Add EIGENVAL, DOSCAR, and all files starting with wannier90 to the list of files to be retrieved."""
+        """
+        Add all files to the list of files to be retrieved.
+
+        Notice that we here utilize both the retrieve batch of files, which are always stored after retrieval and
+        the temporary retrieve list which is automatically cleared after parsing.
+        """
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
+
+        # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
+        calcinfo.stdout_name = self._VASP_OUTPUT
+        calcinfo.join_files = True
+
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve files
         try:
@@ -138,8 +163,8 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
-                                                                               default=[])  # pylint: disable=invalid-name
+            additional_retrieve_temp_list =\
+                self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
@@ -152,7 +177,7 @@ class VaspCalculation(VaspCalcBase):
             provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
         except AttributeError:
             provenance_exclude_list = []
-        # Always include POTCAR in the exclude list (not added to the repository)
+        # Always include POTCAR in the exclude list (not added to the repository, regardless of store)
         calcinfo.provenance_exclude_list = list(set(provenance_exclude_list + ['POTCAR']))
 
         return calcinfo
@@ -204,26 +229,6 @@ class VaspCalculation(VaspCalcBase):
         icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
-    def _check_chgcar(self, remote_folder):  # pylint: disable=no-self-use
-        """
-        Check if the CHGCAR file is present in the remote folder.
-
-        This is only a very rudimentary test, e.g. we only check the
-        presence of a file, not if its content is valid.
-        """
-
-        return 'CHGCAR' in remote_folder.listdir()
-
-    def _check_wavecar(self, remote_folder):  # pylint: disable=no-self-use
-        """
-        Check if the WAVECAR file is present in the remote folder.
-
-        This is only a very rudimentary test, e.g. we only check the
-        presence of a file, not if its content is valid.
-        """
-
-        return 'WAVECAR' in remote_folder.listdir()
-
     def _need_wavecar(self):
         """
         Test wether a wavefunctions input is needed or not.
@@ -253,25 +258,25 @@ class VaspCalculation(VaspCalcBase):
     def write_additional(self, tempfolder, calcinfo):
         """Write CHGAR and WAVECAR files if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
+        # a list of file names to be copied
+        remote_copy_fnames = [os.path.split(entry[1])[1] for entry in calcinfo.remote_copy_list]
         if self._need_chgcar():
             # If we restart, we do not require inputs, but we should have a basic check
             # that the CHGCAR file is present
             if not self._is_restart():
-                chgcar = tempfolder.get_abs_path('CHGCAR')
-                self.write_chgcar(chgcar, calcinfo)
+                self.write_chgcar('CHGCAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
-                if not self._check_chgcar(remote_folder):
+                if 'CHGCAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find CHGCAR in {}'.format(remote_folder.get_remote_path()))
         if self._need_wavecar():
             # If we restart, we do not require inputs, but we should have a basic check
             # that the WAVECAR file is present
             if not self._is_restart():
-                wavecar = tempfolder.get_abs_path('WAVECAR')
-                self.write_wavecar(wavecar, calcinfo)
+                self.write_wavecar('WAVECAR', calcinfo)
             else:
                 remote_folder = self.inputs.restart_folder
-                if not self._check_wavecar(remote_folder):
+                if 'WAVECAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
 
     def write_incar(self, dst):  # pylint: disable=unused-argument
@@ -298,7 +303,12 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision)
+        positions_dof = self.inputs.get('dynamics', {}).get('positions_dof')
+        if positions_dof is not None:
+            options = {'positions_dof': positions_dof}
+        else:
+            options = None
+        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 
     def write_potcar(self, dst):
@@ -337,10 +347,10 @@ class VaspCalculation(VaspCalcBase):
         add_wavecar = kwargs.get('use_wavecar') or bool(builder.parameters.get_dict().get('istart', 0))
         add_chgcar = kwargs.get('use_chgcar') or builder.parameters.get_dict().get('icharg', -1) in [1, 11]
         if add_chgcar:
-            transport.get(remote_path.join('CHGCAR').strpath, sandbox_path.strpath)
+            transport.get(str(remote_path / 'CHGCAR'), str(sandbox_path))
             builder.charge_density = get_chgcar_input(sandbox_path)
         if add_wavecar:
-            transport.get(remote_path.join('WAVECAR').strpath, sandbox_path.strpath)
+            transport.get(str(remote_path / 'WAVECAR'), str(sandbox_path))
             builder.wavefunctions = get_wavecar_input(sandbox_path)
 
 

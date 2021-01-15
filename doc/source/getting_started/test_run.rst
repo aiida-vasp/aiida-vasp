@@ -156,7 +156,7 @@ In this part we will simply launch a `VASP`_ calculation of silicon using the st
         ]
      },
      "total_energies": {
-     "energy_no_entropy": -10.79608481
+     "energy_extrapolated": -10.79608481
      }
      }
 

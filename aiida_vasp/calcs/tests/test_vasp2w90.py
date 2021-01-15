@@ -45,7 +45,7 @@ def test_prepare_for_submission(vasp2w90_calc_and_ref, tmp_path):
     with managed_temp_file() as temp_file:
         vasp_calc.write_incar(temp_file)
         with open(temp_file, 'r') as result_incar_fo:
-            assert result_incar_fo.read() == reference['incar']
+            assert result_incar_fo.readlines() == reference['incar']
 
 
 @ONLY_ONE_CALC

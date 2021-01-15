@@ -12,7 +12,7 @@ from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
-from aiida_vasp.utils.parameters import inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class BandsWorkChain(WorkChain):
@@ -93,6 +93,7 @@ class BandsWorkChain(WorkChain):
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
+        spec.exit_code(2001, 'ERROR_BANDSDATA_NOT_FOUND', message='BandsData not found in exposed_ouputs')
 
     def initialize(self):
         """Initialize."""
@@ -160,7 +161,7 @@ class BandsWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics'])
 
     def run_next_workchain(self):
         """Run the next workchain."""
@@ -208,7 +209,16 @@ class BandsWorkChain(WorkChain):
         """Attach the remaining output results."""
 
         workchain = self.ctx.workchains[-1]
-        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        out_dict = self.exposed_outputs(workchain, self._next_workchain)
+        bands = out_dict.pop('bands', None)
+        self.out_many(out_dict)
+        if bands is None:
+            self.ctx.exit_code = self.exit_codes.ERROR_BANDSDATA_NOT_FOUND  # pylint: disable=no-member
+        else:
+            self.out('bands', attach_labels(bands, self.ctx.inputs.kpoints))
+            self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
+        return self.ctx.exit_code
 
     def finalize(self):
         """Finalize the workchain."""
@@ -227,3 +237,10 @@ def seekpath_structure_analysis(structure, parameters):
     """
     from aiida.tools import get_explicit_kpoints_path
     return get_explicit_kpoints_path(structure, **parameters.get_dict())
+
+
+@calcfunction
+def attach_labels(bands, kpoints):
+    bands_with_labels = bands.clone()
+    bands_with_labels.labels = kpoints.labels
+    return bands_with_labels

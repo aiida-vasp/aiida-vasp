@@ -88,7 +88,7 @@ def vasp_parser_with_test(calc_with_retrieved):
         }
     }
 
-    file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/test_relax_wc/out')
+    file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/basic_run')
 
     node = calc_with_retrieved(file_path, settings_dict)
 
@@ -295,4 +295,153 @@ def test_misc(request, calc_with_retrieved):
     assert data['fermi_level'] == 6.17267267
     assert data['maximum_stress'] == 42.96872956444064
     assert data['maximum_force'] == 0.21326679
-    assert data['total_energies']['energy_no_entropy'] == -10.823296
+    assert data['total_energies']['energy_extrapolated'] == -10.823296
+
+
+@pytest.mark.parametrize(
+    'config',
+    [
+        None,
+        {
+            'random_error': {
+                'kind': 'ERROR',
+                'regex': 'I AM A WELL DEFINED ERROR',
+                'message': 'Okey, this error you do not want.',
+                'suggestion': '',
+                'location': 'STDOUT',
+                'recover': False
+            }
+        },
+        {
+            'random_warning': {
+                'kind': 'WARNING',
+                'regex': 'I AM A WELL DEFINED WARNING',
+                'message': 'Okey, this warning is nasty.',
+                'suggestion': '',
+                'location': 'STDOUT',
+                'recover': False
+            }
+        }  # pylint: disable=too-many-statements, too-many-branches
+    ])
+@pytest.mark.parametrize('misc_input', [[], ['notifications']])
+def test_stream(misc_input, config, request, calc_with_retrieved):
+    """Test that the stream parser works and gets stored on a node."""
+    from aiida.plugins import ParserFactory
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
+
+    # turn of everything, except misc
+    settings_dict = {
+        'parser_settings': {
+            'add_trajectory': False,
+            'add_bands': False,
+            'add_chgcar': False,
+            'add_dos': False,
+            'add_kpoints': False,
+            'add_energies': False,
+            'add_misc': misc_input,
+            'add_structure': False,
+            'add_projectors': False,
+            'add_born_charges': False,
+            'add_dielectrics': False,
+            'add_hessian': False,
+            'add_dynmat': False,
+            'add_wavecar': False,
+            'add_site_magnetization': False,
+            'file_parser_set': 'default',
+            'stream_config': config
+        }
+    }
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    if misc_input == []:
+        # Test empty misc specification, yields no misc output node
+        with pytest.raises(KeyError) as error:
+            misc = result['misc']
+    else:
+        misc = result['misc']
+        misc_dict = misc.get_dict()
+        if config is not None:
+            if 'random_error' in config:
+                assert len(misc_dict['notifications']) == 2
+                assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+                assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+                assert misc_dict['notifications'][1]['name'] == 'random_error'
+                assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
+            if 'random_warning' in config:
+                assert len(misc_dict['notifications']) == 2
+                assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+                assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+                assert misc_dict['notifications'][1]['name'] == 'random_warning'
+                assert misc_dict['notifications'][1]['kind'] == 'WARNING'
+                assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED WARNING'
+        else:
+            assert len(misc_dict['notifications']) == 1
+            assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+            assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+            assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+
+
+def test_stream_history(request, calc_with_retrieved):
+    """Test that the stream parser keeps history."""
+    from aiida.plugins import ParserFactory
+    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
+
+    # turn of everything, except misc
+    settings_dict = {
+        'parser_settings': {
+            'add_trajectory': False,
+            'add_bands': False,
+            'add_chgcar': False,
+            'add_dos': False,
+            'add_kpoints': False,
+            'add_energies': False,
+            'add_misc': ['notifications'],
+            'add_structure': False,
+            'add_projectors': False,
+            'add_born_charges': False,
+            'add_dielectrics': False,
+            'add_hessian': False,
+            'add_dynmat': False,
+            'add_wavecar': False,
+            'add_site_magnetization': False,
+            'file_parser_set': 'default',
+            'stream_config': {
+                'random_error': {
+                    'kind': 'ERROR',
+                    'regex': 'I AM A WELL DEFINED ERROR',
+                    'message': 'Okey, this error you do not want.',
+                    'suggestion': '',
+                    'location': 'STDOUT',
+                    'recover': False
+                }
+            },
+            'stream_history': True
+        }
+    }
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    misc = result['misc']
+    misc_dict = misc.get_dict()
+    assert len(misc_dict['notifications']) == 3
+    assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+    assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+    assert misc_dict['notifications'][1]['name'] == 'random_error'
+    assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
+    assert misc_dict['notifications'][2]['name'] == 'random_error'
+    assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
+    for item in misc_dict['notifications']:
+        assert item['kind'] != 'WARNING'
