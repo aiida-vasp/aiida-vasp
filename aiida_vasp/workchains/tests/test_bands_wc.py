@@ -38,7 +38,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     parameters['system'] = 'test-case:test_bands_wc'
     # Make sure we replace encut with pwcutoff
     del parameters['encut']
-    parameters = {'code': parameters}
+    parameters = {'incar': parameters}
     parameters['electronic'] = {'pwcutoff': 200}
 
     inputs = AttributeDict()

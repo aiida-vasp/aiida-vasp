@@ -79,6 +79,10 @@ class VaspCalculation(VaspCalcBase):
         # Define the inputs.
         # options is passed automatically.
         spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
+        spec.input('dynamics',
+                   valid_type=get_data_class('dict'),
+                   help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
+                   required=False)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
@@ -222,7 +226,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         ichrg_d = 0 if self._need_wavecar() else 2
-        icharg = self._parameters['code'].get('icharg', ichrg_d)
+        icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
     def _need_wavecar(self):
@@ -237,7 +241,7 @@ class VaspCalculation(VaspCalcBase):
         (py:method::NscfCalculation.use_parameters)
         """
         istrt_d = 1 if self.inputs.get('wavefunctions') else 0
-        istart = self._parameters['code'].get('istart', istrt_d)
+        istart = self._parameters.get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
     def _structure(self):
@@ -284,8 +288,7 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the file to write to
         """
-        dict_data = DataFactory('dict')
-        incar_parser = IncarParser(data=dict_data(dict=self.inputs.parameters.dict.code))
+        incar_parser = IncarParser(data=self.inputs.parameters)
         incar_parser.write(dst)
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
@@ -300,7 +303,11 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        options = self.inputs.parameters.get_dict().get('dynamics', None)
+        positions_dof = self.inputs.get('dynamics', {}).get('positions_dof')
+        if positions_dof is not None:
+            options = {'positions_dof': positions_dof}
+        else:
+            options = None
         poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 

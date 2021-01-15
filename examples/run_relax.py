@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'code': {'encut': 240, 'ismear': 0, 'sigma': 0.1, 'system': 'test system'}}
+    INCAR = {'incar': {'encut': 240, 'ismear': 0, 'sigma': 0.1, 'system': 'test system'}}
 
     # KPOINTS equivalent
     # Set kpoint mesh
