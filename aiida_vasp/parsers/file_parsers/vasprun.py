@@ -689,13 +689,17 @@ class VasprunParser(BaseFileParser):
         if eigenvalues is None:
             return None
 
+        # Convert to np.ndarray
+        eigenvalues = np.stack(eigenvalues, axis=0)
+        occupations = np.stack(occupations, axis=0)
+
         return get_band_properties(eigenvalues, occupations)
 
     @property
     def run_status(self):
         """Fetch run_status information"""
         info = {}
-        nosc_energies = self._xml.get_energies('final', nosc=True)
+        nosc_energies = self._xml.get_energies('last', nosc=True)
         parameters = self._xml.get_parameters()
         info['vasp_finished'] = not self._xml_truncated
         # Only set to true for untruncated run to avoid false positives
