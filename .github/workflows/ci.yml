@@ -19,15 +19,12 @@ jobs:
         run: |
           pip install --upgrade pip
           pip --version
+      - name: Install wheel
+        run: pip install wheel
       - name: Install AiiDA-VASP
         run:
-          pip install -e .[graphs,dev]
+          pip install -e .[graphs,tests,pre-commit]
           pip freeze
-      - name: Dump versions
-        run:
-          prospector --version
-          yapf --version
-          pylint --version
       - name: Run pre-commit
         run: pre-commit run --all-files || ( git diff; git status; exit 1; )
   tests:
@@ -64,6 +61,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip --version
+      - name: Install wheel
+        run: pip install wheel
       - name: Install Tox
         run: pip install tox
       - name: Install Coveralls
@@ -75,7 +74,7 @@ jobs:
         run: pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
       - name: Install AiiDA-VASP
         run: |
-          pip install -e .[graphs,dev]
+          pip install -e .[graphs,tests]
           pip freeze
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master

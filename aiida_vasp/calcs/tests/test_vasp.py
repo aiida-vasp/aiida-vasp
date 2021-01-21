@@ -55,12 +55,10 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
 
     inputs.charge_density = chgcar
-
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
 
     calcinfo = calc.prepare_for_submission(temp_folder)
-
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
 

@@ -15,7 +15,7 @@ from aiida_vasp.parsers.quantity import ParsableQuantities
 NODES_TYPES = {
     'dict': [
         'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications',
-        'band_properties', 'run_status', 'run_stats'
+        'band_properties', 'run_status', 'run_stats', 'version'
     ],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],

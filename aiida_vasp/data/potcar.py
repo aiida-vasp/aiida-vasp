@@ -460,18 +460,32 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     def get_file_obj(self):
         """Open a readonly file object to read the stored POTCAR file."""
         file_obj = None
-        try:
-            file_obj = self.archive.extractfile(self.archive.members[0])
-            yield file_obj
-        finally:
-            if file_obj:
-                file_obj.close()
+        with self.get_archive() as archive:
+            try:
+                file_obj = archive.extractfile(archive.members[0])
+                yield file_obj
+            finally:
+                if file_obj:
+                    file_obj.close()
+
+    @contextmanager
+    def get_file_obj_and_tar_obj(self):
+        """Return both decompressed file object and the archive object"""
+        file_obj = None
+        with self.get_archive() as archive:
+            try:
+                file_obj = archive.extractfile(archive.members[0])
+                yield file_obj, archive
+            finally:
+                if file_obj:
+                    file_obj.close()
 
     def export_archive(self, archive, dry_run=False):
         """Add the stored POTCAR file to an archive for export."""
-        with self.get_file_obj() as potcar_fo:
+        with self.get_file_obj_and_tar_obj() as objects:
+            potcar_fo, tar_fo = objects
             arcname = '{}/POTCAR'.format(self.symbol)
-            tarinfo = self.archive.members[0]
+            tarinfo = tar_fo.members[0]
             tarinfo.name = arcname
             if not dry_run:
                 archive.addfile(tarinfo, fileobj=potcar_fo)
@@ -572,7 +586,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """Find and return the matching PotcarFileData node."""
         return PotcarFileData.find_one(**self.attributes)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ,signature-differs
     def store(self, *args, **kwargs):
         """Ensure uniqueness before storing."""
         self.set_version()

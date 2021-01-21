@@ -79,6 +79,10 @@ class VaspCalculation(VaspCalcBase):
         # Define the inputs.
         # options is passed automatically.
         spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
+        spec.input('dynamics',
+                   valid_type=get_data_class('dict'),
+                   help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
+                   required=False)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
@@ -159,8 +163,8 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', \
-                                                                               default=[])  # pylint: disable=invalid-name
+            additional_retrieve_temp_list =\
+                self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
@@ -299,7 +303,12 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision)
+        positions_dof = self.inputs.get('dynamics', {}).get('positions_dof')
+        if positions_dof is not None:
+            options = {'positions_dof': positions_dof}
+        else:
+            options = None
+        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 
     def write_potcar(self, dst):

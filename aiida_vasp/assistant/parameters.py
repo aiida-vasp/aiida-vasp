@@ -4,6 +4,7 @@ Parameter related utils
 -----------------------
 Contains utils and definitions that are used together with the parameters.
 """
+# pylint: disable=too-many-branches
 
 import enum
 
@@ -11,22 +12,8 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
-FUNCTIONAL_PARAMETERS = {
-    'charge': {
-        'wave': True,
-        'charge': True,
-        'potential': True,
-        'constant_charge': True,
-        'constant_atomic': True
-    },
-    'smearing': {
-        'mp': True,
-        'gaussian': True,
-        'fermi': True,
-        'partial': True,
-        'tetra': True
-    }
-}
+_BASE_NAMESPACES = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
+_DEFAULT_OVERRIDE_NAMESPACE = 'incar'
 
 
 class ChargeEnum(enum.IntEnum):
@@ -134,45 +121,66 @@ class RelaxModeEnum(enum.IntEnum):
             raise ValueError('Invalid combination for degrees of freedom: {}'.format(dict(zip(RELAX_POSSIBILITIES, dof))))
 
 
-class ParametersMassage():
+class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     """
     A class that contains all relevant massaging of the input parameters for VASP.
 
     The idea is that this class accepts the set input parameters from AiiDA (non code specifics), checks if any code specific
     parameters supplied are valid VASP input parameters (only rudimentary at this point, should also cross check and check types)
-    and convert the AiiDA input parameters to VASP specific parameters. A set function needs to be developed for each parameter.
-    This set function takes the AiiDA input and converts it. The parameter property should return ready to go parameters
-    that can be dumped using the parsers in the respective CalcJob plugins.
+    and convert the AiiDA input parameters to VASP specific parameters. A set function needs to be developed for each VASP INCAR
+    parameter that we want to set based on supplied AiiDA/AiiDA-VASP specific parameters. These set functions takes these parameters
+    and converts it to VASP INCAR compatible tags. The parameter property should return ready to go parameters containing the
+    default override namespace, the namespaces set in the `_set_extra_parameters` function and any additional namespaces
+    that might have been set using the `additional_override_namespaces` setting entry in settings
+    that can be supplied to the VaspWorkChain.
+
+    The default override namespace (see `_DEFAULT_OVERRIDE_NAMESPACE`) should always be present when using this VASP plugin.
+    If using additional plugins, one can for instance supply additional namespace override that can be used,
+    depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, workchain, parameters, unsupported_parameters=None):
-        # First of all make sure parameters is a not a AiiDA Dict datatype
+    def __init__(self, parameters, unsupported_parameters=None, settings=None):
         self.exit_code = None
-        if unsupported_parameters is None:
-            self._unsupported_parameters = {}
-        else:
-            if not isinstance(unsupported_parameters, dict):
-                raise ValueError(
-                    f'The supplied value for unsupported_parameters is not of list, but of type {type(unsupported_parameters)}')
-            self._unsupported_parameters = unsupported_parameters
-        self._workchain = workchain
+
+        # Check type of parameters and set
+        self._parameters = check_inputs(parameters)
+
+        # Check type of supplied unsupported_parameters and set
+        self._unsupported_parameters = check_inputs(unsupported_parameters)
+
+        # Check type of settings and set
+        self._settings = check_inputs(settings)
+
+        # Check setting for any possible supplied additional override namespace and set
+        self._additional_override_namespaces = self._fetch_additional_override_namespaces()
+
         self._massage = AttributeDict()
-        if isinstance(parameters, DataFactory('dict')):
-            self._parameters = AttributeDict(parameters.get_dict())
-        elif isinstance(parameters, AttributeDict):
-            self._parameters = parameters
-        else:
-            raise TypeError('The supplied type: {} of parameters is not supported. '
-                            'Supply either a Dict or an AttributeDict'.format(type(parameters)))
+        # Initialize any allowed override namespaces
+        self._massage[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
+        for item in self._additional_override_namespaces:
+            self._massage[item] = AttributeDict()
+
+        self._check_valid_namespaces()
+        # Load the valid INCAR parameters that are supported by VASP
         self._load_valid_params()
-        self._functions = ParameterSetFunctions(self._workchain, self._parameters, self._massage)
-        self._set_parameters()
-        # Override any parameter set so far by parameters in the vasp namespace.
-        self._set_override_parameters()
-        # No point to proceed if the override parameters already contains an invalid keys, or the set process trigger another exit code
-        if self.exit_code is not None:
-            return
-        self._validate_parameters()
+        # Establish set functions which will convert AiiDA/AiiDA-VASP specific parameters to VASP INCAR tags
+        self._functions = ParameterSetFunctions(self._parameters, self._massage[_DEFAULT_OVERRIDE_NAMESPACE])
+        # Convert general parameters to VASP specific ones, using the set functions
+        self._set_vasp_parameters()
+        # Override or set parameters that are supplied in the default override namespace (should be valid VASP INCAR tags)
+        self._set_override_vasp_parameters()
+        # Set any extra parameters not related to INCAR
+        self._set_extra_vasp_parameters()
+        # Set any additional override namespace that should just be forwarded
+        self._set_additional_override_parameters()
+        # Finally, we validate the INCAR parameters in order to prepare it for dispatch
+        self._validate_vasp_parameters()
+
+    def _check_valid_namespaces(self):
+        """Check that we do not have namespaces on the input parameters that is unsupported."""
+        for key in self._parameters.keys():
+            if key not in list(_BASE_NAMESPACES + self._additional_override_namespaces + [_DEFAULT_OVERRIDE_NAMESPACE]):
+                raise ValueError(f'The supplied namespace: {key} is not supported.')
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
@@ -182,52 +190,81 @@ class ParametersMassage():
             tags_data = safe_load(file_handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
-        for key, item in self._unsupported_parameters.items():
+        for key, _ in self._unsupported_parameters.items():
             key = key.lower()
-            try:
-                _ = self._massage[key]
-                raise ValueError(f'The supplied unsupported_parameters with key {key} is already a supported parameter.')
-            except KeyError:
+            if key not in self._valid_parameters:
                 self._valid_parameters.append(key)
 
-    def _set_parameters(self):
+    def _fetch_additional_override_namespaces(self):
+        """Check the settings for any additional supplied override namespace and return it."""
+        try:
+            override_namespaces = self._settings.additional_override_namespaces
+        except AttributeError:
+            override_namespaces = []
+
+        return override_namespaces
+
+    def _set_vasp_parameters(self):
         """Iterate over the valid parameters and call the set function associated with that parameter."""
         for key in self._valid_parameters:
             self._set(key)
-            # We check after each parameter set if there is an exit code set on the WorkChain, if so, return
-            if self.exit_code is not None:
-                return
 
-    def _set_override_parameters(self):
+    def _set_override_vasp_parameters(self):
         """Set the any supplied override parameters."""
         try:
-            for key, item in self._parameters.vasp.items():
-                # Sweep the override input parameters to check if they are valid VASP tags
+            if self._parameters[_DEFAULT_OVERRIDE_NAMESPACE]:
+                for key, item in self._parameters[_DEFAULT_OVERRIDE_NAMESPACE].items():
+                    # Sweep the override input parameters (only care about the ones in the default override namespace)
+                    # to check if they are valid VASP tags.
+                    key = key.lower()
+                    if self._valid_vasp_parameter(key):
+                        # Add or override in the default override namespace
+                        self._massage[_DEFAULT_OVERRIDE_NAMESPACE][key] = item
+                    else:
+                        break
+        except KeyError:
+            # The default override namespace might not be supplied (no override)
+            pass
+
+    def _set_extra_vasp_parameters(self):
+        """
+        Find if there are any extra parameters that are not part of the INCAR that needs to be set.
+
+        One example is the dynamic namespace which handles for instance flags for selective dynamics.
+        These flags are more connected to a calculation than a StructureData and thus it was necessary
+        to make sure it was valid input to the VASP workchain.
+
+        """
+        try:
+            if self._parameters.dynamics:
+                self._massage.dynamics = AttributeDict()
+            for key, item in self._parameters.dynamics.items():
                 key = key.lower()
-                if self._valid_vasp_parameter(key):
-                    self._massage[key] = item
+                if key in ['positions_dof']:
+                    self._massage.dynamics[key] = item
                 else:
                     break
         except AttributeError:
-            # The vasp namespace might not be supplied (no override)
             pass
+
+    def _set_additional_override_parameters(self):
+        """Set any customized parameter namespace, including its content on the massaged container."""
+        parameters_keys = self._parameters.keys()
+        for item in self._additional_override_namespaces:
+            if item in parameters_keys:
+                # Only add if namespace exists in parameters
+                self._massage[item] = AttributeDict(self._parameters[item])
 
     def _valid_vasp_parameter(self, key):
         """Make sure a key are recognized as a valid VASP input parameter."""
         if key not in self._valid_parameters:
-            msg = 'Found an invalid key for the INCAR parameters: {}'.format(key)
-            if self._workchain is not None:
-                self._workchain.report(msg)
-                self.exit_code = self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
-            else:
-                self.exit_code = True
-            return False
+            raise ValueError(f'The supplied key: {key} is not a support VASP parameter.')
 
         return True
 
-    def _validate_parameters(self):
+    def _validate_vasp_parameters(self):
         """Make sure all the massaged values are recognized as valid VASP input parameters."""
-        for key in self._massage:
+        for key in self._massage[_DEFAULT_OVERRIDE_NAMESPACE]:
             key = key.lower()
             if not self._valid_vasp_parameter(key):
                 break
@@ -235,17 +272,11 @@ class ParametersMassage():
     def _set(self, key):
         """Call the necessary function to set each parameter."""
         try:
-            exit_code = getattr(self._functions, 'set_' + key)()
-            if exit_code is not None:
-                self.exit_code = exit_code
+            getattr(self._functions, 'set_' + key)()
         except AttributeError:
+            # We have no setter function for the valid key, meaning there is no general parameter that is linked
+            # to this key (INCAR tag). These tags have to be supplied in the default override namespace for now.
             pass
-        # If we find any raw code input key directly on parameter root, override whatever we have set until now
-        # Note that the key may be in upper case, so we test both
-        if key in self._parameters:
-            self._massage[key] = self._parameters[key]
-        elif key.upper() in self._parameters:
-            self._massage[key] = self._parameters[key.upper()]
 
     @property
     def parameters(self):
@@ -254,24 +285,22 @@ class ParametersMassage():
 
 
 class ParameterSetFunctions():
-    """Container for the set functions that converts an AiiDA parameters to a code specific one."""
+    """Container for the set functions that converts an AiiDA parameters to a default override specific one."""
 
-    def __init__(self, workchain, parameters, massage):
+    def __init__(self, parameters, incar):
         self._parameters = parameters
-        self._workchain = workchain
-        self._massage = massage
+        self._incar = incar
 
     def set_encut(self):
         """
         Set which plane wave cutoff to use.
 
         See https://www.vasp.at/wiki/index.php/ENCUT
-
         """
+
         try:
-            self._massage.encut = self._parameters.pwcutoff
+            self._incar.encut = self._parameters.electronic.pwcutoff
         except AttributeError:
-            # VASP accepts defaults
             pass
 
     def set_ibrion(self):
@@ -280,20 +309,17 @@ class ParameterSetFunctions():
 
         See: https://www.vasp.at/wiki/index.php/IBRION
         """
+
         if self._relax():
             try:
                 if self._parameters.relax.algo == 'cg':
-                    self._massage.ibrion = RelaxAlgoEnum.IONIC_RELAXATION_CG.value
+                    self._incar.ibrion = RelaxAlgoEnum.IONIC_RELAXATION_CG.value
                 elif self._parameters.relax.algo == 'rd':
-                    self._massage.ibrion = RelaxAlgoEnum.IONIC_RELAXATION_RMM_DIIS.value
+                    self._incar.ibrion = RelaxAlgoEnum.IONIC_RELAXATION_RMM_DIIS.value
                 else:
-                    self._workchain.report('Invalid algo parameter: {}'.format(self._parameters.relax.algo))
-                    return self._workchain.exit_codes.ERROR_INVALID_PARAMETER_DETECTED
+                    raise ValueError(f'The supplied relax.algo: {self._parameters.relax.algo} is not supported')
             except AttributeError:
-                self._workchain.report('Missing parameter: algo')
-                return self._workchain.exit_codes.ERROR_MISSING_PARAMETER_DETECTED
-
-        return None
+                pass
 
     def set_ediffg(self):
         """
@@ -301,18 +327,20 @@ class ParameterSetFunctions():
 
         See: https://www.vasp.at/wiki/index.php/EDIFFG
         """
+
         if not self._relax():
+            # This flag is only valid if you have enabled relaxation
             return
         energy_cutoff = False
         try:
-            self._massage.ediffg = self._parameters.relax.energy_cutoff
+            self._incar.ediffg = self._parameters.relax.energy_cutoff
             energy_cutoff = True
         except AttributeError:
             pass
         try:
-            self._massage.ediffg = -abs(self._parameters.relax.force_cutoff)
+            self._incar.ediffg = -abs(self._parameters.relax.force_cutoff)
             if energy_cutoff:
-                self._workchain.report('User supplied both a force and an energy cutoff for the relaxation. Utilizing the force cutoff.')
+                raise ValueError('User supplied both a force and an energy cutoff for the relaxation. Please select.')
         except AttributeError:
             pass
 
@@ -322,8 +350,12 @@ class ParameterSetFunctions():
 
         See: https://www.vasp.at/wiki/index.php/NSW
         """
+
         if self._relax():
-            self._set_simple('nsw', self._parameters.relax.steps)
+            try:
+                self._set_simple('nsw', self._parameters.relax.steps)
+            except AttributeError:
+                pass
 
     def set_isif(self):
         """
@@ -331,11 +363,15 @@ class ParameterSetFunctions():
 
         See: https://www.vasp.at/wiki/index.php/ISIF
         """
-        positions = self._parameters.get('relax', {}).get('positions', False)
-        shape = self._parameters.get('relax', {}).get('shape', False)
-        volume = self._parameters.get('relax', {}).get('volume', False)
-        if positions or shape or volume:
-            self._massage.isif = RelaxModeEnum.get_isif_from_dof(positions=positions, shape=shape, volume=volume).value
+
+        if self._relax():
+            positions = self._parameters.get('relax', {}).get('positions', False)
+            shape = self._parameters.get('relax', {}).get('shape', False)
+            volume = self._parameters.get('relax', {}).get('volume', False)
+            try:
+                self._incar.isif = RelaxModeEnum.get_isif_from_dof(positions=positions, shape=shape, volume=volume).value
+            except AttributeError:
+                pass
 
     def set_ismear(self):
         """
@@ -371,6 +407,7 @@ class ParameterSetFunctions():
 
         See: https://www.vasp.at/wiki/index.php/ICHARG
         """
+
         try:
             if self._parameters.charge.from_wave:
                 self._set_simple('icharg', ChargeEnum.WAVE.value)
@@ -416,7 +453,7 @@ class ParameterSetFunctions():
                     raise ValueError('Only projections/decompositions on the bands or the wave function are allowed.')
                 wigner_seitz_radius = False
                 try:
-                    if abs(self._massage.rwigs[0]) > 1E-8:
+                    if abs(self._incar.rwigs[0]) > 1E-8:
                         wigner_seitz_radius = True
                 except AttributeError:
                     pass
@@ -465,16 +502,34 @@ class ParameterSetFunctions():
 
     def _relax(self):
         """Check if we have enabled relaxation."""
-        return self._parameters.get('relax', {}).get('positions') or \
+        return bool(self._parameters.get('relax', {}).get('positions') or \
             self._parameters.get('relax', {}).get('shape') or \
-            self._parameters.get('relax', {}).get('volume')
+            self._parameters.get('relax', {}).get('volume'))
 
     def _set_simple(self, target, value):
         """Set basic parameter."""
         try:
-            self._massage[target] = value
+            self._incar[target] = value
         except AttributeError:
             pass
+
+
+def check_inputs(supplied_inputs):
+    """Check that the inputs are of some correct type and returned as AttributeDict."""
+    inputs = None
+    if supplied_inputs is None:
+        inputs = AttributeDict()
+    else:
+        if isinstance(supplied_inputs, DataFactory('dict')):
+            inputs = AttributeDict(supplied_inputs.get_dict())
+        elif isinstance(supplied_inputs, dict):
+            inputs = AttributeDict(supplied_inputs)
+        elif isinstance(supplied_inputs, AttributeDict):
+            inputs = supplied_inputs
+        else:
+            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. Supply a dict, Dict or an AttributeDict.')
+
+    return inputs
 
 
 def inherit_and_merge_parameters(inputs):
@@ -485,7 +540,9 @@ def inherit_and_merge_parameters(inputs):
     in case there is overlap.
     """
     parameters = AttributeDict()
-    namespaces = ['electronic', 'bands', 'smearing', 'charge', 'relax', 'converge']
+    namespaces = _BASE_NAMESPACES
+
+    # We start with a clean parameters and first set the allowed namespaces and its content from the inputs of the workchain
     for namespace in namespaces:  # pylint: disable=too-many-nested-blocks
         parameters[namespace] = AttributeDict()
         try:
@@ -507,24 +564,19 @@ def inherit_and_merge_parameters(inputs):
         except KeyError:
             pass
 
-    # Now get the input parameters and update the dictionary. This means,
-    # any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what is supplied to the workchain
-    # input namespace (i.e. inputs.somekey).
+    # Then obtain the inputs.parameters.
+    # Here we do not do any checks for valid parameters, that is done later when reaching the ParameterMassager.
     try:
-        # inputs might not have parameters, or parameters might be empty
         input_parameters = AttributeDict(inputs.parameters.get_dict())
     except AttributeError:
-        input_parameters = {}
+        # Inputs might not have parameters
+        input_parameters = AttributeDict()
 
-    # Now check that no loose keys are residing on the root of input_parameters, everything should be in
-    # the vasp or aiida namespace
-    #valid_keys = ['vasp', 'aiida']
-    #if not list(input_parameters.keys()).sort() == valid_keys.sort():
-    #    raise ValueError('Unsupported keys detected on parameter root. '
-    #                     'Please make sure all keys reside inside the vasp or aiida namespace.')
-
+    # Now the namespace and content of the workchain inputs and the inputs.parameters are merged.
+    # Any supplied namespace in the parameters (i.e. inputs.parameters.somekey) will override what
+    # is supplied to the workchain input namespace (i.e. inputs.somekey).
     # We cannot use regular update here, as we only want to replace each key if it exists, if a key
-    # contains a new dict we need to traverse that, hence we have a function to perform this update
+    # contains a new dict we need to traverse that, hence we have a function to perform this update.
     update_nested_dict(parameters, input_parameters)
 
     return parameters

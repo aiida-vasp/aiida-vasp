@@ -243,7 +243,8 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
             xlim = btool.plt.xlim()
             btool.plt.hlines(iwindow, xlim[0], xlim[1], color='k')
             btool.plt.hlines(refinfo['efermi'], xlim[0], xlim[1], color='k', linestyles='dashed')
-            btool.plt.yticks(list(btool.plt.yticks()[0]) + [refinfo['efermi']], [str(l) for l in btool.plt.yticks()[0]] + [r'$E_{fermi}$'])
+            btool.plt.yticks(
+                list(btool.plt.yticks()[0]) + [refinfo['efermi']], [str(line) for line in btool.plt.yticks()[0]] + [r'$E_{fermi}$'])
             pdf = os.path.join(plot_folder, 'comparison_%s.pdf' % wannier_calc.pk)
             fig.savefig(pdf)
             info[wannier_bands.pk]['plot'] = pdf

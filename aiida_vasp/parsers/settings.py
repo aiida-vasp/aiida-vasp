@@ -76,7 +76,7 @@ NODES = {
             'dict',
         'quantities': [
             'total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'notifications', 'run_status',
-            'band_properties', 'fermi_level', 'run_stats'
+            'band_properties', 'fermi_level', 'run_stats', 'version'
         ]
     },
     'kpoints': {
@@ -182,7 +182,6 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
 
     def __init__(self, settings, default_settings=None):
-
         self.alternatives = {}
         if settings is None:
             settings = {}

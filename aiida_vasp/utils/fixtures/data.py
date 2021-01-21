@@ -62,7 +62,7 @@ def vasp_params(fresh_aiida_env):
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('dict')(dict=vasp_params_data.get_dict().update({'lwannier90': True}))
+    incar_data = get_data_class('dict')(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
@@ -82,6 +82,8 @@ def temp_pot_folder(tmp_path):
     assert not potcar_ga.exists()
     pot_archive = Path(data_path('potcar'))
     target = tmp_path / 'potentials'
+    # Ensure that the target path exists
+    Path(target).mkdir(exist_ok=True)
     copytree(pot_archive, target)
     return target
 
@@ -207,8 +209,8 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = vasp_params
-
+            parameters = AttributeDict(vasp_params.get_dict())
+            parameters = get_data_class('dict')(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
         inputs.parameters = parameters
@@ -223,14 +225,14 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
 @pytest.fixture()
 def vasp2w90_inputs(
-        fresh_aiida_env,
-        vasp_params,
-        vasp_kpoints,
-        vasp_structure,
-        potentials,
-        vasp_code,
-        wannier_projections,
-        wannier_params,
+        fresh_aiida_env,  # yapf: disable
+        vasp_params,  # yapf: disable
+        vasp_kpoints,  # yapf: disable
+        vasp_structure,  # yapf: disable
+        potentials,  # yapf: disable
+        vasp_code,  # yapf: disable
+        wannier_projections,  # yapf: disable
+        wannier_params  # yapf: disable
 ):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict
@@ -248,7 +250,8 @@ def vasp2w90_inputs(
             parameters = get_data_class('dict')(dict=parameters)
 
         if parameters is None:
-            parameters = vasp_params
+            parameters = AttributeDict(vasp_params.get_dict())
+            parameters = get_data_class('dict')(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -338,8 +341,8 @@ def ref_incar():
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    data = Path(data_path('wannier')) / 'INCAR'
-    yield data.read_text()
+    with open(data_path('wannier', 'INCAR'), 'r') as reference_incar_wannier:
+        yield reference_incar_wannier.readlines()
 
 
 @pytest.fixture
@@ -357,14 +360,15 @@ def ref_retrieved():
     return retrieved
 
 
-@pytest.fixture(params=['vasprun'])
+@pytest.fixture(params=[('vasprun', {})])
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     from aiida_vasp.parsers.settings import ParserSettings
     from aiida_vasp.calcs.vasp import VaspCalculation
     file_name = 'vasprun.xml'
-    path = data_path(request.param, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings({}))
+    path_to_file, settings = request.param
+    path = data_path(path_to_file, file_name)
+    parser = VasprunParser(file_path=path, settings=ParserSettings(settings))
     parser._vasp_parser = VaspCalculation
     return parser
 

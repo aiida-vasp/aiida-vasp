@@ -74,7 +74,7 @@ class VaspCalcBase(CalcJob):
         Delegates the construction and writing / copying to write_<file> methods.
         That way, subclasses can use any form of input nodes and just
         have to implement the write_xxx method accordingly.
-        Subclasses can extend by calling the super method and if neccessary
+        Subclasses can extend by calling the super method and if necessary
         modifying it's output CalcInfo before returning it.
         """
         # write input files
