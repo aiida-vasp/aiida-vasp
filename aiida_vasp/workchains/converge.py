@@ -266,6 +266,8 @@ class ConvergeWorkChain(WorkChain):
 
         spec.expose_outputs(cls._next_workchain)
         spec.output('converge.data', valid_type=get_data_class('array'), required=False)
+        spec.output('converge.pwcutoff_recommended', valid_type=get_data_class('float'), required=False)
+        spec.output('converge.kpoints_recommended', valid_type=get_data_class('array.kpoints'), required=False)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the converge workchain')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
@@ -928,6 +930,8 @@ class ConvergeWorkChain(WorkChain):
 
         if displace:
             pwcutoff_diff_displacement, kgrid_diff_displacement = self._analyze_conv_disp()
+            self.ctx.converge.pwcutoff_recommended = pwcutoff_diff_displacement
+            self.ctx.converge.kgrid_recommended = kgrid_diff_displacement
             self._set_pwcutoff_and_kgrid(pwcutoff_diff_displacement, kgrid_diff_displacement)
 
         if compress:
@@ -935,15 +939,21 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.pw_data_comp = self.ctx.converge.pw_data
             self.ctx.converge.k_data_comp = self.ctx.converge.k_data
             pwcutoff_diff_comp, kgrid_diff_comp = self._analyze_conv_comp()
+            self.ctx.converge.pwcutoff_recommended = pwcutoff_diff_comp
+            self.ctx.converge.kgrid_recommended = kgrid_diff_comp
             self._set_pwcutoff_and_kgrid(pwcutoff_diff_comp, kgrid_diff_comp)
 
         if displace and compress:
             pwcutoff_disp_comp, kgrid_disp_comp = self._analyze_conv_disp_comp(pwcutoff_diff_displacement, pwcutoff_diff_comp,
                                                                                kgrid_diff_displacement, kgrid_diff_comp)
+            self.ctx.converge.pwcutoff_recommended = pwcutoff_disp_comp
+            self.ctx.converge.kgrid_recommended = kgrid_disp_comp
             self._set_pwcutoff_and_kgrid(pwcutoff_disp_comp, kgrid_disp_comp)
 
         if not (displace or compress):
             pwcutoff, kgrid = self._analyze_conv()
+            self.ctx.converge.pwcutoff_recommended = pwcutoff
+            self.ctx.converge.kgrid_recommended = kgrid
             self._set_pwcutoff_and_kgrid(pwcutoff, kgrid)
 
         # Check if any we have None entries for pwcutoff or kgrid, which means something failed,
@@ -1208,7 +1218,8 @@ class ConvergeWorkChain(WorkChain):
     def store_conv(self):
         """Set up the convergence data and put it in a data node."""
         keys = [
-            'pw_data_org', 'pw_data', 'k_data_org', 'k_data', 'pw_data_displacement', 'k_data_displacement', 'pw_data_comp', 'k_data_comp'
+            'pw_data_org', 'pw_data', 'k_data_org', 'k_data', 'pw_data_displacement', 'k_data_displacement', 'pw_data_comp', 'k_data_comp',
+            'pwcutoff_recommended', 'kgrid_recommended'
         ]
         convergence_dict = {}
         for key, value in self.ctx.converge.items():
@@ -1219,6 +1230,20 @@ class ConvergeWorkChain(WorkChain):
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'converge.data'))
         self.out('converge.data', convergence)
+
+        pwcutoff_recommended = store_conv_pwcutoff(convergence_context)
+        if pwcutoff_recommended:
+            if self._verbose:
+                self.report("attaching the node {}<{}> as '{}'".format(pwcutoff_recommended.__class__.__name__, pwcutoff_recommended.pk,
+                                                                       'converge.pwcutoff_recommended'))
+            self.out('converge.pwcutoff_recommended', pwcutoff_recommended)
+
+        kpoints_recommended = store_conv_kgrid(convergence_context)
+        if kpoints_recommended:
+            if self._verbose:
+                self.report("attaching the node {}<{}> as '{}'".format(kpoints_recommended.__class__.__name__, kpoints_recommended.pk,
+                                                                       'converge.kpoints_recommended'))
+            self.out('converge.kpoints_recommended', kpoints_recommended)
 
     def _check_pw_converged(self, pw_data=None, cutoff_type=None, cutoff_value=None):
         """
@@ -1371,6 +1396,28 @@ def default_array(name, array):
     array_cls.set_array(name, array)
 
     return array_cls
+
+
+@calcfunction
+def store_conv_pwcutoff(convergence_context):
+    """Store the recommended energy from the convergence."""
+    converge = convergence_context.get_dict()
+    try:
+        return get_data_class('float')(converge['pwcutoff_recommended'])
+    except (KeyError, ValueError):
+        return None
+
+
+@calcfunction
+def store_conv_kgrid(convergence_context):
+    """Store the recommended kpoints from the convergence."""
+    converge = convergence_context.get_dict()
+    try:
+        kpoints_recommended = get_data_class('array.kpoints')()
+        kpoints_recommended.set_kpoints_mesh(converge['kgrid_recommended'])
+        return kpoints_recommended
+    except (KeyError, ValueError):
+        return None
 
 
 @calcfunction
