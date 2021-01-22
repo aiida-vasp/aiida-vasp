@@ -32,7 +32,7 @@ class StreamParser(BaseFileParser):
     def _init_with_file_path(self, path):
         """Init with a file path."""
         self._parsed_data = {}
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._data_obj = SingleFile(path=path)
 
         # Since the VASP output can be fairly large, we will parse it only
@@ -40,9 +40,9 @@ class StreamParser(BaseFileParser):
         # First get any special config from the parser settings, else use the default
         stream_config = None
         history = False
-        if self.settings is not None:
-            stream_config = self.settings.get('stream_config', None)
-            history = self.settings.get('stream_history', False)
+        if self._settings is not None:
+            stream_config = self._settings.get('stream_config', None)
+            history = self._settings.get('stream_history', False)
         try:
             self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
@@ -51,7 +51,7 @@ class StreamParser(BaseFileParser):
 
     def _init_with_data(self, data):
         """Init with SingleFileData."""
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
@@ -63,20 +63,20 @@ class StreamParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self.settings is not None and self.settings.quantities_to_parse:
-            quantities_to_parse = self.settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantity_names_to_parse:
+            quantities_to_parse = self._settings.quantity_names_to_parse
 
         result = {}
 
         if self._stream is None:
             # parsevasp threw an exception, which means the standard stream could not be parsed.
             for quantity in quantities_to_parse:
-                if quantity in self.parsable_items:
+                if quantity in self._parsable_items:
                     result[quantity] = None
             return result
 
         for quantity in quantities_to_parse:
-            if quantity in self.parsable_items:
+            if quantity in self._parsable_items:
                 result[quantity] = getattr(self, quantity)
 
         return result

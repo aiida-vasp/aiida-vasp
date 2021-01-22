@@ -12,6 +12,6 @@ SETTINGS = {
 def test_settings_utils():
 
     settings = ParserSettings(SETTINGS)
-    assert len(settings.nodes) == 1 and 'wavecar' in settings.nodes
+    assert len(settings.output_nodes_dict) == 1 and 'wavecar' in settings.output_nodes_dict
     settings = ParserSettings(SETTINGS, DEFAULT_OPTIONS)
-    assert 'wavecar' in settings.nodes
+    assert 'wavecar' in settings.output_nodes_dict

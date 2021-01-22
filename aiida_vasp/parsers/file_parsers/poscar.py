@@ -7,10 +7,10 @@ The file parser that handles the parsing of POSCAR and CONTCAR files.
 # pylint: disable=no-self-use
 import numpy as np
 
-from aiida.common.constants import elements
 from parsevasp.poscar import Poscar, Site
+from aiida.common.constants import elements
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -65,7 +65,7 @@ class PoscarParser(BaseFileParser):
             self._logger.warning('Please supply an AiiDA StructureData datatype for `data`.')
             self._data_obj = None
         self._structure = data
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -105,8 +105,8 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         if self._structure is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._structure = composer.compose('structure', quantities=['poscar-structure'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['poscar-structure'])
+            self._structure = NodeComposer.compose('structure', inputs)
         return self._structure
 
     def aiida_to_parsevasp(self, structure, options=None):
