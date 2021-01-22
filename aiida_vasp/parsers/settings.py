@@ -6,6 +6,7 @@ Defines the file associated with each file parser and the default node
 compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
+from copy import deepcopy
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
@@ -15,7 +16,6 @@ from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.stream import StreamParser
-from aiida_vasp.utils.extended_dicts import DictWithAttributes
 
 FILE_PARSER_SETS = {
     'default': {
@@ -167,6 +167,29 @@ NODES = {
 }
 
 
+class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
+    """Container of parser definitions"""
+
+    def __init__(self, file_parser_set='default'):
+        self._parser_definitions = {}
+        self._init_parser_definitions(file_parser_set)
+
+    @property
+    def parser_definitions(self):
+        return self._parser_definitions
+
+    def add_parser_definition(self, filename, parser_dict):
+        """Add custum parser definition"""
+        self._parser_definitions[filename] = parser_dict
+
+    def _init_parser_definitions(self, file_parser_set):
+        """Load a set of parser definitions."""
+        if file_parser_set not in FILE_PARSER_SETS:
+            return
+        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
+            self._parser_definitions[file_name] = deepcopy(parser_dict)
+
+
 class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
@@ -176,26 +199,55 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
     This provides the following properties to other components of the VaspParser:
 
-        * nodes: A list with all requested output nodes.
-
+        * nodes_dict: A list with all requested output nodes.
         * parser_definitions: A Dict with the FileParser definitions.
+        * quantities_to_parse: Collection of quantities in nodes_dict.
+
     """
 
     def __init__(self, settings, default_settings=None):
-        self.alternatives = {}
         if settings is None:
-            settings = {}
-        self._settings = settings
+            self._settings = {}
+        else:
+            self._settings = settings
         if default_settings is not None:
-            self.update_with(default_settings)
+            self._update_with(default_settings)
 
-        self.nodes = {}
-        self.set_nodes()
+        self._output_nodes_dict = {}
+        self._init_output_nodes_dict()
 
-        self.parser_definitions = {}
-        self.set_parser_definitions(self._settings.get('file_parser_set'))
+    @property
+    def output_nodes_dict(self):
+        return self._output_nodes_dict
 
-    def set_nodes(self):
+    @property
+    def quantity_names_to_parse(self):
+        """Return the combined list of all the quantities, required for the current nodes."""
+        quantity_names_to_parse = []
+        for node_dict in self.output_nodes_dict.values():
+            for quantity_key in node_dict['quantities']:
+                if quantity_key in quantity_names_to_parse:
+                    continue
+                quantity_names_to_parse.append(quantity_key)
+        return quantity_names_to_parse
+
+    def add_output_node(self, node_name, node_dict=None):
+        """Add a definition of node to the nodes dictionary."""
+        if node_dict is None:
+            # Try to get a node_dict from NODES.
+            node_dict = deepcopy(NODES.get(node_name, {}))
+
+        # Check, whether the node_dict contains required keys 'type' and 'quantities'
+        for key in ['type', 'quantities']:
+            if node_dict.get(key) is None:
+                return
+
+        self._output_nodes_dict[node_name] = node_dict
+
+    def get(self, item, default=None):
+        return self._settings.get(item, default)
+
+    def _init_output_nodes_dict(self):
         """
         Set the 'nodes' card of a settings object.
 
@@ -217,9 +269,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
                 'add_custom_node': {'type': 'parameter', 'quantities': ['efermi', 'forces'], 'link_name': 'my_custom_node'}
         """
-        from copy import deepcopy
-
-        self.nodes = {}
+        self._output_nodes_dict = {}
 
         # First, find all the nodes, that should be added.
         for key, value in self._settings.items():
@@ -242,48 +292,10 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             if 'link_name' not in node_dict:
                 node_dict['link_name'] = node_name
 
-            self.add_node(node_name, node_dict)
+            self.add_output_node(node_name, node_dict)
 
-    def add_node(self, node_name, node_dict=None):
-        """Add a definition of node to the nodes dictionary."""
-        from copy import deepcopy
-
-        if node_dict is None:
-            # Try to get a node_dict from NODES.
-            node_dict = deepcopy(NODES.get(node_name, {}))
-
-        # Check, whether the node_dict contains required keys 'type' and 'quantities'
-        for key in ['type', 'quantities']:
-            if node_dict.get(key) is None:
-                return
-
-        self.nodes[node_name] = DictWithAttributes(node_dict)
-
-    def update_with(self, update_dict):
+    def _update_with(self, update_dict):
         """Selectively update keys from one Dictionary to another."""
         for key, value in update_dict.items():
             if key not in self._settings:
                 self._settings[key] = value
-
-    def get(self, item, default=None):
-        return self._settings.get(item, default)
-
-    def set_parser_definitions(self, file_parser_set='default'):
-        """Load the parser definitions."""
-        from copy import deepcopy
-
-        if file_parser_set not in FILE_PARSER_SETS:
-            return
-        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self.parser_definitions[file_name] = deepcopy(parser_dict)
-
-    @property
-    def quantities_to_parse(self):
-        """Return the combined list of all the quantities, required for the current nodes."""
-        quantities = []
-        for value in self.nodes.values():
-            for quantity in value['quantities']:
-                if quantity in quantities:
-                    continue
-                quantities.append(quantity)
-        return quantities

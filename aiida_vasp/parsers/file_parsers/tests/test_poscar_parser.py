@@ -110,10 +110,10 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     """
 
     parser = PoscarParser(data=vasp_structure)
-    result = parser.get_quantity('poscar-structure', {})
-    names = result['poscar-structure'].get_site_kindnames()
+    result = parser.get_quantity('poscar-structure')
+    names = result.get_site_kindnames()
     assert names == ['Hamburger', 'Pizza']
-    symbols = result['poscar-structure'].get_symbols_set()
+    symbols = result.get_symbols_set()
     assert symbols == set(['As', 'In'])
 
     temp_file = str(tmpdir.join('POSCAR'))
@@ -139,10 +139,10 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     """
 
     parser = PoscarParser(data=vasp_structure)
-    result = parser.get_quantity('poscar-structure', {})
-    names = result['poscar-structure'].get_site_kindnames()
+    result = parser.get_quantity('poscar-structure')
+    names = result.get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result['poscar-structure'].get_symbols_set()
+    symbols = result.get_symbols_set()
     assert symbols == set(['As', 'In'])
     temp_file = str(tmpdir.join('POSCAR'))
     parser.write(temp_file)

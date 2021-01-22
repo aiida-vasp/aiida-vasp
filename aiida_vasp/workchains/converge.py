@@ -296,7 +296,7 @@ class ConvergeWorkChain(WorkChain):
         """Initialize the standard content of context."""
 
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
-        self.ctx.workchains = []
+        # self.ctx.workchain_count = 0
         self.ctx.inputs = AttributeDict()
         self.ctx.set_input_nodes = True
 
@@ -351,7 +351,7 @@ class ConvergeWorkChain(WorkChain):
         """Initialize plane wave cutoff variables and store in context."""
         settings = self.ctx.converge.settings
         self.ctx.running_pw = False
-        self.ctx.pw_workchains = []
+        # self.ctx.pw_workchain_count = 0
         self.ctx.converge.pw_data = None
         self.ctx.converge.run_pw_conv_calcs = False
         self.ctx.converge.run_pw_conv_calcs_org = False
@@ -373,7 +373,7 @@ class ConvergeWorkChain(WorkChain):
         """Initialize the k-point grid variables and store in context."""
         settings = self.ctx.converge.settings
         self.ctx.running_kpoints = False
-        self.ctx.kpoints_workchains = []
+        # self.ctx.kpoints_workchain_count = 0
         self.ctx.converge.k_data = None
         self.ctx.converge.run_kpoints_conv_calcs = False
         self.ctx.converge.run_kpoints_conv_calcs_org = False
@@ -682,11 +682,17 @@ class ConvergeWorkChain(WorkChain):
         self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         if self.ctx.running_pw:
-            return self.to_context(pw_workchains=append_(running))
-        if self.ctx.running_kpoints:
-            return self.to_context(kpoints_workchains=append_(running))
-
-        return self.to_context(workchains=append_(running))
+            self.to_context(pw_workchains=append_(running))
+            # self.ctx.pw_workchain_count += 1
+            # self.to_context(**{'pw_workchain_%d' % self.ctx.pw_workchain_count: running})
+        elif self.ctx.running_kpoints:
+            self.to_context(kpoints_workchains=append_(running))
+            # self.ctx.kpoints_workchain_count += 1
+            # self.to_context(**{'kpoints_workchain_%d' % self.ctx.kpoints_workchain_count: running})
+        else:
+            self.to_context(workchains=append_(running))
+            # self.ctx.workchain_count += 1
+            # self.to_context(**{'workchain_%d' % self.ctx.workchain_count: running})
 
     def run_pw_conv_calcs(self):
         """Should a new plane wave cutoff convergence calculation run?"""
@@ -749,12 +755,13 @@ class ConvergeWorkChain(WorkChain):
         # Check if there is in fact a workchain present
         try:
             workchain = self.ctx.pw_workchains[-1]
+            # workchain = self.ctx['pw_workchain_%d' % self.ctx.pw_workchain_count]
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
         # Check if called workchain was successful
-        next_workchain_exit_status = self.ctx.pw_workchains[-1].exit_status
-        next_workchain_exit_message = self.ctx.pw_workchains[-1].exit_message
+        next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if next_workchain_exit_status:
             exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '
@@ -833,13 +840,14 @@ class ConvergeWorkChain(WorkChain):
 
         try:
             workchain = self.ctx.kpoints_workchains[-1]
+            # workchain = self.ctx['kpoints_workchain_%d' % self.ctx.kpoints_workchain_count]
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Check if child workchain was successfull
-        next_workchain_exit_status = self.ctx.kpoints_workchains[-1].exit_status
-        next_workchain_exit_message = self.ctx.kpoints_workchains[-1].exit_message
+        next_workchain_exit_status = workchain.exit_status
+        next_workchain_exit_message = workchain.exit_message
         if next_workchain_exit_status:
             exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report('The called {}<{}> returned a non-zero exit status. '
@@ -1306,11 +1314,12 @@ class ConvergeWorkChain(WorkChain):
 
         try:
             workchain = self.ctx.workchains[-1]
+            # workchain = self.ctx['workchain_%d' % self.ctx.workchain_count]
         except IndexError:
             self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
-        workchain = self.ctx.workchains[-1]
+        # workchain = self.ctx.workchains[-1]
         # Inherit exit status from last workchain (supposed to be
         # successfull)
         next_workchain_exit_status = workchain.exit_status
@@ -1328,6 +1337,7 @@ class ConvergeWorkChain(WorkChain):
         """Attach the remaining output results."""
 
         workchain = self.ctx.workchains[-1]
+        # workchain = self.ctx['workchain_%d' % self.ctx.workchain_count]
         self.out_many(self.exposed_outputs(workchain, self._next_workchain))
 
     def finalize(self):

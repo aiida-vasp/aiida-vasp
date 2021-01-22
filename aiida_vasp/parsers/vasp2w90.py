@@ -29,7 +29,7 @@ class Vasp2w90Parser(VaspParser):
 
     def parse_win(self):
         """Create the wannier90 .win file and kpoints output nodes."""
-        win = self.get_file('wannier90.win')
+        win = self._get_file('wannier90.win')
         if not win:
             return False, None, None, None
         win_result = WinParser(win).result
@@ -67,5 +67,5 @@ class Vasp2w90Parser(VaspParser):
             self.add_node(name, node)  # pylint: disable=no-member
 
     def has_full_dat(self):
-        success = all(self.get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
+        success = all(self._get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
         return success
