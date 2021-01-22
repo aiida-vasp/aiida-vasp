@@ -795,8 +795,8 @@ class ConvergeWorkChain(WorkChain):
             # add stuff to the converge context
             self.ctx.converge.pw_data.append([pwcutoff, total_energy, max_force, max_valence_band, gap])
         else:
-            # add None entries for the failed test
-            self.ctx.converge.pw_data.append([pwcutoff, None, None, None, None])
+            # add np.nan entries for the failed test
+            self.ctx.converge.pw_data.append([pwcutoff, np.nan, np.nan, np.nan, np.nan])
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
@@ -880,8 +880,8 @@ class ConvergeWorkChain(WorkChain):
             # add stuff to the converge context
             self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], pwcutoff, total_energy, max_force, max_valence_band, gap])
         else:
-            # add None entries for the failed test
-            self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], pwcutoff, None, None, None, None])
+            # add np.nan entries for the failed test
+            self.ctx.converge.k_data.append([kgrid[0], kgrid[1], kgrid[2], pwcutoff, np.nan, np.nan, np.nan, np.nan])
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
@@ -1260,8 +1260,8 @@ class ConvergeWorkChain(WorkChain):
         if cutoff_value is None:
             cutoff_value = self.ctx.inputs.parameters.converge.cutoff_value
 
-        # Make sure we do not analyze entries that have a None entry
-        pw_data = [elements for elements in pw_data if None not in elements]
+        # Make sure we do not analyze entries that have a np.nan entry
+        pw_data = [elements for elements in pw_data if np.nan not in elements]
         # Since we are taking deltas, make sure we have at least two entries,
         # otherwise return None
         if len(pw_data) < 2:
@@ -1301,8 +1301,8 @@ class ConvergeWorkChain(WorkChain):
         if cutoff_value is None:
             cutoff_value = self.ctx.inputs.parameters.converge.cutoff_value
 
-        # Make sure we do not analyze entries that have a None entry
-        k_data = [elements for elements in k_data if None not in elements]
+        # Make sure we do not analyze entries that have a np.nan entry
+        k_data = [elements for elements in k_data if np.nan not in elements]
         # Since we are taking deltas, make sure we have at least two entries,
         # otherwise return None
         if len(k_data) < 2:
