@@ -75,7 +75,6 @@ jobs:
       - name: Install AiiDA-VASP  # Manually install the latest version of parse vasp
         run: |
           pip install -e .[graphs,tests]
-          pip install -e git+https://github.com/aiida-vasp/parsevasp#egg=parsevasp
           pip freeze
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master
