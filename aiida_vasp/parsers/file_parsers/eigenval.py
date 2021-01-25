@@ -28,9 +28,6 @@ class EigParser(BaseFileParser):
         },
     }
 
-    def __init__(self, *args, **kwargs):
-        super(EigParser, self).__init__(*args, **kwargs)
-
     @property
     def _parsed_object(self):
         return self._data_obj

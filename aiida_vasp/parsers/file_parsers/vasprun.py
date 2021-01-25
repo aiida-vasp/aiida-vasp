@@ -152,6 +152,7 @@ class VasprunParser(BaseFileParser):
             self._init_xml(kwargs['data'].get_file_abs_path())
 
     def _init_xml(self, path):
+        """Create parsevasp Xml instance"""
         self._data_obj = SingleFile(path=path)
 
         # Since vasprun.xml can be fairly large, we will parse it only

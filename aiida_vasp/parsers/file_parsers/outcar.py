@@ -191,7 +191,6 @@ class LegacyOutcarParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(LegacyOutcarParser, self).__init__(*args, **kwargs)
         self._parameter = None
-        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Add all quantities parsed from OUTCAR to _parsed_data."""

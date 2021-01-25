@@ -2,7 +2,6 @@
 # pylint: disable=redefined-outer-name, unused-wildcard-import, unused-argument, wildcard-import
 
 import pytest
-from pytest import raises
 from aiida.common import InputValidationError
 
 from aiida_vasp.utils.fixtures import *
@@ -69,7 +68,7 @@ def test_parser_dict(fresh_aiida_env, incar_dict_example):
 #     """
 
 #     test_string = 'LOPTICS = .True.\nAddgrid=.false.'
-#     with raises(AttributeError):
+#     with pytest.raises(AttributeError):
 #         IncarParser(incar_string=test_string)
 
 
