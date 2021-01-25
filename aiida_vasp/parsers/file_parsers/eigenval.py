@@ -30,7 +30,6 @@ class EigParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(EigParser, self).__init__(*args, **kwargs)
-        self.init_with_kwargs(**kwargs)
 
     @property
     def _parsed_object(self):

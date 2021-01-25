@@ -25,11 +25,27 @@ class StreamParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize stream parser
+
+        file_path : str
+            File path.
+        data : SingleFileData
+            AiiDA Data class install to store a single file.
+        settings : ParserSettings
+            Do not touch. BaseFileParser takes care of initialization.
+
+        """
+
         super(StreamParser, self).__init__(*args, **kwargs)
         self._stream = None
-        self.init_with_kwargs(**kwargs)
+        self._settings = kwargs.get('settings', None)
+        if 'file_path' in kwargs:
+            self._init_stream(kwargs['file_path'])
+        if 'data' in kwargs:
+            self._init_stream(kwargs['data'].get_file_abs_path())
 
-    def _init_with_file_path(self, path):
+    def _init_stream(self, path):
         """Init with a file path."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
@@ -48,11 +64,6 @@ class StreamParser(BaseFileParser):
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly when parsing the standard stream. Returning None.')
             self._stream = None
-
-    def _init_with_data(self, data):
-        """Init with SingleFileData."""
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
         """Parse the standard streams."""

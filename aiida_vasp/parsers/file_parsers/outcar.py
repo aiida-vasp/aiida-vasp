@@ -56,11 +56,26 @@ class OutcarParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize OUTCAR parser
+
+        file_path : str
+            File path.
+        data : SingleFileData
+            AiiDA Data class install to store a single file.
+        settings : ParserSettings
+
+        """
+
         super(OutcarParser, self).__init__(*args, **kwargs)
         self._outcar = None
-        self.init_with_kwargs(**kwargs)
+        self._settings = kwargs.get('settings', None)
+        if 'file_path' in kwargs:
+            self._init_outcar(kwargs['file_path'])
+        if 'data' in kwargs:
+            self._init_outcar(kwargs['data'].get_file_abs_path())
 
-    def _init_with_file_path(self, path):
+    def _init_outcar(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
@@ -73,11 +88,6 @@ class OutcarParser(BaseFileParser):
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._outcar = None
-
-    def _init_with_data(self, data):
-        """Init with SingleFileData."""
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
 

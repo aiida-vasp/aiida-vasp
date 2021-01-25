@@ -59,18 +59,18 @@ def test_parser_dict(fresh_aiida_env, incar_dict_example):
     assert isinstance(parser.incar, get_data_class('dict'))
 
 
-def test_parser_string():
-    """
-    Pass a string to the INCAR parser.
+# def test_parser_string():
+#     """
+#     Pass a string to the INCAR parser.
 
-    Should fail, since passing of string in
-    the interface is not implemented yet.
+#     Should fail, since passing of string in
+#     the interface is not implemented yet.
 
-    """
+#     """
 
-    test_string = 'LOPTICS = .True.\nAddgrid=.false.'
-    with raises(AttributeError):
-        IncarParser(incar_string=test_string)
+#     test_string = 'LOPTICS = .True.\nAddgrid=.false.'
+#     with raises(AttributeError):
+#         IncarParser(incar_string=test_string)
 
 
 def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):

@@ -31,10 +31,17 @@ class IncarParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
-        super(IncarParser, self).__init__(*args, **kwargs)
-        self.init_with_kwargs(**kwargs)
+        """
+        Initialize INCAR parser
 
-    def _init_with_data(self, data):
+        data : Dict
+
+        """
+        super(IncarParser, self).__init__(*args, **kwargs)
+        if 'data' in kwargs:
+            self._init_incar(kwargs['data'])
+
+    def _init_incar(self, data):
         """Initialize with a given AiiDA Dict instance."""
         if isinstance(data, get_data_class('dict')):
             self._data_obj = data

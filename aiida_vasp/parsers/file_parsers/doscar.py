@@ -42,7 +42,6 @@ class DosParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(DosParser, self).__init__(*args, **kwargs)
         self._dos = None
-        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
