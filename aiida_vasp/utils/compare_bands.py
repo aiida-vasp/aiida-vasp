@@ -340,7 +340,7 @@ def get_band_properties(eigenvalues, occupations):
     # NOTE: this may not correctly handle multiple degenerate VBM/CBM levels
     for spin, occ in enumerate(occupations):
         eign = eigenvalues[spin]
-        occupied = occ > 1e-8
+        occupied = np.abs(occ) > 1e-8
         this_vbm = eign[occupied].max()
         this_cbm = eign[~occupied].min()
         if this_vbm > vbm:

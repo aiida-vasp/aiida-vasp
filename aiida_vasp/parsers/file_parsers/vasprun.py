@@ -677,7 +677,7 @@ class VasprunParser(BaseFileParser):
         info = {}
         nosc_energies = self._xml.get_energies('last', nosc=True)
         parameters = self._xml.get_parameters()
-        info['vasp_finished'] = not self._xml_truncated
+        info['finished'] = not self._xml_truncated
         # Only set to true for untruncated run to avoid false positives
         if nosc_energies is None:
             info['electronic_converged'] = False
