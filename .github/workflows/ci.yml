@@ -72,7 +72,7 @@ jobs:
         run: pip install -e git+https://github.com/aiidateam/aiida_core#egg=aiida-core
       - name: Install AiiDA-Wannier90
         run: pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
-      - name: Install AiiDA-VASP  # Manually install the latest version of parse vasp
+      - name: Install AiiDA-VASP
         run: |
           pip install -e .[graphs,tests]
           pip freeze
