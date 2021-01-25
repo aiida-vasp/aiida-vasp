@@ -470,22 +470,22 @@ def test_run_status_result(fresh_aiida_env, vasprun_parser):
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['run_status'])
     data = NodeComposer.compose('dict', inputs).get_dict()['run_status']
     if 'basic/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
-        assert data['vasp_finished'] is True
+        assert data['finished'] is True
         assert data['electronic_converged'] is True
         assert data['ionic_converged'] is None
 
     if 'relax/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
-        assert data['vasp_finished'] is True
+        assert data['finished'] is True
         assert data['electronic_converged'] is True
         assert data['ionic_converged'] is True
 
     if 'relax-truncated/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
-        assert data['vasp_finished'] is False
+        assert data['finished'] is False
         assert data['electronic_converged'] is False
         assert data['ionic_converged'] is False
 
     if 'relax-not-converged/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
-        assert data['vasp_finished'] is True
+        assert data['finished'] is True
         assert data['electronic_converged'] is True
         assert data['ionic_converged'] is False
 
