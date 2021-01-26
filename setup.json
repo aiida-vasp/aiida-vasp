@@ -84,6 +84,6 @@
 	"pymatgen<=2020.12.3",
 	"lxml",
 	"packaging",
-	"parsevasp >= 2.0.0"
+	"parsevasp >= 2.0.1"
     ]
 }

@@ -53,6 +53,11 @@ class OutcarParser(BaseFileParser):
             'name': 'site_magnetization',
             'prerequisites': []
         },
+        'run_stats': {
+            'inputs': [],
+            'name': 'run_stats',
+            'prerequisites': [],
+        }
     }
 
     def __init__(self, *args, **kwargs):
@@ -104,6 +109,11 @@ class OutcarParser(BaseFileParser):
                 result[quantity] = getattr(self, quantity)
 
         return result
+
+    @property
+    def run_stats(self):
+        """Fetch the run statistics"""
+        return self._outcar.get_run_stats()
 
     @property
     def symmetries(self):

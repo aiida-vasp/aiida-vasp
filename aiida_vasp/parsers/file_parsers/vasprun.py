@@ -12,11 +12,32 @@ from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.utils.compare_bands import get_band_properties
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
-        'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupancies', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress', 'version'
+        'structure',
+        'eigenvalues',
+        'dos',
+        'bands',
+        'kpoints',
+        'occupancies',
+        'trajectory',
+        'energies',
+        'projectors',
+        'dielectrics',
+        'born_charges',
+        'hessian',
+        'dynmat',
+        'forces',
+        'stress',
+        'total_energies',
+        'maximum_force',
+        'maximum_stress',
+        'band_properties',
+        'run_status',
+        'run_stats',
+        'version',
     ],
     'energy_type': ['energy_extrapolated'],
     'electronic_step_energies': False
@@ -120,6 +141,16 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'maximum_stress',
             'prerequisites': []
+        },
+        'band_properties': {
+            'inputs': [],
+            'name': 'band_properties',
+            'prerequisites': [],
+        },
+        'run_status': {
+            'inputs': [],
+            'name': 'run_status',
+            'prerequisites': [],
         },
         'version': {
             'inputs': [],
@@ -624,6 +655,51 @@ class VasprunParser(BaseFileParser):
         """Fetch Fermi level."""
 
         return self._xml.get_fermi_level()
+
+    @property
+    def band_properties(self):
+        """Fetch miscellaneous electronic structure data"""
+
+        eigenvalues = self.eigenvalues
+        occupations = self.occupancies
+        if eigenvalues is None:
+            return None
+
+        # Convert to np.ndarray
+        eigenvalues = np.stack(eigenvalues, axis=0)
+        occupations = np.stack(occupations, axis=0)
+
+        return get_band_properties(eigenvalues, occupations)
+
+    @property
+    def run_status(self):
+        """Fetch run_status information"""
+        info = {}
+        nosc_energies = self._xml.get_energies('last', nosc=True)
+        parameters = self._xml.get_parameters()
+        info['finished'] = not self._xml_truncated
+        # Only set to true for untruncated run to avoid false positives
+        if nosc_energies is None:
+            info['electronic_converged'] = False
+        elif len(nosc_energies) < parameters['nelm'] and not self._xml_truncated:
+            info['electronic_converged'] = True
+        else:
+            info['electronic_converged'] = False
+
+        all_energies = self._xml.get_energies('all', nosc=False)
+        if all_energies is None:
+            info['ionic_converged'] = False
+        else:
+            sc_steps = all_energies.get('electronic_steps')
+            if len(sc_steps) <= parameters['nsw'] and not self._xml_truncated:
+                info['ionic_converged'] = True
+            else:
+                info['ionic_converged'] = False
+        # Override if nsw is 0 - no ionic steps are performed
+        if parameters['nsw'] < 1:
+            info['ionic_converged'] = None
+
+        return info
 
 
 def _build_structure(lattice):
