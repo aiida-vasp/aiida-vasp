@@ -5,7 +5,7 @@ VASP calculation.
 The calculation class that prepares a specific VASP calculation.
 """
 #encoding: utf-8
-# pylint: disable=abstract-method
+# pylint: disable=abstract-method, super-with-arguments
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
 from aiida.plugins import DataFactory
@@ -303,8 +303,10 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        positions_dof = self.inputs.get('dynamics', {}).get('positions_dof')
-        if positions_dof is not None:
+        dynamics = self.inputs.get('dynamics')
+        if dynamics is not None:
+            dynamics = dynamics.get_dict() if dynamics else {}
+            positions_dof = dynamics.get('positions_dof')
             options = {'positions_dof': positions_dof}
         else:
             options = None
