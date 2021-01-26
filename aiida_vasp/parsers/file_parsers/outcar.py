@@ -8,7 +8,7 @@ import re
 
 from parsevasp.outcar import Outcar
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
 
@@ -53,6 +53,11 @@ class OutcarParser(BaseFileParser):
             'name': 'site_magnetization',
             'prerequisites': []
         },
+        'run_stats': {
+            'inputs': [],
+            'name': 'run_stats',
+            'prerequisites': [],
+        }
     }
 
     def __init__(self, *args, **kwargs):
@@ -63,7 +68,7 @@ class OutcarParser(BaseFileParser):
     def _init_with_file_path(self, path):
         """Init with a filepath."""
         self._parsed_data = {}
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._data_obj = SingleFile(path=path)
 
         # Since OUTCAR can be fairly large, we will parse it only
@@ -76,7 +81,7 @@ class OutcarParser(BaseFileParser):
 
     def _init_with_data(self, data):
         """Init with SingleFileData."""
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
@@ -87,8 +92,8 @@ class OutcarParser(BaseFileParser):
             self._parsed_data[key] = value
 
         quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self.settings is not None and self.settings.quantities_to_parse:
-            quantities_to_parse = self.settings.quantities_to_parse
+        if self._settings is not None and self._settings.quantity_names_to_parse:
+            quantities_to_parse = self._settings.quantity_names_to_parse
 
         result = {}
 
@@ -104,6 +109,11 @@ class OutcarParser(BaseFileParser):
                 result[quantity] = getattr(self, quantity)
 
         return result
+
+    @property
+    def run_stats(self):
+        """Fetch the run statistics"""
+        return self._outcar.get_run_stats()
 
     @property
     def symmetries(self):
@@ -245,6 +255,6 @@ class LegacyOutcarParser(BaseFileParser):
     @property
     def parameter(self):
         if self._parameter is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._parameter = composer.compose('parameter', quantities=DEFAULT_OPTIONS)
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=DEFAULT_OPTIONS['quantities_to_parse'])
+            self._parameter = NodeComposer.compose('dict', inputs)
         return self._parameter

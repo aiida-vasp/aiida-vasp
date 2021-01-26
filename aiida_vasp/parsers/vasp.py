@@ -15,12 +15,8 @@ contains several modules:
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
-from aiida_vasp.parsers.manager import ParserManager
-from aiida_vasp.parsers.settings import ParserSettings
-from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.utils.delegates import Delegate
-
-# defaults
+from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs
 
 DEFAULT_OPTIONS = {
     'add_trajectory': False,
@@ -40,7 +36,6 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
-    'file_parser_set': 'default',
 }
 
 
@@ -79,7 +74,7 @@ class VaspParser(BaseParser):
 
     * `file_parser_set`: String (DEFAULT = 'default').
 
-        By this option the default set of FileParsers can be chosen. See parser_settings.py
+        By this option the default set of FileParsers can be chosen. See settings.py
         for available options.
 
     Additional FileParsers can be added to the VaspParser by using
@@ -94,128 +89,66 @@ class VaspParser(BaseParser):
     def __init__(self, node):
         super(VaspParser, self).__init__(node)
 
-        # Initialise the 'get_quantity' delegate:
-        setattr(self, 'get_quantity', Delegate())
-
         try:
             calc_settings = self.node.inputs.settings
         except NotExistent:
             calc_settings = None
 
-        settings = None
+        parser_settings = None
         if calc_settings:
-            settings = calc_settings.get_dict().get('parser_settings')
+            parser_settings = calc_settings.get_dict().get('parser_settings')
 
-        self.settings = ParserSettings(settings, DEFAULT_OPTIONS)
+        self._definitions = ParserDefinitions()
+        self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
+        self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
-        self.quantities = ParsableQuantities(vasp_parser=self)
-        self.parsers = ParserManager(vasp_parser=self)
-
-        self._output_nodes = {}
-
-        # this list is for bookkeeping, to check whether a quantity has been requested
-        # twice during the parsing cycle.
-        self._requested_quantities = []
-
-    def add_file_parser(self, parser_name, parser_dict):
-        """Add the definition of a fileParser to self.settings and self.parsers."""
-
-        self.settings.parser_definitions[parser_name] = parser_dict
-        self.parsers.add_file_parser(parser_name, parser_dict)
+    def add_parser_definition(self, filename, parser_dict):
+        """Add the definition of a fileParser to self._definitions."""
+        self._definitions.add_parser_definition(filename, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
-        self.quantities.additional_quantities[quantity_name] = quantity_dict
+        self._parsable_quantities.add_parsable_quantity(quantity_name, quantity_dict)
 
     def add_custom_node(self, node_name, node_dict):
         """Add a custom node to the settings."""
-        self.settings.add_node(node_name, node_dict)
+        self._settings.add_output_node(node_name, node_dict)
 
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
-        def missing_critical_file():
-            for file_name, value_dict in self.settings.parser_definitions.items():
-                if file_name not in self.retrieved_content.keys() and value_dict['is_critical']:
-                    return True
-            return False
-
-        error_code = self.check_folders(kwargs)
+        exit_code = None
+        error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
-        if missing_critical_file():
-            # A critical file is missing. Abort parsing
-            # in case we do not find this or other files marked with is_critical
-            return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
-        # Get the _quantities from the FileParsers.
-        self.quantities.setup()
+        for file_name, value_dict in self._definitions.parser_definitions.items():
+            if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
+                return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
-        # Set the quantities to parse list. Warnings will be issued if a quantity should be parsed and
-        # the corresponding files do not exist.
-        self.parsers.setup()
-        quantities_to_parse = self.parsers.get_quantities_to_parse()
+        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
+                                        parser_definitions=self._definitions.parser_definitions,
+                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
-        # Parse all implemented quantities in the quantities_to_parse list.
-        while quantities_to_parse:
-            quantity = quantities_to_parse.pop(0)
-            self._output_nodes.update(self.get_quantity(quantity))
+        parsed_quantities = {}
+        for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
+            file_name = self._parsable_quantities.quantity_keys_to_filenames[quantity_key]
+            file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
+            parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+            parsed_quantity = parser.get_quantity(quantity_key)
+            if parsed_quantity is not None:
+                parsed_quantities[quantity_key] = parsed_quantity
+            exit_code = parser.exit_code
 
-        node_assembler = NodeComposer(vasp_parser=self)
-
-        # Assemble the nodes associated with the quantities
-        for node_name, node_dict in self.settings.nodes.items():
-            node = node_assembler.compose(node_dict.type, node_dict.quantities)
-            success = self._set_node(node_name, node)
-            if not success:
+        for _, node_dict in self._settings.output_nodes_dict.items():
+            equivalent_quantity_keys = self._parsable_quantities.equivalent_quantity_keys
+            inputs = get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, node_dict['quantities'])
+            aiida_node = NodeComposer.compose(node_dict['type'], inputs)
+            if aiida_node is None:
                 return self.exit_codes.ERROR_PARSING_FILE_FAILED
+            self.out(node_dict['link_name'], aiida_node)
 
-        # Reset the 'get_quantity' delegate
-        self.get_quantity.clear()
-
-        try:
-            return self.exit_code
-        except AttributeError:
-            pass
+        if exit_code is not None:
+            return exit_code
 
         return self.exit_codes.NO_ERROR
-
-    def get_inputs(self, quantity):
-        """
-        Return a quantity required as input for another quantity.
-
-        This method will be called by the FileParsers in order to get a required input quantity
-        from self._output_nodes. If the quantity is not in the dictionary the VaspParser will
-        try to parse it. If a quantiy has been requested this way two times, parsing will be
-        aborted because there is a cyclic dependency of the parsable items.
-        """
-        if quantity in self._requested_quantities:
-            raise RuntimeError('{quantity} has been requested for parsing a second time. '
-                               'There is probably a cycle in the prerequisites of the '
-                               'parsable_items in the single FileParsers.'.format(quantity=quantity))
-
-        # This is the first time this quantity has been requested, keep track of it.
-        self._requested_quantities.append(quantity)
-        if quantity not in self._output_nodes:
-            # Did we parse an alternative
-            for item in self.quantities.get_equivalent_quantities(quantity):
-                if item.original_name in self._output_nodes:
-                    return {quantity: self._output_nodes.get(item.original_name)}
-            # The quantity is not in the output_nodes. Try to parse it
-            self._output_nodes.update(self.get_quantity(quantity))
-
-        # parsing the quantity without requesting it a second time was successful, remove it from requested_quantities.
-        self._requested_quantities.remove(quantity)
-
-        # since the quantity has already been parsed now as an input, we don't have to parse it a second time later.
-        self.parsers.remove(quantity)
-
-        return {quantity: self._output_nodes.get(quantity)}
-
-    def _set_node(self, node_name, node):
-        """Wrapper for self.add_node, checking whether the Node is None and using the correct linkname."""
-
-        if node is None:
-            return False
-        self.out(self.settings.nodes[node_name].link_name, node)
-        return True

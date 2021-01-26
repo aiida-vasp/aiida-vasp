@@ -368,8 +368,7 @@ def vasprun_parser(request):
     file_name = 'vasprun.xml'
     path_to_file, settings = request.param
     path = data_path(path_to_file, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings(settings))
-    parser._vasp_parser = VaspCalculation
+    parser = VasprunParser(file_path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
     return parser
 
 

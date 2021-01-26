@@ -2,18 +2,13 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
-import math
 
 import pytest
-from aiida.common.folders import SandboxFolder
-from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, create_authinfo
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @ONLY_ONE_CALC
@@ -178,6 +173,8 @@ def test_vasp_calc(run_vasp_calc):
     misc = results['misc'].get_dict()
     assert 'total_energies' in misc
     assert 'maximum_stress' in misc
+    assert 'run_status' in misc
+    assert 'run_stats' in misc
 
     # By default we should store all always retrieve files
     retrieve_temporary_list_ref = []
