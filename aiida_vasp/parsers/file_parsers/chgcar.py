@@ -23,7 +23,6 @@ class ChgcarParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(ChgcarParser, self).__init__(*args, **kwargs)
         self._chgcar = None
-        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Create a DB Node for the CHGCAR file."""

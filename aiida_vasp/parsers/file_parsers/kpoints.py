@@ -33,11 +33,18 @@ class KpointsParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize INCAR parser
+
+        data : KpointsArray
+
+        """
         super(KpointsParser, self).__init__(*args, **kwargs)
         self._kpoints = None
-        self.init_with_kwargs(**kwargs)
+        if 'data' in kwargs:
+            self._init_kpoints(kwargs['data'])
 
-    def _init_with_data(self, data):
+    def _init_kpoints(self, data):
         """Initialize with a given AiiDA KpointsData instance."""
         if isinstance(data, get_data_class('array.kpoints')):
             self._data_obj = data
