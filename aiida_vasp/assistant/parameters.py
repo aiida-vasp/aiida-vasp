@@ -139,8 +139,11 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None):
+    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
         self.exit_code = None
+
+        # Flag for skipping any validations
+        self._skip_validation = skip_parameters_validation
 
         # Check type of parameters and set
         self._parameters = check_inputs(parameters)
@@ -211,20 +214,16 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
 
     def _set_override_vasp_parameters(self):
         """Set the any supplied override parameters."""
-        try:
-            if self._parameters[_DEFAULT_OVERRIDE_NAMESPACE]:
-                for key, item in self._parameters[_DEFAULT_OVERRIDE_NAMESPACE].items():
-                    # Sweep the override input parameters (only care about the ones in the default override namespace)
-                    # to check if they are valid VASP tags.
-                    key = key.lower()
-                    if self._valid_vasp_parameter(key):
-                        # Add or override in the default override namespace
-                        self._massage[_DEFAULT_OVERRIDE_NAMESPACE][key] = item
-                    else:
-                        break
-        except KeyError:
-            # The default override namespace might not be supplied (no override)
-            pass
+        if _DEFAULT_OVERRIDE_NAMESPACE not in self._parameters:
+            return
+
+        for key, item in self._parameters[_DEFAULT_OVERRIDE_NAMESPACE].items():
+            # Sweep the override input parameters (only care about the ones in the default override namespace)
+            # to check if they are valid VASP tags.
+            key = key.lower()
+            if self._skip_validation or self._valid_vasp_parameter(key):
+                # Add or override in the default override namespace
+                self._massage[_DEFAULT_OVERRIDE_NAMESPACE][key] = item
 
     def _set_extra_vasp_parameters(self):
         """
@@ -235,17 +234,19 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         to make sure it was valid input to the VASP workchain.
 
         """
-        try:
-            if self._parameters.dynamics:
-                self._massage.dynamics = AttributeDict()
-            for key, item in self._parameters.dynamics.items():
-                key = key.lower()
-                if key in ['positions_dof']:
-                    self._massage.dynamics[key] = item
-                else:
-                    break
-        except AttributeError:
-            pass
+        # return if dynamics is not supplied
+        if 'dynamics' not in self._parameters:
+            return
+
+        if self._parameters.dynamics:
+            self._massage.dynamics = AttributeDict()
+
+        for key, item in self._parameters.dynamics.items():
+            key = key.lower()
+            if key in ['positions_dof']:
+                self._massage.dynamics[key] = item
+            else:
+                break
 
     def _set_additional_override_parameters(self):
         """Set any customized parameter namespace, including its content on the massaged container."""
@@ -264,6 +265,9 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
 
     def _validate_vasp_parameters(self):
         """Make sure all the massaged values are recognized as valid VASP input parameters."""
+        if self._skip_validation:
+            return
+
         for key in self._massage[_DEFAULT_OVERRIDE_NAMESPACE]:
             key = key.lower()
             if not self._valid_vasp_parameter(key):

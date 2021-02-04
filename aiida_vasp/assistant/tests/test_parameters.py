@@ -366,6 +366,15 @@ def test_unsupported_parameters_in_unsupported_namespace():  # pylint: disable=i
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
 
 
+def test_skip_parameters_validate():  # pylint: disable=invalid-name
+    """Test that it is possibly to completely by-pass parameters checking."""
+    parameters = AttributeDict()
+    parameters[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
+    parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid = 200
+    massager = ParametersMassage(parameters, skip_parameters_validation=True)
+    assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
+
+
 def test_pwcutoff_to_encut():
     """Test that the pwcutoff is converted to encut."""
     parameters = AttributeDict()
