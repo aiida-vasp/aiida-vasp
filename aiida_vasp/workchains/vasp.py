@@ -177,11 +177,12 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Set settings
         unsupported_parameters = None
         skip_parameters_validation = False
-        if 'settings' in self.inputs:
+        if self.inputs.get('settings'):
             self.ctx.inputs.settings = self.inputs.settings
             # Also check if the user supplied additional tags that is not in the supported file.
-            unsupported_parameters = self.ctx.inputs.settings.get('unsupported_parameters', unsupported_parameters)
-            skip_parameters_validation = self.ctx.inputs.settings.get('skip_parameters_validation', skip_parameters_validation)
+            settings_dict = self.ctx.inputs.settings.get_dict()
+            unsupported_parameters = settings_dict.get('unsupported_parameters', unsupported_parameters)
+            skip_parameters_validation = settings_dict.get('skip_parameters_validation', skip_parameters_validation)
 
         # Perform inputs massage to accommodate generalization in higher lying workchains
         # and set parameters.
