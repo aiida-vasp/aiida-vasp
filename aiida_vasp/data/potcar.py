@@ -584,7 +584,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     def find_file_node(self):
         """Find and return the matching PotcarFileData node."""
-        return PotcarFileData.find_one(**self.attributes)
+        return PotcarFileData.find_one(sha512=self.sha512)
 
     # pylint: disable=arguments-differ,signature-differs
     def store(self, *args, **kwargs):
