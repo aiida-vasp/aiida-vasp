@@ -149,8 +149,8 @@ class VaspCalculation(VaspCalcBase):
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
 
         # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
-        calcinfo.stdout_name = self._VASP_OUTPUT
-        calcinfo.join_files = True
+        calcinfo.codes_info[0].stdout_name = self._VASP_OUTPUT
+        calcinfo.codes_info[0].join_files = True
 
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve files
