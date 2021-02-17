@@ -12,11 +12,32 @@ from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.utils.compare_bands import get_band_properties
 
 DEFAULT_OPTIONS = {
     'quantities_to_parse': [
-        'structure', 'eigenvalues', 'dos', 'bands', 'kpoints', 'occupancies', 'trajectory', 'energies', 'projectors', 'dielectrics',
-        'born_charges', 'hessian', 'dynmat', 'forces', 'stress', 'total_energies', 'maximum_force', 'maximum_stress', 'version'
+        'structure',
+        'eigenvalues',
+        'dos',
+        'bands',
+        'kpoints',
+        'occupancies',
+        'trajectory',
+        'energies',
+        'projectors',
+        'dielectrics',
+        'born_charges',
+        'hessian',
+        'dynmat',
+        'forces',
+        'stress',
+        'total_energies',
+        'maximum_force',
+        'maximum_stress',
+        'band_properties',
+        'run_status',
+        'run_stats',
+        'version',
     ],
     'energy_type': ['energy_extrapolated'],
     'electronic_step_energies': False
@@ -121,6 +142,16 @@ class VasprunParser(BaseFileParser):
             'name': 'maximum_stress',
             'prerequisites': []
         },
+        'band_properties': {
+            'inputs': [],
+            'name': 'band_properties',
+            'prerequisites': [],
+        },
+        'run_status': {
+            'inputs': [],
+            'name': 'run_status',
+            'prerequisites': [],
+        },
         'version': {
             'inputs': [],
             'name': 'version',
@@ -129,13 +160,30 @@ class VasprunParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize vasprun.xml parser
+
+        file_path : str
+            File path.
+        data : SingleFileData
+            AiiDA Data class install to store a single file.
+        settings : ParserSettings
+        exit_codes : CalcJobNode.process_class.exit_codes
+
+        """
+
         super(VasprunParser, self).__init__(*args, **kwargs)
         self._xml = None
         self._xml_truncated = False
-        self.init_with_kwargs(**kwargs)
+        self._settings = kwargs.get('settings', None)
+        self._exit_codes = kwargs.get('exit_codes', None)
+        if 'file_path' in kwargs:
+            self._init_xml(kwargs['file_path'])
+        if 'data' in kwargs:
+            self._init_xml(kwargs['data'].get_file_abs_path())
 
-    def _init_with_file_path(self, path):
-        """Init with a filepath."""
+    def _init_xml(self, path):
+        """Create parsevasp Xml instance"""
         self._data_obj = SingleFile(path=path)
 
         # Since vasprun.xml can be fairly large, we will parse it only
@@ -148,10 +196,6 @@ class VasprunParser(BaseFileParser):
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._xml = None
-
-    def _init_with_data(self, data):
-        """Init with SingleFileData."""
-        self._init_with_file_path(data.get_file_abs_path())
 
     def _parse_file(self, inputs):
         """Parse the quantities related to this file parser."""
@@ -624,6 +668,51 @@ class VasprunParser(BaseFileParser):
         """Fetch Fermi level."""
 
         return self._xml.get_fermi_level()
+
+    @property
+    def band_properties(self):
+        """Fetch miscellaneous electronic structure data"""
+
+        eigenvalues = self.eigenvalues
+        occupations = self.occupancies
+        if eigenvalues is None:
+            return None
+
+        # Convert to np.ndarray
+        eigenvalues = np.stack(eigenvalues, axis=0)
+        occupations = np.stack(occupations, axis=0)
+
+        return get_band_properties(eigenvalues, occupations)
+
+    @property
+    def run_status(self):
+        """Fetch run_status information"""
+        info = {}
+        nosc_energies = self._xml.get_energies('last', nosc=True)
+        parameters = self._xml.get_parameters()
+        info['finished'] = not self._xml_truncated
+        # Only set to true for untruncated run to avoid false positives
+        if nosc_energies is None:
+            info['electronic_converged'] = False
+        elif len(nosc_energies) < parameters['nelm'] and not self._xml_truncated:
+            info['electronic_converged'] = True
+        else:
+            info['electronic_converged'] = False
+
+        all_energies = self._xml.get_energies('all', nosc=False)
+        if all_energies is None:
+            info['ionic_converged'] = False
+        else:
+            sc_steps = all_energies.get('electronic_steps')
+            if len(sc_steps) <= parameters['nsw'] and not self._xml_truncated:
+                info['ionic_converged'] = True
+            else:
+                info['ionic_converged'] = False
+        # Override if nsw is 0 - no ionic steps are performed
+        if parameters['nsw'] < 1:
+            info['ionic_converged'] = None
+
+        return info
 
 
 def _build_structure(lattice):

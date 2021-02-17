@@ -22,7 +22,6 @@ class WavecarParser(BaseFileParser):
     def __init__(self, *args, **kwargs):
         super(WavecarParser, self).__init__(*args, **kwargs)
         self._wavecar = None
-        self.init_with_kwargs(**kwargs)
 
     def _parse_file(self, inputs):
         """Create a DB Node for the WAVECAR file."""

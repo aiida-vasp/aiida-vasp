@@ -451,7 +451,47 @@ def test_bands(fresh_aiida_env, vasprun_parser):
 
 
 @pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
-def test_eigenocc_spin(fresh_aiida_env, vasprun_parser):
+def test_band_properties_result(fresh_aiida_env, vasprun_parser):
+    """Test the result of band_properties"""
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['band_properties'])
+    data = NodeComposer.compose('dict', inputs).get_dict()['band_properties']
+    assert data['cbm'] == 6.5536
+    assert data['vbm'] == 6.5105
+    assert data['is_direct_gap'] is False
+    assert data['band_gap'] == pytest.approx(0.04310, rel=1e-3)
+
+
+@pytest.mark.parametrize('vasprun_parser', [('basic', {}), ('relax', {}), ('relax-truncated', {}), ('relax-not-converged', {})],
+                         indirect=True)
+def test_run_status_result(fresh_aiida_env, vasprun_parser):
+    """Test the result of band_properties"""
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['run_status'])
+    data = NodeComposer.compose('dict', inputs).get_dict()['run_status']
+    if 'basic/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
+        assert data['finished'] is True
+        assert data['electronic_converged'] is True
+        assert data['ionic_converged'] is None
+
+    if 'relax/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
+        assert data['finished'] is True
+        assert data['electronic_converged'] is True
+        assert data['ionic_converged'] is True
+
+    if 'relax-truncated/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
+        assert data['finished'] is False
+        assert data['electronic_converged'] is False
+        assert data['ionic_converged'] is False
+
+    if 'relax-not-converged/' in vasprun_parser._xml._file_path:  # pylint: disable=protected-access
+        assert data['finished'] is True
+        assert data['electronic_converged'] is True
+        assert data['ionic_converged'] is False
+
+
+@pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
+def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     """
     Check that the eigenvalues are of type BandData.
 
