@@ -93,6 +93,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
     """Check that preparing creates all necessary files."""
     from aiida.common.folders import Folder
+    from aiida_vasp.calcs.vasp import VaspCalculation
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
@@ -113,6 +114,9 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     assert 'EIGENVAL' in calcinfo.retrieve_list
     assert 'DOSCAR' in calcinfo.retrieve_list
     assert 'wannier90*' in calcinfo.retrieve_list
+
+    assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
+    assert calcinfo.codes_info[0].join_files is True
 
     inputs_dict.update({'icharg': 2})
 
