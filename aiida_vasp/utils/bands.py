@@ -153,6 +153,6 @@ def plot_bands(bands_node, **kwargs):
         import itertools
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
-            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member
+            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member, not-callable
     else:
         plt.plot(bands, **kwargs)
