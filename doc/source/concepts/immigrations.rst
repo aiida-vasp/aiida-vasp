@@ -37,7 +37,7 @@ Assuming you ran `VASP`_ in ``/scratch/<user>/<runfolder>/`` on the remote (or l
 
    from aiida.orm import Code
    from aiida.plugins import CalculationFactory
-   from aiida.engine import run
+   from aiida.engine import submit
 
    # the folder you want to import
    calculation_folder = '/scratch/<user>/<runfolder>/'
@@ -47,10 +47,12 @@ Assuming you ran `VASP`_ in ``/scratch/<user>/<runfolder>/`` on the remote (or l
    # then comes the information which can not be read from input files
    resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}  # whatever is appropriate for you
 
-   process, inputs = CalculationFactory('vasp.vasp').immigrant(code, calculation_folder, resources=resources)
-   result = run(process, **inputs)
+   _, builder = CalculationFactory('vasp.vasp').immigrant(
+       code, calculation_folder,
+       metadata={'options': {'resources': resources}})
+   node = submit(builder)
 
-After running the above snippet, ``result`` will contain the output node dictionary of the created calculation.
+After running the above snippet, ``node`` will be the node of the created calculation.
 
 Parsing additional information
 ------------------------------
