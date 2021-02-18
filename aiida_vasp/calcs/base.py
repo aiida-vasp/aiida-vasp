@@ -7,13 +7,11 @@ Base and meta classes for VASP calculation classes.
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
 import os
-from pathlib import Path
 
 from aiida.engine import CalcJob
 from aiida.common import CalcInfo, CodeInfo, ValidationError
-from aiida.common.folders import SandboxFolder
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, cmp_get_transport
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class VaspCalcBase(CalcJob):
@@ -160,54 +158,3 @@ class VaspCalcBase(CalcJob):
     def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
         """Subclass hook to write additional input files."""
         return
-
-    @classmethod
-    def immigrant(cls, code, remote_path, **kwargs):
-        """
-        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
-
-        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
-        or if additional settings need to be passed, e.g. parser instructions.
-
-        :param code: a Code instance for the code originally used.
-        :param remote_path: The directory on the code's computer in which the simulation was run.
-        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
-        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
-            mapping to find the right POTCARs.
-        :param settings: dict. Used for non-default parsing instructions, etc.
-        """
-
-        from aiida_vasp.calcs import immigrant as imgr  # pylint: disable=import-outside-toplevel
-        remote_path = Path(remote_path)
-        proc_cls = imgr.VaspImmigrant
-        builder = proc_cls.get_builder()
-        builder.code = code
-        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
-        metadata = kwargs.get('metadata', {'options': options})
-        options = metadata.get('options', options)
-        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
-        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
-        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
-        settings = kwargs.get('settings', {})
-        settings.update({'import_from_path': str(remote_path)})
-        builder.settings = get_data_node('dict', dict=settings)
-        with cmp_get_transport(code.computer) as transport:
-            with SandboxFolder() as sandbox:
-                sandbox_path = Path(sandbox.abspath)
-                transport.get(str(remote_path / 'INCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POSCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
-                transport.get(str(remote_path / 'KPOINTS'), str(sandbox_path))
-                builder.parameters = imgr.get_incar_input(sandbox_path)
-                builder.structure = imgr.get_poscar_input(sandbox_path)
-                builder.potential = imgr.get_potcar_input(sandbox_path,
-                                                          potential_family=kwargs.get('potential_family'),
-                                                          potential_mapping=kwargs.get('potential_mapping'))
-                builder.kpoints = imgr.get_kpoints_input(sandbox_path)
-                cls._immigrant_add_inputs(transport, remote_path=remote_path, sandbox_path=sandbox_path, builder=builder, **kwargs)
-        return proc_cls, builder
-
-    @classmethod
-    def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):
-        pass
