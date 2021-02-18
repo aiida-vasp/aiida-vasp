@@ -9,6 +9,7 @@ Development Team
 ----------------
 * Espen Flage-Larsen, SINTEF (maintainer)
 * Atsushi Togo, Kyoto University
+* Bonan Zhu, University College London
 
 Acknowledgements
 ----------------
