@@ -25,7 +25,8 @@
     "entry_points": {
 	"aiida.calculations": [
 	    "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation",
-	    "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
+	    "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation",
+	    "vasp.immigrant = aiida_vasp.calcs.immigrant:VaspImmigrant"
 	],
 	"aiida.cmdline.data": [
 	    "vasp-potcar = aiida_vasp.commands.potcar:potcar"
