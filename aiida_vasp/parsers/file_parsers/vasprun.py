@@ -688,23 +688,26 @@ class VasprunParser(BaseFileParser):
     def run_status(self):
         """Fetch run_status information"""
         info = {}
-        nosc_energies = self._xml.get_energies('last', nosc=True)
+        # First check electronic convergence by comparing executed steps to the
+        # maximum allowed number of steps (NELM).
+        energies = self._xml.get_energies('last', nosc=False)
         parameters = self._xml.get_parameters()
         info['finished'] = not self._xml_truncated
         # Only set to true for untruncated run to avoid false positives
-        if nosc_energies is None:
+        if energies is None:
             info['electronic_converged'] = False
-        elif len(nosc_energies) < parameters['nelm'] and not self._xml_truncated:
+        elif energies.get('electronic_steps')[0] < parameters['nelm'] and not self._xml_truncated:
             info['electronic_converged'] = True
         else:
             info['electronic_converged'] = False
 
-        all_energies = self._xml.get_energies('all', nosc=False)
-        if all_energies is None:
+        # Then check the ionic convergence by comparing executed steps to the
+        # maximum allowed number of steps (NSW).
+        energies = self._xml.get_energies('all', nosc=True)
+        if energies is None:
             info['ionic_converged'] = False
         else:
-            sc_steps = all_energies.get('electronic_steps')
-            if len(sc_steps) <= parameters['nsw'] and not self._xml_truncated:
+            if len(energies.get('electronic_steps')) < parameters['nsw'] and not self._xml_truncated:
                 info['ionic_converged'] = True
             else:
                 info['ionic_converged'] = False
