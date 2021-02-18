@@ -5,9 +5,8 @@ import pytest
 import numpy as np
 
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 
 
 @pytest.mark.parametrize('outcar_parser', ['magnetization'], indirect=True)
@@ -19,15 +18,15 @@ def test_magnetization_parser(fresh_aiida_env, outcar_parser):
 
     """
 
-    outcar_parser.settings.nodes.update(
+    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',
             'quantities': ['site_magnetization']
         }})
 
-    composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('dict', quantities=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
+    data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
@@ -92,15 +91,15 @@ def test_magnetization_single_parser(fresh_aiida_env, outcar_parser):  # pylint:
 
     """
 
-    outcar_parser.settings.nodes.update(
+    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
         {'add_site_magnetization': {
             'link_name': 'site_magnetization',
             'type': 'dict',
             'quantities': ['site_magnetization']
         }})
 
-    composer = NodeComposer(file_parsers=[outcar_parser])
-    data_obj = composer.compose('dict', quantities=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
+    data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()

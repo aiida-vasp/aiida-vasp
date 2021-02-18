@@ -14,17 +14,17 @@ class BaseParser(Parser):
 
     def __init__(self, node):
         super(BaseParser, self).__init__(node)
-        self.retrieved_content = None
-        self.retrieved_temporary = None
+        self._retrieved_content = None
+        self._retrieved_temporary = None
 
     def parse(self, **kwargs):
         """Check the folders and set the retrieved_content for use in extending parsers."""
-        error_code = self.check_folders(kwargs)
+        error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
         return None
 
-    def check_folders(self, parser_kwargs=None):
+    def _compose_retrieved_content(self, parser_kwargs=None):
         """
         Convenient check to see if the retrieved and retrieved temp folder is present.
 
@@ -34,7 +34,7 @@ class BaseParser(Parser):
         """
 
         retrieved = {}
-        exit_code_permanent = self.check_folder()
+        exit_code_permanent = self._check_folder()
         if exit_code_permanent is None:
             # Retrieved folder exists, add content and tag to dictionary
             for retrieved_file in self.retrieved.list_objects():
@@ -42,11 +42,11 @@ class BaseParser(Parser):
 
         exit_code_temporary = None
         if parser_kwargs is not None:
-            exit_code_temporary = self.check_temporary_folder(parser_kwargs)
+            exit_code_temporary = self._set_retrieved_temporary(parser_kwargs)
             if exit_code_temporary is None:
                 # Retrieved_temporary folder exists, add content and tag to dictionary
-                for retrieved_file in os.listdir(self.retrieved_temporary):
-                    retrieved[retrieved_file] = {'path': self.retrieved_temporary, 'status': 'temporary'}
+                for retrieved_file in os.listdir(self._retrieved_temporary):
+                    retrieved[retrieved_file] = {'path': self._retrieved_temporary, 'status': 'temporary'}
 
         # Check if there are other files than the AiiDA generated scheduler files in retrieved and
         # if there are any files in the retrieved_temporary. If not, return an error.
@@ -60,21 +60,21 @@ class BaseParser(Parser):
             return self.exit_codes.ERROR_VASP_DID_NOT_EXECUTE
 
         # Store the retrieved content
-        self.retrieved_content = retrieved
+        self._retrieved_content = retrieved
         # OK if a least one of the folders are present
         if exit_code_permanent is None or exit_code_temporary is None:
             return None
         # Both are not present, exit code of the temporary folder take precedence
         return exit_code_temporary if not None else exit_code_permanent
 
-    def check_temporary_folder(self, parser_kwargs):
+    def _set_retrieved_temporary(self, parser_kwargs):
         """Convenient check of the retrieved_temporary folder."""
-        self.retrieved_temporary = parser_kwargs.get('retrieved_temporary_folder', None)
-        if self.retrieved_temporary is None:
+        self._retrieved_temporary = parser_kwargs.get('retrieved_temporary_folder', None)
+        if self._retrieved_temporary is None:
             return self.exit_codes.ERROR_NO_RETRIEVED_TEMPORARY_FOLDER
         return None
 
-    def check_folder(self):
+    def _check_folder(self):
         """Convenient check of the retrieved folder."""
         try:
             _ = self.retrieved
@@ -82,7 +82,7 @@ class BaseParser(Parser):
         except NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
-    def get_file(self, fname):
+    def _get_file(self, fname):
         """
         Convenient access to retrieved and retrieved_temporary files.
 
@@ -91,7 +91,7 @@ class BaseParser(Parser):
         """
 
         try:
-            if self.retrieved_content[fname]['status'] == 'permanent':
+            if self._retrieved_content[fname]['status'] == 'permanent':
                 try:
                     with self.retrieved.open(fname) as file_obj:
                         ofname = file_obj.name
@@ -100,7 +100,7 @@ class BaseParser(Parser):
                     self.logger.warning(fname + ' not found in retrieved')
                     return None
             else:
-                path = self.retrieved_content[fname]['path']
+                path = self._retrieved_content[fname]['path']
                 file_path = os.path.join(path, fname)
                 try:
                     with open(file_path, 'r') as file_obj:

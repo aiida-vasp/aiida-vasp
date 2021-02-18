@@ -4,17 +4,13 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
-# pylint: disable=no-member, useless-object-inheritance, import-outside-toplevel
-# Reason: pylint erroneously complains about non existing member 'get_quantity', which will be set in __init__.
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.delegates import delegate_method_kwargs, Delegate
-from aiida_vasp.parsers.quantity import ParsableQuantities
-"""NODE_TYPES"""  # pylint: disable=pointless-string-statement
 
 NODES_TYPES = {
     'dict': [
-        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications', 'version'
+        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications',
+        'band_properties', 'run_status', 'run_stats', 'version'
     ],
     'array.kpoints': ['kpoints'],
     'structure': ['structure'],
@@ -26,45 +22,44 @@ NODES_TYPES = {
 }
 
 
-class NodeComposer(object):
+def get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, quantity_names_in_node_dict):
+    """
+    Collect parsed quantities for the NodeCompoer input.
+
+    When multiple equivalent quantities are found, the first one found in the
+    equivalent_quantity_keys is chosen.
+
+    """
+    inputs = {}
+    for quantity_name in quantity_names_in_node_dict:
+        if quantity_name in equivalent_quantity_keys:
+            for quantity_key in equivalent_quantity_keys[quantity_name]:
+                if quantity_key in parsed_quantities:
+                    inputs[quantity_name] = parsed_quantities[quantity_key]
+                    break
+    return inputs
+
+
+def get_node_composer_inputs_from_file_parser(file_parser, quantity_keys=None):  # pylint: disable=invalid-name
+    """Assemble necessary data from file_parser"""
+    inputs = {}
+    for key, value in file_parser.parsable_items.items():
+        if quantity_keys is not None:
+            if key not in quantity_keys:
+                continue
+        inputs[value['name']] = file_parser.get_quantity(key)
+    return inputs
+
+
+class NodeComposer:
     """
     Prototype for a generic NodeComposer, that will compose output nodes based on parsed quantities.
 
     Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
     """
 
-    def __init__(self, **kwargs):
-        # create the delegate for getting quantities.
-        setattr(self, 'get_quantity', Delegate())
-        self.quantites = None
-        self.init_with_kwargs(**kwargs)
-
-    @delegate_method_kwargs(prefix='_init_with_')
-    def init_with_kwargs(self, **kwargs):
-        """Delegate initialization to _init_with - methods."""
-
-    def _init_with_file_parsers(self, file_parsers):
-        """Init with a list of file parsers."""
-        from copy import deepcopy
-
-        if not file_parsers:
-            return
-
-        self.quantites = ParsableQuantities()
-
-        # Add all the FileParsers get_quantity methods to our get_quantity delegate.
-        for parser in file_parsers:
-            for key, value in parser.parsable_items.items():
-                self.quantites.add_parsable_quantity(key, deepcopy(value))
-
-            self.get_quantity.append(parser.get_quantity)
-
-    def _init_with_vasp_parser(self, vasp_parser):
-        """Init with a VaspParser object."""
-        self.get_quantity.append(vasp_parser.get_inputs)
-        self.quantites = vasp_parser.quantities
-
-    def compose(self, node_type, quantities=None):
+    @classmethod
+    def compose(cls, node_type, inputs):
         """
         A wrapper for compose_node with a node definition taken from NODES.
 
@@ -74,16 +69,9 @@ class NodeComposer(object):
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
-        if quantities is None:
-            quantities = NODES_TYPES.get(node_type)
-
-        inputs = {}
-        for quantity_name in quantities:
-            quantity = self.quantites.get_by_name(quantity_name)
-            inputs[quantity.name] = self.get_quantity(quantity_name)[quantity_name]
-
         # Call the correct specialised method for assembling.
-        return getattr(self, '_compose_' + node_type.replace('.', '_'))(node_type, inputs)
+        method_name = '_compose_' + node_type.replace('.', '_')
+        return getattr(cls, method_name)(node_type, inputs)
 
     @staticmethod
     def _compose_dict(node_type, inputs):
@@ -131,10 +119,11 @@ class NodeComposer(object):
             node = get_data_class(node_type)(file=inputs[key])
         return node
 
-    def _compose_array_bands(self, node_type, inputs):
+    @classmethod
+    def _compose_array_bands(cls, node_type, inputs):
         """Compose a bands node."""
         node = get_data_class(node_type)()
-        kpoints = self._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
+        kpoints = cls._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
         return node

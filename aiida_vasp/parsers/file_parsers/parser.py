@@ -72,46 +72,28 @@ class BaseFileParser(BaseParser):
 
     PARSABLE_ITEMS = {}
 
-    def __init__(self, calc_parser_cls=None, **kwargs):  # pylint: disable=unused-argument
+    def __init__(self, **kwargs):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
         self._logger = aiidalogger.getChild(self.__class__.__name__)
-        self._vasp_parser = calc_parser_cls
-        self.settings = None
-        if calc_parser_cls is not None:
-            calc_parser_cls.get_quantity.append(self.get_quantity)
-            self.settings = calc_parser_cls.settings
-
-        self.parsable_items = {}
+        self._exit_code = None
+        self._parsable_items = self.PARSABLE_ITEMS
         self._parsed_data = {}
-        self._data_obj = None
+        if 'file_path' in kwargs:
+            self._data_obj = SingleFile(path=kwargs['file_path'])
+        elif 'data' in kwargs:
+            self._data_obj = SingleFile(data=kwargs['data'])
+        else:
+            self._data_obj = None
 
-    @delegate_method_kwargs(prefix='_init_with_')
-    def init_with_kwargs(self, **kwargs):
-        """Delegate initialization to _init_with - methods."""
+    @property
+    def parsable_items(self):
+        return self._parsable_items
 
-    def _init_with_file_path(self, path):
-        """Init with a file path."""
-        self._data_obj = SingleFile(path=path)
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
-        self._parsed_data = {}
+    @property
+    def exit_code(self):
+        return self._exit_code
 
-    def _init_with_data(self, data):
-        """
-        Init with aiida-data.
-
-        This has to be overriden by every FileParser, which deals with an
-        Aiida data class other than SingleFileData.
-        """
-
-        self._data_obj = SingleFile(data=data)
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
-        self._parsed_data = {}
-
-    def _init_with_settings(self, settings):
-        """Init with settings."""
-        self.settings = settings
-
-    def get_quantity(self, quantity, inputs=None):
+    def get_quantity(self, quantity_key):
         """
         Public method to get the required quantity from the _parsed_data dictionary if that exists.
 
@@ -119,27 +101,33 @@ class BaseFileParser(BaseParser):
         delegate during __init__.
         """
 
-        if quantity not in self.parsable_items:
+        if quantity_key not in self._parsable_items:
             return None
 
-        if self._parsed_data is None or self._parsed_data.get(quantity) is None:
-            # The file has not been parsed yet, or the quantity has not
-            # been parsed yet, due to lack of required inputs..
+        if self._parsed_data.get(quantity_key) is None:
+            self._parsed_data = self._parse_file({})
 
-            # gather everything required for parsing this component.
+        return self._parsed_data.get(quantity_key)
+
+    def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
+        """Method to handle inputs (to be removed)"""
+
+        if quantity_name not in self._parsable_items:
+            return None
+
+        if self._parsed_data.get(quantity_name) is None:
             if inputs is None:
                 inputs = {}
-
-            if self._vasp_parser is not None:
+            if vasp_parser is not None:
                 # gather everything required for parsing this quantity from the VaspParser.
-                for inp in self.parsable_items[quantity]['inputs']:
-                    inputs.update(self._vasp_parser.get_inputs(inp))
-                    if inputs[inp] is None and inp in self.parsable_items[quantity]['prerequisites']:
+                for inp in self._parsable_items[quantity_name]['inputs']:
+                    inputs.update(vasp_parser.get_inputs(inp))
+                    if inputs[inp] is None and inp in self._parsable_items[quantity_name]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
-                        return {quantity: None}
+                        return None
             self._parsed_data = self._parse_file(inputs)
 
-        return {quantity: self._parsed_data.get(quantity)}
+        return self._parsed_data.get(quantity_name)
 
     def write(self, file_path):
         """

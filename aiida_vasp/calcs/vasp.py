@@ -149,8 +149,8 @@ class VaspCalculation(VaspCalcBase):
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
 
         # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
-        calcinfo.stdout_name = self._VASP_OUTPUT
-        calcinfo.join_files = True
+        calcinfo.codes_info[0].stdout_name = self._VASP_OUTPUT
+        calcinfo.codes_info[0].join_files = True
 
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve files
@@ -303,11 +303,13 @@ class VaspCalculation(VaspCalcBase):
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
         poscar_precision = settings.get('poscar_precision', 10)
-        positions_dof = self.inputs.get('dynamics', {}).get('positions_dof')
-        if positions_dof is not None:
-            options = {'positions_dof': positions_dof}
-        else:
-            options = None
+        dynamics = self.inputs.get('dynamics')
+        options = None
+        if dynamics is not None:
+            dynamics = dynamics.get_dict()
+            positions_dof = dynamics.get('positions_dof')
+            if positions_dof is not None:
+                options = {'positions_dof': positions_dof}
         poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 

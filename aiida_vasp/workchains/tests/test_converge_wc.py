@@ -14,7 +14,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -84,6 +84,17 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     except KeyError:
         pytest.fail('Did not find kpoints_regular in converge.data')
 
+    assert 'pwcutoff_recommended' in converge
+    try:
+        _encut = converge['pwcutoff_recommended'].value
+    except AttributeError:
+        pytest.fail('pwcutoff_recommended does not have the expected format')
+    assert 'kpoints_recommended' in converge
+    try:
+        _kpoints = converge['kpoints_recommended'].get_kpoints_mesh()
+    except AttributeError:
+        pytest.fail('kpoints_recommended does not have the expected format')
+
 
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     """Test convergence workflow using mock code."""
@@ -149,3 +160,10 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
                                [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
     np.testing.assert_allclose(conv_data, conv_data_test)
+
+    assert 'pwcutoff_recommended' in converge
+    try:
+        _encut = converge['pwcutoff_recommended'].value
+        np.testing.assert_equal(_encut, 300)
+    except AttributeError:
+        pytest.fail('pwcutoff_recommended does not have the expected format')

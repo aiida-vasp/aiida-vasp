@@ -161,7 +161,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
 
-    def init_inputs(self):
+    def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
         self.ctx.inputs = AttributeDict()
         self.ctx.inputs.parameters = self._init_parameters()
@@ -176,18 +176,20 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Set settings
         unsupported_parameters = None
-        if 'settings' in self.inputs:
+        skip_parameters_validation = False
+        if self.inputs.get('settings'):
             self.ctx.inputs.settings = self.inputs.settings
             # Also check if the user supplied additional tags that is not in the supported file.
-            try:
-                unsupported_parameters = self.ctx.inputs.settings.unsupported_parameters
-            except AttributeError:
-                pass
+            settings_dict = self.ctx.inputs.settings.get_dict()
+            unsupported_parameters = settings_dict.get('unsupported_parameters', unsupported_parameters)
+            skip_parameters_validation = settings_dict.get('skip_parameters_validation', skip_parameters_validation)
 
         # Perform inputs massage to accommodate generalization in higher lying workchains
         # and set parameters.
         try:
-            parameters_massager = ParametersMassage(self.ctx.inputs.parameters, unsupported_parameters)
+            parameters_massager = ParametersMassage(self.ctx.inputs.parameters,
+                                                    unsupported_parameters,
+                                                    skip_parameters_validation=skip_parameters_validation)
         except Exception as exception:  # pylint: disable=broad-except
             return self.exit_codes.ERROR_IN_PARAMETER_MASSAGER.format(exception=exception)  # pylint: disable=no-member
         try:
@@ -207,8 +209,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'options' in self.inputs:
             options = {}
             options.update(self.inputs.options)
-            self.ctx.inputs.metadata = {}
-            self.ctx.inputs.metadata['options'] = options
+            self.ctx.inputs.metadata = {'options': options}
             # Override the parser name if it is supplied by the user.
             parser_name = self.ctx.inputs.metadata['options'].get('parser_name')
             if parser_name:
@@ -216,6 +217,16 @@ class VaspWorkChain(BaseRestartWorkChain):
             # Set MPI to True, unless the user specifies otherwise
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
+
+        # Make sure we also bring along any label and description set on the WorkChain to the CalcJob, it if does
+        # not exists, set to empty string.
+        if 'metadata' in self.inputs:
+            label = self.inputs.metadata.get('label', '')
+            description = self.inputs.metadata.get('description', '')
+            if 'metadata' not in self.ctx.inputs:
+                self.ctx.inputs.metadata = {}
+            self.ctx.inputs.metadata['label'] = label
+            self.ctx.inputs.metadata['description'] = description
 
         # Verify and set potentials (potcar)
         if not self.inputs.potential_family.value:

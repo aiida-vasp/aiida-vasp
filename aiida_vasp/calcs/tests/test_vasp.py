@@ -2,18 +2,13 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
-import math
 
 import pytest
-from aiida.common.folders import SandboxFolder
-from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node, create_authinfo
+from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @ONLY_ONE_CALC
@@ -98,6 +93,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
     """Check that preparing creates all necessary files."""
     from aiida.common.folders import Folder
+    from aiida_vasp.calcs.vasp import VaspCalculation
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
@@ -118,6 +114,9 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     assert 'EIGENVAL' in calcinfo.retrieve_list
     assert 'DOSCAR' in calcinfo.retrieve_list
     assert 'wannier90*' in calcinfo.retrieve_list
+
+    assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
+    assert calcinfo.codes_info[0].join_files is True
 
     inputs_dict.update({'icharg': 2})
 
@@ -178,6 +177,8 @@ def test_vasp_calc(run_vasp_calc):
     misc = results['misc'].get_dict()
     assert 'total_energies' in misc
     assert 'maximum_stress' in misc
+    assert 'run_status' in misc
+    assert 'run_stats' in misc
 
     # By default we should store all always retrieve files
     retrieve_temporary_list_ref = []

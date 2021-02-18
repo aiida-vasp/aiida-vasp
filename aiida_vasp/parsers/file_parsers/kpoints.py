@@ -8,7 +8,7 @@ The file parser that handles the parsing of KPOINTS files.
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -33,11 +33,18 @@ class KpointsParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize INCAR parser
+
+        data : KpointsArray
+
+        """
         super(KpointsParser, self).__init__(*args, **kwargs)
         self._kpoints = None
-        self.init_with_kwargs(**kwargs)
+        if 'data' in kwargs:
+            self._init_kpoints(kwargs['data'])
 
-    def _init_with_data(self, data):
+    def _init_kpoints(self, data):
         """Initialize with a given AiiDA KpointsData instance."""
         if isinstance(data, get_data_class('array.kpoints')):
             self._data_obj = data
@@ -45,7 +52,7 @@ class KpointsParser(BaseFileParser):
             self._logger.warning('Please supply an AiiDA KpointsData datatype for `data`.')
             self._data_obj = None
         self._kpoints = data
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -110,8 +117,8 @@ class KpointsParser(BaseFileParser):
     @property
     def kpoints(self):
         if self._kpoints is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._kpoints = composer.compose('array.kpoints', quantities=['kpoints-kpoints'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['kpoints-kpoints'])
+            self._kpoints = NodeComposer.compose('array.kpoints', inputs)
         return self._kpoints
 
     def _get_kpointsdict_explicit(self, kpointsdata):

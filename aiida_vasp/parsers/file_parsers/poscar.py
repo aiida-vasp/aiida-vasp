@@ -7,10 +7,10 @@ The file parser that handles the parsing of POSCAR and CONTCAR files.
 # pylint: disable=no-self-use
 import numpy as np
 
-from aiida.common.constants import elements
 from parsevasp.poscar import Poscar, Site
+from aiida.common.constants import elements
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
@@ -45,19 +45,21 @@ class PoscarParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize POSCAR parser
+
+        data : StructureData
+
+        """
+
         super(PoscarParser, self).__init__(*args, **kwargs)
-        self.precision = 12
         self._structure = None
-        self.options = None
-        self.init_with_kwargs(**kwargs)
+        self._options = kwargs.get('options', None)
+        self._precision = kwargs.get('precision', 12)
+        if 'data' in kwargs:
+            self._init_structure(kwargs['data'])
 
-    def _init_with_precision(self, precision):
-        self.precision = precision
-
-    def _init_with_options(self, options):
-        self.options = options
-
-    def _init_with_data(self, data):
+    def _init_structure(self, data):
         """Initialize with an AiiDA StructureData instance."""
         if isinstance(data, get_data_class('structure')):
             self._data_obj = data
@@ -65,7 +67,7 @@ class PoscarParser(BaseFileParser):
             self._logger.warning('Please supply an AiiDA StructureData datatype for `data`.')
             self._data_obj = None
         self._structure = data
-        self.parsable_items = self.__class__.PARSABLE_ITEMS
+        self._parsable_items = self.__class__.PARSABLE_ITEMS
         self._parsed_data = {}
 
     @property
@@ -75,8 +77,8 @@ class PoscarParser(BaseFileParser):
         if isinstance(self._data_obj, get_data_class('structure')):
             # _data_obj is StructureData, return the parsed version if possible.
             try:
-                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, options=self.options),
-                              prec=self.precision,
+                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, options=self._options),
+                              prec=self._precision,
                               conserve_order=True,
                               logger=self._logger)
             except SystemExit:
@@ -93,7 +95,7 @@ class PoscarParser(BaseFileParser):
 
         # pass file path to parsevasp and try to load file
         try:
-            poscar = Poscar(file_path=self._data_obj.path, prec=self.precision, conserve_order=True, logger=self._logger)
+            poscar = Poscar(file_path=self._data_obj.path, prec=self._precision, conserve_order=True, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally. ' 'Returning None.')
             return {'poscar-structure': None}
@@ -105,8 +107,8 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         if self._structure is None:
-            composer = NodeComposer(file_parsers=[self])
-            self._structure = composer.compose('structure', quantities=['poscar-structure'])
+            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['poscar-structure'])
+            self._structure = NodeComposer.compose('structure', inputs)
         return self._structure
 
     def aiida_to_parsevasp(self, structure, options=None):

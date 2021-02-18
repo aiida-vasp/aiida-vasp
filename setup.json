@@ -17,7 +17,7 @@
     "license": "MIT License, see LICENSE.txt file.",
     "name": "aiida-vasp",
     "url": "https://github.com/aiida-vasp/aiida-vasp",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "reentry_register": true,
     "setup_requires": [
 	"reentry"
@@ -84,6 +84,6 @@
 	"pymatgen<=2020.12.3",
 	"lxml",
 	"packaging",
-	"parsevasp >= 2.0.0"
+	"parsevasp >= 2.0.1"
     ]
 }
