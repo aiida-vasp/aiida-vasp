@@ -7,6 +7,29 @@ All notable changes to this project after version 1.0.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v2.1.0]
+--------
+
+**Added**
+- The ``metadata.label`` and ``metadata.description`` is now passed from the ``VaspWorkChain`` to the ``VaspCalculation``.
+
+- Possibilities to skip ``INCAR`` tag validation altogether.
+
+- Recommended plane wave cutoff and k-point grid is now set as an output on the ``ConvergeWorkChain``.
+
+**Changed**
+- Bugfix in the check for electronic and ionic convergence for the run status.
+
+- Bugfix in the stream output of the ``vasp_output`` file, which is now always printed without adding redirection to the executable.
+
+- Bugfix pertaining to the matching of ``POTCAR`` data and hash upon. Fixes import and linking issues.
+
+- Bugfix for the passing of selective dynamics.
+
+- Parser has been re-factored.
+
+- Pinned AiiDA to latest available version on PyPI for the CI.
+
 [v2.0.0]
 --------
 
