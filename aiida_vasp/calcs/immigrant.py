@@ -127,7 +127,8 @@ class VaspImmigrant(VaspCalculation):
         builder.code = inputs.code
         builder.parameters = inputs.parameters
         builder.structure = inputs.structure
-        builder.potential = inputs.potential
+        if 'potential' in inputs and inputs.potential:
+            builder.potential = inputs.potential
         builder.kpoints = inputs.kpoints
         builder.settings = inputs.settings
         builder.metadata = inputs.metadata
