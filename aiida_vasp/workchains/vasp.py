@@ -209,8 +209,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'options' in self.inputs:
             options = {}
             options.update(self.inputs.options)
-            self.ctx.inputs.metadata = {}
-            self.ctx.inputs.metadata['options'] = options
+            self.ctx.inputs.metadata = {'options': options}
             # Override the parser name if it is supplied by the user.
             parser_name = self.ctx.inputs.metadata['options'].get('parser_name')
             if parser_name:
@@ -219,13 +218,15 @@ class VaspWorkChain(BaseRestartWorkChain):
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
-        # Make sure we also bring along any label set on the WorkChain to the CalcJob
+        # Make sure we also bring along any label and description set on the WorkChain to the CalcJob, it if does
+        # not exists, set to empty string.
         if 'metadata' in self.inputs:
-            if 'label' in self.inputs.metadata:
-                if 'metadata' in self.ctx.inputs:
-                    self.ctx.inputs.metadata['label'] = self.inputs.metadata.label
-                else:
-                    self.ctx.inputs.metadata = {'label': self.inputs.metadata.label}
+            label = self.inputs.metadata.get('label', '')
+            description = self.inputs.metadata.get('description', '')
+            if 'metadata' not in self.ctx.inputs:
+                self.ctx.inputs.metadata = {}
+            self.ctx.inputs.metadata['label'] = label
+            self.ctx.inputs.metadata['description'] = description
 
         # Verify and set potentials (potcar)
         if not self.inputs.potential_family.value:
