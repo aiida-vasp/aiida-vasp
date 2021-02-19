@@ -342,6 +342,37 @@ class VaspCalculation(VaspCalcBase):
         wave_functions = self.inputs.wavefunctions
         calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
 
+    @classmethod
+    def immigrant(cls, code, remote_path, **kwargs):
+        """
+        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
+        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
+        or if additional settings need to be passed, e.g. parser instructions.
+        :param code: a Code instance for the code originally used.
+        :param remote_path: The directory on the code's computer in which the simulation was run.
+        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
+        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
+            mapping to find the right POTCARs.
+        :param settings: dict. Used for non-default parsing instructions, etc.
+        """
+
+        from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
+
+        proc_cls = VaspImmigrant
+        builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        metadata = kwargs.get('metadata', {'options': options})
+        options = metadata.get('options', options)
+        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
+        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
+        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
+        settings = kwargs.get('settings', {})
+        settings.update({'import_from_path': str(remote_path)})
+        builder.settings = get_data_node('dict', dict=settings)
+
+        return proc_cls, builder
+
 
 def ordered_unique_list(in_list):
     """List unique elements in input list, in order of first occurrence."""

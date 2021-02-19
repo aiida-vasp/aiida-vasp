@@ -83,27 +83,29 @@ class VaspImmigrant(VaspCalculation):
         """
 
         inputs = AttributeDict()
-        remote_path = Path(remote_path)
         inputs.code = code
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         inputs.metadata = {'options': options}
         settings = {'import_from_path': str(remote_path)}
         inputs.settings = get_data_node('dict', dict=settings)
+        _remote_path = Path(remote_path)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = Path(sandbox.abspath)
-                transport.get(str(remote_path / 'INCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POSCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
-                transport.get(str(remote_path / 'KPOINTS'), str(sandbox_path))
+                transport.get(str(_remote_path / 'INCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POSCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
+                transport.get(str(_remote_path / 'KPOINTS'), str(sandbox_path))
                 inputs.parameters = get_incar_input(sandbox_path)
                 inputs.structure = get_poscar_input(sandbox_path)
                 try:
-                    inputs.potential = get_potcar_input(sandbox_path)
+                    inputs.potential = get_potcar_input(sandbox_path,
+                                                        potential_family=kwargs.get('potential_family'),
+                                                        potential_mapping=kwargs.get('potential_mapping'))
                 except InputValidationError:
                     pass
                 inputs.kpoints = get_kpoints_input(sandbox_path)
-                cls._add_inputs(transport, remote_path, sandbox_path, inputs, **kwargs)
+                cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
         return inputs
 
     @classmethod
@@ -124,14 +126,8 @@ class VaspImmigrant(VaspCalculation):
 
         inputs = cls.get_inputs_from_folder(code, remote_path, **kwargs)
         builder = cls.get_builder()
-        builder.code = inputs.code
-        builder.parameters = inputs.parameters
-        builder.structure = inputs.structure
-        if 'potential' in inputs and inputs.potential:
-            builder.potential = inputs.potential
-        builder.kpoints = inputs.kpoints
-        builder.settings = inputs.settings
-        builder.metadata = inputs.metadata
+        for key, val in inputs.items():
+            builder[key] = val
         return builder
 
     @classmethod
