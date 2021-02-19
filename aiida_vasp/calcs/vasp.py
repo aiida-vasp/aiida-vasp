@@ -355,8 +355,8 @@ class VaspCalculation(VaspCalcBase):
         proc_cls = VaspImmigrant
         builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
-        metadata = kwargs.get('metadata', {'options': options})
-        options = metadata.get('options', options)
+        builder.metadata = kwargs.get('metadata', {'options': options})
+        options = builder.metadata.get('options', options)
         max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
         resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
