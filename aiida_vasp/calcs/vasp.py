@@ -69,24 +69,17 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
-        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).', required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
         spec.input('dynamics',
                    valid_type=get_data_class('dict'),
                    help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
                    required=False)
-        spec.input('structure',
-                   valid_type=(get_data_class('structure'), get_data_class('cif')),
-                   help='The input structure (POSCAR).',
-                   required=False)
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
 
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
-        spec.input_namespace('potential',
-                             valid_type=get_data_class('vasp.potcar'),
-                             help='The potentials (POTCAR).',
-                             dynamic=True,
-                             required=False)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).', required=False)
+        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
         spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
         spec.input('wavefunctions',
                    valid_type=get_data_class('vasp.wavefun'),
@@ -345,15 +338,16 @@ class VaspCalculation(VaspCalcBase):
     @classmethod
     def immigrant(cls, code, remote_path, **kwargs):
         """
-        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
-        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
-        or if additional settings need to be passed, e.g. parser instructions.
+        Returns VaspImmigrant class and associated inputs. This method will be obsolete at v3.0
+
         :param code: a Code instance for the code originally used.
         :param remote_path: The directory on the code's computer in which the simulation was run.
-        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
-        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
-            mapping to find the right POTCARs.
+        :param metadata: dict.
         :param settings: dict. Used for non-default parsing instructions, etc.
+        :param potential_family: str.
+        :param potential_mapping: dict.
+        :param use_wavecar: bool. Try to read WAVECAR.
+        :param use_chgcar bool. Try to read CHGCAR.
         """
 
         from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
