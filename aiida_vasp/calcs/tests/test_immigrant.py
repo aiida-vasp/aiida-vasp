@@ -64,7 +64,7 @@ def test_vasp_immigrant(immigrant_with_builder):
 
 
 @pytest.fixture
-def immigrant_with_builder_obsv3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
+def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
 
@@ -82,7 +82,7 @@ def immigrant_with_builder_obsv3(fresh_aiida_env, potcar_family, phonondb_run, l
     return proc, builder
 
 
-def test_immigrant_additional_obsv3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
+def test_immigrant_additional_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)
@@ -105,9 +105,9 @@ def test_immigrant_additional_obsv3(fresh_aiida_env, potcar_family, phonondb_run
     assert set(expected_files) == set(retrieved_files)
 
 
-def test_vasp_immigrant_obsv3(immigrant_with_builder_obsv3):
+def test_vasp_immigrant_example_3(immigrant_with_builder_example_3):  # pylint: disable=invalid-name
     """Test importing a calculation from the folder of a completed VASP run. This will be obsolete at v3."""
-    immigrant, inputs = immigrant_with_builder_obsv3
+    immigrant, inputs = immigrant_with_builder_example_3
 
     # We need to set the parser explicitly
     inputs.metadata['options']['parser_name'] = 'vasp.vasp'
