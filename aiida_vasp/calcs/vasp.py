@@ -69,24 +69,17 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
-        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).', required=False)
+        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
         spec.input('dynamics',
                    valid_type=get_data_class('dict'),
                    help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
                    required=False)
-        spec.input('structure',
-                   valid_type=(get_data_class('structure'), get_data_class('cif')),
-                   help='The input structure (POSCAR).',
-                   required=False)
+        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
 
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
-        spec.input_namespace('potential',
-                             valid_type=get_data_class('vasp.potcar'),
-                             help='The potentials (POTCAR).',
-                             dynamic=True,
-                             required=False)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).', required=False)
+        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
+        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
         spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
         spec.input('wavefunctions',
                    valid_type=get_data_class('vasp.wavefun'),
@@ -341,6 +334,38 @@ class VaspCalculation(VaspCalcBase):
     def write_wavecar(self, dst, calcinfo):  # pylint: disable=unused-argument
         wave_functions = self.inputs.wavefunctions
         calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
+
+    @classmethod
+    def immigrant(cls, code, remote_path, **kwargs):
+        """
+        Returns VaspImmigrant class and associated inputs. This method will be obsolete at v3.0
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: The directory on the code's computer in which the simulation was run.
+        :param metadata: dict.
+        :param settings: dict. Used for non-default parsing instructions, etc.
+        :param potential_family: str.
+        :param potential_mapping: dict.
+        :param use_wavecar: bool. Try to read WAVECAR.
+        :param use_chgcar bool. Try to read CHGCAR.
+        """
+
+        from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
+
+        proc_cls = VaspImmigrant
+        builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        metadata = kwargs.get('metadata', {'options': options})
+        options = metadata.get('options', options)
+        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
+        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
+        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
+        settings = kwargs.get('settings', {})
+        settings.update({'import_from_path': str(remote_path)})
+        builder.settings = get_data_node('dict', dict=settings)
+
+        return proc_cls, builder
 
 
 def ordered_unique_list(in_list):

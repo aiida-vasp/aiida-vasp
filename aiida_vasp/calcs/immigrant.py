@@ -69,69 +69,57 @@ class VaspImmigrant(VaspCalculation):
     @classmethod
     def get_inputs_from_folder(cls, code, remote_path, **kwargs):
         """
-        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
+        Create inputs to launch immigrant from a code and a remote path on the associated computer.
 
-        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
-        or if additional settings need to be passed, e.g. parser instructions.
+        If the POTCAR file is not present anymore, the pair of ``potential_family`` and
+        ``potential_mapping`` is used to attach the potential port. This feature will be
+        obsolete at v3.0.
 
         :param code: a Code instance for the code originally used.
-        :param remote_path: The directory on the code's computer in which the simulation was run.
-        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
-        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
-            mapping to find the right POTCARs.
-        :param settings: dict. Used for non-default parsing instructions, etc.
+        :param remote_path: Directory or folder name where VASP inputs and outputs are stored.
+        :param potential_family: str. This will be obsolete at v3.0.
+        :param potential_mapping: dict. This will be obsolete at v3.0.
+        :param use_wavecar: bool. Try to read WAVECAR.
+        :param use_chgcar bool. Try to read CHGCAR.
         """
 
         inputs = AttributeDict()
-        remote_path = Path(remote_path)
         inputs.code = code
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         inputs.metadata = {'options': options}
         settings = {'import_from_path': str(remote_path)}
         inputs.settings = get_data_node('dict', dict=settings)
+        _remote_path = Path(remote_path)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = Path(sandbox.abspath)
-                transport.get(str(remote_path / 'INCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POSCAR'), str(sandbox_path))
-                transport.get(str(remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
-                transport.get(str(remote_path / 'KPOINTS'), str(sandbox_path))
+                transport.get(str(_remote_path / 'INCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POSCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
+                transport.get(str(_remote_path / 'KPOINTS'), str(sandbox_path))
                 inputs.parameters = get_incar_input(sandbox_path)
                 inputs.structure = get_poscar_input(sandbox_path)
                 try:
-                    inputs.potential = get_potcar_input(sandbox_path)
+                    inputs.potential = get_potcar_input(sandbox_path,
+                                                        potential_family=kwargs.get('potential_family'),
+                                                        potential_mapping=kwargs.get('potential_mapping'))
                 except InputValidationError:
                     pass
                 inputs.kpoints = get_kpoints_input(sandbox_path)
-                cls._add_inputs(transport, remote_path, sandbox_path, inputs, **kwargs)
+                cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
         return inputs
 
     @classmethod
     def get_builder_from_folder(cls, code, remote_path, **kwargs):
         """
-        Create an immigrant with appropriate inputs from a code and a remote path on the associated computer.
-
-        More inputs are required to pass resources information, if the POTCAR file is missing from the folder
-        or if additional settings need to be passed, e.g. parser instructions.
-
-        :param code: a Code instance for the code originally used.
-        :param remote_path: The directory on the code's computer in which the simulation was run.
-        :param resources: dict. The resources used during the run (defaults to 1 machine, 1 process).
-        :param potcar_spec: dict. If the POTCAR file is not present anymore, this allows to pass a family and
-            mapping to find the right POTCARs.
-        :param settings: dict. Used for non-default parsing instructions, etc.
+        Create an immigrant builder from a code and a remote path on the associated computer.
+        See more details in the docstring of ``get_inputs_from_folder``.
         """
 
         inputs = cls.get_inputs_from_folder(code, remote_path, **kwargs)
         builder = cls.get_builder()
-        builder.code = inputs.code
-        builder.parameters = inputs.parameters
-        builder.structure = inputs.structure
-        if 'potential' in inputs and inputs.potential:
-            builder.potential = inputs.potential
-        builder.kpoints = inputs.kpoints
-        builder.settings = inputs.settings
-        builder.metadata = inputs.metadata
+        for key, val in inputs.items():
+            builder[key] = val
         return builder
 
     @classmethod
