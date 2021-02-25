@@ -75,8 +75,7 @@ NODES = {
         'type':
             'dict',
         'quantities': [
-            'total_energies', 'maximum_stress', 'maximum_force', 'symmetries', 'magnetization', 'notifications', 'run_status',
-            'band_properties', 'fermi_level', 'run_stats', 'version'
+            'total_energies', 'maximum_stress', 'maximum_force', 'magnetization', 'notifications', 'run_status', 'run_stats', 'version'
         ]
     },
     'kpoints': {
