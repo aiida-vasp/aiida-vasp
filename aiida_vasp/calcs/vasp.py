@@ -16,20 +16,11 @@ from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
-from aiida_vasp.utils.inheritance import update_docstring
 
 PARAMETER_CLS = DataFactory('dict')
 SINGLEFILE_CLS = DataFactory('singlefile')
 
-_IMMIGRANT_EXTRA_KWARGS = """
-vasp.vasp specific kwargs:
 
-:param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
-:param use_wavecar: bool, if True, read the WAVECAR file (has to exist) and convert it to an input node.
-"""
-
-
-@update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 class VaspCalculation(VaspCalcBase):
     """
     General-purpose VASP calculation.
@@ -84,6 +75,7 @@ class VaspCalculation(VaspCalcBase):
                    help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
                    required=False)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
+
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
         spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
@@ -344,16 +336,36 @@ class VaspCalculation(VaspCalcBase):
         calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
 
     @classmethod
-    def _immigrant_add_inputs(cls, transport, remote_path, sandbox_path, builder, **kwargs):
-        from aiida_vasp.calcs.immigrant import get_chgcar_input, get_wavecar_input  # pylint: disable=import-outside-toplevel
-        add_wavecar = kwargs.get('use_wavecar') or bool(builder.parameters.get_dict().get('istart', 0))
-        add_chgcar = kwargs.get('use_chgcar') or builder.parameters.get_dict().get('icharg', -1) in [1, 11]
-        if add_chgcar:
-            transport.get(str(remote_path / 'CHGCAR'), str(sandbox_path))
-            builder.charge_density = get_chgcar_input(sandbox_path)
-        if add_wavecar:
-            transport.get(str(remote_path / 'WAVECAR'), str(sandbox_path))
-            builder.wavefunctions = get_wavecar_input(sandbox_path)
+    def immigrant(cls, code, remote_path, **kwargs):
+        """
+        Returns VaspImmigrant class and associated inputs. This method will be obsolete at v3.0
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: The directory on the code's computer in which the simulation was run.
+        :param metadata: dict.
+        :param settings: dict. Used for non-default parsing instructions, etc.
+        :param potential_family: str.
+        :param potential_mapping: dict.
+        :param use_wavecar: bool. Try to read WAVECAR.
+        :param use_chgcar bool. Try to read CHGCAR.
+        """
+
+        from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
+
+        proc_cls = VaspImmigrant
+        builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        builder.metadata = kwargs.get('metadata', {'options': options})
+        options = builder.metadata.get('options', options)
+        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
+        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
+        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
+        settings = kwargs.get('settings', {})
+        settings.update({'import_from_path': str(remote_path)})
+        builder.settings = get_data_node('dict', dict=settings)
+
+        return proc_cls, builder
 
 
 def ordered_unique_list(in_list):

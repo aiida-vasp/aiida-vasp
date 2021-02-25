@@ -6,9 +6,13 @@ Enables the immigration of  externally run VASP calculations into AiiDA.
 """
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
+from pathlib import Path
+
 from aiida.common import InputValidationError
 from aiida.common.lang import override
 from aiida.common.links import LinkType
+from aiida.common.folders import SandboxFolder
+from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
@@ -19,6 +23,16 @@ from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.aiida_utils import cmp_get_transport
+
+# _IMMIGRANT_EXTRA_KWARGS = """
+# vasp.vasp specific kwargs:
+
+# :param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
+# :param use_wavecar: bool, if True, read the WAVECAR file (has to exist) and convert it to an input node.
+# """
+
+# @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 
 
 class VaspImmigrant(VaspCalculation):
@@ -33,7 +47,6 @@ class VaspImmigrant(VaspCalculation):
     def run(self):
         import plumpy
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
-        from aiida.common.folders import SandboxFolder
 
         _ = super(VaspImmigrant, self).run()
 
@@ -52,6 +65,74 @@ class VaspImmigrant(VaspCalculation):
         remotedata.store()
 
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
+
+    @classmethod
+    def get_inputs_from_folder(cls, code, remote_path, **kwargs):
+        """
+        Create inputs to launch immigrant from a code and a remote path on the associated computer.
+
+        If the POTCAR file is not present anymore, the pair of ``potential_family`` and
+        ``potential_mapping`` is used to attach the potential port. This feature will be
+        obsolete at v3.0.
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: Directory or folder name where VASP inputs and outputs are stored.
+        :param potential_family: str. This will be obsolete at v3.0.
+        :param potential_mapping: dict. This will be obsolete at v3.0.
+        :param use_wavecar: bool. Try to read WAVECAR.
+        :param use_chgcar bool. Try to read CHGCAR.
+        """
+
+        inputs = AttributeDict()
+        inputs.code = code
+        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
+        inputs.metadata = {'options': options}
+        settings = {'import_from_path': str(remote_path)}
+        inputs.settings = get_data_node('dict', dict=settings)
+        _remote_path = Path(remote_path)
+        with cmp_get_transport(code.computer) as transport:
+            with SandboxFolder() as sandbox:
+                sandbox_path = Path(sandbox.abspath)
+                transport.get(str(_remote_path / 'INCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POSCAR'), str(sandbox_path))
+                transport.get(str(_remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
+                transport.get(str(_remote_path / 'KPOINTS'), str(sandbox_path))
+                inputs.parameters = get_incar_input(sandbox_path)
+                inputs.structure = get_poscar_input(sandbox_path)
+                try:
+                    inputs.potential = get_potcar_input(sandbox_path,
+                                                        potential_family=kwargs.get('potential_family'),
+                                                        potential_mapping=kwargs.get('potential_mapping'))
+                except InputValidationError:
+                    pass
+                inputs.kpoints = get_kpoints_input(sandbox_path)
+                cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
+        return inputs
+
+    @classmethod
+    def get_builder_from_folder(cls, code, remote_path, **kwargs):
+        """
+        Create an immigrant builder from a code and a remote path on the associated computer.
+        See more details in the docstring of ``get_inputs_from_folder``.
+        """
+
+        inputs = cls.get_inputs_from_folder(code, remote_path, **kwargs)
+        builder = cls.get_builder()
+        for key, val in inputs.items():
+            builder[key] = val
+        return builder
+
+    @classmethod
+    def _add_inputs(cls, transport, remote_path, sandbox_path, inputs, **kwargs):
+        """Add some more inputs"""
+        add_wavecar = kwargs.get('use_wavecar') or bool(inputs.parameters.get_dict().get('istart', 0))
+        add_chgcar = kwargs.get('use_chgcar') or inputs.parameters.get_dict().get('icharg', -1) in [1, 11]
+        if add_chgcar:
+            transport.get(str(remote_path / 'CHGCAR'), str(sandbox_path))
+            inputs.charge_density = get_chgcar_input(sandbox_path)
+        if add_wavecar:
+            transport.get(str(remote_path / 'WAVECAR'), str(sandbox_path))
+            inputs.wavefunctions = get_wavecar_input(sandbox_path)
 
 
 def get_incar_input(dir_path):
