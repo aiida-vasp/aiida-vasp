@@ -63,7 +63,7 @@ class DosParser(BaseFileParser):
 
         return result
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-statements
     def _read_doscar(self):
         """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
 
@@ -91,7 +91,10 @@ class DosParser(BaseFileParser):
         tdos = np.zeros((tdos_raw.shape[0]), DTYPES[count])
         tdos['energy'] = tdos_raw[:, 0]
         for i, name in enumerate(DTYPES[count].names[1:]):
-            tdos[name] = np.squeeze(tdos_raw[:, i + 1:i + 1 + num_spin], axis=1)
+            if num_spin == 1:
+                tdos[name] = np.squeeze(tdos_raw[:, i + 1:i + 1 + num_spin], axis=1)
+            else:
+                tdos[name] = tdos_raw[:, i + 1:i + 1 + num_spin]
 
         pdos = []
         if line_2 in raw:
@@ -103,10 +106,19 @@ class DosParser(BaseFileParser):
             count = len(pdos[-1][-1])
             pdos_raw = np.array(pdos)
 
+            # Adjust the spin according to the column definitions
+            if count in [5, 19]:
+                num_spin = 2
+            elif count == 37:
+                num_spin = 4
+
             pdos = np.zeros((pdos_raw.shape[0], pdos_raw.shape[1]), DTYPES[count])
             pdos['energy'] = pdos_raw[:, :, 0]
             for i, name in enumerate(DTYPES[count].names[1:]):
-                pdos[name] = np.squeeze(pdos_raw[:, :, i + 1:i + 1 + num_spin], axis=2)
+                if num_spin == 1:  # Only squeeze if there is only one spin component
+                    pdos[name] = np.squeeze(pdos_raw[:, :, i + 1:i + 1 + num_spin], axis=2)
+                else:
+                    pdos[name] = pdos_raw[:, :, i + 1:i + 1 + num_spin]
 
         header = {}
         header[0] = line_0
