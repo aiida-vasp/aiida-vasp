@@ -11,21 +11,53 @@ from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inp
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.
-DTYPES = {
-    3:
-        np.dtype([('energy', float), ('total', float), ('integrated', float)]),
+DTYPES_TDOS = {
+    3: np.dtype([('energy', float), ('total', float), ('integrated', float)]),
+    5: np.dtype([('energy', float), ('total', float, (2,)), ('integrated', float, (2,))]),
+}
+
+DTYPES_PDOS = {
+    # l-decomposed
+    4:
+        np.dtype([('energy', float), ('s', float), ('p', float), ('d', float)]),
+    7:
+        np.dtype([('energy', float), ('s', float, (2,)), ('p', float, (2,)), ('d', float, (2,))]),
+    13:
+        np.dtype([('energy', float), ('s', float, (4,)), ('p', float, (4,)), ('d', float, (4,))]),
     5:
-        np.dtype([('energy', float), ('total', float, (2,)), ('integrated', float, (2,))]),
+        np.dtype([('energy', float), ('s', float), ('p', float), ('d', float), ('f', float)]),
+    9:
+        np.dtype([('energy', float), ('s', float, (2,)), ('p', float, (2,)), ('d', float, (2,)), ('f', float, (2,))]),
+    17:
+        np.dtype([('energy', float), ('s', float, (4,)), ('p', float, (4,)), ('d', float, (4,)), ('f', float, (4,))]),
+    # lm-decomposed
     10:
         np.dtype([('energy', float), ('s', float), ('py', float), ('px', float), ('pz', float), ('dxy', float), ('dyz', float),
-                  ('dz2', float), ('dxz', float), ('x2-y2', float)]),
+                  ('dz2', float), ('dxz', float), ('dx2-y2', float)]),
+    18:
+        np.dtype([('energy', float), ('s', float), ('py', float), ('px', float), ('pz', float), ('dxy', float), ('dyz', float),
+                  ('dz2', float), ('dxz', float), ('dx2-y2', float), ('fy(3x2-y2)', float), ('fxyz', float), ('fyz2', float),
+                  ('fz3', float), ('fxz2', float), ('fz(x2-y2)', float), ('fx(x2-3y2)', float)]),
     19:
         np.dtype([('energy', float), ('s', float, (2,)), ('py', float, (2,)), ('px', float, (2,)), ('pz', float, (2,)),
-                  ('dxy', float, (2,)), ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('x2-y2', float, (2,))]),
+                  ('dxy', float, (2,)), ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('dx2-y2', float, (2,))]),
+    35:
+        np.dtype([('energy', float), ('s', float, (2,)), ('py', float, (2,)), ('px', float, (2,)), ('pz', float, (2,)),
+                  ('dxy', float, (2,)), ('dyz', float, (2,)), ('dz2', float, (2,)), ('dxz', float, (2,)), ('dx2-y2', float, (2,)),
+                  ('fy(3x2-y2)', float, (2,)), ('fxyz', float, (2,)), ('fyz2', float, (2,)), ('fz3', float, (2,)), ('fxz2', float, (2,)),
+                  ('fz(x2-y2)', float, (2,)), ('fx(x2-3y2)', float, (2,))]),
     37:
         np.dtype([('energy', float), ('s', float, (4,)), ('py', float, (4,)), ('px', float, (4,)), ('pz', float, (4,)),
-                  ('dxy', float, (4,)), ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('x2-y2', float, (4,))])
+                  ('dxy', float, (4,)), ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('x2-y2', float, (4,))]),
+    69:
+        np.dtype([('energy', float), ('s', float, (4,)), ('py', float, (4,)), ('px', float, (4,)), ('pz', float, (4,)),
+                  ('dxy', float, (4,)), ('dyz', float, (4,)), ('dz2', float, (4,)), ('dxz', float, (4,)), ('dx2-y2', float, (4,)),
+                  ('fy(3x2-y2)', float, (4,)), ('fxyz', float, (4,)), ('fyz2', float, (4,)), ('fz3', float, (4,)), ('fxz2', float, (4,)),
+                  ('fz(x2-y2)', float, (4,)), ('fx(x2-3y2)', float, (4,))]),
 }
+
+# Mapping between the number of columns to the number of spins
+COLSPIN_MAP = {7: 2, 9: 2, 19: 2, 35: 2, 13: 4, 17: 4, 37: 4, 69: 4, 4: 1, 5: 1, 10: 1, 18: 1}
 
 
 class DosParser(BaseFileParser):
@@ -84,13 +116,11 @@ class DosParser(BaseFileParser):
         num_spin = 1
         if count == 5:
             num_spin = 2
-        if count == 9:
-            num_spin = 4
 
         tdos_raw = np.array(raw[:ndos])
-        tdos = np.zeros((tdos_raw.shape[0]), DTYPES[count])
+        tdos = np.zeros((tdos_raw.shape[0]), DTYPES_TDOS[count])
         tdos['energy'] = tdos_raw[:, 0]
-        for i, name in enumerate(DTYPES[count].names[1:]):
+        for i, name in enumerate(DTYPES_TDOS[count].names[1:]):
             if num_spin == 1:
                 tdos[name] = np.squeeze(tdos_raw[:, i + 1:i + 1 + num_spin], axis=1)
             else:
@@ -107,14 +137,13 @@ class DosParser(BaseFileParser):
             pdos_raw = np.array(pdos)
 
             # Adjust the spin according to the column definitions
-            if count in [5, 19]:
-                num_spin = 2
-            elif count == 37:
-                num_spin = 4
+            num_spin = COLSPIN_MAP.get(count)
+            if num_spin is None:
+                raise ValueError(f'Unkown column count: {count} in DOSCAR')
 
-            pdos = np.zeros((pdos_raw.shape[0], pdos_raw.shape[1]), DTYPES[count])
+            pdos = np.zeros((pdos_raw.shape[0], pdos_raw.shape[1]), DTYPES_PDOS[count])
             pdos['energy'] = pdos_raw[:, :, 0]
-            for i, name in enumerate(DTYPES[count].names[1:]):
+            for i, name in enumerate(DTYPES_PDOS[count].names[1:]):
                 if num_spin == 1:  # Only squeeze if there is only one spin component
                     pdos[name] = np.squeeze(pdos_raw[:, :, i + 1:i + 1 + num_spin], axis=2)
                 else:
