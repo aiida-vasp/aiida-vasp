@@ -131,10 +131,19 @@ class VaspParser(BaseParser):
                                         quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
         parsed_quantities = {}
+        # A dictionary for catching instantiated file parser objects
+        file_parser_instances = {}
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
             file_name = self._parsable_quantities.quantity_keys_to_filenames[quantity_key]
             file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
-            parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+
+            # If a parse object has been instantiated, use it.
+            if file_parser_cls in file_parser_instances:
+                parser = file_parser_instances[file_parser_cls]
+            else:
+                parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+                file_parser_instances[file_parser_cls] = parser
+
             parsed_quantity = parser.get_quantity(quantity_key)
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
