@@ -22,7 +22,7 @@ jobs:
       - name: Install wheel
         run: pip install wheel
       - name: Install AiiDA-VASP
-        run:
+        run: |
           pip install -e .[graphs,tests,pre-commit]
           pip freeze
       - name: Run pre-commit

@@ -30,3 +30,36 @@ def test_parse_doscar(fresh_aiida_env):
     result_dos = result.get_array('tdos')
     for i in range(0, dos.size):
         assert result_dos[i] == dos[i]
+
+
+def test_parse_doscar_spin(fresh_aiida_env):
+    """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
+    file_name = 'DOSCAR.spin'
+    path = data_path('doscar', file_name)
+    parser = DosParser(file_path=path)
+    result = parser.dos
+
+    result_dos = result.get_array('tdos')
+    assert len(result_dos.dtype) == 3
+    assert result_dos['total'].shape == (301, 2)
+
+    result_dos = result.get_array('pdos')
+    assert len(result_dos.dtype) == 10
+    assert result_dos[0]['px'].shape == (301, 2)
+
+
+def test_parse_doscar_ncl(fresh_aiida_env):
+    """parse a reference doscar file with the dosparser and compare the result to a reference."""
+    file_name = 'DOSCAR.ncl'
+    path = data_path('doscar', file_name)
+    parser = DosParser(file_path=path)
+    result = parser.dos
+
+    # tdos only has a single spin component
+    result_dos = result.get_array('tdos')
+    assert len(result_dos.dtype) == 3
+    assert result_dos['total'].shape == (301,)
+
+    result_dos = result.get_array('pdos')
+    assert len(result_dos.dtype) == 10
+    assert result_dos[0]['px'].shape == (301, 4)
