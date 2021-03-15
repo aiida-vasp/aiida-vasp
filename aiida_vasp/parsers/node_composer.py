@@ -6,7 +6,8 @@ A composer that composes different quantities onto AiiDA data nodes.
 """
 
 from warnings import warn
-import numpy as np
+import math
+import numbers
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 
@@ -200,8 +201,7 @@ def clean_nan_values(inputs: dict) -> dict:
     for key, value in inputs.items():
         if isinstance(value, dict):
             clean_nan_values(value)
-        elif isinstance(value, np.float):
-            if np.isnan(value) or np.isinf(value):
-                warn('Key <{}> has value <{}> replaced by <None>'.format(key, value))
-                inputs[key] = None
+        if isinstance(value, numbers.Real) and (math.isnan(value) or math.isinf(value)):
+            warn('Key <{}> has value <{}> replaced by <{}>'.format(key, value, str(value)))
+            inputs[key] = str(value)
     return inputs
