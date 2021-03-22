@@ -81,6 +81,7 @@
     "include_package_data": true,
     "install_requires": [
 	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1",
+	"sqlalchemy~=1.3.10",
 	"subprocess32",
 	"pymatgen<=2020.12.3",
 	"lxml",
