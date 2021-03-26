@@ -133,7 +133,9 @@ class VaspParser(BaseParser):
                                         parser_definitions=self._definitions.parser_definitions,
                                         quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
+        # Parse the quantities from retrived files
         parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
+        # Compose the output nodes using the parsed quantities
         nodes_failed_to_create = self._compose_nodes(parsed_quantities)
 
         # Return file-parse exit codes, if any. This only works if the file parser did not except
