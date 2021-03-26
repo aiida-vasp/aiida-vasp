@@ -12,6 +12,8 @@ contains several modules:
 """
 #encoding: utf-8
 # pylint: disable=no-member
+import traceback
+
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
@@ -101,6 +103,7 @@ class VaspParser(BaseParser):
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
+        self._last_exit_code = None
 
     def add_parser_definition(self, filename, parser_dict):
         """Add the definition of a fileParser to self._definitions."""
@@ -117,7 +120,7 @@ class VaspParser(BaseParser):
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
-        exit_code = None
+        self._last_exit_code = None
         error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
@@ -130,9 +133,33 @@ class VaspParser(BaseParser):
                                         parser_definitions=self._definitions.parser_definitions,
                                         quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
+        parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
+        nodes_failed_to_create = self._compose_nodes(parsed_quantities)
+
+        # Return file-parse exit codes, if any. This only works if the file parser did not except
+        if self._last_exit_code is not None:
+            return self._last_exit_code
+
+        # Deal with missing quantities
+        if failed_to_parse_quantities:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=', '.join(failed_to_parse_quantities))
+
+        # Deal with missing node/nodes
+        if nodes_failed_to_create:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(nodes_failed_to_create))
+
+        return self.exit_codes.NO_ERROR
+
+    def _parse_quantities(self):
+        """
+        This method dispatch the parsing to file parsers
+
+        :returns: A tuple of parsed quantities dictionary and a list of quantities failed to obtain due to exceptions
+        """
         parsed_quantities = {}
         # A dictionary for catching instantiated file parser objects
         file_parser_instances = {}
+        failed_to_parse_quantities = []
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
             file_name = self._parsable_quantities.quantity_keys_to_filenames[quantity_key]
             file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
@@ -141,23 +168,63 @@ class VaspParser(BaseParser):
             if file_parser_cls in file_parser_instances:
                 parser = file_parser_instances[file_parser_cls]
             else:
-                parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+                try:
+                    # The next line may except for ill-formated file
+                    parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+                except Exception:  # pylint: disable=broad-except
+                    parser = None
+                    self.report('Cannot instantiate {}, exception {}:'.format(quantity_key, traceback.format_exc()))
+
                 file_parser_instances[file_parser_cls] = parser
 
-            parsed_quantity = parser.get_quantity(quantity_key)
+            # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
+            if parser is None:
+                failed_to_parse_quantities.append(quantity_key)
+                parsed_quantities[quantity_key] = None
+                continue
+
+            # The next line may still except for ill-formated file - some parser load all data at
+            # instantiation time, the others may not. See the `BaseFileParser.get_quantity`
+            try:
+                # The next line may still except for ill-formated file - some parser load all data at
+                # instantiation time, the others may not
+                parsed_quantity = parser.get_quantity(quantity_key)
+            except Exception:  # pylint: disable=broad-except
+                self.report('Error parsing {} from {}, exception {}:'.format(quantity_key, parser, traceback.format_exc()))
+                failed_to_parse_quantities.append(quantity_key)
+                parsed_quantity = None
+
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
-            exit_code = parser.exit_code
+            self._last_exit_code = parser.exit_code
 
+        return parsed_quantities, failed_to_parse_quantities
+
+    def _compose_nodes(self, parsed_quantities):
+        """
+        Compose the nodes according to parsed quantities
+
+        :returns: A list of link_names for the nodes that failed to compose
+        """
+        nodes_failed_to_create = []
         for _, node_dict in self._settings.output_nodes_dict.items():
             equivalent_quantity_keys = self._parsable_quantities.equivalent_quantity_keys
             inputs = get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, node_dict['quantities'])
-            aiida_node = NodeComposer.compose(node_dict['type'], inputs)
-            if aiida_node is None:
-                return self.exit_codes.ERROR_PARSING_FILE_FAILED
-            self.out(node_dict['link_name'], aiida_node)
 
-        if exit_code is not None:
-            return exit_code
+            # If the input is empty, we skip creating the node as it is bound to fail
+            if not inputs:
+                nodes_failed_to_create.append(node_dict['type'])
+                continue
 
-        return self.exit_codes.NO_ERROR
+            # Guard the parsing in case of errors
+            try:
+                aiida_node = NodeComposer.compose(node_dict['type'], inputs)
+            except Exception:  # pylint: disable=broad-except
+                self.report('Error creating output {} with type {}, exception: {}'.format(node_dict['link_name'], node_dict['type'],
+                                                                                          traceback.format_exc()))
+                nodes_failed_to_create.append(node_dict['link_name'])
+                aiida_node = None
+
+            if aiida_node is not None:
+                self.out(node_dict['link_name'], aiida_node)
+        return nodes_failed_to_create

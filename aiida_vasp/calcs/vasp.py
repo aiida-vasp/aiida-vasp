@@ -130,6 +130,7 @@ class VaspCalculation(VaspCalcBase):
             message=
             'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
             'very likely the VASP calculation did not run properly')
+        spec.exit_code(1004, 'ERROR_NOT_ABLE_TO_CREATE_NODE', message='the parser is not able to compose one or more output nodes: {nodes}')
 
     def prepare_for_submission(self, tempfolder):
         """
