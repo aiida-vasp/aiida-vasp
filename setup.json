@@ -67,6 +67,7 @@
 	    "pytest-timeout~=1.3",
 	    "pytest-cov~=2.7",
 	    "sqlalchemy-diff~=0.1.3",
+		"sqlalchemy<1.4",
 	    "astroid>=2.4.0",
 	    "toml~=0.10.0",
 	    "coverage<5.0"
