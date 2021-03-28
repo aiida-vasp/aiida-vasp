@@ -217,7 +217,13 @@ def test_parser_exception(request, calc_with_retrieved):
     Here the eigenvalue section of the vasprun.xml and EIGNVAL files are deleted. However,
     we still expect the other propertie to be parsed correctly.
     """
-    settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['total_energies', 'maximum_force']}}
+    settings_dict = {
+        'parser_settings': {
+            'add_bands': True,
+            'add_kpoints': True,
+            'add_misc': ['total_energies', 'maximum_force', 'file_parser_warnings']
+        }
+    }
 
     file_path = str(request.fspath.join('..') + '../../../test_data/basic_run_ill_format')
 
@@ -233,6 +239,13 @@ def test_parser_exception(request, calc_with_retrieved):
     assert isinstance(misc, get_data_class('dict'))
     assert misc.get_dict()['maximum_force'] == 0.0
     assert misc.get_dict()['total_energies']['energy_extrapolated'] == -36.09616894
+
+    assert misc['file_parser_warnings'] == {
+        "<class 'aiida_vasp.parsers.file_parsers.vasprun.VasprunParser'>": {
+            'status': 1002,
+            'message': 'the parser is not able to parse the occupancies quantity'
+        }
+    }
 
     assert 'bands' not in result
 

@@ -103,7 +103,7 @@ class VaspParser(BaseParser):
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
-        self._last_exit_code = None
+        self._file_parse_exit_codes = {}
 
     def add_parser_definition(self, filename, parser_dict):
         """Add the definition of a fileParser to self._definitions."""
@@ -120,7 +120,7 @@ class VaspParser(BaseParser):
     def parse(self, **kwargs):
         """The function that triggers the parsing of a calculation."""
 
-        self._last_exit_code = None
+        self._file_parse_exit_codes = {}
         error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
@@ -135,12 +135,13 @@ class VaspParser(BaseParser):
 
         # Parse the quantities from retrived files
         parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
+
+        # Store any exit codes returned in parser_warnings
+        if self._file_parse_exit_codes:
+            parsed_quantities['file_parser_warnings'] = self.parser_warnings
+
         # Compose the output nodes using the parsed quantities
         nodes_failed_to_create = self._compose_nodes(parsed_quantities)
-
-        # Return file-parse exit codes, if any. This only works if the file parser did not except
-        if self._last_exit_code is not None:
-            return self._last_exit_code
 
         # Deal with missing quantities
         if failed_to_parse_quantities:
@@ -149,6 +150,12 @@ class VaspParser(BaseParser):
         # Deal with missing node/nodes
         if nodes_failed_to_create:
             return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(nodes_failed_to_create))
+
+        # All quantities has been parsed, but there exit_codes reported from the parser
+        # in this case, we return the code with the lowest status (hopefully the most severe)
+        if self._file_parse_exit_codes:
+            self._file_parse_exit_codes.sort(key=lambda x: x.status)
+            return self._file_parse_exit_codes[0]
 
         return self.exit_codes.NO_ERROR
 
@@ -199,7 +206,10 @@ class VaspParser(BaseParser):
 
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
-            self._last_exit_code = parser.exit_code
+
+            # Keep track of exit_code, if any
+            if parser.exit_code and parser.exit_code.status != 0:
+                self._file_parse_exit_codes[str(file_parser_cls)] = parser.exit_code
 
         return parsed_quantities, failed_to_parse_quantities
 
@@ -210,13 +220,17 @@ class VaspParser(BaseParser):
         :returns: A list of link_names for the nodes that failed to compose
         """
         nodes_failed_to_create = []
-        for _, node_dict in self._settings.output_nodes_dict.items():
-            equivalent_quantity_keys = self._parsable_quantities.equivalent_quantity_keys
+
+        # Get the dictionary of equivalent quantities, and add a special quantity "parser_warnings"
+        equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
+        equivalent_quantity_keys.update({'file_parser_warnings': ['file_parser_warnings']})
+
+        for node_name, node_dict in self._settings.output_nodes_dict.items():
             inputs = get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, node_dict['quantities'])
 
             # If the input is empty, we skip creating the node as it is bound to fail
             if not inputs:
-                nodes_failed_to_create.append(node_dict['type'])
+                nodes_failed_to_create.append(node_name)
                 continue
 
             # Guard the parsing in case of errors
@@ -231,3 +245,16 @@ class VaspParser(BaseParser):
             if aiida_node is not None:
                 self.out(node_dict['link_name'], aiida_node)
         return nodes_failed_to_create
+
+    @property
+    def parser_warnings(self):
+        """
+        Compose a list of parser warnings as returned by individual file parsers
+        """
+        warnings = {}
+        for key, exit_code in self._file_parse_exit_codes.items():
+            warnings[key] = {
+                'status': exit_code.status,
+                'message': exit_code.message,
+            }
+        return warnings
