@@ -175,7 +175,8 @@ class VaspParser(BaseParser):
                     parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
                 except Exception:  # pylint: disable=broad-except
                     parser = None
-                    self.report('Cannot instantiate {}, exception {}:'.format(quantity_key, traceback.format_exc()))
+                    failed_to_parse_quantities.append(quantity_key)
+                    self.logger.warning('Cannot instantiate {}, exception {}:'.format(quantity_key, traceback.format_exc()))
 
                 file_parser_instances[file_parser_cls] = parser
 
@@ -192,9 +193,9 @@ class VaspParser(BaseParser):
                 # instantiation time, the others may not
                 parsed_quantity = parser.get_quantity(quantity_key)
             except Exception:  # pylint: disable=broad-except
-                self.report('Error parsing {} from {}, exception {}:'.format(quantity_key, parser, traceback.format_exc()))
-                failed_to_parse_quantities.append(quantity_key)
                 parsed_quantity = None
+                failed_to_parse_quantities.append(quantity_key)
+                self.logger.warning('Error parsing {} from {}, exception {}:'.format(quantity_key, parser, traceback.format_exc()))
 
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
@@ -222,10 +223,10 @@ class VaspParser(BaseParser):
             try:
                 aiida_node = NodeComposer.compose(node_dict['type'], inputs)
             except Exception:  # pylint: disable=broad-except
-                self.report('Error creating output {} with type {}, exception: {}'.format(node_dict['link_name'], node_dict['type'],
-                                                                                          traceback.format_exc()))
                 nodes_failed_to_create.append(node_dict['link_name'])
                 aiida_node = None
+                self.logger.warning('Error creating output {} with type {}, exception: {}'.format(node_dict['link_name'], node_dict['type'],
+                                                                                                  traceback.format_exc()))
 
             if aiida_node is not None:
                 self.out(node_dict['link_name'], aiida_node)

@@ -210,6 +210,36 @@ def test_parser_nodes(request, calc_with_retrieved):
     assert misc.get_dict()['fermi_level'] == 5.96764939
 
 
+def test_parser_exception(request, calc_with_retrieved):
+    """
+    Test the handling of exceptions/missing quantities
+
+    Here the eigenvalue section of the vasprun.xml and EIGNVAL files are deleted. However,
+    we still expect the other propertie to be parsed correctly.
+    """
+    settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['total_energies', 'maximum_force']}}
+
+    file_path = str(request.fspath.join('..') + '../../../test_data/basic_run_ill_format')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, output = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    assert output.is_finished
+    assert output.exit_status == 1002
+
+    misc = result['misc']
+    assert isinstance(misc, get_data_class('dict'))
+    assert misc.get_dict()['maximum_force'] == 0.0
+    assert misc.get_dict()['total_energies']['energy_extrapolated'] == -36.09616894
+
+    assert 'bands' not in result
+
+    kpoints = result['kpoints']
+    assert isinstance(kpoints, get_data_class('array.kpoints'))
+
+
 def test_structure(request, calc_with_retrieved):
     """Test that the structure from vasprun and POSCAR is the same."""
     # turn of everything, except structure
