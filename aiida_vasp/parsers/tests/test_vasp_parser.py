@@ -217,13 +217,7 @@ def test_parser_exception(request, calc_with_retrieved):
     Here the eigenvalue section of the vasprun.xml and EIGNVAL files are deleted. However,
     we still expect the other propertie to be parsed correctly.
     """
-    settings_dict = {
-        'parser_settings': {
-            'add_bands': True,
-            'add_kpoints': True,
-            'add_misc': ['total_energies', 'maximum_force', 'file_parser_warnings']
-        }
-    }
+    settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['total_energies', 'maximum_force']}}
 
     file_path = str(request.fspath.join('..') + '../../../test_data/basic_run_ill_format')
 

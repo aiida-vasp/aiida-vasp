@@ -83,7 +83,6 @@ NODES = {
             'run_status',
             'run_stats',
             'version',
-            'file_parser_warnings',
         ]
     },
     'kpoints': {

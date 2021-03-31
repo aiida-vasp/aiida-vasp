@@ -190,7 +190,6 @@ class VaspParser(BaseParser):
             # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:
                 failed_to_parse_quantities.append(quantity_key)
-                parsed_quantities[quantity_key] = None
                 continue
 
             # The next line may still except for ill-formated file - some parser load all data at
@@ -223,10 +222,12 @@ class VaspParser(BaseParser):
 
         # Get the dictionary of equivalent quantities, and add a special quantity "parser_warnings"
         equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
-        equivalent_quantity_keys.update({'file_parser_warnings': ['file_parser_warnings']})
 
         for node_name, node_dict in self._settings.output_nodes_dict.items():
             inputs = get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, node_dict['quantities'])
+
+            if node_name == 'misc':
+                inputs['file_parser_warnings'] = parsed_quantities.get('file_parser_warnings')
 
             # If the input is empty, we skip creating the node as it is bound to fail
             if not inputs:
