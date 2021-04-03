@@ -11,10 +11,11 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.plugins import CalculationFactory
 from aiida.orm import Code
+from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
-from aiida_vasp.workchains.restart import BaseRestartWorkChain
+#from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 
 
@@ -97,12 +98,12 @@ class VaspWorkChain(BaseRestartWorkChain):
             """)
 
         spec.outline(
-            cls.init_context,
+            cls.setup,
             cls.init_inputs,
-            while_(cls.run_calculations)(
-                cls.init_calculation,
-                cls.run_calculation,
-                cls.verify_calculation
+            while_(cls.should_run_process)(
+                cls.prepare_inputs,
+                cls.run_process,
+                cls.inspect_process,
             ),
             cls.results,
             cls.finalize
@@ -134,6 +135,26 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
         spec.exit_code(703, 'ERROR_IN_PARAMETER_MASSAGER', message='the exception: {exception} was thrown while massaging the parameters')
 
+        # Copied from the old plugin restart workchain
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(400,
+                       'ERROR_ITERATION_RETURNED_NO_CALCULATION',
+                       message='the run_calculation step did not successfully add a calculation node to the context')
+        spec.exit_code(401, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED', message='the maximum number of iterations was exceeded')
+        spec.exit_code(402, 'ERROR_UNEXPECTED_CALCULATION_STATE', message='the calculation finished with an unexpected calculation state')
+        spec.exit_code(403, 'ERROR_UNEXPECTED_CALCULATION_FAILURE', message='the calculation experienced and unexpected failure')
+        spec.exit_code(404, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE', message='the calculation failed to submit, twice in a row')
+        spec.exit_code(405,
+                       'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
+                       message='the calculation failed for an unknown reason, twice in a row')
+        spec.exit_code(300,
+                       'ERROR_MISSING_REQUIRED_OUTPUT',
+                       message='the calculation is missing at least one required output in the restart workchain')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
+        spec.exit_code(501,
+                       'ERROR_MANUAL_INTERVENTION_NEEDED',
+                       message='Cannot handle the error - inputs are likely need to be revised manually.')
+
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
 
@@ -144,8 +165,11 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return parameters
 
-    def init_calculation(self):
-        """Set the restart folder and set parameters tags for a restart."""
+    def prepare_inputs(self):
+        """
+        Set the restart folder and set parameters tags for a restart.
+        NOTE: This step may not be needed once we use handlers
+        """
         # Check first if the calling workchain wants a restart in the same folder
         if 'restart_folder' in self.inputs:
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
@@ -273,3 +297,95 @@ class VaspWorkChain(BaseRestartWorkChain):
                         'Please inspect messages and act.')
 
         return super(VaspWorkChain, self).on_except(exc_info)
+
+    @process_handler(process_handler=1000)
+    def _handle_misc_exists(self, node):
+        # Check if the run is converged electronically
+        if 'misc' not in node.outputs:
+            self.report('Cannot found `misc` outputs.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)
+        return None
+
+    @process_handler(priority=0)
+    def _handle_calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
+        """
+        Perform additional sanity checks on successfully completed calculation.
+
+        Calculations that run successfully may still have problems that can only be determined when inspecting
+        the output. The same problems may also be the hidden root of a calculation failure. For that reason,
+        after verifying that the calculation ran, regardless of its calculation state, we perform some sanity
+        checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
+        should go into the childs..
+
+        Note that this is the "final" check, most of the potential problems should have been handled and
+        fixed in restart by error handlers.
+        """
+
+        misc = node.outputs.misc.get_dict()
+        if 'run_status' not in 'misc':
+            self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)
+
+        run_status = misc['run_status']
+
+        # Check if the calculation is indeed finished
+        if not run_status.get('finished'):
+            self.report(f'The child calcualtion {node} did not reach the end of execution.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUALTION_NOT_FINISHED)
+
+        # Check that the electronic structure is converged
+        if not run_status.get('electronic_converged'):
+            self.report(f'The child calcualtion {node} did not have converged electronic structure.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)
+
+        return None
+
+    @process_handler(priority=100)
+    def _handle_unfinished_calculation(self, node):
+        """
+        Handled the problem such that the calculation is not finished, e.g. did not reach the
+        end of execution.
+
+        If WAVECAR exists, just resubmit the calculation with the restart folder.
+
+        If it is a geometry optimisation, attempt to restart with output structure + WAVECAR.
+        """
+
+        misc = node.outputs.misc.get_dict()
+        run_status = misc['run_status']
+
+        # No need to act if the process is finished
+        if run_status.get('finished'):
+            return None
+
+        # Check it is a geometry optimisation
+        incar = self.ctx.inputs.parameters
+        if incar.get('nsw', -1) > 0:
+            if 'structure' not in node.outputs.structure:
+                self.report('Performing a geometry optimisation but the output structure is not found.')
+                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)
+            self.report('Continuing geometry optimisation using the last geometry.')
+            self.ctx.inputs.structure = node.outputs.structure
+            self._attach_wavecar(node)
+        else:
+            # Single point calculation - attach the wavecar if possible
+            has_wavecar = self._attach_wavecar(node)
+            if not has_wavecar:
+                # If there is no WAVECAR there is not much we can do.....
+                self.report('The calcualtions did not finish and no WAVECAR is avalaible for restart.')
+                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)
+        return ProcessHandlerReport()
+
+    def _attach_wavecar(self, node):
+        """
+        Attach WAVECAR for the new calculation if there is one.
+        """
+        # Check the exists of the WAVECAR
+        has_wavecar = False
+        for file in node.outputs.remote_folder.listdir_withattributes():
+            if file['name'] == 'WAVECAR' and file['attributes'].st_size > 1024 * 16:
+                has_wavecar = True
+        if has_wavecar:
+            self.report('Found WAVECAR in the last calcualtion folder, using the outputs for restart.')
+            self.ctx.restart_calc = node
+        return has_wavecar
