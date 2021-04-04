@@ -40,6 +40,29 @@ DEFAULT_OPTIONS = {
     'add_site_magnetization': False,
 }
 
+CRITICAL_NOTIFICATIONS = [
+    'brmix',
+    'cnormn',
+    'denmp',
+    'dentet',
+    'edddav_zhegv',
+    'eddrmm_zhegv',
+    'edwav',
+    'fexcp',
+    'fock_acc',
+    'non_collinear',
+    'not_hermitian',
+    'psmaxn',
+    'pzstein',
+    'real_optlay',
+    'rhosyg',
+    'rspher',
+    'set_indpw_full',
+    'sgrcon',
+    'no_potimm',
+    'magmom',
+]
+
 
 class VaspParser(BaseParser):
     """
@@ -291,7 +314,7 @@ class VaspParser(BaseParser):
 
         # Check for the existence of critical warnings
         for item in notifications:
-            if item['name'] in self._critical_notifications:
+            if item['name'] in CRITICAL_NOTIFICATIONS:
                 return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=item['message'])
 
         return None
