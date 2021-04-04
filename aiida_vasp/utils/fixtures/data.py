@@ -377,7 +377,11 @@ def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'OUTCAR'
-    path = data_path(request.param, file_name)
+    if isinstance(request.param, list):
+        folder, file_name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
     return parser
 

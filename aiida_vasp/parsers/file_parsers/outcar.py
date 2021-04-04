@@ -58,9 +58,9 @@ class OutcarParser(BaseFileParser):
             'name': 'run_stats',
             'prerequisites': [],
         },
-        'last_iteration': {
+        'run_status': {
             'inputs': [],
-            'name': 'last_iteration',
+            'name': 'run_status',
             'prerequisites': [],
         }
     }
@@ -133,6 +133,10 @@ class OutcarParser(BaseFileParser):
         Extra parsing for the outcar.
         Most of these should be moved to `parsevasp` at a later date
         """
+        nelm = None
+        nsw = None
+        finished = False
+        nelec_steps = {}
         with open(self._file_path) as fhandle:
             iter_counter = None
             for line in fhandle:
@@ -140,14 +144,64 @@ class OutcarParser(BaseFileParser):
                 match = re.search(r'Iteration *(\d+)\( *(\d+)\)', line)
                 if match:
                     iter_counter = [int(match.group(1)), int(match.group(2))]
+                    # Increment the counter
+                    if iter_counter[0] in nelec_steps:
+                        nelec_steps[iter_counter[0]] += 1
+                    else:
+                        nelec_steps[iter_counter[0]] = 1
+                    continue
+                # Record the NELM / NSW requested
+                match = re.match(r'^ +NSW *= *(\d+)', line)
+                if match:
+                    nsw = int(match.group(1))
+                    continue
+                match = re.match(r'^ +NELM *= *(\d+)', line)
+                if match:
+                    nelm = int(match.group(1))
+                    continue
+                # Test if the end of execution has reached
+                if 'timing and accounting informations' in line:
+                    finished = True
 
-        outputs['last_iteration'] = iter_counter
+        run_status = {
+            'nelm': nelm,
+            'nsw': nsw,
+            'last_iteration_index': iter_counter,
+            'finished': finished,
+            'ionic_converged': False,
+            'electronic_converged': False,
+            'consistent_nelm_breach': False,
+            'contains_nelm_breach': False,
+        }
+        # Work out the status of the calculations
+        if finished is True:
+            # There are fewer number of ionic iteration than the max - the relaxation is converged
+            if iter_counter[0] < nsw or nsw < 1:
+                run_status['ionic_converged'] = True
+            # There are fewer electronic steps in the last iteration than the max - the electronic structure is converged
+            if iter_counter[1] < nelm:
+                run_status['electronic_converged'] = True
+
+        # Check for consistent electronic convergence problem - VASP will not break when NELM is reached during
+        # the relaxation. We detect to problem here - wether the NELM is breached consistently and if there are
+        # any break in the history
+        mask = [value >= nelm for sc_idx, value in sorted(nelec_steps.items(), key=lambda x: x[0])]
+        if (finished and all(mask)) or (not finished and all(mask[:-1]) and iter_counter[0] > 1):
+            # Excluded the last iteration, as the calculation may not be finished
+            run_status['consistent_nelm_breach'] = True
+        # Check if NELM has been breached in any of the ionic cycles
+        if any(mask):
+            run_status['contains_nelm_breach'] = True
+        outputs['run_status'] = run_status
         return outputs
 
     @property
-    def last_iteration(self):
-        """A list of [ionic_step, eletronic_step] for the last iteration"""
-        return self._parsed_data.get('last_iteration')
+    def run_status(self):
+        """
+        Extra runtime diagnosis data obtained from OUTCAR - contains information for
+        assessing if the calculation was finished OK or had convergence problems.
+        """
+        return self._parsed_data.get('run_status')
 
     @property
     def run_stats(self):

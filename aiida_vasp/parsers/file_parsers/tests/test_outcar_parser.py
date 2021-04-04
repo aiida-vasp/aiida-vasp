@@ -22,12 +22,12 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
         {'misc': {
             'type': 'dict',
-            'quantities': ['symmetries_extended', 'elastic_moduli', 'run_stats', 'last_iteration'],
+            'quantities': ['symmetries_extended', 'elastic_moduli', 'run_stats', 'run_status'],
             'link_name': 'my_custom_node'
         }})
 
-    inputs = get_node_composer_inputs_from_file_parser(
-        outcar_parser, quantity_keys=['symmetries_extended', 'elastic_moduli', 'run_stats', 'last_iteration'])
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser,
+                                                       quantity_keys=['symmetries_extended', 'elastic_moduli', 'run_stats', 'run_status'])
     data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
@@ -100,4 +100,45 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     assert data_dict['run_stats']['total_cpu_time_used'] == 89.795
     assert data_dict['run_stats']['average_memory_used'] == 0.0
 
-    assert data_dict['last_iteration'] == [15, 5]
+    assert data_dict['run_status']['last_iteration_index'] == [15, 5]
+    assert data_dict['run_status']['end_found']
+    assert data_dict['run_status']['ionic_converged']
+    assert data_dict['run_status']['electronic_converged']
+    assert data_dict['run_status']['nelm'] == 60
+    assert data_dict['run_status']['nsw'] == 61
+
+
+_TEST_DATA = [
+    (['outcar_extras', 'OUTCAR.converged'], [True, True, True, False, False]),
+    (['outcar_extras', 'OUTCAR.nelm-breach-consistent'], [True, False, False, True, True]),
+    (['outcar_extras', 'OUTCAR.nelm-breach-partial'], [True, False, True, False, True]),
+    (['outcar_extras', 'OUTCAR.unfinished'], [False, False, False, False, False]),
+    (['outcar_extras', 'OUTCAR.not-converged'], [True, False, True, False, False]),
+]
+
+
+@pytest.mark.parametrize('outcar_parser,expected', _TEST_DATA, indirect=['outcar_parser'])
+def test_run_status(fresh_aiida_env, outcar_parser, expected):
+    """
+    Test the run_status obtained by checking the convergence problems of a calculation,
+    finished or unfinished.
+    """
+
+    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
+        {'misc': {
+            'type': 'dict',
+            'quantities': ['run_stats', 'run_status'],
+            'link_name': 'my_custom_node'
+        }})
+
+    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['run_stats', 'run_status'])
+    data_obj = NodeComposer.compose('dict', inputs)
+    ref_class = get_data_class('dict')
+    assert isinstance(data_obj, ref_class)
+    data_dict = data_obj.get_dict()
+
+    assert data_dict['run_status']['finished'] is expected[0]
+    assert data_dict['run_status']['ionic_converged'] is expected[1]
+    assert data_dict['run_status']['electronic_converged'] is expected[2]
+    assert data_dict['run_status']['consistent_nelm_breach'] is expected[3]
+    assert data_dict['run_status']['contains_nelm_breach'] is expected[4]
