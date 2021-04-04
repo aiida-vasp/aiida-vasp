@@ -57,6 +57,11 @@ class OutcarParser(BaseFileParser):
             'inputs': [],
             'name': 'run_stats',
             'prerequisites': [],
+        },
+        'last_iteration': {
+            'inputs': [],
+            'name': 'last_iteration',
+            'prerequisites': [],
         }
     }
 
@@ -79,6 +84,7 @@ class OutcarParser(BaseFileParser):
             self._init_outcar(kwargs['file_path'])
         if 'data' in kwargs:
             self._init_outcar(kwargs['data'].get_file_abs_path())
+        self._file_path = kwargs['file_path']
 
     def _init_outcar(self, path):
         """Init with a filepath."""
@@ -118,7 +124,30 @@ class OutcarParser(BaseFileParser):
             if quantity in self.parsable_items:
                 result[quantity] = getattr(self, quantity)
 
+        self._parse_extra_data(result)
+
         return result
+
+    def _parse_extra_data(self, outputs):
+        """
+        Extra parsing for the outcar.
+        Most of these should be moved to `parsevasp` at a later date
+        """
+        with open(self._file_path) as fhandle:
+            iter_counter = None
+            for line in fhandle:
+                # Check the iteration counter
+                match = re.search(r'Iteration *(\d+)\( *(\d+)\)', line)
+                if match:
+                    iter_counter = [int(match.group(1)), int(match.group(2))]
+
+        outputs['last_iteration'] = iter_counter
+        return outputs
+
+    @property
+    def last_iteration(self):
+        """A list of [ionic_step, eletronic_step] for the last iteration"""
+        return self._parsed_data.get('last_iteration')
 
     @property
     def run_stats(self):

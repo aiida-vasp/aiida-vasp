@@ -154,6 +154,12 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(501,
                        'ERROR_MANUAL_INTERVENTION_NEEDED',
                        message='Cannot handle the error - inputs are likely need to be revised manually.')
+        spec.exit_code(502,
+                       'ERROR_CALCULATION_NOT_FINISHED',
+                       message='Cannot handle the error - the last calculation did not reach the end of execution.')
+        spec.exit_code(503,
+                       'ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED',
+                       message='Cannot handle the error - the last calculation did not reach electronic convergence.')
 
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
@@ -299,11 +305,11 @@ class VaspWorkChain(BaseRestartWorkChain):
         return super(VaspWorkChain, self).on_except(exc_info)
 
     @process_handler(process_handler=1000)
-    def _handle_misc_exists(self, node):
+    def _handle_misc_not_exist(self, node):
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
             self.report('Cannot found `misc` outputs.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=0)
@@ -324,14 +330,14 @@ class VaspWorkChain(BaseRestartWorkChain):
         misc = node.outputs.misc.get_dict()
         if 'run_status' not in 'misc':
             self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)  # pylint: disable=no-member
 
         run_status = misc['run_status']
 
         # Check if the calculation is indeed finished
         if not run_status.get('finished'):
             self.report(f'The child calcualtion {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUALTION_NOT_FINISHED)
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUALTION_NOT_FINISHED)  # pylint: disable=no-member
 
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
