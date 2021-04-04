@@ -117,7 +117,7 @@ class VaspParser(BaseParser):
         """Add a custom node to the settings."""
         self._settings.add_output_node(node_name, node_dict)
 
-    def parse(self, **kwargs):
+    def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
         """The function that triggers the parsing of a calculation."""
 
         self._file_parse_exit_codes = {}
@@ -142,6 +142,11 @@ class VaspParser(BaseParser):
 
         # Compose the output nodes using the parsed quantities
         nodes_failed_to_create = self._compose_nodes(parsed_quantities)
+
+        # Check for execution related errors
+        exit_code = self._check_vasp_errors(parsed_quantities)
+        if exit_code is not None:
+            return exit_code
 
         # Deal with missing quantities
         if failed_to_parse_quantities:
@@ -259,3 +264,34 @@ class VaspParser(BaseParser):
                 'message': exit_code.message,
             }
         return warnings
+
+    def _check_vasp_errors(self, quantities):
+        """
+        Detect simple vasp execution problems and returns the exit_codes to be set
+        """
+
+        if 'run_status' not in quantities or 'notifications' not in quantities:
+            return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
+
+        run_status = quantities['run_status']
+        notifications = quantities['notifications']
+
+        # Return errors related to execution and convergence problems.
+        # Note that the order is important here - if a calculation is not finished, we cannot
+        # comment on wether properties are converged are not.
+
+        if run_status['finished'] is False:
+            return self.exit_codes.ERROR_DID_NOT_FINISH
+
+        if run_status['electronic_converged'] is False:
+            return self.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED
+
+        if run_status['ionic_converged'] is False:
+            return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
+
+        # Check for the existence of critical warnings
+        for item in notifications:
+            if item['name'] in self._critical_notifications:
+                return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=item['message'])
+
+        return None
