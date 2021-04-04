@@ -304,7 +304,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return super(VaspWorkChain, self).on_except(exc_info)
 
-    @process_handler(process_handler=1000)
+    @process_handler(priority=1000)
     def _handle_misc_not_exist(self, node):
         """
         Handle the case where misc output is not avaliable, in which case we cannot do anything for it.
