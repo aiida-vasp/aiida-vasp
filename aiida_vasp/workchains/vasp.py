@@ -51,7 +51,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     _calculation = CalculationFactory('vasp.vasp')
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec):  # pylint: disable=too-many-statements
         super(VaspWorkChain, cls).define(spec)
         spec.input('code', valid_type=Code)
         spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), required=True)
@@ -306,6 +306,9 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     @process_handler(process_handler=1000)
     def _handle_misc_not_exist(self, node):
+        """
+        Handle the case where misc output is not avaliable, in which case we cannot do anything for it.
+        """
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
             self.report('Cannot found `misc` outputs.')
@@ -342,7 +345,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
             self.report(f'The child calcualtion {node} did not have converged electronic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)  #pylint: disable=no-member
 
         return None
 
@@ -369,7 +372,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if incar.get('nsw', -1) > 0:
             if 'structure' not in node.outputs.structure:
                 self.report('Performing a geometry optimisation but the output structure is not found.')
-                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)
+                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)  #pylint: disable=no-member
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._attach_wavecar(node)
@@ -379,7 +382,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             if not has_wavecar:
                 # If there is no WAVECAR there is not much we can do.....
                 self.report('The calcualtions did not finish and no WAVECAR is avalaible for restart.')
-                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)
+                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)  #pylint: disable=no-member
         return ProcessHandlerReport()
 
     def _attach_wavecar(self, node):
