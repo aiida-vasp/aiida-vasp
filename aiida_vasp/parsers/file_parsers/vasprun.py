@@ -146,11 +146,11 @@ class VasprunParser(BaseFileParser):
             'name': 'band_properties',
             'prerequisites': [],
         },
-        'run_status': {
-            'inputs': [],
-            'name': 'run_status',
-            'prerequisites': [],
-        },
+        #        'run_status': {
+        #            'inputs': [],
+        #            'name': 'run_status',
+        #            'prerequisites': [],
+        #        },
         'version': {
             'inputs': [],
             'name': 'version',
