@@ -151,11 +151,11 @@ class OutcarParser(BaseFileParser):
                         nelec_steps[iter_counter[0]] = 1
                     continue
                 # Record the NELM / NSW requested
-                match = re.match(r'^ +NSW *= *(\d+)', line)
+                match = re.match(r'^ +NSW *= *([-0-9]+)', line)
                 if match:
                     nsw = int(match.group(1))
                     continue
-                match = re.match(r'^ +NELM *= *(\d+)', line)
+                match = re.match(r'^ +NELM *= *([-0-9]+)', line)
                 if match:
                     nelm = int(match.group(1))
                     continue
