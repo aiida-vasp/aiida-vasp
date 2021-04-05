@@ -106,7 +106,6 @@ class VaspWorkChain(BaseRestartWorkChain):
                 cls.inspect_process,
             ),
             cls.results,
-            cls.finalize
         )  # yapf: disable
 
         spec.output('misc', valid_type=get_data_class('dict'))

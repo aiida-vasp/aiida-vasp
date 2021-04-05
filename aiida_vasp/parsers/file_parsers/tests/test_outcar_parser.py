@@ -101,7 +101,7 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     assert data_dict['run_stats']['average_memory_used'] == 0.0
 
     assert data_dict['run_status']['last_iteration_index'] == [15, 5]
-    assert data_dict['run_status']['end_found']
+    assert data_dict['run_status']['finished']
     assert data_dict['run_status']['ionic_converged']
     assert data_dict['run_status']['electronic_converged']
     assert data_dict['run_status']['nelm'] == 60
