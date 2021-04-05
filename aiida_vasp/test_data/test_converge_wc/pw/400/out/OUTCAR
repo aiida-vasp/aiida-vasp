@@ -563,7 +563,7 @@ Space group operators:
    ROPT   =    0.00000
  Ionic relaxation
    EDIFFG = -.1E-03   stopping-criterion for IOM
-   NSW    =      2    number of steps for IOM
+   NSW    =      1    number of steps for IOM
    NBLOCK =      1;   KBLOCK =      1    inner block; outer block
    IBRION =      2    ionic relax: 0-MD 1-quasi-New 2-CG
    NFREE  =      1    steps in history (QN), initial steepest desc. (CG)

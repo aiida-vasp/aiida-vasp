@@ -128,15 +128,21 @@ class OutcarParser(BaseFileParser):
 
         return result
 
-    def _parse_extra_data(self, outputs):
+    def _parse_extra_data(self, outputs):  # pylint: disable=too-many-branches
         """
         Extra parsing for the outcar.
         Most of these should be moved to `parsevasp` at a later date
         """
-        nelm = None
-        nsw = None
+        ibrion = -1
+        params = {'nelm': None, 'nsw': None, 'ibrion': -1}
         finished = False
         nelec_steps = {}
+
+        def match_integer(inputs, key, line):
+            match = re.match(r'^ +' + key + r' *= *([-0-9]+)', line)
+            if match:
+                inputs[key.lower()] = int(match.group(1))
+
         with open(self._file_path) as fhandle:
             iter_counter = None
             for line in fhandle:
@@ -151,17 +157,16 @@ class OutcarParser(BaseFileParser):
                         nelec_steps[iter_counter[0]] = 1
                     continue
                 # Record the NELM / NSW requested
-                match = re.match(r'^ +NSW *= *([-0-9]+)', line)
-                if match:
-                    nsw = int(match.group(1))
-                    continue
-                match = re.match(r'^ +NELM *= *([-0-9]+)', line)
-                if match:
-                    nelm = int(match.group(1))
-                    continue
+                match_integer(params, 'NSW', line)
+                match_integer(params, 'IBRION', line)
+                match_integer(params, 'NELM', line)
                 # Test if the end of execution has reached
                 if 'timing and accounting informations' in line:
                     finished = True
+
+        nsw = params['nsw']
+        ibrion = params['ibrion']
+        nelm = params['nelm']
 
         run_status = {
             'nelm': nelm,
@@ -176,8 +181,20 @@ class OutcarParser(BaseFileParser):
         # Work out the status of the calculations
         if finished is True:
             # There are fewer number of ionic iteration than the max - the relaxation is converged
-            if iter_counter[0] < nsw or nsw < 1:
-                run_status['ionic_converged'] = True
+            # Only check IBRION is larger than zero
+            if ibrion > 0:
+                if iter_counter[0] < nsw:
+                    # Fewer iterations than requested - run has finished
+                    # note that this may include runs that has been interrupted by STOPCAR - this is a limitation of VASP
+                    run_status['ionic_converged'] = True
+                elif iter_counter[0] == nsw and nsw > 1:
+                    # Reached the requested iterations
+                    run_status['ionic_converged'] = False
+                elif nsw <= 1:
+                    self._logger.warning(
+                        f'IBRION = {ibrion} but NSW is {nsw} - cannot deterimine if the relaxation structure is converged!')
+                    run_status['ionic_converged'] = None
+
             # There are fewer electronic steps in the last iteration than the max - the electronic structure is converged
             if iter_counter[1] < nelm:
                 run_status['electronic_converged'] = True
@@ -192,6 +209,7 @@ class OutcarParser(BaseFileParser):
         # Check if NELM has been breached in any of the ionic cycles
         if any(mask):
             run_status['contains_nelm_breach'] = True
+        run_status.update(params)
         outputs['run_status'] = run_status
         return outputs
 

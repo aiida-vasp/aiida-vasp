@@ -48,7 +48,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     refer to ``examples/run_vasp_lean.py``.
     """
     _verbose = False
-    _calculation = CalculationFactory('vasp.vasp')
+    _process_class = CalculationFactory('vasp.vasp')
 
     @classmethod
     def define(cls, spec):  # pylint: disable=too-many-statements
@@ -179,7 +179,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'restart_folder' in self.inputs:
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
         # Then check if we the restart workchain wants a restart
-        if isinstance(self.ctx.restart_calc, self._calculation):
+        if isinstance(self.ctx.restart_calc, self._process_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
             old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())
             parameters = old_parameters.copy()
@@ -189,6 +189,10 @@ class VaspWorkChain(BaseRestartWorkChain):
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
+
+    def setup(self):
+        super().setup()
+        self.ctx.restart_calc = None
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -330,7 +334,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
 
         misc = node.outputs.misc.get_dict()
-        if 'run_status' not in 'misc':
+        if 'run_status' not in misc:
             self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)  # pylint: disable=no-member
 
