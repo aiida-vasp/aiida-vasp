@@ -194,6 +194,8 @@ class OutcarParser(BaseFileParser):
                     self._logger.warning(
                         f'IBRION = {ibrion} but NSW is {nsw} - cannot deterimine if the relaxation structure is converged!')
                     run_status['ionic_converged'] = None
+            else:
+                run_status['ionic_converged'] = None
 
             # There are fewer electronic steps in the last iteration than the max - the electronic structure is converged
             if iter_counter[1] < nelm:
