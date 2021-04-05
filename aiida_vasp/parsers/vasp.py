@@ -293,11 +293,9 @@ class VaspParser(BaseParser):
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
 
-        if 'run_status' not in quantities or 'notifications' not in quantities:
+        if 'run_status' not in quantities:
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
-
         run_status = quantities['run_status']
-        notifications = quantities['notifications']
 
         # Return errors related to execution and convergence problems.
         # Note that the order is important here - if a calculation is not finished, we cannot
@@ -313,8 +311,12 @@ class VaspParser(BaseParser):
             return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
 
         # Check for the existence of critical warnings
-        for item in notifications:
-            if item['name'] in CRITICAL_NOTIFICATIONS:
-                return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=item['message'])
+        if 'notifications' in quantities:
+            notifications = quantities['notifications']
+            for item in notifications:
+                if item['name'] in CRITICAL_NOTIFICATIONS:
+                    return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=item['message'])
+        else:
+            self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
 
         return None
