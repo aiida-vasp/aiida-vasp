@@ -199,6 +199,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(503,
                        'ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED',
                        message='Cannot handle the error - the last calculation did not reach electronic convergence.')
+        spec.exit_code(504, 'ERROR_IONIC_RELAXATION_NOT_CONVERGED', message='The ionic relaxation is not converged.')
 
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
@@ -400,14 +401,18 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Check if the calculation is indeed finished
         if not run_status.get('finished'):
-            self.report(f'The child calcualtion {node} did not reach the end of execution.')
+            self.report(f'The child calculation {node} did not reach the end of execution.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUALTION_NOT_FINISHED)  # pylint: disable=no-member
 
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
-            self.report(f'The child calcualtion {node} did not have converged electronic structure.')
+            self.report(f'The child calculation {node} did not have converged electronic structure.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)  #pylint: disable=no-member
 
+        # Ionic convergence not reached
+        if run_status.get('ionic_converged') is False:
+            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED)  #pylint: disable=no-member
         return None
 
     @process_handler(priority=900, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
