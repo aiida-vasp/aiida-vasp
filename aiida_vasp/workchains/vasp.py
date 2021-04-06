@@ -39,6 +39,8 @@ This means that for a handler:
           this mean other handlers (with lower priority) must handle it and return a zero error_code.
 
 """
+import numpy as np
+
 from aiida.engine import while_
 from aiida.common.lang import override
 #from aiida.engine.job_processes import override
@@ -233,6 +235,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     def setup(self):
         super().setup()
         self.ctx.restart_calc = None
+        self.ctx.vasp_did_not_execute = False
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -347,6 +350,18 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return super(VaspWorkChain, self).on_except(exc_info)
 
+    @process_handler(priority=1100, exit_codes=VaspCalculation.exit_codes.ERROR_VASP_DID_NOT_EXECUTE)
+    def _handle_calculation_did_not_run(self, node):
+        """Handle the case where the calculation is not performed"""
+        if self.ctx.vasp_did_not_execute:
+            return ProcessHandlerReport(do_breka=True,
+                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                            message='VASP executable did not run on the remote computer.'))
+
+        self.report(f'{node} did not execute - try again')
+        self.ctx.vasp_did_not_execute = True
+        return ProcessHandlerReport(do_break=True)
+
     @process_handler(priority=1000)
     def _handle_misc_not_exist(self, node):
         """
@@ -354,7 +369,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
-            self.report('Cannot found `misc` outputs.')
+            self.report('Cannot found `misc` outputs - please check the process reports for issues.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN, do_break=True)  # pylint: disable=no-member
         return None
 
@@ -395,7 +410,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return None
 
-    @process_handler(priority=100, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
+    @process_handler(priority=900, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
     def _handle_unfinished_calculation(self, node):
         """
         Handled the problem such that the calculation is not finished, e.g. did not reach the
@@ -435,7 +450,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                     exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
         return ProcessHandlerReport(do_break=True)
 
-    @process_handler(priority=80, exit_codes=[VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED])
+    @process_handler(priority=800, exit_codes=[VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED])
     def _handle_electronic_converge_problem(self, node):
         """Handle electronic convergence problem"""
         incar = node.inputs.parameters.get_dict()
@@ -471,7 +486,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                                     exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
                                         message='Cannot apply fix for reaching eletronic convergence.'))
 
-    @process_handler(priority=50, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
+    @process_handler(priority=500, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
     def _handle_ionic_converge_problem(self, node):
         """Handle ionic convergence problem"""
         if 'structure' not in node.outputs.structure:
@@ -485,7 +500,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         self._setup_restart(node)
         return ProcessHandlerReport(do_break=True)
 
-    @process_handler(priority=90, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
+    @process_handler(priority=400, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
     def _handle_vasp_critical(self, node):
         """Handle critical errors"""
         notification = node.outputs.misc['notifications']
@@ -503,6 +518,88 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.restart_calc = node
             return True
         return False
+
+    @process_handler(priority=510, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED], enabled=False)
+    def _handle_ionic_converge_problem_enhanced(self, node):  #pylint: disable=too-many-return-statements
+        """
+        Enhanced handling of ionic relaxation problem beyond simple restarts.
+
+        This is only used when the calculation is having difficuties reaching the
+        convergence. This handler should be applied before the standard handler which
+        breaks the handling cycle.
+        """
+        child_nodes = self.ctx.children
+        child_miscs = [node.outputs.misc for node in child_nodes]
+
+        # Enhanced handler only takes place after 3 trials
+        if len(child_miscs) < 3:
+            return None
+
+        natom = len(self.ctx.inputs.structure.sites)
+        vol_changes = []
+        for child in child_nodes:
+            inp_vol = child.inputs.structure.get_cell_volume()
+            out_vol = child.outputs.structure.get_cell_volume()
+            vol_changes.append(out_vol / inp_vol - 1.0)
+        vol_changes = np.array(vol_changes)
+
+        # Number of iterations
+        ionic_iterations = [misc['run_status']['last_iteration_index'][0] for misc in child_miscs]
+
+        # Output energies
+        energies = []
+        for misc in child_miscs:
+            energies.append(misc.get('total_energies', {}).get('energy_extrapolated'))
+        if all([eng is not None for eng in energies[-3:]]):
+            de_per_atom = np.diff(energies) / natom
+        else:
+            return None
+
+        # First check if dE is very small
+        if np.all(np.abs(de_per_atom) < 1e-5):
+            msg = 'Very samll energy change per atom in the last two iterations - please consider revising the EDIFFG settings.'
+            self.report(msg)
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+
+        # Check if there are very few step performed per launch. Because VASP does not carry over
+        # the internal parameters of the optimizer, this can make convergence slower.
+        if ionic_iterations[-1] < 5:
+            msg = ('Less than 5 iterations performed in the last launch - '
+                   'please consider submitting the jobs with revised resources request.')
+            self.report(msg)
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+
+        # Warn about very unusually large number of steps and switch IBRION if needed.
+        # Total degrees of freedom
+        dof = 3 * natom
+        isif = self.ctx.inputs.parameters.get('isif', 2)
+        if isif == 3:
+            dof += 6
+
+        if sum(ionic_iterations) > dof + 10:
+            self.report(f'Unusually large number of iterations performed for the degrees of freedom: {dof}')
+            ibrion = self.ctx.inputs.parmaeters.get('ibrion')
+            # In this case alternate between different relaxation algorithms
+            if ibrion == 2:
+                self.ctx.inputs.parameters['ibrion'] = 1
+                self.ctx.inputs.parameters['potim'] = 0.3
+                self.ctx.inputs.structure = node.outputs.structure
+                self.report('Switching to IBRION=1 from IBRION=2 with POTIM = 0.3')
+                return ProcessHandlerReport(do_break=True)
+            if ibrion == 1:
+                self.ctx.inputs.parameters['ibrion'] = 2
+                self.ctx.inputs.parameters['potim'] = 0.1
+                self.ctx.inputs.structure = node.outputs.structure
+                self.report('Switching to IBRION=2 from IBRION=1 with POTIM = 0.1')
+                return ProcessHandlerReport(do_break=True)
+
+        # Check if energies are increasing without significant volume change
+        if np.all(de_per_atom > 0.0) and np.all(vol_changes[-2:] < 0.03):
+            msg = 'Energy increasing for the last two iterations - something can be very wrong...'
+            self.report(msg)
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+
+        return None
 
 
 def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
