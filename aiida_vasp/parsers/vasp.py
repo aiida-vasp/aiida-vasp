@@ -288,6 +288,29 @@ class VaspParser(BaseParser):
             }
         return warnings
 
+    @property
+    def _check_ionic_convergence(self):
+        """
+        Wether to check the ionic convergence
+
+        This can be customised using flag in the settings of the calculation
+
+        Usage::
+
+          builder.settings = Dict(dict={
+              'CHECK_IONIC_CONVERGENCE': True
+          })
+
+        The default is `True` so a calculation that has ran for NSW steps is treated
+        as not converged.
+        """
+
+        if settings in self.node.inputs:
+            settings = self.node.inputs.settings.get_dict()
+        else:
+            settings = {}
+        return settings.get('CHECK_IONIC_CONVERGENCE', True)
+
     def _check_vasp_errors(self, quantities):
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
@@ -307,8 +330,11 @@ class VaspParser(BaseParser):
         if run_status['electronic_converged'] is False:
             return self.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED
 
+        # Check the ionic convergence issues
         if run_status['ionic_converged'] is False:
-            return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
+            if self._check_ionic_convergence:
+                return self.exit_code.ERROR_IONIC_NOT_CONVERGED
+            self.logger.warning('The ionic relaxation is not converged, but the calcualtion is treated as successful.')
 
         # Check for the existence of critical warnings
         if 'notifications' in quantities:

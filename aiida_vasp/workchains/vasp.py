@@ -3,6 +3,41 @@ VASP workchain.
 
 ---------------
 Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
+
+
+Below is a copy of the error handler logic from aiida-core.
+
+    If the process is excepted or killed, the work chain will abort. Otherwise any attached handlers will be called
+    in order of their specified priority. If the process was failed and no handler returns a report indicating that
+    the error was handled, it is considered an unhandled process failure and the process is relaunched. If this
+    happens twice in a row, the work chain is aborted. In the case that at least one handler returned a report the
+    following matrix determines the logic that is followed:
+
+        Process  Handler    Handler     Action
+        result   report?    exit code
+        -----------------------------------------
+        Success      yes        == 0     Restart
+        Success      yes        != 0     Abort
+        Failed       yes        == 0     Restart
+        Failed       yes        != 0     Abort
+
+    If no handler returned a report and the process finished successfully, the work chain's work is considered done
+    and it will move on to the next step that directly follows the `while` conditional, if there is one defined in
+    the outline.
+
+This means that for a handler:
+
+    - No error found - just return None
+    - No action taken
+        - the error is not recoverable - return with a non-zero error code with do break
+        - the error is not recoverable, but other handler may/maynot save it - return with a non-zero code without do break
+        - the error is not recoverable, and the workchain should be aborted immediately - non-zero code + do break
+
+    - Action taken
+        - the error is fixed in full - return with a zero error code with `do_break=True`
+        - the error is not fixed in full - return with a report with `do_break=False` but has a `exit_code`.
+          this mean other handlers (with lower priority) must handle it and return a zero error_code.
+
 """
 from aiida.engine import while_
 from aiida.common.lang import override
@@ -17,6 +52,9 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 #from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
+from aiida_vasp.calcs.vasp import VaspCalculation
+
+# pylint: disable=no-member
 
 
 class VaspWorkChain(BaseRestartWorkChain):
@@ -152,7 +190,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
         spec.exit_code(501,
                        'ERROR_MANUAL_INTERVENTION_NEEDED',
-                       message='Cannot handle the error - inputs are likely need to be revised manually.')
+                       message='Cannot handle the error - inputs are likely need to be revised manually. Message: {message}')
         spec.exit_code(502,
                        'ERROR_CALCULATION_NOT_FINISHED',
                        message='Cannot handle the error - the last calculation did not reach the end of execution.')
@@ -189,6 +227,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
+        # Reset the list of valid remote files for the last calculation
+        self.ctx.last_calc_remote_files = None
 
     def setup(self):
         super().setup()
@@ -315,7 +355,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
             self.report('Cannot found `misc` outputs.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=0)
@@ -331,6 +371,9 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         Note that this is the "final" check, most of the potential problems should have been handled and
         fixed in restart by error handlers.
+
+        THIS HANDLER SHOULD NOT BE REACHED DURING THE NORMAL OPERATIONS. Handler with higher priority should
+        break the handling loop and return ProcessHandlerReport(do_break=True).
         """
 
         misc = node.outputs.misc.get_dict()
@@ -352,7 +395,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return None
 
-    @process_handler(priority=100)
+    @process_handler(priority=100, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
     def _handle_unfinished_calculation(self, node):
         """
         Handled the problem such that the calculation is not finished, e.g. did not reach the
@@ -375,29 +418,105 @@ class VaspWorkChain(BaseRestartWorkChain):
         if incar.get('nsw', -1) > 0:
             if 'structure' not in node.outputs.structure:
                 self.report('Performing a geometry optimisation but the output structure is not found.')
-                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)  #pylint: disable=no-member
+                return ProcessHandlerReport(
+                    do_break=True,
+                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No output structure for restart.'))  #pylint: disable=no-member
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
-            self._attach_wavecar(node)
+            self._setup_restart(node)
         else:
             # Single point calculation - attach the wavecar if possible
-            has_wavecar = self._attach_wavecar(node)
+            has_wavecar = self._setup_restart(node)
             if not has_wavecar:
                 # If there is no WAVECAR there is not much we can do.....
                 self.report('The calcualtions did not finish and no WAVECAR is avalaible for restart.')
-                return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED)  #pylint: disable=no-member
-        return ProcessHandlerReport()
+                return ProcessHandlerReport(
+                    do_break=True,
+                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
+        return ProcessHandlerReport(do_break=True)
 
-    def _attach_wavecar(self, node):
+    @process_handler(priority=80, exit_codes=[VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED])
+    def _handle_electronic_converge_problem(self, node):
+        """Handle electronic convergence problem"""
+        incar = node.inputs.parameters.get_dict()
+        run_status = node.outputs.misc['run_status']
+        nelm = run_status['nelm']
+        algo = incar.get('algo', 'normal')
+        # The logic below only works for algo=normal
+        if algo in ['normal', 'fast']:
+            # First try - Increase NELM
+            if nelm < 150:
+                incar['nelm'] = 150
+                self._setup_restart(node)
+                self.ctx.inputs.parameters.update(incar)
+                return ProcessHandlerReport(do_break=True)
+            # Adjust AMIX value if NELM is already high
+            amix = incar.get('amix', 0.4)
+            amix_steps = [0.2, 0.1, 0.05]
+            for amix_target in amix_steps:
+                if amix > amix_target:
+                    incar['amix'] = amix_target
+                    # Increase NELM in the mean time - smaller amplitude requires more cycles but more stable.
+                    incar['nelm'] = nelm + 20
+                    self._setup_restart(node)
+                    self.ctx.inputs.parameters.update(incar)
+                    return ProcessHandlerReport(do_break=True)
+            # Change to ALGO if options have been exhausted
+            incar['algo'] = 'all'
+            self.ctx.inputs.parameters.update(incar)
+            self._setup_restart(node)
+            return ProcessHandlerReport(do_break=True)
+
+        return ProcessHandlerReport(do_break=True,
+                                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                        message='Cannot apply fix for reaching eletronic convergence.'))
+
+    @process_handler(priority=50, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
+    def _handle_ionic_converge_problem(self, node):
+        """Handle ionic convergence problem"""
+        if 'structure' not in node.outputs.structure:
+            self.report('Performing a geometry optimisation but the output structure is not found.')
+            return ProcessHandlerReport(do_break=True,
+                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                            message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
+        # The simplest solution - resubmit the calculation again
+        self.report('Continuing geometry optimisation using the last geometry.')
+        self.ctx.inputs.structure = node.outputs.structure
+        self._setup_restart(node)
+        return ProcessHandlerReport(do_break=True)
+
+    @process_handler(priority=90, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
+    def _handle_vasp_critical(self, node):
+        """Handle critical errors"""
+        notification = node.outputs.misc['notifications']
+        self.report('Critical notifications detected: {} - aborting'.format(notification))
+        return ProcessHandlerReport(do_break=True,
+                                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message=', '.join(notification)))
+
+    def _setup_restart(self, node):
         """
-        Attach WAVECAR for the new calculation if there is one.
+        Attach WAVECAR for the new calculation, if there is one.
         """
-        # Check the exists of the WAVECAR
-        has_wavecar = False
-        for file in node.outputs.remote_folder.listdir_withattributes():
-            if file['name'] == 'WAVECAR' and file['attributes'].st_size > 1024 * 16:
-                has_wavecar = True
-        if has_wavecar:
-            self.report('Found WAVECAR in the last calcualtion folder, using the outputs for restart.')
+        if self.ctx.last_calc_remote_files is None:
+            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
+        if 'WAVECAR' in self.ctx.last_calc_remote_files:
             self.ctx.restart_calc = node
-        return has_wavecar
+            return True
+        return False
+
+
+def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
+    """
+    List non-empty files in the remote folder
+
+    :param remote: The `RemoteFolder` node to be inspected.
+    :param path: The relative path.
+    :param size_threshold: The size threshold to treat the file as a valide one.
+
+    :returns: A list of valid files in the directory.
+    """
+    none_empty = []
+    for file in remote.listdir_withattributes(path):
+        if file['attributes'].st_size > size_threshold and not file['isdir']:
+            none_empty.append(file['name'])
+    return none_empty
