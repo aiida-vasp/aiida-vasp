@@ -305,7 +305,7 @@ class VaspParser(BaseParser):
         as not converged.
         """
 
-        if settings in self.node.inputs:
+        if 'settings' in self.node.inputs:
             settings = self.node.inputs.settings.get_dict()
         else:
             settings = {}
@@ -333,7 +333,7 @@ class VaspParser(BaseParser):
         # Check the ionic convergence issues
         if run_status['ionic_converged'] is False:
             if self._check_ionic_convergence:
-                return self.exit_code.ERROR_IONIC_NOT_CONVERGED
+                return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
             self.logger.warning('The ionic relaxation is not converged, but the calcualtion is treated as successful.')
 
         # Check for the existence of critical warnings

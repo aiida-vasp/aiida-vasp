@@ -455,13 +455,33 @@ class VaspWorkChain(BaseRestartWorkChain):
                     exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
         return ProcessHandlerReport(do_break=True)
 
-    @process_handler(priority=800, exit_codes=[VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED])
+    @process_handler(priority=800,
+                     exit_codes=[
+                         VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED,
+                         VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED,
+                         VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
+                     ])
     def _handle_electronic_converge_problem(self, node):
         """Handle electronic convergence problem"""
         incar = node.inputs.parameters.get_dict()
         run_status = node.outputs.misc['run_status']
         nelm = run_status['nelm']
         algo = incar.get('algo', 'normal')
+
+        # In case of ionic convergence problem, we only act where electronic convergence
+        # issues are consistently observed
+        # For finished runs - all steps are counted, and for unfinished runs all except the last step
+        # are included
+        # No action is taken for calculation did not finish the first cycle
+        if node.exit_status in [
+                VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status, VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH
+        ]:
+            if not run_status['consistent_nelm_breach']:
+                if run_status['contains_nelm_breach']:
+                    self.report('The NELM limit has been breached in some but not all ionic steps - no action taken.')
+                return None
+            self.report('The NELM limit has been breached in all ionic steps - taking actions to improve convergence.')
+
         # The logic below only works for algo=normal
         if algo in ['normal', 'fast']:
             # First try - Increase NELM
@@ -469,6 +489,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 incar['nelm'] = 150
                 self._setup_restart(node)
                 self.ctx.inputs.parameters.update(incar)
+                self.report('Setting NELM to 150')
                 return ProcessHandlerReport(do_break=True)
             # Adjust AMIX value if NELM is already high
             amix = incar.get('amix', 0.4)
@@ -480,11 +501,13 @@ class VaspWorkChain(BaseRestartWorkChain):
                     incar['nelm'] = nelm + 20
                     self._setup_restart(node)
                     self.ctx.inputs.parameters.update(incar)
+                    self.report('Reducing AMIX to {}'.format(incar['amix']))
                     return ProcessHandlerReport(do_break=True)
             # Change to ALGO if options have been exhausted
             incar['algo'] = 'all'
             self.ctx.inputs.parameters.update(incar)
             self._setup_restart(node)
+            self.report('Switching to ALGO = ALL')
             return ProcessHandlerReport(do_break=True)
 
         return ProcessHandlerReport(do_break=True,
@@ -494,7 +517,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     @process_handler(priority=500, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
     def _handle_ionic_converge_problem(self, node):
         """Handle ionic convergence problem"""
-        if 'structure' not in node.outputs.structure:
+        if 'structure' not in node.outputs:
             self.report('Performing a geometry optimisation but the output structure is not found.')
             return ProcessHandlerReport(do_break=True,
                                         exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
@@ -525,7 +548,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         return False
 
     @process_handler(priority=510, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED], enabled=False)
-    def _handle_ionic_converge_problem_enhanced(self, node):  #pylint: disable=too-many-return-statements
+    def _handle_ionic_converge_problem_enhanced(self, node):  #pylint: disable=too-many-return-statements, too-many-branches
         """
         Enhanced handling of ionic relaxation problem beyond simple restarts.
 
@@ -533,6 +556,14 @@ class VaspWorkChain(BaseRestartWorkChain):
         convergence. This handler should be applied before the standard handler which
         breaks the handling cycle.
         """
+
+        if 'structure' not in node.outputs:
+            self.report('Performing a geometry optimisation but the output structure is not found.')
+            return ProcessHandlerReport(do_break=True,
+                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                            message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
+
+        # The simplest solution - resubmit the calculation again
         child_nodes = self.ctx.children
         child_miscs = [node.outputs.misc for node in child_nodes]
 
@@ -618,7 +649,12 @@ def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
     :returns: A list of valid files in the directory.
     """
     none_empty = []
-    for file in remote.listdir_withattributes(path):
+    try:
+        contents = remote.listdir_withattributes(path)
+    except OSError:
+        return []
+
+    for file in contents:
         if file['attributes'].st_size > size_threshold and not file['isdir']:
             none_empty.append(file['name'])
     return none_empty
