@@ -47,8 +47,8 @@ from aiida.common.lang import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.plugins import CalculationFactory
-from aiida.orm import Code
-from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler
+from aiida.orm import Code, CalcJobNode
+from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler, WorkChain
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
@@ -350,6 +350,36 @@ class VaspWorkChain(BaseRestartWorkChain):
                         'Please inspect messages and act.')
 
         return super(VaspWorkChain, self).on_except(exc_info)
+
+    @override
+    def on_terminated(self):
+        """
+        Clean the working directories of all child calculation jobs if `clean_workdir=True` in the inputs and
+        the calculation is finished without problem.
+        """
+        # Directly called the WorkChain method as this method replaces that of the BaseRestartWorkChain
+        WorkChain.on_terminated(self)
+
+        if self.inputs.clean_workdir.value is False:  # type: ignore[union-attr]
+            self.report('remote folders will not be cleaned')
+            return
+
+        if not self.ctx.is_finished:  # type: ignore[union-attr]
+            self.report('remote folders will not be cleaned because the workchain finished with error.')
+            return
+
+        cleaned_calcs = []
+
+        for called_descendant in self.node.called_descendants:
+            if isinstance(called_descendant, CalcJobNode):
+                try:
+                    called_descendant.outputs.remote_folder._clean()  # pylint: disable=protected-access
+                    cleaned_calcs.append(str(called_descendant.pk))
+                except (IOError, OSError, KeyError):
+                    pass
+
+        if cleaned_calcs:
+            self.report(f"cleaned remote folders of calculations: {' '.join(cleaned_calcs)}")
 
     @process_handler(priority=1100, exit_codes=VaspCalculation.exit_codes.ERROR_VASP_DID_NOT_EXECUTE)
     def _handle_calculation_did_not_run(self, node):
