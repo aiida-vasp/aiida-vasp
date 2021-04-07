@@ -110,8 +110,7 @@ class MockRegistry:
 
         return get_hash(items)[0]
 
-    @staticmethod
-    def extract_calc_by_path(rel_path: Path, dst_path: Path):
+    def extract_calc_by_path(self, rel_path: Path, dst_path: Path):
         """
         Copy the content of a give hash to a destination.
 
@@ -122,8 +121,8 @@ class MockRegistry:
         rel_path = Path(rel_path)
         dst_path = Path(dst_path)
 
-        base_out = rel_path / 'out'
-        base_in = rel_path / 'in'
+        base_out = self.base_path / rel_path / 'out'
+        base_in = self.base_path / rel_path / 'inp'
 
         # Copy the content of input and then the output folder
         for folder in [base_in, base_out]:
@@ -139,7 +138,7 @@ class MockRegistry:
         """
         self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst)
 
-    def register_calc(self, folder: Path, rel_path: Union[Path, str], excluded_file=None):
+    def upload_calc(self, folder: Path, rel_path: Union[Path, str], excluded_file=None):
         """
         Register a calculation folder to the repository
         """
@@ -155,7 +154,7 @@ class MockRegistry:
 
         # Deposit the files
         repo_calc_base.mkdir()
-        repo_in = repo_calc_base / 'in'
+        repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
         repo_in.mkdir()
         repo_out.mkdir()
@@ -179,23 +178,23 @@ class MockRegistry:
         # Get the relative path to the base
         rel = calc_base.relative_to(self.base_path)
         # Compute the hash
-        hash_val = self.compute_hash(calc_base / 'in')
+        hash_val = self.compute_hash(calc_base / 'inp')
         # Link absolute path to hash, and hash to relative path (used as name)
         self.reg_hash[hash_val] = calc_base.absolute()
         self.reg_name[str(rel)] = hash_val
 
-    def register_aiida_calc(self, calc_node, rel_path, excluded_names=None):
+    def upload_aiida_calc(self, calc_node, rel_path, excluded_names=None):
         """
         Register an aiida VaspCalculation
         """
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
         if repo_calc_base.exists():
-            raise FileExistsError(f'There is already a direcotry at {repo_calc_base.resolve()}.')
+            raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
         # Deposit the files
         repo_calc_base.mkdir()
-        repo_in = repo_calc_base / 'in'
+        repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
         repo_in.mkdir()
         repo_out.mkdir()
@@ -216,7 +215,7 @@ class MockRegistry:
                 continue
             copy_from_aiida(obj.name, calc_node, repo_out)
 
-        print(f'Calculation {calc_node} has been registerred')
+        print(f'Calculation {calc_node} has been registered')
         self._register_folder(repo_calc_base)
 
 

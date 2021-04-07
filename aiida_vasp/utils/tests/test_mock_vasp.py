@@ -2,6 +2,10 @@
 Tests for mock vasp
 """
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
+from pathlib import Path
+from tempfile import mkdtemp
+from shutil import rmtree
+
 import pytest
 from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp, get_hash
 
@@ -37,3 +41,16 @@ def test_registry_scan(mock_registry):
     assert len(mock_registry.reg_hash) > 0
     # Check some existing mocks are there already
     assert 'test_bands_wc' in mock_registry.reg_name
+
+
+def test_registry_extract(mock_registry):
+    """Test extracting an folder from the registry"""
+
+    tmpfolder = mkdtemp()
+    mock_registry.extract_calc_by_path('test_bands_wc', tmpfolder)
+    files = [path.name for path in Path(tmpfolder).glob('*')]
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files
+    assert 'INCAR' in files
+
+    rmtree(tmpfolder)
