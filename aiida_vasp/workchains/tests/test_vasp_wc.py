@@ -135,6 +135,18 @@ INCAR_ELEC_CONV = {
     # 'ediffg': -0.01
 }
 
+INCAR_IONIC_CONV = {
+    'encut': 240,
+    'ismear': 0,
+    'sigma': 0.1,
+    'ediff': 1e-9,
+    'nelm': 15,
+    'ibrion': 1,
+    'potim': 0.1,
+    'nsw': 5,
+    'isif': 3,
+}
+
 
 def setup_vasp_workchain(structure, incar):
     """
@@ -163,6 +175,7 @@ def setup_vasp_workchain(structure, incar):
                                        },
                                        'max_wallclock_seconds': 3600
                                    })
+    inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_structure': True}})
 
     mock = Code.get_from_string('mock-vasp-strict@localhost')
     inputs.code = mock
@@ -196,4 +209,36 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     called_nodes.sort(key=lambda x: x.ctime)
 
     assert called_nodes[0].exit_status == 701
+    assert called_nodes[1].exit_status == 0
+
+
+def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict):
+    """Test submitting only, not correctness, with mocked vasp code."""
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import run
+
+    workchain = WorkflowFactory('vasp.vasp')
+
+    mock_vasp_strict.store()
+    create_authinfo(computer=mock_vasp_strict.computer, store=True)
+
+    inputs = setup_vasp_workchain(si_structure(), INCAR_IONIC_CONV)
+    inputs.verbose = get_data_node('bool', True)
+    results, node = run.get_node(workchain, **inputs)
+
+    assert node.exit_status == 0
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
+
+    assert results['misc']['total_energies']['energy_extrapolated'] == -4.82820291
+    assert results['misc']['run_status']['ionic_converged']
+
+    # Sort the called nodes by creation time
+    called_nodes = list(node.called)
+    called_nodes.sort(key=lambda x: x.ctime)
+
+    # Check the child status - here the first calculation is not finished but the second one is
+    assert called_nodes[0].exit_status == 702
     assert called_nodes[1].exit_status == 0
