@@ -9,7 +9,7 @@ from shutil import rmtree, copy2
 import pytest
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp, get_hash
+from aiida_vasp.utils.mock_code import MockRegistry, MockVasp, get_hash
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo

@@ -15,7 +15,7 @@ from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 
-from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp
+from aiida_vasp.utils.mock_code import MockRegistry, MockVasp
 
 
 def output_file(*args):
