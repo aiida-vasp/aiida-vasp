@@ -24,6 +24,17 @@ def output_file(*args):
 
 @click.command('mock-vasp')
 def mock_vasp():
+    """Original version of mock-vasp"""
+    return _mock_vasp(False)
+
+
+@click.command('mock-vasp-strict')
+def mock_vasp_strict():
+    """A stricter version of mock-vasp does not allow default matching"""
+    return _mock_vasp(True)
+
+
+def _mock_vasp(strict_match):
     """Verify input files are parseable and copy in output files."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
@@ -62,15 +73,18 @@ def mock_vasp():
         if mock.is_runnable:
             mock.run()
         else:
-            # Then this is a simple case - assemble the outputs from folders
-            shutil.copy(output_file('outcar', 'OUTCAR'), pwd / 'OUTCAR')
-            shutil.copy(output_file('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
-            shutil.copy(output_file('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
-            shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
-            shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
-            shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
-            shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
-            shutil.copy(poscar, pwd / 'CONTCAR')
+            if not strict_match:
+                # Then this is a simple case - assemble the outputs from folders
+                shutil.copy(output_file('outcar', 'OUTCAR'), pwd / 'OUTCAR')
+                shutil.copy(output_file('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
+                shutil.copy(output_file('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
+                shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
+                shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
+                shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+                shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
+                shutil.copy(poscar, pwd / 'CONTCAR')
+            else:
+                click.echo('No matching results found but strict matching is reqested. The mock code cannot be run.')
     else:
         test_data_path = data_path(test_case, 'out')
         for out_file in Path(test_data_path).iterdir():

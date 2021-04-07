@@ -51,7 +51,8 @@
 	    "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain"
 	],
 	"console_scripts": [
-	    "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
+	    "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp",
+	    "mock-vasp-strict = aiida_vasp.commands.mock_vasp:mock_vasp_strict"
 	]
     },
     "extras_require": {
