@@ -265,6 +265,7 @@ class ConvergeWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
+        spec.outputs.dynamic = True
         spec.output('converge.data', valid_type=get_data_class('array'), required=False)
         spec.output('converge.pwcutoff_recommended', valid_type=get_data_class('float'), required=False)
         spec.output('converge.kpoints_recommended', valid_type=get_data_class('array.kpoints'), required=False)
@@ -361,7 +362,7 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.pw_iteration = 0
         settings.pwcutoff = None
         try:
-            parameters_dict = self.ctx.inputs.parameters.get_dict()
+            parameters_dict = self.inputs.parameters.get_dict()
             electronic = parameters_dict.get('electronic', None)
             if electronic is not None:
                 pwcutoff = electronic.get('pwcutoff', None)
@@ -570,6 +571,8 @@ class ConvergeWorkChain(WorkChain):
         # We also pass along relaxation parameters
         try:
             self.ctx.inputs.relax = self.inputs.relax
+            for key, val in self.ctx.inputs.relax.items():
+                self.ctx.inputs.parameters['relax'].update({key: val.value})
         except AttributeError:
             pass
         # The plane wave cutoff needs to be updated in the parameters to the set
@@ -605,6 +608,13 @@ class ConvergeWorkChain(WorkChain):
 
     def _set_input_nodes(self):
         """Sets the ctx.input nodes from the previous calculations."""
+
+        # Make sure updated plane wave cutoff is set
+        # This needs to be done before testing the relaxation to avoid the
+        # relaxation options being overwritten
+        if self.ctx.converge.settings.pwcutoff_org is None or self.ctx.inputs.parameters.converge.testing:
+            self.ctx.inputs.parameters = self.ctx.converge.parameters
+
         # We need to check if relaxation is turned on, disable it during
         # the convergence tests (unless converge.relax is set to True)
         # It is reenabled when we initialize the final calculation
@@ -617,10 +627,6 @@ class ConvergeWorkChain(WorkChain):
 
         # Then the structure
         self.ctx.inputs.structure = self.ctx.converge.structure.clone()
-
-        # Make sure updated plane wave cutoff is set
-        if self.ctx.converge.settings.pwcutoff_org is None or self.ctx.inputs.parameters.converge.testing:
-            self.ctx.inputs.parameters = self.ctx.converge.parameters
 
         # And then the k-points if no mesh was supplied
         if not self.ctx.converge.settings.supplied_kmesh:
@@ -1363,7 +1369,7 @@ class ConvergeWorkChain(WorkChain):
 
         workchain = self.ctx.workchains[-1]
         # workchain = self.ctx['workchain_%d' % self.ctx.workchain_count]
-        self.out_many(self.exposed_outputs(workchain, self._next_workchain))
+        self.out_many({key: workchain.outputs[key] for key in workchain.outputs})
 
     def finalize(self):
         """Finalize the workchain."""
