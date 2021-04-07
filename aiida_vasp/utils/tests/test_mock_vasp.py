@@ -4,10 +4,12 @@ Tests for mock vasp
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 from pathlib import Path
 from tempfile import mkdtemp
-from shutil import rmtree
+from shutil import rmtree, copy2
 
 import pytest
 from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp, get_hash
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 def test_get_hash():
@@ -33,9 +35,27 @@ def mock_registry():
     return MockRegistry()
 
 
+@pytest.fixture
+def custom_registry():
+    """
+    Return an temporary registry
+    """
+    temp_base = mkdtemp()
+    yield MockRegistry(base_path=Path(temp_base))
+    rmtree(temp_base)
+
+
+@pytest.fixture
+def temp_path() -> Path:
+    """Return an temporary folder"""
+    temp_base = mkdtemp()
+    yield Path(temp_base)
+    rmtree(temp_base)
+
+
 def test_registry_scan(mock_registry):
     """
-    Test repository scaning
+    Test repository scanning
     """
     mock_registry.scan()
     assert len(mock_registry.reg_hash) > 0
@@ -54,3 +74,74 @@ def test_registry_extract(mock_registry):
     assert 'INCAR' in files
 
     rmtree(tmpfolder)
+
+
+def test_registry_match(mock_registry):
+    """Test round-trip hash compute and matching"""
+
+    hash_val = mock_registry.compute_hash(mock_registry.base_path / 'test_bands_wc/inp')
+    assert hash_val in mock_registry.reg_hash
+
+
+def test_registry_folder_upload(mock_registry, custom_registry, temp_path):
+    """Test uploading a folder to the registry"""
+
+    # Exact an existing calculation to the folder
+    mock_registry.extract_calc_by_path('test_bands_wc', temp_path)
+    # Upload to a different registry
+    custom_registry.upload_calc(temp_path, 'upload-example')
+
+    # Reset the direcotry
+    rmtree(str(temp_path))
+    temp_path.mkdir()
+
+    # Extract and validate
+    assert 'upload-example' in custom_registry.reg_name
+    custom_registry.extract_calc_by_path('upload-example', temp_path)
+    files = [path.name for path in temp_path.glob('*')]
+
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files
+    assert 'INCAR' in files
+
+
+@pytest.mark.parametrize([
+    'vasp_structure',
+    'vasp_kpoints',
+], [('str', 'mesh')], indirect=True)
+def test_registry_upload_aiida(run_vasp_calc, custom_registry, temp_path):
+    """Test upload from an aiida calculation"""
+
+    _, node = run_vasp_calc()
+    custom_registry.upload_aiida_calc(node, 'upload-example')
+
+    # Exact the calculation
+    custom_registry.extract_calc_by_path('upload-example', temp_path)
+
+    files = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files
+    assert 'INCAR' in files
+
+
+def test_mock_vasp(mock_registry, temp_path):
+    """Test the MockVasp class"""
+
+    # Setup the input directory
+    mock_vasp = MockVasp(temp_path, mock_registry)
+    base_path = Path(data_path('test_bands_wc', 'inp'))
+
+    for file in ['INCAR']:
+        copy2(base_path / file, temp_path / file)
+
+    with pytest.raises(ValueError):
+        mock_vasp.run()
+
+    for file in ['POSCAR']:
+        copy2(base_path / file, temp_path / file)
+
+    mock_vasp.run()
+
+    files = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files

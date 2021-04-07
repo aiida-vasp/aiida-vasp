@@ -12,6 +12,7 @@ import shutil
 import os
 from typing import Union
 from pathlib import Path
+import logging
 
 from aiida.repository import FileType
 
@@ -20,6 +21,11 @@ from parsevasp.incar import Incar
 from parsevasp.poscar import Poscar
 
 from aiida_vasp.utils.fixtures.testdata import data_path
+
+# pylint: disable=logging-format-interpolation, import-outside-toplevel
+
+INPUT_FILES = ('POSCAR', 'INCAR', 'KPOINTS')
+EXCLUDED = ('POTCAR', '.aiida')
 
 
 def get_hash(dict_obj):
@@ -61,11 +67,20 @@ class MockRegistry:
         """
         Instantiate and Registry
         """
-        self.base_path = base_path
+        self.base_path = Path(base_path)
         self.reg_hash = {}
         self.reg_name = {}
-
+        self.logger = logging.getLogger('aiida_vasp.utils.mock_vasp.MockRegistry')
+        self._setup_logger()
         self.scan()
+
+    def _setup_logger(self, level=logging.INFO):
+        """Setup the logger"""
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler = logging.StreamHandler()
+        handler.setLevel(level)
+        handler.setFormatter(formatter)
+        self.logger.setLevel(level)
 
     def scan(self):
         """
@@ -110,7 +125,7 @@ class MockRegistry:
 
         return get_hash(items)[0]
 
-    def extract_calc_by_path(self, rel_path: Path, dst_path: Path):
+    def extract_calc_by_path(self, rel_path: Path, dst_path: Path, include_inputs: bool = True):
         """
         Copy the content of a give hash to a destination.
 
@@ -125,25 +140,26 @@ class MockRegistry:
         base_in = self.base_path / rel_path / 'inp'
 
         # Copy the content of input and then the output folder
-        for folder in [base_in, base_out]:
+        paths = [base_in, base_out] if include_inputs else [base_out]
+        for folder in paths:
             for fpath in folder.glob('*'):
                 if fpath.is_file():
                     shutil.copy2(fpath, dst_path)
                 elif fpath.is_dir():
                     shutil.copytree(fpath, dst_path / fpath.name)
 
-    def extract_calc_by_hash(self, hash_val, dst):
+    def extract_calc_by_hash(self, hash_val, dst, include_inputs=False):
         """
         Extract an registerred calculation using hash.
         """
-        self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst)
+        self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst, include_inputs)
 
     def upload_calc(self, folder: Path, rel_path: Union[Path, str], excluded_file=None):
         """
         Register a calculation folder to the repository
         """
-        inp = ['POSCAR', 'INCAR', 'KPOINTS']
-        excluded = ['POTCAR']
+        inp = list(INPUT_FILES)
+        excluded = list(EXCLUDED)
         if excluded_file:
             excluded.extend(excluded_file)
 
@@ -183,9 +199,9 @@ class MockRegistry:
         self.reg_hash[hash_val] = calc_base.absolute()
         self.reg_name[str(rel)] = hash_val
 
-    def upload_aiida_calc(self, calc_node, rel_path, excluded_names=None):
+    def upload_aiida_calc(self, calc_node, rel_path: Union[str, Path], excluded_names=None):
         """
-        Register an aiida VaspCalculation
+        Register an aiida calc_class
         """
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
@@ -199,7 +215,7 @@ class MockRegistry:
         repo_in.mkdir()
         repo_out.mkdir()
 
-        exclude = ['.aiida']
+        exclude = list(EXCLUDED)
         if excluded_names:
             exclude.extend(excluded_names)
 
@@ -213,10 +229,28 @@ class MockRegistry:
         for obj in calc_node.outputs.retrieved.list_objects():
             if obj.name in exclude:
                 continue
-            copy_from_aiida(obj.name, calc_node, repo_out)
+            copy_from_aiida(obj.name, calc_node.outputs.retrieved, repo_out)
 
-        print(f'Calculation {calc_node} has been registered')
+        self.logger.info(f'Calculation {calc_node} has been registered')
         self._register_folder(repo_calc_base)
+
+    def upload_aiida_work(self, worknode, rel_path: Union[str, Path]):
+        """
+        Upload all calculations in a workchain node
+        """
+        from aiida.plugins import CalculationFactory
+        calc_class = CalculationFactory('vasp.vasp')
+        to_upload = []
+        for node in worknode.called_descendants:
+            if isinstance(node, calc_class):
+                to_upload.append(node)
+        to_upload.sort(key=lambda x: x.ctime)
+        self.logger.info(f'Collected {len(to_upload)} nodes to upload under name {rel_path}.')
+
+        for idx, node in enumerate(to_upload):
+            rel = Path(rel_path) / f'calc-{idx:03d}'
+            self.upload_aiida_calc(node, rel)
+        self.logger.info(f'WorkChain {worknode} has been uploaded.')
 
 
 class MockVasp:
@@ -224,21 +258,21 @@ class MockVasp:
     Mock VaspExecutable
     """
 
-    def __init__(self, workdir: Union[str, Path], repository: MockRegistry):
+    def __init__(self, workdir: Union[str, Path], registry: MockRegistry):
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.
         """
         self.workdir = workdir
-        self.repository = repository
+        self.registry = registry
 
     def run(self):
         """
         Run the mock vasp
         """
-        hash_val = self.repository.compute_hash(self.workdir)
-        if self.repository.has_hash(hash_val):
-            self.repository.extract_calc_by_hash(hash_val)
+        hash_val = self.registry.compute_hash(self.workdir)
+        if hash_val in self.registry.reg_hash:
+            self.registry.extract_calc_by_hash(hash_val, self.workdir)
         else:
             raise ValueError('The calculation is not registered!!')
 
