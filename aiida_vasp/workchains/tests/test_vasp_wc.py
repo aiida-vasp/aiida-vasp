@@ -195,5 +195,5 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     called_nodes = list(node.called)
     called_nodes.sort(key=lambda x: x.ctime)
 
-    assert node.called[0].exit_status == 701
-    assert node.called[1].exit_status == 0
+    assert called_nodes[0].exit_status == 701
+    assert called_nodes[1].exit_status == 0
