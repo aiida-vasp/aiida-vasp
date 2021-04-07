@@ -70,7 +70,7 @@ class MockRegistry:
         self.base_path = Path(base_path)
         self.reg_hash = {}
         self.reg_name = {}
-        self.logger = logging.getLogger('aiida_vasp.utils.mock_vasp.MockRegistry')
+        self.logger = logging.getLogger('aiida_vasp.utils.mock_code.MockRegistry')
         self._setup_logger()
         self.scan()
 
