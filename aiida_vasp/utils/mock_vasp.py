@@ -139,6 +139,9 @@ class MockRegistry:
         base_out = self.base_path / rel_path / 'out'
         base_in = self.base_path / rel_path / 'inp'
 
+        if not base_out.exists() or not base_in.exists():
+            raise ValueError(f'Relative path: {rel_path} is invalid')
+
         # Copy the content of input and then the output folder
         paths = [base_in, base_out] if include_inputs else [base_out]
         for folder in paths:
@@ -169,11 +172,11 @@ class MockRegistry:
             raise FileExistsError(f'There is already a direcotry at {repo_calc_base.resolve()}.')
 
         # Deposit the files
-        repo_calc_base.mkdir()
+        repo_calc_base.mkdir(parents=True)
         repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
-        repo_in.mkdir()
-        repo_out.mkdir()
+        repo_in.mkdir(parents=True)
+        repo_out.mkdir(parents=True)
 
         for file in folder.glob('*'):
             if file.name in inp:
@@ -209,11 +212,11 @@ class MockRegistry:
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
         # Deposit the files
-        repo_calc_base.mkdir()
+        repo_calc_base.mkdir(parents=True)
         repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
-        repo_in.mkdir()
-        repo_out.mkdir()
+        repo_in.mkdir(parents=True)
+        repo_out.mkdir(parents=True)
 
         exclude = list(EXCLUDED)
         if excluded_names:
@@ -238,11 +241,12 @@ class MockRegistry:
         """
         Upload all calculations in a workchain node
         """
+        from aiida.orm import CalcJobNode
         from aiida.plugins import CalculationFactory
         calc_class = CalculationFactory('vasp.vasp')
         to_upload = []
         for node in worknode.called_descendants:
-            if isinstance(node, calc_class):
+            if isinstance(node, CalcJobNode) and node.process_class is calc_class:
                 to_upload.append(node)
         to_upload.sort(key=lambda x: x.ctime)
         self.logger.info(f'Collected {len(to_upload)} nodes to upload under name {rel_path}.')

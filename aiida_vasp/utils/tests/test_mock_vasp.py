@@ -1,15 +1,19 @@
 """
 Tests for mock vasp
 """
-# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
+# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel, too-many-arguments
 from pathlib import Path
 from tempfile import mkdtemp
 from shutil import rmtree, copy2
 
 import pytest
+from aiida.common.extendeddicts import AttributeDict
+
 from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp, get_hash
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
+from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 
 
 def test_get_hash():
@@ -118,6 +122,55 @@ def test_registry_upload_aiida(run_vasp_calc, custom_registry, temp_path):
     # Exact the calculation
     custom_registry.extract_calc_by_path('upload-example', temp_path)
 
+    files = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files
+    assert 'INCAR' in files
+
+
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+def test_registry_upload_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp, custom_registry, temp_path):
+    """Return an VaspWorkChain that has been run"""
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import run
+
+    workchain = WorkflowFactory('vasp.vasp')
+
+    mock_vasp.store()
+    create_authinfo(computer=mock_vasp.computer, store=True)
+
+    kpoints, _ = vasp_kpoints
+    inputs = AttributeDict()
+    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.structure = vasp_structure
+    inputs.parameters = get_data_node('dict', dict={'incar': vasp_params.get_dict()})
+    inputs.kpoints = kpoints
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
+    inputs.max_iterations = get_data_node('int', 1)
+    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.verbose = get_data_node('bool', True)
+    _, node = run.get_node(workchain, **inputs)
+
+    custom_registry.upload_aiida_work(node, 'upload-example')
+    # Exact the calculation
+    repo_path = custom_registry.get_path_by_name('upload-example/calc-000')
+    files = [path.name for path in repo_path.glob('out/*')]
+    assert 'OUTCAR' in files
+    assert 'vasprun.xml' in files
+
+    custom_registry.extract_calc_by_path('upload-example/calc-000', temp_path)
     files = [path.name for path in temp_path.glob('*')]
     assert 'OUTCAR' in files
     assert 'vasprun.xml' in files
