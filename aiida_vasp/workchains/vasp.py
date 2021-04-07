@@ -466,7 +466,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check it is a geometry optimisation
         incar = self.ctx.inputs.parameters
         if incar.get('nsw', -1) > 0:
-            if 'structure' not in node.outputs.structure:
+            if 'structure' not in node.outputs:
                 self.report('Performing a geometry optimisation but the output structure is not found.')
                 return ProcessHandlerReport(
                     do_break=True,

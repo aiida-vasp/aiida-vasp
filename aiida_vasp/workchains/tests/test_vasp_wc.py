@@ -147,8 +147,22 @@ INCAR_IONIC_CONV = {
     'isif': 3,
 }
 
+# Parameters for test handling unfinished VASP. The first iteration was killed manually.
+INCAR_IONIC_UNFINISHED = {
+    'encut': 500,
+    'ismear': 0,
+    'isym': 0,
+    'sigma': 0.1,
+    'ediff': 1e-9,
+    'nelm': 15,
+    'ibrion': 1,
+    'potim': 0.1,
+    'nsw': 20,
+    'isif': 3,
+}
 
-def setup_vasp_workchain(structure, incar):
+
+def setup_vasp_workchain(structure, incar, nkpts):
     """
     Setup the inputs for a VaspWorkChain.
     """
@@ -160,7 +174,7 @@ def setup_vasp_workchain(structure, incar):
     inputs.parameters = get_data_node('dict', dict={'incar': incar})
 
     kpoints = get_data_node('array.kpoints')
-    kpoints.set_kpoints_mesh((8, 8, 8))
+    kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
     inputs.kpoints = kpoints
 
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
@@ -183,7 +197,7 @@ def setup_vasp_workchain(structure, incar):
 
 
 def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
-    """Test submitting only, not correctness, with mocked vasp code."""
+    """Test with mocked vasp code for handling electronic convergence issues"""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
     from aiida.engine import run
@@ -193,7 +207,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     mock_vasp_strict.store()
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
-    inputs = setup_vasp_workchain(si_structure(), INCAR_ELEC_CONV)
+    inputs = setup_vasp_workchain(si_structure(), INCAR_ELEC_CONV, 8)
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
 
@@ -212,8 +226,9 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     assert called_nodes[1].exit_status == 0
 
 
-def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict):
-    """Test submitting only, not correctness, with mocked vasp code."""
+@pytest.mark.parametrize('incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]])
+def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, incar, nkpts, exit_codes):
+    """Test with mocked vasp code for handling ionic convergence issues"""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
     from aiida.engine import run
@@ -223,7 +238,7 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict):
     mock_vasp_strict.store()
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
-    inputs = setup_vasp_workchain(si_structure(), INCAR_IONIC_CONV)
+    inputs = setup_vasp_workchain(si_structure(), incar, nkpts)
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
 
@@ -232,7 +247,6 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict):
     assert 'misc' in results
     assert 'remote_folder' in results
 
-    assert results['misc']['total_energies']['energy_extrapolated'] == -4.82820291
     assert results['misc']['run_status']['ionic_converged']
 
     # Sort the called nodes by creation time
@@ -240,5 +254,5 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict):
     called_nodes.sort(key=lambda x: x.ctime)
 
     # Check the child status - here the first calculation is not finished but the second one is
-    assert called_nodes[0].exit_status == 702
-    assert called_nodes[1].exit_status == 0
+    for idx, code in enumerate(exit_codes):
+        assert called_nodes[idx].exit_status == code
