@@ -234,7 +234,7 @@ class MockRegistry:
                 continue
             copy_from_aiida(obj.name, calc_node.outputs.retrieved, repo_out)
 
-        self.logger.info('Calculation {} has been registered'.format(calc_node))
+        self.logger.info('Calculation %s has been registered', calc_node)
         self._register_folder(repo_calc_base)
 
     def upload_aiida_work(self, worknode, rel_path: Union[str, Path]):
@@ -249,12 +249,12 @@ class MockRegistry:
             if isinstance(node, CalcJobNode) and node.process_class is calc_class:
                 to_upload.append(node)
         to_upload.sort(key=lambda x: x.ctime)
-        self.logger.info('Collected {} nodes to upload under name {}.'.format(to_upload, rel_path))
+        self.logger.info('Collected %s nodes to upload under name %s.', to_upload, rel_path)
 
         for idx, node in enumerate(to_upload):
             rel = Path(rel_path) / f'calc-{idx:03d}'
             self.upload_aiida_calc(node, rel)
-        self.logger.info('WorkChain {} has been uploaded.'.format(worknode))
+        self.logger.info('WorkChain %s has been uploaded.', worknode)
 
 
 class MockVasp:
