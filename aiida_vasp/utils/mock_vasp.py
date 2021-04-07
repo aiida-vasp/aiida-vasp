@@ -280,6 +280,12 @@ class MockVasp:
         else:
             raise ValueError('The calculation is not registered!!')
 
+    @property
+    def is_runnable(self) -> bool:
+        """Return wether the mock code can be run"""
+        hash_val = self.registry.compute_hash(self.workdir)
+        return hash_val in self.registry.reg_hash
+
 
 def copy_from_aiida(name: str, node, dst: Path):
     """

@@ -15,6 +15,8 @@ from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
 
+from aiida_vasp.utils.mock_vasp import MockRegistry, MockVasp
+
 
 def output_file(*args):
     return Path(data_path(*args))
@@ -55,14 +57,20 @@ def mock_vasp():
     except IndexError:
         test_case = ''
     if not test_case:
-        shutil.copy(output_file('outcar', 'OUTCAR'), pwd / 'OUTCAR')
-        shutil.copy(output_file('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
-        shutil.copy(output_file('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
-        shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
-        shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
-        shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
-        shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
-        shutil.copy(poscar, pwd / 'CONTCAR')
+        # If no test case is defined, we first try the hash-based mock registry
+        mock = MockVasp(pwd, MockRegistry())
+        if mock.is_runnable:
+            mock.run()
+        else:
+            # Then this is a simple case - assemble the outputs from folders
+            shutil.copy(output_file('outcar', 'OUTCAR'), pwd / 'OUTCAR')
+            shutil.copy(output_file('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
+            shutil.copy(output_file('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
+            shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
+            shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
+            shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+            shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
+            shutil.copy(poscar, pwd / 'CONTCAR')
     else:
         test_data_path = data_path(test_case, 'out')
         for out_file in Path(test_data_path).iterdir():
