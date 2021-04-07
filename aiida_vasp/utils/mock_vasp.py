@@ -92,23 +92,23 @@ class MockRegistry:
         """
         Compute the hash of a input folder
         """
-        items = []
+        items = {}
         kpt_file = input_folder / 'KPOINTS'
         if kpt_file.is_file():
             kpoints = Kpoints(file_path=str(kpt_file))
-            items.append(get_hash(kpoints.get_dict()))
+            items['kpoints'] = kpoints.get_dict()
 
         incar_file = input_folder / 'INCAR'
         if incar_file.is_file():
             incar = Incar(file_path=str(incar_file))
-            items.append(get_hash(incar.get_dict()))
+            items['incar'] = incar.get_dict()
 
         poscar_file = input_folder / 'POSCAR'
-        if poscar.is_file():
+        if poscar_file.is_file():
             poscar = Poscar(file_path=str(poscar_file))
-            items.append(get_hash(poscar.get_dict()))
+            items['poscar'] = poscar.get_dict()
 
-        return get_hash(items)
+        return get_hash(items)[0]
 
     @staticmethod
     def extract_calc_by_path(rel_path: Path, dst_path: Path):
