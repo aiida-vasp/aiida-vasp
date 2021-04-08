@@ -112,6 +112,7 @@ class MockRegistry:
         if kpt_file.is_file():
             kpoints = Kpoints(file_path=str(kpt_file))
             items['kpoints'] = kpoints.get_dict()
+            items.pop('comment', None)
 
         incar_file = input_folder / 'INCAR'
         if incar_file.is_file():
@@ -122,6 +123,7 @@ class MockRegistry:
         if poscar_file.is_file():
             poscar = Poscar(file_path=str(poscar_file))
             items['poscar'] = poscar.get_dict()
+            items.pop('comment', None)
 
         return get_hash(items)[0]
 
