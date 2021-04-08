@@ -201,6 +201,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
     from aiida.engine import run
+    from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 
     workchain = WorkflowFactory('vasp.vasp')
 
@@ -210,6 +211,13 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     inputs = setup_vasp_workchain(si_structure(), INCAR_ELEC_CONV, 8)
     inputs.verbose = get_data_node('bool', True)
     results, node = run.get_node(workchain, **inputs)
+
+    called_nodes = list(node.called)
+    called_nodes.sort(key=lambda x: x.ctime)
+
+    print(get_workchain_report(node, 'DEBUG'))
+    for child in called_nodes:
+        print(get_calcjob_report(child))
 
     assert node.exit_status == 0
     assert 'retrieved' in results
