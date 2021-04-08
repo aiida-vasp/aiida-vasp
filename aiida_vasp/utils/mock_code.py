@@ -14,6 +14,8 @@ from typing import Union
 from pathlib import Path
 import logging
 
+import numpy as np
+
 from aiida.repository import FileType
 
 from parsevasp.kpoints import Kpoints
@@ -38,13 +40,30 @@ def get_hash(dict_obj):
     The point here is to make the value invariant to the permutation of key orders.
     """
 
+    # If a list is passed - convert it to a dictionary with keys being the indices
+    if isinstance(dict_obj, list):
+        dict_obj = dict(enumerate(dict_obj))
+
     rec = []
     for key, value in dict_obj.items():
-        key = str(key)
-        if isinstance(value, dict):
+        key = repr(key)
+        # For numpy/list with floating point zero (0.0) we have to converge -0.0 to 0.0
+        # as they should be equivalent
+        if isinstance(value, np.ndarray):
+            value[value == 0] = 0
+        elif isinstance(value, list) and 0 in value:
+            value = [type(tmp)(0) if tmp == 0 else tmp for tmp in value]
+
+        # Handle if value itself is float zero
+        if isinstance(value, float) and value == 0:
+            value = 0.
+
+        if isinstance(value, (dict, list)):
             rec.append(key + ':' + get_hash(value)[0])
         else:
-            rec.append(key + ':' + str(value) + ':' + str(type(value)))
+            # Use the string representation
+            rec.append(key + ':' + repr(value) + ':' + repr(type(value)))
+
     # Update, use sorted so the original order does not matter, in force case so
     # sting keys with upper/lower cases are treated as the same
     base = [record.encode().lower() for record in sorted(rec)]
@@ -272,14 +291,18 @@ class MockVasp:
         self.workdir = workdir
         self.registry = registry
 
-    def run(self):
+    def run(self, debug=True):
         """
         Run the mock vasp
         """
         hash_val = self.registry.compute_hash(self.workdir)
+        if debug:
+            print(f'Target hash value: {hash_val}')
         if hash_val in self.registry.reg_hash:
             self.registry.extract_calc_by_hash(hash_val, self.workdir)
         else:
+            if debug:
+                print(f'Registered hashes: {self.registry.reg_hash}')
             raise ValueError('The calculation is not registered!!')
 
     @property

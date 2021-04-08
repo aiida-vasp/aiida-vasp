@@ -11,6 +11,14 @@ jobs:
         python: ['3.8']
     steps:
       - uses: actions/checkout@v2
+      - name: Cache python dependencies
+        id: cache-pip
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python-version }}-tests-${{ hashFiles('**/setup.json') }}
+          restore-keys:
+                      pip-${{ matrix.python-version }}-tests
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -45,18 +53,25 @@ jobs:
         python: ['3.7', '3.8', '3.9']
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache python dependencies
+        id: cache-pip
+        uses: actions/cache@v1
+        with:
+            path: ~/.cache/pip
+            key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+            restore-keys:
+                pip-${{ matrix.python }}-tests-
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
         run: |
-          curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
           sudo apt update
-          sudo .ci/enable_ssh_localhost.sh
-          sudo apt install locate
-          sudo updatedb
           sudo apt install postgresql-10
+          sudo .ci/enable_ssh_localhost.sh
       - name: Upgrade pip
         run: |
           pip install --upgrade pip

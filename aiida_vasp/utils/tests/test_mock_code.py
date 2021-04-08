@@ -31,6 +31,23 @@ def test_get_hash():
     assert hash1 == hash3
 
 
+def test_get_hash_list():
+    """Test generating has for nested dict/list"""
+    dict1 = {'1': 2, 3: 4, 'a': [1, -0., '3']}
+    hash1 = get_hash(dict1)[0]
+    dict2 = {'1': 2, 3: 4, 'a': [1, 0., '3']}
+    hash2 = get_hash(dict2)[0]
+
+    assert hash1 == hash2
+
+    dict1 = {'1': 2, 3: 4, 'a': [1, -0., '3', {'1': 0.}]}
+    hash1 = get_hash(dict1)[0]
+    dict2 = {'1': 2, 3: 4, 'a': [1, 0., '3', {'1': -0.}]}
+    hash2 = get_hash(dict2)[0]
+
+    assert hash1 == hash2
+
+
 @pytest.fixture(scope='module')
 def mock_registry():
     """

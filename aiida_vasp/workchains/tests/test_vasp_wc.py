@@ -218,6 +218,29 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     print(get_workchain_report(node, 'DEBUG'))
     for child in called_nodes:
         print(get_calcjob_report(child))
+    child = called_nodes[0]
+    print(child.get_object_content('INCAR'))
+    print(child.get_object_content('POSCAR'))
+    print(child.get_object_content('KPOINTS'))
+    print(child.retrieved.get_object_content('vasp_output'))
+
+    child = called_nodes[0]
+    print(child.get_object_content('INCAR'))
+    print(child.get_object_content('POSCAR'))
+    print(child.get_object_content('KPOINTS'))
+    print(child.outputs.retrieved.get_object_content('vasp_output'))
+    print(child.outputs.retrieved.list_object_names())
+    print(child.outputs.misc.get_dict())
+    print(child.exit_status)
+
+    child = called_nodes[1]
+    print(child.get_object_content('INCAR'))
+    print(child.get_object_content('POSCAR'))
+    print(child.get_object_content('KPOINTS'))
+    print(child.outputs.retrieved.get_object_content('vasp_output'))
+    print(child.outputs.retrieved.list_object_names())
+    print(child.outputs.misc.get_dict())
+    print(child.exit_status)
 
     assert node.exit_status == 0
     assert 'retrieved' in results
