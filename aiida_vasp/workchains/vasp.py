@@ -404,16 +404,52 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN, do_break=True)  # pylint: disable=no-member
         return None
 
+    @process_handler(priority=2000, enabled=False)
+    def _handle_always_attach_outputs(self, node):
+        """
+        Handle the case where we attach the outputs even if underlying child calculation ends up
+        with some exit status.
+        """
+
+        # Only active this error handler at the last iteration
+        if node.is_finished_ok or self.ctx.iteration < self.inputs.max_iterations.value:
+            return None
+
+        # Attach all outputs from the last workchain
+        self.report('At the last iteration - attaching outputs from the last workchain.')
+        self.report('WARNING: The attached outptus may contain incorrect results - proceed with causion.')
+
+        # Attach the required outputs defined in the spec
+        for name, port in self.spec().outputs.items():
+
+            try:
+                output = node.get_outgoing(link_label_filter=name).one().node
+            except ValueError:
+                if port.required:
+                    self.report(f"required output '{name}' was not an output of {self.ctx.process_name}<{node.pk}>")
+            else:
+                self.out(name, output)
+
+        # Try to get some meaningful exit codes using the sanity check handler
+        # Always generate a handler report with do_break so no more handlers will be run and
+        # overwrite the error code.
+        report = self._handle_calculation_sanity_checks(node)
+        if report:
+            return ProcessHandlerReport(exit_code=report.exit_code, do_break=True)
+        return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MAXIMUM_ITERATION_EXCEEDED, do_break=True)
+
     @process_handler(priority=0)
     def _handle_calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
         """
         Perform additional sanity checks on successfully completed calculation.
+        This is the *backstop* - so if no error handler handled the errors, the loop of running calculation
+        will break if some errors below have been detected.
 
         Calculations that run successfully may still have problems that can only be determined when inspecting
         the output. The same problems may also be the hidden root of a calculation failure. For that reason,
         after verifying that the calculation ran, regardless of its calculation state, we perform some sanity
         checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
-        should go into the childs..
+        should go into the child..
 
         Note that this is the "final" check, most of the potential problems should have been handled and
         fixed in restart by error handlers.
@@ -432,7 +468,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check if the calculation is indeed finished
         if not run_status.get('finished'):
             self.report(f'The child calculation {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUALTION_NOT_FINISHED)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED)  # pylint: disable=no-member
 
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
