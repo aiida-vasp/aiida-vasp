@@ -201,6 +201,13 @@ class VaspWorkChain(BaseRestartWorkChain):
                        message='Cannot handle the error - the last calculation did not reach electronic convergence.')
         spec.exit_code(504, 'ERROR_IONIC_RELAXATION_NOT_CONVERGED', message='The ionic relaxation is not converged.')
 
+    def setup(self):
+        super().setup()
+        self.ctx.restart_calc = None
+        self.ctx.vasp_did_not_execute = False
+        self.ctx.verbose = None
+        self.ctx.last_calc_remote_files = []
+
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
 
@@ -211,32 +218,41 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         return parameters
 
+    def verbose_report(self, *args, **kwargs):
+        """Send report if self.ctx.verbose is True"""
+        if self.ctx.verbose is True:
+            self.report(*args, **kwargs)
+
     def prepare_inputs(self):
         """
-        Set the restart folder and set parameters tags for a restart.
-        NOTE: This step may not be needed once we use handlers
+        Enforce some settings for the restart folder and set parameters tags for a restart.
+        This is called because launching the sub process.
+
+        NOTE: This method should probably be refectorred to give more control on what kind
+        of restart is needed
         """
         # Check first if the calling workchain wants a restart in the same folder
         if 'restart_folder' in self.inputs:
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
-        # Then check if we the restart workchain wants a restart
+
+        # Then check if the workchain wants a restart
         if isinstance(self.ctx.restart_calc, self._process_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
             old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())
             parameters = old_parameters.copy()
-            if 'istart' in parameters:
+            # Make sure ISTART and ICHARG is set to read the relevant files - if they exists
+            if 'istart' in parameters and 'WAVECAR' in self.ctx.last_calc_remote_files:
+                # NOTE for MD simulation we probably want ISTART=2 ?
                 parameters.istart = 1
-            if 'icharg' in parameters:
+            if 'icharg' in parameters and 'CHGCAR' in self.ctx.last_calc_remote_files:
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
-        # Reset the list of valid remote files for the last calculation
-        self.ctx.last_calc_remote_files = None
+                self.verbose_report('Enforced ISTART=1 nad ICHARG=1 for restarting the calculation.')
 
-    def setup(self):
-        super().setup()
+        # Reset the list of valid remote files and the restart calculation
+        self.ctx.last_calc_remote_files = []
         self.ctx.restart_calc = None
-        self.ctx.vasp_did_not_execute = False
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -295,6 +311,10 @@ class VaspWorkChain(BaseRestartWorkChain):
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
+        # Utilise default input/output selections
+        self.ctx.inputs.metadata['options']['input_filename'] = 'INCAR'
+        self.ctx.inputs.metadata['options']['output_filename'] = 'OUTCAR'
+
         # Make sure we also bring along any label and description set on the WorkChain to the CalcJob, it if does
         # not exists, set to empty string.
         if 'metadata' in self.inputs:
@@ -319,10 +339,12 @@ class VaspWorkChain(BaseRestartWorkChain):
         except NotExistent as err:
             return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))  # pylint: disable=no-member
 
+        # Store verbose parameter in ctx - otherwise it will not work after deserialization
         try:
-            self._verbose = self.inputs.verbose.value
+            self.ctx.verbose = self.inputs.verbose.value
         except AttributeError:
-            pass
+            self.ctx.verbose = self._verbose
+
         # Set the charge density (chgcar)
         if 'chgcar' in self.inputs:
             self.ctx.inputs.charge_density = self.inputs.chgcar
@@ -602,13 +624,23 @@ class VaspWorkChain(BaseRestartWorkChain):
         return ProcessHandlerReport(do_break=True,
                                     exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message=', '.join(notification)))
 
+    def _update_last_calc_files(self, node):
+        """
+        Connect to the remote and find the valid files in th calculation folder
+
+        Only update if the entry is empty in order to avoid too many connections to the remote.
+        """
+        if not self.ctx.last_calc_remote_files:
+            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
+        return self.ctx.last_calc_remote_files
+
     def _setup_restart(self, node):
         """
-        Attach WAVECAR for the new calculation, if there is one.
+        Check the existence of any restart files, if any of them eixsts use the last calcualtion
+        for restart.
         """
-        if self.ctx.last_calc_remote_files is None:
-            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
-        if 'WAVECAR' in self.ctx.last_calc_remote_files:
+        self._update_last_calc_files(node)
+        if 'WAVECAR' in self.ctx.last_calc_remote_files or 'CHGCAR' in self.ctx.last_calc_remote_files:
             self.ctx.restart_calc = node
             return True
         return False
