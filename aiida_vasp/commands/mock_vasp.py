@@ -69,7 +69,8 @@ def _mock_vasp(strict_match):
         test_case = ''
     if not test_case:
         # If no test case is defined, we first try the hash-based mock registry
-        mock = MockVasp(pwd, MockRegistry())
+        mock_registry_path = os.environ.get('MOCK_CODE_BASE', data_path('.'))
+        mock = MockVasp(pwd, MockRegistry(mock_registry_path))
         if mock.is_runnable:
             mock.run()
         else:
