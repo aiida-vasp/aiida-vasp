@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 import click
 
+from aiida.cmdline.utils.decorators import with_dbenv
+
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
@@ -23,12 +25,14 @@ def output_file(*args):
 
 
 @click.command('mock-vasp')
+@with_dbenv
 def mock_vasp():
     """Original version of mock-vasp"""
     return _mock_vasp(False)
 
 
 @click.command('mock-vasp-strict')
+@with_dbenv
 def mock_vasp_strict():
     """A stricter version of mock-vasp does not allow default matching"""
     return _mock_vasp(True)
