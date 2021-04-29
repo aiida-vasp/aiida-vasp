@@ -50,6 +50,9 @@
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
 	    "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain"
 	],
+	"aiida.groups": [
+		"vasp.potcar = aiida_vasp.data.potcar:PotcarGroup"
+	],
 	"console_scripts": [
 	    "mock-vasp = aiida_vasp.commands.mock_vasp:mock_vasp"
 	]
