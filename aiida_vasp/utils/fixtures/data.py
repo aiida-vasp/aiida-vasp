@@ -45,9 +45,9 @@ def localhost_dir(tmp_path_factory):
 def localhost(fresh_aiida_env, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
-        computer = Computer.objects.get(name='localhost')
+        computer = Computer.objects.get(label='localhost')
     except NotExistent:
-        computer = Computer(name='localhost',
+        computer = Computer(label='localhost',
                             hostname='localhost',
                             transport_type='local',
                             scheduler_type='direct',

@@ -67,7 +67,7 @@ def detect_old_style_groups():
 @options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
 @click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
 @options.DRY_RUN()
-@with_dbenv
+@with_dbenv()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
@@ -88,7 +88,7 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 @click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
 @click.option('-d', '--description', is_flag=True, help='Also show the description.')
-@with_dbenv
+@with_dbenv()
 def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
     detect_old_style_groups()
@@ -119,7 +119,7 @@ def listfamilies(element, symbol, description):
 @options.DRY_RUN(help='Only display what would be exported.')
 @click.option('-z', '--as-archive', is_flag=True, help='Create a compressed archive (.tar.gz) instead of a folder.')
 @click.option('-v', '--verbose', is_flag=True, help='Print the names of all created files.')
-@with_dbenv
+@with_dbenv()
 def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
     potcar_data_cls = get_data_class('vasp.potcar')
@@ -139,7 +139,7 @@ def exportfamily(path, name, dry_run, as_archive, verbose):
 
 
 @potcar.command()
-@with_dbenv
+@with_dbenv()
 def migratefamilies():
     """
     Migrate the type_string associated with the potcar family groups.
