@@ -331,7 +331,7 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
         if isinstance(fresh_aiida_env._manager, TemporaryProfileManager):
             aiidapath = Path(fresh_aiida_env._manager.root_dir) / '.aiida'
         else:
-            aiidapath = Path(os.environ['AIIDA_PATH']) / '.aiida'
+            aiidapath = Path(os.environ.get('AIIDA_PATH', os.environ.get('HOME'))) / '/.aiida'
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
 
     return code
