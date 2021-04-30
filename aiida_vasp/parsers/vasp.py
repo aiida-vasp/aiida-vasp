@@ -126,7 +126,7 @@ class VaspParser(BaseParser):
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
-        self._file_parse_exit_codes = {}
+        self._file_parser_exit_codes = {}
 
     def add_parser_definition(self, filename, parser_dict):
         """Add the definition of a fileParser to self._definitions."""
@@ -143,7 +143,7 @@ class VaspParser(BaseParser):
     def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
         """The function that triggers the parsing of a calculation."""
 
-        self._file_parse_exit_codes = {}
+        self._file_parser_exit_codes = {}
         error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
@@ -160,7 +160,7 @@ class VaspParser(BaseParser):
         parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
 
         # Store any exit codes returned in parser_warnings
-        if self._file_parse_exit_codes:
+        if self._file_parser_exit_codes:
             parsed_quantities['file_parser_warnings'] = self.parser_warnings
 
         # Compose the output nodes using the parsed quantities
@@ -181,9 +181,10 @@ class VaspParser(BaseParser):
 
         # All quantities has been parsed, but there exit_codes reported from the parser
         # in this case, we return the code with the lowest status (hopefully the most severe)
-        if self._file_parse_exit_codes:
-            self._file_parse_exit_codes.sort(key=lambda x: x.status)
-            return self._file_parse_exit_codes[0]
+        if self._file_parser_exit_codes:
+            exit_codes = list(self._file_parser_exit_codes.values())
+            exit_codes.sort(key=lambda x: x.status)
+            return exit_codes[0]
 
         return self.exit_codes.NO_ERROR
 
@@ -236,7 +237,7 @@ class VaspParser(BaseParser):
 
             # Keep track of exit_code, if any
             if parser.exit_code and parser.exit_code.status != 0:
-                self._file_parse_exit_codes[str(file_parser_cls)] = parser.exit_code
+                self._file_parser_exit_codes[str(file_parser_cls)] = parser.exit_code
 
         return parsed_quantities, failed_to_parse_quantities
 
@@ -281,7 +282,7 @@ class VaspParser(BaseParser):
         Compose a list of parser warnings as returned by individual file parsers
         """
         warnings = {}
-        for key, exit_code in self._file_parse_exit_codes.items():
+        for key, exit_code in self._file_parser_exit_codes.items():
             warnings[key] = {
                 'status': exit_code.status,
                 'message': exit_code.message,
