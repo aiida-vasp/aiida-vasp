@@ -25,14 +25,14 @@ def output_file(*args):
 
 
 @click.command('mock-vasp')
-@with_dbenv
+@with_dbenv()
 def mock_vasp():
     """Original version of mock-vasp"""
     return _mock_vasp(False)
 
 
 @click.command('mock-vasp-strict')
-@with_dbenv
+@with_dbenv()
 def mock_vasp_strict():
     """A stricter version of mock-vasp does not allow default matching"""
     return _mock_vasp(True)
