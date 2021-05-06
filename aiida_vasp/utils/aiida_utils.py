@@ -12,8 +12,6 @@ from packaging import version
 
 from aiida.orm import User
 
-from aiida.cmdline.utils.decorators import with_dbenv
-
 BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
 
 
@@ -44,7 +42,6 @@ def querybuild(cls, **kwargs):
     return query_builder
 
 
-@with_dbenv()
 def get_data_class(data_type):
     """Provide access to the orm.data classes with deferred dbenv loading."""
     from aiida.plugins import DataFactory
