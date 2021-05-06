@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 import click
 
+from aiida.cmdline.utils.decorators import with_dbenv
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
@@ -21,6 +22,7 @@ def output_file(*args):
 
 
 @click.command('mock-vasp')
+@with_dbenv()
 def mock_vasp():
     """Verify input files are parseable and copy in output files."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
@@ -45,6 +47,7 @@ def mock_vasp():
     assert kpoints.is_file(), 'KPOINTS input file not found.'
     incar_parser = IncarParser(file_path=str(incar))
     assert incar_parser, 'INCAR could not be parsed.'
+
     assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
     assert PoscarParser(file_path=str(poscar)), 'POSCAR could not be parsed.'
     assert KpointsParser(file_path=str(kpoints)), 'KPOINTS could not be parsed.'
