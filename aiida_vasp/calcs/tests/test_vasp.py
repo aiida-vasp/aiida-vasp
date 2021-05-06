@@ -161,6 +161,7 @@ def managed_temp_file():
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+@pytest.mark.usefixtures('fresh_aiida_env')
 def test_vasp_calc(run_vasp_calc):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation

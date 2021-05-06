@@ -6,7 +6,7 @@ import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser, clean_nan_values
 
 
 def test_version(fresh_aiida_env, vasprun_parser):
@@ -734,3 +734,16 @@ def test_dynmat(fresh_aiida_env, vasprun_parser):
     ]))
     assert dyneig[0] == -1.36621537e+00
     assert dyneig[4] == -8.48939361e-01
+
+
+def test_nan_inf_cleaning():
+    """
+    Test cleaning nan/inf values
+    """
+
+    example = {'a': 1.0, 'b': {'c': 2.0, 'd': np.inf, 'e': np.nan}, 'd': {'e': {'g': np.inf}}}
+    clean_nan_values(example)
+    assert example['a'] == 1.0
+    assert example['b']['d'] == 'inf'
+    assert example['b']['e'] == 'nan'
+    assert example['d']['e']['g'] == 'inf'
