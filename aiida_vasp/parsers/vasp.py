@@ -362,7 +362,7 @@ class NotificationComposer:
 
         To add new checkers, one needs to implement a property with the name of the error for this class and
         contains the code for checking. This property should return the exit_code or return None. The property
-        if only inspected if its name is in the list critical notifications and it has been emitted.
+        is inspected if its name is in the list critical notifications.
 
         :param notification: The list of parsed notifications from the stream parser.
         :param parsed_quantities: The dictionary of parsed quantities.
