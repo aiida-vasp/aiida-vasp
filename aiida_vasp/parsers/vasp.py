@@ -340,10 +340,64 @@ class VaspParser(BaseParser):
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            for item in notifications:
-                if item['name'] in CRITICAL_NOTIFICATIONS:
-                    return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=item['message'])
+            composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes)
+            exit_code = composer.compose()
+            if exit_code is not None:
+                return exit_code
         else:
             self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
 
         return None
+
+
+class NotificationComposer:
+    """Compose errors codes based on the notifications"""
+
+    def __init__(self, notifications, parsed_quantities, inputs, exit_codes):
+        """
+        Composed error codes based on the notifications
+
+        Some of the errors need to have additional properties inspected before they can be emitted,
+        as they might be trigged in a harmless way.
+
+        To add new checkers, one needs to implement a property with the name of the error for this class and
+        contains the code for checking. This property should return the exit_code or return None. The property
+        if only inspected if its name is in the list critical notifications and it has been emitted.
+
+        :param notification: The list of parsed notifications from the stream parser.
+        :param parsed_quantities: The dictionary of parsed quantities.
+        :param inputs: The dictionary of the input nodes.
+        :param exit_codes: The dictionary of the exit codes from the parser.
+        """
+        self.notifications = notifications
+        self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
+        self.parsed_quantities = parsed_quantities
+        self.inputs = inputs
+        self.exit_codes = exit_codes
+
+    def compose(self):
+        """
+        Compose the exit codes
+
+        Retruns None if no exit code should be emitted, otherwise emit the error code.
+        """
+        for critical in CRITICAL_NOTIFICATIONS:
+            if hasattr(self, critical):
+                output = getattr(self, critical)
+                if output:
+                    return output
+            elif critical in self.notifications_dict:
+                return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict[critical])
+        return None
+
+    @property
+    def brmix(self):
+        """Check if BRMIX should be emitted"""
+        if not 'brmix' in self.notifications_dict:
+            return None
+
+        # If NELECT is set explicitly for the calculation then this is not an critical error
+        if 'parameters' in self.inputs and 'nelect' in self.inputs['parameters'].get_dict():
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['brmix'])

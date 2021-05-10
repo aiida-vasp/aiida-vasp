@@ -9,6 +9,7 @@ import numpy as np
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.vasp import NotificationComposer
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -497,3 +498,23 @@ def test_stream_history(request, calc_with_retrieved):
     assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
     for item in misc_dict['notifications']:
         assert item['kind'] != 'WARNING'
+
+
+def test_notification_composer(vasp_parser_without_parsing):
+    """Test the NotificationComposer class"""
+    parser, file_path = vasp_parser_without_parsing
+    notifications = [{'name': 'edwav', 'kind': 'ERROR', 'message': 'Error in EDWAV'}]
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code.status == 703
+
+    # BRMIX error but has NELECT defined in the input
+    notifications = [{'name': 'brmix', 'kind': 'ERROR', 'message': 'Error in BRMIX'}]
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code is None
+
+    # BRMIX error but no NELECT tag
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code.status == 703
