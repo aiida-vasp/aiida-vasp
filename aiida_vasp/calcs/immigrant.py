@@ -41,6 +41,38 @@ class VaspImmigrant(VaspCalculation):
 
     Simulate running the VaspCalculation up to the point where it can be retrieved and parsed,
     then hand over control to the runner for the rest.
+
+    Usage
+    -----
+    Immigrant calculation can be perfomed as
+
+    ::
+
+       code = Code.get_from_string('vasp544mpi@local')
+       folder = '/home/myself/vasp-calc-dir'
+       VaspImmigrant = CalculationFactory('vasp.immigrant')
+       builder = VaspImmigrant.get_builder_from_folder(code, folder)
+       submit(builder)
+
+    Instead of ``builder``, input dict is obtained similarly as
+
+    ::
+
+       inputs = VaspImmigrant.get_inputs_from_folder(code, folder)
+
+    Note
+    ----
+    The defaul metadata is set automatically as follows::
+
+       {'options': {'max_wallclock_seconds': 1,
+        'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}}
+
+    Specific scheduler may require setting ``resources`` differently
+    (e.g., sge ``'parallel_env'``).
+
+    ``get_inputs_from_folder`` and ``get_builder_from_folder`` accept several
+    kwargs, see the docstring of ``get_inputs_from_folder``.
+
     """
 
     @override
