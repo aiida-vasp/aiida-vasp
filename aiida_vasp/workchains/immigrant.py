@@ -1,0 +1,122 @@
+"""
+Verify workchain.
+
+-----------------
+Indented to be used to verify a calculation, perform corrections in inputs files and
+restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
+or not currently checked in it. This workchain does currently nothing.
+"""
+
+# pylint: disable=attribute-defined-outside-init
+from aiida.engine import while_
+from aiida.plugins import WorkflowFactory, CalculationFactory
+from aiida.orm import Code
+
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.workchains.restart import BaseRestartWorkChain
+
+
+class VaspImmigrantWorkChain(BaseRestartWorkChain):
+    """Parse VASP output files stored in a specified directory.
+
+
+    """
+
+    _verbose = False
+    _calculation = CalculationFactory('vasp.immigrant')
+    _next_workchain_string = 'vasp.vasp'
+    _next_workchain = WorkflowFactory(_next_workchain_string)
+
+    @classmethod
+    def define(cls, spec):
+        super().define(spec)
+        spec.input('code', valid_type=Code, required=True)
+        spec.input('folder_path', valid_type=get_data_class('str'), required=True)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
+        spec.input('options', valid_type=get_data_class('dict'), required=False)
+        spec.input('use_chgcar',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
+            If True, WavefunData (of WAVECAR) is attached.
+            """)
+        spec.input('use_wavecar',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
+            If True, WavefunData (of WAVECAR) is attached.
+            """)
+        spec.input('max_iterations',
+                   valid_type=get_data_class('int'),
+                   required=False,
+                   default=lambda: get_data_node('int', 1),
+                   help="""
+            The maximum number of iterations to perform.
+            """)
+        spec.input('clean_workdir',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
+            If True, clean the work dir upon the completion of a successfull calculation.
+            """)
+        spec.input('verbose',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
+            If True, enable more detailed output during workchain execution.
+            """)
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.outline(
+            cls.init_context,
+            cls.init_inputs,
+            while_(cls.run_calculations)(
+                cls.run_calculation,
+                cls.verify_calculation
+            ),
+            cls.results,
+            cls.finalize
+        )  # yapf: disable
+        spec.expose_outputs(cls._next_workchain)
+
+    def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
+        """Set inputs of VaspImmigrant calculation
+
+        Initial inputs (self.ctx.inputs) AttributeDict is obtained from
+        VaspImmigrant.get_inputs_from_folder(), where the following items
+        are already set in respective AiiDa data types,
+
+            code
+            settings.import_from_path
+            metadata['options']
+            parameters
+            structure
+            kpoints
+            potential (optional)
+
+        """
+
+        kwargs = self._get_kwargs()
+        self.ctx.inputs = self._calculation.get_inputs_from_folder(self.inputs.code, self.inputs.folder_path.value, **kwargs)
+        if 'options' in self.inputs:
+            self.ctx.inputs.metadata.options.update(self.inputs.options)
+        if 'metadata' in self.inputs:
+            label = self.inputs.metadata.get('label', '')
+            description = self.inputs.metadata.get('description', '')
+            self.ctx.inputs.metadata['label'] = label
+            self.ctx.inputs.metadata['description'] = description
+        return self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
+    def _get_kwargs(self):
+        """kwargs dictionary for VaspImmigrant calculation is created."""
+        kwargs = {'use_chgcar': False, 'use_wavecar': False}
+        for key in ('use_chgcar', 'use_wavecar', 'settings'):
+            if key in self.inputs:
+                if key == 'settings':
+                    kwargs[key] = self.inputs[key].get_dict()
+                else:
+                    kwargs[key] = self.inputs[key].value
+        return kwargs

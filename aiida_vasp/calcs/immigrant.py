@@ -36,11 +36,10 @@ from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
 
 class VaspImmigrant(VaspCalculation):
-    """
-    CalcJob subclass for importing non-aiida VASP runs.
+    """Parse VASP output files stored in a specified directory.
 
-    Simulate running the VaspCalculation up to the point where it can be retrieved and parsed,
-    then hand over control to the runner for the rest.
+    Simulate running the VaspCalculation up to the point where it can be
+    retrieved and parsed, then hand over control to the runner for the rest.
 
     Usage
     -----
@@ -50,15 +49,29 @@ class VaspImmigrant(VaspCalculation):
 
        code = Code.get_from_string('vasp544mpi@local')
        folder = '/home/myself/vasp-calc-dir'
+       settings = {'parser_settings': {'add_energies': True,
+                                       'add_forces': True,
+                                       'electronic_step_energies': True}}
        VaspImmigrant = CalculationFactory('vasp.immigrant')
-       builder = VaspImmigrant.get_builder_from_folder(code, folder)
+       builder = VaspImmigrant.get_builder_from_folder(code,
+                                                       folder,
+                                                       settings=settings)
        submit(builder)
 
-    Instead of ``builder``, input dict is obtained similarly as
+    Instead of ``builder``, inputs dict is obtained similarly as
 
     ::
 
-       inputs = VaspImmigrant.get_inputs_from_folder(code, folder)
+       code = Code.get_from_string('vasp544mpi@local')
+       folder = '/home/myself/vasp-calc-dir'
+       settings = {'parser_settings': {'add_energies': True,
+                                       'add_forces': True,
+                                       'electronic_step_energies': True}}
+       VaspImmigrant = CalculationFactory('vasp.immigrant')
+       inputs = VaspImmigrant.get_inputs_from_folder(code,
+                                                     folder,
+                                                     settings=settings)
+       submit(VaspImmigrant, **inputs)
 
     Note
     ----
@@ -109,6 +122,7 @@ class VaspImmigrant(VaspCalculation):
 
         :param code: a Code instance for the code originally used.
         :param remote_path: Directory or folder name where VASP inputs and outputs are stored.
+        :param settings: dict. This is used as the input port of VaspCalculation.
         :param potential_family: str. This will be obsolete at v3.0.
         :param potential_mapping: dict. This will be obsolete at v3.0.
         :param use_wavecar: bool. Try to read WAVECAR.
@@ -119,7 +133,8 @@ class VaspImmigrant(VaspCalculation):
         inputs.code = code
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         inputs.metadata = {'options': options}
-        settings = {'import_from_path': str(remote_path)}
+        settings = kwargs.get('settings', {})
+        settings.update({'import_from_path': str(remote_path)})
         inputs.settings = get_data_node('dict', dict=settings)
         _remote_path = Path(remote_path)
         with cmp_get_transport(code.computer) as transport:
