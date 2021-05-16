@@ -87,6 +87,7 @@ class VaspCalculation(VaspCalcBase):
                    help='The wave function coefficients. (WAVECAR)')
         spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
         spec.input('metadata.options.parser_name', default='vasp.vasp')
+        spec.input('metadata.options.output_filename', default=None)
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
@@ -137,11 +138,24 @@ class VaspCalculation(VaspCalcBase):
 
         Notice that we here utilize both the retrieve batch of files, which are always stored after retrieval and
         the temporary retrieve list which is automatically cleared after parsing.
+
+        As a special case, when ``inputs.metadata.options.output_filename`` is
+        specified, cls._VASP_OUTPUT in cls._ALWAYS_RETRIEVE_LIST is replaced by
+        it.
+
         """
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
+        always_retrieve_list = self._ALWAYS_RETRIEVE_LIST.copy()
 
         # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
-        calcinfo.codes_info[0].stdout_name = self._VASP_OUTPUT
+        print(self.inputs.metadata.options)
+        if self.inputs.metadata.options.output_filename:
+            stdout_name = self.inputs.metadata.options.output_filename
+            calcinfo.codes_info[0].stdout_name = stdout_name
+            always_retrieve_list.remove(self._VASP_OUTPUT)
+            always_retrieve_list.append(stdout_name)
+        else:
+            calcinfo.codes_info[0].stdout_name = self._VASP_OUTPUT
         calcinfo.codes_info[0].join_files = True
 
         # Still need the exceptions in case settings is not defined on inputs
@@ -160,10 +174,10 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
-            calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
+            calcinfo.retrieve_list = list(set(always_retrieve_list + additional_retrieve_list))
             calcinfo.retrieve_temporary_list = additional_retrieve_temp_list  # pylint: disable=invalid-name
         else:
-            calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+            calcinfo.retrieve_temporary_list = list(set(always_retrieve_list + additional_retrieve_temp_list))  # pylint: disable=invalid-name
             calcinfo.retrieve_list = additional_retrieve_list
         try:
             provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
