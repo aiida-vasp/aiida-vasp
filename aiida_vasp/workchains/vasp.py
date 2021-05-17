@@ -444,6 +444,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     def _handle_calculation_did_not_run(self, node):
         """Handle the case where the calculation is not performed"""
         if self.ctx.vasp_did_not_execute:
+            self.report(f'{node} did not execute, and this is the second time - aborting.')
             return ProcessHandlerReport(do_breka=True,
                                         exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='VASP executable did not run on the remote computer.'))
@@ -527,8 +528,15 @@ class VaspWorkChain(BaseRestartWorkChain):
                 return None
             self.report('The NELM limit has been breached in all ionic steps - taking actions to improve convergence.')
 
+        if algo.lower() in ('fast', 'veryfast'):
+            incar['algo'] = 'normal'
+            self._setup_restart(node)
+            self.ctx.inputs.parameters.update(incar)
+            self.report(f'Setting ALGO=normal from ALGO={algo.lower()}')
+            return ProcessHandlerReport(do_break=True)
+
         # The logic below only works for algo=normal
-        if algo in ['normal', 'fast']:
+        if algo.lower() == 'normal':
             # First try - Increase NELM
             if nelm < 150:
                 incar['nelm'] = 150
@@ -554,10 +562,10 @@ class VaspWorkChain(BaseRestartWorkChain):
             self._setup_restart(node)
             self.report('Switching to ALGO = ALL')
             return ProcessHandlerReport(do_break=True)
-
+        self.report('No additional fixes can be applied to improve the electronic convergence - aborting.')
         return ProcessHandlerReport(do_break=True,
                                     exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
-                                        message='Cannot apply fix for reaching eletronic convergence.'))
+                                        message='Cannot apply fix for reaching electronic convergence.'))
 
     @process_handler(priority=510, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED], enabled=False)
     def _handle_ionic_converge_problem_enhanced(self, node):  #pylint: disable=too-many-return-statements, too-many-branches
@@ -648,6 +656,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report(msg)
             return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg))
 
+        self.report('No fixes can be applied for ionic convergence.')
         return None
 
     @process_handler(priority=500, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
