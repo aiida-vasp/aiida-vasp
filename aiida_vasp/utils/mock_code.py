@@ -150,7 +150,7 @@ class MockRegistry:
         """
         Copy the content of a give hash to a destination.
 
-        :param rel_path: The relative path of the calcualtion folder to be
+        :param rel_path: The relative path of the calculation folder to be
           extracted.
         :param dst: The destination path to be extracted to - must already exists.
         """

@@ -250,7 +250,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
-                self.verbose_report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
+                self.report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
 
         # Reset the list of valid remote files and the restart calculation
         self.ctx.last_calc_remote_files = []
@@ -436,6 +436,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # overwrite the error code.
         report = self._handle_calculation_sanity_checks(node)
         if report:
+            self.report('Problems during checks of the outputs. The corresponding `exit_code` will be returned.')
             return ProcessHandlerReport(exit_code=report.exit_code, do_break=True)
         return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MAXIMUM_ITERATION_EXCEEDED, do_break=True)
 
@@ -491,15 +492,13 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
-        else:
-            # Single point calculation - attach the wavecar if possible
-            has_wavecar = self._setup_restart(node)
-            if not has_wavecar:
-                # If there is no WAVECAR there is not much we can do.....
-                self.report('The calcualtions did not finish and no WAVECAR is avalaible for restart.')
-                return ProcessHandlerReport(
-                    do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
-        return ProcessHandlerReport(do_break=True)
+            return ProcessHandlerReport(do_break=True)
+
+        # This is not a geometry optimisation, and there is no easy way to fix it....
+        # Probably we needs have increased resources request/wall time limit.
+        msg = ('The calculation was not completed, potentially due to insufficient walltime.'
+               'Please revise the resources request and/or input parameters.')
+        return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg))  #pylint: disable=no-member
 
     @process_handler(priority=800,
                      exit_codes=[
@@ -695,7 +694,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         misc = node.outputs.misc.get_dict()
         if 'run_status' not in misc:
-            self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
+            self.report('`run_status` is not found in misc - cannot verify the integrity of the child calculation.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT)  # pylint: disable=no-member
 
         run_status = misc['run_status']
@@ -728,7 +727,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     def _setup_restart(self, node):
         """
-        Check the existence of any restart files, if any of them eixsts use the last calcualtion
+        Check the existence of any restart files, if any of them eixsts use the last calculation
         for restart.
         """
         self._update_last_calc_files(node)
