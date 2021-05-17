@@ -222,7 +222,7 @@ def test_parser_exception(request, calc_with_retrieved):
         'parser_settings': {
             'add_bands': True,
             'add_kpoints': True,
-            'add_misc': ['total_energies', 'maximum_force', 'run_status', 'run_stats']
+            'add_misc': ['total_energies', 'maximum_force', 'run_status', 'run_stats', 'notifications']
         }
     }
 
@@ -241,12 +241,11 @@ def test_parser_exception(request, calc_with_retrieved):
     assert misc.get_dict()['maximum_force'] == 0.0
     assert misc.get_dict()['total_energies']['energy_extrapolated'] == -36.09616894
 
-    assert misc['file_parser_warnings'] == {
-        "<class 'aiida_vasp.parsers.file_parsers.vasprun.VasprunParser'>": {
-            'status': 1002,
-            'message': 'the parser is not able to parse the occupancies quantity'
-        }
-    }
+    assert misc['notifications'] == [{
+        'name': "<class 'aiida_vasp.parsers.file_parsers.vasprun.VasprunParser'>",
+        'message': 'the parser is not able to parse the occupancies quantity',
+        'status': 1002,
+    }]
 
     assert 'bands' not in result
 
