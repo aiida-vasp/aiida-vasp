@@ -189,9 +189,11 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(300,
                        'ERROR_MISSING_REQUIRED_OUTPUT',
                        message='the calculation is missing at least one required output in the restart workchain')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
+        spec.exit_code(500,
+                       'ERROR_MISSING_CRITICAL_OUTPUT',
+                       message='Missing critical output for inspecting the status of the calculation.')
         spec.exit_code(501,
-                       'ERROR_MANUAL_INTERVENTION_NEEDED',
+                       'ERROR_OTHER_INTERVENTION_NEEDED',
                        message='Cannot handle the error - inputs are likely need to be revised manually. Message: {message}')
         spec.exit_code(502,
                        'ERROR_CALCULATION_NOT_FINISHED',
@@ -248,7 +250,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
-                self.verbose_report('Enforced ISTART=1 nad ICHARG=1 for restarting the calculation.')
+                self.verbose_report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
 
         # Reset the list of valid remote files and the restart calculation
         self.ctx.last_calc_remote_files = []
@@ -403,29 +405,6 @@ class VaspWorkChain(BaseRestartWorkChain):
         if cleaned_calcs:
             self.report(f"cleaned remote folders of calculations: {' '.join(cleaned_calcs)}")
 
-    @process_handler(priority=1100, exit_codes=VaspCalculation.exit_codes.ERROR_VASP_DID_NOT_EXECUTE)
-    def _handle_calculation_did_not_run(self, node):
-        """Handle the case where the calculation is not performed"""
-        if self.ctx.vasp_did_not_execute:
-            return ProcessHandlerReport(do_breka=True,
-                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
-                                            message='VASP executable did not run on the remote computer.'))
-
-        self.report(f'{node} did not execute - try again')
-        self.ctx.vasp_did_not_execute = True
-        return ProcessHandlerReport(do_break=True)
-
-    @process_handler(priority=1000)
-    def _handle_misc_not_exist(self, node):
-        """
-        Handle the case where misc output is not avaliable, in which case we cannot do anything for it.
-        """
-        # Check if the run is converged electronically
-        if 'misc' not in node.outputs:
-            self.report('Cannot found `misc` outputs - please check the process reports for issues.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN, do_break=True)  # pylint: disable=no-member
-        return None
-
     @process_handler(priority=2000, enabled=False)
     def _handle_always_attach_outputs(self, node):
         """
@@ -460,47 +439,27 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(exit_code=report.exit_code, do_break=True)
         return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MAXIMUM_ITERATION_EXCEEDED, do_break=True)
 
-    @process_handler(priority=0)
-    def _handle_calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
+    @process_handler(priority=1100, exit_codes=VaspCalculation.exit_codes.ERROR_VASP_DID_NOT_EXECUTE)
+    def _handle_calculation_did_not_run(self, node):
+        """Handle the case where the calculation is not performed"""
+        if self.ctx.vasp_did_not_execute:
+            return ProcessHandlerReport(do_breka=True,
+                                        exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
+                                            message='VASP executable did not run on the remote computer.'))
+
+        self.report(f'{node} did not execute - try again')
+        self.ctx.vasp_did_not_execute = True
+        return ProcessHandlerReport(do_break=True)
+
+    @process_handler(priority=1000)
+    def _handle_misc_not_exist(self, node):
         """
-        Perform additional sanity checks on successfully completed calculation.
-        This is the *backstop* - so if no error handler handled the errors, the loop of running calculation
-        will break if some errors below have been detected.
-
-        Calculations that run successfully may still have problems that can only be determined when inspecting
-        the output. The same problems may also be the hidden root of a calculation failure. For that reason,
-        after verifying that the calculation ran, regardless of its calculation state, we perform some sanity
-        checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
-        should go into the child..
-
-        Note that this is the "final" check, most of the potential problems should have been handled and
-        fixed in restart by error handlers.
-
-        THIS HANDLER SHOULD NOT BE REACHED DURING THE NORMAL OPERATIONS. Handler with higher priority should
-        break the handling loop and return ProcessHandlerReport(do_break=True).
+        Handle the case where misc output is not avaliable, in which case we cannot do anything for it.
         """
-
-        misc = node.outputs.misc.get_dict()
-        if 'run_status' not in misc:
-            self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNKNOWN)  # pylint: disable=no-member
-
-        run_status = misc['run_status']
-
-        # Check if the calculation is indeed finished
-        if not run_status.get('finished'):
-            self.report(f'The child calculation {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED)  # pylint: disable=no-member
-
-        # Check that the electronic structure is converged
-        if not run_status.get('electronic_converged'):
-            self.report(f'The child calculation {node} did not have converged electronic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)  #pylint: disable=no-member
-
-        # Ionic convergence not reached
-        if run_status.get('ionic_converged') is False:
-            self.report(f'The child calculation {node} did not have converged electronic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED)  #pylint: disable=no-member
+        # Check if the run is converged electronically
+        if 'misc' not in node.outputs:
+            self.report('Cannot found `misc` outputs - please check the process reports for issues.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=900, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
@@ -528,7 +487,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 self.report('Performing a geometry optimisation but the output structure is not found.')
                 return ProcessHandlerReport(
                     do_break=True,
-                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No output structure for restart.'))  #pylint: disable=no-member
+                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message='No output structure for restart.'))  #pylint: disable=no-member
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
@@ -539,8 +498,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 # If there is no WAVECAR there is not much we can do.....
                 self.report('The calcualtions did not finish and no WAVECAR is avalaible for restart.')
                 return ProcessHandlerReport(
-                    do_break=True,
-                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
+                    do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message='No WAVECAR for continuation.'))  #pylint: disable=no-member
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=800,
@@ -599,51 +557,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(do_break=True)
 
         return ProcessHandlerReport(do_break=True,
-                                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                         message='Cannot apply fix for reaching eletronic convergence.'))
-
-    @process_handler(priority=500, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
-    def _handle_ionic_converge_problem(self, node):
-        """Handle ionic convergence problem"""
-        if 'structure' not in node.outputs:
-            self.report('Performing a geometry optimisation but the output structure is not found.')
-            return ProcessHandlerReport(do_break=True,
-                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
-                                            message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
-        # The simplest solution - resubmit the calculation again
-        self.report('Continuing geometry optimisation using the last geometry.')
-        self.ctx.inputs.structure = node.outputs.structure
-        self._setup_restart(node)
-        return ProcessHandlerReport(do_break=True)
-
-    @process_handler(priority=400, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
-    def _handle_vasp_critical(self, node):
-        """Handle critical errors"""
-        notification = node.outputs.misc['notifications']
-        self.report('Critical notifications detected: {} - aborting'.format(notification))
-        return ProcessHandlerReport(do_break=True,
-                                    exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(message=', '.join(notification)))
-
-    def _update_last_calc_files(self, node):
-        """
-        Connect to the remote and find the valid files in th calculation folder
-
-        Only update if the entry is empty in order to avoid too many connections to the remote.
-        """
-        if not self.ctx.last_calc_remote_files:
-            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
-        return self.ctx.last_calc_remote_files
-
-    def _setup_restart(self, node):
-        """
-        Check the existence of any restart files, if any of them eixsts use the last calcualtion
-        for restart.
-        """
-        self._update_last_calc_files(node)
-        if 'WAVECAR' in self.ctx.last_calc_remote_files or 'CHGCAR' in self.ctx.last_calc_remote_files:
-            self.ctx.restart_calc = node
-            return True
-        return False
 
     @process_handler(priority=510, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED], enabled=False)
     def _handle_ionic_converge_problem_enhanced(self, node):  #pylint: disable=too-many-return-statements, too-many-branches
@@ -658,7 +573,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if 'structure' not in node.outputs:
             self.report('Performing a geometry optimisation but the output structure is not found.')
             return ProcessHandlerReport(do_break=True,
-                                        exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(
+                                        exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
 
         # The simplest solution - resubmit the calculation again
@@ -670,13 +585,6 @@ class VaspWorkChain(BaseRestartWorkChain):
             return None
 
         natom = len(self.ctx.inputs.structure.sites)
-        vol_changes = []
-        for child in child_nodes:
-            inp_vol = child.inputs.structure.get_cell_volume()
-            out_vol = child.outputs.structure.get_cell_volume()
-            vol_changes.append(out_vol / inp_vol - 1.0)
-        vol_changes = np.array(vol_changes)
-
         # Number of iterations
         ionic_iterations = [misc['run_status']['last_iteration_index'][0] for misc in child_miscs]
 
@@ -693,7 +601,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         if np.all(np.abs(de_per_atom) < 1e-5):
             msg = 'Very samll energy change per atom in the last two iterations - please consider revising the EDIFFG settings.'
             self.report(msg)
-            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg))
 
         # Check if there are very few step performed per launch. Because VASP does not carry over
         # the internal parameters of the optimizer, this can make convergence slower.
@@ -701,7 +609,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             msg = ('Less than 5 iterations performed in the last launch - '
                    'please consider submitting the jobs with revised resources request.')
             self.report(msg)
-            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg))
 
         # Warn about very unusually large number of steps and switch IBRION if needed.
         # Total degrees of freedom
@@ -728,12 +636,106 @@ class VaspWorkChain(BaseRestartWorkChain):
                 return ProcessHandlerReport(do_break=True)
 
         # Check if energies are increasing without significant volume change
-        if np.all(de_per_atom > 0.0) and np.all(vol_changes[-2:] < 0.03):
+        vol_changes = []
+        for child in child_nodes:
+            inp_vol = child.inputs.structure.get_cell_volume()
+            out_vol = child.outputs.structure.get_cell_volume()
+            vol_changes.append(out_vol / inp_vol - 1.0)
+        vol_changes = np.array(vol_changes)
+
+        vol_tol = 0.03
+        if np.all(de_per_atom > 0.0) and np.all(abs(vol_changes[-2:]) < vol_tol):
             msg = 'Energy increasing for the last two iterations - something can be very wrong...'
             self.report(msg)
-            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_MANUAL_INTERVENTION_NEEDED.format(msg))
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg))
 
         return None
+
+    @process_handler(priority=500, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])
+    def _handle_ionic_converge_problem(self, node):
+        """Handle ionic convergence problem"""
+        if 'structure' not in node.outputs:
+            self.report('Performing a geometry optimisation but the output structure is not found.')
+            return ProcessHandlerReport(do_break=True,
+                                        exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
+                                            message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
+        # The simplest solution - resubmit the calculation again
+        self.report('Continuing geometry optimisation using the last geometry.')
+        self.ctx.inputs.structure = node.outputs.structure
+        self._setup_restart(node)
+        return ProcessHandlerReport(do_break=True)
+
+    @process_handler(priority=400, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
+    def _handle_vasp_critical(self, node):
+        """Handle critical errors"""
+        notification = node.outputs.misc['notifications']
+        self.report('Critical notifications detected: {} - aborting'.format(notification))
+        return ProcessHandlerReport(do_break=True,
+                                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=', '.join(notification)))
+
+    @process_handler(priority=0)
+    def _handle_calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
+        """
+        Perform additional sanity checks on successfully completed calculation.
+        This is the *backstop* - so if no error handler handled the errors, the loop of running calculation
+        will break if some errors below have been detected.
+
+        Calculations that run successfully may still have problems that can only be determined when inspecting
+        the output. The same problems may also be the hidden root of a calculation failure. For that reason,
+        after verifying that the calculation ran, regardless of its calculation state, we perform some sanity
+        checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
+        should go into the child..
+
+        Note that this is the "final" check, most of the potential problems should have been handled and
+        fixed in restart by error handlers.
+
+        THIS HANDLER SHOULD NOT BE REACHED DURING THE NORMAL OPERATIONS. Handler with higher priority should
+        break the handling loop and return ProcessHandlerReport(do_break=True).
+        """
+
+        misc = node.outputs.misc.get_dict()
+        if 'run_status' not in misc:
+            self.report('`run_status` is not found in misc - cannot verify the integrity of the child calcualtio.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT)  # pylint: disable=no-member
+
+        run_status = misc['run_status']
+
+        # Check if the calculation is indeed finished
+        if not run_status.get('finished'):
+            self.report(f'The child calculation {node} did not reach the end of execution.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED)  # pylint: disable=no-member
+
+        # Check that the electronic structure is converged
+        if not run_status.get('electronic_converged'):
+            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)  #pylint: disable=no-member
+
+        # Ionic convergence not reached
+        if run_status.get('ionic_converged') is False:
+            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED)  #pylint: disable=no-member
+        return None
+
+    def _update_last_calc_files(self, node):
+        """
+        Connect to the remote and find the valid files in th calculation folder
+
+        Only update if the entry is empty in order to avoid too many connections to the remote.
+        """
+        if not self.ctx.last_calc_remote_files:
+            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
+        return self.ctx.last_calc_remote_files
+
+    def _setup_restart(self, node):
+        """
+        Check the existence of any restart files, if any of them eixsts use the last calcualtion
+        for restart.
+        """
+        self._update_last_calc_files(node)
+        if 'WAVECAR' in self.ctx.last_calc_remote_files or 'CHGCAR' in self.ctx.last_calc_remote_files:
+            self.ctx.restart_calc = node
+            return True
+        return False
 
 
 def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
