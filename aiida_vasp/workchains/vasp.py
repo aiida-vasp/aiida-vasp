@@ -543,7 +543,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                          VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED,
                          VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
                      ],
-                     enable=False)
+                     enabled=False)
     def ignore_nelm_breach_relax(self, node):
         """
         Not a actual handler but works as a switch to bypass checks for NELM breaches in the middle of an ionic relaxation.
