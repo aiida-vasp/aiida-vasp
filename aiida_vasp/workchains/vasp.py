@@ -45,7 +45,7 @@ from aiida.engine import while_
 from aiida.common.lang import override
 #from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
-from aiida.common.exceptions import NotExistent
+from aiida.common.exceptions import InputValidationError, NotExistent
 from aiida.plugins import CalculationFactory
 from aiida.orm import Code, CalcJobNode
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler, WorkChain
@@ -296,6 +296,16 @@ class VaspWorkChain(BaseRestartWorkChain):
             unsupported_parameters = settings_dict.get('unsupported_parameters', unsupported_parameters)
             skip_parameters_validation = settings_dict.get('skip_parameters_validation', skip_parameters_validation)
             self.ctx.use_wavecar = settings_dict.get('USE_WAVECAR_FOR_RESTART', True)
+            # Ensure that the misc - run_status will be available for parsing - otherwise we abort immediately
+            # It should be enabled by default.
+            parser_settings = settings_dict.get('parser_settings', {})
+            if 'add_misc' in parser_settings:
+                misc_spec = parser_settings['add_misc']
+                if misc_spec is False:
+                    raise InputValidationError('The `misc` output must be requested for parsing!')
+                if isinstance(misc_spec, list):
+                    if 'run_status' not in misc_spec:
+                        raise InputValidationError('The quantity `run_status` must be requested for parsing!')
 
         # Perform inputs massage to accommodate generalization in higher lying workchains
         # and set parameters.
