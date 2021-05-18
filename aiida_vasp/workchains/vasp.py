@@ -524,7 +524,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
 
         # Only act on this specific return code, otherwise we reset the flag
-        if node.exit_codes != VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH:
+        if node.exit_status != VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH.status:
             self.ctx.last_calc_was_unfinished = False
             return None
 
