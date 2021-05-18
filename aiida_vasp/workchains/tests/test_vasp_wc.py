@@ -266,6 +266,8 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, i
 
     inputs = setup_vasp_workchain(si_structure(), incar, nkpts)
     inputs.verbose = get_data_node('bool', True)
+    # The test calculation contain NELM breaches during the relaxation - set to ignore it.
+    inputs.handler_overrides = get_data_node('dict', dict={'ignore_nelm_breach_relax': True})
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0

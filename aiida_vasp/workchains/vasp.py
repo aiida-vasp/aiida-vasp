@@ -746,7 +746,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         misc = node.outputs.misc.get_dict()
         if 'run_status' not in misc:
             self.report('`run_status` is not found in misc - cannot verify the integrity of the child calculation.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=4)
@@ -758,7 +758,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         run_status = misc['run_status']
         if not run_status.get('finished'):
             self.report(f'The child calculation {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=3)
@@ -771,14 +771,14 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
             self.report(f'The child calculation {node} did not have converged electronic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED)  #pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         if run_status.get('contains_nelm_breach'):
             if self.ctx.ignore_transient_nelm_breach:
                 self.report('The calculation contains at least one electronic step is not converged. But this is ignored as requested.')
             else:
                 self.report(('The calculation contains at least one electronic step is not converged. '
                              'The use should inspect the problem manually, treating the calculation as failed.'))
-                return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX)  #pylint: disable=no-member
+                return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX, do_break=True)  #pylint: disable=no-member
 
         return None
 
@@ -793,7 +793,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check that the ionic structure is converged
         if run_status.get('ionic_converged') is False:
             self.report(f'The child calculation {node} did not have converged electronic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED)  #pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         return None
 
     def _calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
@@ -810,6 +810,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         for check in checks:
             report = check(node)
             if report:
+                if report.do_break:
+                    return report
                 last_report = report
         return last_report
 
