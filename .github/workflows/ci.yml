@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     strategy:
       matrix:
         python: ['3.8']
@@ -38,7 +38,7 @@ jobs:
   tests:
     needs: [pre-commit]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     services:
       rabbitmq:
         image: rabbitmq:latest
