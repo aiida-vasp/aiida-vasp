@@ -661,7 +661,8 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # First check if dE is very small
         if np.all(np.abs(de_per_atom) < 1e-5):
-            msg = 'Very samll energy change per atom in the last two iterations - please consider revising the EDIFFG settings.'
+            msg = ('The total energy difference between the last two step is smaller than 1e-5 /atom'
+                   '- please consider to revise the cutoff value of the ionic steps.')
             self.report(msg)
             return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg))
 
