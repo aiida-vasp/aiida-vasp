@@ -11,9 +11,8 @@ or not currently checked in it. This workchain does currently nothing.
 from aiida.engine import while_
 from aiida.plugins import WorkflowFactory, CalculationFactory
 from aiida.orm import Code
-
+from aiida.engine.processes.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.workchains.restart import BaseRestartWorkChain
 
 
 class VaspImmigrantWorkChain(BaseRestartWorkChain):
@@ -23,7 +22,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     """
 
     _verbose = False
-    _calculation = CalculationFactory('vasp.immigrant')
+    _process_class = CalculationFactory('vasp.immigrant')
     _next_workchain_string = 'vasp.vasp'
     _next_workchain = WorkflowFactory(_next_workchain_string)
 
@@ -71,14 +70,13 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             """)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.outline(
-            cls.init_context,
+            cls.setup,
             cls.init_inputs,
-            while_(cls.run_calculations)(
-                cls.run_calculation,
-                cls.verify_calculation
+            while_(cls.should_run_process)(
+                cls.run_process,
+                cls.inspect_process,
             ),
             cls.results,
-            cls.finalize
         )  # yapf: disable
         spec.expose_outputs(cls._next_workchain)
 
@@ -100,7 +98,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         """
 
         kwargs = self._get_kwargs()
-        self.ctx.inputs = self._calculation.get_inputs_from_folder(self.inputs.code, self.inputs.folder_path.value, **kwargs)
+        self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, self.inputs.folder_path.value, **kwargs)
         if 'options' in self.inputs:
             self.ctx.inputs.metadata.options.update(self.inputs.options)
         if 'metadata' in self.inputs:
