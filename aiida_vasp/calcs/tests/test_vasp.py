@@ -287,3 +287,31 @@ def test_vasp_no_potcar_in_repo(run_vasp_calc):
     _, node = run_vasp_calc(inputs)
     repo_filenames = node.list_object_names()
     assert 'POTCAR' not in repo_filenames
+
+
+@pytest.mark.parametrize('test_case,expected,has_notification', [
+    ['exit_codes/converged-with-error', 703, True],
+    ['exit_codes/converged', 0, False],
+    ['exit_codes/unfinished', 700, False],
+    ['exit_codes/elec-unconverged', 701, False],
+    ['exit_codes/ionic-unconverged', 702, False],
+])
+@pytest.mark.parametrize([
+    'vasp_structure',
+    'vasp_kpoints',
+], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_exit_codes(run_vasp_calc, test_case, expected, has_notification):
+    """
+    Test running a VASP calculation with electronic/ionic convergence problems and
+    check if the exit_codes are set accordingly.
+    """
+    results, node = run_vasp_calc(test_case=test_case)
+
+    # Check that the standard output is there
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
+
+    misc = results['misc'].get_dict()
+    assert node.exit_status == expected
+    assert bool(misc['notifications']) is has_notification

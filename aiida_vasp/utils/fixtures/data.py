@@ -22,7 +22,6 @@ from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.tests import TemporaryProfileManager
-
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
@@ -286,12 +285,35 @@ def vasp_code(localhost):
 
 @pytest.fixture()
 def mock_vasp(fresh_aiida_env, localhost):
+    """
+    Give an mock-up of the VASP executable
+
+    This code will always create the output file even if no matching
+    calculations from the registry is found. This makes it suitable for simple
+    tests.
+    """
+    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp')
+
+
+@pytest.fixture()
+def mock_vasp_strict(fresh_aiida_env, localhost):
+    """
+    Give an mock-up of the VASP executable with strict input matching.
+
+    This code will not create the output file unless matching calculations from the
+    registry is found. It is suitable for testsing complex multi-step workchains.
+    tests.
+    """
+    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp-strict')
+
+
+def _mock_vasp(fresh_aiida_env, localhost, exec_name):
     """Points to a mock-up of a VASP executable."""
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
     query_builder = QueryBuilder()
     query_builder.append(Code, tag='code')
-    query_builder.add_filter('code', {'label': {'==': 'mock-vasp'}})
+    query_builder.add_filter('code', {'label': {'==': exec_name}})
     query_results = query_builder.all()
     if query_results:
         code = query_results[0][0]
@@ -300,9 +322,9 @@ def mock_vasp(fresh_aiida_env, localhost):
         if not localhost.pk:
             localhost.store()
         # returns unicode
-        mock_vasp_path = sp.check_output(['which', 'mock-vasp'], env=os_env, universal_newlines=True).strip()
+        mock_vasp_path = sp.check_output(['which', exec_name], env=os_env, universal_newlines=True).strip()
         code = Code()
-        code.label = 'mock-vasp'
+        code.label = exec_name
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
@@ -382,7 +404,11 @@ def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
     file_name = 'OUTCAR'
-    path = data_path(request.param, file_name)
+    if isinstance(request.param, list):
+        folder, file_name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, file_name)
     parser = OutcarParser(file_path=path, settings=ParserSettings({}))
     return parser
 

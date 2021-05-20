@@ -149,15 +149,21 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
 def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
     """Setup and standard VASP calculation with the mock executable that accepts input overrides."""
 
-    def inner(inputs=None, settings=None):
+    def inner(inputs=None, settings=None, test_case=None):
+        """
+        Run a VASP calculation with specified input and settings overrides.
+
+        Specific outputs can be selected using the test_case parameter.
+        """
         from aiida.plugins import CalculationFactory
         from aiida.engine import run
         calculation = CalculationFactory('vasp.vasp')
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
         kpoints, _ = vasp_kpoints
-        parameters = AttributeDict()
         parameters = vasp_params.get_dict()
+        if test_case is not None:
+            parameters['system'] = f'test-case:{test_case}'
         inpts = AttributeDict()
         inpts.code = Code.get_from_string('mock-vasp@localhost')
         inpts.structure = vasp_structure
