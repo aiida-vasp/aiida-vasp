@@ -10,7 +10,11 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
-    """Provide process class and inputs for importing a AiiDA-external VASP run."""
+    """Provide process class and inputs for importing a AiiDA-external VASP run.
+
+    The list of files in test_data/phonondb doesn't contain POTCAR.
+
+    """
     from aiida_vasp.calcs.immigrant import VaspImmigrant
     from aiida_vasp.data.potcar import PotcarData
 

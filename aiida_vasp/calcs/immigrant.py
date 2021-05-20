@@ -116,9 +116,14 @@ class VaspImmigrant(VaspCalculation):
         """
         Create inputs to launch immigrant from a code and a remote path on the associated computer.
 
-        If the POTCAR file is not present anymore, the pair of ``potential_family`` and
-        ``potential_mapping`` is used to attach the potential port. This feature will be
-        obsolete at v3.0.
+        If POTCAR does not exist, the provided ``potential_family`` and
+        ``potential_mapping`` are used to link potential to inputs. In this
+        case, at least ``potential_family`` has to be provided. Unless
+        ``potential_mapping``, this mapping is generated from structure, i.e.,
+
+        ::
+
+            potential_mapping = {element: element for element in structure.get_kind_names()}
 
         :param code: a Code instance for the code originally used.
         :param remote_path: Directory or folder name where VASP inputs and outputs are stored.
@@ -132,7 +137,8 @@ class VaspImmigrant(VaspCalculation):
         inputs = AttributeDict()
         inputs.code = code
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
-        inputs.metadata = {'options': options}
+        inputs.metadata = AttributeDict()
+        inputs.metadata.options = options
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': str(remote_path)})
         inputs.settings = get_data_node('dict', dict=settings)
