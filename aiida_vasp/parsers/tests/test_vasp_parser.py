@@ -9,6 +9,7 @@ import numpy as np
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
 from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.vasp import NotificationComposer
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -208,6 +209,48 @@ def test_parser_nodes(request, calc_with_retrieved):
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
     assert misc.get_dict()['fermi_level'] == 5.96764939
+
+
+def test_parser_exception(request, calc_with_retrieved):
+    """
+    Test the handling of exceptions/missing quantities
+
+    Here the eigenvalue section of the vasprun.xml and EIGNVAL files are deleted. However,
+    we still expect the other propertie to be parsed correctly.
+    """
+    settings_dict = {
+        'parser_settings': {
+            'add_bands': True,
+            'add_kpoints': True,
+            'add_misc': ['total_energies', 'maximum_force', 'run_status', 'run_stats', 'notifications']
+        }
+    }
+
+    file_path = str(request.fspath.join('..') + '../../../test_data/basic_run_ill_format')
+
+    node = calc_with_retrieved(file_path, settings_dict)
+
+    parser_cls = ParserFactory('vasp.vasp')
+    result, output = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    assert output.is_finished
+    assert output.exit_status == 1002
+
+    misc = result['misc']
+    assert isinstance(misc, get_data_class('dict'))
+    assert misc.get_dict()['maximum_force'] == 0.0
+    assert misc.get_dict()['total_energies']['energy_extrapolated'] == -36.09616894
+
+    assert misc['notifications'] == [{
+        'name': "<class 'aiida_vasp.parsers.file_parsers.vasprun.VasprunParser'>",
+        'message': 'the parser is not able to parse the occupancies quantity',
+        'status': 1002,
+    }]
+
+    assert 'bands' not in result
+
+    kpoints = result['kpoints']
+    assert isinstance(kpoints, get_data_class('array.kpoints'))
 
 
 def test_structure(request, calc_with_retrieved):
@@ -454,3 +497,23 @@ def test_stream_history(request, calc_with_retrieved):
     assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
     for item in misc_dict['notifications']:
         assert item['kind'] != 'WARNING'
+
+
+def test_notification_composer(vasp_parser_without_parsing):
+    """Test the NotificationComposer class"""
+    parser, file_path = vasp_parser_without_parsing
+    notifications = [{'name': 'edwav', 'kind': 'ERROR', 'message': 'Error in EDWAV'}]
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code.status == 703
+
+    # BRMIX error but has NELECT defined in the input
+    notifications = [{'name': 'brmix', 'kind': 'ERROR', 'message': 'Error in BRMIX'}]
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code is None
+
+    # BRMIX error but no NELECT tag
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})}, parser.exit_codes)
+    exit_code = composer.compose()
+    assert exit_code.status == 703

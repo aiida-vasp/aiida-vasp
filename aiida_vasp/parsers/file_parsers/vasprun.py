@@ -35,8 +35,7 @@ DEFAULT_OPTIONS = {
         'maximum_force',
         'maximum_stress',
         'band_properties',
-        'run_status',
-        'run_stats',
+        #'run_status',
         'version',
     ],
     'energy_type': ['energy_extrapolated'],
@@ -147,11 +146,11 @@ class VasprunParser(BaseFileParser):
             'name': 'band_properties',
             'prerequisites': [],
         },
-        'run_status': {
-            'inputs': [],
-            'name': 'run_status',
-            'prerequisites': [],
-        },
+        #        'run_status': {
+        #            'inputs': [],
+        #            'name': 'run_status',
+        #            'prerequisites': [],
+        #        },
         'version': {
             'inputs': [],
             'name': 'version',

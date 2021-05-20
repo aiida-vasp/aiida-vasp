@@ -13,6 +13,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
 from aiida.engine import WorkChain, append_, while_, if_
 from aiida.plugins import WorkflowFactory
+from aiida.orm import CalcJobNode, StructureData, QueryBuilder
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
@@ -338,14 +339,24 @@ class RelaxWorkChain(WorkChain):
                         'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
             return self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
 
+        # Because the workchain may have been through multiple restarts of the underlying VASP calculation
+        # we have to query and find the exact input structure of the calculation that generated the output
+        # structure and use that for comparison
+        query = QueryBuilder()
+        query.append(StructureData, filters={'id': workchain.outputs.structure.id}, tag='workchain-out')
+        query.append(CalcJobNode, with_outgoing='workchain-out', tag='calcjob')
+        query.append(StructureData, with_outgoing='calcjob')
+        input_structure = query.one()[0]
+
         self.ctx.previous_structure = self.ctx.current_structure
+        self.ctx.last_calc_input_structure = input_structure
         self.ctx.current_structure = workchain.outputs.structure
 
         converged = True
         if self.ctx.inputs.parameters.relax.convergence_on:
             if self._verbose:
                 self.report('Checking the convergence of the relaxation.')
-            comparison = compare_structures(self.ctx.previous_structure, self.ctx.current_structure)
+            comparison = compare_structures(input_structure, self.ctx.current_structure)
             delta = comparison.absolute if self.ctx.inputs.parameters.relax.convergence_absolute else comparison.relative
             if self.ctx.inputs.parameters.relax.positions:
                 converged &= self.check_positions_convergence(delta)
