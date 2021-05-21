@@ -160,6 +160,7 @@ class VaspImmigrant(VaspCalculation):
                     pass
                 inputs.kpoints = get_kpoints_input(sandbox_path)
                 cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
+
         return inputs
 
     @classmethod

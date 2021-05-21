@@ -33,6 +33,8 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         spec.input('folder_path', valid_type=get_data_class('str'), required=True)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('options', valid_type=get_data_class('dict'), required=False)
+        spec.input('potential_family', valid_type=get_data_class('str'), required=False)
+        spec.input('potential_mapping', valid_type=get_data_class('dict'), required=False)
         spec.input('use_chgcar',
                    valid_type=get_data_class('bool'),
                    required=False,
@@ -111,9 +113,9 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     def _get_kwargs(self):
         """kwargs dictionary for VaspImmigrant calculation is created."""
         kwargs = {'use_chgcar': False, 'use_wavecar': False}
-        for key in ('use_chgcar', 'use_wavecar', 'settings'):
+        for key in ('use_chgcar', 'use_wavecar', 'settings', 'potential_family', 'potential_mapping'):
             if key in self.inputs:
-                if key == 'settings':
+                if key in ('settings', 'potential_mapping'):
                     kwargs[key] = self.inputs[key].get_dict()
                 else:
                     kwargs[key] = self.inputs[key].value
