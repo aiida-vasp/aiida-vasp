@@ -743,6 +743,15 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             full_name = mapping[element]
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
+                # Check if it was because the family has not been migrated
+                query = QueryBuilder()
+                query.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE, 'label': family_name}, tag='family')
+                query.append(cls, tag='potcar', with_group='family', filters=element_filters)
+                if query.count() > 1:
+                    raise NotExistent(
+                        ('No POTCAR found for full name {} in family {}, but it was found in a legacy group with the same name.'
+                         ' Please run `verdi data vasp-potcar migratefamilies`.').format(full_name, family_name))
+
                 raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
             if len(potcars_of_kind) > 1:
                 result_potcars[element] = cls.find(family=family_name, full_name=full_name)[0]
