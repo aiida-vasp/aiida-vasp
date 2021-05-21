@@ -1,20 +1,19 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import tarfile
+import subprocess as sp
 from pathlib import Path
 import pytest
 
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.exceptions import UniquenessError, NotExistent
-try:
-    import subprocess32 as sp
-except ImportError:
-    import subprocess as sp
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP
+
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group, migrate_potcar_group
 
 
 def test_creation(fresh_aiida_env, potcar_node_pair):
@@ -283,3 +282,30 @@ def test_get_poctcars_dict(potcar_family):
     potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
+
+
+def test_family_migrate(potcar_family):
+    """Test the migration from OLD potcar family to the new ones"""
+
+    class LegacyPotcarGroup(Group):
+        """Old style group with the old type string"""
+
+    # Override the _type_string class property which is supposed to be loaded from the entrypoint.
+    LegacyPotcarGroup._type_string = OLD_POTCAR_FAMILY_TYPE
+
+    new_group = PotcarGroup.objects.get(label=potcar_family)
+    old_group = LegacyPotcarGroup(label=potcar_family + '_migrate_test')
+    old_group.store()
+
+    # Add the nodes from the new group to the old group
+    old_group.add_nodes(list(new_group.nodes))
+    # We levea the old group intact
+    migrate_potcar_group()
+
+    # Old group should still be there
+    assert LegacyPotcarGroup.objects.get(label=potcar_family + '_migrate_test')
+
+    migrated = PotcarGroup.objects.get(label=potcar_family + '_migrate_test')
+    uuids_original = {node.uuid for node in new_group.nodes}
+    uuids_migrated = {node.uuid for node in migrated.nodes}
+    assert uuids_migrated == uuids_original
