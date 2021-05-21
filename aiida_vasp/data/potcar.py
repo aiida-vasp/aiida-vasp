@@ -149,7 +149,7 @@ def migrate_potcar_group():
     Migrate existing potcar family groups to new specification.
     This creates copies of the old potcar family groups using the new `PotcarGroup` class.
 
-    Despite the name 'migrate', the potcar family gorups created are in fact left as they are.
+    Despite the name 'migrate', the potcar family group created are in fact left as they are.
     """
     qdb = QueryBuilder()
     qdb.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE})
@@ -162,9 +162,9 @@ def migrate_potcar_group():
         new_group.store()
         migrated.append(new_group.label)
         if created:
-            print('Created new style Group for <{}>'.format(old_group.label))
+            print('Created new style Group <{}> for <{}>'.format(new_group, old_group.label))
         else:
-            print(('Adding nodes to existing group <{}>'.format(old_group.label)))
+            print('Adding nodes to existing new style Group <{}> from <{}>'.format(new_group, old_group.label))
 
 
 def normalize_potcar_contents(potcar_contents):
