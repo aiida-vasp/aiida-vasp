@@ -14,7 +14,8 @@ from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
-from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, temp_pot_folder
+from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, temp_pot_folder, legacy_potcar_family
+from aiida_vasp.data.potcar import PotcarGroup
 
 
 @pytest.fixture
@@ -209,3 +210,16 @@ def test_call_from_vasp():
     import subprocess
     output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
     assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test
+
+
+def test_migrate_command(fresh_aiida_env, potcar_family, legacy_potcar_family):
+    """Test the migration command"""
+
+    legacy_name, legacy_group_class = legacy_potcar_family
+    legacy_group = legacy_group_class.objects.get(label=legacy_name)
+    run_cmd('migratefamilies')
+    migrated = PotcarGroup.objects.get(label=legacy_name)
+
+    uuids_original = {node.uuid for node in legacy_group.nodes}
+    uuids_migrated = {node.uuid for node in migrated.nodes}
+    assert uuids_migrated == uuids_original
