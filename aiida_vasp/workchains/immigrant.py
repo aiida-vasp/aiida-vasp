@@ -1,10 +1,8 @@
 """
-Verify workchain.
+Vasp immigrant workchain.
 
------------------
-Indented to be used to verify a calculation, perform corrections in inputs files and
-restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
-or not currently checked in it. This workchain does currently nothing.
+-------------------------
+Workchain to import files of VASP calculation in a folder.
 """
 
 # pylint: disable=attribute-defined-outside-init
@@ -16,10 +14,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspImmigrantWorkChain(BaseRestartWorkChain):
-    """Parse VASP output files stored in a specified directory.
-
-
-    """
+    """Import files of VASP calculation in the specified folder path."""
 
     _verbose = False
     _process_class = CalculationFactory('vasp.immigrant')
@@ -87,7 +82,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
 
         Initial inputs (self.ctx.inputs) AttributeDict is obtained from
         VaspImmigrant.get_inputs_from_folder(), where the following items
-        are already set in respective AiiDa data types,
+        are already set in respective AiiDA data types,
 
             code
             settings.import_from_path

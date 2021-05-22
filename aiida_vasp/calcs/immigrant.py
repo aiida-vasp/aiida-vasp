@@ -41,14 +41,14 @@ class VaspImmigrant(VaspCalculation):
     Simulate running the VaspCalculation up to the point where it can be
     retrieved and parsed, then hand over control to the runner for the rest.
 
-    Usage
-    -----
-    Immigrant calculation can be perfomed as
+    Usage examples
+    --------------
+    Immigrant calculation can be perfomed as follows.
 
     ::
 
-       code = Code.get_from_string('vasp544mpi@local')
-       folder = '/home/myself/vasp-calc-dir'
+       code = Code.get_from_string('vasp@local')
+       folder = '/home/username/vasp-calc-dir'
        settings = {'parser_settings': {'add_energies': True,
                                        'add_forces': True,
                                        'electronic_step_energies': True}}
@@ -62,8 +62,8 @@ class VaspImmigrant(VaspCalculation):
 
     ::
 
-       code = Code.get_from_string('vasp544mpi@local')
-       folder = '/home/myself/vasp-calc-dir'
+       code = Code.get_from_string('vasp@local')
+       folder = '/home/username/vasp-calc-dir'
        settings = {'parser_settings': {'add_energies': True,
                                        'add_forces': True,
                                        'electronic_step_energies': True}}
