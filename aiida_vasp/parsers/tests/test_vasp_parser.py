@@ -208,7 +208,7 @@ def test_parser_nodes(request, calc_with_retrieved):
     assert isinstance(misc, get_data_class('dict'))
     assert isinstance(bands, get_data_class('array.bands'))
     assert isinstance(kpoints, get_data_class('array.kpoints'))
-    assert misc.get_dict()['fermi_level'] == 5.96764939
+    assert misc.get_dict()['fermi_level'] == pytest.approx(5.96764939)
 
 
 def test_parser_exception(request, calc_with_retrieved):
@@ -238,8 +238,8 @@ def test_parser_exception(request, calc_with_retrieved):
 
     misc = result['misc']
     assert isinstance(misc, get_data_class('dict'))
-    assert misc.get_dict()['maximum_force'] == 0.0
-    assert misc.get_dict()['total_energies']['energy_extrapolated'] == -36.09616894
+    assert misc.get_dict()['maximum_force'] == pytest.approx(0.0)
+    assert misc.get_dict()['total_energies']['energy_extrapolated'] == pytest.approx(-36.09616894)
 
     assert misc['notifications'] == [{
         'name': "<class 'aiida_vasp.parsers.file_parsers.vasprun.VasprunParser'>",
@@ -348,10 +348,10 @@ def test_misc(request, calc_with_retrieved):
     data = misc.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so
     # only perform rudimentary checks, and the content comming from the xml file.
-    assert data['fermi_level'] == 6.17267267
-    assert data['maximum_stress'] == 42.96872956444064
-    assert data['maximum_force'] == 0.21326679
-    assert data['total_energies']['energy_extrapolated'] == -10.823296
+    assert data['fermi_level'] == pytest.approx(6.17267267)
+    assert data['maximum_stress'] == pytest.approx(42.96872956444064)
+    assert data['maximum_force'] == pytest.approx(0.21326679)
+    assert data['total_energies']['energy_extrapolated'] == pytest.approx(-10.823296)
 
 
 @pytest.mark.parametrize(

@@ -56,8 +56,8 @@ def test_vasp_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_st
     assert 'misc' in results
     assert 'remote_folder' in results
     misc = results['misc'].get_dict()
-    assert misc['maximum_stress'] == 22.8499295
-    assert misc['total_energies']['energy_extrapolated'] == -14.16209692
+    assert misc['maximum_stress'] == pytest.approx(22.8499295)
+    assert misc['total_energies']['energy_extrapolated'] == pytest.approx(-14.16209692)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
@@ -242,7 +242,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     assert 'misc' in results
     assert 'remote_folder' in results
 
-    assert results['misc']['total_energies']['energy_extrapolated'] == -4.82467802
+    assert results['misc']['total_energies']['energy_extrapolated'] == pytest.approx(-4.82467802)
 
     # Sort the called nodes by creation time
     called_nodes = list(node.called)

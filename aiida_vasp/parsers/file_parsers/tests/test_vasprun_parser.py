@@ -50,11 +50,11 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
     data_dict = data_obj.get_dict()
-    assert data_dict['fermi_level'] == 5.96764939
-    assert data_dict['total_energies']['energy_extrapolated'] == -42.91113621
-    assert data_dict['energies']['energy_extrapolated'][0] == -42.91113621
-    assert data_dict['maximum_stress'] == 28.803993008871014
-    assert data_dict['maximum_force'] == 3.41460162
+    assert data_dict['fermi_level'] == pytest.approx(5.96764939)
+    assert data_dict['total_energies']['energy_extrapolated'] == pytest.approx(-42.91113621)
+    assert data_dict['energies']['energy_extrapolated'][0] == pytest.approx(-42.91113621)
+    assert data_dict['maximum_stress'] == pytest.approx(28.803993008871014)
+    assert data_dict['maximum_force'] == pytest.approx(3.41460162)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
@@ -269,7 +269,7 @@ def test_dielectrics(fresh_aiida_env, vasprun_parser):
     assert np.all(real[0] == np.array([12.0757, 11.4969, 11.4969, 0.0, 0.6477, 0.0]))
     assert np.all(real[500] == np.array([-0.5237, -0.5366, -0.5366, 0.0, 0.0134, 0.0]))
     assert np.all(real[999] == np.array([6.57100000e-01, 6.55100000e-01, 6.55100000e-01, 0.0, -1.00000000e-04, 0.0]))
-    assert energy[500] == 10.2933
+    assert energy[500] == pytest.approx(10.2933)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('disp_details', {})], indirect=True)
@@ -341,8 +341,8 @@ def test_dos(fresh_aiida_env, vasprun_parser):
     assert dos.shape == (301,)
     assert energy.shape == (301,)
     # test a few entries
-    assert dos[150] == 4.1296
-    assert energy[150] == 2.3373
+    assert dos[150] == pytest.approx(4.1296)
+    assert energy[150] == pytest.approx(2.3373)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
@@ -368,8 +368,8 @@ def test_dos_spin(fresh_aiida_env, vasprun_parser):
         1000,
     )
     # test a few entries
-    assert dos[0, 500] == 0.9839
-    assert dos[1, 500] == 0.9844
+    assert dos[0, 500] == pytest.approx(0.9839)
+    assert dos[1, 500] == pytest.approx(0.9844)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('partial', {})], indirect=True)
@@ -394,7 +394,7 @@ def test_pdos(fresh_aiida_env, vasprun_parser):
     # test a few entries
     assert np.all(dos[3, 500] == np.array([0.0770, 0.0146, 0.0109, 0.0155, 0.0, 0.0, 0.0, 0.0, 0.0]))
     assert np.all(dos[7, 500] == np.array([0.0747, 0.0121, 0.0092, 0.0116, 0.0, 0.0, 0.0, 0.0, 0.0]))
-    assert energy[500] == 0.01
+    assert energy[500] == pytest.approx(0.01)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('partial', {})], indirect=True)
@@ -442,12 +442,12 @@ def test_bands(fresh_aiida_env, vasprun_parser):
     assert eigen.shape == (1, 64, 21)
     assert occ.shape == (1, 64, 21)
     # test a few entries
-    assert eigen[0, 0, 0] == -6.2348
-    assert eigen[0, 0, 15] == 5.8956
-    assert eigen[0, 6, 4] == -1.7424
-    assert occ[0, 0, 0] == 1.0
-    assert occ[0, 0, 15] == 0.6949
-    assert occ[0, 6, 4] == 1.0
+    assert eigen[0, 0, 0] == pytest.approx(-6.2348)
+    assert eigen[0, 0, 15] == pytest.approx(5.8956)
+    assert eigen[0, 6, 4] == pytest.approx(-1.7424)
+    assert occ[0, 0, 0] == pytest.approx(1.0)
+    assert occ[0, 0, 15] == pytest.approx(0.6949)
+    assert occ[0, 6, 4] == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('spin', {})], indirect=True)
@@ -456,8 +456,8 @@ def test_band_properties_result(fresh_aiida_env, vasprun_parser):
 
     inputs = get_node_composer_inputs_from_file_parser(vasprun_parser, quantity_keys=['band_properties'])
     data = NodeComposer.compose('dict', inputs).get_dict()['band_properties']
-    assert data['cbm'] == 6.5536
-    assert data['vbm'] == 6.5105
+    assert data['cbm'] == pytest.approx(6.5536)
+    assert data['vbm'] == pytest.approx(6.5105)
     assert data['is_direct_gap'] is False
     assert data['band_gap'] == pytest.approx(0.04310, rel=1e-3)
 
@@ -484,18 +484,18 @@ def test_eigenocc_spin_result(fresh_aiida_env, vasprun_parser):
     assert eigen.shape == (2, 64, 25)
     assert occ.shape == (2, 64, 25)
     # test a few entries
-    assert eigen[0, 0, 0] == -6.2363
-    assert eigen[0, 0, 15] == 5.8939
-    assert eigen[0, 6, 4] == -1.7438
-    assert eigen[1, 0, 0] == -6.2357
-    assert eigen[1, 0, 15] == 5.8946
-    assert eigen[1, 6, 4] == -1.7432
-    assert occ[0, 0, 0] == 1.0
-    assert occ[0, 0, 15] == 0.6955
-    assert occ[0, 6, 4] == 1.0
-    assert occ[1, 0, 0] == 1.0
-    assert occ[1, 0, 15] == 0.6938
-    assert occ[1, 6, 4] == 1.0
+    assert eigen[0, 0, 0] == pytest.approx(-6.2363)
+    assert eigen[0, 0, 15] == pytest.approx(5.8939)
+    assert eigen[0, 6, 4] == pytest.approx(-1.7438)
+    assert eigen[1, 0, 0] == pytest.approx(-6.2357)
+    assert eigen[1, 0, 15] == pytest.approx(5.8946)
+    assert eigen[1, 6, 4] == pytest.approx(-1.7432)
+    assert occ[0, 0, 0] == pytest.approx(1.0)
+    assert occ[0, 0, 15] == pytest.approx(0.6955)
+    assert occ[0, 6, 4] == pytest.approx(1.0)
+    assert occ[1, 0, 0] == pytest.approx(1.0)
+    assert occ[1, 0, 15] == pytest.approx(0.6938)
+    assert occ[1, 6, 4] == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
@@ -732,8 +732,8 @@ def test_dynmat(fresh_aiida_env, vasprun_parser):
         3.11984195e-13, 2.73349550e-01, 2.73349550e-01, 2.59853610e-13, 2.73349550e-01, 2.73349550e-01, -1.64418993e-01, 1.81002749e-01,
         1.81002749e-01
     ]))
-    assert dyneig[0] == -1.36621537e+00
-    assert dyneig[4] == -8.48939361e-01
+    assert dyneig[0] == pytest.approx(-1.36621537e+00)
+    assert dyneig[4] == pytest.approx(-8.48939361e-01)
 
 
 def test_nan_inf_cleaning():
@@ -743,7 +743,7 @@ def test_nan_inf_cleaning():
 
     example = {'a': 1.0, 'b': {'c': 2.0, 'd': np.inf, 'e': np.nan}, 'd': {'e': {'g': np.inf}}}
     clean_nan_values(example)
-    assert example['a'] == 1.0
+    assert example['a'] == pytest.approx(1.0)
     assert example['b']['d'] == 'inf'
     assert example['b']['e'] == 'nan'
     assert example['d']['e']['g'] == 'inf'

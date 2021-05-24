@@ -97,8 +97,8 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
     np.testing.assert_allclose(data_dict['elastic_moduli']['total'][3], test)
 
     assert data_dict['run_stats']
-    assert data_dict['run_stats']['total_cpu_time_used'] == 89.795
-    assert data_dict['run_stats']['average_memory_used'] == 0.0
+    assert data_dict['run_stats']['total_cpu_time_used'] == pytest.approx(89.795)
+    assert data_dict['run_stats']['average_memory_used'] == pytest.approx(0.0)
 
     assert data_dict['run_status']['last_iteration_index'] == [15, 5]
     assert data_dict['run_status']['finished']
