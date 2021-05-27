@@ -26,7 +26,7 @@ def test_parser_read(fresh_aiida_env):
     incar = parser.incar
     assert incar['prec'] == 'Accurate'
     assert incar['ibrion'] == -1
-    assert incar['encut'] == 359.7399
+    assert incar['encut'] == pytest.approx(359.7399)
     assert incar['lreal'] is False
 
 

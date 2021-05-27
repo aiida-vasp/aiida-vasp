@@ -64,7 +64,7 @@ def test_relax_parameters_all_set(init_relax_parameters):
     """Test all standard relaxation parameters are set."""
     massager = ParametersMassage(init_relax_parameters)
     parameters = massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE]
-    assert parameters.ediffg == -0.01
+    assert parameters.ediffg == pytest.approx(-0.01)
     assert parameters.ibrion == 2
     assert parameters.nsw == 60
     assert parameters.isif == 3
