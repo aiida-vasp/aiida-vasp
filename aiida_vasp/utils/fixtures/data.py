@@ -30,6 +30,7 @@ from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.parsers.file_parsers.stream import StreamParser
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
@@ -44,9 +45,9 @@ def localhost_dir(tmp_path_factory):
 def localhost(fresh_aiida_env, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
-        computer = Computer.objects.get(name='localhost')
+        computer = Computer.objects.get(label='localhost')
     except NotExistent:
-        computer = Computer(name='localhost',
+        computer = Computer(label='localhost',
                             hostname='localhost',
                             transport_type='local',
                             scheduler_type='direct',
@@ -122,6 +123,28 @@ def potcar_family(fresh_aiida_env, temp_pot_folder):
     assert 'In_d' in potcar_cls.get_full_names(POTCAR_FAMILY_NAME, 'In')
     assert not potcar_ga.exists()
     return family_name
+
+
+@pytest.fixture
+def legacy_potcar_family(potcar_family):
+    """
+    Fixture from creating an legacy potcar group
+
+    Returns a tuple of group label and the LegacyPotcarGroup with the old type_string
+    """
+
+    class LegacyPotcarGroup(Group):
+        """Old style group with the old type string"""
+
+    # Override the _type_string class property which is supposed to be loaded from the entrypoint.
+    LegacyPotcarGroup._type_string = OLD_POTCAR_FAMILY_TYPE
+    new_group = PotcarGroup.objects.get(label=potcar_family)
+    old_group = LegacyPotcarGroup(label=potcar_family + '_migrate_test')
+    old_group.store()
+
+    # Add the nodes from the new group to the old group
+    old_group.add_nodes(list(new_group.nodes))
+    return old_group.label, LegacyPotcarGroup
 
 
 @pytest.fixture

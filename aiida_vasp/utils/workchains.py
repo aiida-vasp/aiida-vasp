@@ -26,7 +26,6 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     namespaces. They all should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
     """
-    from past.builtins import basestring
     prepared_inputs = AttributeDict()
 
     if namespaces is None:
@@ -39,7 +38,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     no_dict = no_dict + namespaces
     # Copy and convert dict
     for key, val in inputs.items():
-        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()])):
+        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()])):
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val

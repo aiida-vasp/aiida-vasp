@@ -1,20 +1,20 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
 import tarfile
+import subprocess as sp
 from pathlib import Path
 import pytest
 
 from pymatgen.io.vasp import PotcarSingle
 from aiida.common.exceptions import UniquenessError, NotExistent
-try:
-    import subprocess32 as sp
-except ImportError:
-    import subprocess as sp
 
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
-from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP
+from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP, legacy_potcar_family
+from aiida_vasp.commands.potcar import potcar
+
+from aiida_vasp.data.potcar import PotcarGroup, migrate_potcar_group
 
 
 def test_creation(fresh_aiida_env, potcar_node_pair):
@@ -280,6 +280,46 @@ def test_get_poctcars_dict(potcar_family):
     potcar_cls = get_data_class('vasp.potcar')
     elements = POTCAR_MAP.keys()
     mapping = POTCAR_MAP
+    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
+    assert set(potcar_dict.keys()) == set(elements)
+    assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
+
+
+def test_family_migrate(potcar_family, legacy_potcar_family):
+    """Test the migration from OLD potcar family to the new ones"""
+
+    old_family_name, legacy_group_class = legacy_potcar_family
+    legacy_group = legacy_group_class.objects.get(label=old_family_name)
+    migrate_potcar_group()
+
+    # Old group should still be there
+    assert legacy_group_class.objects.get(label=old_family_name)
+
+    migrated = PotcarGroup.objects.get(label=old_family_name)
+    uuids_original = {node.uuid for node in legacy_group.nodes}
+    uuids_migrated = {node.uuid for node in migrated.nodes}
+    assert uuids_migrated == uuids_original
+
+
+def test_old_style_detect(potcar_family, legacy_potcar_family):
+    """Test the assestion that the potcars are found old in the legacy group not the new"""
+    potcar_cls = get_data_class('vasp.potcar')
+    elements = POTCAR_MAP.keys()
+    mapping = POTCAR_MAP
+    new_group = PotcarGroup.objects.get(label=potcar_family)
+    new_group.label += '_'
+
+    # Change the name of the legacy group to the new one so it will be matched
+    legacy_group_label, legacy_group_class = legacy_potcar_family
+    legacy_group = legacy_group_class.objects.get(label=legacy_group_label)
+    legacy_group.label = potcar_family
+
+    # The raise Value Error should contain hints for migrate
+    with pytest.raises(NotExistent, match=r'.*found in a legacy group.*'):
+        potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
+
+    # Change the name back and the test should now pass
+    new_group.label = new_group.label[:-1]
     potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
