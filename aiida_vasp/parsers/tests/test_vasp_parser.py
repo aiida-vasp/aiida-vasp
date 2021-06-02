@@ -198,8 +198,11 @@ def test_parser_nodes(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     misc = result['misc']
     bands = result['bands']
@@ -280,8 +283,11 @@ def test_structure(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     # First fetch structure from vasprun
 
@@ -293,8 +299,12 @@ def test_structure(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     structure_poscar = result['structure']
 
@@ -408,8 +418,11 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     if misc_input == []:
         # Test empty misc specification, yields no misc output node
@@ -480,8 +493,12 @@ def test_stream_history(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     misc = result['misc']
     misc_dict = misc.get_dict()
@@ -517,3 +534,21 @@ def test_notification_composer(vasp_parser_without_parsing):
     composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})}, parser.exit_codes)
     exit_code = composer.compose()
     assert exit_code.status == 703
+
+
+def test_critical_file_missing(calc_with_retrieved):
+    """Test raising return code to indicate that one or more critical filse are missing"""
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True})
+    parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
+    success = parser.parse(retrieved_temporary_folder=file_path)
+    assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_FILE
+
+    # Test missing OUTCAR
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    # Delete the retrieved OUTCAR file and instantiate the parser
+    node.outputs.retrieved.delete_object('OUTCAR', force=True)
+    parser = ParserFactory('vasp.vasp')(node)
+    # No temporary folder is passed - parse everything for the permanent storage
+    success = parser.parse()
+    assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_FILE
