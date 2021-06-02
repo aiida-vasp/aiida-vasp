@@ -517,3 +517,21 @@ def test_notification_composer(vasp_parser_without_parsing):
     composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})}, parser.exit_codes)
     exit_code = composer.compose()
     assert exit_code.status == 703
+
+
+def test_critical_file_missing(calc_with_retrieved):
+    """Test raising return code to indicate that one or more critical filse are missing"""
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True})
+    parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
+    success = parser.parse(retrieved_temporary_folder=file_path)
+    assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_FILE
+
+    # Test missing OUTCAR
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    # Delete the retrieved OUTCAR file and instantiate the parser
+    node.outputs.retrieved.delete_object('OUTCAR', force=True)
+    parser = ParserFactory('vasp.vasp')(node)
+    # No temporary folder is passed - parse everything for the permanent storage
+    success = parser.parse()
+    assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_FILE

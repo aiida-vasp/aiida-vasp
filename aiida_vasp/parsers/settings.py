@@ -36,12 +36,12 @@ FILE_PARSER_SETS = {
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
-            'is_critical': False,
+            'is_critical': True,
             'status': 'Unknown'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
-            'is_critical': False,
+            'is_critical': True,
             'status': 'Unknown'
         },
         'CHGCAR': {
