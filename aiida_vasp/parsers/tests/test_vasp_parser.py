@@ -198,8 +198,11 @@ def test_parser_nodes(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     misc = result['misc']
     bands = result['bands']
@@ -280,8 +283,11 @@ def test_structure(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     # First fetch structure from vasprun
 
@@ -293,8 +299,12 @@ def test_structure(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     structure_poscar = result['structure']
 
@@ -408,8 +418,11 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     if misc_input == []:
         # Test empty misc specification, yields no misc output node
@@ -480,8 +493,12 @@ def test_stream_history(request, calc_with_retrieved):
 
     node = calc_with_retrieved(file_path, settings_dict)
 
-    parser_cls = ParserFactory('vasp.vasp')
-    result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    parser = ParserFactory('vasp.vasp')(node)
+    # The test data does not contain OUTCAR - make sure that is allowed
+    parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
+    parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
+    parser.parse(retrieved_temporary_folder=file_path)
+    result = parser.outputs
 
     misc = result['misc']
     misc_dict = misc.get_dict()
