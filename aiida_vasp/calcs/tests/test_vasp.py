@@ -162,10 +162,10 @@ def managed_temp_file():
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.usefixtures('fresh_aiida_env')
-def test_vasp_calc(run_vasp_calc):
+def test_vasp_calc(run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
-    results, node = run_vasp_calc()
+    results, node = run_vasp_process()
     assert node.exit_status == 0
 
     # Check that the standard output is there
@@ -199,19 +199,19 @@ def test_vasp_calc(run_vasp_calc):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_delete(run_vasp_calc):
+def test_vasp_calc_delete(run_vasp_process):
     """Test a run of a basic VASP calculation where one does not want to store the always retrieved files after parsing."""
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False})
-    _, node = run_vasp_calc(inputs)
+    _, node = run_vasp_process(inputs)
     files = node.outputs.retrieved.list_objects()
     file_names = [single_file.name for single_file in files]
     assert set(file_names) == set(retrieve_list_ref)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_extra(run_vasp_calc):
+def test_vasp_calc_extra(run_vasp_process):
     """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
     # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
     # and check if it is actually there
@@ -219,7 +219,7 @@ def test_vasp_calc_extra(run_vasp_calc):
     inputs = {}
     extra_file_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
-    _, node = run_vasp_calc(inputs)
+    _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
     retrieve_temporary_list = node.get_retrieve_temporary_list()
@@ -234,7 +234,7 @@ def test_vasp_calc_extra(run_vasp_calc):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_delete_extra(run_vasp_calc):
+def test_vasp_calc_delete_extra(run_vasp_process):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files but not store them after parsing."""
     # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
     # and check if it is actually there
@@ -243,7 +243,7 @@ def test_vasp_calc_delete_extra(run_vasp_calc):
     inputs = {}
     extra_file_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_file_to_keep]})
-    _, node = run_vasp_calc(inputs)
+    _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['POSCAR']
     retrieve_list = node.get_retrieve_list()
@@ -256,7 +256,7 @@ def test_vasp_calc_delete_extra(run_vasp_calc):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_del_str_ext(run_vasp_calc):
+def test_vasp_calc_del_str_ext(run_vasp_process):
     """Test a run of a basic VASP calculation where one wants to retrieve additional files and store only those."""
     # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
     # and check if it is actually there
@@ -265,7 +265,7 @@ def test_vasp_calc_del_str_ext(run_vasp_calc):
     inputs = {}
     extra_file_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
-    _, node = run_vasp_calc(inputs)
+    _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST
     retrieve_list = node.get_retrieve_list()
@@ -279,12 +279,12 @@ def test_vasp_calc_del_str_ext(run_vasp_calc):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_no_potcar_in_repo(run_vasp_calc):
+def test_vasp_no_potcar_in_repo(run_vasp_process):
     """Test a VASP run to verify that there is no POTCAR file in the repository."""
     # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
     # and check if it is actually there
     inputs = {}
-    _, node = run_vasp_calc(inputs)
+    _, node = run_vasp_process(inputs)
     repo_filenames = node.list_object_names()
     assert 'POTCAR' not in repo_filenames
 
@@ -300,12 +300,12 @@ def test_vasp_no_potcar_in_repo(run_vasp_calc):
     'vasp_structure',
     'vasp_kpoints',
 ], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_exit_codes(run_vasp_calc, test_case, expected, has_notification):
+def test_vasp_calc_exit_codes(run_vasp_process, test_case, expected, has_notification):
     """
     Test running a VASP calculation with electronic/ionic convergence problems and
     check if the exit_codes are set accordingly.
     """
-    results, node = run_vasp_calc(test_case=test_case)
+    results, node = run_vasp_process(test_case=test_case)
 
     # Check that the standard output is there
     assert 'retrieved' in results
