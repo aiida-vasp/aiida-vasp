@@ -16,11 +16,11 @@ import logging
 
 import numpy as np
 
-from aiida.repository import FileType
-
 from parsevasp.kpoints import Kpoints
 from parsevasp.incar import Incar
 from parsevasp.poscar import Poscar
+
+from aiida.repository import FileType
 
 from aiida_vasp.utils.fixtures.testdata import data_path
 

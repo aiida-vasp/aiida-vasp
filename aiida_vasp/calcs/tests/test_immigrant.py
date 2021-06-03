@@ -10,15 +10,21 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
-    """Provide process class and inputs for importing a AiiDA-external VASP run."""
+    """Provide process class and inputs for importing a AiiDA-external VASP run.
+
+    The list of files in test_data/phonondb doesn't contain POTCAR.
+
+    """
     from aiida_vasp.calcs.immigrant import VaspImmigrant
-    from aiida_vasp.data.potcar import PotcarData
 
     create_authinfo(localhost, store=True)
-    builder = VaspImmigrant.get_builder_from_folder(code=mock_vasp, remote_path=phonondb_run)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    builder.potential = PotcarData.get_potcars_from_structure(builder.structure, potential_family, mapping=potential_mapping)  # pylint: disable=no-member
+    builder = VaspImmigrant.get_builder_from_folder(mock_vasp,
+                                                    phonondb_run,
+                                                    potential_family=potential_family,
+                                                    potential_mapping=potential_mapping)
+    # builder.potential = PotcarData.get_potcars_from_structure(builder.structure, potential_family, mapping=potential_mapping)  # pylint: disable=no-member
 
     # Make sure clean_workdir is not done for the immigrant (we do not want to remove the imported data)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential'}
@@ -33,7 +39,7 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
     from aiida_vasp.data.potcar import PotcarData
 
     create_authinfo(localhost, store=True)
-    inputs = VaspImmigrant.get_inputs_from_folder(code=mock_vasp, remote_path=phonondb_run, use_chgcar=True, use_wavecar=True)
+    inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, phonondb_run, use_chgcar=True, use_wavecar=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
     inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)
@@ -71,8 +77,8 @@ def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_ru
     create_authinfo(localhost, store=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    proc, builder = VaspCalculation.immigrant(code=mock_vasp,
-                                              remote_path=phonondb_run,
+    proc, builder = VaspCalculation.immigrant(mock_vasp,
+                                              phonondb_run,
                                               potential_family=potential_family,
                                               potential_mapping=potential_mapping)
     # Make sure clean_workdir is not done for the immigrant (we do not want to remove the imported data)

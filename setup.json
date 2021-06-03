@@ -48,7 +48,8 @@
 	    "vasp.converge = aiida_vasp.workchains.converge:ConvergeWorkChain",
 	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
-	    "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain"
+	    "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain",
+	    "vasp.immigrant = aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
 	],
 	"aiida.groups": [
 		"vasp.potcar = aiida_vasp.data.potcar:PotcarGroup"

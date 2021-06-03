@@ -146,32 +146,22 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
 
 
 @pytest.fixture()
-def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
-    """Setup and standard VASP calculation with the mock executable that accepts input overrides."""
+def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp):
+    """Setup a standard VaspCalculation or VaspWorkChain with the mock executable that accepts input overrides."""
 
-    def inner(inputs=None, settings=None, test_case=None):
+    def inner(inputs=None, settings=None, test_case=None, process_type='calcjob'):
         """
-        Run a VASP calculation with specified input and settings overrides.
+        Run a VaspCalculation or VaspWorkChain with specified input and settings overrides.
 
         Specific outputs can be selected using the test_case parameter.
+
+        The type of process is set with the process_type parameter.
         """
-        from aiida.plugins import CalculationFactory
         from aiida.engine import run
-        calculation = CalculationFactory('vasp.vasp')
-        mock_vasp.store()
-        create_authinfo(computer=mock_vasp.computer, store=True)
-        kpoints, _ = vasp_kpoints
-        parameters = vasp_params.get_dict()
-        if test_case is not None:
-            parameters['system'] = f'test-case:{test_case}'
+
         inpts = AttributeDict()
-        inpts.code = Code.get_from_string('mock-vasp@localhost')
         inpts.structure = vasp_structure
-        inpts.parameters = get_data_class('dict')(dict=parameters)
-        inpts.kpoints = kpoints
-        inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
-                                                                                   family_name=POTCAR_FAMILY_NAME,
-                                                                                   mapping=POTCAR_MAP)
+        parameters = vasp_params.get_dict()
         options = {
             'withmpi': False,
             'queue_name': 'None',
@@ -181,11 +171,43 @@ def run_vasp_calc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_s
             },
             'max_wallclock_seconds': 3600
         }
-        inpts.metadata = {}
-        inpts.metadata['options'] = options
+        if test_case is not None:
+            # Allow to fetch special tests cases using the mock-vasp executable
+            parameters['system'] = f'test-case:{test_case}'
+
+        if process_type == 'calcjob':
+            from aiida.plugins import CalculationFactory
+            process = CalculationFactory('vasp.vasp')
+            inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
+                                                                                       family_name=POTCAR_FAMILY_NAME,
+                                                                                       mapping=POTCAR_MAP)
+            inpts.parameters = get_data_class('dict')(dict=parameters)
+            inpts.metadata = {}
+            inpts.metadata['options'] = options
+        elif process_type == 'workchain':
+            from aiida.plugins import WorkflowFactory
+            process = WorkflowFactory('vasp.vasp')
+            inpts.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+            inpts.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+            inpts.parameters = get_data_node('dict', dict={'incar': parameters})
+            inpts.options = get_data_node('dict', dict=options)
+            inpts.max_iterations = get_data_node('int', 1)
+            inpts.clean_workdir = get_data_node('bool', False)
+            inpts.verbose = get_data_node('bool', True)
+        else:
+            raise ValueError(f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'")
+
+        mock_vasp.store()
+        create_authinfo(computer=mock_vasp.computer, store=True)
+        inpts.code = Code.get_from_string('mock-vasp@localhost')
+        kpoints, _ = vasp_kpoints
+        inpts.kpoints = kpoints
         if inputs is not None:
+            # Allow overrides of the input
             inpts.update(inputs)
-        results_and_node = run.get_node(calculation, **inpts)
+        if settings is not None and isinstance(settings, dict):
+            inpts.settings = get_data_node('dict', dict=settings)
+        results_and_node = run.get_node(process, **inpts)
         return results_and_node
 
     return inner

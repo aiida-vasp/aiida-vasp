@@ -130,10 +130,10 @@ def test_registry_folder_upload(mock_registry, custom_registry, temp_path):
     'vasp_structure',
     'vasp_kpoints',
 ], [('str', 'mesh')], indirect=True)
-def test_registry_upload_aiida(run_vasp_calc, custom_registry, temp_path):
+def test_registry_upload_aiida(run_vasp_process, custom_registry, temp_path):
     """Test upload from an aiida calculation"""
 
-    _, node = run_vasp_calc()
+    _, node = run_vasp_process()
     custom_registry.upload_aiida_calc(node, 'upload-example')
 
     # Exact the calculation
@@ -146,42 +146,11 @@ def test_registry_upload_aiida(run_vasp_calc, custom_registry, temp_path):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_registry_upload_wc(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vasp_structure, mock_vasp, custom_registry, temp_path):
-    """Return an VaspWorkChain that has been run"""
-    from aiida.orm import Code
-    from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
-
-    workchain = WorkflowFactory('vasp.vasp')
-
-    mock_vasp.store()
-    create_authinfo(computer=mock_vasp.computer, store=True)
-
-    kpoints, _ = vasp_kpoints
-    inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
-    inputs.structure = vasp_structure
-    inputs.parameters = get_data_node('dict', dict={'incar': vasp_params.get_dict()})
-    inputs.kpoints = kpoints
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
-    inputs.verbose = get_data_node('bool', True)
-    _, node = run.get_node(workchain, **inputs)
-
+def test_registry_upload_wc(fresh_aiida_env, run_vasp_process, custom_registry, temp_path):
+    """Return an VaspWorkChain node that has been executed."""
+    _, node = run_vasp_process(process_type='workchain')
     custom_registry.upload_aiida_work(node, 'upload-example')
-    # Exact the calculation
+    # Extract the calculation
     repo_path = custom_registry.get_path_by_name('upload-example/calc-000')
     files = [path.name for path in repo_path.glob('out/*')]
     assert 'OUTCAR' in files
