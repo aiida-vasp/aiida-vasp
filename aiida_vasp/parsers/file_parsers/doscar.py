@@ -126,15 +126,16 @@ class DosParser(BaseFileParser):
             else:
                 tdos[name] = tdos_raw[:, i + 1:i + 1 + num_spin]
 
-        pdos = []
+        pdos_items = []
+        pdos = np.array([])  # Empty array by default
         if line_2 in raw:
             for _ in range(num_ions):
                 start = raw.index(line_2) + 1
-                pdos += [raw[start:start + ndos]]
+                pdos_items += [raw[start:start + ndos]]
 
             # Get the number of columns for the pdos section.
-            count = len(pdos[-1][-1])
-            pdos_raw = np.array(pdos)
+            count = len(pdos_items[-1][-1])
+            pdos_raw = np.array(pdos_items)
 
             # Adjust the spin according to the column definitions
             num_spin = COLSPIN_MAP.get(count)
