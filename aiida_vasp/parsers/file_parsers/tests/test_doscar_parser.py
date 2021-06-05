@@ -31,6 +31,16 @@ def test_parse_doscar(fresh_aiida_env):
     for i in range(0, dos.size):
         assert result_dos[i] == dos[i]
 
+    file_name = 'DOSCAR.nopdos'
+    path = data_path('doscar', file_name)
+    parser = DosParser(file_path=path)
+    result = parser.dos
+    # The 'tdos' array is a nested array for some reason.
+    result_dos = result.get_array('tdos')
+    assert 'pdos' not in result.get_arraynames()
+    for i in range(0, dos.size):
+        assert result_dos[i] == dos[i]
+
 
 def test_parse_doscar_spin(fresh_aiida_env):
     """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
