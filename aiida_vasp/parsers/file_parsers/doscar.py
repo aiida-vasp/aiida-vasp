@@ -85,13 +85,14 @@ class DosParser(BaseFileParser):
 
         result['doscar-dos'] = {}
         result['header'] = header
+        if pdos.size != 0:
+            result['doscar-dos']['pdos'] = pdos
+        if tdos.size != 0:
+            result['doscar-dos']['tdos'] = tdos
 
-        for array in [pdos, tdos]:
-            if array.size == 0:
-                return {'doscar-dos': None}
-
-        result['doscar-dos']['pdos'] = pdos
-        result['doscar-dos']['tdos'] = tdos
+        # No data is avaliable - return None
+        if not result['doscar-dos']:
+            return {'doscar-dos': None}
 
         return result
 
