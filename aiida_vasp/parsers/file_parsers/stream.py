@@ -40,16 +40,22 @@ class StreamParser(BaseFileParser):
         super(StreamParser, self).__init__(*args, **kwargs)
         self._stream = None
         self._settings = kwargs.get('settings', None)
+        if 'file_object' in kwargs:
+            try:
+                with kwargs['retrieved'].open(kwargs['filename']) as stream_file:
+                    self._init_stream(stream_file)
+            except SystemExit:
+                self._logger.warning('Parsevasp exited abruptly. Returning None.')
         if 'file_path' in kwargs:
             self._init_stream(kwargs['file_path'])
         if 'data' in kwargs:
             self._init_stream(kwargs['data'].get_file_abs_path())
 
-    def _init_stream(self, path):
+    def _init_stream(self, file_hanlder):
         """Init with a file path."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(file_hanlder=file_hanlder)
 
         # Since the VASP output can be fairly large, we will parse it only
         # once and store the parsevasp Stream object.
@@ -60,7 +66,7 @@ class StreamParser(BaseFileParser):
             stream_config = self._settings.get('stream_config', None)
             history = self._settings.get('stream_history', False)
         try:
-            self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
+            self._stream = Stream(file_handler=file_hanlder, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly when parsing the standard stream. Returning None.')
             self._stream = None

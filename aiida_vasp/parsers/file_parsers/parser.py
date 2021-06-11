@@ -173,6 +173,7 @@ class SingleFile(object):  # pylint: disable=useless-object-inheritance
         super(SingleFile, self).__init__()
         self._path = None
         self._data = None
+        self._file_handler = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
@@ -185,6 +186,10 @@ class SingleFile(object):  # pylint: disable=useless-object-inheritance
     def _init_with_data(self, data):
         """Initialise with SingleFileData."""
         self._data = data
+
+    def _init_with_file_handler(self, file_handler):
+        """Initialise with SingleFileData."""
+        self._file_handler = file_handler
 
     @property
     def path(self):
@@ -201,6 +206,10 @@ class SingleFile(object):  # pylint: disable=useless-object-inheritance
             with self._data.open() as input_obj, open(dst) as output_obj:
                 lines = input_obj.readlines()
                 output_obj.writelines(lines)
+
+        if self._file_handler is not None:
+            lines = self._file_handler.readlines()
+            output_obj.writelines(lines)
 
 
 class KeyValueParser(BaseParser):

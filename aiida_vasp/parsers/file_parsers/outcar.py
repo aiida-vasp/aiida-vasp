@@ -80,22 +80,28 @@ class OutcarParser(BaseFileParser):
         super(OutcarParser, self).__init__(*args, **kwargs)
         self._outcar = None
         self._settings = kwargs.get('settings', None)
+        if 'file_object' in kwargs:
+            try:
+                with kwargs['retrieved'].open(kwargs['filename']) as outcar_file:
+                    self._init_outcar(outcar_file)
+            except SystemExit:
+                self._logger.warning('Parsevasp exited abruptly. Returning None.')
         if 'file_path' in kwargs:
             self._init_outcar(kwargs['file_path'])
         if 'data' in kwargs:
             self._init_outcar(kwargs['data'].get_file_abs_path())
         self._file_path = kwargs['file_path']
 
-    def _init_outcar(self, path):
+    def _init_outcar(self, file_handler):
         """Init with a filepath."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(file_handler=file_handler)
 
         # Since OUTCAR can be fairly large, we will parse it only
         # once and store the parsevasp Outcar object.
         try:
-            self._outcar = Outcar(file_path=path, logger=self._logger)
+            self._outcar = Outcar(file_handler=file_handler, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._outcar = None

@@ -176,19 +176,26 @@ class VasprunParser(BaseFileParser):
         self._xml_truncated = False
         self._settings = kwargs.get('settings', None)
         self._exit_codes = kwargs.get('exit_codes', None)
+        if 'file_object' in kwargs:
+            try:
+                with kwargs['retrieved'].open(kwargs['filename']) as xml_file:
+                    self._init_xml(xml_file)
+            except SystemExit:
+                self._logger.warning('Parsevasp exited abruptly. Returning None.')
+
         if 'file_path' in kwargs:
             self._init_xml(kwargs['file_path'])
         if 'data' in kwargs:
             self._init_xml(kwargs['data'].get_file_abs_path())
 
-    def _init_xml(self, path):
+    def _init_xml(self, file_handler):
         """Create parsevasp Xml instance"""
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(file_handler=file_handler)
 
         # Since vasprun.xml can be fairly large, we will parse it only
         # once and store the parsevasp Xml object.
         try:
-            self._xml = Xml(file_path=path, k_before_band=True, logger=self._logger)
+            self._xml = Xml(file_handler=file_handler, k_before_band=True, logger=self._logger)
             # Let us also check if the xml was truncated as the parser uses lxml and its
             # recovery mode in case we can use some of the results.
             self._xml_truncated = self._xml.truncated

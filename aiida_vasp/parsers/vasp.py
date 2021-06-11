@@ -211,7 +211,12 @@ class VaspParser(BaseParser):
             else:
                 try:
                     # The next line may except for ill-formated file
-                    parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+                    parser = file_parser_cls(
+                        settings=self._settings,
+                        exit_codes=self.exit_codes,
+                        retrieved=self.retrieved,
+                        file_name=file_name,
+                    )
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
