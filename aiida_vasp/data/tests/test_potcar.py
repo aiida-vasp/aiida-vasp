@@ -316,10 +316,26 @@ def test_old_style_detect(potcar_family, legacy_potcar_family):
 
     # The raise Value Error should contain hints for migrate
     with pytest.raises(NotExistent, match=r'.*found in a legacy group.*'):
-        potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
+        potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False)
 
     # Change the name back and the test should now pass
     new_group.label = new_group.label[:-1]
-    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping)
+    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False)
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
+
+    # Test the auto-migration logic
+    # Change the name again, so the only the old group matches
+    new_group.label += '_'
+    with pytest.raises(NotExistent):
+        PotcarGroup.objects.get(label=potcar_family)
+
+    # but as long as we do auto migrate it would be fine
+    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=True)
+    assert set(potcar_dict.keys()) == set(elements)
+    assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
+    # Validate the migrate group
+    migrated = PotcarGroup.objects.get(label=potcar_family)
+    uuids_original = {node.uuid for node in legacy_group.nodes}
+    uuids_migrated = {node.uuid for node in migrated.nodes}
+    assert uuids_migrated == uuids_original

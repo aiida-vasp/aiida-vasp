@@ -711,13 +711,14 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return groups
 
     @classmethod
-    def get_potcars_dict(cls, elements, family_name, mapping=None):
+    def get_potcars_dict(cls, elements, family_name, mapping=None, auto_migrate=True):
         """
         Get a dictionary {element: ``PotcarData.full_name``} for all given symbols.
 
         :param elements: The list of symbols to find POTCARs for
         :param family_name: The POTCAR family to be used
         :param mapping: A mapping[element] -> ``full_name``, for example: mapping={'In': 'In', 'As': 'As_d'}
+        :param auto_migrate: A flag of wether to perform the migration automatically when migration is found to be needed.
 
         Exceptions:
 
@@ -748,6 +749,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 query.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE, 'label': family_name}, tag='family')
                 query.append(cls, tag='potcar', with_group='family', filters=element_filters)
                 if query.count() > 1:
+                    if auto_migrate:
+                        # Migrate to new group labels, and retry
+                        migrate_potcar_group()
+                        return cls.get_potcars_dict(elements=elements, family_name=family_name, mapping=mapping, auto_migrate=False)
                     raise NotExistent(
                         ('No POTCAR found for full name {} in family {}, but it was found in a legacy group with the same name.'
                          ' Please run `verdi data vasp-potcar migratefamilies`.').format(full_name, family_name))
