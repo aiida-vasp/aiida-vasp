@@ -60,6 +60,15 @@ There are four ways to interact and set the parser properties.
 
    where the format for the ``node_definition`` is as in the previous example with the custom nodes.
 
+The parser will check for any error detected for the underlying VASP calculation.
+This information is stored in the `notification` quantity, which contains a list of error/warnings detected.
+By default, a non-zero exit state is returned if any critical error is found.  
+The default list of critical errors is defined by :py:data:`~aiida_vasp.parsers.vasp.CRITCIAL_NOTIFICATIONS`.
+Additional settings may also be supplied under ``parser_settings`` to modify this behaviour:
+
+* ``ignored_notifications``: a list of notifications to be ignored for deciding if a critical error has occured and the calculation should have a non-zero exit status. 
+* ``ignore_all_noficiations``: a boolen value to control whether all notifications should be ignored, defaults to ``False``.
+
 Composing the quantities into an output node
 --------------------------------------------
 

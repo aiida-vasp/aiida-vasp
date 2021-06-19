@@ -348,11 +348,13 @@ class VaspParser(BaseParser):
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            ignored = self.parser_settings.get('ignored_notifications')
-            composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes, ignored=ignored)
-            exit_code = composer.compose()
-            if exit_code is not None:
-                return exit_code
+            ignored = self.parser_settings.get('ignored_notifications', [])
+            ignore_all = self.parser_settings.get('ignore_all_notifications', False)
+            if not ignore_all:
+                composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes, ignored=ignored)
+                exit_code = composer.compose()
+                if exit_code is not None:
+                    return exit_code
         else:
             self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
 
