@@ -52,7 +52,7 @@ CRITICAL_NOTIFICATIONS = [
     'fock_acc',
     'non_collinear',
     'not_hermitian',
-    'psmaxn',
+    #    'psmaxn',  Disable this a it is technically a warning
     'pzstein',
     'real_optlay',
     'rhosyg',
@@ -101,6 +101,9 @@ class VaspParser(BaseParser):
 
         By this option the default set of FileParsers can be chosen. See settings.py
         for available options.
+
+    * `ignored_notifications`: A list notification names to be ignored for checking critical errors.
+      A list of a critical notification is defined by variable `CRITICAL_NOTIFICATION` in this module.
 
     Additional FileParsers can be added to the VaspParser by using
 
@@ -277,6 +280,11 @@ class VaspParser(BaseParser):
         return nodes_failed_to_create
 
     @property
+    def parser_settings(self):
+        """The `parser_settings` dictionary passed"""
+        return self._settings._settings  # pylint: disable=protected-access
+
+    @property
     def parser_warnings(self):
         """
         Compose a list of parser warnings as returned by individual file parsers
@@ -340,7 +348,8 @@ class VaspParser(BaseParser):
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes)
+            ignored = self.parser_settings.get('ignored_notifications')
+            composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes, ignored=ignored)
             exit_code = composer.compose()
             if exit_code is not None:
                 return exit_code
@@ -353,7 +362,7 @@ class VaspParser(BaseParser):
 class NotificationComposer:
     """Compose errors codes based on the notifications"""
 
-    def __init__(self, notifications, parsed_quantities, inputs, exit_codes):
+    def __init__(self, notifications, parsed_quantities, inputs, exit_codes, ignored=None):
         """
         Composed error codes based on the notifications
 
@@ -368,12 +377,14 @@ class NotificationComposer:
         :param parsed_quantities: The dictionary of parsed quantities.
         :param inputs: The dictionary of the input nodes.
         :param exit_codes: The dictionary of the exit codes from the parser.
+        :param ignored: A list of critical notification that are allowed to have
         """
         self.notifications = notifications
         self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
         self.parsed_quantities = parsed_quantities
         self.inputs = inputs
         self.exit_codes = exit_codes
+        self.ignored = [] if ignored is None else ignored
 
     def compose(self):
         """
@@ -387,7 +398,8 @@ class NotificationComposer:
                 if output:
                     return output
             elif critical in self.notifications_dict:
-                return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict[critical])
+                if critical not in self.ignored:
+                    return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict[critical])
         return None
 
     @property
