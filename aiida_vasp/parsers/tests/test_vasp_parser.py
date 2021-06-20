@@ -520,18 +520,28 @@ def test_notification_composer(vasp_parser_without_parsing):
     """Test the NotificationComposer class"""
     parser, file_path = vasp_parser_without_parsing
     notifications = [{'name': 'edwav', 'kind': 'ERROR', 'message': 'Error in EDWAV'}]
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={
+        'nelect': 10
+    })},
+                                    parser.exit_codes,
+                                    parser_settings=parser._settings)
     exit_code = composer.compose()
     assert exit_code.status == 703
 
     # BRMIX error but has NELECT defined in the input
     notifications = [{'name': 'brmix', 'kind': 'ERROR', 'message': 'Error in BRMIX'}]
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={'nelect': 10})}, parser.exit_codes)
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={
+        'nelect': 10
+    })},
+                                    parser.exit_codes,
+                                    parser_settings=parser._settings)
     exit_code = composer.compose()
     assert exit_code is None
 
     # BRMIX error but no NELECT tag
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})}, parser.exit_codes)
+    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})},
+                                    parser.exit_codes,
+                                    parser_settings=parser._settings)
     exit_code = composer.compose()
     assert exit_code.status == 703
 
