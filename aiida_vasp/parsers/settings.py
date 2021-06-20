@@ -221,8 +221,9 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
         # If the default is supplied use it as the base and update with the explicity settings
         if default_settings is not None:
-            self._settings = deepcopy(default_settings)
-            update_nested_dict(self._settings, settings)
+            new_settings = deepcopy(default_settings)
+            update_nested_dict(new_settings, self._settings)
+            self._settings = new_settings
 
         self._output_nodes_dict = {}
         self._critical_error_list = []
