@@ -246,7 +246,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         return quantity_names_to_parse
 
     @property
-    def critical_errors_to_check(self):
+    def critical_notifications_to_check(self):
         """Return the list of critical notification names to be checked"""
         return self._critical_error_list
 
@@ -321,7 +321,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
             'add_name' : True
 
-        in ``parser_settings``'s ``critical_errors`` field.
+        in ``parser_settings``'s ``critical_notifications`` field.
         The the notifications can be removed by setting:
 
             'add_name' : False
@@ -331,7 +331,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         self._critical_error_list = []
 
         # First, find all the nodes, that should be added.
-        for key, value in self._settings.get('critical_errors', {}).items():
+        for key, value in self._settings.get('critical_notifications', {}).items():
             if key.startswith('add_'):
                 # only keys starting with 'add_' are relevant as nodes.
                 if value:

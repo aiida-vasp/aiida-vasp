@@ -328,7 +328,7 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     """
     results, node = run_vasp_process(test_case='exit_codes/converged-with-error',
                                      settings={'parser_settings': {
-                                         'critical_errors': {
+                                         'critical_notifications': {
                                              'add_brmix': False
                                          }
                                      }})
