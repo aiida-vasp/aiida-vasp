@@ -315,3 +315,50 @@ def test_vasp_calc_exit_codes(run_vasp_process, test_case, expected, has_notific
     misc = results['misc'].get_dict()
     assert node.exit_status == expected
     assert bool(misc['notifications']) is has_notification
+
+
+@pytest.mark.parametrize([
+    'vasp_structure',
+    'vasp_kpoints',
+], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_error_suppress(run_vasp_process):
+    """
+    Test running a VASP calculation with electronic/ionic convergence problems and
+    check if the exit_codes are set accordingly.
+    """
+    results, node = run_vasp_process(test_case='exit_codes/converged-with-error',
+                                     settings={'parser_settings': {
+                                         'critical_notifications': {
+                                             'add_brmix': False
+                                         }
+                                     }})
+
+    # Check that the standard output is there
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
+
+    misc = results['misc'].get_dict()
+    assert node.exit_status == 0
+    assert bool(misc['notifications'])
+
+
+@pytest.mark.parametrize([
+    'vasp_structure',
+    'vasp_kpoints',
+], [('str', 'mesh')], indirect=True)
+def test_vasp_calc_error_ignore_all(run_vasp_process):
+    """
+    Test running a VASP calculation with electronic/ionic convergence problems and
+    check if the exit_codes are set accordingly.
+    """
+    results, node = run_vasp_process(test_case='exit_codes/converged-with-error', settings={'parser_settings': {'ignore_all_errors': True}})
+
+    # Check that the standard output is there
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
+
+    misc = results['misc'].get_dict()
+    assert node.exit_status == 0
+    assert bool(misc['notifications'])

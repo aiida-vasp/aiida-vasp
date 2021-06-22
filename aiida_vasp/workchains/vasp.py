@@ -729,9 +729,9 @@ class VaspWorkChain(BaseRestartWorkChain):
         Check if the calculation contain any critical error.
         """
         notification = node.outputs.misc['notifications']
-        self.report('Critical notifications detected: {} - aborting'.format(notification))
-        return ProcessHandlerReport(do_break=True,
-                                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=', '.join(notification)))
+        message = 'Critical error detected in the notifications: {}'.format(', '.join([item.get('name') for item in notification]))
+        self.report(message + ' - aborting.')
+        return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=message))
 
     @process_handler(priority=5)
     def check_misc_output(self, node):

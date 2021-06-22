@@ -17,6 +17,8 @@ from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
 from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.file_parsers.stream import StreamParser
 
+from aiida_vasp.utils.extended_dicts import update_nested_dict
+
 FILE_PARSER_SETS = {
     'default': {
         'DOSCAR': {
@@ -216,11 +218,17 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             self._settings = {}
         else:
             self._settings = settings
+
+        # If the default is supplied use it as the base and update with the explicity settings
         if default_settings is not None:
-            self._update_with(default_settings)
+            new_settings = deepcopy(default_settings)
+            update_nested_dict(new_settings, self._settings)
+            self._settings = new_settings
 
         self._output_nodes_dict = {}
+        self._critical_error_list = []
         self._init_output_nodes_dict()
+        self._init_critical_error_list()
 
     @property
     def output_nodes_dict(self):
@@ -236,6 +244,11 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
                     continue
                 quantity_names_to_parse.append(quantity_key)
         return quantity_names_to_parse
+
+    @property
+    def critical_notifications_to_check(self):
+        """Return the list of critical notification names to be checked"""
+        return self._critical_error_list
 
     def add_output_node(self, node_name, node_dict=None):
         """Add a definition of node to the nodes dictionary."""
@@ -300,8 +313,26 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
             self.add_output_node(node_name, node_dict)
 
-    def _update_with(self, update_dict):
-        """Selectively update keys from one Dictionary to another."""
-        for key, value in update_dict.items():
-            if key not in self._settings:
-                self._settings[key] = value
+    def _init_critical_error_list(self):
+        """
+        Set the critical error list to be checked from a settings object.
+
+        Name of critical notifications can be added by setting:
+
+            'add_name' : True
+
+        in ``parser_settings``'s ``critical_notifications`` field.
+        The the notifications can be removed by setting:
+
+            'add_name' : False
+
+        from the default set defined by CRITICAL_NOTIFICATIONS.
+        """
+        self._critical_error_list = []
+
+        # First, find all the nodes, that should be added.
+        for key, value in self._settings.get('critical_notifications', {}).items():
+            if key.startswith('add_'):
+                # only keys starting with 'add_' are relevant as nodes.
+                if value:
+                    self._critical_error_list.append(key[4:])

@@ -38,30 +38,29 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
+    'critical_notifications': {
+        'add_brmix': True,
+        'add_cnormn': True,
+        'add_denmp': True,
+        'add_dentet': True,
+        'add_edddav_zhegv': True,
+        'add_eddrmm_zhegv': True,
+        'add_edwav': True,
+        'add_fexcp': True,
+        'add_fock_acc': True,
+        'add_non_collinear': True,
+        'add_not_hermitian': True,
+        #add_psmaxn': True,
+        'add_pzstein': True,
+        'add_real_optlay': True,
+        'add_rhosyg': True,
+        'add_rspher': True,
+        'add_set_indpw_full': True,
+        'add_sgrcon': True,
+        'add_no_potimm': True,
+        'add_magmom': True,
+    }
 }
-
-CRITICAL_NOTIFICATIONS = [
-    'brmix',
-    'cnormn',
-    'denmp',
-    'dentet',
-    'edddav_zhegv',
-    'eddrmm_zhegv',
-    'edwav',
-    'fexcp',
-    'fock_acc',
-    'non_collinear',
-    'not_hermitian',
-    'psmaxn',
-    'pzstein',
-    'real_optlay',
-    'rhosyg',
-    'rspher',
-    'set_indpw_full',
-    'sgrcon',
-    'no_potimm',
-    'magmom',
-]
 
 
 class VaspParser(BaseParser):
@@ -94,6 +93,10 @@ class VaspParser(BaseParser):
         'kpoints':    KpointsData node parsed from IBZKPT.
         'wavecar':    FileData node containing the WAVECAR file.
         'chgcar':     FileData node containing the CHGCAR file.
+       If the value is set to ``False`` the quantity will not be returned.
+
+    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
+      to the `add_<quantity>` syntax described above.
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
@@ -101,6 +104,8 @@ class VaspParser(BaseParser):
 
         By this option the default set of FileParsers can be chosen. See settings.py
         for available options.
+
+    * `ignore_all_errors`: If set to `True`, will skip checks for critical error messages. Defaults to `False`.
 
     Additional FileParsers can be added to the VaspParser by using
 
@@ -277,6 +282,11 @@ class VaspParser(BaseParser):
         return nodes_failed_to_create
 
     @property
+    def parser_settings(self):
+        """The `parser_settings` dictionary passed"""
+        return self._settings._settings  # pylint: disable=protected-access
+
+    @property
     def parser_warnings(self):
         """
         Compose a list of parser warnings as returned by individual file parsers
@@ -340,10 +350,16 @@ class VaspParser(BaseParser):
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            composer = NotificationComposer(notifications, quantities, self.node.inputs, self.exit_codes)
-            exit_code = composer.compose()
-            if exit_code is not None:
-                return exit_code
+            ignore_all = self.parser_settings.get('ignore_all_errors', False)
+            if not ignore_all:
+                composer = NotificationComposer(notifications,
+                                                quantities,
+                                                self.node.inputs,
+                                                self.exit_codes,
+                                                parser_settings=self._settings)
+                exit_code = composer.compose()
+                if exit_code is not None:
+                    return exit_code
         else:
             self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
 
@@ -353,7 +369,7 @@ class VaspParser(BaseParser):
 class NotificationComposer:
     """Compose errors codes based on the notifications"""
 
-    def __init__(self, notifications, parsed_quantities, inputs, exit_codes):
+    def __init__(self, notifications, parsed_quantities, inputs, exit_codes, parser_settings):
         """
         Composed error codes based on the notifications
 
@@ -368,12 +384,14 @@ class NotificationComposer:
         :param parsed_quantities: The dictionary of parsed quantities.
         :param inputs: The dictionary of the input nodes.
         :param exit_codes: The dictionary of the exit codes from the parser.
+        :param ignored: A list of critical notification that are allowed to have
         """
         self.notifications = notifications
         self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
         self.parsed_quantities = parsed_quantities
         self.inputs = inputs
         self.exit_codes = exit_codes
+        self.parser_settings = parser_settings
 
     def compose(self):
         """
@@ -381,11 +399,13 @@ class NotificationComposer:
 
         Retruns None if no exit code should be emitted, otherwise emit the error code.
         """
-        for critical in CRITICAL_NOTIFICATIONS:
+        for critical in self.parser_settings.critical_notifications_to_check:
+            # Check for any special handling
             if hasattr(self, critical):
                 output = getattr(self, critical)
                 if output:
                     return output
+            # No special handling, just check if it exists
             elif critical in self.notifications_dict:
                 return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict[critical])
         return None
