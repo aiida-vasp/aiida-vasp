@@ -38,7 +38,7 @@ DEFAULT_OPTIONS = {
     'add_forces': False,
     'add_stress': False,
     'add_site_magnetization': False,
-    'critical_errors': {
+    'critical_notifications': {
         'add_brmix': True,
         'add_cnormn': True,
         'add_denmp': True,
@@ -95,7 +95,7 @@ class VaspParser(BaseParser):
         'chgcar':     FileData node containing the CHGCAR file.
        If the value is set to ``False`` the quantity will not be returned.
 
-    * `critical_errors`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
+    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
       to the `add_<quantity>` syntax described above.
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
@@ -404,7 +404,7 @@ class NotificationComposer:
 
         Retruns None if no exit code should be emitted, otherwise emit the error code.
         """
-        for critical in self.parser_settings.critical_errors_to_check:
+        for critical in self.parser_settings.critical_notifications_to_check:
             # Check for any special handling
             if hasattr(self, critical):
                 output = getattr(self, critical)
