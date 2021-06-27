@@ -219,7 +219,7 @@ class MasterWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['relax', 'converge', 'verify'])
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics', 'relax', 'converge', 'verify'])
 
     def run_next_workchain(self):
         """Run the next workchain."""
