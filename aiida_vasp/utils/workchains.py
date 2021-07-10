@@ -34,7 +34,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     if exclude_parameters is None:
         exclude_parameters = []
 
-    no_dict = ['options', 'metadata', 'potential', 'parameters']
+    no_dict = ['options', 'metadata', 'potential', 'parameters', 'dynamics']
     no_dict = no_dict + namespaces
     # Copy and convert dict
     for key, val in inputs.items():
