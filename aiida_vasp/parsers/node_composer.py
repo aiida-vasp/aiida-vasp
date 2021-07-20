@@ -5,6 +5,10 @@ Node composer.
 A composer that composes different quantities onto AiiDA data nodes.
 """
 
+from warnings import warn
+import math
+import numbers
+
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {
@@ -77,6 +81,7 @@ class NodeComposer:
     def _compose_dict(node_type, inputs):
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
+        inputs = clean_nan_values(inputs)
         node.update_dict(inputs)
         return node
 
@@ -184,3 +189,19 @@ class NodeComposer:
                 else:
                     node.set_array(key, value)
         return node
+
+
+def clean_nan_values(inputs: dict) -> dict:
+    """
+    Recursively replace NaN, Inf values (np.float) into None in place.
+
+    This is because AiiDA does not support serializing these values
+    as node attributes.
+    """
+    for key, value in inputs.items():
+        if isinstance(value, dict):
+            clean_nan_values(value)
+        if isinstance(value, numbers.Real) and (math.isnan(value) or math.isinf(value)):
+            warn('Key <{}> has value <{}> replaced by <{}>'.format(key, value, str(value)))
+            inputs[key] = str(value)
+    return inputs
