@@ -7,6 +7,25 @@ All notable changes to this project after version 1.0.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v2.1.1]
+--------
+
+**Changed**
+- Bugfix to handle NaN values in parsed entries.
+
+- Removed `fermi_level` and `symmetries` are removed from default `misc` quantities to avoid stalling relaxation jobs etc.
+
+- Fix to the DOSCAR parser to not fail when spin-orbit couplings have been enabled.
+
+- Fixes the convergence workchain so that a final relaxation is possible.
+
+- Fixes the convergence workchain lack of the structure not being exposed as an input.
+
+- Fixes the convergence workchain in cases where a plane wave cutoff was supplied, the plane wave convergence tests
+  were still executed.
+
+- Fixes parsing of DOSCAR when the data for the partial density of states is not available.
+
 [v2.1.0]
 --------
 

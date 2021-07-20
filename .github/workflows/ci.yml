@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 45
     services:
       postgres:
-        image: postgres:10
+        image: postgres
         ports:
           - 5432:5432
       rabbitmq:
@@ -56,7 +56,7 @@ jobs:
           sudo .ci/enable_ssh_localhost.sh
           sudo apt install locate
           sudo updatedb
-          sudo apt install postgresql-10
+          sudo apt install postgresql
       - name: Upgrade pip
         run: |
           pip install --upgrade pip
