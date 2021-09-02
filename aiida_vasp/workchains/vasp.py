@@ -155,26 +155,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             cls.results,
         )  # yapf: disable
 
-        spec.output('misc', valid_type=get_data_class('dict'))
-        spec.output('remote_folder', valid_type=get_data_class('remote'))
-        spec.output('retrieved', valid_type=get_data_class('folder'))
-        spec.output('structure', valid_type=get_data_class('structure'), required=False)
-        spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False)
-        spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.output('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.output('bands', valid_type=get_data_class('array.bands'), required=False)
-        spec.output('forces', valid_type=get_data_class('array'), required=False)
-        spec.output('stress', valid_type=get_data_class('array'), required=False)
-        spec.output('dos', valid_type=get_data_class('array'), required=False)
-        spec.output('occupancies', valid_type=get_data_class('array'), required=False)
-        spec.output('energies', valid_type=get_data_class('array'), required=False)
-        spec.output('projectors', valid_type=get_data_class('array'), required=False)
-        spec.output('dielectrics', valid_type=get_data_class('array'), required=False)
-        spec.output('born_charges', valid_type=get_data_class('array'), required=False)
-        spec.output('hessian', valid_type=get_data_class('array'), required=False)
-        spec.output('dynmat', valid_type=get_data_class('array'), required=False)
-        spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False)
+        spec.expose_outputs(cls._process_class)
+
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
         spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')

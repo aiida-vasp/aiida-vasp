@@ -75,7 +75,8 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             ),
             cls.results,
         )  # yapf: disable
-        spec.expose_outputs(cls._next_workchain)
+        # Expose the outputs from the _process_class (vasp.immigrate)
+        spec.expose_outputs(cls._process_class)
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Set inputs of VaspImmigrant calculation
