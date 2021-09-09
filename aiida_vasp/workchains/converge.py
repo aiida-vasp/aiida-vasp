@@ -1394,7 +1394,7 @@ class ConvergeWorkChain(WorkChain):
     def _compress_structure(self):
         """Compress the input structure according to the supplied settings."""
 
-        volume_change = self.ctx.inputs.parameters.converge.volume_change.get_array('array')
+        volume_change = self.ctx.inputs.parameters.converge.volume_change
         # Apply compression and tension
         comp_structure = compressed_structure(self.ctx.converge.structure, volume_change)
         # Make sure we also reset the reciprocal cell

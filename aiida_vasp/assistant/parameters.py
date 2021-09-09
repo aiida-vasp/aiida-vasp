@@ -82,7 +82,7 @@ class RelaxAlgoEnum(enum.IntEnum):
     """
     Encode values for algorithm descriptively.
 
-    See: https://www.vasp.at/wiki/index.php/ALGO
+    See: https://www.vasp.at/wiki/index.php/IBRION
     """
     NO_UPDATE = -1
     IONIC_RELAXATION_RMM_DIIS = 1
