@@ -598,10 +598,15 @@ class VasprunParser(BaseFileParser):
         # Apply mapping - those with `_final` has the suffix removed and those without has `_electronic` added
         mapped_energies = {}
         mapping = ENERGY_MAPPING_VASP5 if self.version.startswith('5') else ENERGY_MAPPING
-        for key, value in mapping.items():
-            # Only include those originally requested
-            if value in energies and key.replace('_electronic', '') in etype_orig:
-                mapped_energies[key] = energies[value]
+        # Reverse the mapping - now key is the name of the original energies output
+        revmapping = {value: key for key, value in mapping.items()}
+        for key, value in energies.items():
+            # Apply mapping if needed
+            if key in revmapping:
+                if revmapping[key].replace('_electronic', '') in etype_orig:
+                    mapped_energies[revmapping[key]] = value
+            else:
+                mapped_energies[key] = value
 
         return mapped_energies
 
