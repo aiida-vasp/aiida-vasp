@@ -15,9 +15,9 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, create_authinfo
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
 
 
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
@@ -32,9 +32,9 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    structure = PoscarParser(file_path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
-    kpoints = KpointsParser(file_path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
-    parameters = IncarParser(file_path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
+    structure = PoscarParser(path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
+    kpoints = KpointsParser(path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
+    parameters = IncarParser(path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_relax_wc'
     parameters = {'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
     parameters['relax'] = {}

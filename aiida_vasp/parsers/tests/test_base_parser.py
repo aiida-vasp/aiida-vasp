@@ -12,16 +12,16 @@ from aiida_vasp.utils.fixtures.calcs import calc_with_retrieved
 
 @pytest.fixture()
 def base_parser(calc_with_retrieved):
-    file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/basic_run/')
-    node = calc_with_retrieved(file_path)
+    path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/basic_run/')
+    node = calc_with_retrieved(path)
     return BaseParser(node)
 
 
-def test_get_file(base_parser):
-    """Test getting a retrieved output file."""
+def test_get_object(base_parser):
+    """Test getting a retrieved output object."""
     base_parser._compose_retrieved_content()  # pylint: disable=protected-access
-    assert os.path.isfile(base_parser._get_file('OUTCAR'))  # pylint: disable=protected-access
-    assert os.path.exists(base_parser._get_file('OUTCAR'))  # pylint: disable=protected-access
+    assert os.path.isfile(base_parser._get_object('OUTCAR'))  # pylint: disable=protected-access
+    assert os.path.exists(base_parser._get_object('OUTCAR'))  # pylint: disable=protected-access
     # This should now not eject an OSError as this is handled by the logger
     # and None is returned.
-    assert base_parser._get_file('NonExistent') is None  # pylint: disable=protected-access
+    assert base_parser._get_object('NonExistent') is None  # pylint: disable=protected-access

@@ -34,7 +34,7 @@ class BandsWorkChain(WorkChain):
                    valid_type=get_data_class('remote'),
                    required=True,
                    help="""
-            The folder to restart in, which contains the files from the prerun to extract the charge density.
+            The folder to restart in, which contains the outputs from the prerun to extract the charge density.
             """)
         spec.input('bands.kpoints_distance',
                    valid_type=get_data_class('float'),

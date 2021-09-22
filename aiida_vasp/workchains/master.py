@@ -109,7 +109,7 @@ class MasterWorkChain(WorkChain):
             self.ctx.inputs.verbose = self.inputs.verbose
         except AttributeError:
             pass
-        # If we want to keep previous files for relaunch, do not clean remote folders
+        # If we want to keep previous outputs for relaunch, do not clean remote folders
         if self.extract_bands() or self.extract_dos():
             self.ctx.inputs.clean_workdir = get_data_node('bool', False)
         self._init_structure()
@@ -194,8 +194,8 @@ class MasterWorkChain(WorkChain):
         self.ctx.inputs.settings = settings
 
     def _enable_charge_density_restart(self):
-        """Enables a restart from a previous charge density file."""
-        # Make sure we set the restart folder (the charge density file is not
+        """Enables a restart from a previously generated charge density object."""
+        # Make sure we set the restart folder (the charge density object is not
         # copied locally, but is present in the folder of the previous remote directory)
         self.ctx.inputs.restart_folder = self.ctx.workchains[-1].outputs.remote_folder
         # Also enable the clean_workdir again

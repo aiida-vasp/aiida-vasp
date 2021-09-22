@@ -2,15 +2,15 @@
 CHGCAR parser.
 
 --------------
-The file parser that handles the parsing of CHGCAR files.
+The object parser that handles the parsing of CHGCAR.
 """
 
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 
 class ChgcarParser(BaseFileParser):
-    """Add CHGCAR as a single file node."""
+    """Add CHGCAR as a SinglefileData node."""
 
     PARSABLE_ITEMS = {
         'chgcar': {
@@ -24,12 +24,12 @@ class ChgcarParser(BaseFileParser):
         super(ChgcarParser, self).__init__(*args, **kwargs)
         self._chgcar = None
 
-    def _parse_file(self, inputs):
-        """Create a DB Node for the CHGCAR file."""
+    def _parse_object(self, inputs):
+        """Create a DB Node for CHGCAR."""
         result = inputs
         result = {}
 
-        chgcar = self._data_obj.path
+        chgcar = self._data_obj.handler
         if chgcar is None:
             return {'chgcar': None}
 
@@ -40,6 +40,6 @@ class ChgcarParser(BaseFileParser):
     @property
     def chgcar(self):
         if self._chgcar is None:
-            inputs = get_node_composer_inputs_from_file_parser(file_parser=self)
+            inputs = get_node_composer_inputs_from_object_parser(object_parser=self)
             self._chgcar = NodeComposer.compose('vasp.chargedensity', inputs)
         return self._chgcar

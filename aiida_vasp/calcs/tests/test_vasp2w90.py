@@ -12,16 +12,16 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 
 
-def normalize_contents(file_contents):
+def normalize_contents(object_contents):
     """Remove trailing zeroes after floating point and normalize trailin newline to unix standard."""
-    normalized = re.sub(r'(\d*.\d*?)0+(\s)', r'\g<1>0\2', file_contents)  # remove trailing zeroes
-    if not re.match(r'\n', file_contents[-1]):  # add trailing newline if necessary
+    normalized = re.sub(r'(\d*.\d*?)0+(\s)', r'\g<1>0\2', object_contents)  # remove trailing zeroes
+    if not re.match(r'\n', object_contents[-1]):  # add trailing newline if necessary
         normalized += '\n'
     return normalized
 
 
 def assert_contents_equivalent(contents_a, contents_b):
-    """Assert equivalence of files with floating point numbers."""
+    """Assert equivalence of objects with floating point numbers."""
     assert normalize_contents(contents_a) == normalize_contents(contents_b)
 
 
@@ -42,28 +42,28 @@ def test_prepare_for_submission(vasp2w90_calc_and_ref, tmp_path):
     vasp_calc, reference = vasp2w90_calc_and_ref
     folder = Folder(os.fspath(tmp_path))
     vasp_calc.prepare_for_submission(folder)
-    with managed_temp_file() as temp_file:
-        vasp_calc.write_incar(temp_file)
-        with open(temp_file, 'r') as result_incar_fo:
+    with managed_temp_object() as temp_object:
+        vasp_calc.write_incar(temp_object)
+        with open(temp_object, 'r') as result_incar_fo:
             assert result_incar_fo.readlines() == reference['incar']
 
 
 @ONLY_ONE_CALC
 def test_write_win(vasp2w90_calc_and_ref):
-    """Write wannier90.win input file and compare to reference."""
+    """Write wannier90.win input object and compare to reference."""
     vasp_calc, reference = vasp2w90_calc_and_ref
-    with managed_temp_file() as temp_file:
-        vasp_calc.write_win(temp_file)
-        with open(temp_file, 'r') as result_incar_fo:
+    with managed_temp_object() as temp_object:
+        vasp_calc.write_win(temp_object)
+        with open(temp_object, 'r') as result_incar_fo:
             assert result_incar_fo.read() == reference['win']
 
 
 @contextlib.contextmanager
-def managed_temp_file():
-    """Create a temp file for a with context, delete after use."""
+def managed_temp_object():
+    """Create a temp file object for a with context, delete after use."""
     import tempfile
-    _, temp_file = tempfile.mkstemp()
+    _, temp_object = tempfile.mkstemp()
     try:
-        yield temp_file
+        yield temp_object
     finally:
-        os.remove(temp_file)
+        os.remove(temp_object)

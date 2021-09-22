@@ -26,7 +26,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 
 # pylint: disable=logging-format-interpolation, import-outside-toplevel
 
-INPUT_FILES = ('POSCAR', 'INCAR', 'KPOINTS')
+INPUT_OBJECTS = ('POSCAR', 'INCAR', 'KPOINTS')
 EXCLUDED = ('POTCAR', '.aiida')
 
 
@@ -127,20 +127,20 @@ class MockRegistry:
         Compute the hash of a input folder
         """
         items = {}
-        kpt_file = input_folder / 'KPOINTS'
-        if kpt_file.is_file():
-            kpoints = Kpoints(file_path=str(kpt_file))
+        kpt_path = input_folder / 'KPOINTS'
+        if kpt_path.is_file():
+            kpoints = Kpoints(file_path=str(kpt_path))
             items['kpoints'] = kpoints.get_dict()
             items['kpoints'].pop('comment', None)
 
-        incar_file = input_folder / 'INCAR'
-        if incar_file.is_file():
-            incar = Incar(file_path=str(incar_file))
+        incar_path = input_folder / 'INCAR'
+        if incar_path.is_file():
+            incar = Incar(file_path=str(incar_path))
             items['incar'] = incar.get_dict()
 
-        poscar_file = input_folder / 'POSCAR'
-        if poscar_file.is_file():
-            poscar = Poscar(file_path=str(poscar_file))
+        poscar_path = input_folder / 'POSCAR'
+        if poscar_path.is_file():
+            poscar = Poscar(file_path=str(poscar_path))
             items['poscar'] = poscar.get_dict()
             items['poscar'].pop('comment', None)
 
@@ -178,35 +178,35 @@ class MockRegistry:
         """
         self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst, include_inputs)
 
-    def upload_calc(self, folder: Path, rel_path: Union[Path, str], excluded_file=None):
+    def upload_calc(self, folder: Path, rel_path: Union[Path, str], excluded_object=None):
         """
         Register a calculation folder to the repository
         """
-        inp = list(INPUT_FILES)
+        inp = list(INPUT_OBJECTS)
         excluded = list(EXCLUDED)
-        if excluded_file:
-            excluded.extend(excluded_file)
+        if excluded_object:
+            excluded.extend(excluded_object)
 
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a direcotry at {repo_calc_base.resolve()}.')
 
-        # Deposit the files
+        # Deposit the objects
         repo_calc_base.mkdir(parents=True)
         repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
         repo_in.mkdir(parents=True)
         repo_out.mkdir(parents=True)
 
-        for file in folder.glob('*'):
-            if file.name in inp:
-                shutil.copy2(file, repo_in)
-            elif file.name not in excluded:
-                if file.is_file():
-                    shutil.copy2(file, repo_out)
-                elif file.is_dir():
-                    shutil.copytree(file, repo_out / file.name)
+        for obj in folder.glob('*'):
+            if obj.name in inp:
+                shutil.copy2(obj, repo_in)
+            elif obj.name not in excluded:
+                if obj.is_file():
+                    shutil.copy2(obj, repo_out)
+                elif obj.is_dir():
+                    shutil.copytree(obj, repo_out / obj.name)
 
         # Update the hash table
         self._register_folder(repo_calc_base)
@@ -232,7 +232,7 @@ class MockRegistry:
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
-        # Deposit the files
+        # Deposit the objects
         repo_calc_base.mkdir(parents=True)
         repo_in = repo_calc_base / 'inp'
         repo_out = repo_calc_base / 'out'
@@ -243,13 +243,13 @@ class MockRegistry:
         if excluded_names:
             exclude.extend(excluded_names)
 
-        # Copy input files
+        # Copy the input objects
         for obj in calc_node.list_objects():
             if obj.name in exclude:
                 continue
             copy_from_aiida(obj.name, calc_node, repo_in)
 
-        # Copy retrieved files
+        # Copy the retrieved objects
         for obj in calc_node.outputs.retrieved.list_objects():
             if obj.name in exclude:
                 continue
@@ -317,7 +317,7 @@ def copy_from_aiida(name: str, node, dst: Path):
     Copy objects from aiida repository.
 
     :param name: The full name (including the parent path) of the object.
-    :param node: Node object for which the files in the repo to be copied.
+    :param node: Node object for which the objects in the repo to be copied.
     :param dst: Path of the destination folder.
 
     This is a recursive function so directory copying also works.
@@ -329,11 +329,11 @@ def copy_from_aiida(name: str, node, dst: Path):
         for sub_obj in node.list_objects(name):
             copy_from_aiida(os.path.join(name, sub_obj.name), node, dst)
     else:
-        # It is a file
+        # Anything else
         with node.open(name) as fsource:
             # Make parent directory if needed
             frepo_path = dst / name
             Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)
-            # Write the file
+            # Write the object
             with open(frepo_path, 'w') as fdst:
                 shutil.copyfileobj(fsource, fdst)

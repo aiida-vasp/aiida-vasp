@@ -2,18 +2,18 @@
 EIGENVAL parser.
 
 ----------------
-The file parser that handles the parsing of EIGENVAL files.
+The parser that handles the parsing of EIGENVAL.
 """
 
 import re
 
 import numpy as np
 
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
 
 
 class EigParser(BaseFileParser):
-    """Contains regex and functions to find grammar elements in EIGENVALUE files."""
+    """Contains regex and functions to find grammar elements in EIGENVAL."""
 
     PARSABLE_ITEMS = {
         'eigenval-eigenvalues': {
@@ -32,8 +32,8 @@ class EigParser(BaseFileParser):
     def _parsed_object(self):
         return self._data_obj
 
-    def _parse_file(self, inputs):
-        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array."""
+    def _parse_object(self, inputs):
+        """Parse an EIGENVAL object and extract metadata and a band structure data array."""
 
         result = inputs.get('settings', {})
         result = {}
@@ -47,9 +47,9 @@ class EigParser(BaseFileParser):
 
     # pylint: disable=too-many-locals
     def _read_eigenval(self):
-        """Parse a VASP EIGENVAL file and extract metadata and a band structure data array."""
+        """Parse an EIGENVAL object and extract metadata and a band structure data array."""
 
-        with open(self._data_obj.path) as eig:
+        with open(self._data_obj.handler) as eig:
             line_0 = self.line(eig, int)  # read header
             line_1 = self.line(eig, float)  # "
             line_2 = self.line(eig, float)  # "

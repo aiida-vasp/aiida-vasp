@@ -15,9 +15,9 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
@@ -32,8 +32,8 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
+    structure = PoscarParser(path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
+    parameters = IncarParser(path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
@@ -107,11 +107,11 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer).store()
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
+    structure = PoscarParser(path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
+    parameters = IncarParser(path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
-    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
+    kpoints = KpointsParser(path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()

@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.object_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
@@ -13,11 +13,11 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 @ONLY_ONE_CALC
 def test_write_incar(vasp_calc_and_ref):
-    """Write parameters input node to INCAR file, compare to reference string."""
+    """Write parameters input node to INCAR object, compare to reference string."""
     vasp_calc, reference = vasp_calc_and_ref
-    with managed_temp_file() as temp_file:
-        vasp_calc.write_incar(temp_file)
-        with open(temp_file, 'r') as result_incar_fo:
+    with managed_temp_object() as temp_object:
+        vasp_calc.write_incar(temp_object)
+        with open(temp_object, 'r') as result_incar_fo:
             assert result_incar_fo.readlines() == reference['incar']
 
 
@@ -26,9 +26,9 @@ def test_write_potcar(vasp_calc_and_ref):
     """Check that POTCAR is written correctly."""
     vasp_calc, _ = vasp_calc_and_ref
 
-    with managed_temp_file() as temp_file:
-        vasp_calc.write_potcar(temp_file)
-        with open(temp_file, 'r') as potcar_fo:
+    with managed_temp_object() as temp_object:
+        vasp_calc.write_potcar(temp_object)
+        with open(temp_object, 'r') as potcar_fo:
             result_potcar = potcar_fo.read()
         assert 'In_sv' in result_potcar
         assert 'As' in result_potcar
@@ -36,14 +36,14 @@ def test_write_potcar(vasp_calc_and_ref):
         assert result_potcar.count('End of Dataset') == 2
 
         if isinstance(vasp_calc.inputs.structure, get_data_class('structure')):
-            multipotcar = MultiPotcarIo.read(temp_file)
+            multipotcar = MultiPotcarIo.read(temp_object)
             potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
             assert potcar_order == ['In_sv', 'As', 'In_d', 'As']
 
 
 @ONLY_ONE_CALC
 def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
-    """Test that CHGAR file is written correctly."""
+    """Test that CHGAR object is written correctly."""
     from aiida.common.folders import Folder
     chgcar, _ = vasp_chgcar
 
@@ -59,7 +59,7 @@ def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
 
 @ONLY_ONE_CALC
 def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
-    """Test that WAVECAR file is written correctly."""
+    """Test that WAVECAR object is written correctly."""
     from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
@@ -91,7 +91,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
 # pylint: disable=protected-access
 @ONLY_ONE_CALC
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
-    """Check that preparing creates all necessary files."""
+    """Check that preparing creates all necessary objects."""
     from aiida.common.folders import Folder
     from aiida_vasp.calcs.vasp import VaspCalculation
     wavecar, _ = vasp_wavecar
@@ -106,17 +106,17 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     calc = vasp_calc(inputs=inputs)
     temp_folder = Folder(str(localhost_dir.parent))
     calcinfo = calc.prepare_for_submission(temp_folder)
-    input_files = temp_folder.get_content_list()
+    input_objects = temp_folder.get_content_list()
 
-    for file_name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
-        assert file_name in input_files
+    for name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
+        assert name in input_objects
 
     assert 'EIGENVAL' in calcinfo.retrieve_list
     assert 'DOSCAR' in calcinfo.retrieve_list
     assert 'wannier90*' in calcinfo.retrieve_list
 
     assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
-    assert calcinfo.codes_info[0].join_files is True
+    assert calcinfo.codes_info[0].join_objects is True
 
     inputs_dict.update({'icharg': 2})
 
@@ -150,14 +150,14 @@ def test_verify_fail(vasp_calc, vasp_inputs):
 
 
 @contextlib.contextmanager
-def managed_temp_file():
-    """Create a temp file for a with context, delete after use."""
+def managed_temp_object():
+    """Create a temp file object for a with context, delete after use."""
     import tempfile
-    _, temp_file = tempfile.mkstemp()
+    _, temp_object = tempfile.mkstemp()
     try:
-        yield temp_file
+        yield temp_object
     finally:
-        os.remove(temp_file)
+        os.remove(temp_object)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
@@ -181,18 +181,18 @@ def test_vasp_calc(run_vasp_process):
     assert 'run_status' in misc
     assert 'run_stats' in misc
 
-    # By default we should store all always retrieve files
+    # By default we should store all always retrieve objects
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
     assert set(retrieve_list_ref) == set(retrieve_list)
-    files = node.outputs.retrieved.list_objects()
-    file_names = [single_file.name for single_file in files]
-    # Exclude Wannier files as they are not in the test set
+    objects = node.outputs.retrieved.list_objects()
+    names = [single_object.name for single_object in objects]
+    # Exclude Wannier objects as they are not in the test set
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
-    assert set(file_names) == set(retrieve_list_ref_no_wannier)
+    assert set(names) == set(retrieve_list_ref_no_wannier)
 
     # Check that we do not have any notifications
     assert not misc['notifications']
@@ -200,25 +200,25 @@ def test_vasp_calc(run_vasp_process):
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete(run_vasp_process):
-    """Test a run of a basic VASP calculation where one does not want to store the always retrieved files after parsing."""
+    """Test a run of a basic VASP calculation where one does not want to store the always retrieved objects after parsing."""
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False})
     _, node = run_vasp_process(inputs)
-    files = node.outputs.retrieved.list_objects()
-    file_names = [single_file.name for single_file in files]
-    assert set(file_names) == set(retrieve_list_ref)
+    objects = node.outputs.retrieved.list_objects()
+    names = [single_object.name for single_object in objects]
+    assert set(names) == set(retrieve_list_ref)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_extra(run_vasp_process):
-    """Test a run of a basic VASP calculation where one wants to keep additional files after parsing is completed."""
-    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    """Test a run of a basic VASP calculation where one wants to keep additional objects after parsing is completed."""
+    # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
     inputs = {}
-    extra_file_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
+    extra_object_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
@@ -226,23 +226,23 @@ def test_vasp_calc_extra(run_vasp_process):
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
     assert set(retrieve_list_ref) == set(retrieve_list)
-    files = node.outputs.retrieved.list_objects()
-    file_names = [single_file.name for single_file in files]
-    # Exclude Wannier files as they are not in the test set
+    objects = node.outputs.retrieved.list_objects()
+    names = [single_object.name for single_object in objects]
+    # Exclude Wannier objects as they are not in the test set
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
-    assert set(file_names) == set(retrieve_list_ref_no_wannier)
+    assert set(names) == set(retrieve_list_ref_no_wannier)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete_extra(run_vasp_process):
-    """Test a run of a basic VASP calculation where one wants to retrieve additional files but not store them after parsing."""
-    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    """Test a run of a basic VASP calculation where one wants to retrieve additional objects but not store them after parsing."""
+    # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
-    extra_file_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_file_to_keep]})
+    extra_object_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['POSCAR']
@@ -250,21 +250,21 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
     assert set(retrieve_list) == set(retrieve_list_ref)
-    files = node.outputs.retrieved.list_objects()
-    file_names = [single_file.name for single_file in files]
-    assert set(file_names) == set(retrieve_list_ref)
+    objects = node.outputs.retrieved.list_objects()
+    names = [single_object.name for single_object in objects]
+    assert set(names) == set(retrieve_list_ref)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_del_str_ext(run_vasp_process):
-    """Test a run of a basic VASP calculation where one wants to retrieve additional files and store only those."""
-    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    """Test a run of a basic VASP calculation where one wants to retrieve additional objects and store only those."""
+    # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
-    extra_file_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_file_to_keep]})
+    extra_object_to_keep = 'POSCAR'
+    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST
@@ -273,20 +273,20 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
     assert set(retrieve_list_ref) == set(retrieve_list)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
-    files = node.outputs.retrieved.list_objects()
-    file_names = [single_file.name for single_file in files]
-    assert set(file_names) == set(retrieve_list_ref)
+    objects = node.outputs.retrieved.list_objects()
+    names = [single_object.name for single_object in objects]
+    assert set(names) == set(retrieve_list_ref)
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_no_potcar_in_repo(run_vasp_process):
-    """Test a VASP run to verify that there is no POTCAR file in the repository."""
-    # Let us add an additional file to the retrieve_list (which do not delete the file after parse)
+    """Test a VASP run to verify that there is no POTCAR object in the repository."""
+    # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     inputs = {}
     _, node = run_vasp_process(inputs)
-    repo_filenames = node.list_object_names()
-    assert 'POTCAR' not in repo_filenames
+    repo_objects = node.list_object_names()
+    assert 'POTCAR' not in repo_objects
 
 
 @pytest.mark.parametrize('test_case,expected,has_notification', [

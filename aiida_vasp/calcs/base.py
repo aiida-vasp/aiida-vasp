@@ -32,7 +32,7 @@ class VaspCalcBase(CalcJob):
 
     @classmethod
     def max_retrieve_list(cls):
-        """Return a list of all possible output files from a VASP run."""
+        """Return a list of all possible output objects from a VASP run."""
         retrieve_list = [
             'CHG',
             'CHGCAR',
@@ -59,7 +59,7 @@ class VaspCalcBase(CalcJob):
             'wannier90*',  # Wannier90 related
             'OSZICAR',  # Convergence related
             'REPORT',  # Output of molecular dynamics runs
-            'STOPCAR',  # Controlled stopping file
+            'STOPCAR',  # Controlled stopping
             'vasprun.xml',
             'OUTCAR'
         ]
@@ -67,15 +67,15 @@ class VaspCalcBase(CalcJob):
 
     def prepare_for_submission(self, tempfolder):  # pylint: disable=arguments-differ
         """
-        Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
+        Writes the four minimum outputs: INCAR, POSCAR, POTCAR, KPOINTS.
 
-        Delegates the construction and writing / copying to write_<file> methods.
+        Delegates the construction and writing / copying to write_<object> methods.
         That way, subclasses can use any form of input nodes and just
         have to implement the write_xxx method accordingly.
         Subclasses can extend by calling the super method and if necessary
         modifying it's output CalcInfo before returning it.
         """
-        # write input files
+        # write input objects
         incar = tempfolder.get_abs_path('INCAR')
         structure = tempfolder.get_abs_path('POSCAR')
         potentials = tempfolder.get_abs_path('POTCAR')
@@ -108,17 +108,17 @@ class VaspCalcBase(CalcJob):
         return calcinfo
 
     def remote_copy_restart_folder(self):
-        """Add all files required for restart to the list of files to be copied from the previous calculation."""
+        """Add all objects required for restart to the list of objects to be copied from the previous calculation."""
         restart_folder = self.inputs.restart_folder
         computer = self.node.computer
         included = ['CHGCAR', 'WAVECAR']
-        existing_files = restart_folder.listdir()
+        existing_objects = restart_folder.listdir()
         to_copy = []
         for name in included:
-            if name not in existing_files:
-                # Here we simple issue an warning as the requirement of files will be explicitly checked by
+            if name not in existing_objects:
+                # Here we simple issue an warning as the requirement of objects will be explicitly checked by
                 # `write_additional` method
-                self.report('WARNING: File {} does not exist in the restart folder.'.format(name))
+                self.report('WARNING: Object {} does not exist in the restart folder.'.format(name))
             else:
                 to_copy.append(name)
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.') for name in to_copy]
@@ -156,5 +156,5 @@ class VaspCalcBase(CalcJob):
         return
 
     def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
-        """Subclass hook to write additional input files."""
+        """Subclass hook to write additional input objects."""
         return

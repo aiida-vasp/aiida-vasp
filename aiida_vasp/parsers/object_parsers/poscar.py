@@ -2,27 +2,27 @@
 POSCAR parser.
 
 --------------
-The file parser that handles the parsing of POSCAR and CONTCAR files.
+The parser that handles the parsing of POSCAR and CONTCAR.
 """
 # pylint: disable=no-self-use
 import numpy as np
 
 from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class PoscarParser(BaseFileParser):
     """
-    Parse a POSCAR format file into a StructureData node and vice versa.
+    Parse a parsevasp representation of POSCAR into a StructureData node and vice versa.
 
-    This is a wrapper for parsevasps Poscar class for parsing POSCAR format
-    files. The Parsing direction depends on whether the Parser is initialised with
-    'path = ...' or 'data = ...'.
+    This is a wrapper for parsevasps Poscar class for parsing POSCARs.
+    The Parsing direction depends on whether the Parser is initialised with
+    'handler = ...' or 'data = ...'.
 
-    :keyword file_path: Path to the POSCAR file.
+    :keyword handler: A handler to a POSCAR.
     :keyword data: Aiida StructureData for parsing.
     :keyword precision: 'int' number specifying the number of digits for floating point
                         numbers that will be written to POSCAR.
@@ -72,7 +72,7 @@ class PoscarParser(BaseFileParser):
 
     @property
     def _parsed_object(self):
-        """Return the parsevasp object representing the POSCAR file."""
+        """Return the parsevasp object representing the POSCAR."""
 
         if isinstance(self._data_obj, get_data_class('structure')):
             # _data_obj is StructureData, return the parsed version if possible.
@@ -86,16 +86,16 @@ class PoscarParser(BaseFileParser):
         # _data_obj is a SingleFile:
         return self._data_obj
 
-    def _parse_file(self, inputs):
-        """Read POSCAR file format."""
+    def _parse_object(self, inputs):
+        """Parse the POSCAR object."""
 
-        # check if structure has already been loaded, in that case just return
+        # Check if structure has already been loaded, in that case just return
         if isinstance(self._data_obj, get_data_class('structure')):
             return {'poscar-structure': self._data_obj}
 
-        # pass file path to parsevasp and try to load file
+        # Pass handler to parsevasp and try to initialize the representation
         try:
-            poscar = Poscar(file_path=self._data_obj.path, prec=self._precision, conserve_order=True, logger=self._logger)
+            poscar = Poscar(file_handler=self._data_obj.handler, prec=self._precision, conserve_order=True, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally. ' 'Returning None.')
             return {'poscar-structure': None}
@@ -107,7 +107,7 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         if self._structure is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['poscar-structure'])
+            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=['poscar-structure'])
             self._structure = NodeComposer.compose('structure', inputs)
         return self._structure
 
@@ -144,29 +144,29 @@ class PoscarParser(BaseFileParser):
 
 def parsevasp_to_aiida(poscar):
     """
-    Parsevasp to Aiida conversion.
+    Parsevasp to AiiDA conversion.
 
-    Generate an Aiida structure from the parsevasp instance of the
+    Generate an AiiDA structure from the parsevasp instance of the
     Poscar class.
-
     """
 
-    # fetch a dictionary containing the entries, make sure all coordinates are
+    # Fetch a dictionary containing the entries, make sure all coordinates are
     # cartesian
     poscar_dict = poscar.get_dict(direct=False)
 
-    # generate Aiida StructureData and add results from the loaded file
+    # Generate AiiDA StructureData and add results from the parsevasp representation
+    # of POSCAR.
     result = {}
 
     for site in poscar_dict['sites']:
         specie = site['specie']
-        # user can specify whatever they want for the elements, but
+        # User can specify whatever they want for the elements, but
         # the symbols entries in Aiida only support the entries defined
         # in aiida.common.constants.elements{}
 
-        # strip trailing _ in case user specifies potential
+        # Strip trailing _ in case user specifies potential
         symbol = specie.split('_')[0].capitalize()
-        # check if leading entry is part of
+        # Check if leading entry is part of
         # aiida.common.constants.elements{}, otherwise set to X, but first
         # invert
         symbols = fetch_symbols_from_elements(elements)

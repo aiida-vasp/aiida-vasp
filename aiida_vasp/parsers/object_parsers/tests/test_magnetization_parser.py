@@ -6,7 +6,7 @@ import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 
 @pytest.mark.parametrize('outcar_parser', ['magnetization'], indirect=True)
@@ -25,7 +25,7 @@ def test_magnetization_parser(fresh_aiida_env, outcar_parser):
             'quantities': ['site_magnetization']
         }})
 
-    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_object_parser(outcar_parser, quantity_keys=['site_magnetization'])
     data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)
@@ -98,7 +98,7 @@ def test_magnetization_single_parser(fresh_aiida_env, outcar_parser):  # pylint:
             'quantities': ['site_magnetization']
         }})
 
-    inputs = get_node_composer_inputs_from_file_parser(outcar_parser, quantity_keys=['site_magnetization'])
+    inputs = get_node_composer_inputs_from_object_parser(outcar_parser, quantity_keys=['site_magnetization'])
     data_obj = NodeComposer.compose('dict', inputs)
     ref_class = get_data_class('dict')
     assert isinstance(data_obj, ref_class)

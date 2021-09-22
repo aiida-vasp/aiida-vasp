@@ -11,15 +11,15 @@ import click
 
 from aiida.cmdline.utils.decorators import with_dbenv
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.potcar import PotcarIo
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.potcar import PotcarIo
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
 
 from aiida_vasp.utils.mock_code import MockRegistry, MockVasp
 
 
-def output_file(*args):
+def output_object(*args):
     return Path(data_path(*args))
 
 
@@ -38,7 +38,7 @@ def mock_vasp_strict():
 
 
 def _mock_vasp(strict_match):
-    """Verify input files are parseable and copy in output files."""
+    """Verify input objects are parseable and copy in output objects."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
     aiida_path = Path(AIIDA_CONFIG_FOLDER)
@@ -49,22 +49,22 @@ def _mock_vasp(strict_match):
     assert aiida_cfg.is_file()
     click.echo(aiida_cfg.read_text())
     incar = pwd / 'INCAR'
-    assert incar.is_file(), 'INCAR input file was not found.'
+    assert incar.is_file(), 'INCAR input was not found.'
 
     potcar = pwd / 'POTCAR'
-    assert potcar.is_file(), 'POTCAR input file not found.'
+    assert potcar.is_file(), 'POTCAR input not found.'
 
     poscar = pwd / 'POSCAR'
-    assert poscar.is_file(), 'POSCAR input file not found.'
+    assert poscar.is_file(), 'POSCAR input not found.'
 
     kpoints = pwd / 'KPOINTS'
-    assert kpoints.is_file(), 'KPOINTS input file not found.'
-    incar_parser = IncarParser(file_path=str(incar))
+    assert kpoints.is_file(), 'KPOINTS input not found.'
+    incar_parser = IncarParser(path=str(incar))
     assert incar_parser, 'INCAR could not be parsed.'
 
     assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
-    assert PoscarParser(file_path=str(poscar)), 'POSCAR could not be parsed.'
-    assert KpointsParser(file_path=str(kpoints)), 'KPOINTS could not be parsed.'
+    assert PoscarParser(path=str(poscar)), 'POSCAR could not be parsed.'
+    assert KpointsParser(path=str(kpoints)), 'KPOINTS could not be parsed.'
 
     system = incar_parser.incar.get('system', '')
     try:
@@ -80,17 +80,17 @@ def _mock_vasp(strict_match):
         else:
             if not strict_match:
                 # Then this is a simple case - assemble the outputs from folders
-                shutil.copy(output_file('outcar', 'OUTCAR'), pwd / 'OUTCAR')
-                shutil.copy(output_file('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
-                shutil.copy(output_file('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
-                shutil.copy(output_file('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
-                shutil.copy(output_file('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
-                shutil.copy(output_file('doscar', 'DOSCAR'), pwd / 'DOSCAR')
-                shutil.copy(output_file('basic_run', 'vasp_output'), pwd / 'vasp_output')
+                shutil.copy(output_object('outcar', 'OUTCAR'), pwd / 'OUTCAR')
+                shutil.copy(output_object('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
+                shutil.copy(output_object('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
+                shutil.copy(output_object('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
+                shutil.copy(output_object('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
+                shutil.copy(output_object('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+                shutil.copy(output_object('basic_run', 'vasp_output'), pwd / 'vasp_output')
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
                 click.echo('No matching results found but strict matching is reqested. The mock code cannot be run.')
     else:
         test_data_path = data_path(test_case, 'out')
-        for out_file in Path(test_data_path).iterdir():
-            shutil.copy(out_file, pwd)
+        for out_object in Path(test_data_path).iterdir():
+            shutil.copy(out_object, pwd)

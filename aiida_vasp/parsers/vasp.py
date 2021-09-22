@@ -2,11 +2,11 @@
 VASP parser.
 
 ------------
-The main driver routine for parsing VASP related files. The parser is very modular and
-contains several modules:
+The main driver routine for parsing VASP related objects. The parser is
+modular and contains several modules:
 
 - ``node_composer`` handles the quantity composition of nodes
-- ``quantity`` the actual quantity to parse and what file parsers to use to obtain it
+- ``quantity`` the actual quantity to parse and what object parsers to use to obtain it
 - ``settings`` general parser settings
 - ``manager`` takes the quantity definitions and executes the actual parsing needed
 """
@@ -67,8 +67,8 @@ class VaspParser(BaseParser):
     """
     Parses all VASP calculations.
 
-    This particular class manages all the specific file parsers in
-    aiida_vasp.parsers.file_parsers. The parser will check which quantities to parse
+    This particular class manages all the specific parsers located in
+    aiida_vasp.parsers.object_parsers. The parser will check which quantities to parse
     and which nodes to add to the calculation based on the 'parser_settings' card in
     the 'settings' Dict of the corresponding VaspCalculation.
 
@@ -91,8 +91,8 @@ class VaspParser(BaseParser):
         'bands':      Band structure node parsed from EIGENVAL.
         'dos':        ArrayData node containing the DOS parsed from DOSCAR.
         'kpoints':    KpointsData node parsed from IBZKPT.
-        'wavecar':    FileData node containing the WAVECAR file.
-        'chgcar':     FileData node containing the CHGCAR file.
+        'wavecar':    SinglefileData node containing the WAVECAR.
+        'chgcar':     SinglefileData node containing the CHGCAR.
        If the value is set to ``False`` the quantity will not be returned.
 
     * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
@@ -100,19 +100,19 @@ class VaspParser(BaseParser):
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
-    * `file_parser_set`: String (DEFAULT = 'default').
+    * `object_parser_set`: String (DEFAULT = 'default').
 
-        By this option the default set of FileParsers can be chosen. See settings.py
+        By this option the default set of object parsers can be chosen. See settings.py
         for available options.
 
     * `ignore_all_errors`: If set to `True`, will skip checks for critical error messages. Defaults to `False`.
 
-    Additional FileParsers can be added to the VaspParser by using
+    Additional object parsers can be added to the VaspParser by using
 
-        VaspParser.add_file_parser(parser_name, parser_definition_dict),
+        VaspParser.add_object_parser(parser_name, parser_definition_dict),
 
     where the 'parser_definition_dict' should contain the 'parser_class' and the
-    'is_critical' flag. Keep in mind adding an additional FileParser after 'parse_with_retrieved'
+    'is_critical' flag. Keep in mind adding an additional object parsers after 'parse_with_retrieved'
     is called, will only have an effect when parsing a second time.
     """
 
@@ -131,11 +131,11 @@ class VaspParser(BaseParser):
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
-        self._file_parser_exit_codes = {}
+        self._object_parser_exit_codes = {}
 
-    def add_parser_definition(self, filename, parser_dict):
-        """Add the definition of a fileParser to self._definitions."""
-        self._definitions.add_parser_definition(filename, parser_dict)
+    def add_parser_definition(self, name, parser_dict):
+        """Add the definition of an oobject parser to self._definitions."""
+        self._definitions.add_parser_definition(name, parser_dict)
 
     def add_parsable_quantity(self, quantity_name, quantity_dict):
         """Add a single parsable quantity to the _parsable_quantities."""
@@ -148,24 +148,24 @@ class VaspParser(BaseParser):
     def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
         """The function that triggers the parsing of a calculation."""
 
-        self._file_parser_exit_codes = {}
+        self._object_parser_exit_codes = {}
         error_code = self._compose_retrieved_content(kwargs)
         if error_code is not None:
             return error_code
 
-        for file_name, value_dict in self._definitions.parser_definitions.items():
-            if file_name not in self._retrieved_content.keys() and value_dict['is_critical']:
-                return self.exit_codes.ERROR_CRITICAL_MISSING_FILE
+        for name, value_dict in self._definitions.parser_definitions.items():
+            if name not in self._retrieved_content.keys() and value_dict['is_critical']:
+                return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-        self._parsable_quantities.setup(retrieved_filenames=self._retrieved_content.keys(),
+        self._parsable_quantities.setup(retrieved_names=self._retrieved_content.keys(),
                                         parser_definitions=self._definitions.parser_definitions,
                                         quantity_names_to_parse=self._settings.quantity_names_to_parse)
 
-        # Parse the quantities from retrived files
+        # Parse the quantities from retrived objects
         parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
 
         # Store any exit codes returned in parser_warnings
-        if self._file_parser_exit_codes:
+        if self._object_parser_exit_codes:
             if 'notifications' not in parsed_quantities:
                 parsed_quantities['notifications'] = []
             for key, value in self.parser_warnings.items():
@@ -189,8 +189,8 @@ class VaspParser(BaseParser):
 
         # All quantities has been parsed, but there exit_codes reported from the parser
         # in this case, we return the code with the lowest status (hopefully the most severe)
-        if self._file_parser_exit_codes:
-            exit_codes = list(self._file_parser_exit_codes.values())
+        if self._object_parser_exit_codes:
+            exit_codes = list(self._object_parser_exit_codes.values())
             exit_codes.sort(key=lambda x: x.status)
             return exit_codes[0]
 
@@ -198,42 +198,39 @@ class VaspParser(BaseParser):
 
     def _parse_quantities(self):
         """
-        This method dispatch the parsing to file parsers
+        This method dispatch the parsing to object parsers
 
         :returns: A tuple of parsed quantities dictionary and a list of quantities failed to obtain due to exceptions
         """
         parsed_quantities = {}
-        # A dictionary for catching instantiated file parser objects
-        file_parser_instances = {}
+        # A dictionary for catching instantiated object parser objects
+        object_parser_instances = {}
         failed_to_parse_quantities = []
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
-            file_name = self._parsable_quantities.quantity_keys_to_filenames[quantity_key]
-            file_parser_cls = self._definitions.parser_definitions[file_name]['parser_class']
+            name = self._parsable_quantities.quantity_keys_to_names[quantity_key]
+            object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
 
             # If a parse object has been instantiated, use it.
-            if file_parser_cls in file_parser_instances:
-                parser = file_parser_instances[file_parser_cls]
+            if object_parser_cls in object_parser_instances:
+                parser = object_parser_instances[object_parser_cls]
             else:
                 try:
-                    # The next line may except for ill-formated file
-                    parser = file_parser_cls(settings=self._settings, exit_codes=self.exit_codes, file_path=self._get_file(file_name))
+                    # The next line may except for ill-formated object
+                    parser = object_parser_cls(settings=self._settings, exit_codes=self.exit_codes, handler=self._get_handler(name))
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
                     self.logger.warning('Cannot instantiate {}, exception {}:'.format(quantity_key, traceback.format_exc()))
 
-                file_parser_instances[file_parser_cls] = parser
+                object_parser_instances[object_parser_cls] = parser
 
-            # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:
+                # If the parser cannot be instantiated, add the quantity to a list of unavailable ones
                 failed_to_parse_quantities.append(quantity_key)
                 continue
-
-            # The next line may still except for ill-formated file - some parser load all data at
-            # instantiation time, the others may not. See the `BaseFileParser.get_quantity`
             try:
-                # The next line may still except for ill-formated file - some parser load all data at
-                # instantiation time, the others may not
+                # The next line may still except for ill-formated object - some parser load all data at
+                # instantiation time, the others may not.
                 parsed_quantity = parser.get_quantity(quantity_key)
             except Exception:  # pylint: disable=broad-except
                 parsed_quantity = None
@@ -245,7 +242,7 @@ class VaspParser(BaseParser):
 
             # Keep track of exit_code, if any
             if parser.exit_code and parser.exit_code.status != 0:
-                self._file_parser_exit_codes[str(file_parser_cls)] = parser.exit_code
+                self._object_parser_exit_codes[str(object_parser_cls)] = parser.exit_code
 
         return parsed_quantities, failed_to_parse_quantities
 
@@ -289,10 +286,10 @@ class VaspParser(BaseParser):
     @property
     def parser_warnings(self):
         """
-        Compose a list of parser warnings as returned by individual file parsers
+        Compose a list of parser warnings as returned by individual object parsers
         """
         warnings = {}
-        for key, exit_code in self._file_parser_exit_codes.items():
+        for key, exit_code in self._object_parser_exit_codes.items():
             warnings[key] = {
                 'status': exit_code.status,
                 'message': exit_code.message,

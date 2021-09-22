@@ -2,25 +2,25 @@
 KPOINTS parser.
 
 ---------------
-The file parser that handles the parsing of KPOINTS files.
+The object parser that handles the parsing of KPOINTS.
 """
 # pylint: disable=no-self-use
 
 from parsevasp.kpoints import Kpoints, Kpoint
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class KpointsParser(BaseFileParser):
     """
-    Parser for VASP KPOINTS format.
+    Parser for VASP KPOINTS.
 
     This is a wrapper for the parsevasp.kpoints parser. It will convert
-    KPOINTS type files to Aiida KpointsData objects and vice versa.
+    KPOINTS representatation from parsevasp to AiiDA KpointsData objects and vice versa.
 
     The Parsing direction depends on whether the KpointsParser is initialised with
-    'path = ...' (read from file) or 'data = ...' (read from data).
+    'handler = ...' (use handler object) or 'data = ...' (read from AiiDA data structure).
 
     """
 
@@ -60,8 +60,7 @@ class KpointsParser(BaseFileParser):
         """
         Return an instance of parsevasp.Kpoints.
 
-        Corresponds to the stored KpointsData.
-
+        Corresponds to the stored KpointsData, but with a different representation.
         """
 
         if isinstance(self._data_obj, get_data_class('array.kpoints')):
@@ -92,8 +91,8 @@ class KpointsParser(BaseFileParser):
         # _data_obj is SingleFile:
         return self._data_obj
 
-    def _parse_file(self, inputs):
-        """Create a DB Node from a KPOINTS file."""
+    def _parse_object(self, inputs):
+        """Create a DB Node from KPOINTS."""
 
         result = inputs
         result = {}
@@ -102,7 +101,7 @@ class KpointsParser(BaseFileParser):
             return {'kpoints-kpoints': self._data_obj}
 
         try:
-            parsed_kpoints = Kpoints(file_path=self._data_obj.path, logger=self._logger)
+            parsed_kpoints = Kpoints(file_handler=self._data_obj.handler, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exitited abnormally. Returning None.')
             return {'kpoints-kpoints': None}
@@ -117,7 +116,7 @@ class KpointsParser(BaseFileParser):
     @property
     def kpoints(self):
         if self._kpoints is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['kpoints-kpoints'])
+            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=['kpoints-kpoints'])
             self._kpoints = NodeComposer.compose('array.kpoints', inputs)
         return self._kpoints
 

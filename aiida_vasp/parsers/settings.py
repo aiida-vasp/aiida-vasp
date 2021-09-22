@@ -2,24 +2,24 @@
 Parser settings.
 
 ----------------
-Defines the file associated with each file parser and the default node
+Defines the object associated with each object parser and the default node
 compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
-from aiida_vasp.parsers.file_parsers.doscar import DosParser
-from aiida_vasp.parsers.file_parsers.eigenval import EigParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
-from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.stream import StreamParser
+from aiida_vasp.parsers.object_parsers.doscar import DosParser
+from aiida_vasp.parsers.object_parsers.eigenval import EigParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.object_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.object_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.object_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.stream import StreamParser
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
-FILE_PARSER_SETS = {
+OBJECT_PARSER_SETS = {
     'default': {
         'DOSCAR': {
             'parser_class': DosParser,
@@ -178,24 +178,24 @@ NODES = {
 class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
-    def __init__(self, file_parser_set='default'):
+    def __init__(self, object_parser_set='default'):
         self._parser_definitions = {}
-        self._init_parser_definitions(file_parser_set)
+        self._init_parser_definitions(object_parser_set)
 
     @property
     def parser_definitions(self):
         return self._parser_definitions
 
-    def add_parser_definition(self, filename, parser_dict):
+    def add_parser_definition(self, name, parser_dict):
         """Add custum parser definition"""
-        self._parser_definitions[filename] = parser_dict
+        self._parser_definitions[name] = parser_dict
 
-    def _init_parser_definitions(self, file_parser_set):
+    def _init_parser_definitions(self, object_parser_set):
         """Load a set of parser definitions."""
-        if file_parser_set not in FILE_PARSER_SETS:
+        if object_parser_set not in OBJECT_PARSER_SETS:
             return
-        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self._parser_definitions[file_name] = deepcopy(parser_dict)
+        for name, parser_dict in OBJECT_PARSER_SETS.get(object_parser_set).items():
+            self._parser_definitions[name] = deepcopy(parser_dict)
 
 
 class ParserSettings(object):  # pylint: disable=useless-object-inheritance
@@ -208,7 +208,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     This provides the following properties to other components of the VaspParser:
 
         * nodes_dict: A list with all requested output nodes.
-        * parser_definitions: A Dict with the FileParser definitions.
+        * parser_definitions: A Dict with the definitions for each specific object parser.
         * quantities_to_parse: Collection of quantities in nodes_dict.
 
     """

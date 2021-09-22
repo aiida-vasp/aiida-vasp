@@ -1,25 +1,25 @@
 """Utils to work with Wannier90 .win format."""
 import re
 
-from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
+from aiida_vasp.parsers.object_parsers.parser import KeyValueParser
 
 
 class WinParser(KeyValueParser):
-    """Parses wannier90.win files."""
+    """Parses wannier90 input."""
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
-    def __init__(self, file_path):
+    def __init__(self, path):
         super(WinParser, self).__init__()
         self.result = {}
-        with open(file_path) as winf:
+        with open(path) as winf:
             self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
         self.result.update(self.keywords)
         self.result.update(self.blocks)
 
     @classmethod
     def parse_win(cls, fobj_or_str):
-        """Parse a wannier90 .win file."""
+        """Parse a wannier90 input."""
         if isinstance(fobj_or_str, str):
             content = fobj_or_str
         else:

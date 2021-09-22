@@ -5,13 +5,13 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
 
 
 #@pytest.mark.parametrize(['vasp_kpoints'], [('list',)], indirect=True)
 def test_parse_kpoints(vasp_kpoints):
     """
-    Parse a reference KPOINTS file.
+    Parse a reference KPOINTS.
 
     Using the KpointsParser and compare the result to a reference
     kpoints-node.
@@ -22,7 +22,7 @@ def test_parse_kpoints(vasp_kpoints):
 
     try:
         _ = kpoints.get_attribute('mesh')
-        file_path = data_path('kpoints', 'KPOINTS_mesh')
+        path = data_path('kpoints', 'KPOINTS_mesh')
         method = 'get_kpoints_mesh'
         param = 'mesh'
     except AttributeError:
@@ -30,13 +30,13 @@ def test_parse_kpoints(vasp_kpoints):
 
     try:
         _ = kpoints.get_attribute('array|kpoints')
-        file_path = data_path('kpoints', 'KPOINTS_list')
+        path = data_path('kpoints', 'KPOINTS_list')
         method = 'get_kpoints'
         param = 'list'
     except AttributeError:
         pass
 
-    parser = KpointsParser(file_path=file_path)
+    parser = KpointsParser(path=path)
     result = parser.kpoints
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()
@@ -46,7 +46,7 @@ def test_parse_kpoints(vasp_kpoints):
 
 def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     """
-    Parse a reference KPOINTS file.
+    Parse a reference KPOINTS.
 
     Using the KpointsParser and compare the result to a reference
     kpoints-node.
@@ -70,9 +70,9 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
         pass
 
     parser = KpointsParser(data=kpoints)
-    temp_file = str(tmpdir.join('KPOINTS'))
-    parser.write(file_path=temp_file)
-    parser_reparse = KpointsParser(file_path=temp_file)
+    temp_object = str(tmpdir.join('KPOINTS'))
+    parser.write(temp_object)
+    parser_reparse = KpointsParser(handler=temp_object)
     result = parser_reparse.kpoints
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()

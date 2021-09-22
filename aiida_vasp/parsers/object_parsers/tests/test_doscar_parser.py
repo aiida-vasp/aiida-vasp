@@ -6,14 +6,14 @@ import numpy
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.doscar import DosParser
+from aiida_vasp.parsers.object_parsers.doscar import DosParser
 
 
 def test_parse_doscar(fresh_aiida_env):
-    """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
-    file_name = 'DOSCAR'
-    path = data_path('doscar', file_name)
-    parser = DosParser(file_path=path)
+    """Parse a reference DOSCAR with the DosParser and compare the result to a reference."""
+    name = 'DOSCAR'
+    path = data_path('doscar', name)
+    parser = DosParser(path=path)
     dos = numpy.array([(-3.44, -1.10400000e-43, -2.09900000e-43),
                        (-1.539, 1.40000000e-01, 2.66100000e-01),
                        (0.362, -3.62400000e-73, 2.00000000e+00),
@@ -31,9 +31,9 @@ def test_parse_doscar(fresh_aiida_env):
     for i in range(0, dos.size):
         assert result_dos[i] == dos[i]
 
-    file_name = 'DOSCAR.nopdos'
-    path = data_path('doscar', file_name)
-    parser = DosParser(file_path=path)
+    name = 'DOSCAR.nopdos'
+    path = data_path('doscar', name)
+    parser = DosParser(path=path)
     result = parser.dos
     # The 'tdos' array is a nested array for some reason.
     result_dos = result.get_array('tdos')
@@ -43,10 +43,10 @@ def test_parse_doscar(fresh_aiida_env):
 
 
 def test_parse_doscar_spin(fresh_aiida_env):
-    """Parse a reference DOSCAR file with the DosParser and compare the result to a reference."""
-    file_name = 'DOSCAR.spin'
-    path = data_path('doscar', file_name)
-    parser = DosParser(file_path=path)
+    """Parse a reference DOSCAR with the DosParser and compare the result to a reference."""
+    name = 'DOSCAR.spin'
+    path = data_path('doscar', name)
+    parser = DosParser(path=path)
     result = parser.dos
 
     result_dos = result.get_array('tdos')
@@ -59,10 +59,10 @@ def test_parse_doscar_spin(fresh_aiida_env):
 
 
 def test_parse_doscar_ncl(fresh_aiida_env):
-    """parse a reference doscar file with the dosparser and compare the result to a reference."""
-    file_name = 'DOSCAR.ncl'
-    path = data_path('doscar', file_name)
-    parser = DosParser(file_path=path)
+    """parse a reference DOSCAR with the dosparser and compare the result to a reference."""
+    name = 'DOSCAR.ncl'
+    path = data_path('doscar', name)
+    parser = DosParser(path=path)
     result = parser.dos
 
     # tdos only has a single spin component

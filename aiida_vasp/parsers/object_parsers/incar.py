@@ -2,24 +2,23 @@
 INCAR parser.
 
 -------------
-The file parser that handles the parsing of INCAR files.
+The object parser that handles the parsing of INCAR.
 """
 from parsevasp.incar import Incar
 from aiida.common import InputValidationError
 
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class IncarParser(BaseFileParser):
     """
-    Parser for VASP INCAR format.
+    Parser for VASP INCAR.
 
     This is a wrapper for the parsevasp.incar parser.
 
     The Parsing direction depends on whether the IncarParser is initialised with
-    'path = ...' (read from file) or 'data = ...' (read from data).
-
+    'handler = ...' (use handler objects) or 'data = ...' (read from an AiiDA data structure).
     """
 
     PARSABLE_ITEMS = {
@@ -67,8 +66,8 @@ class IncarParser(BaseFileParser):
         except SystemExit as error:
             raise InputValidationError(error.args[0])
 
-    def _parse_file(self, inputs):
-        """Create a DB Node from an INCAR file."""
+    def _parse_object(self, inputs):
+        """Create a DB Node from an INCAR."""
 
         result = inputs
         result = {}
@@ -77,7 +76,7 @@ class IncarParser(BaseFileParser):
             return {'incar': self._data_obj}
 
         try:
-            incar = Incar(file_path=self._data_obj.path, logger=self._logger)
+            incar = Incar(file_handler=self._data_obj.handler, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exitited abnormally. Returning None.')
             return {'incar': None}

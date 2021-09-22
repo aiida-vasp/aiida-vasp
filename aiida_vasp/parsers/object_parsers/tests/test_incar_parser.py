@@ -6,7 +6,7 @@ from aiida.common import InputValidationError
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
@@ -19,10 +19,10 @@ def incar_dict_example():
 
 
 def test_parser_read(fresh_aiida_env):
-    """Test to read a INCAR file."""
+    """Test to read an INCAR."""
 
     path = data_path('phonondb', 'INCAR')
-    parser = IncarParser(file_path=path)
+    parser = IncarParser(path=path)
     incar = parser.incar
     assert incar['prec'] == 'Accurate'
     assert incar['ibrion'] == -1
@@ -41,7 +41,7 @@ def test_parser_read_doc(fresh_aiida_env):
     """
 
     path = data_path('incar', 'INCAR.copper_srf')
-    parser = IncarParser(file_path=path)
+    parser = IncarParser(path=path)
     result = parser.incar
     assert result is None
 
@@ -81,10 +81,10 @@ def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     parser = IncarParser(data=incar_params)
 
     # now write
-    temp_file = str(tmpdir.join('INCAR'))
-    parser.write(temp_file)
+    temp_path = str(tmpdir.join('INCAR'))
+    parser.write(temp_path)
     # read again
-    parser_reparse = IncarParser(file_path=temp_file)
+    parser_reparse = IncarParser(path=temp_path)
     result = parser_reparse.incar
     # compare
     comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
@@ -96,4 +96,4 @@ def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
     incar_params = get_data_class('dict')(dict=with_invalid)
     parser = IncarParser(data=incar_params)
     with pytest.raises(InputValidationError):
-        parser.write(temp_file)
+        parser.write(temp_path)

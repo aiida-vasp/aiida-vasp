@@ -8,7 +8,7 @@ errors. Typically this is contained in the scheduler standard output.
 import re
 
 from parsevasp.stream import Stream
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser, SingleFile
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
 
@@ -28,10 +28,10 @@ class StreamParser(BaseFileParser):
         """
         Initialize stream parser
 
-        file_path : str
-            File path.
+        handler : object
+            Handler object.
         data : SingleFileData
-            AiiDA Data class install to store a single file.
+            AiiDA data class to store a single file.
         settings : ParserSettings
             Do not touch. BaseFileParser takes care of initialization.
 
@@ -40,16 +40,16 @@ class StreamParser(BaseFileParser):
         super(StreamParser, self).__init__(*args, **kwargs)
         self._stream = None
         self._settings = kwargs.get('settings', None)
-        if 'file_path' in kwargs:
-            self._init_stream(kwargs['file_path'])
+        if 'handler' in kwargs:
+            self._init_stream(kwargs['handler'])
         if 'data' in kwargs:
             self._init_stream(kwargs['data'].get_file_abs_path())
 
-    def _init_stream(self, path):
-        """Init with a file path."""
+    def _init_stream(self, handler):
+        """Init with handler."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(handler=handler)
 
         # Since the VASP output can be fairly large, we will parse it only
         # once and store the parsevasp Stream object.
@@ -60,12 +60,12 @@ class StreamParser(BaseFileParser):
             stream_config = self._settings.get('stream_config', None)
             history = self._settings.get('stream_history', False)
         try:
-            self._stream = Stream(file_path=path, logger=self._logger, history=history, config=stream_config)
+            self._stream = Stream(file_handler=handler, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly when parsing the standard stream. Returning None.')
             self._stream = None
 
-    def _parse_file(self, inputs):
+    def _parse_object(self, inputs):
         """Parse the standard streams."""
 
         # Since all quantities will be returned by properties, we can't pass

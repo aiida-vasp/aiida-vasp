@@ -44,14 +44,14 @@ def get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, quanti
     return inputs
 
 
-def get_node_composer_inputs_from_file_parser(file_parser, quantity_keys=None):  # pylint: disable=invalid-name
-    """Assemble necessary data from file_parser"""
+def get_node_composer_inputs_from_object_parser(object_parser, quantity_keys=None):  # pylint: disable=invalid-name
+    """Assemble necessary data from object_parser"""
     inputs = {}
-    for key, value in file_parser.parsable_items.items():
+    for key, value in object_parser.parsable_items.items():
         if quantity_keys is not None:
             if key not in quantity_keys:
                 continue
-        inputs[value['name']] = file_parser.get_quantity(key)
+        inputs[value['name']] = object_parser.get_quantity(key)
     return inputs
 
 

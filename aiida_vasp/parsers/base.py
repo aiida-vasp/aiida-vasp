@@ -26,7 +26,7 @@ class BaseParser(Parser):
 
     def _compose_retrieved_content(self, parser_kwargs=None):
         """
-        Convenient check to see if the retrieved and retrieved temp folder is present.
+        Convenient check to see if the retrieved and retrieved temporary folder is present.
 
         This routine also builds a dictionary containing the content of both the retrieved folder and
         the retrieved_temporary folder, accessible from retrieved_content. The error for the temporary
@@ -37,77 +37,94 @@ class BaseParser(Parser):
         exit_code_permanent = self._check_folder()
         if exit_code_permanent is None:
             # Retrieved folder exists, add content and tag to dictionary
-            for retrieved_file in self.retrieved.list_objects():
-                retrieved[retrieved_file.name] = {'path': '', 'status': 'permanent'}
+            for retrieved_object in self.retrieved.list_objects():
+                retrieved[retrieved_object.name] = {'path': '', 'status': 'permanent'}
 
         exit_code_temporary = None
         if parser_kwargs is not None:
             exit_code_temporary = self._set_retrieved_temporary(parser_kwargs)
             if exit_code_temporary is None:
                 # Retrieved_temporary folder exists, add content and tag to dictionary
-                for retrieved_file in os.listdir(self._retrieved_temporary):
-                    retrieved[retrieved_file] = {'path': self._retrieved_temporary, 'status': 'temporary'}
+                # Notice https://github.com/aiidateam/aiida-core/issues/3502. That is why
+                # we need to store the path and use listdir etc.
+                for retrieved_object in os.listdir(self._retrieved_temporary):
+                    retrieved[retrieved_object] = {'path': self._retrieved_temporary, 'status': 'temporary'}
 
-        # Check if there are other files than the AiiDA generated scheduler files in retrieved and
-        # if there are any files in the retrieved_temporary. If not, return an error.
-        aiida_required_files = [self.node.get_attribute('scheduler_stderr'), self.node.get_attribute('scheduler_stdout')]
-        vasp_output_files_present = False
-        for file_name in retrieved:
-            if file_name not in aiida_required_files:
-                vasp_output_files_present = True
-
-        if not vasp_output_files_present:
+        # Check if there are other objects than the AiiDA generated scheduler objects in retrieved and
+        # if there are any objects in the retrieved_temporary. If not, return an error.
+        aiida_required_objects = [self.node.get_attribute('scheduler_stderr'), self.node.get_attribute('scheduler_stdout')]
+        # Check if have some missing objects that we require to be present.
+        vasp_output_objects_present = False
+        for name in retrieved:
+            if name not in aiida_required_objects:
+                vasp_output_objects_present = True
+        if not vasp_output_objects_present:
             return self.exit_codes.ERROR_VASP_DID_NOT_EXECUTE
 
-        # Store the retrieved content
+        # Store the retrieved content.
         self._retrieved_content = retrieved
-        # OK if a least one of the folders are present
+        # At least one of the folders should be present.
         if exit_code_permanent is None or exit_code_temporary is None:
             return None
-        # Both are not present, exit code of the temporary folder take precedence
+        # Both are not present, exit code of the temporary folder take precedence as this is
+        # the one we typically use the most.
         return exit_code_temporary if not None else exit_code_permanent
 
     def _set_retrieved_temporary(self, parser_kwargs):
-        """Convenient check of the retrieved_temporary folder."""
+        """
+        Check the presence of retrieved_temporary folder.
+
+        This folder is typically set as a SandboxFolder if there is anything in the retrieve_temporary_list
+        and deleted when the parsing is completed.
+        """
         self._retrieved_temporary = parser_kwargs.get('retrieved_temporary_folder', None)
         if self._retrieved_temporary is None:
             return self.exit_codes.ERROR_NO_RETRIEVED_TEMPORARY_FOLDER
         return None
 
     def _check_folder(self):
-        """Convenient check of the retrieved folder."""
+        """Check the presence of the retrieved folder."""
         try:
             _ = self.retrieved
             return None
         except NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
-    def _get_file(self, fname):
+    def _get_handler(self, name):
         """
-        Convenient access to retrieved and retrieved_temporary files.
+        Access the handler of retrieved and retrieved_temporary objects. This is passed
+        down to the parers where the content is analyzed.
 
-        :param fname: name of the file
-        :return: absolute path to the retrieved file
+        Since their interface is presently different, we created this wrapper to
+        make it uniform. See also https://github.com/aiidateam/aiida-core/issues/3502.
+
+        :param name: name of the object
+        :returns: the handler for the object
+        :rtype: object
         """
 
         try:
-            if self._retrieved_content[fname]['status'] == 'permanent':
+            if self._retrieved_content[name]['status'] == 'permanent':
+                # For the permanent content to be parsed we can use the fact that
+                # self.retrieved is a FolderData datatype in AiiDA.
                 try:
-                    with self.retrieved.open(fname) as file_obj:
-                        ofname = file_obj.name
-                    return ofname
+                    with self.retrieved.open(name) as handler:
+                        handler_object = handler
+                    return handler_object
                 except OSError:
-                    self.logger.warning(fname + ' not found in retrieved')
+                    self.logger.warning(name + ' not found in retrieved')
                     return None
             else:
-                path = self._retrieved_content[fname]['path']
-                file_path = os.path.join(path, fname)
+                # For the temporary content to be parsed we have to use the regular
+                # folder approach for now.
+                # See https://github.com/aiidateam/aiida-core/issues/3502.
+                path = os.path.join(self._retrieved_content[name]['path'], name)
                 try:
-                    with open(file_path, 'r') as file_obj:
-                        ofname = file_path
-                    return ofname
+                    with open(path, 'r') as handler:
+                        handler_object = handler
+                    return handler_object
                 except OSError:
-                    self.logger.warning(fname + ' not found in retrieved_temporary')
+                    self.logger.warning(name + ' not found in retrieved_temporary')
                     return None
         except KeyError:
             return None

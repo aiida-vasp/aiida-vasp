@@ -190,8 +190,8 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         """Import a list of valid parameters for VASP. This is generated from the manual."""
         from os import path  # pylint: disable=import-outside-toplevel
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
-        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r') as file_handler:
-            tags_data = safe_load(file_handler)
+        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r') as handler:
+            tags_data = safe_load(handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
         for key, _ in self._unsupported_parameters.items():

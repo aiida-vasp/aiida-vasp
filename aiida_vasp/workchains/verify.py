@@ -2,7 +2,7 @@
 Verify workchain.
 
 -----------------
-Indented to be used to verify a calculation, perform corrections in inputs files and
+Indented to be used to verify a calculation, perform necessary corrections and
 restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
 or not currently checked in it. This workchain does currently nothing.
 """

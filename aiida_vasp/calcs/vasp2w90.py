@@ -30,12 +30,12 @@ class Vasp2w90Calculation(VaspCalculation):
         spec.input('wannier_projections',
                    valid_type=(get_data_class('orbital'), List),
                    required=False,
-                   help='Projections to be defined in the Wannier90 input file.')
+                   help='Projections to be defined in the Wannier90 input.')
 
     def prepare_for_submission(self, tempfolder):
         """Override the method such that we can add the flag that executes Wannier90 in library mode."""
         # Create a new parameters node that contain the flag that turns on the Wannier90 library mode such
-        # that the Wannier90 files are created. Execution of Wannier90 itself is to be done after the execution
+        # that the Wannier90 inputs are created. Execution of Wannier90 itself is to be done after the execution
         # of this calculation with the aiida-wannier90 plugins calculation.
         parameters = self.inputs.parameters.get_dict()
         parameters.update({'lwannier90': True})
@@ -50,7 +50,7 @@ class Vasp2w90Calculation(VaspCalculation):
         return super(Vasp2w90Calculation, self).prepare_for_submission(tempfolder)
 
     def write_win(self, dst):
-        """Write Wannier90 input file."""
+        """Write Wannier90 input."""
         write_win(filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
 
     @staticmethod

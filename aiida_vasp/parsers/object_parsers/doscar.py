@@ -2,13 +2,13 @@
 DOSCAR parser.
 
 --------------
-The file parser that handles the parsing of DOSCAR files.
+The parser that handles the parsing of DOSCAR.
 """
 # pylint: disable=unsubscriptable-object  # pylint/issues/3139
 import numpy as np
 
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.
 DTYPES_TDOS = {
@@ -61,7 +61,7 @@ COLSPIN_MAP = {7: 2, 9: 2, 19: 2, 35: 2, 13: 4, 17: 4, 37: 4, 69: 4, 4: 1, 5: 1,
 
 
 class DosParser(BaseFileParser):
-    """Parse a DOSCAR file from a vasp run."""
+    """Parse a DOSCAR object."""
 
     PARSABLE_ITEMS = {
         'doscar-dos': {
@@ -75,8 +75,8 @@ class DosParser(BaseFileParser):
         super(DosParser, self).__init__(*args, **kwargs)
         self._dos = None
 
-    def _parse_file(self, inputs):
-        """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
+    def _parse_object(self, inputs):
+        """Parse a DOSCAR object and extract metadata and a density of states data array."""
 
         result = inputs
         result = {}
@@ -98,9 +98,9 @@ class DosParser(BaseFileParser):
 
     # pylint: disable=too-many-locals, too-many-statements
     def _read_doscar(self):
-        """Read a VASP DOSCAR file and extract metadata and a density of states data array."""
+        """Parse a DOSCAR object and extract metadata and a density of states data array."""
 
-        with open(self._data_obj.path) as dos:
+        with open(self._data_obj.handler) as dos:
             num_ions, num_atoms, p00, p01 = self.line(dos, int)
             line_0 = self.line(dos, float)
             line_1 = self.line(dos, float)
@@ -172,6 +172,6 @@ class DosParser(BaseFileParser):
     @property
     def dos(self):
         if self._dos is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=['doscar-dos'])
+            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=['doscar-dos'])
             self._dos = NodeComposer.compose('array', inputs)
         return self._dos

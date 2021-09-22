@@ -15,8 +15,8 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, get_current_user, aiida_version, cmp_version
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
@@ -33,8 +33,8 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    structure = PoscarParser(file_path=data_path('test_bands_wc', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_bands_wc', 'inp', 'INCAR')).incar
+    structure = PoscarParser(path=data_path('test_bands_wc', 'inp', 'POSCAR')).structure
+    parameters = IncarParser(path=data_path('test_bands_wc', 'inp', 'INCAR')).incar
     parameters['system'] = 'test-case:test_bands_wc'
     # Make sure we replace encut with pwcutoff
     del parameters['encut']

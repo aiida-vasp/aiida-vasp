@@ -1,8 +1,8 @@
 """
-Base classes for the VASP file parsers.
+Base classes for the VASP object parsers.
 
 ---------------------------------------
-Contains the base classes for the VASP file parsers.
+Contains the base classes for the VASP object parsers.
 """
 # pylint: disable=import-outside-toplevel
 import re
@@ -16,7 +16,7 @@ class BaseParser(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def line(cls, fobj_or_str, d_type=str):
-        """Grab a line from a file object or string and convert it to d_type (default: str)."""
+        """Grab a line from an object or string and convert it to d_type (default: str)."""
         if isinstance(fobj_or_str, str):
             line = fobj_or_str
         else:
@@ -39,35 +39,35 @@ class BaseParser(object):  # pylint: disable=useless-object-inheritance
 
 class BaseFileParser(BaseParser):
     """
-    Abstract base class for the individual file parsers.
+    Abstract base class for the individual object parsers.
 
     It provides the following interface to be used by the VaspParser:
 
-        - _parsable_items: a dictionary holding all items this parser can extract from it's file as well
+        - _parsable_items: a dictionary holding all items this parser can extract from it's object as well
           as the required information on how to extract those.
-        - _parsed_data: a dictionary containing all the parsed data from this file.
+        - _parsed_data: a dictionary containing all the parsed data from this object.
         - get_quantity(): Method to be called by the VaspParser
-          which will either fill the _parsed_data in case that it is empty by calling _parse_file
+          which will either fill the _parsed_data in case that it is empty by calling _parse_object
           or return the requested data from the _parsed_data. If another quantity is required as
           prerequisite it will be requested from the VaspParser.
 
           This method will be subscribed to the VaspParsers get_quantity delegate during initialisation.
           When the VaspParser calls his delegate this method will be called and return the requested
           quantity.
-        _ _parse_file: an abstract method to be implemented by the actual file parser, which will
-          parse the file and fill the _parsed_data dictionary.
+        _ _parse_object: an abstract method to be implemented by the actual object parser, which will
+          parse the object and fill the _parsed_data dictionary.
 
         :param calc_parser_cls: Python class, optional, class of the calling CalculationParser instance
 
-        :keyword file_path: Initialise with a path to a file. The file will be parsed by the FileParser
+        :keyword path: Initialise with a path to a object. The object will be parsed by the object parser
         :keyword data: Initialise with an aiida data object. This may be SingleFileData, KpointsData or StructureData.
 
     Additional keyword arguments might be defined by the inheriting classes.
 
-    The second way to use the BaseFileParser is for writing VASP files based on given Aiida data objects.
+    The second way to use the BaseFileParser is for writing VASP objects based on given Aiida data objects.
     The BaseFileParser will provide the data object by the _parsed_object property and offer a public 'write' method
-    to write the corresponding VASP file. Depending on whether the file under consideration is an actual input
-    file, this may simply mean copying a file.
+    to write the corresponding VASP object. Depending on whether the object under consideration is an actual input
+    object, this may simply mean copying it.
     """
 
     PARSABLE_ITEMS = {}
@@ -78,9 +78,11 @@ class BaseFileParser(BaseParser):
         self._exit_code = None
         self._parsable_items = self.PARSABLE_ITEMS
         self._parsed_data = {}
-        if 'file_path' in kwargs:
-            self._data_obj = SingleFile(path=kwargs['file_path'])
+        if 'handler' in kwargs:
+            # For instance a file handler
+            self._data_obj = SingleFile(handler=kwargs['handler'])
         elif 'data' in kwargs:
+            # An AiiDA data structure
             self._data_obj = SingleFile(data=kwargs['data'])
         else:
             self._data_obj = None
@@ -95,17 +97,16 @@ class BaseFileParser(BaseParser):
 
     def get_quantity(self, quantity_key):
         """
-        Public method to get the required quantity from the _parsed_data dictionary if that exists.
+        Get the required quantity
 
-        Otherwise parse the file. This method will be registered to the VaspParsers get_quantities
-        delegate during __init__.
+        Either from the _parsed_data dictionary if that exists, otherwise parse the object.
         """
 
         if quantity_key not in self._parsable_items:
             return None
 
         if self._parsed_data.get(quantity_key) is None:
-            self._parsed_data = self._parse_file({})
+            self._parsed_data = self._parse_object({})
 
         return self._parsed_data.get(quantity_key)
 
@@ -125,30 +126,30 @@ class BaseFileParser(BaseParser):
                     if inputs[inp] is None and inp in self._parsable_items[quantity_name]['prerequisites']:
                         # The VaspParser was unable to provide the required input.
                         return None
-            self._parsed_data = self._parse_file(inputs)
+            self._parsed_data = self._parse_object(inputs)
 
         return self._parsed_data.get(quantity_name)
 
-    def write(self, file_path):
+    def write(self, path):
         """
-        Writes a VASP style file from the parsed Object.
+        Writes a VASP object from the parsed object.
 
-        For non input files this means simply copying the file.
+        For non input objects this means simply copying the object.
         """
         if self._parsed_object is not None:
-            self._parsed_object.write(file_path)
+            self._parsed_object.write(path)
 
     @property
     def _parsed_object(self):
         """
-        Property to return the FileParsers _data_obj.
+        Property to return the object parsers _data_obj.
 
         The data_obj is either an instance of one of the parsevasp parser classes,
-        which provide a write function, an instance of an aiida data node or an
-        instance of SingleFile in case that it is just a file and does not have
+        which provide a write function, an instance of an AiiDA data node or an
+        instance of SingleFile in case it is just an object and does not have
         it's own 'write' method.
 
-        In particular FileParsers storing aiida data nodes. will have to override this.
+        In particular the specific object parsers storing AiiDA data nodes have to override this.
         """
         return self._data_obj
 
@@ -156,22 +157,22 @@ class BaseFileParser(BaseParser):
     def data_obj(self):
         return self._data_obj
 
-    def _parse_file(self, inputs):
-        """Abstract base method to parse this file parsers file. Has to be overwritten by the child class."""
+    def _parse_object(self, inputs):
+        """Abstract base method to parse this object. Has to be overwritten by the child class."""
 
-        raise NotImplementedError('{classname} does not implement a _parse_file() ' 'method.'.format(classname=self.__class__.__name__))
+        raise NotImplementedError('{classname} does not implement a _parse_object() ' 'method.'.format(classname=self.__class__.__name__))
 
 
 class SingleFile(object):  # pylint: disable=useless-object-inheritance
     """
-    Datastructure for a singleFile file providing a write method.
+    Datastructure for a SingleFile object providing a write method.
 
     This should get replaced, as soon as parsevasp has a dedicated class.
     """
 
     def __init__(self, **kwargs):
         super(SingleFile, self).__init__()
-        self._path = None
+        self._handler = None
         self._data = None
         self.init_with_kwargs(**kwargs)
 
@@ -179,22 +180,23 @@ class SingleFile(object):  # pylint: disable=useless-object-inheritance
     def init_with_kwargs(self, **kwqargs):
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_path(self, path):
-        self._path = path
+    def _init_with_handler(self, handler):
+        self._handler = handler
 
     def _init_with_data(self, data):
         """Initialise with SingleFileData."""
         self._data = data
 
     @property
-    def path(self):
-        return self._path
+    def handler(self):
+        return self._handler
 
     def write(self, dst):
-        """Copy file to destination."""
-        if self._path is not None:
-            import shutil
-            shutil.copyfile(self._path, dst)
+        """Copy to destination."""
+        if self._handler is not None:
+            with open(dst, 'w') as output_obj:
+                lines = self._handler.readlines()
+                output_obj.writelines(lines)
             return
 
         if self._data is not None:
@@ -208,7 +210,7 @@ class KeyValueParser(BaseParser):
     Key and value parser.
 
     ---------------------
-    This baseclass has some utility functions for parsing files that are
+    This baseclass has some utility functions for parsing objects that are
     (mostly) in a `key` = `value` format.
 
     This class does not integrate with the VaspParser class currently.
@@ -217,12 +219,12 @@ class KeyValueParser(BaseParser):
 
         import re
 
-        from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
+        from aiida_vasp.parsers.object_parsers.parser import KeyValueParser
 
         ParamParser(KeyValueParser):
 
-            def __init__(self, file_path):
-                self._file_path = py.path.local(file_path)
+            def __init__(self, path):
+                self._path = py.path.local(path)
                 super(WinParser, self).__init__()
                 self.result = {}
 
@@ -233,11 +235,11 @@ class KeyValueParser(BaseParser):
                         return converted['value']
                 return value
 
-            def parse_file(self):
-                assignments = re.findall(self.assignment, self._file_path.read())
+            def parse_object(self):
+                assignments = re.findall(self.assignment, self._path.read())
                 return {key: self.convert_or_not(value)}
 
-    Parses files like::
+    Parses objects like::
 
         StrParam = value_1
         FloatParam = 1.0
@@ -249,9 +251,9 @@ class KeyValueParser(BaseParser):
     comments = True
 
     @classmethod
-    def get_lines(cls, filename):
-        with open(filename) as input_file:
-            lines = input_file.read().splitlines()
+    def get_lines(cls, name):
+        with open(name) as input_object:
+            lines = input_object.read().splitlines()
         return lines
 
     @classmethod
@@ -329,8 +331,8 @@ class KeyValueParser(BaseParser):
         return cls.retval(value, comment=comment)
 
     @classmethod
-    def kv_list(cls, filename):
-        with open(filename) as input_fo:
+    def kv_list(cls, name):
+        with open(name) as input_fo:
             kv_list = filter(None, map(cls.find_kv, input_fo))
         return kv_list
 

@@ -16,27 +16,27 @@ from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.object_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.object_parsers.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
 # _IMMIGRANT_EXTRA_KWARGS = """
 # vasp.vasp specific kwargs:
 
-# :param use_chgcar: bool, if True, read the CHGCAR file (has to exist) and convert it to an input node.
-# :param use_wavecar: bool, if True, read the WAVECAR file (has to exist) and convert it to an input node.
+# :param use_chgcar: bool, if True, use the CHGCAR (has to exist) and convert it to an input node.
+# :param use_wavecar: bool, if True, use the WAVECAR (has to exist) and convert it to an input node.
 # """
 
 # @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 
 
 class VaspImmigrant(VaspCalculation):
-    """Parse VASP output files stored in a specified directory.
+    """Parse VASP output objects stored in a specified directory.
 
     Simulate running the VaspCalculation up to the point where it can be
     retrieved and parsed, then hand over control to the runner for the rest.
@@ -190,16 +190,16 @@ class VaspImmigrant(VaspCalculation):
 
 
 def get_incar_input(dir_path):
-    incar = IncarParser(file_path=str(dir_path / 'INCAR')).incar
+    incar = IncarParser(path=str(dir_path / 'INCAR')).incar
     return get_data_node('dict', dict=incar)
 
 
 def get_poscar_input(dir_path):
-    return PoscarParser(file_path=str(dir_path / 'POSCAR')).structure
+    return PoscarParser(path=str(dir_path / 'POSCAR')).structure
 
 
 def get_potcar_input(dir_path, structure=None, potential_family=None, potential_mapping=None):
-    """Read potentials from a POTCAR file or set it up from a structure."""
+    """Read potentials from POTCAR or set it up from a structure."""
     local_potcar = dir_path / 'POTCAR'
     structure = structure or get_poscar_input(dir_path)
     potentials = {}
@@ -216,14 +216,14 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
 
 def get_kpoints_input(dir_path, structure=None):
     structure = structure or get_poscar_input(dir_path)
-    kpoints = KpointsParser(file_path=str(dir_path / 'KPOINTS')).kpoints
+    kpoints = KpointsParser(path=str(dir_path / 'KPOINTS')).kpoints
     kpoints.set_cell_from_structure(structure)
     return kpoints
 
 
 def get_chgcar_input(dir_path):
-    return ChgcarParser(file_path=str(dir_path / 'CHGCAR')).chgcar
+    return ChgcarParser(path=str(dir_path / 'CHGCAR')).chgcar
 
 
 def get_wavecar_input(dir_path):
-    return WavecarParser(file_path=str(dir_path / 'WAVECAR')).wavecar
+    return WavecarParser(path=str(dir_path / 'WAVECAR')).wavecar

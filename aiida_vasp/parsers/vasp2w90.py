@@ -7,7 +7,7 @@ AiiDA Parser for aiida_vasp.Vasp2w90Calculation.
 from aiida.plugins import DataFactory
 from aiida.orm.nodes.data.list import List
 
-from aiida_vasp.parsers.file_parsers.win import WinParser
+from aiida_vasp.parsers.object_parsers.win import WinParser
 from .vasp import VaspParser
 
 
@@ -28,8 +28,8 @@ class Vasp2w90Parser(VaspParser):
         return self.result(success=win_success and has_full_dat)  # pylint: disable=no-member
 
     def parse_win(self):
-        """Create the wannier90 .win file and kpoints output nodes."""
-        win = self._get_file('wannier90.win')
+        """Create the wannier90 input and kpoints output nodes."""
+        win = self._get_object('wannier90.win')
         if not win:
             return False, None, None, None
         win_result = WinParser(win).result
@@ -67,5 +67,5 @@ class Vasp2w90Parser(VaspParser):
             self.add_node(name, node)  # pylint: disable=no-member
 
     def has_full_dat(self):
-        success = all(self._get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
+        success = all(self._get_object('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
         return success

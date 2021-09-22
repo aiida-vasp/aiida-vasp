@@ -2,7 +2,7 @@
 vasprun parser.
 
 ---------------
-The file parser that handles the parsing of vasprun.xml files.
+The parser that handles the parsing of vasprun.xml.
 """
 # pylint: disable=too-many-public-methods, protected-access
 import sys
@@ -11,7 +11,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser, SingleFile
 from aiida_vasp.utils.compare_bands import get_band_properties
 
 DEFAULT_OPTIONS = {
@@ -162,10 +162,10 @@ class VasprunParser(BaseFileParser):
         """
         Initialize vasprun.xml parser
 
-        file_path : str
-            File path.
+        handler : object
+            Handler object.
         data : SingleFileData
-            AiiDA Data class install to store a single file.
+            AiiDA data class to store a single file.
         settings : ParserSettings
         exit_codes : CalcJobNode.process_class.exit_codes
 
@@ -176,19 +176,19 @@ class VasprunParser(BaseFileParser):
         self._xml_truncated = False
         self._settings = kwargs.get('settings', None)
         self._exit_codes = kwargs.get('exit_codes', None)
-        if 'file_path' in kwargs:
-            self._init_xml(kwargs['file_path'])
+        if 'handler' in kwargs:
+            self._init_xml(kwargs['handler'])
         if 'data' in kwargs:
             self._init_xml(kwargs['data'].get_file_abs_path())
 
-    def _init_xml(self, path):
+    def _init_xml(self, handler):
         """Create parsevasp Xml instance"""
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(handler=handler)
 
         # Since vasprun.xml can be fairly large, we will parse it only
         # once and store the parsevasp Xml object.
         try:
-            self._xml = Xml(file_path=path, k_before_band=True, logger=self._logger)
+            self._xml = Xml(file_handler=handler, k_before_band=True, logger=self._logger)
             # Let us also check if the xml was truncated as the parser uses lxml and its
             # recovery mode in case we can use some of the results.
             self._xml_truncated = self._xml.truncated
@@ -196,8 +196,8 @@ class VasprunParser(BaseFileParser):
             self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._xml = None
 
-    def _parse_file(self, inputs):
-        """Parse the quantities related to this file parser."""
+    def _parse_object(self, inputs):
+        """Parse the quantities related to this object parser."""
         # Since all quantities will be returned by properties, we can't pass
         # inputs as a parameter, so we store them in self._parsed_data
         for key, value in inputs.items():
@@ -221,7 +221,7 @@ class VasprunParser(BaseFileParser):
                 result[quantity] = getattr(self, quantity)
 
         # Now we make sure that if some of the requested quantities sets an error during parsing and
-        # the xml file is in recover mode, the calculation is simply garbage. Also, exit_code is not always set, or
+        # the xml object is in recover mode, the calculation is simply garbage. Also, exit_code is not always set, or
         # its status can be zero.
         if self._exit_code is None:
             self._exit_code = self._exit_codes.NO_ERROR

@@ -75,11 +75,11 @@ Composing the quantities into an output node
 A ``NodeComposer`` has been added to compose output nodes based on a given set of ``quantities``. It can be initialised in two different ways::
 
   composer = NodeComposer(vasp_parser=...)
-  composer = NodeComposer(file_parsers=[...])
+  composer = NodeComposer(object_parsers=[...])
 
-where either a ``VaspParser`` object or a list of ``FileParser`` objects are required for the ``NodeComposer`` to get the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
+where either a ``VaspParser`` object is passed to ``vasp_parser`` or a list of specific object parsers is passed to ``object_parsers``. Either are required for the ``NodeComposer`` to assemble the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
 
-  composer = NodeComposer(file_parsers=[vasprun_parser])
+  composer = NodeComposer(object_parsers=[vasprun_parser])
   data_obj = composer.compose('array.kpoints', quantities=['kpoints'])
 
 For most node types there are default quantities defined as::
@@ -106,7 +106,7 @@ where the whole composer part is dealt with internally::
   @property
   def structure(self):
       if self._structure is None:
-          composer = NodeComposer(file_parsers=[self])
+          composer = NodeComposer(object_parsers=[self])
           self._structure = composer.compose('structure', quantities=['poscar-structure'])
       return self._structure
 
@@ -121,7 +121,7 @@ At the moment existing short-cut properties are:
 - ``IncarParser.incar`` (This is an exception in so far that it actually just returns a dictionary)
 
 Prominently missing from this list are ``bands`` from the ``EigenvalParser`` and everything from the ``VasprunParser``.
-For the former the reason is that ``bands`` require quantities from other ``FileParsers`` `and for the latter the name space is crowded.
+For the former the reason is that ``bands`` require quantities from other object parsers and for the latter the name space is crowded.
 
 Quantity definitions and alternatives
 -------------------------------------

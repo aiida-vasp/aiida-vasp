@@ -2,13 +2,13 @@
 OUTCAR parser.
 
 --------------
-The file parser that handles the parsing of OUTCAR files.
+The object parser that handles the parsing of OUTCAR.
 """
 import re
 
 from parsevasp.outcar import Outcar
-from aiida_vasp.parsers.file_parsers.parser import BaseFileParser, SingleFile
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_file_parser
+from aiida_vasp.parsers.object_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
 
@@ -17,14 +17,11 @@ class OutcarParser(BaseFileParser):
     """
     Interface to parsevasp's OUTCAR parser.
 
-    The quantities listed here are not yet ejected in the xml file:
+    The quantities listed here are not yet ejected in VASP xml objects:
     - symmetries
     - elastic moduli
 
-    And we can thus not fully rely on the xml parser.
-
-    No possibilities to write OUTCAR files have been implemented.
-
+    We thus need to parse these from OUTCAR.
     """
 
     PARSABLE_ITEMS = {
@@ -69,10 +66,10 @@ class OutcarParser(BaseFileParser):
         """
         Initialize OUTCAR parser
 
-        file_path : str
-            File path.
+        handler : object
+            Handler object.
         data : SingleFileData
-            AiiDA Data class install to store a single file.
+            AiiDA data class to store a single file.
         settings : ParserSettings
 
         """
@@ -80,27 +77,27 @@ class OutcarParser(BaseFileParser):
         super(OutcarParser, self).__init__(*args, **kwargs)
         self._outcar = None
         self._settings = kwargs.get('settings', None)
-        if 'file_path' in kwargs:
-            self._init_outcar(kwargs['file_path'])
+        if 'handler' in kwargs:
+            self._init_outcar(kwargs['handler'])
         if 'data' in kwargs:
             self._init_outcar(kwargs['data'].get_file_abs_path())
-        self._file_path = kwargs['file_path']
+        self._handler = kwargs['handler']
 
-    def _init_outcar(self, path):
-        """Init with a filepath."""
+    def _init_outcar(self, handler):
+        """Init with handler."""
         self._parsed_data = {}
         self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._data_obj = SingleFile(path=path)
+        self._data_obj = SingleFile(handler=handler)
 
         # Since OUTCAR can be fairly large, we will parse it only
         # once and store the parsevasp Outcar object.
         try:
-            self._outcar = Outcar(file_path=path, logger=self._logger)
+            self._outcar = Outcar(file_handler=handler, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abruptly. Returning None.')
             self._outcar = None
 
-    def _parse_file(self, inputs):
+    def _parse_object(self, inputs):
 
         # Since all quantities will be returned by properties, we can't pass
         # inputs as a parameter, so we store them in self._parsed_data
@@ -143,7 +140,7 @@ class OutcarParser(BaseFileParser):
             if match:
                 inputs[key.lower()] = int(match.group(1))
 
-        with open(self._file_path) as fhandle:
+        with open(self._handler) as fhandle:
             iter_counter = None
             for line in fhandle:
                 # Check the iteration counter
@@ -268,11 +265,11 @@ class LegacyOutcarParser(BaseFileParser):
     """
     Parse OUTCAR into a dictionary, which is supposed to be turned into Dict later.
 
-    For constructor params and more details check the documentation for ``aiida_vasp.parsers.file_parsers.parser`` and
-    ``aiida_vasp.parsers.file_parsers.parser.BaseParser``.
+    For constructor params and more details check the documentation for ``aiida_vasp.parsers.object_parsers.parser`` and
+    ``aiida_vasp.parsers.object_parsers.parser.BaseParser``.
     """
 
-    FILE_NAME = 'OUTCAR'
+    OBJECT_NAME = 'OUTCAR'
     PARSABLE_ITEMS = {
         'outcar-volume': {
             'inputs': [],
@@ -305,7 +302,7 @@ class LegacyOutcarParser(BaseFileParser):
         super(LegacyOutcarParser, self).__init__(*args, **kwargs)
         self._parameter = None
 
-    def _parse_file(self, inputs):
+    def _parse_object(self, inputs):
         """Add all quantities parsed from OUTCAR to _parsed_data."""
         result = self._read_outcar(inputs)
         return result
@@ -328,14 +325,14 @@ class LegacyOutcarParser(BaseFileParser):
                 res_dict[key] = result
 
     def _read_outcar(self, inputs):
-        """Parse the OUTCAR file into a dictionary."""
+        """Parse the content of OUTCAR into a dictionary."""
         result = inputs.get('settings', {})
         result = {}
         energy_free = []
         energy_zero = []
         symmetries = {}
-        with open(self._data_obj.path, 'r') as outcar_file_object:
-            for line in outcar_file_object:
+        with open(self._data_obj.handler, 'r') as handler:
+            for line in handler:
                 # volume
                 if line.rfind('volume of cell :') > -1:
                     result['outcar-volume'] = float(line.split()[-1])
@@ -367,6 +364,6 @@ class LegacyOutcarParser(BaseFileParser):
     @property
     def parameter(self):
         if self._parameter is None:
-            inputs = get_node_composer_inputs_from_file_parser(self, quantity_keys=DEFAULT_OPTIONS['quantities_to_parse'])
+            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=DEFAULT_OPTIONS['quantities_to_parse'])
             self._parameter = NodeComposer.compose('dict', inputs)
         return self._parameter

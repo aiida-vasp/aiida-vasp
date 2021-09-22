@@ -36,7 +36,7 @@ def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process):
     results, node = run_vasp_process(settings=settings, process_type='workchain')
     assert node.exit_status == 0
     assert 'chgcar' in results
-    assert results['chgcar'].get_content() == 'This is a test CHGCAR file.\n'
+    assert results['chgcar'].get_content() == 'This is a test CHGCAR.\n'
 
 
 ### COMPLEX WORHCAIN TEST ###

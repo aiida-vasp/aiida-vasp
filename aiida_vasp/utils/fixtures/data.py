@@ -24,12 +24,12 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.tests import TemporaryProfileManager
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.object_parsers.incar import IncarParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.object_parsers.outcar import OutcarParser
 from aiida_vasp.utils.general import copytree
-from aiida_vasp.parsers.file_parsers.stream import StreamParser
+from aiida_vasp.parsers.object_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
 
 POTCAR_FAMILY_NAME = 'test_family'
@@ -79,7 +79,7 @@ def potcar_node_pair(fresh_aiida_env):
 
 @pytest.fixture
 def temp_pot_folder(tmp_path):
-    """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
+    """A temporary copy of the potcar test data folder, to avoid extracting tar objects inside the repo."""
     potcar_ga = Path(data_path('potcar')) / 'Ga'
     assert not potcar_ga.exists()
     pot_archive = Path(data_path('potcar'))
@@ -311,7 +311,7 @@ def mock_vasp(fresh_aiida_env, localhost):
     """
     Give an mock-up of the VASP executable
 
-    This code will always create the output file even if no matching
+    This code will always create the output object even if no matching
     calculations from the registry is found. This makes it suitable for simple
     tests.
     """
@@ -323,7 +323,7 @@ def mock_vasp_strict(fresh_aiida_env, localhost):
     """
     Give an mock-up of the VASP executable with strict input matching.
 
-    This code will not create the output file unless matching calculations from the
+    This code will not create the output object unless matching calculations from the
     registry is found. It is suitable for testsing complex multi-step workchains.
     tests.
     """
@@ -415,10 +415,10 @@ def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     from aiida_vasp.parsers.settings import ParserSettings
     from aiida_vasp.calcs.vasp import VaspCalculation
-    file_name = 'vasprun.xml'
-    path_to_file, settings = request.param
-    path = data_path(path_to_file, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
+    name = 'vasprun.xml'
+    path_to_object, settings = request.param
+    path = data_path(path_to_object, name)
+    parser = VasprunParser(path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
     return parser
 
 
@@ -426,13 +426,13 @@ def vasprun_parser(request):
 def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'OUTCAR'
+    name = 'OUTCAR'
     if isinstance(request.param, list):
-        folder, file_name = request.param
+        folder, name = request.param
     else:
         folder = request.param
-    path = data_path(folder, file_name)
-    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    path = data_path(folder, name)
+    parser = OutcarParser(path=path, settings=ParserSettings({}))
     return parser
 
 
@@ -440,9 +440,9 @@ def outcar_parser(request):
 def stream_parser(request):
     """Return an instance of StreamParser for a reference stream capture."""
     from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'vasp_output'
-    path = data_path(*request.param, file_name)
-    parser = StreamParser(file_path=path, settings=ParserSettings({}))
+    name = 'vasp_output'
+    path = data_path(*request.param, name)
+    parser = StreamParser(path=path, settings=ParserSettings({}))
     return parser
 
 

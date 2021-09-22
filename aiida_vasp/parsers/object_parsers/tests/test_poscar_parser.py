@@ -5,13 +5,13 @@ import pytest
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_parse_poscar(fresh_aiida_env, vasp_structure):
     """
-    Parse a reference POSCAR file.
+    Parse a reference POSCAR.
 
     Using the PoscarParser and compare the result to a reference
     structure.
@@ -19,7 +19,7 @@ def test_parse_poscar(fresh_aiida_env, vasp_structure):
     """
 
     path = data_path('poscar', 'POSCAR')
-    parser = PoscarParser(file_path=path)
+    parser = PoscarParser(path=path)
     result = parser.structure
     structure = vasp_structure
 
@@ -31,7 +31,7 @@ def test_parse_poscar(fresh_aiida_env, vasp_structure):
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
     """
-    Parse (write) a reference POSCAR file.
+    Parse (write) a reference POSCAR.
 
     Using the PoscarParser, and compare to reference
     structure.
@@ -41,10 +41,10 @@ def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
     structure = vasp_structure
     parser = PoscarParser(data=structure)
 
-    temp_file = str(tmpdir.join('POSCAR'))
-    parser.write(temp_file)
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
 
-    parser = PoscarParser(file_path=temp_file)
+    parser = PoscarParser(path=temp_path)
     result_reparse = parser.structure
 
     assert result_reparse.cell == structure.cell
@@ -57,7 +57,7 @@ def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
     """
-    Parse (read) a reference POSCAR file.
+    Parse (read) a reference POSCAR.
 
     Using the PoscarParser, parse(write), parse (read), and compare
     to reference structure.
@@ -65,12 +65,12 @@ def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
     """
 
     path = data_path('poscar', 'POSCAR')
-    parser = PoscarParser(file_path=path)
+    parser = PoscarParser(path=path)
 
-    temp_file = str(tmpdir.join('POSCAR'))
-    parser.write(temp_file)
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
 
-    parser = PoscarParser(file_path=temp_file)
+    parser = PoscarParser(path=temp_path)
     result = parser.structure
 
     structure = vasp_structure
@@ -90,7 +90,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
     """
 
     path = data_path('poscar', 'POSCARSILLY')
-    parser = PoscarParser(file_path=path)
+    parser = PoscarParser(path=path)
     result = parser.structure
 
     names = result.get_site_kindnames()
@@ -116,10 +116,10 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     symbols = result.get_symbols_set()
     assert symbols == set(['As', 'In'])
 
-    temp_file = str(tmpdir.join('POSCAR'))
-    parser.write(temp_file)
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
 
-    parser = PoscarParser(file_path=temp_file)
+    parser = PoscarParser(path=temp_path)
     result_reparse = parser.structure
 
     names = result_reparse.get_site_kindnames()
@@ -144,9 +144,9 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
     symbols = result.get_symbols_set()
     assert symbols == set(['As', 'In'])
-    temp_file = str(tmpdir.join('POSCAR'))
-    parser.write(temp_file)
-    parser = PoscarParser(file_path=temp_file)
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
+    parser = PoscarParser(path=temp_path)
     result_reparse = parser.structure
     names = result_reparse.get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
@@ -161,7 +161,7 @@ def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
     """
-    from aiida_vasp.parsers.file_parsers.poscar import parsevasp_to_aiida
+    from aiida_vasp.parsers.object_parsers.poscar import parsevasp_to_aiida
     from parsevasp.poscar import Poscar
 
     path = data_path('poscar', 'POSCAR')
