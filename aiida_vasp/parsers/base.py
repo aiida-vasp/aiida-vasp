@@ -4,6 +4,7 @@ Common code for parsers.
 ------------------------
 """
 import os
+from contextlib import contextmanager
 
 from aiida.parsers.parser import Parser
 from aiida.common.exceptions import NotExistent
@@ -90,6 +91,7 @@ class BaseParser(Parser):
         except NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
+    @contextmanager
     def _get_handler(self, name):
         """
         Access the handler of retrieved and retrieved_temporary objects. This is passed
@@ -98,8 +100,12 @@ class BaseParser(Parser):
         Since their interface is presently different, we created this wrapper to
         make it uniform. See also https://github.com/aiidateam/aiida-core/issues/3502.
 
+        Furthermore, since we now use context managers for e.g. file handler we needed
+        to also make this method a contextmanager. By using the decorator we do not have
+        to make it a class and define the __enter__ and __exit__ methods.
+
         :param name: name of the object
-        :returns: the handler for the object
+        :returns: a yielded handler for the object
         :rtype: object
         """
 
@@ -109,11 +115,10 @@ class BaseParser(Parser):
                 # self.retrieved is a FolderData datatype in AiiDA.
                 try:
                     with self.retrieved.open(name) as handler:
-                        handler_object = handler
-                    return handler_object
+                        yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved')
-                    return None
+                    yield None
             else:
                 # For the temporary content to be parsed we have to use the regular
                 # folder approach for now.
@@ -121,10 +126,9 @@ class BaseParser(Parser):
                 path = os.path.join(self._retrieved_content[name]['path'], name)
                 try:
                     with open(path, 'r') as handler:
-                        handler_object = handler
-                    return handler_object
+                        yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved_temporary')
-                    return None
+                    yield None
         except KeyError:
-            return None
+            yield None

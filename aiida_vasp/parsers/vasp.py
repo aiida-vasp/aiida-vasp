@@ -216,7 +216,8 @@ class VaspParser(BaseParser):
             else:
                 try:
                     # The next line may except for ill-formated object
-                    parser = object_parser_cls(settings=self._settings, exit_codes=self.exit_codes, handler=self._get_handler(name))
+                    with self._get_handler(name) as handler:
+                        parser = object_parser_cls(settings=self._settings, exit_codes=self.exit_codes, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
