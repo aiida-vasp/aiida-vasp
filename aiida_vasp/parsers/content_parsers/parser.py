@@ -110,26 +110,6 @@ class BaseFileParser(BaseParser):
 
         return self._parsed_data.get(quantity_key)
 
-    def get_quantity_from_inputs(self, quantity_name, inputs, vasp_parser):
-        """Method to handle inputs (to be removed)"""
-
-        if quantity_name not in self._parsable_items:
-            return None
-
-        if self._parsed_data.get(quantity_name) is None:
-            if inputs is None:
-                inputs = {}
-            if vasp_parser is not None:
-                # gather everything required for parsing this quantity from the VaspParser.
-                for inp in self._parsable_items[quantity_name]['inputs']:
-                    inputs.update(vasp_parser.get_inputs(inp))
-                    if inputs[inp] is None and inp in self._parsable_items[quantity_name]['prerequisites']:
-                        # The VaspParser was unable to provide the required input.
-                        return None
-            self._parsed_data = self._parse_object(inputs)
-
-        return self._parsed_data.get(quantity_name)
-
     def write(self, path):
         """
         Writes a VASP object from the parsed object.
