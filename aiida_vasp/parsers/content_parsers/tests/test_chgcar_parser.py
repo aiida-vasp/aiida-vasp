@@ -5,7 +5,7 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 
 
 def test_parse_chgcar(fresh_aiida_env):

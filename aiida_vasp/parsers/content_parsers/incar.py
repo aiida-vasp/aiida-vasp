@@ -7,7 +7,7 @@ The object parser that handles the parsing of INCAR.
 from parsevasp.incar import Incar
 from aiida.common import InputValidationError
 
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 

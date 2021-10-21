@@ -8,7 +8,7 @@ errors. Typically this is contained in the scheduler standard output.
 import re
 
 from parsevasp.stream import Stream
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser, SingleFile
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
 

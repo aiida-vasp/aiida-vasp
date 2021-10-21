@@ -16,12 +16,12 @@ from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
-from aiida_vasp.parsers.object_parsers.incar import IncarParser
-from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.object_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.object_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.object_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.content_parsers.wavecar import WavecarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.aiida_utils import cmp_get_transport
 

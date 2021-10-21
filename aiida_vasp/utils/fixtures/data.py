@@ -24,12 +24,12 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.tests import TemporaryProfileManager
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.incar import IncarParser
-from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.object_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.object_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.utils.general import copytree
-from aiida_vasp.parsers.object_parsers.stream import StreamParser
+from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
 
 POTCAR_FAMILY_NAME = 'test_family'

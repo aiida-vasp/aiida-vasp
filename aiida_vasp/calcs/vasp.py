@@ -10,10 +10,10 @@ The calculation class that prepares a specific VASP calculation.
 import os
 from aiida.plugins import DataFactory
 
-from aiida_vasp.parsers.object_parsers.incar import IncarParser
-from aiida_vasp.parsers.object_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
 

@@ -219,7 +219,7 @@ class KeyValueParser(BaseParser):
 
         import re
 
-        from aiida_vasp.parsers.object_parsers.parser import KeyValueParser
+        from aiida_vasp.parsers.content_parsers.parser import KeyValueParser
 
         ParamParser(KeyValueParser):
 

@@ -5,7 +5,7 @@ import pytest
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
-from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
@@ -161,7 +161,7 @@ def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
     """
-    from aiida_vasp.parsers.object_parsers.poscar import parsevasp_to_aiida
+    from aiida_vasp.parsers.content_parsers.poscar import parsevasp_to_aiida
     from parsevasp.poscar import Poscar
 
     path = data_path('poscar', 'POSCAR')

@@ -5,7 +5,7 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.content_parsers.wavecar import WavecarParser
 
 
 def test_parse_wavecar(fresh_aiida_env):

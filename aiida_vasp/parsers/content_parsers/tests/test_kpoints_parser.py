@@ -5,7 +5,7 @@ import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 
 
 #@pytest.mark.parametrize(['vasp_kpoints'], [('list',)], indirect=True)

@@ -68,7 +68,7 @@ class VaspParser(BaseParser):
     Parses all VASP calculations.
 
     This particular class manages all the specific parsers located in
-    aiida_vasp.parsers.object_parsers. The parser will check which quantities to parse
+    aiida_vasp.parsers.content_parsers. The parser will check which quantities to parse
     and which nodes to add to the calculation based on the 'parser_settings' card in
     the 'settings' Dict of the corresponding VaspCalculation.
 
@@ -210,14 +210,16 @@ class VaspParser(BaseParser):
             name = self._parsable_quantities.quantity_keys_to_names[quantity_key]
             object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
 
-            # If a parse object has been instantiated, use it.
+            # If a parsed object has been instantiated, use it.
             if object_parser_cls in object_parser_instances:
                 parser = object_parser_instances[object_parser_cls]
             else:
                 try:
                     # The next line may except for ill-formated object
                     with self._get_handler(name) as handler:
+                        print(name, handler)
                         parser = object_parser_cls(settings=self._settings, exit_codes=self.exit_codes, handler=handler)
+                        print(parser)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
@@ -234,8 +236,10 @@ class VaspParser(BaseParser):
                 # instantiation time, the others may not.
                 parsed_quantity = parser.get_quantity(quantity_key)
             except Exception:  # pylint: disable=broad-except
+                print('FAILED')
                 parsed_quantity = None
                 failed_to_parse_quantities.append(quantity_key)
+                print(traceback.format_exc())
                 self.logger.warning('Error parsing {} from {}, exception {}:'.format(quantity_key, parser, traceback.format_exc()))
 
             if parsed_quantity is not None:

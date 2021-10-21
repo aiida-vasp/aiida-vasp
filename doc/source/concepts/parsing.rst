@@ -75,11 +75,11 @@ Composing the quantities into an output node
 A ``NodeComposer`` has been added to compose output nodes based on a given set of ``quantities``. It can be initialised in two different ways::
 
   composer = NodeComposer(vasp_parser=...)
-  composer = NodeComposer(object_parsers=[...])
+  composer = NodeComposer(content_parsers=[...])
 
-where either a ``VaspParser`` object is passed to ``vasp_parser`` or a list of specific object parsers is passed to ``object_parsers``. Either are required for the ``NodeComposer`` to assemble the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
+where either a ``VaspParser`` object is passed to ``vasp_parser`` or a list of specific object parsers is passed to ``content_parsers``. Either are required for the ``NodeComposer`` to assemble the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
 
-  composer = NodeComposer(object_parsers=[vasprun_parser])
+  composer = NodeComposer(content_parsers=[vasprun_parser])
   data_obj = composer.compose('array.kpoints', quantities=['kpoints'])
 
 For most node types there are default quantities defined as::
@@ -106,7 +106,7 @@ where the whole composer part is dealt with internally::
   @property
   def structure(self):
       if self._structure is None:
-          composer = NodeComposer(object_parsers=[self])
+          composer = NodeComposer(content_parsers=[self])
           self._structure = composer.compose('structure', quantities=['poscar-structure'])
       return self._structure
 

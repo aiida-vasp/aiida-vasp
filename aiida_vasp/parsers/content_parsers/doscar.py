@@ -8,7 +8,7 @@ The parser that handles the parsing of DOSCAR.
 import numpy as np
 
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 
 # Map from number of columns in DOSCAR to dtype.
 DTYPES_TDOS = {

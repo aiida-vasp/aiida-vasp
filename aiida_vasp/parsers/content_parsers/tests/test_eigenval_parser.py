@@ -6,7 +6,7 @@ import numpy
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.eigenval import EigParser
+from aiida_vasp.parsers.content_parsers.eigenval import EigParser
 
 
 def test_parse_eigenval():

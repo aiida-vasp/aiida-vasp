@@ -7,7 +7,7 @@ The object parser that handles the parsing of OUTCAR.
 import re
 
 from parsevasp.outcar import Outcar
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser, SingleFile
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}
@@ -98,6 +98,7 @@ class OutcarParser(BaseFileParser):
             self._outcar = None
 
     def _parse_object(self, inputs):
+        """Parse the OUTCAR object."""
 
         # Since all quantities will be returned by properties, we can't pass
         # inputs as a parameter, so we store them in self._parsed_data
@@ -121,104 +122,17 @@ class OutcarParser(BaseFileParser):
             if quantity in self.parsable_items:
                 result[quantity] = getattr(self, quantity)
 
-        self._parse_extra_data(result)
-
         return result
-
-    def _parse_extra_data(self, outputs):  # pylint: disable=too-many-branches
-        """
-        Extra parsing for the outcar.
-        Most of these should be moved to `parsevasp` at a later date
-        """
-        ibrion = -1
-        params = {'nelm': None, 'nsw': None, 'ibrion': -1}
-        finished = False
-        nelec_steps = {}
-
-        def match_integer(inputs, key, line):
-            match = re.match(r'^ +' + key + r' *= *([-0-9]+)', line)
-            if match:
-                inputs[key.lower()] = int(match.group(1))
-
-        with open(self._handler) as fhandle:
-            iter_counter = None
-            for line in fhandle:
-                # Check the iteration counter
-                match = re.search(r'Iteration *(\d+)\( *(\d+)\)', line)
-                if match:
-                    iter_counter = [int(match.group(1)), int(match.group(2))]
-                    # Increment the counter
-                    if iter_counter[0] in nelec_steps:
-                        nelec_steps[iter_counter[0]] += 1
-                    else:
-                        nelec_steps[iter_counter[0]] = 1
-                    continue
-                # Record the NELM / NSW requested
-                match_integer(params, 'NSW', line)
-                match_integer(params, 'IBRION', line)
-                match_integer(params, 'NELM', line)
-                # Test if the end of execution has reached
-                if 'timing and accounting informations' in line:
-                    finished = True
-
-        nsw = params['nsw']
-        ibrion = params['ibrion']
-        nelm = params['nelm']
-
-        run_status = {
-            'nelm': nelm,
-            'nsw': nsw,
-            'last_iteration_index': iter_counter,
-            'finished': finished,
-            'ionic_converged': False,
-            'electronic_converged': False,
-            'consistent_nelm_breach': False,
-            'contains_nelm_breach': False,
-        }
-        # Work out the status of the calculations
-        if finished is True:
-            # There are fewer number of ionic iteration than the max - the relaxation is converged
-            # Only check IBRION is larger than zero
-            if ibrion > 0:
-                if iter_counter[0] < nsw:
-                    # Fewer iterations than requested - run has finished
-                    # note that this may include runs that has been interrupted by STOPCAR - this is a limitation of VASP
-                    run_status['ionic_converged'] = True
-                elif iter_counter[0] == nsw and nsw > 1:
-                    # Reached the requested iterations
-                    run_status['ionic_converged'] = False
-                elif nsw <= 1:
-                    self._logger.warning(
-                        f'IBRION = {ibrion} but NSW is {nsw} - cannot deterimine if the relaxation structure is converged!')
-                    run_status['ionic_converged'] = None
-            else:
-                run_status['ionic_converged'] = None
-
-            # There are fewer electronic steps in the last iteration than the max - the electronic structure is converged
-            if iter_counter[1] < nelm:
-                run_status['electronic_converged'] = True
-
-        # Check for consistent electronic convergence problem - VASP will not break when NELM is reached during
-        # the relaxation. We detect to problem here - wether the NELM is breached consistently and if there are
-        # any break in the history
-        mask = [value >= nelm for sc_idx, value in sorted(nelec_steps.items(), key=lambda x: x[0])]
-        if (finished and all(mask)) or (not finished and all(mask[:-1]) and iter_counter[0] > 1):
-            # Excluded the last iteration, as the calculation may not be finished
-            run_status['consistent_nelm_breach'] = True
-        # Check if NELM has been breached in any of the ionic cycles
-        if any(mask):
-            run_status['contains_nelm_breach'] = True
-        run_status.update(params)
-        outputs['run_status'] = run_status
-        return outputs
 
     @property
     def run_status(self):
         """
-        Extra runtime diagnosis data obtained from OUTCAR - contains information for
-        assessing if the calculation was finished OK or had convergence problems.
+        Fetch status of calculations.
+
+        Obtains the status of the convergence of ionic relaxations and electronics,
+        in addition to a flag that signifies if the calculation was finished (timings present in OUTCAR).
         """
-        return self._parsed_data.get('run_status')
+        return self._outcar.get_run_status()
 
     @property
     def run_stats(self):
@@ -265,8 +179,8 @@ class LegacyOutcarParser(BaseFileParser):
     """
     Parse OUTCAR into a dictionary, which is supposed to be turned into Dict later.
 
-    For constructor params and more details check the documentation for ``aiida_vasp.parsers.object_parsers.parser`` and
-    ``aiida_vasp.parsers.object_parsers.parser.BaseParser``.
+    For constructor params and more details check the documentation for ``aiida_vasp.parsers.content_parsers.parser`` and
+    ``aiida_vasp.parsers.content_parsers.parser.BaseParser``.
     """
 
     OBJECT_NAME = 'OUTCAR'
@@ -331,28 +245,28 @@ class LegacyOutcarParser(BaseFileParser):
         energy_free = []
         energy_zero = []
         symmetries = {}
-        with open(self._data_obj.handler, 'r') as handler:
-            for line in handler:
-                # volume
-                if line.rfind('volume of cell :') > -1:
-                    result['outcar-volume'] = float(line.split()[-1])
-                # Free energy
-                if line.lower().startswith('  free  energy   toten'):
-                    energy_free.append(float(line.split()[-2]))
-                # Extrapolated zero point energy
-                if line.startswith('  energy  without entropy'):
-                    energy_zero.append(float(line.split()[-1]))
-                # Fermi energy
-                if line.rfind('E-fermi') > -1:
-                    result['outcar-efermi'] = float(line.split()[2])
-                # space group operations
-                self._parse_line_regex_once(line, self.SPACE_GROUP_OP_PATTERN, symmetries, 'num_space_group_operations', int)
-                # point group operations
-                self._parse_line_regex_once(line, self.POINT_GROUP_OP_PATTERN, symmetries, 'num_point_group_operations', int)
-                # point symmetry
-                self._parse_line_regex_once(line, self.POINT_SYMMETRY_PATTERN, symmetries, 'point_symmetry')
-                # space group
-                self._parse_line_regex_once(line, self.SPACE_GROUP_PATTERN, symmetries, 'space_group')
+        outcar = self._data_obj.handler.readlines()
+        for line in outcar:
+            # volume
+            if line.rfind('volume of cell :') > -1:
+                result['outcar-volume'] = float(line.split()[-1])
+            # Free energy
+            if line.lower().startswith('  free  energy   toten'):
+                energy_free.append(float(line.split()[-2]))
+            # Extrapolated zero point energy
+            if line.startswith('  energy  without entropy'):
+                energy_zero.append(float(line.split()[-1]))
+            # Fermi energy
+            if line.rfind('E-fermi') > -1:
+                result['outcar-efermi'] = float(line.split()[2])
+            # space group operations
+            self._parse_line_regex_once(line, self.SPACE_GROUP_OP_PATTERN, symmetries, 'num_space_group_operations', int)
+            # point group operations
+            self._parse_line_regex_once(line, self.POINT_GROUP_OP_PATTERN, symmetries, 'num_point_group_operations', int)
+            # point symmetry
+            self._parse_line_regex_once(line, self.POINT_SYMMETRY_PATTERN, symmetries, 'point_symmetry')
+            # space group
+            self._parse_line_regex_once(line, self.SPACE_GROUP_PATTERN, symmetries, 'space_group')
         result['outcar-energies'] = {}
         result['outcar-energies']['free_energy'] = energy_free[-1]
         result['outcar-energies']['energy_without_entropy'] = energy_zero[-1]

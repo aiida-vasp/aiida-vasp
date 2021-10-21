@@ -6,7 +6,7 @@ from aiida.common import InputValidationError
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 

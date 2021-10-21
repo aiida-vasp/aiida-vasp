@@ -3,7 +3,7 @@
 
 import pytest
 
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 
 
 def test_base_object_parser():

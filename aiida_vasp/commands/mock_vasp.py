@@ -11,10 +11,10 @@ import click
 
 from aiida.cmdline.utils.decorators import with_dbenv
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.object_parsers.incar import IncarParser
-from aiida_vasp.parsers.object_parsers.potcar import PotcarIo
-from aiida_vasp.parsers.object_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.object_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.potcar import PotcarIo
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 
 from aiida_vasp.utils.mock_code import MockRegistry, MockVasp
 

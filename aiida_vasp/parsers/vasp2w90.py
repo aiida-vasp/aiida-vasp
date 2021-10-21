@@ -7,7 +7,7 @@ AiiDA Parser for aiida_vasp.Vasp2w90Calculation.
 from aiida.plugins import DataFactory
 from aiida.orm.nodes.data.list import List
 
-from aiida_vasp.parsers.object_parsers.win import WinParser
+from aiida_vasp.parsers.content_parsers.win import WinParser
 from .vasp import VaspParser
 
 

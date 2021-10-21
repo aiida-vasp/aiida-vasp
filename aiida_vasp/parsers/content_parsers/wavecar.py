@@ -4,7 +4,7 @@ WAVECAR parser.
 ---------------
 The parser that handles the parsing of WAVECAR.
 """
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 

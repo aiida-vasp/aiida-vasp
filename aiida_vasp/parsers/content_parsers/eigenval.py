@@ -9,7 +9,7 @@ import re
 
 import numpy as np
 
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 
 
 class EigParser(BaseFileParser):
@@ -48,15 +48,14 @@ class EigParser(BaseFileParser):
     # pylint: disable=too-many-locals
     def _read_eigenval(self):
         """Parse an EIGENVAL object and extract metadata and a band structure data array."""
-
-        with open(self._data_obj.handler) as eig:
-            line_0 = self.line(eig, int)  # read header
-            line_1 = self.line(eig, float)  # "
-            line_2 = self.line(eig, float)  # "
-            coord_type = self.line(eig)  # "
-            name = self.line(eig)  # read name line (can be empty)
-            param_0, num_kp, num_bands = self.line(eig, int)  # read: ? #kp #bands
-            data = eig.read()  # rest is data
+        eig = self._data_obj.handler
+        line_0 = self.line(eig, int)  # read header
+        line_1 = self.line(eig, float)  # "
+        line_2 = self.line(eig, float)  # "
+        coord_type = self.line(eig)  # "
+        name = self.line(eig)  # read name line (can be empty)
+        param_0, num_kp, num_bands = self.line(eig, int)  # read: ? #kp #bands
+        data = eig.read()  # rest is data
         num_ions, num_atoms, p00, num_spins = line_0
         data = re.split(self.empty_line, data)  # list of data blocks
         data = [[line.split() for line in block.splitlines()] for block in data]

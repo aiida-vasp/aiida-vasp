@@ -8,7 +8,9 @@ import numpy as np
 
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
-from aiida_vasp.parsers.object_parsers.parser import BaseFileParser
+#from aiida.manage.tests.pytest_fixtures import aiida_caplog
+from aiida.common.log import AIIDA_LOGGER
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.vasp import NotificationComposer
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
@@ -219,8 +221,10 @@ def test_parser_exception(request, calc_with_retrieved):
     Test the handling of exceptions/missing quantities
 
     Here the eigenvalue section of the vasprun.xml and EIGNVAL files are deleted. However,
-    we still expect the other propertie to be parsed correctly.
+    we still expect the other properties to be parsed correctly.
     """
+
+    AIIDA_LOGGER.propagate = True
     settings_dict = {
         'parser_settings': {
             'add_bands': True,
@@ -245,7 +249,7 @@ def test_parser_exception(request, calc_with_retrieved):
     assert misc.get_dict()['total_energies']['energy_extrapolated'] == pytest.approx(-36.09616894)
 
     assert misc['notifications'] == [{
-        'name': "<class 'aiida_vasp.parsers.object_parsers.vasprun.VasprunParser'>",
+        'name': "<class 'aiida_vasp.parsers.content_parsers.vasprun.VasprunParser'>",
         'message': 'the parser is not able to parse the occupancies quantity',
         'status': 1002,
     }]
