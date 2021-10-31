@@ -1,8 +1,8 @@
 """
-POSCAR parser.
+POSCAR/CONTCAR parser.
 
 --------------
-The parser that handles the parsing of POSCAR and CONTCAR.
+Contains the parsing interfaces to parsevasp used to parse POSCAR/CONTCAR.
 """
 # pylint: disable=no-self-use
 import numpy as np
@@ -13,30 +13,24 @@ from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
+DEFAULT_OPTIONS = {'quantities_to_parse': ['poscar-structure']}
+
 
 class PoscarParser(BaseFileParser):
-    """
-    Parse a parsevasp representation of POSCAR into a StructureData node and vice versa.
+    """The parser interface that enables parsing of POSCAR/CONTCAR files.
 
-    This is a wrapper for parsevasps Poscar class for parsing POSCARs.
-    The Parsing direction depends on whether the Parser is initialised with
-    'handler = ...' or 'data = ...'.
+    The parser is triggered by using the `poscar-structure` quantity key. The quantity key `structure`
+    will parse the structure using the XML parser.
 
-    :keyword handler: A handler to a POSCAR.
-    :keyword data: Aiida StructureData for parsing.
-    :keyword precision: 'int' number specifying the number of digits for floating point
-                        numbers that will be written to POSCAR.
-                        DEFAULT = 12
+    Parameters
+    ----------
+    precision : int, optional
+        An integer specifying the number of digits for floating point numbers that will be written
+        to POSCAR/CONTCAR. Defaults to 12.
 
-    The PoscarParser will deal with non standard atomic symbols internally if it is
-    initialised with StructureData. In case that a POSCAR with non standard atomic
-    symbols should be parsed, the comment line must contain the keyword '# Aiida-elements:'
-    followed by a list of the actual atomic symbols, e.g.:
-
-        # Aiida-elements: Ga In As
     """
 
-    PARSABLE_ITEMS = {
+    PARSABLE_QUANTITIES = {
         'poscar-structure': {
             'inputs': [],
             'name': 'structure',
@@ -44,94 +38,81 @@ class PoscarParser(BaseFileParser):
         },
     }
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize POSCAR parser
+    def __init__(self, *, precision=12, **kwargs):
+        """Initialize an instance of this class."""
 
-        data : StructureData
+        self._precision = precision
+        super(PoscarParser, self).__init__(**kwargs)
 
-        """
+    def _init_from_handler(self, handler):
+        """Initialize using a file like handler."""
 
-        super(PoscarParser, self).__init__(*args, **kwargs)
-        self._structure = None
-        self._options = kwargs.get('options', None)
-        self._precision = kwargs.get('precision', 12)
-        if 'data' in kwargs:
-            self._init_structure(kwargs['data'])
-
-    def _init_structure(self, data):
-        """Initialize with an AiiDA StructureData instance."""
-        if isinstance(data, get_data_class('structure')):
-            self._data_obj = data
-        else:
-            self._logger.warning('Please supply an AiiDA StructureData datatype for `data`.')
-            self._data_obj = None
-        self._structure = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._parsed_data = {}
-
-    @property
-    def _parsed_object(self):
-        """Return the parsevasp object representing the POSCAR."""
-
-        if isinstance(self._data_obj, get_data_class('structure')):
-            # _data_obj is StructureData, return the parsed version if possible.
-            try:
-                return Poscar(poscar_dict=self.aiida_to_parsevasp(self._data_obj, options=self._options),
-                              prec=self._precision,
-                              conserve_order=True,
-                              logger=self._logger)
-            except SystemExit:
-                return None
-        # _data_obj is a SingleFile:
-        return self._data_obj
-
-    def _parse_object(self, inputs):
-        """Parse the POSCAR object."""
-
-        # Check if structure has already been loaded, in that case just return
-        if isinstance(self._data_obj, get_data_class('structure')):
-            return {'poscar-structure': self._data_obj}
-
-        # Pass handler to parsevasp and try to initialize the representation
         try:
-            poscar = Poscar(file_handler=self._data_obj.handler, prec=self._precision, conserve_order=True, logger=self._logger)
+            self._content_parser = Poscar(file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger)
         except SystemExit:
-            self._logger.warning('Parsevasp exited abnormally. ' 'Returning None.')
-            return {'poscar-structure': None}
+            self._logger.warning('Parsevasp exited abnormally.')
 
-        result = parsevasp_to_aiida(poscar)
+    def _init_from_data(self, data):
+        """Initialize using AiiDA StructureData."""
+
+        if isinstance(data, get_data_class('structure')):
+            self._content_data = data
+        else:
+            raise TypeError('The supplied AiiDA data structure is not a StructureData.')
+
+    def _parse_content(self):
+        """Parse the quantities configured and parseable from the content."""
+
+        quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
+        if self._settings is not None and self._settings.quantity_names_to_parse:
+            quantities_to_parse = self._settings.quantity_names_to_parse
+
+        result = {}
+
+        if self._content_parser is None:
+            # Parsevasp threw an exception, which means POSCAR could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self._parsable_quantities:
+                    result[quantity] = None
+            return result
+
+        for quantity in quantities_to_parse:
+            if quantity in self._parsable_quantities:
+                # In case there is a - in the quantity, we assume we can
+                # parse this quantity from multiple sources, remove source as we do not want to used
+                # the source in the property name, i.e. use last element in the split
+                quantity_splitted = quantity.split('-')
+                quantity_splitted = quantity_splitted[-1]
+                result[quantity] = getattr(self, quantity_splitted)
 
         return result
 
     @property
     def structure(self):
-        if self._structure is None:
-            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=['poscar-structure'])
-            self._structure = NodeComposer.compose('structure', inputs)
-        return self._structure
+        return parsevasp_to_aiida(self._content_parser)
 
-    def aiida_to_parsevasp(self, structure, options=None):
-        """Convert Aiida StructureData to parsevasp's dictionary format."""
+    def _content_data_to_content_parser(self):
+        """Convert an AiiDA data structure to a content parser instance parsevasp."""
         dictionary = {}
-        dictionary['comment'] = structure.label or structure.get_formula()
-        dictionary['unitcell'] = np.asarray(structure.cell)
+        dictionary['comment'] = self._content_data.label or self._content_data.get_formula()
+        dictionary['unitcell'] = np.asarray(self._content_data.cell)
         # As for now all Aiida-structures are in Cartesian coordinates.
         direct = False
         sites = []
         _transform_to_bool = np.vectorize(self.transform_to_bool)
-        for index, site in enumerate(structure.sites):
-            if options is None:
+        for index, site in enumerate(self._content_data.sites):
+            if self._options is None:
                 _selective = [True, True, True]
             else:
                 try:
-                    _selective = _transform_to_bool(np.array(options['positions_dof'])[index, :])
+                    _selective = _transform_to_bool(np.array(self._options['positions_dof'])[index, :])
                 except KeyError:
                     _selective = [True, True, True]
             sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))
 
         dictionary['sites'] = sites
-        return dictionary
+
+        return Poscar(poscar_dict=dictionary, prec=self._precision, conserve_order=True, logger=self._logger)
 
     def transform_to_bool(self, value):
         """Helper function to transform the dictionary from strings or integers to bools"""
@@ -143,25 +124,32 @@ class PoscarParser(BaseFileParser):
 
 
 def parsevasp_to_aiida(poscar):
-    """
-    Parsevasp to AiiDA conversion.
+    """Parsevasp to AiiDA conversion.
 
     Generate an AiiDA structure from the parsevasp instance of the
     Poscar class.
+
+    Parameters
+    ----------
+    poscar : object
+        An instance of the Poscar class in parsevasp.
+
+    Returns
+    -------
+    poscar_dict : dict
+        A dictionary representation which are ready to be used when creating an
+        AiiDA StructureData instance.
+
     """
 
     # Fetch a dictionary containing the entries, make sure all coordinates are
     # cartesian
     poscar_dict = poscar.get_dict(direct=False)
 
-    # Generate AiiDA StructureData and add results from the parsevasp representation
-    # of POSCAR.
-    result = {}
-
     for site in poscar_dict['sites']:
         specie = site['specie']
         # User can specify whatever they want for the elements, but
-        # the symbols entries in Aiida only support the entries defined
+        # the symbols entries in AiiDA only support the entries defined
         # in aiida.common.constants.elements{}
 
         # Strip trailing _ in case user specifies potential
@@ -178,9 +166,7 @@ def parsevasp_to_aiida(poscar):
         site['symbol'] = symbol
         site['kind_name'] = specie
 
-    result['poscar-structure'] = poscar_dict
-
-    return result
+    return poscar_dict
 
 
 def fetch_symbols_from_elements(elmnts):

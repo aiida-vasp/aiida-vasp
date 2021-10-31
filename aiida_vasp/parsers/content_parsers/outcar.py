@@ -7,7 +7,7 @@ The object parser that handles the parsing of OUTCAR.
 import re
 
 from parsevasp.outcar import Outcar
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 
 DEFAULT_OPTIONS = {'quantities_to_parse': ['elastic_moduli', 'symmetries']}

@@ -6,6 +6,7 @@ import pytest
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 #@pytest.mark.parametrize(['vasp_kpoints'], [('list',)], indirect=True)
@@ -54,6 +55,7 @@ def test_parse_kpoints_write(vasp_kpoints, tmpdir):
     """
 
     kpoints, _ = vasp_kpoints
+    assert isinstance(vasp_kpoints, get_data_class('kpoints'))
 
     try:
         _ = kpoints.get_attribute('mesh')

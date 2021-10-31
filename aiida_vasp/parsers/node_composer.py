@@ -87,12 +87,22 @@ class NodeComposer:
 
     @staticmethod
     def _compose_structure(node_type, inputs):
-        """Compose a structure node."""
+        """
+        Compose a structure node from consumable inputs.
+
+        :param node_type: str Contains which type of AiiDA data structure you want for the node, i.e. ``structure``.
+        :param inputs: Containing a key ``structure`` with keys ``sites`` and ``unitcell``.
+        Here `sites` should contains an entry for each site with keys ``position``, ``symbol`` and ``kind_name``,
+        which contain the position, the atomic symbol (e.g. ``Fe``) and the name to separate e.g.
+        different symbols from each other, e.g. ``Fe1``.
+
+        """
         node = get_data_class(node_type)()
-        for key in inputs:
-            node.set_cell(inputs[key]['unitcell'])
-            for site in inputs[key]['sites']:
-                node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
+        if 'structure' not in inputs:
+            raise ValueError('The key structure is not found in the supplied inputs')
+        node.set_cell(inputs['structure']['unitcell'])
+        for site in inputs['structure']['sites']:
+            node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
         return node
 
     @staticmethod

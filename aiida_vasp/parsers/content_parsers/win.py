@@ -4,7 +4,7 @@ import re
 from aiida_vasp.parsers.content_parsers.parser import KeyValueParser
 
 
-class WinParser(KeyValueParser):
+class WinParser(object):
     """Parses wannier90 input."""
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')

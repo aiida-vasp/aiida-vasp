@@ -418,7 +418,8 @@ def vasprun_parser(request):
     name = 'vasprun.xml'
     path_to_object, settings = request.param
     path = data_path(path_to_object, name)
-    parser = VasprunParser(path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
+    with open(path, 'r') as handler:
+        parser = VasprunParser(handler=handler, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
     return parser
 
 
@@ -432,7 +433,23 @@ def outcar_parser(request):
     else:
         folder = request.param
     path = data_path(folder, name)
-    parser = OutcarParser(path=path, settings=ParserSettings({}))
+    with open(path, 'r') as handler:
+        parser = OutcarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def poscar_parser(request):
+    """Return an instance of PoscarParser for a reference POSCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'POSCAR'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = PoscarParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 
@@ -442,7 +459,8 @@ def stream_parser(request):
     from aiida_vasp.parsers.settings import ParserSettings
     name = 'vasp_output'
     path = data_path(*request.param, name)
-    parser = StreamParser(path=path, settings=ParserSettings({}))
+    with open(path, 'r') as handler:
+        parser = StreamParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 

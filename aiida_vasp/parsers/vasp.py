@@ -217,9 +217,7 @@ class VaspParser(BaseParser):
                 try:
                     # The next line may except for ill-formated object
                     with self._get_handler(name) as handler:
-                        print(name, handler)
                         parser = object_parser_cls(settings=self._settings, exit_codes=self.exit_codes, handler=handler)
-                        print(parser)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
@@ -236,10 +234,8 @@ class VaspParser(BaseParser):
                 # instantiation time, the others may not.
                 parsed_quantity = parser.get_quantity(quantity_key)
             except Exception:  # pylint: disable=broad-except
-                print('FAILED')
                 parsed_quantity = None
                 failed_to_parse_quantities.append(quantity_key)
-                print(traceback.format_exc())
                 self.logger.warning('Error parsing {} from {}, exception {}:'.format(quantity_key, parser, traceback.format_exc()))
 
             if parsed_quantity is not None:

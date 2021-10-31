@@ -1,163 +1,109 @@
 """Test the POSCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import pytest
+import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 
 
-@pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
-def test_parse_poscar(fresh_aiida_env, vasp_structure):
-    """
-    Parse a reference POSCAR.
+@pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
+def test_parse_poscar(fresh_aiida_env, poscar_parser):
+    """Load a reference POSCAR parser.
 
-    Using the PoscarParser and compare the result to a reference
-    structure.
-
-    """
-
-    path = data_path('poscar', 'POSCAR')
-    parser = PoscarParser(path=path)
-    result = parser.structure
-    structure = vasp_structure
-
-    assert result.cell == structure.cell
-    assert result.get_site_kindnames() == structure.get_site_kindnames()
-    assert result.sites[2].position == structure.sites[2].position
-
-
-@pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
-def test_parse_poscar_write(fresh_aiida_env, vasp_structure, tmpdir):
-    """
-    Parse (write) a reference POSCAR.
-
-    Using the PoscarParser, and compare to reference
-    structure.
+    We check that it parses and provides the correct content.
 
     """
 
-    structure = vasp_structure
-    parser = PoscarParser(data=structure)
+    # The structure for the POSCAR parser should have the key `poscar-structure`
+    result = poscar_parser.get_quantity('poscar-structure')
+    compare_poscar_content(result)
 
+
+@pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
+def test_parse_poscar_object(fresh_aiida_env, poscar_parser, tmpdir):
+    """Load a reference parser and test the file handler.
+
+    We check if the file handler works correctly by writing the reference parser content
+    and reloading it in a new parser using the file handler interface and check the content.
+
+    """
+
+    # Write the loaded structure to file
     temp_path = str(tmpdir.join('POSCAR'))
-    parser.write(temp_path)
+    poscar_parser.write(temp_path)
 
-    parser = PoscarParser(path=temp_path)
-    result_reparse = parser.structure
-
-    assert result_reparse.cell == structure.cell
-    assert result_reparse.get_site_kindnames() == \
-        structure.get_site_kindnames()
-    assert result_reparse.sites[2].position == \
-        structure.sites[2].position
-
-
-@pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
-def test_parse_poscar_reparse(fresh_aiida_env, vasp_structure, tmpdir):
-    """
-    Parse (read) a reference POSCAR.
-
-    Using the PoscarParser, parse(write), parse (read), and compare
-    to reference structure.
-
-    """
-
-    path = data_path('poscar', 'POSCAR')
-    parser = PoscarParser(path=path)
-
-    temp_path = str(tmpdir.join('POSCAR'))
-    parser.write(temp_path)
-
-    parser = PoscarParser(path=temp_path)
-    result = parser.structure
-
-    structure = vasp_structure
-    assert result.cell == structure.cell
-    assert result.get_site_kindnames() == structure.get_site_kindnames()
-    assert result.sites[2].position == structure.sites[2].position
-
-
-@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
-def test_parse_poscar_silly_read(fresh_aiida_env):
-    """
-    Parse (read) a reference POSCAR with silly elemental names.
-
-    Using the PoscarParser and compare the result to a reference
-    structure.
-
-    """
-
-    path = data_path('poscar', 'POSCARSILLY')
-    parser = PoscarParser(path=path)
-    result = parser.structure
-
-    names = result.get_site_kindnames()
-    assert names == ['Hamburger', 'Pizza']
-    symbols = result.get_symbols_set()
-    assert symbols == set(['X', 'X'])
-
-
-@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
-@pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
-def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
-    """
-    Parse (read, write) a reference POSCAR with silly elemental names.
-
-    Using the PoscarParser and compare the result to a reference structure.
-
-    """
-
-    parser = PoscarParser(data=vasp_structure)
+    # Load the written structure using a new content parser instance
+    parser = None
+    with open(temp_path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
     result = parser.get_quantity('poscar-structure')
-    names = result.get_site_kindnames()
-    assert names == ['Hamburger', 'Pizza']
-    symbols = result.get_symbols_set()
-    assert symbols == set(['As', 'In'])
+    compare_poscar_content(result)
 
+
+@pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
+def test_parse_poscar_write(fresh_aiida_env, poscar_parser, tmpdir):
+    """Load a reference parser and check that the write functionality works.
+
+    Here we make sure the write function of the content parser works.
+
+    """
+
+    # Write the loaded structure to file
     temp_path = str(tmpdir.join('POSCAR'))
-    parser.write(temp_path)
+    poscar_parser.write(temp_path)
 
-    parser = PoscarParser(path=temp_path)
-    result_reparse = parser.structure
+    # Load the written structure using a new content parser instance
+    content = None
+    with open(temp_path, 'r') as handler:
+        content = handler.readlines()
+    ref_content = [
+        '# Compound: Al4. Old comment: Al\n', '  1.000000000000\n', '  4.040000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   4.040000000000   0.000000000000\n', '  0.000000000000   0.000000000000   4.040000000000\n', 'Al\n', '    4\n',
+        'Direct\n', '  0.000000000000   0.000000000000   0.000000000000\n', '  0.000000000000   0.500000000000   0.500000000000\n',
+        '  0.500000000000   0.000000000000   0.500000000000\n', '  0.500000000000   0.500000000000   0.000000000000\n', '\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n', '  0.000000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n', '  0.000000000000   0.000000000000   0.000000000000\n'
+    ]
+    assert content == ref_content
 
-    names = result_reparse.get_site_kindnames()
-    assert names == ['Hamburger', 'Pizza']
-    symbols = result_reparse.get_symbols_set()
-    assert symbols == set(['X', 'X'])
 
+@pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
+def test_parse_poscar_data(fresh_aiida_env, vasp_structure, tmpdir):
+    """Load a reference AiiDA StructureData and check that the parser can
+    initialize using the data.
 
-@pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
-def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
+    Using the StructureData sitting in the initialized parser it should
+    write that content to a POSCAR file when issuing write which is also tested,
+    file is reloaded and content checked.
+
     """
-    Parse a reference POSCAR.
 
-    With potential elemental names using the PoscarParser and compare
-    the result to a reference structure.
+    # Initialize parser with an existing reference StructureData
+    poscar_parser = PoscarParser(data=vasp_structure)
 
-    """
+    # Write the loaded StructureData to file, which behind the scenes convert it
+    # to a POSCAR format
+    temp_path = str(tmpdir.join('POSCAR'))
+    poscar_parser.write(temp_path)
 
-    parser = PoscarParser(data=vasp_structure)
+    # Load the written structure using a new content parser instance
+    parser = None
+    with open(temp_path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
     result = parser.get_quantity('poscar-structure')
-    names = result.get_site_kindnames()
-    assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result.get_symbols_set()
-    assert symbols == set(['As', 'In'])
-    temp_path = str(tmpdir.join('POSCAR'))
-    parser.write(temp_path)
-    parser = PoscarParser(path=temp_path)
-    result_reparse = parser.structure
-    names = result_reparse.get_site_kindnames()
-    assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
-    symbols = result_reparse.get_symbols_set()
-    assert symbols == set(['As', 'In'])
+    # When we start from StructureData we do not have any velocity or predictor
+    # values present, so let us not compare them. The reference POSCAR has no
+    # velocities, but predictors, so we can not compare those directly.
+    compare_poscar_content(result, predictors=False)
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
 def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
-    """
-    Compare the poscar-dict returned by parsevasp to the dict created by the PoscarParser.
+    """Compare the poscar-dict returned by parsevasp to the dict created by the PoscarParser.
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
     """
@@ -168,7 +114,7 @@ def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
     poscar = Poscar(file_path=path, prec=12, conserve_order=True)
 
     poscar_dict = poscar.get_dict(direct=False)
-    result_dict = parsevasp_to_aiida(poscar)['poscar-structure']
+    result_dict = parsevasp_to_aiida(poscar)
     compare_objects(poscar_dict, result_dict)
 
 
@@ -187,3 +133,60 @@ def compare_objects(obj_a, obj_b):
             return
 
     assert obj_a == obj_b
+
+
+def compare_poscar_content(result, velocities=True, predictors=True):
+    """Compare the content of a supplied get_quantity('poscar-structure') with reference data."""
+    unitcell = np.array([[4.04, 0., 0.], [0., 4.04, 0.], [0., 0., 4.04]])
+    keys = ['comment', 'unitcell', 'sites']
+    species = [{
+        'specie': 'Al',
+        'position': np.array([0., 0., 0.]),
+        'selective': [True, True, True],
+        'velocities': None,
+        'predictors': np.array([0., 0., 0.]),
+        'direct': False,
+        'symbol': 'Al',
+        'kind_name': 'Al'
+    }, {
+        'specie': 'Al',
+        'position': np.array([0., 2.02, 2.02]),
+        'selective': [True, True, True],
+        'velocities': None,
+        'predictors': np.array([0., 0., 0.]),
+        'direct': False,
+        'symbol': 'Al',
+        'kind_name': 'Al'
+    }, {
+        'specie': 'Al',
+        'position': np.array([2.02, 0., 2.02]),
+        'selective': [True, True, True],
+        'velocities': None,
+        'predictors': np.array([0., 0., 0.]),
+        'direct': False,
+        'symbol': 'Al',
+        'kind_name': 'Al'
+    }, {
+        'specie': 'Al',
+        'position': np.array([2.02, 2.02, 0.]),
+        'selective': [True, True, True],
+        'velocities': None,
+        'predictors': np.array([0., 0., 0.]),
+        'direct': False,
+        'symbol': 'Al',
+        'kind_name': 'Al'
+    }]
+    assert set(result.keys()) == set(keys)
+    assert np.allclose(result['unitcell'], unitcell)
+    print(result)
+    for index, item in enumerate(species):
+        assert item['specie'] == result['sites'][index]['specie']
+        assert item['selective'] == result['sites'][index]['selective']
+        assert item['direct'] == result['sites'][index]['direct']
+        assert item['symbol'] == result['sites'][index]['symbol']
+        assert item['kind_name'] == result['sites'][index]['kind_name']
+        assert np.allclose(item['position'], result['sites'][index]['position'])
+        if velocities:
+            assert item['velocities'] == result['sites'][index]['velocities']
+        if predictors:
+            assert np.allclose(item['predictors'], result['sites'][index]['predictors'])

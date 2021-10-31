@@ -11,7 +11,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser, SingleFile
+from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.utils.compare_bands import get_band_properties
 
 DEFAULT_OPTIONS = {
