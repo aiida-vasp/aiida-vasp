@@ -191,25 +191,3 @@ class KpointsParser(BaseFileParser):
     #     kpout.set_kpoints_mesh(mesh, offset=shifts)
 
     #     return kpout
-
-
-def parsevasp_to_aiida(kpoints):
-    """Parsevasp to AiiDA conversion.
-
-    Generate an AiiDA compatible representation of the k-points from the parsevasp instance of the
-    Poscar class.
-
-    Parameters
-    ----------
-    kpoints : object
-        An instance of the Kpoints class in parsevasp.
-
-    Returns
-    -------
-    kpoints_dict : dict
-        A dictionary representation which are ready to be used when creating an
-        AiiDA KpointsData instance.
-
-    """
-
-    return kpoints_dict
