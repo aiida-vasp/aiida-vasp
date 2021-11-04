@@ -8,7 +8,7 @@ compositions of quantities.
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
-from aiida_vasp.parsers.content_parsers.eigenval import EigParser
+from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
@@ -27,7 +27,7 @@ OBJECT_PARSER_SETS = {
             'status': 'Unknown'
         },
         'EIGENVAL': {
-            'parser_class': EigParser,
+            'parser_class': EigenvalParser,
             'is_critical': False,
             'status': 'Unknown'
         },

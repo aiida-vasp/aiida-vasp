@@ -9,7 +9,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 @pytest.mark.parametrize(['doscar_parser'], [('doscar',)], indirect=True)
-def test_parse_doscar(fresh_aiida_env, doscar_parser):
+def test_parse_doscar(doscar_parser):
     """Load a reference DOSCAR parser.
 
     We check that the it parses and provides the correct content.
@@ -20,7 +20,7 @@ def test_parse_doscar(fresh_aiida_env, doscar_parser):
 
 
 @pytest.mark.parametrize(['doscar_parser'], [(['doscar', 'DOSCAR.nopdos'], )], indirect=True)
-def test_parse_doscar_nodos(fresh_aiida_env, doscar_parser):
+def test_parse_doscar_nodos(doscar_parser):
     """Load a reference DOSCAR parser with no partial density of states.
 
     We check that the it parses and provides the correct content.
@@ -30,7 +30,7 @@ def test_parse_doscar_nodos(fresh_aiida_env, doscar_parser):
     compare_doscar_content(result, pdos=False)
 
 @pytest.mark.parametrize(['doscar_parser'], [(['doscar', 'DOSCAR.spin'], )], indirect=True)
-def test_parse_doscar_spin(fresh_aiida_env, doscar_parser):
+def test_parse_doscar_spin(doscar_parser):
     """Parse a reference DOSCAR with the DosParser and compare the result to a reference."""
     result = doscar_parser.get_quantity('doscar-dos')
 
@@ -43,7 +43,7 @@ def test_parse_doscar_spin(fresh_aiida_env, doscar_parser):
     assert result_dos[0]['px'].shape == (301, 2)
 
 @pytest.mark.parametrize(['doscar_parser'], [(['doscar', 'DOSCAR.ncl'], )], indirect=True)
-def test_parse_doscar_ncl(fresh_aiida_env, doscar_parser):
+def test_parse_doscar_ncl(doscar_parser):
     """parse a reference DOSCAR with the dosparser and compare the result to a reference."""
     result = doscar_parser.get_quantity('doscar-dos')
 

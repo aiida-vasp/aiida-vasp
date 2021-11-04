@@ -29,6 +29,7 @@ from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
+from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
@@ -466,6 +467,21 @@ def doscar_parser(request):
     path = data_path(folder, name)
     with open(path, 'r') as handler:
         parser = DoscarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def eigenval_parser(request):
+    """Return an instance of EigenvalParser for a reference Eigenval."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'EIGENVAL'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = EigenvalParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 

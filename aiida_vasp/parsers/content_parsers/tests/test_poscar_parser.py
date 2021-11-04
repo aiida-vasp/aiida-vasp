@@ -11,7 +11,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
-def test_parse_poscar(fresh_aiida_env, poscar_parser):
+def test_parse_poscar(poscar_parser):
     """Load a reference POSCAR parser.
 
     We check that it parses and provides the correct content.
@@ -24,7 +24,7 @@ def test_parse_poscar(fresh_aiida_env, poscar_parser):
 
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
-def test_parse_poscar_write(fresh_aiida_env, poscar_parser, tmpdir):
+def test_parse_poscar_write(poscar_parser, tmpdir):
     """Load a reference parser and check that the write functionality works.
 
     Here we make sure the write function of the content parser works.
@@ -51,7 +51,7 @@ def test_parse_poscar_write(fresh_aiida_env, poscar_parser, tmpdir):
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
-def test_parse_poscar_data(fresh_aiida_env, vasp_structure, tmpdir):
+def test_parse_poscar_data(vasp_structure, tmpdir):
     """Load a reference AiiDA StructureData and check that the parser can
     initialize using the data.
 
@@ -81,7 +81,7 @@ def test_parse_poscar_data(fresh_aiida_env, vasp_structure, tmpdir):
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str-Al',)], indirect=True)
-def test_consistency_with_parsevasp(fresh_aiida_env, vasp_structure):
+def test_consistency_with_parsevasp(vasp_structure):
     """Compare the poscar-dict returned by parsevasp to the dict created by the PoscarParser.
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.

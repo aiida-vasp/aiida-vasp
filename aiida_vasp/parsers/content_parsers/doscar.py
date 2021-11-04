@@ -4,10 +4,6 @@ DOSCAR parser.
 --------------
 Contains the parsing interfaces to parsevasp used to parse DOSCAR.
 """
-# pylint: disable=unsubscriptable-object  # pylint/issues/3139
-import numpy as np
-
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 
 from parsevasp.doscar import Doscar

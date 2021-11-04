@@ -9,7 +9,6 @@ import numpy as np
 
 from aiida.common.constants import elements
 from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 from parsevasp.poscar import Poscar, Site
