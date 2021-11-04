@@ -7,20 +7,19 @@ Contains the parsing interfaces to parsevasp used to parse POSCAR/CONTCAR.
 # pylint: disable=no-self-use
 import numpy as np
 
-from parsevasp.poscar import Poscar, Site
 from aiida.common.constants import elements
 from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
-DEFAULT_OPTIONS = {'quantities_to_parse': ['poscar-structure']}
+from parsevasp.poscar import Poscar, Site
 
 
 class PoscarParser(BaseFileParser):
-    """The parser interface that enables parsing of POSCAR/CONTCAR files.
+    """The parser interface that enables parsing of POSCAR/CONTCAR.
 
     The parser is triggered by using the `poscar-structure` quantity key. The quantity key `structure`
-    will parse the structure using the XML parser.
+    will on the other hand parse the structure using the XML parser.
 
     Parameters
     ----------
@@ -29,6 +28,8 @@ class PoscarParser(BaseFileParser):
         to POSCAR/CONTCAR. Defaults to 12.
 
     """
+
+    DEFAULT_OPTIONS = {'quantities_to_parse': ['poscar-structure']}
 
     PARSABLE_QUANTITIES = {
         'poscar-structure': {
@@ -60,36 +61,22 @@ class PoscarParser(BaseFileParser):
         else:
             raise TypeError('The supplied AiiDA data structure is not a StructureData.')
 
-    def _parse_content(self):
-        """Parse the quantities configured and parseable from the content."""
-
-        quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self._settings is not None and self._settings.quantity_names_to_parse:
-            quantities_to_parse = self._settings.quantity_names_to_parse
-
-        result = {}
-
-        if self._content_parser is None:
-            # Parsevasp threw an exception, which means POSCAR could not be parsed.
-            for quantity in quantities_to_parse:
-                if quantity in self._parsable_quantities:
-                    result[quantity] = None
-            return result
-
-        for quantity in quantities_to_parse:
-            if quantity in self._parsable_quantities:
-                # In case there is a - in the quantity, we assume we can
-                # parse this quantity from multiple sources, remove source as we do not want to used
-                # the source in the property name, i.e. use last element in the split
-                quantity_splitted = quantity.split('-')
-                quantity_splitted = quantity_splitted[-1]
-                result[quantity] = getattr(self, quantity_splitted)
-
-        return result
-
     @property
     def structure(self):
-        return parsevasp_to_aiida(self._content_parser)
+        """
+        Return a structure that is ready to be consumed by the the AiiDA StructureData.
+
+        Returns
+        -------
+        aiida_structure : dict
+            A dict that contain keys `comment`, `unitcell` and `sites`, which are compatible
+            with consumption of the initialization of the AiiDA StructureData.
+
+        """
+
+        aiida_structure = parsevasp_to_aiida(self._content_parser)
+
+        return aiida_structure
 
     def _content_data_to_content_parser(self):
         """Convert an AiiDA data structure to a content parser instance parsevasp."""

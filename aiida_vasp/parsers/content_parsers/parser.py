@@ -176,13 +176,29 @@ class BaseFileParser(object):
     def _init_from_data(self, data):
         raise NotImplementedError('{classname} does not implement a _init_from_data() ' 'method.'.format(classname=self.__class__.__name__))
 
-    def _parse_content(self, inputs):
-        """Abstract base method to parse content.
+    def _parse_content(self):
+        """Parse the quantities configured and parseable from the content."""
 
-        Has to be overwritten by the child class, which typically is a specific content parser.
+        quantities_to_parse = self.DEFAULT_OPTIONS.get('quantities_to_parse')
+        if self._settings is not None and self._settings.quantity_names_to_parse:
+            quantities_to_parse = self._settings.quantity_names_to_parse
 
-        :param inputs:
+        result = {}
 
-        """
+        if self._content_parser is None:
+            # Parsevasp threw an exception, which means POSCAR could not be parsed.
+            for quantity in quantities_to_parse:
+                if quantity in self._parsable_quantities:
+                    result[quantity] = None
+            return result
 
-        raise NotImplementedError('{classname} does not implement a _parse_content() ' 'method.'.format(classname=self.__class__.__name__))
+        for quantity in quantities_to_parse:
+            if quantity in self._parsable_quantities:
+                # In case there is a - in the quantity, we assume we can
+                # parse this quantity from multiple sources, remove source as we do not want to used
+                # the source in the property name, i.e. use last element in the split
+                quantity_splitted = quantity.split('-')
+                quantity_splitted = quantity_splitted[-1]
+                result[quantity] = getattr(self, quantity_splitted)
+
+        return result

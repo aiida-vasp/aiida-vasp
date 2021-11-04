@@ -24,27 +24,6 @@ def test_parse_poscar(fresh_aiida_env, poscar_parser):
 
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
-def test_parse_poscar_object(fresh_aiida_env, poscar_parser, tmpdir):
-    """Load a reference parser and test the file handler.
-
-    We check if the file handler works correctly by writing the reference parser content
-    and reloading it in a new parser using the file handler interface and check the content.
-
-    """
-
-    # Write the loaded structure to file
-    temp_path = str(tmpdir.join('POSCAR'))
-    poscar_parser.write(temp_path)
-
-    # Load the written structure using a new content parser instance
-    parser = None
-    with open(temp_path, 'r') as handler:
-        parser = PoscarParser(handler=handler)
-    result = parser.get_quantity('poscar-structure')
-    compare_poscar_content(result)
-
-
-@pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
 def test_parse_poscar_write(fresh_aiida_env, poscar_parser, tmpdir):
     """Load a reference parser and check that the write functionality works.
 

@@ -7,7 +7,7 @@ compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
-from aiida_vasp.parsers.content_parsers.doscar import DosParser
+from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
@@ -22,7 +22,7 @@ from aiida_vasp.utils.extended_dicts import update_nested_dict
 OBJECT_PARSER_SETS = {
     'default': {
         'DOSCAR': {
-            'parser_class': DosParser,
+            'parser_class': DoscarParser,
             'is_critical': False,
             'status': 'Unknown'
         },

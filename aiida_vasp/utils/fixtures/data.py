@@ -28,6 +28,7 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
@@ -450,6 +451,21 @@ def poscar_parser(request):
     path = data_path(folder, name)
     with open(path, 'r') as handler:
         parser = PoscarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def doscar_parser(request):
+    """Return an instance of DoscarParser for a reference Doscar."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'DOSCAR'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = DoscarParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 
