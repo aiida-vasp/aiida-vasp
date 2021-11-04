@@ -2,29 +2,25 @@
 KPOINTS parser.
 
 ---------------
-The object parser that handles the parsing of KPOINTS.
+Contains the parsing interfaces to parsevasp used to parse KPOINTS.
 """
-# pylint: disable=no-self-use
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class KpointsParser(BaseFileParser):
-    """
-    Parser for VASP KPOINTS.
+    """The parser interface that enables parsing of KPOINTS.
 
-    This is a wrapper for the parsevasp.kpoints parser. It will convert
-    KPOINTS representatation from parsevasp to AiiDA KpointsData objects and vice versa.
-
-    The Parsing direction depends on whether the KpointsParser is initialised with
-    'handler = ...' (use handler object) or 'data = ...' (read from AiiDA data structure).
+    The parser is triggered by using the `kpoints-kpoints` quantity key. The quantity key `kpoints`
+    will on the other hand parse the k-points using the XML parser.
 
     """
 
-    PARSABLE_ITEMS = {
+    DEFAULT_OPTIONS = {'quantities_to_parse': ['kpoints-kpoints']}
+
+    PARSABLE_QUANTITIES = {
         'kpoints-kpoints': {
             'inputs': [],
             'name': 'kpoints',
@@ -32,103 +28,96 @@ class KpointsParser(BaseFileParser):
         },
     }
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize INCAR parser
-
-        data : KpointsArray
-
-        """
-        super(KpointsParser, self).__init__(*args, **kwargs)
-        self._kpoints = None
-        if 'data' in kwargs:
-            self._init_kpoints(kwargs['data'])
-
-    def _init_kpoints(self, data):
-        """Initialize with a given AiiDA KpointsData instance."""
-        if isinstance(data, get_data_class('array.kpoints')):
-            self._data_obj = data
-        else:
-            self._logger.warning('Please supply an AiiDA KpointsData datatype for `data`.')
-            self._data_obj = None
-        self._kpoints = data
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._parsed_data = {}
-
-    @property
-    def _parsed_object(self):
-        """
-        Return an instance of parsevasp.Kpoints.
-
-        Corresponds to the stored KpointsData, but with a different representation.
-        """
-
-        if isinstance(self._data_obj, get_data_class('array.kpoints')):
-            # The KpointsData has not been successfully parsed yet. So let's parse it.
-            try:
-                _ = self._data_obj.get_attribute('mesh')
-                mode = 'automatic'
-            except AttributeError:
-                pass
-
-            try:
-                _ = self._data_obj.get_attribute('array|kpoints')
-                mode = 'explicit'
-            except AttributeError:
-                pass
-
-            kpoints_dict = {}
-            for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
-                kpoints_dict[keyword] = None
-
-            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._data_obj))
-
-            try:
-                return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
-            except SystemExit:
-                return None
-
-        # _data_obj is SingleFile:
-        return self._data_obj
-
-    def _parse_object(self, inputs):
-        """Create a DB Node from KPOINTS."""
-
-        result = inputs
-        result = {}
-
-        if isinstance(self._data_obj, get_data_class('array.kpoints')):
-            return {'kpoints-kpoints': self._data_obj}
+    def _init_from_handler(self, handler):
+        """Initialize using a file like handler."""
 
         try:
-            parsed_kpoints = Kpoints(file_handler=self._data_obj.handler, logger=self._logger)
+            self._content_parser = Kpoints(file_handler=handler, logger=self._logger)
         except SystemExit:
-            self._logger.warning('Parsevasp exitited abnormally. Returning None.')
-            return {'kpoints-kpoints': None}
+            self._logger.warning('Parsevasp exited abnormally.')
 
-        if parsed_kpoints.entries.get('mode') == 'line':
-            self._logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
-            return {'kpoints-kpoints': None}
-        result['kpoints-kpoints'] = parsed_kpoints.entries
+    def _init_from_data(self, data):
+        """Initialize using AiiDA KpointsData."""
 
-        return result
+        if isinstance(data, get_data_class('array.kpoints')):
+            self._content_data = data
+        else:
+            raise TypeError('The supplied AiiDA data structure is not a KpointsData.')
 
     @property
     def kpoints(self):
-        if self._kpoints is None:
-            inputs = get_node_composer_inputs_from_object_parser(self, quantity_keys=['kpoints-kpoints'])
-            self._kpoints = NodeComposer.compose('array.kpoints', inputs)
-        return self._kpoints
+        """
+        Return kpoints that is ready to be consumed by the the AiiDA KpointsData.
 
-    def _get_kpointsdict_explicit(self, kpointsdata):
-        """Turn Aiida KpointData into an 'explicit' kpoints dictionary."""
-        dictionary = {}
+        AiiDA does not support the line mode used in VASP, so we give a warning that parsing
+        this is not supported.
+
+        Returns
+        -------
+        aiida_kpoints : dict
+            A dict that contain keys `comment`, `divisions`, `shifts`, `points`, `tetra`,
+            `tetra_volume`, `mode` `centering` and `num_kpoints`, which are compatible
+            with consumption of the initialization of the AiiDA StructureData.
+
+        """
+
+        aiida_kpoints = None
+        if self._content_parser.entries.get('mode') == 'line':
+            self._logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
+        else:
+            aiida_kpoints = self._content_parser.get_dict()
+
+        return aiida_kpoints
+
+    def _content_data_to_content_parser(self):
+        """Convert an AiiDA KpointsData to a content parser instance of Kpoints from parsevasp."""
+        try:
+            # Check if the KpointsData contain a mesh.
+            _ = self._content_data.get_attribute('mesh')
+            mode = 'automatic'
+        except AttributeError:
+            pass
+
+        try:
+            # Check to see if the KpointsData contain an explicit k-point list.
+            _ = self._content_data.get_attribute('array|kpoints')
+            mode = 'explicit'
+        except AttributeError:
+            pass
+
+        kpoints_dict = {}
+        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+            kpoints_dict[keyword] = None
+
+            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._content_data))
+
+        try:
+            return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
+        except SystemExit:
+            return None
+
+    def _get_kpointsdict_explicit(self, kpoints_data):
+        """
+        Turn Aiida KpointData into an 'explicit' kpoints dictionary.
+
+        Parameters
+        ----------
+        kpoints_data : object
+            An AiiDA KpointsData object containing explicit k-point sets.
+
+        Returns
+        -------
+        kpoints_dict : dict
+            A dictionary that can be used to initialize a parsevasp Kpoints instance.
+
+        """
+        kpoints_dict = {}
 
         kpts = []
         try:
-            points, weights = kpointsdata.get_kpoints(also_weights=True)
+            points, weights = kpoints_data.get_kpoints(also_weights=True)
         except AttributeError:
-            points = kpointsdata.get_kpoints()
+            points = kpoints_data.get_kpoints()
             weights = None
         for index, point in enumerate(points):
             if weights is not None:
@@ -137,56 +126,90 @@ class KpointsParser(BaseFileParser):
                 # no weights supplied, so set them to 1.0
                 kpt = Kpoint(point, weight=1.0, logger=self._logger)
             kpts.append(kpt)
-        dictionary['points'] = kpts
-        dictionary['mode'] = 'explicit'
-        dictionary['num_kpoints'] = len(kpts)
+        kpoints_dict['points'] = kpts
+        kpoints_dict['mode'] = 'explicit'
+        kpoints_dict['num_kpoints'] = len(kpts)
 
-        return dictionary
-
-    @staticmethod
-    def _get_kpointsdata_explicit(kpoints_dict):
-        """Turn an 'explicit' kpoints dictionary into Aiida KpointsData."""
-        kpout = get_data_class('array.kpoints')()
-
-        kpoints = kpoints_dict.get('points')
-        cartesian = not kpoints[0].get_direct()
-        kpoint_list = []
-        weights = []
-        for kpoint in kpoints:
-            kpoint_list.append(kpoint.get_point().tolist())
-            weights.append(kpoint.get_weight())
-
-        if weights[0] is None:
-            weights = None
-
-        kpout.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
-
-        return kpout
-
-    @staticmethod
-    def _get_kpointsdata_automatic(kpoints_dict):
-        """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
-        kpout = get_data_class('array.kpoints')()
-
-        mesh = kpoints_dict.get('divisions')
-        shifts = kpoints_dict.get('shifts')
-        kpout.set_kpoints_mesh(mesh, offset=shifts)
-
-        return kpout
+        return kpoints_dict
 
     @staticmethod
     def _get_kpointsdict_automatic(kpointsdata):
-        """Turn Aiida KpointData into an 'automatic' kpoints dictionary."""
-        dictionary = {}
-        # automatic mode
-        mesh = kpointsdata.get_kpoints_mesh()
-        dictionary['divisions'] = mesh[0]
-        dictionary['shifts'] = mesh[1]
-        dictionary['mode'] = 'automatic'
-        # here we need to make a choice, so should
-        # add more to Aiida to make this better
-        # defined
-        dictionary['centering'] = 'Gamma'
-        dictionary['num_kpoints'] = 0
+        """
+        Turn Aiida KpointData into an 'automatic' kpoints dictionary.
 
-        return dictionary
+        Parameters
+        ----------
+        kpoints_data : object
+            An AiiDA KpointsData object containing meshed k-point sets.
+
+        Returns
+        -------
+        kpoints_dict : dict
+            A dictionary that can be used to initialize a parsevasp Kpoints instance.
+
+        """
+
+        kpoints_dict = {}
+        # Automatic mode
+        mesh = kpointsdata.get_kpoints_mesh()
+        kpoints_dict['divisions'] = mesh[0]
+        kpoints_dict['shifts'] = mesh[1]
+        kpoints_dict['mode'] = 'automatic'
+        # Here we need to make a choice, so should add more to AiiDA to make this better defined
+        kpoints_dict['centering'] = 'Gamma'
+        kpoints_dict['num_kpoints'] = 0
+
+        return kpoints_dict
+
+    # @staticmethod
+    # def _get_kpointsdata_explicit(kpoints_dict):
+    #     """Turn an 'explicit' kpoints dictionary into Aiida KpointsData."""
+    #     kpout = get_data_class('array.kpoints')()
+
+    #     kpoints = kpoints_dict.get('points')
+    #     cartesian = not kpoints[0].get_direct()
+    #     kpoint_list = []
+    #     weights = []
+    #     for kpoint in kpoints:
+    #         kpoint_list.append(kpoint.get_point().tolist())
+    #         weights.append(kpoint.get_weight())
+
+    #     if weights[0] is None:
+    #         weights = None
+
+    #     kpout.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
+
+    #     return kpout
+
+    # @staticmethod
+    # def _get_kpointsdata_automatic(kpoints_dict):
+    #     """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
+    #     kpout = get_data_class('array.kpoints')()
+
+    #     mesh = kpoints_dict.get('divisions')
+    #     shifts = kpoints_dict.get('shifts')
+    #     kpout.set_kpoints_mesh(mesh, offset=shifts)
+
+    #     return kpout
+
+
+def parsevasp_to_aiida(kpoints):
+    """Parsevasp to AiiDA conversion.
+
+    Generate an AiiDA compatible representation of the k-points from the parsevasp instance of the
+    Poscar class.
+
+    Parameters
+    ----------
+    kpoints : object
+        An instance of the Kpoints class in parsevasp.
+
+    Returns
+    -------
+    kpoints_dict : dict
+        A dictionary representation which are ready to be used when creating an
+        AiiDA KpointsData instance.
+
+    """
+
+    return kpoints_dict

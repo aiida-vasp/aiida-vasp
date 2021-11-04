@@ -143,3 +143,40 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
     symbols = result_reparse.get_symbols_set()
     assert symbols == set(['As', 'In'])
+
+
+def test_parse_kpoints(vasp_kpoints):
+    """
+    Parse a reference KPOINTS.
+
+    Using the KpointsParser and compare the result to a reference
+    kpoints-node.
+
+    """
+
+    kpoints, _ = vasp_kpoints
+
+    try:
+        _ = kpoints.get_attribute('mesh')
+        path = data_path('kpoints', 'KPOINTS_mesh')
+        method = 'get_kpoints_mesh'
+        param = 'mesh'
+    except AttributeError:
+        pass
+
+    try:
+        _ = kpoints.get_attribute('array|kpoints')
+        path = data_path('kpoints', 'KPOINTS_list')
+        method = 'get_kpoints'
+        param = 'list'
+    except AttributeError:
+        pass
+
+    parser = None
+    with open(path, 'r') as handler:
+        parser = KpointsParser(file_handler=handler)
+    result = parser.kpoints
+    if param == 'list':
+        assert getattr(result, method)().all() == getattr(kpoints, method)().all()
+    if param == 'mesh':
+        assert getattr(result, method)() == getattr(kpoints, method)()

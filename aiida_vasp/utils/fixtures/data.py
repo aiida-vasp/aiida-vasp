@@ -30,6 +30,7 @@ from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
@@ -457,7 +458,7 @@ def poscar_parser(request):
 
 @pytest.fixture()
 def doscar_parser(request):
-    """Return an instance of DoscarParser for a reference Doscar."""
+    """Return an instance of DoscarParser for a reference DOSCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
     name = 'DOSCAR'
     if isinstance(request.param, list):
@@ -472,7 +473,7 @@ def doscar_parser(request):
 
 @pytest.fixture()
 def eigenval_parser(request):
-    """Return an instance of EigenvalParser for a reference Eigenval."""
+    """Return an instance of EigenvalParser for a reference EIGENVAL."""
     from aiida_vasp.parsers.settings import ParserSettings
     name = 'EIGENVAL'
     if isinstance(request.param, list):
@@ -482,6 +483,21 @@ def eigenval_parser(request):
     path = data_path(folder, name)
     with open(path, 'r') as handler:
         parser = EigenvalParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def kpoints_parser(request):
+    """Return an instance of KpointsParser for a reference KPOINTS."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'KPOINTS'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = KpointsParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 

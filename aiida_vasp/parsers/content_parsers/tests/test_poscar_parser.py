@@ -25,7 +25,7 @@ def test_parse_poscar(poscar_parser):
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
 def test_parse_poscar_write(poscar_parser, tmpdir):
-    """Load a reference parser and check that the write functionality works.
+    """Load a reference POSCAR parser and check that the write functionality works.
 
     Here we make sure the write function of the content parser works.
 
@@ -157,7 +157,6 @@ def compare_poscar_content(result, velocities=True, predictors=True):
     }]
     assert set(result.keys()) == set(keys)
     assert np.allclose(result['unitcell'], unitcell)
-    print(result)
     for index, item in enumerate(species):
         assert item['specie'] == result['sites'][index]['specie']
         assert item['selective'] == result['sites'][index]['selective']
