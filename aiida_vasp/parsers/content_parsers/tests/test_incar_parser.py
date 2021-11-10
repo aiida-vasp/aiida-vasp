@@ -9,13 +9,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
-
-@pytest.fixture()
-def incar_dict_example():
-    """Create a example dict."""
-
-    incar_dict = {'encut': 350, 'Sigma': '.5e-1 #comment', 'lreal': False, 'PREC': 'Accurate'}
-    return incar_dict
+compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}
 
 
 def test_parser_read(fresh_aiida_env):
@@ -30,70 +24,100 @@ def test_parser_read(fresh_aiida_env):
     assert incar['lreal'] is False
 
 
-def test_parser_read_doc(fresh_aiida_env):
-    """
-    Read example INCAR from VASP documentation.
+@pytest.mark.parametrize(['incar_parser'], [('incar',)], indirect=True)
+def test_parse_incar(incar_parser):
+    """Load a reference INCAR parser.
 
-    Using parsevasp. Returned content should be none
+    We check that it parses and provides the correct content for the default INCAR.
+
+    """
+
+    # The structure for the INCAR parser should have the key `incar-structure`
+    result = incar_parser.get_quantity('incar')
+    assert result == compare_incar
+
+
+@pytest.mark.parametrize(['incar_parser'], [('phonondb',)], indirect=True)
+def test_parser_read_phonon(incar_parser):
+    """Load a reference INCAR parser.
+
+    We check that it parses and provides the correct content for an INCAR used for
+    phonon calculations.
+
+    """
+
+    incar = incar_parser.incar
+    assert incar['prec'] == 'Accurate'
+    assert incar['ibrion'] == -1
+    assert incar['encut'] == pytest.approx(359.7399)
+    assert incar['lreal'] is False
+
+
+@pytest.mark.parametrize(['incar_parser'], [('incar',)], indirect=True)
+def test_parse_incar_write(incar_parser, tmpdir):
+    """Load a reference INCAR parser and check that the write functionality works.
+
+    Here we make sure the write function of the content parser works.
+
+    """
+    # Write the loaded structure to file
+    temp_path = str(tmpdir.join('INCAR'))
+    incar_parser.write(temp_path)
+
+    # Load the written structure using a new content parser instance
+    content = None
+    with open(temp_path, 'r') as handler:
+        content = handler.readlines()
+    ref_content = ['GGA = PE\n', 'GGA_COMPAT = .FALSE.\n', 'LORBIT = 11\n', 'MAGMOM = 30 * 2*0.\n', 'SIGMA = 0.5\n']
+    assert content == ref_content
+
+
+def test_parse_incar_data(vasp_params, tmpdir):
+    """Load a reference AiiDA Dict and check that the parser can
+    initialize using the data.
+
+    Using the Dict sitting in the initialized parser it should
+    write that content to an INCAR file when issuing write which is also tested,
+    file is reloaded and content checked.
+
+    """
+
+    # Initialize parser with an existing reference Dict
+    incar_parser = IncarParser(data=vasp_params)
+
+    # Write the loaded Dict to file, which behind the scenes convert it
+    # to a INCAR format
+    temp_path = str(tmpdir.join('INCAR'))
+    incar_parser.write(temp_path)
+
+    # Load the written INCAR using a new content parser instance
+    parser = None
+    with open(temp_path, 'r') as handler:
+        parser = IncarParser(handler=handler)
+    result = parser.get_quantity('incar')
+    assert vasp_params.get_dict() == result
+
+
+@pytest.mark.parametrize(['incar_parser'], [(['incar', 'INCAR.nohash'],)], indirect=True)
+def test_incar_parser_nohash(incar_parser):
+    """Load a reference INCAR parser.
+
+    Using parsevasp. Returned content should be None
     since parsevasp refuse to parse an INCAR where the
     comments does not start with hashtags.
 
     """
 
-    path = data_path('incar', 'INCAR.copper_srf')
-    parser = IncarParser(path=path)
-    result = parser.incar
+    result = incar_parser.incar
     assert result is None
 
 
-def test_parser_dict(fresh_aiida_env, incar_dict_example):
-    """
-    Pass a dict to the INCAR parser.
-
-    Should return an AiiDA datastructure for dict.
-
-    """
-
-    parser = IncarParser(data=get_data_node('dict', dict=incar_dict_example))
-    assert isinstance(parser.incar, get_data_class('dict'))
-
-
-# def test_parser_string():
-#     """
-#     Pass a string to the INCAR parser.
-
-#     Should fail, since passing of string in
-#     the interface is not implemented yet.
-
-#     """
-
-#     test_string = 'LOPTICS = .True.\nAddgrid=.false.'
-#     with pytest.raises(AttributeError):
-#         IncarParser(incar_string=test_string)
-
-
-def test_write_parser(fresh_aiida_env, tmpdir, incar_dict_example):
-    """Test writing an INCAR from a dict, read and compare."""
-
-    # create AiiDA dictionary instance
-    incar_params = get_data_class('dict')(dict=incar_dict_example)
-    assert isinstance(incar_params, get_data_class('dict'))
-    parser = IncarParser(data=incar_params)
-
-    # now write
+def test_incar_parser_invalid_tag(vasp_params, tmpdir):
+    """Test parsing an INCAR with an invalid tag."""
+    params = vasp_params.get_dict()
+    params.update(foo='bar')
+    vasp_params_modified = get_data_node('dict', dict=params)
+    parser = IncarParser(data=vasp_params_modified)
     temp_path = str(tmpdir.join('INCAR'))
-    parser.write(temp_path)
-    # read again
-    parser_reparse = IncarParser(path=temp_path)
-    result = parser_reparse.incar
-    # compare
-    comp_dict = {'encut': 350, 'sigma': 0.05, 'lreal': False, 'prec': 'Accurate'}
-    assert str(sorted(result)) == str(sorted(comp_dict))
-
-    # Test validation
-    with_invalid = dict(incar_dict_example)
-    with_invalid.update(foo='bar')
-    incar_params = get_data_class('dict')(dict=with_invalid)
-    parser = IncarParser(data=incar_params)
     with pytest.raises(InputValidationError):
         parser.write(temp_path)

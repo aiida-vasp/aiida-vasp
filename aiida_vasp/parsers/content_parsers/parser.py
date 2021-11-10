@@ -88,7 +88,7 @@ class BaseFileParser(object):
         # Parser options.
         self._options = options
 
-        # Set `handler`, `data` or raise if we supply something else in the parameters
+        # Set `handler` (parsing from some source) or `data` (eventually for example executing write)
         if handler is not None:
             self._init_from_handler(handler)
         if data is not None:

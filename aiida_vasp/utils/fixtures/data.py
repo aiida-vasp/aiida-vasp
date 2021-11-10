@@ -458,6 +458,36 @@ def poscar_parser(request):
 
 
 @pytest.fixture()
+def poscar_parser(request):
+    """Return an instance of PoscarParser for a reference POSCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'POSCAR'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = PoscarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def incar_parser(request):
+    """Return an instance of IncarParser for a reference INCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'INCAR'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = IncarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
 def doscar_parser(request):
     """Return an instance of DoscarParser for a reference DOSCAR."""
     from aiida_vasp.parsers.settings import ParserSettings
