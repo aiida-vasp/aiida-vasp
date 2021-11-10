@@ -161,14 +161,17 @@ class BaseFileParser(object):
             # Only write if we have an AiiDA data structure or parser prepared.
             if self._content_parser is None:
                 # If we do not have a parser loaded before write, we have an
-                # AiiDA data structure. Make sure that is on the form parsevasp expects.
+                # AiiDA data structure. Make sure that is on the form parsevasp expects
+                # by initializing the content parser instance.
                 self._content_parser = self._content_data_to_content_parser()
             # Now a content parser should be ready and its content can be
-            # written using parsevasp
+            # written using parsevasp. But the content parser could still be None
+            # if there is something with the data that can not be parsed.
+            print(dir(self._content_parser))
             with open(path, 'w') as handler:
                 self._content_parser.write(file_handler=handler)
         else:
-            raise ValueError('The content parser has not been initialized or no ' 'AiiDA data structure is preparred.')
+            raise ValueError('The content parser has not been initialized or no AiiDA data structure is preparred.')
 
     def _init_from_handler(self, data):
         raise NotImplementedError('{classname} does not implement a _init_from_handler() '

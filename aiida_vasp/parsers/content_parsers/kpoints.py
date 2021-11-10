@@ -70,7 +70,15 @@ class KpointsParser(BaseFileParser):
         return aiida_kpoints
 
     def _content_data_to_content_parser(self):
-        """Convert an AiiDA KpointsData to a content parser instance of Kpoints from parsevasp."""
+        """
+        Convert an AiiDA KpointsData to a content parser instance of Kpoints from parsevasp.
+
+        Returns
+        -------
+        kpoints : object
+            An instance of Kpoints from parsevasp.
+
+        """
         try:
             # Check if the KpointsData contain a mesh.
             _ = self._content_data.get_attribute('mesh')
@@ -91,10 +99,10 @@ class KpointsParser(BaseFileParser):
 
             kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._content_data))
 
-        try:
-            return Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
-        except SystemExit:
-            return None
+        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
+        kpoints = Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
+
+        return kpoints
 
     def _get_kpointsdict_explicit(self, kpoints_data):
         """

@@ -2,7 +2,6 @@
 # pylint: disable=redefined-outer-name, unused-wildcard-import, unused-argument, wildcard-import
 
 import pytest
-from aiida.common import InputValidationError
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
@@ -10,18 +9,6 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}
-
-
-def test_parser_read(fresh_aiida_env):
-    """Test to read an INCAR."""
-
-    path = data_path('phonondb', 'INCAR')
-    parser = IncarParser(path=path)
-    incar = parser.incar
-    assert incar['prec'] == 'Accurate'
-    assert incar['ibrion'] == -1
-    assert incar['encut'] == pytest.approx(359.7399)
-    assert incar['lreal'] is False
 
 
 @pytest.mark.parametrize(['incar_parser'], [('incar',)], indirect=True)
@@ -38,7 +25,7 @@ def test_parse_incar(incar_parser):
 
 
 @pytest.mark.parametrize(['incar_parser'], [('phonondb',)], indirect=True)
-def test_parser_read_phonon(incar_parser):
+def test_parse_incar_phonon(incar_parser):
     """Load a reference INCAR parser.
 
     We check that it parses and provides the correct content for an INCAR used for
@@ -99,7 +86,7 @@ def test_parse_incar_data(vasp_params, tmpdir):
 
 
 @pytest.mark.parametrize(['incar_parser'], [(['incar', 'INCAR.nohash'],)], indirect=True)
-def test_incar_parser_nohash(incar_parser):
+def test_parse_incar_nohash(incar_parser):
     """Load a reference INCAR parser.
 
     Using parsevasp. Returned content should be None
@@ -112,12 +99,12 @@ def test_incar_parser_nohash(incar_parser):
     assert result is None
 
 
-def test_incar_parser_invalid_tag(vasp_params, tmpdir):
+def test_parse_incar_invalid_tag(vasp_params, tmpdir):
     """Test parsing an INCAR with an invalid tag."""
     params = vasp_params.get_dict()
     params.update(foo='bar')
     vasp_params_modified = get_data_node('dict', dict=params)
     parser = IncarParser(data=vasp_params_modified)
     temp_path = str(tmpdir.join('INCAR'))
-    with pytest.raises(InputValidationError):
+    with pytest.raises(SystemExit):
         parser.write(temp_path)

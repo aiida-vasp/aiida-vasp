@@ -59,3 +59,20 @@ class IncarParser(BaseFileParser):
             params = self._content_parser.get_dict()
             return params
         return None
+
+    def _content_data_to_content_parser(self):
+        """
+        Convert an AiiDA Dict to a content parser instance of Incar from parsevasp.
+
+        Returns
+        -------
+        incar : object
+            An instance of Incar from parsevasp.
+
+        """
+        dictionary = self._content_data.get_dict()
+
+        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
+        incar = Incar(incar_dict=dictionary, logger=self._logger)
+
+        return incar

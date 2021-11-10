@@ -78,7 +78,15 @@ class PoscarParser(BaseFileParser):
         return aiida_structure
 
     def _content_data_to_content_parser(self):
-        """Convert an AiiDA StructureData to a content parser instance of Poscar from parsevasp."""
+        """
+        Convert an AiiDA StructureData to a content parser instance of Poscar from parsevasp.
+
+        Returns
+        -------
+        poscar : object
+            An instance of Poscar from parsevasp.
+
+        """
         dictionary = {}
         dictionary['comment'] = self._content_data.label or self._content_data.get_formula()
         dictionary['unitcell'] = np.asarray(self._content_data.cell)
@@ -98,10 +106,10 @@ class PoscarParser(BaseFileParser):
 
         dictionary['sites'] = sites
 
-        try:
-            return Poscar(poscar_dict=dictionary, prec=self._precision, conserve_order=True, logger=self._logger)
-        except SystemExit:
-            return None
+        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
+        poscar = Poscar(poscar_dict=dictionary, prec=self._precision, conserve_order=True, logger=self._logger)
+
+        return poscar
 
     def transform_to_bool(self, value):
         """Helper function to transform the dictionary from strings or integers to bools"""
