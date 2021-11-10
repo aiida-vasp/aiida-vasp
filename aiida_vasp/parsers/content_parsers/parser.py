@@ -135,7 +135,8 @@ class BaseFileParser(object):
 
         # We continue assuming we need to parse this quantity
         if quantity_key not in self._parsable_quantities:
-            # Check if this quantity can be parsed by this content parser.
+            # Check if this quantity can be parsed by this content parser, if not,
+            # return None.
             return None
 
         if self._parsed_content.get(quantity_key) is None:

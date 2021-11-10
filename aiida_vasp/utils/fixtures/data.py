@@ -30,6 +30,7 @@ from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
@@ -468,6 +469,21 @@ def doscar_parser(request):
     path = data_path(folder, name)
     with open(path, 'r') as handler:
         parser = DoscarParser(handler=handler, settings=ParserSettings({}))
+    return parser
+
+
+@pytest.fixture()
+def chgcar_parser(request):
+    """Return an instance of ChgcarParser for a reference CHGCAR."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    name = 'CHGCAR'
+    if isinstance(request.param, list):
+        folder, name = request.param
+    else:
+        folder = request.param
+    path = data_path(folder, name)
+    with open(path, 'r') as handler:
+        parser = ChgcarParser(handler=handler, settings=ParserSettings({}))
     return parser
 
 
