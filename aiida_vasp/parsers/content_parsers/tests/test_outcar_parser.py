@@ -6,32 +6,40 @@ import numpy as np
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.node_composer import NodeComposer, get_node_composer_inputs_from_object_parser
+
+
+@pytest.mark.parametrize('outcar_parser', ['outcar'], indirect=True)
+def test_parse_outcar_bogus_quantity(outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that the get quantity returns None for bogus keys.
+
+    """
+
+    assert outcar_parser.get_quantity('bogusquantity1234') is None
+
+
+@pytest.mark.parametrize('outcar_parser', ['outcar'], indirect=True)
+def test_parse_outcar_no_quantity(outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that the get quantity returns None if that quantity is not found
+    in the presented OUTCAR.
+
+    """
+    # A standard OUTCAR should not contain parsable magnetization.
+    assert outcar_parser.get_quantity('magnetization') is None
 
 
 @pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
-def test_parameter_results(fresh_aiida_env, outcar_parser):
+def test_parse_outcar_symmetry(outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for the symmetry.
+
     """
-    Test that the parameter node is a ParametersData instance.
 
-    Should contain the symmetries and the elastic moduli.
-
-    """
-
-    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
-        {'misc': {
-            'type': 'dict',
-            'quantities': ['symmetries_extended', 'elastic_moduli', 'run_stats', 'run_status'],
-            'link_name': 'my_custom_node'
-        }})
-
-    inputs = get_node_composer_inputs_from_object_parser(outcar_parser,
-                                                         quantity_keys=['symmetries_extended', 'elastic_moduli', 'run_stats', 'run_status'])
-    data_obj = NodeComposer.compose('dict', inputs)
-    ref_class = get_data_class('dict')
-    assert isinstance(data_obj, ref_class)
-    data_dict = data_obj.get_dict()
+    symmetry = outcar_parser.get_quantity('symmetries')
     # test symmetries
     test = {
         'symmetrized_cell_type': {
@@ -52,16 +60,6 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
                 'face centered cubic supercell.'
             ]
         },
-        'point_group': {
-            'static': [
-                'O_h', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'D_2h.',
-                'D_2h.', 'O_h'
-            ],
-            'dynamic': [
-                'O_h', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'D_4h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'C_2h.', 'D_2h.',
-                'D_2h.', 'O_h'
-            ]
-        },
         'original_cell_type': {
             'static': [
                 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
@@ -77,35 +75,49 @@ def test_parameter_results(fresh_aiida_env, outcar_parser):
         'num_space_group_operations': {
             'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
             'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
-        },
-        'primitive_translations': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        }
     }
-    assert set(data_dict['symmetries']) == set(test)
+    assert set(symmetry) == set(test)
 
-    # then elastic moduli
+
+@pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
+def test_parse_outcar_elastic_moduli(outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for the elastic moduli.
+
+    """
+
+    moduli = outcar_parser.get_quantity('elastic_moduli')
     test = np.array([1674.5786, 704.739, 704.739, -0.0, 0.0, 0.0])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['symmetrized'][0], test)
+    np.testing.assert_allclose(moduli['symmetrized'][0], test)
     test = np.array([0.0, 0.0, 0.0, -0.0, -0.0, 1122.6622])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['symmetrized'][5], test)
+    np.testing.assert_allclose(moduli['symmetrized'][5], test)
     test = np.array([705.0238, 1674.8491, 705.0238, -0.0, -0.0, 0.0])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['non_symmetrized'][1], test)
+    np.testing.assert_allclose(moduli['non_symmetrized'][1], test)
     test = np.array([-0.0078, -0.0495, 0.0147, 0.0, 1123.0829, -0.0])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['non_symmetrized'][4], test)
+    np.testing.assert_allclose(moduli['non_symmetrized'][4], test)
     test = np.array([704.739, 704.739, 1674.5786, -0.0, -0.0, 0.0])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['total'][2], test)
+    np.testing.assert_allclose(moduli['total'][2], test)
     test = np.array([-0.0, -0.0, -0.0, 775.8054, 0.0, -0.0])
-    np.testing.assert_allclose(data_dict['elastic_moduli']['total'][3], test)
+    np.testing.assert_allclose(moduli['total'][3], test)
 
-    assert data_dict['run_stats']
-    assert data_dict['run_stats']['total_cpu_time_used'] == pytest.approx(89.795)
-    assert data_dict['run_stats']['average_memory_used'] == pytest.approx(0.0)
 
-    assert data_dict['run_status']['last_iteration_index'] == [15, 5]
-    assert data_dict['run_status']['finished']
-    assert data_dict['run_status']['ionic_converged']
-    assert data_dict['run_status']['electronic_converged']
-    assert data_dict['run_status']['nelm'] == 60
-    assert data_dict['run_status']['nsw'] == 61
+@pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
+def test_parse_outcar_status(outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for a simple status.
+
+    """
+
+    status = outcar_parser.get_quantity('run_status')
+    assert status['last_iteration_index'] == [15, 5]
+    assert status['finished']
+    assert status['ionic_converged']
+    assert status['electronic_converged']
+    assert status['nelm'] == 60
+    assert status['nsw'] == 61
 
 
 _TEST_DATA = [
@@ -118,27 +130,16 @@ _TEST_DATA = [
 
 
 @pytest.mark.parametrize('outcar_parser,expected', _TEST_DATA, indirect=['outcar_parser'])
-def test_run_status(fresh_aiida_env, outcar_parser, expected):
+def test_parse_outcar_status_extended(outcar_parser, expected):
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for the status for multiple OUTCARs.
+
     """
-    Test the run_status obtained by checking the convergence problems of a calculation,
-    finished or unfinished.
-    """
 
-    outcar_parser._settings._output_nodes_dict.update(  # pylint: disable=protected-access
-        {'misc': {
-            'type': 'dict',
-            'quantities': ['run_stats', 'run_status'],
-            'link_name': 'my_custom_node'
-        }})
-
-    inputs = get_node_composer_inputs_from_object_parser(outcar_parser, quantity_keys=['run_stats', 'run_status'])
-    data_obj = NodeComposer.compose('dict', inputs)
-    ref_class = get_data_class('dict')
-    assert isinstance(data_obj, ref_class)
-    data_dict = data_obj.get_dict()
-
-    assert data_dict['run_status']['finished'] is expected[0]
-    assert data_dict['run_status']['ionic_converged'] is expected[1]
-    assert data_dict['run_status']['electronic_converged'] is expected[2]
-    assert data_dict['run_status']['consistent_nelm_breach'] is expected[3]
-    assert data_dict['run_status']['contains_nelm_breach'] is expected[4]
+    status = outcar_parser.get_quantity('run_status')
+    assert status['finished'] is expected[0]
+    assert status['ionic_converged'] is expected[1]
+    assert status['electronic_converged'] is expected[2]
+    assert status['consistent_nelm_breach'] is expected[3]
+    assert status['contains_nelm_breach'] is expected[4]

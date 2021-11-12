@@ -2,21 +2,21 @@
 Standard stream parser for the VASP output.
 
 --------------
-A parser that analyses standard output for VASP related notification, warnings and
-errors. Typically this is contained in the scheduler standard output.
+Contains the parsing interfaces to parsevasp used to parse standard streams
+for VASP related notification, warnings and errors.
 """
 import re
 
 from parsevasp.stream import Stream
 from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
 
-DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
-
 
 class StreamParser(BaseFileParser):
     """Parser used for parsing errors and warnings from VASP."""
 
-    PARSABLE_ITEMS = {
+    DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
+
+    PARSABLE_QUANTITIES = {
         'notifications': {
             'inputs': [],
             'name': 'notifications',
@@ -24,73 +24,19 @@ class StreamParser(BaseFileParser):
         }
     }
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize stream parser
-
-        handler : object
-            Handler object.
-        data : SingleFileData
-            AiiDA data class to store a single file.
-        settings : ParserSettings
-            Do not touch. BaseFileParser takes care of initialization.
-
-        """
-
-        super(StreamParser, self).__init__(*args, **kwargs)
-        self._stream = None
-        self._settings = kwargs.get('settings', None)
-        if 'handler' in kwargs:
-            self._init_stream(kwargs['handler'])
-        if 'data' in kwargs:
-            self._init_stream(kwargs['data'].get_file_abs_path())
-
-    def _init_stream(self, handler):
-        """Init with handler."""
-        self._parsed_data = {}
-        self._parsable_items = self.__class__.PARSABLE_ITEMS
-        self._data_obj = SingleFile(handler=handler)
-
-        # Since the VASP output can be fairly large, we will parse it only
-        # once and store the parsevasp Stream object.
+    def _init_from_handler(self, handler):
+        """Initialize using a file like handler."""
         # First get any special config from the parser settings, else use the default
         stream_config = None
         history = False
         if self._settings is not None:
             stream_config = self._settings.get('stream_config', None)
             history = self._settings.get('stream_history', False)
+
         try:
-            self._stream = Stream(file_handler=handler, logger=self._logger, history=history, config=stream_config)
+            self._content_parser = Stream(file_handler=handler, logger=self._logger, history=history, config=stream_config)
         except SystemExit:
-            self._logger.warning('Parsevasp exited abruptly when parsing the standard stream. Returning None.')
-            self._stream = None
-
-    def _parse_object(self, inputs):
-        """Parse the standard streams."""
-
-        # Since all quantities will be returned by properties, we can't pass
-        # inputs as a parameter, so we store them in self._parsed_data
-        for key, value in inputs.items():
-            self._parsed_data[key] = value
-
-        quantities_to_parse = DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self._settings is not None and self._settings.quantity_names_to_parse:
-            quantities_to_parse = self._settings.quantity_names_to_parse
-
-        result = {}
-
-        if self._stream is None:
-            # parsevasp threw an exception, which means the standard stream could not be parsed.
-            for quantity in quantities_to_parse:
-                if quantity in self._parsable_items:
-                    result[quantity] = None
-            return result
-
-        for quantity in quantities_to_parse:
-            if quantity in self._parsable_items:
-                result[quantity] = getattr(self, quantity)
-
-        return result
+            self._logger.warning('Parsevasp exited abnormally.')
 
     @property
     def notifications(self):
@@ -100,7 +46,7 @@ class StreamParser(BaseFileParser):
         # This should be fixed in AiiDA core and coordinated across many plugins. For now, we convert the relevant info
         # into dict entries explicitly.
         notifications = []
-        for item in self._stream.entries:
+        for item in self._content_parser.entries:
             if isinstance(item.regex, type(re.compile(''))):
                 regex = item.regex.pattern
             else:
@@ -112,19 +58,19 @@ class StreamParser(BaseFileParser):
     @property
     def errors(self):
         """Fetch the errors from parsevasp."""
-        return [item for item in self._stream.entries if item.kind == 'ERROR']
+        return [item for item in self._content_parser.entries if item.kind == 'ERROR']
 
     @property
     def warnings(self):
         """Fetch the warnings from parsevasp."""
-        return [item for item in self._stream.entries if item.kind == 'WARNING']
+        return [item for item in self._content_parser.entries if item.kind == 'WARNING']
 
     @property
     def has_entries(self):
         """Fetch if there are streams present according to the config after parsning."""
-        return self._stream.has_entries
+        return self._content_parser.has_entries
 
     @property
     def number_of_entries(self):
         """Return a dict containing the number of unique streams detected."""
-        return len(self._stream)
+        return len(self._content_parser)
