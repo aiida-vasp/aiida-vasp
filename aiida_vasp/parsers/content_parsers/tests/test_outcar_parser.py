@@ -143,3 +143,101 @@ def test_parse_outcar_status_extended(outcar_parser, expected):
     assert status['electronic_converged'] is expected[2]
     assert status['consistent_nelm_breach'] is expected[3]
     assert status['contains_nelm_breach'] is expected[4]
+
+@pytest.mark.parametrize('outcar_parser', ['magnetization'], indirect=True)
+def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for the magnetization.
+
+    """
+    magnetization = outcar_parser.get_quantity('site_magnetization')
+    test = {
+        'sphere': {
+            'x': {
+                'site_moment': {
+                    1: {
+                        's': -0.014,
+                        'p': -0.051,
+                        'd': 1.687,
+                        'tot': 1.621
+                    },
+                    2: {
+                        's': -0.015,
+                        'p': -0.052,
+                        'd': 1.686,
+                        'tot': 1.619
+                    },
+                    3: {
+                        's': -0.014,
+                        'p': -0.053,
+                        'd': 1.708,
+                        'tot': 1.64
+                    },
+                    4: {
+                        's': -0.014,
+                        'p': -0.053,
+                        'd': 1.708,
+                        'tot': 1.64
+                    }
+                },
+                'total_magnetization': {
+                    's': -0.057,
+                    'p': -0.21,
+                    'd': 6.788,
+                    'tot': 6.521
+                }
+            },
+            'y': {
+                'site_moment': {},
+                'total_magnetization': {}
+            },
+            'z': {
+                'site_moment': {},
+                'total_magnetization': {}
+            }
+        },
+        'full_cell': np.asarray([6.4424922])
+    }
+    assert set(magnetization) == set(test)
+
+
+@pytest.mark.parametrize('outcar_parser', ['magnetization_single'], indirect=True)
+def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # pylint: disable=invalid-name
+    """Load a reference OUTCAR parser.
+
+    We check that it parses and provides the correct content for the magnetization
+    for a single atom in the cell.
+
+    """
+    magnetization = outcar_parser.get_quantity('site_magnetization')
+    test = {
+        'sphere': {
+            'x': {
+                'site_moment': {
+                    1: {
+                        's': -0.012,
+                        'p': -0.043,
+                        'd': 2.49,
+                        'tot': 2.434
+                    },
+                },
+                'total_magnetization': {
+                    's': -0.012,
+                    'p': -0.043,
+                    'd': 2.49,
+                    'tot': 2.434
+                }
+            },
+            'y': {
+                'site_moment': {},
+                'total_magnetization': {}
+            },
+            'z': {
+                'site_moment': {},
+                'total_magnetization': {}
+            }
+        },
+        'full_cell': np.asarray([2.4077611])
+    }
+    assert set(magnetization) == set(test)
