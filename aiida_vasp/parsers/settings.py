@@ -13,7 +13,6 @@ from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.content_parsers.wavecar import WavecarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 
@@ -48,11 +47,6 @@ OBJECT_PARSER_SETS = {
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
-            'is_critical': False,
-            'status': 'Unknown'
-        },
-        'WAVECAR': {
-            'parser_class': WavecarParser,
             'is_critical': False,
             'status': 'Unknown'
         },

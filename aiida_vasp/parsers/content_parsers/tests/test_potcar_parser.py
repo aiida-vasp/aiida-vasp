@@ -78,5 +78,5 @@ def test_multi_round_trip(potcar_family, tmp_path):
 def test_multi_from_structure(potcar_family, vasp_structure_poscar):
     potcar_cls = get_data_class('vasp.potcar')
     potcar_dict = potcar_cls.get_potcars_dict(elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP)
-    multi = MultiPotcarIo.from_structure(structure=vasp_structure_poscar.data_obj, potentials_dict=potcar_dict)
+    multi = MultiPotcarIo.from_structure(structure=vasp_structure_poscar._content_data, potentials_dict=potcar_dict)
     assert [potcar.node.full_name for potcar in multi.potcars] == ['In_sv', 'As', 'In_d', 'As']
