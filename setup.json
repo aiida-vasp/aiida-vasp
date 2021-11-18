@@ -89,7 +89,7 @@
 	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
 	"psycopg2-binary~=2.8.3",
 	"subprocess32",
-	"pymatgen<=2020.12.3",
+	"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
 	"lxml",
 	"packaging",
 	"parsevasp >= 2.0.1"
