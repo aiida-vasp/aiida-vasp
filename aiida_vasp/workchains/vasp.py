@@ -764,12 +764,20 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
         Check if the calculation has converged ionic structure.
         """
+
+        # Check if we have requested to ignore ionic convergence check at calculation level
+        # If so, then this handler should be by-passed
+        if 'settings' in node.inputs:
+            settings = node.inputs.settings.get_dict()
+            if not settings.get('CHECK_IONIC_CONVERGENCE', True):
+                return None
+
         misc = node.outputs.misc.get_dict()
         run_status = misc['run_status']
 
         # Check that the ionic structure is converged
         if run_status.get('ionic_converged') is False:
-            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            self.report(f'The child calculation {node} did not have converged ionic structure.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         return None
 
