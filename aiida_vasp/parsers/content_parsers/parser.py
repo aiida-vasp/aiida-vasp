@@ -1,5 +1,5 @@
 """
-Base classes for the VASP object parsers.
+Base classes for the VASP content parsers.
 
 ---------------------------------------
 Contains the base classes for the VASP content parsers.
