@@ -6,9 +6,9 @@
 	"Environment :: Plugins",
 	"Intended Audience :: Science/Research",
 	"License :: OSI Approved :: MIT License",
-	"Programming Language :: Python :: 3.6",
 	"Programming Language :: Python :: 3.7",
 	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
 	"Topic :: Scientific/Engineering :: Physics",
 	"Topic :: Scientific/Engineering :: Chemistry",
 	"Framework :: AiiDA"
@@ -19,6 +19,7 @@
     "url": "https://github.com/aiida-vasp/aiida-vasp",
     "version": "2.1.1",
     "reentry_register": true,
+    "python_requires": ">=3.7",
     "setup_requires": [
 	"reentry"
     ],
