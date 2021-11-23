@@ -19,6 +19,7 @@
     "url": "https://github.com/aiida-vasp/aiida-vasp",
     "version": "2.1.1",
     "reentry_register": true,
+    "python_requires": ">=3.7",
     "setup_requires": [
 	"reentry"
     ],
