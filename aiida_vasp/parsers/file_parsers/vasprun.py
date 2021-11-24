@@ -588,7 +588,6 @@ class VasprunParser(BaseFileParser):
                 # which is then recovered as `energy_no_entropy` later
                 energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
         else:
-            etype = [ENERGY_MAPPING[key] for key in etype.items()]
             energies = self._xml.get_energies(status='all', etype=etype, nosc=nosc)
 
         if energies is None:
