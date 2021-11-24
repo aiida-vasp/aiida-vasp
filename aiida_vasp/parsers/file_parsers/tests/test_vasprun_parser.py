@@ -15,15 +15,34 @@ def test_version(fresh_aiida_env, vasprun_parser):
     assert quantity == '5.4.4'
 
 
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_version_v621(fresh_aiida_env, vasprun_parser_v621):
+    """Parse a reference vasprun.xml and fetch the VASP version for VASP 6.2.1."""
+    quantity = vasprun_parser_v621.get_quantity('version')
+    assert quantity == '6.2.1'
+
+
 def test_parse_vasprun(fresh_aiida_env, vasprun_parser):
     """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string."""
 
     quantity = vasprun_parser.get_quantity('occupancies')
     occ = quantity[0]
-    occupancies = np.array([[[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]]])
-    assert occ.all() == occupancies.all()
+    occupancies = np.array([[1., 1., 1., 1., 0.6667, 0.6667, 0.6667, -0., -0., -0.]])
+    np.testing.assert_allclose(occ, occupancies, rtol=0, atol=1e-8)
     # eFL: How do we want to store scalar values?
     #assert  == 7.29482275
+
+
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_parse_vasprun_v621(fresh_aiida_env, vasprun_parser_v621):
+    """Parse a reference vasprun.xml file with the VasprunParser and compare the result to a reference string for VASP 6.2.1."""
+
+    quantity = vasprun_parser_v621.get_quantity('occupancies')
+    occ = quantity[0]
+    occupancies = [[1., 1., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                   [1., 1., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                   [1., 1., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]]
+    np.testing.assert_allclose(occ, occupancies, rtol=0, atol=1e-8)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
@@ -57,6 +76,37 @@ def test_parameter_results(fresh_aiida_env, vasprun_parser):
     assert data_dict['maximum_force'] == pytest.approx(3.41460162)
 
 
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_parameter_results_v621(fresh_aiida_env, vasprun_parser_v621):
+    """
+    Test that the parameter node is a ParametersData instance for VASP 6.2.1.
+
+    Should contain the Fermi level, total_energies, maximum_force and maximum_stress.
+
+    """
+
+    vasprun_parser_v621._settings._output_nodes_dict.update({  # pylint: disable=protected-access
+        'misc': {
+            'type': 'dict',
+            'quantities': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress'],
+            'link_name': 'my_custom_node'
+        }
+    })
+
+    quantity_keys = ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress']
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser_v621, quantity_keys=quantity_keys)
+    data_obj = NodeComposer.compose('dict', inputs)
+
+    ref_class = get_data_class('dict')
+    assert isinstance(data_obj, ref_class)
+    data_dict = data_obj.get_dict()
+    assert data_dict['fermi_level'] == pytest.approx(6.44789926)
+    assert data_dict['total_energies']['energy_extrapolated'] == pytest.approx(-8.24094279)
+    assert data_dict['energies']['energy_extrapolated'][0] == pytest.approx(-8.24094279)
+    assert data_dict['maximum_stress'] == pytest.approx(96.61478144)
+    assert data_dict['maximum_force'] == pytest.approx(0.00000000)
+
+
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
 def test_kpoints(fresh_aiida_env, vasprun_parser):
     """Test that the kpoints result node is a KpointsData instance."""
@@ -68,6 +118,19 @@ def test_kpoints(fresh_aiida_env, vasprun_parser):
     assert isinstance(data_obj, ref_class)
     np.testing.assert_allclose(data_obj.get_kpoints()[0], np.array([0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
     np.testing.assert_allclose(data_obj.get_kpoints()[-1], np.array([0.42857143, -0.42857143, 0.42857143]), atol=0., rtol=1.0e-7)
+
+
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_kpoints_v621(fresh_aiida_env, vasprun_parser_v621):
+    """Test that the kpoints result node is a KpointsData instance for VASP 6.2.1."""
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser_v621, quantity_keys=['kpoints'])
+    data_obj = NodeComposer.compose('array.kpoints', inputs)
+
+    ref_class = get_data_class('array.kpoints')
+    assert isinstance(data_obj, ref_class)
+    np.testing.assert_allclose(data_obj.get_kpoints()[0], np.array([0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(data_obj.get_kpoints()[-1], np.array([0.5, 0.5, 0]), atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
@@ -96,6 +159,32 @@ def test_structure(fresh_aiida_env, vasprun_parser):
     assert data_obj.get_cell_volume() == np.float(163.22171870360754)
 
 
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_structure_v621(fresh_aiida_env, vasprun_parser_v621):
+    """
+    Test that the structure result node is a StructureData instance for VASP 6.2.1.
+
+    Also check various other important properties.
+
+    """
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser_v621, quantity_keys=['structure'])
+    data_obj = NodeComposer.compose('structure', inputs)
+    # check object
+    ref_obj = get_data_class('structure')
+    assert isinstance(data_obj, ref_obj)
+    # check cell
+    unitcell = data_obj.cell
+    np.testing.assert_allclose(unitcell[0], np.array([2.71550000, 0.0, 2.71550000]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(unitcell[1], np.array([2.71550000, 2.71550000, 0.0]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(unitcell[2], np.array([0.0, 2.71550000, 2.71550000]), atol=0., rtol=1.0e-7)
+    # check first and last position
+    np.testing.assert_allclose(data_obj.sites[0].position, np.array([4.752125, 4.752125, 4.752125]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(data_obj.sites[-1].position, np.array([0.678875, 0.678875, 0.678875]), atol=0., rtol=1.0e-7)
+    # check volume
+    assert abs(data_obj.get_cell_volume() - 40.04786950) < 1e-7
+
+
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
 def test_final_force(fresh_aiida_env, vasprun_parser):
     """Test that the forces are returned correctly."""
@@ -116,6 +205,21 @@ def test_final_force(fresh_aiida_env, vasprun_parser):
     np.testing.assert_allclose(forces[7], forces_check[7], atol=0., rtol=1.0e-7)
 
 
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_final_force_v621(fresh_aiida_env, vasprun_parser_v621):
+    """Test that the forces are returned correctly for VASP 6.2.1."""
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser_v621, quantity_keys=['forces'])
+    data_obj = NodeComposer.compose('array', inputs)
+    # check object
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    forces = data_obj.get_array('final')
+    # check first, third and last position
+    np.testing.assert_allclose(forces[0], [0, 0, 0], atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(forces[-1], [0, 0, 0], atol=0., rtol=1.0e-7)
+
+
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
 def test_final_stress(fresh_aiida_env, vasprun_parser):
     """Test that the stress are returned correctly."""
@@ -132,6 +236,21 @@ def test_final_stress(fresh_aiida_env, vasprun_parser):
     np.testing.assert_allclose(stress[0], stress_check[0], atol=0., rtol=1.0e-7)
     np.testing.assert_allclose(stress[1], stress_check[1], atol=0., rtol=1.0e-7)
     np.testing.assert_allclose(stress[2], stress_check[2], atol=0., rtol=1.0e-7)
+
+
+@pytest.mark.parametrize('vasprun_parser_v621', [('basic', {})], indirect=True)
+def test_final_stress_v621(fresh_aiida_env, vasprun_parser_v621):
+    """Test that the stress are returned correctly for VASP 6.2.1."""
+
+    inputs = get_node_composer_inputs_from_file_parser(vasprun_parser_v621, quantity_keys=['stress'])
+    data_obj = NodeComposer.compose('array', inputs)
+    # check object
+    ref_obj = get_data_class('array')
+    assert isinstance(data_obj, ref_obj)
+    stress_check = np.eye(3) * 96.61478144
+    stress = data_obj.get_array('final')
+    # check entries
+    np.testing.assert_allclose(stress, stress_check, atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize('vasprun_parser', [('basic', {})], indirect=True)
