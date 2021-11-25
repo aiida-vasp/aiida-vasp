@@ -422,6 +422,18 @@ def vasprun_parser(request):
     return parser
 
 
+@pytest.fixture(params=[('basic', {})])
+def vasprun_parser_v621(request):
+    """Return an instance of VasprunParser for a reference vasprun.xml of VASP6."""
+    from aiida_vasp.parsers.settings import ParserSettings
+    from aiida_vasp.calcs.vasp import VaspCalculation
+    file_name = 'vasprun621.xml'
+    path_to_file, settings = request.param
+    path = data_path(path_to_file, file_name)
+    parser = VasprunParser(file_path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
+    return parser
+
+
 @pytest.fixture()
 def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
