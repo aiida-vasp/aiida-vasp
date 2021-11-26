@@ -5,7 +5,7 @@ CHGCAR parser.
 Contains the parsing interfaces to parsevasp used to parse CHGCAR.
 """
 
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 from parsevasp.chgcar import Chgcar
 

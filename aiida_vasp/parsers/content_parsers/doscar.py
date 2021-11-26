@@ -4,7 +4,7 @@ DOSCAR parser.
 --------------
 Contains the parsing interfaces to parsevasp used to parse DOSCAR.
 """
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 from parsevasp.doscar import Doscar
 

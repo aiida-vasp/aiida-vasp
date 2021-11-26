@@ -5,7 +5,7 @@ INCAR parser.
 Contains the parsing interfaces to parsevasp used to parse INCAR.
 """
 
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 from parsevasp.incar import Incar

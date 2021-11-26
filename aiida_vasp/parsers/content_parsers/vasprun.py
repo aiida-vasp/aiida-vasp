@@ -11,7 +11,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class VasprunParser(BaseFileParser):

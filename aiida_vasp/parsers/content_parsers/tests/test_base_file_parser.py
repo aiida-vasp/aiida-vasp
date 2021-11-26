@@ -4,7 +4,7 @@
 import pytest
 
 from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 def test_base_object_parser(tmpdir):
