@@ -735,7 +735,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         run_status = misc['run_status']
         if not run_status.get('finished'):
             self.report(f'The child calculation {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCUlATION_NOT_FINISHED, do_break=True)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCULATION_NOT_FINISHED, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=3)
