@@ -105,7 +105,6 @@ class VaspCalculation(VaspCalcBase):
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
         spec.output('dos', valid_type=get_data_class('array'), required=False, help='The output dos.')
-        spec.output('occupancies', valid_type=get_data_class('array'), required=False, help='The output band occupancies.')
         spec.output('energies', valid_type=get_data_class('array'), required=False, help='The output total energies.')
         spec.output('projectors', valid_type=get_data_class('array'), required=False, help='The output projectors of decomposition.')
         spec.output('dielectrics', valid_type=get_data_class('array'), required=False, help='The output dielectric functions.')
