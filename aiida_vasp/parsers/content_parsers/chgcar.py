@@ -1,19 +1,19 @@
 """
-CHGCAR parser.
+The ``CHGCAR`` parser interface.
 
---------------
-Contains the parsing interfaces to parsevasp used to parse CHGCAR.
+--------------------------------
+Contains the parsing interfaces to ``parsevasp`` used to parse ``CHGCAR`` content.
 """
-
+# pylint: disable=abstract-method
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 from parsevasp.chgcar import Chgcar
 
 
 class ChgcarParser(BaseFileParser):
-    """The parser interface that enables parsing of CHGCAR.
+    """The parser interface that enables parsing of ``CHGCAR`` content.
 
-    The parser is triggered by using the `charge_density` and/or `magnetization_density` quantity key.
+    The parser is triggered by using the ``charge_density`` and/or ``magnetization_density`` quantity key.
 
     """
 
@@ -33,7 +33,14 @@ class ChgcarParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Chgcar`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary ``CHGCAR`` content to be parsed.
+
+        """
 
         try:
             self._content_parser = Chgcar(file_handler=handler, logger=self._logger)

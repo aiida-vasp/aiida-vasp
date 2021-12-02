@@ -1,8 +1,8 @@
 """
-POSCAR/CONTCAR parser.
+The ``POSCAR``/``CONTCAR`` parser interface.
 
---------------
-Contains the parsing interfaces to parsevasp used to parse POSCAR/CONTCAR.
+------------------------------------
+Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONTCAR`` content.
 """
 # pylint: disable=no-self-use
 import numpy as np
@@ -15,16 +15,16 @@ from parsevasp.poscar import Poscar, Site
 
 
 class PoscarParser(BaseFileParser):
-    """The parser interface that enables parsing of POSCAR/CONTCAR.
+    """The parser interface that enables parsing of ``POSCAR``/``CONTCAR`` content.
 
-    The parser is triggered by using the `poscar-structure` quantity key. The quantity key `structure`
+    The parser is triggered by using the ``poscar-structure`` quantity key. The quantity key ``structure``
     will on the other hand parse the structure using the XML parser.
 
     Parameters
     ----------
     precision : int, optional
         An integer specifying the number of digits for floating point numbers that will be written
-        to POSCAR/CONTCAR. Defaults to 12.
+        to ``POSCAR``/``CONTCAR``. Defaults to 12.
 
     """
 
@@ -45,7 +45,14 @@ class PoscarParser(BaseFileParser):
         super(PoscarParser, self).__init__(**kwargs)
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Poscar`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary ``POSCAR`/``CONTCAR``` content to be parsed.
+
+        """
 
         try:
             self._content_parser = Poscar(file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger)
@@ -53,7 +60,14 @@ class PoscarParser(BaseFileParser):
             self._logger.warning('Parsevasp exited abnormally.')
 
     def _init_from_data(self, data):
-        """Initialize using AiiDA StructureData."""
+        """Initialize using an AiiDA ``StructureData`` instance.
+
+        Parameters
+        ----------
+        data : object
+            A valid AiiDA ``StructureData`` object.
+
+        """
 
         if isinstance(data, get_data_class('structure')):
             self._content_data = data
@@ -63,13 +77,13 @@ class PoscarParser(BaseFileParser):
     @property
     def structure(self):
         """
-        Return a structure that is ready to be consumed by the the AiiDA StructureData.
+        Return a structure that is ready to be consumed by the the AiiDA ``StructureData``.
 
         Returns
         -------
         aiida_structure : dict
-            A dict that contain keys `comment`, `unitcell` and `sites`, which are compatible
-            with consumption of the initialization of the AiiDA StructureData.
+            A dict that contain keys ``comment``, ``unitcell`` and ``sites``, which are compatible
+            with consumption of the initialization of the AiiDA ``StructureData``.
 
         """
 
@@ -79,12 +93,12 @@ class PoscarParser(BaseFileParser):
 
     def _content_data_to_content_parser(self):
         """
-        Convert an AiiDA StructureData to a content parser instance of Poscar from parsevasp.
+        Convert an AiiDA ``StructureData`` to a content parser instance of ``Poscar`` from ``parsevasp``.
 
         Returns
         -------
-        poscar : object
-            An instance of Poscar from parsevasp.
+        content_parser : object
+            An instance of ``Poscar`` from ``parsevasp``.
 
         """
         dictionary = {}
@@ -106,10 +120,10 @@ class PoscarParser(BaseFileParser):
 
         dictionary['sites'] = sites
 
-        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
-        poscar = Poscar(poscar_dict=dictionary, prec=self._precision, conserve_order=True, logger=self._logger)
+        # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
+        content_parser = Poscar(poscar_dict=dictionary, prec=self._precision, conserve_order=True, logger=self._logger)
 
-        return poscar
+        return content_parser
 
     def transform_to_bool(self, value):
         """Helper function to transform the dictionary from strings or integers to bools"""
@@ -121,21 +135,21 @@ class PoscarParser(BaseFileParser):
 
 
 def parsevasp_to_aiida(poscar):
-    """Parsevasp to AiiDA conversion.
+    """``parsevasp`` to AiiDA conversion.
 
-    Generate an AiiDA structure from the parsevasp instance of the
-    Poscar class.
+    Generate an AiiDA structure that can be consumed by ``StructureData`` on initialization
+    from the ``parsevasp`` instance of the ``Poscar`` class.
 
     Parameters
     ----------
     poscar : object
-        An instance of the Poscar class in parsevasp.
+        An instance of the ``Poscar`` class in ``parsevasp``.
 
     Returns
     -------
     poscar_dict : dict
         A dictionary representation which are ready to be used when creating an
-        AiiDA StructureData instance.
+        AiiDA ``StructureData`` instance.
 
     """
 

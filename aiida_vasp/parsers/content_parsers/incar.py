@@ -1,8 +1,8 @@
 """
-INCAR parser.
+The ``INCAR`` parser interface.
 
--------------
-Contains the parsing interfaces to parsevasp used to parse INCAR.
+---------------------------
+Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -12,9 +12,9 @@ from parsevasp.incar import Incar
 
 
 class IncarParser(BaseFileParser):
-    """The parser interface that enables parsing of POSCAR/CONTCAR.
+    """The parser interface that enables parsing of ``INCAR`` content.
 
-    The parser is triggered by using the `incar` quantity key.
+    The parser is triggered by using the ``incar`` quantity key.
 
     """
 
@@ -29,7 +29,14 @@ class IncarParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Incar`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary ``INCAR`` content to be parsed.
+
+        """
 
         try:
             self._content_parser = Incar(file_handler=handler, logger=self._logger)
@@ -37,7 +44,14 @@ class IncarParser(BaseFileParser):
             self._logger.warning('Parsevasp exited abnormally.')
 
     def _init_from_data(self, data):
-        """Initialize using an AiiDA Dict data type."""
+        """Initialize using an AiiDA ``Dict`` instance.
+
+        Parameters
+        ----------
+        data : object
+            A valid AiiDA ``Dict`` object.
+
+        """
 
         if isinstance(data, get_data_class('dict')):
             self._content_data = data
@@ -46,13 +60,13 @@ class IncarParser(BaseFileParser):
 
     @property
     def incar(self):
-        """Return the parameters in the INCAR.
+        """Return the parameters in the ``INCAR``.
 
         Returns
         -------
         params : dict or None
             A dictionary containing the parameter tags as keys and its settings as values.
-            None is returned if the quantity can not be parsed.
+            ``None`` is returned if the quantity can not be parsed.
 
         """
         if self._content_parser is not None:
@@ -62,17 +76,17 @@ class IncarParser(BaseFileParser):
 
     def _content_data_to_content_parser(self):
         """
-        Convert an AiiDA Dict to a content parser instance of Incar from parsevasp.
+        Convert an AiiDA ``Dict`` to a content parser instance of ``Incar`` from ``parsevasp``.
 
         Returns
         -------
-        incar : object
-            An instance of Incar from parsevasp.
+        content_parser : object
+            An instance of ``Incar`` from ``parsevasp``.
 
         """
         dictionary = self._content_data.get_dict()
 
-        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
-        incar = Incar(incar_dict=dictionary, logger=self._logger)
+        # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
+        content_parser = Incar(incar_dict=dictionary, logger=self._logger)
 
-        return incar
+        return content_parser

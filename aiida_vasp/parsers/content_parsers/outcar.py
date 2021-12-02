@@ -1,19 +1,20 @@
 """
-OUTCAR parser.
+The ``OUTCAR`` parser interface.
 
---------------
-Contains the parsing interfaces to parsevasp used to parse OUTCAR.
+----------------------------
+Contains the parsing interfaces to parsevasp used to parse ``OUTCAR`` content.
 """
+# pylint: disable=abstract-method
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 from parsevasp.outcar import Outcar
 
 
 class OutcarParser(BaseFileParser):
-    """The parser interface that enables parsing of OUTCAR.
+    """The parser interface that enables parsing of ``OUTCAR`` content.
 
-    The parser is triggered by using the `elastic_moduli`, `magnetization` or `site-magnetization`
-    `run_stats` or `run_status` quantity keys.
+    The parser is triggered by using the ``elastic_moduli``, ``magnetization`` or ``site-magnetization``
+    ``run_stats`` or ``run_status`` quantity keys.
 
     Parameters
     ----------
@@ -61,7 +62,14 @@ class OutcarParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Outcar`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary ``OUTCAR`` content to be parsed.
+
+        """
 
         try:
             self._content_parser = Outcar(file_handler=handler, logger=self._logger)
@@ -76,13 +84,13 @@ class OutcarParser(BaseFileParser):
         Returns
         -------
         status : dict
-            A dictionary containing the keys `finished`, which is True if the VASP calculation
-            contain timing information in the end of the OUTCAR. The key `ionic_converged` is
+            A dictionary containing the keys ``finished``, which is True if the VASP calculation
+            contain timing information in the end of the ``OUTCAR``. The key ``ionic_converged`` is
             True if the number of ionic steps detected is smaller than the supplied NSW.
-            The key `electronic_converged` is True if the number of electronic steps is smaller than
+            The key ``electronic_converged`` is True if the number of electronic steps is smaller than
             NELM (defaults to 60 in VASP). It is also possible to check if all the ionic steps
-            did reached NELM and thus did not converged if the key `consistent_nelm_breach` is True,
-            while `contains_nelm_breach` is True if one or more ionic steps reached NELM and thus
+            did reached NELM and thus did not converged if the key ``consistent_nelm_breach`` is ``True``,
+            while ``contains_nelm_breach`` is True if one or more ionic steps reached NELM and thus
             did not converge electronically.
 
         """
@@ -97,9 +105,9 @@ class OutcarParser(BaseFileParser):
         -------
         stats : dict
             A dictionary containing timing and memory consumption information
-            that are parsed from the end of the OUTCAR file. The key names are
-            mostly preserved, except for the memory which is prefixed with `mem_usage_`.
-            Units are preserved from OUTCAR and there are some differences between
+            that are parsed from the end of the ``OUTCAR`` file. The key names are
+            mostly preserved, except for the memory which is prefixed with ``mem_usage_``.
+            Units are preserved from ``OUTCAR`` and there are some differences between
             VASP 5 and 6.
 
         """
@@ -114,8 +122,8 @@ class OutcarParser(BaseFileParser):
         -------
         sym : dict
             A dictionary containing the number of space group operations in the
-            key `num_space_group_operations` and the detected supplied cell in
-            `original_cell_type`. In `symmetrized_cell_type` the cell on which
+            key ``num_space_group_operations`` and the detected supplied cell in
+            ``original_cell_type``. In ``symmetrized_cell_type`` the cell on which
             VASP performs the calculation has been included. Each value in the
             dictionary is a list, where each entry represent one ionic step.
 
@@ -132,8 +140,8 @@ class OutcarParser(BaseFileParser):
         -------
         moduli : dict
             A dictionary containing ndarrays with the rigid ion elastic moduli, both symmetrized and
-            non-symmetrized for the keys `symmetrized` and `non_symmetrized` respectively.
-            The key `total` contain both the rigid ion and the ionic contributions to the
+            non-symmetrized for the keys ``symmetrized`` and ``non_symmetrized`` respectively.
+            The key ``total`` contain both the rigid ion and the ionic contributions to the
             elastic tensor for the symmetrized case.
 
         """
@@ -148,15 +156,15 @@ class OutcarParser(BaseFileParser):
         Returns
         -------
         magnetization : dict
-            A dictionary containing the key `sphere` which contains the integrated
-            magnetization in units of Bohr magneton. Additional keys under `sphere` are
+            A dictionary containing the key ``sphere`` which contains the integrated
+            magnetization in units of Bohr magneton. Additional keys under ``sphere`` are
             given for each direction and for non-collinear calculations all of them are used.
-            The `site_moment` yields the magnetization per site, with a key describing the
-            site number and then the `s`, `p`, `d` etc. the projections of the site magnetization
-            and `tot` containing the total magnetization for that site.
-            The `total_magnetization` gives the sum of each magnetization projection and
+            The ``site_moment`` yields the magnetization per site, with a key describing the
+            site number and then the ``s``, ``p``, ``d`` etc. the projections of the site magnetization
+            and ``tot`` containing the total magnetization for that site.
+            The ``total_magnetization`` gives the sum of each magnetization projection and
             magnetization total for each site.
-            The `full_cell` key yields the magnetization from the electronic part of the last
+            The ``full_cell`` key yields the magnetization from the electronic part of the last
             electronic step in a list.
 
         """

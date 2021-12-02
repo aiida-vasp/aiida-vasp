@@ -1,23 +1,21 @@
 """
-vasprun.xml parser.
+The vasprun.xml parser interface.
 
----------------
-Contains the parsing interfaces to parsevasp used to parse vasprun.xml.
+---------------------------------
+Contains the parsing interfaces to ``parsevasp`` used to parse ``vasprun.xml`` content.
 """
-# pylint: disable=too-many-public-methods, protected-access
-import sys
+# pylint: disable=abstract-method, too-many-public-methods
 import numpy as np
 
 from parsevasp.vasprun import Xml
-from parsevasp.kpoints import Kpoint
 from parsevasp import constants as parsevaspct
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class VasprunParser(BaseFileParser):
-    """The parser interface that enables parsing of vasprun.xml.
+    """The parser interface that enables parsing of ``vasprun.xml`` content.
 
-    The parser is triggered by using the keys listed in PARSABLE_QUANTITIES.
+    The parser is triggered by using the keys listed in ``PARSABLE_QUANTITIES``.
 
     """
 
@@ -159,7 +157,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def version(self):
-        """Fetch the VASP version from parsevasp and return it as a string object."""
+        """Fetch the VASP version from ``parsevasp`` and return it as a string object."""
 
         # fetch version
         version = self._content_parser.get_version()
@@ -171,7 +169,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def eigenvalues(self):
-        """Fetch eigenvalues from parsevasp."""
+        """Fetch eigenvalues."""
 
         # Fetch eigenvalues
         eigenvalues = self._content_parser.get_eigenvalues()
@@ -183,7 +181,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def occupancies(self):
-        """Fetch occupancies from parsevasp."""
+        """Fetch occupancies."""
 
         # Fetch occupancies
         occupancies = self._content_parser.get_occupancies()
@@ -196,7 +194,7 @@ class VasprunParser(BaseFileParser):
 
     @property
     def kpoints(self):
-        """Fetch the kpoints from parsevasp an prepare for consumption by the NodeComposer."""
+        """Fetch the kpoints an prepare for consumption by the NodeComposer."""
 
         kpts = self._content_parser.get_kpoints()
         kptsw = self._content_parser.get_kpointsw()
@@ -236,7 +234,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch the structure.
 
-        After or at the last recorded ionic step from parsevasp.
+        After or at the last recorded ionic step.
 
         """
 
@@ -250,7 +248,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch the structure.
 
-        After or at the last recorded ionic step from parsevasp. Should in
+        After or at the last recorded ionic step. Should in
         principle be the same as the method above.
 
         """
@@ -262,7 +260,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch forces.
 
-        After or at the last recorded ionic step from parsevasp.
+        After or at the last recorded ionic step.
 
         """
 
@@ -274,7 +272,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch forces.
 
-        After or at the last recorded ionic step from parsevasp.
+        After or at the last recorded ionic step.
 
         """
 
@@ -311,7 +309,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch stess.
 
-        After or at the last recorded ionic step from parsevasp.
+        After or at the last recorded ionic step.
 
         """
 
@@ -323,7 +321,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch stress.
 
-        After or at the last recorded ionic step from parsevasp.
+        After or at the last recorded ionic step.
 
         """
 
@@ -359,7 +357,7 @@ class VasprunParser(BaseFileParser):
         """
         Fetch unitcells, positions, species, forces and stress.
 
-        For all calculation steps from parsevasp.
+        For all calculation steps.
 
         """
 
@@ -561,11 +559,11 @@ class VasprunParser(BaseFileParser):
         # maximum allowed number of steps (NELM).
         energies = self._content_parser.get_energies('last', nosc=False)
         parameters = self._content_parser.get_parameters()
-        info['finished'] = not self._content_parser_truncated
+        info['finished'] = not self._content_parser.truncated
         # Only set to true for untruncated run to avoid false positives
         if energies is None:
             info['electronic_converged'] = False
-        elif energies.get('electronic_steps')[0] < parameters['nelm'] and not self._content_parser_truncated:
+        elif energies.get('electronic_steps')[0] < parameters['nelm'] and not self._content_parser.truncated:
             info['electronic_converged'] = True
         else:
             info['electronic_converged'] = False
@@ -576,7 +574,7 @@ class VasprunParser(BaseFileParser):
         if energies is None:
             info['ionic_converged'] = False
         else:
-            if len(energies.get('electronic_steps')) < parameters['nsw'] and not self._content_parser_truncated:
+            if len(energies.get('electronic_steps')) < parameters['nsw'] and not self._content_parser.truncated:
                 info['ionic_converged'] = True
             else:
                 info['ionic_converged'] = False

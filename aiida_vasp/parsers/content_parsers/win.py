@@ -1,4 +1,10 @@
-"""Utils to work with Wannier90 .win format."""
+"""
+The .win parser interface.
+
+--------------------------
+Contains routines to parse Wannier90 input files. Will in the future be utilizing
+the parser in the Wannier90 plugin, but no input parser exists.
+"""
 import re
 
 
@@ -61,7 +67,7 @@ class KeyValueParser(BaseKeyValueParser):
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     bool_true = re.compile(r'^T$')
     bool_false = re.compile(r'^F$')
-    comments = True
+    comment = True
 
     @classmethod
     def get_lines(cls, filename):
@@ -185,7 +191,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cleaned_value
 
 
-class WinParser():
+class WinParser(KeyValueParser):
     """Parses wannier90 input."""
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
@@ -205,11 +211,11 @@ class WinParser():
             content = fobj_or_str
         else:
             content = fobj_or_str.read()
-        comments = re.findall(KeyValueParser.comment, content)
-        content = re.sub(KeyValueParser.comment, '', content)
-        blocks = re.findall(KeyValueParser.block, content)
-        content = re.sub(KeyValueParser.block, '', content)
-        kvd = dict(re.findall(KeyValueParser.assignment, content))
+        comments = re.findall(cls.comment, content)
+        content = re.sub(cls.comment, '', content)
+        blocks = re.findall(cls.block, content)
+        content = re.sub(cls.block, '', content)
+        kvd = dict(re.findall(cls.assignment, content))
         bld = {}
         for keyword, value in blocks:
             # do not split individual lines

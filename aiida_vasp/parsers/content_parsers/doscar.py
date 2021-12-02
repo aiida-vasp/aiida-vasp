@@ -1,18 +1,19 @@
 """
-DOSCAR parser.
+The ``DOSCAR`` parser interface.
 
---------------
-Contains the parsing interfaces to parsevasp used to parse DOSCAR.
+--------------------------------
+Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
+# pylint: disable=abstract-method
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 from parsevasp.doscar import Doscar
 
 
 class DoscarParser(BaseFileParser):
-    """The parser interface that enables parsing of DOSCAR.
+    """The parser interface that enables parsing of ``DOSCAR`` content.
 
-    The parser is triggered by using the `doscar-dos` quantity key. The quantity key `dos`
+    The parser is triggered by using the ``doscar-dos`` quantity key. The quantity key ``dos``
     will on the other hand parse the structure using the XML parser.
 
     """
@@ -28,7 +29,14 @@ class DoscarParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Chgcar`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary ``DOSCAR`` content to be parsed.
+
+        """
 
         try:
             self._content_parser = Doscar(file_handler=handler, logger=self._logger)
@@ -43,7 +51,7 @@ class DoscarParser(BaseFileParser):
         Returns
         -------
         dos : dict
-            A dict containing the keys `tdos`, `pdos` and `header`, which contain
+            A dict containing the keys ``tdos``, ``pdos`` and ``header``, which contain
             for the two first, NumPy arrays for the total density of states and partial
             density of states, respectively.
 

@@ -1,19 +1,17 @@
 """
 Base classes for the VASP content parsers.
 
----------------------------------------
+------------------------------------------
 Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
 import io
-import re
 
 from aiida.orm import Data
 from aiida.common import AIIDA_LOGGER as aiidalogger
-from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
-class BaseFileParser(object):
+class BaseFileParser():
     """
     Base class for all the content parsers which parse (read and write) VASP files.
 
@@ -29,27 +27,27 @@ class BaseFileParser(object):
     file based on its content. In the former case we basically
     read from a file, while in the latter we write to a file.
 
-    The first approach is enabled if we initialize the parser with the argument `handler`.
+    The first approach is enabled if we initialize the parser with the argument ``handler``.
     This should be a file like handler, i.e. from a context manager telling where the
     content can be located. The respective quantities can then be fetched using the
-    `get_quantity` function of the instance with the key representing the quantity.
+    ``get_quantity`` function of the instance with the key representing the quantity.
     The content of the handler is parsed after
     initialization. The valid keys representing fetchable quantities is defined for each
-    content parser class using the `PARSABLE_QUANTITIES` class parameter.
+    content parser class using the ~`PARSABLE_QUANTITIES~` class parameter.
 
-    The second approach is enabled if we initialize with an argument `data`. This should be
-    a valid AiiDA data structure node. Using the `get_quantity('somekey')` function of the instance
-    return the same AiiDA data structure node back as was supplied to `data`.
+    The second approach is enabled if we initialize with an argument ``data``. This should be
+    a valid AiiDA data structure node. Using the ``get_quantity('somekey')`` function of the instance
+    return the same AiiDA data structure node back as was supplied to ``data``.
 
     One can write the parsed content or the content of the StructureData using the
-    function `write` of the class instance.
+    function ``write`` of the class instance.
 
     Parameters
     ----------
     handler : object, optional
         A file like object, for instance a file handler representing the file or object
         containing content to be parsed. Typically used when parsing completed calculations and is
-        also the parameter used during initialization of the content parser, when the `parse`
+        also the parameter used during initialization of the content parser, when the ``parse``
         function of this AiiDA plugin is executed.
     data : object. optional
         An AiiDA data structure node. Typically used when one later want to write VASP input
@@ -58,28 +56,27 @@ class BaseFileParser(object):
         Parser settings. Used to set parser settings, e.g. which quantities to compose into nodes etc.
     options : dict
         Parser options. Used to set extra options to the content parsers. For instance for the
-        POSCAR/CONTAR parser one set `options.positions_dof` to supply selective tags to enable proper
-        construction of selective dynamics POSCAR/CONTCAR from a StructureData. The StructureData does
+        ``POSCAR``/``CONTAR`` parser one set ``options.positions_dof`` to supply selective tags to enable proper
+        construction of selective dynamics ``POSCAR``/``CONTCAR`` from a ``StructureData``. The ``StructureData`` does
         not contain this type of possibilities.
 
     """
 
     PARSABLE_QUANTITIES = {}
+    DEFAULT_OPTIONS = {}
 
     def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
-        # Make sure we only accept initialization with either `handler` or `data`.
+        # Make sure we only accept initialization with either ``handler`` or ``data``.
         if (handler is not None and data is not None) or (handler is None and data is None):
             raise TypeError('Supply at bare minimum either argument handler or data to initialize parser.')
 
         # Make sure logger messages in the parser are passed to the AiiDA logger.
         self._logger = aiidalogger.getChild(self.__class__.__name__)
 
-        # A few defaults
-        self._exit_code = None
         # What quantities the specific content parser can provide.
         self._parsable_quantities = self.PARSABLE_QUANTITIES
-        # The container for the parsed data when the `get_quantity` is executed, i.e. in the node composer
+        # The container for the parsed data when the ``get_quantity`` is executed, i.e. in the node composer
         # at a later stage.
         self._parsed_content = {}
         # The content parser, which will be an instance of one of the parsevasp parser classes.
@@ -91,7 +88,7 @@ class BaseFileParser(object):
         # Parser options.
         self._options = options
 
-        # Set `handler` (parsing from some source) or `data` (eventually for example executing write)
+        # Set ``handler`` (parsing from some source) or ``data`` (eventually for example executing write)
         if handler is not None:
             # Check that the supplied handler is IOBase.
             if isinstance(handler, io.IOBase):
@@ -110,11 +107,6 @@ class BaseFileParser(object):
         """Fetch the quantities that this content parser can provide."""
         return self._parsable_quantities
 
-    @property
-    def exit_code(self):
-        """Fetch exit code."""
-        return self._exit_code
-
     def get_quantity(self, quantity_key):
         """Fetch the required quantity from the content parser.
 
@@ -131,9 +123,9 @@ class BaseFileParser(object):
         -------
         result : object
             If we have initialized the content parser with an AiiDA data structure, we return it in
-            its original form. If the `quantity_key` is not find to be parsable by this content
+            its original form. If the ``quantity_key`` is not find to be parsable by this content
             parser None is returned. Finally, if the content parser was initialized with a file like
-            object and the requested `quantity_key` is found to be parsable we return the quantity.
+            object and the requested ``quantity_key`` is found to be parsable we return the quantity.
 
         """
 
@@ -184,12 +176,56 @@ class BaseFileParser(object):
         else:
             raise ValueError('The content parser has not been initialized or no AiiDA data structure is preparred.')
 
-    def _init_from_handler(self, data):
+    def _init_from_handler(self, handler):
+        """Initialize using a file like object.
+
+        Should be overridden in specific content parsers under ``content_parsers``
+        if it will accept parsable content.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary content to be parsed.
+
+        """
+
         raise NotImplementedError('{classname} does not implement a _init_from_handler() '
                                   'method.'.format(classname=self.__class__.__name__))
 
     def _init_from_data(self, data):
+        """Initialize using an AiiDA data structure.
+
+        Should be overridden in specific content parsers under ``content_parsers``
+        if it will accept an AiiDA data structure. It should also check that the
+        right structure is supplied.
+
+        Parameters
+        ----------
+        data : object
+            A valid AiiDA data structure object.
+
+        """
+
         raise NotImplementedError('{classname} does not implement a _init_from_data() ' 'method.'.format(classname=self.__class__.__name__))
+
+    def _content_data_to_content_parser(self):
+        """
+        Convert an AiiDA data structure to a content parser instance relevant for that
+        data structure. E.g. ``Poscar`` from ``parsevasp`` for an AiiDA ``StructureData``.
+
+        Should be overridden in specific content parsers under ``content_parsers``
+        if it will accept an AiiDA data structure. It should also check that the
+        right structure is supplied.
+
+        Returns
+        -------
+        content_parser : object
+            An instance of a content parser from ``parsevasp``, e.g. ``Poscar``.
+
+        """
+
+        raise NotImplementedError('{classname} does not implement a _content_data_to_content_parser() '
+                                  'method.'.format(classname=self.__class__.__name__))
 
     def _parse_content(self):
         """Parse the quantities configured and parseable from the content."""

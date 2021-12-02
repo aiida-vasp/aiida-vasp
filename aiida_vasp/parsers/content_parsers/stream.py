@@ -1,10 +1,11 @@
 """
-Standard stream parser for the VASP output.
+The standard stream parser interface for VASP.
 
---------------
-Contains the parsing interfaces to parsevasp used to parse standard streams
+----------------------------------------------
+Contains the parsing interfaces to ``parsevasp`` used to parse standard streams
 for VASP related notification, warnings and errors.
 """
+# pylint: disable=abstract-method
 import re
 
 from parsevasp.stream import Stream
@@ -25,7 +26,15 @@ class StreamParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize a ``parsevasp`` object of ``Stream`` using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary standard stream content to be parsed.
+
+        """
+
         # First get any special config from the parser settings, else use the default
         stream_config = None
         history = False
@@ -40,8 +49,18 @@ class StreamParser(BaseFileParser):
 
     @property
     def notifications(self):
-        """Fetch the notifications from parsevasp."""
-        # Parsevasp returns VaspStream objects, which we cannot serialize. We could serialize this, but
+        """Fetch the notifications that VASP generated.
+
+        Returns
+        -------
+        notifications : list
+            A list of all notifications from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
+            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
+            of the notification and the regular expression detected as string values.
+
+        """
+
+        # ``parsevasp`` returns ``VaspStream`` objects, which we cannot serialize. We could serialize this, but
         # eventually, we would like to move to a dedicated node for the notifications with its own data class.
         # This should be fixed in AiiDA core and coordinated across many plugins. For now, we convert the relevant info
         # into dict entries explicitly.
@@ -57,20 +76,58 @@ class StreamParser(BaseFileParser):
 
     @property
     def errors(self):
-        """Fetch the errors from parsevasp."""
+        """Fetch the errors that VASP generated.
+
+        Returns
+        -------
+        errors : list
+            A list of all errors from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
+            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
+            of the error and the regular expression detected as string values.
+
+        """
+
         return [item for item in self._content_parser.entries if item.kind == 'ERROR']
 
     @property
     def warnings(self):
-        """Fetch the warnings from parsevasp."""
+        """Fetch the warnings that VASP generated.
+
+        Returns
+        -------
+        warnings : list
+            A list of all warnings from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
+            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
+            of the error and the regular expression detected as string values.
+
+        """
+
         return [item for item in self._content_parser.entries if item.kind == 'WARNING']
 
     @property
     def has_entries(self):
-        """Fetch if there are streams present according to the config after parsning."""
-        return self._content_parser.has_entries
+        """Check if there are notifications from VASP present according to the config after parsning.
+
+        Returns
+        -------
+        entries : bool
+            ``True`` if notifications was detected, ``False`` otherwise.
+
+        """
+
+        entries = self._content_parser.has_entries
+        return entries
 
     @property
     def number_of_entries(self):
-        """Return a dict containing the number of unique streams detected."""
-        return len(self._content_parser)
+        """Find the number of unique notifications from VASP.
+
+        Returns
+        -------
+        number_of_entries : int
+            The number of unique notification entries that VASP generated.
+
+        """
+
+        number_of_entries = len(self._content_parser)
+        return number_of_entries

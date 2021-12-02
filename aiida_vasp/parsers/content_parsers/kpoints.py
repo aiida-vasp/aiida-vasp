@@ -1,8 +1,8 @@
 """
-KPOINTS parser.
+The ``KPOINTS`` parser interface.
 
----------------
-Contains the parsing interfaces to parsevasp used to parse KPOINTS.
+-----------------------------
+Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
 
 from parsevasp.kpoints import Kpoints, Kpoint
@@ -11,9 +11,9 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class KpointsParser(BaseFileParser):
-    """The parser interface that enables parsing of KPOINTS.
+    """The parser interface that enables parsing of ``KPOINTS`` content.
 
-    The parser is triggered by using the `kpoints-kpoints` quantity key. The quantity key `kpoints`
+    The parser is triggered by using the ``kpoints-kpoints`` quantity key. The quantity key ``kpoints``
     will on the other hand parse the k-points using the XML parser.
 
     """
@@ -29,7 +29,14 @@ class KpointsParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like handler."""
+        """Initialize using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary content to be parsed.
+
+        """
 
         try:
             self._content_parser = Kpoints(file_handler=handler, logger=self._logger)
@@ -47,7 +54,7 @@ class KpointsParser(BaseFileParser):
     @property
     def kpoints(self):
         """
-        Return kpoints that is ready to be consumed by the the AiiDA KpointsData.
+        Return kpoints that is ready to be consumed by the the AiiDA ``KpointsData``.
 
         AiiDA does not support the line mode used in VASP, so we give a warning that parsing
         this is not supported.
@@ -55,8 +62,8 @@ class KpointsParser(BaseFileParser):
         Returns
         -------
         aiida_kpoints : dict
-            A dict that contain keys `comment`, `divisions`, `shifts`, `points`, `tetra`,
-            `tetra_volume`, `mode` `centering` and `num_kpoints`, which are compatible
+            A dict that contain keys ``comment``, ``divisions``, ``shifts``, ``points``, ``tetra``,
+            ``tetra_volume``, ``mode`` ``centering`` and ``num_kpoints``, which are compatible
             with consumption of the initialization of the AiiDA StructureData.
 
         """
@@ -71,23 +78,23 @@ class KpointsParser(BaseFileParser):
 
     def _content_data_to_content_parser(self):
         """
-        Convert an AiiDA KpointsData to a content parser instance of Kpoints from parsevasp.
+        Convert an AiiDA ``KpointsData`` to a content parser instance of ``Kpoints`` from ``parsevasp``.
 
         Returns
         -------
-        kpoints : object
-            An instance of Kpoints from parsevasp.
+        content_parser : object
+            An instance of ``Kpoints`` from ``parsevasp``.
 
         """
         try:
-            # Check if the KpointsData contain a mesh.
+            # Check if the ``KpointsData`` contain a mesh.
             _ = self._content_data.get_attribute('mesh')
             mode = 'automatic'
         except AttributeError:
             pass
 
         try:
-            # Check to see if the KpointsData contain an explicit k-point list.
+            # Check to see if the ``KpointsData`` contain an explicit k-point list.
             _ = self._content_data.get_attribute('array|kpoints')
             mode = 'explicit'
         except AttributeError:
@@ -99,24 +106,24 @@ class KpointsParser(BaseFileParser):
 
             kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._content_data))
 
-        # We brake hard if parsevasp fail here. If we can not write we will not try another parser.
-        kpoints = Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
+        # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
+        content_parser = Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
 
-        return kpoints
+        return content_parser
 
     def _get_kpointsdict_explicit(self, kpoints_data):
         """
-        Turn Aiida KpointData into an 'explicit' kpoints dictionary.
+        Turn Aiida ``KpointData`` into a k-points dictionary with explicit generation of points.
 
         Parameters
         ----------
         kpoints_data : object
-            An AiiDA KpointsData object containing explicit k-point sets.
+            An AiiDA ``KpointsData`` object containing explicit k-point sets.
 
         Returns
         -------
         kpoints_dict : dict
-            A dictionary that can be used to initialize a parsevasp Kpoints instance.
+            A dictionary that can be used to initialize a ``parsevasp`` ``Kpoints`` instance.
 
         """
         kpoints_dict = {}
@@ -131,7 +138,7 @@ class KpointsParser(BaseFileParser):
             if weights is not None:
                 kpt = Kpoint(point, weight=weights[index], logger=self._logger)
             else:
-                # no weights supplied, so set them to 1.0
+                # No weights supplied, so set them to 1.0
                 kpt = Kpoint(point, weight=1.0, logger=self._logger)
             kpts.append(kpt)
         kpoints_dict['points'] = kpts
@@ -143,17 +150,17 @@ class KpointsParser(BaseFileParser):
     @staticmethod
     def _get_kpointsdict_automatic(kpointsdata):
         """
-        Turn Aiida KpointData into an 'automatic' kpoints dictionary.
+        Turn Aiida ``KpointData`` into a k-point dictionary with automatic generation of points.
 
         Parameters
         ----------
         kpoints_data : object
-            An AiiDA KpointsData object containing meshed k-point sets.
+            An AiiDA ``KpointsData`` object containing meshed k-point sets.
 
         Returns
         -------
         kpoints_dict : dict
-            A dictionary that can be used to initialize a parsevasp Kpoints instance.
+            A dictionary that can be used to initialize a ``parsevasp`` ``Kpoints`` instance.
 
         """
 
