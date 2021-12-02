@@ -73,6 +73,9 @@ class NodeComposer:
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
+        if node_type in ('float', 'int', 'str'):
+            return cls._compose_basic_type(node_type, inputs)
+
         # Call the correct specialised method for assembling.
         method_name = '_compose_' + node_type.replace('.', '_')
         return getattr(cls, method_name)(node_type, inputs)
@@ -102,6 +105,16 @@ class NodeComposer:
         for item in inputs:
             for key, value in inputs[item].items():
                 node.set_array(key, value)
+        return node
+
+    @staticmethod
+    def _compose_basic_type(node_type, inputs):
+        """Compose a basic type node (int, float, str)."""
+        node = None
+        for key in inputs:
+            # Technically this dictionary has only one key. to
+            # avoid problems with python 2/3 it is done with the loop.
+            node = get_data_class(node_type)(inputs[key])
         return node
 
     @staticmethod

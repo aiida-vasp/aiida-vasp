@@ -14,6 +14,7 @@ contains several modules:
 # pylint: disable=no-member
 import traceback
 
+from aiida.plugins import CalculationFactory
 from aiida.common.exceptions import NotExistent
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.quantity import ParsableQuantities
@@ -278,7 +279,17 @@ class VaspParser(BaseParser):
                                                                                                   traceback.format_exc()))
 
             if aiida_node is not None:
-                self.out(node_dict['link_name'], aiida_node)
+                vasp_calc_spec = CalculationFactory('vasp.vasp').spec()
+                if node_dict['link_name'] in vasp_calc_spec.outputs and node_dict['link_name'] != 'custom_outputs':
+                    # link_name is in CalcJob.outputs.
+                    self.out(node_dict['link_name'], aiida_node)
+                elif node_dict['link_name'].split('.')[0] == 'custom_outputs':
+                    # link_name is not in CalcJob.outputs, but starting with "cutstom_outputs.".
+                    self.out(f"{node_dict['link_name']}", aiida_node)
+                else:
+                    # In other cases, put in outputs.custom_outputs.link_name.
+                    self.out(f"custom_outputs.{node_dict['link_name']}", aiida_node)
+
         return nodes_failed_to_create
 
     @property
