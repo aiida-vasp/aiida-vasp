@@ -168,6 +168,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     except AttributeError:
         pytest.fail('pwcutoff_recommended does not have the expected format')
 
+
 def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp):
     """Test convergence workflow using mock code."""
     from aiida.orm import Code
@@ -184,9 +185,7 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp):
     parameters['system'] = 'test-case:test_converge_wc'
     pwcutoff = parameters['encut']
     parameters = {
-        'incar': {
-            k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']
-        },
+        'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']},
     }
 
     restart_clean_workdir = get_data_node('bool', False)
@@ -198,14 +197,13 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp):
     inputs.parameters = get_data_node('dict', dict=parameters)
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                   })
+    inputs.options = get_data_node('dict', dict={
+        'queue_name': 'None',
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+    })
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
