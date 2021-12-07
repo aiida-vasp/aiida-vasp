@@ -361,14 +361,20 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.pwcutoff_sampling = None
         self.ctx.converge.pw_iteration = 0
         settings.pwcutoff = None
+
         try:
+            if self.inputs.converge.pwcutoff is not None:
+                pwcutoff = self.inputs.converge.pwcutoff
+                settings.pwcutoff = pwcutoff
+
+            # Check inconsistent pwcutoff setting
             parameters_dict = self.inputs.parameters.get_dict()
             electronic = parameters_dict.get('electronic', None)
-            if electronic is not None:
-                pwcutoff = electronic.get('pwcutoff', None)
-                settings.pwcutoff = pwcutoff
+            if (electronic is not None) and ('pwcutoff' in electronic):
+                self.report("value of 'parameters.electronic.pwcutoff' is overrode with that of 'convere.pwcutoff'")
         except AttributeError:
             pass
+
         # We need a copy of the original pwcutoff as we will modify it
         self.ctx.converge.settings.pwcutoff_org = copy.deepcopy(settings.pwcutoff)
 
