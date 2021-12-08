@@ -368,10 +368,13 @@ class ConvergeWorkChain(WorkChain):
                 settings.pwcutoff = pwcutoff
 
             # Check inconsistent pwcutoff setting
+            # In general, we prioritize workchain-specfic parameters over global input ones.
+            # See https://github.com/aiida-vasp/aiida-vasp/issues/560
             parameters_dict = self.inputs.parameters.get_dict()
             electronic = parameters_dict.get('electronic', None)
             if (electronic is not None) and ('pwcutoff' in electronic):
-                self.report("value of 'parameters.electronic.pwcutoff' is overrode with that of 'convere.pwcutoff'")
+                self.report(
+                    "The 'pwcutoff' supplied in the global input parameters was overridden by the 'pwcutoff' supplied to the workchain.")
         except AttributeError:
             pass
 
