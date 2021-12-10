@@ -83,6 +83,8 @@ Determine the inputs and outputs
 --------------------------------
 
 One of the first questions in designing a workchain should be which inputs will be required and what outputs should be generated. A workchain might provide defaults for everything and work as a passthrough, it might set up all inputs or outputs, or only parts of them. As a user writing new workchains, one should thus first be concerned about defining these and writing the ``spec.input``, ``spec.output``.
+You may encounter a conflict in ``spec.input``; that is, some parameters correspond to the same variable in a workchain.
+In that case, consider following the overriding policy in AiiDA-VASP, shown in :ref:`parameters` section.
 
 
 Determine the required steps

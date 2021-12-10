@@ -8,7 +8,18 @@ We now describe how parameters can be passed in the plugin. We separate between 
 
 When supplying parameters to ``VaspWorkChain``
 ----------------------------------------------
-Also valid for any workchain (:ref:`workchains`) ultimately ending up calling ``VaspWorkChain`` and forwarding parameters to it. This is the recommended way of interacting and performing `VASP`_ calculations. Here, one can supply `VASP`_ input parameters (``INCAR`` tags) in ``inputs.parameters.incar``. Any key value combination put into this ``incar`` namespace bypasses the ``ParameterMassager`` (except the check if it is valid `VASP`_ tags). Remember that this is the only way to supply `VASP`_ parameters, or ``INCAR`` tags directly to `VASP`_ through the workchain stack. In the ``ParameterMassager`` other namespaces can also be supplied. For instance from higher lying workchains like the ``RelaxWorkChain``, the parameters pertaining to this workchain that would be relevant for `VASP`_ are passed to the ``VaspWorkChain`` in a namespace called ``relax`` and in there parameters like ``force_cutoff`` is supplied which controls the size of the force cutoff when performing relaxations. This parameter is translated to a suitable ``EDIFFG`` by the ``ParameterMassager``. To the workchains, e.g. the ``RelaxWorkChain`` it is also possible to supply these namespaces in the ``inputs.parameters``, e.g. ``inputs.parameters.relax.force_cutoff`` and this would override any parameter that has been supplied (or set as default ) in ``input.relax.force_cutoff`` (an input node of the ``RelaxWorkChain``). In a workchain, the ``inherit_and_merge_parameters`` is called, which before the next workchain is called merges the workchain input nodes (``inputs.somenamespace.something``) with the content of ``inputs.parameters.somenamespace.something`` and performs the correct prioritization as described below.
+As also valid for any workchain, :ref:`workchains` ultimately ends up calling ``VaspWorkChain`` and forwards parameters to it.
+This is the recommended way of interacting and performing `VASP`_ calculations.
+Here, one can supply *INCAR passthrough parameter* (corresponding to ``INCAR`` tag) in ``inputs.parameters.incar``.
+Remember that this is the only way to supply `VASP`_ parameters, or ``INCAR`` tags directly to `VASP`_ through the workchain stack.
+
+To the workchains, e.g. the ``RelaxWorkChain``, it is also possible to supply *Workchain input parameter* in namespaces other than ``'incar'``, e.g. ``inputs.parameters.relax.force_cutoff``.
+This would override any parameter that has been supplied (or set as default ) in ``input.parameters.incar.ediffg``.
+This *Workchain input parameter* is translated to a suitable ``EDIFFG`` by the ``ParameterMassager``.
+Internally, the ``inherit_and_merge_parameters`` is called in a workchain, which before the next workchain is called merges the workchain input nodes (``inputs.somenamespace.something``) with the content of ``inputs.parameters.somenamespace.something`` and performs the correct prioritization as described below.
+
+From higher lying workchains like the ``RelaxWorkChain``, the parameters pertaining to this workchain that would be relevant for `VASP`_ are passed to the ``VaspWorkChain`` in a namespace called ``relax``.
+In there, *Workflow input parameter* like ``force_cutoff`` is supplied, which controls the size of the force cutoff when performing relaxations.
 
 When supplying parameters directly to the ``VaspCalculation``
 -------------------------------------------------------------
@@ -16,16 +27,18 @@ The ``VaspCalculation`` expects the input of the `VASP`_ ``INCAR`` tags to be su
 
 Supported namespaces
 --------------------
-The supported namespaces are set using concatenation of the content of ``_BASE_NAMESPACES`` variable (currently containing ``['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']``), any additional override namespace added by supplying the ``inputs.settings.additional_override_namespaces`` variable, which should be a list of strings to the ``VaspWorkChain`` and finally the override namespace ``incar``. 
+The supported namespaces are set using concatenation of the content of ``_BASE_NAMESPACES`` variable (currently containing ``['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']``), any additional override namespace added by supplying the ``inputs.settings.additional_override_namespaces`` variable, which should be a list of strings to the ``VaspWorkChain`` and finally the override namespace ``incar``.
 
 How parameters are prioritized and set
 --------------------------------------
-Since there are basically three ways to supply parameters (for the most general ones ultimately ending up as tags in the ``INCAR``),
-the following prioritization is performed:
+Since there are basically three ways to supply parameters (for the most general ones ultimately ending up as tags in the ``INCAR``):
 
-1. Parameters supplied in the ovveride namespace ``inputs.parameters.incar`` are always respected as long as it is a valid `VASP`_ tag.
-2. Parameters supplied in ``inputs.parameters``, e.g. ``inputs.parameters.relax.force_cutoff`` (for the ``RelaxWorkChain``).
-3. Parameters supplied as workchain input nodes, e.g. ``inputs.relax.force_cutoff`` (for the ``RelaxWorkChain``).
+1. *INCAR passthrough parameter*, which are supplied in the override namespace ``inputs.parameters.incar``, are respected as long as it is a valid `VASP`_ tag: e.g. ``inputs.parameters.ediffg`` (for the ``RelaxWorkChain``)
+2. *Workchain input parameter* supplied in ``inputs.parameters``: e.g. ``inputs.parameters.relax.force_cutoff`` (for the ``RelaxWorkChain``).
+3. *Workflow input parameter* supplied as workchain input nodes: e.g. ``inputs.relax.force_cutoff`` (for the ``RelaxWorkChain``).
+
+When a conflict between these three parameters occurs, the latter always overrides the formers.
+For example, if you set (1) ``inputs.parameters.incar.ediffg = -1e-1``, (2) ``inputs.parameters.relax.force_cutoff = 1e-2``, and (3) ``inputs.relax.force_cutoff = Float(1e-3)`` for the ``RelaxWorkChain``, the parameter in (3) is finally chosen as `EDIFFG=-1e-3`.
 
 The parameter massager
 ----------------------
