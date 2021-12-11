@@ -105,9 +105,9 @@ class ConvergeWorkChain(WorkChain):
                    The cutoff_type to check convergence against. Currently the following
                    options are accepted:
                    * energy
+                   * forces
                    * gap
                    * vbm (not yet currently supported)
-                   * forces
                    """)
         spec.input('converge.cutoff_value',
                    valid_type=get_data_class('float'),
@@ -266,7 +266,7 @@ class ConvergeWorkChain(WorkChain):
 
         spec.expose_outputs(cls._next_workchain)
         spec.outputs.dynamic = True
-        spec.output('converge.data', valid_type=get_data_class('array'), required=False)
+        spec.output('converge.data', valid_type=get_data_class('dict'), required=False)
         spec.output('converge.pwcutoff_recommended', valid_type=get_data_class('float'), required=False)
         spec.output('converge.kpoints_recommended', valid_type=get_data_class('array.kpoints'), required=False)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
@@ -787,11 +787,11 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.run_pw_conv_calcs = False
 
         pwcutoff = self.ctx.converge.settings.pwcutoff
-        total_energy = 0.0
-        max_force = 0.0
-        # Aiida cannot do VBM, yet, so set to zero for now
-        max_valence_band = 0.0
-        gap = 0.0
+        total_energy = None
+        max_force = None
+        # Aiida cannot do VBM, yet, so set to None for now
+        max_valence_band = None
+        gap = None
         success = False
         if not next_workchain_exit_status:
             success = True
@@ -876,11 +876,11 @@ class ConvergeWorkChain(WorkChain):
 
         kgrid = self.ctx.converge.settings.kgrid
         pwcutoff = self.ctx.converge.settings.pwcutoff
-        total_energy = 0.0
-        max_force = 0.0
-        # Aiida cannot do VBM, yet, so set to zero for now
-        max_valence_band = 0.0
-        gap = 0.0
+        total_energy = None
+        max_force = None
+        # Aiida cannot do VBM, yet, so set to None for now
+        max_valence_band = None
+        gap = None
         success = False
         if not next_workchain_exit_status:
             success = True
@@ -1268,6 +1268,7 @@ class ConvergeWorkChain(WorkChain):
             elif key in recommended_keys:
                 convergence_dict[key] = value
 
+        self.report(convergence_dict)
         convergence_context = get_data_node('dict', dict=convergence_dict)
         convergence = store_conv_data(convergence_context)
         if self._verbose:
@@ -1474,7 +1475,7 @@ def store_conv_kgrid(convergence_context):
 @calcfunction
 def store_conv_data(convergence_context):
     """Store convergence data in the array."""
-    convergence = get_data_class('array')()
+    convergence = get_data_class('dict')()
     converge = convergence_context.get_dict()
     # Store regular conversion data
     try:
@@ -1512,6 +1513,7 @@ def store_conv_data(convergence_context):
 
 
 def store_conv_data_single(array, key, data):
-    """Store a single convergence data entry in the array."""
+    """Store a single convergence data entry in the dict."""
     if data:
-        array.set_array(key, np.array(data))
+        # `data` is set as dictionary not array to store float and None in the same array.
+        array.set_dict(dictionary={key: data})

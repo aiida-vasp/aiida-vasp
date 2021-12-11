@@ -76,12 +76,12 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
 
     conv_data = converge['data']
     try:
-        conv_data.get_array('pw_regular')
+        'pw_regular' not in conv_data
     except KeyError:
         # pytest.fail('Did not find pw_regular in converge.data')
         pytest.xfail('Cannot find pw_regular since no test datum are supplied.')
     try:
-        conv_data.get_array('kpoints_regular')
+        'kpoints_regular' not in conv_data
     except KeyError:
         # pytest.fail('Did not find kpoints_regular in converge.data')
         pytest.xfail('Cannot find kpoints_regular since no test datum are supplied.')
@@ -98,6 +98,18 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     except AttributeError:
         # pytest.fail('kpoints_recommended does not have the expected format')
         pytest.xfail('Cannot find kpoints_recommended since no test datum are supplied.')
+
+
+def compare_converge_datum(conv_data_actual, conv_data_expect):
+    """Compare pw_data or k_data in outputs of ConvergeWorkChain with a test case."""
+    assert len(conv_data_actual) == len(conv_data_expect)
+    for data_actual, data_expect in zip(conv_data_actual, conv_data_expect):
+        assert len(data_actual) == len(data_expect)
+        for actual, expect in zip(data_actual, data_expect):
+            if actual is None:
+                assert expect is None
+            else:
+                assert np.isclose(actual, expect)
 
 
 def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
@@ -157,14 +169,16 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     assert 'converge' in results
     converge = results['converge']
     assert 'data' in converge
-    conv_data = converge['data']
     try:
-        conv_data = conv_data.get_array('pw_regular')
+        conv_data = converge['data']['pw_regular']
     except KeyError:
         pytest.fail('Did not find pw_regular in converge.data')
-    conv_data_test = np.array([[200.0, -10.77974998, 0.0, 0.0, 0.5984], [250.0, -10.80762044, 0.0, 0.0, 0.5912],
-                               [300.0, -10.82261992, 0.0, 0.0, 0.5876]])
-    np.testing.assert_allclose(conv_data, conv_data_test)
+    conv_data_test = [
+        [200.0, -10.77974998, 0.0, None, 0.5984],
+        [250.0, -10.80762044, 0.0, None, 0.5912],
+        [300.0, -10.82261992, 0.0, None, 0.5876],
+    ]
+    compare_converge_datum(conv_data, conv_data_test)
 
     assert 'pwcutoff_recommended' in converge
     try:
