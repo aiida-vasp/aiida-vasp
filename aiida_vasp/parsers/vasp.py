@@ -130,7 +130,7 @@ class VaspParser(BaseParser):
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
         self._definitions = ParserDefinitions()
-        self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS)
+        self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_OPTIONS, vasp_parser_logger=self.logger)
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
         self._file_parser_exit_codes = {}
 
