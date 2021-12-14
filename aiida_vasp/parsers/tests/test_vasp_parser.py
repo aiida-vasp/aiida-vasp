@@ -371,29 +371,31 @@ def test_misc(request, calc_with_retrieved):
 
 def test_custom_outputs(request, calc_with_retrieved):
     """Test custom_outputs by fermi_level."""
-    for parser_settings in ({
-            'add_custom_outputs': {
-                'type': 'float',
-                'quantities': ['fermi_level',],
-                'link_name': 'custom_outputs.fermi_level',
-            }
+    parser_settings = [{
+        'add_custom_outputs': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+            'link_name': 'custom_outputs.fermi_level',
+        }
     }, {
-            'add_custom_outputs': {
-                'type': 'float',
-                'quantities': ['fermi_level',],
-                'link_name': 'fermi_level',
-            }
+        'add_custom_outputs': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+            'link_name': 'fermi_level',
+        }
     }, {
-            'add_fermi_level': {
-                'type': 'float',
-                'quantities': ['fermi_level',],
-            }
+        'add_fermi_level': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+        }
     }, {
-            'add_fermi_level': {
-                'type': 'float',
-            }
-    }):
-        parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request, settings_dict={'parser_settings': parser_settings})
+        'add_fermi_level': {
+            'type': 'float'
+        }
+    }]
+
+    for parser_setting in parser_settings:
+        parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request, settings_dict={'parser_settings': parser_setting})
         parser.parse(retrieved_temporary_folder=file_path)
         assert 'custom_outputs.fermi_level' in parser.outputs
         assert parser.outputs['custom_outputs.fermi_level'] == pytest.approx(4.29634683)
