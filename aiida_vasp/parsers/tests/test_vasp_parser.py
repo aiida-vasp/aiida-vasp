@@ -76,7 +76,7 @@ class ExampleFileParser2(BaseFileParser):
 
 
 def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_file_path=None):
-    """Return vasp parser before parsing"""
+    """Return vasp parser before parsing."""
 
     if settings_dict is None:
         _settings_dict = {
@@ -117,7 +117,7 @@ def vasp_parser_with_test(calc_with_retrieved, request):
 
 @pytest.fixture
 def vasp_parser_without_parsing(calc_with_retrieved, request):
-    parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request)
     return parser, file_path
 
 
@@ -367,6 +367,36 @@ def test_misc(request, calc_with_retrieved):
     assert data['maximum_stress'] == pytest.approx(42.96872956444064)
     assert data['maximum_force'] == pytest.approx(0.21326679)
     assert data['total_energies']['energy_extrapolated'] == pytest.approx(-10.823296)
+
+
+def test_custom_outputs(request, calc_with_retrieved):
+    """Test custom_outputs by fermi_level."""
+    for parser_settings in ({
+            'add_custom_outputs': {
+                'type': 'float',
+                'quantities': ['fermi_level',],
+                'link_name': 'custom_outputs.fermi_level',
+            }
+    }, {
+            'add_custom_outputs': {
+                'type': 'float',
+                'quantities': ['fermi_level',],
+                'link_name': 'fermi_level',
+            }
+    }, {
+            'add_fermi_level': {
+                'type': 'float',
+                'quantities': ['fermi_level',],
+            }
+    }, {
+            'add_fermi_level': {
+                'type': 'float',
+            }
+    }):
+        parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request, settings_dict={'parser_settings': parser_settings})
+        parser.parse(retrieved_temporary_folder=file_path)
+        assert 'custom_outputs.fermi_level' in parser.outputs
+        assert parser.outputs['custom_outputs.fermi_level'] == pytest.approx(4.29634683)
 
 
 @pytest.mark.parametrize(
