@@ -244,7 +244,7 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp):
     assert 'data' in converge
     conv_data = converge['data']
     try:
-        conv_data = conv_data.get_array('kpoints_regular')
+        conv_data = converge['data']['kpoints_regular']
     except KeyError:
         pytest.fail('Did not find kpoints_regular in converge.data')
     # this workflow should check 8x8x8 and 10x10x10 meshs

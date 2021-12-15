@@ -306,6 +306,7 @@ class ConvergeWorkChain(WorkChain):
     def _init_converge_context(self):
         """Initialize the converge part of the context."""
         self.ctx.converge = AttributeDict()
+        # values of converge.settings are not AiiDA's data types.
         self.ctx.converge.settings = AttributeDict()
         self._init_pw_context()
         self._init_kpoints_context()
@@ -364,7 +365,7 @@ class ConvergeWorkChain(WorkChain):
 
         try:
             if self.inputs.converge.pwcutoff is not None:
-                pwcutoff = self.inputs.converge.pwcutoff
+                pwcutoff = self.inputs.converge.pwcutoff.value
                 settings.pwcutoff = pwcutoff
 
             # Check inconsistent pwcutoff setting
