@@ -3,6 +3,7 @@
 # pylint: disable=protected-access,unused-variable,too-few-public-methods, import-outside-toplevel
 
 import os
+from pathlib import Path
 import pytest
 import numpy as np
 
@@ -74,28 +75,38 @@ class ExampleFileParser2(BaseFileParser):
         return result
 
 
-def _get_vasp_parser(calc_with_retrieved):
-    """Return vasp parser before parsing"""
-    settings_dict = {
-        # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
-        'parser_settings': {
-            'add_custom': {
-                'link_name': 'custom_node',
-                'type': 'dict',
-                'quantities': ['quantity2', 'quantity_with_alternatives']
+def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_file_path=None):
+    """Return vasp parser before parsing."""
+
+    if settings_dict is None:
+        _settings_dict = {
+            # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
+            'parser_settings': {
+                'add_custom': {
+                    'link_name': 'custom_node',
+                    'type': 'dict',
+                    'quantities': ['quantity2', 'quantity_with_alternatives']
+                }
             }
         }
-    }
-    file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/basic_run')
-    node = calc_with_retrieved(file_path, settings_dict)
+    else:
+        _settings_dict = settings_dict
+    if relative_file_path is None:
+        _relative_file_path = '../../test_data/basic_run'
+    else:
+        _relative_file_path = relative_file_path
+
+    # Path(request.fspath) will be replaced by request.node.path from pytest v7.
+    file_path = str(Path(request.fspath).parent / _relative_file_path)
+    node = calc_with_retrieved(file_path, _settings_dict)
     parser = ParserFactory('vasp.vasp')(node)
     return parser, file_path, node
 
 
 @pytest.fixture
-def vasp_parser_with_test(calc_with_retrieved):
+def vasp_parser_with_test(calc_with_retrieved, request):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
-    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
     parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
@@ -105,8 +116,8 @@ def vasp_parser_with_test(calc_with_retrieved):
 
 
 @pytest.fixture
-def vasp_parser_without_parsing(calc_with_retrieved):
-    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+def vasp_parser_without_parsing(calc_with_retrieved, request):
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request)
     return parser, file_path
 
 
@@ -193,12 +204,10 @@ def xml_truncate(index, original, tmp):
 def test_parser_nodes(request, calc_with_retrieved):
     """Test a few basic node items of the parser."""
     settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['fermi_level']}}
-
-    file_path = str(request.fspath.join('..') + '../../../test_data/basic')
-
-    node = calc_with_retrieved(file_path, settings_dict)
-
-    parser = ParserFactory('vasp.vasp')(node)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
+                                            request,
+                                            settings_dict=settings_dict,
+                                            relative_file_path='../../test_data/basic')
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=file_path)
@@ -229,10 +238,9 @@ def test_parser_exception(request, calc_with_retrieved):
         }
     }
 
-    file_path = str(request.fspath.join('..') + '../../../test_data/basic_run_ill_format')
-
+    # Path(request.fspath) will be replaced by request.node.path from pytest v7.
+    file_path = str(Path(request.fspath).parent / '../../test_data/basic_run_ill_format')
     node = calc_with_retrieved(file_path, settings_dict)
-
     parser_cls = ParserFactory('vasp.vasp')
     result, output = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
@@ -279,11 +287,10 @@ def test_structure(request, calc_with_retrieved):
         }
     }
 
-    file_path = str(request.fspath.join('..') + '../../../test_data/basic')
-
-    node = calc_with_retrieved(file_path, settings_dict)
-
-    parser = ParserFactory('vasp.vasp')(node)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
+                                            request,
+                                            settings_dict=settings_dict,
+                                            relative_file_path='../../test_data/basic')
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=file_path)
@@ -295,11 +302,10 @@ def test_structure(request, calc_with_retrieved):
     assert isinstance(structure_vasprun, get_data_class('structure'))
 
     # Then from POSCAR/CONTCAR
-    file_path = str(request.fspath.join('..') + '../../../test_data/basic_poscar')
-
-    node = calc_with_retrieved(file_path, settings_dict)
-
-    parser = ParserFactory('vasp.vasp')(node)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
+                                            request,
+                                            settings_dict=settings_dict,
+                                            relative_file_path='../../test_data/basic_poscar')
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
@@ -346,10 +352,9 @@ def test_misc(request, calc_with_retrieved):
         }
     }
 
-    file_path = str(request.fspath.join('..') + '../../../test_data/disp_details')
-
+    # Path(request.fspath) will be replaced by request.node.path from pytest v7.
+    file_path = str(Path(request.fspath).parent / '../../test_data/disp_details')
     node = calc_with_retrieved(file_path, settings_dict)
-
     parser_cls = ParserFactory('vasp.vasp')
     result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
@@ -362,6 +367,38 @@ def test_misc(request, calc_with_retrieved):
     assert data['maximum_stress'] == pytest.approx(42.96872956444064)
     assert data['maximum_force'] == pytest.approx(0.21326679)
     assert data['total_energies']['energy_extrapolated'] == pytest.approx(-10.823296)
+
+
+def test_custom_outputs(request, calc_with_retrieved):
+    """Test custom_outputs by fermi_level."""
+    parser_settings = [{
+        'add_custom_outputs': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+            'link_name': 'custom_outputs.fermi_level',
+        }
+    }, {
+        'add_custom_outputs': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+            'link_name': 'fermi_level',
+        }
+    }, {
+        'add_fermi_level': {
+            'type': 'float',
+            'quantities': ['fermi_level',],
+        }
+    }, {
+        'add_fermi_level': {
+            'type': 'float'
+        }
+    }]
+
+    for parser_setting in parser_settings:
+        parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request, settings_dict={'parser_settings': parser_setting})
+        parser.parse(retrieved_temporary_folder=file_path)
+        assert 'custom_outputs.fermi_level' in parser.outputs
+        assert parser.outputs['custom_outputs.fermi_level'] == pytest.approx(4.29634683)
 
 
 @pytest.mark.parametrize(
@@ -392,8 +429,6 @@ def test_misc(request, calc_with_retrieved):
 @pytest.mark.parametrize('misc_input', [[], ['notifications']])
 def test_stream(misc_input, config, request, calc_with_retrieved):
     """Test that the stream parser works and gets stored on a node."""
-    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
-
     # turn of everything, except misc
     settings_dict = {
         'parser_settings': {
@@ -416,9 +451,10 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         }
     }
 
-    node = calc_with_retrieved(file_path, settings_dict)
-
-    parser = ParserFactory('vasp.vasp')(node)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
+                                            request,
+                                            settings_dict=settings_dict,
+                                            relative_file_path='../../test_data/stdout/out')
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=file_path)
@@ -457,8 +493,6 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 
 def test_stream_history(request, calc_with_retrieved):
     """Test that the stream parser keeps history."""
-    file_path = str(request.fspath.join('..') + '../../../test_data/stdout/out')
-
     # turn of everything, except misc
     settings_dict = {
         'parser_settings': {
@@ -491,9 +525,11 @@ def test_stream_history(request, calc_with_retrieved):
         }
     }
 
-    node = calc_with_retrieved(file_path, settings_dict)
+    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
+                                            request,
+                                            settings_dict=settings_dict,
+                                            relative_file_path='../../test_data/stdout/out')
 
-    parser = ParserFactory('vasp.vasp')(node)
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
@@ -546,16 +582,16 @@ def test_notification_composer(vasp_parser_without_parsing):
     assert exit_code.status == 703
 
 
-def test_critical_file_missing(calc_with_retrieved):
+def test_critical_file_missing(calc_with_retrieved, request):
     """Test raising return code to indicate that one or more critical filse are missing"""
-    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
     parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True})
     parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
     success = parser.parse(retrieved_temporary_folder=file_path)
     assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_FILE
 
     # Test missing OUTCAR
-    parser, file_path, node = _get_vasp_parser(calc_with_retrieved)
+    parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
     # Delete the retrieved OUTCAR file and instantiate the parser
     node.outputs.retrieved.delete_object('OUTCAR', force=True)
     parser = ParserFactory('vasp.vasp')(node)

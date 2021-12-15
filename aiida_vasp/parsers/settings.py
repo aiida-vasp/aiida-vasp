@@ -7,6 +7,7 @@ compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+
 from aiida_vasp.parsers.file_parsers.doscar import DosParser
 from aiida_vasp.parsers.file_parsers.eigenval import EigParser
 from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
@@ -213,7 +214,8 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
     """
 
-    def __init__(self, settings, default_settings=None):
+    def __init__(self, settings, default_settings=None, vasp_parser_logger=None):
+        self._vasp_parser_logger = vasp_parser_logger
         if settings is None:
             self._settings = {}
         else:
@@ -250,18 +252,26 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         """Return the list of critical notification names to be checked"""
         return self._critical_error_list
 
-    def add_output_node(self, node_name, node_dict=None):
+    def add_output_node(self, node_name, node_dict, is_custom_node=False):
         """Add a definition of node to the nodes dictionary."""
-        if node_dict is None:
-            # Try to get a node_dict from NODES.
-            node_dict = deepcopy(NODES.get(node_name, {}))
+        _node_dict = deepcopy(node_dict)
 
-        # Check, whether the node_dict contains required keys 'type' and 'quantities'
-        for key in ['type', 'quantities']:
-            if node_dict.get(key) is None:
-                return
+        if is_custom_node:
+            if 'link_name' not in _node_dict:
+                _node_dict['link_name'] = node_name
+                self._vasp_parser_logger.info(f'\'{node_name}\' was set as \'link_name\' in node_dict.')
+            if 'quantities' not in node_dict:
+                _node_dict['quantities'] = [node_name]
+                self._vasp_parser_logger.info(f'\'{node_name}\' was set as \'quantities\' in node_dict.')
 
-        self._output_nodes_dict[node_name] = node_dict
+        # Check, whether the node_dict contains required keys.
+        exist_missing_key = False
+        for key in ['type', 'quantities', 'link_name']:
+            if key not in _node_dict:
+                self._vasp_parser_logger.warning(f'\'{key}\' was not found in node_dict.')
+                exist_missing_key = True
+        if not exist_missing_key:
+            self._output_nodes_dict[node_name] = _node_dict
 
     def get(self, item, default=None):
         return self._settings.get(item, default)
@@ -301,6 +311,8 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
             node_name = key[4:]
             node_dict = deepcopy(NODES.get(node_name, {}))
+            # Considered as custom node if node_dict == {}.
+            is_custom_node = not bool(node_dict)
 
             if isinstance(value, list):
                 node_dict['quantities'] = value
@@ -308,10 +320,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
             if isinstance(value, dict):
                 node_dict.update(value)
 
-            if 'link_name' not in node_dict:
-                node_dict['link_name'] = node_name
-
-            self.add_output_node(node_name, node_dict)
+            self.add_output_node(node_name, node_dict, is_custom_node=is_custom_node)
 
     def _init_critical_error_list(self):
         """
