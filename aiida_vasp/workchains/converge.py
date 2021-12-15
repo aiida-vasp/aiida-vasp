@@ -1445,10 +1445,12 @@ class ConvergeWorkChain(WorkChain):
         return comp_structure
 
     def _get_pw_data_criteria_position(self, cutoff_type: str):
+        # pw_data = [pwcutoff, ...]
         return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 1
 
     def _get_k_data_criteria_position(self, cutoff_type: str):
-        return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 3
+        # k_data = [kgrid_x, kgrid_y, kgrid_z, pwcutoff, ...]
+        return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 4
 
 
 def default_array(name, array):
