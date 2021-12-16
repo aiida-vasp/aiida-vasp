@@ -21,7 +21,24 @@ from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
-def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
+@pytest.fixture
+def options():
+    """pytest fixuture for inputs.options for workflows in testing."""
+    # 'withmpi' should be set False in testing!
+    options = get_data_node('dict',
+                            dict={
+                                'withmpi': False,
+                                'queue_name': 'None',
+                                'resources': {
+                                    'num_machines': 1,
+                                    'num_mpiprocs_per_machine': 1
+                                },
+                                'max_wallclock_seconds': 3600
+                            })
+    return options
+
+
+def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
@@ -32,9 +49,10 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc', 'inp', 'INCAR')).incar
-    parameters['system'] = 'test-case:test_converge_wc'
+    test_case = 'test_converge_wc'
+    structure = PoscarParser(file_path=data_path(test_case, 'inp', 'POSCAR')).structure
+    parameters = IncarParser(file_path=data_path(test_case, 'inp', 'INCAR')).incar
+    parameters['system'] = f'test-case:{test_case}'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
     restart_clean_workdir = get_data_node('bool', False)
@@ -46,16 +64,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp):
     inputs.parameters = get_data_node('dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
+    inputs.options = options
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
@@ -112,7 +121,7 @@ def compare_converge_datum(conv_data_actual, conv_data_expect):
                 assert np.isclose(actual, expect)
 
 
-def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
+def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     """Test convergence workflow using mock code."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
@@ -139,16 +148,7 @@ def test_converge_wc_pw(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.parameters = get_data_node('dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
+    inputs.options = options
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
@@ -215,16 +215,7 @@ def test_converge_wc_on_failed(fresh_aiida_env, vasp_params, potentials, mock_va
     inputs.parameters = get_data_node('dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
     inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
+    inputs.options = options
     inputs.max_iterations = get_data_node('int', 1)
     inputs.clean_workdir = get_data_node('bool', False)
     relax = AttributeDict()
