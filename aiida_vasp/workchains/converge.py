@@ -306,6 +306,7 @@ class ConvergeWorkChain(WorkChain):
     def _init_converge_context(self):
         """Initialize the converge part of the context."""
         self.ctx.converge = AttributeDict()
+        # values of converge.settings are not AiiDA's data types.
         self.ctx.converge.settings = AttributeDict()
         self._init_pw_context()
         self._init_kpoints_context()
@@ -361,14 +362,23 @@ class ConvergeWorkChain(WorkChain):
         self.ctx.converge.pwcutoff_sampling = None
         self.ctx.converge.pw_iteration = 0
         settings.pwcutoff = None
+
         try:
+            if self.inputs.converge.pwcutoff is not None:
+                pwcutoff = self.inputs.converge.pwcutoff.value
+                settings.pwcutoff = pwcutoff
+
+            # Check inconsistent pwcutoff setting
+            # In general, we prioritize workchain-specfic parameters over global input ones.
+            # See https://github.com/aiida-vasp/aiida-vasp/issues/560
             parameters_dict = self.inputs.parameters.get_dict()
             electronic = parameters_dict.get('electronic', None)
-            if electronic is not None:
-                pwcutoff = electronic.get('pwcutoff', None)
-                settings.pwcutoff = pwcutoff
+            if (electronic is not None) and ('pwcutoff' in electronic):
+                self.report(
+                    "The 'pwcutoff' supplied in the global input parameters was overridden by the 'pwcutoff' supplied to the workchain.")
         except AttributeError:
             pass
+
         # We need a copy of the original pwcutoff as we will modify it
         self.ctx.converge.settings.pwcutoff_org = copy.deepcopy(settings.pwcutoff)
 
@@ -1436,10 +1446,12 @@ class ConvergeWorkChain(WorkChain):
         return comp_structure
 
     def _get_pw_data_criteria_position(self, cutoff_type: str):
+        # pw_data = [pwcutoff, ...]
         return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 1
 
     def _get_k_data_criteria_position(self, cutoff_type: str):
-        return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 3
+        # k_data = [kgrid_x, kgrid_y, kgrid_z, pwcutoff, ...]
+        return self._ALLOWED_CUTOFF_TYPES[cutoff_type] + 4
 
 
 def default_array(name, array):
