@@ -52,6 +52,7 @@ def localhost(fresh_aiida_env, localhost_dir):
                             transport_type='local',
                             scheduler_type='direct',
                             workdir=str(localhost_dir)).store()
+        computer.set_minimum_job_poll_interval(0.)
     return computer
 
 
