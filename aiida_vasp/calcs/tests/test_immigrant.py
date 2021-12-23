@@ -33,7 +33,9 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     return builder
 
 
-def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
+@pytest.mark.usefixtures('fresh_aiida_env')
+@pytest.mark.usefixtures('potcar_family')
+def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
     from aiida_vasp.calcs.immigrant import VaspImmigrant
     from aiida_vasp.data.potcar import PotcarData
@@ -88,7 +90,9 @@ def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_ru
     return proc, builder
 
 
-def test_immigrant_additional_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
+@pytest.mark.usefixtures('fresh_aiida_env')
+@pytest.mark.usefixtures('potcar_family')
+def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)

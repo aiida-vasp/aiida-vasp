@@ -88,12 +88,12 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         are already set in respective AiiDA data types,
 
             code
-            settings.import_from_path
             metadata['options']
             parameters
             structure
             kpoints
             potential (optional)
+            remote_workdir
 
         """
 
@@ -105,6 +105,8 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         else:
             raise InputValidationError('remoet_workdir not found in inputs.')
         self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, remote_workdir, **kwargs)
+        if 'settings' in self.inputs:
+            self.ctx.inputs.settings = self.inputs.settings
         if 'options' in self.inputs:
             self.ctx.inputs.metadata.options.update(self.inputs.options)
         if 'metadata' in self.inputs:
@@ -117,10 +119,9 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     def _get_kwargs(self):
         """kwargs dictionary for VaspImmigrant calculation is created."""
         kwargs = {'use_chgcar': False, 'use_wavecar': False}
-        for key in ('use_chgcar', 'use_wavecar', 'settings', 'potential_family', 'potential_mapping'):
+        if 'potential_mapping' in self.inputs:
+            kwargs['potential_mapping'] = self.inputs['potential_mapping'].get_dict()
+        for key in ('use_chgcar', 'use_wavecar', 'potential_family'):
             if key in self.inputs:
-                if key in ('settings', 'potential_mapping'):
-                    kwargs[key] = self.inputs[key].get_dict()
-                else:
-                    kwargs[key] = self.inputs[key].value
+                kwargs[key] = self.inputs[key].value
         return kwargs
