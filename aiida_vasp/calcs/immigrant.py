@@ -88,6 +88,11 @@ class VaspImmigrant(VaspCalculation):
 
     """
 
+    @classmethod
+    def define(cls, spec):
+        super().define(spec)
+        spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
+
     @override
     def run(self):
         import plumpy
@@ -99,20 +104,18 @@ class VaspImmigrant(VaspCalculation):
         with SandboxFolder() as folder:
             self.presubmit(folder)
 
-        settings = self.inputs.get('settings', None)
-        settings = settings.get_dict() if settings else {}
-        remote_path = settings.get('import_from_path', None)
-        if not remote_path:
-            raise InputValidationError('immigrant calculations need an input "settings" containing a key "import_from_path"!')
-        self.node.set_remote_workdir(remote_path)  # pylint: disable=protected-access
-        remotedata = get_data_node('remote', computer=self.node.computer, remote_path=remote_path)
+        if 'remote_workdir' not in self.inputs:
+            raise InputValidationError('immigrant calculations need inputs.remote_workdir.')
+
+        self.node.set_remote_workdir(self.inputs.remote_workdir)  # pylint: disable=protected-access
+        remotedata = get_data_node('remote', computer=self.node.computer, remote_path=self.inputs.remote_workdir)
         remotedata.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
         remotedata.store()
 
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
 
     @classmethod
-    def get_inputs_from_folder(cls, code, remote_path, **kwargs):
+    def get_inputs_from_folder(cls, code, remote_workdir: str, **kwargs):
         """
         Create inputs to launch immigrant from a code and a remote path on the associated computer.
 
@@ -126,7 +129,7 @@ class VaspImmigrant(VaspCalculation):
             potential_mapping = {element: element for element in structure.get_kind_names()}
 
         :param code: a Code instance for the code originally used.
-        :param remote_path: Directory or folder name where VASP inputs and outputs are stored.
+        :param remote_workdir: Directory or folder name where VASP inputs and outputs are stored.
         :param settings: dict. This is used as the input port of VaspCalculation.
         :param potential_family: str. This will be obsolete at v3.0.
         :param potential_mapping: dict. This will be obsolete at v3.0.
@@ -139,17 +142,17 @@ class VaspImmigrant(VaspCalculation):
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         inputs.metadata = AttributeDict()
         inputs.metadata.options = options
-        settings = kwargs.get('settings', {})
-        settings.update({'import_from_path': str(remote_path)})
-        inputs.settings = get_data_node('dict', dict=settings)
-        _remote_path = Path(remote_path)
+        inputs.remote_workdir = remote_workdir
+        if 'settings' in kwargs:
+            inputs.settings = get_data_node('dict', dict=kwargs['settings'])
+        _remote_workdir = Path(remote_workdir)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = Path(sandbox.abspath)
-                transport.get(str(_remote_path / 'INCAR'), str(sandbox_path))
-                transport.get(str(_remote_path / 'POSCAR'), str(sandbox_path))
-                transport.get(str(_remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
-                transport.get(str(_remote_path / 'KPOINTS'), str(sandbox_path))
+                transport.get(str(_remote_workdir / 'INCAR'), str(sandbox_path))
+                transport.get(str(_remote_workdir / 'POSCAR'), str(sandbox_path))
+                transport.get(str(_remote_workdir / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
+                transport.get(str(_remote_workdir / 'KPOINTS'), str(sandbox_path))
                 inputs.parameters = get_incar_input(sandbox_path)
                 inputs.structure = get_poscar_input(sandbox_path)
                 try:
@@ -159,18 +162,18 @@ class VaspImmigrant(VaspCalculation):
                 except InputValidationError:
                     pass
                 inputs.kpoints = get_kpoints_input(sandbox_path)
-                cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
+                cls._add_inputs(transport, _remote_workdir, sandbox_path, inputs, **kwargs)
 
         return inputs
 
     @classmethod
-    def get_builder_from_folder(cls, code, remote_path, **kwargs):
+    def get_builder_from_folder(cls, code, remote_workdir: str, **kwargs):
         """
         Create an immigrant builder from a code and a remote path on the associated computer.
         See more details in the docstring of ``get_inputs_from_folder``.
         """
 
-        inputs = cls.get_inputs_from_folder(code, remote_path, **kwargs)
+        inputs = cls.get_inputs_from_folder(code, remote_workdir, **kwargs)
         builder = cls.get_builder()
         for key, val in inputs.items():
             builder[key] = val

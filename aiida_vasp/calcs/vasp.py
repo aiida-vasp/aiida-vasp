@@ -374,7 +374,7 @@ class VaspCalculation(VaspCalcBase):
         from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
 
         proc_cls = VaspImmigrant
-        builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
+        builder = proc_cls.get_builder_from_folder(code, str(remote_path), **kwargs)
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         builder.metadata = kwargs.get('metadata', {'options': options})
         options = builder.metadata.get('options', options)
