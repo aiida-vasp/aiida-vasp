@@ -6,6 +6,7 @@ Workchain to import files of VASP calculation in a folder.
 """
 
 # pylint: disable=attribute-defined-outside-init
+from aiida.common import InputValidationError
 from aiida.engine import while_
 from aiida.plugins import WorkflowFactory, CalculationFactory
 from aiida.orm import Code
@@ -25,7 +26,8 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         super().define(spec)
         spec.input('code', valid_type=Code, required=True)
-        spec.input('folder_path', valid_type=get_data_class('str'), required=True)
+        spec.input('folder_path', valid_type=get_data_class('str'), required=False, help='Deprecated.')
+        spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('options', valid_type=get_data_class('dict'), required=False)
         spec.input('potential_family', valid_type=get_data_class('str'), required=False)
@@ -96,7 +98,13 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         """
 
         kwargs = self._get_kwargs()
-        self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, self.inputs.folder_path.value, **kwargs)
+        if 'remote_workdir' in self.inputs:
+            remote_workdir = self.inputs.remote_workdir
+        elif 'folder_path' in self.inputs:
+            remote_workdir = self.inputs.folder_path.value
+        else:
+            raise InputValidationError('remoet_workdir not found in inputs.')
+        self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, remote_workdir, **kwargs)
         if 'options' in self.inputs:
             self.ctx.inputs.metadata.options.update(self.inputs.options)
         if 'metadata' in self.inputs:
