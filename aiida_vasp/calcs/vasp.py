@@ -202,7 +202,10 @@ class VaspCalculation(VaspCalcBase):
             self._prestore()
         _parameters = self.inputs.parameters.get_dict()
         _lorbit = _parameters.get('lorbit', 0)
-        _settings = self.inputs.settings.get_dict()
+        if 'settings' in self.inputs:
+            _settings = self.inputs.settings.get_dict()
+        else:
+            _settings = {}
         _site_magnetization = _settings.get('parser_settings', {}).get('add_site_magnetization', False)
         if _site_magnetization and _lorbit < 10:
             raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
