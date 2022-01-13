@@ -220,7 +220,7 @@ class VaspParser(BaseParser):
                         settings=self._settings,
                         exit_codes=self.exit_codes,
                         retrieved=self.retrieved,
-                        file_name=file_name,
+                        file_path=self._get_file(file_name),
                     )
                 except Exception:  # pylint: disable=broad-except
                     parser = None
