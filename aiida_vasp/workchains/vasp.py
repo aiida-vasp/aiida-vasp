@@ -51,7 +51,7 @@ from aiida.orm import Code, CalcJobNode
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler, WorkChain
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compose_exit_code
+from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 #from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 from aiida_vasp.calcs.vasp import VaspCalculation
@@ -110,6 +110,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.input('site_magnetization', valid_type=get_data_class('dict'), required=False, help='Site magnetization to be used as MAGMOM')
         spec.input('restart_folder',
                    valid_type=get_data_class('remote'),
                    required=False,
@@ -143,7 +144,6 @@ class VaspWorkChain(BaseRestartWorkChain):
                    help="""
             Site dependent flag for selective dynamics when performing relaxation
             """)
-
         spec.outline(
             cls.setup,
             cls.init_inputs,
@@ -233,9 +233,9 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
 
         # Then check if the workchain wants a restart
-        if isinstance(self.ctx.restart_calc, self._process_class):
+        if self.ctx.restart_calc and isinstance(self.ctx.restart_calc.process_class, self._process_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
-            old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())
+            old_parameters = AttributeDict(self.ctx.inputs.parameters).copy()
             parameters = old_parameters.copy()
             # Make sure ISTART and ICHARG is set to read the relevant files - if they exists
             if 'istart' in parameters and 'WAVECAR' in self.ctx.last_calc_remote_files:
@@ -248,12 +248,28 @@ class VaspWorkChain(BaseRestartWorkChain):
             if 'icharg' in parameters and 'CHGCAR' in self.ctx.last_calc_remote_files:
                 parameters.icharg = 1
             if parameters != old_parameters:
-                self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
+                self.ctx.inputs.parameters = parameters
                 self.report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
 
         # Reset the list of valid remote files and the restart calculation
         self.ctx.last_calc_remote_files = []
         self.ctx.restart_calc = None
+
+    def update_magmom(self, node=None):
+        """
+        Update magmom from site magnetization information if avaliable
+
+        :param node: Calculation node to be used, defaults to the last launched calculation.
+        """
+        if self.is_noncollinear:
+            self.report('Automatic carrying on magmom for non-collinear magnetism calculation is not implemented.')
+            return
+
+        if node is None:
+            node = self.ctx.children[-1]
+
+        if 'site_magnetization' in node.outputs:
+            self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(node.outputs.site_magnetization.get_dict())
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -323,6 +339,12 @@ class VaspWorkChain(BaseRestartWorkChain):
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
+        # Carry on site magnetization for initialization
+        if 'site_magnetization' in self.inputs and not self.is_noncollinear:
+            magmom = site_magnetization_to_magmom(self.inputs.site_magnetization.get_dict())
+            assert len(magmom) == len(self.inputs.structure.sites)
+            self.ctx.inputs.parameters['magmom'] = magmom
+
         # Utilise default input/output selections
         self.ctx.inputs.metadata['options']['input_filename'] = 'INCAR'
         self.ctx.inputs.metadata['options']['output_filename'] = 'OUTCAR'
@@ -366,6 +388,11 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.wavefunctions = self.inputs.wavecar
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
+    @property
+    def is_noncollinear(self):
+        """Check if the calculation is a noncollinear one"""
+        return self.ctx.inputs.parameters.get('lnoncollinear') or self.ctx.inputs.parameters.get('lsorbit')
 
     @override
     def on_except(self, exc_info):
@@ -455,7 +482,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """Handle the case where the calculation is not performed"""
         if self.ctx.vasp_did_not_execute:
             self.report(f'{node} did not execute, and this is the second time - aborting.')
-            return ProcessHandlerReport(do_breka=True,
+            return ProcessHandlerReport(do_break=True,
                                         exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='VASP executable did not run on the remote computer.'))
 
@@ -496,6 +523,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
+            self.update_magmom(node)
             return ProcessHandlerReport(do_break=True)
         return None
 
@@ -618,6 +646,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         child_nodes = self.ctx.children
         child_miscs = [node.outputs.misc for node in child_nodes]
 
+        self.update_magmom(node)
+
         # Enhanced handler only takes place after 3 trials
         if len(child_miscs) < 3:
             return None
@@ -703,6 +733,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         self.report('Continuing geometry optimisation using the last geometry.')
         self.ctx.inputs.structure = node.outputs.structure
         self._setup_restart(node)
+        self.update_magmom(node)
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=400, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
