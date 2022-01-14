@@ -16,7 +16,7 @@ from aiida.plugins import WorkflowFactory
 from aiida.orm import CalcJobNode, StructureData, QueryBuilder
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code, site_magnetization_to_magmom
+from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
@@ -192,7 +192,7 @@ class RelaxWorkChain(WorkChain):
         """Store exposed inputs in the context."""
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
-        self.ctx.current_magmom = None
+        self.ctx.current_site_magnetization = None
         self.ctx.relax = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
@@ -290,8 +290,8 @@ class RelaxWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Update the MAGMOM
-        if self.ctx.current_magmom is not None:
-            self.ctx.inputs.parameters = self.ctx.inputs.parameters['incar']['magmom':self.ctx.current_magmom]
+        if self.ctx.current_site_magnetization is not None:
+            self.ctx.inputs.current_site_magnetization = self.ctx.current_site_magnetization
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
         self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'])
@@ -387,7 +387,7 @@ class RelaxWorkChain(WorkChain):
 
         # Update the MAGMOM to be used
         if 'site_magnetization' in workchain.outputs and self.ctx.inputs.parameters.relax.keep_magnetization.value is True:
-            self.ctx.current_magmom = site_magnetization_to_magmom(workchain.outputs.site_magnetization)
+            self.ctx.current_site_magnetization = workchain.outputs.site_magnetization
 
         if converged:
             self.ctx.is_converged = converged
