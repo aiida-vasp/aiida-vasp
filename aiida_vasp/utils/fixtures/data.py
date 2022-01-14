@@ -331,7 +331,13 @@ def mock_vasp_strict(fresh_aiida_env, localhost):
 
 
 def _mock_vasp(fresh_aiida_env, localhost, exec_name):
-    """Points to a mock-up of a VASP executable."""
+    """
+    Points to a mock-up of a VASP executable.
+
+    If environmental variable REAL_VASP_PATH is set, switch the code
+    to point to the REAL VASP executable. This is used to generate the
+    actual outputs for mock tests later
+    """
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
     query_builder = QueryBuilder()
@@ -346,6 +352,12 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
             localhost.store()
         # returns unicode
         mock_vasp_path = sp.check_output(['which', exec_name], env=os_env, universal_newlines=True).strip()
+
+        # Allow overriding mock using REAL code, this is used for running the actual
+        # calculation once and deposit the results in the registry
+        if os.environ.get('REAL_VASP_PATH'):
+            mock_vasp_path = os.environ['REAL_VASP_PATH']
+
         code = Code()
         code.label = exec_name
         code.description = 'Mock VASP for tests'
