@@ -21,7 +21,7 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def options():
-    """pytest fixture for inputs.options for workflows in testing."""
+    """pytest fixuture for inputs.options for workflows in testing."""
     # 'withmpi' should be set False in testing!
     options = get_data_node('dict',
                             dict={
@@ -239,7 +239,7 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
         conv_data = converge['data']['kpoints_regular']
     except KeyError:
         pytest.fail('Did not find kpoints_regular in converge.data')
-    # this workflow should check 8x8x8 and 10x10x10 mesh
+    # this workflow should check 8x8x8 and 10x10x10 meshs
     np.testing.assert_allclose(conv_data[0][:4], [8.0, 8.0, 8.0, pwcutoff])
     np.testing.assert_allclose(conv_data[1][:4], [10.0, 10.0, 10.0, pwcutoff])
 
@@ -288,7 +288,7 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     converge.testing = get_data_node('bool', True)
     converge.compress = get_data_node('bool', False)
     converge.displace = get_data_node('bool', False)
-    # intentionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
+    # intetionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
     converge.pwcutoff_start = get_data_node('float', 0.0)
     converge.pwcutoff_samples = get_data_node('int', 1)
     inputs.relax = relax
