@@ -38,7 +38,7 @@ class BaseRestartWorkChain(WorkChain):
             cls.verify_calculation,
         )
 
-    Each of these methods can of course be overriden but they should be general enough to fit most
+    Each of these methods can of course be overridden but they should be general enough to fit most
     calculation cycles. The run_calculation method will take the inputs for the calculation process
     from the context under the key 'inputs'. The user should therefore make sure that before the
     run_calculation method is called, that the to be used inputs are stored under self.ctx.inputs.
@@ -218,7 +218,7 @@ class BaseRestartWorkChain(WorkChain):
             self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))  # pylint: disable=not-callable
 
     def _handle_succesfull(self, calculation):
-        """Handle the case when the calculaton was successfull."""
+        """Handle the case when the calculation was successfull."""
         self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))  # pylint: disable=not-callable
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
@@ -255,7 +255,7 @@ class BaseRestartWorkChain(WorkChain):
         the output. The same problems may also be the hidden root of a calculation failure. For that reason,
         after verifying that the calculation ran, regardless of its calculation state, we perform some sanity
         checks. However, make sure that this workchain is general. Calculation plugin specific sanity checks
-        should go into the childs..
+        should go into the children..
         """
 
     def _handle_unexpected_failure(self, calculation):
@@ -362,7 +362,7 @@ A namedtuple to define an error handler report for a :class:`~aiida.work.workcha
 
 This namedtuple should be returned by an error handling method of a workchain instance if
 the condition of the error handling was met by the failure mode of the calculation.
-If the error was appriopriately handled, the 'is_handled' field should be set to `True`,
+If the error was appropriately handled, the 'is_handled' field should be set to `True`,
 and `False` otherwise. If no further error handling should be performed after this method
 the 'do_break' field should be set to `True`
 
@@ -376,7 +376,7 @@ def register_error_handler(cls, priority):
     """
     Turn any decorated function in an error handler for workchain that inherits from the :class:`.BaseRestartWorkChain`.
 
-    The function expects two arguments, a workchain class and a priortity.
+    The function expects two arguments, a workchain class and a priority.
     The decorator will add the function as a class method to the workchain class and add an :class:`.ErrorHandler`
     tuple to the :attr:`.BaseRestartWorkChain._error_handlers` attribute of the workchain. During failed calculation
     handling the :meth:`.inspect_calculation` outline method will call the `_handle_calculation_failure` which will loop

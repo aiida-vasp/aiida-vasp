@@ -225,7 +225,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         Enforce some settings for the restart folder and set parameters tags for a restart.
         This is called because launching the sub process.
 
-        NOTE: This method should probably be refectorred to give more control on what kind
+        NOTE: This method should probably be refactored to give more control on what kind
         of restart is needed
         """
         # Check first if the calling workchain wants a restart in the same folder
@@ -482,18 +482,18 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         If WAVECAR exists, just resubmit the calculation with the restart folder.
 
-        If it is a geometry optimisation, attempt to restart with output structure + WAVECAR.
+        If it is a geometry optimization, attempt to restart with output structure + WAVECAR.
         """
 
-        # Check it is a geometry optimisation
+        # Check it is a geometry optimization
         incar = self.ctx.inputs.parameters
         if incar.get('nsw', -1) > 0:
             if 'structure' not in node.outputs:
-                self.report('Performing a geometry optimisation but the output structure is not found.')
+                self.report('Performing a geometry optimization but the output structure is not found.')
                 return ProcessHandlerReport(
                     do_break=True,
                     exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message='No output structure for restart.'))  #pylint: disable=no-member
-            self.report('Continuing geometry optimisation using the last geometry.')
+            self.report('Continuing geometry optimization using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
             return ProcessHandlerReport(do_break=True)
@@ -609,7 +609,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
 
         if 'structure' not in node.outputs:
-            self.report('Performing a geometry optimisation but the output structure is not found.')
+            self.report('Performing a geometry optimization but the output structure is not found.')
             return ProcessHandlerReport(do_break=True,
                                         exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
@@ -659,7 +659,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         if sum(ionic_iterations) > dof + 10:
             self.report(f'Unusually large number of iterations performed for the degrees of freedom: {dof}')
-            ibrion = self.ctx.inputs.parmaeters.get('ibrion')
+            ibrion = self.ctx.inputs.parameters.get('ibrion')
             # In this case alternate between different relaxation algorithms
             if ibrion == 2:
                 self.ctx.inputs.parameters['ibrion'] = 1
@@ -695,12 +695,12 @@ class VaspWorkChain(BaseRestartWorkChain):
     def handler_ionic_conv(self, node):
         """Handle ionic convergence problem"""
         if 'structure' not in node.outputs:
-            self.report('Performing a geometry optimisation but the output structure is not found.')
+            self.report('Performing a geometry optimization but the output structure is not found.')
             return ProcessHandlerReport(do_break=True,
                                         exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='No output structure for restarting ionic relaxation.'))  #pylint: disable=no-member
         # The simplest solution - resubmit the calculation again
-        self.report('Continuing geometry optimisation using the last geometry.')
+        self.report('Continuing geometry optimization using the last geometry.')
         self.ctx.inputs.structure = node.outputs.structure
         self._setup_restart(node)
         return ProcessHandlerReport(do_break=True)
@@ -812,7 +812,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     def _setup_restart(self, node):
         """
-        Check the existence of any restart files, if any of them eixsts use the last calculation
+        Check the existence of any restart files, if any of them exists use the last calculation
         for restart.
         """
         self._update_last_calc_files(node)
