@@ -51,7 +51,7 @@ from aiida.orm import Code, CalcJobNode
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler, WorkChain
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compose_exit_code
+from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 #from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 from aiida_vasp.calcs.vasp import VaspCalculation
@@ -110,6 +110,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.input('site_magnetization', valid_type=get_data_class('dict'), required=False, help='Site magnetization to be used as MAGMOM')
         spec.input('restart_folder',
                    valid_type=get_data_class('remote'),
                    required=False,
@@ -143,7 +144,6 @@ class VaspWorkChain(BaseRestartWorkChain):
                    help="""
             Site dependent flag for selective dynamics when performing relaxation
             """)
-
         spec.outline(
             cls.setup,
             cls.init_inputs,
@@ -233,9 +233,9 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.restart_folder = self.inputs.restart_folder
 
         # Then check if the workchain wants a restart
-        if isinstance(self.ctx.restart_calc, self._process_class):
+        if self.ctx.restart_calc and isinstance(self.ctx.restart_calc.process_class, self._process_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
-            old_parameters = AttributeDict(self.ctx.inputs.parameters.get_dict())
+            old_parameters = AttributeDict(self.ctx.inputs.parameters).copy()
             parameters = old_parameters.copy()
             # Make sure ISTART and ICHARG is set to read the relevant files - if they exists
             if 'istart' in parameters and 'WAVECAR' in self.ctx.last_calc_remote_files:
@@ -248,8 +248,12 @@ class VaspWorkChain(BaseRestartWorkChain):
             if 'icharg' in parameters and 'CHGCAR' in self.ctx.last_calc_remote_files:
                 parameters.icharg = 1
             if parameters != old_parameters:
-                self.ctx.inputs.parameters = get_data_node('dict', dict=parameters)
+                self.ctx.inputs.parameters = parameters
                 self.report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
+
+            # Check if the site_magnetization should be carried over
+            if 'site_magnetization' in self.ctx.restart_calc.outputs:
+                self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(self.ctx.restart_calc.outputs.site_magnetization)
 
         # Reset the list of valid remote files and the restart calculation
         self.ctx.last_calc_remote_files = []
@@ -322,6 +326,12 @@ class VaspWorkChain(BaseRestartWorkChain):
             # Set MPI to True, unless the user specifies otherwise
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
+
+        # Carry on site magnetization for initialization
+        if 'site_magnetization' in self.inputs:
+            magmom = site_magnetization_to_magmom(self.inputs.site_magnetization.get_dict())
+            assert len(magmom) == len(self.inputs.structure.sites)
+            self.ctx.inputs.parameters['magmom'] = magmom
 
         # Utilise default input/output selections
         self.ctx.inputs.metadata['options']['input_filename'] = 'INCAR'
