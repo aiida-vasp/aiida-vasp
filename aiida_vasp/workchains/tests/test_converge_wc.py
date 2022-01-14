@@ -1,8 +1,6 @@
 """
 Test submitting a ConvergenceWorkChain.
-
 Only `run` currently works.
-
 """
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, too-many-statements, import-outside-toplevel
 from __future__ import print_function
@@ -23,7 +21,7 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def options():
-    """pytest fixuture for inputs.options for workflows in testing."""
+    """pytest fixture for inputs.options for workflows in testing."""
     # 'withmpi' should be set False in testing!
     options = get_data_node('dict',
                             dict={
@@ -188,7 +186,72 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
         pytest.fail('pwcutoff_recommended does not have the expected format')
 
 
-def test_converge_wc_on_failed(fresh_aiida_env, vasp_params, potentials, mock_vasp):
+def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
+    """Test convergence workflow using mock code."""
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import run
+
+    workchain = WorkflowFactory('vasp.converge')
+
+    mock_vasp.store()
+    create_authinfo(computer=mock_vasp.computer).store()
+
+    structure = PoscarParser(file_path=data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR')).structure
+    parameters = IncarParser(file_path=data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR')).incar
+    parameters['system'] = 'test-case:test_converge_wc'
+    pwcutoff = parameters['encut']
+    parameters = {
+        'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']},
+    }
+
+    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir.store()
+
+    inputs = AttributeDict()
+    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.structure = structure
+    inputs.parameters = get_data_node('dict', dict=parameters)
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.options = options
+    inputs.max_iterations = get_data_node('int', 1)
+    inputs.clean_workdir = get_data_node('bool', False)
+    relax = AttributeDict()
+    relax.perform = get_data_node('bool', False)
+    inputs.relax = relax
+    converge = AttributeDict()
+    converge.pwcutoff = get_data_node('float', pwcutoff)
+    converge.k_dense = get_data_node('float', 0.21)  # 10x10x10 mesh
+    converge.k_course = get_data_node('float', 0.27)  # 8x8x8 mesh
+    converge.k_samples = get_data_node('int', 1)
+    converge.testing = get_data_node('bool', True)
+    inputs.converge = converge
+    inputs.verbose = get_data_node('bool', True)
+    results, node = run.get_node(workchain, **inputs)
+
+    assert node.exit_status == 0
+    assert 'converge' in results
+    converge = results['converge']
+    assert 'data' in converge
+    conv_data = converge['data']
+    try:
+        conv_data = converge['data']['kpoints_regular']
+    except KeyError:
+        pytest.fail('Did not find kpoints_regular in converge.data')
+    # this workflow should check 8x8x8 and 10x10x10 mesh
+    np.testing.assert_allclose(conv_data[0][:4], [8.0, 8.0, 8.0, pwcutoff])
+    np.testing.assert_allclose(conv_data[1][:4], [10.0, 10.0, 10.0, pwcutoff])
+
+    assert 'kpoints_recommended' in converge
+    try:
+        _kpoints, _ = converge['kpoints_recommended'].get_kpoints_mesh()
+        np.testing.assert_equal(_kpoints, [10.0, 10.0, 10.0])
+    except AttributeError:
+        pytest.fail('kpoints_recommended does not have the expected format')
+
+
+def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     """Test convergence workflow using mock code."""
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
@@ -225,7 +288,7 @@ def test_converge_wc_on_failed(fresh_aiida_env, vasp_params, potentials, mock_va
     converge.testing = get_data_node('bool', True)
     converge.compress = get_data_node('bool', False)
     converge.displace = get_data_node('bool', False)
-    # intetionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
+    # intentionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
     converge.pwcutoff_start = get_data_node('float', 0.0)
     converge.pwcutoff_samples = get_data_node('int', 1)
     inputs.relax = relax
