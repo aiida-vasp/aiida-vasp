@@ -251,13 +251,21 @@ class VaspWorkChain(BaseRestartWorkChain):
                 self.ctx.inputs.parameters = parameters
                 self.report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
 
-            # Check if the site_magnetization should be carried over
-            if 'site_magnetization' in self.ctx.restart_calc.outputs:
-                self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(self.ctx.restart_calc.outputs.site_magnetization)
-
         # Reset the list of valid remote files and the restart calculation
         self.ctx.last_calc_remote_files = []
         self.ctx.restart_calc = None
+
+    def update_magmom(self, node=None):
+        """
+        Update magmom from site magnetization information if avaliable
+
+        :param node: Calculation node to be used, defaults to the last launched calculation.
+        """
+        if node is None:
+            node = self.ctx.children[-1]
+
+        if 'site_magnetization' in node.outputs:
+            self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(node.outputs.site_magnetization.get_dict())
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -465,7 +473,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """Handle the case where the calculation is not performed"""
         if self.ctx.vasp_did_not_execute:
             self.report(f'{node} did not execute, and this is the second time - aborting.')
-            return ProcessHandlerReport(do_breka=True,
+            return ProcessHandlerReport(do_break=True,
                                         exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                                             message='VASP executable did not run on the remote computer.'))
 
@@ -506,6 +514,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report('Continuing geometry optimisation using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
+            self.update_magmom(node)
             return ProcessHandlerReport(do_break=True)
         return None
 
@@ -628,6 +637,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         child_nodes = self.ctx.children
         child_miscs = [node.outputs.misc for node in child_nodes]
 
+        self.update_magmom(node)
+
         # Enhanced handler only takes place after 3 trials
         if len(child_miscs) < 3:
             return None
@@ -713,6 +724,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         self.report('Continuing geometry optimisation using the last geometry.')
         self.ctx.inputs.structure = node.outputs.structure
         self._setup_restart(node)
+        self.update_magmom(node)
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=400, exit_codes=[VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR])
