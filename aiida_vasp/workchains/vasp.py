@@ -261,6 +261,10 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         :param node: Calculation node to be used, defaults to the last launched calculation.
         """
+        if self.is_noncollinear:
+            self.report('Automatic carrying on magmom for non-collinear magnetism calculation is not implemented.')
+            return
+
         if node is None:
             node = self.ctx.children[-1]
 
@@ -336,7 +340,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
         # Carry on site magnetization for initialization
-        if 'site_magnetization' in self.inputs:
+        if 'site_magnetization' in self.inputs and not self.is_noncollinear:
             magmom = site_magnetization_to_magmom(self.inputs.site_magnetization.get_dict())
             assert len(magmom) == len(self.inputs.structure.sites)
             self.ctx.inputs.parameters['magmom'] = magmom
@@ -384,6 +388,11 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.wavefunctions = self.inputs.wavecar
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
+
+    @property
+    def is_noncollinear(self):
+        """Check if the calculation is a noncollinear one"""
+        return self.ctx.inputs.parameters.get('lnoncollinear') or self.ctx.inputs.parameters.get('lsorbit')
 
     @override
     def on_except(self, exc_info):
