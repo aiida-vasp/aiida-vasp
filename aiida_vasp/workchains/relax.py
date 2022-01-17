@@ -141,7 +141,7 @@ class RelaxWorkChain(WorkChain):
                    default=lambda: get_data_node('float', 0.1),
                    help="""
                    The cutoff value for the convergence check on the lengths of the unit cell
-                   vecotrs. If ``convergence_absolute``
+                   vectors. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
         spec.input('relax.convergence_shape_angles',
@@ -395,7 +395,7 @@ class RelaxWorkChain(WorkChain):
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
-        """Check the difference in cell shape before / after the last iteratio against a tolerance."""
+        """Check the difference in cell shape before / after the last iteration against a tolerance."""
         lengths_converged = bool(delta.cell_lengths.max() <= self.ctx.inputs.parameters.relax.convergence_shape_lengths)
         if not lengths_converged:
             self.report('cell lengths changed by max {}, tolerance is {}'.format(

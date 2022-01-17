@@ -1,8 +1,6 @@
 """
 Test submitting a ConvergenceWorkChain.
-
 Only `run` currently works.
-
 """
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, too-many-statements, import-outside-toplevel
 from __future__ import print_function
@@ -23,7 +21,7 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def options():
-    """pytest fixuture for inputs.options for workflows in testing."""
+    """pytest fixture for inputs.options for workflows in testing."""
     # 'withmpi' should be set False in testing!
     options = get_data_node('dict',
                             dict={
@@ -290,7 +288,7 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     converge.testing = get_data_node('bool', True)
     converge.compress = get_data_node('bool', False)
     converge.displace = get_data_node('bool', False)
-    # intetionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
+    # intentionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
     converge.pwcutoff_start = get_data_node('float', 0.0)
     converge.pwcutoff_samples = get_data_node('int', 1)
     inputs.relax = relax

@@ -3,7 +3,7 @@ Verify workchain.
 
 -----------------
 Indented to be used to verify a calculation, perform corrections in inputs files and
-restart depending on physical principles etc. E.g. issues that are outside the Calculators awereness,
+restart depending on physical principles etc. E.g. issues that are outside the Calculators awareness,
 or not currently checked in it. This workchain does currently nothing.
 """
 

@@ -9,6 +9,7 @@ The calculation class that prepares a specific VASP calculation.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
 from aiida.plugins import DataFactory
+from aiida.common.exceptions import InputValidationError
 
 from aiida_vasp.parsers.file_parsers.incar import IncarParser
 from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
@@ -199,6 +200,15 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, self).verify_inputs()
         if not hasattr(self, 'elements'):
             self._prestore()
+        _parameters = self.inputs.parameters.get_dict()
+        _lorbit = _parameters.get('lorbit', 0)
+        if 'settings' in self.inputs:
+            _settings = self.inputs.settings.get_dict()
+        else:
+            _settings = {}
+        _site_magnetization = _settings.get('parser_settings', {}).get('add_site_magnetization', False)
+        if _site_magnetization and _lorbit < 10:
+            raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
 
     def _prestore(self):
         """Set attributes prior to storing."""
