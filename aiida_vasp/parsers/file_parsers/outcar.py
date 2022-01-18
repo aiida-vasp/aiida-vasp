@@ -161,7 +161,7 @@ class OutcarParser(BaseFileParser):
                 match_integer(params, 'IBRION', line)
                 match_integer(params, 'NELM', line)
                 # Test if the end of execution has reached
-                if 'timing and accounting informations' in line:
+                if 'timing and accounting information' in line:
                     finished = True
 
         nsw = params['nsw']

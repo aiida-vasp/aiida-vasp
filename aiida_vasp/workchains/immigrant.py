@@ -103,7 +103,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         elif 'folder_path' in self.inputs:
             remote_workdir = self.inputs.folder_path.value
         else:
-            raise InputValidationError('remoet_workdir not found in inputs.')
+            raise InputValidationError('remote_workdir not found in inputs.')
         self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, remote_workdir, **kwargs)
         if 'settings' in self.inputs:
             self.ctx.inputs.settings = self.inputs.settings

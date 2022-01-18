@@ -81,7 +81,7 @@ class ConvergeWorkChain(WorkChain):
                    required=False,
                    default=lambda: get_data_node('float', 0.35),
                    help="""
-                   The target k-point stepping at the coursest grid in inverse AA.
+                   The target k-point stepping at the coarsest grid in inverse AA.
                    """)
         spec.input('converge.k_spacing',
                    valid_type=get_data_class('float'),
@@ -149,7 +149,7 @@ class ConvergeWorkChain(WorkChain):
                    performed. The difference of the ``cutoff_type`` values for each
                    calculations are evaluated and when the difference between these are
                    less than ``cutoff_value_r``, the calculation is considered converged.
-                   The largest planw-wave cutoff and densest k-point grid are used.
+                   The largest plane-wave cutoff and densest k-point grid are used.
                    """)
         spec.input('converge.displacement_vector',
                    valid_type=get_data_class('array'),
@@ -369,7 +369,7 @@ class ConvergeWorkChain(WorkChain):
                 settings.pwcutoff = pwcutoff
 
             # Check inconsistent pwcutoff setting
-            # In general, we prioritize workchain-specfic parameters over global input ones.
+            # In general, we prioritize workchain-specific parameters over global input ones.
             # See https://github.com/aiida-vasp/aiida-vasp/issues/560
             parameters_dict = self.inputs.parameters.get_dict()
             electronic = parameters_dict.get('electronic', None)
@@ -461,10 +461,10 @@ class ConvergeWorkChain(WorkChain):
             converge.settings.inform_details = ', using a displaced structure'
         # Also, make sure the data arrays from previous convergence tests are saved
         # in order to be able to calculate the relative convergence
-        # criterias later.
+        # criteria later.
         converge.pw_data_org = copy.deepcopy(converge.pw_data)
         converge.k_data_org = copy.deepcopy(converge.k_data)
-        # Emtpy arrays
+        # Empty arrays
         converge.pw_data = []
         converge.k_data = []
         # Finally, reset k-point grid if plane wave cutoff is not supplied
@@ -522,7 +522,7 @@ class ConvergeWorkChain(WorkChain):
             converge.parameters = self._init_parameters()
             if not supplied_kmesh and kgrid_org is None:
                 self._set_default_kgrid()
-            # Turn on plane wave convergene tests.
+            # Turn on plane wave convergence tests.
             converge.run_pw_conv_calcs = True
             converge.run_pw_conv_calcs_org = True
             # make pwcutoff test vector
@@ -1174,7 +1174,7 @@ class ConvergeWorkChain(WorkChain):
         return pwcutoff_diff_displacement, kgrid_diff_displacement
 
     def _analyze_conv_comp(self):  # noqa: MC0001
-        """Analize the relative convergence due to unit cell compression."""
+        """Analyze the relative convergence due to unit cell compression."""
 
         settings = self.ctx.converge.settings
         pwcutoff_org = settings.pwcutoff_org

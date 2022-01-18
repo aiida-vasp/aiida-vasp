@@ -121,7 +121,7 @@ class StreamParser(BaseFileParser):
 
     @property
     def has_entries(self):
-        """Fetch if there are streams present according to the config after parsning."""
+        """Fetch if there are streams present according to the config after parsing."""
         return self._stream.has_entries
 
     @property
