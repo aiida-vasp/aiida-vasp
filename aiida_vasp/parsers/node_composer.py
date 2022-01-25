@@ -4,10 +4,13 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
+# pylint: disable=logging-fstring-interpolation
+import traceback
 
 from warnings import warn
 import math
 import numbers
+import numpy as np
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 
@@ -20,39 +23,9 @@ NODES_TYPES = {
     'structure': ['structure'],
     'array.trajectory': ['trajectory'],
     'array.bands': ['eigenvalues', 'kpoints', 'occupancies'],
-    'vasp.chargedensity': ['chgcar'],
     'vasp.wavefun': ['wavecar'],
     'array': [],
 }
-
-
-def get_node_composer_inputs(equivalent_quantity_keys, parsed_quantities, quantity_names_in_node_dict):
-    """
-    Collect parsed quantities for the NodeCompoer input.
-
-    When multiple equivalent quantities are found, the first one found in the
-    equivalent_quantity_keys is chosen.
-
-    """
-    inputs = {}
-    for quantity_name in quantity_names_in_node_dict:
-        if quantity_name in equivalent_quantity_keys:
-            for quantity_key in equivalent_quantity_keys[quantity_name]:
-                if quantity_key in parsed_quantities:
-                    inputs[quantity_name] = parsed_quantities[quantity_key]
-                    break
-    return inputs
-
-
-def get_node_composer_inputs_from_object_parser(object_parser, quantity_keys=None):  # pylint: disable=invalid-name
-    """Assemble necessary data from object_parser"""
-    inputs = {}
-    for key, value in object_parser.parsable_items.items():
-        if quantity_keys is not None:
-            if key not in quantity_keys:
-                continue
-        inputs[value['name']] = object_parser.get_quantity(key)
-    return inputs
 
 
 class NodeComposer:
@@ -60,10 +33,69 @@ class NodeComposer:
     Prototype for a generic NodeComposer, that will compose output nodes based on parsed quantities.
 
     Provides methods to compose output_nodes from quantities. Currently supported node types are defined in NODES_TYPES.
+
+    Parameters
+    ----------
     """
 
-    @classmethod
-    def compose(cls, node_type, inputs):
+    def __init__(self, nodes, equivalent_quantity_keys, quantities, logger=None):
+        """Initialize."""
+        self._equivalent_quantity_keys = equivalent_quantity_keys
+        self._quantities = quantities
+        self._nodes = nodes
+        self._failed_to_create = []
+        self._created = {}
+
+        # Set logger
+        if logger is not None:
+            self._logger = logger
+        else:
+            import logging  # pylint: disable=import-outside-toplevel
+            logging.basicConfig(level=logging.DEBUG)
+            self._logger = logging.getLogger('NodeComposer')
+
+        # Compose the nodes
+        self.compose_nodes()
+
+    def compose_nodes(self):
+        """Compose the nodes according to the specifications."""
+        for node_name, node_dict in self._nodes.items():
+            inputs = {}
+            for key in self._quantities.keys():
+                # Make sure we strip prefixes as the quantities can contain
+                # multiple equivalent keys, relevant only up to now.
+                new_key = key
+                if '-' in key:
+                    new_key = key.split('-')[1]
+                if key in node_dict['quantities'] or new_key in node_dict['quantities']:
+                    # The found quantity should sit on this particular node.
+                    # The delegated compose methods for each structure does not recognize prefixed keys,
+                    # so use the stripped one.
+                    inputs[new_key] = self._quantities[key]
+
+            # If the input is empty, we skip creating the node as it is bound to fail
+            if not inputs:
+                self._failed_to_create.append(node_name)
+                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
+                                     'No parsed data available.')
+                continue
+
+            exception = None  # pylint: disable=unused-variable
+            # Guard the parsing in case of errors
+            try:
+                node = self.compose_node(node_dict['type'], inputs)
+            except Exception:  # pylint: disable=broad-except
+                node = None
+                exception = traceback.format_exc()
+
+            if node is not None:
+                self._created[node_dict['link_name']] = node
+            else:
+                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
+                                     'exception: {exception}')
+                self._failed_to_create.append(node_dict['link_name'])
+
+    def compose_node(self, node_type, inputs):
         """
         A wrapper for compose_node with a node definition taken from NODES.
 
@@ -74,11 +106,28 @@ class NodeComposer:
         """
 
         # Call the correct specialised method for assembling.
-        method_name = '_compose_' + node_type.replace('.', '_')
-        return getattr(cls, method_name)(node_type, inputs)
+        method_name = 'compose_' + node_type.replace('.', '_')
+        return getattr(self, method_name)(node_type, inputs)
+
+    def compose_array_bands(self, node_type, inputs):
+        """Compose a bands node."""
+        typ = 'eigenvalues'
+        if typ not in inputs:
+            raise ValueError(f'The {typ} are not present after parsing.')
+        node = get_data_class(node_type)()
+        kpoints = self.compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
+        node.set_kpointsdata(kpoints)
+        if 'total' in inputs['eigenvalues']:
+            eigenvalues = np.array([inputs['eigenvalues']['total']])
+            occupancies = np.array([inputs['occupancies']['total']])
+        else:
+            eigenvalues = np.array([inputs['eigenvalues']['up'], inputs['eigenvalues']['down']])
+            occupancies = np.array([inputs['occupancies']['up'], inputs['occupancies']['down']])
+        node.set_bands(eigenvalues, occupations=occupancies)
+        return node
 
     @staticmethod
-    def _compose_dict(node_type, inputs):
+    def compose_dict(node_type, inputs):
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
         inputs = clean_nan_values(inputs)
@@ -86,7 +135,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def _compose_structure(node_type, inputs):
+    def compose_structure(node_type, inputs):
         """
         Compose a structure node from consumable inputs.
 
@@ -97,16 +146,17 @@ class NodeComposer:
         different symbols from each other, e.g. ``Fe1``.
 
         """
+        typ = 'structure'
+        if typ not in inputs:
+            raise ValueError(f'The {typ} is not present after parsing.')
         node = get_data_class(node_type)()
-        if 'structure' not in inputs:
-            raise ValueError('The key structure is not found in the supplied inputs')
         node.set_cell(inputs['structure']['unitcell'])
         for site in inputs['structure']['sites']:
             node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
         return node
 
     @staticmethod
-    def _compose_array(node_type, inputs):
+    def compose_array(node_type, inputs):
         """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
@@ -115,54 +165,31 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def _compose_vasp_wavefun(node_type, inputs):
+    def compose_vasp_wavefun(node_type, inputs):
         """Compose a wave function node."""
         node = None
         for key in inputs:
             # Technically this dictionary has only one key. to
             # avoid problems with python 2/3 it is done with the loop.
-            node = get_data_class(node_type)(file=inputs[key])
+            node = get_data_class(node_type)(inputs[key])
         return node
 
     @staticmethod
-    def _compose_vasp_chargedensity(node_type, inputs):
-        """Compose a charge density node."""
-        node = None
-        for key in inputs:
-            # Technically this dictionary has only one key. to
-            # avoid problems with python 2/3 it is done with the loop.
-            node = get_data_class(node_type)(file=inputs[key])
-        return node
-
-    @classmethod
-    def _compose_array_bands(cls, node_type, inputs):
-        """Compose a bands node."""
-        node = get_data_class(node_type)()
-        kpoints = cls._compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
-        node.set_kpointsdata(kpoints)
-        node.set_bands(inputs['eigenvalues'], occupations=inputs['occupancies'])
-        return node
-
-    @staticmethod
-    def _compose_array_kpoints(node_type, inputs):
+    def compose_array_kpoints(node_type, inputs):
         """Compose an array.kpoints node based on inputs."""
+        typ = 'kpoints'
+        if typ not in inputs:
+            raise ValueError(f'The {typ} are not present after parsing.')
         node = get_data_class(node_type)()
         for key in inputs:
             mode = inputs[key]['mode']
             if mode == 'explicit':
                 kpoints = inputs[key].get('points')
-                cartesian = not kpoints[0].get_direct()
-                kpoint_list = []
-                weights = []
-                for kpoint in kpoints:
-                    kpoint_list.append(kpoint.get_point().tolist())
-                    weights.append(kpoint.get_weight())
-
+                weights = inputs[key].get('weights')
+                cartesian = inputs[key].get('cartesian')
                 if weights[0] is None:
                     weights = None
-
-                node.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
-
+                node.set_kpoints(kpoints, weights=weights, cartesian=cartesian)
             if mode == 'automatic':
                 mesh = inputs[key].get('divisions')
                 shifts = inputs[key].get('shifts')
@@ -170,7 +197,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def _compose_array_trajectory(node_type, inputs):
+    def compose_array_trajectory(node_type, inputs):
         """
         Compose a trajectory node.
 
@@ -199,6 +226,14 @@ class NodeComposer:
                 else:
                     node.set_array(key, value)
         return node
+
+    @property
+    def failed(self):
+        return self._failed_to_create
+
+    @property
+    def successful(self):
+        return self._created
 
 
 def clean_nan_values(inputs: dict) -> dict:

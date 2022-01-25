@@ -16,17 +16,9 @@ class OutcarParser(BaseFileParser):
     The parser is triggered by using the ``elastic_moduli``, ``magnetization`` or ``site-magnetization``
     ``run_stats`` or ``run_status`` quantity keys.
 
-    Parameters
-    ----------
-    precision : int, optional
-        An integer specifying the number of digits for floating point numbers that will be written
-        to POSCAR/CONTCAR. Defaults to 12.
-
     """
 
-    DEFAULT_OPTIONS = {
-        'quantities_to_parse': ['elastic_moduli', 'symmetries', 'magnetization', 'site_magnetization', 'run)stats', 'run_status']
-    }
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['run_status', 'run_stats']}
 
     PARSABLE_QUANTITIES = {
         'elastic_moduli': {

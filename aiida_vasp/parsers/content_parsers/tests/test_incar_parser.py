@@ -4,9 +4,8 @@
 import pytest
 
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}
 
@@ -71,6 +70,9 @@ def test_parse_incar_data(vasp_params, tmpdir):
 
     # Initialize parser with an existing reference Dict
     incar_parser = IncarParser(data=vasp_params)
+
+    # Check that get_quantity return the same Dict instance
+    assert vasp_params == incar_parser.get_quantity('key_does_not_matter')
 
     # Write the loaded Dict to file, which behind the scenes convert it
     # to a INCAR format

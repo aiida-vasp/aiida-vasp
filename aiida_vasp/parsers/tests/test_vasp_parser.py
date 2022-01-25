@@ -1,6 +1,7 @@
 """Unittests for VaspParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 # pylint: disable=protected-access,unused-variable,too-few-public-methods, import-outside-toplevel
+# pylint: disable=abstract-method
 
 import os
 import pytest
@@ -8,20 +9,23 @@ import numpy as np
 
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
-#from aiida.manage.tests.pytest_fixtures import aiida_caplog
-from aiida.common.log import AIIDA_LOGGER
-from aiida_vasp.parsers.content_parsers.parser import BaseFileParser
+
+from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.parsers.vasp import NotificationComposer
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.node_composer import NodeComposer
 
 
 class ExampleFileParser(BaseFileParser):
     """Example object parser class for testing VaspParsers functionality."""
 
-    PARSABLE_ITEMS = {
+    PARSABLE_QUANTITIES = {
         'quantity1': {
             'inputs': [],
             'name': 'quantity_with_alternatives',
@@ -41,13 +45,13 @@ class ExampleFileParser(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(ExampleFileParser, self).__init__(*args, **kwargs)
-        self._parsable_items = ExampleFileParser.PARSABLE_ITEMS
+        self._parsable_items = ExampleFileParser.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):
+    def _parse_object(self, inputs):  # pylint: disable=no-self-use
         from aiida.orm.nodes.data.dict import Dict
         result = {}
-        for quantity in ExampleFileParser.PARSABLE_ITEMS:
+        for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
             result[quantity] = Dict(dict={})
         return result
 
@@ -55,7 +59,7 @@ class ExampleFileParser(BaseFileParser):
 class ExampleFileParser2(BaseFileParser):
     """Example class for testing non unique quantity identifiers."""
 
-    PARSABLE_ITEMS = {
+    PARSABLE_QUANTITIES = {
         'quantity1': {
             'inputs': [],
             'name': 'quantity_with_alternatives',
@@ -65,13 +69,13 @@ class ExampleFileParser2(BaseFileParser):
 
     def __init__(self, *args, **kwargs):
         super(ExampleFileParser2, self).__init__(*args, **kwargs)
-        self._parsable_items = ExampleFileParser2.PARSABLE_ITEMS
+        self._parsable_items = ExampleFileParser2.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):
+    def _parse_object(self, inputs):  # pylint: disable=no-self-use
         from aiida.orm.nodes.data.dict import Dict
         result = {}
-        for quantity in ExampleFileParser.PARSABLE_ITEMS:
+        for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
             result[quantity] = Dict(dict={})
         return result
 
@@ -113,7 +117,7 @@ def vasp_parser_without_parsing(calc_with_retrieved):
 
 
 def test_add_parser_quantity_fail(vasp_parser_without_parsing):
-    """add_parsable_quantity without name must fail"""
+    """Add_parsable_quantity without name must fail"""
     parser, path = vasp_parser_without_parsing
     parser.add_parsable_quantity('quantity_with_alternatives', {
         'inputs': [],
@@ -123,15 +127,15 @@ def test_add_parser_quantity_fail(vasp_parser_without_parsing):
         parser.parse(retrieved_temporary_folder=path)
 
 
-def test_add_parser_quantity(vasp_parser_without_parsing):
-    """add_parsable_quantity with name succeeds."""
+def test_add_parser_quantity(vasp_parser_without_parsing, aiida_caplog):
+    """Add_parsable_quantity with name succeeds."""
     parser, path = vasp_parser_without_parsing
     parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'name': '_scheduler-stderr.txt'})
     parser.parse(retrieved_temporary_folder=path)
     quantities = parser._parsable_quantities
     assert 'quantity_with_alternatives' not in quantities.quantity_keys_to_parse
-    assert 'quantity_with_alternatives' in quantities._missing_names
-    assert quantities._missing_names['quantity_with_alternatives'] == '_scheduler-stderr.txt'
+    assert 'quantity_with_alternatives' in quantities._missing_content
+    assert quantities._missing_content['quantity_with_alternatives'] == '_scheduler-stderr.txt'
 
 
 def test_add_parser_definition(vasp_parser_with_test):
@@ -145,13 +149,13 @@ def test_parsable_quantities(vasp_parser_with_test):
     """Check whether parsable quantities are set as intended."""
     parser = vasp_parser_with_test
     quantity_keys_to_parse = parser._parsable_quantities.quantity_keys_to_parse
-    missing_names = parser._parsable_quantities._missing_names
-    quantity_keys = parser._parsable_quantities.quantity_keys_to_names.keys()
+    missing_content = parser._parsable_quantities._missing_content
+    quantity_keys = parser._parsable_quantities.quantity_keys_to_content.keys()
     # Check whether all quantities from the added ExampleFileParser have been added.
-    for quantity_key in ExampleFileParser.PARSABLE_ITEMS:
+    for quantity_key in ExampleFileParser.PARSABLE_QUANTITIES:
         assert quantity_key in quantity_keys
     # Check whether quantities have been set up correctly.
-    assert 'quantity1' not in missing_names
+    assert 'quantity1' not in missing_content
     assert 'quantity1' in quantity_keys_to_parse
     assert 'quantity2' not in quantity_keys_to_parse
     assert 'quantity3' not in quantity_keys_to_parse
@@ -166,7 +170,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
     parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
     with pytest.raises(RuntimeError) as excinfo:
-        parser._parsable_quantities.setup(retrieved_names=parser._retrieved_content.keys(),
+        parser._parsable_quantities.setup(retrieved_content=parser._retrieved_content.keys(),
                                           parser_definitions=parser._definitions.parser_definitions,
                                           quantity_names_to_parse=parser._settings.quantity_names_to_parse)
 
@@ -224,7 +228,6 @@ def test_parser_exception(request, calc_with_retrieved):
     we still expect the other properties to be parsed correctly.
     """
 
-    AIIDA_LOGGER.propagate = True
     settings_dict = {
         'parser_settings': {
             'add_bands': True,
@@ -247,17 +250,129 @@ def test_parser_exception(request, calc_with_retrieved):
     assert isinstance(misc, get_data_class('dict'))
     assert misc.get_dict()['maximum_force'] == pytest.approx(0.0)
     assert misc.get_dict()['total_energies']['energy_extrapolated'] == pytest.approx(-36.09616894)
-
-    assert misc['notifications'] == [{
-        'name': "<class 'aiida_vasp.parsers.content_parsers.vasprun.VasprunParser'>",
-        'message': 'the parser is not able to parse the occupancies quantity',
-        'status': 1002,
-    }]
-
     assert 'bands' not in result
-
     kpoints = result['kpoints']
     assert isinstance(kpoints, get_data_class('array.kpoints'))
+
+
+@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
+def test_parse_poscar_silly_read(fresh_aiida_env):
+    """
+    Parse (read) a reference POSCAR with silly elemental names.
+
+    Using the PoscarParser and compare the result to a reference
+    structure.
+
+    """
+
+    # Setup parser
+    path = data_path('poscar', 'POSCARSILLY')
+    parser = None
+    with open(path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
+    # Compose the node
+    structure = parser.get_quantity('poscar-structure')
+    result = NodeComposer.compose_structure('structure', {'structure': structure})
+    names = result.get_site_kindnames()
+    assert names == ['Hamburger', 'Pizza']
+    symbols = result.get_symbols_set()
+    assert symbols == set(['X', 'X'])
+
+
+@pytest.mark.parametrize(['vasp_structure'], [('str-InAs',)], indirect=True)
+def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
+    """
+    Parse (read, write) a reference POSCAR with silly elemental names.
+
+    Using the PoscarParser and compare the result to a reference structure.
+
+    """
+
+    # Initialize the content parser
+    parser = PoscarParser(data=vasp_structure)
+
+    # Write silly POSCAR content to file
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
+
+    # Read it again
+    with open(temp_path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
+    structure = parser.get_quantity('poscar-structure')
+    result = NodeComposer.compose_structure('structure', {'structure': structure})
+
+    # Compare
+    names = result.get_site_kindnames()
+    assert names == ['Hamburger', 'Pizza']
+    symbols = result.get_symbols_set()
+    assert symbols == set(['X', 'X'])
+
+
+@pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
+def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
+    """
+    Parse a reference POSCAR.
+
+    With potential elemental names using the PoscarParser and compare
+    the result to a reference structure.
+
+    """
+
+    parser = PoscarParser(data=vasp_structure)
+    result = parser.get_quantity('poscar-structure')
+    names = result.get_site_kindnames()
+    assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
+    symbols = result.get_symbols_set()
+    assert symbols == set(['As', 'In'])
+    temp_path = str(tmpdir.join('POSCAR'))
+    parser.write(temp_path)
+    parser = None
+    with open(temp_path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
+    structure = parser.get_quantity('poscar-structure')
+    result_reparse = NodeComposer.compose_structure('structure', {'structure': structure})
+    names = result_reparse.get_site_kindnames()
+    assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
+    symbols = result_reparse.get_symbols_set()
+    assert symbols == set(['As', 'In'])
+
+
+def test_parse_kpoints(vasp_kpoints):
+    """
+    Parse a reference KPOINTS.
+
+    Using the KpointsParser and compare the result to a reference
+    KpointsData node.
+
+    """
+
+    kpoints, _ = vasp_kpoints
+
+    try:
+        _ = kpoints.get_attribute('mesh')
+        path = data_path('kpoints', 'KPOINTS_mesh')
+        method = 'get_kpoints_mesh'
+        param = 'mesh'
+    except AttributeError:
+        pass
+
+    try:
+        _ = kpoints.get_attribute('array|kpoints')
+        path = data_path('kpoints', 'KPOINTS_list')
+        method = 'get_kpoints'
+        param = 'list'
+    except AttributeError:
+        pass
+
+    parser = None
+    with open(path, 'r') as handler:
+        parser = KpointsParser(handler=handler)
+    kpts = parser.get_quantity('kpoints-kpoints')
+    result = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpts})
+    if param == 'list':
+        assert getattr(result, method)().all() == getattr(kpoints, method)().all()
+    if param == 'mesh':
+        assert getattr(result, method)() == getattr(kpoints, method)()
 
 
 def test_structure(request, calc_with_retrieved):
@@ -267,7 +382,7 @@ def test_structure(request, calc_with_retrieved):
         'parser_settings': {
             'add_trajectory': False,
             'add_bands': False,
-            'add_chgcar': False,
+            'add_charge_density': False,
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
@@ -284,7 +399,6 @@ def test_structure(request, calc_with_retrieved):
     }
 
     path = str(request.fspath.join('..') + '../../../test_data/basic')
-
     node = calc_with_retrieved(path, settings_dict)
 
     parser = ParserFactory('vasp.vasp')(node)
@@ -294,17 +408,15 @@ def test_structure(request, calc_with_retrieved):
     result = parser.outputs
 
     # First fetch structure from vasprun
-
     structure_vasprun = result['structure']
     assert isinstance(structure_vasprun, get_data_class('structure'))
 
-    # Then from POSCAR/CONTCAR
+    # Then fetch structure from POSCAR/CONTCAR
     path = str(request.fspath.join('..') + '../../../test_data/basic_poscar')
-
     node = calc_with_retrieved(path, settings_dict)
-
     parser = ParserFactory('vasp.vasp')(node)
-    # The test data does not contain OUTCAR - make sure that is allowed
+
+    # The test data does not contain OUTCAR or vasprun - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=path)
@@ -334,7 +446,7 @@ def test_misc(request, calc_with_retrieved):
         'parser_settings': {
             'add_trajectory': False,
             'add_bands': False,
-            'add_chgcar': False,
+            'add_charge_density': False,
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
@@ -403,7 +515,7 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         'parser_settings': {
             'add_trajectory': False,
             'add_bands': False,
-            'add_chgcar': False,
+            'add_charge_density': False,
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
@@ -427,6 +539,7 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=path)
     result = parser.outputs
+    assert result is not None
 
     if misc_input == []:
         # Test empty misc specification, yields no misc output node
@@ -468,7 +581,7 @@ def test_stream_history(request, calc_with_retrieved):
         'parser_settings': {
             'add_trajectory': False,
             'add_bands': False,
-            'add_chgcar': False,
+            'add_charge_density': False,
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,

@@ -13,18 +13,18 @@ from parsevasp.eigenval import Eigenval
 class EigenvalParser(BaseFileParser):
     """The parser interface that enables parsing of ``EIGENVAL`` content.
 
-    The parser is triggered by using the ``eigenval-bands`` and/or ``eigenval-kpoints`` quantity key.
-    The quantity keys ``bands`` and ``kpoints`` will on the other hand parse the
+    The parser is triggered by using the ``eigenval-eigenvalues`` and/or ``eigenval-kpoints`` quantity key.
+    The quantity keys ``eigenvalues`` and ``kpoints`` will on the other hand parse the
     eigenvalues and/or kpoints using the XML parser.
 
     """
 
-    DEFAULT_OPTIONS = {'quantities_to_parse': ['eigenval-bands', 'eigenval-kpoints']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['eigenval-eigenvalues', 'eigenval-kpoints']}
 
     PARSABLE_QUANTITIES = {
-        'eigenval-bands': {
+        'eigenval-eigenvalues': {
             'inputs': [],
-            'name': 'bands',
+            'name': 'eigenvalues',
             'prerequisites': [],
         },
         'eigenval-kpoints': {
@@ -50,22 +50,22 @@ class EigenvalParser(BaseFileParser):
             self._logger.warning('Parsevasp exited abnormally.')
 
     @property
-    def bands(self):
+    def eigenvalues(self):
         """Return the eigenvalue and metadata in the ``EIGENVAL``.
 
         Returns
         -------
-        bands : dict
-            A dict containing the keys ``bands`` and ``metadata``, which contain
+        eigenvalues : dict
+            A dict containing the keys ``eigenvalues`` and ``metadata``, which contain
             a NumPy array of the eigenvalues and a dict with metadata, respectively.
 
         """
 
         metadata = self._content_parser.get_metadata()
-        _bands = self._content_parser.get_bands()
-        bands = {'bands': _bands, 'metadata': metadata}
+        _eigenvalues = self._content_parser.get_eigenvalues()
+        eigenvalues = {'eigenvalues': _eigenvalues, 'metadata': metadata}
 
-        return bands
+        return eigenvalues
 
     @property
     def kpoints(self):

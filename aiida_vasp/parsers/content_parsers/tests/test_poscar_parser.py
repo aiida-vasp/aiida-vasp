@@ -64,6 +64,9 @@ def test_parse_poscar_data(vasp_structure, tmpdir):
     # Initialize parser with an existing reference StructureData
     poscar_parser = PoscarParser(data=vasp_structure)
 
+    # Check that get_quantity return the same StructureData instance
+    assert vasp_structure == poscar_parser.get_quantity('key_does_not_matter')
+
     # Write the loaded StructureData to file, which behind the scenes convert it
     # to a POSCAR format
     temp_path = str(tmpdir.join('POSCAR'))
@@ -99,8 +102,6 @@ def test_consistency_with_parsevasp(vasp_structure):
 
 def compare_objects(obj_a, obj_b):
     """Compare two potentially nested objects assuming they have the same structure."""
-    import numpy as np
-
     if isinstance(obj_a, dict):
         for key in obj_a:
             compare_objects(obj_a[key], obj_b[key])

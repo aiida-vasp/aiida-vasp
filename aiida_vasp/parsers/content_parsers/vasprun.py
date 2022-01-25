@@ -10,6 +10,7 @@ import numpy as np
 from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
+from aiida_vasp.utils.compare_bands import get_band_properties
 
 
 class VasprunParser(BaseFileParser):
@@ -19,12 +20,11 @@ class VasprunParser(BaseFileParser):
 
     """
 
-    DEFAULT_OPTIONS = {
+    DEFAULT_SETTINGS = {
         'quantities_to_parse': [
             'structure',
             'eigenvalues',
             'dos',
-            'bands',
             'kpoints',
             'occupancies',
             'trajectory',
@@ -39,6 +39,7 @@ class VasprunParser(BaseFileParser):
             'total_energies',
             'maximum_force',
             'maximum_stress',
+            'band_properties',
             'version',
         ],
         'energy_type': ['energy_extrapolated'],
@@ -139,6 +140,11 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'maximum_stress',
             'prerequisites': []
+        },
+        'band_properties': {
+            'inputs': [],
+            'name': 'band_properties',
+            'prerequisites': [],
         },
         'version': {
             'inputs': [],
@@ -402,7 +408,7 @@ class VasprunParser(BaseFileParser):
         if energies is None:
             return None
         energies_dict = {}
-        for etype in self._settings.get('energy_type', self.DEFAULT_OPTIONS['energy_type']):
+        for etype in self._settings.get('energy_type', self.DEFAULT_SETTINGS['energy_type']):
             energies_dict[etype] = energies[etype][-1]
 
         return energies_dict
@@ -411,7 +417,7 @@ class VasprunParser(BaseFileParser):
     def energies(self):
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
-        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_OPTIONS['electronic_step_energies'])
+        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies'])
 
         return self._energies(nosc=not electronic_step_energies)
 
@@ -425,7 +431,7 @@ class VasprunParser(BaseFileParser):
         there is per ionic step. Using the combination, one can rebuild the electronic step energy per ionic step etc.
 
         """
-        etype = self._settings.get('energy_type', self.DEFAULT_OPTIONS['energy_type'])
+        etype = self._settings.get('energy_type', self.DEFAULT_SETTINGS['energy_type'])
         energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
         if energies is None:
             return None
@@ -583,6 +589,25 @@ class VasprunParser(BaseFileParser):
             info['ionic_converged'] = None
 
         return info
+
+    @property
+    def band_properties(self):
+        """Fetch key properties of the electronic structure."""
+
+        eigenvalues = self.eigenvalues
+        occupancies = self.occupancies
+        if eigenvalues is None:
+            return None
+
+        # Convert dict to index in numpy array
+        if 'total' in eigenvalues:
+            eig = np.array(eigenvalues['total'])
+            occ = np.array(occupancies['total'])
+        else:
+            eig = np.array([eigenvalues['up'], eigenvalues['down']])
+            occ = np.array([occupancies['up'], occupancies['down']])
+
+        return get_band_properties(eig, occ)
 
 
 def _build_structure(lattice):

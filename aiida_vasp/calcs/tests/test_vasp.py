@@ -74,7 +74,7 @@ def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
 @ONLY_ONE_CALC
 def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     """Test incar with invaid tags raises exception"""
-    from aiida.common import InputValidationError
+    from aiida.common import ValidationError
     from aiida.common.folders import Folder
     inputs_dict = {
         'gga': 'PE',
@@ -84,7 +84,7 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     calc = vasp_calc(inputs=inputs)
 
     temp_folder = Folder(str(localhost_dir.parent))
-    with pytest.raises(InputValidationError):
+    with pytest.raises(ValidationError):
         calc.prepare_for_submission(temp_folder)
 
 
@@ -116,7 +116,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     assert 'wannier90*' in calcinfo.retrieve_list
 
     assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
-    assert calcinfo.codes_info[0].join_objects is True
+    assert calcinfo.codes_info[0].join_files is True
 
     inputs_dict.update({'icharg': 2})
 
@@ -162,7 +162,7 @@ def managed_temp_object():
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.usefixtures('fresh_aiida_env')
-def test_vasp_calc(run_vasp_process):
+def test_vasp_calc(run_vasp_process, aiida_caplog):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     results, node = run_vasp_process()
@@ -193,6 +193,9 @@ def test_vasp_calc(run_vasp_process):
     # Exclude Wannier objects as they are not in the test set
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
     assert set(names) == set(retrieve_list_ref_no_wannier)
+
+    # Check that we always try to parse notifications
+    assert misc.get('notifications') is not None
 
     # Check that we do not have any notifications
     assert not misc['notifications']

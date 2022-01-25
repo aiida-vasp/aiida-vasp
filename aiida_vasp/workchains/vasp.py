@@ -471,7 +471,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
             self.report('Cannot found `misc` outputs - please check the process reports for issues.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_, do_break=True)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=910, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
@@ -747,14 +747,17 @@ class VaspWorkChain(BaseRestartWorkChain):
         run_status = misc['run_status']
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
-            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            self.report(f'The child calculation {node} does not possess a converged electronic structure.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         if run_status.get('contains_nelm_breach'):
             if self.ctx.ignore_transient_nelm_breach:
-                self.report('The calculation contains at least one electronic step is not converged. But this is ignored as requested.')
+                self.report('The calculation contains at least one electronic minimization '
+                            'that was truncated. It should thus not be considered converged. '
+                            'Upon request from user, this is ignored.')
             else:
-                self.report(('The calculation contains at least one electronic step is not converged. '
-                             'The use should inspect the problem manually, treating the calculation as failed.'))
+                self.report('The calculation contains at least one electronic minimization '
+                            'that is truncated. It should thus not be considered converged. '
+                            'Treating the calculation as failed. Please inspect, maybe it is salvageable.')
                 return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX, do_break=True)  #pylint: disable=no-member
 
         return None

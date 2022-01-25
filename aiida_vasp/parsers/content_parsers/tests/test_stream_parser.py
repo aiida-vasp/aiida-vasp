@@ -6,6 +6,7 @@ import pytest
 from aiida_vasp.utils.fixtures import *
 
 
+@pytest.mark.parametrize(['stream_parser'], [('stdout/out',)], indirect=True)
 def test_stream_parser(stream_parser):
     """Test that the stream parser works."""
     import re  # pylint: disable=import-outside-toplevel

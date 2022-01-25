@@ -15,6 +15,7 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, create_authinfo
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
@@ -32,9 +33,24 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
-    structure = PoscarParser(path=data_path('test_relax_wc', 'inp', 'POSCAR')).structure
-    kpoints = KpointsParser(path=data_path('test_relax_wc', 'inp', 'KPOINTS')).kpoints
-    parameters = IncarParser(path=data_path('test_relax_wc', 'inp', 'INCAR')).incar
+    structure = None
+    with open(data_path('test_relax_wc', 'inp', 'POSCAR'), 'r') as handler:
+        structure_parser = PoscarParser(handler=handler)
+        structure = structure_parser.get_quantity('poscar-structure')
+        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+
+    kpoints = None
+    with open(data_path('test_relax_wc', 'inp', 'KPOINTS'), 'r') as handler:
+        kpoints_parser = KpointsParser(handler=handler)
+        kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
+        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints.set_cell_from_structure(structure)
+
+    parameters = None
+    with open(data_path('test_relax_wc', 'inp', 'INCAR')) as handler:
+        incar_parser = IncarParser(handler=handler)
+        parameters = incar_parser.get_quantity('incar')
+
     parameters['system'] = 'test-case:test_relax_wc'
     parameters = {'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'nsw', 'ediffg']}}
     parameters['relax'] = {}

@@ -18,7 +18,7 @@ class DoscarParser(BaseFileParser):
 
     """
 
-    DEFAULT_OPTIONS = {'quantities_to_parse': ['doscar-dos']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['doscar-dos']}
 
     PARSABLE_QUANTITIES = {
         'doscar-dos': {
@@ -39,7 +39,8 @@ class DoscarParser(BaseFileParser):
         """
 
         try:
-            self._content_parser = Doscar(file_handler=handler, logger=self._logger)
+            non_collinear = self._settings.get('non_collinear', 'False')
+            self._content_parser = Doscar(file_handler=handler, logger=self._logger, non_collinear=non_collinear)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 

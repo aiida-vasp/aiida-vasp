@@ -296,6 +296,8 @@ class MockVasp:
         Run the mock vasp
         """
         hash_val = self.registry.compute_hash(self.workdir)
+        with open('/tmp/testing', 'a') as handler:
+            handler.write(str(self.workdir))
         if debug:
             print(f'Target hash value: {hash_val}')
         if hash_val in self.registry.reg_hash:

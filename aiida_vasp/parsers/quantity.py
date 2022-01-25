@@ -6,7 +6,7 @@ Contains the representation of quantities that users want to parse.
 """
 
 
-class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
+class ParsableQuantities():  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 
@@ -19,9 +19,9 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
         self._quantity_keys_to_parse = None
         self._equiv_quantity_keys = None
-        self._quantity_keys_to_names = None
+        self._quantity_keys_to_content = None
 
-        self._missing_names = None
+        self._missing_content = None
         self._quantity_items = None
         self._waiting_quantity_items = {}
 
@@ -31,9 +31,9 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         return self._quantity_keys_to_parse
 
     @property
-    def quantity_keys_to_names(self):
+    def quantity_keys_to_content(self):
         """Dictionary of quantity key -> object name"""
-        return self._quantity_keys_to_names
+        return self._quantity_keys_to_content
 
     @property
     def equivalent_quantity_keys(self):
@@ -52,8 +52,8 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         """Put parsable quantity in the waiting list"""
         self._waiting_quantity_items[quantity_key] = quantity_dict
 
-    def setup(self, retrieved_names=None, parser_definitions=None, quantity_names_to_parse=None):
-        """Set the parsable_quantities dictionary based on parsable_items obtained from object parsers."""
+    def setup(self, retrieved_content=None, parser_definitions=None, quantity_names_to_parse=None):
+        """Set the parsable_quantities dictionary based on PARSABLE_QUANTITIES obtained from object parsers."""
 
         def _show(var, var_name):
             print('---%s ---' % var_name)
@@ -69,26 +69,25 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
         show_screening_steps = False
 
-        self._quantity_items, self._quantity_keys_to_names = self._get_quantity_items_from_definitions(parser_definitions)
+        self._quantity_items, self._quantity_keys_to_content = self._get_quantity_items_from_definitions(parser_definitions)
         if show_screening_steps:
             _show(self._quantity_items, 'self._quantity_items')
-            _show(self._quantity_keys_to_names, 'self._quantity_keys_to_names')
+            _show(self._quantity_keys_to_content, 'self._quantity_keys_to_content')
 
         self._equiv_quantity_keys = self._create_containers_of_equiv_quantity_keys()
         if show_screening_steps:
             _show(self._equiv_quantity_keys, 'self._equiv_quantity_keys')
 
-        self._missing_names = self._identify_missing_names(retrieved_names, parser_definitions.keys())
+        self._missing_content = self._identify_missing_content(retrieved_content, parser_definitions.keys())
         if show_screening_steps:
-            _show(retrieved_names, 'retrieved_names')
+            _show(retrieved_content, 'retrieved_content')
             _show(parser_definitions.keys(), 'parser_definitions.keys()')
-            _show(self._missing_names, 'self._missing_names')
+            _show(self._missing_content, 'self._missing_content')
 
         parsable_quantity_keys = self._get_parsable_quantity_keys()
         if show_screening_steps:
             _show(parsable_quantity_keys, 'parsable_quantity_keys')
-
-        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse, retrieved_names)
+        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse, retrieved_content)
         if show_screening_steps:
             _show(quantity_names_to_parse, 'quantity_names_to_parse')
             _show(self._quantity_keys_to_parse, 'self._quantity_keys_to_parse')
@@ -100,22 +99,22 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         quantity_key has to be unique.
 
         """
-        _quantity_keys_to_names = {}
+        _quantity_keys_to_content = {}
         _quantity_items = {}
 
         for name, value in parser_definitions.items():
-            for quantity_key, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
-                self._add_quantity(_quantity_items, _quantity_keys_to_names, quantity_key, quantity_dict, name)
+            for quantity_key, quantity_dict in value['parser_class'].PARSABLE_QUANTITIES.items():
+                self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name)
 
         for quantity_key, quantity_dict in self._waiting_quantity_items.items():
             if 'name' in quantity_dict:
-                self._add_quantity(_quantity_items, _quantity_keys_to_names, quantity_key, quantity_dict, quantity_dict['name'])
+                self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, quantity_dict['name'])
             else:
                 raise RuntimeError('The added quantity {quantity} has to contain a name entry.'.format(quantity=quantity_key))
 
-        return _quantity_items, _quantity_keys_to_names
+        return _quantity_items, _quantity_keys_to_content
 
-    def _add_quantity(self, _quantity_items, _quantity_keys_to_names, quantity_key, quantity_dict, name):  # pylint: disable=no-self-use
+    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):  # pylint: disable=no-self-use
         """
         Helper to store quantity_dict in self._quantity_items
 
@@ -130,7 +129,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
                                'defined by two object parser classes. Quantity names must '
                                'be unique. If both quantities are equivalent, define one '
                                'as an alternative for the other.'.format(quantity=quantity_key, name=name))
-        _quantity_keys_to_names[quantity_key] = name
+        _quantity_keys_to_content[quantity_key] = name
         _quantity_dict = quantity_dict.copy()
         if 'name' not in _quantity_dict:
             _quantity_dict['name'] = quantity_key
@@ -169,14 +168,14 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
 
         return _equiv_quantity_keys
 
-    def _identify_missing_names(self, retrieved_names, names_in_parser_definitions):
+    def _identify_missing_content(self, retrieved_content, names_in_parser_definitions):
         """Identify missing objects for quantities."""
-        _missing_names = {}
+        _missing_content = {}
         for quantity_key in self._quantity_items:
-            name = self._quantity_keys_to_names[quantity_key]
-            if name not in retrieved_names or name not in names_in_parser_definitions:
-                _missing_names[quantity_key] = name
-        return _missing_names
+            name = self._quantity_keys_to_content[quantity_key]
+            if name not in retrieved_content or name not in names_in_parser_definitions:
+                _missing_content[quantity_key] = name
+        return _missing_content
 
     def _get_parsable_quantity_keys(self):
         """Check for every quantity, whether all of the prerequisites are parsable."""
@@ -185,9 +184,9 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
             is_parsable = True
             if 'prerequisites' in quantity_dict:
                 for prereq in quantity_dict['prerequisites']:
-                    if prereq not in self._quantity_items or prereq in self._missing_names:
+                    if prereq not in self._quantity_items or prereq in self._missing_content:
                         is_parsable = False
-            if is_parsable and quantity_key not in self._missing_names:
+            if is_parsable and quantity_key not in self._missing_content:
                 _parsable_quantity_keys.append(quantity_key)
         return _parsable_quantity_keys
 
@@ -219,7 +218,7 @@ class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
         Check if the missing objects are defined in the retrieve list
 
         """
-        missing_objects = self._missing_names[quantity_name]
+        missing_objects = self._missing_content[quantity_name]
         not_in_retrieve_names = None
         for item in missing_objects:
             if item not in retrieve_names:

@@ -17,7 +17,7 @@ class ChgcarParser(BaseFileParser):
 
     """
 
-    DEFAULT_OPTIONS = {'quantities_to_parse': ['charge_density', 'magnetization_density']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['charge_density']}
 
     PARSABLE_QUANTITIES = {
         'charge_density': {
@@ -58,7 +58,11 @@ class ChgcarParser(BaseFileParser):
             A NumPy array containing the charge density in the unit cell in C order.
 
         """
+
         charge_density = self._content_parser.charge_density
+        if charge_density is None:
+            return None
+        charge_density = {'charge_density': charge_density}
         return charge_density
 
     @property
@@ -77,4 +81,7 @@ class ChgcarParser(BaseFileParser):
 
         """
         magnetization_density = self._content_parser.magnetization_density
+        if magnetization_density is None:
+            return None
+        magnetization_density = {'magnetization_density': magnetization_density}
         return magnetization_density

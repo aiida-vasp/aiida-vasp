@@ -15,7 +15,7 @@ from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 class StreamParser(BaseFileParser):
     """Parser used for parsing errors and warnings from VASP."""
 
-    DEFAULT_OPTIONS = {'quantities_to_parse': ['notifications']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['notifications']}
 
     PARSABLE_QUANTITIES = {
         'notifications': {
@@ -41,7 +41,6 @@ class StreamParser(BaseFileParser):
         if self._settings is not None:
             stream_config = self._settings.get('stream_config', None)
             history = self._settings.get('stream_history', False)
-
         try:
             self._content_parser = Stream(file_handler=handler, logger=self._logger, history=history, config=stream_config)
         except SystemExit:

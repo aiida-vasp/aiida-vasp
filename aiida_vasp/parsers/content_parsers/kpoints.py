@@ -4,6 +4,7 @@ The ``KPOINTS`` parser interface.
 -----------------------------
 Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
+import numpy as np
 
 from parsevasp.kpoints import Kpoints, Kpoint
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -18,7 +19,7 @@ class KpointsParser(BaseFileParser):
 
     """
 
-    DEFAULT_OPTIONS = {'quantities_to_parse': ['kpoints-kpoints']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['kpoints-kpoints']}
 
     PARSABLE_QUANTITIES = {
         'kpoints-kpoints': {
@@ -63,16 +64,12 @@ class KpointsParser(BaseFileParser):
         -------
         aiida_kpoints : dict
             A dict that contain keys ``comment``, ``divisions``, ``shifts``, ``points``, ``tetra``,
-            ``tetra_volume``, ``mode`` ``centering`` and ``num_kpoints``, which are compatible
-            with consumption of the initialization of the AiiDA StructureData.
+            ``tetra_volume``, ``mode`` ``centering``, ``num_kpoints``, ``weights`` and ``cartesian``
+            which are compatible with consumption of the initialization of the AiiDA KpointsData.
 
         """
 
-        aiida_kpoints = None
-        if self._content_parser.entries.get('mode') == 'line':
-            self._logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
-        else:
-            aiida_kpoints = self._content_parser.get_dict()
+        aiida_kpoints = parsevasp_to_aiida(self._content_parser, self._logger)
 
         return aiida_kpoints
 
@@ -176,33 +173,67 @@ class KpointsParser(BaseFileParser):
 
         return kpoints_dict
 
-    # @staticmethod
-    # def _get_kpointsdata_explicit(kpoints_dict):
-    #     """Turn an 'explicit' kpoints dictionary into Aiida KpointsData."""
-    #     kpout = get_data_class('array.kpoints')()
 
-    #     kpoints = kpoints_dict.get('points')
-    #     cartesian = not kpoints[0].get_direct()
-    #     kpoint_list = []
-    #     weights = []
-    #     for kpoint in kpoints:
-    #         kpoint_list.append(kpoint.get_point().tolist())
-    #         weights.append(kpoint.get_weight())
+def parsevasp_to_aiida(kpoints, logger):
+    """``parsevasp`` to AiiDA conversion.
 
-    #     if weights[0] is None:
-    #         weights = None
+    Generate an AiiDA data structure that can be consumed by ``KpointsData`` on initialization
+    from the ``parsevasp`` instance of the ``Kpoints`` class.
 
-    #     kpout.set_kpoints(kpoint_list, weights=weights, cartesian=cartesian)
+    Parameters
+    ----------
+    kpoints : object
+        An instance of the ``Kpoints`` class in ``parsevasp``.
 
-    #     return kpout
+    Returns
+    -------
+    kpoints_dict : dict
+        A dictionary representation which are ready to be used when creating an
+        AiiDA ``KpointsData`` instance.
 
-    # @staticmethod
-    # def _get_kpointsdata_automatic(kpoints_dict):
-    #     """Turn an 'automatic' kpoints dictionary into Aiida KpointsData."""
-    #     kpout = get_data_class('array.kpoints')()
+    """
 
-    #     mesh = kpoints_dict.get('divisions')
-    #     shifts = kpoints_dict.get('shifts')
-    #     kpout.set_kpoints_mesh(mesh, offset=shifts)
+    if kpoints.entries.get('mode') == 'line':
+        # AiiDA does not support line mode
+        logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
+        return None
 
-    #     return kpout
+    # Fetch a dictionary containing the k-points information
+    kpoints_dict = kpoints.get_dict()
+
+    # Now unpack points, weights and check direct versus cartesian. Set to
+    # None if mode is automatic.
+    points = []
+    weights = []
+    cartesian = []
+    for key, value in kpoints_dict.items():
+        if key == 'points':
+            if value is not None:
+                for item in value:
+                    points.append(item[0])
+                    weights.append(item[1])
+                    # AiiDA wants cartesian and not direct flags, so revert
+                    cartesian.append(not item[2])
+            else:
+                points = None
+                weights = None
+                cartesian = None
+
+    # Make sure weights is ndarray
+    if weights is not None:
+        weights = np.array(weights)
+
+    # Check that we only have similar elements in the direct list as
+    # AiiDA can only work with all points being either in direct or cartesian
+    # coordinates.
+    if cartesian is not None:
+        if not cartesian.count(cartesian[0]) == len(cartesian):
+            raise ValueError('Different coordinate systems have been detected among the k-points.')
+        cartesian = cartesian[0]
+
+    # Modify dict to AiiDA spec
+    kpoints_dict['points'] = points
+    kpoints_dict['weights'] = weights
+    kpoints_dict['cartesian'] = cartesian
+
+    return kpoints_dict

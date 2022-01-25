@@ -1,5 +1,6 @@
 """Test the OUTCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
+# pylint: disable=invalid-name
 
 import pytest
 import numpy as np
@@ -31,7 +32,7 @@ def test_parse_outcar_no_quantity(outcar_parser):
     assert outcar_parser.get_quantity('magnetization') is None
 
 
-@pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
+@pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['symmetries']}],)], indirect=True)
 def test_parse_outcar_symmetry(outcar_parser):
     """Load a reference OUTCAR parser.
 
@@ -40,8 +41,7 @@ def test_parse_outcar_symmetry(outcar_parser):
     """
 
     symmetry = outcar_parser.get_quantity('symmetries')
-    # test symmetries
-    test = {
+    compare_symmetries = {
         'symmetrized_cell_type': {
             'static': [
                 'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
@@ -77,10 +77,10 @@ def test_parse_outcar_symmetry(outcar_parser):
             'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
         }
     }
-    assert set(symmetry) == set(test)
+    assert set(symmetry) == set(compare_symmetries)
 
 
-@pytest.mark.parametrize('outcar_parser', ['disp_details'], indirect=True)
+@pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['elastic_moduli']}],)], indirect=True)
 def test_parse_outcar_elastic_moduli(outcar_parser):
     """Load a reference OUTCAR parser.
 
@@ -144,7 +144,11 @@ def test_parse_outcar_status_extended(outcar_parser, expected):
     assert status['consistent_nelm_breach'] is expected[3]
     assert status['contains_nelm_breach'] is expected[4]
 
-@pytest.mark.parametrize('outcar_parser', ['magnetization'], indirect=True)
+
+@pytest.mark.parametrize(['outcar_parser'], [(['magnetization', 'OUTCAR', {
+    'quantities_to_parse': ['magnetization', 'site_magnetization']
+}],)],
+                         indirect=True)
 def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
     """Load a reference OUTCAR parser.
 
@@ -202,7 +206,11 @@ def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
     assert set(magnetization) == set(test)
 
 
-@pytest.mark.parametrize('outcar_parser', ['magnetization_single'], indirect=True)
+@pytest.mark.parametrize(['outcar_parser'],
+                         [(['magnetization_single', 'OUTCAR', {
+                             'quantities_to_parse': ['magnetization', 'site_magnetization']
+                         }],)],
+                         indirect=True)
 def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # pylint: disable=invalid-name
     """Load a reference OUTCAR parser.
 

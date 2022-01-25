@@ -15,7 +15,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
-class PotcarIo(object):  # pylint: disable=useless-object-inheritance
+class PotcarIo():  # pylint: disable=useless-object-inheritance
     """
     Use pymatgen.io.vasp.Potcar to deal with VASP pseudopotential IO.
 
@@ -106,7 +106,7 @@ class PotcarIo(object):  # pylint: disable=useless-object-inheritance
         return self.sha512 == other.sha512
 
 
-class MultiPotcarIo(object):  # pylint: disable=useless-object-inheritance
+class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
     """Handle file i/o for POTCAR files with one or more potentials."""
 
     def __init__(self, potcars=None):

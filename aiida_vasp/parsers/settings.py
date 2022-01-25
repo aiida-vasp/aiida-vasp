@@ -66,15 +66,12 @@ OBJECT_PARSER_SETS = {
 
 NODES = {
     'misc': {
-        'link_name':
-            'misc',
-        'type':
-            'dict',
+        'link_name': 'misc',
+        'type': 'dict',
         'quantities': [
             'total_energies',
             'maximum_stress',
             'maximum_force',
-            'magnetization',
             'notifications',
             'run_status',
             'run_stats',
@@ -151,10 +148,10 @@ NODES = {
         'type': 'array',
         'quantities': ['dynmat'],
     },
-    'chgcar': {
-        'link_name': 'chgcar',
-        'type': 'vasp.chargedensity',
-        'quantities': ['chgcar'],
+    'charge_density': {
+        'link_name': 'charge_density',
+        'type': 'array',
+        'quantities': ['charge_density'],
     },
     'wavecar': {
         'link_name': 'wavecar',
@@ -169,7 +166,7 @@ NODES = {
 }
 
 
-class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
+class ParserDefinitions():  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
     def __init__(self, object_parser_set='default'):
@@ -192,7 +189,7 @@ class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
             self._parser_definitions[name] = deepcopy(parser_dict)
 
 
-class ParserSettings(object):  # pylint: disable=useless-object-inheritance
+class ParserSettings():  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
 
@@ -257,8 +254,22 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
 
         self._output_nodes_dict[node_name] = node_dict
 
+    @property
+    def settings(self):
+        """Return the settings dictionary."""
+        return self._settings
+
     def get(self, item, default=None):
         return self._settings.get(item, default)
+
+    def update_quantities_to_parse(self, new_quantities):
+        """Update the quantities to be parsed."""
+        try:
+            # Update the quantities to be parsed, any extra keys already sitting in settings are preserved
+            self._settings['quantities_to_parse'].append(new_quantities)
+            self._settings['quantities_to_parse'] = list(dict.fromkeys(self._settings['quantities_to_parse']))
+        except KeyError:
+            self._settings['quantities_to_parse'] = new_quantities
 
     def _init_output_nodes_dict(self):
         """

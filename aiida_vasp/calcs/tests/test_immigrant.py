@@ -40,6 +40,7 @@ def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, loca
 
     create_authinfo(localhost, store=True)
     inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, phonondb_run, use_chgcar=True, use_wavecar=True)
+
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
     inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)

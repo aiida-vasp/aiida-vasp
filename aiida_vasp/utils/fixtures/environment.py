@@ -13,10 +13,11 @@ from __future__ import print_function
 import pytest
 
 from aiida.manage.tests import TemporaryProfileManager
+from aiida.manage.tests.pytest_fixtures import aiida_caplog
 
 
 @pytest.fixture()
-def fresh_aiida_env(aiida_profile):
+def fresh_aiida_env(aiida_profile, aiida_caplog):
     """Reset the database before and after the test function."""
     if isinstance(aiida_profile._manager, TemporaryProfileManager):
         print('The root directory of the fixture manager is: {}'.format(aiida_profile._manager.root_dir))  # pylint: disable=protected-access

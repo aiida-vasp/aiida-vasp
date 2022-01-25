@@ -1,5 +1,6 @@
 """Test the vasprun.xml parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
+# pylint: disable=invalid-name
 
 import pytest
 import numpy as np
@@ -423,3 +424,14 @@ def test_parse_vasprun_dynmat(vasprun_parser):
         ]))
     assert dyneig[0] == pytest.approx(-1.36621537e+00)
     assert dyneig[4] == pytest.approx(-8.48939361e-01)
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
+def test_band_properties(fresh_aiida_env, vasprun_parser):
+    """Load a reference vasprun.xml and check that key properties of the electric structure
+    are returned correctly."""
+    data = vasprun_parser.get_quantity('band_properties')
+    assert data['cbm'] == pytest.approx(6.5536)
+    assert data['vbm'] == pytest.approx(6.5105)
+    assert data['is_direct_gap'] is False
+    assert data['band_gap'] == pytest.approx(0.04310, rel=1e-3)

@@ -8,7 +8,7 @@ The calculation class that prepares a specific VASP calculation.
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
-from aiida.plugins import DataFactory
+from aiida.common import ValidationError
 
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
@@ -54,6 +54,10 @@ class VaspCalculation(VaspCalcBase):
 
     Which is very similar to the workchain example.
 
+    Since we do not want the content parsers to know about the AiiDA infrastructure,
+    i.e. processes etc. we have no access to the exit codes defined on the CalcJob.
+    We thus have to deal with failures in parsing directly in the write calls here.
+
     """
 
     _VASP_OUTPUT = 'vasp_output'
@@ -93,11 +97,11 @@ class VaspCalculation(VaspCalcBase):
         spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
         spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
-        spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The output charge density.')
-        spec.output('wavecar',
-                    valid_type=get_data_class('vasp.wavefun'),
+        spec.output('chgcar',
+                    valid_type=get_data_class('vasp.chargedensity'),
                     required=False,
-                    help='The output containing the plane wave coefficients.')
+                    help='The output charge density CHGCAR file.')
+        spec.output('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False, help='The output plane wave coefficients file.')
         spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
@@ -109,6 +113,8 @@ class VaspCalculation(VaspCalcBase):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
         spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
         spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
+        spec.output('charge_density', valid_type=get_data_class('array'), required=False, help='The output charge density.')
+        spec.output('magnetization_density', valid_type=get_data_class('array'), required=False, help='The output magnetization density.')
         spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False, help='The output of the site magnetization')
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(350,
@@ -298,8 +304,11 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the object to write to
         """
-        incar_parser = IncarParser(data=self.inputs.parameters)
-        incar_parser.write(dst)
+        try:
+            incar_parser = IncarParser(data=self.inputs.parameters)
+            incar_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The INCAR content did not pass validation.')
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
         """
@@ -320,8 +329,12 @@ class VaspCalculation(VaspCalcBase):
             positions_dof = dynamics.get('positions_dof')
             if positions_dof is not None:
                 options = {'positions_dof': positions_dof}
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
-        poscar_parser.write(dst)
+
+        try:
+            poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
+            poscar_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The POSCAR content did not pass validation.')
 
     def write_potcar(self, dst):
         """
@@ -342,8 +355,11 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the object to write to
         """
-        kpoint_parser = KpointsParser(data=self.inputs.kpoints)
-        kpoint_parser.write(dst)
+        try:
+            kpoint_parser = KpointsParser(data=self.inputs.kpoints)
+            kpoint_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The KPOINTS content did not pass validation.')
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
         charge_density = self.inputs.charge_density

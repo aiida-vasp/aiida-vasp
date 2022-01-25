@@ -52,9 +52,9 @@ class BaseFileParser():
     data : object. optional
         An AiiDA data structure node. Typically used when one later want to write VASP input
         files.
-    settings : dict
+    settings : dict, optional
         Parser settings. Used to set parser settings, e.g. which quantities to compose into nodes etc.
-    options : dict
+    options : dict, optional
         Parser options. Used to set extra options to the content parsers. For instance for the
         ``POSCAR``/``CONTAR`` parser one set ``options.positions_dof`` to supply selective tags to enable proper
         construction of selective dynamics ``POSCAR``/``CONTCAR`` from a ``StructureData``. The ``StructureData`` does
@@ -63,7 +63,7 @@ class BaseFileParser():
     """
 
     PARSABLE_QUANTITIES = {}
-    DEFAULT_OPTIONS = {}
+    DEFAULT_SETTINGS = {'quantities_to_parse': []}
 
     def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument
         super(BaseFileParser, self).__init__()
@@ -84,7 +84,7 @@ class BaseFileParser():
         # Content data, which is an AiiDA data structure.
         self._content_data = None
         # Parser settings.
-        self._settings = settings
+        self._set_settings(settings)
         # Parser options.
         self._options = options
 
@@ -107,6 +107,30 @@ class BaseFileParser():
         """Fetch the quantities that this content parser can provide."""
         return self._parsable_quantities
 
+    def _set_settings(self, settings):
+        """Sets the settings to be used for the content parser.
+
+        Parameters
+        ----------
+        settings : None or a dict
+            The settings to be used for the content parser. Can be None if no settings is supplied
+            to init. Defaults are then set.
+
+        """
+        if settings is None:
+            # Apply defaults
+            self._settings = self.DEFAULT_SETTINGS
+        else:
+            self._settings = settings
+        if not self._settings.get('quantities_to_parse'):
+            # Did not find any quantities to parse in the settings, set it to the default
+            # for each content parser or to an empty list of not defined
+            self._settings['quantities_to_parse'] = self.DEFAULT_SETTINGS['quantities_to_parse'] \
+                if self.DEFAULT_SETTINGS.get('quantities_to_parse') else []
+        # Let us make sure the quantities to parser is in a list form
+        if not isinstance(self._settings.get('quantities_to_parse'), list):
+            raise TypeError('The quantities_to_parse is not defined as a list of quantities.')
+
     def get_quantity(self, quantity_key):
         """Fetch the required quantity from the content parser.
 
@@ -128,23 +152,21 @@ class BaseFileParser():
             object and the requested ``quantity_key`` is found to be parsable we return the quantity.
 
         """
-
         if self._content_data is not None:
             # If we have already set an AiiDA data structure, return it.
             # This is straightforward in our case as there is for the PoscarParser,
             # KpointsParser a 1:1 mapping between the parser and the AiiDA data (if
             # we ignore conversions between representations etc.).
             return self._content_data
-
         # We continue assuming we need to parse this quantity
         if quantity_key not in self._parsable_quantities:
             # Check if this quantity can be parsed by this content parser, if not,
             # return None.
             return None
-
         if self._parsed_content.get(quantity_key) is None:
             # Parsed content does not contain this quantity,
-            # most likely not parsed. Parse it now and store.
+            # most likely none of the content is parsed. Parse
+            # all relevant content now and store.
             self._parsed_content = self._parse_content()
 
         return self._parsed_content.get(quantity_key)
@@ -155,8 +177,10 @@ class BaseFileParser():
 
         Uses the write method defined in this loaded content parser.
 
-        :param path: A string describing the relative path in the submission folder
-        to write the file.
+        Parameters
+        ----------
+        path : str
+            A string describing the relative path in the submission folder to write the file.
 
         """
 
@@ -170,7 +194,6 @@ class BaseFileParser():
             # Now a content parser should be ready and its content can be
             # written using parsevasp. But the content parser could still be None
             # if there is something with the data that can not be parsed.
-            print(dir(self._content_parser))
             with open(path, 'w') as handler:
                 self._content_parser.write(file_handler=handler)
         else:
@@ -229,15 +252,10 @@ class BaseFileParser():
 
     def _parse_content(self):
         """Parse the quantities configured and parseable from the content."""
-
-        quantities_to_parse = self.DEFAULT_OPTIONS.get('quantities_to_parse')
-        if self._settings is not None and self._settings.quantity_names_to_parse:
-            quantities_to_parse = self._settings.quantity_names_to_parse
-
+        quantities_to_parse = self._settings.get('quantities_to_parse')
         result = {}
-
         if self._content_parser is None:
-            # Parsevasp threw an exception, which means POSCAR could not be parsed.
+            # Parsevasp threw an exception, which means content could not be parsed.
             for quantity in quantities_to_parse:
                 if quantity in self._parsable_quantities:
                     result[quantity] = None

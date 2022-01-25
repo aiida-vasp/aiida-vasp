@@ -40,6 +40,23 @@ POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
 
 
+def path_file_and_settings(name, param):
+    """Locate folder, filename and settings from param. Return the path and settings."""
+    settings = {}
+    if isinstance(param, list):
+        if len(param) == 3:
+            folder, name, settings = param
+        elif len(param) == 2:
+            folder, name = param
+        else:
+            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
+    else:
+        folder = param
+    path = data_path(folder, name)
+
+    return path, settings
+
+
 @pytest.fixture(scope='session')
 def localhost_dir(tmp_path_factory):
     return tmp_path_factory.mktemp('localhost_work')
@@ -417,152 +434,81 @@ def ref_retrieved():
 @pytest.fixture()
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'vasprun.xml'
-    settings = {}
-    if isinstance(request.param, list):
-        if len(request.param) == 3:
-            folder, name, settings = request.param
-        elif len(request.param) == 2:
-            folder, name = request.param
-        else:
-            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('vasprun.xml', request.param)
     with open(path, 'r') as handler:
-        parser = VasprunParser(handler=handler, settings=ParserSettings(settings))
+        parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'OUTCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('OUTCAR', request.param)
     with open(path, 'r') as handler:
-        parser = OutcarParser(handler=handler, settings=ParserSettings({}))
+        parser = OutcarParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def poscar_parser(request):
     """Return an instance of PoscarParser for a reference POSCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'POSCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, _ = path_file_and_settings('POSCAR', request.param)
     with open(path, 'r') as handler:
-        parser = PoscarParser(handler=handler, settings=ParserSettings({}))
-    return parser
-
-
-@pytest.fixture()
-def poscar_parser(request):
-    """Return an instance of PoscarParser for a reference POSCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'POSCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
-    with open(path, 'r') as handler:
-        parser = PoscarParser(handler=handler, settings=ParserSettings({}))
+        parser = PoscarParser(handler=handler)
     return parser
 
 
 @pytest.fixture()
 def incar_parser(request):
     """Return an instance of IncarParser for a reference INCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'INCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('INCAR', request.param)
     with open(path, 'r') as handler:
-        parser = IncarParser(handler=handler, settings=ParserSettings({}))
+        parser = IncarParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def doscar_parser(request):
     """Return an instance of DoscarParser for a reference DOSCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'DOSCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('DOSCAR', request.param)
     with open(path, 'r') as handler:
-        parser = DoscarParser(handler=handler, settings=ParserSettings({}))
+        parser = DoscarParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def chgcar_parser(request):
     """Return an instance of ChgcarParser for a reference CHGCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'CHGCAR'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('CHGCAR', request.param)
     with open(path, 'r') as handler:
-        parser = ChgcarParser(handler=handler, settings=ParserSettings({}))
+        parser = ChgcarParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def eigenval_parser(request):
     """Return an instance of EigenvalParser for a reference EIGENVAL."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'EIGENVAL'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('EIGENVAL', request.param)
     with open(path, 'r') as handler:
-        parser = EigenvalParser(handler=handler, settings=ParserSettings({}))
+        parser = EigenvalParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def kpoints_parser(request):
     """Return an instance of KpointsParser for a reference KPOINTS."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'KPOINTS'
-    if isinstance(request.param, list):
-        folder, name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, name)
+    path, settings = path_file_and_settings('KPOINTS', request.param)
     with open(path, 'r') as handler:
-        parser = KpointsParser(handler=handler, settings=ParserSettings({}))
+        parser = KpointsParser(handler=handler, settings=settings)
     return parser
 
 
-@pytest.fixture(params=[['stdout', 'out']])
+@pytest.fixture()
 def stream_parser(request):
     """Return an instance of StreamParser for a reference stream capture."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    name = 'vasp_output'
-    path = data_path(*request.param, name)
+    path, settings = path_file_and_settings('vasp_output', request.param)
     with open(path, 'r') as handler:
-        parser = StreamParser(handler=handler, settings=ParserSettings({}))
+        parser = StreamParser(handler=handler, settings=settings)
     return parser
 
 

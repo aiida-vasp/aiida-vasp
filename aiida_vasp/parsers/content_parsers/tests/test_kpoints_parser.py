@@ -25,12 +25,14 @@ def test_parse_kpoints_explicit(kpoints_parser):
         'comment': 'K-points',
         'divisions': None,
         'shifts': None,
-        'points': [[np.array([0., 0., 0.]), 1.0, True], [np.array([0., 0., 0.5]), 1.0, True]],
+        'points': [np.array([0., 0., 0.]), np.array([0., 0., 0.5])],
+        'weights': [1.0, 1.0],
         'tetra': None,
         'tetra_volume': None,
         'mode': 'explicit',
         'centering': None,
-        'num_kpoints': 2
+        'num_kpoints': 2,
+        'cartesian': False
     }
     compare_kpoints_content(result, result_ref)
 
@@ -50,11 +52,13 @@ def test_parse_kpoints_mesh(kpoints_parser):
         'divisions': [2, 2, 2],
         'shifts': [0.0, 0.0, 0.0],
         'points': None,
+        'weights': None,
         'tetra': None,
         'tetra_volume': None,
         'mode': 'automatic',
         'centering': 'Monkhorst-Pack',
-        'num_kpoints': 0
+        'num_kpoints': 0,
+        'cartesian': None,
     }
     compare_kpoints_content(result, result_ref)
 
@@ -95,6 +99,9 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
     kpoints_data, _ = vasp_kpoints
     kpoints_parser = KpointsParser(data=kpoints_data)
 
+    # Check that get_quantity return the same KpointsData instance
+    assert kpoints_data == kpoints_parser.get_quantity('key_does_not_matter')
+
     # Write the loaded KpointsData to file, which behind the scenes convert it
     # to a KPOINTS format
     temp_path = str(tmpdir.join('KPOINTS'))
@@ -111,23 +118,27 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
             'divisions': [2, 2, 2],
             'shifts': [0.0, 0.0, 0.0],
             'points': None,
+            'weights': None,
             'tetra': None,
             'tetra_volume': None,
             'mode': 'automatic',
             'centering': 'Gamma',
-            'num_kpoints': 0
+            'num_kpoints': 0,
+            'cartesian': None
         }
     else:
         result_ref = {
             'comment': 'No comment',
             'divisions': None,
             'shifts': None,
-            'points': [[np.array([0., 0., 0.]), 1.0, True], [np.array([0., 0., 0.5]), 1.0, True]],
+            'points': [np.array([0., 0., 0.]), np.array([0., 0., 0.5])],
+            'weights': [1.0, 1.0],
             'tetra': None,
             'tetra_volume': None,
             'mode': 'explicit',
             'centering': None,
-            'num_kpoints': 2
+            'num_kpoints': 2,
+            'cartesian': False
         }
     compare_kpoints_content(result, result_ref)
 
@@ -135,14 +146,17 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
 def compare_kpoints_content(kpoints, kpoints_ref):
     """Compare the KPOINTS content with supplied reference data."""
     if kpoints['mode'] == 'explicit':
-        kpoints_ref_no_points = dict(kpoints_ref)
-        del kpoints_ref_no_points['points']
-        kpoints_no_points = dict(kpoints)
-        del kpoints_no_points['points']
-        assert kpoints_no_points == kpoints_ref_no_points
+        # Check all but points and weights
+        kpoints_ref_no_points_weights = dict(kpoints_ref)
+        del kpoints_ref_no_points_weights['points']
+        del kpoints_ref_no_points_weights['weights']
+        kpoints_no_points_weights = dict(kpoints)
+        del kpoints_no_points_weights['points']
+        del kpoints_no_points_weights['weights']
+        assert kpoints_no_points_weights == kpoints_ref_no_points_weights
+        # Check points and weights
         for index, item in enumerate(kpoints['points']):
-            assert np.allclose(item[0], kpoints_ref['points'][index][0])
-            assert math.isclose(item[1], kpoints_ref['points'][index][1])
-            assert item[2] == kpoints_ref['points'][index][2]
+            assert np.allclose(item, kpoints_ref['points'][index])
+        assert np.allclose(kpoints['weights'], kpoints_ref['weights'])
     elif kpoints['mode'] == 'automatic':
         assert kpoints == kpoints_ref

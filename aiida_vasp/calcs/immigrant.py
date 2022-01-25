@@ -16,12 +16,13 @@ from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.content_parsers.wavecar import WavecarParser
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
@@ -150,15 +151,17 @@ class VaspImmigrant(VaspCalculation):
                 transport.get(str(_remote_path / 'POSCAR'), str(sandbox_path))
                 transport.get(str(_remote_path / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
                 transport.get(str(_remote_path / 'KPOINTS'), str(sandbox_path))
+                # Compose the input nodes
                 inputs.parameters = get_incar_input(sandbox_path)
                 inputs.structure = get_poscar_input(sandbox_path)
+                inputs.kpoints = get_kpoints_input(sandbox_path, structure=inputs.structure)
                 try:
                     inputs.potential = get_potcar_input(sandbox_path,
+                                                        structure=inputs.structure,
                                                         potential_family=kwargs.get('potential_family'),
                                                         potential_mapping=kwargs.get('potential_mapping'))
                 except InputValidationError:
                     pass
-                inputs.kpoints = get_kpoints_input(sandbox_path)
                 cls._add_inputs(transport, _remote_path, sandbox_path, inputs, **kwargs)
 
         return inputs
@@ -190,12 +193,23 @@ class VaspImmigrant(VaspCalculation):
 
 
 def get_incar_input(dir_path):
-    incar = IncarParser(path=str(dir_path / 'INCAR')).incar
-    return get_data_node('dict', dict=incar)
+    """Create a node that contains the INCAR content."""
+    with open(str(dir_path / 'INCAR'), 'r') as handler:
+        incar_parser = IncarParser(handler=handler)
+    incar = incar_parser.get_quantity('incar')
+    node = NodeComposer.compose_dict('dict', incar)
+
+    return node
 
 
 def get_poscar_input(dir_path):
-    return PoscarParser(path=str(dir_path / 'POSCAR')).structure
+    """Create a node that contains the POSCAR content."""
+    with open(str(dir_path / 'POSCAR'), 'r') as handler:
+        poscar_parser = PoscarParser(handler=handler)
+    poscar = poscar_parser.get_quantity('poscar-structure')
+    node = NodeComposer.compose_structure('structure', {'structure': poscar})
+
+    return node
 
 
 def get_potcar_input(dir_path, structure=None, potential_family=None, potential_mapping=None):
@@ -215,15 +229,24 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
 
 
 def get_kpoints_input(dir_path, structure=None):
+    """Create a node that contains the KPOINTS content."""
     structure = structure or get_poscar_input(dir_path)
-    kpoints = KpointsParser(path=str(dir_path / 'KPOINTS')).kpoints
-    kpoints.set_cell_from_structure(structure)
-    return kpoints
+    with open(str(dir_path / 'KPOINTS'), 'r') as handler:
+        kpoints_parser = KpointsParser(handler=handler)
+    kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
+    node = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+    node.set_cell_from_structure(structure)
+
+    return node
 
 
 def get_chgcar_input(dir_path):
-    return ChgcarParser(path=str(dir_path / 'CHGCAR')).chgcar
+    node = ChargedensityData(str(dir_path / 'CHGCAR'))
+
+    return node
 
 
 def get_wavecar_input(dir_path):
-    return WavecarParser(path=str(dir_path / 'WAVECAR')).wavecar
+    node = WavefunData(str(dir_path / 'WAVECAR'))
+
+    return node

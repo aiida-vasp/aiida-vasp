@@ -37,10 +37,13 @@ def mock_vasp_strict():
     return _mock_vasp(True)
 
 
-def _mock_vasp(strict_match):
+def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
     """Verify input objects are parseable and copy in output objects."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
+    with open('/tmp/pung', 'w') as handler:
+        handler.write('HERE')
+        handler.write('pwd:' + str(pwd) + '!')
     aiida_path = Path(AIIDA_CONFIG_FOLDER)
     aiida_cfg = aiida_path / 'config.json'
     click.echo('DEBUG: AIIDA_PATH = {}'.format(os.environ.get('AIIDA_PATH')))
@@ -59,18 +62,32 @@ def _mock_vasp(strict_match):
 
     kpoints = pwd / 'KPOINTS'
     assert kpoints.is_file(), 'KPOINTS input not found.'
-    incar_parser = IncarParser(path=str(incar))
+
+    # Check that the input files can be parsed (as close to a validity check we can get)
+    incar_parser = False
+    system = ''
+    with open(str(incar), 'r') as handler:
+        incar_parser = IncarParser(handler=handler)
+        system = incar_parser.incar.get('system', '')
     assert incar_parser, 'INCAR could not be parsed.'
 
-    assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
-    assert PoscarParser(path=str(poscar)), 'POSCAR could not be parsed.'
-    assert KpointsParser(path=str(kpoints)), 'KPOINTS could not be parsed.'
+    poscar_parser = False
+    with open(str(poscar), 'r') as handler:
+        poscar_parser = PoscarParser(handler=handler)
+    assert poscar_parser, 'POSCAR could not be parsed.'
 
-    system = incar_parser.incar.get('system', '')
+    kpoints_parser = False
+    with open(str(kpoints), 'r') as handler:
+        kpoints_parser = KpointsParser(handler=handler)
+    assert kpoints_parser, 'KPOINTS could not be parsed.'
+
+    assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
+
     try:
         test_case = system.strip().split(':')[1].strip()
     except IndexError:
         test_case = ''
+
     if not test_case:
         # If no test case is defined, we first try the hash-based mock registry
         mock_registry_path = os.environ.get('MOCK_CODE_BASE', data_path('.'))
