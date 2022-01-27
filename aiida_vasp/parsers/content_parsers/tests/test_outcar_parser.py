@@ -33,7 +33,7 @@ def test_parse_outcar_no_quantity(outcar_parser):
 
 
 @pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['symmetries']}],)], indirect=True)
-def test_parse_outcar_symmetry(outcar_parser):
+def test_parse_outcar_symmetry(outcar_parser, compare_symmetries):
     """Load a reference OUTCAR parser.
 
     We check that it parses and provides the correct content for the symmetry.
@@ -41,42 +41,6 @@ def test_parse_outcar_symmetry(outcar_parser):
     """
 
     symmetry = outcar_parser.get_quantity('symmetries')
-    compare_symmetries = {
-        'symmetrized_cell_type': {
-            'static': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
-            ],
-            'dynamic': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
-            ]
-        },
-        'original_cell_type': {
-            'static': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
-            ],
-            'dynamic': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
-            ]
-        },
-        'num_space_group_operations': {
-            'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
-            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
-        }
-    }
     assert set(symmetry) == set(compare_symmetries)
 
 

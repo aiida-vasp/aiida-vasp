@@ -571,3 +571,43 @@ def phonondb_run(tmp_path):
     phonondb = Path(data_path('phonondb'))
     copytree(phonondb, tmp_path)
     yield tmp_path
+
+
+@pytest.fixture
+def compare_symmetries():
+    return {
+        'symmetrized_cell_type': {
+            'static': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ],
+            'dynamic': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ]
+        },
+        'original_cell_type': {
+            'static': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ],
+            'dynamic': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ]
+        },
+        'num_space_group_operations': {
+            'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
+            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
+        }
+    }

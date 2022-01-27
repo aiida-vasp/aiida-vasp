@@ -706,7 +706,7 @@ def test_create_node_dynmat(fresh_aiida_env, vasprun_parser):
                              'quantities_to_parse': ['symmetries', 'elastic_moduli', 'run_status', 'run_stats']
                          }],)],
                          indirect=True)
-def test_create_node_dict_custom(fresh_aiida_env, outcar_parser):
+def test_create_node_dict_custom(fresh_aiida_env, outcar_parser, compare_symmetries):
     """Check that the node composer works for custom Dict node."""
 
     # Prepare inputs for the node composer
@@ -723,42 +723,6 @@ def test_create_node_dict_custom(fresh_aiida_env, outcar_parser):
     assert isinstance(composed_nodes.successful['my_custom_node'], get_data_class('dict'))
 
     # Compare
-    compare_symmetries = {
-        'symmetrized_cell_type': {
-            'static': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
-            ],
-            'dynamic': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
-            ]
-        },
-        'original_cell_type': {
-            'static': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
-            ],
-            'dynamic': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
-            ]
-        },
-        'num_space_group_operations': {
-            'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
-            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
-        }
-    }
     data_dict = composed_nodes.successful['my_custom_node'].get_dict()
     assert set(data_dict['symmetries']) == set(compare_symmetries)
 
