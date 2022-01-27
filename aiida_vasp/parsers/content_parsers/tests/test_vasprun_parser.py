@@ -241,7 +241,7 @@ def test_parse_vasprun_toten(vasprun_parser):
     """Load a reference vasprun.xml and test that one of the  total energies
     is returned correctly."""
     result = vasprun_parser.get_quantity('energies')
-    assert set(result.keys()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
+    assert set(result.keys()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
     energies = result['energy_extrapolated']
     test_array = np.array([-42.91113621])
     np.testing.assert_allclose(test_array, energies, atol=0., rtol=1.0e-7)
@@ -250,9 +250,13 @@ def test_parse_vasprun_toten(vasprun_parser):
     # Electronic steps should be one
     test_array = np.array([1])
     np.testing.assert_allclose(test_array, result['electronic_steps'], atol=0., rtol=1.0e-7)
-    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     test_array = np.array([-0.00236711])
-    np.testing.assert_allclose(test_array, result['energy_extrapolated_final'], atol=0., rtol=1.0e-7)
+    with np.testing.assert_raises(AssertionError):
+        np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
+    # Instead we correct and it should be
+    test_array = np.array([-42.911136])
+    np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [(['basic', 'vasprun.xml', {
@@ -264,14 +268,13 @@ def test_toten_multiple(vasprun_parser):
     are returned properly."""
     result = vasprun_parser.get_quantity('energies')
     assert set(result.keys()) == set(
-        ['electronic_steps', 'energy_free', 'energy_free_final', 'energy_no_entropy', 'energy_no_entropy_final'])
+        ['electronic_steps', 'energy_free_electronic', 'energy_free', 'energy_no_entropy', 'energy_no_entropy_electronic'])
     test_array = np.array([-42.91231976])
+    np.testing.assert_allclose(test_array, result['energy_free_electronic'], atol=0., rtol=1.0e-7)
     np.testing.assert_allclose(test_array, result['energy_free'], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(test_array, result['energy_free_final'], atol=0., rtol=1.0e-7)
     test_array = np.array([-42.90995265])
+    np.testing.assert_allclose(test_array, result['energy_no_entropy_electronic'], atol=0., rtol=1.0e-7)
     np.testing.assert_allclose(test_array, result['energy_no_entropy'], atol=0., rtol=1.0e-7)
-    test_array = np.array([-42.91113621])
-    np.testing.assert_allclose(test_array, result['energy_no_entropy_final'], atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [(['basic', 'vasprun.xml', {'electronic_step_energies': True}],)], indirect=True)
@@ -280,8 +283,8 @@ def test_parse_vasprun_toten_electronic(vasprun_parser):
     are returned correctly for the electronic steps."""
     result = vasprun_parser.get_quantity('energies')
     # Test that the default arrays are present
-    assert set(result.keys()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
-    energies = result['energy_extrapolated']
+    assert set(result.keys()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    energies = result['energy_extrapolated_electronic']
     test_array = np.array([-42.91113666, -42.91113621])
     np.testing.assert_allclose(test_array, energies, atol=0., rtol=1.0e-7)
     # Test number of entries
@@ -289,9 +292,13 @@ def test_parse_vasprun_toten_electronic(vasprun_parser):
     # Electronic steps should be two
     test_array = np.array([2])
     np.testing.assert_allclose(test_array, result['electronic_steps'], atol=0., rtol=1.0e-7)
-    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     test_array = np.array([-0.00236711])
-    np.testing.assert_allclose(test_array, result['energy_extrapolated_final'], atol=0., rtol=1.0e-7)
+    with np.testing.assert_raises(AssertionError):
+        np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
+    # Instead we correct and it should be
+    test_array = np.array([-42.911136])
+    np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
@@ -299,8 +306,8 @@ def test_parse_vasprun_toten_relax(vasprun_parser):
     """Load a reference vasprun.xml and check that the total energies are
     returned correctly for relaxation runs."""
     result = vasprun_parser.get_quantity('energies')
-    assert set(result.keys()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
-    energies = result['energy_extrapolated']
+    assert set(result.keys()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    energies = result['energy_extrapolated_electronic']
     test_array = np.array([
         -42.91113348, -43.27757545, -43.36648855, -43.37734069, -43.38062479, -43.38334165, -43.38753003, -43.38708193, -43.38641449,
         -43.38701639, -43.38699488, -43.38773717, -43.38988315, -43.3898822, -43.39011239, -43.39020751, -43.39034244, -43.39044584,
@@ -312,12 +319,19 @@ def test_parse_vasprun_toten_relax(vasprun_parser):
     assert energies.shape == test_array.shape
     # Electronic steps should be entries times one
     np.testing.assert_allclose(np.ones(19, dtype=int), result['electronic_steps'], atol=0., rtol=1.0e-7)
-    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
+    # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     test_array = np.array([
         -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806, -0.00042762, -0.00043875,
         -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078, -0.00043053, -0.00043149, -0.00043417
     ])
-    np.testing.assert_allclose(test_array, result['energy_extrapolated_final'], atol=0., rtol=1.0e-7)
+    with np.testing.assert_raises(AssertionError):
+        np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
+    # Instead we correct and it should be
+    test_array = np.array([
+        -42.911133, -43.277575, -43.366489, -43.377341, -43.380625, -43.383342, -43.38753, -43.387082, -43.386414, -43.387016, -43.386995,
+        -43.387737, -43.389883, -43.389882, -43.390112, -43.390208, -43.390342, -43.390446, -43.390877
+    ])
+    np.testing.assert_allclose(test_array, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [(['relax', 'vasprun.xml', {'electronic_step_energies': True}],)], indirect=True)
@@ -325,8 +339,8 @@ def test_parse_vasprun_toten_relax_electronic(vasprun_parser):
     """Load a reference vasprun.xml and check that the total energies
     are returned correctly for both the electronic and ionic steps."""
     result = vasprun_parser.get_quantity('energies')
-    assert set(result.keys()) == set(['energy_extrapolated_final', 'energy_extrapolated', 'electronic_steps'])
-    energies = result['energy_extrapolated']
+    assert set(result.keys()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    energies = result['energy_extrapolated_electronic']
     test_array_energies = [
         np.array([
             163.37398579, 14.26925896, -23.05190509, -34.91615104, -40.20080347, -42.18390876, -42.97469852, -43.31556073, -43.60169068,
@@ -364,8 +378,15 @@ def test_parse_vasprun_toten_relax_electronic(vasprun_parser):
         -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806, -0.00042762, -0.00043875,
         -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078, -0.00043053, -0.00043149, -0.00043417
     ])
-    # Testing on VASP 5 so final total energy should not be the same as the last electronic step total energy.
-    np.testing.assert_allclose(test_array_energies, result['energy_extrapolated_final'], atol=0., rtol=1.0e-7)
+    # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
+    with np.testing.assert_raises(AssertionError):
+        np.testing.assert_allclose(test_array_energies, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
+    # Instead we correct and it should be
+    test_array_energies = np.array([
+        -42.911133, -43.277575, -43.366489, -43.377341, -43.380625, -43.383342, -43.38753, -43.387082, -43.386414, -43.387016, -43.386995,
+        -43.387737, -43.389883, -43.389882, -43.390112, -43.390208, -43.390342, -43.390446, -43.390877
+    ])
+    np.testing.assert_allclose(test_array_energies, result['energy_extrapolated'], atol=0., rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)

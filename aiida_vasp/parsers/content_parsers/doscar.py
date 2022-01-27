@@ -39,7 +39,7 @@ class DoscarParser(BaseFileParser):
         """
 
         try:
-            non_collinear = self._settings.get('non_collinear', 'False')
+            non_collinear = self._settings.get('non_collinear', False)
             self._content_parser = Doscar(file_handler=handler, logger=self._logger, non_collinear=non_collinear)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')

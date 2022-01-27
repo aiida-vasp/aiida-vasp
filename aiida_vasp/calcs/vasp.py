@@ -8,7 +8,7 @@ The calculation class that prepares a specific VASP calculation.
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
-from aiida.common import ValidationError
+from aiida.common.exceptions import InputValidationError, ValidationError
 
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
@@ -106,7 +106,6 @@ class VaspCalculation(VaspCalcBase):
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
         spec.output('dos', valid_type=get_data_class('array'), required=False, help='The output dos.')
-        spec.output('occupancies', valid_type=get_data_class('array'), required=False, help='The output band occupancies.')
         spec.output('energies', valid_type=get_data_class('array'), required=False, help='The output total energies.')
         spec.output('projectors', valid_type=get_data_class('array'), required=False, help='The output projectors of decomposition.')
         spec.output('dielectrics', valid_type=get_data_class('array'), required=False, help='The output dielectric functions.')
@@ -116,6 +115,7 @@ class VaspCalculation(VaspCalcBase):
         spec.output('charge_density', valid_type=get_data_class('array'), required=False, help='The output charge density.')
         spec.output('magnetization_density', valid_type=get_data_class('array'), required=False, help='The output magnetization density.')
         spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False, help='The output of the site magnetization')
+        spec.output_namespace('custom_outputs', dynamic=True)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(350,
                        'ERROR_NO_RETRIEVED_FOLDER',
@@ -202,6 +202,15 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, self).verify_inputs()
         if not hasattr(self, 'elements'):
             self._prestore()
+        _parameters = self.inputs.parameters.get_dict()
+        _lorbit = _parameters.get('lorbit', 0)
+        if 'settings' in self.inputs:
+            _settings = self.inputs.settings.get_dict()
+        else:
+            _settings = {}
+        _site_magnetization = _settings.get('parser_settings', {}).get('add_site_magnetization', False)
+        if _site_magnetization and _lorbit < 10:
+            raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
 
     def _prestore(self):
         """Set attributes prior to storing."""
@@ -387,7 +396,7 @@ class VaspCalculation(VaspCalcBase):
         from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
 
         proc_cls = VaspImmigrant
-        builder = proc_cls.get_builder_from_folder(code, remote_path, **kwargs)
+        builder = proc_cls.get_builder_from_folder(code, str(remote_path), **kwargs)
         options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
         builder.metadata = kwargs.get('metadata', {'options': options})
         options = builder.metadata.get('options', options)

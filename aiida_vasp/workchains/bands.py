@@ -2,7 +2,7 @@
 Bands workchain.
 
 ----------------
-Intended to be used to extract the band structure using SeeKpath as a preprossesor
+Intended to be used to extract the band structure using SeeKpath as a preprocessor
 to extract the k-point path.
 """
 
@@ -76,7 +76,7 @@ class BandsWorkChain(WorkChain):
                    required=False,
                    default=lambda: get_data_node('list', list=[False]),
                    help="""
-            The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilzed.
+            The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilized.
             """)
         spec.outline(
             cls.initialize,

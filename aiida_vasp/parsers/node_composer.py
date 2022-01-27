@@ -105,6 +105,9 @@ class NodeComposer:
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
+        if node_type in ('float', 'int', 'str'):
+            return self._compose_basic_type(node_type, inputs)
+
         # Call the correct specialised method for assembling.
         method_name = 'compose_' + node_type.replace('.', '_')
         return getattr(self, method_name)(node_type, inputs)
@@ -165,7 +168,17 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_vasp_wavefun(node_type, inputs):
+    def _compose_basic_type(node_type, inputs):
+        """Compose a basic type node (int, float, str)."""
+        node = None
+        for key in inputs:
+            # Technically this dictionary has only one key. to
+            # avoid problems with python 2/3 it is done with the loop.
+            node = get_data_class(node_type)(inputs[key])
+        return node
+
+    @staticmethod
+    def _compose_vasp_wavefun(node_type, inputs):
         """Compose a wave function node."""
         node = None
         for key in inputs:

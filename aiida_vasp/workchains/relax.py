@@ -40,6 +40,13 @@ class RelaxWorkChain(WorkChain):
                    help="""
             If True, perform relaxation.
             """)
+        spec.input('relax.keep_magnetization',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', True),
+                   help="""
+                   If True, try to keep the site magnetization from the previous calculation.
+                   """)
         spec.input('relax.algo',
                    valid_type=get_data_class('str'),
                    default=lambda: get_data_node('str', 'cg'),
@@ -134,7 +141,7 @@ class RelaxWorkChain(WorkChain):
                    default=lambda: get_data_node('float', 0.1),
                    help="""
                    The cutoff value for the convergence check on the lengths of the unit cell
-                   vecotrs. If ``convergence_absolute``
+                   vectors. If ``convergence_absolute``
                    is True in AA, otherwise in relative difference.
                    """)
         spec.input('relax.convergence_shape_angles',
@@ -185,6 +192,7 @@ class RelaxWorkChain(WorkChain):
         """Store exposed inputs in the context."""
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
         self.ctx.is_converged = False
+        self.ctx.current_site_magnetization = None
         self.ctx.relax = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
@@ -281,6 +289,10 @@ class RelaxWorkChain(WorkChain):
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
+        # Update the MAGMOM
+        if self.ctx.current_site_magnetization is not None:
+            self.ctx.inputs.current_site_magnetization = self.ctx.current_site_magnetization
+
         # Make sure we do not have any floating dict (convert to Dict etc.)
         self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'])
 
@@ -373,13 +385,17 @@ class RelaxWorkChain(WorkChain):
                 if self._verbose:
                     self.report('Relaxation is considered converged.')
 
+        # Update the MAGMOM to be used
+        if 'site_magnetization' in workchain.outputs and self.ctx.inputs.parameters.relax.keep_magnetization.value is True:
+            self.ctx.current_site_magnetization = workchain.outputs.site_magnetization
+
         if converged:
             self.ctx.is_converged = converged
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
-        """Check the difference in cell shape before / after the last iteratio against a tolerance."""
+        """Check the difference in cell shape before / after the last iteration against a tolerance."""
         lengths_converged = bool(delta.cell_lengths.max() <= self.ctx.inputs.parameters.relax.convergence_shape_lengths)
         if not lengths_converged:
             self.report('cell lengths changed by max {}, tolerance is {}'.format(

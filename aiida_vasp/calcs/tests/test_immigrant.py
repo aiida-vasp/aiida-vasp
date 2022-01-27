@@ -21,7 +21,7 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
     builder = VaspImmigrant.get_builder_from_folder(mock_vasp,
-                                                    phonondb_run,
+                                                    str(phonondb_run),
                                                     potential_family=potential_family,
                                                     potential_mapping=potential_mapping)
     # builder.potential = PotcarData.get_potcars_from_structure(builder.structure, potential_family, mapping=potential_mapping)  # pylint: disable=no-member
@@ -33,14 +33,15 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     return builder
 
 
-def test_immigrant_additional(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
+@pytest.mark.usefixtures('fresh_aiida_env')
+@pytest.mark.usefixtures('potcar_family')
+def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
     from aiida_vasp.calcs.immigrant import VaspImmigrant
     from aiida_vasp.data.potcar import PotcarData
 
     create_authinfo(localhost, store=True)
-    inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, phonondb_run, use_chgcar=True, use_wavecar=True)
-
+    inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, str(phonondb_run), use_chgcar=True, use_wavecar=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
     inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)
@@ -89,7 +90,9 @@ def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_ru
     return proc, builder
 
 
-def test_immigrant_additional_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
+@pytest.mark.usefixtures('fresh_aiida_env')
+@pytest.mark.usefixtures('potcar_family')
+def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)

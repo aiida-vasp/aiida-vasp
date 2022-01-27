@@ -6,6 +6,7 @@ Workchain to import a successful VASP run that has not been executed in the AiiD
 """
 
 # pylint: disable=attribute-defined-outside-init
+from aiida.common import InputValidationError
 from aiida.engine import while_
 from aiida.plugins import WorkflowFactory, CalculationFactory
 from aiida.orm import Code
@@ -25,7 +26,8 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         super().define(spec)
         spec.input('code', valid_type=Code, required=True)
-        spec.input('folder_path', valid_type=get_data_class('str'), required=True)
+        spec.input('folder_path', valid_type=get_data_class('str'), required=False, help='Deprecated.')
+        spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
         spec.input('settings', valid_type=get_data_class('dict'), required=False)
         spec.input('options', valid_type=get_data_class('dict'), required=False)
         spec.input('potential_family', valid_type=get_data_class('str'), required=False)
@@ -86,17 +88,25 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         are already set in respective AiiDA data types,
 
             code
-            settings.import_from_path
             metadata['options']
             parameters
             structure
             kpoints
             potential (optional)
+            remote_workdir
 
         """
 
         kwargs = self._get_kwargs()
-        self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, self.inputs.folder_path.value, **kwargs)
+        if 'remote_workdir' in self.inputs:
+            remote_workdir = self.inputs.remote_workdir
+        elif 'folder_path' in self.inputs:
+            remote_workdir = self.inputs.folder_path.value
+        else:
+            raise InputValidationError('remote_workdir not found in inputs.')
+        self.ctx.inputs = self._process_class.get_inputs_from_folder(self.inputs.code, remote_workdir, **kwargs)
+        if 'settings' in self.inputs:
+            self.ctx.inputs.settings = self.inputs.settings
         if 'options' in self.inputs:
             self.ctx.inputs.metadata.options.update(self.inputs.options)
         if 'metadata' in self.inputs:
@@ -109,10 +119,9 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     def _get_kwargs(self):
         """kwargs dictionary for VaspImmigrant calculation is created."""
         kwargs = {'use_chgcar': False, 'use_wavecar': False}
-        for key in ('use_chgcar', 'use_wavecar', 'settings', 'potential_family', 'potential_mapping'):
+        if 'potential_mapping' in self.inputs:
+            kwargs['potential_mapping'] = self.inputs['potential_mapping'].get_dict()
+        for key in ('use_chgcar', 'use_wavecar', 'potential_family'):
             if key in self.inputs:
-                if key in ('settings', 'potential_mapping'):
-                    kwargs[key] = self.inputs[key].get_dict()
-                else:
-                    kwargs[key] = self.inputs[key].value
+                kwargs[key] = self.inputs[key].value
         return kwargs

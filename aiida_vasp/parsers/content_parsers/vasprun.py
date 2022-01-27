@@ -153,6 +153,26 @@ class VasprunParser(BaseFileParser):
         }
     }
 
+    # Mapping of the energy names to those returned by parsevasp.vasprunl.Xml
+    ENERGY_MAPPING = {
+        'energy_extrapolated': 'energy_extrapolated_final',
+        'energy_free': 'energy_free_final',
+        'energy_no_entropy': 'energy_no_entropy_final',
+        'energy_extrapolated_electronic': 'energy_extrapolated',
+        'energy_free_electronic': 'energy_free',
+        'energy_no_entropy_electronic': 'energy_no_entropy',
+    }
+
+    ENERGY_MAPPING_VASP5 = {
+        'energy_extrapolated': 'energy_no_entropy_final',
+        'energy_free': 'energy_free_final',
+        # Not that energy_extrapolated_final parsed is the entropy term
+        'energy_no_entropy': 'energy_extrapolated_final',
+        'energy_extrapolated_electronic': 'energy_extrapolated',
+        'energy_free_electronic': 'energy_free',
+        'energy_no_entropy_electronic': 'energy_no_entropy',
+    }
+
     def _init_from_handler(self, handler):
         """Initialize using a file like handler."""
 
@@ -410,6 +430,8 @@ class VasprunParser(BaseFileParser):
         energies_dict = {}
         for etype in self._settings.get('energy_type', self.DEFAULT_SETTINGS['energy_type']):
             energies_dict[etype] = energies[etype][-1]
+            # Also return the raw electronic steps energy
+            energies_dict[etype + '_electronic'] = energies[etype + '_electronic'][-1]
 
         return energies_dict
 
@@ -430,13 +452,57 @@ class VasprunParser(BaseFileParser):
         be found in the flattened ndarray where the key `electronic_steps` indicate how many electronic steps
         there is per ionic step. Using the combination, one can rebuild the electronic step energy per ionic step etc.
 
+        Because the VASPrun parser returns both the electronic step energies (at the end of each cycles) and the ionic step
+        energies (_final), we apply a mapping to recovery the naming such that the ionic step energies do not have the suffix,
+        but the electronic step energies do.
         """
+
         etype = self._settings.get('energy_type', self.DEFAULT_SETTINGS['energy_type'])
-        energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
+        # Create a copy
+        etype = list(etype)
+        etype_orig = list(etype)
+
+        # Apply mapping and request the correct energies from the parsing results
+        # VASP 5 has a bug where the energy_no_entropy is not included in the XML output - we have to calculate it here
+        if self.version.startswith('5'):
+            # For energy_no_entropy needs to be calculated here
+            if 'energy_no_entropy' in etype_orig:
+                etype.append('energy_free')
+                etype.append('energy_extrapolated')
+
+            # energy extrapolated is stored as energy_no_entropy for the ionic steps
+            if 'energy_extrapolated' in etype_orig:
+                etype.append('energy_no_entropy')
+
+            # Remove duplicates
+            etype = list(set(etype))
+            energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
+            # Here we must calculate the true `energy_no_entropy`
+            if 'energy_no_entropy' in etype_orig:
+                # The energy_extrapolated_final is the entropy term itself in VASP 5
+                # Store the calculated energy_no_entropy under 'energy_extrapolated_final',
+                # which is then recovered as `energy_no_entropy` later
+                energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
+        else:
+            energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
+
         if energies is None:
             return None
 
-        return energies
+        # Apply mapping - those with `_final` has the suffix removed and those without has `_electronic` added
+        mapped_energies = {}
+        mapping = self.ENERGY_MAPPING_VASP5 if self.version.startswith('5') else self.ENERGY_MAPPING
+        # Reverse the mapping - now key is the name of the original energies output
+        revmapping = {value: key for key, value in mapping.items()}
+        for key, value in energies.items():
+            # Apply mapping if needed
+            if key in revmapping:
+                if revmapping[key].replace('_electronic', '') in etype_orig:
+                    mapped_energies[revmapping[key]] = value
+            else:
+                mapped_energies[key] = value
+
+        return mapped_energies
 
     @property
     def projectors(self):
