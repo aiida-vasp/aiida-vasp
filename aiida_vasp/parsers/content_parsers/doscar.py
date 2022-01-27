@@ -5,9 +5,9 @@ The ``DOSCAR`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
 # pylint: disable=abstract-method
-from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-
 from parsevasp.doscar import Doscar
+
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class DoscarParser(BaseFileParser):

@@ -5,9 +5,9 @@ The ``OUTCAR`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``OUTCAR`` content.
 """
 # pylint: disable=abstract-method
-from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-
 from parsevasp.outcar import Outcar
+
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class OutcarParser(BaseFileParser):

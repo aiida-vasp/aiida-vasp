@@ -5,9 +5,9 @@ The ``CHGCAR`` parser interface.
 Contains the parsing interfaces to ``parsevasp`` used to parse ``CHGCAR`` content.
 """
 # pylint: disable=abstract-method
-from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-
 from parsevasp.chgcar import Chgcar
+
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class ChgcarParser(BaseFileParser):

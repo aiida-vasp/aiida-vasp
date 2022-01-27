@@ -4,11 +4,10 @@ The ``INCAR`` parser interface.
 ---------------------------
 Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
+from parsevasp.incar import Incar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
-
-from parsevasp.incar import Incar
 
 
 class IncarParser(BaseFileParser):

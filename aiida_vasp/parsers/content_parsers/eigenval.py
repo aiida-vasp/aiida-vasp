@@ -5,9 +5,9 @@ The ``EIGENVAL`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``EIGENVAL`` content.
 """
 # pylint: disable=abstract-method
-from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-
 from parsevasp.eigenval import Eigenval
+
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class EigenvalParser(BaseFileParser):
