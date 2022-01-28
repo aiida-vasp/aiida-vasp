@@ -233,38 +233,38 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     assert called_nodes[1].exit_status == 0
 
 
-# @pytest.mark.parametrize('incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]])
-# def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, incar, nkpts, exit_codes):
-#     """Test with mocked vasp code for handling ionic convergence issues"""
-#     from aiida.orm import Code
-#     from aiida.plugins import WorkflowFactory
-#     from aiida.engine import run
+@pytest.mark.parametrize('incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]])
+def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, incar, nkpts, exit_codes):
+    """Test with mocked vasp code for handling ionic convergence issues"""
+    from aiida.orm import Code
+    from aiida.plugins import WorkflowFactory
+    from aiida.engine import run
 
-#     workchain = WorkflowFactory('vasp.vasp')
+    workchain = WorkflowFactory('vasp.vasp')
 
-#     mock_vasp_strict.store()
-#     create_authinfo(computer=mock_vasp_strict.computer, store=True)
+    mock_vasp_strict.store()
+    create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
-#     inputs = setup_vasp_workchain(si_structure(), incar, nkpts)
-#     inputs.verbose = get_data_node('bool', True)
-#     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-#     inputs.handler_overrides = get_data_node('dict', dict={'ignore_nelm_breach_relax': True})
-#     results, node = run.get_node(workchain, **inputs)
+    inputs = setup_vasp_workchain(si_structure(), incar, nkpts)
+    inputs.verbose = get_data_node('bool', True)
+    # The test calculation contain NELM breaches during the relaxation - set to ignore it.
+    inputs.handler_overrides = get_data_node('dict', dict={'ignore_nelm_breach_relax': True})
+    results, node = run.get_node(workchain, **inputs)
 
-#     assert node.exit_status == 0
-#     assert 'retrieved' in results
-#     assert 'misc' in results
-#     assert 'remote_folder' in results
+    assert node.exit_status == 0
+    assert 'retrieved' in results
+    assert 'misc' in results
+    assert 'remote_folder' in results
 
-#     assert results['misc']['run_status']['ionic_converged']
+    assert results['misc']['run_status']['ionic_converged']
 
-#     # Sort the called nodes by creation time
-#     called_nodes = list(node.called)
-#     called_nodes.sort(key=lambda x: x.ctime)
+    # Sort the called nodes by creation time
+    called_nodes = list(node.called)
+    called_nodes.sort(key=lambda x: x.ctime)
 
-#     # Check the child status - here the first calculation is not finished but the second one is
-#     for idx, code in enumerate(exit_codes):
-#         assert called_nodes[idx].exit_status == code
+    # Check the child status - here the first calculation is not finished but the second one is
+    for idx, code in enumerate(exit_codes):
+        assert called_nodes[idx].exit_status == code
 
 
 def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_strict):
