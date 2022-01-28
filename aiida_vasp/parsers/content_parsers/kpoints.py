@@ -108,7 +108,7 @@ class KpointsParser(BaseFileParser):
 
         return content_parser
 
-    def _get_kpointsdict_explicit(self, kpoints_data):
+    def _get_kpointsdict_explicit(self, kpoints_data):  # pylint: disable=no-self-use
         """
         Turn Aiida ``KpointData`` into a k-points dictionary with explicit generation of points.
 
@@ -133,10 +133,10 @@ class KpointsParser(BaseFileParser):
             weights = None
         for index, point in enumerate(points):
             if weights is not None:
-                kpt = Kpoint(point, weight=weights[index], logger=self._logger)
+                kpt = Kpoint(point, weight=weights[index])
             else:
                 # No weights supplied, so set them to 1.0
-                kpt = Kpoint(point, weight=1.0, logger=self._logger)
+                kpt = Kpoint(point, weight=1.0)
             kpts.append(kpt)
         kpoints_dict['points'] = kpts
         kpoints_dict['mode'] = 'explicit'

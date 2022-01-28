@@ -115,7 +115,7 @@ class PoscarParser(BaseFileParser):
                     _selective = _transform_to_bool(np.array(self._options['positions_dof'])[index, :])
                 except KeyError:
                     _selective = [True, True, True]
-            sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct, logger=self._logger))
+            sites.append(Site(site.kind_name, site.position, selective=_selective, direct=direct))
 
         dictionary['sites'] = sites
 
