@@ -60,19 +60,8 @@ class NodeComposer:
     def compose_nodes(self):
         """Compose the nodes according to the specifications."""
         for node_name, node_dict in self._nodes.items():
-            inputs = {}
-            for key in self._quantities.keys():
-                # Make sure we strip prefixes as the quantities can contain
-                # multiple equivalent keys, relevant only up to now.
-                new_key = key
-                if '-' in key:
-                    new_key = key.split('-')[1]
-                if key in node_dict['quantities'] or new_key in node_dict['quantities']:
-                    # The found quantity should sit on this particular node.
-                    # The delegated compose methods for each structure does not recognize prefixed keys,
-                    # so use the stripped one.
-                    inputs[new_key] = self._quantities[key]
-
+            # Set the input quantities necessary for this particular node.
+            inputs = self._set_input_quantities(node_dict['quantities'])
             # If the input is empty, we skip creating the node as it is bound to fail
             if not inputs:
                 self._failed_to_create.append(node_name)
@@ -247,6 +236,37 @@ class NodeComposer:
     @property
     def successful(self):
         return self._created
+
+    def _find_equivalent_quantities(self, quantity):
+        """Locate the equivalent quantities from a given quantity."""
+        # Iterate equivalent quantities definitions
+        for equivalent_quantities in self._equivalent_quantity_keys.values():
+            # Iterate equivalent quantities
+            for equivalent_quantity in equivalent_quantities:
+                if quantity == equivalent_quantity:
+                    return equivalent_quantities
+
+        return None
+
+    def _set_input_quantities(self, node_quantities):
+        """Set the necessary input quantities for the node."""
+        inputs = {}
+        # Iterate over the quantities that is requested for this node
+        for quantity in node_quantities:
+            # Find this quantity's equivalent quantities
+            equivalent_quantities = self._find_equivalent_quantities(quantity)
+            if equivalent_quantities is not None:
+                # Check if these are parsed and pick the first one if multiple exists
+                for equivalent_quantity in equivalent_quantities:
+                    if equivalent_quantity in self._quantities:
+                        # Make sure we strip prefixes as the quantities can contain
+                        # multiple equivalent keys, relevant only up to now.
+                        new_key = equivalent_quantity
+                        if '-' in equivalent_quantity:
+                            new_key = equivalent_quantity.split('-')[1]
+                        inputs[new_key] = self._quantities[equivalent_quantity]
+                        break
+        return inputs
 
 
 def clean_nan_values(inputs: dict) -> dict:

@@ -58,6 +58,7 @@ def test_create_node_misc(fresh_aiida_env, outcar_parser):
 
     # Compare
     data_dict = composed_nodes.successful['misc'].get_dict()
+    print(data_dict)
     assert data_dict['run_stats']
     assert data_dict['run_stats']['total_cpu_time_used'] == pytest.approx(89.795)
     assert data_dict['run_stats']['average_memory_used'] == pytest.approx(0.0)
@@ -785,7 +786,8 @@ def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
 
 @pytest.mark.parametrize(['outcar_parser'], [(['basic_run', 'OUTCAR', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
 @pytest.mark.parametrize(['vasprun_parser'], [(['basic_run', 'vasprun.xml', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
-def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser):
+@pytest.mark.parametrize(['stream_parser'], [(['basic_run', 'vasp_output', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
+def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, stream_parser):
     """Check that the node composer works for the misc node containing all valid quantities."""
 
     # Prepare inputs for the node composer
@@ -793,7 +795,7 @@ def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser):
     requested_node = {'misc': {'link_name': 'misc', 'type': 'dict', 'quantities': quantities_to_parse}}
 
     # Compose nodes
-    composed_nodes = node_composer_test_helper('misc', requested_node, [vasprun_parser, outcar_parser])
+    composed_nodes = node_composer_test_helper('misc', requested_node, [vasprun_parser, outcar_parser, stream_parser])
 
     # Compare
     misc = composed_nodes.successful['misc'].get_dict()
@@ -873,7 +875,7 @@ def node_composer_test_helper(node_settings_key, NODES, parsers):
         for item in NODES[node_settings_key]['quantities']:
             if item in parser.PARSABLE_QUANTITIES:
                 parsed_quantities[item] = parser.get_quantity(item)
-                equivalent_keys[item] = item
+                equivalent_keys[item] = [item]
 
     # Compose node
     composed_nodes = NodeComposer(requested_node, equivalent_keys, parsed_quantities)
