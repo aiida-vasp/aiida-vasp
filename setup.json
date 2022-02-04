@@ -62,8 +62,7 @@
     },
     "extras_require": {
 	"pre-commit": [
-	    "pre-commit~=2.2",
-	    "pylint~=2.5.0"
+		"aiida-core[pre-commit] >= 1.2.1,!=1.4.0,!=1.4.1,<2"
 	],
 	"tests": [
 	    "aiida-export-migration-tests==0.9.0",
@@ -87,12 +86,12 @@
     },
     "include_package_data": true,
     "install_requires": [
-	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
-	"psycopg2-binary~=2.8.3",
-	"subprocess32",
-	"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
-	"lxml",
-	"packaging",
-	"parsevasp@git+https://github.com/aiida-vasp/parsevasp@058bb26872588c4a83dbc93afcfbf638963be1fc"
+		"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
+		"psycopg2-binary~=2.8.3",
+		"subprocess32",
+		"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
+		"lxml",
+		"packaging",
+		"parsevasp@git+https://github.com/aiida-vasp/parsevasp@058bb26872588c4a83dbc93afcfbf638963be1fc"
     ]
 }
