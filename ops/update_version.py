@@ -5,7 +5,7 @@ import json
 import fileinput
 import contextlib
 from pathlib import Path
-import subprocess32 as subprocess
+import subprocess
 
 from packaging import version
 
