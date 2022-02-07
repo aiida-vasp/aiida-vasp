@@ -2,7 +2,7 @@
 Test submitting a ConvergenceWorkChain.
 Only `run` currently works.
 """
-# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, too-many-statements, import-outside-toplevel
+# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, too-many-statements, import-outside-toplevel, too-many-locals
 from __future__ import print_function
 
 import numpy as np
@@ -13,9 +13,10 @@ from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
+from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
@@ -47,9 +48,17 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer, store=True)
 
+    structure = None
     test_case = 'test_converge_wc'
-    structure = PoscarParser(file_path=data_path(test_case, 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path(test_case, 'inp', 'INCAR')).incar
+    with open(data_path('test_converge_wc', 'inp', 'POSCAR'), 'r') as handler:
+        structure_parser = PoscarParser(handler=handler)
+        structure = structure_parser.get_quantity('poscar-structure')
+        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+    parameters = None
+    with open(data_path('test_converge_wc', 'inp', 'INCAR')) as handler:
+        incar_parser = IncarParser(handler=handler)
+        parameters = incar_parser.get_quantity('incar')
+
     parameters['system'] = f'test-case:{test_case}'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
@@ -130,11 +139,26 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer).store()
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
+    structure = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r') as handler:
+        structure_parser = PoscarParser(handler=handler)
+        structure = structure_parser.get_quantity('poscar-structure')
+        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+
+    kpoints = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r') as handler:
+        kpoints_parser = KpointsParser(handler=handler)
+        kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
+        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints.set_cell_from_structure(structure)
+
+    parameters = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR')) as handler:
+        incar_parser = IncarParser(handler=handler)
+        parameters = incar_parser.get_quantity('incar')
+
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
-    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()
@@ -197,8 +221,17 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer).store()
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR')).incar
+    structure = None
+    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR'), 'r') as handler:
+        structure_parser = PoscarParser(handler=handler)
+        structure = structure_parser.get_quantity('poscar-structure')
+        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+
+    parameters = None
+    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR')) as handler:
+        incar_parser = IncarParser(handler=handler)
+        parameters = incar_parser.get_quantity('incar')
+
     parameters['system'] = 'test-case:test_converge_wc'
     pwcutoff = parameters['encut']
     parameters = {
@@ -262,11 +295,26 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     mock_vasp.store()
     create_authinfo(computer=mock_vasp.computer).store()
 
-    structure = PoscarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'POSCAR')).structure
-    parameters = IncarParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'INCAR')).incar
+    structure = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r') as handler:
+        structure_parser = PoscarParser(handler=handler)
+        structure = structure_parser.get_quantity('poscar-structure')
+        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+
+    kpoints = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r') as handler:
+        kpoints_parser = KpointsParser(handler=handler)
+        kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
+        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints.set_cell_from_structure(structure)
+
+    parameters = None
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR')) as handler:
+        incar_parser = IncarParser(handler=handler)
+        parameters = incar_parser.get_quantity('incar')
+
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
-    kpoints = KpointsParser(file_path=data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS')).kpoints
 
     restart_clean_workdir = get_data_node('bool', False)
     restart_clean_workdir.store()

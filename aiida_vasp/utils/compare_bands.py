@@ -307,7 +307,7 @@ def get_band_properties_from_data(bandsdata):
 
 def get_band_properties(eigenvalues, occupations):
     """
-    Get some auxiliary information about the band structure
+    Get some key information about the band structure
 
     Parameters
     ----------

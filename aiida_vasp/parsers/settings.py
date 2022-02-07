@@ -2,33 +2,31 @@
 Parser settings.
 
 ----------------
-Defines the file associated with each file parser and the default node
+Defines the object associated with each object parser and the default node
 compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
-
-from aiida_vasp.parsers.file_parsers.doscar import DosParser
-from aiida_vasp.parsers.file_parsers.eigenval import EigParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
-from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.file_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.file_parsers.wavecar import WavecarParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.stream import StreamParser
+from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
+from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.stream import StreamParser
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
-FILE_PARSER_SETS = {
+OBJECT_PARSER_SETS = {
     'default': {
         'DOSCAR': {
-            'parser_class': DosParser,
+            'parser_class': DoscarParser,
             'is_critical': False,
             'status': 'Unknown'
         },
         'EIGENVAL': {
-            'parser_class': EigParser,
+            'parser_class': EigenvalParser,
             'is_critical': False,
             'status': 'Unknown'
         },
@@ -52,11 +50,6 @@ FILE_PARSER_SETS = {
             'is_critical': False,
             'status': 'Unknown'
         },
-        'WAVECAR': {
-            'parser_class': WavecarParser,
-            'is_critical': False,
-            'status': 'Unknown'
-        },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
@@ -73,15 +66,12 @@ FILE_PARSER_SETS = {
 
 NODES = {
     'misc': {
-        'link_name':
-            'misc',
-        'type':
-            'dict',
+        'link_name': 'misc',
+        'type': 'dict',
         'quantities': [
             'total_energies',
             'maximum_stress',
             'maximum_force',
-            'magnetization',
             'notifications',
             'run_status',
             'run_stats',
@@ -158,10 +148,10 @@ NODES = {
         'type': 'array',
         'quantities': ['dynmat'],
     },
-    'chgcar': {
-        'link_name': 'chgcar',
-        'type': 'vasp.chargedensity',
-        'quantities': ['chgcar'],
+    'charge_density': {
+        'link_name': 'charge_density',
+        'type': 'array',
+        'quantities': ['charge_density'],
     },
     'wavecar': {
         'link_name': 'wavecar',
@@ -176,30 +166,30 @@ NODES = {
 }
 
 
-class ParserDefinitions(object):  # pylint: disable=useless-object-inheritance
+class ParserDefinitions():  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
-    def __init__(self, file_parser_set='default'):
+    def __init__(self, object_parser_set='default'):
         self._parser_definitions = {}
-        self._init_parser_definitions(file_parser_set)
+        self._init_parser_definitions(object_parser_set)
 
     @property
     def parser_definitions(self):
         return self._parser_definitions
 
-    def add_parser_definition(self, filename, parser_dict):
+    def add_parser_definition(self, name, parser_dict):
         """Add custum parser definition"""
-        self._parser_definitions[filename] = parser_dict
+        self._parser_definitions[name] = parser_dict
 
-    def _init_parser_definitions(self, file_parser_set):
+    def _init_parser_definitions(self, object_parser_set):
         """Load a set of parser definitions."""
-        if file_parser_set not in FILE_PARSER_SETS:
+        if object_parser_set not in OBJECT_PARSER_SETS:
             return
-        for file_name, parser_dict in FILE_PARSER_SETS.get(file_parser_set).items():
-            self._parser_definitions[file_name] = deepcopy(parser_dict)
+        for name, parser_dict in OBJECT_PARSER_SETS.get(object_parser_set).items():
+            self._parser_definitions[name] = deepcopy(parser_dict)
 
 
-class ParserSettings(object):  # pylint: disable=useless-object-inheritance
+class ParserSettings():  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
 
@@ -209,7 +199,7 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
     This provides the following properties to other components of the VaspParser:
 
         * nodes_dict: A list with all requested output nodes.
-        * parser_definitions: A Dict with the FileParser definitions.
+        * parser_definitions: A Dict with the definitions for each specific object parser.
         * quantities_to_parse: Collection of quantities in nodes_dict.
 
     """
@@ -273,8 +263,22 @@ class ParserSettings(object):  # pylint: disable=useless-object-inheritance
         if not exist_missing_key:
             self._output_nodes_dict[node_name] = _node_dict
 
+    @property
+    def settings(self):
+        """Return the settings dictionary."""
+        return self._settings
+
     def get(self, item, default=None):
         return self._settings.get(item, default)
+
+    def update_quantities_to_parse(self, new_quantities):
+        """Update the quantities to be parsed."""
+        try:
+            # Update the quantities to be parsed, any extra keys already sitting in settings are preserved
+            self._settings['quantities_to_parse'].append(new_quantities)
+            self._settings['quantities_to_parse'] = list(dict.fromkeys(self._settings['quantities_to_parse']))
+        except KeyError:
+            self._settings['quantities_to_parse'] = new_quantities
 
     def _init_output_nodes_dict(self):
         """
