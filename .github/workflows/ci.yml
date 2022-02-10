@@ -24,10 +24,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-          pip --version
+      - name: Pin pip to version 21.3
+        run: pip install pip~=21.3
       - name: Install wheel
         run: pip install wheel
       - name: Install AiiDA-VASP
@@ -70,10 +68,8 @@ jobs:
           sudo apt install locate
           sudo updatedb
           sudo apt install postgresql
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-          pip --version
+      - name: Pin pip to version 21.3
+        run: pip install pip~=21.3
       - name: Install wheel
         run: pip install wheel
       - name: Install Tox

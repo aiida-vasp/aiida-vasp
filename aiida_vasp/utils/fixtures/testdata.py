@@ -8,7 +8,7 @@ import os
 
 
 def data_path(*args):
-    """Give the path to a test data file."""
+    """Give the path to test data."""
     path = os.path.realpath(os.path.join(__file__, '../../../test_data', *args))
     assert os.path.exists(path)
     assert os.path.isabs(path)

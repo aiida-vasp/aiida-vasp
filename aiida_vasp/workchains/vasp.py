@@ -203,7 +203,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         self.ctx.use_wavecar = True
         self.ctx.ignore_transient_nelm_breach = False  # Flag for ignoring the NELM breach during the relaxation
         self.ctx.verbose = None
-        self.ctx.last_calc_remote_files = []
+        self.ctx.last_calc_remote_objects = []
 
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
@@ -237,22 +237,22 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
             old_parameters = AttributeDict(self.ctx.inputs.parameters).copy()
             parameters = old_parameters.copy()
-            # Make sure ISTART and ICHARG is set to read the relevant files - if they exists
-            if 'istart' in parameters and 'WAVECAR' in self.ctx.last_calc_remote_files:
+            # Make sure ISTART and ICHARG is set to read the relevant objects - if they exists
+            if 'istart' in parameters and 'WAVECAR' in self.ctx.last_calc_remote_objects:
                 # Correct in case of istart = 0
                 if parameters.istart == 0 and self.ctx.use_wavecar:
                     parameters.istart = 1
             # Not using the WAVECAR - we make sure ISTART is 0
             if not self.ctx.use_wavecar:
                 parameters.istart = 0
-            if 'icharg' in parameters and 'CHGCAR' in self.ctx.last_calc_remote_files:
+            if 'icharg' in parameters and 'CHGCAR' in self.ctx.last_calc_remote_objects:
                 parameters.icharg = 1
             if parameters != old_parameters:
                 self.ctx.inputs.parameters = parameters
                 self.report('Enforced ISTART=1 and ICHARG=1 for restarting the calculation.')
 
-        # Reset the list of valid remote files and the restart calculation
-        self.ctx.last_calc_remote_files = []
+        # Reset the list of valid remote objects and the restart calculation
+        self.ctx.last_calc_remote_objects = []
         self.ctx.restart_calc = None
 
     def update_magmom(self, node=None):
@@ -289,7 +289,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         skip_parameters_validation = False
         if self.inputs.get('settings'):
             self.ctx.inputs.settings = self.inputs.settings
-            # Also check if the user supplied additional tags that is not in the supported file.
+            # Also check if the user supplied additional tags that is not in the supported object.
             settings_dict = self.ctx.inputs.settings.get_dict()
             unsupported_parameters = settings_dict.get('unsupported_parameters', unsupported_parameters)
             skip_parameters_validation = settings_dict.get('skip_parameters_validation', skip_parameters_validation)
@@ -498,7 +498,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
             self.report('Cannot found `misc` outputs - please check the process reports for issues.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_, do_break=True)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
         return None
 
     @process_handler(priority=910, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
@@ -778,14 +778,17 @@ class VaspWorkChain(BaseRestartWorkChain):
         run_status = misc['run_status']
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
-            self.report(f'The child calculation {node} did not have converged electronic structure.')
+            self.report(f'The child calculation {node} does not possess a converged electronic structure.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         if run_status.get('contains_nelm_breach'):
             if self.ctx.ignore_transient_nelm_breach:
-                self.report('The calculation contains at least one electronic step is not converged. But this is ignored as requested.')
+                self.report('The calculation contains at least one electronic minimization '
+                            'that was truncated. It should thus not be considered converged. '
+                            'Upon request from user, this is ignored.')
             else:
-                self.report(('The calculation contains at least one electronic step is not converged. '
-                             'The use should inspect the problem manually, treating the calculation as failed.'))
+                self.report('The calculation contains at least one electronic minimization '
+                            'that is truncated. It should thus not be considered converged. '
+                            'Treating the calculation as failed. Please inspect, maybe it is salvageable.')
                 return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX, do_break=True)  #pylint: disable=no-member
 
         return None
@@ -831,37 +834,37 @@ class VaspWorkChain(BaseRestartWorkChain):
                 last_report = report
         return last_report
 
-    def _update_last_calc_files(self, node):
+    def _update_last_calc_objects(self, node):
         """
-        Connect to the remote and find the valid files in th calculation folder
+        Connect to the remote and find the valid objects in th calculation folder
 
         Only update if the entry is empty in order to avoid too many connections to the remote.
         """
-        if not self.ctx.last_calc_remote_files:
-            self.ctx.last_calc_remote_files = list_valid_files_in_remote(node.outputs.remote_folder)
-        return self.ctx.last_calc_remote_files
+        if not self.ctx.last_calc_remote_objects:
+            self.ctx.last_calc_remote_objects = list_valid_objects_in_remote(node.outputs.remote_folder)
+        return self.ctx.last_calc_remote_objects
 
     def _setup_restart(self, node):
         """
-        Check the existence of any restart files, if any of them exists use the last calculation
+        Check the existence of any restart objects, if any of them eixsts use the last calculation
         for restart.
         """
-        self._update_last_calc_files(node)
-        if 'WAVECAR' in self.ctx.last_calc_remote_files or 'CHGCAR' in self.ctx.last_calc_remote_files:
+        self._update_last_calc_objects(node)
+        if 'WAVECAR' in self.ctx.last_calc_remote_objects or 'CHGCAR' in self.ctx.last_calc_remote_objects:
             self.ctx.restart_calc = node
             return True
         return False
 
 
-def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
+def list_valid_objects_in_remote(remote, path='.', size_threshold=0) -> list:
     """
-    List non-empty files in the remote folder
+    List non-empty objects in the remote folder
 
     :param remote: The `RemoteFolder` node to be inspected.
     :param path: The relative path.
-    :param size_threshold: The size threshold to treat the file as a valide one.
+    :param size_threshold: The size threshold to treat the object as a valide one.
 
-    :returns: A list of valid files in the directory.
+    :returns: A list of valid objects in the directory.
     """
     none_empty = []
     try:
@@ -869,7 +872,7 @@ def list_valid_files_in_remote(remote, path='.', size_threshold=0) -> list:
     except OSError:
         return []
 
-    for file in contents:
-        if file['attributes'].st_size > size_threshold and not file['isdir']:
-            none_empty.append(file['name'])
+    for obj in contents:
+        if obj['attributes'].st_size > size_threshold and not obj['isdir']:
+            none_empty.append(obj['name'])
     return none_empty

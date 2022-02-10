@@ -2,7 +2,7 @@
 Vasp immigrant workchain.
 
 -------------------------
-Workchain to import files of VASP calculation in a folder.
+Workchain to import a successful VASP run that has not been executed in the AiiDA framework.
 """
 
 # pylint: disable=attribute-defined-outside-init
@@ -15,7 +15,7 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspImmigrantWorkChain(BaseRestartWorkChain):
-    """Import files of VASP calculation in the specified folder path."""
+    """Import a VASP run executed in the directory specified by folder_path."""
 
     _verbose = False
     _process_class = CalculationFactory('vasp.immigrant')

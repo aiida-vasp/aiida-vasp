@@ -8,18 +8,14 @@ The calculation class that prepares a specific VASP calculation.
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
-from aiida.plugins import DataFactory
-from aiida.common.exceptions import InputValidationError
+from aiida.common.exceptions import InputValidationError, ValidationError
 
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
-
-PARAMETER_CLS = DataFactory('dict')
-SINGLEFILE_CLS = DataFactory('singlefile')
 
 
 class VaspCalculation(VaspCalcBase):
@@ -28,13 +24,13 @@ class VaspCalculation(VaspCalcBase):
 
     ---------------------------------
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR'
-    and Wannier90 input / output files. These files are deleted after parsing.
-    Additional retrieve files can be specified via the
+    and Wannier90 input / output objects. These objects are deleted after parsing.
+    Additional retrieve objects can be specified via the
     ``settings['ADDITIONAL_RETRIEVE_TEMPORARY_LIST']`` input. In addition, if you want to keep
-    any files after parsing, put them in ``settings['ADDITIONAL_RETRIEVE_LIST']`` which is empty
+    any objects after parsing, put them in ``settings['ADDITIONAL_RETRIEVE_LIST']`` which is empty
     by default.
 
-    Floating point precision for writing POSCAR files can be adjusted using
+    Floating point precision for writing POSCAR objects can be adjusted using
     ``settings['poscar_precision']``, default: 10
 
     The following assumes you are familiar with the AiiDA data structures and
@@ -57,6 +53,10 @@ class VaspCalculation(VaspCalcBase):
         submit(proc, **inputs)
 
     Which is very similar to the workchain example.
+
+    Since we do not want the content parsers to know about the AiiDA infrastructure,
+    i.e. processes etc. we have no access to the exit codes defined on the CalcJob.
+    We thus have to deal with failures in parsing directly in the write calls here.
 
     """
 
@@ -97,11 +97,11 @@ class VaspCalculation(VaspCalcBase):
         spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
         spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
         spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
-        spec.output('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The output charge density.')
-        spec.output('wavecar',
-                    valid_type=get_data_class('vasp.wavefun'),
+        spec.output('chgcar',
+                    valid_type=get_data_class('vasp.chargedensity'),
                     required=False,
-                    help='The output file containing the plane wave coefficients.')
+                    help='The output charge density CHGCAR file.')
+        spec.output('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False, help='The output plane wave coefficients file.')
         spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
         spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
         spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
@@ -112,6 +112,8 @@ class VaspCalculation(VaspCalcBase):
         spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
         spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
         spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
+        spec.output('charge_density', valid_type=get_data_class('array'), required=False, help='The output charge density.')
+        spec.output('magnetization_density', valid_type=get_data_class('array'), required=False, help='The output magnetization density.')
         spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False, help='The output of the site magnetization')
         spec.output_namespace('custom_outputs', dynamic=True)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
@@ -124,12 +126,12 @@ class VaspCalculation(VaspCalcBase):
                        message='the retrieved_temporary folder data node could not be accessed.',
                        invalidates_cache=True)
         spec.exit_code(352,
-                       'ERROR_CRITICAL_MISSING_FILE',
-                       message='a file that is marked by the parser as critical is missing.',
+                       'ERROR_CRITICAL_MISSING_OBJECT',
+                       message='an object that is marked by the parser as critical is missing.',
                        invalidates_cache=True)
         spec.exit_code(333,
                        'ERROR_VASP_DID_NOT_EXECUTE',
-                       message='VASP did not produce any output files and did likely not execute properly.',
+                       message='VASP did not produce any output and did likely not execute properly.',
                        invalidates_cache=True)
 
         # 700 series of the errors catches VASP execution related problems
@@ -143,7 +145,7 @@ class VaspCalculation(VaspCalcBase):
             message=
             'Outputs for diagnosis are missing, please make sure `run_status` and `notifications` quantities are requested for parsing.')
 
-        spec.exit_code(1001, 'ERROR_PARSING_FILE_FAILED', message='parsing a file has failed.')
+        spec.exit_code(1001, 'ERROR_PARSING_OBJECT_FAILED', message='parsing an object has failed.')
         spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the {quantity} quantity')
         spec.exit_code(
             1003,
@@ -155,9 +157,9 @@ class VaspCalculation(VaspCalcBase):
 
     def prepare_for_submission(self, tempfolder):
         """
-        Add all files to the list of files to be retrieved.
+        Add all objects to the list of objects to be retrieved.
 
-        Notice that we here utilize both the retrieve batch of files, which are always stored after retrieval and
+        Notice that we here utilize both the retrieve batch of objects, which are always stored after retrieval and
         the temporary retrieve list which is automatically cleared after parsing.
         """
         calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
@@ -167,7 +169,7 @@ class VaspCalculation(VaspCalcBase):
         calcinfo.codes_info[0].join_files = True
 
         # Still need the exceptions in case settings is not defined on inputs
-        # Check if we want to store all always retrieve files
+        # Check if we want to store all always retrieve objects
         try:
             store = self.inputs.settings.get_attribute('ALWAYS_STORE', default=True)
         except AttributeError:
@@ -242,7 +244,7 @@ class VaspCalculation(VaspCalcBase):
         Test wether an charge_densities input is needed or not.
 
         :return output:
-            True if a chgcar file must be used
+            True if CHGCAR must be present
             (py:method::NscfCalculation.use_charge_densities),
             False otherwise
         needs 'parameters' input to be set
@@ -257,7 +259,7 @@ class VaspCalculation(VaspCalcBase):
         Test wether a wavefunctions input is needed or not.
 
         :return output:
-            True if a wavecar file must be
+            True if WAVECAR must be present
             used (py:method::NscfCalculation.use_wavefunctions),
             False otherwise
         needs 'parameters' input to be set
@@ -279,13 +281,13 @@ class VaspCalculation(VaspCalcBase):
         return structure
 
     def write_additional(self, tempfolder, calcinfo):
-        """Write CHGAR and WAVECAR files if needed."""
+        """Write CHGAR and WAVECAR if needed."""
         super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
-        # a list of file names to be copied
+        # a list of object names to be copied
         remote_copy_fnames = [os.path.split(entry[1])[1] for entry in calcinfo.remote_copy_list]
         if self._need_chgcar():
             # If we restart, we do not require inputs, but we should have a basic check
-            # that the CHGCAR file is present
+            # that CHGCAR is present
             if not self._is_restart():
                 self.write_chgcar('CHGCAR', calcinfo)
             else:
@@ -294,7 +296,7 @@ class VaspCalculation(VaspCalcBase):
                     raise FileNotFoundError('Could not find CHGCAR in {}'.format(remote_folder.get_remote_path()))
         if self._need_wavecar():
             # If we restart, we do not require inputs, but we should have a basic check
-            # that the WAVECAR file is present
+            # that WAVECAR is present
             if not self._is_restart():
                 self.write_wavecar('WAVECAR', calcinfo)
             else:
@@ -309,10 +311,13 @@ class VaspCalculation(VaspCalcBase):
         Passes the parameters node (Dict) from to the INCAR parser for
         preparation and writes to dst.
 
-        :param dst: absolute path of the file to write to
+        :param dst: absolute path of the object to write to
         """
-        incar_parser = IncarParser(data=self.inputs.parameters)
-        incar_parser.write(dst)
+        try:
+            incar_parser = IncarParser(data=self.inputs.parameters)
+            incar_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The INCAR content did not pass validation.')
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
         """
@@ -321,7 +326,7 @@ class VaspCalculation(VaspCalcBase):
         Passes the structures node (StructureData) to the POSCAR parser for
         preparation and writes to dst.
 
-        :param dst: absolute path of the file to write to
+        :param dst: absolute path of the object to write to
         """
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
@@ -333,14 +338,18 @@ class VaspCalculation(VaspCalcBase):
             positions_dof = dynamics.get('positions_dof')
             if positions_dof is not None:
                 options = {'positions_dof': positions_dof}
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
-        poscar_parser.write(dst)
+
+        try:
+            poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
+            poscar_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The POSCAR content did not pass validation.')
 
     def write_potcar(self, dst):
         """
-        Concatenates multiple POTCAR files into one in the same order as the elements appear in POSCAR.
+        Concatenates multiple POTCARs into one in the same order as the elements appear in POSCAR.
 
-        :param dst: absolute path of the file to write to
+        :param dst: absolute path of the object to write to
         """
         structure = self._structure()
         multi_potcar = MultiPotcarIo.from_structure(structure, self.inputs.potential)
@@ -353,10 +362,13 @@ class VaspCalculation(VaspCalcBase):
         Passes the kpoints node (KpointsData) to the KPOINTS parser for
         preparation and writes to dst.
 
-        :param dst: absolute path of the file to write to
+        :param dst: absolute path of the object to write to
         """
-        kpoint_parser = KpointsParser(data=self.inputs.kpoints)
-        kpoint_parser.write(dst)
+        try:
+            kpoint_parser = KpointsParser(data=self.inputs.kpoints)
+            kpoint_parser.write(dst)
+        except SystemExit:
+            raise ValidationError('The KPOINTS content did not pass validation.')
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
         charge_density = self.inputs.charge_density

@@ -24,16 +24,37 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.tests import TemporaryProfileManager
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.file_parsers.incar import IncarParser
-from aiida_vasp.parsers.file_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.file_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
+from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.general import copytree
-from aiida_vasp.parsers.file_parsers.stream import StreamParser
+from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
+
+
+def path_file_and_settings(name, param):
+    """Locate folder, filename and settings from param. Return the path and settings."""
+    settings = {}
+    if isinstance(param, list):
+        if len(param) == 3:
+            folder, name, settings = param
+        elif len(param) == 2:
+            folder, name = param
+        else:
+            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
+    else:
+        folder = param
+    path = data_path(folder, name)
+
+    return path, settings
 
 
 @pytest.fixture(scope='session')
@@ -80,7 +101,7 @@ def potcar_node_pair(fresh_aiida_env):
 
 @pytest.fixture
 def temp_pot_folder(tmp_path):
-    """A temporary copy of the potcar test data folder, to avoid extracting tar files inside the repo."""
+    """A temporary copy of the potcar test data folder, to avoid extracting tar objects inside the repo."""
     potcar_ga = Path(data_path('potcar')) / 'Ga'
     assert not potcar_ga.exists()
     pot_archive = Path(data_path('potcar'))
@@ -312,7 +333,7 @@ def mock_vasp(fresh_aiida_env, localhost):
     """
     Give an mock-up of the VASP executable
 
-    This code will always create the output file even if no matching
+    This code will always create the output object even if no matching
     calculations from the registry is found. This makes it suitable for simple
     tests.
     """
@@ -324,7 +345,7 @@ def mock_vasp_strict(fresh_aiida_env, localhost):
     """
     Give an mock-up of the VASP executable with strict input matching.
 
-    This code will not create the output file unless matching calculations from the
+    This code will not create the output object unless matching calculations from the
     registry is found. It is suitable for testsing complex multi-step workchains.
     tests.
     """
@@ -423,51 +444,93 @@ def ref_retrieved():
     return retrieved
 
 
-@pytest.fixture(params=[('vasprun', {})])
+@pytest.fixture()
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    from aiida_vasp.calcs.vasp import VaspCalculation
-    file_name = 'vasprun.xml'
-    path_to_file, settings = request.param
-    path = data_path(path_to_file, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
+    path, settings = path_file_and_settings('vasprun.xml', request.param)
+    with open(path, 'r') as handler:
+        parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
 
-@pytest.fixture(params=[('basic', {})])
+@pytest.fixture()
 def vasprun_parser_v621(request):
     """Return an instance of VasprunParser for a reference vasprun.xml of VASP6."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    from aiida_vasp.calcs.vasp import VaspCalculation
-    file_name = 'vasprun621.xml'
-    path_to_file, settings = request.param
-    path = data_path(path_to_file, file_name)
-    parser = VasprunParser(file_path=path, settings=ParserSettings(settings), exit_codes=VaspCalculation.exit_codes)
+    path, settings = path_file_and_settings('vasprun621.xml', request.param)
+    with open(path, 'r') as handler:
+        parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
 
 @pytest.fixture()
 def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'OUTCAR'
-    if isinstance(request.param, list):
-        folder, file_name = request.param
-    else:
-        folder = request.param
-    path = data_path(folder, file_name)
-    parser = OutcarParser(file_path=path, settings=ParserSettings({}))
+    path, settings = path_file_and_settings('OUTCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = OutcarParser(handler=handler, settings=settings)
     return parser
 
 
-@pytest.fixture(params=[['stdout', 'out']])
+@pytest.fixture()
+def poscar_parser(request):
+    """Return an instance of PoscarParser for a reference POSCAR."""
+    path, _ = path_file_and_settings('POSCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = PoscarParser(handler=handler)
+    return parser
+
+
+@pytest.fixture()
+def incar_parser(request):
+    """Return an instance of IncarParser for a reference INCAR."""
+    path, settings = path_file_and_settings('INCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = IncarParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
+def doscar_parser(request):
+    """Return an instance of DoscarParser for a reference DOSCAR."""
+    path, settings = path_file_and_settings('DOSCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = DoscarParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
+def chgcar_parser(request):
+    """Return an instance of ChgcarParser for a reference CHGCAR."""
+    path, settings = path_file_and_settings('CHGCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = ChgcarParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
+def eigenval_parser(request):
+    """Return an instance of EigenvalParser for a reference EIGENVAL."""
+    path, settings = path_file_and_settings('EIGENVAL', request.param)
+    with open(path, 'r') as handler:
+        parser = EigenvalParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
+def kpoints_parser(request):
+    """Return an instance of KpointsParser for a reference KPOINTS."""
+    path, settings = path_file_and_settings('KPOINTS', request.param)
+    with open(path, 'r') as handler:
+        parser = KpointsParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
 def stream_parser(request):
     """Return an instance of StreamParser for a reference stream capture."""
-    from aiida_vasp.parsers.settings import ParserSettings
-    file_name = 'vasp_output'
-    path = data_path(*request.param, file_name)
-    parser = StreamParser(file_path=path, settings=ParserSettings({}))
+    path, settings = path_file_and_settings('vasp_output', request.param)
+    with open(path, 'r') as handler:
+        parser = StreamParser(handler=handler, settings=settings)
     return parser
 
 
@@ -508,3 +571,43 @@ def phonondb_run(tmp_path):
     phonondb = Path(data_path('phonondb'))
     copytree(phonondb, tmp_path)
     yield tmp_path
+
+
+@pytest.fixture
+def compare_symmetries():
+    return {
+        'symmetrized_cell_type': {
+            'static': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ],
+            'dynamic': [
+                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.'
+            ]
+        },
+        'original_cell_type': {
+            'static': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ],
+            'dynamic': [
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+            ]
+        },
+        'num_space_group_operations': {
+            'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
+            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
+        }
+    }

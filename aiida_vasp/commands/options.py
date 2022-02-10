@@ -58,4 +58,4 @@ FAMILY_NAME = OverridableOption('-n',
                                 'for a specific calculation or workflow.')
 PATH = OverridableOption('-p', '--path', default='.', type=click.Path(exists=True), help='Path to the folder.')
 
-DRY_RUN = OverridableOption('--dry-run', is_flag=True, is_eager=True, help='Do not commit to database or modify configuration files.')
+DRY_RUN = OverridableOption('--dry-run', is_flag=True, is_eager=True, help='Do not commit to database or modify configurations.')

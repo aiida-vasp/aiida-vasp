@@ -21,7 +21,8 @@
     "reentry_register": true,
     "python_requires": ">=3.7",
     "setup_requires": [
-	"reentry"
+	"reentry",
+	"pip<22"
     ],
     "entry_points": {
 	"aiida.calculations": [
@@ -86,12 +87,12 @@
     },
     "include_package_data": true,
     "install_requires": [
-		"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
-		"psycopg2-binary~=2.8.3",
-		"subprocess32",
-		"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
-		"lxml",
-		"packaging",
-		"parsevasp@git+https://github.com/aiida-vasp/parsevasp@058bb26872588c4a83dbc93afcfbf638963be1fc"
+	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
+	"psycopg2-binary~=2.8.3",
+	"subprocess32",
+	"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
+	"lxml",
+	"packaging",
+	"parsevasp@git+https://github.com/aiida-vasp/parsevasp@573842a96dd3e25b1e8dc53838f3e7db988d356d"
     ]
 }

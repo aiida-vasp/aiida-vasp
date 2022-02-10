@@ -10,6 +10,7 @@ from __future__ import print_function
 import pytest
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
+from aiida.manage.tests.pytest_fixtures import aiida_caplog
 from aiida.plugins.factories import DataFactory
 
 from aiida_vasp.utils.fixtures import *
@@ -32,13 +33,25 @@ def test_vasp_wc(fresh_aiida_env, run_vasp_process):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process):
-    """Test submitting only, not correctness, with mocked vasp code, test fetching of the CHGCAR."""
-    settings = {'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_chgcar': True}}
+def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process, aiida_caplog):
+    """Test submitting only, not correctness, with mocked vasp code, test fetching and parsing of the CHGCAR content."""
+    settings = {'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'], 'parser_settings': {'add_charge_density': True}}
     results, node = run_vasp_process(settings=settings, process_type='workchain')
     assert node.exit_status == 0
-    assert 'chgcar' in results
-    assert results['chgcar'].get_content() == 'This is a test CHGCAR file.\n'
+    assert 'charge_density' in results
+    assert 'misc' in results
+    test_array = np.array([[[0.09329446, 0.18658892, 0.27988338], [0.37317784, 0.4664723, 0.55976676], [0.65306122, 0.74635569, 0.83965015],
+                            [0.93294461, 1.02623907, 1.11953353]],
+                           [[1.21282799, 1.30612245, 1.39941691], [1.49271137, 1.58600583, 1.67930029],
+                            [1.77259475, 1.86588921, 1.95918367], [2.05247813, 2.14577259, 2.23906706]],
+                           [[2.33236152, 2.42565598, 2.51895044], [2.6122449, 2.70553936, 2.79883382], [2.89212828, 2.98542274, 3.0787172],
+                            [3.17201166, 3.26530612, 3.35860058]],
+                           [[3.45189504, 3.5451895, 3.63848397], [3.73177843, 3.82507289, 3.91836735], [4.01166181, 4.10495627, 4.19825073],
+                            [4.29154519, 4.38483965, 4.47813411]],
+                           [[4.57142857, 4.66472303, 4.75801749], [4.85131195, 4.94460641, 5.03790087], [5.13119534, 5.2244898, 5.31778426],
+                            [5.41107872, 5.50437318, 5.59766764]]])
+    charge_density = results['charge_density'].get_array('charge_density')
+    assert np.allclose(charge_density, test_array)
 
 
 def upload_real_workchain(node, name):

@@ -12,7 +12,7 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run.
 
-    The list of files in test_data/phonondb doesn't contain POTCAR.
+    The list of objects in test_data/phonondb doesn't contain POTCAR.
 
     """
     from aiida_vasp.calcs.immigrant import VaspImmigrant
@@ -53,9 +53,9 @@ def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     assert node.exit_status == 0
 
     # We should not have any POTCAR here
-    expected_files = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
-    retrieved_files = result['retrieved'].list_object_names()
-    assert set(expected_files) == set(retrieved_files)
+    expected_objects = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
+    retrieved_objects = result['retrieved'].list_object_names()
+    assert set(expected_objects) == set(retrieved_objects)
 
 
 def test_vasp_immigrant(immigrant_with_builder):
@@ -110,9 +110,9 @@ def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # 
     assert node.exit_status == 0
 
     # We should not have any POTCAR here
-    expected_files = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
-    retrieved_files = result['retrieved'].list_object_names()
-    assert set(expected_files) == set(retrieved_files)
+    expected_objects = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
+    retrieved_objects = result['retrieved'].list_object_names()
+    assert set(expected_objects) == set(retrieved_objects)
 
 
 def test_vasp_immigrant_example_3(immigrant_with_builder_example_3):  # pylint: disable=invalid-name
