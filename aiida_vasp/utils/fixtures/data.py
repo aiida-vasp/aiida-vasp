@@ -430,6 +430,8 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
         else:
             aiidapath = Path(os.environ.get('AIIDA_PATH', os.environ.get('HOME'))) / '/.aiida'
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
+        code.store()
+        code.set_extra('is_mock_code', True)
 
     return code
 
