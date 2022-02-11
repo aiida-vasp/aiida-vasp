@@ -171,8 +171,10 @@ class MockRegistry:
             for fpath in folder.glob('*'):
                 if fpath.is_file():
                     shutil.copy2(fpath, dst_path)
+                # Directory - then copy the sub files - this only handles one level down
                 elif fpath.is_dir():
-                    shutil.copytree(fpath, dst_path / fpath.name, dirs_exist_ok=True)
+                    for subfile in fpath.glob('*'):
+                        shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
 
     def extract_calc_by_hash(self, hash_val, dst, include_inputs=False):
         """
