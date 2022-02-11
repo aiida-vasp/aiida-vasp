@@ -60,6 +60,7 @@ def print_and_export_failed_mock():
     print('######## Information for FAILED mock code calculations ########')
     entities = []
     for (calcjob,) in query.all():
+        entities.append(calcjob)
         root = get_call_root(calcjob)
         if root != calcjob:
             print('######## Information for the call root ########')
