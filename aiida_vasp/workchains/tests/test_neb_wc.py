@@ -75,7 +75,7 @@ def neb_wc_input(fresh_aiida_env, potentials, mock_vasp_strict, nh3_end_points):
     kpoints.set_kpoints_mesh((1, 1, 1))
     builder = WorkflowFactory('vasp.neb').get_builder()
     builder.parameters = orm.Dict(dict={'incar': parameters})
-    builder.options = orm.Dict(dict={'resources': {'tot_num_mpiprocs': 3, 'num_machines': 1}})
+    builder.options = orm.Dict(dict={'resources': {'tot_num_mpiprocs': 1, 'num_machines': 1}, 'withmpi': False})
 
     builder.potential_family = orm.Str(POTCAR_FAMILY_NAME)
     builder.potential_mapping = orm.Dict(dict=POTCAR_MAP)
