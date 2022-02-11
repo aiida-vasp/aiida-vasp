@@ -16,24 +16,18 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cache/pip
-          key:
-            pip-${{ matrix.python-version }}-tests-${{
-            hashFiles('**/setup.json') }}
-          restore-keys: pip-${{ matrix.python-version }}-tests
+          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+          restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
       - name: Pin pip to version 21.3
         run: pip install pip~=21.3
-      - name: Install wheel
-        run: pip install wheel
-      - name: Install AiiDA-VASP
-        run: |
-          pip install -e .[graphs,tests,pre-commit]
-          pip freeze
-      - name: Run pre-commit
-        run: pre-commit run --all-files || ( git diff; git status; exit 1; )
+      - name: Install Tox
+        run: pip install tox
+      - name: Run pre-commit in Tox
+        run: tox -e pre-commit
   tests:
     needs: [pre-commit]
     runs-on: ubuntu-latest
@@ -48,7 +42,6 @@ jobs:
         python: ["3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
-
       - name: Cache python dependencies
         id: cache-pip
         uses: actions/cache@v1
@@ -56,7 +49,6 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
           restore-keys: pip-${{ matrix.python }}-tests-
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
