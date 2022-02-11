@@ -57,17 +57,17 @@ def print_and_export_failed_mock():
         return
 
     # Print information
-    print('Information for FAILED mock code calculations\n')
+    print('######## Information for FAILED mock code calculations ########')
     entities = []
     for (calcjob,) in query.all():
         root = get_call_root(calcjob)
         if root != calcjob:
-            print('Information for the call root')
+            print('######## Information for the call root ########')
             print(format_call_graph(root))
             print(get_node_info(root))
             print(get_workchain_report(root, 'REPORT'))
 
-        print('Information for the calcjob')
+        print('######## Information for the calcjob ########')
         print(get_node_info(calcjob))
         print(get_calcjob_report(calcjob))
         names = calcjob.outputs.retrieved.list_object_names()
@@ -76,7 +76,11 @@ def print_and_export_failed_mock():
             if option in names:
                 stdout = option
                 break
-        print(calcjob.outputs.retrieved.get_object_content(stdout))
+        if stdout is not None:
+            print('######## STDOUT from the calcjob ########')
+            print(calcjob.outputs.retrieved.get_object_content(stdout))
+        else:
+            print('ERROR: No STDOUT found for the calculation')
 
     # Export the failed calculations
     output_file = Path(__file__).parent.parent.parent.parent / 'test_mock_error.aiida'

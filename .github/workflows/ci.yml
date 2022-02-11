@@ -95,6 +95,17 @@ jobs:
       - name: Run tox
         if: matrix.python != '3.8'
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
+
+      - name: Archive error mock calculations
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: error-mock-calc-archive
+          path: |
+            test_mock_error.aiida
+          retention-days: 5
+          if-no-files-found: warn
+
       - name: Upload coverage to Codecov
         if: matrix.python == '3.8'
         uses: codecov/codecov-action@v2
