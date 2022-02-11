@@ -27,7 +27,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
@@ -37,7 +37,7 @@ from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn'}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn', 'N': 'N', 'H': 'H'}
 
 
 def path_file_and_settings(name, param):
@@ -315,6 +315,46 @@ def vasp2w90_inputs(
 
 
 @pytest.fixture()
+def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
+    """Inputs dictionary for CalcJob Processes."""
+    from aiida.orm import Dict
+
+    def inner(settings=None, parameters=None):
+
+        inputs = AttributeDict()
+
+        metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
+
+        if settings is not None:
+            inputs.settings = Dict(dict=settings)
+
+        if isinstance(parameters, dict):
+            parameters = get_data_class('dict')(dict=parameters)
+
+        if parameters is None:
+            parameters = AttributeDict(vasp_params.get_dict())
+            parameters['images'] = 3
+            parameters = get_data_class('dict')(dict=parameters)
+
+        inputs.code = vasp_code
+        inputs.metadata = metadata
+        inputs.parameters = parameters
+        inputs.kpoints, _ = vasp_kpoints
+
+        inputs.initial_structure = vasp_structure
+        inputs.final_structure = vasp_structure
+
+        inputs.potential = potentials
+
+        neb_images = {f'images_{idx:02d}': vasp_structure for idx in range(1, 4)}
+        inputs.neb_images = neb_images
+
+        return inputs
+
+    return inner
+
+
+@pytest.fixture()
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
     from aiida.orm import Code
@@ -459,6 +499,15 @@ def vasprun_parser_v621(request):
     path, settings = path_file_and_settings('vasprun621.xml', request.param)
     with open(path, 'r') as handler:
         parser = VasprunParser(handler=handler, settings=settings)
+    return parser
+
+
+@pytest.fixture()
+def neb_outcar_parser(request):
+    """Return an instance of OutcarParser for a reference OUTCAR."""
+    path, settings = path_file_and_settings('OUTCAR', request.param)
+    with open(path, 'r') as handler:
+        parser = VtstNebOutcarParser(handler=handler, settings=settings)
     return parser
 
 

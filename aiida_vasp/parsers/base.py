@@ -8,6 +8,7 @@ from contextlib import contextmanager
 
 from aiida.parsers.parser import Parser
 from aiida.common.exceptions import NotExistent
+from aiida.repository.common import FileType
 
 
 class BaseParser(Parser):
@@ -25,7 +26,7 @@ class BaseParser(Parser):
             return error_code
         return None
 
-    def _compose_retrieved_content(self, parser_kwargs=None):
+    def _compose_retrieved_content(self, parser_kwargs=None):  # pylint:disable=too-many-branches
         """
         Convenient check to see if the retrieved and retrieved temporary folder is present.
 
@@ -39,7 +40,12 @@ class BaseParser(Parser):
         if exit_code_permanent is None:
             # Retrieved folder exists, add content and tag to dictionary
             for retrieved_object in self.retrieved.list_objects():
-                retrieved[retrieved_object.name] = {'path': '', 'status': 'permanent'}
+                # Add sub directory objects - this only treat for one extra level
+                if retrieved_object.file_type == FileType.DIRECTORY:
+                    for subobj in self.retrieved.list_objects(retrieved_object.name):
+                        retrieved[retrieved_object.name + '/' + subobj.name] = {'path': '', 'status': 'permanent'}
+                else:
+                    retrieved[retrieved_object.name] = {'path': '', 'status': 'permanent'}
 
         exit_code_temporary = None
         if parser_kwargs is not None:
@@ -49,7 +55,13 @@ class BaseParser(Parser):
                 # Notice https://github.com/aiidateam/aiida-core/issues/3502. That is why
                 # we need to store the path and use listdir etc.
                 for retrieved_object in os.listdir(self._retrieved_temporary):
-                    retrieved[retrieved_object] = {'path': self._retrieved_temporary, 'status': 'temporary'}
+                    abspath = os.path.join(self._retrieved_temporary, retrieved_object)
+                    # Add sub directory objects - this only treat for one extra level
+                    if os.path.isdir(abspath):
+                        for subobj in os.listdir(abspath):
+                            retrieved[os.path.join(retrieved_object, subobj)] = {'path': self._retrieved_temporary, 'status': 'temporary'}
+                    else:
+                        retrieved[retrieved_object] = {'path': self._retrieved_temporary, 'status': 'temporary'}
 
         # Check if there are other objects than the AiiDA generated scheduler objects in retrieved and
         # if there are any objects in the retrieved_temporary. If not, return an error.
@@ -132,3 +144,18 @@ class BaseParser(Parser):
                     yield None
         except KeyError:
             yield None
+
+
+def list_files_recursive(retrieved, top_level=''):
+    """
+    Recursively list the content of a retrieved FolderData node.
+    """
+    object_paths = []
+    for obj in retrieved.list_objects(top_level):
+        if obj.file_type == FileType.FILE:
+            object_paths.append(os.path.join(top_level, obj.name))
+        elif obj.file_type == FileType.DIRECTORY:
+            object_paths.extend(
+                [os.path.join(top_level, path) for path in list_files_recursive(retrieved, os.path.join(top_level, obj.name))])
+
+    return object_paths

@@ -213,9 +213,12 @@ class VaspCalculation(VaspCalcBase):
             raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
 
     def _prestore(self):
-        """Set attributes prior to storing."""
+        """
+        Set attributes prior to storing.
+        BONAN: Is this used in any case??
+        """
         super(VaspCalculation, self)._prestore()
-        setattr(self, 'elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
+        setattr(self, 'elements', ordered_unique_list(self._structure().get_ase().get_chemical_symbols()))
 
     @property
     def _parameters(self):
@@ -304,7 +307,7 @@ class VaspCalculation(VaspCalcBase):
                 if 'WAVECAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
 
-    def write_incar(self, dst):  # pylint: disable=unused-argument
+    def write_incar(self, dst, validate_tags=True):  # pylint: disable=unused-argument
         """
         Write the INCAR.
 
@@ -314,7 +317,7 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the object to write to
         """
         try:
-            incar_parser = IncarParser(data=self.inputs.parameters)
+            incar_parser = IncarParser(data=self.inputs.parameters, validate_tags=validate_tags)
             incar_parser.write(dst)
         except SystemExit:
             raise ValidationError('The INCAR content did not pass validation.')

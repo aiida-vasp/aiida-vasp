@@ -41,7 +41,8 @@ class NodeComposer:
     def __init__(self, nodes, equivalent_quantity_keys, quantities, logger=None):
         """Initialize."""
         self._equivalent_quantity_keys = equivalent_quantity_keys
-        self._quantities = quantities
+        # Make a copy of the quantities in case we need to modify it
+        self._quantities = dict(quantities)
         self._nodes = nodes
         self._failed_to_create = []
         self._created = {}
@@ -69,7 +70,7 @@ class NodeComposer:
                                      'No parsed data available.')
                 continue
 
-            exception = None  # pylint: disable=unused-variable
+            exception = None
             # Guard the parsing in case of errors
             try:
                 node = self.compose_node(node_dict['type'], inputs)
@@ -81,7 +82,7 @@ class NodeComposer:
                 self._created[node_dict['link_name']] = node
             else:
                 self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
-                                     'exception: {exception}')
+                                     f'exception: {exception}')
                 self._failed_to_create.append(node_dict['link_name'])
 
     def compose_node(self, node_type, inputs):

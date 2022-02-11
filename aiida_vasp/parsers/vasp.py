@@ -115,6 +115,7 @@ class VaspParser(BaseParser):
     'is_critical' flag. Keep in mind adding an additional object parsers after 'parse_with_retrieved'
     is called, will only have an effect when parsing a second time.
     """
+    COMPOSER_CLASS = NodeComposer
 
     def __init__(self, node):
         super(VaspParser, self).__init__(node)
@@ -144,6 +145,12 @@ class VaspParser(BaseParser):
         """Add a custom node to the settings."""
         self._settings.add_output_node(node_name, node_dict)
 
+    def _setup_parsable(self):
+
+        self._parsable_quantities.setup(retrieved_content=self._retrieved_content.keys(),
+                                        parser_definitions=self._definitions.parser_definitions,
+                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
+
     def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
         """The function that triggers the parsing of a calculation."""
 
@@ -165,11 +172,10 @@ class VaspParser(BaseParser):
 
         # Parse the quantities from retrived objects
         parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
-
         # Compose the output nodes using the parsed quantities
         requested_nodes = self._settings.output_nodes_dict
         equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
-        composed_nodes = NodeComposer(requested_nodes, equivalent_quantity_keys, parsed_quantities, logger=self.logger)
+        composed_nodes = self.COMPOSER_CLASS(requested_nodes, equivalent_quantity_keys, parsed_quantities, logger=self.logger)
         for link_name, node in composed_nodes.successful.items():
             self.out(link_name, node)
 

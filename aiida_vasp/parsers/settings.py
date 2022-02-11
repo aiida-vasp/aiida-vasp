@@ -10,7 +10,7 @@ from copy import deepcopy
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.content_parsers.outcar import OutcarParser
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -56,6 +56,50 @@ OBJECT_PARSER_SETS = {
             'status': 'Unknown'
         },
         'vasp_output': {
+            'parser_class': StreamParser,
+            'is_critical': False,
+            'status': 'Unkonwn'
+        }
+    },
+    'neb': {
+        'DOSCAR': {
+            'parser_class': DoscarParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'EIGENVAL': {
+            'parser_class': EigenvalParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'IBZKPT': {
+            'parser_class': KpointsParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'OUTCAR': {
+            'parser_class': VtstNebOutcarParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'vasprun.xml': {
+            'parser_class': VasprunParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'CHGCAR': {
+            'parser_class': ChgcarParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        'CONTCAR': {
+            'parser_class': PoscarParser,
+            'is_critical': False,
+            'status': 'Unknown'
+        },
+        # The STDOUT is rename as 'stdout' for NEB calculations, this is because VASP itself
+        # divert STDOUT for each image to <ID>/stdout
+        'stdout': {
             'parser_class': StreamParser,
             'is_critical': False,
             'status': 'Unkonwn'
@@ -203,6 +247,7 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
         * quantities_to_parse: Collection of quantities in nodes_dict.
 
     """
+    NODES = NODES
 
     def __init__(self, settings, default_settings=None, vasp_parser_logger=None):
         self._vasp_parser_logger = vasp_parser_logger
@@ -314,7 +359,7 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
                 continue
 
             node_name = key[4:]
-            node_dict = deepcopy(NODES.get(node_name, {}))
+            node_dict = deepcopy(self.NODES.get(node_name, {}))
             # Considered as custom node if node_dict == {}.
             is_custom_node = not bool(node_dict)
 

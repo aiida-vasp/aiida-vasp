@@ -27,6 +27,10 @@ class IncarParser(BaseFileParser):
         },
     }
 
+    def __init__(self, *args, validate_tags=True, **kwargs):
+        self._validate_tags = validate_tags
+        super().__init__(*args, **kwargs)
+
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Incar`` using a file like handler.
 
@@ -38,7 +42,7 @@ class IncarParser(BaseFileParser):
         """
 
         try:
-            self._content_parser = Incar(file_handler=handler, logger=self._logger)
+            self._content_parser = Incar(file_handler=handler, logger=self._logger, validate_tags=self._validate_tags)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 
@@ -86,6 +90,6 @@ class IncarParser(BaseFileParser):
         dictionary = self._content_data.get_dict()
 
         # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
-        content_parser = Incar(incar_dict=dictionary, logger=self._logger)
+        content_parser = Incar(incar_dict=dictionary, logger=self._logger, validate_tags=self._validate_tags)
 
         return content_parser

@@ -213,3 +213,19 @@ def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # p
         'full_cell': np.asarray([2.4077611])
     }
     assert set(magnetization) == set(test)
+
+
+@pytest.mark.parametrize('neb_outcar_parser', ['neb/01'], indirect=True)
+def test_neb(fresh_aiida_env, neb_outcar_parser):
+    """
+    Test that the parameter node is a ParametersData instance.
+
+    Should contain the symmetries and the elastic moduli.
+
+    """
+    data = neb_outcar_parser.get_quantity('neb_data')
+    assert data['neb_converged']
+    assert data['force_prep_real'] == pytest.approx(0.017467)
+    assert data['energy_extrapolated'] == pytest.approx(-19.49550593)
+
+    np.testing.assert_allclose(neb_outcar_parser.forces[0], np.array([0.008815, 0.005492, -0.000661]))
