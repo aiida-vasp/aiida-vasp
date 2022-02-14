@@ -386,7 +386,7 @@ class RelaxWorkChain(WorkChain):
                     self.report('Relaxation is considered converged.')
 
         # Update the MAGMOM to be used
-        if 'site_magnetization' in workchain.outputs and self.ctx.inputs.parameters.relax.keep_magnetization.value is True:
+        if 'site_magnetization' in workchain.outputs and self.ctx.inputs.parameters.relax.keep_magnetization is True:
             self.ctx.current_site_magnetization = workchain.outputs.site_magnetization
 
         if converged:
