@@ -7,7 +7,7 @@ from pathlib import Path
 from aiida.common.exceptions import InputValidationError
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_list
+from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 
 
@@ -272,17 +272,16 @@ class VaspNEBCalculation(VaspCalculation):
         """
         super().verify_inputs()
         last_order = None
-        last_num_atoms = None
+        last_num_sites = None
         for structure in list(self.inputs.neb_images.values()) + [self.inputs.initial_structure, self.inputs.final_structure]:
-            atoms = structure.get_ase()
-            order = ordered_unique_list(atoms.get_chemical_symbols())
-            num_atoms = len(atoms)
+            num_sites = len(structure.sites)
+            order = ordered_unique_symbols(structure)
             if last_order is not None and order != last_order:
                 raise InputValidationError('The input structures have non-euqal element orders.')
-            if last_order is not None and num_atoms != last_num_atoms:
+            if last_order is not None and num_sites != last_num_sites:
                 raise InputValidationError('The input structures have non-equal number of atoms.')
             last_order = order
-            last_num_atoms = num_atoms
+            last_num_sites = num_sites
 
     def write_incar(self, dst, validate_tags=False):  # pylint: disable=unused-argument
         """
