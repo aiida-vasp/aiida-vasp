@@ -275,6 +275,11 @@ class VaspNEBCalculation(VaspCalculation):
         last_num_sites = None
         for structure in list(self.inputs.neb_images.values()) + [self.inputs.initial_structure, self.inputs.final_structure]:
             num_sites = len(structure.sites)
+
+            # Convert to StructureData from CifData on demand....
+            if not hasattr(structure, 'get_pymatgen'):
+                structure = get_data_node('structure', ase=structure.get_ase())
+
             order = ordered_unique_symbols(structure)
             if last_order is not None and order != last_order:
                 raise InputValidationError('The input structures have non-euqal element orders.')
