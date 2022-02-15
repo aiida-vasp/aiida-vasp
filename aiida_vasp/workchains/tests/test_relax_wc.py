@@ -10,6 +10,10 @@ from __future__ import print_function
 import pytest
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
+import aiida.orm as orm
+from aiida.engine import run
+from aiida.plugins import DataFactory
+from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
@@ -19,14 +23,52 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.utils.mock_code import MockRegistry
+
+
+def upload_real_workchain(node, name):
+    """
+    Upload the workchain to the repository to make it work with mocking
+
+    This function should be called once after the REAL vasp calculation is run during the test
+    """
+    reg = MockRegistry()
+    print(reg.base_path)
+    reg.upload_aiida_work(node, name)
+
+
+def upload_real_pseudopotentials(path):
+    """
+    Upload real pseudopotentials for workchain test mock deposition
+
+
+    This function should be called once before the REAL vasp calculation is launch to setup the
+    correct POTCARs
+    """
+    global POTCAR_FAMILY_NAME  # pylint: disable=global-statement
+    POTCAR_FAMILY_NAME = 'TEMP'
+    potcar_data_cls = DataFactory('vasp.potcar')
+    potcar_data_cls.upload_potcar_family(path, 'TEMP', 'TEMP-REALPOTCARS', stop_if_existing=False, dry_run=False)
+
+
+def si_structure():
+    """
+    Setup a silicon structure in a displaced FCC setting
+    """
+    structure_data = DataFactory('structure')
+    alat = 3.9
+    lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
+    structure = structure_data(cell=lattice)
+    positions = [[0.1, 0.0, 0.0]]
+    for pos_direct in positions:
+        pos_cartesian = np.dot(pos_direct, lattice)
+        structure.append_atom(position=pos_cartesian, symbols='Si')
+    return structure
 
 
 def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     # def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp, mock_relax_wc):
     """Test submitting only, not correctness, with mocked vasp code."""
-    from aiida.orm import Code
-    from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.relax')
 
@@ -59,7 +101,7 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     parameters['relax']['force_cutoff'] = 0.01
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = orm.Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
     inputs.parameters = get_data_node('dict', dict=parameters)
@@ -105,3 +147,84 @@ def test_mode_values():
                 except Exception as exc:  # pylint: disable=broad-except
                     assert 'Get from DOF function has to either return the correct value or raise a ValueError ' \
                            'for invalid combinations, instead got {} exception'.format(type(exc))
+
+
+INCAR_SI_MAGMOM = {'encut': 240, 'ismear': 0, 'sigma': 0.1, 'ediff': 1e-5, 'nelm': 15, 'potim': 0.1, 'nupdown': 1}
+
+
+def setup_vasp_relax_workchain(structure, incar, nkpts, code=None):
+    """
+    Setup the inputs for a VaspWorkChain.
+    """
+    #upload_real_pseudopotentials('/home/bonan/appdir/VASP/POTCARS/potpaw_PBE.54-2015_subset')
+    inputs = AttributeDict()
+
+    inputs.structure = structure
+    inputs.parameters = get_data_node('dict', dict={'incar': incar})
+
+    kpoints = get_data_node('array.kpoints')
+    kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
+    inputs.kpoints = kpoints
+
+    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.options = get_data_node('dict',
+                                   dict={
+                                       'withmpi': False,
+                                       'queue_name': 'None',
+                                       'resources': {
+                                           'num_machines': 1,
+                                           'num_mpiprocs_per_machine': 1
+                                       },
+                                       'max_wallclock_seconds': 3600
+                                   })
+    inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_structure': True}})
+    inputs.relax = AttributeDict()
+    inputs.relax.force_cutoff = orm.Float(5e-2)
+    inputs.relax.volume = orm.Bool(True)
+    inputs.relax.shape = orm.Bool(True)
+    inputs.relax.steps = orm.Int(25)
+    inputs.relax.perform = orm.Bool(True)
+    inputs.relax.keep_magnetization = orm.Bool(True)
+
+    # If code is not passed, use the mock code
+    if code is None:
+        mock = orm.Code.get_from_string('mock-vasp-strict@localhost')
+        inputs.code = mock
+    else:
+        inputs.code = code
+    return inputs
+
+
+def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_strict):
+    """Test with mocked vasp code for handling ionic convergence issues"""
+
+    workchain = WorkflowFactory('vasp.relax')
+
+    mock_vasp_strict.store()
+    create_authinfo(computer=mock_vasp_strict.computer, store=True)
+
+    incar = dict(INCAR_SI_MAGMOM)
+    incar['ispin'] = 2
+    incar['lorbit'] = 10
+    incar['nupdown'] = 2
+    inputs = setup_vasp_relax_workchain(si_structure(), incar, 8)
+    inputs.verbose = get_data_node('bool', True)
+
+    # The test calculation contain NELM breaches during the relaxation - set to ignore it.
+    inputs.settings = get_data_node('dict', dict={'parser_settings': {
+        'add_structure': True,
+        'add_site_magnetization': True,
+    }})
+    inputs.max_iterations = get_data_node('int', 3)
+
+    _, node = run.get_node(workchain, **inputs)
+    assert node.exit_status == 0
+
+    called_nodes = list(node.called)
+    called_nodes.sort(key=lambda x: x.ctime)
+    # Check that the second node takes the magnetization of the first node
+    assert called_nodes[1].inputs.site_magnetization['site_magnetization']['sphere']['x']['site_moment']['1']['tot'] == 0.643
+    assert called_nodes[1].called[0].called[0].inputs.parameters['magmom'] == [0.643]
+    assert 'site_magnetization' in node.outputs
+    #upload_real_workchain(node, 'relax-wc-keep-magmom')

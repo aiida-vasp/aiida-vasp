@@ -291,7 +291,7 @@ class RelaxWorkChain(WorkChain):
 
         # Update the MAGMOM
         if self.ctx.current_site_magnetization is not None:
-            self.ctx.inputs.current_site_magnetization = self.ctx.current_site_magnetization
+            self.ctx.inputs.site_magnetization = self.ctx.current_site_magnetization
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
         self.ctx.inputs_ready = prepare_process_inputs(self.ctx.inputs, namespaces=['verify', 'dynamics'])
