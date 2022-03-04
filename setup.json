@@ -27,6 +27,7 @@
     "entry_points": {
 	"aiida.calculations": [
 	    "vasp.vasp = aiida_vasp.calcs.vasp:VaspCalculation",
+	    "vasp.neb = aiida_vasp.calcs.neb:VaspNEBCalculation",
 	    "vasp.vasp2w90 = aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation",
 	    "vasp.immigrant = aiida_vasp.calcs.immigrant:VaspImmigrant"
 	],
@@ -42,6 +43,7 @@
 	],
 	"aiida.parsers": [
 	    "vasp.vasp = aiida_vasp.parsers.vasp:VaspParser",
+	    "vasp.neb = aiida_vasp.parsers.neb:VtstNebParser",
 	    "vasp.vasp2w90 = aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
 	],
 	"aiida.workflows": [
@@ -51,6 +53,7 @@
 	    "vasp.bands = aiida_vasp.workchains.bands:BandsWorkChain",
 	    "vasp.master = aiida_vasp.workchains.master:MasterWorkChain",
 	    "vasp.relax = aiida_vasp.workchains.relax:RelaxWorkChain",
+	    "vasp.neb = aiida_vasp.workchains.neb:VaspNEBWorkChain",
 	    "vasp.immigrant = aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
 	],
 	"aiida.groups": [

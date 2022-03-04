@@ -60,6 +60,53 @@ def calc_with_retrieved(localhost):
 
 
 @pytest.fixture()
+def neb_calc_with_retrieved(localhost):
+    """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
+    from aiida.common.links import LinkType
+    from aiida.orm import CalcJobNode, FolderData, Computer, Dict
+
+    def _inner(file_path, input_settings=None, nimgs=3):
+        # Create a test computer
+        computer = localhost
+
+        process_type = 'aiida.calculations:{}'.format('vasp.vasp')
+
+        node = CalcJobNode(computer=computer, process_type=process_type)
+        node.set_attribute('input_filename', 'INCAR')
+        node.set_attribute('output_filename', 'OUTCAR')
+        #node.set_attribute('error_filename', 'aiida.err')
+        node.set_attribute('scheduler_stderr', '_scheduler-stderr.txt')
+        node.set_attribute('scheduler_stdout', '_scheduler-stdout.txt')
+        node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
+        node.set_option('max_wallclock_seconds', 1800)
+
+        if input_settings is None:
+            input_settings = {}
+
+        settings = Dict(dict=input_settings)
+        node.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
+        settings.store()
+
+        # Add inputs with the number of images
+        param = get_data_class('dict')(dict={'images': nimgs})
+        node.add_incoming(param, link_type=LinkType.INPUT_CALC, link_label='parameters')
+        param.store()
+
+        node.store()
+
+        # Create a `FolderData` that will represent the `retrieved` folder. Store the test
+        # output fixture in there and link it.
+        retrieved = FolderData()
+        retrieved.put_object_from_tree(file_path)
+        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.store()
+
+        return node
+
+    return _inner
+
+
+@pytest.fixture()
 def base_calc(fresh_aiida_env, vasp_code):
     """An instance of a VaspCalcBase Process."""
     from aiida_vasp.calcs.base import VaspCalcBase
@@ -88,6 +135,23 @@ def vasp_calc(vasp_inputs):
         runner = manager.get_runner()
 
         return instantiate_process(runner, VaspCalculation, **inputs)
+
+    return inner
+
+
+@pytest.fixture()
+def vasp_neb_calc(vasp_neb_inputs):
+    """An instance of a VaspCalculation Process."""
+    from aiida_vasp.calcs.neb import VaspNEBCalculation
+
+    def inner(inputs=None, settings=None):
+
+        if inputs is None:
+            inputs = vasp_neb_inputs(settings)
+        manager = get_manager()
+        runner = manager.get_runner()
+
+        return instantiate_process(runner, VaspNEBCalculation, **inputs)
 
     return inner
 

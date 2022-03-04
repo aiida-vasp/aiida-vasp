@@ -12,7 +12,6 @@ import click
 from aiida.cmdline.utils.decorators import with_dbenv
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.parsers.content_parsers.potcar import PotcarIo
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 
@@ -67,7 +66,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
     incar_parser = False
     system = ''
     with open(str(incar), 'r') as handler:
-        incar_parser = IncarParser(handler=handler)
+        incar_parser = IncarParser(handler=handler, validate_tags=False)
         system = incar_parser.incar.get('system', '')
     assert incar_parser, 'INCAR could not be parsed.'
 
@@ -81,7 +80,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
         kpoints_parser = KpointsParser(handler=handler)
     assert kpoints_parser, 'KPOINTS could not be parsed.'
 
-    assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
+    #assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
 
     try:
         test_case = system.strip().split(':')[1].strip()

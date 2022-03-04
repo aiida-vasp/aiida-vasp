@@ -200,8 +200,6 @@ class VaspCalculation(VaspCalcBase):
 
     def verify_inputs(self):
         super(VaspCalculation, self).verify_inputs()
-        if not hasattr(self, 'elements'):
-            self._prestore()
         _parameters = self.inputs.parameters.get_dict()
         _lorbit = _parameters.get('lorbit', 0)
         if 'settings' in self.inputs:
@@ -211,11 +209,6 @@ class VaspCalculation(VaspCalcBase):
         _site_magnetization = _settings.get('parser_settings', {}).get('add_site_magnetization', False)
         if _site_magnetization and _lorbit < 10:
             raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
-
-    def _prestore(self):
-        """Set attributes prior to storing."""
-        super(VaspCalculation, self)._prestore()
-        setattr(self, 'elements', ordered_unique_list(self.inputs.structure.get_ase().get_chemical_symbols()))
 
     @property
     def _parameters(self):
@@ -304,7 +297,7 @@ class VaspCalculation(VaspCalcBase):
                 if 'WAVECAR' not in remote_copy_fnames:
                     raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
 
-    def write_incar(self, dst):  # pylint: disable=unused-argument
+    def write_incar(self, dst, validate_tags=True):  # pylint: disable=unused-argument
         """
         Write the INCAR.
 
@@ -314,7 +307,7 @@ class VaspCalculation(VaspCalcBase):
         :param dst: absolute path of the object to write to
         """
         try:
-            incar_parser = IncarParser(data=self.inputs.parameters)
+            incar_parser = IncarParser(data=self.inputs.parameters, validate_tags=validate_tags)
             incar_parser.write(dst)
         except SystemExit:
             raise ValidationError('The INCAR content did not pass validation.')
@@ -418,3 +411,11 @@ def ordered_unique_list(in_list):
         if i not in out_list:
             out_list.append(i)
     return out_list
+
+
+def ordered_unique_symbols(structure):
+    """
+    Return a list of ordered unique symbols in the structure
+    """
+    symbols = [structure.get_kind(kindname).symbol for kindname in structure.get_site_kindnames()]
+    return ordered_unique_list(symbols)

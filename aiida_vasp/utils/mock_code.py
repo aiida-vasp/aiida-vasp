@@ -16,11 +16,11 @@ import logging
 
 import numpy as np
 
+from aiida.repository import FileType
+
 from parsevasp.kpoints import Kpoints
 from parsevasp.incar import Incar
 from parsevasp.poscar import Poscar
-
-from aiida.repository import FileType
 
 from aiida_vasp.utils.fixtures.testdata import data_path
 
@@ -135,10 +135,12 @@ class MockRegistry:
 
         incar_path = input_folder / 'INCAR'
         if incar_path.is_file():
-            incar = Incar(file_path=str(incar_path))
+            incar = Incar(file_path=str(incar_path), validate_tags=False)
             items['incar'] = incar.get_dict()
 
         poscar_path = input_folder / 'POSCAR'
+        if not poscar_path.is_file():
+            poscar_path = input_folder / '00/POSCAR'
         if poscar_path.is_file():
             poscar = Poscar(file_path=str(poscar_path))
             items['poscar'] = poscar.get_dict()
@@ -169,8 +171,10 @@ class MockRegistry:
             for fpath in folder.glob('*'):
                 if fpath.is_file():
                     shutil.copy2(fpath, dst_path)
+                # Directory - then copy the sub files - this only handles one level down
                 elif fpath.is_dir():
-                    shutil.copytree(fpath, dst_path / fpath.name)
+                    for subfile in fpath.glob('*'):
+                        shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
 
     def extract_calc_by_hash(self, hash_val, dst, include_inputs=False):
         """
@@ -265,9 +269,10 @@ class MockRegistry:
         from aiida.orm import CalcJobNode
         from aiida.plugins import CalculationFactory
         calc_class = CalculationFactory('vasp.vasp')
+        neb_class = CalculationFactory('vasp.neb')
         to_upload = []
         for node in worknode.called_descendants:
-            if isinstance(node, CalcJobNode) and node.process_class is calc_class:
+            if isinstance(node, CalcJobNode) and (node.process_class in [calc_class, neb_class]):
                 to_upload.append(node)
         to_upload.sort(key=lambda x: x.ctime)
         self.logger.info('Collected %s nodes to upload under name %s.', to_upload, rel_path)
