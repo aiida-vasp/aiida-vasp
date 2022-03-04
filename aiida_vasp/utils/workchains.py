@@ -138,7 +138,7 @@ def site_magnetization_to_magmom(site_dict):
             break
     # No avaliable site magnetization for setting MAGMOM, something is wrong
     if to_use is None:
-        raise RuntimeError('No valid site-projected magnetization avaliable')
+        raise ValueError('No valid site-projected magnetization avaliable')
     # Ensure sorted list
     tmp = list(site_dict[to_use]['site_moment'].items())
     tmp.sort(key=lambda x: int(x[0]))

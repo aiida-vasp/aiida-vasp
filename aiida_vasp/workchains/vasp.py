@@ -269,7 +269,10 @@ class VaspWorkChain(BaseRestartWorkChain):
             node = self.ctx.children[-1]
 
         if 'site_magnetization' in node.outputs:
-            self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(node.outputs.site_magnetization.get_dict())
+            try:
+                self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(node.outputs.site_magnetization.get_dict())
+            except ValueError:
+                pass
 
     def init_inputs(self):  # pylint: disable=too-many-branches, too-many-statements
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
