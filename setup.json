@@ -66,7 +66,7 @@
     },
     "extras_require": {
 	"pre-commit": [
-		"aiida-core[pre-commit] >= 1.2.1,!=1.4.0,!=1.4.1,<2"
+		"aiida-core[pre-commit] >= 2.0.1"
 	],
 	"tests": [
 	    "aiida-export-migration-tests==0.9.0",
@@ -76,7 +76,6 @@
 	    "pytest-timeout~=1.3",
 	    "pytest-cov~=2.7",
 	    "sqlalchemy-diff~=0.1.3",
-		"sqlalchemy<1.4",
 	    "astroid>=2.4.0",
 	    "toml~=0.10.0",
 	    "coverage<5.0"
