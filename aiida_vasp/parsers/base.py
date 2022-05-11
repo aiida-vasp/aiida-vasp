@@ -34,7 +34,6 @@ class BaseParser(Parser):
         the retrieved_temporary folder, accessible from retrieved_content. The error for the temporary
         folder takes presence as this is the one we mostly rely on.
         """
-
         retrieved = {}
         exit_code_permanent = self._check_folder()
         if exit_code_permanent is None:
@@ -104,7 +103,7 @@ class BaseParser(Parser):
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
     @contextmanager
-    def _get_handler(self, name):
+    def _get_handler(self, name, open_mode):
         """
         Access the handler of retrieved and retrieved_temporary objects. This is passed
         down to the parers where the content is analyzed.
@@ -116,7 +115,10 @@ class BaseParser(Parser):
         to also make this method a contextmanager. By using the decorator we do not have
         to make it a class and define the __enter__ and __exit__ methods.
 
+        We also allow opening the file in different modes.
+
         :param name: name of the object
+        :param open_mode: the open mode to use for the respective parser, typically 'r' or 'rb'.
         :returns: a yielded handler for the object
         :rtype: object
         """
@@ -126,7 +128,7 @@ class BaseParser(Parser):
                 # For the permanent content to be parsed we can use the fact that
                 # self.retrieved is a FolderData datatype in AiiDA.
                 try:
-                    with self.retrieved.open(name) as handler:
+                    with self.retrieved.open(name, open_mode) as handler:
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved')
@@ -137,7 +139,7 @@ class BaseParser(Parser):
                 # See https://github.com/aiidateam/aiida-core/issues/3502.
                 path = os.path.join(self._retrieved_content[name]['path'], name)
                 try:
-                    with open(path, 'r') as handler:
+                    with open(path, open_mode) as handler:
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved_temporary')

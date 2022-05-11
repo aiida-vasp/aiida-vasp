@@ -10,6 +10,7 @@ import numpy as np
 
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
+from aiida.orm import load_node
 
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -114,7 +115,7 @@ def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_
 def vasp_parser_with_test(calc_with_retrieved, request):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False, 'open_mode': 'r'})
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
@@ -180,7 +181,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     """Make sure non-unique quantity identifiers are detected."""
     parser = vasp_parser_with_test
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
-    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
+    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False, 'open_mode': 'r'})
     with pytest.raises(RuntimeError) as excinfo:
         parser._parsable_quantities.setup(retrieved_content=parser._retrieved_content.keys(),
                                           parser_definitions=parser._definitions.parser_definitions,
@@ -705,16 +706,22 @@ def test_notification_composer(vasp_parser_without_parsing):
 
 def test_critical_object_missing(calc_with_retrieved, request):
     """Test raising return code to indicate that one or more critical objects are missing"""
+    # Here we add a fictional file as critical
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True})
+    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True, 'open_mode': 'r'})
     parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
     success = parser.parse(retrieved_temporary_folder=file_path)
     assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-    # Test missing OUTCAR
+    # Here we remove a file that is marked as critical by default
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    # Delete the retrieved OUTCAR file and instantiate the parser
-    node.outputs.retrieved.delete_object('OUTCAR', force=True)
+    # Delete the retrieved OUTCAR file and instantiate the parser. In order to
+    # delete from a stored node we need to access the backend, which allows such deletion.
+    # Also, make sure we use the same variable here, otherwise we would e.g. issue the
+    # update_repository_metadata on a different repository entry in memory.
+    retrieved = node.outputs.retrieved
+    retrieved.base.repository._repository.delete_object('OUTCAR')
+    retrieved.base.repository._update_repository_metadata()
     parser = ParserFactory('vasp.vasp')(node)
     # No temporary folder is passed - parse everything for the permanent storage
     success = parser.parse()

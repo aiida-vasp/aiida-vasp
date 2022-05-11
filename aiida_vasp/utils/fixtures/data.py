@@ -70,8 +70,8 @@ def localhost(fresh_aiida_env, localhost_dir):
     except NotExistent:
         computer = Computer(label='localhost',
                             hostname='localhost',
-                            transport_type='local',
-                            scheduler_type='direct',
+                            transport_type='core.local',
+                            scheduler_type='core.direct',
                             workdir=str(localhost_dir)).store()
         computer.set_minimum_job_poll_interval(0.)
     return computer
@@ -488,9 +488,9 @@ def ref_retrieved():
 
 @pytest.fixture()
 def vasprun_parser(request):
-    """Return an instance of VasprunParser for a reference vasprun.xml."""
+    """Return an instance of VasprunParser for a reference vasprun.xml. Remember rb mode. """
     path, settings = path_file_and_settings('vasprun.xml', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'rb') as handler:
         parser = VasprunParser(handler=handler, settings=settings)
     return parser
 

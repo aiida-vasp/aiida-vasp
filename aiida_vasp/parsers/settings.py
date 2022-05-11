@@ -23,86 +23,102 @@ OBJECT_PARSER_SETS = {
         'DOSCAR': {
             'parser_class': DoscarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'EIGENVAL': {
             'parser_class': EigenvalParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'IBZKPT': {
             'parser_class': KpointsParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
             'is_critical': True,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': True,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'rb'
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'vasp_output': {
             'parser_class': StreamParser,
             'is_critical': False,
-            'status': 'Unkonwn'
+            'status': 'Unkonwn',
+            'open_mode': 'r'
         }
     },
     'neb': {
         'DOSCAR': {
             'parser_class': DoscarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'EIGENVAL': {
             'parser_class': EigenvalParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'IBZKPT': {
             'parser_class': KpointsParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'OUTCAR': {
             'parser_class': VtstNebOutcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'rb'
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
-            'status': 'Unknown'
+            'status': 'Unknown',
+            'open_mode': 'r'
         },
         # The STDOUT is rename as 'stdout' for NEB calculations, this is because VASP itself
         # divert STDOUT for each image to <ID>/stdout
         'stdout': {
             'parser_class': StreamParser,
             'is_critical': False,
-            'status': 'Unkonwn'
+            'status': 'Unkonwn',
+            'open_mode': 'r'
         }
     },
 }

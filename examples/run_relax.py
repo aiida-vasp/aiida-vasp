@@ -30,7 +30,7 @@ def get_structure():
 
     """
 
-    structure_data = DataFactory('structure')
+    structure_data = DataFactory('core.structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = structure_data(cell=lattice)

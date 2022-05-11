@@ -349,6 +349,7 @@ class VtstNebParser(VaspParser):
                 content_path = _VASP_OUTPUT
 
             object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
+            open_mode = self._definitions.parser_definitions[name]['open_mode']
 
             # If a parse object has been instantiated, use it.
             if object_parser_cls in file_parser_instances:
@@ -356,7 +357,7 @@ class VtstNebParser(VaspParser):
             else:
                 try:
                     # The next line may except for ill-formated file
-                    with self._get_handler(content_path) as handler:
+                    with self._get_handler(content_path, open_mode) as handler:
                         parser = object_parser_cls(settings=self._settings, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None

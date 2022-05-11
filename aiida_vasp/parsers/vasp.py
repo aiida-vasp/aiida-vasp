@@ -209,13 +209,14 @@ class VaspParser(BaseParser):
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
             name = self._parsable_quantities.quantity_keys_to_content[quantity_key]
             object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
+            open_mode = self._definitions.parser_definitions[name]['open_mode']
             # If a parsed object has been instantiated, use it.
             if object_parser_cls in object_parser_instances:
                 parser = object_parser_instances[object_parser_cls]
             else:
                 try:
                     # The next line may except for ill-formated object
-                    with self._get_handler(name) as handler:
+                    with self._get_handler(name, open_mode) as handler:
                         parser = object_parser_cls(settings=self._settings.settings, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
@@ -347,8 +348,9 @@ class NotificationComposer:
         """
         Compose the exit codes
 
-        Retruns None if no exit code should be emitted, otherwise emit the error code.
+        Returns None if no exit code should be emitted, otherwise emit the error code.
         """
+
         for critical in self.parser_settings.critical_notifications_to_check:
             # Check for any special handling
             if hasattr(self, critical):
