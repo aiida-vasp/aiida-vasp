@@ -41,7 +41,7 @@ class PoscarParser(BaseFileParser):
         """Initialize an instance of this class."""
 
         self._precision = precision
-        super(PoscarParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Poscar`` using a file like handler.

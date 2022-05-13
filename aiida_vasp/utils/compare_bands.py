@@ -110,10 +110,10 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err))
+            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err)) from err
     except AttributeError as err:
         if not silent:
-            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err))
+            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err)) from err
     return owindow
 
 

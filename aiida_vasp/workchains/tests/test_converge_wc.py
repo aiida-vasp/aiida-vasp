@@ -50,12 +50,12 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
 
     structure = None
     test_case = 'test_converge_wc'
-    with open(data_path('test_converge_wc', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_converge_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure})
     parameters = None
-    with open(data_path('test_converge_wc', 'inp', 'INCAR')) as handler:
+    with open(data_path('test_converge_wc', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 
@@ -140,20 +140,20 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     create_authinfo(computer=mock_vasp.computer).store()
 
     structure = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure})
 
     kpoints = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r') as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
         kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR')) as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 
@@ -222,13 +222,13 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
     create_authinfo(computer=mock_vasp.computer).store()
 
     structure = None
-    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure})
 
     parameters = None
-    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR')) as handler:
+    with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 
@@ -296,20 +296,20 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     create_authinfo(computer=mock_vasp.computer).store()
 
     structure = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure})
 
     kpoints = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r') as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
         kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
-    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR')) as handler:
+    with open(data_path('test_converge_wc/pw/200', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 

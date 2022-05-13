@@ -25,7 +25,8 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 #@pytest.mark.wc
 def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     """Test with mocked vasp code."""
-    from aiida.orm import Code, Log, RemoteData
+    from aiida.orm import Code, Log
+    from aiida.orm import RemoteData  # pylint: disable=no-name-in-module
     from aiida.plugins import WorkflowFactory
     from aiida.engine import run
 
@@ -35,12 +36,12 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     create_authinfo(computer=mock_vasp.computer, store=True)
 
     structure = None
-    with open(data_path('test_bands_wc', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_bands_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure_parser.structure})
     parameters = None
-    with open(data_path('test_bands_wc', 'inp', 'INCAR'), 'r') as handler:
+    with open(data_path('test_bands_wc', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 

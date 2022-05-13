@@ -24,7 +24,7 @@ Will write the same information to a file, which can be edited with the desired 
 It can then be loaded and fed to a workflow::
 
    import json
-   with open('scf_inputs.json) as inputs:
+   with open('scf_inputs.json', 'r', encoding="utf8") as inputs:
       parameters = json.load(inputs)
    wf = ScfWorkflow(params=parameters)
    wf.start()

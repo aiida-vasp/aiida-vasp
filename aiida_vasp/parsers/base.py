@@ -15,7 +15,7 @@ class BaseParser(Parser):
     """Does common tasks all parsers carry out and provides convenience methods."""
 
     def __init__(self, node):
-        super(BaseParser, self).__init__(node)
+        super().__init__(node)
         self._retrieved_content = None
         self._retrieved_temporary = None
 
@@ -103,7 +103,7 @@ class BaseParser(Parser):
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
     @contextmanager
-    def _get_handler(self, name, open_mode):
+    def _get_handler(self, name, mode, encoding=None):
         """
         Access the handler of retrieved and retrieved_temporary objects. This is passed
         down to the parers where the content is analyzed.
@@ -118,17 +118,21 @@ class BaseParser(Parser):
         We also allow opening the file in different modes.
 
         :param name: name of the object
-        :param open_mode: the open mode to use for the respective parser, typically 'r' or 'rb'.
+        :param mode: the open mode to use for the respective parser, typically 'r' or 'rb'.
+        :param encoding: the encoding to be used, if binary mode, this is ignored, otherwise defaults to utf8 if not given.
         :returns: a yielded handler for the object
         :rtype: object
         """
 
+        if 'b' not in mode and encoding is None:
+            # If we do not use binary, set default is encoding not proided
+            encoding = 'utf8'
         try:
             if self._retrieved_content[name]['status'] == 'permanent':
                 # For the permanent content to be parsed we can use the fact that
                 # self.retrieved is a FolderData datatype in AiiDA.
                 try:
-                    with self.retrieved.open(name, open_mode) as handler:
+                    with self.retrieved.open(name, mode) as handler:  # pylint: disable=unspecified-encoding
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved')
@@ -139,7 +143,7 @@ class BaseParser(Parser):
                 # See https://github.com/aiidateam/aiida-core/issues/3502.
                 path = os.path.join(self._retrieved_content[name]['path'], name)
                 try:
-                    with open(path, open_mode) as handler:
+                    with open(path, mode, encoding=encoding) as handler:
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved_temporary')

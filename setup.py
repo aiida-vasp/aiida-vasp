@@ -11,11 +11,11 @@ from setuptools import setup, find_packages
 
 SETUP_JSON_PATH = os.path.join(os.path.dirname(__file__), 'setup.json')
 README_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'README.rst')
-with open(README_PATH, 'r') as readme:
+with open(README_PATH, 'r', encoding='utf8') as readme:
     LONG_DESCRIPTION = readme.read()
 
 if __name__ == '__main__':
-    with open(SETUP_JSON_PATH, 'r') as info:
+    with open(SETUP_JSON_PATH, 'r', encoding='utf8') as info:
         SETUP_KWARGS = json.load(info)
     setup(packages=find_packages(exclude=['aiida']),
           keywords='vasp, aiida, wannier90, workflow, materials',

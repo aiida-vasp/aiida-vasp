@@ -271,7 +271,7 @@ class VtstNebParser(VaspParser):
     COMPOSER_CLASS = NEBNodeComposer
 
     def __init__(self, node):
-        super(VtstNebParser, self).__init__(node)
+        super().__init__(node)
         try:
             calc_settings = self.node.inputs.settings
         except NotExistent:
@@ -282,7 +282,7 @@ class VtstNebParser(VaspParser):
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
         self._settings = NEBSettings(parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger)
-        self._definitions = ParserDefinitions(object_parser_set='neb')
+        self._definitions = ParserDefinitions(content_parser_set='neb')
         self._parsable_quantities = NEBParsableQuantities(vasp_parser_logger=self.logger)
 
     def get_num_images(self):
@@ -291,8 +291,8 @@ class VtstNebParser(VaspParser):
         """
         try:
             nimages = self.node.inputs.parameters['images']
-        except KeyError:
-            raise ValueError('No `images` key defined in inputs - this is really an NEB calculation?')
+        except KeyError as no_images:
+            raise ValueError('No `images` key defined in inputs - this is really an NEB calculation?') from no_images
         return nimages
 
     def _setup_parsable(self):
@@ -348,24 +348,23 @@ class VtstNebParser(VaspParser):
             if image_idx == 1 and name == _VASP_OUTPUT:
                 content_path = _VASP_OUTPUT
 
-            object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
-            open_mode = self._definitions.parser_definitions[name]['open_mode']
+            content_parser_cls = self._definitions.parser_definitions[name]['parser_class']
 
             # If a parse object has been instantiated, use it.
-            if object_parser_cls in file_parser_instances:
-                parser = file_parser_instances[object_parser_cls]
+            if content_parser_cls in file_parser_instances:
+                parser = file_parser_instances[content_parser_cls]
             else:
                 try:
                     # The next line may except for ill-formated file
-                    with self._get_handler(content_path, open_mode) as handler:
-                        parser = object_parser_cls(settings=self._settings, handler=handler)
+                    with self._get_handler(content_path, content_parser_cls.OPEN_MODE) as handler:
+                        parser = content_parser_cls(settings=self._settings, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
                     self.logger.warning('Cannot instantiate {} for image {}, exception {}:'.format(
-                        object_parser_cls, image_idx, traceback.format_exc()))
+                        content_parser_cls, image_idx, traceback.format_exc()))
 
-                file_parser_instances[object_parser_cls] = parser
+                file_parser_instances[content_parser_cls] = parser
 
             # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:

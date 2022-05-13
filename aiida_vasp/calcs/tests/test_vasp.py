@@ -17,7 +17,7 @@ def test_write_incar(vasp_calc_and_ref):
     vasp_calc, reference = vasp_calc_and_ref
     with managed_temp_object() as temp_object:
         vasp_calc.write_incar(temp_object)
-        with open(temp_object, 'r') as result_incar_fo:
+        with open(temp_object, 'r', encoding='utf8') as result_incar_fo:
             assert result_incar_fo.readlines() == reference['incar']
 
 
@@ -28,7 +28,7 @@ def test_write_potcar(vasp_calc_and_ref):
 
     with managed_temp_object() as temp_object:
         vasp_calc.write_potcar(temp_object)
-        with open(temp_object, 'r') as potcar_fo:
+        with open(temp_object, 'r', encoding='utf8') as potcar_fo:
             result_potcar = potcar_fo.read()
         assert 'In_sv' in result_potcar
         assert 'As' in result_potcar

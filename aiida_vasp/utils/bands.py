@@ -10,8 +10,8 @@ try:
     import matplotlib
     matplotlib.use('TKAgg')
     from matplotlib import pyplot as plt
-except ImportError:
-    raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality')
+except ImportError as no_matplotlib:
+    raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality') from no_matplotlib
 
 
 def get_bs_dims(bands_array):

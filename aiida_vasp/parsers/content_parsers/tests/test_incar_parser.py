@@ -52,7 +52,7 @@ def test_parse_incar_write(incar_parser, tmpdir):
 
     # Load the written structure using a new content parser instance
     content = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         content = handler.readlines()
     ref_content = ['GGA = PE\n', 'GGA_COMPAT = .FALSE.\n', 'LORBIT = 11\n', 'MAGMOM = 30 * 2*0.\n', 'SIGMA = 0.5\n']
     assert content == ref_content
@@ -81,7 +81,7 @@ def test_parse_incar_data(vasp_params, tmpdir):
 
     # Load the written INCAR using a new content parser instance
     parser = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         parser = IncarParser(handler=handler)
     result = parser.get_quantity('incar')
     assert vasp_params.get_dict() == result

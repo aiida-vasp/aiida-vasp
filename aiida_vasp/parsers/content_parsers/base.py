@@ -62,11 +62,12 @@ class BaseFileParser():
 
     """
 
+    OPEN_MODE = 'r'
     PARSABLE_QUANTITIES = {}
     DEFAULT_SETTINGS = {'quantities_to_parse': []}
 
     def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument
-        super(BaseFileParser, self).__init__()
+        super().__init__()
         # Make sure we only accept initialization with either ``handler`` or ``data``.
         if (handler is not None and data is not None) or (handler is None and data is None):
             raise TypeError('Supply at bare minimum either argument handler or data to initialize parser.')
@@ -194,7 +195,7 @@ class BaseFileParser():
             # Now a content parser should be ready and its content can be
             # written using parsevasp. But the content parser could still be None
             # if there is something with the data that can not be parsed.
-            with open(path, 'w') as handler:
+            with open(path, 'w', encoding='utf8') as handler:
                 self._content_parser.write(file_handler=handler)
         else:
             raise ValueError('The content parser has not been initialized or no AiiDA data structure is preparred.')

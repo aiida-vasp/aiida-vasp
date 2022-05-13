@@ -100,7 +100,7 @@ class VaspParser(BaseParser):
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
-    * `object_parser_set`: String (DEFAULT = 'default').
+    * `content_parser_set`: String (DEFAULT = 'default').
 
         By this option the default set of object parsers can be chosen. See settings.py
         for available options.
@@ -109,7 +109,7 @@ class VaspParser(BaseParser):
 
     Additional object parsers can be added to the VaspParser by using
 
-        VaspParser.add_object_parser(parser_name, parser_definition_dict),
+        VaspParser.add_content_parser(parser_name, parser_definition_dict),
 
     where the 'parser_definition_dict' should contain the 'parser_class' and the
     'is_critical' flag. Keep in mind adding an additional object parsers after 'parse_with_retrieved'
@@ -118,7 +118,7 @@ class VaspParser(BaseParser):
     COMPOSER_CLASS = NodeComposer
 
     def __init__(self, node):
-        super(VaspParser, self).__init__(node)
+        super().__init__(node)
 
         try:
             calc_settings = self.node.inputs.settings
@@ -204,26 +204,25 @@ class VaspParser(BaseParser):
         """
         parsed_quantities = {}
         # A dictionary for catching instantiated object parser objects
-        object_parser_instances = {}
+        content_parser_instances = {}
         failed_to_parse_quantities = []
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
             name = self._parsable_quantities.quantity_keys_to_content[quantity_key]
-            object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
-            open_mode = self._definitions.parser_definitions[name]['open_mode']
+            content_parser_cls = self._definitions.parser_definitions[name]['parser_class']
             # If a parsed object has been instantiated, use it.
-            if object_parser_cls in object_parser_instances:
-                parser = object_parser_instances[object_parser_cls]
+            if content_parser_cls in content_parser_instances:
+                parser = content_parser_instances[content_parser_cls]
             else:
                 try:
                     # The next line may except for ill-formated object
-                    with self._get_handler(name, open_mode) as handler:
-                        parser = object_parser_cls(settings=self._settings.settings, handler=handler)
+                    with self._get_handler(name, mode=content_parser_cls.OPEN_MODE) as handler:
+                        parser = content_parser_cls(settings=self._settings.settings, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
-                    self.logger.warning('Cannot instantiate {}, exception {}:'.format(object_parser_cls, traceback.format_exc()))
+                    self.logger.warning('Cannot instantiate {}, exception {}:'.format(content_parser_cls, traceback.format_exc()))
 
-                object_parser_instances[object_parser_cls] = parser
+                content_parser_instances[content_parser_cls] = parser
 
             if parser is None:
                 # If the parser cannot be instantiated, add the quantity to a list of unavailable ones

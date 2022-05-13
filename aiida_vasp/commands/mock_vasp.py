@@ -82,7 +82,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
     # Check that the input files can be parsed (as close to a validity check we can get)
     incar_parser = False
     system = ''
-    with open(str(incar), 'r') as handler:
+    with open(str(incar), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler, validate_tags=False)
         system = incar_parser.incar.get('system', '')
     if not incar_parser:
@@ -90,14 +90,14 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     poscar_parser = False
-    with open(str(poscar), 'r') as handler:
+    with open(str(poscar), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     if not poscar_parser:
         vasp_mock_output.append('MOCK PREPEND: POSCAR could not be parsed.\n')
         stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     kpoints_parser = False
-    with open(str(kpoints), 'r') as handler:
+    with open(str(kpoints), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
     if not kpoints_parser:
         vasp_mock_output.append('MOCK PREPEND: KPOINTS could not be parsed.\n')
@@ -141,7 +141,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
 
     # Read original vasp_output as we will append mock messages to it
     if vasp_output_file.exists():
-        with open(vasp_output_file, 'r') as handler:
+        with open(vasp_output_file, 'r', encoding='utf8') as handler:
             vasp_output = handler.readlines()
 
     vasp_mock_output.append('MOCK PREPEND: Mock folder contains the following files: ' + str(os.listdir(pwd)) + '\n')
@@ -149,7 +149,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
     vasp_mock_output.append('Existing VASP stdout/stderr follows:\n')
 
     # Make sure we add the mock details in case we need to inspect later
-    with open(vasp_output_file, 'w') as handler:
+    with open(vasp_output_file, 'w', encoding='utf8') as handler:
         handler.write(''.join(vasp_mock_output + vasp_output))
 
 

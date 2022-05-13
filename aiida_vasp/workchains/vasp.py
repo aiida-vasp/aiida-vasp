@@ -413,7 +413,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                         'Something really awefull happened. '
                         'Please inspect messages and act.')
 
-        return super(VaspWorkChain, self).on_except(exc_info)
+        return super().on_except(exc_info)
 
     @override
     def on_terminated(self):
@@ -663,7 +663,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         energies = []
         for misc in child_miscs:
             energies.append(misc.get('total_energies', {}).get('energy_extrapolated'))
-        if all([eng is not None for eng in energies[-3:]]):
+        if all([eng is not None for eng in energies[-3:]]):  # pylint: disable=use-a-generator
             de_per_atom = np.diff(energies) / natom
         else:
             return None

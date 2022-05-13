@@ -99,7 +99,7 @@ class VaspImmigrant(VaspCalculation):
         import plumpy
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
-        _ = super(VaspImmigrant, self).run()
+        _ = super().run()
 
         # Make sure the retrieve list is set (done in presubmit so we need to call that also)
         with SandboxFolder() as folder:
@@ -197,7 +197,7 @@ class VaspImmigrant(VaspCalculation):
 
 def get_incar_input(dir_path):
     """Create a node that contains the INCAR content."""
-    with open(str(dir_path / 'INCAR'), 'r') as handler:
+    with open(str(dir_path / 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
     incar = incar_parser.get_quantity('incar')
     node = NodeComposer.compose_dict('dict', incar)
@@ -207,7 +207,7 @@ def get_incar_input(dir_path):
 
 def get_poscar_input(dir_path):
     """Create a node that contains the POSCAR content."""
-    with open(str(dir_path / 'POSCAR'), 'r') as handler:
+    with open(str(dir_path / 'POSCAR'), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     poscar = poscar_parser.get_quantity('poscar-structure')
     node = NodeComposer.compose_structure('structure', {'structure': poscar})
@@ -234,7 +234,7 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
 def get_kpoints_input(dir_path, structure=None):
     """Create a node that contains the KPOINTS content."""
     structure = structure or get_poscar_input(dir_path)
-    with open(str(dir_path / 'KPOINTS'), 'r') as handler:
+    with open(str(dir_path / 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
     kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
     node = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})

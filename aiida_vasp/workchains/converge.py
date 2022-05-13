@@ -649,8 +649,8 @@ class ConvergeWorkChain(WorkChain):
 
         try:
             self.ctx.inputs
-        except AttributeError:
-            raise ValueError('no input dictionary was defined in self.ctx.inputs')
+        except AttributeError as no_inputs:
+            raise ValueError('no input dictionary was defined in self.ctx.inputs') from no_inputs
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))

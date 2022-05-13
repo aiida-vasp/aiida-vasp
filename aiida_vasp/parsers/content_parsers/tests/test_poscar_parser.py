@@ -37,7 +37,7 @@ def test_parse_poscar_write(poscar_parser, tmpdir):
 
     # Load the written structure using a new content parser instance
     content = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         content = handler.readlines()
     ref_content = [
         '# Compound: Al4. Old comment: Al\n', '  1.000000000000\n', '  4.040000000000   0.000000000000   0.000000000000\n',
@@ -74,7 +74,7 @@ def test_parse_poscar_data(vasp_structure, tmpdir):
 
     # Load the written structure using a new content parser instance
     parser = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     result = parser.get_quantity('poscar-structure')
     # When we start from StructureData we do not have any velocity or predictor

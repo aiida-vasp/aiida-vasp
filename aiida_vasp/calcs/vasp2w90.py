@@ -32,7 +32,7 @@ class Vasp2w90Calculation(VaspCalculation):
                    required=False,
                    help='Projections to be defined in the Wannier90 input.')
 
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, folder):
         """Override the method such that we can add the flag that executes Wannier90 in library mode."""
         # Create a new parameters node that contain the flag that turns on the Wannier90 library mode such
         # that the Wannier90 inputs are created. Execution of Wannier90 itself is to be done after the execution
@@ -47,7 +47,7 @@ class Vasp2w90Calculation(VaspCalculation):
             self.inputs.wannier_parameters = DataFactory('dict')(dict={})
 
         # Then call the super function.
-        return super(Vasp2w90Calculation, self).prepare_for_submission(tempfolder)
+        return super().prepare_for_submission(folder)
 
     def write_win(self, dst):
         """Write Wannier90 input."""
@@ -57,7 +57,7 @@ class Vasp2w90Calculation(VaspCalculation):
     def new_wannier_parameters(**kwargs):
         return DataFactory('dict')(**kwargs)
 
-    def write_additional(self, tempfolder, calcinfo):
-        super(Vasp2w90Calculation, self).write_additional(tempfolder, calcinfo)
-        win = tempfolder.get_abs_path('wannier90.win')
+    def write_additional(self, folder, calcinfo):
+        super().write_additional(folder, calcinfo)
+        win = folder.get_abs_path('wannier90.win')
         self.write_win(win)

@@ -16,7 +16,7 @@ class Vasp2w90Parser(VaspParser):
 
     def parse_with_retrieved(self, retrieved):
         """The main parsing method called by AiiDA."""
-        super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)  # pylint: disable=no-member
+        super().parse_with_retrieved(retrieved)  # pylint: disable=no-member
 
         win_success, kpoints_node, param_node, proj_node = self.parse_win()
         self.set_node('wannier_parameters', param_node)

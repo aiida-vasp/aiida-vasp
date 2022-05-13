@@ -18,55 +18,55 @@ from aiida_vasp.parsers.content_parsers.stream import StreamParser
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
-OBJECT_PARSER_SETS = {
+CONTENT_PARSER_SETS = {
     'default': {
         'DOSCAR': {
             'parser_class': DoscarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'EIGENVAL': {
             'parser_class': EigenvalParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'IBZKPT': {
             'parser_class': KpointsParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'OUTCAR': {
             'parser_class': OutcarParser,
             'is_critical': True,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': True,
             'status': 'Unknown',
-            'open_mode': 'rb'
+            'mode': 'rb'
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'vasp_output': {
             'parser_class': StreamParser,
             'is_critical': False,
             'status': 'Unkonwn',
-            'open_mode': 'r'
+            'mode': 'r'
         }
     },
     'neb': {
@@ -74,43 +74,43 @@ OBJECT_PARSER_SETS = {
             'parser_class': DoscarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'EIGENVAL': {
             'parser_class': EigenvalParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'IBZKPT': {
             'parser_class': KpointsParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'OUTCAR': {
             'parser_class': VtstNebOutcarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'vasprun.xml': {
             'parser_class': VasprunParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'rb'
+            'mode': 'rb'
         },
         'CHGCAR': {
             'parser_class': ChgcarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         'CONTCAR': {
             'parser_class': PoscarParser,
             'is_critical': False,
             'status': 'Unknown',
-            'open_mode': 'r'
+            'mode': 'r'
         },
         # The STDOUT is rename as 'stdout' for NEB calculations, this is because VASP itself
         # divert STDOUT for each image to <ID>/stdout
@@ -118,7 +118,7 @@ OBJECT_PARSER_SETS = {
             'parser_class': StreamParser,
             'is_critical': False,
             'status': 'Unkonwn',
-            'open_mode': 'r'
+            'mode': 'r'
         }
     },
 }
@@ -229,9 +229,9 @@ NODES = {
 class ParserDefinitions():  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
-    def __init__(self, object_parser_set='default'):
+    def __init__(self, content_parser_set='default'):
         self._parser_definitions = {}
-        self._init_parser_definitions(object_parser_set)
+        self._init_parser_definitions(content_parser_set)
 
     @property
     def parser_definitions(self):
@@ -241,11 +241,11 @@ class ParserDefinitions():  # pylint: disable=useless-object-inheritance
         """Add custum parser definition"""
         self._parser_definitions[name] = parser_dict
 
-    def _init_parser_definitions(self, object_parser_set):
+    def _init_parser_definitions(self, content_parser_set):
         """Load a set of parser definitions."""
-        if object_parser_set not in OBJECT_PARSER_SETS:
+        if content_parser_set not in CONTENT_PARSER_SETS:
             return
-        for name, parser_dict in OBJECT_PARSER_SETS.get(object_parser_set).items():
+        for name, parser_dict in CONTENT_PARSER_SETS.get(content_parser_set).items():
             self._parser_definitions[name] = deepcopy(parser_dict)
 
 
@@ -259,7 +259,7 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
     This provides the following properties to other components of the VaspParser:
 
         * nodes_dict: A list with all requested output nodes.
-        * parser_definitions: A Dict with the definitions for each specific object parser.
+        * parser_definitions: A Dict with the definitions for each specific content parser.
         * quantities_to_parse: Collection of quantities in nodes_dict.
 
     """

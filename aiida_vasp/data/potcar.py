@@ -126,7 +126,7 @@ from pymatgen.io.vasp import PotcarSingle
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.exceptions import UniquenessError, NotExistent
 from aiida.orm import Group
-from aiida.orm import Data
+from aiida.orm import Data  # pylint: disable=no-name-in-module
 from aiida.orm import QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
@@ -320,7 +320,7 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         """
         res = cls.find(**kwargs)
         if len(res) > 1:
-            if not all([True for node in res if node.sha512 == res[0].sha512]):
+            if not all([True for node in res if node.sha512 == res[0].sha512]):  # pylint: disable=use-a-generator
                 raise UniquenessError('Multiple nodes found satisfying {}'.format(kwargs))
         return res[0]
 
@@ -427,7 +427,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     def __init__(self, *args, **kwargs):
         # remove file in kwargs as this is not accepted in the subsequent inits
         path = kwargs.pop('file', None)
-        super(PotcarFileData, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if path is not None:
             # Only allow a Path object or a string
             if isinstance(path, Path):
@@ -450,7 +450,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self.set_version()
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')
-        super(PotcarFileData, self).add_file(src_abs, dst_filename)
+        super().add_file(src_abs, dst_filename)
         self.set_attribute('sha512', self.get_file_sha512(src_abs))
         # PotcarSingle needs a string for path
         potcar = PotcarSingle.from_file(str(src_abs))
@@ -471,7 +471,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     def get_file_sha512(cls, path):
         """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
         path = Path(path)
-        with path.open('r') as potcar_fo:
+        with path.open('r', encoding='utf8') as potcar_fo:
             sha512 = sha512_potcar(potcar_fo.read())
         return sha512
 
@@ -486,7 +486,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self.set_version()
         _ = PotcarData.get_or_create(self)
         self.verify_unique()
-        return super(PotcarFileData, self).store(*args, **kwargs)
+        return super().store(*args, **kwargs)
 
     @contextmanager
     def get_file_obj(self):
@@ -602,7 +602,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     def __init__(self, **kwargs):
         potcar_file_node = kwargs.pop('potcar_file_node', None)
-        super(PotcarData, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if potcar_file_node is not None:
             self.set_potcar_file_node(potcar_file_node)
 
@@ -621,7 +621,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         """Ensure uniqueness before storing."""
         self.set_version()
         self.verify_unique()
-        return super(PotcarData, self).store(*args, **kwargs)
+        return super().store(*args, **kwargs)
 
     @classmethod
     def get_or_create(cls, file_node):
@@ -984,15 +984,17 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             name = path.name + '.tar.gz'
             path = path.parent / name
 
-        archive = tarfile.open(str(path), 'w:gz') if not dry_run else None
         group = cls.get_potcar_group(family_name)
         all_file_nodes = [potcar.find_file_node() for potcar in group.nodes]
         files_added = []
-
-        for file_node in all_file_nodes:
-            files_added.append(file_node.export_archive(archive, dry_run=dry_run))
         if not dry_run:
-            archive.close()
+            with tarfile.open(str(path), 'w:gz') as archive:
+                for file_node in all_file_nodes:
+                    files_added.append(file_node.export_archive(archive, dry_run=dry_run))
+        else:
+            for file_node in all_file_nodes:
+                files_added.append(file_node.export_archive(None, dry_run=dry_run))
+
         return path, files_added
 
     def get_content(self):

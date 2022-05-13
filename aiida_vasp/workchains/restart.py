@@ -61,7 +61,7 @@ class BaseRestartWorkChain(WorkChain):
     _expected_calculation_states = [ProcessState.FINISHED, ProcessState.EXCEPTED, ProcessState.KILLED]
 
     def __init__(self, *args, **kwargs):
-        super(BaseRestartWorkChain, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Set exit status to None, as this triggers an error if we do not enter
         # a method that detects and sets a particular status
         if self._calculation is None or not issubclass(self._calculation, CalcJob):
@@ -116,8 +116,8 @@ class BaseRestartWorkChain(WorkChain):
 
         try:
             unwrapped_inputs = self.ctx.inputs
-        except AttributeError:
-            raise ValueError('no calculation input dictionary was defined in self.ctx.inputs')
+        except AttributeError as no_inputs:
+            raise ValueError('no calculation input dictionary was defined in self.ctx.inputs') from no_inputs
 
         inputs = prepare_process_inputs(unwrapped_inputs)
         running = self.submit(self._calculation, **inputs)
@@ -199,7 +199,7 @@ class BaseRestartWorkChain(WorkChain):
     def on_terminated(self):
         """Clean remote folders of the calculations called in the workchain if the clean_workdir input is True."""
 
-        super(BaseRestartWorkChain, self).on_terminated()  # pylint: disable=no-member
+        super().on_terminated()  # pylint: disable=no-member
         # Do not clean if we do not want to or the calculation failed
         if self.ctx.exit_code.status or self.inputs.clean_workdir.value is False:
             self.report('not cleaning the remote folders')  # pylint: disable=not-callable

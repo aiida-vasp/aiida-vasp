@@ -104,7 +104,7 @@ def test_find(fresh_aiida_env, potcar_node_pair):
 def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     file_node_as = potcar_node_pair['file']
     original_file = Path(data_path(file_node_as.original_file_name))
-    assert original_file.read_text() == file_node_as.get_content().decode()
+    assert original_file.read_text(encoding='utf8') == file_node_as.get_content().decode()
 
 
 #def test_file_get_pymatgen(fresh_aiida_env, potcar_node_pair):
@@ -249,14 +249,11 @@ def test_export_family_archive(fresh_aiida_env, potcar_family, tmp_path):
 
     # Start check for actual export
     ar_path, _ = potcar_cls.export_family_archive(potcar_family, path=export_dir, dry_run=False)
-    archive = tarfile.open(str(ar_path))
-    assert set(['Ga/POTCAR', 'As/POTCAR', 'In_d/POTCAR']).issubset(set(archive.getnames()))
-    potcar_in = archive.extractfile('In_d/POTCAR')
-    try:
+    with tarfile.open(str(ar_path)) as archive:
+        assert set(['Ga/POTCAR', 'As/POTCAR', 'In_d/POTCAR']).issubset(set(archive.getnames()))
+        potcar_in = archive.extractfile('In_d/POTCAR')
         content = potcar_in.read()
         assert b'TITEL' in content
-    finally:
-        potcar_in.close()
 
 
 def test_create_equivalence(potcar_family):

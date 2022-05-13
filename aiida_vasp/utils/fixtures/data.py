@@ -442,7 +442,7 @@ def vasp_chgcar(fresh_aiida_env):
     from aiida.plugins import DataFactory
     chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
-    with open(chgcar_path, 'r') as ref_chgcar_fo:
+    with open(chgcar_path, 'r', encoding='utf8') as ref_chgcar_fo:
         ref_chgcar = ref_chgcar_fo.read()
     return chgcar, ref_chgcar
 
@@ -453,28 +453,28 @@ def vasp_wavecar(fresh_aiida_env):
     from aiida.plugins import DataFactory
     wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
-    with open(wavecar_path, 'r') as ref_wavecar_fo:
+    with open(wavecar_path, 'r', encoding='utf8') as ref_wavecar_fo:
         ref_wavecar = ref_wavecar_fo.read()
     return wavecar, ref_wavecar
 
 
 @pytest.fixture
 def ref_incar():
-    with open(data_path('incar', 'INCAR'), 'r') as reference_incar_fo:
+    with open(data_path('incar', 'INCAR'), 'r', encoding='utf8') as reference_incar_fo:
         # yield reference_incar_fo.read().strip()
         yield reference_incar_fo.readlines()
 
 
 @pytest.fixture
 def ref_incar_vasp2w90():
-    with open(data_path('wannier', 'INCAR'), 'r') as reference_incar_wannier:
+    with open(data_path('wannier', 'INCAR'), 'r', encoding='utf8') as reference_incar_wannier:
         yield reference_incar_wannier.readlines()
 
 
 @pytest.fixture
 def ref_win():
     data = Path(data_path('wannier90.win'))
-    yield data.read_text()
+    yield data.read_text(encoding='utf8')
 
 
 @pytest.fixture()
@@ -490,7 +490,7 @@ def ref_retrieved():
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml. Remember rb mode. """
     path, settings = path_file_and_settings('vasprun.xml', request.param)
-    with open(path, 'rb') as handler:
+    with open(path, 'rb') as handler:  # pylint: disable=unspecified-encoding
         parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
@@ -499,7 +499,7 @@ def vasprun_parser(request):
 def vasprun_parser_v621(request):
     """Return an instance of VasprunParser for a reference vasprun.xml of VASP6."""
     path, settings = path_file_and_settings('vasprun621.xml', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
@@ -508,7 +508,7 @@ def vasprun_parser_v621(request):
 def neb_outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     path, settings = path_file_and_settings('OUTCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = VtstNebOutcarParser(handler=handler, settings=settings)
     return parser
 
@@ -517,7 +517,7 @@ def neb_outcar_parser(request):
 def outcar_parser(request):
     """Return an instance of OutcarParser for a reference OUTCAR."""
     path, settings = path_file_and_settings('OUTCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = OutcarParser(handler=handler, settings=settings)
     return parser
 
@@ -526,7 +526,7 @@ def outcar_parser(request):
 def poscar_parser(request):
     """Return an instance of PoscarParser for a reference POSCAR."""
     path, _ = path_file_and_settings('POSCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     return parser
 
@@ -535,7 +535,7 @@ def poscar_parser(request):
 def incar_parser(request):
     """Return an instance of IncarParser for a reference INCAR."""
     path, settings = path_file_and_settings('INCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = IncarParser(handler=handler, settings=settings)
     return parser
 
@@ -544,7 +544,7 @@ def incar_parser(request):
 def doscar_parser(request):
     """Return an instance of DoscarParser for a reference DOSCAR."""
     path, settings = path_file_and_settings('DOSCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = DoscarParser(handler=handler, settings=settings)
     return parser
 
@@ -553,7 +553,7 @@ def doscar_parser(request):
 def chgcar_parser(request):
     """Return an instance of ChgcarParser for a reference CHGCAR."""
     path, settings = path_file_and_settings('CHGCAR', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = ChgcarParser(handler=handler, settings=settings)
     return parser
 
@@ -562,7 +562,7 @@ def chgcar_parser(request):
 def eigenval_parser(request):
     """Return an instance of EigenvalParser for a reference EIGENVAL."""
     path, settings = path_file_and_settings('EIGENVAL', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = EigenvalParser(handler=handler, settings=settings)
     return parser
 
@@ -571,7 +571,7 @@ def eigenval_parser(request):
 def kpoints_parser(request):
     """Return an instance of KpointsParser for a reference KPOINTS."""
     path, settings = path_file_and_settings('KPOINTS', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = KpointsParser(handler=handler, settings=settings)
     return parser
 
@@ -580,19 +580,19 @@ def kpoints_parser(request):
 def stream_parser(request):
     """Return an instance of StreamParser for a reference stream capture."""
     path, settings = path_file_and_settings('vasp_output', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = StreamParser(handler=handler, settings=settings)
     return parser
 
 
 def _ref_kp_list():
-    with open(data_path('kpoints', 'KPOINTS_list'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_list'), 'r', encoding='utf8') as reference_kpoints_fo:
         ref_kp_str = reference_kpoints_fo.read()
     return ref_kp_str
 
 
 def _ref_kp_mesh():
-    with open(data_path('kpoints', 'KPOINTS_mesh'), 'r') as reference_kpoints_fo:
+    with open(data_path('kpoints', 'KPOINTS_mesh'), 'r', encoding='utf8') as reference_kpoints_fo:
         ref_kp_list = reference_kpoints_fo.read()
     return ref_kp_list
 

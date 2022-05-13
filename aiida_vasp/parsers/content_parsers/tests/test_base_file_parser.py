@@ -7,7 +7,7 @@ from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
-def test_base_object_parser(tmpdir):
+def test_base_content_parser(tmpdir):
     """Test functionality of the BaseFileParser, that is not already covered by any of the subclass tests."""
     with pytest.raises(TypeError):
         # Need to be initialized with either the `handler` or `data` parameters
@@ -15,7 +15,7 @@ def test_base_object_parser(tmpdir):
     temp_path = tmpdir / 'dummyfile'
     with pytest.raises(NotImplementedError):
         # Does not have a init_handler method, should be implemented in child
-        with open(temp_path, 'w') as handler:
+        with open(temp_path, 'w', encoding='utf8') as handler:
             _ = BaseFileParser(handler=handler)
     with pytest.raises(NotImplementedError):
         # Does not have a init_data method, should be implemented in child

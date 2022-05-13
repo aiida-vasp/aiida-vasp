@@ -20,6 +20,7 @@ class VasprunParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'rb'
     DEFAULT_SETTINGS = {
         'quantities_to_parse': [
             'structure',

@@ -349,5 +349,5 @@ def copy_from_aiida(name: str, node, dst: Path):
             frepo_path = dst / name
             Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)
             # Write the object
-            with open(frepo_path, 'w') as fdst:
+            with open(frepo_path, 'w', encoding='utf8') as fdst:
                 shutil.copyfileobj(fsource, fdst)

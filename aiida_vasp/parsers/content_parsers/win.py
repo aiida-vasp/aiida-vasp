@@ -48,7 +48,7 @@ class KeyValueParser(BaseKeyValueParser):
         ParamParser(KeyValueParser):
             def __init__(self, file_path):
                 self._file_path = py.path.local(file_path)
-                super(WinParser, self).__init__()
+                super().__init__()
                 self.result = {}
             def convert_or_not(self, value):
                 for converter in self.get_converter_iter():
@@ -71,7 +71,7 @@ class KeyValueParser(BaseKeyValueParser):
 
     @classmethod
     def get_lines(cls, filename):
-        with open(filename) as input_file:
+        with open(filename, 'r', encoding='utf8') as input_file:
             lines = input_file.read().splitlines()
         return lines
 
@@ -151,7 +151,7 @@ class KeyValueParser(BaseKeyValueParser):
 
     @classmethod
     def kv_list(cls, filename):
-        with open(filename) as input_fo:
+        with open(filename, 'r', encoding='utf8') as input_fo:
             kv_list = filter(None, map(cls.find_kv, input_fo))
         return kv_list
 
@@ -197,9 +197,9 @@ class WinParser(KeyValueParser):
     comment = re.compile(r'(!.*)\n?')
 
     def __init__(self, path):
-        super(WinParser, self).__init__()
+        super().__init__()
         self.result = {}
-        with open(path) as winf:
+        with open(path, 'r', encoding='utf8') as winf:
             self.keywords, self.blocks, self.comments = WinParser.parse_win(winf)
         self.result.update(self.keywords)
         self.result.update(self.blocks)

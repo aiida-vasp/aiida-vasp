@@ -44,7 +44,7 @@ def test_prepare_for_submission(vasp2w90_calc_and_ref, tmp_path):
     vasp_calc.prepare_for_submission(folder)
     with managed_temp_object() as temp_object:
         vasp_calc.write_incar(temp_object)
-        with open(temp_object, 'r') as result_incar_fo:
+        with open(temp_object, 'r', encoding='utf8') as result_incar_fo:
             assert result_incar_fo.readlines() == reference['incar']
 
 
@@ -54,7 +54,7 @@ def test_write_win(vasp2w90_calc_and_ref):
     vasp_calc, reference = vasp2w90_calc_and_ref
     with managed_temp_object() as temp_object:
         vasp_calc.write_win(temp_object)
-        with open(temp_object, 'r') as result_incar_fo:
+        with open(temp_object, 'r', encoding='utf8') as result_incar_fo:
             assert result_incar_fo.read() == reference['win']
 
 

@@ -6,7 +6,7 @@ Test for the NEB workchain
 from io import StringIO
 import pytest
 
-import aiida.orm as orm
+from aiida import orm
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.fixtures import *
