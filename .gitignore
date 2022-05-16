@@ -1,3 +1,4 @@
+*.aiida
 *.pyc
 .*.swp
 .*.swo
