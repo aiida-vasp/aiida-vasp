@@ -124,7 +124,7 @@ def compare_doscar_content(result, pdos=True):
         for item in partial_dos.dtype.names:
             assert np.allclose(result_partial_dos[item], partial_dos[item])
     else:
-        assert not result_partial_dos
+        assert result_partial_dos.size == 0
     header = {
         'n_ions': 4,
         'n_atoms': 4,
