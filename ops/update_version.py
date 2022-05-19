@@ -49,25 +49,26 @@ class VersionUpdater(object):  # pylint: disable=useless-object-inheritance
         self.version = self.get_version()
 
     def write_to_init(self):
-        init_content = self.top_level_init.read_text()
-        self.top_level_init.write_text(
-            re.sub(self.init_version_pat, r'\1\g<2>{}\4'.format(str(self.version)), init_content, re.DOTALL | re.MULTILINE))
+        init_content = self.top_level_init.read_text(encoding='utf8')
+        self.top_level_init.write_text(re.sub(self.init_version_pat, r'\1\g<2>{}\4'.format(str(self.version)), init_content,
+                                              re.DOTALL | re.MULTILINE),
+                                       encoding='utf8')
 
     def write_to_setup(self):
         """Write the updated version number to the setup file."""
         setup = json.load(str(self.setup_json))
         setup['version'] = str(self.version)
-        with open(str(self.setup_json), 'w') as setup_fo:
+        with open(str(self.setup_json), 'w', encoding='utf8') as setup_fo:
             json.dump(setup, setup_fo, indent=4, sort_keys=True)
 
     @property
     def setup_version(self):
-        with self.setup_json.open() as file_object:
+        with self.setup_json.open(mode='r', encoding='utf8') as file_object:
             return version.parse(json.load(file_object)['version'])
 
     @property
     def init_version(self):
-        match = re.search(self.init_version_pat, self.top_level_init.read_text())
+        match = re.search(self.init_version_pat, self.top_level_init.read_text(encoding='utf8'))
         if not match:
             raise AttributeError('No __version__ found in top-level __init__.py')
         return version.parse(match.groups()[2])
@@ -82,7 +83,7 @@ class VersionUpdater(object):  # pylint: disable=useless-object-inheritance
             )
             version_string = re.findall(self.version_pat, describe_byte_string)[0]
         except subprocess.CalledProcessError:  # pylint: disable=no-member
-            with open(str(self.setup_json), 'r') as setup_fo:
+            with open(str(self.setup_json), 'r', encoding='utf8') as setup_fo:
                 setup = json.load(setup_fo)
                 version_string = setup['version']
 

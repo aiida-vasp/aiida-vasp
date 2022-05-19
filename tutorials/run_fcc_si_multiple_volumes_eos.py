@@ -130,6 +130,6 @@ if __name__ == '__main__':
         misc = output['misc'].get_dict()
         EOS.append([lattice_constant, misc['total_energies']['energy_extrapolated']])
     # Write volume and total energies to file
-    with open('eos', 'w') as file_object:
+    with open('eos', 'w', encoding='utf8') as file_object:
         for item in EOS:
             file_object.write('{} {}\n'.format(item[0], item[1]))

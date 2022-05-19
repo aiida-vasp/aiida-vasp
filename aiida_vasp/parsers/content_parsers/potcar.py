@@ -129,7 +129,7 @@ class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
         """Read a POTCAR file that may contain one or more potentials into a list of PotcarIo objects."""
         potcars = cls()
         path = Path(path)
-        with path.open('r') as potcar_fo:
+        with path.open('r', encoding='utf8') as potcar_fo:
             potcar_strings = re.compile(r'\n?(\s*.*?End of Dataset\n)', re.S).findall(potcar_fo.read())
 
         for potcar_contents in potcar_strings:

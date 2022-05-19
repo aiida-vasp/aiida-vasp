@@ -155,14 +155,14 @@ class VaspCalculation(VaspCalcBase):
             'very likely the VASP calculation did not run properly')
         spec.exit_code(1004, 'ERROR_NOT_ABLE_TO_CREATE_NODE', message='the parser is not able to compose one or more output nodes: {nodes}')
 
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, folder):
         """
         Add all objects to the list of objects to be retrieved.
 
         Notice that we here utilize both the retrieve batch of objects, which are always stored after retrieval and
         the temporary retrieve list which is automatically cleared after parsing.
         """
-        calcinfo = super(VaspCalculation, self).prepare_for_submission(tempfolder)
+        calcinfo = super().prepare_for_submission(folder)
 
         # Combine stdout and stderr into vasp_output so that the stream parser can parse it later.
         calcinfo.codes_info[0].stdout_name = self._VASP_OUTPUT
@@ -199,7 +199,7 @@ class VaspCalculation(VaspCalcBase):
         return calcinfo
 
     def verify_inputs(self):
-        super(VaspCalculation, self).verify_inputs()
+        super().verify_inputs()
         _parameters = self.inputs.parameters.get_dict()
         _lorbit = _parameters.get('lorbit', 0)
         if 'settings' in self.inputs:
@@ -273,9 +273,9 @@ class VaspCalculation(VaspCalcBase):
             structure = get_data_node('structure', ase=structure.get_ase())
         return structure
 
-    def write_additional(self, tempfolder, calcinfo):
+    def write_additional(self, folder, calcinfo):
         """Write CHGAR and WAVECAR if needed."""
-        super(VaspCalculation, self).write_additional(tempfolder, calcinfo)
+        super().write_additional(folder, calcinfo)
         # a list of object names to be copied
         remote_copy_fnames = [os.path.split(entry[1])[1] for entry in calcinfo.remote_copy_list]
         if self._need_chgcar():
@@ -309,8 +309,8 @@ class VaspCalculation(VaspCalcBase):
         try:
             incar_parser = IncarParser(data=self.inputs.parameters, validate_tags=validate_tags)
             incar_parser.write(dst)
-        except SystemExit:
-            raise ValidationError('The INCAR content did not pass validation.')
+        except SystemExit as parser_error:
+            raise ValidationError('The INCAR content did not pass validation.') from parser_error
 
     def write_poscar(self, dst):  # pylint: disable=unused-argument
         """
@@ -335,8 +335,8 @@ class VaspCalculation(VaspCalcBase):
         try:
             poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
             poscar_parser.write(dst)
-        except SystemExit:
-            raise ValidationError('The POSCAR content did not pass validation.')
+        except SystemExit as parser_error:
+            raise ValidationError('The POSCAR content did not pass validation.') from parser_error
 
     def write_potcar(self, dst):
         """
@@ -360,8 +360,8 @@ class VaspCalculation(VaspCalcBase):
         try:
             kpoint_parser = KpointsParser(data=self.inputs.kpoints)
             kpoint_parser.write(dst)
-        except SystemExit:
-            raise ValidationError('The KPOINTS content did not pass validation.')
+        except SystemExit as parser_error:
+            raise ValidationError('The KPOINTS content did not pass validation.') from parser_error
 
     def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
         charge_density = self.inputs.charge_density

@@ -86,8 +86,8 @@ class VerifyWorkChain(WorkChain):
 
         try:
             self.ctx.inputs
-        except AttributeError:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs')
+        except AttributeError as no_input:
+            raise ValueError('No input dictionary was defined in self.ctx.inputs') from no_input
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))

@@ -19,7 +19,7 @@ from aiida.manage.tests.pytest_fixtures import aiida_caplog
 from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_node_info
-from aiida.tools.importexport.dbexport import export
+from aiida.tools.archive import create_archive
 
 
 @pytest.fixture()
@@ -85,7 +85,7 @@ def print_and_export_failed_mock():
 
     # Export the failed calculations
     output_file = Path(__file__).parent.parent.parent.parent / 'test_mock_error.aiida'
-    export(entities, filename=str(output_file), file_format='zip', include_logs=True, overwrite=True)
+    create_archive(entities, filename=str(output_file), include_logs=True, overwrite=True)
 
 
 def get_call_root(node):

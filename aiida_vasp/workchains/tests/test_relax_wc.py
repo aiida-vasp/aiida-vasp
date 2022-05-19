@@ -10,7 +10,7 @@ from __future__ import print_function
 import pytest
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
-import aiida.orm as orm
+from aiida import orm
 from aiida.engine import run
 from aiida.plugins import DataFactory
 from aiida.plugins import WorkflowFactory
@@ -76,20 +76,20 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     create_authinfo(computer=mock_vasp.computer, store=True)
 
     structure = None
-    with open(data_path('test_relax_wc', 'inp', 'POSCAR'), 'r') as handler:
+    with open(data_path('test_relax_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
         structure = NodeComposer.compose_structure('structure', {'structure': structure})
 
     kpoints = None
-    with open(data_path('test_relax_wc', 'inp', 'KPOINTS'), 'r') as handler:
+    with open(data_path('test_relax_wc', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
         kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
-    with open(data_path('test_relax_wc', 'inp', 'INCAR')) as handler:
+    with open(data_path('test_relax_wc', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
         parameters = incar_parser.get_quantity('incar')
 

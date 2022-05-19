@@ -280,8 +280,8 @@ class RelaxWorkChain(WorkChain):
 
         try:
             self.ctx.inputs
-        except AttributeError:
-            raise ValueError('no input dictionary was defined in self.ctx.inputs')
+        except AttributeError as no_inputs:
+            raise ValueError('no input dictionary was defined in self.ctx.inputs') from no_inputs
 
         # Set structure
         self.ctx.inputs.structure = self.ctx.current_structure

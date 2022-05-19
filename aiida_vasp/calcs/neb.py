@@ -137,26 +137,26 @@ class VaspNEBCalculation(VaspCalculation):
             message=
             'Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` quantities are requested for parsing.')
 
-    def prepare_for_submission(self, tempfolder):
+    def prepare_for_submission(self, folder):
         """
         Add all files to the list of files to be retrieved.
 
         Notice that we here utilize both the retrieve batch of files, which are always stored after retrieval and
         the temporary retrieve list which is automatically cleared after parsing.
         """
-        calcinfo = super().prepare_for_submission(tempfolder)
+        calcinfo = super().prepare_for_submission(folder)
 
         nimages = len(self.inputs.neb_images)
         nimage_keys = sorted(list(self.inputs.neb_images.keys()))
 
         image_folders = []
 
-        # Iterate though each folder that needs to be setup
+        # Iterate though each image_folder that needs to be setup
         for i in range(nimages + 2):
             folder_id = f'{i:02d}'
-            folder = Path(tempfolder.get_abs_path(folder_id))
-            folder.mkdir()
-            poscar = str(folder / 'POSCAR')
+            image_folder = Path(folder.get_abs_path(folder_id))
+            image_folder.mkdir()
+            poscar = str(image_folder / 'POSCAR')
             if i == 0:
                 # Write the initial image
                 self.write_neb_poscar(self.inputs.initial_structure, poscar)

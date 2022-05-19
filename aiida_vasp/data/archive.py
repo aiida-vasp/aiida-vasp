@@ -18,7 +18,7 @@ class ArchiveData(Data):
 
     def __init__(self, *args, **kwargs):
         self._filelist = []
-        super(ArchiveData, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @contextmanager
     def get_archive(self):
@@ -56,4 +56,4 @@ class ArchiveData(Data):
     def store(self, *args, **kwargs):
         self._make_archive()
         del self._filelist
-        super(ArchiveData, self).store(*args, **kwargs)
+        super().store(*args, **kwargs)

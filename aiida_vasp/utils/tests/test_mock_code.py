@@ -165,15 +165,21 @@ def test_registry_upload_wc(fresh_aiida_env, run_vasp_process, custom_registry, 
 
 def test_mock_vasp(mock_registry, temp_path):
     """Test the MockVasp class"""
-
+    import os
     # Setup the input directory
     mock_vasp = MockVasp(temp_path, mock_registry)
     base_path = Path(data_path('test_bands_wc', 'inp'))
+
+    with pytest.raises(ValueError):
+        # Should fail due to not having any input files present and
+        # we can then not match it to a test dataset
+        mock_vasp.run()
 
     for obj in ['INCAR']:
         copy2(base_path / obj, temp_path / obj)
 
     with pytest.raises(ValueError):
+        # Should fail due to missing POSCAR
         mock_vasp.run()
 
     for obj in ['POSCAR']:

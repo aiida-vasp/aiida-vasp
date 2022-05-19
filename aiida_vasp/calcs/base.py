@@ -65,7 +65,7 @@ class VaspCalcBase(CalcJob):
         ]
         return retrieve_list
 
-    def prepare_for_submission(self, tempfolder):  # pylint: disable=arguments-differ
+    def prepare_for_submission(self, folder):  # pylint: disable=arguments-differ
         """
         Writes the four minimum outputs: INCAR, POSCAR, POTCAR, KPOINTS.
 
@@ -76,10 +76,10 @@ class VaspCalcBase(CalcJob):
         modifying it's output CalcInfo before returning it.
         """
         # write input objects
-        incar = tempfolder.get_abs_path('INCAR')
-        structure = tempfolder.get_abs_path('POSCAR')
-        potentials = tempfolder.get_abs_path('POTCAR')
-        kpoints = tempfolder.get_abs_path('KPOINTS')
+        incar = folder.get_abs_path('INCAR')
+        structure = folder.get_abs_path('POSCAR')
+        potentials = folder.get_abs_path('POTCAR')
+        kpoints = folder.get_abs_path('KPOINTS')
 
         remote_copy_list = []
 
@@ -103,7 +103,7 @@ class VaspCalcBase(CalcJob):
         # here we need to do the charge density and wave function copy
         # as we need access to the calcinfo
         calcinfo.local_copy_list = []
-        self.write_additional(tempfolder, calcinfo)
+        self.write_additional(folder, calcinfo)
 
         return calcinfo
 
@@ -149,12 +149,12 @@ class VaspCalcBase(CalcJob):
     def store(self, *args, **kwargs):
         """Adds a _prestore subclass hook for operations that should be done just before storing."""
         self._prestore()
-        super(VaspCalcBase, self).store(*args, **kwargs)
+        super().store(*args, **kwargs)
 
     def _prestore(self):  # pylint: disable=no-self-use
         """Subclass hook for updating attributes etc, just before storing."""
         return
 
-    def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
+    def write_additional(self, folder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
         """Subclass hook to write additional input objects."""
         return

@@ -6,9 +6,9 @@
 	"Environment :: Plugins",
 	"Intended Audience :: Science/Research",
 	"License :: OSI Approved :: MIT License",
-	"Programming Language :: Python :: 3.7",
 	"Programming Language :: Python :: 3.8",
 	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
 	"Topic :: Scientific/Engineering :: Physics",
 	"Topic :: Scientific/Engineering :: Chemistry",
 	"Framework :: AiiDA"
@@ -19,10 +19,9 @@
     "url": "https://github.com/aiida-vasp/aiida-vasp",
     "version": "2.1.1",
     "reentry_register": true,
-    "python_requires": ">=3.7",
+    "python_requires": ">=3.8",
     "setup_requires": [
-	"reentry",
-	"pip<22"
+	"pip>=20.3"
     ],
     "entry_points": {
 	"aiida.calculations": [
@@ -66,31 +65,22 @@
     },
     "extras_require": {
 	"pre-commit": [
-		"aiida-core[pre-commit] >= 1.2.1,!=1.4.0,!=1.4.1,<2"
+	    "aiida-core[pre-commit]>=2.0.1,<3",
+	    "tox>=3.23.0",
+	    "virtualenv>20"
 	],
 	"tests": [
-	    "aiida-export-migration-tests==0.9.0",
-	    "pg8000~=1.13",
-	    "pgtest~=1.3,>=1.3.1",
-	    "pytest~=6.0",
-	    "pytest-timeout~=1.3",
-	    "pytest-cov~=2.7",
-	    "sqlalchemy-diff~=0.1.3",
-		"sqlalchemy<1.4",
-	    "astroid>=2.4.0",
-	    "toml~=0.10.0",
-	    "coverage<5.0"
+	    "aiida-core[tests]>=2.0.1,<3",
+	    "tox>=3.23.0",
+	    "virtualenv>20"
 	],
 	"graphs": [
 	    "matplotlib"
-	],
-	"wannier": [
-	    "aiida-wannier90"
 	]
     },
     "include_package_data": true,
     "install_requires": [
-	"aiida-core[atomic_tools] >= 1.2.1,!=1.4.0,!=1.4.1,<2",
+	"aiida-core[atomic_tools]>=2.0.1,<3",
 	"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
 	"lxml",
 	"packaging",

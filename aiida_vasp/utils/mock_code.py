@@ -145,7 +145,6 @@ class MockRegistry:
             poscar = Poscar(file_path=str(poscar_path))
             items['poscar'] = poscar.get_dict()
             items['poscar'].pop('comment', None)
-
         return get_hash(items)[0]
 
     def extract_calc_by_path(self, rel_path: Path, dst_path: Path, include_inputs: bool = True):
@@ -292,6 +291,11 @@ class MockVasp:
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.
+
+        Notice that we do not set the hash value at init of workdir as we allow
+        the unit of the MockVasp at any point, typically, you are prepping for
+        a VASP calculation. Only when you execute VASP is the files checked, in this
+        case when executing run. Thus, we calculate the hash of the workdir only then.
         """
         self.workdir = workdir
         self.registry = registry
@@ -300,9 +304,12 @@ class MockVasp:
         """
         Run the mock vasp
         """
+
+        if not os.listdir(self.workdir):
+            # Directory is empty, no point of trying to find matching calcs
+            raise ValueError('No input files given, so we can not find the associated test data.')
+
         hash_val = self.registry.compute_hash(self.workdir)
-        with open('/tmp/testing', 'a') as handler:
-            handler.write(str(self.workdir))
         if debug:
             print(f'Target hash value: {hash_val}')
         if hash_val in self.registry.reg_hash:
@@ -310,11 +317,11 @@ class MockVasp:
         else:
             if debug:
                 print(f'Registered hashes: {self.registry.reg_hash}')
-            raise ValueError('The calculation is not registered!!')
+            raise ValueError('The calculation is not registered.')
 
     @property
     def is_runnable(self) -> bool:
-        """Return wether the mock code can be run"""
+        """Check if the mock code can be executed."""
         hash_val = self.registry.compute_hash(self.workdir)
         return hash_val in self.registry.reg_hash
 
@@ -342,5 +349,5 @@ def copy_from_aiida(name: str, node, dst: Path):
             frepo_path = dst / name
             Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)
             # Write the object
-            with open(frepo_path, 'w') as fdst:
+            with open(frepo_path, 'w', encoding='utf8') as fdst:
                 shutil.copyfileobj(fsource, fdst)

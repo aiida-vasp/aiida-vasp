@@ -212,8 +212,8 @@ class MasterWorkChain(WorkChain):
         """Initialize the base workchain."""
         try:
             self.ctx.inputs
-        except AttributeError:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs')
+        except AttributeError as no_inputs:
+            raise ValueError('No input dictionary was defined in self.ctx.inputs') from no_inputs
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))

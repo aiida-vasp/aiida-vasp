@@ -1,3 +1,4 @@
+# pylint: disable=too-many-function-args
 """
 Mock vasp command.
 
@@ -36,51 +37,71 @@ def mock_vasp_strict():
     return _mock_vasp(True)
 
 
-def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
+def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
     """Verify input objects are parseable and copy in output objects."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
-    with open('/tmp/pung', 'w') as handler:
-        handler.write('HERE')
-        handler.write('pwd:' + str(pwd) + '!')
+    vasp_mock_output = []
+    vasp_output = []
+    vasp_output_file = pwd / 'vasp_output'
+    vasp_mock_output.append('MOCK PREPEND: START ----------------------\n')
+    vasp_mock_output.append('MOCK PREPEND: Mock directory: ' + str(pwd) + '\n')
     aiida_path = Path(AIIDA_CONFIG_FOLDER)
     aiida_cfg = aiida_path / 'config.json'
-    click.echo('DEBUG: AIIDA_PATH = {}'.format(os.environ.get('AIIDA_PATH')))
-    click.echo('DEBUG: AIIDA_CONFIG_FOLDER = {}'.format(str(aiida_path)))
-    assert aiida_path.exists()
-    assert aiida_cfg.is_file()
-    click.echo(aiida_cfg.read_text())
+    vasp_mock_output.append('MOCK PREPEND: AIIDA_PATH: ' + os.environ.get('AIIDA_PATH') + '\n')
+    vasp_mock_output.append('MOCK PREPEND: AIIDA_CONFIG_FOLDER: ' + str(aiida_path) + '\n')
+
+    if not aiida_path.exists():
+        vasp_mock_output.append('MOCK PREPEND: AIIDA_PATH does not exist.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+
+    if not aiida_cfg.is_file():
+        vasp_mock_output.append('MOCK PREPEND: Can not find the AIIDA_CONFIG.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+
     incar = pwd / 'INCAR'
-    assert incar.is_file(), 'INCAR input was not found.'
+    if not incar.is_file():
+        vasp_mock_output.append('MOCK PREPEND: INCAR not found.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     potcar = pwd / 'POTCAR'
-    assert potcar.is_file(), 'POTCAR input not found.'
+    if not potcar.is_file():
+        vasp_mock_output.append('MOCK PREPEND: POTCAR not found.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     poscar = pwd / 'POSCAR'
-    assert poscar.is_file(), 'POSCAR input not found.'
+    if not poscar.is_file():
+        vasp_mock_output.append('MOCK PREPEND: POSCAR not found.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     kpoints = pwd / 'KPOINTS'
-    assert kpoints.is_file(), 'KPOINTS input not found.'
+    if not kpoints.is_file():
+        vasp_mock_output.append('MOCK PREPEND: KPOINTS not found.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     # Check that the input files can be parsed (as close to a validity check we can get)
     incar_parser = False
     system = ''
-    with open(str(incar), 'r') as handler:
+    with open(str(incar), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler, validate_tags=False)
         system = incar_parser.incar.get('system', '')
-    assert incar_parser, 'INCAR could not be parsed.'
+    if not incar_parser:
+        vasp_mock_output.append('MOCK PREPEND: INCAR could not be parsed.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     poscar_parser = False
-    with open(str(poscar), 'r') as handler:
+    with open(str(poscar), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
-    assert poscar_parser, 'POSCAR could not be parsed.'
+    if not poscar_parser:
+        vasp_mock_output.append('MOCK PREPEND: POSCAR could not be parsed.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     kpoints_parser = False
-    with open(str(kpoints), 'r') as handler:
+    with open(str(kpoints), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
-    assert kpoints_parser, 'KPOINTS could not be parsed.'
-
-    #assert PotcarIo(path=str(potcar)), 'POTCAR could not be parsed.'
+    if not kpoints_parser:
+        vasp_mock_output.append('MOCK PREPEND: KPOINTS could not be parsed.\n')
+        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     try:
         test_case = system.strip().split(':')[1].strip()
@@ -88,12 +109,17 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
         test_case = ''
 
     if not test_case:
+        vasp_mock_output.append('MOCK PREPEND: Trying to detect test case using registry or reverting to default.\n')
         # If no test case is defined, we first try the hash-based mock registry
         mock_registry_path = os.environ.get('MOCK_CODE_BASE', data_path('.'))
-        mock = MockVasp(pwd, MockRegistry(mock_registry_path))
+        mock_registry = MockRegistry(mock_registry_path)
+        mock = MockVasp(pwd, mock_registry)
         if mock.is_runnable:
+            detected_path = mock.registry.get_path_by_hash(mock_registry.compute_hash(pwd))
+            vasp_mock_output.append(f'MOCK PREPEND: Using test data in path {detected_path} based detection from inputs.\n')
             mock.run()
         else:
+            vasp_mock_output.append('MOCK PREPEND: Using default test data in the respective folders named similar to the file name.\n')
             if not strict_match:
                 # Then this is a simple case - assemble the outputs from folders
                 shutil.copy(output_object('outcar', 'OUTCAR'), pwd / 'OUTCAR')
@@ -105,8 +131,30 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
                 shutil.copy(output_object('basic_run', 'vasp_output'), pwd / 'vasp_output')
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
-                click.echo('No matching results found but strict matching is reqested. The mock code cannot be run.')
+                vasp_mock_output.append('MOCK PREPEND: Caller demanded to only locate test data by input, but no match was found.\n')
+                stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
     else:
+        vasp_mock_output.append('MOCK PREPEND: Using test data from folder: ' + test_case + '\n')
         test_data_path = data_path(test_case, 'out')
         for out_object in Path(test_data_path).iterdir():
             shutil.copy(out_object, pwd)
+
+    # Read original vasp_output as we will append mock messages to it
+    if vasp_output_file.exists():
+        with open(vasp_output_file, 'r', encoding='utf8') as handler:
+            vasp_output = handler.readlines()
+
+    vasp_mock_output.append('MOCK PREPEND: Mock folder contains the following files: ' + str(os.listdir(pwd)) + '\n')
+    vasp_mock_output.append('MOCK PREPEND: END ----------------------\n')
+    vasp_mock_output.append('Existing VASP stdout/stderr follows:\n')
+
+    # Make sure we add the mock details in case we need to inspect later
+    with open(vasp_output_file, 'w', encoding='utf8') as handler:
+        handler.write(''.join(vasp_mock_output + vasp_output))
+
+
+def stop_and_return(vasp_output, vasp_mock_output):
+    """Halts mock-vasp, rebuilds the vasp_output and returns."""
+    # Assemble the
+    print(''.join(vasp_mock_output + vasp_output))
+    raise RuntimeError('The mock-vasp code could not perform a clean run.')

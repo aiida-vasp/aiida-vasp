@@ -286,7 +286,7 @@ def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,
     inputs = {} if inputs is None else inputs
 
     if isinstance(path, (str, Path)):
-        with open(path, 'r') as fobj:
+        with open(path, 'r', encoding='utf8') as fobj:
             lines = fobj.readlines()
     # A file-like object
     elif hasattr(path, 'readlines'):

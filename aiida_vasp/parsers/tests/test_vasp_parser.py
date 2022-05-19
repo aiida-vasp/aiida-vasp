@@ -10,6 +10,7 @@ import numpy as np
 
 from aiida.plugins import ParserFactory
 from aiida.plugins import CalculationFactory
+from aiida.orm import load_node
 
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -45,7 +46,7 @@ class ExampleFileParser(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
-        super(ExampleFileParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._parsable_items = ExampleFileParser.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
@@ -69,7 +70,7 @@ class ExampleFileParser2(BaseFileParser):
     }
 
     def __init__(self, *args, **kwargs):
-        super(ExampleFileParser2, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._parsable_items = ExampleFileParser2.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
@@ -114,7 +115,7 @@ def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_
 def vasp_parser_with_test(calc_with_retrieved, request):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False})
+    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False, 'mode': 'r'})
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
@@ -180,7 +181,7 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     """Make sure non-unique quantity identifiers are detected."""
     parser = vasp_parser_with_test
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
-    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False})
+    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False, 'mode': 'r'})
     with pytest.raises(RuntimeError) as excinfo:
         parser._parsable_quantities.setup(retrieved_content=parser._retrieved_content.keys(),
                                           parser_definitions=parser._definitions.parser_definitions,
@@ -201,10 +202,10 @@ def poscar_path(folder):
 
 def xml_truncate(index, original, tmp):
     """Truncate vasprun.xml at the given line number and parse."""
-    with open(original, 'r') as handler:
+    with open(original, 'r', encoding='utf8') as handler:
         content = handler.read().splitlines()
         truncated_content = '\n'.join(content[:-index or None])
-    with open(tmp, 'w') as handler:
+    with open(tmp, 'w', encoding='utf8') as handler:
         handler.write(str(truncated_content))
 
 
@@ -278,7 +279,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
     # Setup parser
     path = data_path('poscar', 'POSCARSILLY')
     parser = None
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     # Compose the node
     structure = parser.get_quantity('poscar-structure')
@@ -306,7 +307,7 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     parser.write(temp_path)
 
     # Read it again
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
     result = NodeComposer.compose_structure('structure', {'structure': structure})
@@ -337,7 +338,7 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     temp_path = str(tmpdir.join('POSCAR'))
     parser.write(temp_path)
     parser = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
     result_reparse = NodeComposer.compose_structure('structure', {'structure': structure})
@@ -375,7 +376,7 @@ def test_parse_kpoints(vasp_kpoints):
         pass
 
     parser = None
-    with open(path, 'r') as handler:
+    with open(path, 'r', encoding='utf8') as handler:
         parser = KpointsParser(handler=handler)
     kpts = parser.get_quantity('kpoints-kpoints')
     result = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpts})
@@ -705,16 +706,22 @@ def test_notification_composer(vasp_parser_without_parsing):
 
 def test_critical_object_missing(calc_with_retrieved, request):
     """Test raising return code to indicate that one or more critical objects are missing"""
+    # Here we add a fictional file as critical
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True})
+    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True, 'mode': 'r'})
     parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
     success = parser.parse(retrieved_temporary_folder=file_path)
     assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-    # Test missing OUTCAR
+    # Here we remove a file that is marked as critical by default
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    # Delete the retrieved OUTCAR file and instantiate the parser
-    node.outputs.retrieved.delete_object('OUTCAR', force=True)
+    # Delete the retrieved OUTCAR file and instantiate the parser. In order to
+    # delete from a stored node we need to access the backend, which allows such deletion.
+    # Also, make sure we use the same variable here, otherwise we would e.g. issue the
+    # update_repository_metadata on a different repository entry in memory.
+    retrieved = node.outputs.retrieved
+    retrieved.base.repository._repository.delete_object('OUTCAR')
+    retrieved.base.repository._update_repository_metadata()
     parser = ParserFactory('vasp.vasp')(node)
     # No temporary folder is passed - parse everything for the permanent storage
     success = parser.parse()

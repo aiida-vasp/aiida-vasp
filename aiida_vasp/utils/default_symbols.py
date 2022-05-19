@@ -87,7 +87,7 @@ def get_all(version_nr='latest', use_gw=False):
 if __name__ == '__main__':
     DEF_PAW = get_recommendations()
     DEF_GW = get_recommendations(use_gw=True)
-    with open('default_paws.py', 'w') as defaults:
+    with open('default_paws.py', 'w', encoding='utf8') as defaults:
         defaults.write('lda = {\n')
         defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.items()])
         defaults.write('}\n\n')

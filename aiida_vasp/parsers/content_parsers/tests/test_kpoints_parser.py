@@ -76,7 +76,7 @@ def test_parse_kpoints_write(kpoints_parser, tmpdir):
     kpoints_parser.write(temp_path)
     # Load the written KPOINTS using a new content parser instance and compare
     content = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         content = handler.readlines()
     ref_content = [
         '# K-points\n', '     2\n', 'Direct\n', '  0.000000000   0.000000000   0.000000000   1.000000000\n',
@@ -109,7 +109,7 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
 
     # Load the written KPOINTS using a new content parser instance and compare
     parser = None
-    with open(temp_path, 'r') as handler:
+    with open(temp_path, 'r', encoding='utf8') as handler:
         parser = KpointsParser(handler=handler)
     result = parser.get_quantity('kpoints-kpoints')
     if result['mode'] == 'automatic':

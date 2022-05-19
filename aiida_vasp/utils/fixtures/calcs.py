@@ -238,7 +238,6 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
         if test_case is not None:
             # Allow to fetch special tests cases using the mock-vasp executable
             parameters['system'] = f'test-case:{test_case}'
-
         if process_type == 'calcjob':
             from aiida.plugins import CalculationFactory
             process = CalculationFactory('vasp.vasp')
