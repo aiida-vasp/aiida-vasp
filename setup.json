@@ -84,6 +84,6 @@
 	"pymatgen>=2019.7.2,<=2022.02.03,!=2019.9.7",
 	"lxml",
 	"packaging",
-	"parsevasp@git+https://github.com/aiida-vasp/parsevasp@c60379205a0b297d93eb0b4e46a850173099c5c6"
+	"parsevasp~=3.0"
     ]
 }
