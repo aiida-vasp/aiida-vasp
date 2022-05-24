@@ -17,6 +17,7 @@ class ChgcarParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['charge_density']}
 
     PARSABLE_QUANTITIES = {

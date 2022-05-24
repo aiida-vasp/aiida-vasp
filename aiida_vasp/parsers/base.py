@@ -104,7 +104,7 @@ class BaseParser(Parser):
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
     @contextmanager
-    def _get_handler(self, name):
+    def _get_handler(self, name, mode):
         """
         Access the handler of retrieved and retrieved_temporary objects. This is passed
         down to the parers where the content is analyzed.
@@ -117,6 +117,7 @@ class BaseParser(Parser):
         to make it a class and define the __enter__ and __exit__ methods.
 
         :param name: name of the object
+        :param mode: the open mode to use for the respective parser, typically 'r' or 'rb'.
         :returns: a yielded handler for the object
         :rtype: object
         """
@@ -126,7 +127,7 @@ class BaseParser(Parser):
                 # For the permanent content to be parsed we can use the fact that
                 # self.retrieved is a FolderData datatype in AiiDA.
                 try:
-                    with self.retrieved.open(name) as handler:
+                    with self.retrieved.open(name, mode=mode) as handler:
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved')
@@ -137,7 +138,7 @@ class BaseParser(Parser):
                 # See https://github.com/aiidateam/aiida-core/issues/3502.
                 path = os.path.join(self._retrieved_content[name]['path'], name)
                 try:
-                    with open(path, 'r') as handler:
+                    with open(path, mode=mode) as handler:
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved_temporary')

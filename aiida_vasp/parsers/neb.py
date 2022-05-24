@@ -282,7 +282,7 @@ class VtstNebParser(VaspParser):
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
         self._settings = NEBSettings(parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger)
-        self._definitions = ParserDefinitions(object_parser_set='neb')
+        self._definitions = ParserDefinitions(content_parser_set='neb')
         self._parsable_quantities = NEBParsableQuantities(vasp_parser_logger=self.logger)
 
     def get_num_images(self):
@@ -348,23 +348,23 @@ class VtstNebParser(VaspParser):
             if image_idx == 1 and name == _VASP_OUTPUT:
                 content_path = _VASP_OUTPUT
 
-            object_parser_cls = self._definitions.parser_definitions[name]['parser_class']
+            content_parser_cls = self._definitions.parser_definitions[name]['parser_class']
 
-            # If a parse object has been instantiated, use it.
-            if object_parser_cls in file_parser_instances:
-                parser = file_parser_instances[object_parser_cls]
+            # If a parser object has been instantiated, use it.
+            if content_parser_cls in file_parser_instances:
+                parser = file_parser_instances[content_parser_cls]
             else:
                 try:
                     # The next line may except for ill-formated file
-                    with self._get_handler(content_path) as handler:
-                        parser = object_parser_cls(settings=self._settings, handler=handler)
+                    with self._get_handler(content_path, mode=content_parser_cls.OPEN_MODE) as handler:
+                        parser = content_parser_cls(settings=self._settings, handler=handler)
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
                     self.logger.warning('Cannot instantiate {} for image {}, exception {}:'.format(
-                        object_parser_cls, image_idx, traceback.format_exc()))
+                        content_parser_cls, image_idx, traceback.format_exc()))
 
-                file_parser_instances[object_parser_cls] = parser
+                file_parser_instances[content_parser_cls] = parser
 
             # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:

@@ -20,6 +20,7 @@ class OutcarParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['run_status', 'run_stats']}
 
     PARSABLE_QUANTITIES = {

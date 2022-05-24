@@ -19,6 +19,7 @@ class KpointsParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['kpoints-kpoints']}
 
     PARSABLE_QUANTITIES = {

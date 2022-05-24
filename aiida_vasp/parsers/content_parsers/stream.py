@@ -15,6 +15,7 @@ from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 class StreamParser(BaseFileParser):
     """Parser used for parsing errors and warnings from VASP."""
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['notifications']}
 
     PARSABLE_QUANTITIES = {

@@ -213,9 +213,9 @@ NODES = {
 class ParserDefinitions():  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
-    def __init__(self, object_parser_set='default'):
+    def __init__(self, content_parser_set='default'):
         self._parser_definitions = {}
-        self._init_parser_definitions(object_parser_set)
+        self._init_parser_definitions(content_parser_set)
 
     @property
     def parser_definitions(self):

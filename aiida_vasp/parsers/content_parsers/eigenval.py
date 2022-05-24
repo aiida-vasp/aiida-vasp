@@ -19,6 +19,7 @@ class EigenvalParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['eigenval-eigenvalues', 'eigenval-kpoints']}
 
     PARSABLE_QUANTITIES = {

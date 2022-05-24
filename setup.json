@@ -22,7 +22,7 @@
     "python_requires": ">=3.7",
     "setup_requires": [
 	"reentry",
-	"pip<22"
+	"pip>=20.3,<22"
     ],
     "entry_points": {
 	"aiida.calculations": [
@@ -66,20 +66,14 @@
     },
     "extras_require": {
 	"pre-commit": [
-		"aiida-core[pre-commit] >= 1.2.1,!=1.4.0,!=1.4.1,<2"
+	    "aiida-core[pre-commit]>= 1.2.1,!=1.4.0,!=1.4.1,<2",
+	    "tox>=3.23.0",
+	    "virtualenv>20"
 	],
 	"tests": [
-	    "aiida-export-migration-tests==0.9.0",
-	    "pg8000~=1.13",
-	    "pgtest~=1.3,>=1.3.1",
-	    "pytest~=6.0",
-	    "pytest-timeout~=1.3",
-	    "pytest-cov~=2.7",
-	    "sqlalchemy-diff~=0.1.3",
-		"sqlalchemy<1.4",
-	    "astroid>=2.4.0",
-	    "toml~=0.10.0",
-	    "coverage<5.0"
+	    "aiida-core[pre-commit]>= 1.2.1,!=1.4.0,!=1.4.1,<2",
+	    "tox>=3.23.0",
+	    "virtualenv>20"
 	],
 	"graphs": [
 	    "matplotlib"

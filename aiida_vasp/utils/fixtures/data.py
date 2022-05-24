@@ -490,7 +490,7 @@ def ref_retrieved():
 def vasprun_parser(request):
     """Return an instance of VasprunParser for a reference vasprun.xml."""
     path, settings = path_file_and_settings('vasprun.xml', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'rb') as handler:
         parser = VasprunParser(handler=handler, settings=settings)
     return parser
 
@@ -499,7 +499,7 @@ def vasprun_parser(request):
 def vasprun_parser_v621(request):
     """Return an instance of VasprunParser for a reference vasprun.xml of VASP6."""
     path, settings = path_file_and_settings('vasprun621.xml', request.param)
-    with open(path, 'r') as handler:
+    with open(path, 'rb') as handler:
         parser = VasprunParser(handler=handler, settings=settings)
     return parser
 

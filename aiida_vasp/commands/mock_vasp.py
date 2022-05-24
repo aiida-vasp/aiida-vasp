@@ -40,9 +40,6 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements
     """Verify input objects are parseable and copy in output objects."""
     from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
-    with open('/tmp/pung', 'w') as handler:
-        handler.write('HERE')
-        handler.write('pwd:' + str(pwd) + '!')
     aiida_path = Path(AIIDA_CONFIG_FOLDER)
     aiida_cfg = aiida_path / 'config.json'
     click.echo('DEBUG: AIIDA_PATH = {}'.format(os.environ.get('AIIDA_PATH')))

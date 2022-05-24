@@ -17,6 +17,7 @@ class IncarParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['incar']}
 
     PARSABLE_QUANTITIES = {

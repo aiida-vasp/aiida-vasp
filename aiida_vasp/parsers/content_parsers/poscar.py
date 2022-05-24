@@ -27,6 +27,7 @@ class PoscarParser(BaseFileParser):
 
     """
 
+    OPEN_MODE = 'r'
     DEFAULT_SETTINGS = {'quantities_to_parse': ['poscar-structure']}
 
     PARSABLE_QUANTITIES = {
