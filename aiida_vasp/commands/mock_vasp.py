@@ -10,13 +10,12 @@ import shutil
 from pathlib import Path
 import click
 
-from aiida.cmdline.utils.decorators import with_dbenv
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 
-from aiida_vasp.utils.mock_code import MockRegistry, MockVasp
+from aiida_vasp.utils.mock_code import VaspMockRegistry, MockVasp
 
 
 def output_object(*args):
@@ -24,14 +23,12 @@ def output_object(*args):
 
 
 @click.command('mock-vasp')
-@with_dbenv()
 def mock_vasp():
     """Original version of mock-vasp"""
     return _mock_vasp(False)
 
 
 @click.command('mock-vasp-strict')
-@with_dbenv()
 def mock_vasp_strict():
     """A stricter version of mock-vasp does not allow default matching"""
     return _mock_vasp(True)
@@ -39,45 +36,31 @@ def mock_vasp_strict():
 
 def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
     """Verify input objects are parseable and copy in output objects."""
-    from aiida.manage.configuration.settings import AIIDA_CONFIG_FOLDER  # pylint: disable=import-outside-toplevel
     pwd = Path().absolute()
     vasp_mock_output = []
-    vasp_output = []
     vasp_output_file = pwd / 'vasp_output'
     vasp_mock_output.append('MOCK PREPEND: START ----------------------\n')
     vasp_mock_output.append('MOCK PREPEND: Mock directory: ' + str(pwd) + '\n')
-    aiida_path = Path(AIIDA_CONFIG_FOLDER)
-    aiida_cfg = aiida_path / 'config.json'
-    vasp_mock_output.append('MOCK PREPEND: AIIDA_PATH: ' + os.environ.get('AIIDA_PATH') + '\n')
-    vasp_mock_output.append('MOCK PREPEND: AIIDA_CONFIG_FOLDER: ' + str(aiida_path) + '\n')
-
-    if not aiida_path.exists():
-        vasp_mock_output.append('MOCK PREPEND: AIIDA_PATH does not exist.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
-
-    if not aiida_cfg.is_file():
-        vasp_mock_output.append('MOCK PREPEND: Can not find the AIIDA_CONFIG.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
 
     incar = pwd / 'INCAR'
     if not incar.is_file():
         vasp_mock_output.append('MOCK PREPEND: INCAR not found.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     potcar = pwd / 'POTCAR'
     if not potcar.is_file():
         vasp_mock_output.append('MOCK PREPEND: POTCAR not found.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     poscar = pwd / 'POSCAR'
     if not poscar.is_file():
         vasp_mock_output.append('MOCK PREPEND: POSCAR not found.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     kpoints = pwd / 'KPOINTS'
     if not kpoints.is_file():
         vasp_mock_output.append('MOCK PREPEND: KPOINTS not found.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     # Check that the input files can be parsed (as close to a validity check we can get)
     incar_parser = False
@@ -87,21 +70,21 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         system = incar_parser.incar.get('system', '')
     if not incar_parser:
         vasp_mock_output.append('MOCK PREPEND: INCAR could not be parsed.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     poscar_parser = False
     with open(str(poscar), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     if not poscar_parser:
         vasp_mock_output.append('MOCK PREPEND: POSCAR could not be parsed.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     kpoints_parser = False
     with open(str(kpoints), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
     if not kpoints_parser:
         vasp_mock_output.append('MOCK PREPEND: KPOINTS could not be parsed.\n')
-        stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+        stop_and_return(vasp_mock_output)
 
     try:
         test_case = system.strip().split(':')[1].strip()
@@ -111,8 +94,8 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
     if not test_case:
         vasp_mock_output.append('MOCK PREPEND: Trying to detect test case using registry or reverting to default.\n')
         # If no test case is defined, we first try the hash-based mock registry
-        mock_registry_path = os.environ.get('MOCK_CODE_BASE', data_path('.'))
-        mock_registry = MockRegistry(mock_registry_path)
+        mock_registry_path = os.environ.get('VASP_MOCK_CODE_BASE', data_path('.'))
+        mock_registry = VaspMockRegistry(mock_registry_path)
         mock = MockVasp(pwd, mock_registry)
         if mock.is_runnable:
             detected_path = mock.registry.get_path_by_hash(mock_registry.compute_hash(pwd))
@@ -132,7 +115,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
                 vasp_mock_output.append('MOCK PREPEND: Caller demanded to only locate test data by input, but no match was found.\n')
-                stop_and_return(vasp_output_file, vasp_output, vasp_mock_output)
+                stop_and_return(vasp_mock_output)
     else:
         vasp_mock_output.append('MOCK PREPEND: Using test data from folder: ' + test_case + '\n')
         test_data_path = data_path(test_case, 'out')
@@ -153,8 +136,8 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         handler.write(''.join(vasp_mock_output + vasp_output))
 
 
-def stop_and_return(vasp_output, vasp_mock_output):
+def stop_and_return(vasp_mock_output):
     """Halts mock-vasp, rebuilds the vasp_output and returns."""
     # Assemble the
-    print(''.join(vasp_mock_output + vasp_output))
+    print(''.join(vasp_mock_output))
     raise RuntimeError('The mock-vasp code could not perform a clean run.')

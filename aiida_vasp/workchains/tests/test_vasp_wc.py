@@ -16,7 +16,7 @@ from aiida.plugins.factories import DataFactory
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
-from aiida_vasp.utils.mock_code import MockRegistry
+from aiida_vasp.utils.mock_code import VaspMockRegistry
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
@@ -60,7 +60,7 @@ def upload_real_workchain(node, name):
 
     This function should be called once after the REAL vasp calculation is run during the test
     """
-    reg = MockRegistry()
+    reg = VaspMockRegistry()
     print(reg.base_path)
     reg.upload_aiida_work(node, name)
 
