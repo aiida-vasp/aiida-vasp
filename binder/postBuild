@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+# Install the plugin explicity
+pip install -e ./
+
+# Neet to use an updated version of aiida-core
+pip install git+https://github.com/zhubonan/aiida-core.git@0531a6eb8ccd65003b58fad790aa72a59bcce72e

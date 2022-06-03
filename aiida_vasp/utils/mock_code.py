@@ -260,6 +260,9 @@ class VaspMockRegistry(MockRegistry):
         """
         Register an aiida calc_class
         """
+        from aiida import orm
+        assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
+
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
         if repo_calc_base.exists():
@@ -295,13 +298,14 @@ class VaspMockRegistry(MockRegistry):
         """
         Upload all calculations in a workchain node
         """
-        from aiida.orm import CalcJobNode
+        from aiida import orm
         from aiida.plugins import CalculationFactory
         calc_class = CalculationFactory('vasp.vasp')
         neb_class = CalculationFactory('vasp.neb')
         to_upload = []
         for node in work_node.called_descendants:
-            if isinstance(node, CalcJobNode) and (node.process_class in [calc_class, neb_class]):
+            # Only upload VASP calculations
+            if isinstance(node, orm.CalcJobNode) and (node.process_class in [calc_class, neb_class]):
                 to_upload.append(node)
         to_upload.sort(key=lambda x: x.ctime)
         self.logger.info('Collected %s nodes to upload under name %s.', to_upload, rel_path)

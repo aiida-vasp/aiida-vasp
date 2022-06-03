@@ -96,6 +96,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         # If no test case is defined, we first try the hash-based mock registry
         mock_registry_path = os.environ.get('VASP_MOCK_CODE_BASE', data_path('.'))
         mock_registry = VaspMockRegistry(mock_registry_path)
+        vasp_mock_output.append(f'MOCK PREPEND: registry search paths: {mock_registry.search_paths}\n')
         mock = MockVasp(pwd, mock_registry)
         if mock.is_runnable:
             detected_path = mock.registry.get_path_by_hash(mock_registry.compute_hash(pwd))

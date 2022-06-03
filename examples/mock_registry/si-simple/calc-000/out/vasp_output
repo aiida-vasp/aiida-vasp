@@ -1,0 +1,27 @@
+ running on    1 total cores
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ vasp.6.2.0 18Jan21 (build May 29 2021 13:05:38) complex
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ scaLAPACK will be used
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.384507612134E+01   -0.38451E+01   -0.18842E+03   480   0.366E+02
+DAV:   2    -0.109188993945E+02   -0.70738E+01   -0.69734E+01   744   0.495E+01
+DAV:   3    -0.109740329230E+02   -0.55134E-01   -0.55134E-01   568   0.524E+00
+DAV:   4    -0.109741846495E+02   -0.15173E-03   -0.15172E-03   760   0.282E-01
+DAV:   5    -0.109741847258E+02   -0.76275E-07   -0.85002E-07   552   0.457E-03    0.299E+00
+DAV:   6    -0.108498740150E+02    0.12431E+00   -0.80467E-02   544   0.147E+00    0.177E+00
+DAV:   7    -0.107930937282E+02    0.56780E-01   -0.14846E-01   584   0.213E+00    0.151E-01
+DAV:   8    -0.107944008181E+02   -0.13071E-02   -0.37257E-03   480   0.444E-01    0.247E-02
+DAV:   9    -0.107944957306E+02   -0.94913E-04   -0.94099E-05   648   0.747E-02
+   1 F= -.10794496E+02 E0= -.10794496E+02  d E =0.000000E+00
+ writing wavefunctions
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
