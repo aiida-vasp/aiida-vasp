@@ -6,5 +6,4 @@ set -e
 pip install -e ./
 
 # Neet to use an updated version of aiida-core
-pip uninstall aiida-core
-pip install git+https://github.com/zhubonan/aiida-core.git@0531a6eb8ccd65003b58fad790aa72a59bcce72e
+pip install --force-reinstall git+https://github.com/zhubonan/aiida-core.git@0531a6eb8ccd65003b58fad790aa72a59bcce72e
