@@ -39,6 +39,8 @@ This means that for a handler:
           this mean other handlers (with lower priority) must handle it and return a zero error_code.
 
 """
+import math
+
 import numpy as np
 
 from aiida.engine import while_
@@ -96,6 +98,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     """
     _verbose = False
     _process_class = CalculationFactory('vasp.vasp')
+    _algo_switching = {'normal': ['veryfast', 'damped'], 'fast': ['veryfast', 'normal', 'damped'], 'veryfast': ['fast', 'normal', 'damped']}
 
     @classmethod
     def define(cls, spec):  # pylint: disable=too-many-statements
@@ -204,6 +207,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         self.ctx.ignore_transient_nelm_breach = False  # Flag for ignoring the NELM breach during the relaxation
         self.ctx.verbose = None
         self.ctx.last_calc_remote_objects = []
+        self.ctx.handler = AttributeDict()
+        self.ctx.handler.nbands_increase_tries = 0
 
     def _init_parameters(self):
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
@@ -530,6 +535,52 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(do_break=True)
         return None
 
+    @process_handler(priority=799, enabled=False, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
+    def handler_unfinished_calc_ionic_alt(self, node):
+        """
+        Handled the problem such that the calculation is not finished, e.g. did not reach the
+        end of execution.
+
+        If WAVECAR exists, just resubmit the calculation with the restart folder.
+
+        If it is a geometry optimization, attempt to restart with output structure + WAVECAR.
+        """
+
+        # Check it is a geometry optimization
+        incar = self.ctx.inputs.parameters
+        if incar.get('nsw', -1) > 0:
+            if 'structure' not in node.outputs:
+                self.report('Performing a geometry optimization but the output structure is not found.')
+                return ProcessHandlerReport(
+                    do_break=True,
+                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message='No output structure for restart.'))  #pylint: disable=no-member
+            self.report('Continuing geometry optimization using the last geometry.')
+            self.ctx.inputs.structure = node.outputs.structure
+            self._setup_restart(node)
+            self.update_magmom(node)
+            return ProcessHandlerReport(do_break=True)
+        return None
+
+    @process_handler(priority=798, enabled=False)
+    def handler_unfinished_calc_generic_alt(self, node):
+        """
+        A generic handler for unfinished calculations, we attempt to restart it once.
+        """
+
+        # Only act on this specific return code, otherwise we reset the flag
+        if node.exit_status != VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH.status:
+            self.ctx.last_calc_was_unfinished = False
+            return None
+
+        if self.ctx.last_calc_was_unfinished:
+            msg = ('The last calculation was not completed for the second time, potentially due to insufficient walltime/node failure.'
+                   'Please revise the resources request and/or input parameters.')
+            return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg))  #pylint: disable=no-member
+        self.report(('The last calculation was not finished - restart using the same set of inputs. '
+                     'If it was due to transient problem this may fix it, fingers crossed.'))
+        self.ctx.last_calc_was_unfinished = True
+        return ProcessHandlerReport(do_break=True)
+
     @process_handler(priority=900)
     def handler_unfinished_calc_generic(self, node):
         """
@@ -557,6 +608,89 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
         _ = node
         self.ctx.ignore_transient_nelm_breach = True
+
+    @process_handler(priority=800,
+                     enabled=False,
+                     exit_codes=[
+                         VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED, VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED,
+                         VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH, VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR,
+                         VaspCalculation.exit_codes.ERROR_OVERFLOW_IN_XML
+                     ])
+    def handler_electronic_conv_alt(self, node):
+        """Handle electronic convergence problem"""
+        incar = node.inputs.parameters.get_dict()
+        run_status = node.outputs.misc['run_status']
+        notifications = node.outputs.misc['notifications']
+        nelm = run_status['nelm']
+        algo = incar.get('algo', 'normal')
+
+        # In case of ionic convergence problem, we also act if electronic convergence problem has been reported.
+        if node.exit_status in [
+                VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status, VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH
+        ]:
+            perform_fix = False
+            if run_status['consistent_nelm_breach']:
+                self.report('The NELM limit has been breached in all ionic steps - proceed to take actions for improving convergence.')
+                perform_fix = True
+            elif run_status['contains_nelm_breach']:
+                # Then there are some breaches in the ionic cycles
+                if self.ctx.ignore_transient_nelm_breach:
+                    self.report('WARNING: NELM limit breached in some ionic steps but requested to ignore this - no action taken.')
+                    perform_fix = False
+                else:
+                    self.report('The NELM limit has been breached in some ionic steps - proceed to take actions for improving convergence.')
+                    perform_fix = True
+            if not perform_fix:
+                return None
+
+        if node.exit_status == VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR.status:
+            # Make sure we only continue in this handler for a selected set of the critical errors.
+            if not any(item in node.exit_message for item in ['EDDRMM', 'EDDDAV', 'The topmost band is occupied']):
+                # We have some other critical error not to handle here
+                return None
+
+        # Check if we need to add more bands
+        for item in notifications:
+            if item['name'] == 'bandocc' and self.ctx.handler.nbands_increase_tries < 5:
+                try:
+                    nbands = run_status['nbands']
+                    # Increase nbands with 10%
+                    nbands_new = math.ceil(nbands * 1.1)
+                    self.report(f'Changing NBANDS from {nbands} to {nbands_new}')
+                    self.ctx.handler.nbands_increase_tries += 1
+                    incar['nbands'] = nbands_new
+                    self.ctx.inputs.parameters.update(incar)
+                    return ProcessHandlerReport(do_break=True)
+                except KeyError:
+                    self.report(
+                        'The topmost band is occupied but did not locate the nbands entry in run_status, so no way to do corrections.')
+                    return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
+
+        if nelm < 300:
+            # Standard NELM might be a bit low, so increase a bit
+            incar['nelm'] = 300
+            # Here we can just continue from previous run
+            self._setup_restart(node)
+            self.ctx.inputs.parameters.update(incar)
+            self.report(f'Changing NELM from {nelm} to 300.')
+            return ProcessHandlerReport(do_break=True)
+
+        # Let us start or continue to switch algorithms and reduce try list
+        try:
+            if self.ctx.handler.get('remaining_algos', None) is None:
+                self.ctx.handler.remaining_algos = self._algo_switching[algo.lower()]
+            new_algo = self.ctx.handler.remaining_algos.pop(0)
+            incar['algo'] = new_algo
+            self.ctx.inputs.parameters.update(incar)
+            self.report(f'Changing ALGO from {algo.lower()} to {new_algo}')
+            return ProcessHandlerReport(do_break=True)
+        except IndexError:
+            self.report(f'No more algorithms to try and we still have not reached electronic convergence.')
+
+        self.report('No additional fixes can be applied to improve the electronic convergence - aborting.')
+        return ProcessHandlerReport(do_break=True,
+                                    exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
+                                        message='Cannot apply fix for reaching electronic convergence.'))
 
     @process_handler(priority=800,
                      exit_codes=[

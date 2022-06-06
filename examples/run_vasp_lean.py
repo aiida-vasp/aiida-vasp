@@ -30,7 +30,7 @@ def get_structure():
 
     """
 
-    structure_data = DataFactory('structure')
+    structure_data = DataFactory('core.structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -45,8 +45,8 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
 
     # First, we need to fetch the AiiDA datatypes which will
     # house the inputs to our calculation
-    dict_data = DataFactory('dict')
-    kpoints_data = DataFactory('array.kpoints')
+    dict_data = DataFactory('core.dict')
+    kpoints_data = DataFactory('core.array.kpoints')
 
     # Then, we set the workchain you would like to call
     workchain = WorkflowFactory('vasp.verify')
