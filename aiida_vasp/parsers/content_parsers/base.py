@@ -5,7 +5,6 @@ Base classes for the VASP content parsers.
 Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
-import io
 
 from aiida.orm import Data
 from aiida.common import AIIDA_LOGGER as aiidalogger
@@ -91,11 +90,7 @@ class BaseFileParser():
 
         # Set ``handler`` (parsing from some source) or ``data`` (eventually for example executing write)
         if handler is not None:
-            # Check that the supplied handler is IOBase.
-            if isinstance(handler, io.IOBase):
-                self._init_from_handler(handler)
-            else:
-                raise TypeError('The supplied handler is not of IOBase type.')
+            self._init_from_handler(handler)
         if data is not None:
             # Check that the supplied handler is Data, one of the AiiDA supported data types.
             if isinstance(data, Data):
