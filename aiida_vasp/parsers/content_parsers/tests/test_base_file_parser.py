@@ -23,6 +23,3 @@ def test_base_content_parser(tmpdir):
     with pytest.raises(TypeError):
         # Check that something else than Data for the AiiDA data type raises an exception.
         _ = BaseFileParser(data=[])
-
-    # Check that something else than IOBase will not raise an exception as it is allowed
-    _ = BaseFileParser(handler=[])
