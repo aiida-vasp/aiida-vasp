@@ -7,6 +7,18 @@ All notable changes to this project after version 1.0.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v2.2.0]
+--------
+This is to be considered a compatibility release for `aiida-core<2,>1.6`. It deviates from
+`master` and `develop` from this point.
+
+**Changed**
+- Modified the handling of EDDDAV and EDDRMM through the error handlers. Critical exit codes are now not set if electronic convergence is detected.
+- Dependency on `parsevasp>=3.1`.
+
+**Added**
+- Added modified error handlers to comply with the ACWF study on oxides and unaries. They are disabled by default and need to be enabled with `handler_overrides` in the `inputs.settings` using the subscript `_alt` on the handlers `handler_unfinished_calc_ionic`, `handler_unfinished_calc_generic` and `handler_electronic_conv`.
+
 [v2.1.1]
 --------
 
