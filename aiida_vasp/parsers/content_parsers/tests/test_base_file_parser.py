@@ -21,8 +21,5 @@ def test_base_content_parser(tmpdir):
         # Does not have a init_data method, should be implemented in child
         _ = BaseFileParser(data=get_data_node('dict', dict={}))
     with pytest.raises(TypeError):
-        # Check that something else than IOBase raises an exception as it is not allowed
-        _ = BaseFileParser(handler=[])
-    with pytest.raises(TypeError):
         # Check that something else than Data for the AiiDA data type raises an exception.
         _ = BaseFileParser(data=[])
