@@ -82,16 +82,36 @@ class MockRegistry:
     Calculations are identified using the hash of the parsed inputs.
     """
 
+    CODE_NAME = 'ABSTRACT'
+
     def __init__(self, base_path=data_path('.')):
         """
         Instantiate and Registry
         """
-        self.base_path = Path(base_path)
+        if isinstance(base_path, (Path, str)):
+            self._search_paths = [Path(base_path)]
+        else:
+            self._search_paths = [Path(path) for path in base_path]
+
         self.reg_hash = {}
         self.reg_name = {}
         self.logger = logging.getLogger('aiida_vasp.utils.mock_code.MockRegistry')
         self._setup_logger()
         self.scan()
+
+    def append_search_path(self, path):
+        """Add a path to the list of search paths"""
+        self.search_paths.append(Path(path))
+
+    @property
+    def base_path(self):
+        """Return the base repository path of the registry"""
+        return self._search_paths[0]
+
+    @property
+    def search_paths(self):
+        """Return a list of all search paths"""
+        return self._search_paths
 
     def _setup_logger(self, level=logging.INFO):
         """Setup the logger"""
@@ -105,9 +125,10 @@ class MockRegistry:
         """
         Scan the base folder and locate input/output folders
         """
-        for output_folder in Path(self.base_path).glob('**/out'):
-            calc_base_folder = output_folder.parent.absolute()
-            self._register_folder(calc_base_folder)
+        for registry_path in self.search_paths:
+            for output_folder in registry_path.glob('**/out'):
+                calc_base_folder = output_folder.parent.absolute()
+                self._register_folder(calc_base_folder)
 
     def get_path_by_hash(self, hash_val):
         """
@@ -121,32 +142,6 @@ class MockRegistry:
         """
         return Path(self.reg_hash[self.reg_name[name]])
 
-    @staticmethod
-    def compute_hash(input_folder: Path):
-        """
-        Compute the hash of a input folder
-        """
-        items = {}
-        kpt_path = input_folder / 'KPOINTS'
-        if kpt_path.is_file():
-            kpoints = Kpoints(file_path=str(kpt_path))
-            items['kpoints'] = kpoints.get_dict()
-            items['kpoints'].pop('comment', None)
-
-        incar_path = input_folder / 'INCAR'
-        if incar_path.is_file():
-            incar = Incar(file_path=str(incar_path), validate_tags=False)
-            items['incar'] = incar.get_dict()
-
-        poscar_path = input_folder / 'POSCAR'
-        if not poscar_path.is_file():
-            poscar_path = input_folder / '00/POSCAR'
-        if poscar_path.is_file():
-            poscar = Poscar(file_path=str(poscar_path))
-            items['poscar'] = poscar.get_dict()
-            items['poscar'].pop('comment', None)
-        return get_hash(items)[0]
-
     def extract_calc_by_path(self, rel_path: Path, dst_path: Path, include_inputs: bool = True):
         """
         Copy the content of a give hash to a destination.
@@ -157,23 +152,29 @@ class MockRegistry:
         """
         rel_path = Path(rel_path)
         dst_path = Path(dst_path)
+        found = False
+        for reg_path in self.search_paths:
+            base_out = reg_path / rel_path / 'out'
+            base_in = reg_path / rel_path / 'inp'
 
-        base_out = self.base_path / rel_path / 'out'
-        base_in = self.base_path / rel_path / 'inp'
+            # Not a valid folder - skip this
+            if not (base_out.exists() and base_in.exists()):
+                continue
 
-        if not base_out.exists() or not base_in.exists():
-            raise ValueError(f'Relative path: {rel_path} is invalid')
-
-        # Copy the content of input and then the output folder
-        paths = [base_in, base_out] if include_inputs else [base_out]
-        for folder in paths:
-            for fpath in folder.glob('*'):
-                if fpath.is_file():
-                    shutil.copy2(fpath, dst_path)
-                # Directory - then copy the sub files - this only handles one level down
-                elif fpath.is_dir():
-                    for subfile in fpath.glob('*'):
-                        shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
+            found = True
+            # Copy the content of input and then the output folder
+            paths = [base_in, base_out] if include_inputs else [base_out]
+            for folder in paths:
+                for fpath in folder.glob('*'):
+                    if fpath.is_file():
+                        shutil.copy2(fpath, dst_path)
+                    # Directory - then copy the sub files - this only handles one level down
+                    elif fpath.is_dir():
+                        for subfile in fpath.glob('*'):
+                            shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
+            break
+        if not found:
+            raise ValueError(f'The path give: {rel_path}, is not found in any search paths.')
 
     def extract_calc_by_hash(self, hash_val, dst, include_inputs=False):
         """
@@ -183,7 +184,7 @@ class MockRegistry:
 
     def upload_calc(self, folder: Path, rel_path: Union[Path, str], excluded_object=None):
         """
-        Register a calculation folder to the repository
+        Register a calculation folder to primary search path of the registry
         """
         inp = list(INPUT_OBJECTS)
         excluded = list(EXCLUDED)
@@ -193,7 +194,7 @@ class MockRegistry:
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
         if repo_calc_base.exists():
-            raise FileExistsError(f'There is already a direcotry at {repo_calc_base.resolve()}.')
+            raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
         # Deposit the objects
         repo_calc_base.mkdir(parents=True)
@@ -226,10 +227,42 @@ class MockRegistry:
         self.reg_hash[hash_val] = calc_base.absolute()
         self.reg_name[str(rel)] = hash_val
 
+    @classmethod
+    def from_env(cls):
+        """Instantiate from environmental variable"""
+        path = os.environ.get(f'{cls.CODE_NAME}_MOCK_CODE_BASE')
+        if path is None:
+            raise ValueError(f'The {cls.CODE_NAME}_MOCK_CODE_BASE environmental variable is not set!')
+
+        paths = path.split(':')
+        return cls(paths)
+
+    @staticmethod
+    def compute_hash(folder):
+        """Compute the hash for a target folder"""
+        raise NotImplementedError
+
+    def upload_aiida_calc(self, calc_node, rel_path: Union[str, Path], excluded_names=None):
+        """Update a calculation into the registry"""
+        raise NotImplementedError
+
+    def upload_aiida_work(self, work_node, rel_path: Union[str, Path]):
+        """Update all calculations run by an workflow into the registry"""
+        raise NotImplementedError
+
+
+class VaspMockRegistry(MockRegistry):
+    """Registry of mock code for VASP"""
+
+    CODE_NAME = 'VASP'
+
     def upload_aiida_calc(self, calc_node, rel_path: Union[str, Path], excluded_names=None):
         """
         Register an aiida calc_class
         """
+        from aiida import orm
+        assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
+
         # Check if the repository folder already exists
         repo_calc_base = self.base_path / rel_path
         if repo_calc_base.exists():
@@ -261,17 +294,18 @@ class MockRegistry:
         self.logger.info('Calculation %s has been registered', calc_node)
         self._register_folder(repo_calc_base)
 
-    def upload_aiida_work(self, worknode, rel_path: Union[str, Path]):
+    def upload_aiida_work(self, work_node, rel_path: Union[str, Path]):
         """
         Upload all calculations in a workchain node
         """
-        from aiida.orm import CalcJobNode
+        from aiida import orm
         from aiida.plugins import CalculationFactory
         calc_class = CalculationFactory('vasp.vasp')
         neb_class = CalculationFactory('vasp.neb')
         to_upload = []
-        for node in worknode.called_descendants:
-            if isinstance(node, CalcJobNode) and (node.process_class in [calc_class, neb_class]):
+        for node in work_node.called_descendants:
+            # Only upload VASP calculations
+            if isinstance(node, orm.CalcJobNode) and (node.process_class in [calc_class, neb_class]):
                 to_upload.append(node)
         to_upload.sort(key=lambda x: x.ctime)
         self.logger.info('Collected %s nodes to upload under name %s.', to_upload, rel_path)
@@ -279,7 +313,33 @@ class MockRegistry:
         for idx, node in enumerate(to_upload):
             rel = Path(rel_path) / f'calc-{idx:03d}'
             self.upload_aiida_calc(node, rel)
-        self.logger.info('WorkChain %s has been uploaded.', worknode)
+        self.logger.info('WorkChain %s has been uploaded.', work_node)
+
+    @staticmethod
+    def compute_hash(folder: Path):
+        """
+        Compute the hash of a input folder
+        """
+        items = {}
+        kpt_path = folder / 'KPOINTS'
+        if kpt_path.is_file():
+            kpoints = Kpoints(file_path=str(kpt_path))
+            items['kpoints'] = kpoints.get_dict()
+            items['kpoints'].pop('comment', None)
+
+        incar_path = folder / 'INCAR'
+        if incar_path.is_file():
+            incar = Incar(file_path=str(incar_path), validate_tags=False)
+            items['incar'] = incar.get_dict()
+
+        poscar_path = folder / 'POSCAR'
+        if not poscar_path.is_file():
+            poscar_path = folder / '00/POSCAR'
+        if poscar_path.is_file():
+            poscar = Poscar(file_path=str(poscar_path))
+            items['poscar'] = poscar.get_dict()
+            items['poscar'].pop('comment', None)
+        return get_hash(items)[0]
 
 
 class MockVasp:
@@ -287,7 +347,7 @@ class MockVasp:
     Mock VaspExecutable
     """
 
-    def __init__(self, workdir: Union[str, Path], registry: MockRegistry):
+    def __init__(self, workdir: Union[str, Path], registry: VaspMockRegistry):
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.

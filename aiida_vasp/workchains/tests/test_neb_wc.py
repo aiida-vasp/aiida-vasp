@@ -113,8 +113,8 @@ def upload_real_workchain(node, name):
 
     This function should be called once after the REAL vasp calculation is run during the test
     """
-    from aiida_vasp.utils.mock_code import MockRegistry
-    reg = MockRegistry()
+    from aiida_vasp.utils.mock_code import VaspMockRegistry
+    reg = VaspMockRegistry()
     print(reg.base_path)
     reg.upload_aiida_work(node, name)
 

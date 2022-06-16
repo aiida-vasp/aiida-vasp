@@ -23,7 +23,7 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.utils.mock_code import MockRegistry
+from aiida_vasp.utils.mock_code import VaspMockRegistry
 
 
 def upload_real_workchain(node, name):
@@ -32,7 +32,7 @@ def upload_real_workchain(node, name):
 
     This function should be called once after the REAL vasp calculation is run during the test
     """
-    reg = MockRegistry()
+    reg = VaspMockRegistry()
     print(reg.base_path)
     reg.upload_aiida_work(node, name)
 

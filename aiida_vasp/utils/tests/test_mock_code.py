@@ -9,7 +9,7 @@ from shutil import rmtree, copy2
 import pytest
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.mock_code import MockRegistry, MockVasp, get_hash
+from aiida_vasp.utils.mock_code import VaspMockRegistry, MockVasp, get_hash
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
@@ -53,7 +53,7 @@ def mock_registry():
     """
     Get an mock registry object
     """
-    return MockRegistry()
+    return VaspMockRegistry()
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def custom_registry():
     Return an temporary registry
     """
     temp_base = mkdtemp()
-    yield MockRegistry(base_path=Path(temp_base))
+    yield VaspMockRegistry(base_path=Path(temp_base))
     rmtree(temp_base)
 
 
