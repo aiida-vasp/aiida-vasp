@@ -7,6 +7,18 @@ All notable changes to this project after version 1.0.1 will be documented in th
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v2.2.0]
+--------
+
+**Added**
+- Error handlers for the ACWF study, disabled by default to retain backwards compatibility. These
+  offer bare minimum, basically changing `ALGO` and `NBANDS` in case that is needed due to lack of
+  electronic convergence.
+
+**Changed**
+- Deviates from the `develop` branch and releases `>2` from commit `837870c4f0080434955a491b269858caa9243005` and forward.
+- Removed pylint requirement in CI.
+
 [v2.1.1]
 --------
 
