@@ -180,7 +180,7 @@ class OutcarParser(BaseFileParser):
         """
         magnetization = self.site_magnetization
         if magnetization is not None:
-            magnetization = magnetization['full_cell'] or None
+            magnetization = magnetization['full_cell']
         return magnetization
 
 

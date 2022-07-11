@@ -58,7 +58,6 @@ def test_create_node_misc(fresh_aiida_env, outcar_parser):
 
     # Compare
     data_dict = composed_nodes.successful['misc'].get_dict()
-    print(data_dict)
     assert data_dict['run_stats']
     assert data_dict['run_stats']['total_cpu_time_used'] == pytest.approx(89.795)
     assert data_dict['run_stats']['average_memory_used'] == pytest.approx(0.0)
@@ -829,7 +828,7 @@ def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, st
     assert misc['run_stats']['elapsed_time'] == pytest.approx(22.518)
     assert 'symmetries' in misc
     # No magnetization
-    assert misc['magnetization'] is None
+    assert not misc['magnetization']
     assert misc['site_magnetization'] == {
         'sphere': {
             'x': {
