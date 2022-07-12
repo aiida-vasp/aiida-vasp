@@ -76,6 +76,26 @@ This will automatically install the `AiiDA`_ python package(s) as well as any ot
 
 Please consider that `AiiDA`_ have prerequisite that needs to be installed and ensured working. The steps above will not take care of this for you. Please consult `AiiDA prerequisites`_ and follow the instructions therein.
 
+
+Upgrading from AiiDA 1.x
+------------------------
+
+At the moment, only the development version of the plugin supports `aiida-core >= 2.0.1`. 
+If you are upgrading an existing AiiDA 1.x installation. Please upgrade `aiida-core` first and reinstall the plugin using::
+
+
+    $ pip install git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
+
+
+This ensures the installation of the latest development version and registers the entrypoints. 
+You can verify the latter with::
+
+    $ verdi plugin list aiida.groups
+
+and there should be entries of `vasp.potcar`. The `aiida.workflows` and `aiida.calculations` entrypoints can be checked in a similiar way. 
+
+
+
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
