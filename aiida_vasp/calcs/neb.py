@@ -210,6 +210,17 @@ class VaspNEBCalculation(VaspCalculation):
 
         return calcinfo
 
+    def _structure(self):
+        """
+        Get the input structure as AiiDa StructureData.
+
+        This is required in order to support CifData as input as well.
+        """
+        structure = self.inputs.initial_structure
+        if not hasattr(structure, 'get_pymatgen'):
+            structure = get_data_node('structure', ase=structure.get_ase())
+        return structure
+
     def remote_copy_restart_folder(self):
         """
         Add all files required for restart to the list of files to be copied from the previous calculation.
