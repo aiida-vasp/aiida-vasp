@@ -196,7 +196,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
         finished = []
         # Since 1.6.3 the nested namespaces are handled properly.
-        if aiida_version == '1.6.3':
+        if version.parse(aiida_version) >= version.parse('1.6.3'):
             if 'misc' not in node.outputs:
                 self.report('Cannot found the `misc` output containing the parsed per-image data')
                 return None
@@ -219,7 +219,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
                         finished.append(False)
 
         if not all(finished):
-            self.report('At least one image did not reach the end of VASP execution.')
+            self.report('At least one image did not reach the end of VASP execution - calculation not finished!')
 
             out = self._attach_output_structure(node)
             if out is not None:
