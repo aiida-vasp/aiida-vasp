@@ -23,14 +23,18 @@ class Vasp2w90Calculation(VaspCalculation):
     @classmethod
     def define(cls, spec):
         super(Vasp2w90Calculation, cls).define(spec)
-        spec.input('wannier_parameters',
-                   valid_type=get_data_class('dict'),
-                   required=False,
-                   help='Input parameters for the Wannier90 interface.')
-        spec.input('wannier_projections',
-                   valid_type=(get_data_class('orbital'), List),
-                   required=False,
-                   help='Projections to be defined in the Wannier90 input.')
+        spec.input(
+            'wannier_parameters',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+            help='Input parameters for the Wannier90 interface.',
+        )
+        spec.input(
+            'wannier_projections',
+            valid_type=(get_data_class('core.orbital'), List),
+            required=False,
+            help='Projections to be defined in the Wannier90 input.',
+        )
 
     def prepare_for_submission(self, folder):
         """Override the method such that we can add the flag that executes Wannier90 in library mode."""
@@ -40,12 +44,12 @@ class Vasp2w90Calculation(VaspCalculation):
         # of this calculation with the aiida-wannier90 plugins calculation.
         parameters = self.inputs.parameters.get_dict()
         parameters.update({'lwannier90': True})
-        self.inputs.parameters = DataFactory('dict')(dict=parameters)
+        self.inputs.parameters = DataFactory('core.dict')(dict=parameters)
         # Check if any Wannier90 parameters are given
         try:
             _ = self.inputs.wannier_parameters
         except AttributeError:
-            self.inputs.wannier_parameters = DataFactory('dict')(dict={})
+            self.inputs.wannier_parameters = DataFactory('core.dict')(dict={})
 
         # Then call the super function.
         return super().prepare_for_submission(folder)
@@ -57,7 +61,7 @@ class Vasp2w90Calculation(VaspCalculation):
 
     @staticmethod
     def new_wannier_parameters(**kwargs):
-        return DataFactory('dict')(**kwargs)
+        return DataFactory('core.dict')(**kwargs)
 
     def write_additional(self, folder, calcinfo):
         super().write_additional(folder, calcinfo)

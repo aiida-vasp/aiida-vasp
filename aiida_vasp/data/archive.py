@@ -22,13 +22,13 @@ class ArchiveData(Data):
 
     @contextmanager
     def get_archive(self):
-        with self.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
     @contextmanager
     def archive(self):
-        with self.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
@@ -48,7 +48,7 @@ class ArchiveData(Data):
             with tarfile.open(path, mode='w:gz') as archive:
                 for src, dstn in self._filelist:
                     archive.add(src, arcname=dstn)
-            self.put_object_from_file(path, path='archive.tar.gz')
+            self.base.repository.put_object_from_file(path, path='archive.tar.gz')
         finally:
             os.remove(path)
 

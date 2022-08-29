@@ -35,7 +35,7 @@ def test_write_potcar(vasp_calc_and_ref):
         assert 'In_d' in result_potcar
         assert result_potcar.count('End of Dataset') == 2
 
-        if isinstance(vasp_calc.inputs.structure, get_data_class('structure')):
+        if isinstance(vasp_calc.inputs.structure, get_data_class('core.structure')):
             multipotcar = MultiPotcarIo.read(temp_object)
             potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
             assert potcar_order == ['In_sv', 'As', 'In_d', 'As']
@@ -188,7 +188,7 @@ def test_vasp_calc(run_vasp_process, aiida_caplog):
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
     assert set(retrieve_list_ref) == set(retrieve_list)
-    objects = node.outputs.retrieved.list_objects()
+    objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
     # Exclude Wannier objects as they are not in the test set
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
@@ -206,9 +206,9 @@ def test_vasp_calc_delete(run_vasp_process):
     """Test a run of a basic VASP calculation where one does not want to store the always retrieved objects after parsing."""
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
-    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False})
+    inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False})
     _, node = run_vasp_process(inputs)
-    objects = node.outputs.retrieved.list_objects()
+    objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
     assert set(names) == set(retrieve_list_ref)
 
@@ -221,7 +221,7 @@ def test_vasp_calc_extra(run_vasp_process):
     from aiida_vasp.calcs.vasp import VaspCalculation
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
+    inputs['settings'] = get_data_node('core.dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
@@ -229,7 +229,7 @@ def test_vasp_calc_extra(run_vasp_process):
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
     assert set(retrieve_list_ref) == set(retrieve_list)
-    objects = node.outputs.retrieved.list_objects()
+    objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
     # Exclude Wannier objects as they are not in the test set
     retrieve_list_ref_no_wannier = [item for item in retrieve_list_ref if 'wannier' not in item]
@@ -245,7 +245,13 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep]})
+    inputs['settings'] = get_data_node(
+        'core.dict',
+        dict={
+            'ALWAYS_STORE': False,
+            'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep]
+        },
+    )
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['POSCAR']
@@ -253,7 +259,7 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
     assert set(retrieve_list) == set(retrieve_list_ref)
-    objects = node.outputs.retrieved.list_objects()
+    objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
     assert set(names) == set(retrieve_list_ref)
 
@@ -267,7 +273,7 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
+    inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST
@@ -276,7 +282,7 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     assert set(retrieve_temporary_list) == set(retrieve_temporary_list_ref)
     assert set(retrieve_list_ref) == set(retrieve_list)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
-    objects = node.outputs.retrieved.list_objects()
+    objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
     assert set(names) == set(retrieve_list_ref)
 
@@ -288,7 +294,7 @@ def test_vasp_no_potcar_in_repo(run_vasp_process):
     # and check if it is actually there
     inputs = {}
     _, node = run_vasp_process(inputs)
-    repo_objects = node.list_object_names()
+    repo_objects = node.base.repository.list_object_names()
     assert 'POTCAR' not in repo_objects
 
 
@@ -329,12 +335,16 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     Test running a VASP calculation with electronic/ionic convergence problems and
     check if the exit_codes are set accordingly.
     """
-    results, node = run_vasp_process(test_case='exit_codes/converged-with-error',
-                                     settings={'parser_settings': {
-                                         'critical_notifications': {
-                                             'add_brmix': False
-                                         }
-                                     }})
+    results, node = run_vasp_process(
+        test_case='exit_codes/converged-with-error',
+        settings={
+            'parser_settings': {
+                'critical_notifications': {
+                    'add_brmix': False
+                }
+            },
+        },
+    )
 
     # Check that the standard output is there
     assert 'retrieved' in results

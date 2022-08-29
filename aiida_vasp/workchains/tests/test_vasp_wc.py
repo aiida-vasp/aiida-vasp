@@ -40,16 +40,38 @@ def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process, aiida_caplog):
     assert node.exit_status == 0
     assert 'charge_density' in results
     assert 'misc' in results
-    test_array = np.array([[[0.09329446, 0.18658892, 0.27988338], [0.37317784, 0.4664723, 0.55976676], [0.65306122, 0.74635569, 0.83965015],
-                            [0.93294461, 1.02623907, 1.11953353]],
-                           [[1.21282799, 1.30612245, 1.39941691], [1.49271137, 1.58600583, 1.67930029],
-                            [1.77259475, 1.86588921, 1.95918367], [2.05247813, 2.14577259, 2.23906706]],
-                           [[2.33236152, 2.42565598, 2.51895044], [2.6122449, 2.70553936, 2.79883382], [2.89212828, 2.98542274, 3.0787172],
-                            [3.17201166, 3.26530612, 3.35860058]],
-                           [[3.45189504, 3.5451895, 3.63848397], [3.73177843, 3.82507289, 3.91836735], [4.01166181, 4.10495627, 4.19825073],
-                            [4.29154519, 4.38483965, 4.47813411]],
-                           [[4.57142857, 4.66472303, 4.75801749], [4.85131195, 4.94460641, 5.03790087], [5.13119534, 5.2244898, 5.31778426],
-                            [5.41107872, 5.50437318, 5.59766764]]])
+    test_array = np.array([
+        [
+            [0.09329446, 0.18658892, 0.27988338],
+            [0.37317784, 0.4664723, 0.55976676],
+            [0.65306122, 0.74635569, 0.83965015],
+            [0.93294461, 1.02623907, 1.11953353],
+        ],
+        [
+            [1.21282799, 1.30612245, 1.39941691],
+            [1.49271137, 1.58600583, 1.67930029],
+            [1.77259475, 1.86588921, 1.95918367],
+            [2.05247813, 2.14577259, 2.23906706],
+        ],
+        [
+            [2.33236152, 2.42565598, 2.51895044],
+            [2.6122449, 2.70553936, 2.79883382],
+            [2.89212828, 2.98542274, 3.0787172],
+            [3.17201166, 3.26530612, 3.35860058],
+        ],
+        [
+            [3.45189504, 3.5451895, 3.63848397],
+            [3.73177843, 3.82507289, 3.91836735],
+            [4.01166181, 4.10495627, 4.19825073],
+            [4.29154519, 4.38483965, 4.47813411],
+        ],
+        [
+            [4.57142857, 4.66472303, 4.75801749],
+            [4.85131195, 4.94460641, 5.03790087],
+            [5.13119534, 5.2244898, 5.31778426],
+            [5.41107872, 5.50437318, 5.59766764],
+        ],
+    ],)
     charge_density = results['charge_density'].get_array('charge_density')
     assert np.allclose(charge_density, test_array)
 
@@ -86,7 +108,7 @@ def si_structure():
     """
     Setup a silicon structure in a displaced FCC setting
     """
-    structure_data = DataFactory('structure')
+    structure_data = DataFactory('core.structure')
     alat = 3.9
     lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -148,25 +170,27 @@ def setup_vasp_workchain(structure, incar, nkpts, code=None):
     inputs = AttributeDict()
 
     inputs.structure = structure
-    inputs.parameters = get_data_node('dict', dict={'incar': incar})
+    inputs.parameters = get_data_node('core.dict', dict={'incar': incar})
 
-    kpoints = get_data_node('array.kpoints')
+    kpoints = get_data_node('core.array.kpoints')
     kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
     inputs.kpoints = kpoints
 
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
-    inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_structure': True}})
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
+    inputs.options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        },
+    )
+    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {'add_structure': True}})
 
     # If code is not passed, use the mock code
     if code is None:
@@ -190,7 +214,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
     inputs = setup_vasp_workchain(si_structure(), INCAR_ELEC_CONV, 8)
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
 
     called_nodes = list(node.called)
@@ -201,20 +225,20 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
         print(get_calcjob_report(child))
 
     child = called_nodes[0]
-    print(child.get_object_content('INCAR'))
-    print(child.get_object_content('POSCAR'))
-    print(child.get_object_content('KPOINTS'))
-    print(child.outputs.retrieved.get_object_content('vasp_output'))
-    print(child.outputs.retrieved.list_object_names())
+    print(child.base.repository.get_object_content('INCAR'))
+    print(child.base.repository.get_object_content('POSCAR'))
+    print(child.base.repository.get_object_content('KPOINTS'))
+    print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
+    print(child.outputs.retrieved.base.repository.list_object_names())
     print(child.outputs.misc.get_dict())
     print(child.exit_status)
 
     child = called_nodes[1]
-    print(child.get_object_content('INCAR'))
-    print(child.get_object_content('POSCAR'))
-    print(child.get_object_content('KPOINTS'))
-    print(child.outputs.retrieved.get_object_content('vasp_output'))
-    print(child.outputs.retrieved.list_object_names())
+    print(child.base.repository.get_object_content('INCAR'))
+    print(child.base.repository.get_object_content('POSCAR'))
+    print(child.base.repository.get_object_content('KPOINTS'))
+    print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
+    print(child.outputs.retrieved.base.repository.list_object_names())
     print(child.outputs.misc.get_dict())
     print(child.exit_status)
 
@@ -246,9 +270,9 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, i
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
     inputs = setup_vasp_workchain(si_structure(), incar, nkpts)
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = get_data_node('dict', dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = get_data_node('core.dict', dict={'ignore_nelm_breach_relax': True})
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
@@ -283,15 +307,15 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
     incar['lorbit'] = 10
     incar['nupdown'] = 2
     inputs = setup_vasp_workchain(si_structure(), incar, 8)
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = get_data_node('dict', dict={'ignore_nelm_breach_relax': True})
-    inputs.settings = get_data_node('dict', dict={'parser_settings': {
+    inputs.handler_overrides = get_data_node('core.dict', dict={'ignore_nelm_breach_relax': True})
+    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {
         'add_structure': True,
         'add_site_magnetization': True,
     }})
-    inputs.max_iterations = get_data_node('int', 2)
+    inputs.max_iterations = get_data_node('core.int', 2)
 
     _, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0

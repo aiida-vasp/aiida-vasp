@@ -720,7 +720,7 @@ def test_create_node_dict_custom(fresh_aiida_env, outcar_parser, compare_symmetr
 
     # Compose node
     composed_nodes = NodeComposer(requested_node, equivalent_keys, parsed_quantities)
-    assert isinstance(composed_nodes.successful['my_custom_node'], get_data_class('dict'))
+    assert isinstance(composed_nodes.successful['my_custom_node'], get_data_class('core.dict'))
 
     # Compare
     data_dict = composed_nodes.successful['my_custom_node'].get_dict()
@@ -772,7 +772,7 @@ def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
 
     # Compose node
     composed_nodes = NodeComposer(requested_node, equivalent_keys, parsed_quantities)
-    assert isinstance(composed_nodes.successful['my_custom_node'], get_data_class('dict'))
+    assert isinstance(composed_nodes.successful['my_custom_node'], get_data_class('core.dict'))
 
     # Compare
     data_dict = composed_nodes.successful['my_custom_node'].get_dict()
@@ -783,14 +783,20 @@ def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
     assert data_dict['maximum_force'] == pytest.approx(3.41460162)
 
 
-@pytest.mark.parametrize(['outcar_parser'], [(['basic_run', 'OUTCAR', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
-@pytest.mark.parametrize(['vasprun_parser'], [(['basic_run', 'vasprun.xml', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
-@pytest.mark.parametrize(['stream_parser'], [(['basic_run', 'vasp_output', {'quantities_to_parse': NODES_TYPES['dict']}],)], indirect=True)
+@pytest.mark.parametrize(['outcar_parser'], [(['basic_run', 'OUTCAR', {'quantities_to_parse': NODES_TYPES['core.dict']}],)], indirect=True)
+@pytest.mark.parametrize(['vasprun_parser'], [(['basic_run', 'vasprun.xml', {
+    'quantities_to_parse': NODES_TYPES['core.dict']
+}],)],
+                         indirect=True)
+@pytest.mark.parametrize(['stream_parser'], [(['basic_run', 'vasp_output', {
+    'quantities_to_parse': NODES_TYPES['core.dict']
+}],)],
+                         indirect=True)
 def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, stream_parser):
     """Check that the node composer works for the misc node containing all valid quantities."""
 
     # Prepare inputs for the node composer
-    quantities_to_parse = NODES_TYPES['dict']
+    quantities_to_parse = NODES_TYPES['core.dict']
     requested_node = {'misc': {'link_name': 'misc', 'type': 'dict', 'quantities': quantities_to_parse}}
 
     # Compose nodes
@@ -862,7 +868,7 @@ def test_nan_inf_cleaning():
 
 
 def node_composer_test_helper(node_settings_key, NODES, parsers):
-    """A helper routine to minimize code ducplication across tests for node composition."""
+    """A helper routine to minimize code duplication across tests for node composition."""
 
     # Prepare inputs for tqhe node composer
     requested_node = {NODES[node_settings_key]['link_name']: NODES[node_settings_key]}

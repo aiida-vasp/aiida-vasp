@@ -24,16 +24,18 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 def options():
     """pytest fixture for inputs.options for workflows in testing."""
     # 'withmpi' should be set False in testing!
-    options = get_data_node('dict',
-                            dict={
-                                'withmpi': False,
-                                'queue_name': 'None',
-                                'resources': {
-                                    'num_machines': 1,
-                                    'num_mpiprocs_per_machine': 1
-                                },
-                                'max_wallclock_seconds': 3600
-                            })
+    options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        },
+    )
     return options
 
 
@@ -53,7 +55,7 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
     with open(data_path('test_converge_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
     parameters = None
     with open(data_path('test_converge_wc', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
@@ -62,29 +64,29 @@ def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
     parameters['system'] = f'test-case:{test_case}'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
-    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir = get_data_node('core.bool', False)
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
-    inputs.parameters = get_data_node('dict', dict={'incar': parameters})
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
     inputs.options = options
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.max_iterations = get_data_node('core.int', 1)
+    inputs.clean_workdir = get_data_node('core.bool', False)
     relax = AttributeDict()
     converge = AttributeDict()
-    converge.relax = get_data_node('bool', False)
-    converge.compress = get_data_node('bool', False)
-    converge.displace = get_data_node('bool', False)
-    converge.pwcutoff_samples = get_data_node('int', 3)
-    converge.k_samples = get_data_node('int', 3)
-    relax.perform = get_data_node('bool', True)
+    converge.relax = get_data_node('core.bool', False)
+    converge.compress = get_data_node('core.bool', False)
+    converge.displace = get_data_node('core.bool', False)
+    converge.pwcutoff_samples = get_data_node('core.int', 3)
+    converge.k_samples = get_data_node('core.int', 3)
+    relax.perform = get_data_node('core.bool', True)
     inputs.relax = relax
     inputs.converge = converge
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     converge = results['converge']
@@ -143,13 +145,13 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
 
     kpoints = None
     with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
@@ -160,32 +162,32 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
-    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir = get_data_node('core.bool', False)
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
-    inputs.parameters = get_data_node('dict', dict={'incar': parameters})
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
     inputs.options = options
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.max_iterations = get_data_node('core.int', 1)
+    inputs.clean_workdir = get_data_node('core.bool', False)
     relax = AttributeDict()
     converge = AttributeDict()
-    relax.perform = get_data_node('bool', False)
-    converge.relax = get_data_node('bool', False)
-    converge.testing = get_data_node('bool', True)
-    converge.compress = get_data_node('bool', False)
-    converge.displace = get_data_node('bool', False)
-    converge.pwcutoff_start = get_data_node('float', 200)
-    converge.pwcutoff_step = get_data_node('float', 50)
-    converge.pwcutoff_samples = get_data_node('int', 3)
+    relax.perform = get_data_node('core.bool', False)
+    converge.relax = get_data_node('core.bool', False)
+    converge.testing = get_data_node('core.bool', True)
+    converge.compress = get_data_node('core.bool', False)
+    converge.displace = get_data_node('core.bool', False)
+    converge.pwcutoff_start = get_data_node('core.float', 200)
+    converge.pwcutoff_step = get_data_node('core.float', 50)
+    converge.pwcutoff_samples = get_data_node('core.int', 3)
     inputs.relax = relax
     inputs.converge = converge
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'converge' in results
@@ -225,7 +227,7 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
     with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
 
     parameters = None
     with open(data_path('test_converge_wc/kgrid/8_8_8', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
@@ -238,29 +240,29 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
         'incar': {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']},
     }
 
-    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir = get_data_node('core.bool', False)
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
-    inputs.parameters = get_data_node('dict', dict=parameters)
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.parameters = get_data_node('core.dict', dict=parameters)
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
     inputs.options = options
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.max_iterations = get_data_node('core.int', 1)
+    inputs.clean_workdir = get_data_node('core.bool', False)
     relax = AttributeDict()
-    relax.perform = get_data_node('bool', False)
+    relax.perform = get_data_node('core.bool', False)
     inputs.relax = relax
     converge = AttributeDict()
-    converge.pwcutoff = get_data_node('float', pwcutoff)
-    converge.k_dense = get_data_node('float', 0.21)  # 10x10x10 mesh
-    converge.k_course = get_data_node('float', 0.27)  # 8x8x8 mesh
-    converge.k_samples = get_data_node('int', 1)
-    converge.testing = get_data_node('bool', True)
+    converge.pwcutoff = get_data_node('core.float', pwcutoff)
+    converge.k_dense = get_data_node('core.float', 0.21)  # 10x10x10 mesh
+    converge.k_course = get_data_node('core.float', 0.27)  # 8x8x8 mesh
+    converge.k_samples = get_data_node('core.int', 1)
+    converge.testing = get_data_node('core.bool', True)
     inputs.converge = converge
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
@@ -299,13 +301,13 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     with open(data_path('test_converge_wc/pw/200', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
 
     kpoints = None
     with open(data_path('test_converge_wc/pw/200', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
@@ -316,32 +318,32 @@ def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     parameters['system'] = 'test-case:test_converge_wc'
     parameters = {k: v for k, v in parameters.items() if k not in ['isif', 'ibrion', 'encut', 'nsw']}
 
-    restart_clean_workdir = get_data_node('bool', False)
+    restart_clean_workdir = get_data_node('core.bool', False)
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
     inputs.code = Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
-    inputs.parameters = get_data_node('dict', dict={'incar': parameters})
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
+    inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
     inputs.options = options
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
+    inputs.max_iterations = get_data_node('core.int', 1)
+    inputs.clean_workdir = get_data_node('core.bool', False)
     relax = AttributeDict()
     converge = AttributeDict()
-    relax.perform = get_data_node('bool', False)
-    converge.relax = get_data_node('bool', False)
-    converge.testing = get_data_node('bool', True)
-    converge.compress = get_data_node('bool', False)
-    converge.displace = get_data_node('bool', False)
+    relax.perform = get_data_node('core.bool', False)
+    converge.relax = get_data_node('core.bool', False)
+    converge.testing = get_data_node('core.bool', True)
+    converge.compress = get_data_node('core.bool', False)
+    converge.displace = get_data_node('core.bool', False)
     # intentionally make a called RelaxWorkChain fail by not proving output files at 'test_data/test_converge_wc/pw'
-    converge.pwcutoff_start = get_data_node('float', 0.0)
-    converge.pwcutoff_samples = get_data_node('int', 1)
+    converge.pwcutoff_start = get_data_node('core.float', 0.0)
+    converge.pwcutoff_samples = get_data_node('core.int', 1)
     inputs.relax = relax
     inputs.converge = converge
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0

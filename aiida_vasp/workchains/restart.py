@@ -72,24 +72,66 @@ class BaseRestartWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BaseRestartWorkChain, cls).define(spec)
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(400,
-                       'ERROR_ITERATION_RETURNED_NO_CALCULATION',
-                       message='the run_calculation step did not successfully add a calculation node to the context')
-        spec.exit_code(401, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED', message='the maximum number of iterations was exceeded')
-        spec.exit_code(402, 'ERROR_UNEXPECTED_CALCULATION_STATE', message='the calculation finished with an unexpected calculation state')
-        spec.exit_code(403, 'ERROR_UNEXPECTED_CALCULATION_FAILURE', message='the calculation experienced and unexpected failure')
-        spec.exit_code(404, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE', message='the calculation failed to submit, twice in a row')
-        spec.exit_code(405,
-                       'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
-                       message='the calculation failed for an unknown reason, twice in a row')
-        spec.exit_code(300,
-                       'ERROR_MISSING_REQUIRED_OUTPUT',
-                       message='the calculation is missing at least one required output in the restart workchain')
-        spec.exit_code(406, 'ERROR_CALCULATION_EXCEPTED', message='the calculation is in an excepted state')
-        spec.exit_code(407, 'ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS', message='the error handlers did not manage to find a solution')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the restart workchain')
-        spec.exit_code(501, 'ERROR_NO_ERROR_HANDLERS', message='no error handlers specified')
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            400,
+            'ERROR_ITERATION_RETURNED_NO_CALCULATION',
+            message='the run_calculation step did not successfully add a calculation node to the context',
+        )
+        spec.exit_code(
+            401,
+            'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
+            message='the maximum number of iterations was exceeded',
+        )
+        spec.exit_code(
+            402,
+            'ERROR_UNEXPECTED_CALCULATION_STATE',
+            message='the calculation finished with an unexpected calculation state',
+        )
+        spec.exit_code(
+            403,
+            'ERROR_UNEXPECTED_CALCULATION_FAILURE',
+            message='the calculation experienced and unexpected failure',
+        )
+        spec.exit_code(
+            404,
+            'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE',
+            message='the calculation failed to submit, twice in a row',
+        )
+        spec.exit_code(
+            405,
+            'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
+            message='the calculation failed for an unknown reason, twice in a row',
+        )
+        spec.exit_code(
+            300,
+            'ERROR_MISSING_REQUIRED_OUTPUT',
+            message='the calculation is missing at least one required output in the restart workchain',
+        )
+        spec.exit_code(
+            406,
+            'ERROR_CALCULATION_EXCEPTED',
+            message='the calculation is in an excepted state',
+        )
+        spec.exit_code(
+            407,
+            'ERROR_NO_SOLUTION_FROM_ERROR_HANDLERS',
+            message='the error handlers did not manage to find a solution',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_UNKNOWN',
+            message='unknown error detected in the restart workchain',
+        )
+        spec.exit_code(
+            501,
+            'ERROR_NO_ERROR_HANDLERS',
+            message='no error handlers specified',
+        )
 
     def init_context(self):
         """Initialize context variables that are used during the logical flow of the BaseRestartWorkChain."""
@@ -218,7 +260,7 @@ class BaseRestartWorkChain(WorkChain):
             self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))  # pylint: disable=not-callable
 
     def _handle_succesfull(self, calculation):
-        """Handle the case when the calculation was successfull."""
+        """Handle the case when the calculation was successful."""
         self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))  # pylint: disable=not-callable
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True

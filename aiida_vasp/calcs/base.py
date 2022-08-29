@@ -20,7 +20,7 @@ class VaspCalcBase(CalcJob):
 
     * Defines internal parameters common to all vasp calculations.
     * provides a basic, extendable implementation of _prepare_for_submission
-    * provides hooks, so subclasses can extend the behaviour without having to reimplement common functionality
+    * provides hooks, so subclasses can extend the behavior without having to reimplement common functionality
     """
 
     _default_parser = 'vasp.vasp'
@@ -28,7 +28,12 @@ class VaspCalcBase(CalcJob):
     @classmethod
     def define(cls, spec):
         super(VaspCalcBase, cls).define(spec)
-        spec.input('restart_folder', valid_type=get_data_class('remote'), help='A remote folder to restart from if need be', required=False)
+        spec.input(
+            'restart_folder',
+            valid_type=get_data_class('core.remote'),
+            help='A remote folder to restart from if need be',
+            required=False,
+        )
 
     @classmethod
     def max_retrieve_list(cls):

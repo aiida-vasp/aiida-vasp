@@ -40,7 +40,7 @@ def test_prepare(vasp_neb_calc, vasp_neb_inputs, vasp_structure, vasp_kpoints, l
     assert calcinfo.codes_info[0].join_files is True
 
     # Test retriving more files
-    settings = get_data_node('dict', dict={
+    settings = get_data_node('core.dict', dict={
         'PER_IMAGE_ADDITIONAL_RETRIEVE_LIST': ['IBZKPT'],
     })
     inputs['settings'] = settings

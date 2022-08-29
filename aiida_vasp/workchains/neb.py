@@ -63,51 +63,88 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
     @classmethod
     def define(cls, spec):
         super(VaspNEBWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._process_class, exclude=('potential', 'kpoints', 'dynamics', 'metadata'))
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('kpoints_spacing', valid_type=get_data_class('float'), required=False)
-        spec.input('potential_family', valid_type=get_data_class('str'), required=True)
-        spec.input('potential_mapping', valid_type=get_data_class('dict'), required=True)
-        spec.input('options', valid_type=get_data_class('dict'), required=True)
-        spec.input('max_iterations',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 5),
-                   help="""
+        spec.expose_inputs(
+            cls._process_class,
+            exclude=('potential', 'kpoints', 'dynamics', 'metadata'),
+        )
+        spec.input(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+        )
+        spec.input(
+            'kpoints_spacing',
+            valid_type=get_data_class('core.float'),
+            required=False,
+        )
+        spec.input(
+            'potential_family',
+            valid_type=get_data_class('core.str'),
+            required=True,
+        )
+        spec.input(
+            'potential_mapping',
+            valid_type=get_data_class('core.dict'),
+            required=True,
+        )
+        spec.input(
+            'options',
+            valid_type=get_data_class('core.dict'),
+            required=True,
+        )
+        spec.input(
+            'max_iterations',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 5),
+            help="""
             The maximum number of iterations to perform.
-            """)
-        spec.input('clean_workdir',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-            If True, clean the work dir upon the completion of a successfull calculation.
-            """)
-        spec.input('verbose',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', True),
-                   help="""
+            """,
+        )
+        spec.input(
+            'clean_workdir',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, clean the work dir upon the completion of a successful calculation.
+            """,
+        )
+        spec.input(
+            'verbose',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+            help="""
             If True, enable more detailed output during workchain execution.
-            """)
-        spec.input('dynamics.positions_dof',
-                   valid_type=get_data_class('list'),
-                   required=False,
-                   help="""
+            """,
+        )
+        spec.input(
+            'dynamics.positions_dof',
+            valid_type=get_data_class('core.list'),
+            required=False,
+            help="""
             Site dependent flag for selective dynamics when performing relaxation
-            """)
-        spec.input('ldau_mapping',
-                   valid_type=get_data_class('dict'),
-                   required=False,
-                   help="Mappings, see the doc string of 'get_ldau_keys'")
-        spec.input('kpoints_spacing',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help='Spacing for the kpoints in units A^-1 * 2pi (CASTEP style `kpoints_mp_spacing`)')
-        spec.input('kpoints_spacing_vasp',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help='Spacing for the kpoints in units A^-1 (VASP style)')
+            """,
+        )
+        spec.input(
+            'ldau_mapping',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+            help="Mappings, see the doc string of 'get_ldau_keys'",
+        )
+        spec.input(
+            'kpoints_spacing',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help='Spacing for the kpoints in units A^-1 * 2pi (CASTEP style `kpoints_mp_spacing`)',
+        )
+        spec.input(
+            'kpoints_spacing_vasp',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help='Spacing for the kpoints in units A^-1 (VASP style)',
+        )
         spec.outline(
             cls.setup,
             while_(cls.should_run_process)(
@@ -119,12 +156,36 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._process_class)
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
-        spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')
-        spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
-        spec.exit_code(703, 'ERROR_IN_PARAMETER_MASSAGER', message='the exception: {exception} was thrown while massaging the parameters')
-        spec.exit_code(501, 'SUB_NEB_CALCULATION_ERROR', message='Unrecoverable error in launched NEB calculations.')
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            700,
+            'ERROR_NO_POTENTIAL_FAMILY_NAME',
+            message='the user did not supply a potential family name',
+        )
+        spec.exit_code(
+            701,
+            'ERROR_POTENTIAL_VALUE_ERROR',
+            message='ValueError was returned from get_potcars_from_structure',
+        )
+        spec.exit_code(
+            702,
+            'ERROR_POTENTIAL_DO_NOT_EXIST',
+            message='the potential does not exist',
+        )
+        spec.exit_code(
+            703,
+            'ERROR_IN_PARAMETER_MASSAGER',
+            message='the exception: {exception} was thrown while massaging the parameters',
+        )
+        spec.exit_code(
+            501,
+            'SUB_NEB_CALCULATION_ERROR',
+            message='Unrecoverable error in launched NEB calculations.',
+        )
 
     def setup(self):
 
@@ -157,7 +218,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
     @process_handler(priority=500, exit_codes=[VaspNEBCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])  # pylint: disable=no-member
     def handle_unconverged(self, node):
         """
-        Handle the problem where the NEB optimisation is not converged.
+        Handle the problem where the NEB optimization is not converged.
 
         Note that VASP could reach NSW before the actual convergence.
         Hence this check is necessary even for finished runs.
@@ -168,7 +229,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         neb_misc = node.outputs.neb_misc.get_dict()
 
         if not neb_misc.get('neb_data'):
-            self.report('Cannot found the `neb_data` dictioanry containing the NEB run data')
+            self.report('Cannot found the `neb_data` dictionary containing the NEB run data')
             return None
 
         neb_data = neb_misc.get('neb_data')
@@ -287,7 +348,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             self.report('WARNING: IOPT not set.')
 
         if ibrion == 2:
-            raise InputValidationError('IBRION=2 should not be used for NEB optimisation!!')
+            raise InputValidationError('IBRION=2 should not be used for NEB optimization!!')
 
         # Check the displacement of atoms between the frames
         # the hope is that this may detect simple errors such as atoms going across the PBC or
@@ -432,7 +493,8 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         # for the outcome of the work chain and so have marked it as `is_finished=True`.
         max_iterations = self.inputs.max_iterations.value  # type: ignore[union-attr]
         if not self.ctx.is_finished and self.ctx.iteration >= max_iterations:
-            self.report(f'reached the maximum number of iterations {max_iterations}: ' f'last ran {self.ctx.process_name}<{node.pk}>')
+            self.report(f'reached the maximum number of iterations {max_iterations}: '
+                        f'last ran {self.ctx.process_name}<{node.pk}>')
             return self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED  # pylint: disable=no-member
 
         self.report(f'work chain completed after {self.ctx.iteration} iterations')

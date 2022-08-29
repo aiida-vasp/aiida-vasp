@@ -117,7 +117,7 @@ CONTENT_PARSER_SETS = {
         'stdout': {
             'parser_class': StreamParser,
             'is_critical': False,
-            'status': 'Unkonwn',
+            'status': 'Unknown',
             'mode': 'r'
         }
     },
@@ -238,7 +238,7 @@ class ParserDefinitions():  # pylint: disable=useless-object-inheritance
         return self._parser_definitions
 
     def add_parser_definition(self, name, parser_dict):
-        """Add custum parser definition"""
+        """Add custom parser definition"""
         self._parser_definitions[name] = parser_dict
 
     def _init_parser_definitions(self, content_parser_set):

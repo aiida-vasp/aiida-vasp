@@ -28,42 +28,58 @@ class MasterWorkChain(WorkChain):
     def define(cls, spec):
         super(MasterWorkChain, cls).define(spec)
         spec.expose_inputs(cls._base_workchain, exclude=['settings', 'clean_workdir'])
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input_namespace('relax', required=False, dynamic=True)
-        spec.input('extract_bands',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   Do you want to extract the band structure?
-                   """)
-        spec.input('extract_dos',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   Do you want to extract the density of states?
-                   """)
-        spec.input('dos.kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.1),
-                   help="""
-                   The target k-point distance for density of states extraction.
-                   """)
-        spec.input('dos.kpoints',
-                   valid_type=get_data_class('array.kpoints'),
-                   required=False,
-                   help="""
-                   The target k-point distance for density of states extraction.
-                   """)
-        spec.input('kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help="""
-                   The maximum distance between k-points in inverse AA.
-                   """)
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+        )
+        spec.input_namespace(
+            'relax',
+            required=False,
+            dynamic=True,
+        )
+        spec.input(
+            'extract_bands',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""Do you want to extract the band structure?""",
+        )
+        spec.input(
+            'extract_dos',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""Do you want to extract the density of states?""",
+        )
+        spec.input(
+            'dos.kpoints_distance',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.1),
+            help="""
+            The target k-point distance for density of states extraction.
+            """,
+        )
+        spec.input(
+            'dos.kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+            help="""
+            The target k-point distance for density of states extraction.
+            """,
+        )
+        spec.input(
+            'kpoints_distance',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help="""The maximum distance between k-points in inverse AA.""",
+        )
         spec.outline(
             cls.initialize,
             cls.init_prerun,
@@ -84,11 +100,37 @@ class MasterWorkChain(WorkChain):
             ),
             cls.finalize
         )  # yapf: disable
-        spec.expose_outputs(cls._bands_workchain, namespace='bands', namespace_options={'required': False, 'populate_defaults': False})
-        spec.expose_outputs(cls._dos_workchain, namespace='dos', namespace_options={'required': False, 'populate_defaults': False})
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the master workchain')
+        spec.expose_outputs(
+            cls._bands_workchain,
+            namespace='bands',
+            namespace_options={
+                'required': False,
+                'populate_defaults': False
+            },
+        )
+        spec.expose_outputs(
+            cls._dos_workchain,
+            namespace='dos',
+            namespace_options={
+                'required': False,
+                'populate_defaults': False
+            },
+        )
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            420,
+            'ERROR_NO_CALLED_WORKCHAIN',
+            message='no called workchain detected',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_UNKNOWN',
+            message='unknown error detected in the master workchain',
+        )
 
     def initialize(self):
         """Initialize."""
@@ -111,7 +153,7 @@ class MasterWorkChain(WorkChain):
             pass
         # If we want to keep previous outputs for relaunch, do not clean remote folders
         if self.extract_bands() or self.extract_dos():
-            self.ctx.inputs.clean_workdir = get_data_node('bool', False)
+            self.ctx.inputs.clean_workdir = get_data_node('core.bool', False)
         self._init_structure()
         self._init_kpoints()
 
@@ -145,7 +187,7 @@ class MasterWorkChain(WorkChain):
                 # If neither, return, we need to run convergence tests
                 return None
             return kpoints
-        kpoints = get_data_class('array.kpoints')()
+        kpoints = get_data_class('core.array.kpoints')()
         kpoints.set_cell_from_structure(self.ctx.inputs.structure)
         kpoints.set_kpoints_mesh_from_density(distance)
 
@@ -199,7 +241,7 @@ class MasterWorkChain(WorkChain):
         # copied locally, but is present in the folder of the previous remote directory)
         self.ctx.inputs.restart_folder = self.ctx.workchains[-1].outputs.remote_folder
         # Also enable the clean_workdir again
-        self.ctx.inputs.clean_workdir = get_data_node('bool', True)
+        self.ctx.inputs.clean_workdir = get_data_node('core.bool', True)
 
     def _clean_inputs(self, exclude=None):
         """Clean the inputs for the next workchain in order not to pass redundant inputs."""

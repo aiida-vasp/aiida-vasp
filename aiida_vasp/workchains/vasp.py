@@ -77,7 +77,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     Handlers are implemented to try fix common problems and improves the robustness.
     Individual handlers can be enabled/disabled by setting the ``handler_overrides`` input port.
     Additional settings may be passed under the "settings" input, which is also forwarded to the
-    calculations. The avaliable options are:
+    calculations. The available options are:
 
     - ``USE_WAVECAR_FOR_RESTART`` wether calculation restarts should use the WAVECAR. The default is ``True``.
 
@@ -100,50 +100,104 @@ class VaspWorkChain(BaseRestartWorkChain):
     @classmethod
     def define(cls, spec):  # pylint: disable=too-many-statements
         super(VaspWorkChain, cls).define(spec)
-        spec.input('code', valid_type=Code)
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), required=True)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=True)
-        spec.input('potential_family', valid_type=get_data_class('str'), required=True)
-        spec.input('potential_mapping', valid_type=get_data_class('dict'), required=True)
-        spec.input('parameters', valid_type=get_data_class('dict'), required=True)
-        spec.input('options', valid_type=get_data_class('dict'), required=True)
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
-        spec.input('site_magnetization', valid_type=get_data_class('dict'), required=False, help='Site magnetization to be used as MAGMOM')
-        spec.input('restart_folder',
-                   valid_type=get_data_class('remote'),
-                   required=False,
-                   help="""
+        spec.input(
+            'code',
+            valid_type=Code,
+        )
+        spec.input(
+            'structure',
+            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            required=True,
+        )
+        spec.input(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=True,
+        )
+        spec.input(
+            'potential_family',
+            valid_type=get_data_class('core.str'),
+            required=True,
+        )
+        spec.input(
+            'potential_mapping',
+            valid_type=get_data_class('core.dict'),
+            required=True,
+        )
+        spec.input(
+            'parameters',
+            valid_type=get_data_class('core.dict'),
+            required=True,
+        )
+        spec.input(
+            'options',
+            valid_type=get_data_class('core.dict'),
+            required=True,
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'wavecar',
+            valid_type=get_data_class('vasp.wavefun'),
+            required=False,
+        )
+        spec.input(
+            'chgcar',
+            valid_type=get_data_class('vasp.chargedensity'),
+            required=False,
+        )
+        spec.input(
+            'site_magnetization',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+            help='Site magnetization to be used as MAGMOM',
+        )
+        spec.input(
+            'restart_folder',
+            valid_type=get_data_class('core.remote'),
+            required=False,
+            help="""
             The restart folder from a previous workchain run that is going to be used.
-            """)
-        spec.input('max_iterations',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 5),
-                   help="""
+            """,
+        )
+        spec.input(
+            'max_iterations',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 5),
+            help="""
             The maximum number of iterations to perform.
-            """)
-        spec.input('clean_workdir',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', True),
-                   help="""
-            If True, clean the work dir upon the completion of a successfull calculation.
-            """)
-        spec.input('verbose',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'clean_workdir',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+            help="""
+            If True, clean the work dir upon the completion of a successful calculation.
+            """,
+        )
+        spec.input(
+            'verbose',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             If True, enable more detailed output during workchain execution.
-            """)
-        spec.input('dynamics.positions_dof',
-                   valid_type=get_data_class('list'),
-                   required=False,
-                   help="""
+            """,
+        )
+        spec.input(
+            'dynamics.positions_dof',
+            valid_type=get_data_class('core.list'),
+            required=False,
+            help="""
             Site dependent flag for selective dynamics when performing relaxation
-            """)
+            """,
+        )
         spec.outline(
             cls.setup,
             cls.init_inputs,
@@ -157,43 +211,97 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         spec.expose_outputs(cls._process_class)
 
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(700, 'ERROR_NO_POTENTIAL_FAMILY_NAME', message='the user did not supply a potential family name')
-        spec.exit_code(701, 'ERROR_POTENTIAL_VALUE_ERROR', message='ValueError was returned from get_potcars_from_structure')
-        spec.exit_code(702, 'ERROR_POTENTIAL_DO_NOT_EXIST', message='the potential does not exist')
-        spec.exit_code(703, 'ERROR_IN_PARAMETER_MASSAGER', message='the exception: {exception} was thrown while massaging the parameters')
-
         # Copied from the old plugin restart workchain
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(400,
-                       'ERROR_ITERATION_RETURNED_NO_CALCULATION',
-                       message='the run_calculation step did not successfully add a calculation node to the context')
-        spec.exit_code(401, 'ERROR_MAXIMUM_ITERATIONS_EXCEEDED', message='the maximum number of iterations was exceeded')
-        spec.exit_code(402, 'ERROR_UNEXPECTED_CALCULATION_STATE', message='the calculation finished with an unexpected calculation state')
-        spec.exit_code(403, 'ERROR_UNEXPECTED_CALCULATION_FAILURE', message='the calculation experienced and unexpected failure')
-        spec.exit_code(404, 'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE', message='the calculation failed to submit, twice in a row')
-        spec.exit_code(405,
-                       'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
-                       message='the calculation failed for an unknown reason, twice in a row')
-        spec.exit_code(300,
-                       'ERROR_MISSING_REQUIRED_OUTPUT',
-                       message='the calculation is missing at least one required output in the restart workchain')
-        spec.exit_code(500,
-                       'ERROR_MISSING_CRITICAL_OUTPUT',
-                       message='Missing critical output for inspecting the status of the calculation.')
-        spec.exit_code(501,
-                       'ERROR_OTHER_INTERVENTION_NEEDED',
-                       message='Cannot handle the error - inputs are likely need to be revised manually. Message: {message}')
-        spec.exit_code(502,
-                       'ERROR_CALCULATION_NOT_FINISHED',
-                       message='Cannot handle the error - the last calculation did not reach the end of execution.')
-        spec.exit_code(503,
-                       'ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED',
-                       message='Cannot handle the error - the last calculation did not reach electronic convergence.')
-        spec.exit_code(504, 'ERROR_IONIC_RELAXATION_NOT_CONVERGED', message='The ionic relaxation is not converged.')
-        spec.exit_code(505,
-                       'ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX',
-                       message='At least one of the ionic steps during the relaxation has did not have converged electronic structure.')
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            300,
+            'ERROR_MISSING_REQUIRED_OUTPUT',
+            message='the calculation is missing at least one required output in the restart workchain',
+        )
+        spec.exit_code(
+            400,
+            'ERROR_ITERATION_RETURNED_NO_CALCULATION',
+            message='the run_calculation step did not successfully add a calculation node to the context',
+        )
+        spec.exit_code(
+            401,
+            'ERROR_MAXIMUM_ITERATIONS_EXCEEDED',
+            message='the maximum number of iterations was exceeded',
+        )
+        spec.exit_code(
+            402,
+            'ERROR_UNEXPECTED_CALCULATION_STATE',
+            message='the calculation finished with an unexpected calculation state',
+        )
+        spec.exit_code(
+            403,
+            'ERROR_UNEXPECTED_CALCULATION_FAILURE',
+            message='the calculation experienced and unexpected failure',
+        )
+        spec.exit_code(
+            404,
+            'ERROR_SECOND_CONSECUTIVE_SUBMISSION_FAILURE',
+            message='the calculation failed to submit, twice in a row',
+        )
+        spec.exit_code(
+            405,
+            'ERROR_SECOND_CONSECUTIVE_UNHANDLED_FAILURE',
+            message='the calculation failed for an unknown reason, twice in a row',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_MISSING_CRITICAL_OUTPUT',
+            message='Missing critical output for inspecting the status of the calculation.',
+        )
+        spec.exit_code(
+            501,
+            'ERROR_OTHER_INTERVENTION_NEEDED',
+            message='Cannot handle the error - inputs are likely need to be revised manually. Message: {message}',
+        )
+        spec.exit_code(
+            502,
+            'ERROR_CALCULATION_NOT_FINISHED',
+            message='Cannot handle the error - the last calculation did not reach the end of execution.',
+        )
+        spec.exit_code(
+            503,
+            'ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED',
+            message='Cannot handle the error - the last calculation did not reach electronic convergence.',
+        )
+        spec.exit_code(
+            504,
+            'ERROR_IONIC_RELAXATION_NOT_CONVERGED',
+            message='The ionic relaxation is not converged.',
+        )
+        spec.exit_code(
+            505,
+            'ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX',
+            message='At least one of the ionic steps during the relaxation has did not have converged electronic structure.',
+        )
+        spec.exit_code(
+            700,
+            'ERROR_NO_POTENTIAL_FAMILY_NAME',
+            message='the user did not supply a potential family name',
+        )
+        spec.exit_code(
+            701,
+            'ERROR_POTENTIAL_VALUE_ERROR',
+            message='ValueError was returned from get_potcars_from_structure',
+        )
+        spec.exit_code(
+            702,
+            'ERROR_POTENTIAL_DO_NOT_EXIST',
+            message='the potential does not exist',
+        )
+        spec.exit_code(
+            703,
+            'ERROR_IN_PARAMETER_MASSAGER',
+            message='the exception: {exception} was thrown while massaging the parameters',
+        )
 
     def setup(self):
         super().setup()
@@ -257,7 +365,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
     def update_magmom(self, node=None):
         """
-        Update magmom from site magnetization information if avaliable
+        Update magmom from site magnetization information if available
 
         :param node: Calculation node to be used, defaults to the last launched calculation.
         """
@@ -410,7 +518,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 self.report('Scheduler stderr:\n{}'.format(sched_err or ''))  # pylint: disable=not-callable
         except AttributeError:
             self.report('No calculation was found in the context. '  # pylint: disable=not-callable
-                        'Something really awefull happened. '
+                        'Something really awful happened. '
                         'Please inspect messages and act.')
 
         return super().on_except(exc_info)
@@ -458,7 +566,7 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Attach all outputs from the last workchain
         self.report('At the last iteration - attaching outputs from the last workchain.')
-        self.report('WARNING: The attached outptus may contain incorrect results - proceed with causion.')
+        self.report('WARNING: The attached outputs may contain incorrect results - proceed with caution.')
 
         # Attach the required outputs defined in the spec
         for name, port in self.spec().outputs.items():
@@ -496,7 +604,7 @@ class VaspWorkChain(BaseRestartWorkChain):
     @process_handler(priority=1000)
     def handler_misc_not_exist(self, node):
         """
-        Handle the case where misc output is not avaliable, in which case we cannot do anything for it.
+        Handle the case where misc output is not available, in which case we cannot do anything for it.
         """
         # Check if the run is converged electronically
         if 'misc' not in node.outputs:
@@ -634,7 +742,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         """
         Enhanced handling of ionic relaxation problem beyond simple restarts.
 
-        This is only used when the calculation is having difficuties reaching the
+        This is only used when the calculation is having difficulties reaching the
         convergence. This handler should be applied before the standard handler which
         breaks the handling cycle.
         """

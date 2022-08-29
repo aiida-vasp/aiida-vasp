@@ -19,7 +19,7 @@ def test_base_content_parser(tmpdir):
             _ = BaseFileParser(handler=handler)
     with pytest.raises(NotImplementedError):
         # Does not have a init_data method, should be implemented in child
-        _ = BaseFileParser(data=get_data_node('dict', dict={}))
+        _ = BaseFileParser(data=get_data_node('core.dict', dict={}))
     with pytest.raises(TypeError):
         # Check that something else than Data for the AiiDA data type raises an exception.
         _ = BaseFileParser(data=[])

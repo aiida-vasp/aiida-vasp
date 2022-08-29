@@ -47,7 +47,7 @@ class KpointsParser(BaseFileParser):
     def _init_from_data(self, data):
         """Initialize using AiiDA KpointsData."""
 
-        if isinstance(data, get_data_class('array.kpoints')):
+        if isinstance(data, get_data_class('core.array.kpoints')):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a KpointsData.')
@@ -85,14 +85,14 @@ class KpointsParser(BaseFileParser):
         """
         try:
             # Check if the ``KpointsData`` contain a mesh.
-            _ = self._content_data.get_attribute('mesh')
+            _ = self._content_data.base.attributes.get('mesh')
             mode = 'automatic'
         except AttributeError:
             pass
 
         try:
             # Check to see if the ``KpointsData`` contain an explicit k-point list.
-            _ = self._content_data.get_attribute('array|kpoints')
+            _ = self._content_data.base.attributes.get('array|kpoints')
             mode = 'explicit'
         except AttributeError:
             pass
@@ -195,7 +195,8 @@ def parsevasp_to_aiida(kpoints, logger):
 
     if kpoints.entries.get('mode') == 'line':
         # AiiDA does not support line mode
-        logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
+        logger.warning('The read KPOINTS contained line mode which is'
+                       'not supported. Returning None.')
         return None
 
     # Fetch a dictionary containing the k-points information

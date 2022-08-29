@@ -226,9 +226,9 @@ def test_parser_nodes(request, calc_with_retrieved):
     bands = result['bands']
     kpoints = result['kpoints']
 
-    assert isinstance(misc, get_data_class('dict'))
-    assert isinstance(bands, get_data_class('array.bands'))
-    assert isinstance(kpoints, get_data_class('array.kpoints'))
+    assert isinstance(misc, get_data_class('core.dict'))
+    assert isinstance(bands, get_data_class('core.array.bands'))
+    assert isinstance(kpoints, get_data_class('core.array.kpoints'))
     assert misc.get_dict()['fermi_level'] == pytest.approx(5.96764939)
 
 
@@ -258,12 +258,12 @@ def test_parser_exception(request, calc_with_retrieved):
     assert output.exit_status == 1002
 
     misc = result['misc']
-    assert isinstance(misc, get_data_class('dict'))
+    assert isinstance(misc, get_data_class('core.dict'))
     assert misc.get_dict()['maximum_force'] == pytest.approx(0.0)
     assert misc.get_dict()['total_energies']['energy_extrapolated'] == pytest.approx(-36.09616894)
     assert 'bands' not in result
     kpoints = result['kpoints']
-    assert isinstance(kpoints, get_data_class('array.kpoints'))
+    assert isinstance(kpoints, get_data_class('core.array.kpoints'))
 
 
 @pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
@@ -283,7 +283,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
         parser = PoscarParser(handler=handler)
     # Compose the node
     structure = parser.get_quantity('poscar-structure')
-    result = NodeComposer.compose_structure('structure', {'structure': structure})
+    result = NodeComposer.compose_structure('core.structure', {'structure': structure})
     names = result.get_site_kindnames()
     assert names == ['Hamburger', 'Pizza']
     symbols = result.get_symbols_set()
@@ -310,7 +310,7 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
-    result = NodeComposer.compose_structure('structure', {'structure': structure})
+    result = NodeComposer.compose_structure('core.structure', {'structure': structure})
 
     # Compare
     names = result.get_site_kindnames()
@@ -341,7 +341,7 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
-    result_reparse = NodeComposer.compose_structure('structure', {'structure': structure})
+    result_reparse = NodeComposer.compose_structure('core.structure', {'structure': structure})
     names = result_reparse.get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
     symbols = result_reparse.get_symbols_set()
@@ -360,7 +360,7 @@ def test_parse_kpoints(vasp_kpoints):
     kpoints, _ = vasp_kpoints
 
     try:
-        _ = kpoints.get_attribute('mesh')
+        _ = kpoints.base.attributes.get('mesh')
         path = data_path('kpoints', 'KPOINTS_mesh')
         method = 'get_kpoints_mesh'
         param = 'mesh'
@@ -368,7 +368,7 @@ def test_parse_kpoints(vasp_kpoints):
         pass
 
     try:
-        _ = kpoints.get_attribute('array|kpoints')
+        _ = kpoints.base.attributes.get('array|kpoints')
         path = data_path('kpoints', 'KPOINTS_list')
         method = 'get_kpoints'
         param = 'list'
@@ -379,7 +379,7 @@ def test_parse_kpoints(vasp_kpoints):
     with open(path, 'r', encoding='utf8') as handler:
         parser = KpointsParser(handler=handler)
     kpts = parser.get_quantity('kpoints-kpoints')
-    result = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpts})
+    result = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpts})
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()
     if param == 'mesh':
@@ -421,7 +421,7 @@ def test_structure(request, calc_with_retrieved):
 
     # First fetch structure from vasprun
     structure_vasprun = result['structure']
-    assert isinstance(structure_vasprun, get_data_class('structure'))
+    assert isinstance(structure_vasprun, get_data_class('core.structure'))
 
     # Then from POSCAR/CONTCAR
     parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
@@ -436,7 +436,7 @@ def test_structure(request, calc_with_retrieved):
 
     structure_poscar = result['structure']
 
-    assert isinstance(structure_poscar, get_data_class('structure'))
+    assert isinstance(structure_poscar, get_data_class('core.structure'))
     np.testing.assert_allclose(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7), rtol=0, atol=1e-8)
     positions_vasprun = []
     positions_poscar = []
@@ -481,7 +481,7 @@ def test_misc(request, calc_with_retrieved):
     result, _ = parser_cls.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     misc = result['misc']
-    assert isinstance(misc, get_data_class('dict'))
+    assert isinstance(misc, get_data_class('core.dict'))
     data = misc.get_dict()
     # We already have a test to check if the quantities from the OUTCAR is correct, so
     # only perform rudimentary checks, and the content comming from the xml object.
@@ -678,28 +678,44 @@ def test_notification_composer(vasp_parser_without_parsing):
     """Test the NotificationComposer class"""
     parser, path = vasp_parser_without_parsing
     notifications = [{'name': 'edwav', 'kind': 'ERROR', 'message': 'Error in EDWAV'}]
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={
-        'nelect': 10
-    })},
-                                    parser.exit_codes,
-                                    parser_settings=parser._settings)
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {
+            'parameters': get_data_class('core.dict')(dict={
+                'nelect': 10
+            }),
+        },
+        parser.exit_codes,
+        parser_settings=parser._settings,
+    )
     exit_code = composer.compose()
     assert exit_code.status == 703
 
     # BRMIX error but has NELECT defined in the input
     notifications = [{'name': 'brmix', 'kind': 'ERROR', 'message': 'Error in BRMIX'}]
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={
-        'nelect': 10
-    })},
-                                    parser.exit_codes,
-                                    parser_settings=parser._settings)
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {
+            'parameters': get_data_class('core.dict')(dict={
+                'nelect': 10
+            }),
+        },
+        parser.exit_codes,
+        parser_settings=parser._settings,
+    )
     exit_code = composer.compose()
     assert exit_code is None
 
     # BRMIX error but no NELECT tag
-    composer = NotificationComposer(notifications, {}, {'parameters': get_data_class('dict')(dict={})},
-                                    parser.exit_codes,
-                                    parser_settings=parser._settings)
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {'parameters': get_data_class('core.dict')(dict={})},
+        parser.exit_codes,
+        parser_settings=parser._settings,
+    )
     exit_code = composer.compose()
     assert exit_code.status == 703
 

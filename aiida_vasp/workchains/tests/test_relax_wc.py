@@ -55,7 +55,7 @@ def si_structure():
     """
     Setup a silicon structure in a displaced FCC setting
     """
-    structure_data = DataFactory('structure')
+    structure_data = DataFactory('core.structure')
     alat = 3.9
     lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -79,13 +79,13 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     with open(data_path('test_relax_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('structure', {'structure': structure})
+        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
 
     kpoints = None
     with open(data_path('test_relax_wc', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-        kpoints = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+        kpoints = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None
@@ -104,23 +104,25 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     inputs.code = orm.Code.get_from_string('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
-    inputs.parameters = get_data_node('dict', dict=parameters)
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'max_wallclock_seconds': 1,
-                                       'import_sys_environment': True,
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                   })
-    inputs.max_iterations = get_data_node('int', 1)
-    inputs.clean_workdir = get_data_node('bool', False)
-    inputs.verbose = get_data_node('bool', True)
+    inputs.parameters = get_data_node('core.dict', dict=parameters)
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
+    inputs.options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'max_wallclock_seconds': 1,
+            'import_sys_environment': True,
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+        },
+    )
+    inputs.max_iterations = get_data_node('core.int', 1)
+    inputs.clean_workdir = get_data_node('core.bool', False)
+    inputs.verbose = get_data_node('core.bool', True)
     results, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0
     assert 'relax' in results
@@ -160,25 +162,27 @@ def setup_vasp_relax_workchain(structure, incar, nkpts, code=None):
     inputs = AttributeDict()
 
     inputs.structure = structure
-    inputs.parameters = get_data_node('dict', dict={'incar': incar})
+    inputs.parameters = get_data_node('core.dict', dict={'incar': incar})
 
-    kpoints = get_data_node('array.kpoints')
+    kpoints = get_data_node('core.array.kpoints')
     kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
     inputs.kpoints = kpoints
 
-    inputs.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    inputs.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    inputs.options = get_data_node('dict',
-                                   dict={
-                                       'withmpi': False,
-                                       'queue_name': 'None',
-                                       'resources': {
-                                           'num_machines': 1,
-                                           'num_mpiprocs_per_machine': 1
-                                       },
-                                       'max_wallclock_seconds': 3600
-                                   })
-    inputs.settings = get_data_node('dict', dict={'parser_settings': {'add_structure': True}})
+    inputs.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    inputs.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
+    inputs.options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        },
+    )
+    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {'add_structure': True}})
     inputs.relax = AttributeDict()
     inputs.relax.force_cutoff = orm.Float(5e-2)
     inputs.relax.volume = orm.Bool(True)
@@ -209,14 +213,14 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
     incar['lorbit'] = 10
     incar['nupdown'] = 2
     inputs = setup_vasp_relax_workchain(si_structure(), incar, 8)
-    inputs.verbose = get_data_node('bool', True)
+    inputs.verbose = get_data_node('core.bool', True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.settings = get_data_node('dict', dict={'parser_settings': {
+    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {
         'add_structure': True,
         'add_site_magnetization': True,
     }})
-    inputs.max_iterations = get_data_node('int', 3)
+    inputs.max_iterations = get_data_node('core.int', 3)
 
     _, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0

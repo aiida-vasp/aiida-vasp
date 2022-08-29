@@ -15,16 +15,16 @@ import numpy as np
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {
-    'dict': [
+    'core.dict': [
         'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications',
         'band_properties', 'run_status', 'run_stats', 'version'
     ],
-    'array.kpoints': ['kpoints'],
-    'structure': ['structure'],
-    'array.trajectory': ['trajectory'],
-    'array.bands': ['eigenvalues', 'kpoints', 'occupancies'],
+    'core.array.kpoints': ['kpoints'],
+    'core.structure': ['structure'],
+    'core.array.trajectory': ['trajectory'],
+    'core.array.bands': ['eigenvalues', 'kpoints', 'occupancies'],
     'vasp.wavefun': ['wavecar'],
-    'array': [],
+    'core.array': [],
 }
 
 
@@ -108,7 +108,7 @@ class NodeComposer:
         if typ not in inputs:
             raise ValueError(f'The {typ} are not present after parsing.')
         node = get_data_class(node_type)()
-        kpoints = self.compose_array_kpoints('array.kpoints', {'kpoints': inputs['kpoints']})
+        kpoints = self.compose_array_kpoints('core.array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         if 'total' in inputs['eigenvalues']:
             eigenvalues = np.array([inputs['eigenvalues']['total']])
@@ -225,7 +225,7 @@ class NodeComposer:
         for item in inputs:
             for key, value in inputs[item].items():
                 if key == 'symbols':
-                    node.set_attribute(key, value)
+                    node.base.attributes.set(key, value)
                 else:
                     node.set_array(key, value)
         return node

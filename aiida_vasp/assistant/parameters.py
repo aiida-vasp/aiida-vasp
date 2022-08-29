@@ -529,7 +529,7 @@ def check_inputs(supplied_inputs):
     if supplied_inputs is None:
         inputs = AttributeDict()
     else:
-        if isinstance(supplied_inputs, DataFactory('dict')):
+        if isinstance(supplied_inputs, DataFactory('core.dict')):
             inputs = AttributeDict(supplied_inputs.get_dict())
         elif isinstance(supplied_inputs, dict):
             inputs = AttributeDict(supplied_inputs)
@@ -556,7 +556,7 @@ def inherit_and_merge_parameters(inputs):
         parameters[namespace] = AttributeDict()
         try:
             for key, item in inputs[namespace].items():
-                if isinstance(item, DataFactory('array')):
+                if isinstance(item, DataFactory('core.array')):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
                         raise IndexError(
@@ -564,9 +564,9 @@ def inherit_and_merge_parameters(inputs):
                             .format(key))
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
-                elif isinstance(item, DataFactory('dict')):
+                elif isinstance(item, DataFactory('core.dict')):
                     parameters[namespace][key] = item.get_dict()
-                elif isinstance(item, DataFactory('list')):
+                elif isinstance(item, DataFactory('core.list')):
                     parameters[namespace][key] = item.get_list()
                 else:
                     parameters[namespace][key] = item.value

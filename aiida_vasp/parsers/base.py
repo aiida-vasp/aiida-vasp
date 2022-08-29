@@ -38,10 +38,10 @@ class BaseParser(Parser):
         exit_code_permanent = self._check_folder()
         if exit_code_permanent is None:
             # Retrieved folder exists, add content and tag to dictionary
-            for retrieved_object in self.retrieved.list_objects():
+            for retrieved_object in self.retrieved.base.repository.list_objects():
                 # Add sub directory objects - this only treat for one extra level
                 if retrieved_object.file_type == FileType.DIRECTORY:
-                    for subobj in self.retrieved.list_objects(retrieved_object.name):
+                    for subobj in self.retrieved.base.repository.list_objects(retrieved_object.name):
                         retrieved[retrieved_object.name + '/' + subobj.name] = {'path': '', 'status': 'permanent'}
                 else:
                     retrieved[retrieved_object.name] = {'path': '', 'status': 'permanent'}
@@ -64,7 +64,7 @@ class BaseParser(Parser):
 
         # Check if there are other objects than the AiiDA generated scheduler objects in retrieved and
         # if there are any objects in the retrieved_temporary. If not, return an error.
-        aiida_required_objects = [self.node.get_attribute('scheduler_stderr'), self.node.get_attribute('scheduler_stdout')]
+        aiida_required_objects = [self.node.base.attributes.get('scheduler_stderr'), self.node.base.attributes.get('scheduler_stdout')]
         # Check if have some missing objects that we require to be present.
         vasp_output_objects_present = False
         for name in retrieved:
@@ -125,14 +125,14 @@ class BaseParser(Parser):
         """
 
         if 'b' not in mode and encoding is None:
-            # If we do not use binary, set default is encoding not proided
+            # If we do not use binary, set default is encoding not provided
             encoding = 'utf8'
         try:
             if self._retrieved_content[name]['status'] == 'permanent':
                 # For the permanent content to be parsed we can use the fact that
                 # self.retrieved is a FolderData datatype in AiiDA.
                 try:
-                    with self.retrieved.open(name, mode) as handler:  # pylint: disable=unspecified-encoding
+                    with self.retrieved.base.repository.open(name, mode) as handler:  # pylint: disable=unspecified-encoding
                         yield handler
                 except OSError:
                     self.logger.warning(name + ' not found in retrieved')
@@ -157,7 +157,7 @@ def list_files_recursive(retrieved, top_level=''):
     Recursively list the content of a retrieved FolderData node.
     """
     object_paths = []
-    for obj in retrieved.list_objects(top_level):
+    for obj in retrieved.base.repository.list_objects(top_level):
         if obj.file_type == FileType.FILE:
             object_paths.append(os.path.join(top_level, obj.name))
         elif obj.file_type == FileType.DIRECTORY:

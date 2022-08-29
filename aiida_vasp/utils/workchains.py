@@ -48,16 +48,16 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
         parameters = prepared_inputs.parameters
         if exclude_parameters:
             # First make sure we have a proper copy so that any removal does not havoc elements in the dictionary
-            if isinstance(parameters, DataFactory('dict')):
+            if isinstance(parameters, DataFactory('core.dict')):
                 parameters = prepared_inputs.parameters.clone()
                 # Unpack in case the parameters is a Dict data structure
                 parameters = parameters.get_dict()
             else:
                 parameters = deepcopy(prepared_inputs.parameters)
             delete_keys_from_dict(parameters, exclude_parameters)
-        if not isinstance(parameters, DataFactory('dict')):
+        if not isinstance(parameters, DataFactory('core.dict')):
             # Convert parameters to Dict
-            parameters = DataFactory('dict')(dict=parameters)
+            parameters = DataFactory('core.dict')(dict=parameters)
         prepared_inputs.parameters = parameters
     except AttributeError:
         # In case parameters is not present at all
@@ -111,7 +111,7 @@ def fetch_k_grid(rec_cell, k_spacing):
 
     """
     rec_cell_lenghts = np.linalg.norm(rec_cell, axis=1)
-    kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
+    kgrid = np.ceil(rec_cell_lenghts / np.float64(k_spacing))
 
     return kgrid.astype('int').tolist()
 
@@ -124,7 +124,7 @@ def compose_exit_code(status, message):
 
 def site_magnetization_to_magmom(site_dict):
     """
-    Convert site mangetization to MAGMOM used for restart
+    Convert site magnetization to MAGMOM used for restart
     NOTE: Only tested for colinear cases
     """
     if 'site_magnetization' in site_dict:
@@ -138,7 +138,7 @@ def site_magnetization_to_magmom(site_dict):
             break
     # No avaliable site magnetization for setting MAGMOM, something is wrong
     if to_use is None:
-        raise ValueError('No valid site-projected magnetization avaliable')
+        raise ValueError('No valid site-projected magnetization available')
     # Ensure sorted list
     tmp = list(site_dict[to_use]['site_moment'].items())
     tmp.sort(key=lambda x: int(x[0]))

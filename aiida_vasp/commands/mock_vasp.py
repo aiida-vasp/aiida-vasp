@@ -35,7 +35,7 @@ def mock_vasp_strict():
 
 
 def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
-    """Verify input objects are parseable and copy in output objects."""
+    """Verify input objects are parsable and copy in output objects."""
     pwd = Path().absolute()
     vasp_mock_output = []
     vasp_output_file = pwd / 'vasp_output'

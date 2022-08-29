@@ -48,22 +48,22 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair):
     potcar_path = data_path('potcar', 'As', 'POTCAR')
 
     file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    file_node.set_attribute('sha512', 'foo')
+    file_node.base.attributes.set('sha512', 'foo')
     with pytest.raises(UniquenessError):
         file_node.store()
 
     file_node = get_data_node('vasp.potcar_file', file=potcar_path)
-    file_node.set_attribute('symbol', 'Ta')
+    file_node.base.attributes.set('symbol', 'Ta')
     with pytest.raises(UniquenessError):
         file_node.store()
 
     data_node = get_data_node('vasp.potcar', potcar_file_node=potcar_node_pair['file'])
-    data_node.set_attribute('sha512', 'foo')
+    data_node.base.attributes.set('sha512', 'foo')
     with pytest.raises(UniquenessError):
         data_node.store()
 
     data_node = get_data_node('vasp.potcar', potcar_file_node=potcar_node_pair['file'])
-    data_node.set_attribute('symbol', 'Ta')
+    data_node.base.attributes.set('symbol', 'Ta')
     with pytest.raises(UniquenessError):
         data_node.store()
 
@@ -164,7 +164,7 @@ def test_potcar_from_file(fresh_aiida_env):
 
 def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     """Test getting POTCARS from a family for a structure."""
-    indium_2 = get_data_node('structure')
+    indium_2 = get_data_node('core.structure')
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
     indium_2.append_atom(position=[1, 0, 0], symbols='In', name='In1')
     in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(indium_2, potcar_family, mapping={'In': 'In_d', 'In1': 'In_d'})
