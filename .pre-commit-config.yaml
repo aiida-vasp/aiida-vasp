@@ -33,12 +33,6 @@ repos:
       ^examples/
       )
 
-  - id: version-updater
-    name: updating version entries
-    language: system
-    entry: python ops/update_version.py
-    always_run: true
-
 - repo: https://github.com/Lucas-C/pre-commit-hooks-markup
   rev: v1.0.1
   hooks:
