@@ -7,7 +7,7 @@ build-backend = "flit_core.buildapi"
 # See https://www.python.org/dev/peps/pep-0621/
 name = "aiida-vasp"
 dynamic = ["version"]  # read from aiida_vasp/__init__.py
-description = "AiiDA plugin for running VASPcalculations."
+description = "AiiDA plugin for running VASP calculations and workflows."
 authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sintef.no"}]
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [project.urls]
-Source = "https://github.com/zhubonan/aiida-grouppathx"
+Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
@@ -115,7 +115,7 @@ disable = [
 # Configuration for [pytest](https://docs.pytest.org)
 python_files = "test_*.py example_*.py"
 filterwarnings = [
-#   "ignore::DeprecationWarning:aiida:",
+    "ignore::DeprecationWarning:aiida:",
     "ignore::DeprecationWarning:plumpy:",
     "ignore::DeprecationWarning:django:",
     "ignore::DeprecationWarning:yaml:",
@@ -133,28 +133,35 @@ force_sort_within_sections = true
 sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'AIIDA', 'FIRSTPARTY', 'LOCALFOLDER']
 known_aiida = ['aiida']
 
-# Disable tox related setting for now
-#[tool.tox]
-#legacy_tox_ini = """
-#[tox]
-#envlist = py38
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = pre-commit,{py38,py39,py310}-aiida_vasp
+requires = virtualenv >= 20
+isolated_build = True
 
-#[testenv]
-#usedevelop=True
+[testenv]
+setenv = AIIDA_PATH={toxworkdir}/.aiida
+whitelist_externals =
+                    mkdir
+                    rm
+commands =
+	 mkdir -p {toxworkdir}/.aiida
+	 pytest {posargs}
+	 rm -r {toxworkdir}/.aiida
+extras = tests
 
-#[testenv:py{37,38,39,310}]
-#description = Run the test suite against a python version
-#extras = testing
-#commands = pytest {posargs}
+[testenv:pre-commit]
+whitelist_externals = bash
+commands = bash -ec 'pre-commit run --all-files || ( git diff; git status; exit 1; )'
+extras =
+       pre-commit
+       tests
 
-#[testenv:pre-commit]
-#description = Run the pre-commit checks
-#extras = pre-commit
-#commands = pre-commit run {posargs}
+[flake8]
+max-line-length = 140
+import-order-style = edited
 
-#[testenv:docs]
-#description = Build the documentation
-#extras = docs
-#commands = sphinx-build -nW --keep-going -b html {posargs} docs/source docs/build/html
-#commands_post = echo "open file://{toxinidir}/docs/build/html/index.html"
-#"""
+[pycodestyle]
+max-line-length = 140
+"""
