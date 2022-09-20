@@ -98,10 +98,13 @@ class KpointsParser(BaseFileParser):
             pass
 
         kpoints_dict = {}
-        for keyword in ['comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints']:
+        for keyword in [
+                'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
+                'generating_vectors'
+        ]:
             kpoints_dict[keyword] = None
 
-            kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._content_data))
+        kpoints_dict.update(getattr(self, '_get_kpointsdict_' + mode)(self._content_data))
 
         # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
         content_parser = Kpoints(kpoints_dict=kpoints_dict, logger=self._logger)
