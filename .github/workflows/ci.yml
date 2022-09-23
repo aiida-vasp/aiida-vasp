@@ -3,33 +3,7 @@ name: aiida-vasp
 on: [push, pull_request]
 
 jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    strategy:
-      matrix:
-        python: ["3.8"]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache python dependencies
-        id: cache-pip
-        uses: actions/cache@v1
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
-          restore-keys: pip-${{ matrix.python }}-tests-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Pin pip to version 21.3
-        run: pip install pip~=21.3
-      - name: Install Tox
-        run: pip install tox
-      - name: Run pre-commit in Tox
-        run: tox -e pre-commit
   tests:
-    needs: [pre-commit]
     runs-on: ubuntu-latest
     timeout-minutes: 90
     services:

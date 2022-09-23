@@ -177,10 +177,16 @@ class VasprunParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize using a file like handler."""
 
+        self.overflow = False
         try:
             self._content_parser = Xml(file_handler=handler, k_before_band=True, logger=self._logger)
-        except SystemExit:
-            self._logger.warning('Parsevasp exited abnormally.')
+        except SystemExit as e:
+            if e.code == 509:
+                # Xml might be fine but overflow is detected
+                self.overflow = True
+                self._logger.warning('Parsevasp exited abnormally due to overflow in XML file.')
+            else:
+                self._logger.warn < ing('Parsevasp exited abnormally.')
 
     @property
     def version(self):
