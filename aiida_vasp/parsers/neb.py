@@ -326,17 +326,18 @@ class VtstNebParser(VaspParser):
         per_image_quantities = {}
         #per_image_failed_quantities = {}
         failed_quantities = []
+        parser_notifications = {'xml_overflow': False}
 
         for image_idx in range(1, nimages + 1):
-            quantities, failed = self._parse_quantities_for_image(image_idx)
+            quantities, failed = self._parse_quantities_for_image(image_idx, parser_notifications)
             per_image_quantities[f'{image_idx:02d}'] = quantities
             #per_image_failed_quantities[f'{image_idx:02d}'] = failed
             failed_quantities.extend([f'image_{image_idx:02d}_{name}' for name in failed])
 
-        return per_image_quantities, failed_quantities
+        return per_image_quantities, failed_quantities, parser_notifications
 
     # Override super class methods
-    def _parse_quantities_for_image(self, image_idx):
+    def _parse_quantities_for_image(self, image_idx, parser_notifications):
         """
         This method dispatch the parsing to file parsers
 
@@ -381,6 +382,14 @@ class VtstNebParser(VaspParser):
 
                 file_parser_instances[content_parser_cls] = parser
 
+            try:
+                if parser.overflow:
+                    # We check for overflow and set the appropriate exit status
+                    parser_notifications['xml_overflow'] = True
+            except AttributeError:
+                # Not the XML parser
+                pass
+
             # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:
                 failed_to_parse_quantities.append(quantity_key)
@@ -407,7 +416,7 @@ class VtstNebParser(VaspParser):
 
         return parsed_quantities, failed_to_parse_quantities
 
-    def _check_vasp_errors(self, quantities):
+    def _check_vasp_errors(self, quantities, parser_notifications):  # pylint: disable=too-many-return-statements
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
@@ -418,6 +427,14 @@ class VtstNebParser(VaspParser):
 
         if any(data is None for data in neb_data_list) or any(data is None for data in run_status_list):
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
+
+        try:
+            # We have an overflow in the XML file which is critical, but not reported by VASP in
+            # the standard output, so checking this here.
+            if parser_notifications['xml_overflow']:
+                return self.exit_codes.ERROR_OVERFLOW_IN_XML
+        except AttributeError:
+            pass
 
         # Return errors related to execution and convergence problems.
         # Note that the order is important here - if a calculation is not finished, we cannot

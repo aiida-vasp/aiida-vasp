@@ -884,7 +884,7 @@ def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, st
     assert misc['run_stats']['elapsed_time'] == pytest.approx(22.518)
     assert 'symmetries' in misc
     # No magnetization
-    assert misc['magnetization'] is None
+    assert not misc['magnetization']
     assert misc['site_magnetization'] == {
         'sphere': {
             'x': {

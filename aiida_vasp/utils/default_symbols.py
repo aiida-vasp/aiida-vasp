@@ -80,7 +80,7 @@ def get_all(version_nr='latest', use_gw=False):
             row[0] = symbol
             row[1] = int(row[1])
             row[2] = float(row[2])
-            syms[element][suffix] = (PawInfo(*row))
+            syms[element][suffix] = PawInfo(*row)
     return syms
 
 
