@@ -95,20 +95,20 @@ class NodeComposer:
         :return: An AiidaData object of a type corresponding to node_type.
         """
 
-        if node_type in ('float', 'int', 'str'):
+        if node_type in ('core.float', 'core.int', 'core.str'):
             return self._compose_basic_type(node_type, inputs)
 
         # Call the correct specialised method for assembling.
         method_name = 'compose_' + node_type.replace('.', '_')
         return getattr(self, method_name)(node_type, inputs)
 
-    def compose_array_bands(self, node_type, inputs):
+    def compose_core_array_bands(self, node_type, inputs):
         """Compose a bands node."""
         typ = 'eigenvalues'
         if typ not in inputs:
             raise ValueError(f'The {typ} are not present after parsing.')
         node = get_data_class(node_type)()
-        kpoints = self.compose_array_kpoints('core.array.kpoints', {'kpoints': inputs['kpoints']})
+        kpoints = self.compose_core_array_kpoints('core.array.kpoints', {'kpoints': inputs['kpoints']})
         node.set_kpointsdata(kpoints)
         if 'total' in inputs['eigenvalues']:
             eigenvalues = np.array([inputs['eigenvalues']['total']])
@@ -120,7 +120,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_dict(node_type, inputs):
+    def compose_core_dict(node_type, inputs):
         """Compose the dictionary node."""
         node = get_data_class(node_type)()
         inputs = clean_nan_values(inputs)
@@ -128,7 +128,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_structure(node_type, inputs):
+    def compose_core_structure(node_type, inputs):
         """
         Compose a structure node from consumable inputs.
 
@@ -149,7 +149,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_array(node_type, inputs):
+    def compose_core_array(node_type, inputs):
         """Compose an array node."""
         node = get_data_class(node_type)()
         for item in inputs:
@@ -178,7 +178,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_array_kpoints(node_type, inputs):
+    def compose_core_array_kpoints(node_type, inputs):
         """Compose an array.kpoints node based on inputs."""
         typ = 'kpoints'
         if typ not in inputs:
@@ -200,7 +200,7 @@ class NodeComposer:
         return node
 
     @staticmethod
-    def compose_array_trajectory(node_type, inputs):
+    def compose_core_array_trajectory(node_type, inputs):
         """
         Compose a trajectory node.
 

@@ -410,7 +410,7 @@ class RelaxWorkChain(WorkChain):
         # we have to query and find the exact input structure of the calculation that generated the output
         # structure and use that for comparison
         query = QueryBuilder()
-        query.append(StructureData, filters={'id': workchain.outputs.structure.id}, tag='workchain-out')
+        query.append(StructureData, filters={'id': workchain.outputs.structure.pk}, tag='workchain-out')
         query.append(CalcJobNode, with_outgoing='workchain-out', tag='calcjob')
         query.append(StructureData, with_outgoing='calcjob')
         input_structure = query.one()[0]

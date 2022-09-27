@@ -493,8 +493,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         # for the outcome of the work chain and so have marked it as `is_finished=True`.
         max_iterations = self.inputs.max_iterations.value  # type: ignore[union-attr]
         if not self.ctx.is_finished and self.ctx.iteration >= max_iterations:
-            self.report(f'reached the maximum number of iterations {max_iterations}: '
-                        f'last ran {self.ctx.process_name}<{node.pk}>')
+            self.report(f'reached the maximum number of iterations {max_iterations}: ' f'last ran {self.ctx.process_name}<{node.pk}>')
             return self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED  # pylint: disable=no-member
 
         self.report(f'work chain completed after {self.ctx.iteration} iterations')

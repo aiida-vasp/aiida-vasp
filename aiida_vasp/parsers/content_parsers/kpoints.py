@@ -195,8 +195,7 @@ def parsevasp_to_aiida(kpoints, logger):
 
     if kpoints.entries.get('mode') == 'line':
         # AiiDA does not support line mode
-        logger.warning('The read KPOINTS contained line mode which is'
-                       'not supported. Returning None.')
+        logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
         return None
 
     # Fetch a dictionary containing the k-points information

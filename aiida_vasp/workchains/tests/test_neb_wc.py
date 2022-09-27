@@ -50,8 +50,8 @@ Direct
     init = PoscarParser(handler=pos1).structure
     final = PoscarParser(handler=pos2).structure
 
-    init_structure = NodeComposer.compose_structure('core.structure', {'structure': init})
-    final_structure = NodeComposer.compose_structure('core.structure', {'structure': final})
+    init_structure = NodeComposer.compose_core_structure('core.structure', {'structure': init})
+    final_structure = NodeComposer.compose_core_structure('core.structure', {'structure': final})
     return init_structure, final_structure
 
 

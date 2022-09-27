@@ -157,7 +157,7 @@ def migrate_potcar_group():
     migrated = []
     created = []
     for (old_group,) in qdb.iterall():
-        new_group, created = PotcarGroup.objects.get_or_create(label=old_group.label, description=old_group.description)
+        new_group, created = PotcarGroup.collection.get_or_create(label=old_group.label, description=old_group.description)
         new_group.add_nodes(list(old_group.nodes))
         new_group.store()
         migrated.append(new_group.label)
@@ -844,7 +844,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
         """Prepare a (possibly new) group to upload a POTCAR family to."""
         if not dry_run:
-            group, group_created = PotcarGroup.objects.get_or_create(label=group_name)
+            group, group_created = PotcarGroup.collection.get_or_create(label=group_name)
         else:
             group = cls.get_potcar_group(group_name)
             group_created = bool(not group)

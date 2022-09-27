@@ -39,7 +39,7 @@ def test_bands_wc(fresh_aiida_env, potentials, mock_vasp):
     with open(data_path('test_bands_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('core.structure', {'structure': structure_parser.structure})
+        structure = NodeComposer.compose_core_structure('core.structure', {'structure': structure_parser.structure})
     parameters = None
     with open(data_path('test_bands_wc', 'inp', 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)

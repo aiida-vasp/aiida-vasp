@@ -17,7 +17,7 @@ def test_create_node_structure(fresh_aiida_env, vasp_structure, poscar_parser):
 
     node_settings_key = 'poscar-structure'
     assert NODES[node_settings_key]['link_name'] == 'structure'
-    assert NODES[node_settings_key]['type'] == 'structure'
+    assert NODES[node_settings_key]['type'] == 'core.structure'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper('poscar-structure', NODES, [poscar_parser])
@@ -35,7 +35,7 @@ def test_create_node_kpoints(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'kpoints'
     assert NODES[node_settings_key]['link_name'] == 'kpoints'
-    assert NODES[node_settings_key]['type'] == 'array.kpoints'
+    assert NODES[node_settings_key]['type'] == 'core.array.kpoints'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper('kpoints', NODES, [vasprun_parser])
@@ -52,7 +52,7 @@ def test_create_node_misc(fresh_aiida_env, outcar_parser):
 
     # Prepare inputs for the node composer
     quantities_to_parse = ['run_stats', 'run_status']
-    requested_node = {'misc': {'link_name': 'misc', 'type': 'dict', 'quantities': quantities_to_parse}}
+    requested_node = {'misc': {'link_name': 'misc', 'type': 'core.dict', 'quantities': quantities_to_parse}}
     # Compose nodes
     composed_nodes = node_composer_test_helper('misc', requested_node, [outcar_parser])
 
@@ -76,7 +76,7 @@ def test_create_node_forces(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'forces'
     assert NODES[node_settings_key]['link_name'] == 'forces'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -99,7 +99,7 @@ def test_create_node_stress(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'stress'
     assert NODES[node_settings_key]['link_name'] == 'stress'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -121,7 +121,7 @@ def test_create_node_trajectory_forces(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'trajectory'
     assert NODES[node_settings_key]['link_name'] == 'trajectory'
-    assert NODES[node_settings_key]['type'] == 'array.trajectory'
+    assert NODES[node_settings_key]['type'] == 'core.array.trajectory'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -141,7 +141,7 @@ def test_create_node_trajectory_forces_ionic(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'trajectory'
     assert NODES[node_settings_key]['link_name'] == 'trajectory'
-    assert NODES[node_settings_key]['type'] == 'array.trajectory'
+    assert NODES[node_settings_key]['type'] == 'core.array.trajectory'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -163,7 +163,7 @@ def test_create_node_trajectory_cells(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'trajectory'
     assert NODES[node_settings_key]['link_name'] == 'trajectory'
-    assert NODES[node_settings_key]['type'] == 'array.trajectory'
+    assert NODES[node_settings_key]['type'] == 'core.array.trajectory'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -185,7 +185,7 @@ def test_create_node_trajectory_positions(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'trajectory'
     assert NODES[node_settings_key]['link_name'] == 'trajectory'
-    assert NODES[node_settings_key]['type'] == 'array.trajectory'
+    assert NODES[node_settings_key]['type'] == 'core.array.trajectory'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -207,7 +207,7 @@ def test_create_node_dielectrics(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dielectrics'
     assert NODES[node_settings_key]['link_name'] == 'dielectrics'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -240,7 +240,7 @@ def test_create_node_dielectrics_epsilon(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dielectrics'
     assert NODES[node_settings_key]['link_name'] == 'dielectrics'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -265,7 +265,7 @@ def test_create_node_born_charges(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'born_charges'
     assert NODES[node_settings_key]['link_name'] == 'born_charges'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -287,7 +287,7 @@ def test_create_node_dos(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dos'
     assert NODES[node_settings_key]['link_name'] == 'dos'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -310,7 +310,7 @@ def test_create_node_dos_spin(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dos'
     assert NODES[node_settings_key]['link_name'] == 'dos'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -334,7 +334,7 @@ def test_create_node_dos_partial(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dos'
     assert NODES[node_settings_key]['link_name'] == 'dos'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -358,7 +358,7 @@ def test_create_node_projectors(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'projectors'
     assert NODES[node_settings_key]['link_name'] == 'projectors'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -380,7 +380,7 @@ def test_create_node_bands(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'bands'
     assert NODES[node_settings_key]['link_name'] == 'bands'
-    assert NODES[node_settings_key]['type'] == 'array.bands'
+    assert NODES[node_settings_key]['type'] == 'core.array.bands'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -408,7 +408,7 @@ def test_create_node_bands_spin(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'bands'
     assert NODES[node_settings_key]['link_name'] == 'bands'
-    assert NODES[node_settings_key]['type'] == 'array.bands'
+    assert NODES[node_settings_key]['type'] == 'core.array.bands'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -442,7 +442,7 @@ def test_create_node_energies(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'energies'
     assert NODES[node_settings_key]['link_name'] == 'energies'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -476,7 +476,7 @@ def test_create_node_energies_multiple(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'energies'
     assert NODES[node_settings_key]['link_name'] == 'energies'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -499,7 +499,7 @@ def test_create_node_energies_electronic(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'energies'
     assert NODES[node_settings_key]['link_name'] == 'energies'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -529,7 +529,7 @@ def test_create_node_energies_relax(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'energies'
     assert NODES[node_settings_key]['link_name'] == 'energies'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -570,7 +570,7 @@ def test_create_node_energies_electronic_relax(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'energies'
     assert NODES[node_settings_key]['link_name'] == 'energies'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -633,7 +633,7 @@ def test_create_node_hessian(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'hessian'
     assert NODES[node_settings_key]['link_name'] == 'hessian'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -668,7 +668,7 @@ def test_create_node_dynmat(fresh_aiida_env, vasprun_parser):
 
     node_settings_key = 'dynmat'
     assert NODES[node_settings_key]['link_name'] == 'dynmat'
-    assert NODES[node_settings_key]['type'] == 'array'
+    assert NODES[node_settings_key]['type'] == 'core.array'
 
     # Compose nodes
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
@@ -711,7 +711,7 @@ def test_create_node_dict_custom(fresh_aiida_env, outcar_parser, compare_symmetr
 
     # Prepare inputs for the node composer
     quantities_to_parse = ['symmetries', 'elastic_moduli', 'run_stats', 'run_status']
-    requested_node = {'misc': {'link_name': 'my_custom_node', 'type': 'dict', 'quantities': quantities_to_parse}}
+    requested_node = {'misc': {'link_name': 'my_custom_node', 'type': 'core.dict', 'quantities': quantities_to_parse}}
     parsed_quantities = {}
     equivalent_keys = {}
     for item in quantities_to_parse:
@@ -763,7 +763,7 @@ def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
 
     # Prepare inputs for the node composer
     quantities_to_parse = ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress']
-    requested_node = {'misc': {'link_name': 'my_custom_node', 'type': 'dict', 'quantities': quantities_to_parse}}
+    requested_node = {'misc': {'link_name': 'my_custom_node', 'type': 'core.dict', 'quantities': quantities_to_parse}}
     parsed_quantities = {}
     equivalent_keys = {}
     for item in quantities_to_parse:
@@ -797,7 +797,7 @@ def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, st
 
     # Prepare inputs for the node composer
     quantities_to_parse = NODES_TYPES['core.dict']
-    requested_node = {'misc': {'link_name': 'misc', 'type': 'dict', 'quantities': quantities_to_parse}}
+    requested_node = {'misc': {'link_name': 'misc', 'type': 'core.dict', 'quantities': quantities_to_parse}}
 
     # Compose nodes
     composed_nodes = node_composer_test_helper('misc', requested_node, [vasprun_parser, outcar_parser, stream_parser])

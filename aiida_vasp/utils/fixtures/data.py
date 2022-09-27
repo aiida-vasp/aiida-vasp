@@ -66,7 +66,7 @@ def localhost_dir(tmp_path_factory):
 def localhost(fresh_aiida_env, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
-        computer = Computer.objects.get(label='localhost')
+        computer = Computer.collection.get(label='localhost')
     except NotExistent:
         computer = Computer(label='localhost',
                             hostname='localhost',
@@ -160,7 +160,7 @@ def legacy_potcar_family(potcar_family):
 
     # Override the _type_string class property which is supposed to be loaded from the entrypoint.
     LegacyPotcarGroup._type_string = OLD_POTCAR_FAMILY_TYPE
-    new_group = PotcarGroup.objects.get(label=potcar_family)
+    new_group = PotcarGroup.collection.get(label=potcar_family)
     old_group = LegacyPotcarGroup(label=potcar_family + '_migrate_test')
     old_group.store()
 

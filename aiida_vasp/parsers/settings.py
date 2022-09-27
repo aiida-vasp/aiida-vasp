@@ -127,7 +127,7 @@ CONTENT_PARSER_SETS = {
 NODES = {
     'misc': {
         'link_name': 'misc',
-        'type': 'dict',
+        'type': 'core.dict',
         'quantities': [
             'total_energies',
             'maximum_stress',
@@ -140,77 +140,77 @@ NODES = {
     },
     'kpoints': {
         'link_name': 'kpoints',
-        'type': 'array.kpoints',
+        'type': 'core.array.kpoints',
         'quantities': ['kpoints'],
     },
     'structure': {
         'link_name': 'structure',
-        'type': 'structure',
+        'type': 'core.structure',
         'quantities': ['structure'],
     },
     'poscar-structure': {
         'link_name': 'structure',
-        'type': 'structure',
+        'type': 'core.structure',
         'quantities': ['poscar-structure'],
     },
     'trajectory': {
         'link_name': 'trajectory',
-        'type': 'array.trajectory',
+        'type': 'core.array.trajectory',
         'quantities': ['trajectory'],
     },
     'forces': {
         'link_name': 'forces',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['forces'],
     },
     'stress': {
         'link_name': 'stress',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['stress'],
     },
     'bands': {
         'link_name': 'bands',
-        'type': 'array.bands',
+        'type': 'core.array.bands',
         'quantities': ['eigenvalues', 'kpoints', 'occupancies'],
     },
     'dos': {
         'link_name': 'dos',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['dos'],
     },
     'energies': {
         'link_name': 'energies',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['energies'],
     },
     'projectors': {
         'link_name': 'projectors',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['projectors'],
     },
     'born_charges': {
         'link_name': 'born_charges',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['born_charges'],
     },
     'dielectrics': {
         'link_name': 'dielectrics',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['dielectrics'],
     },
     'hessian': {
         'link_name': 'hessian',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['hessian'],
     },
     'dynmat': {
         'link_name': 'dynmat',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['dynmat'],
     },
     'charge_density': {
         'link_name': 'charge_density',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['charge_density'],
     },
     'wavecar': {
@@ -220,7 +220,7 @@ NODES = {
     },
     'site_magnetization': {
         'link_name': 'site_magnetization',
-        'type': 'dict',
+        'type': 'core.dict',
         'quantities': ['site_magnetization'],
     },
 }

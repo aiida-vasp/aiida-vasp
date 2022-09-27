@@ -12,7 +12,7 @@ from packaging import version
 
 from aiida.orm import User
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
+BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
 
 
 def get_data_node(data_type, *args, **kwargs):
@@ -57,7 +57,7 @@ def get_data_class(data_type):
 
 def get_current_user():
     """Get current user."""
-    current_user = User.objects.get_default()
+    current_user = User.collection.get_default()
     return current_user
 
 

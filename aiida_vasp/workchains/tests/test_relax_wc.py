@@ -79,13 +79,13 @@ def test_relax_wc(fresh_aiida_env, vasp_params, potentials, mock_vasp):
     with open(data_path('test_relax_wc', 'inp', 'POSCAR'), 'r', encoding='utf8') as handler:
         structure_parser = PoscarParser(handler=handler)
         structure = structure_parser.get_quantity('poscar-structure')
-        structure = NodeComposer.compose_structure('core.structure', {'structure': structure})
+        structure = NodeComposer.compose_core_structure('core.structure', {'structure': structure})
 
     kpoints = None
     with open(data_path('test_relax_wc', 'inp', 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
         kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-        kpoints = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
+        kpoints = NodeComposer.compose_core_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
         kpoints.set_cell_from_structure(structure)
 
     parameters = None

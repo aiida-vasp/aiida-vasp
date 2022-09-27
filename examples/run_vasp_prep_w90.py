@@ -10,6 +10,7 @@ from aiida.orm import Code
 from aiida.plugins import DataFactory, CalculationFactory
 from aiida.engine import submit
 from aiida import load_profile
+
 load_profile()
 
 
@@ -78,7 +79,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set settings
     inputs.settings = dict_data(dict=settings)
     # Set Wannier90 projectors
-    inputs.wannier_projections = DataFactory('list')(list=['Si: sp3'])
+    inputs.wannier_projections = DataFactory('core.list')(list=['Si: sp3'])
     # Submit the requested calculation with the supplied inputs
     submit(calculation, **inputs)
 

@@ -200,7 +200,7 @@ def get_incar_input(dir_path):
     with open(str(dir_path / 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
     incar = incar_parser.get_quantity('incar')
-    node = NodeComposer.compose_dict('core.dict', incar)
+    node = NodeComposer.compose_core_dict('core.dict', incar)
 
     return node
 
@@ -210,7 +210,7 @@ def get_poscar_input(dir_path):
     with open(str(dir_path / 'POSCAR'), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     poscar = poscar_parser.get_quantity('poscar-structure')
-    node = NodeComposer.compose_structure('core.structure', {'structure': poscar})
+    node = NodeComposer.compose_core_structure('core.structure', {'structure': poscar})
 
     return node
 
@@ -237,7 +237,7 @@ def get_kpoints_input(dir_path, structure=None):
     with open(str(dir_path / 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
     kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-    node = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
+    node = NodeComposer.compose_core_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
     node.set_cell_from_structure(structure)
 
     return node

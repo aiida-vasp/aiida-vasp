@@ -91,7 +91,7 @@ def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_
             'parser_settings': {
                 'add_custom': {
                     'link_name': 'custom_node',
-                    'type': 'dict',
+                    'type': 'core.dict',
                     'quantities': ['quantity2', 'quantity_with_alternatives']
                 }
             }
@@ -283,7 +283,7 @@ def test_parse_poscar_silly_read(fresh_aiida_env):
         parser = PoscarParser(handler=handler)
     # Compose the node
     structure = parser.get_quantity('poscar-structure')
-    result = NodeComposer.compose_structure('core.structure', {'structure': structure})
+    result = NodeComposer.compose_core_structure('core.structure', {'structure': structure})
     names = result.get_site_kindnames()
     assert names == ['Hamburger', 'Pizza']
     symbols = result.get_symbols_set()
@@ -310,7 +310,7 @@ def test_parse_poscar_silly_write(fresh_aiida_env, vasp_structure, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
-    result = NodeComposer.compose_structure('core.structure', {'structure': structure})
+    result = NodeComposer.compose_core_structure('core.structure', {'structure': structure})
 
     # Compare
     names = result.get_site_kindnames()
@@ -341,7 +341,7 @@ def test_parse_poscar_undercase(fresh_aiida_env, vasp_structure, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
     structure = parser.get_quantity('poscar-structure')
-    result_reparse = NodeComposer.compose_structure('core.structure', {'structure': structure})
+    result_reparse = NodeComposer.compose_core_structure('core.structure', {'structure': structure})
     names = result_reparse.get_site_kindnames()
     assert names == ['In', 'As', 'As', 'In_d', 'In_d', 'As']
     symbols = result_reparse.get_symbols_set()
@@ -379,7 +379,7 @@ def test_parse_kpoints(vasp_kpoints):
     with open(path, 'r', encoding='utf8') as handler:
         parser = KpointsParser(handler=handler)
     kpts = parser.get_quantity('kpoints-kpoints')
-    result = NodeComposer.compose_array_kpoints('core.array.kpoints', {'kpoints': kpts})
+    result = NodeComposer.compose_core_array_kpoints('core.array.kpoints', {'kpoints': kpts})
     if param == 'list':
         assert getattr(result, method)().all() == getattr(kpoints, method)().all()
     if param == 'mesh':
@@ -495,21 +495,21 @@ def test_custom_outputs(request, calc_with_retrieved):
     """Test custom_outputs by fermi_level."""
     parser_settings = {
         'add_custom_outputs': {
-            'type': 'float',
+            'type': 'core.float',
             'quantities': ['fermi_level',],
             'link_name': 'custom_outputs.fermi_level',
         },
         'add_custom_outputs2': {
-            'type': 'float',
+            'type': 'core.float',
             'quantities': ['fermi_level',],
             'link_name': 'fermi_level3',
         },
         'add_fermi_level2': {
-            'type': 'float',
+            'type': 'core.float',
             'quantities': ['fermi_level',],
         },
         'add_fermi_level': {
-            'type': 'float'
+            'type': 'core.float'
         }
     }
     for parser_setting in parser_settings:
