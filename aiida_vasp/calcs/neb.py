@@ -1,10 +1,13 @@
 """
 Module for settings up NEB calculations
 """
+from typing import Union
+
 import os
 from pathlib import Path
 
 from aiida.common.exceptions import InputValidationError
+from aiida import orm
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
@@ -290,6 +293,17 @@ class VaspNEBCalculation(VaspCalculation):
 
         return calcinfo
 
+    def _structure(self):
+        """
+        Get the input structure as AiiDa StructureData.
+
+        This is required in order to support CifData as input as well.
+        """
+        structure = self.inputs.initial_structure
+        if not hasattr(structure, 'get_pymatgen'):
+            structure = get_data_node('structure', ase=structure.get_ase())
+        return structure
+
     def remote_copy_restart_folder(self):
         """
         Add all files required for restart to the list of files to be copied from the previous calculation.
@@ -335,19 +349,8 @@ class VaspNEBCalculation(VaspCalculation):
             options = {'positions_dof': positions_dof}
         else:
             options = None
-        poscar_parser = PoscarParser(data=self._structure(), precision=poscar_precision, options=options)
+        poscar_parser = PoscarParser(data=ensure_structure_data(structure), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
-
-    def _structure(self):
-        """
-        Get the input structure as AiiDa StructureData.
-
-        This is required in order to support CifData as input as well.
-        """
-        structure = self.inputs.initial_structure
-        if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('core.structure', ase=structure.get_ase())
-        return structure
 
     def verify_inputs(self):
         """
@@ -394,3 +397,14 @@ def image_folder_paths(image_folders, retrieve_names):
             # Need to use the tuple format to keep the sub directory structure
             retrieve_list.append([fdname + '/' + key, '.', 2])
     return retrieve_list
+
+
+def ensure_structure_data(structure: Union[orm.StructureData, orm.CifData]) -> orm.StructureData:
+    """
+    Get the input structure as AiiDA StructureData.
+
+    This is required in order to support CifData as input as well.
+    """
+    if not hasattr(structure, 'get_pymatgen'):
+        structure = get_data_node('structure', ase=structure.get_ase())
+    return structure
