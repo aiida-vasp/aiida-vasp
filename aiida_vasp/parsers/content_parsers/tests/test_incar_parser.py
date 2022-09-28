@@ -105,7 +105,7 @@ def test_parse_incar_invalid_tag(vasp_params, tmpdir):
     """Test parsing an INCAR with an invalid tag."""
     params = vasp_params.get_dict()
     params.update(foo='bar')
-    vasp_params_modified = get_data_node('dict', dict=params)
+    vasp_params_modified = get_data_node('core.dict', dict=params)
     parser = IncarParser(data=vasp_params_modified)
     temp_path = str(tmpdir.join('INCAR'))
     with pytest.raises(SystemExit):

@@ -29,136 +29,191 @@ class RelaxWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(RelaxWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'structure', 'settings'))
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('parameters', valid_type=get_data_class('dict'))
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('relax.perform',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+        spec.expose_inputs(
+            cls._next_workchain,
+            exclude=('parameters', 'structure', 'settings'),
+        )
+        spec.input(
+            'structure',
+            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+        )
+        spec.input(
+            'parameters',
+            valid_type=get_data_class('core.dict'),
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'relax.perform',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             If True, perform relaxation.
-            """)
-        spec.input('relax.keep_magnetization',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', True),
-                   help="""
-                   If True, try to keep the site magnetization from the previous calculation.
-                   """)
-        spec.input('relax.algo',
-                   valid_type=get_data_class('str'),
-                   default=lambda: get_data_node('str', 'cg'),
-                   help="""
+            """,
+        )
+        spec.input(
+            'relax.keep_magnetization',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+            help="""
+            If True, try to keep the site magnetization from the previous calculation.
+            """,
+        )
+        spec.input(
+            'relax.algo',
+            valid_type=get_data_class('core.str'),
+            default=lambda: get_data_node('core.str', 'cg'),
+            help="""
             The algorithm to use during relaxation.
-            """)
-        spec.input('relax.energy_cutoff',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help="""
+            """,
+        )
+        spec.input(
+            'relax.energy_cutoff',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
             case it stops when the total energy between two ionic steps is less than the
             supplied value.
-            """)
-        spec.input('relax.force_cutoff',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help="""
+            """,
+        )
+        spec.input(
+            'relax.force_cutoff',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
             case it stops when all forces are smaller than than the
             supplied value.
-            """)
-        spec.input('relax.steps',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 60),
-                   help="""
-                   The number of relaxation steps to perform (updates to the atomic positions,
+            """,
+        )
+        spec.input(
+            'relax.steps',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 60),
+            help="""
+            The number of relaxation steps to perform (updates to the atomic positions,
             unit cell size or shape).
-                   """)
-        spec.input('relax.positions',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', True),
-                   help="""
-                   If True, perform relaxation of the atomic positions.
-                   """)
-        spec.input('relax.shape',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, perform relaxation of the unit cell shape.
-                   """)
-        spec.input('relax.volume',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, perform relaxation of the unit cell volume..
-                   """)
-        spec.input('relax.convergence_on',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, test convergence based on selected criterias set.
-                   """)
-        spec.input('relax.convergence_absolute',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, test convergence based on absolute differences.
-                   """)
-        spec.input('relax.convergence_max_iterations',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 5),
-                   help="""
-                   The number of iterations to perform if the convergence criteria is not met.
-                   """)
-        spec.input('relax.convergence_volume',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.01),
-                   help="""
-                   The cutoff value for the convergence check on volume. If ``convergence_absolute``
-                   is True in AA, otherwise in relative.
-                   """)
-        spec.input('relax.convergence_positions',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.01),
-                   help="""
-                   The cutoff value for the convergence check on positions. If ``convergence_absolute``
-                   is True in AA, otherwise in relative difference.
-                   """)
-        spec.input('relax.convergence_shape_lengths',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.1),
-                   help="""
-                   The cutoff value for the convergence check on the lengths of the unit cell
-                   vectors. If ``convergence_absolute``
-                   is True in AA, otherwise in relative difference.
-                   """)
-        spec.input('relax.convergence_shape_angles',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.1),
-                   help="""
-                   The cutoff value for the convergence check on the angles of the unit cell.
-                   If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
-                   """)
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(300,
-                       'ERROR_MISSING_REQUIRED_OUTPUT',
-                       message='the called workchain does not contain the necessary relaxed output structure')
-        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the relax workchain')
-        spec.exit_code(502, 'ERROR_OVERRIDE_PARAMETERS', message='there was an error overriding the parameters')
+            """,
+        )
+        spec.input(
+            'relax.positions',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+            help="""If True, perform relaxation of the atomic positions.""",
+        )
+        spec.input(
+            'relax.shape',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""If True, perform relaxation of the unit cell shape.""",
+        )
+        spec.input(
+            'relax.volume',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""If True, perform relaxation of the unit cell volume..""",
+        )
+        spec.input(
+            'relax.convergence_on',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, test convergence based on selected criterias set.
+            """,
+        )
+        spec.input(
+            'relax.convergence_absolute',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""If True, test convergence based on absolute differences.""",
+        )
+        spec.input(
+            'relax.convergence_max_iterations',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 5),
+            help="""
+            The number of iterations to perform if the convergence criteria is not met.
+            """,
+        )
+        spec.input(
+            'relax.convergence_volume',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.01),
+            help="""
+            The cutoff value for the convergence check on volume. If ``convergence_absolute``
+            is True in AA, otherwise in relative.
+            """,
+        )
+        spec.input(
+            'relax.convergence_positions',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.01),
+            help="""
+            The cutoff value for the convergence check on positions. If ``convergence_absolute``
+            is True in AA, otherwise in relative difference.
+            """,
+        )
+        spec.input(
+            'relax.convergence_shape_lengths',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.1),
+            help="""
+            The cutoff value for the convergence check on the lengths of the unit cell
+            vectors. If ``convergence_absolute``
+            is True in AA, otherwise in relative difference.
+            """,
+        )
+        spec.input(
+            'relax.convergence_shape_angles',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.1),
+            help="""
+            The cutoff value for the convergence check on the angles of the unit cell.
+            If ``convergence_absolute`` is True in degrees, otherwise in relative difference.
+            """,
+        )
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            300,
+            'ERROR_MISSING_REQUIRED_OUTPUT',
+            message='the called workchain does not contain the necessary relaxed output structure',
+        )
+        spec.exit_code(
+            420,
+            'ERROR_NO_CALLED_WORKCHAIN',
+            message='no called workchain detected',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_UNKNOWN',
+            message='unknown error detected in the relax workchain',
+        )
+        spec.exit_code(
+            502,
+            'ERROR_OVERRIDE_PARAMETERS',
+            message='there was an error overriding the parameters',
+        )
         spec.outline(
             cls.initialize,
             if_(cls.perform_relaxation)(
@@ -179,7 +234,7 @@ class RelaxWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('relax.structure', valid_type=get_data_class('structure'), required=False)
+        spec.output('relax.structure', valid_type=get_data_class('core.structure'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -355,7 +410,7 @@ class RelaxWorkChain(WorkChain):
         # we have to query and find the exact input structure of the calculation that generated the output
         # structure and use that for comparison
         query = QueryBuilder()
-        query.append(StructureData, filters={'id': workchain.outputs.structure.id}, tag='workchain-out')
+        query.append(StructureData, filters={'id': workchain.outputs.structure.pk}, tag='workchain-out')
         query.append(CalcJobNode, with_outgoing='workchain-out', tag='calcjob')
         query.append(StructureData, with_outgoing='calcjob')
         input_structure = query.one()[0]

@@ -56,7 +56,7 @@ class IncarParser(BaseFileParser):
 
         """
 
-        if isinstance(data, get_data_class('dict')):
+        if isinstance(data, get_data_class('core.dict')):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a Dict.')

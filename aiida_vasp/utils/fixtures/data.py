@@ -66,7 +66,7 @@ def localhost_dir(tmp_path_factory):
 def localhost(fresh_aiida_env, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
-        computer = Computer.objects.get(label='localhost')
+        computer = Computer.collection.get(label='localhost')
     except NotExistent:
         computer = Computer(label='localhost',
                             hostname='localhost',
@@ -79,14 +79,14 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    incar_data = get_data_class('core.dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_data
 
 
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('dict')(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
+    incar_data = get_data_class('core.dict')(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
@@ -119,8 +119,8 @@ def duplicate_potcar_data(potcar_node):
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.add_file(potcar_file)
-        file_node.set_attribute('sha512', 'abcd')
-        file_node.set_attribute('full_name', potcar_node.full_name)
+        file_node.base.attributes.set('sha512', 'abcd')
+        file_node.base.attributes.set('full_name', potcar_node.full_name)
         file_node.store()
     data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
     return data_node
@@ -160,7 +160,7 @@ def legacy_potcar_family(potcar_family):
 
     # Override the _type_string class property which is supposed to be loaded from the entrypoint.
     LegacyPotcarGroup._type_string = OLD_POTCAR_FAMILY_TYPE
-    new_group = PotcarGroup.objects.get(label=potcar_family)
+    new_group = PotcarGroup.collection.get(label=potcar_family)
     old_group = LegacyPotcarGroup(label=potcar_family + '_migrate_test')
     old_group.store()
 
@@ -184,11 +184,11 @@ def vasp_structure(request, fresh_aiida_env):
     from aiida.plugins import DataFactory
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
-        structure = DataFactory('cif').get_or_create(cif_path)[0]
+        structure = DataFactory('core.cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
         larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
         alat = 6.058
-        structure = DataFactory('structure')(cell=larray * alat)
+        structure = DataFactory('core.structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
         structure.append_atom(position=[.25, .25, .25], symbols='As')
         structure.append_atom(position=[.25, .33, .34], symbols='As')
@@ -198,13 +198,13 @@ def vasp_structure(request, fresh_aiida_env):
     elif request.param == 'str-Al':
         larray = numpy.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         alat = 4.04
-        structure = DataFactory('structure')(cell=larray * alat)
+        structure = DataFactory('core.structure')(cell=larray * alat)
         structure.append_atom(position=numpy.array([0, 0, 0]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
         structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
     elif request.param == 'str-InAs':
-        structure_cls = DataFactory('structure')
+        structure_cls = DataFactory('core.structure')
         structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * 6.058)
         structure.append_atom(position=(0, 0, 0), symbols='In', name='Hamburger')
         structure.append_atom(position=(0.25, 0.25, 0.25), symbols='As', name='Pizza')
@@ -215,9 +215,9 @@ def vasp_structure(request, fresh_aiida_env):
 def vasp_structure_poscar(vasp_structure):
     """Fixture: Well formed POSCAR contents."""
     aiida_structure = vasp_structure
-    if isinstance(vasp_structure, get_data_class('cif')):
+    if isinstance(vasp_structure, get_data_class('core.cif')):
         ase_structure = vasp_structure.get_ase()
-        aiida_structure = get_data_node('structure', ase=ase_structure)
+        aiida_structure = get_data_node('core.structure', ase=ase_structure)
     writer = PoscarParser(data=aiida_structure)
     return writer
 
@@ -227,11 +227,11 @@ def vasp_kpoints(request, fresh_aiida_env):
     """Fixture: (kpoints object, resulting KPOINTS)."""
     from aiida.plugins import DataFactory
     if request.param == 'mesh':
-        kpoints = DataFactory('array.kpoints')()
+        kpoints = DataFactory('core.array.kpoints')()
         kpoints.set_kpoints_mesh([2, 2, 2])
         ref_kpoints = _ref_kp_mesh()
     elif request.param == 'list':
-        kpoints = DataFactory('array.kpoints')()
+        kpoints = DataFactory('core.array.kpoints')()
         kpoints.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
         ref_kpoints = _ref_kp_list()
     return kpoints, ref_kpoints
@@ -252,11 +252,11 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
         inputs.parameters = parameters
@@ -293,11 +293,11 @@ def vasp2w90_inputs(
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -329,12 +329,12 @@ def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
             parameters['images'] = 3
-            parameters = get_data_class('dict')(dict=parameters)
+            parameters = get_data_class('core.dict')(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -431,7 +431,7 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
             aiidapath = Path(os.environ.get('AIIDA_PATH', os.environ.get('HOME'))) / '/.aiida'
         code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
         code.store()
-        code.set_extra('is_mock_code', True)
+        code.base.extras.set('is_mock_code', True)
 
     return code
 
@@ -481,7 +481,7 @@ def ref_win():
 def ref_retrieved():
     """Fixture: retrieved directory from an NSCF vasp run."""
     from aiida.plugins import DataFactory
-    retrieved = DataFactory('folder')()
+    retrieved = DataFactory('core.folder')()
     retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
 

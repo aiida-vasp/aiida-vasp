@@ -216,9 +216,9 @@ def test_migrate_command(fresh_aiida_env, potcar_family, legacy_potcar_family):
     """Test the migration command"""
 
     legacy_name, legacy_group_class = legacy_potcar_family
-    legacy_group = legacy_group_class.objects.get(label=legacy_name)
+    legacy_group = legacy_group_class.collection.get(label=legacy_name)
     run_cmd('migratefamilies')
-    migrated = PotcarGroup.objects.get(label=legacy_name)
+    migrated = PotcarGroup.collection.get(label=legacy_name)
 
     uuids_original = {node.uuid for node in legacy_group.nodes}
     uuids_migrated = {node.uuid for node in migrated.nodes}

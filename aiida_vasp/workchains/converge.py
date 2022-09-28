@@ -31,179 +31,227 @@ class ConvergeWorkChain(WorkChain):
     def define(cls, spec):
         super(ConvergeWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings', 'relax'))
-        spec.input('parameters', valid_type=get_data_class('dict'))
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input_namespace('relax', required=False, dynamic=True)
-        spec.input('converge.pwcutoff',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   help="""
-                   The plane-wave cutoff to be used during convergence tests in electron volts.
-                   """)
-        spec.input('converge.kgrid',
-                   valid_type=get_data_class('array'),
-                   required=False,
-                   help="""
-                   The k-point grid to be used during convergence tests.
-                   """)
-        spec.input('converge.pwcutoff_start',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 200.0),
-                   help="""
-                   The plane-wave cutoff in electron volts.
-                   """)
-        spec.input('converge.pwcutoff_step',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 50.0),
-                   help="""
-                   The plane-wave cutoff step (increment) in electron volts.
-                   """)
-        spec.input('converge.pwcutoff_samples',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 10),
-                   help="""
-                   The number of plane-wave cutoff samples.
-                   """)
-        spec.input('converge.k_dense',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.07),
-                   help="""
-                   The target k-point stepping at the densest grid in inverse AA.
-                   """)
-        spec.input('converge.k_course',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.35),
-                   help="""
-                   The target k-point stepping at the coarsest grid in inverse AA.
-                   """)
-        spec.input('converge.k_spacing',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.1),
-                   help="""
-                   The default k-point spacing in inverse AA.
-                   """)
-        spec.input('converge.k_samples',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 10),
-                   help="""
-                   The number of k-point samples.
-                   """)
-        spec.input('converge.cutoff_type',
-                   valid_type=get_data_class('str'),
-                   required=False,
-                   default=lambda: get_data_node('str', 'energy'),
-                   help="""
-                   The cutoff_type to check convergence against. Currently the following
-                   options are accepted:
-                   * energy
-                   * forces
-                   * gap
-                   * vbm (not yet currently supported)
-                   """)
-        spec.input('converge.cutoff_value',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.01),
-                   help="""
-                   The cutoff value to be used. When the difference between two convergence
-                   calculations are within this value for ``cutoff_type``, then it is
-                   considered converged.
-                   """)
-        spec.input('converge.cutoff_value_r',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.01),
-                   help="""
-                   The relative cutoff value to be used. When the difference between two convergence
-                   calculations are within this value for ``cutoff_type``, then it is
-                   considered converged. However, in this case the cutoff value is the difference
-                   between `cutoff_type` for the input structure and an atomic displacement or a
-                   compression of the unitcell.
-                   """)
-        spec.input('converge.compress',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, a convergence test of the compressed structure is also
-                   performed. The difference of the ``cutoff_type`` values for each
-                   calculations are evaluated and when the difference between these are
-                   less than ``cutoff_value_r``, the calculation is considered converged.
-                   The largest planw-wave cutoff and densest k-point grid are used.
-                   """)
-        spec.input('converge.displace',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, a convergence test of the displaced structure is also
-                   performed. The difference of the ``cutoff_type`` values for each
-                   calculations are evaluated and when the difference between these are
-                   less than ``cutoff_value_r``, the calculation is considered converged.
-                   The largest plane-wave cutoff and densest k-point grid are used.
-                   """)
-        spec.input('converge.displacement_vector',
-                   valid_type=get_data_class('array'),
-                   required=False,
-                   default=lambda: default_array('array', np.array([1.0, 1.0, 1.0])),
-                   help="""
-                   The displacement unit vector for the displacement test. Sets the direction
-                   of displacement.
-                   """)
-        spec.input('converge.displacement_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.2),
-                   help="""
-                   The displacement distance (L2 norm) for the displacement test in AA. Follows
-                   the direction of ``displacement_vector``.
-                   """)
-        spec.input('converge.displacement_atom',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 1),
-                   help="""
-                   Which atom to displace? Index starts from 1 and follows the sequence for the
-                   sites in the Aiida ``structure`` object.
-                   """)
-        spec.input('converge.volume_change',
-                   valid_type=get_data_class('array'),
-                   required=False,
-                   default=lambda: default_array('array', np.array([1.05, 1.05, 1.05])),
-                   help="""
-                   The volume change in direct coordinates for each lattice vector.
-                   """)
-        spec.input('converge.relax',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, we relax for each convergence test.
-                   """)
-        spec.input('converge.total_energy_type',
-                   valid_type=get_data_class('str'),
-                   required=False,
-                   default=lambda: get_data_node('str', 'energy_extrapolated'),
-                   help="""
-                   The energy type that is used when ``cutoff_type`` is set to `energy`.
-                   Consult the options available in the parser for the current version.
-                   """)
-        spec.input('converge.testing',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-                   If True, we assume testing to be performed (e.g. dummy calculations).
-                   """)
+        spec.input(
+            'parameters',
+            valid_type=get_data_class('core.dict'),
+        )
+        spec.input(
+            'structure',
+            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+        )
+        spec.input(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input_namespace(
+            'relax',
+            required=False,
+            dynamic=True,
+        )
+        spec.input(
+            'converge.pwcutoff',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            help="""
+            The plane-wave cutoff to be used during convergence tests in electron volts.
+            """,
+        )
+        spec.input(
+            'converge.kgrid',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help="""The k-point grid to be used during convergence tests.""",
+        )
+        spec.input(
+            'converge.pwcutoff_start',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 200.0),
+            help="""The plane-wave cutoff in electron volts.""",
+        )
+        spec.input(
+            'converge.pwcutoff_step',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 50.0),
+            help="""
+            The plane-wave cutoff step (increment) in electron volts.
+            """,
+        )
+        spec.input(
+            'converge.pwcutoff_samples',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 10),
+            help="""The number of plane-wave cutoff samples.""",
+        )
+        spec.input(
+            'converge.k_dense',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.07),
+            help="""
+            The target k-point stepping at the densest grid in inverse AA.
+            """,
+        )
+        spec.input(
+            'converge.k_course',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.35),
+            help="""
+            The target k-point stepping at the coarsest grid in inverse AA.
+            """,
+        )
+        spec.input(
+            'converge.k_spacing',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.1),
+            help="""The default k-point spacing in inverse AA.""",
+        )
+        spec.input(
+            'converge.k_samples',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 10),
+            help="""The number of k-point samples.""",
+        )
+        spec.input(
+            'converge.cutoff_type',
+            valid_type=get_data_class('core.str'),
+            required=False,
+            default=lambda: get_data_node('core.str', 'energy'),
+            help="""
+            The cutoff_type to check convergence against. Currently the following
+            options are accepted:
+                * energy
+                * forces
+                * gap
+                * vbm (not yet currently supported)
+            """,
+        )
+        spec.input(
+            'converge.cutoff_value',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.01),
+            help="""
+            The cutoff value to be used. When the difference between two convergence
+            calculations are within this value for ``cutoff_type``, then it is
+            considered converged.
+            """,
+        )
+        spec.input(
+            'converge.cutoff_value_r',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.01),
+            help="""
+            The relative cutoff value to be used. When the difference between two convergence
+            calculations are within this value for ``cutoff_type``, then it is
+            considered converged. However, in this case the cutoff value is the difference
+            between `cutoff_type` for the input structure and an atomic displacement or a
+            compression of the unitcell.
+            """,
+        )
+        spec.input(
+            'converge.compress',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, a convergence test of the compressed structure is also
+            performed. The difference of the ``cutoff_type`` values for each
+            calculations are evaluated and when the difference between these are
+            less than ``cutoff_value_r``, the calculation is considered converged.
+            The largest plane-wave cutoff and densest k-point grid are used.
+            """,
+        )
+        spec.input(
+            'converge.displace',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, a convergence test of the displaced structure is also
+            performed. The difference of the ``cutoff_type`` values for each
+            calculations are evaluated and when the difference between these are
+            less than ``cutoff_value_r``, the calculation is considered converged.
+            The largest plane-wave cutoff and densest k-point grid are used.
+            """,
+        )
+        spec.input(
+            'converge.displacement_vector',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            default=lambda: default_array('array', np.array([1.0, 1.0, 1.0])),
+            help="""
+            The displacement unit vector for the displacement test. Sets the direction
+            of displacement.
+            """,
+        )
+        spec.input(
+            'converge.displacement_distance',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.2),
+            help="""
+            The displacement distance (L2 norm) for the displacement test in AA. Follows
+            the direction of ``displacement_vector``.
+            """,
+        )
+        spec.input(
+            'converge.displacement_atom',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 1),
+            help="""
+            Which atom to displace? Index starts from 1 and follows the sequence for the
+            sites in the Aiida ``structure`` object.
+            """,
+        )
+        spec.input(
+            'converge.volume_change',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            default=lambda: default_array('array', np.array([1.05, 1.05, 1.05])),
+            help="""
+            The volume change in direct coordinates for each lattice vector.
+            """,
+        )
+        spec.input(
+            'converge.relax',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""If True, we relax for each convergence test.""",
+        )
+        spec.input(
+            'converge.total_energy_type',
+            valid_type=get_data_class('core.str'),
+            required=False,
+            default=lambda: get_data_node('core.str', 'energy_extrapolated'),
+            help="""
+            The energy type that is used when ``cutoff_type`` is set to `energy`.
+            Consult the options available in the parser for the current version.
+            """,
+        )
+        spec.input(
+            'converge.testing',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, we assume testing to be performed (e.g. dummy calculations).
+            """,
+        )
 
         spec.outline(
             cls.initialize,
@@ -266,12 +314,36 @@ class ConvergeWorkChain(WorkChain):
 
         spec.expose_outputs(cls._next_workchain)
         spec.outputs.dynamic = True
-        spec.output('converge.data', valid_type=get_data_class('dict'), required=False)
-        spec.output('converge.pwcutoff_recommended', valid_type=get_data_class('float'), required=False)
-        spec.output('converge.kpoints_recommended', valid_type=get_data_class('array.kpoints'), required=False)
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the converge workchain')
-        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
+        spec.output(
+            'converge.data',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.output(
+            'converge.pwcutoff_recommended',
+            valid_type=get_data_class('core.float'),
+            required=False,
+        )
+        spec.output(
+            'converge.kpoints_recommended',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+        )
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_UNKNOWN',
+            message='unknown error detected in the converge workchain',
+        )
+        spec.exit_code(
+            420,
+            'ERROR_NO_CALLED_WORKCHAIN',
+            message='no called workchain detected',
+        )
 
     def initialize(self):
         """Initialize."""
@@ -427,7 +499,7 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.structure = self.inputs.structure
         # Also create a dummy KpointsData in order to calculate the reciprocal
         # unit cell
-        kpoints = get_data_class('array.kpoints')()
+        kpoints = get_data_class('core.array.kpoints')()
         kpoints.set_kpoints_mesh([1, 1, 1])
         kpoints.set_cell_from_structure(self.ctx.converge.structure)
         self.ctx.converge.kpoints = kpoints
@@ -563,7 +635,7 @@ class ConvergeWorkChain(WorkChain):
         kgrid = fetch_k_grid(rec_cell, k_spacing)
         converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('array.kpoints')()
+        kpoints = get_data_class('core.array.kpoints')()
         kpoints.set_kpoints_mesh(kgrid)
         kpoints.set_cell_from_structure(converge.structure)
         converge.kpoints = kpoints
@@ -591,7 +663,7 @@ class ConvergeWorkChain(WorkChain):
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
-            kpoints = get_data_class('array.kpoints')()
+            kpoints = get_data_class('core.array.kpoints')()
             kpoints.set_kpoints_mesh(self.ctx.converge.settings.kgrid)
             kpoints.set_cell_from_structure(self.ctx.inputs.structure)
             self.ctx.inputs.kpoints = kpoints
@@ -839,7 +911,7 @@ class ConvergeWorkChain(WorkChain):
             kgrid = [element + 1 for element in kgrid]
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('array.kpoints')()
+        kpoints = get_data_class('core.array.kpoints')()
         kpoints.set_kpoints_mesh(kgrid)
         kpoints.set_cell_from_structure(self.ctx.converge.structure)
         self.ctx.converge.kpoints = kpoints
@@ -1279,7 +1351,7 @@ class ConvergeWorkChain(WorkChain):
                 convergence_dict[key] = value
 
         self.report(convergence_dict)
-        convergence_context = get_data_node('dict', dict=convergence_dict)
+        convergence_context = get_data_node('core.dict', dict=convergence_dict)
         convergence = store_conv_data(convergence_context)
         if self._verbose:
             self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'converge.data'))
@@ -1438,7 +1510,7 @@ class ConvergeWorkChain(WorkChain):
         # Apply compression and tension
         comp_structure = compressed_structure(self.ctx.converge.structure, volume_change)
         # Make sure we also reset the reciprocal cell
-        kpoints = get_data_class('array.kpoints')()
+        kpoints = get_data_class('core.array.kpoints')()
         kpoints.set_kpoints_mesh([1, 1, 1])
         kpoints.set_cell_from_structure(comp_structure)
         self.ctx.converge.kpoints = kpoints
@@ -1456,7 +1528,7 @@ class ConvergeWorkChain(WorkChain):
 
 def default_array(name, array):
     """Used to set ArrayData for spec.input."""
-    array_cls = get_data_node('array')
+    array_cls = get_data_node('core.array')
     array_cls.set_array(name, array)
 
     return array_cls
@@ -1467,7 +1539,7 @@ def store_conv_pwcutoff(convergence_context):
     """Store the recommended energy from the convergence."""
     converge = convergence_context.get_dict()
     try:
-        return get_data_class('float')(converge['pwcutoff_recommended'])
+        return get_data_class('core.float')(converge['pwcutoff_recommended'])
     except (KeyError, ValueError):
         return None
 
@@ -1477,7 +1549,7 @@ def store_conv_kgrid(convergence_context):
     """Store the recommended kpoints from the convergence."""
     converge = convergence_context.get_dict()
     try:
-        kpoints_recommended = get_data_class('array.kpoints')()
+        kpoints_recommended = get_data_class('core.array.kpoints')()
         kpoints_recommended.set_kpoints_mesh(converge['kgrid_recommended'])
         return kpoints_recommended
     except (KeyError, ValueError):
@@ -1487,7 +1559,7 @@ def store_conv_kgrid(convergence_context):
 @calcfunction
 def store_conv_data(convergence_context):
     """Store convergence data in the array."""
-    convergence = get_data_class('dict')()
+    convergence = get_data_class('core.dict')()
     converge = convergence_context.get_dict()
     # Store regular conversion data
     try:

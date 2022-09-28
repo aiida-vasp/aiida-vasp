@@ -38,19 +38,21 @@ def immigrant_wc_builder_deprecated(fresh_aiida_env, potcar_family, phonondb_run
 
     builder = workchain.get_builder()
     builder.code = mock_vasp
-    builder.folder_path = get_data_node('str', phonondb_run)
-    builder.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    builder.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    builder.options = get_data_node('dict',
-                                    dict={
-                                        'withmpi': False,
-                                        'queue_name': 'None',
-                                        'resources': {
-                                            'num_machines': 1,
-                                            'num_mpiprocs_per_machine': 1
-                                        },
-                                        'max_wallclock_seconds': 3600
-                                    })
+    builder.folder_path = get_data_node('core.str', phonondb_run)
+    builder.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    builder.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
+    builder.options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        },
+    )
     return builder
 
 
@@ -83,18 +85,20 @@ def immigrant_wc_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost
     builder = workchain.get_builder()
     builder.code = mock_vasp
     builder.remote_workdir = str(phonondb_run)
-    builder.potential_family = get_data_node('str', POTCAR_FAMILY_NAME)
-    builder.potential_mapping = get_data_node('dict', dict=POTCAR_MAP)
-    builder.options = get_data_node('dict',
-                                    dict={
-                                        'withmpi': False,
-                                        'queue_name': 'None',
-                                        'resources': {
-                                            'num_machines': 1,
-                                            'num_mpiprocs_per_machine': 1
-                                        },
-                                        'max_wallclock_seconds': 3600
-                                    })
+    builder.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
+    builder.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
+    builder.options = get_data_node(
+        'core.dict',
+        dict={
+            'withmpi': False,
+            'queue_name': 'None',
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 3600
+        },
+    )
     return builder
 
 
@@ -132,8 +136,8 @@ def test_vasp_immigrant_wc_additional_deprecated(immigrant_wc_builder_deprecated
 
 def _test_vasp_immigrant_wc_additional(immigrant_wc_builder):
     """VaspImmigrantWorkChain test"""
-    immigrant_wc_builder.use_chgcar = get_data_node('bool', True)
-    immigrant_wc_builder.use_wavecar = get_data_node('bool', True)
+    immigrant_wc_builder.use_chgcar = get_data_node('core.bool', True)
+    immigrant_wc_builder.use_wavecar = get_data_node('core.bool', True)
     results, node = run.get_node(immigrant_wc_builder)
 
     assert node.exit_status == 0
@@ -141,6 +145,6 @@ def _test_vasp_immigrant_wc_additional(immigrant_wc_builder):
     assert 'misc' in results
     assert 'remote_folder' in results
 
-    calc_node = node.get_outgoing(link_label_filter='iteration_01').first().node
+    calc_node = node.base.links.get_outgoing(link_label_filter='iteration_01').first().node
     assert 'charge_density' in calc_node.inputs
     assert 'wavefunctions' in calc_node.inputs

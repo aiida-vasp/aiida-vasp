@@ -16,6 +16,7 @@
 .coverage
 .tox
 .pytest_cache
+*.vscode
 
 doc/build
 build/

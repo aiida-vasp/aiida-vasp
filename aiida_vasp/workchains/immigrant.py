@@ -25,49 +25,93 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.input('code', valid_type=Code, required=True)
-        spec.input('folder_path', valid_type=get_data_class('str'), required=False, help='Deprecated.')
-        spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('options', valid_type=get_data_class('dict'), required=False)
-        spec.input('potential_family', valid_type=get_data_class('str'), required=False)
-        spec.input('potential_mapping', valid_type=get_data_class('dict'), required=False)
-        spec.input('use_chgcar',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+        spec.input(
+            'code',
+            valid_type=Code,
+            required=True,
+        )
+        spec.input(
+            'folder_path',
+            valid_type=get_data_class('core.str'),
+            required=False,
+            help='Deprecated.',
+        )
+        spec.input(
+            'remote_workdir',
+            valid_type=str,
+            required=False,
+            non_db=True,
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'options',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'potential_family',
+            valid_type=get_data_class('core.str'),
+            required=False,
+        )
+        spec.input(
+            'potential_mapping',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'use_chgcar',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             If True, WavefunData (of WAVECAR) is attached.
-            """)
-        spec.input('use_wavecar',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'use_wavecar',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             If True, WavefunData (of WAVECAR) is attached.
-            """)
-        spec.input('max_iterations',
-                   valid_type=get_data_class('int'),
-                   required=False,
-                   default=lambda: get_data_node('int', 1),
-                   help="""
+            """,
+        )
+        spec.input(
+            'max_iterations',
+            valid_type=get_data_class('core.int'),
+            required=False,
+            default=lambda: get_data_node('core.int', 1),
+            help="""
             The maximum number of iterations to perform.
-            """)
-        spec.input('clean_workdir',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
-            If True, clean the work dir upon the completion of a successfull calculation.
-            """)
-        spec.input('verbose',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'clean_workdir',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
+            If True, clean the work dir upon the completion of a successful calculation.
+            """,
+        )
+        spec.input(
+            'verbose',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             If True, enable more detailed output during workchain execution.
-            """)
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+            """,
+        )
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
         spec.outline(
             cls.setup,
             cls.init_inputs,

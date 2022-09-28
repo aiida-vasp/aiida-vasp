@@ -10,7 +10,7 @@ from aiida_vasp.utils.fixtures import *  # pylint: disable=wildcard-import, unus
 
 
 def test_generate_base_calc(base_calc):
-    """Test that it is possible to start the generatione of an instance of the base calculation class."""
+    """Test that it is possible to start the generation of an instance of the base calculation class."""
 
     from aiida_vasp.calcs.base import VaspCalcBase
 

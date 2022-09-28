@@ -68,7 +68,7 @@ class PoscarParser(BaseFileParser):
 
         """
 
-        if isinstance(data, get_data_class('structure')):
+        if isinstance(data, get_data_class('core.structure')):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a StructureData.')

@@ -31,7 +31,7 @@ def fresh_aiida_env(aiida_profile, aiida_caplog):
         print('Using existing profile: {}'.format(aiida_profile._manager._profile.name))
     yield aiida_profile
     print_and_export_failed_mock()
-    aiida_profile.reset_db()
+    aiida_profile.clear_profile()
 
 
 def print_and_export_failed_mock():
@@ -40,18 +40,22 @@ def print_and_export_failed_mock():
     """
 
     query = QueryBuilder()
-    query.append(CalculationNode,
-                 filters={'or': [
-                     {
-                         'attributes.process_state': 'excepted'
-                     },
-                     {
-                         'attributes.exit_status': {
-                             '!==': 0
-                         }
-                     },
-                 ]},
-                 project=['*'])
+    query.append(
+        CalculationNode,
+        filters={
+            'or': [
+                {
+                    'attributes.process_state': 'excepted'
+                },
+                {
+                    'attributes.exit_status': {
+                        '!==': 0
+                    }
+                },
+            ],
+        },
+        project=['*'],
+    )
     query.append(Code, with_outgoing=CalculationNode, filters={'extras.is_mock_code': True})
     if query.count() == 0:
         return
@@ -71,7 +75,7 @@ def print_and_export_failed_mock():
         print('######## Information for the calcjob ########')
         print(get_node_info(calcjob))
         print(get_calcjob_report(calcjob))
-        names = calcjob.outputs.retrieved.list_object_names()
+        names = calcjob.outputs.retrieved.base.repository.list_object_names()
         stdout = None
         for option in ['stdout', 'vasp_output']:
             if option in names:
@@ -79,7 +83,7 @@ def print_and_export_failed_mock():
                 break
         if stdout is not None:
             print('######## STDOUT from the calcjob ########')
-            print(calcjob.outputs.retrieved.get_object_content(stdout))
+            print(calcjob.outputs.retrieved.base.repository.get_object_content(stdout))
         else:
             print('ERROR: No STDOUT found for the calculation')
 

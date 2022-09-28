@@ -25,59 +25,94 @@ class BandsWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
-        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings', 'kpoints'))
-        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
-        spec.input('settings', valid_type=get_data_class('dict'), required=False)
-        spec.input('smearing.gaussian', valid_type=get_data_class('bool'), required=False, default=lambda: get_data_node('bool', True))
-        spec.input('smearing.sigma', valid_type=get_data_class('float'), required=False, default=lambda: get_data_node('float', 0.05))
-        spec.input('restart_folder',
-                   valid_type=get_data_class('remote'),
-                   required=True,
-                   help="""
+        spec.expose_inputs(
+            cls._next_workchain,
+            exclude=('parameters', 'settings', 'kpoints'),
+        )
+        spec.input(
+            'parameters',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+        )
+        spec.input(
+            'smearing.gaussian',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+        )
+        spec.input(
+            'smearing.sigma',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.05),
+        )
+        spec.input(
+            'restart_folder',
+            valid_type=get_data_class('core.remote'),
+            required=True,
+            help="""
             The folder to restart in, which contains the outputs from the prerun to extract the charge density.
-            """)
-        spec.input('bands.kpoints_distance',
-                   valid_type=get_data_class('float'),
-                   required=False,
-                   default=lambda: get_data_node('float', 0.05),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.kpoints_distance',
+            valid_type=get_data_class('core.float'),
+            required=False,
+            default=lambda: get_data_node('core.float', 0.05),
+            help="""
             The distance between each k-point along each high-symmetry line.
-            """)
-        spec.input('bands.decompose_bands',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.decompose_bands',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             Decompose the band structure on each atom.
-            """)
-        spec.input('bands.decompose_wave',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.decompose_wave',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             Decompose the wave function.
-            """)
-        spec.input('bands.lm',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.lm',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             Further decompose the decomposition into l- and m-states.
-            """)
-        spec.input('bands.phase',
-                   valid_type=get_data_class('bool'),
-                   required=False,
-                   default=lambda: get_data_node('bool', False),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.phase',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', False),
+            help="""
             Further decompose the l- and m-state decomposition into phases.
-            """)
-        spec.input('bands.wigner_seitz_radius',
-                   valid_type=get_data_class('list'),
-                   required=False,
-                   default=lambda: get_data_node('list', list=[False]),
-                   help="""
+            """,
+        )
+        spec.input(
+            'bands.wigner_seitz_radius',
+            valid_type=get_data_class('core.list'),
+            required=False,
+            default=lambda: get_data_node('core.list', list=[False]),
+            help="""
             The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilized.
-            """)
+            """,
+        )
         spec.outline(
             cls.initialize,
             cls.get_kpoints_path,
@@ -89,11 +124,30 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('bands', valid_type=get_data_class('array.bands'))
-        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
-        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
-        spec.exit_code(2001, 'ERROR_BANDSDATA_NOT_FOUND', message='BandsData not found in exposed_ouputs')
+        spec.output(
+            'bands',
+            valid_type=get_data_class('core.array.bands'),
+        )
+        spec.exit_code(
+            0,
+            'NO_ERROR',
+            message='the sun is shining',
+        )
+        spec.exit_code(
+            420,
+            'ERROR_NO_CALLED_WORKCHAIN',
+            message='no called workchain detected',
+        )
+        spec.exit_code(
+            500,
+            'ERROR_UNKNOWN',
+            message='unknown error detected in the bands workchain',
+        )
+        spec.exit_code(
+            2001,
+            'ERROR_BANDSDATA_NOT_FOUND',
+            message='BandsData not found in exposed_outputs',
+        )
 
     def initialize(self):
         """Initialize."""
@@ -126,7 +180,7 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
+        self.ctx.seekpath_parameters = get_data_node('core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value

@@ -70,90 +70,252 @@ class VaspCalculation(VaspCalcBase):
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
-        spec.input('parameters', valid_type=get_data_class('dict'), help='The VASP input parameters (INCAR).')
-        spec.input('dynamics',
-                   valid_type=get_data_class('dict'),
-                   help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
-                   required=False)
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')), help='The input structure (POSCAR).')
+        spec.input(
+            'parameters',
+            valid_type=get_data_class('core.dict'),
+            help='The VASP input parameters (INCAR).',
+        )
+        spec.input(
+            'dynamics',
+            valid_type=get_data_class('core.dict'),
+            help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
+            required=False,
+        )
+        spec.input(
+            'structure',
+            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            help='The input structure (POSCAR).',
+        )
 
         # Need namespace on this as it should also accept keys that are of `kind`. These are unknown
         # until execution.
-        spec.input_namespace('potential', valid_type=get_data_class('vasp.potcar'), help='The potentials (POTCAR).', dynamic=True)
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), help='The kpoints to use (KPOINTS).')
-        spec.input('charge_density', valid_type=get_data_class('vasp.chargedensity'), required=False, help='The charge density. (CHGCAR)')
-        spec.input('wavefunctions',
-                   valid_type=get_data_class('vasp.wavefun'),
-                   required=False,
-                   help='The wave function coefficients. (WAVECAR)')
-        spec.input('settings', valid_type=get_data_class('dict'), required=False, help='Additional parameters not related to VASP itself.')
-        spec.input('metadata.options.parser_name', default='vasp.vasp')
+        spec.input_namespace(
+            'potential',
+            valid_type=get_data_class('vasp.potcar'),
+            help='The potentials (POTCAR).',
+            dynamic=True,
+        )
+        spec.input(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            help='The kpoints to use (KPOINTS).',
+        )
+        spec.input(
+            'charge_density',
+            valid_type=get_data_class('vasp.chargedensity'),
+            required=False,
+            help='The charge density. (CHGCAR)',
+        )
+        spec.input(
+            'wavefunctions',
+            valid_type=get_data_class('vasp.wavefun'),
+            required=False,
+            help='The wave function coefficients. (WAVECAR)',
+        )
+        spec.input(
+            'settings',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+            help='Additional parameters not related to VASP itself.',
+        )
+        spec.input(
+            'metadata.options.parser_name',
+            default='vasp.vasp',
+        )
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically
-        spec.output('misc',
-                    valid_type=get_data_class('dict'),
-                    help='The output parameters containing smaller quantities that do not depend on system size.')
-        spec.output('structure', valid_type=get_data_class('structure'), required=False, help='The output structure.')
-        spec.output('kpoints', valid_type=get_data_class('array.kpoints'), required=False, help='The output k-points.')
-        spec.output('trajectory', valid_type=get_data_class('array.trajectory'), required=False, help='The output trajectory data.')
-        spec.output('chgcar',
-                    valid_type=get_data_class('vasp.chargedensity'),
-                    required=False,
-                    help='The output charge density CHGCAR file.')
-        spec.output('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False, help='The output plane wave coefficients file.')
-        spec.output('bands', valid_type=get_data_class('array.bands'), required=False, help='The output band structure.')
-        spec.output('forces', valid_type=get_data_class('array'), required=False, help='The output forces.')
-        spec.output('stress', valid_type=get_data_class('array'), required=False, help='The output stress.')
-        spec.output('dos', valid_type=get_data_class('array'), required=False, help='The output dos.')
-        spec.output('energies', valid_type=get_data_class('array'), required=False, help='The output total energies.')
-        spec.output('projectors', valid_type=get_data_class('array'), required=False, help='The output projectors of decomposition.')
-        spec.output('dielectrics', valid_type=get_data_class('array'), required=False, help='The output dielectric functions.')
-        spec.output('born_charges', valid_type=get_data_class('array'), required=False, help='The output Born effective charges.')
-        spec.output('hessian', valid_type=get_data_class('array'), required=False, help='The output Hessian matrix.')
-        spec.output('dynmat', valid_type=get_data_class('array'), required=False, help='The output dynamical matrix.')
-        spec.output('charge_density', valid_type=get_data_class('array'), required=False, help='The output charge density.')
-        spec.output('magnetization_density', valid_type=get_data_class('array'), required=False, help='The output magnetization density.')
-        spec.output('site_magnetization', valid_type=get_data_class('dict'), required=False, help='The output of the site magnetization')
+        spec.output(
+            'misc',
+            valid_type=get_data_class('core.dict'),
+            help='The output parameters containing smaller quantities that do not depend on system size.',
+        )
+        spec.output(
+            'structure',
+            valid_type=get_data_class('core.structure'),
+            required=False,
+            help='The output structure.',
+        )
+        spec.output(
+            'kpoints',
+            valid_type=get_data_class('core.array.kpoints'),
+            required=False,
+            help='The output k-points.',
+        )
+        spec.output(
+            'trajectory',
+            valid_type=get_data_class('core.array.trajectory'),
+            required=False,
+            help='The output trajectory data.',
+        )
+        spec.output(
+            'chgcar',
+            valid_type=get_data_class('vasp.chargedensity'),
+            required=False,
+            help='The output charge density CHGCAR file.',
+        )
+        spec.output(
+            'wavecar',
+            valid_type=get_data_class('vasp.wavefun'),
+            required=False,
+            help='The output plane wave coefficients file.',
+        )
+        spec.output(
+            'bands',
+            valid_type=get_data_class('core.array.bands'),
+            required=False,
+            help='The output band structure.',
+        )
+        spec.output(
+            'forces',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output forces.',
+        )
+        spec.output(
+            'stress',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output stress.',
+        )
+        spec.output(
+            'dos',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output dos.',
+        )
+        spec.output(
+            'energies',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output total energies.',
+        )
+        spec.output(
+            'projectors',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output projectors of decomposition.',
+        )
+        spec.output(
+            'dielectrics',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output dielectric functions.',
+        )
+        spec.output(
+            'born_charges',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output Born effective charges.',
+        )
+        spec.output(
+            'hessian',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output Hessian matrix.',
+        )
+        spec.output(
+            'dynmat',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output dynamical matrix.',
+        )
+        spec.output(
+            'charge_density',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output charge density.',
+        )
+        spec.output(
+            'magnetization_density',
+            valid_type=get_data_class('core.array'),
+            required=False,
+            help='The output magnetization density.',
+        )
+        spec.output(
+            'site_magnetization',
+            valid_type=get_data_class('core.dict'),
+            required=False,
+            help='The output of the site magnetization',
+        )
         spec.output_namespace('custom_outputs', dynamic=True)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
-        spec.exit_code(350,
-                       'ERROR_NO_RETRIEVED_FOLDER',
-                       message='the retrieved folder data node could not be accessed.',
-                       invalidates_cache=True)
-        spec.exit_code(351,
-                       'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
-                       message='the retrieved_temporary folder data node could not be accessed.',
-                       invalidates_cache=True)
-        spec.exit_code(352,
-                       'ERROR_CRITICAL_MISSING_OBJECT',
-                       message='an object that is marked by the parser as critical is missing.',
-                       invalidates_cache=True)
-        spec.exit_code(333,
-                       'ERROR_VASP_DID_NOT_EXECUTE',
-                       message='VASP did not produce any output and did likely not execute properly.',
-                       invalidates_cache=True)
+        spec.exit_code(
+            350,
+            'ERROR_NO_RETRIEVED_FOLDER',
+            message='the retrieved folder data node could not be accessed.',
+            invalidates_cache=True,
+        )
+        spec.exit_code(
+            351,
+            'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
+            message='the retrieved_temporary folder data node could not be accessed.',
+            invalidates_cache=True,
+        )
+        spec.exit_code(
+            352,
+            'ERROR_CRITICAL_MISSING_OBJECT',
+            message='an object that is marked by the parser as critical is missing.',
+            invalidates_cache=True,
+        )
+        spec.exit_code(
+            333,
+            'ERROR_VASP_DID_NOT_EXECUTE',
+            message='VASP did not produce any output and did likely not execute properly.',
+            invalidates_cache=True,
+        )
 
         # 700 series of the errors catches VASP execution related problems
-        spec.exit_code(700, 'ERROR_DID_NOT_FINISH', message='Calculation did not reach the end of execution.', invalidates_cache=True)
-        spec.exit_code(701, 'ERROR_ELECTRONIC_NOT_CONVERGED', message='The electronic structure is not converged.')
-        spec.exit_code(702, 'ERROR_IONIC_NOT_CONVERGED', message='The ionic relaxation is not converged.')
-        spec.exit_code(703, 'ERROR_VASP_CRITICAL_ERROR', message='VASP calculation encountered a critical error: {error_message}.')
+        spec.exit_code(
+            700,
+            'ERROR_DID_NOT_FINISH',
+            message='Calculation did not reach the end of execution.',
+            invalidates_cache=True,
+        )
+        spec.exit_code(
+            701,
+            'ERROR_ELECTRONIC_NOT_CONVERGED',
+            message='The electronic structure is not converged.',
+        )
+        spec.exit_code(
+            702,
+            'ERROR_IONIC_NOT_CONVERGED',
+            message='The ionic relaxation is not converged.',
+        )
+        spec.exit_code(
+            703,
+            'ERROR_VASP_CRITICAL_ERROR',
+            message='VASP calculation encountered a critical error: {error_message}.',
+        )
         spec.exit_code(
             704,
             'ERROR_DIAGNOSIS_OUTPUTS_MISSING',
             message=
-            'Outputs for diagnosis are missing, please make sure `run_status` and `notifications` quantities are requested for parsing.')
+            'Outputs for diagnosis are missing, please make sure `run_status` and `notifications` quantities are requested for parsing.',
+        )
 
-        spec.exit_code(1001, 'ERROR_PARSING_OBJECT_FAILED', message='parsing an object has failed.')
-        spec.exit_code(1002, 'ERROR_NOT_ABLE_TO_PARSE_QUANTITY', message='the parser is not able to parse the {quantity} quantity')
+        spec.exit_code(
+            1001,
+            'ERROR_PARSING_OBJECT_FAILED',
+            message='parsing an object has failed.',
+        )
+        spec.exit_code(
+            1002,
+            'ERROR_NOT_ABLE_TO_PARSE_QUANTITY',
+            message='the parser is not able to parse the {quantity} quantity',
+        )
         spec.exit_code(
             1003,
             'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
             message=
             'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
-            'very likely the VASP calculation did not run properly')
-        spec.exit_code(1004, 'ERROR_NOT_ABLE_TO_CREATE_NODE', message='the parser is not able to compose one or more output nodes: {nodes}')
+            'very likely the VASP calculation did not run properly',
+        )
+        spec.exit_code(
+            1004,
+            'ERROR_NOT_ABLE_TO_CREATE_NODE',
+            message='the parser is not able to compose one or more output nodes: {nodes}',
+        )
 
     def prepare_for_submission(self, folder):
         """
@@ -171,16 +333,16 @@ class VaspCalculation(VaspCalcBase):
         # Still need the exceptions in case settings is not defined on inputs
         # Check if we want to store all always retrieve objects
         try:
-            store = self.inputs.settings.get_attribute('ALWAYS_STORE', default=True)
+            store = self.inputs.settings.base.attributes.get('ALWAYS_STORE', default=True)
         except AttributeError:
             store = True
         try:
-            additional_retrieve_list = self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_LIST', default=[])
+            additional_retrieve_list = self.inputs.settings.base.attributes.get('ADDITIONAL_RETRIEVE_LIST', default=[])
         except AttributeError:
             additional_retrieve_list = []
         try:
             additional_retrieve_temp_list =\
-                self.inputs.settings.get_attribute('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
+                self.inputs.settings.base.attributes.get('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
@@ -190,7 +352,7 @@ class VaspCalculation(VaspCalcBase):
             calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
             calcinfo.retrieve_list = additional_retrieve_list
         try:
-            provenance_exclude_list = self.inputs.settings.get_attribute('PROVENANCE_EXCLUDE_LIST', default=[])
+            provenance_exclude_list = self.inputs.settings.base.attributes.get('PROVENANCE_EXCLUDE_LIST', default=[])
         except AttributeError:
             provenance_exclude_list = []
         # Always include POTCAR in the exclude list (not added to the repository, regardless of store)
@@ -270,7 +432,7 @@ class VaspCalculation(VaspCalcBase):
         """
         structure = self.inputs.structure
         if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('structure', ase=structure.get_ase())
+            structure = get_data_node('core.structure', ase=structure.get_ase())
         return structure
 
     def write_additional(self, folder, calcinfo):
@@ -399,7 +561,7 @@ class VaspCalculation(VaspCalcBase):
         builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': str(remote_path)})
-        builder.settings = get_data_node('dict', dict=settings)
+        builder.settings = get_data_node('core.dict', dict=settings)
 
         return proc_cls, builder
 

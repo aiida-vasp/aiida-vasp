@@ -17,12 +17,12 @@ from aiida_vasp.parsers.vasp import VaspParser, NotificationComposer
 NEB_NODES = {
     'neb_misc': {
         'link_name': 'neb_misc',
-        'type': 'dict',
+        'type': 'core.dict',
         'quantities': ['neb_data']
     },
     'misc': {
         'link_name': 'misc',
-        'type': 'dict',
+        'type': 'core.dict',
         'quantities': [
             'notifications',
             'run_stats',
@@ -31,12 +31,12 @@ NEB_NODES = {
     },
     'kpoints': {
         'link_name': 'kpoints',
-        'type': 'array.kpoints',
+        'type': 'core.array.kpoints',
         'quantities': ['kpoints-kpoints'],
     },
     'structure': {
         'link_name': 'structure',
-        'type': 'structure',
+        'type': 'core.structure',
         'quantities': ['structure'],
     },
     'chgcar': {
@@ -51,12 +51,12 @@ NEB_NODES = {
     },
     'site_magnetization': {
         'link_name': 'site_magnetization',
-        'type': 'dict',
+        'type': 'core.dict',
         'quantities': ['site_magnetization'],
     },
     'image_forces': {
         'link_name': 'image_forces',
-        'type': 'array',
+        'type': 'core.array',
         'quantities': ['forces']
     }
 }

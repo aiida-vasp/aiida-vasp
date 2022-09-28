@@ -12,7 +12,7 @@ from packaging import version
 
 from aiida.orm import User
 
-BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
+BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
 
 
 def get_data_node(data_type, *args, **kwargs):
@@ -57,13 +57,13 @@ def get_data_class(data_type):
 
 def get_current_user():
     """Get current user."""
-    current_user = User.objects.get_default()
+    current_user = User.collection.get_default()
     return current_user
 
 
 def copy_parameter(old_parameter):
     """Assemble a new Dict."""
-    return get_data_node('dict', dict=old_parameter.get_dict())
+    return get_data_node('core.dict', dict=old_parameter.get_dict())
 
 
 def displaced_structure(structure, displacement, entry):

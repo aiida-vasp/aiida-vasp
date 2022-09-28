@@ -54,7 +54,7 @@ def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
 
     # We should not have any POTCAR here
     expected_objects = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
-    retrieved_objects = result['retrieved'].list_object_names()
+    retrieved_objects = result['retrieved'].base.repository.list_object_names()
     assert set(expected_objects) == set(retrieved_objects)
 
 
@@ -111,7 +111,7 @@ def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # 
 
     # We should not have any POTCAR here
     expected_objects = ['CONTCAR', 'DOSCAR', 'EIGENVAL', 'OUTCAR', 'vasprun.xml']
-    retrieved_objects = result['retrieved'].list_object_names()
+    retrieved_objects = result['retrieved'].base.repository.list_object_names()
     assert set(expected_objects) == set(retrieved_objects)
 
 

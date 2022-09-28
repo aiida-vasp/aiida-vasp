@@ -109,8 +109,8 @@ class VaspImmigrant(VaspCalculation):
             raise InputValidationError('immigrant calculations need inputs.remote_workdir.')
 
         self.node.set_remote_workdir(self.inputs.remote_workdir)  # pylint: disable=protected-access
-        remotedata = get_data_node('remote', computer=self.node.computer, remote_path=self.inputs.remote_workdir)
-        remotedata.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
+        remotedata = get_data_node('core.remote', computer=self.node.computer, remote_path=self.inputs.remote_workdir)
+        remotedata.base.links.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
         remotedata.store()
 
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
@@ -145,7 +145,7 @@ class VaspImmigrant(VaspCalculation):
         inputs.metadata.options = options
         inputs.remote_workdir = remote_workdir
         if 'settings' in kwargs:
-            inputs.settings = get_data_node('dict', dict=kwargs['settings'])
+            inputs.settings = get_data_node('core.dict', dict=kwargs['settings'])
         _remote_workdir = Path(remote_workdir)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:
@@ -200,7 +200,7 @@ def get_incar_input(dir_path):
     with open(str(dir_path / 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
     incar = incar_parser.get_quantity('incar')
-    node = NodeComposer.compose_dict('dict', incar)
+    node = NodeComposer.compose_core_dict('core.dict', incar)
 
     return node
 
@@ -210,7 +210,7 @@ def get_poscar_input(dir_path):
     with open(str(dir_path / 'POSCAR'), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     poscar = poscar_parser.get_quantity('poscar-structure')
-    node = NodeComposer.compose_structure('structure', {'structure': poscar})
+    node = NodeComposer.compose_core_structure('core.structure', {'structure': poscar})
 
     return node
 
@@ -237,7 +237,7 @@ def get_kpoints_input(dir_path, structure=None):
     with open(str(dir_path / 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)
     kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-    node = NodeComposer.compose_array_kpoints('array.kpoints', {'kpoints': kpoints})
+    node = NodeComposer.compose_core_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
     node.set_cell_from_structure(structure)
 
     return node

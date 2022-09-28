@@ -280,13 +280,13 @@ class VaspMockRegistry(MockRegistry):
             exclude.extend(excluded_names)
 
         # Copy the input objects
-        for obj in calc_node.list_objects():
+        for obj in calc_node.base.repository.list_objects():
             if obj.name in exclude:
                 continue
             copy_from_aiida(obj.name, calc_node, repo_in)
 
         # Copy the retrieved objects
-        for obj in calc_node.outputs.retrieved.list_objects():
+        for obj in calc_node.outputs.retrieved.base.repository.list_objects():
             if obj.name in exclude:
                 continue
             copy_from_aiida(obj.name, calc_node.outputs.retrieved, repo_out)
@@ -396,15 +396,15 @@ def copy_from_aiida(name: str, node, dst: Path):
 
     This is a recursive function so directory copying also works.
     """
-    obj = node.get_object(name)
+    obj = node.base.repository.get_object(name)
 
     # If it is a directory, copy the contents one by one
     if obj.file_type == FileType.DIRECTORY:
-        for sub_obj in node.list_objects(name):
+        for sub_obj in node.base.repository.list_objects(name):
             copy_from_aiida(os.path.join(name, sub_obj.name), node, dst)
     else:
         # Anything else
-        with node.open(name) as fsource:
+        with node.base.repository.open(name) as fsource:
             # Make parent directory if needed
             frepo_path = dst / name
             Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)

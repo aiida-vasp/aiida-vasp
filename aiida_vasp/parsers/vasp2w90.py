@@ -57,7 +57,7 @@ class Vasp2w90Parser(VaspParser):
         """Convert the k-points output from string to float."""
         if kpoints is None:
             return False, None
-        kpoints_node = DataFactory('array.kpoints')()
+        kpoints_node = DataFactory('core.array.kpoints')()
         kpoints_node.set_kpoints([[float(x) for x in k.split()] for k in kpoints])
         return True, kpoints_node
 

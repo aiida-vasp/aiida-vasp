@@ -300,23 +300,23 @@ def test_inherit_and_merge():
 
     inputs = AttributeDict()
     inputs.bands = AttributeDict()
-    inputs.bands.somekey = DataFactory('bool')(True)
+    inputs.bands.somekey = DataFactory('core.bool')(True)
     inputs.relax = AttributeDict()
-    inputs.relax.somekey = DataFactory('bool')(True)
+    inputs.relax.somekey = DataFactory('core.bool')(True)
     inputs.smearing = AttributeDict()
-    inputs.smearing.somekey = DataFactory('bool')(True)
+    inputs.smearing.somekey = DataFactory('core.bool')(True)
     inputs.charge = AttributeDict()
-    inputs.charge.somekey = DataFactory('bool')(True)
+    inputs.charge.somekey = DataFactory('core.bool')(True)
     inputs.converge = AttributeDict()
-    inputs.converge.somekey = DataFactory('bool')(True)
+    inputs.converge.somekey = DataFactory('core.bool')(True)
     inputs.electronic = AttributeDict()
-    inputs.electronic.somekey = DataFactory('bool')(True)
+    inputs.electronic.somekey = DataFactory('core.bool')(True)
     inputs.dynamics = AttributeDict()
-    inputs.dynamics.somekey = DataFactory('bool')(True)
+    inputs.dynamics.somekey = DataFactory('core.bool')(True)
     # Check that parameters does not have to be present
     parameters = inherit_and_merge_parameters(inputs)
     # Check that an empty parameters is allowed
-    inputs.parameters = DataFactory('dict')(dict={})
+    inputs.parameters = DataFactory('core.dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters = AttributeDict({
         'electronic': AttributeDict({'somekey': True}),
@@ -330,11 +330,11 @@ def test_inherit_and_merge():
     assert parameters == test_parameters
     # Test ignored
     inputs.ignored = AttributeDict()
-    inputs.ignored.ignored = DataFactory('bool')(True)
+    inputs.ignored.ignored = DataFactory('core.bool')(True)
     parameters = inherit_and_merge_parameters(inputs)
     assert parameters == test_parameters
     # Test to override inputs.bands.somekey
-    inputs.parameters = DataFactory('dict')(dict={'bands': {'somekey': False}})
+    inputs.parameters = DataFactory('core.dict')(dict={'bands': {'somekey': False}})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters.bands.somekey = False
     assert parameters == test_parameters

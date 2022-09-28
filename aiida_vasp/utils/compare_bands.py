@@ -9,7 +9,7 @@ or moved in the future.
 from aiida.plugins import DataFactory
 from aiida.engine import calcfunction
 
-BANDS_CLS = DataFactory('array.bands')
+BANDS_CLS = DataFactory('core.array.bands')
 
 
 def _firstspin(bands):
@@ -84,7 +84,7 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     ref_info.update_dict({'efermi': efermi})
     ref_info.update_dict({'outer_window': owindow})
 
-    ref_bands = DataFactory('array.bands')()
+    ref_bands = DataFactory('core.array.bands')()
     ref_bands.set_kpointsdata(wannier_bands)
     ref_bands.set_bands(vbands_window, occupations=vocc_window)
 
