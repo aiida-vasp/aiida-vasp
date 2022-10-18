@@ -234,7 +234,7 @@ class RelaxWorkChain(WorkChain):
                 ),
                 cls.store_relaxed,
             ),
-            if_(cls.perform_final_static_calculation)(
+            if_(cls.perform_final_static)(
                 cls.init_relaxed,
                 cls.init_next_workchain,
                 cls.run_next_workchain,
