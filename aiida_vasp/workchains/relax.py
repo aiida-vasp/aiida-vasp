@@ -47,6 +47,15 @@ class RelaxWorkChain(WorkChain):
             required=False,
         )
         spec.input(
+            'perform_static',
+            valid_type=get_data_class('core.bool'),
+            required=False,
+            default=lambda: get_data_node('core.bool', True),
+            help="""
+            If True, perform static calculation after relaxation.
+            """,
+        )
+        spec.input(
             'relax.perform',
             valid_type=get_data_class('core.bool'),
             required=False,
@@ -225,10 +234,12 @@ class RelaxWorkChain(WorkChain):
                 ),
                 cls.store_relaxed,
             ),
-            cls.init_relaxed,
-            cls.init_next_workchain,
-            cls.run_next_workchain,
-            cls.verify_next_workchain,
+            if_(cls.perform_final_static)(
+                cls.init_relaxed,
+                cls.init_next_workchain,
+                cls.run_next_workchain,
+                cls.verify_next_workchain,
+            ),
             cls.results,
             cls.finalize
         )  # yapf: disable
@@ -513,3 +524,7 @@ class RelaxWorkChain(WorkChain):
     def perform_relaxation(self):
         """Check if a relaxation is to be performed."""
         return self.ctx.relax
+
+    def perform_final_static(self):
+        """Check if the final static calculation is to be performed."""
+        return self.inputs.perform_static
