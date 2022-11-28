@@ -1,4 +1,4 @@
-name: nightly against develop aiida-core
+name: nightly against `main` branch of `aiida-core`
 
 on:
   schedule:
@@ -43,11 +43,10 @@ jobs:
         run: |
           pip install -e .[graphs,dev]
           pip freeze
-      - name: Install AiiDA develop branch
+      - name: Install AiiDA main branch
         id: install_aiida
         run: |
-          pip install git+https://github.com/aiidateam/aiida-core@develop
-          reentry scan
+          pip install git+https://github.com/aiidateam/aiida-core@main
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master
         id: tox
@@ -66,5 +65,5 @@ jobs:
           SLACK_USERNAME: aiida-vasp
           SLACK_CHANNEL: nightly
           SLACK_COLOR: b60205
-          SLACK_TITLE: "Nightly build against `aiida-core/develop` failed"
-          SLACK_MESSAGE: "The tests fail with the current version of `aiida-core/develop`."
+          SLACK_TITLE: "Nightly build against `aiida-core/main` failed"
+          SLACK_MESSAGE: "The tests fail with the current version of `aiida-core/main`."
