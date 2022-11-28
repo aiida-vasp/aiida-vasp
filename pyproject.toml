@@ -43,13 +43,13 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 [project.optional-dependencies]
 tests = [
 
-    "aiida-core[tests]>=2.0.1,<3",
+    "aiida-core[tests]>=2.0.1,<2.1.1",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
 
 pre-commit = [
-    "aiida-core[pre-commit]>=2.0.1,<3",
+    "aiida-core[pre-commit]>=2.0.1,<2.1.1",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
