@@ -139,7 +139,7 @@ isolated_build = True
 
 [testenv]
 setenv = AIIDA_PATH={toxworkdir}/.aiida
-whitelist_externals =
+allowlist_externals =
                     mkdir
                     rm
 commands =
