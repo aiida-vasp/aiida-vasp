@@ -21,7 +21,6 @@ from pymatgen.io.vasp import Poscar
 from aiida.orm import Computer, FolderData
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
-from aiida.manage.tests import TemporaryProfileManager
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
@@ -425,11 +424,6 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
         code.description = 'Mock VASP for tests'
         code.set_remote_computer_exec((localhost, mock_vasp_path))
         code.set_input_plugin_name('vasp.vasp')
-        if isinstance(fresh_aiida_env._manager, TemporaryProfileManager):
-            aiidapath = Path(fresh_aiida_env._manager.root_dir) / '.aiida'
-        else:
-            aiidapath = Path(os.environ.get('AIIDA_PATH', os.environ.get('HOME'))) / '/.aiida'
-        code.set_prepend_text('export AIIDA_PATH={}'.format(aiidapath))
         code.store()
         code.base.extras.set('is_mock_code', True)
 
