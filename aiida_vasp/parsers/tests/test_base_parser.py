@@ -4,7 +4,6 @@ import os
 import io
 
 import pytest
-from aiida.common.folders import SandboxFolder
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.fixtures import *

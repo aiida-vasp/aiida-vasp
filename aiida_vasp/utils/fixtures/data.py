@@ -18,7 +18,7 @@ import numpy
 import pytest
 from pymatgen.io.vasp import Poscar
 
-from aiida.orm import Computer, FolderData
+from aiida.orm import Computer
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class

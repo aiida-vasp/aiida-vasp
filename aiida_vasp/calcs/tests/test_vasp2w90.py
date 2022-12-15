@@ -36,13 +36,11 @@ def test_wannier_parameters(vasp2w90_calc_and_ref):
 
 
 @ONLY_ONE_CALC
-def test_prepare_for_submission(vasp2w90_calc_and_ref, tmp_path):
+def test_prepare_for_submission(vasp2w90_calc_and_ref, sandbox_folder):
     """Test that the lwannier90 flag is written at the prepare for submission step."""
-    from aiida.common.folders import Folder
     vasp_calc, reference = vasp2w90_calc_and_ref
-    folder = Folder(os.fspath(tmp_path))
     with pytest.raises(NotImplementedError):
-        vasp_calc.prepare_for_submission(folder)
+        vasp_calc.prepare_for_submission(sandbox_folder)
         with managed_temp_object() as temp_object:
             vasp_calc.write_incar(temp_object)
             with open(temp_object, 'r', encoding='utf8') as result_incar_fo:

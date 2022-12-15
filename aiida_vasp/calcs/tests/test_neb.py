@@ -15,9 +15,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 # pylint: disable=protected-access
 @ONLY_ONE_CALC
-def test_prepare(fresh_aiida_env, aiida_instance, vasp_neb_calc, vasp_neb_inputs, localhost_dir):
+def test_prepare(fresh_aiida_env, aiida_instance, vasp_neb_calc, vasp_neb_inputs, localhost_dir, sandbox_folder):
     """Check that preparing creates all necessary files."""
-    from aiida.common.folders import Folder
     from aiida_vasp.calcs.neb import VaspNEBCalculation
 
     inputs_dict = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'images': 3}
@@ -25,7 +24,7 @@ def test_prepare(fresh_aiida_env, aiida_instance, vasp_neb_calc, vasp_neb_inputs
     inputs = vasp_neb_inputs(parameters=inputs_dict)
 
     calc = vasp_neb_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir))
+    temp_folder = sandbox_folder
     calcinfo = calc.prepare_for_submission(temp_folder)
     input_files = temp_folder.get_content_list()
 

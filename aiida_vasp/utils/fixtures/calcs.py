@@ -19,6 +19,14 @@ from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structu
 
 
 @pytest.fixture()
+def sandbox_folder():
+    """Yield a `SandboxFolder` that can be used for tests where a Folder is needed."""
+    from aiida.common.folders import SandboxFolder
+    with SandboxFolder() as folder:
+        yield folder
+
+
+@pytest.fixture()
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
