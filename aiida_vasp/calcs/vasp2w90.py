@@ -4,15 +4,15 @@ VASP to Wannier90 calculation.
 ------------------------------
 VASP2Wannier90 - Calculation.
 """
+from aiida.orm import List
 # pylint: disable=abstract-method, unreachable, undefined-variable
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.plugins import DataFactory
-from aiida.orm import List
-
-#from aiida_wannier90.io import write_win  # pylint: disable=wrong-import-order, import-error
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.utils.aiida_utils import get_data_class
+
+#from aiida_wannier90.io import write_win  # pylint: disable=wrong-import-order, import-error
 
 
 class Vasp2w90Calculation(VaspCalculation):

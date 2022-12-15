@@ -9,22 +9,21 @@ Enables the immigration of  externally run VASP calculations into AiiDA.
 from pathlib import Path
 
 from aiida.common import InputValidationError
+from aiida.common.extendeddicts import AttributeDict
+from aiida.common.folders import SandboxFolder
 from aiida.common.lang import override
 from aiida.common.links import LinkType
-from aiida.common.folders import SandboxFolder
-from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.utils.aiida_utils import cmp_get_transport
+from aiida_vasp.utils.aiida_utils import cmp_get_transport, get_data_node
 
 # _IMMIGRANT_EXTRA_KWARGS = """
 # vasp.vasp specific kwargs:
@@ -97,6 +96,7 @@ class VaspImmigrant(VaspCalculation):
     @override
     def run(self):
         import plumpy
+
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
         _ = super().run()

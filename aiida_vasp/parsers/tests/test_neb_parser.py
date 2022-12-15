@@ -3,18 +3,18 @@
 # pylint: disable=protected-access,unused-variable,too-few-public-methods, import-outside-toplevel
 
 import os
-import pytest
+
 import numpy as np
+import pytest
 
 from aiida.common.links import LinkType
-from aiida.plugins import ParserFactory
-from aiida.plugins import CalculationFactory
+from aiida.plugins import CalculationFactory, ParserFactory
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved, neb_calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 def _get_neb_vasp_parser(neb_calc_with_retrieved):

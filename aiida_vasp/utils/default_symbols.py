@@ -50,7 +50,7 @@ class PawInfo(object):  # pylint: disable=useless-object-inheritance
         return self.symbol
 
     def __repr__(self):
-        return '<paw: {} at {}>'.format(self.symbol, hex(id(self)))
+        return f'<paw: {self.symbol} at {hex(id(self))}>'
 
 
 def get_all(version_nr='latest', use_gw=False):
@@ -89,8 +89,8 @@ if __name__ == '__main__':
     DEF_GW = get_recommendations(use_gw=True)
     with open('default_paws.py', 'w', encoding='utf8') as defaults:
         defaults.write('lda = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v) for k, v in DEF_PAW.items()])
+        defaults.writelines([f'"{k}": "{v}",\n' for k, v in DEF_PAW.items()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines(['"{}": "{}",\n'.format(k, v.replace('_GW', '')) for k, v in DEF_GW.items()])
+        defaults.writelines([f"\"{k}\": \"{v.replace('_GW', '')}\",\n" for k, v in DEF_GW.items()])
         defaults.write('}\n\n')

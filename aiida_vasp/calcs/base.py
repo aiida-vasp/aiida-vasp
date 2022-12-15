@@ -8,8 +8,8 @@ Base and meta classes for VASP calculation classes.
 # explanation: pylint wrongly complains about Node not implementing query
 import os
 
-from aiida.engine import CalcJob
 from aiida.common import CalcInfo, CodeInfo, ValidationError
+from aiida.engine import CalcJob
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 
@@ -123,7 +123,7 @@ class VaspCalcBase(CalcJob):
             if name not in existing_objects:
                 # Here we simple issue an warning as the requirement of objects will be explicitly checked by
                 # `write_additional` method
-                self.report('WARNING: Object {} does not exist in the restart folder.'.format(name))
+                self.report(f'WARNING: Object {name} does not exist in the restart folder.')
             else:
                 to_copy.append(name)
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.') for name in to_copy]

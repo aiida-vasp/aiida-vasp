@@ -8,19 +8,18 @@ This way we can perform tests for workchain without the need for
 injecting test code into the workchain logic itself.
 """
 import hashlib
-import shutil
-import os
-from typing import Union
-from pathlib import Path
 import logging
+import os
+from pathlib import Path
+import shutil
+from typing import Union
 
 import numpy as np
+from parsevasp.incar import Incar
+from parsevasp.kpoints import Kpoints
+from parsevasp.poscar import Poscar
 
 from aiida.repository import FileType
-
-from parsevasp.kpoints import Kpoints
-from parsevasp.incar import Incar
-from parsevasp.poscar import Poscar
 
 from aiida_vasp.utils.fixtures.testdata import data_path
 

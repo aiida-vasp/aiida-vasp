@@ -6,10 +6,9 @@ The file parser that handles the parsing of POTCAR files. Also contains methods 
 find, import, compose and write POTCAR files.
 """
 from itertools import groupby
-import re
 import os
-
 from pathlib import Path
+import re
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs

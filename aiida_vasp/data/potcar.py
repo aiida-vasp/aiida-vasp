@@ -112,22 +112,22 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 # pylint: disable=import-outside-toplevel, too-many-lines
 from __future__ import print_function
 
-import re
-import os
+from collections import namedtuple
+from contextlib import contextmanager
 import hashlib
+import os
+from pathlib import Path
+import re
+import shutil
 import tarfile
 import tempfile
-import shutil
-from contextlib import contextmanager
-from collections import namedtuple
 
-from pathlib import Path
 from pymatgen.io.vasp import PotcarSingle
+
 from aiida.common import AIIDA_LOGGER as aiidalogger
-from aiida.common.exceptions import UniquenessError, NotExistent
-from aiida.orm import Group
+from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.orm import Data  # pylint: disable=no-name-in-module
-from aiida.orm import QueryBuilder
+from aiida.orm import Group, QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
@@ -162,9 +162,9 @@ def migrate_potcar_group():
         new_group.store()
         migrated.append(new_group.label)
         if created:
-            print('Created new style Group <{}> for <{}>'.format(new_group, old_group.label))
+            print(f'Created new style Group <{new_group}> for <{old_group.label}>')
         else:
-            print('Adding nodes to existing new style Group <{}> from <{}>'.format(new_group, old_group.label))
+            print(f'Adding nodes to existing new style Group <{new_group}> from <{old_group.label}>')
 
 
 def normalize_potcar_contents(potcar_contents):
@@ -294,7 +294,7 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
             query = querybuild(cls, tag=label)
         filters = {}
         for attr_name, attr_val in kwargs.items():
-            filters['attributes.{}'.format(attr_name)] = {'==': attr_val}
+            filters[f'attributes.{attr_name}'] = {'==': attr_val}
         if cls._HAS_MODEL_VERSIONING:
             filters['attributes._MODEL_VERSION'] = {'==': kwargs.get('model_version', cls._VERSION)}
         query.add_filter(label, filters)
@@ -373,7 +373,7 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         """Raise a UniquenessError if an equivalent node exists."""
         from copy import deepcopy
         if self.exists(sha512=self.sha512):
-            raise UniquenessError('A {} node already exists for this file.'.format(str(self.__class__)))
+            raise UniquenessError(f'A {str(self.__class__)} node already exists for this file.')
 
         other_attrs = deepcopy(self.base.attributes.all)
 
@@ -516,7 +516,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         """Add the stored POTCAR file to an archive for export."""
         with self.get_file_obj_and_tar_obj() as objects:
             potcar_fo, tar_fo = objects
-            arcname = '{}/POTCAR'.format(self.symbol)
+            arcname = f'{self.symbol}/POTCAR'
             tarinfo = tar_fo.members[0]
             tarinfo.name = arcname
             if not dry_run:
@@ -757,7 +757,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                         ('No POTCAR found for full name {} in family {}, but it was found in a legacy group with the same name.'
                          ' Please run `verdi data vasp-potcar migratefamilies`.').format(full_name, family_name))
 
-                raise NotExistent('No POTCAR found for full name {} in family {}'.format(full_name, family_name))
+                raise NotExistent(f'No POTCAR found for full name {full_name} in family {family_name}')
             if len(potcars_of_kind) > 1:
                 result_potcars[element] = cls.find(family=family_name, full_name=full_name)[0]
             else:
@@ -859,7 +859,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if group_description:
             group.description = group_description
         elif group_created:
-            raise ValueError('A new POTCAR family {} should be created but no description was given!'.format(group_name))
+            raise ValueError(f'A new POTCAR family {group_name} should be created but no description was given!')
 
         return group
 
@@ -921,11 +921,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                                       'therefore it cannot be added with the stop_if_existing kwarg.').format(file_path))
                 list_created.append((potcar, created, file_path))
             except KeyError as err:
-                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
+                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
             except AttributeError as err:
-                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
+                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
             except IndexError as err:
-                print('skipping file {} - uploading raised {}{}'.format(file_path, str(err.__class__), str(err)))
+                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
 
         return list_created
 

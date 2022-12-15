@@ -1,10 +1,10 @@
 """Test the get_bands_info method"""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
-import pytest
 import numpy as np
+import pytest
 
+from aiida_vasp.utils.compare_bands import get_band_properties, get_band_properties_from_data
 from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
-from aiida_vasp.utils.compare_bands import get_band_properties_from_data, get_band_properties
 
 
 @pytest.fixture

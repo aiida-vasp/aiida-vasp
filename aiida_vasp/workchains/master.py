@@ -7,10 +7,11 @@ calculations.
 """
 # pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import WorkChain, if_, append_
+from aiida.engine import WorkChain, append_, if_
 from aiida.plugins import WorkflowFactory
+
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
 class MasterWorkChain(WorkChain):
@@ -267,7 +268,7 @@ class MasterWorkChain(WorkChain):
         """Run the next workchain."""
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> ')
 
         return self.to_context(workchains=append_(running))
 
@@ -276,7 +277,7 @@ class MasterWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be

@@ -6,16 +6,17 @@ Intended to be used to control convergence checks for plane-wave calculations.
 """
 # pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init
 import copy
+
 import numpy as np
 
-from aiida.engine import WorkChain, append_, while_, if_, calcfunction
 from aiida.common.extendeddicts import AttributeDict
-from aiida.plugins import WorkflowFactory
+from aiida.engine import WorkChain, append_, calcfunction, if_, while_
 from aiida.orm.nodes.data.array.bands import find_bandgap
+from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import (get_data_class, get_data_node, displaced_structure, compressed_structure)
-from aiida_vasp.utils.workchains import fetch_k_grid, prepare_process_inputs, compose_exit_code
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
+from aiida_vasp.utils.aiida_utils import compressed_structure, displaced_structure, get_data_class, get_data_node
+from aiida_vasp.utils.workchains import compose_exit_code, fetch_k_grid, prepare_process_inputs
 
 
 class ConvergeWorkChain(WorkChain):
@@ -769,7 +770,7 @@ class ConvergeWorkChain(WorkChain):
         """Run next workchain."""
         inputs = self.ctx.inputs_ready
         running = self.submit(self._next_workchain, **inputs)
-        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> ')
 
         if self.ctx.running_pw:
             self.to_context(pw_workchains=append_(running))
@@ -847,7 +848,7 @@ class ConvergeWorkChain(WorkChain):
             workchain = self.ctx.pw_workchains[-1]
             # workchain = self.ctx['pw_workchain_%d' % self.ctx.pw_workchain_count]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
         # Check if called workchain was successful
         next_workchain_exit_status = workchain.exit_status
@@ -934,7 +935,7 @@ class ConvergeWorkChain(WorkChain):
             workchain = self.ctx.kpoints_workchains[-1]
             # workchain = self.ctx['kpoints_workchain_%d' % self.ctx.kpoints_workchain_count]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Check if child workchain was successfull
@@ -1093,7 +1094,7 @@ class ConvergeWorkChain(WorkChain):
             self.report('No atomic displacements or compressions were performed. The convergence test suggests:')
         if settings.pwcutoff_org is None:
             if self._verbose:
-                self.report('plane wave cutoff: {pwcutoff} eV.'.format(pwcutoff=pwcutoff))
+                self.report(f'plane wave cutoff: {pwcutoff} eV.')
         else:
             if self._verbose:
                 self.report('plane wave cutoff: User supplied.')
@@ -1102,7 +1103,7 @@ class ConvergeWorkChain(WorkChain):
             kgrid = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value)
             if self._verbose:
                 if kgrid is not None:
-                    self.report('k-point grid: {kgrid0}x{kgrid1}x{kgrid2}'.format(kgrid0=kgrid[0], kgrid1=kgrid[1], kgrid2=kgrid[2]))
+                    self.report(f'k-point grid: {kgrid[0]}x{kgrid[1]}x{kgrid[2]}')
                 else:
                     self.report('k-point grid: Failed')
         else:
@@ -1111,8 +1112,7 @@ class ConvergeWorkChain(WorkChain):
                 self.report('k-point grid: User supplied')
 
         if self._verbose:
-            self.report('for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}'.format(cutoff_type=cutoff_type,
-                                                                                                           cutoff_value=cutoff_value))
+            self.report(f'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}')
 
         return pwcutoff, kgrid
 
@@ -1143,7 +1143,7 @@ class ConvergeWorkChain(WorkChain):
 
         if self.ctx.converge.settings.pwcutoff_org is None and pwcutoff_displacement is not None and pwcutoff_comp is not None:
             if self._verbose:
-                self.report('plane wave cutoff: {pwcutoff} eV'.format(pwcutoff=pwcutoff))
+                self.report(f'plane wave cutoff: {pwcutoff} eV')
         elif self.ctx.converge.settings.pwcutoff_org is not None:
             if self._verbose:
                 self.report('plane wave cutoff: User supplied')
@@ -1153,7 +1153,7 @@ class ConvergeWorkChain(WorkChain):
 
         if not self.ctx.converge.settings.supplied_kmesh and kgrid_displacement is not None and kgrid_comp is not None:
             if self._verbose:
-                self.report('k-point grid: {kgrid0}x{kgrid1}x{kgrid2}'.format(kgrid0=kgrid[0], kgrid1=kgrid[1], kgrid2=kgrid[2]))
+                self.report(f'k-point grid: {kgrid[0]}x{kgrid[1]}x{kgrid[2]}')
         elif self.ctx.converge.settings.supplied_kmesh:
             if self._verbose:
                 self.report('k-point grid: User supplied.')
@@ -1162,8 +1162,7 @@ class ConvergeWorkChain(WorkChain):
                 self.report('k-point grid: Failed.')
 
         if self._verbose:
-            self.report('for the convergence criteria '
-                        '{cutoff_type} and a cutoff of {cutoff_value}.'.format(cutoff_type=cutoff_type, cutoff_value=cutoff_value))
+            self.report(f'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}.')
 
         return pwcutoff, kgrid
 
@@ -1207,7 +1206,8 @@ class ConvergeWorkChain(WorkChain):
             kgrid_diff_displacement = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
             self.report('Performed atomic displacements.')
-            self.report('The convergence test using the difference between ' 'the original and displaced dataset suggests:')
+            self.report('The convergence test using the difference between '
+                        'the original and displaced dataset suggests:')
         if pwcutoff_org is None and pwcutoff_diff_displacement is not None and pwcutoff_displacement is not None:
             if self._verbose:
                 self.report('plane wave cutoff: {pwcutoff_diff_displacement} '
@@ -1285,7 +1285,8 @@ class ConvergeWorkChain(WorkChain):
             kgrid_diff_comp = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
             self.report('Performed compression.')
-            self.report('The convergence test using the difference between the ' 'original and dataset with a volume change suggests:')
+            self.report('The convergence test using the difference between the '
+                        'original and dataset with a volume change suggests:')
         if pwcutoff_org is None and pwcutoff_diff_comp is not None and pwcutoff_comp is not None:
             if self._verbose:
                 self.report('plane wave cutoff: {pwcutoff_diff_comp} '
@@ -1354,7 +1355,7 @@ class ConvergeWorkChain(WorkChain):
         convergence_context = get_data_node('core.dict', dict=convergence_dict)
         convergence = store_conv_data(convergence_context)
         if self._verbose:
-            self.report("attaching the node {}<{}> as '{}'".format(convergence.__class__.__name__, convergence.pk, 'converge.data'))
+            self.report(f"attaching the node {convergence.__class__.__name__}<{convergence.pk}> as 'converge.data'")
         self.out('converge.data', convergence)
 
         pwcutoff_recommended = store_conv_pwcutoff(convergence_context)
@@ -1459,7 +1460,7 @@ class ConvergeWorkChain(WorkChain):
             workchain = self.ctx.workchains[-1]
             # workchain = self.ctx['workchain_%d' % self.ctx.workchain_count]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # workchain = self.ctx.workchains[-1]

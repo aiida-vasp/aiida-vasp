@@ -3,11 +3,11 @@ Common code for parsers.
 
 ------------------------
 """
-import os
 from contextlib import contextmanager
+import os
 
-from aiida.parsers.parser import Parser
 from aiida.common.exceptions import NotExistent
+from aiida.parsers.parser import Parser
 from aiida.repository.common import FileType
 
 

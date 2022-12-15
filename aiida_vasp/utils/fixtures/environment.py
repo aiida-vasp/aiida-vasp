@@ -8,16 +8,16 @@ to set up a dummy database and configuration that can be used during
 testing. AiiDA contributes with its own fixture manager, which we use.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, protected-access
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import absolute_import, print_function
+
 from pathlib import Path
+
 import pytest
 
-from aiida.orm import QueryBuilder, Code, CalculationNode
-#from aiida.manage.tests.pytest_fixtures import aiida_caplog
-from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 from aiida.cmdline.utils.ascii_vis import format_call_graph
-from aiida.cmdline.utils.common import get_node_info
+#from aiida.manage.tests.pytest_fixtures import aiida_caplog
+from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
+from aiida.orm import CalculationNode, Code, QueryBuilder
 from aiida.tools.archive import create_archive
 
 

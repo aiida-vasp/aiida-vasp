@@ -9,15 +9,15 @@ parameters instead of the code dependent variables.
 # pylint: disable=attribute-defined-outside-init
 import numpy as np
 
-from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import NotExistent
-from aiida.engine import WorkChain, append_, while_, if_
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import WorkChain, append_, if_, while_
+from aiida.orm import CalcJobNode, QueryBuilder, StructureData
 from aiida.plugins import WorkflowFactory
-from aiida.orm import CalcJobNode, StructureData, QueryBuilder
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compare_structures, prepare_process_inputs, compose_exit_code
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.workchains import compare_structures, compose_exit_code, prepare_process_inputs
 
 
 class RelaxWorkChain(WorkChain):
@@ -368,9 +368,9 @@ class RelaxWorkChain(WorkChain):
         running = self.submit(self._next_workchain, **inputs)
 
         if not self.ctx.is_converged and self.perform_relaxation():
-            self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+            self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
         else:
-            self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
+            self.report(f'launching {self._next_workchain.__name__}<{running.pk}> ')
 
         return self.to_context(workchains=append_(running))
 
@@ -380,7 +380,7 @@ class RelaxWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be

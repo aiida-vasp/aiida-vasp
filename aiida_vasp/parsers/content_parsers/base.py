@@ -6,8 +6,8 @@ Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
 
-from aiida.orm import Data
 from aiida.common import AIIDA_LOGGER as aiidalogger
+from aiida.orm import Data
 
 
 class BaseFileParser():
@@ -208,8 +208,7 @@ class BaseFileParser():
 
         """
 
-        raise NotImplementedError('{classname} does not implement a _init_from_handler() '
-                                  'method.'.format(classname=self.__class__.__name__))
+        raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_handler() method.')
 
     def _init_from_data(self, data):
         """Initialize using an AiiDA data structure.
@@ -225,7 +224,7 @@ class BaseFileParser():
 
         """
 
-        raise NotImplementedError('{classname} does not implement a _init_from_data() ' 'method.'.format(classname=self.__class__.__name__))
+        raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_data() method.')
 
     def _content_data_to_content_parser(self):
         """

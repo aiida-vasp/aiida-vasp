@@ -6,9 +6,9 @@ import os
 import pytest
 
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @ONLY_ONE_CALC

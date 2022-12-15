@@ -4,24 +4,24 @@ VASP NEB workchain.
 ---------------
 Contains the VaspNEBWorkChain class definition which uses the BaseRestartWorkChain.
 """
+import numpy as np
 #pylint: disable=too-many-branches, too-many-statements
 from packaging import version
-import numpy as np
+
 from aiida import __version__ as aiida_version
-from aiida.engine import while_
 from aiida import orm
-
-from aiida.common.lang import override
+from aiida.common.exceptions import InputValidationError, NotExistent
 from aiida.common.extendeddicts import AttributeDict
-from aiida.common.exceptions import NotExistent, InputValidationError
+from aiida.common.lang import override
+from aiida.engine import while_
+from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler
 from aiida.plugins import CalculationFactory
-from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, process_handler, ProcessHandlerReport
 
+from aiida_vasp.assistant.parameters import ParametersMassage
+from aiida_vasp.calcs.neb import VaspNEBCalculation
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
-from aiida_vasp.assistant.parameters import ParametersMassage
-from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.calcs.neb import VaspNEBCalculation
 
 # Additional tags for VTST calculations - these are not the tags used by standard VASP
 VTST_ADDITIONAL_TAGS = {
@@ -309,7 +309,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         nout = len(output_images)
         nexists = len(self.inputs.neb_images)
         if nout != nexists:
-            self.report('Number of parsed images: {} does not equal to the images need to restart: {}.'.format(nout, nexists))
+            self.report(f'Number of parsed images: {nout} does not equal to the images need to restart: {nexists}.')
             return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.SUB_NEB_CALCULATION_ERROR)  # pylint: disable=no-member
         self.report(f'Attached output structures from the previous calculation {node} as new inputs.')
         self.ctx.inputs.neb_images = output_images
@@ -493,7 +493,8 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         # for the outcome of the work chain and so have marked it as `is_finished=True`.
         max_iterations = self.inputs.max_iterations.value  # type: ignore[union-attr]
         if not self.ctx.is_finished and self.ctx.iteration >= max_iterations:
-            self.report(f'reached the maximum number of iterations {max_iterations}: ' f'last ran {self.ctx.process_name}<{node.pk}>')
+            self.report(f'reached the maximum number of iterations {max_iterations}: '
+                        f'last ran {self.ctx.process_name}<{node.pk}>')
             return self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED  # pylint: disable=no-member
 
         self.report(f'work chain completed after {self.ctx.iteration} iterations')

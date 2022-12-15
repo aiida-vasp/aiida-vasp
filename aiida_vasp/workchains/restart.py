@@ -9,10 +9,10 @@ the QuantumEspresso plugin.
 from collections import namedtuple
 from functools import wraps
 
+from aiida.engine import CalcJob, WorkChain, append_
 from aiida.engine.processes.process import ProcessState
-from aiida.engine import CalcJob
-from aiida.engine import WorkChain, append_
-from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
+
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
 class BaseRestartWorkChain(WorkChain):
@@ -164,7 +164,7 @@ class BaseRestartWorkChain(WorkChain):
         inputs = prepare_process_inputs(unwrapped_inputs)
         running = self.submit(self._calculation, **inputs)
 
-        self.report('launching {}<{}> iteration #{}'.format(self._calculation.__name__, running.pk, self.ctx.iteration))  # pylint: disable=not-callable
+        self.report(f'launching {self._calculation.__name__}<{running.pk}> iteration #{self.ctx.iteration}')  # pylint: disable=not-callable
 
         return self.to_context(calculations=append_(running))
 
@@ -180,7 +180,7 @@ class BaseRestartWorkChain(WorkChain):
         try:
             calculation = self.ctx.calculations[-1]
         except IndexError:
-            self.report = 'The first iteration finished without returning a {}'.format(self._calculation.__name__)  # pylint: disable=not-callable
+            self.report = f'The first iteration finished without returning a {self._calculation.__name__}'  # pylint: disable=not-callable
             return self.exit_codes.ERROR_ITERATION_RETURNED_NO_CALCULATION  # pylint: disable=no-member
 
         # Check if the calculation already has an exit status, if so, inherit that
@@ -224,7 +224,7 @@ class BaseRestartWorkChain(WorkChain):
 
     def results(self):
         """Attach the outputs specified in the output specification from the last completed calculation."""
-        self.report('{}<{}> completed after {} iterations'.format(self.__class__.__name__, self.pid, self.ctx.iteration))  # pylint: disable=not-callable
+        self.report(f'{self.__class__.__name__}<{self.pid}> completed after {self.ctx.iteration} iterations')  # pylint: disable=not-callable
         for name, port in self.spec().outputs.items():
             if port.required and name not in self.ctx.restart_calc.outputs:
                 self.report('the spec specifies the output {} as required '  # pylint: disable=not-callable
@@ -234,7 +234,7 @@ class BaseRestartWorkChain(WorkChain):
                 node = self.ctx.restart_calc.outputs[name]
                 self.out(name, self.ctx.restart_calc.outputs[name])
                 if self._verbose:
-                    self.report("attaching the node {}<{}> as '{}'".format(node.__class__.__name__, node.pk, name))  # pylint: disable=not-callable
+                    self.report(f"attaching the node {node.__class__.__name__}<{node.pk}> as '{name}'")  # pylint: disable=not-callable
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
@@ -257,11 +257,11 @@ class BaseRestartWorkChain(WorkChain):
                 pass
 
         if cleaned_calcs:
-            self.report('cleaned remote folders of calculations: {}'.format(' '.join(map(str, cleaned_calcs))))  # pylint: disable=not-callable
+            self.report(f"cleaned remote folders of calculations: {' '.join(map(str, cleaned_calcs))}")  # pylint: disable=not-callable
 
     def _handle_succesfull(self, calculation):
         """Handle the case when the calculation was successful."""
-        self.report('{}<{}> completed successfully'.format(self._calculation.__name__, calculation.pk))  # pylint: disable=not-callable
+        self.report(f'{self._calculation.__name__}<{calculation.pk}> completed successfully')  # pylint: disable=not-callable
         self.ctx.restart_calc = calculation
         self.ctx.is_finished = True
         self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
@@ -448,7 +448,7 @@ def register_error_handler(cls, priority):
         @wraps(handler)
         def error_handler(self, calculation):
             if hasattr(cls, '_verbose') and cls._verbose:
-                self.report('({}){}'.format(priority, handler.__name__))  # pylint: disable=not-callable
+                self.report(f'({priority}){handler.__name__}')  # pylint: disable=not-callable
             return handler(self, calculation)
 
         setattr(cls, handler.__name__, error_handler)

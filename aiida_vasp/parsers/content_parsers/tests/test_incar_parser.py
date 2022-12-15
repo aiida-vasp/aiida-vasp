@@ -3,9 +3,9 @@
 
 import pytest
 
-from aiida_vasp.utils.fixtures import *
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida_vasp.utils.fixtures import *
 
 compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}
 

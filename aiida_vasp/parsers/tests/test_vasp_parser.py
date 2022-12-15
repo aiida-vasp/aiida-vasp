@@ -5,23 +5,22 @@
 
 import os
 from pathlib import Path
-import pytest
+
 import numpy as np
+import pytest
 
-from aiida.plugins import ParserFactory
-from aiida.plugins import CalculationFactory
 from aiida.orm import load_node
+from aiida.plugins import CalculationFactory, ParserFactory
 
-from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.vasp import NotificationComposer
+from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, get_data_class
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.node_composer import NodeComposer
 
 
 class ExampleFileParser(BaseFileParser):

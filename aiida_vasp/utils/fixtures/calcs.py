@@ -8,14 +8,28 @@ calculations on which one can for instance test parsing etc.
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 
-from aiida.engine.utils import instantiate_process
-from aiida.orm import Code
 from aiida.common.extendeddicts import AttributeDict
+from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class, create_authinfo
+from aiida.orm import Code
 
-from .data import vasp_code, vasp_params, potentials, vasp_kpoints, vasp_structure, ref_incar, vasp_chgcar, vasp_wavecar, wannier_params, \
-    wannier_projections, ref_win, POTCAR_FAMILY_NAME, POTCAR_MAP
+from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_class, get_data_node
+
+from .data import (
+    POTCAR_FAMILY_NAME,
+    POTCAR_MAP,
+    potentials,
+    ref_incar,
+    ref_win,
+    vasp_chgcar,
+    vasp_code,
+    vasp_kpoints,
+    vasp_params,
+    vasp_structure,
+    vasp_wavecar,
+    wannier_params,
+    wannier_projections,
+)
 
 
 @pytest.fixture()
@@ -30,13 +44,13 @@ def sandbox_folder():
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, FolderData, Computer, Dict
+    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
 
     def _inner(file_path, input_settings=None):
         # Create a test computer
         computer = localhost
 
-        process_type = 'aiida.calculations:{}'.format('vasp.vasp')
+        process_type = 'aiida.calculations:vasp.vasp'
 
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.base.attributes.set('input_filename', 'INCAR')
@@ -71,13 +85,13 @@ def calc_with_retrieved(localhost):
 def neb_calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, FolderData, Computer, Dict
+    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
 
     def _inner(file_path, input_settings=None, nimgs=3):
         # Create a test computer
         computer = localhost
 
-        process_type = 'aiida.calculations:{}'.format('vasp.vasp')
+        process_type = 'aiida.calculations:vasp.vasp'
 
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.base.attributes.set('input_filename', 'INCAR')

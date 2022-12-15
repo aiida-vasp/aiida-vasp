@@ -8,9 +8,10 @@ Workchain to import a successful VASP run that has not been executed in the AiiD
 # pylint: disable=attribute-defined-outside-init
 from aiida.common import InputValidationError
 from aiida.engine import while_
-from aiida.plugins import WorkflowFactory, CalculationFactory
-from aiida.orm import Code
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain
+from aiida.orm import Code
+from aiida.plugins import CalculationFactory, WorkflowFactory
+
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 

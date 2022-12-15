@@ -7,15 +7,16 @@ and `run` just seems to get stuck after a while.
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 from __future__ import print_function
 
-import pytest
 import numpy as np
+import pytest
+
 from aiida.common.extendeddicts import AttributeDict
 from aiida.manage.tests.pytest_fixtures import aiida_caplog
 from aiida.plugins.factories import DataFactory
 
+from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
 from aiida_vasp.utils.mock_code import VaspMockRegistry
 
 
@@ -203,10 +204,10 @@ def setup_vasp_workchain(structure, incar, nkpts, code=None):
 
 def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     """Test with mocked vasp code for handling electronic convergence issues"""
+    from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
-    from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 
     workchain = WorkflowFactory('vasp.vasp')
 
@@ -260,9 +261,9 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
 @pytest.mark.parametrize('incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]])
 def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, incar, nkpts, exit_codes):
     """Test with mocked vasp code for handling ionic convergence issues"""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.vasp')
 
@@ -293,9 +294,9 @@ def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, i
 
 def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_strict):
     """Test with mocked vasp code for handling ionic convergence issues"""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.vasp')
 

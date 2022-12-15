@@ -3,8 +3,8 @@
 
 import pytest
 
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 def test_base_content_parser(tmpdir):

@@ -6,16 +6,16 @@ Mock vasp command.
 Separate cli interface for commands useful in development and testing.
 """
 import os
-import shutil
 from pathlib import Path
+import shutil
+
 import click
 
-from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-
-from aiida_vasp.utils.mock_code import VaspMockRegistry, MockVasp
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry
 
 
 def output_object(*args):

@@ -41,20 +41,25 @@ This means that for a handler:
 """
 import numpy as np
 
-from aiida.engine import while_
-from aiida.common.lang import override
+from aiida.common.exceptions import InputValidationError, NotExistent
 #from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
-from aiida.common.exceptions import InputValidationError, NotExistent
+from aiida.common.lang import override
+from aiida.engine import while_
+from aiida.engine.processes.workchains.restart import (
+    BaseRestartWorkChain,
+    ProcessHandlerReport,
+    WorkChain,
+    process_handler,
+)
+from aiida.orm import CalcJobNode, Code
 from aiida.plugins import CalculationFactory
-from aiida.orm import Code, CalcJobNode
-from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler, WorkChain
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 #from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 from aiida_vasp.calcs.vasp import VaspCalculation
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 
 # pylint: disable=no-member
 
@@ -511,11 +516,11 @@ class VaspWorkChain(BaseRestartWorkChain):
         try:
             last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
             if last_calc is not None:
-                self.report('Last calculation: {calc}'.format(calc=repr(last_calc)))  # pylint: disable=not-callable
+                self.report(f'Last calculation: {repr(last_calc)}')  # pylint: disable=not-callable
                 sched_err = last_calc.outputs.retrieved.get_file_content('_scheduler-stderr.txt')
                 sched_out = last_calc.outputs.retrieved.get_file_content('_scheduler-stdout.txt')
-                self.report('Scheduler output:\n{}'.format(sched_out or ''))  # pylint: disable=not-callable
-                self.report('Scheduler stderr:\n{}'.format(sched_err or ''))  # pylint: disable=not-callable
+                self.report(f"Scheduler output:\n{sched_out or ''}")  # pylint: disable=not-callable
+                self.report(f"Scheduler stderr:\n{sched_err or ''}")  # pylint: disable=not-callable
         except AttributeError:
             self.report('No calculation was found in the context. '  # pylint: disable=not-callable
                         'Something really awful happened. '
@@ -724,7 +729,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                     incar['nelm'] = nelm + 20
                     self._setup_restart(node)
                     self.ctx.inputs.parameters.update(incar)
-                    self.report('Reducing AMIX to {}'.format(incar['amix']))
+                    self.report(f"Reducing AMIX to {incar['amix']}")
                     return ProcessHandlerReport(do_break=True)
             # Change to ALGO if options have been exhausted
             incar['algo'] = 'all'
@@ -853,7 +858,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         Check if the calculation contain any critical error.
         """
         notification = node.outputs.misc['notifications']
-        message = 'Critical error detected in the notifications: {}'.format(', '.join([item.get('name') for item in notification]))
+        message = f"Critical error detected in the notifications: {', '.join([item.get('name') for item in notification])}"
         self.report(message + ' - aborting.')
         return ProcessHandlerReport(do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=message))
 

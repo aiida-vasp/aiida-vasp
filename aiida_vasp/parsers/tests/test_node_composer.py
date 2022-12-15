@@ -1,13 +1,13 @@
 """Tests for NodeComposer."""
 # pylint: disable=unused-wildcard-import,wildcard-import, redefined-outer-name, unused-argument
 # pylint: disable=invalid-name
-import pytest
 import numpy as np
+import pytest
 
+from aiida_vasp.parsers.node_composer import NODES_TYPES, NodeComposer, clean_nan_values
+from aiida_vasp.parsers.settings import NODES
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.parsers.node_composer import NodeComposer, NODES_TYPES, clean_nan_values
-from aiida_vasp.parsers.settings import NODES
 
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)

@@ -1,13 +1,22 @@
 """Test submitting a VaspImmigrantWorkChain."""
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
-import pytest
 import numpy as np
-from aiida.engine import run
-from aiida.common.extendeddicts import AttributeDict
+import pytest
 
-from aiida_vasp.utils.fixtures import fresh_aiida_env, mock_vasp, phonondb_run, localhost, localhost_dir, potcar_family, temp_pot_folder
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run
+
+from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
+from aiida_vasp.utils.fixtures import (
+    fresh_aiida_env,
+    localhost,
+    localhost_dir,
+    mock_vasp,
+    phonondb_run,
+    potcar_family,
+    temp_pot_folder,
+)
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import get_data_node, create_authinfo
 
 
 @pytest.fixture

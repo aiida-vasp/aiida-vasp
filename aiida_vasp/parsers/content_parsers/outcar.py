@@ -6,6 +6,7 @@ Contains the parsing interfaces to parsevasp used to parse ``OUTCAR`` content.
 """
 # pylint: disable=abstract-method
 from pathlib import Path
+
 import numpy as np
 from parsevasp.outcar import Outcar
 
@@ -294,7 +295,7 @@ def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,
         path.seek(0)
         lines = path.readlines()
     else:
-        raise ValueError("'path' variable is not supported: {}".format(path))
+        raise ValueError(f"'path' variable is not supported: {path}")
 
     vtst_data = {'neb_converged': False}
     for idx, line in enumerate(lines):

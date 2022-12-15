@@ -1,7 +1,7 @@
 """Unit tests for BaseParser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
-import os
 import io
+import os
 
 import pytest
 

@@ -3,17 +3,18 @@ Tests for mock vasp
 """
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel, too-many-arguments
 from pathlib import Path
+from shutil import copy2, rmtree
 from tempfile import mkdtemp
-from shutil import rmtree, copy2
 
 import pytest
+
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.mock_code import VaspMockRegistry, MockVasp, get_hash
+from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, get_hash
 
 
 def test_get_hash():
@@ -166,6 +167,7 @@ def test_registry_upload_wc(fresh_aiida_env, run_vasp_process, custom_registry, 
 def test_mock_vasp(mock_registry, temp_path):
     """Test the MockVasp class"""
     import os
+
     # Setup the input directory
     mock_vasp = MockVasp(temp_path, mock_registry)
     base_path = Path(data_path('test_bands_wc', 'inp'))

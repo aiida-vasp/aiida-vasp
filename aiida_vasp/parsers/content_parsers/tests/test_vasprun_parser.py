@@ -2,11 +2,11 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 # pylint: disable=invalid-name
 
-import pytest
 import numpy as np
+import pytest
 
-from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.fixtures import *
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
