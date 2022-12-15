@@ -42,40 +42,35 @@ def test_write_potcar(vasp_calc_and_ref):
 
 
 @ONLY_ONE_CALC
-def test_write_chgcar(localhost_dir, vasp_calc, vasp_inputs, vasp_chgcar):
+def test_write_chgcar(vasp_calc, vasp_inputs, vasp_chgcar, sandbox_folder):
     """Test that CHGAR object is written correctly."""
-    from aiida.common.folders import Folder
     chgcar, _ = vasp_chgcar
 
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
 
     inputs.charge_density = chgcar
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir))
 
-    calcinfo = calc.prepare_for_submission(temp_folder)
+    calcinfo = calc.prepare_for_submission(sandbox_folder)
     assert 'CHGCAR' in [item[1] for item in calcinfo.local_copy_list]
 
 
 @ONLY_ONE_CALC
-def test_write_wavecar(localhost_dir, vasp_calc, vasp_inputs, vasp_wavecar):
+def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
     """Test that WAVECAR object is written correctly."""
-    from aiida.common.folders import Folder
     wavecar, _ = vasp_wavecar
     inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir))
-    calcinfo = calc.prepare_for_submission(temp_folder)
+    calcinfo = calc.prepare_for_submission(sandbox_folder)
 
     assert 'WAVECAR' in [item[1] for item in calcinfo.local_copy_list]
 
 
 @ONLY_ONE_CALC
-def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
+def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
     """Test incar with invaid tags raises exception"""
     from aiida.common import ValidationError
-    from aiida.common.folders import Folder
     inputs_dict = {
         'gga': 'PE',
         'smear': 3  # <- Invalid tag
@@ -83,16 +78,14 @@ def test_incar_validate(vasp_calc, vasp_inputs, localhost_dir):
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
 
-    temp_folder = Folder(str(localhost_dir))
     with pytest.raises(ValidationError):
-        calc.prepare_for_submission(temp_folder)
+        calc.prepare_for_submission(sandbox_folder)
 
 
 # pylint: disable=protected-access
 @ONLY_ONE_CALC
-def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_dir):
+def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, sandbox_folder):
     """Check that preparing creates all necessary objects."""
-    from aiida.common.folders import Folder
     from aiida_vasp.calcs.vasp import VaspCalculation
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
@@ -104,7 +97,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir))
+    temp_folder = sandbox_folder
     calcinfo = calc.prepare_for_submission(temp_folder)
     input_objects = temp_folder.get_content_list()
 
@@ -125,9 +118,7 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, localhost_di
     inputs.wavefunctions = wavecar
 
     calc = vasp_calc(inputs=inputs)
-    temp_folder = Folder(str(localhost_dir))
-
-    calcinfo = calc.prepare_for_submission(temp_folder)
+    calcinfo = calc.prepare_for_submission(sandbox_folder)
 
     assert 'WAVECAR' in [item[1] for item in calcinfo.local_copy_list]
 
