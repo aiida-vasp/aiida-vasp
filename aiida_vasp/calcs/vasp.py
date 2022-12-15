@@ -238,7 +238,7 @@ class VaspCalculation(VaspCalcBase):
             required=False,
             help='The output of the site magnetization',
         )
-        spec.output_namespace('custom_outputs', dynamic=True)
+        spec.output_namespace('custom_outputs', required=False, dynamic=True)
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(
             350,

@@ -14,8 +14,7 @@ from pathlib import Path
 import pytest
 
 from aiida.orm import QueryBuilder, Code, CalculationNode
-from aiida.manage.tests import TemporaryProfileManager
-from aiida.manage.tests.pytest_fixtures import aiida_caplog
+#from aiida.manage.tests.pytest_fixtures import aiida_caplog
 from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_node_info
@@ -23,15 +22,12 @@ from aiida.tools.archive import create_archive
 
 
 @pytest.fixture()
-def fresh_aiida_env(aiida_profile, aiida_caplog):
+def fresh_aiida_env(aiida_profile_clean, aiida_caplog):
     """Reset the database before and after the test function."""
-    if isinstance(aiida_profile._manager, TemporaryProfileManager):
-        print('The root directory of the fixture manager is: {}'.format(aiida_profile._manager.root_dir))  # pylint: disable=protected-access
-    else:
-        print('Using existing profile: {}'.format(aiida_profile._manager._profile.name))
-    yield aiida_profile
-    print_and_export_failed_mock()
-    aiida_profile.clear_profile()
+    try:
+        yield aiida_profile_clean
+    finally:
+        print_and_export_failed_mock()
 
 
 def print_and_export_failed_mock():
