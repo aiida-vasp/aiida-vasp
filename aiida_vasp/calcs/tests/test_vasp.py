@@ -153,6 +153,18 @@ def managed_temp_object():
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.usefixtures('fresh_aiida_env')
+def test_vasp_calc_only_output(run_vasp_process, aiida_caplog):
+    """Test a run of a basic VASP calculation which misses critical files."""
+    from aiida_vasp.calcs.vasp import VaspCalculation
+    _, node = run_vasp_process(test_case='stdout')
+    assert node.exit_status == 352
+    vasp_output = node.outputs.retrieved.get_object_content('vasp_output')
+    assert 'MOCK PREPEND: Using test data from folder: stdout' in vasp_output
+    assert 'VERY BAD NEWS! internal error in subroutine IBZKPT:' in vasp_output
+
+
+@pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
+@pytest.mark.usefixtures('fresh_aiida_env')
 def test_vasp_calc(run_vasp_process, aiida_caplog):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
