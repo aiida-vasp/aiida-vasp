@@ -1,8 +1,3 @@
- .. AiiDA-VASP documentation master file, created by
-   sphinx-quickstart on Mon Feb 12 09:24:45 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to AiiDA-VASP's documentation!
 ======================================
 
@@ -10,34 +5,11 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 
 AiiDA-VASP is under active development, check out the `changelog`_.
 
-The plugin is only tested with VASP 5.4.4 and is compatible with Python>=3.6.
+.. warning::
+   Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to open an issue or even better, submit a pull requests, where you try to fix the issue yourself. You can do this on our Github repository. 
 
-.. warning: Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to open an issue or even better, submit a pull requests, where you try to fix the issue yourself. You can do this on our Github repository. 
-
-.. note:
+.. note::
    We are currently looking for additional developers. If you are interested, please open an issue on our repository on Github.
-
-
-General comments about the user documentation and support
-=========================================================
-
-.. _convention:
-
-We will try to keep the documentation updated for both the standard Python and the `Conda`_ virtual environment. In order to make this as clear as possible, we have opted for the following syntax::
-
-  $ commands in a standard Linux console, used together with the standard Python virtual environment
-
-  % commands in the Conda console, used together with the Conda virtual environment
-
-  %/$ same commands in the Conda console or standard Linux console
-
-  # commands executed in the Postgresql interactive terminal
-
-As such, whenever needed, we will try to keep parallel documentation on this. If you are on a Conda
-platform, please follow the commands prepended with ``%``. Similarly you follow the commands with
-a ``$`` prepended if you are using the standard Python virtual enviroments. In case the commands are
-the same for both cases, ``%/$`` is prepended to the commands. The commands executed in
-the Postgresql interactive terminal (``psql``) should be similar between the two.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
@@ -51,14 +23,7 @@ the Postgresql interactive terminal (``psql``) should be similar between the two
    :hidden:
 
    getting_started/general
-   getting_started/python
-   getting_started/conda
-   getting_started/rabbitmq
-   getting_started/database
    getting_started/install
-   getting_started/interact
-   getting_started/profile
-   getting_started/computer
    getting_started/code
    getting_started/potentials
    getting_started/test_run

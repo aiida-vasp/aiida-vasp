@@ -68,6 +68,9 @@ Installing the plugin
 
    $ (aiida-vasp) pip install aiida-vasp
 
+  If you need to install the compatibility release of `AiiDA-VASP`_ which works with `AiiDA`_ 1.6.4 you should instead install the plugin
+  using ``pip install aiida-vasp=2.2``, but this is not recommended and only mentioned for legacy support.
+
 #. Update the entry points that `AiiDA`_ are using::
 
    $ (aiida-vasp) reentry scan -r aiida
