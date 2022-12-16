@@ -2,13 +2,14 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import math
-import pytest
-import numpy as np
 
-from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
+import numpy as np
+import pytest
+
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 @pytest.mark.parametrize(['kpoints_parser'], [('kpoints',)], indirect=True)

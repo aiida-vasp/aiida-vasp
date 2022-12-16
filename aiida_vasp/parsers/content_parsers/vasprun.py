@@ -6,9 +6,9 @@ Contains the parsing interfaces to ``parsevasp`` used to parse ``vasprun.xml`` c
 """
 # pylint: disable=abstract-method, too-many-public-methods
 import numpy as np
-
-from parsevasp.vasprun import Xml
 from parsevasp import constants as parsevaspct
+from parsevasp.vasprun import Xml
+
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.compare_bands import get_band_properties
 

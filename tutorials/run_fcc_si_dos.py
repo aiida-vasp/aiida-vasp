@@ -4,12 +4,13 @@ Call script to calculate the total energies for one volume of standard silicon.
 This particular call script set up a standard calculation that execute a calculation for
 the fcc silicon structure.
 """
+from aiida import load_profile
 # pylint: disable=too-many-arguments, invalid-name, import-outside-toplevel
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
 from aiida.engine import submit
-from aiida import load_profile
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory, WorkflowFactory
+
 load_profile()
 
 

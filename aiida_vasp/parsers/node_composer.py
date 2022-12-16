@@ -4,12 +4,12 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
-# pylint: disable=logging-fstring-interpolation
-import traceback
-
-from warnings import warn
 import math
 import numbers
+# pylint: disable=logging-fstring-interpolation
+import traceback
+from warnings import warn
+
 import numpy as np
 
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -281,6 +281,6 @@ def clean_nan_values(inputs: dict) -> dict:
         if isinstance(value, dict):
             clean_nan_values(value)
         if isinstance(value, numbers.Real) and (math.isnan(value) or math.isinf(value)):
-            warn('Key <{}> has value <{}> replaced by <{}>'.format(key, value, str(value)))
+            warn(f'Key <{key}> has value <{value}> replaced by <{str(value)}>')
             inputs[key] = str(value)
     return inputs

@@ -3,11 +3,11 @@
 
 import pytest
 
-from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path, read_file
-from aiida_vasp.utils.fixtures.data import POTCAR_MAP
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo, PotcarIo
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.parsers.content_parsers.potcar import PotcarIo, MultiPotcarIo
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.data import POTCAR_MAP
+from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 
 
 def verify_potcario(potcario):

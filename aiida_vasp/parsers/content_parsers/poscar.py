@@ -6,9 +6,10 @@ Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONT
 """
 # pylint: disable=no-self-use
 import numpy as np
+from parsevasp.poscar import Poscar, Site
 
 from aiida.common.constants import elements
-from parsevasp.poscar import Poscar, Site
+
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 

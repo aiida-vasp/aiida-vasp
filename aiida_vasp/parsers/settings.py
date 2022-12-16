@@ -7,15 +7,15 @@ compositions of quantities.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
-from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
-
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 CONTENT_PARSER_SETS = {

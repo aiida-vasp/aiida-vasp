@@ -2,14 +2,15 @@
 Parser for NEB calculations using VASP compiled with VTST
 """
 import os
-import traceback
 from pathlib import Path
+import traceback
 
 from aiida.common.exceptions import NotExistent
-from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
+
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.quantity import ParsableQuantities
-from aiida_vasp.parsers.vasp import VaspParser, NotificationComposer
+from aiida_vasp.parsers.settings import ParserDefinitions, ParserSettings
+from aiida_vasp.parsers.vasp import NotificationComposer, VaspParser
 
 # pylint: disable=no-member
 # pylint: disable=logging-fstring-interpolation
@@ -224,7 +225,8 @@ class NEBNodeComposer(NodeComposer):
                 # Suffix the output name with image id
                 self._created[link_name] = node
             else:
-                self._logger.warning(f'Creating node {link_name} of type {node_dict["type"]} failed, ' f'exception: {exception}')
+                self._logger.warning(f'Creating node {link_name} of type {node_dict["type"]} failed, '
+                                     f'exception: {exception}')
                 self._failed_to_create.append(link_name)
 
         return nodes_failed_to_create

@@ -9,6 +9,7 @@ for VASP related notification, warnings and errors.
 import re
 
 from parsevasp.stream import Stream
+
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 

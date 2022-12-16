@@ -1,17 +1,16 @@
 """
 Module for settings up NEB calculations
 """
-from typing import Union
-
 import os
 from pathlib import Path
+from typing import Union
 
-from aiida.common.exceptions import InputValidationError
 from aiida import orm
+from aiida.common.exceptions import InputValidationError
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspNEBCalculation(VaspCalculation):

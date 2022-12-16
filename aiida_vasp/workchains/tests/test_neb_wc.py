@@ -4,18 +4,18 @@ Test for the NEB workchain
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 
 from io import StringIO
+
 import pytest
 
 from aiida import orm
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.fixtures import *
-
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import create_authinfo
-from aiida_vasp.utils.neb import neb_interpolate
 from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.utils.aiida_utils import create_authinfo
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
+from aiida_vasp.utils.neb import neb_interpolate
 
 
 @pytest.fixture

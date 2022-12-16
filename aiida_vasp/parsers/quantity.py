@@ -56,7 +56,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
         """Set the parsable_quantities dictionary based on PARSABLE_QUANTITIES obtained from object parsers."""
 
         def _show(var, var_name):
-            print('---%s ---' % var_name)
+            print(f'---{var_name} ---')
             if isinstance(var, dict):
                 for key, value in var.items():
                     print(key, value)
@@ -65,7 +65,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
                     print(value)
             else:
                 print(var)
-            print('---%s ---' % var_name)
+            print(f'---{var_name} ---')
 
         show_screening_steps = False
 
@@ -110,7 +110,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
             if 'name' in quantity_dict:
                 self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, quantity_dict['name'])
             else:
-                raise RuntimeError('The added quantity {quantity} has to contain a name entry.'.format(quantity=quantity_key))
+                raise RuntimeError(f'The added quantity {quantity_key} has to contain a name entry.')
 
         return _quantity_items, _quantity_keys_to_content
 

@@ -1,20 +1,26 @@
 """Unit test the POTCAR AiiDA data structures."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name
-import tarfile
-import subprocess as sp
 from pathlib import Path
-import pytest
+import subprocess as sp
+import tarfile
 
 from pymatgen.io.vasp import PotcarSingle
-from aiida.common.exceptions import UniquenessError, NotExistent
+import pytest
 
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
-from aiida_vasp.utils.fixtures.testdata import data_path, read_file
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
-from aiida_vasp.utils.fixtures.data import potcar_node_pair, potcar_family, temp_pot_folder, POTCAR_MAP, legacy_potcar_family
+from aiida.common.exceptions import NotExistent, UniquenessError
+
 from aiida_vasp.commands.potcar import potcar
-
 from aiida_vasp.data.potcar import PotcarGroup, migrate_potcar_group
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.fixtures.data import (
+    POTCAR_MAP,
+    legacy_potcar_family,
+    potcar_family,
+    potcar_node_pair,
+    temp_pot_folder,
+)
+from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
+from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 
 
 def test_creation(fresh_aiida_env, potcar_node_pair):

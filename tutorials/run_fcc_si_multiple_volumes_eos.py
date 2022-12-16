@@ -7,11 +7,13 @@ eos.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
-from aiida.engine import run
+
 from aiida import load_profile
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory, WorkflowFactory
+
 load_profile()
 
 
@@ -132,4 +134,4 @@ if __name__ == '__main__':
     # Write volume and total energies to file
     with open('eos', 'w', encoding='utf8') as file_object:
         for item in EOS:
-            file_object.write('{} {}\n'.format(item[0], item[1]))
+            file_object.write(f'{item[0]} {item[1]}\n')

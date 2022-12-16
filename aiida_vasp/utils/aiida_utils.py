@@ -44,8 +44,8 @@ def querybuild(cls, **kwargs):
 
 def get_data_class(data_type):
     """Provide access to the orm.data classes with deferred dbenv loading."""
-    from aiida.plugins import DataFactory
     from aiida.common.exceptions import MissingEntryPointError
+    from aiida.plugins import DataFactory
 
     data_cls = None
     try:
@@ -129,7 +129,7 @@ def cmp_load_verdi_data():
             import_errors.append(err)
 
     if not verdi_data:
-        err_messages = '\n'.join([' * {}'.format(err) for err in import_errors])
+        err_messages = '\n'.join([f' * {err}' for err in import_errors])
         raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
 
     return verdi_data

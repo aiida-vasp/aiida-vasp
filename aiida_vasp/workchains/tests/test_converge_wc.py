@@ -7,17 +7,17 @@ from __future__ import print_function
 
 import numpy as np
 import pytest
+
 from aiida.common.extendeddicts import AttributeDict
 
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node
-from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.fixture
@@ -41,9 +41,9 @@ def options():
 
 def test_converge_wc(fresh_aiida_env, potentials, mock_vasp, options):
     """Test submitting only, not correctness, with mocked vasp code."""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.converge')
 
@@ -132,9 +132,9 @@ def compare_converge_datum(conv_data_actual, conv_data_expect):
 
 def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
     """Test convergence workflow using mock code."""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.converge')
 
@@ -214,9 +214,9 @@ def test_converge_wc_pw(fresh_aiida_env, potentials, mock_vasp, options):
 
 def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
     """Test convergence workflow using mock code."""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.converge')
 
@@ -288,9 +288,9 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
 
 def test_converge_wc_on_failed(fresh_aiida_env, potentials, mock_vasp, options):
     """Test convergence workflow using mock code."""
+    from aiida.engine import run
     from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
-    from aiida.engine import run
 
     workchain = WorkflowFactory('vasp.converge')
 

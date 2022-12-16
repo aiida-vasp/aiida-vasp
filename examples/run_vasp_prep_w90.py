@@ -5,11 +5,12 @@ Performs a self consistent electron convergence run using the standard silicon s
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code
-from aiida.plugins import DataFactory, CalculationFactory
-from aiida.engine import submit
+
 from aiida import load_profile
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import submit
+from aiida.orm import Code
+from aiida.plugins import CalculationFactory, DataFactory
 
 load_profile()
 

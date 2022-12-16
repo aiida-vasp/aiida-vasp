@@ -3,9 +3,10 @@
 import pytest
 
 from aiida.engine import run
+
+from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
-from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
 @pytest.fixture
@@ -47,7 +48,7 @@ def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
-        assert inputs.get(input_link, None) is not None, 'input link "{}" was not set!'.format(input_link)
+        assert inputs.get(input_link, None) is not None, f'input link "{input_link}" was not set!'
 
     result, node = run.get_node(VaspImmigrant, **inputs)
     assert node.exit_status == 0
@@ -104,7 +105,7 @@ def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # 
                                               use_wavecar=True)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
-        assert builder.get(input_link, None) is not None, 'input link "{}" was not set!'.format(input_link)
+        assert builder.get(input_link, None) is not None, f'input link "{input_link}" was not set!'
 
     result, node = run.get_node(proc, **builder)
     assert node.exit_status == 0

@@ -15,10 +15,11 @@ modular and contains several modules:
 import traceback
 
 from aiida.common.exceptions import NotExistent
+
 from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.quantity import ParsableQuantities
-from aiida_vasp.parsers.settings import ParserSettings, ParserDefinitions
 from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.quantity import ParsableQuantities
+from aiida_vasp.parsers.settings import ParserDefinitions, ParserSettings
 
 DEFAULT_SETTINGS = {
     'add_trajectory': False,
@@ -160,7 +161,7 @@ class VaspParser(BaseParser):
 
         for name, value_dict in self._definitions.parser_definitions.items():
             if name not in self._retrieved_content.keys() and value_dict['is_critical']:
-                self.logger.error('Missing content: {} which is tagged as critical by the parser'.format(name))
+                self.logger.error(f'Missing content: {name} which is tagged as critical by the parser')
                 return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
         self._parsable_quantities.setup(retrieved_content=self._retrieved_content.keys(),
                                         parser_definitions=self._definitions.parser_definitions,
@@ -220,7 +221,7 @@ class VaspParser(BaseParser):
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
-                    self.logger.warning('Cannot instantiate {}, exception {}:'.format(content_parser_cls, traceback.format_exc()))
+                    self.logger.warning(f'Cannot instantiate {content_parser_cls}, exception {traceback.format_exc()}:')
 
                 content_parser_instances[content_parser_cls] = parser
 
@@ -240,7 +241,7 @@ class VaspParser(BaseParser):
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
             else:
-                self.logger.warning('Parsing {} from {} failed, exception: {}'.format(quantity_key, parser, exception))
+                self.logger.warning(f'Parsing {quantity_key} from {parser} failed, exception: {exception}')
                 failed_to_parse_quantities.append(quantity_key)
 
         return parsed_quantities, failed_to_parse_quantities

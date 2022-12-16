@@ -6,11 +6,13 @@ the fcc silicon structure.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
-from aiida.engine import submit
+
 from aiida import load_profile
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import submit
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory, WorkflowFactory
+
 load_profile()
 
 

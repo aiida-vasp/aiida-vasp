@@ -8,14 +8,15 @@ The calculation class that prepares a specific VASP calculation.
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
+
 from aiida.common.exceptions import InputValidationError, ValidationError
 
-from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
 from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspCalculation(VaspCalcBase):
@@ -448,7 +449,7 @@ class VaspCalculation(VaspCalcBase):
             else:
                 remote_folder = self.inputs.restart_folder
                 if 'CHGCAR' not in remote_copy_fnames:
-                    raise FileNotFoundError('Could not find CHGCAR in {}'.format(remote_folder.get_remote_path()))
+                    raise FileNotFoundError(f'Could not find CHGCAR in {remote_folder.get_remote_path()}')
         if self._need_wavecar():
             # If we restart, we do not require inputs, but we should have a basic check
             # that WAVECAR is present
@@ -457,7 +458,7 @@ class VaspCalculation(VaspCalcBase):
             else:
                 remote_folder = self.inputs.restart_folder
                 if 'WAVECAR' not in remote_copy_fnames:
-                    raise FileNotFoundError('Could not find WAVECAR in {}'.format(remote_folder.get_remote_path()))
+                    raise FileNotFoundError(f'Could not find WAVECAR in {remote_folder.get_remote_path()}')
 
     def write_incar(self, dst, validate_tags=True):  # pylint: disable=unused-argument
         """

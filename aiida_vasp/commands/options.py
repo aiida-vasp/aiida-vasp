@@ -7,7 +7,7 @@ Common click options for verdi commands.
 import click
 
 try:
-    from aiida.cmdline.params.options import OverridableOption, FORCE, DESCRIPTION  # pylint: disable=unused-import
+    from aiida.cmdline.params.options import DESCRIPTION, FORCE, OverridableOption  # pylint: disable=unused-import
 except ImportError:
     # pylint: disable=too-few-public-methods
     class OverridableOption(object):  # pylint: disable=useless-object-inheritance

@@ -9,13 +9,13 @@ Contains utils and definitions that are used together with the parameters.
 import enum
 from warnings import warn
 
-from aiida.common.extendeddicts import AttributeDict
 from aiida.common.exceptions import InputValidationError
+from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
 
-from aiida_vasp.utils.extended_dicts import update_nested_dict
 from aiida_vasp.parsers.settings import ParserSettings
 from aiida_vasp.parsers.vasp import DEFAULT_SETTINGS
+from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 _BASE_NAMESPACES = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
 _DEFAULT_OVERRIDE_NAMESPACE = 'incar'
@@ -123,7 +123,7 @@ class RelaxModeEnum(enum.IntEnum):
         try:
             return value_from_dof[dof]
         except KeyError as no_dof:
-            raise ValueError('Invalid combination for degrees of freedom: {}'.format(dict(zip(RELAX_POSSIBILITIES, dof)))) from no_dof
+            raise ValueError(f'Invalid combination for degrees of freedom: {dict(zip(RELAX_POSSIBILITIES, dof))}') from no_dof
 
 
 class ParametersMassage():  # pylint: disable=too-many-instance-attributes
@@ -193,6 +193,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
         from os import path  # pylint: disable=import-outside-toplevel
+
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
         with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
             tags_data = safe_load(handler)

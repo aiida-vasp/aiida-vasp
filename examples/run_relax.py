@@ -5,11 +5,12 @@ Performs a relaxation of the standard silicon structure.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
+
+from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import submit
 from aiida.orm import Code
 from aiida.plugins import DataFactory, WorkflowFactory
-from aiida.engine import submit
-from aiida import load_profile
 
 load_profile()
 

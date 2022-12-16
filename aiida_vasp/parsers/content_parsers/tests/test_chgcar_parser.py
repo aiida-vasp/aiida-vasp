@@ -1,12 +1,12 @@
 """Test the CHGCAR parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
-import pytest
 import numpy as np
+import pytest
 
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 
 compare_charge_density = np.array([[[0.09329446, 0.18658892, 0.27988338], [0.37317784, 0.4664723, 0.55976676],
                                     [0.65306122, 0.74635569, 0.83965015], [0.93294461, 1.02623907, 1.11953353]],

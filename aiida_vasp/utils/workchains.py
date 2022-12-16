@@ -7,11 +7,12 @@ to make code more compact in the workchains.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Dict
 from aiida.engine.processes.exit_code import ExitCode
+from aiida.orm import Dict
 from aiida.plugins import DataFactory
 
 from aiida_vasp.utils.extended_dicts import delete_keys_from_dict

@@ -6,15 +6,16 @@ calculation of each structure. In this script we only supply a dictionary of dif
 structures as an input to the workchain, in addition to the standard inputs required by
 the AiiDA-VASP workchain stack.
 """
+from eos import EosWorkChain
 # pylint: disable=too-many-arguments
 import numpy as np
 
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory
-from aiida.engine import submit
 from aiida import load_profile
-from eos import EosWorkChain
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import submit
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory
+
 load_profile()
 
 
@@ -41,7 +42,7 @@ def get_structure(alat):
     for pos_direct in positions:
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols='Si')
-        structure.label = 'silicon_at_{}'.format(str(alat).replace('.', '_'))
+        structure.label = f"silicon_at_{str(alat).replace('.', '_')}"
     return structure
 
 
@@ -50,7 +51,7 @@ def get_structures(lattice_constants):
     structures = {}
     for lattice_constant in lattice_constants:
         # use the lattice constant as a key
-        structures['silicon_at_{}'.format(str(lattice_constant).replace('.', '_'))] = get_structure(lattice_constant)
+        structures[f"silicon_at_{str(lattice_constant).replace('.', '_')}"] = get_structure(lattice_constant)
     return structures
 
 

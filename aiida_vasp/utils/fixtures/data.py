@@ -10,30 +10,30 @@ workchains.
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
 # pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg, import-outside-toplevel
 import os
-from collections import OrderedDict
-import subprocess as sp
 from pathlib import Path
+import subprocess as sp
 
 import numpy
-import pytest
 from pymatgen.io.vasp import Poscar
+import pytest
 
-from aiida.orm import Computer
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
-from aiida_vasp.utils.aiida_utils import get_data_node, get_data_class
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
+from aiida.orm import Computer
+
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarGroup
+from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
-from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.utils.general import copytree
+from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
-from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup, Group
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.general import copytree
 
 POTCAR_FAMILY_NAME = 'test_family'
 POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn', 'N': 'N', 'H': 'H'}

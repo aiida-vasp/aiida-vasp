@@ -7,22 +7,22 @@ and `run` just seems to get stuck after a while.
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name,no-member, import-outside-toplevel
 from __future__ import print_function
 
-import pytest
 import numpy as np
-from aiida.common.extendeddicts import AttributeDict
-from aiida import orm
-from aiida.engine import run
-from aiida.plugins import DataFactory
-from aiida.plugins import WorkflowFactory
+import pytest
 
+from aiida import orm
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run
+from aiida.plugins import DataFactory, WorkflowFactory
+
+from aiida_vasp.parsers.content_parsers.incar import IncarParser
+from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, create_authinfo
-from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.mock_code import VaspMockRegistry
 
 

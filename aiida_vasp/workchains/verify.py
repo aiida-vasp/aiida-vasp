@@ -7,14 +7,14 @@ restart depending on physical principles etc. E.g. issues that are outside the C
 or not currently checked in it. This workchain does currently nothing.
 """
 
+from aiida.common.exceptions import NotExistent
 # pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
-from aiida.common.exceptions import NotExistent
-from aiida.engine import WorkChain, while_, append_
+from aiida.engine import WorkChain, append_, while_
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
 class VerifyWorkChain(WorkChain):
@@ -112,7 +112,7 @@ class VerifyWorkChain(WorkChain):
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
         return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
@@ -130,7 +130,7 @@ class VerifyWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be

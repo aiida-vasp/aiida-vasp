@@ -2,8 +2,8 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 # pylint: disable=invalid-name
 
-import pytest
 import numpy as np
+import pytest
 
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
