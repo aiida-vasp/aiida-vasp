@@ -77,7 +77,6 @@ graphs = [
 
 [project.entry-points."aiida.workflows"]
 "vasp.vasp" = "aiida_vasp.workchains.vasp:VaspWorkChain"
-"vasp.verify" = "aiida_vasp.workchains.verify:VerifyWorkChain"
 "vasp.converge" = "aiida_vasp.workchains.converge:ConvergeWorkChain"
 "vasp.bands" = "aiida_vasp.workchains.bands:BandsWorkChain"
 "vasp.master" = "aiida_vasp.workchains.master:MasterWorkChain"

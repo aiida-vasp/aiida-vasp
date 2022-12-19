@@ -229,6 +229,6 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
     called_nodes.sort(key=lambda x: x.ctime)
     # Check that the second node takes the magnetization of the first node
     assert called_nodes[1].inputs.site_magnetization['site_magnetization']['sphere']['x']['site_moment']['1']['tot'] == 0.643
-    assert called_nodes[1].called[0].called[0].inputs.parameters['magmom'] == [0.643]
+    assert called_nodes[1].called[0].inputs.parameters['magmom'] == [0.643]
     assert 'site_magnetization' in node.outputs
     #upload_real_workchain(node, 'relax-wc-keep-magmom')
