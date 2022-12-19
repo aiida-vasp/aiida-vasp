@@ -3,9 +3,8 @@ lxml
 click
 chainmap
 pyparsing
-aiida-core[atomic_tools]~=2
+aiida-core[atomic_tools,docs]~=2.2
 -e git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
-sphinx~=5
 sphinx-autobuild
-sphinx_rtd_theme
-sphinxcontrib-details-directive
+sphinx-lint
+sphinx-rtd-theme

@@ -18,13 +18,13 @@ sure you have completed the :ref:`previous tutorial<tutorial_fcc_si_step1>` befo
 
    .. literalinclude:: ../../../tutorials/run_fcc_si_multiple_volumes.py
       :diff: ../../../tutorials/run_fcc_si_one_volume.py
-	
+
    As you can see, we did only minimal changes, all which should be self explanatory.
 
 #. Change the ``options`` and ``code_string`` as you did in the :ref:`previous tutorial<tutorial_fcc_si_step1>`.
-   
+
    .. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
-		that the `AiiDA`_ daemon is running before continuing.
+      that the `AiiDA`_ daemon is running before continuing.
 
 #. Save and execute the resulting run script by issuing::
 

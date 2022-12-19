@@ -48,7 +48,14 @@ tests = [
 pre-commit = [
     "aiida-core[pre-commit]~=2.2",
     "tox>=3.23.0",
-    "virtualenv>20"
+    "virtualenv>20",
+    "sphinx-lint"
+]
+docs = [
+    "aiida-core[docs]~=2.2",
+    "sphinx-autobuild",
+    "sphinx-lint",
+    "sphinx-rtd-theme"
 ]
 graphs = [
     "matplotlib"

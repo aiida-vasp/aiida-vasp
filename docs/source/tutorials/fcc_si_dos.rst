@@ -28,13 +28,13 @@ In this case we will not modify the structure, so we will simply use the unmodif
    .. literalinclude:: ../../../tutorials/run_fcc_si_dos.py
 
    Or you can download it::
-     
+
      %/$ wget https://github.com/aiida-vasp/aiida-vasp/raw/develop/tutorials/run_fcc_si_dos.py
 
    Where we have modified the input parameters according to the tutorial
    `density of states for FCC Si`_. And importantly, we have also told the parser to
    give us the density of states.
-   
+
 #. And execute it::
 
      %/$ python run_fcc_si_dos.py
@@ -65,7 +65,7 @@ In this case we will not modify the structure, so we will simply use the unmodif
      process state  Finished
      exit status    0
      computer       [6] mycluster
-     
+
      Inputs                     PK  Type
      ---------------------  ------  -------------
      clean_workdir          103818  Bool
@@ -80,18 +80,18 @@ In this case we will not modify the structure, so we will simply use the unmodif
      structure              103729  StructureData
      verbose                103816  Bool
      verify_max_iterations  103819  Int
-     
+
      Outputs            PK  Type
      -------------  ------  ----------
      dos            103825  ArrayData
      misc           103826  Dict
      remote_folder  103823  RemoteData
      retrieved      103824  FolderData
-     
+
      Called        PK  Type
      --------  ------  -------------
      CALL      103821  WorkChainNode
-     
+
      Log messages
      ---------------------------------------------
      There are 1 log messages for this calculation

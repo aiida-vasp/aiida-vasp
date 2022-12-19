@@ -12,15 +12,15 @@ the `AiiDA documentation`_. Before configuring the code in `AiiDA`_, please make
 
 #. Let us now add the code, which we will call ``vasp`` as follows::
 
-     % verdi code create core.code.installed                                                                                     
-     Report: enter ? for help.                                                      
+     % verdi code create core.code.installed
+     Report: enter ? for help.
      Report: enter ! to ignore the default and set no value.
-     Computer: mycluster                                                                
+     Computer: mycluster
      Absolute filepath executable: /cluster/software/vasp/vasp6.3.2/vasp
      Label: vasp
-     Description: VASP 6.3.2 standard version                                                              
+     Description: VASP 6.3.2 standard version
      Default `CalcJob` plugin: vasp.vasp
-     Escape using double quotes [y/N]:                   
+     Escape using double quotes [y/N]:
      Success: Created InstalledCode<6>
 
    The `Absolute filepath executable` is the full path to the `VASP`_ executable installed on the remote `computer`, here
@@ -51,12 +51,12 @@ the `AiiDA documentation`_. Before configuring the code in `AiiDA`_, please make
      Full label                                                                                     Pk  Entry point
      -------------------------------------------------------------------------------------------  ----  -------------------
      vasp@mycluster                                                                                  6  core.code.installed
-     
+
      Use `verdi code show IDENTIFIER` to see details for a code
 
    This might of course be different for you if you have multiple entries or have named things differently than in this
    example.
-     
+
 #. Also, let us inspect look its details::
 
      % verdi code show 6

@@ -62,7 +62,7 @@ There are four ways to interact and set the parser properties.
 
 The parser will check for any error detected for the underlying VASP calculation.
 This information is stored in the `notification` quantity, which contains a list of error/warnings detected.
-By default, a non-zero exit state is returned if any critical error is found.  
+By default, a non-zero exit state is returned if any critical error is found.
 The default list of critical errors is defined under the `critical_notifications` key inside :py:data:`~aiida_vasp.parsers.vasp.DEFAULT_SETTINGS`.
 Additional settings may also be supplied under ``parser_settings`` to modify the behaviours:
 

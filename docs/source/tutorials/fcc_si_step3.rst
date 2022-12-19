@@ -44,7 +44,7 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
       :end-before: def initialize
 
    We have defined some inputs:
-   
+
    - All inputs defined in the ``_next_workchain``, which in this case is the :ref:`vasp_workchain`.
      We can include those very easily by using ``expose_inputs``. You can of course expose
      inputs from other workchains as long as `AiiDA`_ can find them.
@@ -109,7 +109,7 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
 #. Change the ``options`` and ``code_string`` as you did :ref:`previously<tutorial_fcc_si_step1>`.
 
    .. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
-		that the `AiiDA`_ daemon is running before continuing.
+      that the `AiiDA`_ daemon is running before continuing.
 
 #. Now we need to make sure the daemon can pick up the workchain. We can do this by
    making sure the daemon sees the directory where ``eos.py`` and ``run_fcc_si_workchain.py`` is
@@ -123,7 +123,7 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
    previous steps in the tutorial. If you use Conda, please do::
 
      % echo "export PYTHONPATH=$PYTHONPATH:<yourdirectory>" >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-		
+
 #. Submit the workchain by running the call script::
 
      %/$ python run_fcc_si_workchain.py
@@ -175,7 +175,7 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
      process state  Finished
      exit status    0
      computer       [6] mycluster
-     
+
      Inputs              PK      Type
      ------------------  ------  -------------
      structures
@@ -198,12 +198,12 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
      potential_mapping   103567  Dict
      settings            103569  Dict
      verbose             103570  Bool
-     
+
      Outputs          PK  Type
      -----------  ------  ---------
      eos          103621  ArrayData
      eos_minimum  103623  Dict
-     
+
      Called        PK  Type
      --------  ------  ----------------
      CALL      103622  CalcFunctionNode
@@ -217,13 +217,13 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
      CALL      103584  WorkChainNode
      CALL      103579  WorkChainNode
      CALL      103574  WorkChainNode
-     
+
      Log messages
      ---------------------------------------------
      There are 9 log messages for this calculation
      Run 'verdi process report 103573' to see them
 
-     
+
 #. Inspect the total energies versus volume::
 
      %/$ verdi data array show 103621
@@ -279,7 +279,7 @@ of the workchain. Please, have a look at :ref:`workchains` and references therei
 That concludes this tutorial. We hope at this point you have now realized
 that `AiiDA-VASP`_ seems somewhat usefull and that you would like to continue to
 learn more, maybe even start to write your own :ref:`workflows` or :ref:`workchains`.
-   
+
 .. _Gnuplot: http://gnuplot.info/
 .. _AiiDA: https://www.aiida.net
 .. _FCC Si: https://cms.mpi.univie.ac.at/wiki/index.php/Fcc_Si

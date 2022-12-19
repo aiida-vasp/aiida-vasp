@@ -1,4 +1,4 @@
-exclude: '^doc|(cookiecutters)|(aiida_vasp/test_data)'
+exclude: '^(cookiecutters)|(aiida_vasp/test_data)/'
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -36,11 +36,6 @@ repos:
     '--fail-on-change'
     ]
 
-- repo: https://github.com/Lucas-C/pre-commit-hooks-markup
-  rev: v1.0.1
-  hooks:
-  - id: rst-linter
-
 - repo: local
   hooks:
   - id: pylint
@@ -53,3 +48,9 @@ repos:
       ^tutorials/|
       ^examples/
       )
+  - id: sphinx-lint
+    name: Sphinx lint
+    description: 'Searches for common typos in sphinx-flavored rst files.'
+    files: '\.rst$'
+    entry: sphinx-lint --disable=horizontal-tab
+    language: python

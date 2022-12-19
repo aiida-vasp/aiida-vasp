@@ -60,44 +60,42 @@ This leads to the following KPOINTS::
    4 4 4
    0 0 0
 
-..
-   Whereas::
+Whereas::
 
-      my_kpoints = [
-		    [0, 0, 0],
-		    [0.1, 0.1, 0.1],
-		    ...
-		   ]
-      my_weights = [1., 2., ...]
-      assert(len(my_kpoints) == 10)
-      assert(len(my_weights) == 10)
-      k_list = KpointsData()
-      k_list.set_kpoints(my_kpoints)
+  my_kpoints = [[0.0, 0.0, 0.0],
+                [0.1, 0.1, 0.1],
+		...
+		]
+  my_weights = [1., 2., ...]
+  assert(len(my_kpoints) == 10)
+  assert(len(my_weights) == 10)
+  k_list = KpointsData()
+  k_list.set_kpoints(my_kpoints)
 
-   leads to::
+leads to::
 
-      Explicit list
-      10
-      Direct
-      0   0   0   1.0
-      0.1 0.1 0.1 2.0
-      ...
+  Explicit list
+  10
+  Direct
+  0.0 0.0 0.0 1.0
+  0.1 0.1 0.1 2.0
+  ...
 
-..
-   To use a k-point path requires knowledge of the structure beforehand::
 
-      structure = CifData.get_or_create('<path-to-cif-file>')
-      k_path = KpointsData()
-      k_path.set_cell(structure.get_ase().get_cell())
-      k_path.set_kpoints_path(value=[('G', 'M'), ('M', ...), ... ])
+To use a k-point path requires knowledge of the structure beforehand::
 
-   This leads to::
+  structure = CifData.get_or_create('<path-to-cif-file>')
+  k_path = KpointsData()
+  k_path.set_cell(structure.get_ase().get_cell())
+  k_path.set_kpoints_path(value=[('G', 'M'), ('M', ...), ... ])
 
-      Explicit list
-      <Number of AiiDA generated kpoints>
-      Direct
-      0  0  0  1.0
-      ...
+This leads to::
+
+  Explicit list
+  <Number of AiiDA generated kpoints>
+  Direct
+  0  0  0  1.0
+  ...
 
 Look at the class documentation for :py:class:`KpointsData <aiida.orm.nodes.data.array.kpoints.KpointsData>` for more information on how to influence the generation of kpoints from paths. One can also utilize `SeeK-path`_ to create consitent explicit lists of k-points to be used for band structure extractions. This is demonstrated in :ref:`bands_workchain`.
 
