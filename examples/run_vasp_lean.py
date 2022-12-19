@@ -51,7 +51,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     kpoints_data = DataFactory('core.array.kpoints')
 
     # Then, we set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.verify')
+    workchain = WorkflowFactory('vasp.vasp')
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
