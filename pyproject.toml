@@ -84,15 +84,17 @@ graphs = [
 "vasp.neb" = "aiida_vasp.workchains.neb:VaspNEBWorkChain"
 "vasp.immigrant" = "aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
 "vasp.v2.vasp" = "aiida_vasp.workchains.v2.vasp:VaspWorkChain"
-"vasp.v2.converge" = "aiida_vasp.workchains.v2.converge:ConvergeWorkChain"
-"vasp.v2.bands" = "aiida_vasp.workchains.v2.bands:BandsWorkChain"
-"vasp.v2.relax" = "aiida_vasp.workchains.v2.relax:RelaxWorkChain"
+"vasp.v2.converge" = "aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain"
+"vasp.v2.bands" = "aiida_vasp.workchains.v2.bands:VaspBandsWorkChain"
+"vasp.v2.hybrid_bands" = "aiida_vasp.workchains.v2.bands:VaspHybridBandsWorkChain"
+"vasp.v2.relax" = "aiida_vasp.workchains.v2.relax:VaspRelaxWorkChain"
 
 [project.entry-points."aiida.groups"]
 "vasp.potcar" = "aiida_vasp.data.potcar:PotcarGroup"
 
 [project.scripts]
 "mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
+"dryrun-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
 "mock-vasp-strict" = "aiida_vasp.commands.mock_vasp:mock_vasp_strict"
 
 [tool.flit.module]

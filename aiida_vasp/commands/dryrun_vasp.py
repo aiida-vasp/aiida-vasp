@@ -14,7 +14,7 @@ import yaml
 #pylint:disable=too-many-branches,consider-using-with
 
 
-@click.command('vasp-dryrun')
+@click.command('dryrun-vasp')
 @click.option(
     '--input-dir',
     help='Where the VASP input is, default to the current working directory.',
@@ -37,13 +37,13 @@ import yaml
     is_flag=True,
     show_default=True,
 )
-def cmd_vasp_dryrun(input_dir, vasp_exe, timeout, work_dir, keep, force):
+def cmd_dryrun_vasp(input_dir, vasp_exe, timeout, work_dir, keep, force):
     """
     A simple tool to dryrun a VASP calculation. The calculation will be run for
     up to <timeout> seconds. The underlying VASP process will be terminated once it enters
     the main loop, which is signalled by the appearance of a `INWAV` keyword in the OUTCAR.
     """
-    result = vasp_dryrun(
+    result = dryrun_vasp(
         input_dir=input_dir,
         vasp_exe=vasp_exe,
         timeout=timeout,
@@ -55,7 +55,7 @@ def cmd_vasp_dryrun(input_dir, vasp_exe, timeout, work_dir, keep, force):
         yaml.dump(result, fhandle, Dumper=yaml.SafeDumper)
 
 
-def vasp_dryrun(input_dir, vasp_exe='vasp_std', timeout=10, work_dir=None, keep=False, force=False):
+def dryrun_vasp(input_dir, vasp_exe='vasp_std', timeout=10, work_dir=None, keep=False, force=False):
     """
     Perform a "dryrun" for a VASP calculation - get the number of kpoints, bands and
     estimated memory usage.

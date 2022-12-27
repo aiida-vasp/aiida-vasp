@@ -13,7 +13,7 @@ from aiida.transports.plugins.local import LocalTransport
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.commands.dryrun_vasp import vasp_dryrun as _vasp_dryrun
+from aiida_vasp.commands.dryrun_vasp import dryrun_vasp as _vasp_dryrun
 from aiida_vasp.data.potcar import PotcarData
 
 
