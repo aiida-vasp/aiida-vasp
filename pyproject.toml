@@ -83,6 +83,10 @@ graphs = [
 "vasp.relax" = "aiida_vasp.workchains.relax:RelaxWorkChain"
 "vasp.neb" = "aiida_vasp.workchains.neb:VaspNEBWorkChain"
 "vasp.immigrant" = "aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
+"vasp.v2.vasp" = "aiida_vasp.workchains.v2.vasp:VaspWorkChain"
+"vasp.v2.converge" = "aiida_vasp.workchains.v2.converge:ConvergeWorkChain"
+"vasp.v2.bands" = "aiida_vasp.workchains.v2.bands:BandsWorkChain"
+"vasp.v2.relax" = "aiida_vasp.workchains.v2.relax:RelaxWorkChain"
 
 [project.entry-points."aiida.groups"]
 "vasp.potcar" = "aiida_vasp.data.potcar:PotcarGroup"
