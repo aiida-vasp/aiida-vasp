@@ -23,7 +23,7 @@ repos:
     additional_dependencies: ['toml']
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.10.1
+  rev: 5.11.5
   hooks:
     - id: isort
 
