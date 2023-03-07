@@ -469,6 +469,11 @@ class VaspCalculation(VaspCalcBase):
 
         :param dst: absolute path of the object to write to
         """
+        # Check if parameters validation is turned off
+        if self.inputs.get('settings'):
+            settings_dict = self.inputs.settings.get_dict()
+            if settings_dict.get('skip_parameters_validation') or settings_dict.get('unsupported_parameters'):
+                validate_tags = False
         try:
             incar_parser = IncarParser(data=self.inputs.parameters, validate_tags=validate_tags)
             incar_parser.write(dst)

@@ -156,7 +156,7 @@ def migrate_potcar_group():
 
     migrated = []
     created = []
-    for (old_group,) in qdb.iterall():
+    for (old_group,) in qdb.all():
         new_group, created = PotcarGroup.collection.get_or_create(label=old_group.label, description=old_group.description)
         new_group.add_nodes(list(old_group.nodes))
         new_group.store()
