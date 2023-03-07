@@ -561,8 +561,8 @@ def inherit_and_merge_parameters(inputs):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
                         raise IndexError(
-                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
-                            .format(key))
+                            f'The input array with a key {key} contains more than one array. Please make sure an input only contains one array.'
+                        )
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
                 elif isinstance(item, DataFactory('core.dict')):

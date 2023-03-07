@@ -384,15 +384,15 @@ class RelaxWorkChain(WorkChain):
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be
-        # successfull)
+        # successful)
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The called {}<{}> returned a non-zero exit status. '
-                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            self.report(f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status. '
+                        f'The exit status {self.ctx.exit_code} is inherited')
             # Make sure at the very minimum we attach the misc node (if it exists) that contains notifications and other
             # quantities that can be salvaged
             try:
@@ -412,9 +412,9 @@ class RelaxWorkChain(WorkChain):
         workchain = self.ctx.workchains[-1]
         # Double check presence of structure
         if 'structure' not in workchain.outputs:
-            self.report('The {}<{}> for the relaxation run did not have an '
+            self.report(f'The {workchain.__class__.__name__}<{workchain.pk}> for the relaxation run did not have an '
                         'output structure and most likely failed. However, '
-                        'its exit status was zero.'.format(workchain.__class__.__name__, workchain.pk))
+                        'its exit status was zero.')
             return self.exit_codes.ERROR_NO_RELAXED_STRUCTURE  # pylint: disable=no-member
 
         # Because the workchain may have been through multiple restarts of the underlying VASP calculation
@@ -464,13 +464,13 @@ class RelaxWorkChain(WorkChain):
         """Check the difference in cell shape before / after the last iteration against a tolerance."""
         lengths_converged = bool(delta.cell_lengths.max() <= self.ctx.inputs.parameters.relax.convergence_shape_lengths)
         if not lengths_converged:
-            self.report('cell lengths changed by max {}, tolerance is {}'.format(
-                delta.cell_lengths.max(), self.ctx.inputs.parameters.relax.convergence_shape_lengths))
+            self.report(f'cell lengths changed by max {delta.cell_lengths.max()}, '
+                        f'tolerance is {self.ctx.inputs.parameters.relax.convergence_shape_lengths}')
 
         angles_converged = bool(delta.cell_angles.max() <= self.ctx.inputs.parameters.relax.convergence_shape_angles)
         if not angles_converged:
-            self.report('cell angles changed by max {}, tolerance is {}'.format(delta.cell_angles.max(),
-                                                                                self.ctx.inputs.parameters.relax.convergence_shape_angles))
+            self.report(f'cell angles changed by max {delta.cell_angles.max()}, '
+                        f'tolerance is {self.ctx.inputs.parameters.relax.convergence_shape_angles}')
 
         return bool(lengths_converged and angles_converged)
 
@@ -478,8 +478,7 @@ class RelaxWorkChain(WorkChain):
         """Check the convergence of the volume, given a cutoff."""
         volume_converged = bool(delta.volume <= self.ctx.inputs.parameters.relax.convergence_volume)
         if not volume_converged:
-            self.report('cell volume changed by {}, tolerance is {}'.format(delta.volume,
-                                                                            self.ctx.inputs.parameters.relax.convergence_volume))
+            self.report(f'cell volume changed by {delta.volume}, ' f'tolerance is {self.ctx.inputs.parameters.relax.convergence_volume}')
         return volume_converged
 
     def check_positions_convergence(self, delta):
@@ -495,8 +494,8 @@ class RelaxWorkChain(WorkChain):
 
         if not positions_converged:
             try:
-                self.report('max site position change is {}, tolerance is {}'.format(np.nanmax(
-                    delta.pos_lengths), self.ctx.inputs.parameters.relax.convergence_positions))
+                self.report(f'max site position change is {np.nanmax(delta.pos_lengths)}, '
+                            f'tolerance is {self.ctx.inputs.parameters.relax.convergence_positions}')
             except RuntimeWarning:
                 pass
 
@@ -508,8 +507,7 @@ class RelaxWorkChain(WorkChain):
 
         relaxed_structure = workchain.outputs.structure
         if self._verbose:
-            self.report("attaching the node {}<{}> as '{}'".format(relaxed_structure.__class__.__name__, relaxed_structure.pk,
-                                                                   'relax.structure'))
+            self.report(f"attaching the node {relaxed_structure.__class__.__name__}<{relaxed_structure.pk}> as 'relax.structure'")
         self.out('relax.structure', relaxed_structure)
 
     def results(self):

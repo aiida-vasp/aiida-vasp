@@ -45,12 +45,18 @@ class BandsWorkChain(WorkChain):
             valid_type=get_data_class('core.bool'),
             required=False,
             default=lambda: get_data_node('core.bool', True),
+            help="""
+            Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`. 
+            """,
         )
         spec.input(
             'smearing.sigma',
             valid_type=get_data_class('core.float'),
             required=False,
             default=lambda: get_data_node('core.float', 0.05),
+            help="""
+            Magnitude of the smearing in eV.
+            """,
         )
         spec.input(
             'restart_folder',
@@ -247,16 +253,15 @@ class BandsWorkChain(WorkChain):
             self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
-        # Inherit exit status from last workchain (supposed to be
-        # successfull)
+        # Inherit exit status from last workchain (supposed to be successful)
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The called {}<{}> returned a non-zero exit status. '
-                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            self.report(f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status. '
+                        f'The exit status {self.ctx.exit_code} is inherited')
 
         return self.ctx.exit_code
 
