@@ -31,7 +31,7 @@ Reference: `vasp.relax` inputs
 The `RelaxWorkChain` has several parameters that can be passed to it to control its behavior. Some are uniquely defined for the relaxation and others are exposed from the base `VaspWorkChain`.
 
 .. note::
-  Any parameter defined that would affect the relaxation, e.g. ``relax.positions`` will override any input passed via any other input, e.g passing ``ISIF`` manually in the ``parameters`` dictionary. 
+  Any parameter defined that would affect the relaxation, e.g. ``relax.positions`` will override any input passed via any other input, e.g passing ``ISIF`` manually in the ``parameters`` dictionary.
 
 
 Basic inputs
@@ -41,7 +41,7 @@ These are the set of basic parameters that need to be given to be able to perfor
 
 * ``structure``, type: :py:class:`aiida.orm.nodes.data.StructureData` or :py:class:`aiida.orm.nodes.data.CifData`. Describes the structure on which `VASP`_ is to be run.
 * ``parameters``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
-* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. 
+* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc.
 
 Exposed from `vasp.vasp`
 ^^^^^^^^^^^^^^^^^^^^^^^^

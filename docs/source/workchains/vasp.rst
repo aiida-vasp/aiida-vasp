@@ -26,7 +26,7 @@ Extra inputs
 
 The ``VaspWorkChain`` can take other inputs that allow for higher control of the workchain itself.
 
-* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. 
+* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc.
 * ``wavecar``, type: :py:class:`aiida_vasp.data.WavefunData`. It contains the wavefunctions of the Kohn-Sham equation as stored in the `WAVECAR`_ file. It can be used to restart a calculation in a very efficient manner.
 * ``chgcar```, type: :py_class:`aiida_vasp.data.ChargedensityData`. It contains the charge density and the PAW one-center occupancies and can be used for restarting VASP calculation, as stored in the `CHGCAR`_ file.
 * ``site_magnetization``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing the site dependent magnetization, that can be used to restart the calculation. It currently it is only tested for the collinear case.

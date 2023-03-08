@@ -478,7 +478,8 @@ class RelaxWorkChain(WorkChain):
         """Check the convergence of the volume, given a cutoff."""
         volume_converged = bool(delta.volume <= self.ctx.inputs.parameters.relax.convergence_volume)
         if not volume_converged:
-            self.report(f'cell volume changed by {delta.volume}, ' f'tolerance is {self.ctx.inputs.parameters.relax.convergence_volume}')
+            self.report(f'cell volume changed by {delta.volume}, '
+                        f'tolerance is {self.ctx.inputs.parameters.relax.convergence_volume}')
         return volume_converged
 
     def check_positions_convergence(self, delta):

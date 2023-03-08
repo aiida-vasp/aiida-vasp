@@ -46,7 +46,7 @@ class BandsWorkChain(WorkChain):
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
-            Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`. 
+            Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`.
             """,
         )
         spec.input(

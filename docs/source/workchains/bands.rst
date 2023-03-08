@@ -15,7 +15,7 @@ This workchain will take the results from a previous ground state calculation an
 
 
 Reference: `vasp.bands` inputs
-----------------------------
+------------------------------
 
 Basic inputs
 ^^^^^^^^^^^^
@@ -37,7 +37,7 @@ Extras
 These inputs do not need to be provided for the band structure calculation.
 
 * ``parameters``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
-* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. 
+* ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc.
 
 Exposed from `vasp.vasp`
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -68,7 +68,7 @@ These inputs do not need to be provided and have a set of defaults.
 Smearing
 ^^^^^^^^
 
-These parameters control the smearing of the charge density when determining the band structure. 
+These parameters control the smearing of the charge density when determining the band structure.
 
 * ``smearing.gaussian``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: True. Whether or not gaussian smearing would be used in the band structure determination. If it is not set the smearing would be set to Fermi smearing.
 * ``smearing.sigma``, type: :py:class:`aiida.orm.nodes.data.Float`, default: 0.05. Magnitude of the smearing applied to the band structure determination, in eV.
@@ -85,7 +85,7 @@ The following inputs will allow the user to control how the band structure is de
 * ``bands.decompose_wave``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: False. Whether to decompose the wave function when determining the band structure.
 * ``bands.lm``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: False. Whether or not to decompose the wave function into l- and m- states.
 * ``bands.phase``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: False. Whether or not to further decompose the l- and m- projections into phases.
-* ``bands.wigner_seitz_radius``, type: :py:class:`aiida.orm.nodes.data.List`, default: `list[False]`. The Wigner-Seitz radius for each atom type in ångstroms as a list. If set, the internal projectors are not utilized. 
+* ``bands.wigner_seitz_radius``, type: :py:class:`aiida.orm.nodes.data.List`, default: `list[False]`. The Wigner-Seitz radius for each atom type in ångstroms as a list. If set, the internal projectors are not utilized.
 
 .. note::
    The parameters dealing with the decomposition of the wave function, ``bands.decompose_bands``, ``bands.decompose_wave``, etc. will be used to determine the value for `LORBIT`_ needed to fulfill the desired decompositions.
@@ -94,7 +94,7 @@ The following inputs will allow the user to control how the band structure is de
 
 
 Reference: `vasp.bands` outputs
------------------------------
+-------------------------------
 
 The following output nodes are created upon successful completion:
 

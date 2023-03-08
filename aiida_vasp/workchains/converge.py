@@ -1206,7 +1206,8 @@ class ConvergeWorkChain(WorkChain):
             kgrid_diff_displacement = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
             self.report('Performed atomic displacements.')
-            self.report('The convergence test using the difference between ' 'the original and displaced dataset suggests:')
+            self.report('The convergence test using the difference between '
+                        'the original and displaced dataset suggests:')
         if pwcutoff_org is None and pwcutoff_diff_displacement is not None and pwcutoff_displacement is not None:
             if self._verbose:
                 self.report('plane wave cutoff: {pwcutoff_diff_displacement} '
@@ -1284,7 +1285,8 @@ class ConvergeWorkChain(WorkChain):
             kgrid_diff_comp = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
             self.report('Performed compression.')
-            self.report('The convergence test using the difference between the ' 'original and dataset with a volume change suggests:')
+            self.report('The convergence test using the difference between the '
+                        'original and dataset with a volume change suggests:')
         if pwcutoff_org is None and pwcutoff_diff_comp is not None and pwcutoff_comp is not None:
             if self._verbose:
                 self.report('plane wave cutoff: {pwcutoff_diff_comp} '
