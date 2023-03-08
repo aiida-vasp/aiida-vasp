@@ -102,7 +102,7 @@ class ConvergeWorkChain(WorkChain):
             """,
         )
         spec.input(
-            'converge.k_course',
+            'converge.k_coarse',
             valid_type=get_data_class('core.float'),
             required=False,
             default=lambda: get_data_node('core.float', 0.35),
@@ -621,10 +621,10 @@ class ConvergeWorkChain(WorkChain):
             # 4 AA lattice vector needs roughly 16 kpoints etc.
             # Start convergence test with a step size of 0.5/AA,
             # round values up.
-            stepping = (self.ctx.inputs.parameters.converge.k_course -
+            stepping = (self.ctx.inputs.parameters.converge.k_coarse -
                         self.ctx.inputs.parameters.converge.k_dense) / self.ctx.inputs.parameters.converge.k_samples
             converge.k_sampling = [
-                self.ctx.inputs.parameters.converge.k_course - x * stepping
+                self.ctx.inputs.parameters.converge.k_coarse - x * stepping
                 for x in range(self.ctx.inputs.parameters.converge.k_samples + 1)
             ]
 
