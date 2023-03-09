@@ -69,7 +69,7 @@ def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
 
 @ONLY_ONE_CALC
 def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
-    """Test incar with invaid tags raises exception"""
+    """Test incar with invalid tags raises exception."""
     from aiida.common import ValidationError
     inputs_dict = {
         'gga': 'PE',
@@ -80,6 +80,14 @@ def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
 
     with pytest.raises(ValidationError):
         calc.prepare_for_submission(sandbox_folder)
+
+    inputs = vasp_inputs(parameters=inputs_dict, settings={'skip_parameters_validation': True})
+    calc = vasp_calc(inputs=inputs)
+    calc.prepare_for_submission(sandbox_folder)
+
+    inputs = vasp_inputs(parameters=inputs_dict, settings={'unsupported_parameters': {'smear': {}}})
+    calc = vasp_calc(inputs=inputs)
+    calc.prepare_for_submission(sandbox_folder)
 
 
 # pylint: disable=protected-access

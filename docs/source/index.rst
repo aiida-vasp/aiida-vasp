@@ -30,13 +30,21 @@ AiiDA-VASP is under active development, check out the `changelog`_.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials
+   :caption: Basic tutorials
    :hidden:
 
    tutorials/fcc_si_step1
    tutorials/fcc_si_step2
    tutorials/fcc_si_step3
+   tutorials/fcc_si_step4
    tutorials/fcc_si_dos
+   tutorials/interacting_data.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Specific tutorials
+   :hidden:
+
    tutorials/run_vasp_builder
    tutorials/bulk_modulus
    tutorials/bulk_modulus_2

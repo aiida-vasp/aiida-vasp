@@ -105,7 +105,7 @@ class EosWorkChain(WorkChain):
     def init_next_workchain(self):
         """Initialize the next workchain."""
 
-        # Elavate iteraetion index
+        # Elevate iteration index
         self.ctx.iteration += 1
 
         # Check that the context inputs exists
@@ -125,7 +125,7 @@ class EosWorkChain(WorkChain):
         self.ctx.inputs.structure = self.ctx.structures.pop(item)
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics'])
 
     def run_next_workchain(self):
         """
@@ -136,9 +136,8 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-
         self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
-        return self.to_context(workchains=append_(running))
+        self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""

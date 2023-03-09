@@ -75,7 +75,7 @@ class EosWorkChain(WorkChain):
         self.ctx.is_finished = False
 
         # Define an interation index
-        self.ctx.interation = 0
+        self.ctx.iteration = 0
 
         # Define the context inputs
         self.ctx.inputs = AttributeDict()
@@ -134,9 +134,8 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-
         self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
-        return self.to_context(workchains=append_(running))
+        self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""
@@ -158,7 +157,7 @@ class EosWorkChain(WorkChain):
             self.report('The called {}<{}> returned a non-zero exit status. '
                         'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
-        # Stop further executions of workchains if there are no more structure
+        # Stop further execution of workchains if there are no more structure
         # entries in the structures dictionary
         if not self.ctx.structures:
             self.ctx.is_finished = True

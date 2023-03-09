@@ -42,7 +42,6 @@ This means that for a handler:
 import numpy as np
 
 from aiida.common.exceptions import InputValidationError, NotExistent
-#from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.lang import override
 from aiida.engine import while_
@@ -55,7 +54,6 @@ from aiida.engine.processes.workchains.restart import (
 from aiida.orm import CalcJobNode, Code
 from aiida.plugins import CalculationFactory
 
-#from aiida_vasp.workchains.restart import BaseRestartWorkChain
 from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
