@@ -37,7 +37,7 @@ However, notice that if in one of the workchains that composes the workchain sta
 including any additional necessary parameters and a message to the user is provided in the logs giving details of the override.
 
 Also note that for instance the degrees-of-freedom used for selective dynamics runs is to be considered as an input to `VASP`_ and this does for obvious reasons not fit into ``parameters.incar``.
-For these cases, there is an input Node ``dynamics``can be supplied.
+For these cases, there is an input Node ``dynamics`` can be supplied.
 For this particular example, the key ``positions_dof`` that contains the selective dynamics flags to be set in ``POSCAR``.
 Similarly one should utilize and define these namespaces accordingly when new functionality is introduced to `VASP`_ that for instance does not fit into ``INCAR``.
 
