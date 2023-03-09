@@ -10,16 +10,16 @@ jobs:
       matrix:
         python: ["3.8"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - name: Cache python dependencies
         id: cache-pip
-        uses: actions/cache@v1
+        uses: actions/cache@v3.2.6
         with:
           path: ~/.cache/pip
           key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
           restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
@@ -41,16 +41,16 @@ jobs:
       matrix:
         python: ["3.8", "3.9", "3.10"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - name: Cache python dependencies
         id: cache-pip
-        uses: actions/cache@v1
+        uses: actions/cache@v3.2.6
         with:
           path: ~/.cache/pip
           key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
           restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
@@ -76,8 +76,7 @@ jobs:
           replace-with: ""
       - name: Run tox and codecov
         if: matrix.python == '3.8'
-        run:
-          tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
           --cov=./aiida_vasp --cov-append --cov-report=xml
       - name: Run tox
         if: matrix.python != '3.8'
@@ -93,7 +92,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload coverage to Codecov
         if: matrix.python == '3.8'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           name: aiida-vasp
           fail_ci_if_error: true
