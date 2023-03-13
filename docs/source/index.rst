@@ -102,6 +102,7 @@ AiiDA-VASP is under active development, check out the `changelog`_.
    developments/general
    developments/developments
    developments/running_tests
+   developments/documentation
    changelog
 
 .. toctree::
