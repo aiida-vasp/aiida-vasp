@@ -85,7 +85,7 @@ All of these inputs are optional
 * ``relax.algo``, type: :py:class:`aiida.orm.nodes.data.Str`, default: cg. The type of algorithm that will be used for the ionic relaxation.
 * ``relax.energy_cutoff``, type: :py:class:`aiida.orm.nodes.data.Float`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when the total energy between two ionic steps is less than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFF`_.
 * ``relax.force_cutoff``, type: :py:class:`aiida.orm.nodes.data.Float`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when all forces are smaller than than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFFG`_.
-* ``perform_static``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: True. Whether or not to perform a static calculation after the relaxation.
+* ``relax.perform_static``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: True. Whether or not to perform a static calculation after the relaxation.
 
 Degrees of freedom
 ^^^^^^^^^^^^^^^^^^

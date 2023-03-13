@@ -47,12 +47,12 @@ class RelaxWorkChain(WorkChain):
             required=False,
         )
         spec.input(
-            'perform_static',
+            'relax.perform_static',
             valid_type=get_data_class('core.bool'),
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
-            If True, perform static calculation after relaxation.
+            If True, perform static calculation after relaxation to obtain a more sane electronic structure etc.
             """,
         )
         spec.input(
@@ -234,7 +234,7 @@ class RelaxWorkChain(WorkChain):
                 ),
                 cls.store_relaxed,
             ),
-            if_(cls.perform_final_static)(
+            if_(cls.perform_static)(
                 cls.init_relaxed,
                 cls.init_next_workchain,
                 cls.run_next_workchain,
@@ -260,6 +260,7 @@ class RelaxWorkChain(WorkChain):
         self.ctx.is_converged = False
         self.ctx.current_site_magnetization = None
         self.ctx.relax = False
+        self.ctx.perform_static = False
         self.ctx.iteration = 0
         self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()
@@ -303,6 +304,7 @@ class RelaxWorkChain(WorkChain):
 
         # Need to save the parameter that controls if relaxation should be performed
         self.ctx.relax = parameters.relax.perform
+        self.ctx.perform_static = parameters.relax.perform_static
         if not parameters.relax.perform:
             # Make sure we do not expose the relax namespace in the input parameters (
             # basically setting no code tags related to relaxation unless user overrides)
@@ -524,6 +526,6 @@ class RelaxWorkChain(WorkChain):
         """Check if a relaxation is to be performed."""
         return self.ctx.relax
 
-    def perform_final_static(self):
+    def perform_static(self):
         """Check if the final static calculation is to be performed."""
-        return self.inputs.perform_static
+        return self.ctx.perform_static
