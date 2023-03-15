@@ -100,8 +100,8 @@ AiiDA-VASP is under active development, check out the `changelog`_.
    :hidden:
 
    developments/general
-   developments/developments
-   developments/running_tests
+   developments/contributions
+   developments/tests
    developments/documentation
    changelog
 

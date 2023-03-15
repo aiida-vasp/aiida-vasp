@@ -9,11 +9,16 @@ managers that are present, see the `AiiDA documentation`_.
 
 In order to run all tests execute, in the root folder::
 
-  %/$ pytest
+  $ pytest
 
 This is a useful test to see if the plugin works and that everything is installed correctly.
 
-For developers, one principle rule: always try to construct tests when submitting a PR.
+.. note::
+   For contributors, one principle rule is in place: always try to construct tests when submitting a PR.
+
+.. note::
+   We also utilize ``tox`` in order to make the test environment fully isolated. In order to run tests
+   in ``tox``, please issue ``tox`` in the root folder of `AiiDA-VASP`_.
 
 .. _pytest: https://docs.pytest.org/en/latest/
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
