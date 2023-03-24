@@ -1,7 +1,5 @@
 .. _bands_workchain:
 
-.. _seekpath: https://github.com/giovannipizzi/seekpath
-
 ===============
 Bands workchain
 ===============
@@ -102,3 +100,7 @@ The following output nodes are created upon successful completion:
 * ``misc``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing the output parameters containing smaller quantities that do not depend on system size.
 
 Depending on the passed inputs to the workchain several outputs might be exposed according to what was defined in the :ref:`vasp_workchain_outputs`.
+
+.. _VASP: https://www.vasp.at
+.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
+.. _seekpath: https://github.com/giovannipizzi/seekpath

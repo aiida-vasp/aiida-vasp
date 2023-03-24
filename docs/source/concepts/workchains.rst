@@ -19,7 +19,6 @@ Workchains should be placed in the ``aiida_vasp/workchains`` folder.
 AiiDA-VASP is delivered with several preconstructed workchains to perform dedicated tasks and we believe these, instead the the :ref:`calculations` should be the main entry point for users. They are currently:
 
 - ``vasp.vasp``
-- ``vasp.verify``
 - ``vasp.relax``
 - ``vasp.converge``
 - ``vasp.bands``
@@ -33,17 +32,11 @@ VASP workchain
 ------------------
 This performs the low level interactions with the :ref:`vasp_calculation` and is accesible by utilizing the :py:class:`aiida.plugins.WorkflowFactory` with the key ``vasp.vasp``. For additional details on how to interact with this workchain, see :ref:`vasp_workchain`.
 
-.. _verify_workchain_doc:
-
-Verify workchain
---------------------
-This is constructed to handle input/output verifications that is not related to numerics or the construction of combinations of workchains and calls :ref:`vasp_workchain_doc`. Currently, this workchain is not doing anything. For additional details on how to interact with this workchain, see :ref:`verify_workchain`.
-
 .. _relax_workchain_doc:
 
 Relaxation workchain
 ------------------------
-This handles the process of relaxing the structure and calls :ref:`verify_workchain_doc`. For additional details on how to interact with this workchain, see :ref:`relax_workchain`.
+This handles the process of relaxing the structure and calls :ref:`vasp_workchain_doc`. For additional details on how to interact with this workchain, see :ref:`relax_workchain`.
 
 .. _converge_workchain_doc:
 
@@ -68,5 +61,5 @@ The idea of this workchain is to ultimately be the main entry point, such that a
 .. _Process: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/processes.html
 .. _Calculation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/calculations.html
 .. _VASP: https://www.vasp.at
-.. _`SeeK-path`: https://github.com/giovannipizzi/seekpath
+.. _`SeeKpath`: https://github.com/giovannipizzi/seekpath
 .. _verdi_shell: https://aiida.readthedocs.io/projects/aiida-core/en/latest/working_with_aiida/scripting.html

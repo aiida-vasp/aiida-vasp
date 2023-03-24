@@ -305,7 +305,7 @@ addressed.
 
 .. _Gnuplot: http://gnuplot.info/
 .. _AiiDA: https://www.aiida.net
-.. _tutorial for writing workflows: https://aiida.readthedocs.io/projects/aiida-core/en/latest/intro/tutorial.html#workflows
+.. _tutorial on writing workflows: https://aiida.readthedocs.io/projects/aiida-core/en/latest/intro/tutorial.html#workflows
 .. _AiiDA documentation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/index.html
 .. _FCC Si: https://cms.mpi.univie.ac.at/wiki/index.php/Fcc_Si
 .. _VASP: https://www.vasp.at

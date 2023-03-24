@@ -39,11 +39,8 @@ have a look at `AiiDA concepts`_ before continuing.
 
    .. literalinclude:: ../../../tutorials/run_fcc_si_one_volume.py
 
-#. Change the following based on what is required by your previous setup steps::
-
-     code_string
-
-   which is the entry you would like to use when executing ``verdi code list``.
+#. Change the ``CODE_STRING``  based on the code and computer you have stored. This can be
+   inspected with ``verdi code list``.
 
 #. Change the following to comply with requirements of your cluster or your project::
 
@@ -53,6 +50,7 @@ have a look at `AiiDA concepts`_ before continuing.
      options.queue_name = ''
 
    For example, if you use a SGE scheduler, you need to modify `resources` as follows::
+
      resources = {'num_machines': 1, 'tot_num_mpiprocs': 8, 'parallel_env': 'mpi*'}  # for SGE
 
    Please consult the documentation on `AiiDA job resources`_ and adjust accordingly.

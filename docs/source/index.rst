@@ -11,11 +11,20 @@ AiiDA-VASP is under active development, check out the `changelog`_.
 .. note::
    We are currently looking for additional developers. If you are interested, please open an issue on our repository on Github.
 
+Also, please consider that `AiiDA-VASP`_ is no substitute for not knowing how to use VASP. If in doubt at any point of the `VASP`_ parts of the
+training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for instance `VASP lectures`_, `VASP tutorials`_, `VASP howtos`_,
+`VASP tutorials using notebooks`_ or `VASP videos`_ or ask experienced `VASP`_ users.
+
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _VASP wiki: https://cms.mpi.univie.ac.at/wiki/index.php
 .. _changelog: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
 .. _Conda: https://docs.conda.io/en/latest/
+.. _VASP lectures: https://www.vasp.at/wiki/index.php/Lectures_and_presentations
+.. _VASP tutorials: https://www.vasp.at/wiki/index.php/Category:Tutorials
+.. _VASP howtos: https://www.vasp.at/wiki/index.php/Category:Howto
+.. _VASP tutorials using notebooks: https://www.vasp.at/tutorials/latest/
+.. _VASP videos: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw
 
 .. toctree::
    :maxdepth: 1
@@ -87,12 +96,12 @@ AiiDA-VASP is under active development, check out the `changelog`_.
    :hidden:
 
    workchains/vasp
-   workchains/verify
    workchains/relax
    workchains/converge
    workchains/bands
    workchains/master
    workchains/writing_workchains
+   workchains/exit
 
 .. toctree::
    :maxdepth: 1
@@ -101,8 +110,9 @@ AiiDA-VASP is under active development, check out the `changelog`_.
 
    developments/general
    developments/contributions
-   developments/tests
    developments/documentation
+   developments/tests
+   developments/vasp
    changelog
 
 .. toctree::

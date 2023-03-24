@@ -4,7 +4,6 @@
 A daily life with AiiDA-VASP
 ============================
 
-
 Here some tips are presented to make our AiiDA-VASP life easy. These
 below are all explained in AiiDA documentation and also in AiiDA
 tutorials, but some of them are picked up here.
@@ -76,7 +75,7 @@ is used instead of ``ipython``.
 
    In [2]:
 
-More details on ``verdi shell`` is found `here
+More details on ``verdi shell`` is found `in the AiiDA documentation
 <https://aiida.readthedocs.io/projects/aiida-core/en/latest/working_with_aiida/scripting.html#verdi-shell>`_.
 
 Python Docstring
@@ -99,7 +98,7 @@ Tab completion
 In the interactive mode invoked by ``verdi shell``, tab completion is
 extremely helpful in writing an AiiDA script to show the like of
 attributes of classes and instances. Therefore we must set up
-the verdi tab-completion following `this documentation
+the verdi tab-completion following `the documentation here
 <https://aiida.readthedocs.io/projects/aiida-core/en/latest/install/configuration.html#verdi-tab-completion>`_.
 
 ::
@@ -149,10 +148,9 @@ which is easily done by ``get_builder()``::
 Below, how to use the ProcessBuilder is explained shortly. More
 details are found at `AiiDA documentation
 <https://aiida-core.readthedocs.io/en/latest/working/processes.html#working-processes-builder>`_. On
-AiiDA process, it is nice to read `this
+AiiDA process, it is nice to read about `the concepts of processes
 <https://aiida-core.readthedocs.io/en/latest/concepts/processes.html>`_
-and `this
-<https://aiida-core.readthedocs.io/en/latest/working/processes.html>`_
+and `how to work with processes <https://aiida-core.readthedocs.io/en/latest/working/processes.html>`_
 in the AiiDA documentation.
 
 There are two ways to submit a process to AiiDA daemon. They are like

@@ -63,9 +63,8 @@ Exposed from `vasp.vasp`
 
 The following inputs will be passed straight through to the :ref:`vasp_workchain`.
 
-++++++++
 Required
-++++++++
+""""""""
 
 These inputs are exposed from the base `VaspWorkChain`, and must be provided to perform the calculation.
 
@@ -74,9 +73,8 @@ These inputs are exposed from the base `VaspWorkChain`, and must be provided to 
 * ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
 * ``options``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
 
-++++++
 Extras
-++++++
+""""""
 
 These inputs do not need to be provided and have a set of defaults.
 
@@ -122,12 +120,14 @@ The following output nodes are created upon successful completion:
 
 * ``misc``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing the output parameters containing smaller quantities that do not depend on system size.
 
-++++++
 Extras
-++++++
+^^^^^^
 
 These outputs might be present depending on the type of calculation performed, i.e. which kind of convergence, if any, was performed.
 
 * ``converge.data``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing the value of the convergence criterion parameter for each variation of the convergence parameters (energy and/or k-points).
 * ``converge.pwcutoff_recommended``, type: :py:class:`aiida.orm.nodes.data.Float`. Recommended value for the energy cutoff.
 * ``converge.kpoints_recommended``, type: :py:class:`aiida.orm.nodes.data.KpointsData`. Recommended value for the k-points mesh.
+
+.. _VASP: https://www.vasp.at
+.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/

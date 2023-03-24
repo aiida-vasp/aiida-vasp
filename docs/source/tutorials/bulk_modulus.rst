@@ -1,107 +1,141 @@
 .. _bulk_modulus_script:
 
-==============================
-6. Writing bulk modulus script
-==============================
+=======================
+6. Designing a workflow
+=======================
 
-This section presents an example to calculate bulk modulus of
-wurtzite-type SiC. This tutorial is divided in two; in the first part we will calculate the bulk modulus in the usual way by inspecting the VASP output files manually, while in the second part we will make a simple script that depend on AiiDA and AiiDA-VASP to perform the same calculation.
+This tutorial focuses on how to approach designing, developing, and finally launching a workflow.
 
-In the script, ``QueryBuilder`` and ``Group`` are used to manage the workflow of this calculation.
+We will use as an example, the calculation of the bulk modulus of wurtzite-type SiC.
 
+The tutorial is divided in two sections. In the first part we will prepare the mental state by identifying
+the different steps we need to perform in order to calculate the bulk modulus using VASP.
+While, in the second part we will make a simple script that depend on
+`AiiDA`_ and `AiiDA-VASP`_ to perform the same calculation.
+
+Also, note that we will in this tutorial try to motivate the reader to write most of this and not
+just downloading the scripts and executing them. This is good training practice. However, in case you need or want to
+there is also a link to the scripts used in this tutorial. But please try not to be tempted to download them
+right away. For this reason, they are also mentioned at the end.
 
 Workflow
 --------
 
 .. _workflow_bulk_modulus:
 
-It is always nice to try to sketch the outline of the steps needed to investigate a property, phenomena or something else. These steps typically then define the workflow.
+Let us first start by trying to sketch the outline of the steps needed to investigate a property,
+phenomena or something else. These steps typically then define the workflow.
 
-Here we take a rather simple example to illustrate the flow of thought. We typically calculate the bulk modulus by following the following steps (the full script is attached at the end of this page):
+Here we take a rather simple example to illustrate how to approach this problem, such that it becomes
+easier to write up the workflow in `AiiDA`_ later. Maybe a good mental picture of this would be that
+we want to bridge the gap between the two concepts of *scientific workflows* and the *workflows as code*.
+The first being how you would approach a problem from the scientific side, which is obviously not something
+you can directly do on a computer, while the second is how it can be performed in a computer.
 
-1. `Relax` the crystal structure
-2. `Wait` until (1) finishes
-3. `Create two structures` at fixed volumes with +/- 1% from the relaxed
+To obtain the bulk modulus we typically need to perform several different calculations.
+Broadly, we would like to follow the following steps:
+
+#. First we need to prepare the inputs, or starting point. In this case the crystal structure is the most
+   important. Here, this would be the wurtzite-type SiC.
+
+#. Then we need to `Relax` the crystal structure.
+
+#. Then we need to `Wait` until (1) finishes and verify results.
+
+#. Then we need to `Create two structures` at fixed volumes with +/- 1% from the relaxed
    structure obtained at the step (1).
-4. `Relax the shape` of the structures generated in step (3).
-5. `Compute bulk modulus` as a post process by the formula :math:`K \simeq -V_0
-   \frac{\Delta P}{\Delta  V}`
 
-Let us now try to perform these steps using VASP.
+#. Then we need to `Relax the shape` of the structures generated in step (3).
 
-Bulk modulus calculation without using AiiDA-VASP
---------------------------------------------------
+#. Then we need to `Wait` until (4) finishes and verify results.
 
-Steps 1 and 2
-^^^^^^^^^^^^^
+#. Then we need to `Compute bulk modulus` as a post process by :math:`K \simeq -V_0\frac{\Delta P}{\Delta  V}`,
+   where we use the previous outputs as inputs.
 
-POSCAR file
+Let us now try to perform these steps exclusively using `VASP`_. The steps above are of course general and could
+be executed on any code that provides the functionality to honor the sub-steps.
 
-::
+Bulk modulus calculation with VASP
+----------------------------------
 
-   wurtzite-type SiC
-     1.0000000000
-     3.0920000000   0.0000000000   0.0000000000
-    -1.5460000000   2.6777505485   0.0000000000
-     0.0000000000   0.0000000000   5.0730000000
-   Si    C
-       2     2
-   Direct
-     0.3333333333   0.6666666667   0.0000000000
-     0.6666666667   0.3333333333   0.5000000000
-     0.3333333333   0.6666666667   0.3758220000
-     0.6666666667   0.3333333333   0.8758220000
+0. Preparing input files
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-INCAR file
+#. We will utilize the following crystal structure for wurtzite-type SiC, for `VASP`_ this means using
+   the following ``POSCAR`` file::
 
-::
+     wurtzite-type SiC
+       1.0000000000
+       3.0920000000   0.0000000000   0.0000000000
+      -1.5460000000   2.6777505485   0.0000000000
+       0.0000000000   0.0000000000   5.0730000000
+     Si    C
+	 2     2
+     Direct
+       0.3333333333   0.6666666667   0.0000000000
+       0.6666666667   0.3333333333   0.5000000000
+       0.3333333333   0.6666666667   0.3758220000
+       0.6666666667   0.3333333333   0.8758220000
 
-   EDIFF = 1e-08
-   EDIFFG = -1e-05
-   ENCUT = 500
-   GGA = PS
-   IALGO = 38
-   IBRION = 2
-   ISIF = 3
-   ISMEAR = 0
-   LCHARG = .FALSE.
-   LREAL = .FALSE.
-   LWAVE = .FALSE.
-   NELM = 100
-   NELMIN = 5
-   NSW = 10
-   PREC = Accurate
-   SIGMA = 0.01
+#. We also need to prepare a suitable ``KPOINTS`` file, here::
 
-KPOINTS file
+     # Half grid shift along c*
+     0
+     Gamma
+		 6             6             4
+       0.000000000   0.000000000   0.500000000
 
-::
+#. Then, we need the ``INCAR`` file to tell `VASP`_ to relax the structure::
 
-   # Half grid shift along c*
-   0
-   Gamma
-               6             6             4
-     0.000000000   0.000000000   0.500000000
+     EDIFF = 1e-08
+     EDIFFG = -1e-05
+     ENCUT = 500
+     IALGO = 38
+     IBRION = 2
+     ISIF = 3
+     ISMEAR = 0
+     LCHARG = .FALSE.
+     LREAL = .FALSE.
+     LWAVE = .FALSE.
+     NELM = 100
+     NELMIN = 5
+     NSW = 10
+     PREC = Accurate
+     SIGMA = 0.01
 
-Using this setting files, we get CONTCAR::
+#. You also need to assemble the potential files for ``SiC`` by concatenating
+   the recommended ``PBE.54`` potential files for ``Si`` and ``C`` into a suitable ``POTCAR``.
+   If in doubt about these steps, please have a look at `VASP lectures`_, `VASP tutorials`_, `VASP howtos`_,
+   `VASP tutorials using notebooks`_ or `VASP videos`_ or ask experienced `VASP`_ users. `AiiDA-VASP`_ is not
+   a substitute for not knowing how to use `VASP`_, its intent is to make it more efficient, reproducible to use `VASP`_,
+   in addition to open up for new areas of applications.
 
-   SiC
-      1.00000000000000
-        3.0779853535726360    0.0000000000000000    0.0000000000000000
-       -1.5389926767863180    2.6656135086688661    0.0000000000000000
-        0.0000000000000000   -0.0000000000000000    5.0493167306164031
-      Si   C
-        2     2
-   Direct
-     0.3333333332999970  0.6666666667000030 -0.0000414569885531
-     0.6666666667000030  0.3333333332999970  0.4999585430114469
-     0.3333333332999970  0.6666666667000030  0.3758634569885525
-     0.6666666667000030  0.3333333332999970  0.8758634569885526
+#. Create a jobfile, or another way to execute `VASP`_ in your environment and continue to the next step.
 
-     0.00000000E+00  0.00000000E+00  0.00000000E+00
-     0.00000000E+00  0.00000000E+00  0.00000000E+00
-     0.00000000E+00  0.00000000E+00  0.00000000E+00
-     0.00000000E+00  0.00000000E+00  0.00000000E+00
+1. Execute the relaxation and 2. Wait for it to finish
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+#. Execute `VASP`_ using the prepared ``INCAR``, ``POSCAR``, ``KPOINTS`` and ``POTCAR`` from the previous step.
+
+#. Inspect the resulting relaxed structure that will be housed in the created ``CONTCAR`` file::
+
+     SiC
+	1.00000000000000
+	  3.0779853535726360    0.0000000000000000    0.0000000000000000
+	 -1.5389926767863180    2.6656135086688661    0.0000000000000000
+	  0.0000000000000000   -0.0000000000000000    5.0493167306164031
+	Si   C
+	  2     2
+     Direct
+       0.3333333332999970  0.6666666667000030 -0.0000414569885531
+       0.6666666667000030  0.3333333332999970  0.4999585430114469
+       0.3333333332999970  0.6666666667000030  0.3758634569885525
+       0.6666666667000030  0.3333333332999970  0.8758634569885526
+
+       0.00000000E+00  0.00000000E+00  0.00000000E+00
+       0.00000000E+00  0.00000000E+00  0.00000000E+00
+       0.00000000E+00  0.00000000E+00  0.00000000E+00
+       0.00000000E+00  0.00000000E+00  0.00000000E+00
 
 Steps 3 and 4
 ^^^^^^^^^^^^^
@@ -219,6 +253,10 @@ We get the value::
    Bulk modules: 222.016084 GPa
 
 Below you can find the full script to perform the calculation. Please study and play with it.
+
+In the script, ``QueryBuilder`` and ``Group`` are `AiiDA`_ concepts used to manage the workflow
+of this calculation.
+
 
 Full script to compute bulk modulus
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -475,3 +513,12 @@ the bulk modulus calculation is launched and this way::
 
 the bulk modulus is calculated fetching calculatied data from AiiDA
 database.
+
+.. _AiiDA: https://www.aiida.net
+.. _VASP: https://www.vasp.at
+.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
+.. _VASP lectures: https://www.vasp.at/wiki/index.php/Lectures_and_presentations
+.. _VASP tutorials: https://www.vasp.at/wiki/index.php/Category:Tutorials
+.. _VASP howtos: https://www.vasp.at/wiki/index.php/Category:Howto
+.. _VASP tutorials using py4vasp: https://www.vasp.at/tutorials/latest/
+.. _VASP videos: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw

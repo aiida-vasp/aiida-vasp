@@ -55,7 +55,8 @@ docs = [
     "aiida-core[docs]~=2.2",
     "sphinx-autobuild",
     "sphinx-lint",
-    "sphinx-rtd-theme"
+    "sphinx-rtd-theme",
+    "sphinxcontrib-apidoc"
 ]
 graphs = [
     "matplotlib"

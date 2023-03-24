@@ -24,7 +24,6 @@ Inputs
 Outputs
 -------
 
-* :ref:`results <vasp-output-results>`
 * :ref:`bands <vasp-output-bands>`
 * :ref:`dos <vasp-output-dos>`
 * :ref:`wannier_parameters <vasp-output-wannier_parameters>`

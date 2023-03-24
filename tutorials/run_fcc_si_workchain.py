@@ -95,7 +95,7 @@ def main(code_string, incar, kmesh, structures, potential_family, potential_mapp
 
 if __name__ == '__main__':
     # Code_string is chosen among the list given by 'verdi code list'
-    CODE_STRING = 'VASP/6.3.2-gompi-2021b-std-wannier90-libxc-hdf5-beef-d7238be44ec2ed23315a16cc1549a1e3@betzy'
+    CODE_STRING = 'vasp@mycluster'
 
     # INCAR equivalent
     # Set input parameters
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     # POTCAR equivalent
     # Potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'
-    POTENTIAL_FAMILY = 'PBE'
+    POTENTIAL_FAMILY = 'PBE.54'
     # The potential mapping selects which potential to use, here we use the standard
     # for silicon, this could for instance be {'Si': 'Si_GW'} to use the GW ready
     # potential instead
@@ -120,8 +120,8 @@ if __name__ == '__main__':
     # AttributeDict is just a special dictionary with the extra benefit that
     # you can set and get the key contents with mydict.mykey, instead of mydict['mykey']
     OPTIONS = AttributeDict()
-    OPTIONS.account = 'nn9997k'
-    OPTIONS.qos = 'devel'
+    OPTIONS.account = ''
+    OPTIONS.qos = ''
     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600

@@ -11,16 +11,16 @@ The quantities that can be parsed are now fully customisable. The user interface
    Notice however, that even though the parser and the `node composer` is configurable, the output check in `AiiDA`_ will complain that your newly added custom node is not detected in the ``spec`` definitions of for instance your ``VaspCalculation``. If you do add additional nodes outside the ones defined in the code already, please consider to also add it to the ``spec.output`` section in the ``VaspCalculation`` class and potentially also to workchains if need be.
 
 .. literalinclude:: ../../../aiida_vasp/parsers/vasp.py
-   :start-after: defaults
+   :start-after: ParserSettings
    :end-before: VaspParser
 
-   Where ``<node_name>`` is defined as ``add_<node_name>``. The ``<node_name>`` usually correspond to
-   the parsed ``quantities``, except for ``misc`` which is a container for all system size independent quantities.
-   This can be seen from the current default node definitions:
+where ``<node_name>`` is defined as ``add_<node_name>``. The ``<node_name>`` usually correspond to
+the parsed ``quantities``, except for ``misc`` which is a container for all system size independent quantities.
+This can be seen from the current default node definitions:
 
 .. literalinclude:: ../../../aiida_vasp/parsers/settings.py
    :start-after: NODES
-   :end-before: ParserSettings
+   :end-before: ParserDefinitions
 
 As you can see, the ``<node_name>`` named ``bands`` is composed of three quantities,
 the ``eigenvalues``, the ``kpoints`` and the ``occupancies``. You typically need all three
@@ -84,9 +84,9 @@ where either a ``VaspParser`` object is passed to ``vasp_parser`` or a list of s
 
 For most node types there are default quantities defined as::
 
-.. literalinclude:: ../../../aiida_vasp/parsers/node_composer.py
-   :start-after: NODE_TYPES
-   :end-before: NodeComposer
+  .. literalinclude:: ../../../aiida_vasp/parsers/node_composer.py
+		      :start-after: NODE_TYPES
+		      :end-before: NodeComposer
 
 so that the above could be shortened to::
 

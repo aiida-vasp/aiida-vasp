@@ -26,7 +26,7 @@ Unless the workflow is solely concerned with providing a more robust or more spe
 .. _relax_workchain/inputs:
 
 Reference: `vasp.relax` inputs
-----------------------------
+------------------------------
 
 The `RelaxWorkChain` has several parameters that can be passed to it to control its behavior. Some are uniquely defined for the relaxation and others are exposed from the base `VaspWorkChain`.
 
@@ -122,7 +122,7 @@ All of these inputs are optional
 * ``relax.convergence_positions``, type: :py:class:`aiida.orm.nodes.data.Float`, default: 0.01. Maximum percentage change of the displacement (L2 norm) of the positions from the previous relaxation.
 
 Reference: `vasp.relax` outputs
------------------------------
+-------------------------------
 
 The following output nodes are created upon successful completion:
 

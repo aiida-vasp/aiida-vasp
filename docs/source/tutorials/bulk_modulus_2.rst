@@ -58,14 +58,18 @@ Workflow 2.0
 
 The workflow is same as the :ref:`previous
 one<workflow_bulk_modulus>`, but we will now be a bit more explicit to
-comply with a typical implementation of a WorkChain::
+comply with a typical implementation of a WorkChain:
 
 1. ``initialize`` Initialize whatever needs initializing
+
 2. ``run_relax`` Run a relax workchain to fully relax crystal structure
+
 3. ``create_two_structures`` Create two structures with a +/- 1% change
    in the volume from the relaxed structure obtained at step (2).
+
 4. ``run_two_volumes`` Submit two relaxations to relax the shape of the
    structures created at step (3).
+
 5. ``calc_bulk_modulus`` Compute bulk modulus as a post process by using the
    formula :math:`K \simeq -V_0 \frac{\Delta P}{\Delta V}`, where the
    pressure :math:`P \equiv \mathrm{Tr}(\sigma)/3` follows the VASP

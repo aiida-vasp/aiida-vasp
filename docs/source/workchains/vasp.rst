@@ -28,13 +28,15 @@ The ``VaspWorkChain`` can take other inputs that allow for higher control of the
 
 * ``settings``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc.
 * ``wavecar``, type: :py:class:`aiida_vasp.data.WavefunData`. It contains the wavefunctions of the Kohn-Sham equation as stored in the `WAVECAR`_ file. It can be used to restart a calculation in a very efficient manner.
-* ``chgcar```, type: :py_class:`aiida_vasp.data.ChargedensityData`. It contains the charge density and the PAW one-center occupancies and can be used for restarting VASP calculation, as stored in the `CHGCAR`_ file.
+* ``chgcar```, type: :py:class:`aiida_vasp.data.ChargedensityData`. It contains the charge density and the PAW one-center occupancies and can be used for restarting VASP calculation, as stored in the `CHGCAR`_ file.
 * ``site_magnetization``, type: :py:class:`aiida.orm.nodes.data.Dict`. Dictionary containing the site dependent magnetization, that can be used to restart the calculation. It currently it is only tested for the collinear case.
 * ``restart_folder``, type: :py:class:`aiida.orm.nodes.data.RemoteData`. This is a folder of a previous calculation that can be used as a parent or to restart the calculation.
 * ``max_iterations``, type: `AiiDA`_ :py:class:`aiida.orm.nodes.data.Int`, default: 5. How many iterations the restart will be attempted before resulting in failure.
 * ``clean_workdir``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: True. Whether or not the remote folder of the calculation will be deleted after the end of the calculation.
 * ``verbose``, type: :py:class:`aiida.orm.nodes.data.Bool`, default: False. Whether or not extra information is displayed during the workchain execution.
 * ``dynamics.positions_dof``, type: :py:class:`aiida.orm.nodes.data.List`. It controls the selective dynamics of the ions when performing relaxations.
+
+.. _vasp_workchain_outputs:
 
 Required outputs
 ^^^^^^^^^^^^^^^^
@@ -45,8 +47,6 @@ A successful `VaspWorkChain` would result in the following outputs always being 
 
 Extra outputs
 ^^^^^^^^^^^^^
-
-.. _vasp_workchain_outputs:
 
 Depending on the input variables passed as inputs one or more of the following outputs can be produced
 

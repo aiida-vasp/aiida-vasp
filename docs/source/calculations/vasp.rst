@@ -43,7 +43,7 @@ A dictionary containing information about how the calculation should obey the dy
     ]}
   )
 
-.. _vasp-input-kpoint:
+.. _vasp-input-kpoints:
 
 kpoints
 ^^^^^^^

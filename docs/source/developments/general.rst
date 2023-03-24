@@ -22,3 +22,4 @@ Also we would encourage users to focus on writing workchains that uses :ref:`con
 .. _AiiDA documentation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/index.html
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 .. _open issues: https://github.com/aiida-vasp/aiida-vasp/issues
+.. _VASP: https://www.vasp.at

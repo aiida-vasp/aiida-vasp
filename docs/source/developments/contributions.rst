@@ -10,38 +10,42 @@ Prerequisites
 -------------
 
 1. Make sure you have an account on GitHub and that you have your public SSH key uploaded.
+
 2. One of two things, either you need to clone the repository, or you need to make sure you
    have the recent changes in place.
-2a. You have the `AiiDA-VASP`_ repository present in your local computer.
-    Clone the upstream `AiiDA-VASP`_ repository by running::
 
-     $ git clone git@github.com:aiida-vasp/aiida-vasp.git
+   a. You have the `AiiDA-VASP`_ repository present in your local computer.
+      Clone the upstream `AiiDA-VASP`_ repository by running::
 
-2b. You already have the `AiiDA-VASP`_ repository present on your local computer.
-    Check if you already have some changes. From the root folder of the repository run::
+	$ git clone git@github.com:aiida-vasp/aiida-vasp.git
 
-      $ git status
+   b. You already have the `AiiDA-VASP`_ repository present on your local computer.
+      Check if you already have some changes. From the root folder of the repository run::
 
-    If you have no changes, good, continue. If you have, try to remember what you have done
-    and if it is worth saving. Issue for instance::
+	$ git status
 
-      $ git stash
+      If you have no changes, good, continue. If you have, try to remember what you have done
+      and if it is worth saving. Issue for instance::
 
-    to store what you had changed. These can later be retrieved as long as you do not delete
-    the repository and clone it again. Now, make sure you are on the ``develop`` branch, i.e.::
+	$ git stash
 
-      $ git checkout develop
+      to store what you had changed. These can later be retrieved as long as you do not delete
+      the repository and clone it again. Now, make sure you are on the ``develop`` branch, i.e.::
 
-    Make sure you have the recent ``develop`` branch by running i.e.::
+	$ git checkout develop
 
-      $ git pull origin develop
+      Make sure you have the recent ``develop`` branch by running i.e.::
 
-    if the upstream `AiiDA-VASP`_ repository is stored as ``origin`` in your ``git`` setup.
+	$ git pull origin develop
+
+      if the upstream `AiiDA-VASP`_ repository is stored as ``origin`` in your ``git`` setup.
 
 3. Typically this upstream repository will be a ``remote`` called ``origin``. Double check
    what it is called with ``git remote -v``. In the following, we assume this is called
    ``origin``.
+
 4. Make sure your AiiDA-VASP Python virtual environment is enabled, consult :ref:`the installation instructions <install>`.
+
 5. Make sure you are ready for development work on the plugin, meaning, you need to make
    sure you have installed everything you need. Make sure you have installed the plugin in
    edit mode and that you have enabled the extra ``tests``, ``docs`` and ``pre-commit`` options when installing.
@@ -82,4 +86,5 @@ You should try to follow this workflow when submitting a contribution:
 
 .. _issue: https://github.com/aiida-vasp/aiida-vasp/issues
 .. _pull request: https://github.com/aiida-vasp/aiida-vasp/pulls
-.. _AiiDA-VASP: repository: https://github.com/aiida-vasp/aiida-vasp
+.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
+.. _VASP: https://www.vasp.at

@@ -16,7 +16,7 @@ Modularity
 Reusable skeleton code
 ----------------------
 
-From the `AiiDA documentation`_ you should be familiar with this code. It runs the :ref:`VASP workchain` with most input parameters inherited from the definition specified in :ref:`VASP workchain`, but we override the ``structure``. The reason we want to do this is to demonstrate the simple example of building inputs on the fly in workchains such that it is possible for a user to call the workchain we here construct with minimal input parameters. Say that we always want to do calculations on the same structure (this could of course be a list of structures or the whole set of structures in say the Materials Project database). Since :ref:`VASP workchain` requires a ``structure`` as an input, we will in the example below override that such that we in the example workchain specify the structure. Consequently, then the user wants to call the example workchain, they do not have to supply a structure, a default is chosen if they do not::
+From the `AiiDA documentation`_ you should be familiar with this code. It runs the :ref:`vasp_workchain` with most input parameters inherited from the definition specified in :ref:`vasp_workchain`, but we override the ``structure``. The reason we want to do this is to demonstrate the simple example of building inputs on the fly in workchains such that it is possible for a user to call the workchain we here construct with minimal input parameters. Say that we always want to do calculations on the same structure (this could of course be a list of structures or the whole set of structures in say the Materials Project database). Since :ref:`vasp_workchain` requires a ``structure`` as an input, we will in the example below override that such that we in the example workchain specify the structure. Consequently, then the user wants to call the example workchain, they do not have to supply a structure, a default is chosen if they do not::
 
    from aiida.engine import WorkChain
    from aiida.orm import Str, Int
@@ -77,7 +77,7 @@ From the `AiiDA documentation`_ you should be familiar with this code. It runs t
           workchain = self.ctx.workchains[-1]
           self.out_many(self.exposed_ouputs(workchain, self._next_workchain))
 
-This example uses the :ref:`VASP workchain` to run a single `VASP`_ calculation with its defaults. Please also consult the example files in the ``examples`` folder, which calls the bundled workchains.
+This example uses the :ref:`vasp_workchain` to run a single `VASP`_ calculation with its defaults. Please also consult the example files in the ``examples`` folder, which calls the bundled workchains.
 
 Determine the inputs and outputs
 --------------------------------

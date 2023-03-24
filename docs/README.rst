@@ -33,7 +33,7 @@ Now, we can build the documentation and setup a temporary web
 server for us to browse and check the documentation. From the
 AiiDA-VASP root folder, issue the command::
 
-  $ sphinx-autobuild  docs docs/_build
+  $ sphinx-autobuild docs/source docs/_build
 
 Now open ``http://127.0.0.1:8000`` in a browser and inspect the documentation.
 The webserver can be brought down by killing the ``sphinx-autobuild`` process,
@@ -44,13 +44,13 @@ Without a web server
 
 To just build the documentation without setting up a temporary web server execute::
 
-  $ sphinx-build docs docs/_build
+  $ sphinx-build docs/source docs/_build
 
 With a link checker
 ~~~~~~~~~~~~~~~~~~~
 
 We can also check links in our documentation, but issuing::
 
-  $ sphinx-build -b linkcheck docs docs/_build
+  $ sphinx-build -b linkcheck docs/source docs/_build
 
 .. _open issue list: https://github.com/aiida-vasp/aiida-vasp/issues?q=is%3Aissue+is%3Aopen+label%3A%22documentation%22

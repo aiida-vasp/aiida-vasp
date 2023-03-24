@@ -45,11 +45,11 @@ In this case we will not modify the structure, so we will simply use the unmodif
    `density of states for FCC Si`_.
 
    .. note::
-   Importantly, we have told the parser to give us the density of states by adding
-   ``add_dos: True`` dictionary entry to the ``parser_settings`` key in the ``settings``
-   dictionary. In fact, this is the general way to control what quantities to parse, to enable with
-   ``add_<quantity>: True`` or ``add_<quantity>: False``, where ``<quantity>`` is a given
-   quantity. Please consult :ref:`parsing` for the supported quantities and additional details.
+      Importantly, we have told the parser to give us the density of states by adding
+      ``add_dos: True`` dictionary entry to the ``parser_settings`` key in the ``settings``
+      dictionary. In fact, this is the general way to control what quantities to parse, to enable with
+      ``add_<quantity>: True`` or ``add_<quantity>: False``, where ``<quantity>`` is a given
+      quantity. Please consult :ref:`parsing` for the supported quantities and additional details.
 
 #. Let us now execute ``run_fcc_si_dos.py`` by issuing the command::
 
