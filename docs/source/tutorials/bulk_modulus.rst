@@ -461,7 +461,7 @@ previous step. Please remove:
   Furthermore, make sure ``requires-python = ">=3.8"`` and remove ``37`` under the ``testenv:py`` entry,
   which is also something we require in `AiiDA-VASP`_. The ``pyproject.toml`` should now look something like:
 
-  .. literalinclude:: ../../../tutorials/pyproject.toml
+  .. rli:: https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/aiida_vasp_bm/pyproject.toml
 
 We now need to add the actual workchain to the plugin.
 
