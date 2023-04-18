@@ -56,9 +56,6 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 
    tutorials/run_vasp_builder
    tutorials/bulk_modulus
-   tutorials/bulk_modulus_2
-   tutorials/band_structure_electrons
-   tutorials/a_daily_life
 
 .. toctree::
    :maxdepth: 1

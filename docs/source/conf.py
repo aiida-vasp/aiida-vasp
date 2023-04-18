@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode', 'aiida.sphinxext', 'sphinxcontrib.apidoc'
+    'sphinx.ext.viewcode', 'aiida.sphinxext', 'sphinxcontrib.apidoc', 'sphinxext.remoteliteralinclude'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

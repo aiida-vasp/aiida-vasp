@@ -177,8 +177,8 @@ Initial static run
 	 ]
      }
 
-Do not take these values for granted and compare them to yours. They depend on the
-system you executed, potential used etc.
+   Do not take these values for granted and compare them to yours. They depend on the
+   system you executed, potential used etc.
 
 #. We can also inspect it from Python. In order to make all the AiiDA machinery
    available in Python, we can use ``verdi shell``. Start ``verdi shell`` and then load the node::
