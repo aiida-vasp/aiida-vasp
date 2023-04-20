@@ -7,8 +7,7 @@
 Here we will simply install the plugin before continuing.
 
 .. include:: ../../../README.rst
-   :start-line: 54
-   :end-line: 71
+   :start-after: Start installation description
 
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 .. _AiiDA: https://www.aiida.net

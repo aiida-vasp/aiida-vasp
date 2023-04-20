@@ -6,10 +6,13 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 AiiDA-VASP is under active development, check out the `changelog`_.
 
 .. warning::
-   Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to open an issue or even better, submit a pull requests, where you try to fix the issue yourself. You can do this on our Github repository.
+   Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to `open an issue`_ or even better, `submit a pull request`_, where you try to fix the issue yourself. You can do this on our Github repository.
 
 .. note::
    We are currently looking for additional developers. If you are interested, please open an issue on our repository on Github.
+
+.. note::
+   Please consider to `open an issue`_ instead of sending an email to the AiiDA mailing list if the issue is related to this plugin.
 
 Also, please consider that `AiiDA-VASP`_ is no substitute for not knowing how to use VASP. If in doubt at any point of the `VASP`_ parts of the
 training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for instance `VASP lectures`_, `VASP tutorials`_, `VASP howtos`_,
@@ -25,6 +28,8 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 .. _VASP howtos: https://www.vasp.at/wiki/index.php/Category:Howto
 .. _VASP tutorials using notebooks: https://www.vasp.at/tutorials/latest/
 .. _VASP videos: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw
+.. _open an issue: https://github.com/aiida-vasp/aiida-vasp/issues
+.. _submit a pull request: https://github.com/aiida-vasp/aiida-vasp/pull
 
 .. toctree::
    :maxdepth: 1

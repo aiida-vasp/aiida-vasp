@@ -52,6 +52,11 @@ Please have a look at the `AiiDA-VASP documentation`_ for instructions on how to
 Installing the plugin
 ---------------------
 
+..
+  Keep this comment as it is used for including these steps in the install section of the docs.
+  It includes everything past the next line.
+  Start installation description
+
 #. If you are already using `AiiDA`_, simply activate the virtual environment associated with it, here assumed to be located in ``~/env/aiida-vasp``::
 
    $ source ~/env/aiida-vasp/bin/activate
@@ -83,12 +88,10 @@ Please consider that `AiiDA`_ have prerequisite that needs to be installed and e
 Upgrading from AiiDA 1.x
 ------------------------
 
-At the moment, only the development version of the plugin supports ``aiida-core >= 2.0.1``.
+At the moment, only the development version of the plugin supports aiida-core >= 2.2.2.
 If you are upgrading an existing AiiDA 1.x installation. Please upgrade ``aiida-core`` first and reinstall the plugin using::
 
-
     $ pip install git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
-
 
 This ensures the installation of the latest development version and registers the entrypoints.
 You can verify the latter with::
@@ -96,8 +99,6 @@ You can verify the latter with::
     $ verdi plugin list aiida.groups
 
 and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similiar way.
-
-
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at

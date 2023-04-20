@@ -387,7 +387,7 @@ perfect for `AiiDA`_ plugins.
    a contact email ``<yourcontactemail>`` should be provided.
 
    Enter the resulting ``aiida-vasp-bm`` folder and inspect it. The first thing you should do is to read the ``README.md`` file to
-   know what the  ``AiiDA plugin cookie cutter`_ provides and how to further configure it. Out of the box, the following is
+   know what the  `AiiDA plugin cookie cutter`_ provides and how to further configure it. Out of the box, the following is
    provided:
 
      - A license file. MIT is provided out of the box.
