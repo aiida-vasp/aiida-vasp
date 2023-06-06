@@ -537,7 +537,8 @@ def check_inputs(supplied_inputs):
         elif isinstance(supplied_inputs, AttributeDict):
             inputs = supplied_inputs
         else:
-            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. Supply a dict, Dict or an AttributeDict.')
+            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. '
+                             'Supply a dict, Dict or an AttributeDict.')
 
     return inputs
 
@@ -560,9 +561,8 @@ def inherit_and_merge_parameters(inputs):
                 if isinstance(item, DataFactory('core.array')):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
-                        raise IndexError(
-                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
-                            .format(key))
+                        raise IndexError(f'The input array with a key {key} contains more than one array. '
+                                         'Please make sure an input only contains one array.')
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
                 elif isinstance(item, DataFactory('core.dict')):
