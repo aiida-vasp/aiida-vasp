@@ -122,9 +122,6 @@ continuing.
 
 #. Change the ``options`` and ``code_string`` as you did in :ref:`previously<tutorial_fcc_si_step1>`.
 
-   .. warning:: Make sure you have activated your `AiiDA`_ virtual environment and
-      that the `AiiDA`_ daemon is running before continuing.
-
 #. Now we need to make sure the daemon can pick up the workchain. We can do this by
    making sure the daemon sees the directory where ``eos.py`` and ``run_fcc_si_workchain.py`` is
    located. The simplest approach is to add the following, to your virtual environment ``activate``
@@ -137,6 +134,11 @@ continuing.
    previous steps in the tutorial. If you use Conda, please do::
 
      $ echo "export PYTHONPATH=$PYTHONPATH:<yourdirectory>" >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+
+   .. warning:: Make sure you have (re)activated your `AiiDA`_ virtual environment and
+      (re)started the `AiiDA`_ daemon before continuing. Otherwise, the updated ``PYTHONPATH`` variable
+      will not be picked up by the daemon worker. You may want to double check by running ``echo $PYTHONPATH``
+      in the shell before starting the daemon with ``verdi daemon start``.
 
 #. Submit the workchain by running the call script::
 
