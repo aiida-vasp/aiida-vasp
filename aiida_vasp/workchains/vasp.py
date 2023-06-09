@@ -929,7 +929,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
         return None
 
-    def _calculation_sanity_checks(self, node):  # pylint: disable=no-self-use,unused-argument
+    def _calculation_sanity_checks(self, node):  # pylint: disable=unused-argument
         """
         Perform additional sanity checks on successfully completed calculation.
         This method acts invokes the 'check' handlers to check the calculations and abort the workchain if any

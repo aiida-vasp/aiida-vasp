@@ -242,7 +242,7 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     Build a list of potcars including their full path and wether they are archived inside a tar archive.
     """
 
-    def __init__(self, path):
+    def __init__(self, path):  # pylint: disable=missing-function-docstring
         # Only accept a Path object or a string
         if isinstance(path, Path):
             self.path = path
@@ -834,10 +834,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             )
         """
         kind_names = structure.get_kind_names()
-        potcar_dict = {kind_name: value
-                       for kind_name, value in cls.get_potcars_dict(kind_names, # pylint: disable=unnecessary-comprehension
-                                                                    family_name,
-                                                                    mapping=mapping).items()}  # yapf: disable
+        potcar_dict = dict(cls.get_potcars_dict(kind_names, family_name, mapping=mapping))
         return potcar_dict
 
     @classmethod

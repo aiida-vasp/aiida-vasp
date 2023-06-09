@@ -104,7 +104,7 @@ bad-names=foo,bar,baz,toto,tutu,tata
 # Regular expression matching correct class attribute names
 class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
 
-# Regular expression matching correct class nameclass-name-hint,s
+# Regular expression matching correct class names
 class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Regular expression matching correct constant names

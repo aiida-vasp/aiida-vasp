@@ -44,7 +44,8 @@ def sandbox_folder():
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
+    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None):
         # Create a test computer
@@ -64,14 +65,14 @@ def calc_with_retrieved(localhost):
         if input_settings is None:
             input_settings = {}
 
-        settings = Dict(dict=input_settings)
+        settings = DataFactory('core.dict')(dict=input_settings)
         node.base.links.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
         node.store()
 
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
-        retrieved = FolderData()
+        retrieved = DataFactory('core.folder')()
         retrieved.base.repository.put_object_from_tree(file_path)
         retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
@@ -85,7 +86,8 @@ def calc_with_retrieved(localhost):
 def neb_calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
+    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None, nimgs=3):
         # Create a test computer
@@ -105,7 +107,7 @@ def neb_calc_with_retrieved(localhost):
         if input_settings is None:
             input_settings = {}
 
-        settings = Dict(dict=input_settings)
+        settings = DataFactory('core.dict')(dict=input_settings)
         node.base.links.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
 
@@ -118,7 +120,7 @@ def neb_calc_with_retrieved(localhost):
 
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
-        retrieved = FolderData()
+        retrieved = DataFactory('core.folder')()
         retrieved.base.repository.put_object_from_tree(file_path)
         retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()

@@ -144,7 +144,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
+    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):  # pylint: disable=missing-function-docstring
         self.exit_code = None
 
         # Flag for skipping any validations

@@ -160,7 +160,7 @@ class VaspParser(BaseParser):
             return error_code
 
         for name, value_dict in self._definitions.parser_definitions.items():
-            if name not in self._retrieved_content.keys() and value_dict['is_critical']:
+            if name not in self._retrieved_content.keys() and value_dict['is_critical']:  # pylint: disable=consider-iterating-dictionary
                 self.logger.error(f'Missing content: {name} which is tagged as critical by the parser')
                 return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
         self._parsable_quantities.setup(retrieved_content=self._retrieved_content.keys(),

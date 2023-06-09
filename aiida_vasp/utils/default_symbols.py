@@ -25,7 +25,7 @@ def get_recommendations(version_nr='latest', use_gw=False):
     :return: recommendations dict
     """
     urlkey = 'gw-url' if use_gw else 'url'
-    page = requests.get(VERSION[version_nr][urlkey])
+    page = requests.get(VERSION[version_nr][urlkey], timeout=10)
     tree = html.fromstring(page.text)
     tags = tree.xpath('//table//td[1]/b')
     rec = {}
@@ -62,7 +62,7 @@ def get_all(version_nr='latest', use_gw=False):
     :return: recommendations dict
     """
     urlkey = 'gw-url' if use_gw else 'url'
-    page = requests.get(VERSION[version_nr][urlkey])
+    page = requests.get(VERSION[version_nr][urlkey], timeout=10)
     tree = html.fromstring(page.text)
     tags = tree.xpath('//table/tr')
     syms = {}

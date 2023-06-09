@@ -111,7 +111,7 @@ class KpointsParser(BaseFileParser):
 
         return content_parser
 
-    def _get_kpointsdict_explicit(self, kpoints_data):  # pylint: disable=no-self-use
+    def _get_kpointsdict_explicit(self, kpoints_data):
         """
         Turn Aiida ``KpointData`` into a k-points dictionary with explicit generation of points.
 

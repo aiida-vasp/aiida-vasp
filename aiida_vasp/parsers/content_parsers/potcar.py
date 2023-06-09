@@ -182,4 +182,4 @@ class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
 
     @property
     def max_enmax(self):
-        return max([potcario.pymatgen.enmax for potcario in self.potcars])
+        return max(potcario.pymatgen.enmax for potcario in self.potcars)

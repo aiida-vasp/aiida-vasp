@@ -30,10 +30,10 @@ classifiers = [
 keywords = ["aiida", "plugin"]
 requires-python = ">=3.8"
 dependencies = [
-	"aiida-core[atomic_tools]>=2.2.2",
+	"aiida-core[atomic_tools]~=2.3",
 	"lxml",
 	"packaging",
-	"parsevasp~=3.0"
+	"parsevasp~=3.2"
 ]
 
 [project.urls]
@@ -41,18 +41,19 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
-    "aiida-core[tests]>=2.2.2,<3",
+    "aiida-core[tests]~=2.3",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
 pre-commit = [
-    "aiida-core[pre-commit]>=2.2.2,<3",
     "tox>=3.23.0",
     "virtualenv>20",
-    "sphinx-lint"
+    "pre-commit~=2.2",
+    "pylint~=2.15.0",
+    "sphinx-lint~=0.6"
 ]
 docs = [
-    "aiida-core[docs]>=2.2.2,<3",
+    "aiida-core[docs]~=2.3",
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",

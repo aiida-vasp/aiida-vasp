@@ -196,7 +196,7 @@ class WinParser(KeyValueParser):
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
-    def __init__(self, path):
+    def __init__(self, path):  # pylint: disable=missing-function-docstring
         super().__init__()
         self.result = {}
         with open(path, 'r', encoding='utf8') as winf:

@@ -1136,7 +1136,7 @@ class ConvergeWorkChain(WorkChain):
                         'tests suggests:')
 
         if not self.ctx.converge.settings.supplied_kmesh:
-            if np.sqrt(sum([x**2 for x in kgrid_displacement])) > np.sqrt(sum([x**2 for x in kgrid_comp])):
+            if np.sqrt(sum(x**2 for x in kgrid_displacement)) > np.sqrt(sum(x**2 for x in kgrid_comp)):
                 kgrid = kgrid_displacement
             else:
                 kgrid = kgrid_comp

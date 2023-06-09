@@ -14,7 +14,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
     - Provide ways to get parsable quantities.
     """
 
-    def __init__(self, vasp_parser_logger=None):
+    def __init__(self, vasp_parser_logger=None):  # pylint: disable=missing-function-docstring
         self._vasp_parser_logger = vasp_parser_logger
 
         self._quantity_keys_to_parse = None
@@ -114,7 +114,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         return _quantity_items, _quantity_keys_to_content
 
-    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):  # pylint: disable=no-self-use
+    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):
         """
         Helper to store quantity_dict in self._quantity_items
 
