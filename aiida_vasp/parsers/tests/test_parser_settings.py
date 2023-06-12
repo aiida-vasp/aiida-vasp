@@ -1,4 +1,4 @@
-# pylint: disable=unused-import,too-few-public-methods,missing-docstring,no-self-use,no-member
+# pylint: disable=unused-import,too-few-public-methods,missing-docstring,no-member
 """Test the Settings utils Module."""
 
 from aiida_vasp.parsers.settings import ParserSettings

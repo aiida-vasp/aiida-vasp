@@ -49,7 +49,7 @@ class ExampleFileParser(BaseFileParser):
         self._parsable_items = ExampleFileParser.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):  # pylint: disable=no-self-use
+    def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
@@ -73,7 +73,7 @@ class ExampleFileParser2(BaseFileParser):
         self._parsable_items = ExampleFileParser2.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):  # pylint: disable=no-self-use
+    def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
@@ -590,26 +590,35 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         misc_dict = misc.get_dict()
         if config is not None:
             if 'random_error' in config:
-                assert len(misc_dict['notifications']) == 2
+                assert len(misc_dict['notifications']) == 3
                 assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
                 assert misc_dict['notifications'][0]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
                 assert misc_dict['notifications'][1]['name'] == 'random_error'
                 assert misc_dict['notifications'][1]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
+                assert misc_dict['notifications'][2]['name'] == 'nostart'
+                assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][2]['regex'] == 'vasp.'
             if 'random_warning' in config:
-                assert len(misc_dict['notifications']) == 2
+                assert len(misc_dict['notifications']) == 3
                 assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
                 assert misc_dict['notifications'][0]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
                 assert misc_dict['notifications'][1]['name'] == 'random_warning'
                 assert misc_dict['notifications'][1]['kind'] == 'WARNING'
                 assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED WARNING'
+                assert misc_dict['notifications'][2]['name'] == 'nostart'
+                assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][2]['regex'] == 'vasp.'
         else:
-            assert len(misc_dict['notifications']) == 1
+            assert len(misc_dict['notifications']) == 2
             assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
             assert misc_dict['notifications'][0]['kind'] == 'ERROR'
             assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+            assert misc_dict['notifications'][1]['name'] == 'nostart'
+            assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+            assert misc_dict['notifications'][1]['regex'] == 'vasp.'
 
 
 def test_stream_history(request, calc_with_retrieved):
@@ -659,7 +668,7 @@ def test_stream_history(request, calc_with_retrieved):
 
     misc = result['misc']
     misc_dict = misc.get_dict()
-    assert len(misc_dict['notifications']) == 3
+    assert len(misc_dict['notifications']) == 4
     assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
     assert misc_dict['notifications'][0]['kind'] == 'ERROR'
     assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
@@ -669,6 +678,9 @@ def test_stream_history(request, calc_with_retrieved):
     assert misc_dict['notifications'][2]['name'] == 'random_error'
     assert misc_dict['notifications'][2]['kind'] == 'ERROR'
     assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
+    assert misc_dict['notifications'][3]['name'] == 'nostart'
+    assert misc_dict['notifications'][3]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][3]['regex'] == 'vasp.'
     for item in misc_dict['notifications']:
         assert item['kind'] != 'WARNING'
 

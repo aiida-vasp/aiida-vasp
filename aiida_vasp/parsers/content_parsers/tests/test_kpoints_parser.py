@@ -33,7 +33,8 @@ def test_parse_kpoints_explicit(kpoints_parser):
         'mode': 'explicit',
         'centering': None,
         'num_kpoints': 2,
-        'cartesian': False
+        'cartesian': False,
+        'generating_vectors': None
     }
     compare_kpoints_content(result, result_ref)
 
@@ -60,6 +61,7 @@ def test_parse_kpoints_mesh(kpoints_parser):
         'centering': 'Monkhorst-Pack',
         'num_kpoints': 0,
         'cartesian': None,
+        'generating_vectors': None
     }
     compare_kpoints_content(result, result_ref)
 
@@ -125,7 +127,8 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
             'mode': 'automatic',
             'centering': 'Gamma',
             'num_kpoints': 0,
-            'cartesian': None
+            'cartesian': None,
+            'generating_vectors': None
         }
     else:
         result_ref = {
@@ -139,7 +142,8 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
             'mode': 'explicit',
             'centering': None,
             'num_kpoints': 2,
-            'cartesian': False
+            'cartesian': False,
+            'generating_vectors': None
         }
     compare_kpoints_content(result, result_ref)
 

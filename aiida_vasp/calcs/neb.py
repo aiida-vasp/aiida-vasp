@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from typing import Union
 
-from aiida import orm
 from aiida.common.exceptions import InputValidationError
+from aiida.plugins import DataFactory
 
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -398,9 +398,9 @@ def image_folder_paths(image_folders, retrieve_names):
     return retrieve_list
 
 
-def ensure_structure_data(structure: Union[orm.StructureData, orm.CifData]) -> orm.StructureData:
+def ensure_structure_data(structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]) -> DataFactory('core.structure'):
     """
-    Get the input structure as AiiDA StructureData.
+        Get the input structure as AiiDA StructureData.
 
     This is required in order to support CifData as input as well.
     """
