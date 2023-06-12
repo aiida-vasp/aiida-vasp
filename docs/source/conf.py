@@ -102,7 +102,7 @@ latex_documents = [
 # -- Options for the sphinxcontrib.apidoc extention -----------------------
 
 apidoc_module_dir = '../../aiida_vasp'
-apidoc_output_dir = 'api'
+apidoc_output_dir = 'apidoc'
 apidoc_excluded_paths = ['tests', 'test_data']
 apidoc_extra_args = ['--no-headings', '--module-first', '--maxdepth', '4']
 

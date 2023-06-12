@@ -21,3 +21,5 @@
 docs/_build
 build/
 dist/
+docs/source/api/
+docs/source/apidoc/

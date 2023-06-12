@@ -81,18 +81,18 @@ How to check what potential families are present in the database?
 How to access uploaded potentials and search?
 ---------------------------------------------
 
-The data structure used to find and retrieve potentials is called ``aiida_vasp.data.potcar.PotcarData`` and can be accessed through AiiDA's data factory as ``DataFactory('vasp.potcar')``. This class provides shortcuts for simple or frequent cases, for complex queries, please refer to the `AiiDA documentation`_ on querying the provenance graph.
+The data structure used to find and retrieve potentials is called :py:class:`aiida_vasp.data.potcar.PotcarData` and can be accessed through AiiDA's data factory as ``DataFactory('vasp.potcar')``. This class provides shortcuts for simple or frequent cases, for complex queries, please refer to the `AiiDA documentation`_ on querying the provenance graph.
 
 Find potentials by properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-More advanced searches, like for ranges of properties etc can be done using the ``QueryBuilder`` tool, which is part of `AiiDA`_ and documented there.
+More advanced searches, like for ranges of properties etc can be done using the :py:class:`QueryBuilder<aiida.orm.querybuilder.QueryBuilder>` tool, which is part of `AiiDA`_ and documented there.
 
 Use::
 
    PotcarData.find(<property>=<value>, <property2>=<value2>, ...)
 
-which returns a list of all stored ``PotcarData`` instances fullfilling the criteria. Some important supported ``<property>`` entries are:
+which returns a list of all stored :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>` instances fullfilling the criteria. Some important supported ``<property>`` entries are:
 
    * ``sha512`` - An SHA512 hash of the file contents
    * ``title`` - Title of the potential, typically the title of the POTCAR

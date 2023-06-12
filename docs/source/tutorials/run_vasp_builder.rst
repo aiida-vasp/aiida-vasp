@@ -238,7 +238,7 @@ If we want to fully relax the crystal structure, we need to modify the script ac
    settings like this is twofolded: (i) it makes more sense to the user, and (ii) it makes this
    workflow independent on `VASP`_ and can in principle be executed with any other backend, say
    Quantum Espresso as long as the conversion in the backend is done properly. This is the role of the
-   ``ParameterMassager``. The long term
+   :py:class:`ParametersMassage<aiida_vasp.assistant.parameters.ParametersMassage>`. The long term
    goal of the development of these plugins is that we will eventually have a more unified interface
    for the workflows that in principle can be code independent.
 

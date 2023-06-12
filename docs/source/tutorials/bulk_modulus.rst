@@ -559,15 +559,15 @@ convenience of being able to quickly modify the code and relaunch. Assuming you 
 which will install the plugin in editable mode.
 
 .. warning::
-   Please remember to restart the daemon if you change any code that the ``AiiDA`_ daemon should have access to. This typically
+   Please remember to restart the daemon if you change any code that the `AiiDA`_ daemon should have access to. This typically
    goes for all editable (the ones installed with the ``-e`` option for ``pip``) installations of Python packages. This
    is very easy to miss and during heavy development it sometimes make sense to restart the daemon in the call script
    to not forget. Beware that if you forget this, it can cause a significant time drain on debugging something that already
    might be working just fine.
 
-Again, tailor the launch script to your needs as we now have done a few times. Launch it. Note the id ``<PK>>>`` printed. Monitor its
-progress with e.g. ``verdi process report <PK>``. When done, fetch its ``bulk_modulus`` output id ``<<PK'>>`` from
-``verdi process show <PK>`` and inspect it::
+Again, tailor the launch script to your needs as we now have done a few times. Launch it. Note the id ``<PK>`` printed. Monitor its
+progress with e.g. ``verdi process report <PK>``. When done, fetch its ``bulk_modulus`` output id ``<PK'>`` from
+``verdi process show <PK'>`` and inspect it::
 
   $ verdi node attributes <PK'>
   PK: 6700

@@ -14,8 +14,8 @@ As you might have noticed we have now populated the database with the silicon st
 multiple times. Let us try instead to load some of the structures that already are present
 to save coding, reuse previous results and save data storage.
 
-In order to illustrate this we will need a finished ``VaspWorkChain`` and we will use the one
-from the :ref:`previous tutorial<tutorial_fcc_si_dos>`. You can chose any ``VaspWorkChain`` you
+In order to illustrate this we will need a finished :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` and we will use the one
+from the :ref:`previous tutorial<tutorial_fcc_si_dos>`. You can chose any :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` you
 want from your side, but notice that the input and outputs might be slightly different. If you are
 confused, please complete :ref:`previous tutorial<tutorial_fcc_si_dos>` and continue to use the
 results from that as we do here.
@@ -36,7 +36,7 @@ will be stored (deleted) by default after parsing, regardless of the values of `
 
 With this in mind, let us interact with data and see how this is manifested for our chosen example.
 
-#. Let us first inspect the outputs of our previous ``VaspWorkChain``::
+#. Let us first inspect the outputs of our previous :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>`::
 
      $ verdi process show 2431
      Property     Value
