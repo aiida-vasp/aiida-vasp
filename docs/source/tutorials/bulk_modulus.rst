@@ -311,7 +311,7 @@ and its workchains are doing.
 .. note::
 
    The additional :ref:`workchains` not bundled with `AiiDA-VASP`_ have to be exposed as a
-   Python module to be seen from `AiiDA`_ daemon. It should be availble in ``$PYTHONPATH`` of the daemon. The easiest way
+   Python module to be seen from `AiiDA`_ daemon. It should be available in ``$PYTHONPATH`` of the daemon. The easiest way
    to achieve this is usually to make a small plugin that you can use as a container for the installation and documentation
    of the workchain, or set of workchain. This can then be installed (with ``pip`` for instance) in
    an AiiDA environment where you want to utilize the workchain(s).
@@ -599,7 +599,7 @@ that.
 In order to spread the uptake and also open for improvements and suggestions from the field, we suggest that you consider to
 make your workflow publicly accessible. There are mainly two ways:
 
-- Contribute to the `AiiDA-VASP`_ plugin such that your developed workflow eventually is part of the `AiiDA-VASP`_ distrubution.
+- Contribute to the `AiiDA-VASP`_ plugin such that your developed workflow eventually is part of the `AiiDA-VASP`_ distribution.
 
 - Publish it on GitHub or other standardized frameworks that supports publications of code using `Git`_.
 

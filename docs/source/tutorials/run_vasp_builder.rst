@@ -10,7 +10,7 @@ The idea here is to understand how we can use the ``builder`` to set up
 the inputs for the call script and how to interface with the bundled
 workchain for relaxing structures.
 
-Before continuing it is worthwile to consider symmetry and work with that in a more
+Before continuing it is worthwhile to consider symmetry and work with that in a more
 general manner. It is good practice to familiar ourself about these topics from
 time to time as much of it is easily forgotten and taken for granted, giving us
 problems downstream that could be avoided with a bit better oversight initially.
@@ -96,7 +96,7 @@ the calling script.
 Initial static run
 ^^^^^^^^^^^^^^^^^^
 
-#. First assemble a script to launch a VASP caluculation using the wurtzite-type SiC structure
+#. First assemble a script to launch a VASP calculation using the wurtzite-type SiC structure
    . The scripts to launch certain calculations can be designed in many different way.
    Let us fetch an example `AiiDA-VASP`_ run file::
 
@@ -235,7 +235,7 @@ If we want to fully relax the crystal structure, we need to modify the script ac
       :diff: ../../../tutorials/run_sic.py
 
    The plugin will then set the correct ``ISIF`` and ``EDIFFG`` etc. The point of using dedicated
-   settings like this is twofolded: (i) it makes more sense to the user, and (ii) it makes this
+   settings like this is two folded: (i) it makes more sense to the user, and (ii) it makes this
    workflow independent on `VASP`_ and can in principle be executed with any other backend, say
    Quantum Espresso as long as the conversion in the backend is done properly. This is the role of the
    :py:class:`ParametersMassage<aiida_vasp.assistant.parameters.ParametersMassage>`. The long term
@@ -244,7 +244,7 @@ If we want to fully relax the crystal structure, we need to modify the script ac
 
 #. Save the modified script and relaunch it.
 
-#. Locate the ``PK`` of the finalized ``RelaxWorkChain``, in this case ``2698``
+#. Locate the ``PK`` of the finalized :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>`, in this case ``2698``
    and launch ``verdi shell`` again. Then locate the relaxed structure and the stress::
 
 

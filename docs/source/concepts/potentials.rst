@@ -4,7 +4,7 @@ Potentials
 ==========
 As you already know, `VASP`_ relies on potentials represented by the POTCAR files.
 
-AiiDA-VASP takes care of managing your POTCAR files, but you need to obtain them separately and make them available to AiiDA-VASP. These are usually supplied by the `VASP`_ team and is part of the license. You should have recieved a folder (``tar`` archive) containing multiple subfolders (``tar`` archives), each representing a set of POTCAR files intended to be used together. AiiDA-VASP allows you to import only the sets (or even individual potentials) you require, and keep them grouped in potential families. The import process uploads these potentials to you working AiiDA database.
+AiiDA-VASP takes care of managing your POTCAR files, but you need to obtain them separately and make them available to AiiDA-VASP. These are usually supplied by the `VASP`_ team and is part of the license. You should have received a folder (``tar`` archive) containing multiple subfolders (``tar`` archives), each representing a set of POTCAR files intended to be used together. AiiDA-VASP allows you to import only the sets (or even individual potentials) you require, and keep them grouped in potential families. The import process uploads these potentials to you working AiiDA database.
 
 
 Why do I need to import POTCAR files?
@@ -14,7 +14,7 @@ Why do I need to import POTCAR files?
 
    * AiiDA-VASP stores a unique hash for each file. This can help users navigate when different potentials have very similar looking headers, but do in fact contain a different potential.
    * POTCAR files uploaded to the database cannot be modified accidentally, thus it is recorded unambiguously, which file was used for which execution of each run.
-   * Storing the file's contents rather than a link prevents accidentially breaking the link by moving the file away (or renaming it).
+   * Storing the file's contents rather than a link prevents accidentally breaking the link by moving the file away (or renaming it).
 
 How to import a set of POTCAR files?
 ------------------------------------
@@ -92,7 +92,7 @@ Use::
 
    PotcarData.find(<property>=<value>, <property2>=<value2>, ...)
 
-which returns a list of all stored :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>` instances fullfilling the criteria. Some important supported ``<property>`` entries are:
+which returns a list of all stored :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>` instances fulfilling the criteria. Some important supported ``<property>`` entries are:
 
    * ``sha512`` - An SHA512 hash of the file contents
    * ``title`` - Title of the potential, typically the title of the POTCAR
@@ -114,7 +114,7 @@ To find one potential for each element in a list of element names, all from the 
    potcars_for_elements = PotcarData.get_potcars_dict(
       elements=['Ac', 'Ag', ..], <potential_family>, mapping=mapping)
 
-The ``mapping`` dictionary is required to decide which of the variants should be chosen for each element. The mapping can also conveniently be stored in a ``Dict`` node for reuse. The potential family is specified with ``<potential_family>``.
+The ``mapping`` dictionary is required to decide which of the variants should be chosen for each element. The mapping can also conveniently be stored in a :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` node for reuse. The potential family is specified with ``<potential_family>``.
 
 How to pass potentials to a VASP calculation?
 ---------------------------------------------

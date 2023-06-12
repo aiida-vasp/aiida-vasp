@@ -4,7 +4,7 @@
 Converge workchain
 ==================
 
-The ``ConvergeWorkChain`` is intended to be used to determine the appropriate energy cutoff and reciprocal space mesh as to converge a certain convergence quantity (``cutoff_type``), e.g. the ground state total energy. One can control whether only the energy, reciprocal mesh or both parameters are used.
+The :py:class:`ConvergeWorkChain<aiida_vasp.workchains.converge.ConvergeWorkChain>` is intended to be used to determine the appropriate energy cutoff and reciprocal space mesh as to converge a certain convergence quantity (``cutoff_type``), e.g. the ground state total energy. One can control whether only the energy, reciprocal mesh or both parameters are used.
 
 When performing the energy cutoff convergence if no k-point mesh is given the energy cutoff convergence tests will be done with an auto-generated k-point mesh. The distance between the points is either user provided or default values are used. Similarly, for the reciprocal mesh, if a provided energy cutoff has been given that will be used, otherwise if a cutoff value has been found from the energy convergence that would be used instead.
 
@@ -17,7 +17,7 @@ The workflow works in the same way for the k-points, if the cutoff energy is giv
 The situation is somewhat more complex when both variables are allowed to vary, since first a convergence in energy will be performed with a k-point mesh given by `converge.k_spacing`, which is deemed to be "good enough". After the cutoff energy recommended value has been found, that value will be set and the k-points are varied instead. Once convergence has been reached both values will be set and the final calculation will be performed and the recommended values stored for further use.
 
 .. note::
-  The details of the ``ConvergeWorkChain`` can be also seen in the ``run_converge.py`` example.
+  The details of the :py:class:`ConvergeWorkChain<aiida_vasp.workchains.converge.ConvergeWorkChain>` can be also seen in the ``run_converge.py`` example.
 
 
 Reference: `vasp.converge` inputs
@@ -26,7 +26,7 @@ Reference: `vasp.converge` inputs
 These are the set of basic parameters for the base level convergence of the energy cutoff and reciprocal space mesh.
 
 * ``parameters``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
-* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.CifData`. Describes the structure on which `VASP`_ is to be run.
+* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.cif.CifData`. Describes the structure on which `VASP`_ is to be run.
 * ``settings``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. **Optional**
 * ``kpoints``, type :py:class:`aiida.orm.nodes.data.array.kpoints.KpointsData`. If given no convergence will be performed in the reciprocal mesh. Instead this mesh will be used while the energy cutoff is varied. **Optional**
 
@@ -68,7 +68,7 @@ Required
 
 These inputs are exposed from the base `VaspWorkChain`, and must be provided to perform the calculation.
 
-* ``code``, type: :py:class:`aiida.orm.nodes.data.Code`. Describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
+* ``code``, type: :py:class:`aiida.orm.nodes.data.code.installed.InstalledCode`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
 * ``potential_family``, type: :py:class:`aiida.orm.nodes.data.str.Str`. The name given to a set of uploaded POTCAR files.
 * ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
 * ``options``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.

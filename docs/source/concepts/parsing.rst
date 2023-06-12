@@ -5,10 +5,10 @@ Parsing
 =======
 AiiDA-VASP provides flexible parsing of `VASP`_ output files to store data in the `AiiDA`_ database and repository.
 
-The quantities that can be parsed are now fully customisable. The user interface for configuring the parsing settings takes place in the ``settings['parser_settings']`` dictionary entry. The default ``parser_settings`` is presently:
+The quantities that can be parsed are now fully customizable. The user interface for configuring the parsing settings takes place in the ``settings['parser_settings']`` dictionary entry. The default ``parser_settings`` is presently:
 
 .. warning::
-   Notice however, that even though the parser and the `node composer` is configurable, the output check in `AiiDA`_ will complain that your newly added custom node is not detected in the ``spec`` definitions of for instance your ``VaspCalculation``. If you do add additional nodes outside the ones defined in the code already, please consider to also add it to the ``spec.output`` section in the ``VaspCalculation`` class and potentially also to workchains if need be.
+   Notice however, that even though the parser and the `node composer` is configurable, the output check in `AiiDA`_ will complain that your newly added custom node is not detected in the ``spec`` definitions of for instance your :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`. If you do add additional nodes outside the ones defined in the code already, please consider to also add it to the ``spec.output`` section in the :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` class and potentially also to workchains if need be.
 
 .. literalinclude:: ../../../aiida_vasp/parsers/vasp.py
    :start-after: ParserSettings
@@ -26,7 +26,7 @@ As you can see, the ``<node_name>`` named ``bands`` is composed of three quantit
 the ``eigenvalues``, the ``kpoints`` and the ``occupancies``. You typically need all three
 when you analyze the band structure. Similarly it is possible to customize the output stored by
 composing different ``quantities``. However, the regular user should not need to utilize these
-functions. It is more usefull when developing new workchains, where it makes sense to introduce a
+functions. It is more useful when developing new workchains, where it makes sense to introduce a
 new output container which does not already exists.
 
 There are four ways to interact and set the parser properties.
@@ -54,7 +54,7 @@ There are four ways to interact and set the parser properties.
 #. Defining the parsing interactively
 
    The three ways above were all mediated by modifying ``settings``. There is also an interactive way,
-   if you have an instance of ``VaspParser``::
+   if you have an instance of :py:class:`VaspParser<aiida_vasp.parsers.vasp.VaspParser>`::
 
      VaspParser.add_custom_node(node_name, node_definition)
 
@@ -64,20 +64,20 @@ The parser will check for any error detected for the underlying VASP calculation
 This information is stored in the `notification` quantity, which contains a list of error/warnings detected.
 By default, a non-zero exit state is returned if any critical error is found.
 The default list of critical errors is defined under the `critical_notifications` key inside :py:data:`~aiida_vasp.parsers.vasp.DEFAULT_SETTINGS`.
-Additional settings may also be supplied under ``parser_settings`` to modify the behaviours:
+Additional settings may also be supplied under ``parser_settings`` to modify the behaviors:
 
-* ``ignore_all_errors``: a boolen value to control whether all notifications should be ignored, defaults to ``False``.
+* ``ignore_all_errors``: a boolean value to control whether all notifications should be ignored, defaults to ``False``.
 * ``critical_notifications``: a dictionary with items like ``'add_<error>': True`` for controlling which errors to be regarded as `critical` or not.
 
 Composing the quantities into an output node
 --------------------------------------------
 
-A ``NodeComposer`` has been added to compose output nodes based on a given set of ``quantities``. It can be initialised in two different ways::
+A :py:class:`NodeComposer<aiida_vasp.parsers.node_composer.NodeComposer>` has been added to compose output nodes based on a given set of ``quantities``. It can be initialized in two different ways::
 
   composer = NodeComposer(vasp_parser=...)
   composer = NodeComposer(content_parsers=[...])
 
-where either a ``VaspParser`` object is passed to ``vasp_parser`` or a list of specific object parsers is passed to ``content_parsers``. Either are required for the ``NodeComposer`` to assemble the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
+where either a :py:class:`VaspParser<aiida_vasp.parsers.vasp.VaspParser>` object is passed to ``vasp_parser`` or a list of specific object parsers is passed to ``content_parsers``. Either are required for the :py:class:`NodeComposer<aiida_vasp.parsers.node_composer.NodeComposer>` to assemble the required quantities for a node. Here is an example for the interface for composing a node from the ``VasprunParser`` test::
 
   composer = NodeComposer(content_parsers=[vasprun_parser])
   data_obj = composer.compose('array.kpoints', quantities=['kpoints'])

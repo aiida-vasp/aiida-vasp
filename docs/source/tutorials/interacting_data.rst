@@ -95,7 +95,7 @@ With this in mind, let us interact with data and see how this is manifested for 
      vasp_output
      vasprun.xml
 
-   As we can see, this is the default files listed in ``_ALWAYS_RETREIVE_LIST``. In addition, there are
+   As we can see, this is the default files listed in ``_ALWAYS_RETRIEVE_LIST``. In addition, there are
    the scheduler standard stream files, which is added by `AiiDA`_.
 
 #. Let us have a look at the content of for instance ``CONTCAR``::
@@ -156,7 +156,7 @@ With this in mind, let us interact with data and see how this is manifested for 
      'vasp_output',
      'vasprun.xml']
 
-   As we can see, as before, this is the default files listed in ``_ALWAYS_RETREIVE_LIST``, in addition to the
+   As we can see, as before, this is the default files listed in ``_ALWAYS_RETRIEVE_LIST``, in addition to the
    scheduler files.
 
    .. note::

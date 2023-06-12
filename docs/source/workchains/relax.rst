@@ -28,7 +28,7 @@ Unless the workflow is solely concerned with providing a more robust or more spe
 Reference: `vasp.relax` inputs
 ------------------------------
 
-The `RelaxWorkChain` has several parameters that can be passed to it to control its behavior. Some are uniquely defined for the relaxation and others are exposed from the base `VaspWorkChain`.
+The :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>` has several parameters that can be passed to it to control its behavior. Some are uniquely defined for the relaxation and others are exposed from the base `VaspWorkChain`.
 
 .. note::
   Any parameter defined that would affect the relaxation, e.g. ``relax.positions`` will override any input passed via any other input, e.g passing ``ISIF`` manually in the ``parameters`` dictionary.
@@ -39,7 +39,7 @@ Basic inputs
 
 These are the set of basic parameters that need to be given to be able to perform the calculation. These inputs are required to perform the relaxation.
 
-* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.CifData`. Describes the structure on which `VASP`_ is to be run.
+* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.cif.CifData`. Describes the structure on which `VASP`_ is to be run.
 * ``parameters``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
 * ``settings``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. **Optional**
 
@@ -54,7 +54,7 @@ Required
 
 These inputs are exposed from the base `VaspWorkChain`, and must be provided to perform the calculation.
 
-* ``code``, type: :py:class:`aiida.orm.nodes.data.Code`. Describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
+* ``code``, type: :py:class:`aiida.orm.nodes.data.code.installed.InstalledCode`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
 * ``kpoints``, type: :py:class:`aiida.orm.nodes.data.array.kpoints.KpointsData`. The kpoints mesh or path for the calculation.
 * ``potential_family``, type: :py:class:`aiida.orm.nodes.data.str.Str`. The name given to a set of uploaded POTCAR files.
 * ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.

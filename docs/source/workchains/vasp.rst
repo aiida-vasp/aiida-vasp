@@ -6,15 +6,15 @@ VASP workchain
 
 This is the base `VASP`_ workchain, it is designed so that one can perform any single DFT `VASP`_ run. The behavior of the calculation, i.e. exactly what kind of run is performed, control values, etc. are controlled via the ``parameters`` inputs.
 
-The `VaspWorkChain` is the basis that is used to build the rest of the more specialized workchains, e.g. `RelaxWorkChain` to deal with the structural relaxation.
+The :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` is the basis that is used to build the rest of the more specialized workchains, e.g. `RelaxWorkChain` to deal with the structural relaxation.
 
 Required inputs
 ^^^^^^^^^^^^^^^
 
-The `VaspWorkChain` requires a number of inputs, these comprise the minimum set of information to run a `VASP`_ calculation from `AiiDA`_.
+The :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` requires a number of inputs, these comprise the minimum set of information to run a `VASP`_ calculation from `AiiDA`_.
 
-* ``code``, type: :py:class:`aiida.orm.nodes.data.Code`. Describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
-* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.CifData`. Describes the structure on which VASP is to be run.
+* ``code``, type: :py:class:`aiida.orm.nodes.data.code.installed.InstalledCode`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
+* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.cif.CifData`. Describes the structure on which VASP is to be run.
 * ``kpoints``, type: :py:class:`aiida.orm.nodes.data.array.kpoints.KpointsData`. The kpoints mesh or path.
 * ``potential_family``, type: :py:class:`aiida.orm.nodes.data.str.Str`. The name given to a set of uploaded POTCAR files.
 * ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
@@ -24,7 +24,7 @@ The `VaspWorkChain` requires a number of inputs, these comprise the minimum set 
 Extra inputs
 ^^^^^^^^^^^^
 
-The ``VaspWorkChain`` can take other inputs that allow for higher control of the workchain itself.
+The :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` can take other inputs that allow for higher control of the workchain itself.
 
 * ``settings``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc.
 * ``wavecar``, type: :py:class:`aiida_vasp.data.WavefunData`. It contains the wavefunctions of the Kohn-Sham equation as stored in the `WAVECAR`_ file. It can be used to restart a calculation in a very efficient manner.
@@ -70,7 +70,7 @@ Depending on the input variables passed as inputs one or more of the following o
 Restarting calculations
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The main difference between a ``VaspWorkChain`` and a  ``VaspCalculation`` is that the former implements a basic logic of restarting failed or unfinished calculations.
+The main difference between a :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` and a  :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` is that the former implements a basic logic of restarting failed or unfinished calculations.
 The framework of :py:class:`~aiida.engine.processes.workchains.restart.BaseRestartWorkChain` is used with a set of predefined handlers to fix some (but not all) common pitfalls,
 such as restarting an ionic relaxation that has run out of the wall time and electronic convergence issues.
 
@@ -91,8 +91,8 @@ For more information, please see the docstring of :py:class:`~aiida.engine.proce
 One should note that the handlers included here are not intended to give a comprehensive coverage of all of possible errors from VASP,
 but instead we focus on improving the robustness by performing simple corrections that would be the right things to do in most times.
 
-New handlers may be registered by adding the method to :py:class:`~aiida_vasp.workchains.vasp.VaspWorkChain` with the ``process_handler`` decorator.
-Alternatively, one can also extended the :py:class:`~aiida_vasp.workchains.vasp.VaspWorkChain` by sub-classing and add more handlers there.
+New handlers may be registered by adding the method to :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` with the ``process_handler`` decorator.
+Alternatively, one can also extended the :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` by sub-classing and add more handlers there.
 
 
 .. _AiiDA: https://www.aiida.net

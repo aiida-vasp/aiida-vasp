@@ -85,7 +85,7 @@ have a look at `AiiDA concepts`_ before continuing.
       any more as finished processes are not considered active. In order to also list these processes we can
       use ``verdi process list -a``.
 
-#. After a while, we execut ``verdi process list -a`` and get::
+#. After a while, we execute ``verdi process list -a`` and get::
 
      $ verdi process list -a
        PK  Created    Process label    Process State     Process status

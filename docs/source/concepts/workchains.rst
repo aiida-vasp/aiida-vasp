@@ -30,7 +30,7 @@ where are explained as follows.
 
 VASP workchain
 ------------------
-This performs the low level interactions with the :ref:`vasp_calculation` and is accesible by utilizing the :py:class:`aiida.plugins.WorkflowFactory` with the key ``vasp.vasp``. For additional details on how to interact with this workchain, see :ref:`vasp_workchain`.
+This performs the low level interactions with the :ref:`vasp_calculation` and is accessible by utilizing the :py:class:`aiida.plugins.WorkflowFactory` with the key ``vasp.vasp``. For additional details on how to interact with this workchain, see :ref:`vasp_workchain`.
 
 .. _relax_workchain_doc:
 
@@ -54,7 +54,7 @@ This enables the calculation of electronic band structures by standardizing the 
 
 Master workchain
 --------------------
-The idea of this workchain is to ultimately be the main entry point, such that a user can select what properties to be calculated. Then the master workchain composes a workflow to enable such extraction. Currently only the calculation of the electronic band structure is enabled. But this serves as a nice introductory example that can be easily expandedand calls any relevant workchain, depending on the chosen input parameters. For additional details on how to interact with this workchain, see :ref:`master_workchain`.
+The idea of this workchain is to ultimately be the main entry point, such that a user can select what properties to be calculated. Then the master workchain composes a workflow to enable such extraction. Currently only the calculation of the electronic band structure is enabled. But this serves as a nice introductory example that can be easily expanded and calls any relevant workchain, depending on the chosen input parameters. For additional details on how to interact with this workchain, see :ref:`master_workchain`.
 
 .. _AiiDA: https://www.aiida.net
 .. _Workchain: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/workflows.html#work-chains

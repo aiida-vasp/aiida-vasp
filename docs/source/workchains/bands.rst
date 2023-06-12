@@ -4,7 +4,7 @@
 Bands workchain
 ===============
 
-The ``BandsWorkChain`` deals with the extraction of the band structure of a material using `seekpath`_ as a pre-processor to get the k-points path.
+The :py:class:`BandsWorkChain<aiida_vasp.workchains.bands.BandsWorkChain>` deals with the extraction of the band structure of a material using `seekpath`_ as a pre-processor to get the k-points path.
 
 This workchain will take the results from a previous ground state calculation and use them to determine the band structure itself.
 
@@ -48,8 +48,8 @@ Required
 
 These inputs are exposed from the base `VaspWorkChain`, and must be provided to perform the calculation.
 
-* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.CifData`. Describes the structure on which `VASP`_ is to be run.
-* ``code``, type: :py:class:`aiida.orm.nodes.data.Code`. Describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
+* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.cif.CifData`. Describes the structure on which `VASP`_ is to be run.
+* ``code``, type: :py:class:`aiida.orm.nodes.data.code.installed.InstalledCode`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
 * ``potential_family``, type: :py:class:`aiida.orm.nodes.data.str.Str`. The name given to a set of uploaded POTCAR files.
 * ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
 * ``options``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
@@ -83,7 +83,7 @@ The following inputs will allow the user to control how the band structure is de
 * ``bands.decompose_wave``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether to decompose the wave function when determining the band structure.
 * ``bands.lm``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether or not to decompose the wave function into l- and m- states.
 * ``bands.phase``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether or not to further decompose the l- and m- projections into phases.
-* ``bands.wigner_seitz_radius``, type: :py:class:`aiida.orm.nodes.data.list.List`, default: `list[False]`. The Wigner-Seitz radius for each atom type in ångstroms as a list. If set, the internal projectors are not utilized.
+* ``bands.wigner_seitz_radius``, type: :py:class:`aiida.orm.nodes.data.list.List`, default: `list[False]`. The Wigner-Seitz radius for each atom type in ångströms as a list. If set, the internal projectors are not utilized.
 
 .. note::
    The parameters dealing with the decomposition of the wave function, ``bands.decompose_bands``, ``bands.decompose_wave``, etc. will be used to determine the value for `LORBIT`_ needed to fulfill the desired decompositions.

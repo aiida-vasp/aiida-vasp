@@ -98,7 +98,7 @@ You can verify the latter with::
 
     $ verdi plugin list aiida.groups
 
-and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similiar way.
+and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similar way.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
