@@ -8,7 +8,7 @@ build-backend = "flit_core.buildapi"
 name = "aiida-vasp"
 dynamic = ["version"]  # read from aiida_vasp/__init__.py
 description = "AiiDA plugin for running VASP calculations and workflows."
-authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sintef.no"}]
+authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no"}]
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 classifiers = [
