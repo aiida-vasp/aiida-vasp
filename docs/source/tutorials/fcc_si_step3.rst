@@ -59,7 +59,7 @@ continuing.
 
    - A namespace called ``structures``, which is defined as a dictionary. Since we here do not know how many structures will be supplied,
      we have defined this input as a dynamic namespace. However, we know the dictionary should only
-     contain :py:class:`StructureData<aiida.orm.StructureData>` values.
+     contain :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>` values.
 
    Then we have defined some outputs:
 
@@ -178,7 +178,7 @@ continuing.
 
    As you can see, seven :ref:`vasp_workchain` and :ref:`vasp_calculation` were executed,
    one for each supplied volume.
-   Also, there is a separate entry for the storrage of the total energies, which also performs
+   Also, there is a separate entry for the storage of the total energies, which also performs
    a sort. The location of the minima is also listed as a separate process as we decorated that
    function with a ``calcfunction`` decorator.
 
@@ -298,7 +298,7 @@ continuing.
 
 
 That concludes this tutorial. We hope at this point you have now realized
-that `AiiDA-VASP`_ seems somewhat usefull and that you would like to continue to
+that `AiiDA-VASP`_ seems somewhat useful and that you would like to continue to
 learn more, maybe even start to write your own :ref:`workflows` or :ref:`workchains`.
 You might have noticed when running this workflow that the each volume was running sequentially
 and was a bit concerned about that being not so efficient as there is no data sharing between

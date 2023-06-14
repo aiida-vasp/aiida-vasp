@@ -85,7 +85,7 @@ have a look at `AiiDA concepts`_ before continuing.
       any more as finished processes are not considered active. In order to also list these processes we can
       use ``verdi process list -a``.
 
-#. After a while, we execut ``verdi process list -a`` and get::
+#. After a while, we execute ``verdi process list -a`` and get::
 
      $ verdi process list -a
        PK  Created    Process label    Process State     Process status
@@ -101,8 +101,7 @@ have a look at `AiiDA concepts`_ before continuing.
    The processes composing the workflow are now finished. And there is a zero inside the brackets.
    This shows the exit code, and usual practice is that a zero is a sign of a successfully process
    execution. Please consult the documentation of the `AiiDA exit codes`_ for more details. `AiiDA`_
-   defines a few internal exit codes and the `AiiDA-VASP`_ plugin adds to those. Consults the documentation
-   concerning the specific :ref:`exit_codes`.
+   defines a few internal exit codes and the `AiiDA-VASP`_ plugin adds to those.
 
    From the finished state we can conclude that your VASP calculation, or workflow is done.
 

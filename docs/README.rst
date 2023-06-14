@@ -24,7 +24,7 @@ Make sure your existing AiiDA-VASP virtual environment is enabled.
 Install dependencies from the AiiDA-VASP root folder by issuing
 the following command::
 
-  $ pip install -e .[docs]
+  $ pip install .[docs]
 
 With a temporary web server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

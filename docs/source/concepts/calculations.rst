@@ -6,7 +6,7 @@ We call an `AiiDA`_ triggered execution of `VASP`_ a `Calculation`_. The calcula
 
 A `Calculation`_ is a special class in `AiiDA`_ that is derived from a `Process`_ class which handles these (and more subtle) tasks.
 
-There are three types of `Calculation`_ classes for `VASP`_, an all-purpose one for pure `VASP`_ calculations (:ref:`vasp_calculation`) and two specialized ones for using the `VASP interface to Wannier90`_ (:ref:`wannier_calculation`) and immigrating `VASP`_ calculations that have been performed outside AiiDA-VASP (:ref:`immigrator_calculation`). A AiiDA-VASP calculation can be accessed by loading it using the :py:class:`aiida.plugins.CalculationFactory` from `AiiDA`_::
+There are three types of `Calculation`_ classes for `VASP`_, an all-purpose one for pure `VASP`_ calculations (:ref:`vasp_calculation`) and two specialized ones for using the `VASP interface to Wannier90`_ (:ref:`wannier_calculation`) and immigrating `VASP`_ calculations that have been performed outside AiiDA-VASP. A AiiDA-VASP calculation can be accessed by loading it using the :py:class:`CalculationFactory<aiida.plugins.factories.CalculationFactory>` from `AiiDA`_::
 
   $ some_calc = CalculationFactory('<plugin_namespace>.<calculation_name>')
 

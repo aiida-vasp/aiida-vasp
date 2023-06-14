@@ -216,8 +216,8 @@ Notice a few things:
 
 #. We set ``builder.clean_workdir = Bool(False)``. This makes sure that the folder used on the defined
    computer (usually remotely on the cluster in most cases) for the VASP calculations are not removed after a successful calculation
-   (which is usually the default). Then one can after a ``VaspCalculation`` is finished execute ``verdi calcjob gotocomputer <PK>``,
-   where ``<PK>`` is the id given to the ``VaspCalculation`` process you want to inspect. This takes you directly to the
+   (which is usually the default). Then one can after a :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` is finished execute ``verdi calcjob gotocomputer <PK>``,
+   where ``<PK>`` is the id given to the :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` process you want to inspect. This takes you directly to the
    submission folder where the input and output files can be directly inspected. This setting is rather useful to debug and
    verify that your input and output files are as expected, regardless of the plugin.
 
@@ -311,7 +311,7 @@ and its workchains are doing.
 .. note::
 
    The additional :ref:`workchains` not bundled with `AiiDA-VASP`_ have to be exposed as a
-   Python module to be seen from `AiiDA`_ daemon. It should be availble in ``$PYTHONPATH`` of the daemon. The easiest way
+   Python module to be seen from `AiiDA`_ daemon. It should be available in ``$PYTHONPATH`` of the daemon. The easiest way
    to achieve this is usually to make a small plugin that you can use as a container for the installation and documentation
    of the workchain, or set of workchain. This can then be installed (with ``pip`` for instance) in
    an AiiDA environment where you want to utilize the workchain(s).
@@ -397,7 +397,7 @@ perfect for `AiiDA`_ plugins.
 
      - A basic example calculation (``aiida_vasp_bm/calculations.py::DiffCalculation``) and
        a basic parser (``aiida_vasp_bm/parsers.py::DiffParser``). In addition a few command line examples are given in
-       ``aiida_vasp_bm/cli.py``. None of this is relevant for us. We will instead reuse the ``VaspCalculation``
+       ``aiida_vasp_bm/cli.py``. None of this is relevant for us. We will instead reuse the :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`
        in the `AiiDA-VASP`_ plugin, the `AiiDA-VASP`_ parsers and its command line infrastructure.
 
      - Basic tests. Testing your code is important, so a testing framework is also provided to test the example calculation
@@ -481,14 +481,14 @@ which will calculate the bulk modulus is housed in the class ``BulkModulusWorkCh
 the general ``WorkChain`` class of `AiiDA`_. Consult the `how you write workchains in AiiDA`_ for more details of the structure of this,
 but summarized very briefly here: (i) we define what is going to be supplied as inputs, what is going to be done, or executed,
 and what is going to be an output in the ``define`` method of the ``BulkModulusWorkChain`` class. As you also noticed
-from the ``run_bulk_modulus.py`` script, we eventually called the ``RelaxWorkChain`` class of the `AiiDA-VASP`_ plugin multiple
+from the ``run_bulk_modulus.py`` script, we eventually called the :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>` class of the `AiiDA-VASP`_ plugin multiple
 times. We also need to do this here. The ``spec.expose_inputs()`` configures the ``BulkModulusWorkChain`` to expect the
-same inputs as defined in another workchain, in this case, the workchain we will call later, the ``RelaxWorkChain``. In
+same inputs as defined in another workchain, in this case, the workchain we will call later, the :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>`. In
 addition, we specify an output that is required for this particular workchain, the ``bulk_modulus``, which is required to be
 a simple float datatype.
 
 .. note::
-   Again, remember that `AiiDA`_ have wrappers for the usual Python datatypes, including ``float``, represented as ``Float``.
+   Again, remember that `AiiDA`_ have wrappers for the usual Python datatypes, including ``float``, represented as :py:class:`Float<aiida.orm.nodes.data.float.Float>`.
    This is due to the fact that in `AiiDA`_, the datatypes often need to be passed around and they need to obey data provenance
    principles. As such they are defined as nodes which gives additional functionalities over the basic data types, such as
    the ability to store, lock and link them. Also, as you have maybe already noticed from previous tutorials, `AiiDA`_
@@ -559,15 +559,15 @@ convenience of being able to quickly modify the code and relaunch. Assuming you 
 which will install the plugin in editable mode.
 
 .. warning::
-   Please remember to restart the daemon if you change any code that the ``AiiDA`_ daemon should have access to. This typically
+   Please remember to restart the daemon if you change any code that the `AiiDA`_ daemon should have access to. This typically
    goes for all editable (the ones installed with the ``-e`` option for ``pip``) installations of Python packages. This
    is very easy to miss and during heavy development it sometimes make sense to restart the daemon in the call script
    to not forget. Beware that if you forget this, it can cause a significant time drain on debugging something that already
    might be working just fine.
 
-Again, tailor the launch script to your needs as we now have done a few times. Launch it. Note the id ``<PK>>>`` printed. Monitor its
-progress with e.g. ``verdi process report <PK>``. When done, fetch its ``bulk_modulus`` output id ``<<PK'>>`` from
-``verdi process show <PK>`` and inspect it::
+Again, tailor the launch script to your needs as we now have done a few times. Launch it. Note the id ``<PK>`` printed. Monitor its
+progress with e.g. ``verdi process report <PK>``. When done, fetch its ``bulk_modulus`` output id ``<PK'>`` from
+``verdi process show <PK'>`` and inspect it::
 
   $ verdi node attributes <PK'>
   PK: 6700
@@ -599,7 +599,7 @@ that.
 In order to spread the uptake and also open for improvements and suggestions from the field, we suggest that you consider to
 make your workflow publicly accessible. There are mainly two ways:
 
-- Contribute to the `AiiDA-VASP`_ plugin such that your developed workflow eventually is part of the `AiiDA-VASP`_ distrubution.
+- Contribute to the `AiiDA-VASP`_ plugin such that your developed workflow eventually is part of the `AiiDA-VASP`_ distribution.
 
 - Publish it on GitHub or other standardized frameworks that supports publications of code using `Git`_.
 

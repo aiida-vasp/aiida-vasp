@@ -103,32 +103,32 @@ Required inputs
 
 The VaspWorkChain requires a number of inputs, these comprise the minimum set of information to run a VASP calculation from AiiDA.
 
- * ``code``: an AiiDA ``Code``, describes the VASP executable and holds a reference to the ``Computer`` instance on which it lives.
- * ``structure``: an AiiDA ``StructureData`` or ``CifData``, describes the structure on which VASP is to be run.
- * ``kpoints``: an AiiDA ``KpointsData`` instance, describing the kpoints mesh or path.
- * ``potential_family``: an AiiDA ``Str``, the name given to a set of uploaded POTCAR files.
- * ``potential_mapping``: an AiiDA ``Dict``, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
- * ``incar``: an AiiDA ``Dict`` instance, containing key/value pairs that get written to INCAR as ``KEY = VALUE``, keys can be lower case and builtin python types should be used for values.
- * ``options``, an AiiDA ``Dict`` instance, containing at least the keys ``resources`` and ``queue_name``. More information about calculation options is available in the AiiDA documentation.
+ * ``code``: an AiiDA :py:class:`InstalledCode<aiida.orm.nodes.data.code.installed.InstalledCode>`, describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
+ * ``structure``: an AiiDA :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>` or :py:class:`CifData<aiida.orm.nodes.data.cif.CifData>`, describes the structure on which VASP is to be run.
+ * ``kpoints``: an AiiDA :py:class:`KpointsData<aiida.orm.nodes.data.array.kpoints.KpointsData>` instance, describing the kpoints mesh or path.
+ * ``potential_family``: an AiiDA :py:class:`Str<aiida.orm.nodes.data.str.Str>`, the name given to a set of uploaded POTCAR files.
+ * ``potential_mapping``: an AiiDA :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`, containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
+ * ``incar``: an AiiDA :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` instance, containing key/value pairs that get written to INCAR as ``KEY = VALUE``, keys can be lower case and builtin python types should be used for values.
+ * ``options``, an AiiDA :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>` instance, containing at least the keys ``resources`` and ``queue_name``. More information about calculation options is available in the AiiDA documentation.
 
 Optional inputs
 ^^^^^^^^^^^^^^^
 
 Optional inputs are not required and can be used to change aspects of the VASP run:
 
- * ``wavecar``: an instance of ``aiida_vasp.data.wavefun.WavefunData`` (factory string: ``vasp.wavefun``). Used to pass Wavefunctions from a previous run to a follow up calculation.
- * ``chgcar``: an instance of ``aiida_vasp.data.chargedensity.ChargedensityData`` (factory string: ``vasp.chargedensity``. Used to pass charge densities calculated in a previous run.
- * ``settings``: ``Dict``, contains additional settings for AiiDA-side aspects of the VASP calculation, like additional files to retrieve, optional quantities to be parsed, etc.
+ * ``wavecar``: an instance of :py:class:`WavefunData<aiida_vasp.data.wavefun.WavefunData>` (factory string: ``vasp.wavefun``). Used to pass Wavefunctions from a previous run to a follow up calculation.
+ * ``chgcar``: an instance of :py:class:`ChargedensityData<aiida_vasp.data.chargedensity.ChargedensityData>` (factory string: ``vasp.chargedensity``. Used to pass charge densities calculated in a previous run.
+ * ``settings``: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`, contains additional settings for AiiDA-side aspects of the VASP calculation, like additional files to retrieve, optional quantities to be parsed, etc.
 
 Outputs
 ^^^^^^^
 
 The outputs, if no additional ones are requested using the ``settings`` input, are:
 
- * ``parameters``: ``Dict``, scalar and low dimensional vector quantities, like energies, forces, etc, parsed from OUTCAR and vasprun.xml
- * ``structure``: ``StructureData``, what VASP outputs in CONTCAR
- * ``retrieved``: ``FolderData`` containing the retrieved files
- * ``remote_folder``: ``RemoteFolderData`` containing information about the remote work folder in which VASP was run
+ * ``parameters``: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`, scalar and low dimensional vector quantities, like energies, forces, etc, parsed from OUTCAR and vasprun.xml
+ * ``structure``: :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>`, what VASP outputs in CONTCAR
+ * ``retrieved``: :py:class:`FolderData<aiida.orm.nodes.data.folder.FolderData>` containing the retrieved files
+ * ``remote_folder``: :py:class:`RemoteData<aiida.orm.nodes.data.remote.base.RemoteData>` containing information about the remote work folder in which VASP was run
 
 
 .. _AiiDA: https://www.aiida.net

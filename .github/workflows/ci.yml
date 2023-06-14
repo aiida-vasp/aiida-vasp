@@ -61,7 +61,7 @@ jobs:
           sudo updatedb
           sudo apt install postgresql
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
-        run: pip install virtualenv>20
+        run: pip install "virtualenv>20"
       - name: Install Tox
         run: pip install tox
       - name: Install codecov

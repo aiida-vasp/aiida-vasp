@@ -88,7 +88,7 @@ Please consider that `AiiDA`_ have prerequisite that needs to be installed and e
 Upgrading from AiiDA 1.x
 ------------------------
 
-At the moment, only the development version of the plugin supports aiida-core >= 2.2.2.
+At the moment, only the development version of the plugin supports ``aiida-core >= 2.3``.
 If you are upgrading an existing AiiDA 1.x installation. Please upgrade ``aiida-core`` first and reinstall the plugin using::
 
     $ pip install git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
@@ -98,7 +98,7 @@ You can verify the latter with::
 
     $ verdi plugin list aiida.groups
 
-and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similiar way.
+and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similar way.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at

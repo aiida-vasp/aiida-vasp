@@ -45,7 +45,7 @@ that you now should have sitting in your database at this point.
      OPTIONS.account = '' # modify it to contain your account, if the cluster needs it
      OPTIONS.qos = '' # modify it to contain your qos, if the cluster needs it
      OPTIONS.queue_name = '' # modify it to contain your queue name, if the cluster needs it
-     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16} # modify it to relect your cluster
+     OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16} # modify it to reflect your cluster
      OPTIONS.max_wallclock_seconds = 3600 # how long do you think you job will run in seconds?
      OPTIONS.max_memory_kb = 10240000 # how much memory do you need per node (not per CPU) in kB?
 

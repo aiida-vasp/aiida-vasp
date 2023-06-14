@@ -14,8 +14,8 @@ As you might have noticed we have now populated the database with the silicon st
 multiple times. Let us try instead to load some of the structures that already are present
 to save coding, reuse previous results and save data storage.
 
-In order to illustrate this we will need a finished ``VaspWorkChain`` and we will use the one
-from the :ref:`previous tutorial<tutorial_fcc_si_dos>`. You can chose any ``VaspWorkChain`` you
+In order to illustrate this we will need a finished :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` and we will use the one
+from the :ref:`previous tutorial<tutorial_fcc_si_dos>`. You can chose any :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>` you
 want from your side, but notice that the input and outputs might be slightly different. If you are
 confused, please complete :ref:`previous tutorial<tutorial_fcc_si_dos>` and continue to use the
 results from that as we do here.
@@ -26,7 +26,7 @@ parsing unless it is explicitly told not to do so, or to keep specific files. Le
 how we can tailor this. It is rather simple. First, we always try to retrieve what is stored in the
 ``_ALWAYS_RETRIEVE_LIST`` in ``calcs/vasp.py``, which currently is the ``CONTCAR``, ``OUTCAR``, ``vasprun.xml``, ``vasp_output``
 , any ``wannier90*`` file. The default setting ``settings['ALWAYS_STORE'] = True`` make sure these files will always be
-kept after a successful parsing step, which also results in a successful ``VaspCalculation``. One can specify
+kept after a successful parsing step, which also results in a successful :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`. One can specify
 ``settings['ALWAYS_STORE'] = False`` to delete these files after a successful parsing step if one only want to
 keep the parsed data, which are typically stored as `AiiDA`_ data nodes on the output of the process node. In
 addition, it is possible to fine tune this. For instance, one might want to make sure to also download additional
@@ -36,7 +36,7 @@ will be stored (deleted) by default after parsing, regardless of the values of `
 
 With this in mind, let us interact with data and see how this is manifested for our chosen example.
 
-#. Let us first inspect the outputs of our previous ``VaspWorkChain``::
+#. Let us first inspect the outputs of our previous :py:class:`VaspWorkChain<aiida_vasp.workchains.vasp.VaspWorkChain>`::
 
      $ verdi process show 2431
      Property     Value
@@ -95,7 +95,7 @@ With this in mind, let us interact with data and see how this is manifested for 
      vasp_output
      vasprun.xml
 
-   As we can see, this is the default files listed in ``_ALWAYS_RETREIVE_LIST``. In addition, there are
+   As we can see, this is the default files listed in ``_ALWAYS_RETRIEVE_LIST``. In addition, there are
    the scheduler standard stream files, which is added by `AiiDA`_.
 
 #. Let us have a look at the content of for instance ``CONTCAR``::
@@ -156,7 +156,7 @@ With this in mind, let us interact with data and see how this is manifested for 
      'vasp_output',
      'vasprun.xml']
 
-   As we can see, as before, this is the default files listed in ``_ALWAYS_RETREIVE_LIST``, in addition to the
+   As we can see, as before, this is the default files listed in ``_ALWAYS_RETRIEVE_LIST``, in addition to the
    scheduler files.
 
    .. note::

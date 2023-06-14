@@ -30,6 +30,7 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 .. _VASP videos: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw
 .. _open an issue: https://github.com/aiida-vasp/aiida-vasp/issues
 .. _submit a pull request: https://github.com/aiida-vasp/aiida-vasp/pull
+.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 
 .. toctree::
    :maxdepth: 1
@@ -81,7 +82,6 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
    :hidden:
 
    workflows/using_workflows
-   workflows/designing_workflows
 
 .. toctree::
    :maxdepth: 1
@@ -90,7 +90,6 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 
    calculations/vasp
    calculations/wannier
-   calculations/immigrator
 
 .. toctree::
    :maxdepth: 1
@@ -101,9 +100,7 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
    workchains/relax
    workchains/converge
    workchains/bands
-   workchains/master
    workchains/writing_workchains
-   workchains/exit
 
 .. toctree::
    :maxdepth: 1
@@ -122,4 +119,4 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
    :caption: API reference
    :hidden:
 
-   api/aiida_vasp
+   apidoc/aiida_vasp
