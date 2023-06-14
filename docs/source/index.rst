@@ -82,7 +82,6 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
    :hidden:
 
    workflows/using_workflows
-   workflows/designing_workflows
 
 .. toctree::
    :maxdepth: 1
@@ -91,7 +90,6 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 
    calculations/vasp
    calculations/wannier
-   calculations/immigrator
 
 .. toctree::
    :maxdepth: 1
@@ -102,9 +100,7 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
    workchains/relax
    workchains/converge
    workchains/bands
-   workchains/master
    workchains/writing_workchains
-   workchains/exit
 
 .. toctree::
    :maxdepth: 1

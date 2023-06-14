@@ -39,9 +39,9 @@ Basic inputs
 
 These are the set of basic parameters that need to be given to be able to perform the calculation. These inputs are required to perform the relaxation.
 
-* ``structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData` or :py:class:`aiida.orm.nodes.data.cif.CifData`. Describes the structure on which `VASP`_ is to be run.
-* ``parameters``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
-* ``settings``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. **Optional**
+* ``structure``, type: :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>` or :py:class:`CifData<aiida.orm.nodes.data.cif.CifData>`. Describes the structure on which `VASP`_ is to be run.
+* ``parameters``, type: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`. Dictionary with the parameters for the calculation. Please consult the documentation on how parameters are handled (:ref `parameters`) for details, particularly the section pertaining to the ``VaspWorkChain``.
+* ``settings``, type: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`. Dictionary containing parameters not related to `VASP`_ itself, e.g. parser settings, selective dynamics, etc. **Optional**
 
 Exposed from `vasp.vasp`
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -54,11 +54,11 @@ Required
 
 These inputs are exposed from the base `VaspWorkChain`, and must be provided to perform the calculation.
 
-* ``code``, type: :py:class:`aiida.orm.nodes.data.code.installed.InstalledCode`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
-* ``kpoints``, type: :py:class:`aiida.orm.nodes.data.array.kpoints.KpointsData`. The kpoints mesh or path for the calculation.
-* ``potential_family``, type: :py:class:`aiida.orm.nodes.data.str.Str`. The name given to a set of uploaded POTCAR files.
-* ``potential_mapping``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
-* ``options``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
+* ``code``, type: :py:class:`InstalledCode<aiida.orm.nodes.data.code.installed.InstalledCode>`. Describes the VASP executable and holds a reference to the :py:class:`Computer<aiida.orm.computers.Computer>` instance on which it lives.
+* ``kpoints``, type: :py:class:`KpointsData<aiida.orm.nodes.data.array.kpoints.KpointsData>`. The kpoints mesh or path for the calculation.
+* ``potential_family``, type: :py:class:`Str<aiida.orm.nodes.data.str.Str>`. The name given to a set of uploaded POTCAR files.
+* ``potential_mapping``, type: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`. Dictionary containing an entry for at least every kind name in the ``structure`` input with the full name of the POTCAR from the ``potential_family``. Example: ``{'In1': 'In_d', 'In2': 'In_h'}``.
+* ``options``, type: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`. Dictionary containing at least the keys ``resources``. More information about the options is available in the `AiiDA documentation`_.
 
 ++++++
 Extras
@@ -66,8 +66,8 @@ Extras
 
 These inputs do not need to be provided and have a set of defaults.
 
-* ``max_iterations``, type: :py:class:`aiida.orm.nodes.data.int.Int`, default: 5. How many iterations the restart will be attempted before resulting in failure. -> `max_iterations` on `vasp.vasp`
-* ``clean_workdir``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: True. Whether or not the remote folder of the calculation will be deleted after the end of the calculation. -> `clean_workdir` on `vasp.vasp`
+* ``max_iterations``, type: :py:class:`Int<aiida.orm.nodes.data.int.Int>`, default: 5. How many iterations the restart will be attempted before resulting in failure. -> `max_iterations` on `vasp.vasp`
+* ``clean_workdir``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: True. Whether or not the remote folder of the calculation will be deleted after the end of the calculation. -> `clean_workdir` on `vasp.vasp`
 
 Relaxation control
 ^^^^^^^^^^^^^^^^^^
@@ -79,13 +79,13 @@ These inputs control global parameters about the relaxation.
 
 All of these inputs are optional
 
-* ``relax.perform``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether or not to perform relaxations
-* ``relax.steps``, type: :py:class:`aiida.orm.nodes.data.int.Int`, default: 60. The number of ionic positions updates to perform.
-* ``relax.keep_magnetization``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: True. Whether or not to keep the magnetization from the previous relaxation run.
-* ``relax.algo``, type: :py:class:`aiida.orm.nodes.data.str.Str`, default: cg. The type of algorithm that will be used for the ionic relaxation.
-* ``relax.energy_cutoff``, type: :py:class:`aiida.orm.nodes.data.float.Float`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when the total energy between two ionic steps is less than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFF`_.
-* ``relax.force_cutoff``, type: :py:class:`aiida.orm.nodes.data.float.Float`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when all forces are smaller than than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFFG`_.
-* ``relax.perform_static``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: True. Whether or not to perform a static calculation after the relaxation.
+* ``relax.perform``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: False. Whether or not to perform relaxations
+* ``relax.steps``, type: :py:class:`Int<aiida.orm.nodes.data.int.Int>`, default: 60. The number of ionic positions updates to perform.
+* ``relax.keep_magnetization``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: True. Whether or not to keep the magnetization from the previous relaxation run.
+* ``relax.algo``, type: :py:class:`Str<aiida.orm.nodes.data.str.Str>`, default: cg. The type of algorithm that will be used for the ionic relaxation.
+* ``relax.energy_cutoff``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when the total energy between two ionic steps is less than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFF`_.
+* ``relax.force_cutoff``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`. The cutoff that determines when the relaxation procedure is stopped. In this case it stops when all forces are smaller than than the supplied value. If not provided whatever default value `VASP`_ has for `EDIFFG`_.
+* ``relax.perform_static``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: True. Whether or not to perform a static calculation after the relaxation.
 
 Degrees of freedom
 ^^^^^^^^^^^^^^^^^^
@@ -96,9 +96,9 @@ Through its input parameters, `VASP`_ can be configured to utilize three degrees
 
 All of these inputs are optional
 
-* ``relax.positions``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: True. If is True, perform relaxations of the atomic positions.
-* ``relax.shape``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. If is True, perform relaxation of the cell shape.
-* ``relax.volume``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. If is True, perform relaxation of the cell volume.
+* ``relax.positions``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: True. If is True, perform relaxations of the atomic positions.
+* ``relax.shape``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: False. If is True, perform relaxation of the cell shape.
+* ``relax.volume``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: False. If is True, perform relaxation of the cell volume.
 
 .. _official VASP wiki - ISIF tag page: https://cms.mpi.univie.ac.at/wiki/index.php/ISIF
 
@@ -111,23 +111,23 @@ Keep in mind there is no guarantee that the new run will overcome the barriers o
 
 All of these inputs are optional
 
-* ``relax.convergence_on``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether or not to check or run additional relaxations.
-* ``relax.convergence_absolute``, type: :py:class:`aiida.orm.nodes.data.bool.Bool`, default: False. Whether or not to converge the relaxation with respect to the previous run
+* ``relax.convergence_on``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: False. Whether or not to check or run additional relaxations.
+* ``relax.convergence_absolute``, type: :py:class:`Bool<aiida.orm.nodes.data.bool.Bool>`, default: False. Whether or not to converge the relaxation with respect to the previous run
   - False: relative tolerances are used (relative convergence)
   - True: absolute tolerances are used (native VASP units)
-* ``relax.convergence_max_iterations``, type: :py:class:`aiida.orm.nodes.data.int.Int`, default: 5. Maximum number of relaxation runs.
-* ``relax.convergence_shape_lengths``, type: :py:class:`aiida.orm.nodes.data.float.Float`, default: 0.1. Maximum percentage change of the L2 norm for the unitcell vectors from the previous relaxation.
-* ``relax.convergence_shape_angles``, type: :py:class:`aiida.orm.nodes.data.float.Float`, default: 0.1. Maximum percentage change of the unitcell angles from the previous relaxation.
-* ``relax.convergence_volume``, type: :py:class:`aiida.orm.nodes.data.float.Float`, default: 0.01. Maximum percentage change of the unitcell volume from the previous relaxation.
-* ``relax.convergence_positions``, type: :py:class:`aiida.orm.nodes.data.float.Float`, default: 0.01. Maximum percentage change of the displacement (L2 norm) of the positions from the previous relaxation.
+* ``relax.convergence_max_iterations``, type: :py:class:`Int<aiida.orm.nodes.data.int.Int>`, default: 5. Maximum number of relaxation runs.
+* ``relax.convergence_shape_lengths``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`, default: 0.1. Maximum percentage change of the L2 norm for the unitcell vectors from the previous relaxation.
+* ``relax.convergence_shape_angles``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`, default: 0.1. Maximum percentage change of the unitcell angles from the previous relaxation.
+* ``relax.convergence_volume``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`, default: 0.01. Maximum percentage change of the unitcell volume from the previous relaxation.
+* ``relax.convergence_positions``, type: :py:class:`Float<aiida.orm.nodes.data.float.Float>`, default: 0.01. Maximum percentage change of the displacement (L2 norm) of the positions from the previous relaxation.
 
 Reference: `vasp.relax` outputs
 -------------------------------
 
 The following output nodes are created upon successful completion:
 
-* ``misc``, type: :py:class:`aiida.orm.nodes.data.dict.Dict`. Dictionary containing the output parameters containing smaller quantities that do not depend on system size.
-* ``relax.structure``, type: :py:class:`aiida.orm.nodes.data.structure.StructureData`. The output structure after relaxation (if it was performed).
+* ``misc``, type: :py:class:`Dict<aiida.orm.nodes.data.dict.Dict>`. Dictionary containing the output parameters containing smaller quantities that do not depend on system size.
+* ``relax.structure``, type: :py:class:`StructureData<aiida.orm.nodes.data.structure.StructureData>`. The output structure after relaxation (if it was performed).
 
 Depending on the passed inputs to the workchain several outputs might be exposed according to what was defined in the :ref:`vasp_workchain_outputs`.
 

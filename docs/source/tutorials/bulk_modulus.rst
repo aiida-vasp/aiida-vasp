@@ -216,8 +216,8 @@ Notice a few things:
 
 #. We set ``builder.clean_workdir = Bool(False)``. This makes sure that the folder used on the defined
    computer (usually remotely on the cluster in most cases) for the VASP calculations are not removed after a successful calculation
-   (which is usually the default). Then one can after a ``VaspCalculation`` is finished execute ``verdi calcjob gotocomputer <PK>``,
-   where ``<PK>`` is the id given to the ``VaspCalculation`` process you want to inspect. This takes you directly to the
+   (which is usually the default). Then one can after a :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` is finished execute ``verdi calcjob gotocomputer <PK>``,
+   where ``<PK>`` is the id given to the :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>` process you want to inspect. This takes you directly to the
    submission folder where the input and output files can be directly inspected. This setting is rather useful to debug and
    verify that your input and output files are as expected, regardless of the plugin.
 
@@ -397,7 +397,7 @@ perfect for `AiiDA`_ plugins.
 
      - A basic example calculation (``aiida_vasp_bm/calculations.py::DiffCalculation``) and
        a basic parser (``aiida_vasp_bm/parsers.py::DiffParser``). In addition a few command line examples are given in
-       ``aiida_vasp_bm/cli.py``. None of this is relevant for us. We will instead reuse the ``VaspCalculation``
+       ``aiida_vasp_bm/cli.py``. None of this is relevant for us. We will instead reuse the :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`
        in the `AiiDA-VASP`_ plugin, the `AiiDA-VASP`_ parsers and its command line infrastructure.
 
      - Basic tests. Testing your code is important, so a testing framework is also provided to test the example calculation
@@ -481,14 +481,14 @@ which will calculate the bulk modulus is housed in the class ``BulkModulusWorkCh
 the general ``WorkChain`` class of `AiiDA`_. Consult the `how you write workchains in AiiDA`_ for more details of the structure of this,
 but summarized very briefly here: (i) we define what is going to be supplied as inputs, what is going to be done, or executed,
 and what is going to be an output in the ``define`` method of the ``BulkModulusWorkChain`` class. As you also noticed
-from the ``run_bulk_modulus.py`` script, we eventually called the ``RelaxWorkChain`` class of the `AiiDA-VASP`_ plugin multiple
+from the ``run_bulk_modulus.py`` script, we eventually called the :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>` class of the `AiiDA-VASP`_ plugin multiple
 times. We also need to do this here. The ``spec.expose_inputs()`` configures the ``BulkModulusWorkChain`` to expect the
-same inputs as defined in another workchain, in this case, the workchain we will call later, the ``RelaxWorkChain``. In
+same inputs as defined in another workchain, in this case, the workchain we will call later, the :py:class:`RelaxWorkChain<aiida_vasp.workchains.relax.RelaxWorkChain>`. In
 addition, we specify an output that is required for this particular workchain, the ``bulk_modulus``, which is required to be
 a simple float datatype.
 
 .. note::
-   Again, remember that `AiiDA`_ have wrappers for the usual Python datatypes, including ``float``, represented as ``Float``.
+   Again, remember that `AiiDA`_ have wrappers for the usual Python datatypes, including ``float``, represented as :py:class:`Float<aiida.orm.nodes.data.float.Float>`.
    This is due to the fact that in `AiiDA`_, the datatypes often need to be passed around and they need to obey data provenance
    principles. As such they are defined as nodes which gives additional functionalities over the basic data types, such as
    the ability to store, lock and link them. Also, as you have maybe already noticed from previous tutorials, `AiiDA`_

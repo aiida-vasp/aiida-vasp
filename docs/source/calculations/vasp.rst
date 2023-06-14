@@ -103,7 +103,7 @@ This leads to::
   0  0  0  1.0
   ...
 
-Look at the class documentation for :py:class:`KpointsData <aiida.orm.nodes.data.array.kpoints.KpointsData>` for more information on how to influence the generation of kpoints from paths. One can also utilize `SeeK-path`_ to create consitent explicit lists of k-points to be used for band structure extractions. This is demonstrated in :ref:`bands_workchain`.
+Look at the class documentation for :py:class:`KpointsData<aiida.orm.nodes.data.array.kpoints.KpointsData>` for more information on how to influence the generation of kpoints from paths. One can also utilize `SeeK-path`_ to create consitent explicit lists of k-points to be used for band structure extractions. This is demonstrated in :ref:`bands_workchain`.
 
 .. _`SeeK-path`: https://github.com/giovannipizzi/seekpath
 

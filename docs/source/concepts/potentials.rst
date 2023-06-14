@@ -81,7 +81,7 @@ How to check what potential families are present in the database?
 How to access uploaded potentials and search?
 ---------------------------------------------
 
-The data structure used to find and retrieve potentials is called :py:class:`aiida_vasp.data.potcar.PotcarData` and can be accessed through AiiDA's data factory as ``DataFactory('vasp.potcar')``. This class provides shortcuts for simple or frequent cases, for complex queries, please refer to the `AiiDA documentation`_ on querying the provenance graph.
+The data structure used to find and retrieve potentials is called :py:class:`PotcarData<aiida_vasp.data.potcar.PotcarData>` and can be accessed through AiiDA's data factory as ``DataFactory('vasp.potcar')``. This class provides shortcuts for simple or frequent cases, for complex queries, please refer to the `AiiDA documentation`_ on querying the provenance graph.
 
 Find potentials by properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -6,7 +6,7 @@ Workchains
 
 `AiiDA`_ utilizes the concept of a `Workchain`_ as a building block to creating more complex workflows. AiiDA-VASP honours this. The idea is that the workchains should be modular such that one can pick what is needed and build a workflow that suits the problem at hand. Similar to `Calculation`_, the `Workchain`_ is a special class in `AiiDA`_ that is derived from a `Process`_ class.
 
-A `Workchain`_ can be loaded by utilizing the :py:class:`aiida.plugins.WorkflowFactory`::
+A `Workchain`_ can be loaded by utilizing the :py:class:`~aiida.plugins.factories.WorkflowFactory`::
 
   $ some_workchain = WorkflowFactory('<plugin_namespace>.<workchain_name>')
 
@@ -30,7 +30,7 @@ where are explained as follows.
 
 VASP workchain
 ------------------
-This performs the low level interactions with the :ref:`vasp_calculation` and is accessible by utilizing the :py:class:`aiida.plugins.WorkflowFactory` with the key ``vasp.vasp``. For additional details on how to interact with this workchain, see :ref:`vasp_workchain`.
+This performs the low level interactions with the :ref:`vasp_calculation` and is accessible by utilizing the :py:class:`~aiida.plugins.factories.WorkflowFactory` with the key ``vasp.vasp``. For additional details on how to interact with this workchain, see :ref:`vasp_workchain`.
 
 .. _relax_workchain_doc:
 
@@ -48,13 +48,13 @@ This checks the k-point grid and plane wave cutoff for convergence on selected p
 
 Bands workchain
 -------------------
-This enables the calculation of electronic band structures by standardizing the selected paths in reciprocal space using `SeeKpath`_. This internally calls the :ref:`vasp_workchain_doc`. For additional details on how to interact with this workchain, see :ref:`bands_workchain`. If a user wants to calculate the electronic band structure, they should use the :ref:`master_workchain_doc` as the main entry point.
+This enables the calculation of electronic band structures by standardizing the selected paths in reciprocal space using `SeeKpath`_. This internally calls the :ref:`vasp_workchain_doc`. For additional details on how to interact with this workchain, see :ref:`bands_workchain`. If a user wants to calculate the electronic band structure, they should use the :py:class:`MasterWorkChain<aiida_vasp.workchains.master.MasterWorkChain>` as the main entry point.
 
 .. _master_workchain_doc:
 
 Master workchain
 --------------------
-The idea of this workchain is to ultimately be the main entry point, such that a user can select what properties to be calculated. Then the master workchain composes a workflow to enable such extraction. Currently only the calculation of the electronic band structure is enabled. But this serves as a nice introductory example that can be easily expanded and calls any relevant workchain, depending on the chosen input parameters. For additional details on how to interact with this workchain, see :ref:`master_workchain`.
+The idea of this workchain is to ultimately be the main entry point, such that a user can select what properties to be calculated. Then the master workchain composes a workflow to enable such extraction. Currently only the calculation of the electronic band structure is enabled. But this serves as a nice introductory example that can be easily expanded and calls any relevant workchain, depending on the chosen input parameters.
 
 .. _AiiDA: https://www.aiida.net
 .. _Workchain: https://aiida.readthedocs.io/projects/aiida-core/en/latest/concepts/workflows.html#work-chains

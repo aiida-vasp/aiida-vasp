@@ -52,7 +52,7 @@ Prerequisites
    Execute from the root folder of the clones source code for `AiiDA-VASP`_::
 
      $ cd aiida-vasp
-     $ pip install -e .[tests,pre-commit,docs]
+     $ pip install .[tests,pre-commit,docs]
 
 6. Make sure ``pre-commit`` is enabled by running::
 
@@ -79,6 +79,8 @@ You should try to follow this workflow when submitting a contribution:
    when you issue the commit, ``pre-commit`` will run different checks, in particular for linting. Most
    likely this will not pass. Please adjust and issue the commit command again until it passes. The same check
    is done after the code have been pushed.
+   For simplicity one can install `tox`_ to make running the pre-commit and any tests much easier, this can be done by running
+   ``pip install tox`` and then the pre-commit can be run inside tox via ``tox -e pre-commit``. In a similar way the tests can be locally run via ``tox -e py{python_version}--aiida_vasp -- --cov=./aiida_vasp --cov-append --cov-report=xml`` where ``python_version`` is your local python version without the ".", e.g. 39 for python 3.9.
 6. Upload your changes to the main repository: ``git push origin my_changes``
 7. Create a new `pull request`_.
    Select your ``my_changes`` branch as the ``compare`` branch and ``develop`` as the ``base`` branch.
@@ -88,3 +90,4 @@ You should try to follow this workflow when submitting a contribution:
 .. _pull request: https://github.com/aiida-vasp/aiida-vasp/pulls
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 .. _VASP: https://www.vasp.at
+.. _tox: https://tox.wiki/en/latest/

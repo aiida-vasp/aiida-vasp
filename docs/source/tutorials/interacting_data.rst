@@ -26,7 +26,7 @@ parsing unless it is explicitly told not to do so, or to keep specific files. Le
 how we can tailor this. It is rather simple. First, we always try to retrieve what is stored in the
 ``_ALWAYS_RETRIEVE_LIST`` in ``calcs/vasp.py``, which currently is the ``CONTCAR``, ``OUTCAR``, ``vasprun.xml``, ``vasp_output``
 , any ``wannier90*`` file. The default setting ``settings['ALWAYS_STORE'] = True`` make sure these files will always be
-kept after a successful parsing step, which also results in a successful ``VaspCalculation``. One can specify
+kept after a successful parsing step, which also results in a successful :py:class:`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`. One can specify
 ``settings['ALWAYS_STORE'] = False`` to delete these files after a successful parsing step if one only want to
 keep the parsed data, which are typically stored as `AiiDA`_ data nodes on the output of the process node. In
 addition, it is possible to fine tune this. For instance, one might want to make sure to also download additional

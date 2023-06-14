@@ -3,7 +3,7 @@
 Immigrations
 ============
 
-Sometimes it is usefull or necessary to import `VASP`_ calculations that have not been executed in `AiiDA`_ or with the AiiDA-VASP plugin. For these cases, existing `VASP`_ calculations can be imported, or immigrated into the AiiDA-VASP realm. To make this process simple, we have designed am particular calculation that performs the data immigration task called :ref:`immigrator_calculation`.
+Sometimes it is usefull or necessary to import `VASP`_ calculations that have not been executed in `AiiDA`_ or with the AiiDA-VASP plugin. For these cases, existing `VASP`_ calculations can be imported, or immigrated into the AiiDA-VASP realm. To make this process simple, we have designed am particular calculation that performs the data immigration task called :py:class:`VaspImmigrant<aiida_vasp.calcs.immigrant.VaspImmigrant>`.
 
 Working principles
 ------------------
@@ -57,7 +57,7 @@ After running the above snippet, ``node`` will be the node of the created calcul
 Parsing additional information
 ------------------------------
 
-In order to parse additional quantities, first, please see :ref:`parsing`. For the :ref:`immigrator_calculation`, this follows the same mechanism as for normal calculations. Here we take as an example, that the user want to also parse and include the electronic band structure (not enabled by default). We then make this available by passing the ``settings`` kwarg to the ``immigrant`` method::
+In order to parse additional quantities, first, please see :ref:`parsing`. For the, this follows the same mechanism as for normal calculations. Here we take as an example, that the user want to also parse and include the electronic band structure (not enabled by default). We then make this available by passing the ``settings`` kwarg to the ``immigrant`` method::
 
    settings_dict = {'parser_settings': {'add_bands': True}}
    process, inputs = CalculationFactory('vasp.vasp').immigrant(..., settings=settings_dict)
