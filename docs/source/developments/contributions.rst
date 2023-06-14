@@ -52,7 +52,7 @@ Prerequisites
    Execute from the root folder of the clones source code for `AiiDA-VASP`_::
 
      $ cd aiida-vasp
-     $ pip install .[tests,pre-commit,docs]
+     $ pip install -e .[tests,pre-commit,docs]
 
 6. Make sure ``pre-commit`` is enabled by running::
 
