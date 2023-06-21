@@ -74,31 +74,12 @@ Installing the plugin
    $ (aiida-vasp) pip install aiida-vasp
 
   If you need to install the compatibility release of `AiiDA-VASP`_ which works with `AiiDA`_ 1.6.4 you should instead install the plugin
-  using ``pip install aiida-vasp=2.2``, but this is not recommended and only mentioned for legacy support.
-
-#. Update the entry points that `AiiDA`_ are using::
-
-   $ (aiida-vasp) reentry scan -r aiida
+  using ``pip install aiida-vasp=2.2``, but this is not recommended and only mentioned for legacy support. For the legacy version you
+  also most likely have to run ``reentry scan -r aiida`` after installing the plugin.
 
 This will automatically install the `AiiDA`_ python package(s) as well as any other dependencies of the plugin and register all the plugin classes with `AiiDA`_.
 
 Please consider that `AiiDA`_ have prerequisite that needs to be installed and ensured working. The steps above will not take care of this for you. Please consult `AiiDA prerequisites`_ and follow the instructions therein.
-
-
-Upgrading from AiiDA 1.x
-------------------------
-
-At the moment, only the development version of the plugin supports ``aiida-core >= 2.3``.
-If you are upgrading an existing AiiDA 1.x installation. Please upgrade ``aiida-core`` first and reinstall the plugin using::
-
-    $ pip install git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
-
-This ensures the installation of the latest development version and registers the entrypoints.
-You can verify the latter with::
-
-    $ verdi plugin list aiida.groups
-
-and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similar way.
 
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
