@@ -2,5 +2,5 @@ Getting help
 ------------
 
 .. include:: ../../../README.rst
-   :start-after: Start installation description
-   :end-before: End installation description
+   :start-after: Start support description
+   :end-before: End support description
