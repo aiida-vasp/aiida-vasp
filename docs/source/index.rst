@@ -116,6 +116,13 @@ training material for `AiiDA-VASP`_ or when using `AiiDA-VASP`_, consult for ins
 
 .. toctree::
    :maxdepth: 1
+   :caption: Support
+   :hidden:
+
+   support/general
+
+.. toctree::
+   :maxdepth: 1
    :caption: API reference
    :hidden:
 
