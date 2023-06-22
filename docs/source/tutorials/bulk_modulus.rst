@@ -461,7 +461,7 @@ previous step. Please remove:
   Furthermore, make sure ``requires-python = ">=3.8"`` and remove ``37`` under the ``testenv:py`` entry,
   which is also something we require in `AiiDA-VASP`_. The ``pyproject.toml`` should now look something like:
 
-  .. rli:: https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/aiida_vasp_bm/pyproject.toml
+  .. rli:: https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/pyproject.toml
 
 We now need to add the actual workchain to the plugin.
 
@@ -539,11 +539,11 @@ In the end of this section, we now would like to raise a few notes:
 The launch script will define our input structure and launch the ``BulkModulusWorkChain`` workchain which
 will contain the ``bulk_modulus`` output node that we can inspect when it is finalized. Obtain the launch script::
 
-  $ wget https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/aiida_vasp_bm/examples/run_vasp_bm.py
+  $ wget https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/examples/run_vasp_bm.py
 
 It should look something like:
 
-.. rli:: https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/aiida_vasp_bm/examples/run_vasp_bm.py
+.. rli:: https://raw.githubusercontent.com/aiida-vasp/aiida-vasp-bm/master/examples/run_vasp_bm.py
    :language: python
 
 Place this call script in the ``examples`` directory of the plugin.
