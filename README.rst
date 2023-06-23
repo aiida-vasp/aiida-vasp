@@ -1,5 +1,3 @@
-.. _getting_started:
-
 =================
 AiiDA VASP plugin
 =================
@@ -81,12 +79,6 @@ This will automatically install the `AiiDA`_ python package(s) as well as any ot
 
 Please consider that `AiiDA`_ have prerequisite that needs to be installed and ensured working. The steps above will not take care of this for you. Please consult `AiiDA prerequisites`_ and follow the instructions therein.
 
-.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
-.. _AiiDA: https://www.aiida.net
-.. _VASP: https://www.vasp.at
-.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
-.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
-.. _AiiDA prerequisites: https://aiida-core.readthedocs.io/en/latest/install/prerequisites.html
 ..
   End installation description
 
@@ -102,9 +94,13 @@ the development team is present in the space and users are free to ask.
 First consult the documentation of both `AiiDA-VASP documentation`_ and `AiiDA documentation`_ and also consider that the developers are
 not paid for this work. Please respect potential lead times in getting answers and be polite.
 
-.. _space on Matrix: https://matrix.to/#/#aiida-vasp:matrix.org
-.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
-.. _AiiDA documentation: https://aiida.readthedocs.io/projects/aiida-core/en/latest/
-
 ..
   End support description
+
+.. _space on Matrix: https://matrix.to/#/#aiida-vasp:matrix.org
+.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
+.. _AiiDA: https://www.aiida.net
+.. _VASP: https://www.vasp.at
+.. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
+.. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
+.. _AiiDA prerequisites: https://aiida-core.readthedocs.io/en/latest/install/prerequisites.html

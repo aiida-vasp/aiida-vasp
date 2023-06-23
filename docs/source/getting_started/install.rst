@@ -12,3 +12,4 @@ Here we will simply install the plugin before continuing.
 
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 .. _AiiDA: https://www.aiida.net
+.. _AiiDA prerequisites: https://aiida-core.readthedocs.io/en/latest/install/prerequisites.html
