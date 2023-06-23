@@ -262,7 +262,9 @@ class MasterWorkChain(WorkChain):
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
 
         # Make sure we do not have any floating dict (convert to Dict)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics', 'relax', 'converge', 'verify'])
+        self.ctx.inputs = prepare_process_inputs(
+            self.ctx.inputs, namespaces=['dynamics', 'relax', 'converge', 'verify']
+        )
 
     def run_next_workchain(self):
         """Run the next workchain."""
@@ -288,8 +290,12 @@ class MasterWorkChain(WorkChain):
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The called {}<{}> returned a non-zero exit status. '
-                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            self.report(
+                'The called {}<{}> returned a non-zero exit status. '
+                'The exit status {} is inherited'.format(
+                    workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
+                )
+            )
 
         return self.ctx.exit_code
 

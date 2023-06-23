@@ -258,7 +258,9 @@ def test_vasp_wc_nelm(fresh_aiida_env, potentials, mock_vasp_strict):
     assert called_nodes[1].exit_status == 0
 
 
-@pytest.mark.parametrize('incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]])
+@pytest.mark.parametrize(
+    'incar,nkpts,exit_codes', [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]]
+)
 def test_vasp_wc_ionic_continue(fresh_aiida_env, potentials, mock_vasp_strict, incar, nkpts, exit_codes):
     """Test with mocked vasp code for handling ionic convergence issues"""
     from aiida.engine import run
@@ -312,10 +314,12 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
     inputs.handler_overrides = get_data_node('core.dict', dict={'ignore_nelm_breach_relax': True})
-    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {
-        'add_structure': True,
-        'add_site_magnetization': True,
-    }})
+    inputs.settings = get_data_node(
+        'core.dict', dict={'parser_settings': {
+            'add_structure': True,
+            'add_site_magnetization': True,
+        }}
+    )
     inputs.max_iterations = get_data_node('core.int', 2)
 
     _, node = run.get_node(workchain, **inputs)

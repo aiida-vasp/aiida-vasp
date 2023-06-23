@@ -46,7 +46,16 @@ def test_write_chgcar(vasp_calc, vasp_inputs, vasp_chgcar, sandbox_folder):
     """Test that CHGAR object is written correctly."""
     chgcar, _ = vasp_chgcar
 
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 1})
+    inputs = vasp_inputs(
+        parameters={
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'icharg': 1
+        }
+    )
 
     inputs.charge_density = chgcar
     calc = vasp_calc(inputs=inputs)
@@ -59,7 +68,16 @@ def test_write_chgcar(vasp_calc, vasp_inputs, vasp_chgcar, sandbox_folder):
 def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
     """Test that WAVECAR object is written correctly."""
     wavecar, _ = vasp_wavecar
-    inputs = vasp_inputs(parameters={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'istart': 1})
+    inputs = vasp_inputs(
+        parameters={
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.',
+            'istart': 1
+        }
+    )
     inputs.wavefunctions = wavecar
     calc = vasp_calc(inputs=inputs)
     calcinfo = calc.prepare_for_submission(sandbox_folder)
@@ -235,7 +253,9 @@ def test_vasp_calc_extra(run_vasp_process):
     inputs['settings'] = get_data_node('core.dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
-    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
+    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + [
+        '_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR'
+    ]
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
@@ -284,7 +304,12 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False, 'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
+    inputs['settings'] = get_data_node(
+        'core.dict', dict={
+            'ALWAYS_STORE': False,
+            'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]
+        }
+    )
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
     retrieve_temporary_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST
@@ -309,13 +334,15 @@ def test_vasp_no_potcar_in_repo(run_vasp_process):
     assert 'POTCAR' not in repo_objects
 
 
-@pytest.mark.parametrize('test_case,expected,has_notification', [
-    ['exit_codes/converged-with-error', 703, True],
-    ['exit_codes/converged', 0, False],
-    ['exit_codes/unfinished', 700, False],
-    ['exit_codes/elec-unconverged', 701, False],
-    ['exit_codes/ionic-unconverged', 702, False],
-])
+@pytest.mark.parametrize(
+    'test_case,expected,has_notification', [
+        ['exit_codes/converged-with-error', 703, True],
+        ['exit_codes/converged', 0, False],
+        ['exit_codes/unfinished', 700, False],
+        ['exit_codes/elec-unconverged', 701, False],
+        ['exit_codes/ionic-unconverged', 702, False],
+    ]
+)
 @pytest.mark.parametrize([
     'vasp_structure',
     'vasp_kpoints',
@@ -376,7 +403,11 @@ def test_vasp_calc_error_ignore_all(run_vasp_process):
     Test running a VASP calculation with electronic/ionic convergence problems and
     check if the exit_codes are set accordingly.
     """
-    results, node = run_vasp_process(test_case='exit_codes/converged-with-error', settings={'parser_settings': {'ignore_all_errors': True}})
+    results, node = run_vasp_process(
+        test_case='exit_codes/converged-with-error', settings={'parser_settings': {
+            'ignore_all_errors': True
+        }}
+    )
 
     # Check that the standard output is there
     assert 'retrieved' in results

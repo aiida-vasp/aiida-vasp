@@ -109,22 +109,51 @@ max-line-length = 140
 
 [tool.pylint.messages_control]
 disable = [
+    "raw-checker-failed",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "R0801",
+    "consider-using-f-string",
+    "no-name-in-module",
+    "missing-function-docstring",
+    "too-many-locals",
+    "missing-class-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-public-methods",
+    "missing-module-docstring",
     "too-many-ancestors",
-    "invalid-name",
-    "duplicate-code",
-    # black compatibility
-    "C0330",
-    "C0326",
+    "too-many-lines"
 ]
 
 [tool.pytest.ini_options]
 # Configuration for [pytest](https://docs.pytest.org)
 python_files = "test_*.py example_*.py"
 filterwarnings = [
-    "ignore::DeprecationWarning:aiida:",
-    "ignore::DeprecationWarning:plumpy:",
+    "ignore:POTCAR data with symbol .* does not match any VASP",
+    "ignore:Using or importing the ABCs from 'collections' instead of from 'collections.abc' in deprecated",
+    "ignore::DeprecationWarning:babel:",
     "ignore::DeprecationWarning:django:",
+    "ignore::DeprecationWarning:frozendict:",
+    "ignore::DeprecationWarning:sqlalchemy:",
     "ignore::DeprecationWarning:yaml:",
+    "ignore::DeprecationWarning:pymatgen:",
+    "ignore::DeprecationWarning:jsonbackend:",
+    "ignore::DeprecationWarning:reentry:",
+    "ignore::DeprecationWarning:past:",
+    "ignore::DeprecationWarning:pkg_resources:",
+    "ignore::pytest.PytestCollectionWarning",
+    "ignore::DeprecationWarning:numpy:",
+    "ignore::DeprecationWarning:pandas:",
+    "ignore::DeprecationWarning:scipy:",
+    "ignore::DeprecationWarning:networkx:",
+    "ignore::DeprecationWarning:ase:",
+    "ignore::DeprecationWarning:aiida:",
+    "ignore::DeprecationWarning:plumpy:"
 ]
 
 [tool.coverage.run]

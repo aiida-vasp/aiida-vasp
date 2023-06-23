@@ -100,10 +100,14 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         mock = MockVasp(pwd, mock_registry)
         if mock.is_runnable:
             detected_path = mock.registry.get_path_by_hash(mock_registry.compute_hash(pwd))
-            vasp_mock_output.append(f'MOCK PREPEND: Using test data in path {detected_path} based detection from inputs.\n')
+            vasp_mock_output.append(
+                f'MOCK PREPEND: Using test data in path {detected_path} based detection from inputs.\n'
+            )
             mock.run()
         else:
-            vasp_mock_output.append('MOCK PREPEND: Using default test data in the respective folders named similar to the file name.\n')
+            vasp_mock_output.append(
+                'MOCK PREPEND: Using default test data in the respective folders named similar to the file name.\n'
+            )
             if not strict_match:
                 # Then this is a simple case - assemble the outputs from folders
                 shutil.copy(output_object('outcar', 'OUTCAR'), pwd / 'OUTCAR')
@@ -115,7 +119,9 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
                 shutil.copy(output_object('basic_run', 'vasp_output'), pwd / 'vasp_output')
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
-                vasp_mock_output.append('MOCK PREPEND: Caller demanded to only locate test data by input, but no match was found.\n')
+                vasp_mock_output.append(
+                    'MOCK PREPEND: Caller demanded to only locate test data by input, but no match was found.\n'
+                )
                 stop_and_return(vasp_mock_output)
     else:
         vasp_mock_output.append('MOCK PREPEND: Using test data from folder: ' + test_case + '\n')

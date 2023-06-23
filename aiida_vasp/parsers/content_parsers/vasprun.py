@@ -44,7 +44,8 @@ class VasprunParser(BaseFileParser):
             'version',
         ],
         'energy_type': ['energy_extrapolated'],
-        'electronic_step_energies': False
+        'electronic_step_energies':
+        False
     }
 
     PARSABLE_QUANTITIES = {
@@ -440,7 +441,9 @@ class VasprunParser(BaseFileParser):
     def energies(self):
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
-        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies'])
+        electronic_step_energies = self._settings.get(
+            'electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies']
+        )
 
         return self._energies(nosc=not electronic_step_energies)
 
@@ -483,7 +486,8 @@ class VasprunParser(BaseFileParser):
                 # The energy_extrapolated_final is the entropy term itself in VASP 5
                 # Store the calculated energy_no_entropy under 'energy_extrapolated_final',
                 # which is then recovered as `energy_no_entropy` later
-                energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
+                energies['energy_extrapolated_final'
+                         ] = energies['energy_free_final'] - energies['energy_extrapolated_final']
         else:
             energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
 

@@ -145,7 +145,9 @@ class KeyValueParser(BaseKeyValueParser):
         elif re.match(cls.bool_false, bool_str):
             value = False
         else:
-            raise ValueError(f'bool string {string_} did not match any of {[cls.bool_true.pattern, cls.bool_false.pattern]}')
+            raise ValueError(
+                f'bool string {string_} did not match any of {[cls.bool_true.pattern, cls.bool_false.pattern]}'
+            )
         comment = ' '.join(vals)
         return cls.retval(value, comment=comment)
 

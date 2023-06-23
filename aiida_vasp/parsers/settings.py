@@ -126,8 +126,10 @@ CONTENT_PARSER_SETS = {
 
 NODES = {
     'misc': {
-        'link_name': 'misc',
-        'type': 'core.dict',
+        'link_name':
+        'misc',
+        'type':
+        'core.dict',
         'quantities': [
             'total_energies',
             'maximum_stress',

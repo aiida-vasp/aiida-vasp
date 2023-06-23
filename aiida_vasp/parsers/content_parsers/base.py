@@ -242,8 +242,9 @@ class BaseFileParser():
 
         """
 
-        raise NotImplementedError('{classname} does not implement a _content_data_to_content_parser() '
-                                  'method.'.format(classname=self.__class__.__name__))
+        raise NotImplementedError(
+            f'{self.__class__.__name__} does not implement a _content_data_to_content_parser() method.'
+        )
 
     def _parse_content(self):
         """Parse the quantities configured and parseable from the content."""

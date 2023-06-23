@@ -82,7 +82,8 @@ def get_structure_SiC():
     c = 5.073
     lattice = [[a, 0, 0], [-a / 2, a / 2 * np.sqrt(3), 0], [0, 0, c]]
     structure = StructureData(cell=lattice)
-    for pos_direct, symbol in zip(([1. / 3, 2. / 3, 0], [2. / 3, 1. / 3, 0.5], [1. / 3, 2. / 3, 0.375822], [2. / 3, 1. / 3, 0.875822]),
+    for pos_direct, symbol in zip(([1. / 3, 2. / 3, 0], [2. / 3, 1. / 3, 0.5], [1. / 3, 2. / 3, 0.375822
+                                                                                ], [2. / 3, 1. / 3, 0.875822]),
                                   ('Si', 'Si', 'C', 'C')):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols=symbol)

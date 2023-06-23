@@ -72,9 +72,9 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set parameters
     inputs.parameters = dict_data(dict=incar)
     # Set potentials and their mapping
-    inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(structure=inputs.structure,
-                                                                             family_name=potential_family,
-                                                                             mapping=potential_mapping)
+    inputs.potential = DataFactory('vasp.potcar').get_potcars_from_structure(
+        structure=inputs.structure, family_name=potential_family, mapping=potential_mapping
+    )
     # Set options
     inputs.metadata = AttributeDict({'options': options})
     # Set settings

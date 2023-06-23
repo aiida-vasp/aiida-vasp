@@ -187,7 +187,9 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node('core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
+        self.ctx.seekpath_parameters = get_data_node(
+            'core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value}
+        )
 
         try:
             self._verbose = self.inputs.verbose.value
@@ -260,8 +262,10 @@ class BandsWorkChain(WorkChain):
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report(f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status. '
-                        f'The exit status {self.ctx.exit_code} is inherited')
+            self.report(
+                f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status. '
+                f'The exit status {self.ctx.exit_code} is inherited'
+            )
 
         return self.ctx.exit_code
 
