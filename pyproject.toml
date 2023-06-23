@@ -20,7 +20,6 @@ classifiers = [
 	"Environment :: Plugins",
 	"Intended Audience :: Science/Research",
 	"License :: OSI Approved :: MIT License",
-	"Programming Language :: Python :: 3.8",
 	"Programming Language :: Python :: 3.9",
 	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
@@ -29,9 +28,9 @@ classifiers = [
 	"Framework :: AiiDA"
 ]
 keywords = ["aiida", "plugin"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
-	"aiida-core[atomic_tools]~=2.3",
+	"aiida-core[atomic_tools]~=2.4",
 	"lxml",
 	"packaging",
 	"parsevasp~=3.2"
@@ -42,7 +41,7 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
-    "aiida-core[tests]~=2.3",
+    "aiida-core[tests]~=2.4",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
@@ -54,7 +53,7 @@ pre-commit = [
     "sphinx-lint~=0.6"
 ]
 docs = [
-    "aiida-core[docs]~=2.3",
+    "aiida-core[docs]~=2.4",
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",
@@ -156,7 +155,7 @@ indent_dictionary_value = false
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = pre-commit,{py38,py39,py310,py311}-aiida_vasp
+envlist = pre-commit,{py39,py310,py311}-aiida_vasp
 requires = virtualenv >= 20
 isolated_build = True
 
