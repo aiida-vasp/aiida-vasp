@@ -9,13 +9,17 @@ Development Team
 ----------------
 * Espen Flage-Larsen, Sigma2, Norway (maintainer)
 * Atsushi Togo, NIMS, Japan
-* Bonan Zhu, University College London, UK
+* Bonan Zhu, University College London, United Kingdom
 * Jonathan Chico, AB Sandvik Coromant, Department of Materials Design and Modeling, Sweden
 
 Acknowledgements
 ----------------
 Special thanks go to the following individuals and organizations that helps or helped in the development.
 
+* Sebastiaan Huber, Microsoft Quantum (bugfixes)
+* Kohei Shinohara, Kyoto University (bugfixes)
+* Michael Wolloch, VASP Software GmbH (discussions, bugfixes)
+* Vladislav Nikolaev, Moscow Institute of Physics and Technology, Russia (bugfixes)
 * Martin Callsen, Gent University (for extensive work on the parser)
 * Rico Häuselmann, THEOS, EPFL (big thanks for the initial design and implementation of the plugin compatible with AiiDA 0.x)
 * Dominik Gresch, ITP, ETHZ
