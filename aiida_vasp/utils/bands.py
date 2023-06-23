@@ -10,8 +10,8 @@ try:
     import matplotlib
     matplotlib.use('TKAgg')
     from matplotlib import pyplot as plt
-except ImportError:
-    raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality')
+except ImportError as no_matplotlib:
+    raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality') from no_matplotlib
 
 
 def get_bs_dims(bands_array):
@@ -108,7 +108,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
     :return: the matplotlib figure containing the plot
     """
     fig = plt.figure()
-    title = title or 'Band Structure (pk=%s)' % bands_node.pk
+    title = title or f'Band Structure (pk={bands_node.pk})'
     bands = bands_node.get_bands()
     _, nkp, _ = get_bs_dims(bands)
     plot_bands(bands_node, **kwargs)

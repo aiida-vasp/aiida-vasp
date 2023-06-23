@@ -35,7 +35,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def _assign(cls, key, val):
-        return '{} = {}'.format(key, val)
+        return f'{key} = {val}'
 
     @classmethod
     def _value(cls, val):

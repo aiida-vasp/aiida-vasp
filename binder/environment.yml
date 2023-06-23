@@ -1,0 +1,8 @@
+# Note: this is files is primarily intended for repo2docker
+channels:
+  - conda-forge
+
+dependencies:
+  - aiida-core~=2.0.1
+  - python~=3.8
+  - pip

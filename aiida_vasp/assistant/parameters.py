@@ -9,8 +9,12 @@ Contains utils and definitions that are used together with the parameters.
 import enum
 from warnings import warn
 
+from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
+
+from aiida_vasp.parsers.settings import ParserSettings
+from aiida_vasp.parsers.vasp import DEFAULT_SETTINGS
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 _BASE_NAMESPACES = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
@@ -82,7 +86,7 @@ class RelaxAlgoEnum(enum.IntEnum):
     """
     Encode values for algorithm descriptively.
 
-    See: https://www.vasp.at/wiki/index.php/ALGO
+    See: https://www.vasp.at/wiki/index.php/IBRION
     """
     NO_UPDATE = -1
     IONIC_RELAXATION_RMM_DIIS = 1
@@ -118,8 +122,8 @@ class RelaxModeEnum(enum.IntEnum):
         }
         try:
             return value_from_dof[dof]
-        except KeyError:
-            raise ValueError('Invalid combination for degrees of freedom: {}'.format(dict(zip(RELAX_POSSIBILITIES, dof))))
+        except KeyError as no_dof:
+            raise ValueError(f'Invalid combination for degrees of freedom: {dict(zip(RELAX_POSSIBILITIES, dof))}') from no_dof
 
 
 class ParametersMassage():  # pylint: disable=too-many-instance-attributes
@@ -140,7 +144,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
+    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):  # pylint: disable=missing-function-docstring
         self.exit_code = None
 
         # Flag for skipping any validations
@@ -189,9 +193,10 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
         from os import path  # pylint: disable=import-outside-toplevel
+
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
-        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r') as file_handler:
-            tags_data = safe_load(file_handler)
+        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
+            tags_data = safe_load(handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
         for key, _ in self._unsupported_parameters.items():
@@ -525,14 +530,15 @@ def check_inputs(supplied_inputs):
     if supplied_inputs is None:
         inputs = AttributeDict()
     else:
-        if isinstance(supplied_inputs, DataFactory('dict')):
+        if isinstance(supplied_inputs, DataFactory('core.dict')):
             inputs = AttributeDict(supplied_inputs.get_dict())
         elif isinstance(supplied_inputs, dict):
             inputs = AttributeDict(supplied_inputs)
         elif isinstance(supplied_inputs, AttributeDict):
             inputs = supplied_inputs
         else:
-            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. Supply a dict, Dict or an AttributeDict.')
+            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. '
+                             'Supply a dict, Dict or an AttributeDict.')
 
     return inputs
 
@@ -552,17 +558,16 @@ def inherit_and_merge_parameters(inputs):
         parameters[namespace] = AttributeDict()
         try:
             for key, item in inputs[namespace].items():
-                if isinstance(item, DataFactory('array')):
+                if isinstance(item, DataFactory('core.array')):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
-                        raise IndexError(
-                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
-                            .format(key))
+                        raise IndexError(f'The input array with a key {key} contains more than one array. '
+                                         'Please make sure an input only contains one array.')
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
-                elif isinstance(item, DataFactory('dict')):
+                elif isinstance(item, DataFactory('core.dict')):
                     parameters[namespace][key] = item.get_dict()
-                elif isinstance(item, DataFactory('list')):
+                elif isinstance(item, DataFactory('core.list')):
                     parameters[namespace][key] = item.get_list()
                 else:
                     parameters[namespace][key] = item.value
@@ -585,3 +590,80 @@ def inherit_and_merge_parameters(inputs):
     update_nested_dict(parameters, input_parameters)
 
     return parameters
+
+
+class ParserSettingsChecker:
+    """
+    Check for inconsistency between the parser settings and the INCAR tags.
+    """
+
+    def __init__(self, parameters: dict, settings: dict, default_settings=None):
+        """
+        Instantiate an ParserSettingsChecker object.
+
+        :param parameters: A dictionary of INCAR tags to be used
+        :param settings: The settings dictionary
+        :param default_option: The default options to be used for instantiating the ParserSetting object.
+
+        """
+
+        if default_settings is None:
+            default_settings = DEFAULT_SETTINGS
+
+        # Obtain the expected quantities names to be parsed
+        self.settings = ParserSettings(settings, default_settings)
+        self.quantities = settings.quantity_names_to_parse
+        self.parameters = parameters
+
+    def check(self):
+        """
+        Check the consistency between the supplied INCAR tags the requested quantities to be parsed.
+        """
+
+        self.check_maximum_stress()
+        self.check_wavecar_chgcar()
+        self.check_born_charges()
+        self.check_dynmat()
+
+    def check_maximum_stress(self):
+        """Check the the maximum_stress can be parsed"""
+
+        if 'maximum_stress' not in self.quantities and 'stress' not in self.quantities:
+            return
+
+        isif = self.parameters.get('isif')
+        ibrion = self.parameters.get('ibrion', -1)
+        lhfcalc = self.parameters.get('lhfcalc', False)
+        if isif is None:
+            if ibrion == 0:
+                isif = 0
+            if lhfcalc:
+                isif = 0
+
+        if isif == 0:
+            raise InputValidationError('Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.')
+
+    def check_wavecar_chgcar(self):
+        """Check if WAVECAR CHGCAR are set to be written"""
+
+        if 'wavecar' in self.quantities and not self.parameters.get('lwave', True):
+            raise InputValidationError('Requested to retrieve <WAVECAR> but it not set to be written.')
+
+        if 'chgcar' in self.quantities and not self.parameters.get('lwave', True):
+            raise InputValidationError('Requested to retrieve <CHGCAR> but it not set to be written.')
+
+    def check_born_charges(self):
+        """Check if projectors can be parsed"""
+        if 'born_charges' not in self.quantities and 'dielectrics' not in self.quantities:
+            return
+
+        lepsilon = self.parameters.get('lepsilon', False)
+        if not lepsilon:
+            raise InputValidationError('Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.')
+
+    def check_dynmat(self):
+        if 'hessian' not in self.quantities and 'dynmat' not in self.quantities:
+            return
+        ibrion = self.parameters.get('ibrion', -1)
+        if ibrion not in [5, 6, 7, 8]:
+            raise InputValidationError('Requsted to parse "hessian"/"dynmat" but they are not going to be calculated.')

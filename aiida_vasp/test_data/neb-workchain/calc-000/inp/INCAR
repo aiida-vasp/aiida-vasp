@@ -1,0 +1,8 @@
+ALGO = normal
+EDIFFG = -0.02
+IBRION = 3
+IMAGES = 3
+IOPT = 1
+NSW = 50
+POTIM = 0.0
+SPRING = -5

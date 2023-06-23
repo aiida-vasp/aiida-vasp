@@ -4,12 +4,13 @@ A general archive class.
 ------------------------
 Archive data class: store multiple files together in a compressed archive in the repository.
 """
+from contextlib import contextmanager
+import os
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import tarfile
-from contextlib import contextmanager
-import os
 import tempfile
+
 from aiida.orm.nodes import Data
 
 
@@ -18,17 +19,17 @@ class ArchiveData(Data):
 
     def __init__(self, *args, **kwargs):
         self._filelist = []
-        super(ArchiveData, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @contextmanager
     def get_archive(self):
-        with self.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
     @contextmanager
     def archive(self):
-        with self.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
@@ -48,7 +49,7 @@ class ArchiveData(Data):
             with tarfile.open(path, mode='w:gz') as archive:
                 for src, dstn in self._filelist:
                     archive.add(src, arcname=dstn)
-            self.put_object_from_file(path, path='archive.tar.gz')
+            self.base.repository.put_object_from_file(path, path='archive.tar.gz')
         finally:
             os.remove(path)
 
@@ -56,4 +57,4 @@ class ArchiveData(Data):
     def store(self, *args, **kwargs):
         self._make_archive()
         del self._filelist
-        super(ArchiveData, self).store(*args, **kwargs)
+        super().store(*args, **kwargs)

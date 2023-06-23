@@ -1,3 +1,4 @@
+*.aiida
 *.pyc
 .*.swp
 .*.swo
@@ -15,7 +16,10 @@
 .coverage
 .tox
 .pytest_cache
+*.vscode
 
-doc/build
+docs/_build
 build/
 dist/
+docs/source/api/
+docs/source/apidoc/

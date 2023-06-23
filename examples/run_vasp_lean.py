@@ -5,11 +5,13 @@ Performs a self consistent electron convergence run using the standard silicon s
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
-from aiida.engine import submit
+
 from aiida import load_profile
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import submit
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory, WorkflowFactory
+
 load_profile()
 
 
@@ -30,7 +32,7 @@ def get_structure():
 
     """
 
-    structure_data = DataFactory('structure')
+    structure_data = DataFactory('core.structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -45,11 +47,11 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
 
     # First, we need to fetch the AiiDA datatypes which will
     # house the inputs to our calculation
-    dict_data = DataFactory('dict')
-    kpoints_data = DataFactory('array.kpoints')
+    dict_data = DataFactory('core.dict')
+    kpoints_data = DataFactory('core.array.kpoints')
 
     # Then, we set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.verify')
+    workchain = WorkflowFactory('vasp.vasp')
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()

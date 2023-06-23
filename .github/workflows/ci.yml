@@ -5,32 +5,33 @@ on: [push, pull_request]
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     strategy:
       matrix:
-        python: ['3.8']
+        python: ["3.8"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
+      - name: Cache python dependencies
+        id: cache-pip
+        uses: actions/cache@v3.2.6
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+          restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-          pip --version
-      - name: Install wheel
-        run: pip install wheel
-      - name: Install AiiDA-VASP
-        run: |
-          pip install -e .[graphs,tests,pre-commit]
-          pip freeze
-      - name: Run pre-commit
-        run: pre-commit run --all-files || ( git diff; git status; exit 1; )
+      - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
+        run: pip install virtualenv>20
+      - name: Install Tox
+        run: pip install tox
+      - name: Run pre-commit in Tox
+        run: tox -e pre-commit
   tests:
     needs: [pre-commit]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     services:
       rabbitmq:
         image: rabbitmq:latest
@@ -38,55 +39,60 @@ jobs:
           - 5672:5672
     strategy:
       matrix:
-        python: ['3.7', '3.8', '3.9']
+        python: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
+      - name: Cache python dependencies
+        id: cache-pip
+        uses: actions/cache@v3.2.6
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+          restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
         run: |
-          curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
           sudo apt update
           sudo .ci/enable_ssh_localhost.sh
           sudo apt install locate
           sudo updatedb
           sudo apt install postgresql
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-          pip --version
-      - name: Install wheel
-        run: pip install wheel
+      - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
+        run: pip install "virtualenv>20"
       - name: Install Tox
         run: pip install tox
-      - name: Install Coveralls
-        if: ${{ matrix.python }} == '3.8'
-        run: pip install coveralls
-      - name: Install AiiDA
-        #run: pip install -e git+https://github.com/aiidateam/aiida_core#egg=aiida-core
-        run: pip install 'aiida-core>=1.6.1,<2'
-      - name: Install AiiDA-Wannier90
-        run: pip install -e git+https://github.com/aiidateam/aiida-wannier90#egg=aiida-wannier90
-      - name: Install AiiDA-VASP
-        run: |
-          pip install -e .[graphs,tests]
-          pip freeze
+      - name: Install codecov
+        if: matrix.python == '3.8'
+        run: pip install codecov pytest-cov
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master
         id: tox
         with:
           pattern: '\.'
           string: ${{ matrix.python }}
-          replace-with: ''
+          replace-with: ""
+      - name: Run tox and codecov
+        if: matrix.python == '3.8'
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
+          --cov=./aiida_vasp --cov-append --cov-report=xml
       - name: Run tox
+        if: matrix.python != '3.8'
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
-      - name: Run coverage from coverage-python by running pytest yet again
-        if: ${{ matrix.python }} == '3.8'
-        run: pytest --cov-report=xml --cov-append --cov=aiida_vasp
+      - name: Archive error mock calculations
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: error-mock-calc-archive
+          path: |
+            test_mock_error.aiida
+          retention-days: 5
+          if-no-files-found: warn
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        if: matrix.python == '3.8'
+        uses: codecov/codecov-action@v3
         with:
           name: aiida-vasp
           fail_ci_if_error: true

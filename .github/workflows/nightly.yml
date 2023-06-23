@@ -1,8 +1,9 @@
-name: nightly against develop aiida-core
+name: nightly against `main` branch of `aiida-core`
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Run every day at midnight
+    - cron: "0 0 * * *" # Run every day at midnight
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -15,11 +16,11 @@ jobs:
           - 5672:5672
     strategy:
       matrix:
-        python: ['3.7', '3.8', '3.9']
+        python: ["3.8", "3.9", "3.10"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
@@ -43,18 +44,17 @@ jobs:
         run: |
           pip install -e .[graphs,dev]
           pip freeze
-      - name: Install AiiDA develop branch
+      - name: Install AiiDA main branch
         id: install_aiida
         run: |
-          pip install git+https://github.com/aiidateam/aiida-core@develop
-          reentry scan
+          pip install git+https://github.com/aiidateam/aiida-core@main
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master
         id: tox
         with:
           pattern: '\.'
           string: ${{ matrix.python }}
-          replace-with: ''
+          replace-with: ""
       - name: Run tox
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
       - name: Notification to Slack channel
@@ -66,5 +66,5 @@ jobs:
           SLACK_USERNAME: aiida-vasp
           SLACK_CHANNEL: nightly
           SLACK_COLOR: b60205
-          SLACK_TITLE: "Nightly build against `aiida-core/develop` failed"
-          SLACK_MESSAGE: "The tests fail with the current version of `aiida-core/develop`."
+          SLACK_TITLE: "Nightly build against `aiida-core/main` failed"
+          SLACK_MESSAGE: "The tests fail with the current version of `aiida-core/main`."

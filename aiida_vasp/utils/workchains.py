@@ -7,11 +7,12 @@ to make code more compact in the workchains.
 """
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Dict
 from aiida.engine.processes.exit_code import ExitCode
+from aiida.orm import Dict
 from aiida.plugins import DataFactory
 
 from aiida_vasp.utils.extended_dicts import delete_keys_from_dict
@@ -26,7 +27,6 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     namespaces. They all should remain a standard dictionary. Another exception are dictionaries
     whose keys are not strings but for example tuples.
     """
-    from past.builtins import basestring
     prepared_inputs = AttributeDict()
 
     if namespaces is None:
@@ -39,7 +39,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     no_dict = no_dict + namespaces
     # Copy and convert dict
     for key, val in inputs.items():
-        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, (basestring)) for k in val.keys()])):
+        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()])):  # pylint: disable=use-a-generator
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
@@ -49,16 +49,16 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
         parameters = prepared_inputs.parameters
         if exclude_parameters:
             # First make sure we have a proper copy so that any removal does not havoc elements in the dictionary
-            if isinstance(parameters, DataFactory('dict')):
+            if isinstance(parameters, DataFactory('core.dict')):
                 parameters = prepared_inputs.parameters.clone()
                 # Unpack in case the parameters is a Dict data structure
                 parameters = parameters.get_dict()
             else:
                 parameters = deepcopy(prepared_inputs.parameters)
             delete_keys_from_dict(parameters, exclude_parameters)
-        if not isinstance(parameters, DataFactory('dict')):
+        if not isinstance(parameters, DataFactory('core.dict')):
             # Convert parameters to Dict
-            parameters = DataFactory('dict')(dict=parameters)
+            parameters = DataFactory('core.dict')(dict=parameters)
         prepared_inputs.parameters = parameters
     except AttributeError:
         # In case parameters is not present at all
@@ -112,7 +112,7 @@ def fetch_k_grid(rec_cell, k_spacing):
 
     """
     rec_cell_lenghts = np.linalg.norm(rec_cell, axis=1)
-    kgrid = np.ceil(rec_cell_lenghts / np.float(k_spacing))
+    kgrid = np.ceil(rec_cell_lenghts / np.float64(k_spacing))
 
     return kgrid.astype('int').tolist()
 
@@ -121,3 +121,26 @@ def compose_exit_code(status, message):
     """Compose an ExitCode instance based on a status and message."""
     exit_code = ExitCode(status=status, message=message)
     return exit_code
+
+
+def site_magnetization_to_magmom(site_dict):
+    """
+    Convert site magnetization to MAGMOM used for restart
+    NOTE: Only tested for colinear cases
+    """
+    if 'site_magnetization' in site_dict:
+        site_dict = site_dict['site_magnetization']
+
+    site_dict = site_dict['sphere']
+    to_use = None
+    for symbol in 'xyz':
+        if site_dict.get(symbol) and site_dict.get(symbol, {}).get('site_moment'):
+            to_use = symbol
+            break
+    # No available site magnetization for setting MAGMOM, something is wrong
+    if to_use is None:
+        raise ValueError('No valid site-projected magnetization available')
+    # Ensure sorted list
+    tmp = list(site_dict[to_use]['site_moment'].items())
+    tmp.sort(key=lambda x: int(x[0]))
+    return [entry[1]['tot'] for entry in tmp]

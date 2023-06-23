@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------
+WARNING: Linux kernel CMA support was requested via the
+btl_vader_single_copy_mechanism MCA variable, but CMA support is
+not available due to restrictive ptrace settings.
+
+The vader shared memory BTL will fall back on another single-copy
+mechanism if one is available. This may result in lower performance.
+
+  Local host: DESKTOP-EMLNJAS
+--------------------------------------------------------------------------
+ running on    2 total cores
+ distrk:  each k-point on    2 cores,    1 groups
+ distr:  one band on    1 cores,    2 groups
+ using from now: INCAR     
+ vasp.5.4.4.18Apr17-6-g9f103f2a35 (build Apr  9 2020 10:35:27) complex           
+ POSCAR found type information on POSCAR  Si
+ POSCAR found :  1 types and       1 ions
+ scaLAPACK will be used
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.393959088538E+01   -0.39396E+01   -0.98521E+02   426   0.270E+02
+DAV:   2    -0.484598409282E+01   -0.90639E+00   -0.89946E+00   486   0.219E+01
+DAV:   3    -0.484959881621E+01   -0.36147E-02   -0.36139E-02   444   0.138E+00
+DAV:   4    -0.484960262007E+01   -0.38039E-05   -0.38037E-05   492   0.371E-02
+DAV:   5    -0.484960262181E+01   -0.17416E-08   -0.16338E-08   444   0.546E-04    0.294E+00
+DAV:   6    -0.483623940628E+01    0.13363E-01   -0.42789E-03   372   0.378E-01    0.163E+00
+DAV:   7    -0.482868116835E+01    0.75582E-02   -0.83918E-03   372   0.526E-01
+   1 F= -.48286812E+01 E0= -.48247182E+01  d E =-.792588E-02
+ writing wavefunctions
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+[DESKTOP-EMLNJAS:04476] 1 more process has sent help message help-btl-vader.txt / cma-permission-denied
+[DESKTOP-EMLNJAS:04476] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages

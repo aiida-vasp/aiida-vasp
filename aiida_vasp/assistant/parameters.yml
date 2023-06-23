@@ -1,4 +1,3 @@
----
 addgrid:
   default: false
   description: ADDGRID determines whether an additional support grid is used for the
@@ -3514,3 +3513,80 @@ zval:
   description: ZVAL describes the valency of each atomic sphere.
   type: float
   values: null
+
+# VTST specific tags
+iopt:
+  default: 0
+  description: Tag for selecting the optimisation algorithm - used by vtst
+  type: integer
+  values: null
+maxmov:
+  default: 0.2
+  description: Maximum allowed step size for translation
+  type: float
+  values: null
+ilbfgsmem:
+  default: 20
+  description: Number of steps saved when building the inverse Hessian matrix
+  type: integer
+  values: null
+lglobal:
+  default: true
+  description: Optimize the NEB globally instead of image-by-image
+  values: null
+  type: null
+lautoscale:
+  default: true
+  description: Automatically determines INVCURV
+  values: null
+  type: null
+invcurv:
+  default: 0.01
+  description: Initial inverse curvature, used to construct the inverse Hessian matrix
+  values: null
+  type: float
+llineopt:
+  default: false
+  description: Use a force based line minimizer for translation
+  values: null
+  type: null
+fdstep:
+  default: 5.0e-3
+  description: Finite difference step size for line optimizer
+  values: null
+  type: float
+sdalpha:
+  default: 0.01
+  description: Ratio between force and step size
+  values: null
+  type: float
+timestep:
+  default: 0.1
+  description: Dynamical time step
+  values: null
+  type: float
+ftimemax:
+  default: 1.0
+  description: Maximum dynamical time step allowed
+  values: null
+  type: float
+ftimedec:
+  default: 0.5
+  description: Factor to decrease dt
+  values: null
+  type: float
+ftimeinc:
+  default: 1.1
+  description: Factor to increase dt
+  values: null
+  type: float
+falpha:
+  default: 0.1
+  description: Parameter that controls velocity damping
+  values: null
+  type: float
+fnmin:
+  default: 5
+  description: Minimum number of iterations before adjusting alpha and dt
+  values: null
+  type: integer
