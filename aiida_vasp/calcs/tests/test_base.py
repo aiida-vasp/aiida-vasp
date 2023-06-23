@@ -10,20 +10,17 @@ from aiida_vasp.utils.fixtures import *  # pylint: disable=wildcard-import, unus
 
 
 def test_generate_base_calc(base_calc):
-    """Test that it is possible to start the generation of an instance of the base calculation class."""
+    """Test that it is possible to start the generatione of an instance of the base calculation class."""
 
     from aiida_vasp.calcs.base import VaspCalcBase
 
     manager = get_manager()
     runner = manager.get_runner()
     inputs = AttributeDict()
+
     metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
     inputs.metadata = metadata
 
-    # Need more input, so we will get an AttributeError because we do not pass code
-    with pytest.raises(AttributeError):
+    # Need more input, so we will get an ValueError because we do not pass code
+    with pytest.raises(ValueError):
         instantiate_process(runner, VaspCalcBase, **inputs)
-
-    # Let us try again with a code attached, thus should pass
-    inputs.code = base_calc.inputs.code
-    instantiate_process(runner, VaspCalcBase, **inputs)

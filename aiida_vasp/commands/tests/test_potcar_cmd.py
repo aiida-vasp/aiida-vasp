@@ -1,21 +1,20 @@
 """Unit tests for vasp-potcar command family."""
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
-from __future__ import absolute_import, print_function
-
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from pathlib import Path, PurePath
+import pytest
 
 from click.testing import CliRunner
 from monty.collections import AttrDict
 from packaging import version
-import pytest
 
 from aiida_vasp.commands.potcar import potcar
-from aiida_vasp.data.potcar import PotcarGroup
-from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, legacy_potcar_family, potcar_family, temp_pot_folder
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
+from aiida_vasp.utils.fixtures.data import potcar_family, POTCAR_FAMILY_NAME, temp_pot_folder
 
 
 @pytest.fixture
@@ -24,8 +23,8 @@ def cmd_params(temp_pot_folder):
     params = AttrDict()
     params.POTCAR_PATH = str(temp_pot_folder)
     params.FAMILY_NAME = POTCAR_FAMILY_NAME
-    params.PATH_OPTION = f'--path={params.POTCAR_PATH}'
-    params.NAME_OPTION = f'--name={params.FAMILY_NAME}'
+    params.PATH_OPTION = '--path={}'.format(params.POTCAR_PATH)
+    params.NAME_OPTION = '--name={}'.format(params.FAMILY_NAME)
     params.DESC_OPTION = '--description="This is a test POTCAR family"'
     return params
 
@@ -59,7 +58,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     """Give a tar file as the source."""
-    path_option = f"--path={str(Path(cmd_params.POTCAR_PATH) / 'Ga.tar')}"
+    path_option = '--path={}'.format(str(Path(cmd_params.POTCAR_PATH) / 'Ga.tar'))
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 
@@ -99,7 +98,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
         * Adds no nodes
         * Adds no groups
     """
-    from aiida.orm import Group, Node
+    from aiida.orm import Node, Group
     from aiida.orm.querybuilder import QueryBuilder
 
     node_qb = QueryBuilder(path=[Node])
@@ -119,7 +118,7 @@ def test_uploadfamily_again(fresh_aiida_env, potcar_family, cmd_params):
 
 def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
     """Make sure --dry-run does not affect the db."""
-    from aiida.orm import Group, Node
+    from aiida.orm import Node, Group
     from aiida.orm.querybuilder import QueryBuilder
 
     node_qb = QueryBuilder(path=[Node])
@@ -210,16 +209,3 @@ def test_call_from_vasp():
     import subprocess
     output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
     assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test
-
-
-def test_migrate_command(fresh_aiida_env, potcar_family, legacy_potcar_family):
-    """Test the migration command"""
-
-    legacy_name, legacy_group_class = legacy_potcar_family
-    legacy_group = legacy_group_class.collection.get(label=legacy_name)
-    run_cmd('migratefamilies')
-    migrated = PotcarGroup.collection.get(label=legacy_name)
-
-    uuids_original = {node.uuid for node in legacy_group.nodes}
-    uuids_migrated = {node.uuid for node in migrated.nodes}
-    assert uuids_migrated == uuids_original

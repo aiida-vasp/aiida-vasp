@@ -9,16 +9,14 @@ The data is saved and the energy minimum is calculated and stored.
 """
 # pylint: disable=attribute-defined-outside-init
 import random
-
 import numpy as np
-from scipy.interpolate import interp1d
 from scipy.optimize import minimize
+from scipy.interpolate import interp1d
 
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import WorkChain, append_, calcfunction, while_
-from aiida.plugins import DataFactory, WorkflowFactory
-
-from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
+from aiida.engine import calcfunction, WorkChain, while_, append_
+from aiida.plugins import WorkflowFactory, DataFactory
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class EosWorkChain(WorkChain):
@@ -105,7 +103,7 @@ class EosWorkChain(WorkChain):
     def init_next_workchain(self):
         """Initialize the next workchain."""
 
-        # Elevate iteration index
+        # Elavate iteraetion index
         self.ctx.iteration += 1
 
         # Check that the context inputs exists
@@ -125,7 +123,7 @@ class EosWorkChain(WorkChain):
         self.ctx.inputs.structure = self.ctx.structures.pop(item)
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics'])
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
 
     def run_next_workchain(self):
         """
@@ -136,8 +134,9 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
-        self.to_context(workchains=append_(running))
+
+        self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+        return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""
@@ -145,7 +144,7 @@ class EosWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be

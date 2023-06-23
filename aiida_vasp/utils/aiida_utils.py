@@ -12,7 +12,9 @@ from packaging import version
 
 from aiida.orm import User
 
-BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
+from aiida.cmdline.utils.decorators import with_dbenv
+
+BASIC_DATA_TYPES = ['bool', 'float', 'int', 'list', 'str', 'dict']
 
 
 def get_data_node(data_type, *args, **kwargs):
@@ -42,10 +44,11 @@ def querybuild(cls, **kwargs):
     return query_builder
 
 
+@with_dbenv()
 def get_data_class(data_type):
     """Provide access to the orm.data classes with deferred dbenv loading."""
-    from aiida.common.exceptions import MissingEntryPointError
     from aiida.plugins import DataFactory
+    from aiida.common.exceptions import MissingEntryPointError
 
     data_cls = None
     try:
@@ -57,13 +60,13 @@ def get_data_class(data_type):
 
 def get_current_user():
     """Get current user."""
-    current_user = User.collection.get_default()
+    current_user = User.objects.get_default()
     return current_user
 
 
 def copy_parameter(old_parameter):
     """Assemble a new Dict."""
-    return get_data_node('core.dict', dict=old_parameter.get_dict())
+    return get_data_node('dict', dict=old_parameter.get_dict())
 
 
 def displaced_structure(structure, displacement, entry):
@@ -129,7 +132,7 @@ def cmp_load_verdi_data():
             import_errors.append(err)
 
     if not verdi_data:
-        err_messages = '\n'.join([f' * {err}' for err in import_errors])
+        err_messages = '\n'.join([' * {}'.format(err) for err in import_errors])
         raise ImportError('The verdi data base command group could not be found:\n' + err_messages)
 
     return verdi_data

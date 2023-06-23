@@ -3,7 +3,7 @@ Inheritance tools.
 
 ------------------
 This sets up inheritance of the docstrings for use when we inherit
-classes. This makes it simple to add further details to or replace the
+classes. This makses it simple to add further details to or replace the
 docstring present on the base class.
 """
 
@@ -12,7 +12,7 @@ def update_docstring(method_name, content, append=True):
     r"""
     Update docstring of (an inherited) class method.
 
-    For subclasses that use hooks to change behavior of superclass methods.
+    For subclasses that use hooks to change behaviour of superclass methods.
 
     :param append: If true, append to the docstring, else overwrite it entirely.
 

@@ -133,8 +133,9 @@ class {{ cookiecutter.workchain_name[0]|upper}}{{cookiecutter.workchain_name[1:]
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
+
         self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
-        self.to_context(workchains=append_(running))
+        return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""

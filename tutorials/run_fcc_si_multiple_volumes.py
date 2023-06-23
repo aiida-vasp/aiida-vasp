@@ -6,13 +6,11 @@ each of them.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-
-from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import submit
-from aiida.orm import Bool, Code, Str
+from aiida.orm import Code, Bool, Str
 from aiida.plugins import DataFactory, WorkflowFactory
-
+from aiida.engine import submit
+from aiida import load_profile
 load_profile()
 
 
@@ -35,7 +33,7 @@ def get_structure(alat):
     structure_data = DataFactory('structure')
     lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
     structure = structure_data(cell=lattice)
-    for pos_direct in [[0.0, 0.0, 0.0]]:
+    for pos_direct in ([[0.0, 0.0, 0.0]]):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols='Si')
     return structure
@@ -50,33 +48,36 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
-    workchain = WorkflowFactory('vasp.vasp')
+    workchain = WorkflowFactory('vasp.verify')
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
     inputs = AttributeDict()
 
-    # Set inputs for the following WorkChain execution
-    # Code
+    # organize settings
+    settings.parser_settings = {'output_params': ['total_energies', 'maximum_force']}
+
+    # set inputs for the following WorkChain execution
+    # set code
     inputs.code = Code.get_from_string(code_string)
-    # Structure
+    # set structure
     inputs.structure = structure
-    # k-points grid density
+    # set k-points grid density
     kpoints = kpoints_data()
     kpoints.set_kpoints_mesh(kmesh)
     inputs.kpoints = kpoints
-    # Parameters
+    # set parameters
     inputs.parameters = dict_data(dict=incar)
-    # Potential family and their mapping between element and potential type to use
+    # set potentials and their mapping
     inputs.potential_family = Str(potential_family)
     inputs.potential_mapping = dict_data(dict=potential_mapping)
-    # Options
+    # set options
     inputs.options = dict_data(dict=options)
-    # Settings
+    # set settings
     inputs.settings = dict_data(dict=settings)
-    # Workchain related inputs, in this case, give more explicit output to report
+    # set workchain related inputs, in this case, give more explicit output to report
     inputs.verbose = Bool(True)
-    # Submit the workchain with the set inputs
+    # submit the requested workchain with the supplied inputs
     submit(workchain, **inputs)
 
 
@@ -86,7 +87,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'incar': {'istart': 0, 'icharg': 2, 'encut': 240, 'ismear': 0, 'sigma': 0.1}}
+    INCAR = {'istart': 0, 'icharg': 2, 'encut': 240, 'ismear': 0, 'sigma': 0.1}
 
     # KPOINTS equivalent
     # Set kpoint mesh
@@ -95,13 +96,13 @@ if __name__ == '__main__':
     # POTCAR equivalent
     # Potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'
-    POTENTIAL_FAMILY = 'PBE.54'
+    POTENTIAL_FAMILY = 'pbe'
     # The potential mapping selects which potential to use, here we use the standard
     # for silicon, this could for instance be {'Si': 'Si_GW'} to use the GW ready
     # potential instead
     POTENTIAL_MAPPING = {'Si': 'Si'}
 
-    # Jobfile equivalent
+    # jobfile equivalent
     # In options, we typically set scheduler options.
     # See https://aiida.readthedocs.io/projects/aiida-core/en/latest/scheduler/index.html
     # AttributeDict is just a special dictionary with the extra benefit that
@@ -109,10 +110,10 @@ if __name__ == '__main__':
     OPTIONS = AttributeDict()
     OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600
-    OPTIONS.max_memory_kb = 2000000
+    OPTIONS.max_memory_kb = 1024000
 
     # Iterate over each lattice constant and pass it explicitly
     for lattice_constant in [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3]:

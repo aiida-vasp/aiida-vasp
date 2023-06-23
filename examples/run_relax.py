@@ -5,13 +5,11 @@ Performs a relaxation of the standard silicon structure.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-
-from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import submit
 from aiida.orm import Code
 from aiida.plugins import DataFactory, WorkflowFactory
-
+from aiida.engine import submit
+from aiida import load_profile
 load_profile()
 
 
@@ -32,7 +30,7 @@ def get_structure():
 
     """
 
-    structure_data = DataFactory('core.structure')
+    structure_data = DataFactory('structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -61,38 +59,38 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set structure
     inputs.structure = structure
     # Set k-points grid density
-    kpoints = DataFactory('core.array.kpoints')()
+    kpoints = DataFactory('array.kpoints')()
     kpoints.set_kpoints_mesh(kmesh)
     inputs.kpoints = kpoints
     # Set parameters
-    inputs.parameters = DataFactory('core.dict')(dict=incar)
+    inputs.parameters = DataFactory('dict')(dict=incar)
     # Set potentials and their mapping
-    inputs.potential_family = DataFactory('core.str')(potential_family)
-    inputs.potential_mapping = DataFactory('core.dict')(dict=potential_mapping)
+    inputs.potential_family = DataFactory('str')(potential_family)
+    inputs.potential_mapping = DataFactory('dict')(dict=potential_mapping)
     # Set options
-    inputs.options = DataFactory('core.dict')(dict=options)
+    inputs.options = DataFactory('dict')(dict=options)
     # Set settings
-    inputs.settings = DataFactory('core.dict')(dict=settings)
+    inputs.settings = DataFactory('dict')(dict=settings)
     # Set workchain related inputs, in this case, give more explicit output to report
-    inputs.verbose = DataFactory('core.bool')(True)
+    inputs.verbose = DataFactory('bool')(True)
 
     # Relaxation related parameters that is passed to the relax workchain
     relax = AttributeDict()
     # Turn on relaxation
-    relax.perform = DataFactory('core.bool')(True)
+    relax.perform = DataFactory('bool')(True)
     # Select relaxation algorithm
-    relax.algo = DataFactory('core.str')('cg')
+    relax.algo = DataFactory('str')('cg')
     # Set force cutoff limit (EDIFFG, but no sign needed)
-    relax.force_cutoff = DataFactory('core.float')(0.01)
+    relax.force_cutoff = DataFactory('float')(0.01)
     # Turn on relaxation of positions (strictly not needed as the default is on)
     # The three next parameters correspond to the well known ISIF=3 setting
-    relax.positions = DataFactory('core.bool')(True)
+    relax.positions = DataFactory('bool')(True)
     # Turn on relaxation of the cell shape (defaults to False)
-    relax.shape = DataFactory('core.bool')(True)
+    relax.shape = DataFactory('bool')(True)
     # Turn on relaxation of the volume (defaults to False)
-    relax.volume = DataFactory('core.bool')(True)
+    relax.volume = DataFactory('bool')(True)
     # Set maximum number of ionic steps
-    relax.steps = DataFactory('core.int')(100)
+    relax.steps = DataFactory('int')(100)
     # Set the relaxation parameters on the inputs
     inputs.relax = relax
     # Submit the requested workchain with the supplied inputs

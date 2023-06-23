@@ -4,7 +4,7 @@ Extensions of dictionaries.
 ---------------------------
 Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 """
-import collections.abc
+import collections
 from copy import deepcopy
 
 from aiida.common.extendeddicts import AttributeDict
@@ -65,7 +65,7 @@ def update_nested_dict(dict1, dict2):
     """Updated a nested dictionary, where dict1 is updated with values in dict2."""
     for key, value in dict2.items():
         dict1_value = dict1.get(key)
-        if isinstance(value, collections.abc.Mapping) and isinstance(dict1_value, collections.abc.Mapping):
+        if isinstance(value, collections.Mapping) and isinstance(dict1_value, collections.Mapping):
             update_nested_dict(dict1_value, value)
         else:
             dict1[key] = deepcopy(value)

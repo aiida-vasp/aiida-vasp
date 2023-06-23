@@ -1,12 +1,12 @@
 """Test aiida_parameters."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import re
-
 import pytest
 
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE, ParametersMassage
+from aiida_vasp.assistant.parameters import ParametersMassage
+from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def test_relax_parameters_all_set(init_relax_parameters):
     """Test all standard relaxation parameters are set."""
     massager = ParametersMassage(init_relax_parameters)
     parameters = massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE]
-    assert parameters.ediffg == pytest.approx(-0.01)
+    assert parameters.ediffg == -0.01
     assert parameters.ibrion == 2
     assert parameters.nsw == 60
     assert parameters.isif == 3
@@ -296,28 +296,27 @@ def test_vasp_parameter_override(init_relax_parameters):
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
     from aiida.plugins import DataFactory
-
     from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
     inputs = AttributeDict()
     inputs.bands = AttributeDict()
-    inputs.bands.somekey = DataFactory('core.bool')(True)
+    inputs.bands.somekey = DataFactory('bool')(True)
     inputs.relax = AttributeDict()
-    inputs.relax.somekey = DataFactory('core.bool')(True)
+    inputs.relax.somekey = DataFactory('bool')(True)
     inputs.smearing = AttributeDict()
-    inputs.smearing.somekey = DataFactory('core.bool')(True)
+    inputs.smearing.somekey = DataFactory('bool')(True)
     inputs.charge = AttributeDict()
-    inputs.charge.somekey = DataFactory('core.bool')(True)
+    inputs.charge.somekey = DataFactory('bool')(True)
     inputs.converge = AttributeDict()
-    inputs.converge.somekey = DataFactory('core.bool')(True)
+    inputs.converge.somekey = DataFactory('bool')(True)
     inputs.electronic = AttributeDict()
-    inputs.electronic.somekey = DataFactory('core.bool')(True)
+    inputs.electronic.somekey = DataFactory('bool')(True)
     inputs.dynamics = AttributeDict()
-    inputs.dynamics.somekey = DataFactory('core.bool')(True)
+    inputs.dynamics.somekey = DataFactory('bool')(True)
     # Check that parameters does not have to be present
     parameters = inherit_and_merge_parameters(inputs)
     # Check that an empty parameters is allowed
-    inputs.parameters = DataFactory('core.dict')(dict={})
+    inputs.parameters = DataFactory('dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters = AttributeDict({
         'electronic': AttributeDict({'somekey': True}),
@@ -331,11 +330,11 @@ def test_inherit_and_merge():
     assert parameters == test_parameters
     # Test ignored
     inputs.ignored = AttributeDict()
-    inputs.ignored.ignored = DataFactory('core.bool')(True)
+    inputs.ignored.ignored = DataFactory('bool')(True)
     parameters = inherit_and_merge_parameters(inputs)
     assert parameters == test_parameters
     # Test to override inputs.bands.somekey
-    inputs.parameters = DataFactory('core.dict')(dict={'bands': {'somekey': False}})
+    inputs.parameters = DataFactory('dict')(dict={'bands': {'somekey': False}})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters.bands.somekey = False
     assert parameters == test_parameters

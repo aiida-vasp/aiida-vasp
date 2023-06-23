@@ -6,7 +6,8 @@ import pytest
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
 
-from aiida_vasp.utils.extended_dicts import delete_keys_from_dict, update_nested_dict
+from aiida_vasp.utils.extended_dicts import update_nested_dict
+from aiida_vasp.utils.extended_dicts import delete_keys_from_dict
 
 
 @pytest.fixture

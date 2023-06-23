@@ -2,44 +2,10 @@
 Changelog
 =========
 
-All notable changes to this project after version 1.0.1 will be documented in this file. There is
-changelog data prior to this present, but it is not to be considered complete.
+All notable changes to this project after version 1.0.1 will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
-
-[v3.0.0]
---------
-**Added**
-- ``AiiDA>=2.0`` support.
-
-- Python 3.11 support.
-
-- ``pyproject.toml`` support.
-
-- Option to ommit a static run in the relax workflow.
-
-- Support for generalized k-point grids.
-
-- Wrappers for the moved parsers.
-
-**Changed**
-- Updated documentation.
-
-- Necessary changes to support ``AiiDA>=2.3``.
-
-- LICENSE file to reflect plugin work in recent years.
-
-- Dependency of ``parsevasp~=3.2``.
-
-- Contact info and author info.
-
-**Removed**
-- Python 3.7 support.
-
-- ``pymatgen`` dependency.
-
-- Remaining parsers moved to ``parsevasp``.
 
 [v2.1.1]
 --------

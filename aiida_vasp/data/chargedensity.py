@@ -1,15 +1,13 @@
 """
-Representation of CHGCAR objects.
+Representation of CHGCAR files.
 
 -------------------------------
-Charge density data node (stores CHGCAR objects in the repository).
+Charge density data node (stores CHGCAR files in the repository).
 """
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
-from aiida.plugins import DataFactory
-
-SinglefileData = DataFactory('core.singlefile')
+from aiida.orm import SinglefileData
 
 
-class ChargedensityData(SinglefileData):  # pylint: disable=too-few-public-methods
+class ChargedensityData(SinglefileData):
     pass

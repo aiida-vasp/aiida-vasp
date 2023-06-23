@@ -5,13 +5,11 @@ Performs a self consistent electron convergence run using the standard silicon s
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-
-from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import submit
 from aiida.orm import Code
-from aiida.plugins import CalculationFactory, DataFactory
-
+from aiida.plugins import DataFactory, CalculationFactory
+from aiida.engine import submit
+from aiida import load_profile
 load_profile()
 
 
@@ -32,7 +30,7 @@ def get_structure():
 
     """
 
-    structure_data = DataFactory('core.structure')
+    structure_data = DataFactory('structure')
     alat = 5.431
     lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
     structure = structure_data(cell=lattice)
@@ -47,8 +45,8 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
 
     # First, we need to fetch the AiiDA datatypes which will
     # house the inputs to our calculation
-    dict_data = DataFactory('core.dict')
-    kpoints_data = DataFactory('core.array.kpoints')
+    dict_data = DataFactory('dict')
+    kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
     calculation = CalculationFactory('vasp.vasp2w90')
@@ -80,7 +78,7 @@ def main(code_string, incar, kmesh, structure, potential_family, potential_mappi
     # Set settings
     inputs.settings = dict_data(dict=settings)
     # Set Wannier90 projectors
-    inputs.wannier_projections = DataFactory('core.list')(list=['Si: sp3'])
+    inputs.wannier_projections = DataFactory('list')(list=['Si: sp3'])
     # Submit the requested calculation with the supplied inputs
     submit(calculation, **inputs)
 

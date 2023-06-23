@@ -1,4 +1,0 @@
-module load mvapich2/1.9-intel
-module load intel/14.0.1
-module load mkl/11.1.1.106-intel14.0.1
-module load fftw/3.3.3

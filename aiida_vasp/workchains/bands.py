@@ -2,7 +2,7 @@
 Bands workchain.
 
 ----------------
-Intended to be used to extract the band structure using SeeKpath as a preprocessor
+Intended to be used to extract the band structure using SeeKpath as a preprossesor
 to extract the k-point path.
 """
 
@@ -10,10 +10,9 @@ to extract the k-point path.
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
-
-from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
+from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
 
 class BandsWorkChain(WorkChain):
@@ -26,100 +25,59 @@ class BandsWorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super(BandsWorkChain, cls).define(spec)
-        spec.expose_inputs(
-            cls._next_workchain,
-            exclude=('parameters', 'settings', 'kpoints'),
-        )
-        spec.input(
-            'parameters',
-            valid_type=get_data_class('core.dict'),
-            required=False,
-        )
-        spec.input(
-            'settings',
-            valid_type=get_data_class('core.dict'),
-            required=False,
-        )
-        spec.input(
-            'smearing.gaussian',
-            valid_type=get_data_class('core.bool'),
-            required=False,
-            default=lambda: get_data_node('core.bool', True),
-            help="""
-            Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`.
-            """,
-        )
-        spec.input(
-            'smearing.sigma',
-            valid_type=get_data_class('core.float'),
-            required=False,
-            default=lambda: get_data_node('core.float', 0.05),
-            help="""
-            Magnitude of the smearing in eV.
-            """,
-        )
-        spec.input(
-            'restart_folder',
-            valid_type=get_data_class('core.remote'),
-            required=True,
-            help="""
-            The folder to restart in, which contains the outputs from the prerun to extract the charge density.
-            """,
-        )
-        spec.input(
-            'bands.kpoints_distance',
-            valid_type=get_data_class('core.float'),
-            required=False,
-            default=lambda: get_data_node('core.float', 0.05),
-            help="""
+        spec.expose_inputs(cls._next_workchain, exclude=('parameters', 'settings', 'kpoints'))
+        spec.input('parameters', valid_type=get_data_class('dict'), required=False)
+        spec.input('settings', valid_type=get_data_class('dict'), required=False)
+        spec.input('smearing.gaussian', valid_type=get_data_class('bool'), required=False, default=lambda: get_data_node('bool', True))
+        spec.input('smearing.sigma', valid_type=get_data_class('float'), required=False, default=lambda: get_data_node('float', 0.05))
+        spec.input('restart_folder',
+                   valid_type=get_data_class('remote'),
+                   required=True,
+                   help="""
+            The folder to restart in, which contains the files from the prerun to extract the charge density.
+            """)
+        spec.input('bands.kpoints_distance',
+                   valid_type=get_data_class('float'),
+                   required=False,
+                   default=lambda: get_data_node('float', 0.05),
+                   help="""
             The distance between each k-point along each high-symmetry line.
-            """,
-        )
-        spec.input(
-            'bands.decompose_bands',
-            valid_type=get_data_class('core.bool'),
-            required=False,
-            default=lambda: get_data_node('core.bool', False),
-            help="""
+            """)
+        spec.input('bands.decompose_bands',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
             Decompose the band structure on each atom.
-            """,
-        )
-        spec.input(
-            'bands.decompose_wave',
-            valid_type=get_data_class('core.bool'),
-            required=False,
-            default=lambda: get_data_node('core.bool', False),
-            help="""
+            """)
+        spec.input('bands.decompose_wave',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
             Decompose the wave function.
-            """,
-        )
-        spec.input(
-            'bands.lm',
-            valid_type=get_data_class('core.bool'),
-            required=False,
-            default=lambda: get_data_node('core.bool', False),
-            help="""
+            """)
+        spec.input('bands.lm',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
             Further decompose the decomposition into l- and m-states.
-            """,
-        )
-        spec.input(
-            'bands.phase',
-            valid_type=get_data_class('core.bool'),
-            required=False,
-            default=lambda: get_data_node('core.bool', False),
-            help="""
+            """)
+        spec.input('bands.phase',
+                   valid_type=get_data_class('bool'),
+                   required=False,
+                   default=lambda: get_data_node('bool', False),
+                   help="""
             Further decompose the l- and m-state decomposition into phases.
-            """,
-        )
-        spec.input(
-            'bands.wigner_seitz_radius',
-            valid_type=get_data_class('core.list'),
-            required=False,
-            default=lambda: get_data_node('core.list', list=[False]),
-            help="""
-            The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilized.
-            """,
-        )
+            """)
+        spec.input('bands.wigner_seitz_radius',
+                   valid_type=get_data_class('list'),
+                   required=False,
+                   default=lambda: get_data_node('list', list=[False]),
+                   help="""
+            The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilzed.
+            """)
         spec.outline(
             cls.initialize,
             cls.get_kpoints_path,
@@ -131,30 +89,11 @@ class BandsWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output(
-            'bands',
-            valid_type=get_data_class('core.array.bands'),
-        )
-        spec.exit_code(
-            0,
-            'NO_ERROR',
-            message='the sun is shining',
-        )
-        spec.exit_code(
-            420,
-            'ERROR_NO_CALLED_WORKCHAIN',
-            message='no called workchain detected',
-        )
-        spec.exit_code(
-            500,
-            'ERROR_UNKNOWN',
-            message='unknown error detected in the bands workchain',
-        )
-        spec.exit_code(
-            2001,
-            'ERROR_BANDSDATA_NOT_FOUND',
-            message='BandsData not found in exposed_outputs',
-        )
+        spec.output('bands', valid_type=get_data_class('array.bands'))
+        spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
+        spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
+        spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the bands workchain')
+        spec.exit_code(2001, 'ERROR_BANDSDATA_NOT_FOUND', message='BandsData not found in exposed_ouputs')
 
     def initialize(self):
         """Initialize."""
@@ -187,7 +126,7 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node('core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
+        self.ctx.seekpath_parameters = get_data_node('dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value
@@ -215,8 +154,8 @@ class BandsWorkChain(WorkChain):
         """Initialize the next workchain."""
         try:
             self.ctx.inputs
-        except AttributeError as no_input:
-            raise ValueError('No input dictionary was defined in self.ctx.inputs') from no_input
+        except AttributeError:
+            raise ValueError('No input dictionary was defined in self.ctx.inputs')
 
         # Add exposed inputs
         self.ctx.inputs.update(self.exposed_inputs(self._next_workchain))
@@ -229,7 +168,7 @@ class BandsWorkChain(WorkChain):
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
 
-        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> ')
+        self.report('launching {}<{}> '.format(self._next_workchain.__name__, running.pk))
 
         return self.to_context(workchains=append_(running))
 
@@ -250,18 +189,19 @@ class BandsWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
-        # Inherit exit status from last workchain (supposed to be successful)
+        # Inherit exit status from last workchain (supposed to be
+        # successfull)
         next_workchain_exit_status = workchain.exit_status
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report(f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status. '
-                        f'The exit status {self.ctx.exit_code} is inherited')
+            self.report('The called {}<{}> returned a non-zero exit status. '
+                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
         return self.ctx.exit_code
 

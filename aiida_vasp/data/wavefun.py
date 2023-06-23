@@ -1,10 +1,10 @@
 """
-Representation of WAVECAR and WAVEDER objects.
+Representation of WAVECAR and WAVEDER files.
 
 --------------------------------------------
-Wave function data node (stores WAVECAR and WAVEDER objects in the repository).
+Wave function data node (stores WAVECAR and WAVEDER files in the repository).
 """
-# pylint: disable=abstract-method, too-few-public-methods, no-name-in-module
+# pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.orm import SinglefileData
 

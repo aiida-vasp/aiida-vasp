@@ -9,14 +9,12 @@ The data is saved and the energy minimum is calculated and stored.
 """
 # pylint: disable=attribute-defined-outside-init
 import random
-
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import WorkChain, append_, calcfunction, while_
-from aiida.plugins import DataFactory, WorkflowFactory
-
-from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
+from aiida.engine import calcfunction, WorkChain, while_, append_
+from aiida.plugins import WorkflowFactory, DataFactory
+from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
 
 
 class EosWorkChain(WorkChain):
@@ -75,7 +73,7 @@ class EosWorkChain(WorkChain):
         self.ctx.is_finished = False
 
         # Define an interation index
-        self.ctx.iteration = 0
+        self.ctx.interation = 0
 
         # Define the context inputs
         self.ctx.inputs = AttributeDict()
@@ -134,8 +132,9 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
-        self.to_context(workchains=append_(running))
+
+        self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
+        return self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""
@@ -143,7 +142,7 @@ class EosWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
+            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be
@@ -157,7 +156,7 @@ class EosWorkChain(WorkChain):
             self.report('The called {}<{}> returned a non-zero exit status. '
                         'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
 
-        # Stop further execution of workchains if there are no more structure
+        # Stop further executions of workchains if there are no more structure
         # entries in the structures dictionary
         if not self.ctx.structures:
             self.ctx.is_finished = True
@@ -173,7 +172,7 @@ class EosWorkChain(WorkChain):
         # some_output_quantity = workchain.outputs.some_output_quantity
 
         # An example which stores nonsense.
-        self.ctx.quantities_container.append([self.ctx.iteration, f'Some quantity for iteration: {self.ctx.iteration}'])
+        self.ctx.quantities_container.append([self.ctx.iteration, 'Some quantity for iteration: {}'.format(self.ctx.iteration)])
 
     def finalize(self):
         """

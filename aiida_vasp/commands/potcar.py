@@ -4,15 +4,12 @@ Commands for the potential interface.
 -------------------------------------
 Commandline util for dealing with potcar files.
 """
-# pylint: disable=import-outside-toplevel
 import click
 from click_spinner import spinner as cli_spinner
 import tabulate
 
-from aiida.cmdline.utils.decorators import with_dbenv
-
+from aiida_vasp.utils.aiida_utils import get_data_class, cmp_load_verdi_data
 from aiida_vasp.commands import options
-from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data, get_data_class
 
 VERDI_DATA = cmp_load_verdi_data()
 
@@ -39,27 +36,6 @@ def try_grab_description(ctx, param, value):
     return value
 
 
-def detect_old_style_groups():
-    """Check for the existence of old style groups and prompt the user"""
-    from aiida.orm import Group, QueryBuilder
-
-    from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup
-    qdb = QueryBuilder()
-    qdb.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE}, project=['label'])
-    all_old_groups = [qres[0] for qres in qdb.all()]
-    not_migrated = []
-    for group_label in all_old_groups:
-        qdb = QueryBuilder()
-        qdb.append(PotcarGroup, filters={'label': {'==': group_label}})
-        count = qdb.count()
-        if count == 0:
-            not_migrated.append(group_label)
-    if any(not_migrated):
-        click.echo(
-            ("Some of the old style POTCAR family groups are not migrated. Please run command 'verdi data vasp-potcar migratefamilies.\n'",
-             f'The missing groups are: {not_migrated}.'))
-
-
 @potcar.command()
 @options.PATH(help='Path to a folder or archive containing the POTCAR files. '
               'You can supply the archive that you downloaded from the VASP server. '
@@ -68,7 +44,6 @@ def detect_old_style_groups():
 @options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
 @click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
 @options.DRY_RUN()
-@with_dbenv()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
@@ -80,7 +55,7 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
                                                                                   stop_if_existing=stop_if_existing,
                                                                                   dry_run=dry_run)
 
-    click.echo(f'POTCAR files found: {num_found}. New files uploaded: {num_uploaded}, Added to Family: {num_added}')
+    click.echo('POTCAR files found: {}. New files uploaded: {}, Added to Family: {}'.format(num_found, num_uploaded, num_added))
     if dry_run:
         click.echo('No files were uploaded due to --dry-run.')
 
@@ -89,10 +64,8 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 @click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
 @click.option('-d', '--description', is_flag=True, help='Also show the description.')
-@with_dbenv()
 def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
-    detect_old_style_groups()
 
     potcar_data_cls = get_data_class('vasp.potcar')
     groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
@@ -120,7 +93,6 @@ def listfamilies(element, symbol, description):
 @options.DRY_RUN(help='Only display what would be exported.')
 @click.option('-z', '--as-archive', is_flag=True, help='Create a compressed archive (.tar.gz) instead of a folder.')
 @click.option('-v', '--verbose', is_flag=True, help='Print the names of all created files.')
-@with_dbenv()
 def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
     potcar_data_cls = get_data_class('vasp.potcar')
@@ -132,22 +104,8 @@ def exportfamily(path, name, dry_run, as_archive, verbose):
     else:
         archive, files = potcar_data_cls.export_family_archive(name, path, dry_run)
         if verbose:
-            click.echo(tabulate.tabulate([[i] for i in files], headers=[f'Files added to archive {archive}:']))
+            click.echo(tabulate.tabulate([[i] for i in files], headers=['Files added to archive {}:'.format(archive)]))
 
-    click.echo(f'{len(files)} POTCAR files exported.')
+    click.echo('{} POTCAR files exported.'.format(len(files)))
     if dry_run:
         click.echo('Nothing written due to "--dry-run"')
-
-
-@potcar.command()
-@with_dbenv()
-def migratefamilies():
-    """
-    Migrate the type_string associated with the potcar family groups.
-
-    Previously, these groups has type_string: data.vasp.potcar.family.
-    Since AiiDA 1.2, groups used by plugins should be defined by subclass and entrypoint names.
-    This commands recreates the old style group using the ``PotcarGroup`` class.
-    """
-    from aiida_vasp.data.potcar import migrate_potcar_group
-    migrate_potcar_group()

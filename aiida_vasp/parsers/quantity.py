@@ -6,22 +6,22 @@ Contains the representation of quantities that users want to parse.
 """
 
 
-class ParsableQuantities():  # pylint: disable=useless-object-inheritance
+class ParsableQuantities(object):  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 
-    - Get the parsable quantities from the object parsers and initialise them.
+    - Get the parsable quantities from the FileParsers and initialise them.
     - Provide ways to get parsable quantities.
     """
 
-    def __init__(self, vasp_parser_logger=None):  # pylint: disable=missing-function-docstring
+    def __init__(self, vasp_parser_logger=None):
         self._vasp_parser_logger = vasp_parser_logger
 
         self._quantity_keys_to_parse = None
         self._equiv_quantity_keys = None
-        self._quantity_keys_to_content = None
+        self._quantity_keys_to_filenames = None
 
-        self._missing_content = None
+        self._missing_filenames = None
         self._quantity_items = None
         self._waiting_quantity_items = {}
 
@@ -31,9 +31,9 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
         return self._quantity_keys_to_parse
 
     @property
-    def quantity_keys_to_content(self):
-        """Dictionary of quantity key -> object name"""
-        return self._quantity_keys_to_content
+    def quantity_keys_to_filenames(self):
+        """Dictionary of quantity key -> file name"""
+        return self._quantity_keys_to_filenames
 
     @property
     def equivalent_quantity_keys(self):
@@ -52,11 +52,11 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
         """Put parsable quantity in the waiting list"""
         self._waiting_quantity_items[quantity_key] = quantity_dict
 
-    def setup(self, retrieved_content=None, parser_definitions=None, quantity_names_to_parse=None):
-        """Set the parsable_quantities dictionary based on PARSABLE_QUANTITIES obtained from object parsers."""
+    def setup(self, retrieved_filenames=None, parser_definitions=None, quantity_names_to_parse=None):
+        """Set the parsable_quantities dictionary based on parsable_items obtained from the FileParsers."""
 
         def _show(var, var_name):
-            print(f'---{var_name} ---')
+            print('---%s ---' % var_name)
             if isinstance(var, dict):
                 for key, value in var.items():
                     print(key, value)
@@ -65,56 +65,58 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
                     print(value)
             else:
                 print(var)
-            print(f'---{var_name} ---')
+            print('---%s ---' % var_name)
 
         show_screening_steps = False
 
-        self._quantity_items, self._quantity_keys_to_content = self._get_quantity_items_from_definitions(parser_definitions)
+        self._quantity_items, self._quantity_keys_to_filenames = self._get_quantity_items_from_definitions(parser_definitions)
         if show_screening_steps:
             _show(self._quantity_items, 'self._quantity_items')
-            _show(self._quantity_keys_to_content, 'self._quantity_keys_to_content')
+            _show(self._quantity_keys_to_filenames, 'self._quantity_keys_to_filenames')
 
         self._equiv_quantity_keys = self._create_containers_of_equiv_quantity_keys()
         if show_screening_steps:
             _show(self._equiv_quantity_keys, 'self._equiv_quantity_keys')
 
-        self._missing_content = self._identify_missing_content(retrieved_content, parser_definitions.keys())
+        self._missing_filenames = self._identify_missing_filenames(retrieved_filenames, parser_definitions.keys())
         if show_screening_steps:
-            _show(retrieved_content, 'retrieved_content')
+            _show(retrieved_filenames, 'retrieved_filenames')
             _show(parser_definitions.keys(), 'parser_definitions.keys()')
-            _show(self._missing_content, 'self._missing_content')
+            _show(self._missing_filenames, 'self._missing_filenames')
 
         parsable_quantity_keys = self._get_parsable_quantity_keys()
         if show_screening_steps:
             _show(parsable_quantity_keys, 'parsable_quantity_keys')
-        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse, retrieved_content)
+
+        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse,
+                                                                        retrieved_filenames)
         if show_screening_steps:
             _show(quantity_names_to_parse, 'quantity_names_to_parse')
             _show(self._quantity_keys_to_parse, 'self._quantity_keys_to_parse')
 
     def _get_quantity_items_from_definitions(self, parser_definitions):
         """
-        Gather all quantity keys in definitions of the object parsers.
+        Gather all quantity keys in definitions of the file parsers.
 
         quantity_key has to be unique.
 
         """
-        _quantity_keys_to_content = {}
+        _quantity_keys_to_filenames = {}
         _quantity_items = {}
 
-        for name, value in parser_definitions.items():
-            for quantity_key, quantity_dict in value['parser_class'].PARSABLE_QUANTITIES.items():
-                self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name)
+        for filename, value in parser_definitions.items():
+            for quantity_key, quantity_dict in value['parser_class'].PARSABLE_ITEMS.items():
+                self._add_quantity(_quantity_items, _quantity_keys_to_filenames, quantity_key, quantity_dict, filename)
 
         for quantity_key, quantity_dict in self._waiting_quantity_items.items():
-            if 'name' in quantity_dict:
-                self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, quantity_dict['name'])
+            if 'file_name' in quantity_dict:
+                self._add_quantity(_quantity_items, _quantity_keys_to_filenames, quantity_key, quantity_dict, quantity_dict['file_name'])
             else:
-                raise RuntimeError(f'The added quantity {quantity_key} has to contain a name entry.')
+                raise RuntimeError('The added quantity {quantity} has to contain file_name entry.'.format(quantity=quantity_key))
 
-        return _quantity_items, _quantity_keys_to_content
+        return _quantity_items, _quantity_keys_to_filenames
 
-    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):
+    def _add_quantity(self, _quantity_items, _quantity_keys_to_filenames, quantity_key, quantity_dict, filename):  # pylint: disable=no-self-use
         """
         Helper to store quantity_dict in self._quantity_items
 
@@ -125,11 +127,11 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         """
         if quantity_key in _quantity_items:
-            raise RuntimeError('The quantity {quantity} defined in {name} has been '
-                               'defined by two object parser classes. Quantity names must '
+            raise RuntimeError('The quantity {quantity} defined in {filename} has been '
+                               'defined by two FileParser classes. Quantity names must '
                                'be unique. If both quantities are equivalent, define one '
-                               'as an alternative for the other.'.format(quantity=quantity_key, name=name))
-        _quantity_keys_to_content[quantity_key] = name
+                               'as an alternative for the other.'.format(quantity=quantity_key, filename=filename))
+        _quantity_keys_to_filenames[quantity_key] = filename
         _quantity_dict = quantity_dict.copy()
         if 'name' not in _quantity_dict:
             _quantity_dict['name'] = quantity_key
@@ -168,14 +170,14 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         return _equiv_quantity_keys
 
-    def _identify_missing_content(self, retrieved_content, names_in_parser_definitions):
-        """Identify missing objects for quantities."""
-        _missing_content = {}
+    def _identify_missing_filenames(self, retrieved_filenames, filenames_in_parser_definitions):
+        """Identify missing files for quantities."""
+        _missing_filenames = {}
         for quantity_key in self._quantity_items:
-            name = self._quantity_keys_to_content[quantity_key]
-            if name not in retrieved_content or name not in names_in_parser_definitions:
-                _missing_content[quantity_key] = name
-        return _missing_content
+            filename = self._quantity_keys_to_filenames[quantity_key]
+            if filename not in retrieved_filenames or filename not in filenames_in_parser_definitions:
+                _missing_filenames[quantity_key] = filename
+        return _missing_filenames
 
     def _get_parsable_quantity_keys(self):
         """Check for every quantity, whether all of the prerequisites are parsable."""
@@ -184,13 +186,13 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
             is_parsable = True
             if 'prerequisites' in quantity_dict:
                 for prereq in quantity_dict['prerequisites']:
-                    if prereq not in self._quantity_items or prereq in self._missing_content:
+                    if prereq not in self._quantity_items or prereq in self._missing_filenames:
                         is_parsable = False
-            if is_parsable and quantity_key not in self._missing_content:
+            if is_parsable and quantity_key not in self._missing_filenames:
                 _parsable_quantity_keys.append(quantity_key)
         return _parsable_quantity_keys
 
-    def _get_quantity_keys_to_parse(self, parsable_quantity_keys, quantity_names_to_parse, retrieve_names):
+    def _get_quantity_keys_to_parse(self, parsable_quantity_keys, quantity_names_to_parse, retrieve_filenames):
         """Collect quantity_names_to_parse"""
         _quantity_keys_to_parse = []
         for quantity_name in quantity_names_to_parse:
@@ -201,7 +203,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
                         _quantity_keys_to_parse.append(quantity_key)
                         is_parsable = True
                 if not is_parsable:
-                    self._issue_warning(retrieve_names, quantity_name)
+                    self._issue_warning(retrieve_filenames, quantity_name)
             else:
                 self._vasp_parser_logger.warning('{quantity} has been requested, '
                                                  'however its parser has not been implemented. '
@@ -209,26 +211,26 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
                                                  'for valid input.'.format(quantity=quantity_name))
         return _quantity_keys_to_parse
 
-    def _issue_warning(self, retrieve_names, quantity_name):
+    def _issue_warning(self, retrieve_filenames, quantity_name):
         """
         Issue warning when no parsable quantity is found.
 
         Neither the quantity nor it's alternatives could be added to the quantity_keys_to_parse.
-        Gather a list of all the missing objects and issue a warning.
-        Check if the missing objects are defined in the retrieve list
+        Gather a list of all the missing files and issue a warning.
+        Check if the missing files are defined in the retrieve list
 
         """
-        missing_objects = self._missing_content[quantity_name]
-        not_in_retrieve_names = None
-        for item in missing_objects:
-            if item not in retrieve_names:
-                not_in_retrieve_names = item
+        missing_files = self._missing_filenames[quantity_name]
+        not_in_retrieve_filenames = None
+        for item in missing_files:
+            if item not in retrieve_filenames:
+                not_in_retrieve_filenames = item
         self._vasp_parser_logger.warning('The quantity {quantity} has been requested for parsing, however the '
-                                         'following objects required for parsing it have not been '
-                                         'retrieved: {missing_objects}.'.format(quantity=quantity_name, missing_objects=missing_objects))
-        if not_in_retrieve_names is not None:
+                                         'following files required for parsing it have not been '
+                                         'retrieved: {missing_files}.'.format(quantity=quantity_name, missing_files=missing_files))
+        if not_in_retrieve_filenames is not None:
             self._vasp_parser_logger.warning(
-                'The object {not_in_retrieve_names} is not present '
-                'in the list of retrieved objects. If you want to add additional '
-                'objects, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
-                'which is an option given to calculation settings.'.format(not_in_retrieve_names=not_in_retrieve_names))
+                'The file {not_in_retrieve_filenames} is not present '
+                'in the list of retrieved files. If you want to add additional '
+                'files, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
+                'which is an option given to calculation settings.'.format(not_in_retrieve_filenames=not_in_retrieve_filenames))

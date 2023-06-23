@@ -1,3 +1,3 @@
-"""AiiDA plugin for running and managing VASP calculations."""
+"""AiiDA Plugin for running VASP calculations."""
 
-__version__ = '3.0.0'
+__version__ = '2.1.1'

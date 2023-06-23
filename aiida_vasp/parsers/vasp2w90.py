@@ -4,11 +4,10 @@ VASP to Wannier90 parser.
 -------------------------
 AiiDA Parser for aiida_vasp.Vasp2w90Calculation.
 """
-from aiida.orm.nodes.data.list import List
 from aiida.plugins import DataFactory
+from aiida.orm.nodes.data.list import List
 
-from aiida_vasp.parsers.content_parsers.win import WinParser
-
+from aiida_vasp.parsers.file_parsers.win import WinParser
 from .vasp import VaspParser
 
 
@@ -17,7 +16,7 @@ class Vasp2w90Parser(VaspParser):
 
     def parse_with_retrieved(self, retrieved):
         """The main parsing method called by AiiDA."""
-        super().parse_with_retrieved(retrieved)  # pylint: disable=no-member
+        super(Vasp2w90Parser, self).parse_with_retrieved(retrieved)  # pylint: disable=no-member
 
         win_success, kpoints_node, param_node, proj_node = self.parse_win()
         self.set_node('wannier_parameters', param_node)
@@ -29,8 +28,8 @@ class Vasp2w90Parser(VaspParser):
         return self.result(success=win_success and has_full_dat)  # pylint: disable=no-member
 
     def parse_win(self):
-        """Create the wannier90 input and kpoints output nodes."""
-        win = self._get_object('wannier90.win')  # pylint: disable=no-member
+        """Create the wannier90 .win file and kpoints output nodes."""
+        win = self._get_file('wannier90.win')
         if not win:
             return False, None, None, None
         win_result = WinParser(win).result
@@ -58,7 +57,7 @@ class Vasp2w90Parser(VaspParser):
         """Convert the k-points output from string to float."""
         if kpoints is None:
             return False, None
-        kpoints_node = DataFactory('core.array.kpoints')()
+        kpoints_node = DataFactory('array.kpoints')()
         kpoints_node.set_kpoints([[float(x) for x in k.split()] for k in kpoints])
         return True, kpoints_node
 
@@ -68,5 +67,5 @@ class Vasp2w90Parser(VaspParser):
             self.add_node(name, node)  # pylint: disable=no-member
 
     def has_full_dat(self):
-        success = all(self._get_object('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])  # pylint: disable=no-member
+        success = all(self._get_file('wannier90.' + ext) for ext in ['mmn', 'amn', 'eig'])
         return success
