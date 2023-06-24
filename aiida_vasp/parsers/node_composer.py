@@ -16,8 +16,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {
     'core.dict': [
-        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization', 'notifications',
-        'band_properties', 'run_status', 'run_stats', 'version'
+        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization',
+        'notifications', 'band_properties', 'run_status', 'run_stats', 'version'
     ],
     'core.array.kpoints': ['kpoints'],
     'core.structure': ['structure'],
@@ -66,8 +66,10 @@ class NodeComposer:
             # If the input is empty, we skip creating the node as it is bound to fail
             if not inputs:
                 self._failed_to_create.append(node_name)
-                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
-                                     'No parsed data available.')
+                self._logger.warning(
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
+                    'No parsed data available.'
+                )
                 continue
 
             exception = None
@@ -81,8 +83,10 @@ class NodeComposer:
             if node is not None:
                 self._created[node_dict['link_name']] = node
             else:
-                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
-                                     f'exception: {exception}')
+                self._logger.warning(
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
+                    f'exception: {exception}'
+                )
                 self._failed_to_create.append(node_dict['link_name'])
 
     def compose_node(self, node_type, inputs):

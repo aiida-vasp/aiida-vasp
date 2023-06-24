@@ -158,10 +158,12 @@ class VaspImmigrant(VaspCalculation):
                 inputs.structure = get_poscar_input(sandbox_path)
                 inputs.kpoints = get_kpoints_input(sandbox_path, structure=inputs.structure)
                 try:
-                    inputs.potential = get_potcar_input(sandbox_path,
-                                                        structure=inputs.structure,
-                                                        potential_family=kwargs.get('potential_family'),
-                                                        potential_mapping=kwargs.get('potential_mapping'))
+                    inputs.potential = get_potcar_input(
+                        sandbox_path,
+                        structure=inputs.structure,
+                        potential_family=kwargs.get('potential_family'),
+                        potential_mapping=kwargs.get('potential_mapping')
+                    )
                 except InputValidationError:
                     pass
 

@@ -157,7 +157,9 @@ def migrate_potcar_group():
     migrated = []
     created = []
     for (old_group,) in qdb.all():
-        new_group, created = PotcarGroup.collection.get_or_create(label=old_group.label, description=old_group.description)
+        new_group, created = PotcarGroup.collection.get_or_create(
+            label=old_group.label, description=old_group.description
+        )
         new_group.add_nodes(list(old_group.nodes))
         new_group.store()
         migrated.append(new_group.label)
@@ -379,8 +381,9 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
 
         other_attrs.pop('sha512')
         if self.exists(**other_attrs):
-            raise UniquenessError('A {} node with these attributes but a different file exists:\n{}'.format(
-                str(self.__class__), str(other_attrs)))
+            raise UniquenessError(
+                f'A {str(self.__class__)} node with these attributes but a different file exists:\n{str(other_attrs)}'
+            )
 
 
 class VersioningMixin(object):  # pylint: disable=useless-object-inheritance
@@ -640,7 +643,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_or_create_from_file(cls, file_path):
         """Get or create (store) a PotcarData node from a POTCAR file."""
         sha512 = PotcarFileData.get_file_sha512(file_path)
-        file_node = PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else PotcarFileData(file=file_path)
+        file_node = PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else PotcarFileData(
+            file=file_path
+        )
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
             file_node.store()
@@ -655,7 +660,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     @classmethod
     def file_not_uploaded(cls, file_path):
         sha512 = PotcarFileData.get_file_sha512(file_path)
-        return PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512) else namedtuple('potcar', ('uuid'))('-1')
+        return PotcarFileData.find_one(sha512=sha512) if PotcarFileData.exists(sha512=sha512
+                                                                               ) else namedtuple('potcar',
+                                                                                                 ('uuid'))('-1')
 
     def get_family_names(self):
         """List potcar families to which this instance belongs."""
@@ -692,7 +699,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 for i, group in enumerate(groups):
                     elem_query = QueryBuilder()
                     elem_query.append(PotcarGroup, tag='family', filters={'label': {'==': group.label}})
-                    elem_query.append(cls, tag='potcar', with_group='family', filters={'attributes.element': {'==': element}})
+                    elem_query.append(
+                        cls, tag='potcar', with_group='family', filters={'attributes.element': {
+                            '==': element
+                        }}
+                    )
                     if elem_query.count() > 0:
                         idx_has_element.append(i)
                 groups = [groups[i] for i in range(len(groups)) if i in idx_has_element]
@@ -703,7 +714,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                 for i, group in enumerate(groups):
                     symbol_query = QueryBuilder()
                     symbol_query.append(PotcarGroup, tag='family', filters={'label': {'==': group.label}})
-                    symbol_query.append(cls, tag='potcar', with_group='family', filters={'attributes.symbol': {'==': symbol}})
+                    symbol_query.append(
+                        cls, tag='potcar', with_group='family', filters={'attributes.symbol': {
+                            '==': symbol
+                        }}
+                    )
                     if symbol_query.count() > 0:
                         idx_has_symbol.append(i)
                 groups = [groups[i] for i in range(len(groups)) if i in idx_has_symbol]
@@ -739,8 +754,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         result_potcars = {}
         for element in elements:
             if element not in mapping:
-                raise ValueError('Potcar mapping must contain an item for each element in the structure, '
-                                 'with the full name of the POTCAR file (i.e. "In_d", "As_h").')
+                raise ValueError(
+                    'Potcar mapping must contain an item for each element in the structure, '
+                    'with the full name of the POTCAR file (i.e. "In_d", "As_h").'
+                )
             full_name = mapping[element]
             potcars_of_kind = [potcar[0] for potcar in query.all() if potcar[0].full_name == full_name]
             if not potcars_of_kind:
@@ -752,10 +769,13 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                     if auto_migrate:
                         # Migrate to new group labels, and retry
                         migrate_potcar_group()
-                        return cls.get_potcars_dict(elements=elements, family_name=family_name, mapping=mapping, auto_migrate=False)
-                    raise NotExistent(
-                        ('No POTCAR found for full name {} in family {}, but it was found in a legacy group with the same name.'
-                         ' Please run `verdi data vasp-potcar migratefamilies`.').format(full_name, family_name))
+                        return cls.get_potcars_dict(
+                            elements=elements, family_name=family_name, mapping=mapping, auto_migrate=False
+                        )
+                    raise NotExistent((
+                        'No POTCAR found for full name {} in family {}, but it was found in a legacy group with the same name.'
+                        ' Please run `verdi data vasp-potcar migratefamilies`.'
+                    ).format(full_name, family_name))
 
                 raise NotExistent(f'No POTCAR found for full name {full_name} in family {family_name}')
             if len(potcars_of_kind) > 1:
@@ -850,8 +870,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         if group.user.pk != get_current_user().pk:
             raise UniquenessError(
-                'There is already a POTCAR family group with name {}, but it belongs to user {}, therefore you cannot modify it'.format(
-                    group_name, group.user.email))
+                'There is already a POTCAR family group with name {}, but it belongs to user {}, therefore you cannot modify it'
+                .format(group_name, group.user.email)
+            )
 
         if group_description:
             group.description = group_description
@@ -881,17 +902,24 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         potcar_finder.walk()
         num_files = len(potcar_finder.potcars)
         family_nodes_uuid = [node.uuid for node in group.nodes] if not dry_run else []
-        potcars_tried_upload = cls._try_upload_potcars(potcar_finder.potcars, stop_if_existing=stop_if_existing, dry_run=dry_run)
-        new_potcars_added = [
-            (potcar, created, file_path) for potcar, created, file_path in potcars_tried_upload if potcar.uuid not in family_nodes_uuid
-        ]
+        potcars_tried_upload = cls._try_upload_potcars(
+            potcar_finder.potcars, stop_if_existing=stop_if_existing, dry_run=dry_run
+        )
+        new_potcars_added = [(potcar, created, file_path)
+                             for potcar, created, file_path in potcars_tried_upload
+                             if potcar.uuid not in family_nodes_uuid]
 
         for potcar, created, file_path in new_potcars_added:
             if created:
-                aiidalogger.debug('New PotcarData node %s created while uploading file %s for family %s', potcar.uuid, file_path,
-                                  group_name)
+                aiidalogger.debug(
+                    'New PotcarData node %s created while uploading file %s for family %s', potcar.uuid, file_path,
+                    group_name
+                )
             else:
-                aiidalogger.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
+                aiidalogger.debug(
+                    'PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path,
+                    group_name
+                )
 
         if not dry_run:
             group.add_nodes([potcar for potcar, created, file_path in new_potcars_added])
@@ -914,8 +942,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                     potcar = cls.file_not_uploaded(file_path)
                     created = bool(potcar.uuid == -1)
                 if stop_if_existing and not created:
-                    raise ValueError(('A POTCAR with identical SHA512 to {} is already in the DB,'
-                                      'therefore it cannot be added with the stop_if_existing kwarg.').format(file_path))
+                    raise ValueError((
+                        'A POTCAR with identical SHA512 to {} is already in the DB,'
+                        'therefore it cannot be added with the stop_if_existing kwarg.'
+                    ).format(file_path))
                 list_created.append((potcar, created, file_path))
             except KeyError as err:
                 print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')

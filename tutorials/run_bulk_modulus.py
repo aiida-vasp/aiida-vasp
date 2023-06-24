@@ -34,7 +34,8 @@ def get_structure_SiC():
     c = 5.073
     lattice = [[a, 0, 0], [-a / 2, a / 2 * np.sqrt(3), 0], [0, 0, c]]
     structure = StructureData(cell=lattice)
-    for pos_direct, symbol in zip(([1. / 3, 2. / 3, 0], [2. / 3, 1. / 3, 0.5], [1. / 3, 2. / 3, 0.375822], [2. / 3, 1. / 3, 0.875822]),
+    for pos_direct, symbol in zip(([1. / 3, 2. / 3, 0], [2. / 3, 1. / 3, 0.5], [1. / 3, 2. / 3, 0.375822
+                                                                                ], [2. / 3, 1. / 3, 0.875822]),
                                   ('Si', 'Si', 'C', 'C')):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols=symbol)
@@ -65,7 +66,15 @@ def launch_aiida_relax_shape(structure, code_string, options, label):
     }
 
     # Set code, potentials to use and options
-    base_config = {'code_string': code_string, 'potential_family': 'PBE', 'potential_mapping': {'Si': 'Si', 'C': 'C'}, 'options': options}
+    base_config = {
+        'code_string': code_string,
+        'potential_family': 'PBE',
+        'potential_mapping': {
+            'Si': 'Si',
+            'C': 'C'
+        },
+        'options': options
+    }
 
     # Make sure some things are parsed
     base_parser_settings = {'add_energies': True, 'add_forces': True, 'add_stress': True}
@@ -204,7 +213,9 @@ def main(code_string, options, group_name, sleep_seconds=30):
             ase_structure.set_cell(ase_structure.cell * strain**(1.0 / 3.0), scale_atoms=True)
             StructureData = DataFactory('structure')
             structure = StructureData(ase=ase_structure)
-            node = launch_aiida_relax_shape(structure, code_string, options, f'SiC VASP relax shape at {label} volume ({strain:f})')
+            node = launch_aiida_relax_shape(
+                structure, code_string, options, f'SiC VASP relax shape at {label} volume ({strain:f})'
+            )
             group.add_nodes(node)
             print(f'Relaxation positions of scaled cell: {ase_structure.cell}')
     else:
@@ -225,7 +236,9 @@ def main(code_string, options, group_name, sleep_seconds=30):
     # Do one final check to make sure all calcs have a zero exit status
     for node in group.nodes:
         if not node.is_finished_ok:
-            print(f'Node with id: {node.pk} has an exit status: {node.exit_status} and exit message: {node.exit_message}')
+            print(
+                f'Node with id: {node.pk} has an exit status: {node.exit_status} and exit message: {node.exit_message}'
+            )
             exit(1)
 
 

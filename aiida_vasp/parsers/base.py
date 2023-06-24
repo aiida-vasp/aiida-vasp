@@ -58,13 +58,19 @@ class BaseParser(Parser):
                     # Add sub directory objects - this only treat for one extra level
                     if os.path.isdir(abspath):
                         for subobj in os.listdir(abspath):
-                            retrieved[os.path.join(retrieved_object, subobj)] = {'path': self._retrieved_temporary, 'status': 'temporary'}
+                            retrieved[os.path.join(retrieved_object, subobj)] = {
+                                'path': self._retrieved_temporary,
+                                'status': 'temporary'
+                            }
                     else:
                         retrieved[retrieved_object] = {'path': self._retrieved_temporary, 'status': 'temporary'}
 
         # Check if there are other objects than the AiiDA generated scheduler objects in retrieved and
         # if there are any objects in the retrieved_temporary. If not, return an error.
-        aiida_required_objects = [self.node.base.attributes.get('scheduler_stderr'), self.node.base.attributes.get('scheduler_stdout')]
+        aiida_required_objects = [
+            self.node.base.attributes.get('scheduler_stderr'),
+            self.node.base.attributes.get('scheduler_stdout')
+        ]
         # Check if have some missing objects that we require to be present.
         vasp_output_objects_present = False
         for name in retrieved:
@@ -161,7 +167,9 @@ def list_files_recursive(retrieved, top_level=''):
         if obj.file_type == FileType.FILE:
             object_paths.append(os.path.join(top_level, obj.name))
         elif obj.file_type == FileType.DIRECTORY:
-            object_paths.extend(
-                [os.path.join(top_level, path) for path in list_files_recursive(retrieved, os.path.join(top_level, obj.name))])
+            object_paths.extend([
+                os.path.join(top_level, path)
+                for path in list_files_recursive(retrieved, os.path.join(top_level, obj.name))
+            ])
 
     return object_paths

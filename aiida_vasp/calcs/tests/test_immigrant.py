@@ -21,10 +21,9 @@ def immigrant_with_builder(fresh_aiida_env, potcar_family, phonondb_run, localho
     create_authinfo(localhost, store=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    builder = VaspImmigrant.get_builder_from_folder(mock_vasp,
-                                                    str(phonondb_run),
-                                                    potential_family=potential_family,
-                                                    potential_mapping=potential_mapping)
+    builder = VaspImmigrant.get_builder_from_folder(
+        mock_vasp, str(phonondb_run), potential_family=potential_family, potential_mapping=potential_mapping
+    )
     # builder.potential = PotcarData.get_potcars_from_structure(builder.structure, potential_family, mapping=potential_mapping)  # pylint: disable=no-member
 
     # Make sure clean_workdir is not done for the immigrant (we do not want to remove the imported data)
@@ -45,7 +44,9 @@ def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, str(phonondb_run), use_chgcar=True, use_wavecar=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)
+    inputs.potential = PotcarData.get_potcars_from_structure(
+        inputs.structure, potential_family, mapping=potential_mapping
+    )
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
         assert inputs.get(input_link, None) is not None, f'input link "{input_link}" was not set!'
@@ -80,10 +81,9 @@ def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_ru
     create_authinfo(localhost, store=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    proc, builder = VaspCalculation.immigrant(mock_vasp,
-                                              phonondb_run,
-                                              potential_family=potential_family,
-                                              potential_mapping=potential_mapping)
+    proc, builder = VaspCalculation.immigrant(
+        mock_vasp, phonondb_run, potential_family=potential_family, potential_mapping=potential_mapping
+    )
     # Make sure clean_workdir is not done for the immigrant (we do not want to remove the imported data)
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential'}
     for input_link in expected_inputs:
@@ -97,12 +97,14 @@ def test_immigrant_additional_example_3(phonondb_run, localhost, mock_vasp):  # 
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
     create_authinfo(localhost, store=True)
-    proc, builder = VaspCalculation.immigrant(code=mock_vasp,
-                                              remote_path=phonondb_run,
-                                              potential_family=POTCAR_FAMILY_NAME,
-                                              potential_mapping=POTCAR_MAP,
-                                              use_chgcar=True,
-                                              use_wavecar=True)
+    proc, builder = VaspCalculation.immigrant(
+        code=mock_vasp,
+        remote_path=phonondb_run,
+        potential_family=POTCAR_FAMILY_NAME,
+        potential_mapping=POTCAR_MAP,
+        use_chgcar=True,
+        use_wavecar=True
+    )
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
         assert builder.get(input_link, None) is not None, f'input link "{input_link}" was not set!'

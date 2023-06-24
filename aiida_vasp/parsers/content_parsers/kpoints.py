@@ -99,8 +99,8 @@ class KpointsParser(BaseFileParser):
 
         kpoints_dict = {}
         for keyword in [
-                'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
-                'generating_vectors'
+            'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
+            'generating_vectors'
         ]:
             kpoints_dict[keyword] = None
 

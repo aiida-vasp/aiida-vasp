@@ -15,8 +15,9 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- General configuration ------------------------------------------------
 
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode', 'aiida.sphinxext', 'sphinxcontrib.apidoc', 'sphinxext.remoteliteralinclude'
+    'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage',
+    'sphinx.ext.mathjax', 'sphinx.ext.viewcode', 'aiida.sphinxext', 'sphinxcontrib.apidoc',
+    'sphinxext.remoteliteralinclude'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -118,8 +119,10 @@ man_pages = [(master_doc, 'aiida-vasp', 'AiiDA-VASP Documentation', [author], 1)
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'AiiDA-VASP', 'AiiDA-VASP Documentation', author, 'AiiDA-VASP',
-     'A plugin to enable usage of VASP in the AiiDA workflow engine.', 'Miscellaneous'),
+    (
+        master_doc, 'AiiDA-VASP', 'AiiDA-VASP Documentation', author, 'AiiDA-VASP',
+        'A plugin to enable usage of VASP in the AiiDA workflow engine.', 'Miscellaneous'
+    ),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.

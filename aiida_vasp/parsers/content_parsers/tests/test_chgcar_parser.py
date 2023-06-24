@@ -33,11 +33,13 @@ def test_parse_charge(chgcar_parser):
     assert np.allclose(result['charge_density'], compare_charge_density)
 
 
-@pytest.mark.parametrize(['chgcar_parser'],
-                         [(['chgcar', 'CHGCAR.spin', {
-                             'quantities_to_parse': ['charge_density', 'magnetization_density']
-                         }],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['chgcar_parser'],
+    [(['chgcar', 'CHGCAR.spin', {
+        'quantities_to_parse': ['charge_density', 'magnetization_density']
+    }],)],
+    indirect=True
+)
 def test_parse_magnetization(chgcar_parser):
     """Load a reference CHGCAR parser.
 
@@ -55,11 +57,12 @@ def test_parse_magnetization(chgcar_parser):
     assert np.allclose(result['magnetization_density'], compare_charge_density)
 
 
-@pytest.mark.parametrize(['chgcar_parser'],
-                         [(['chgcar', 'CHGCAR.ncl', {
-                             'quantities_to_parse': ['charge_density', 'magnetization_density']
-                         }],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['chgcar_parser'], [(['chgcar', 'CHGCAR.ncl', {
+        'quantities_to_parse': ['charge_density', 'magnetization_density']
+    }],)],
+    indirect=True
+)
 def test_parse_magnetization_ncl(chgcar_parser):
     """Load a reference CHGCAR parser.
 

@@ -54,7 +54,9 @@ class PoscarParser(BaseFileParser):
         """
 
         try:
-            self._content_parser = Poscar(file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger)
+            self._content_parser = Poscar(
+                file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger
+            )
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 
