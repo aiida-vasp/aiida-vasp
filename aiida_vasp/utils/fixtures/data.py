@@ -14,7 +14,6 @@ from pathlib import Path
 import subprocess as sp
 
 import numpy
-from pymatgen.io.vasp import Poscar
 import pytest
 
 from aiida.common.exceptions import NotExistent

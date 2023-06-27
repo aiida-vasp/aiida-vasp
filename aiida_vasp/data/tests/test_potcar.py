@@ -4,7 +4,6 @@ from pathlib import Path
 import subprocess as sp
 import tarfile
 
-from pymatgen.io.vasp import PotcarSingle
 import pytest
 
 from aiida.common.exceptions import NotExistent, UniquenessError
@@ -111,21 +110,6 @@ def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     file_node_as = potcar_node_pair['file']
     original_file = Path(data_path(file_node_as.original_file_name))
     assert original_file.read_text(encoding='utf8') == file_node_as.get_content().decode()
-
-
-#def test_file_get_pymatgen(fresh_aiida_env, potcar_node_pair):
-#    """
-#    Create a pymatgen ``PotcarSingle`` instance from a ``PotcarFileData`` node.
-#
-#    Test equality and completeness of the resulting object.
-#    """
-#    file_node_as = potcar_node_pair['file']
-#    potcar_single_as = file_node_as.get_pymatgen()
-#
-#    assert isinstance(potcar_single_as, PotcarSingle)
-#    assert file_node_as.title == potcar_single_as.keywords['TITEL']
-#
-#    assert potcar_single_as.data == file_node_as.get_content()
 
 
 def test_file_get_or_create(fresh_aiida_env, potcar_node_pair):
