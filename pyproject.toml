@@ -1,0 +1,215 @@
+[build-system]
+# build the package with [flit](https://flit.readthedocs.io)
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+# See https://www.python.org/dev/peps/pep-0621/
+name = "aiida-vasp"
+dynamic = ["version"]  # read from aiida_vasp/__init__.py
+description = "AiiDA plugin for running VASP calculations and workflows."
+authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no"}]
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+classifiers = [
+    "Programming Language :: Python",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Framework :: AiiDA",
+    "Development Status :: 5 - Production/Stable",
+	"Environment :: Plugins",
+	"Intended Audience :: Science/Research",
+	"License :: OSI Approved :: MIT License",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Topic :: Scientific/Engineering :: Physics",
+	"Topic :: Scientific/Engineering :: Chemistry",
+	"Framework :: AiiDA"
+]
+keywords = ["aiida", "plugin"]
+requires-python = ">=3.9"
+dependencies = [
+	"aiida-core[atomic_tools]~=2.4",
+	"lxml",
+	"packaging",
+	"parsevasp~=3.2"
+]
+
+[project.urls]
+Source = "https://github.com/aiida-vasp/aiida-vasp"
+
+[project.optional-dependencies]
+tests = [
+    "aiida-core[tests]~=2.4",
+    "tox>=3.23.0",
+    "virtualenv>20"
+]
+pre-commit = [
+    "tox>=3.23.0",
+    "virtualenv>20",
+    "pre-commit~=2.2",
+    "pylint~=2.15.0",
+    "sphinx-lint~=0.6"
+]
+docs = [
+    "aiida-core[docs]~=2.4",
+    "sphinx-autobuild",
+    "sphinx-lint",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-apidoc",
+    "sphinxext.remoteliteralinclude"
+]
+graphs = [
+    "matplotlib"
+]
+
+[project.entry-points."aiida.cmdline.data"]
+"vasp-potcar" = "aiida_vasp.commands.potcar:potcar"
+
+[project.entry-points."aiida.calculations"]
+"vasp.vasp" = "aiida_vasp.calcs.vasp:VaspCalculation"
+"vasp.neb" = "aiida_vasp.calcs.neb:VaspNEBCalculation"
+"vasp.vasp2w90" = "aiida_vasp.calcs.vasp2w90:Vasp2w90Calculation"
+"vasp.immigrant" = "aiida_vasp.calcs.immigrant:VaspImmigrant"
+
+[project.entry-points."aiida.data"]
+"vasp.archive" = "aiida_vasp.data.archive:ArchiveData"
+"vasp.chargedensity" = "aiida_vasp.data.chargedensity:ChargedensityData"
+"vasp.wavefun" = "aiida_vasp.data.wavefun:WavefunData"
+"vasp.potcar" = "aiida_vasp.data.potcar:PotcarData"
+"vasp.potcar_file" = "aiida_vasp.data.potcar:PotcarFileData"
+
+[project.entry-points."aiida.parsers"]
+"vasp.vasp" = "aiida_vasp.parsers.vasp:VaspParser"
+"vasp.neb" = "aiida_vasp.parsers.neb:VtstNebParser"
+"vasp.vasp2w90" = "aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+
+[project.entry-points."aiida.workflows"]
+"vasp.vasp" = "aiida_vasp.workchains.vasp:VaspWorkChain"
+"vasp.converge" = "aiida_vasp.workchains.converge:ConvergeWorkChain"
+"vasp.bands" = "aiida_vasp.workchains.bands:BandsWorkChain"
+"vasp.master" = "aiida_vasp.workchains.master:MasterWorkChain"
+"vasp.relax" = "aiida_vasp.workchains.relax:RelaxWorkChain"
+"vasp.neb" = "aiida_vasp.workchains.neb:VaspNEBWorkChain"
+"vasp.immigrant" = "aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
+
+[project.entry-points."aiida.groups"]
+"vasp.potcar" = "aiida_vasp.data.potcar:PotcarGroup"
+
+[project.scripts]
+"mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
+"mock-vasp-strict" = "aiida_vasp.commands.mock_vasp:mock_vasp_strict"
+
+[tool.flit.module]
+name = "aiida_vasp"
+
+[tool.pylint.format]
+max-line-length = 140
+
+[tool.pylint.messages_control]
+disable = [
+    "raw-checker-failed",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "R0801",
+    "consider-using-f-string",
+    "no-name-in-module",
+    "missing-function-docstring",
+    "too-many-locals",
+    "missing-class-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-public-methods",
+    "missing-module-docstring",
+    "too-many-ancestors",
+    "too-many-lines"
+]
+
+[tool.pytest.ini_options]
+# Configuration for [pytest](https://docs.pytest.org)
+python_files = "test_*.py example_*.py"
+filterwarnings = [
+    "ignore:POTCAR data with symbol .* does not match any VASP",
+    "ignore:Using or importing the ABCs from 'collections' instead of from 'collections.abc' in deprecated",
+    "ignore::DeprecationWarning:babel:",
+    "ignore::DeprecationWarning:django:",
+    "ignore::DeprecationWarning:frozendict:",
+    "ignore::DeprecationWarning:sqlalchemy:",
+    "ignore::DeprecationWarning:yaml:",
+    "ignore::DeprecationWarning:pymatgen:",
+    "ignore::DeprecationWarning:jsonbackend:",
+    "ignore::DeprecationWarning:reentry:",
+    "ignore::DeprecationWarning:past:",
+    "ignore::DeprecationWarning:pkg_resources:",
+    "ignore::pytest.PytestCollectionWarning",
+    "ignore::DeprecationWarning:numpy:",
+    "ignore::DeprecationWarning:pandas:",
+    "ignore::DeprecationWarning:scipy:",
+    "ignore::DeprecationWarning:networkx:",
+    "ignore::DeprecationWarning:ase:",
+    "ignore::DeprecationWarning:aiida:",
+    "ignore::DeprecationWarning:plumpy:"
+]
+
+[tool.coverage.run]
+# Configuration of [coverage.py](https://coverage.readthedocs.io)
+# reporting which lines of your plugin are covered by tests
+source=["aiida_vasp"]
+
+[tool.isort]
+# Configuration of [isort](https://isort.readthedocs.io)
+line_length = 120
+force_sort_within_sections = true
+sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'AIIDA', 'FIRSTPARTY', 'LOCALFOLDER']
+known_aiida = ['aiida']
+# this configuration is compatible with yapf
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.yapf]
+# Configuration of [yapf](https://github.com/google/yapf)
+based_on_style = "google"
+column_limit = 120
+dedent_closing_brackets = true
+coalesce_brackets = true
+align_closing_bracket_with_visual_indent = true
+split_arguments_when_comma_terminated = true
+indent_dictionary_value = false
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = pre-commit,{py39,py310,py311}-aiida_vasp
+requires = virtualenv >= 20
+isolated_build = True
+
+[testenv]
+setenv = AIIDA_PATH={toxworkdir}/.aiida
+allowlist_externals =
+                    mkdir
+                    rm
+commands =
+	 mkdir -p {toxworkdir}/.aiida
+	 pytest {posargs}
+	 rm -r {toxworkdir}/.aiida
+extras = tests
+
+[testenv:pre-commit]
+allowlist_externals = bash
+commands = bash -ec 'pre-commit run --all-files || ( git diff; git status; exit 1; )'
+extras =
+       pre-commit
+       tests
+
+[flake8]
+max-line-length = 140
+import-order-style = edited
+
+[pycodestyle]
+max-line-length = 140
+"""

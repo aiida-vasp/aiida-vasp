@@ -5,11 +5,11 @@ Utils for comparing band structures.
 Utilities for comparing band structures. Mostly present for legacy purposes. Will be rewritten
 or moved in the future.
 """
+from aiida.engine import calcfunction
 # pylint: disable=import-outside-toplevel
 from aiida.plugins import DataFactory
-from aiida.engine import calcfunction
 
-BANDS_CLS = DataFactory('array.bands')
+BANDS_CLS = DataFactory('core.array.bands')
 
 
 def _firstspin(bands):
@@ -84,7 +84,7 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     ref_info.update_dict({'efermi': efermi})
     ref_info.update_dict({'outer_window': owindow})
 
-    ref_bands = DataFactory('array.bands')()
+    ref_bands = DataFactory('core.array.bands')()
     ref_bands.set_kpointsdata(wannier_bands)
     ref_bands.set_bands(vbands_window, occupations=vocc_window)
 
@@ -110,10 +110,11 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err))
+            raise KeyError('Missing window parameters in input to '
+                           'parent calculation:\n' + str(err)) from err
     except AttributeError as err:
         if not silent:
-            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err))
+            raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err)) from err
     return owindow
 
 
@@ -160,7 +161,8 @@ def band_gap(bands, occ, efermi=None):
     # if lumo crosses efermi, something is wrong
     if efermi:
         if gap_upper < efermi:
-            raise ValueError(('The given E_fermi was higher than ' 'the lowest point of the lowest unoccupied band'))
+            raise ValueError(('The given E_fermi was higher than '
+                              'the lowest point of the lowest unoccupied band'))
     result['gap'] = gap_upper - gap_lower
     result['direct'] = bool(gap_upper_k == gap_lower_k)
     # check wether the two closest points are at the same kpoint (direct)
@@ -206,6 +208,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     :return:
     """
     import numpy as np
+
     import aiida_vasp.utils.bands as btool
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
     ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.items()}
@@ -237,15 +240,17 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
         if plot_folder:
             import os
             colors = ['r', 'b', 'g', 'm', 'c', 'y', 'k']
-            title = 'Vasp-Wannier comparison for window {}'.format([owindow, iwindow])
+            title = f'Vasp-Wannier comparison for window {[owindow, iwindow]}'
             fig = btool.plot_bstr(reference, efermi=refinfo['efermi'], colors=colors, title=title)
             btool.plot_bands(wannier_bands, colors=colors, figure=fig, ls=':')
             xlim = btool.plt.xlim()
             btool.plt.hlines(iwindow, xlim[0], xlim[1], color='k')
             btool.plt.hlines(refinfo['efermi'], xlim[0], xlim[1], color='k', linestyles='dashed')
             btool.plt.yticks(
-                list(btool.plt.yticks()[0]) + [refinfo['efermi']], [str(line) for line in btool.plt.yticks()[0]] + [r'$E_{fermi}$'])
-            pdf = os.path.join(plot_folder, 'comparison_%s.pdf' % wannier_calc.pk)
+                list(btool.plt.yticks()[0]) + [refinfo['efermi']],
+                [str(line) for line in btool.plt.yticks()[0]] + [r'$E_{fermi}$']
+            )
+            pdf = os.path.join(plot_folder, f'comparison_{wannier_calc.pk}.pdf')
             fig.savefig(pdf)
             info[wannier_bands.pk]['plot'] = pdf
 
@@ -262,6 +267,7 @@ def compare_from_window_wf(workflow, **kwargs):
 def plot_errors_vs_iwsize(comparison_info):
     """Plot Band structure errors versus size of the inner window parameter for wannier90."""
     import numpy as np
+
     import aiida_vasp.utils.bands as btool
     ows = []
     iws = []
@@ -307,7 +313,7 @@ def get_band_properties_from_data(bandsdata):
 
 def get_band_properties(eigenvalues, occupations):
     """
-    Get some auxiliary information about the band structure
+    Get some key information about the band structure
 
     Parameters
     ----------

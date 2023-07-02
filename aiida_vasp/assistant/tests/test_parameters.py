@@ -1,12 +1,12 @@
 """Test aiida_parameters."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import re
+
 import pytest
 
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.assistant.parameters import ParametersMassage
-from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE
+from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE, ParametersMassage
 
 
 @pytest.fixture
@@ -74,8 +74,9 @@ def test_additional_override_namespaces(init_relax_parameters):  # pylint: disab
     """Test that we can supply additional override namespaces and that they are unmodified in the massager."""
     init_relax_parameters.myspace = AttributeDict({'myspaceparameter': 1})
     init_relax_parameters.yourspace = AttributeDict({'yourspaceparameter': 1})
-    massager = ParametersMassage(init_relax_parameters,
-                                 settings=AttributeDict({'additional_override_namespaces': ['myspace', 'yourspace']}))
+    massager = ParametersMassage(
+        init_relax_parameters, settings=AttributeDict({'additional_override_namespaces': ['myspace', 'yourspace']})
+    )
     assert massager.parameters.myspace.myspaceparameter == 1
     assert massager.parameters.yourspace.yourspaceparameter == 1
 
@@ -92,7 +93,9 @@ def test_catch_invalid_tags(init_relax_parameters):
 def test_relax_multiple_cutoffs(init_relax_parameters):
     """Test if the massager raise exception if both energy and force cutoff is supplied."""
     init_relax_parameters.relax.energy_cutoff = 0.01
-    matching_string = re.compile(r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$')
+    matching_string = re.compile(
+        r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$'
+    )
     with pytest.raises(ValueError, match=matching_string):
         _ = ParametersMassage(init_relax_parameters)
 
@@ -296,27 +299,28 @@ def test_vasp_parameter_override(init_relax_parameters):
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
     from aiida.plugins import DataFactory
+
     from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
     inputs = AttributeDict()
     inputs.bands = AttributeDict()
-    inputs.bands.somekey = DataFactory('bool')(True)
+    inputs.bands.somekey = DataFactory('core.bool')(True)
     inputs.relax = AttributeDict()
-    inputs.relax.somekey = DataFactory('bool')(True)
+    inputs.relax.somekey = DataFactory('core.bool')(True)
     inputs.smearing = AttributeDict()
-    inputs.smearing.somekey = DataFactory('bool')(True)
+    inputs.smearing.somekey = DataFactory('core.bool')(True)
     inputs.charge = AttributeDict()
-    inputs.charge.somekey = DataFactory('bool')(True)
+    inputs.charge.somekey = DataFactory('core.bool')(True)
     inputs.converge = AttributeDict()
-    inputs.converge.somekey = DataFactory('bool')(True)
+    inputs.converge.somekey = DataFactory('core.bool')(True)
     inputs.electronic = AttributeDict()
-    inputs.electronic.somekey = DataFactory('bool')(True)
+    inputs.electronic.somekey = DataFactory('core.bool')(True)
     inputs.dynamics = AttributeDict()
-    inputs.dynamics.somekey = DataFactory('bool')(True)
+    inputs.dynamics.somekey = DataFactory('core.bool')(True)
     # Check that parameters does not have to be present
     parameters = inherit_and_merge_parameters(inputs)
     # Check that an empty parameters is allowed
-    inputs.parameters = DataFactory('dict')(dict={})
+    inputs.parameters = DataFactory('core.dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters = AttributeDict({
         'electronic': AttributeDict({'somekey': True}),
@@ -330,11 +334,11 @@ def test_inherit_and_merge():
     assert parameters == test_parameters
     # Test ignored
     inputs.ignored = AttributeDict()
-    inputs.ignored.ignored = DataFactory('bool')(True)
+    inputs.ignored.ignored = DataFactory('core.bool')(True)
     parameters = inherit_and_merge_parameters(inputs)
     assert parameters == test_parameters
     # Test to override inputs.bands.somekey
-    inputs.parameters = DataFactory('dict')(dict={'bands': {'somekey': False}})
+    inputs.parameters = DataFactory('core.dict')(dict={'bands': {'somekey': False}})
     parameters = inherit_and_merge_parameters(inputs)
     test_parameters.bands.somekey = False
     assert parameters == test_parameters
@@ -357,12 +361,16 @@ def test_unsupported_parameters_in_unsupported_namespace():  # pylint: disable=i
     parameters[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
     parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid = 200
     massager = ParametersMassage(
-        parameters, unsupported_parameters={'not_valid': {
-            'default': 1.0,
-            'description': 'Something',
-            'type': float,
-            'values': [1.0, 2.0]
-        }})
+        parameters,
+        unsupported_parameters={
+            'not_valid': {
+                'default': 1.0,
+                'description': 'Something',
+                'type': float,
+                'values': [1.0, 2.0]
+            }
+        }
+    )
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
 
 

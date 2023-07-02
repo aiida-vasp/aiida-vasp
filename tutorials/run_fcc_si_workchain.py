@@ -6,15 +6,16 @@ calculation of each structure. In this script we only supply a dictionary of dif
 structures as an input to the workchain, in addition to the standard inputs required by
 the AiiDA-VASP workchain stack.
 """
+from eos_parallel import EosParallelWorkChain
 # pylint: disable=too-many-arguments
 import numpy as np
 
-from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import Code, Bool, Str
-from aiida.plugins import DataFactory
-from aiida.engine import submit
 from aiida import load_profile
-from eos import EosWorkChain
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run, submit
+from aiida.orm import Bool, Code, Str
+from aiida.plugins import DataFactory
+
 load_profile()
 
 
@@ -37,11 +38,10 @@ def get_structure(alat):
     structure_data = DataFactory('structure')
     lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
     structure = structure_data(cell=lattice)
-    positions = [[0.0, 0.0, 0.0]]
-    for pos_direct in positions:
+    for pos_direct in [[0.0, 0.0, 0.0]]:
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols='Si')
-        structure.label = 'silicon_at_{}'.format(str(alat).replace('.', '_'))
+        structure.label = f"silicon_at_{str(alat).replace('.', '_')}"
     return structure
 
 
@@ -50,7 +50,7 @@ def get_structures(lattice_constants):
     structures = {}
     for lattice_constant in lattice_constants:
         # use the lattice constant as a key
-        structures['silicon_at_{}'.format(str(lattice_constant).replace('.', '_'))] = get_structure(lattice_constant)
+        structures[f"silicon_at_{str(lattice_constant).replace('.', '_')}"] = get_structure(lattice_constant)
     return structures
 
 
@@ -63,36 +63,33 @@ def main(code_string, incar, kmesh, structures, potential_family, potential_mapp
     kpoints_data = DataFactory('array.kpoints')
 
     # Then, we set the workchain you would like to call
-    workchain = EosWorkChain
+    workchain = EosParallelWorkChain
 
     # And finally, we declare the options, settings and input containers
     settings = AttributeDict()
     inputs = AttributeDict()
 
-    # organize settings
-    settings.parser_settings = {'output_params': ['total_energies', 'maximum_force']}
-
-    # set inputs for the following WorkChain execution
-    # set code
+    # Set inputs for the following WorkChain execution
+    # Code
     inputs.code = Code.get_from_string(code_string)
-    # set structures
+    # Structures
     inputs.structures = structures
-    # set k-points grid density
+    # k-points grid density
     kpoints = kpoints_data()
     kpoints.set_kpoints_mesh(kmesh)
     inputs.kpoints = kpoints
-    # set parameters
+    # Parameters
     inputs.parameters = dict_data(dict=incar)
-    # set potentials and their mapping
+    # Potential family and their mapping between element and potential type to use
     inputs.potential_family = Str(potential_family)
     inputs.potential_mapping = dict_data(dict=potential_mapping)
-    # set options
+    # Options
     inputs.options = dict_data(dict=options)
-    # set settings
+    # Settings
     inputs.settings = dict_data(dict=settings)
-    # set workchain related inputs, in this case, give more explicit output to report
+    # Workchain related inputs, in this case, give more explicit output to report
     inputs.verbose = Bool(True)
-    # submit the requested workchain with the supplied inputs
+    # Submit the workchain with the set inputs
     submit(workchain, **inputs)
 
 
@@ -102,7 +99,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'istart': 0, 'icharg': 2, 'encut': 240, 'ismear': 0, 'sigma': 0.1}
+    INCAR = {'incar': {'istart': 0, 'icharg': 2, 'encut': 240, 'ismear': 0, 'sigma': 0.1}}
 
     # KPOINTS equivalent
     # Set kpoint mesh
@@ -111,7 +108,7 @@ if __name__ == '__main__':
     # POTCAR equivalent
     # Potential_family is chosen among the list given by
     # 'verdi data vasp-potcar listfamilies'
-    POTENTIAL_FAMILY = 'pbe'
+    POTENTIAL_FAMILY = 'PBE.54'
     # The potential mapping selects which potential to use, here we use the standard
     # for silicon, this could for instance be {'Si': 'Si_GW'} to use the GW ready
     # potential instead
@@ -125,10 +122,10 @@ if __name__ == '__main__':
     OPTIONS = AttributeDict()
     OPTIONS.account = ''
     OPTIONS.qos = ''
-    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 16}
+    OPTIONS.resources = {'num_machines': 1, 'num_mpiprocs_per_machine': 8}
     OPTIONS.queue_name = ''
     OPTIONS.max_wallclock_seconds = 3600
-    OPTIONS.max_memory_kb = 1024000
+    OPTIONS.max_memory_kb = 2000000
 
     # POSCAR equivalent
     # Set the silicon structure

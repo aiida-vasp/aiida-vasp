@@ -9,12 +9,14 @@ The data is saved and the energy minimum is calculated and stored.
 """
 # pylint: disable=attribute-defined-outside-init
 import random
+
 import numpy as np
 
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import calcfunction, WorkChain, while_, append_
-from aiida.plugins import WorkflowFactory, DataFactory
-from aiida_vasp.utils.workchains import prepare_process_inputs, compose_exit_code
+from aiida.engine import WorkChain, append_, calcfunction, while_
+from aiida.plugins import DataFactory, WorkflowFactory
+
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
 class EosWorkChain(WorkChain):
@@ -36,7 +38,9 @@ class EosWorkChain(WorkChain):
     def define(cls, spec):
         super(EosWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=['structure'])
-        spec.input_namespace('structures', valid_type=DataFactory('structure'), dynamic=True, help='a dictionary of structures to use')
+        spec.input_namespace(
+            'structures', valid_type=DataFactory('structure'), dynamic=True, help='a dictionary of structures to use'
+        )
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the eos workchain')
@@ -73,7 +77,7 @@ class EosWorkChain(WorkChain):
         self.ctx.is_finished = False
 
         # Define an interation index
-        self.ctx.interation = 0
+        self.ctx.iteration = 0
 
         # Define the context inputs
         self.ctx.inputs = AttributeDict()
@@ -132,9 +136,8 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-
-        self.report('launching {}<{}> iteration #{}'.format(self._next_workchain.__name__, running.pk, self.ctx.iteration))
-        return self.to_context(workchains=append_(running))
+        self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
+        self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""
@@ -142,7 +145,7 @@ class EosWorkChain(WorkChain):
         try:
             workchain = self.ctx.workchains[-1]
         except IndexError:
-            self.report('There is no {} in the called workchain list.'.format(self._next_workchain.__name__))
+            self.report(f'There is no {self._next_workchain.__name__} in the called workchain list.')
             return self.exit_codes.ERROR_NO_CALLED_WORKCHAIN  # pylint: disable=no-member
 
         # Inherit exit status from last workchain (supposed to be
@@ -153,10 +156,14 @@ class EosWorkChain(WorkChain):
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The called {}<{}> returned a non-zero exit status. '
-                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            self.report(
+                'The called {}<{}> returned a non-zero exit status. '
+                'The exit status {} is inherited'.format(
+                    workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
+                )
+            )
 
-        # Stop further executions of workchains if there are no more structure
+        # Stop further execution of workchains if there are no more structure
         # entries in the structures dictionary
         if not self.ctx.structures:
             self.ctx.is_finished = True
@@ -172,7 +179,7 @@ class EosWorkChain(WorkChain):
         # some_output_quantity = workchain.outputs.some_output_quantity
 
         # An example which stores nonsense.
-        self.ctx.quantities_container.append([self.ctx.iteration, 'Some quantity for iteration: {}'.format(self.ctx.iteration)])
+        self.ctx.quantities_container.append([self.ctx.iteration, f'Some quantity for iteration: {self.ctx.iteration}'])
 
     def finalize(self):
         """

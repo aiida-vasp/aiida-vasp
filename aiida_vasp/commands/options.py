@@ -7,7 +7,7 @@ Common click options for verdi commands.
 import click
 
 try:
-    from aiida.cmdline.params.options import OverridableOption, FORCE, DESCRIPTION  # pylint: disable=unused-import
+    from aiida.cmdline.params.options import DESCRIPTION, FORCE, OverridableOption  # pylint: disable=unused-import
 except ImportError:
     # pylint: disable=too-few-public-methods
     class OverridableOption(object):  # pylint: disable=useless-object-inheritance
@@ -50,12 +50,16 @@ except ImportError:
     FORCE = OverridableOption('-f', '--force', is_flag=True, help='Do not ask for confirmation.')
     DESCRIPTION = OverridableOption('-d', '--description', help='(text) description')
 
-FAMILY_NAME = OverridableOption('-n',
-                                '--name',
-                                required=True,
-                                help='The name you want to give this family of potential(s). '
-                                'This is the name you will use in the future when telling which potentials to use '
-                                'for a specific calculation or workflow.')
+FAMILY_NAME = OverridableOption(
+    '-n',
+    '--name',
+    required=True,
+    help='The name you want to give this family of potential(s). '
+    'This is the name you will use in the future when telling which potentials to use '
+    'for a specific calculation or workflow.'
+)
 PATH = OverridableOption('-p', '--path', default='.', type=click.Path(exists=True), help='Path to the folder.')
 
-DRY_RUN = OverridableOption('--dry-run', is_flag=True, is_eager=True, help='Do not commit to database or modify configuration files.')
+DRY_RUN = OverridableOption(
+    '--dry-run', is_flag=True, is_eager=True, help='Do not commit to database or modify configurations.'
+)

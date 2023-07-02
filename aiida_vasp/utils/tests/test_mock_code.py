@@ -3,17 +3,18 @@ Tests for mock vasp
 """
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel, too-many-arguments
 from pathlib import Path
+from shutil import copy2, rmtree
 from tempfile import mkdtemp
-from shutil import rmtree, copy2
 
 import pytest
+
 from aiida.common.extendeddicts import AttributeDict
 
-from aiida_vasp.utils.mock_code import MockRegistry, MockVasp, get_hash
+from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.aiida_utils import get_data_node, aiida_version, cmp_version, create_authinfo
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
+from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, get_hash
 
 
 def test_get_hash():
@@ -53,7 +54,7 @@ def mock_registry():
     """
     Get an mock registry object
     """
-    return MockRegistry()
+    return VaspMockRegistry()
 
 
 @pytest.fixture
@@ -62,7 +63,7 @@ def custom_registry():
     Return an temporary registry
     """
     temp_base = mkdtemp()
-    yield MockRegistry(base_path=Path(temp_base))
+    yield VaspMockRegistry(base_path=Path(temp_base))
     rmtree(temp_base)
 
 
@@ -89,10 +90,10 @@ def test_registry_extract(mock_registry):
 
     tmpfolder = mkdtemp()
     mock_registry.extract_calc_by_path('test_bands_wc', tmpfolder)
-    files = [path.name for path in Path(tmpfolder).glob('*')]
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
-    assert 'INCAR' in files
+    objects = [path.name for path in Path(tmpfolder).glob('*')]
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects
+    assert 'INCAR' in objects
 
     rmtree(tmpfolder)
 
@@ -119,11 +120,11 @@ def test_registry_folder_upload(mock_registry, custom_registry, temp_path):
     # Extract and validate
     assert 'upload-example' in custom_registry.reg_name
     custom_registry.extract_calc_by_path('upload-example', temp_path)
-    files = [path.name for path in temp_path.glob('*')]
+    objects = [path.name for path in temp_path.glob('*')]
 
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
-    assert 'INCAR' in files
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects
+    assert 'INCAR' in objects
 
 
 @pytest.mark.parametrize([
@@ -139,10 +140,10 @@ def test_registry_upload_aiida(run_vasp_process, custom_registry, temp_path):
     # Exact the calculation
     custom_registry.extract_calc_by_path('upload-example', temp_path)
 
-    files = [path.name for path in temp_path.glob('*')]
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
-    assert 'INCAR' in files
+    objects = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects
+    assert 'INCAR' in objects
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
@@ -152,35 +153,42 @@ def test_registry_upload_wc(fresh_aiida_env, run_vasp_process, custom_registry, 
     custom_registry.upload_aiida_work(node, 'upload-example')
     # Extract the calculation
     repo_path = custom_registry.get_path_by_name('upload-example/calc-000')
-    files = [path.name for path in repo_path.glob('out/*')]
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
+    objects = [path.name for path in repo_path.glob('out/*')]
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects
 
     custom_registry.extract_calc_by_path('upload-example/calc-000', temp_path)
-    files = [path.name for path in temp_path.glob('*')]
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
-    assert 'INCAR' in files
+    objects = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects
+    assert 'INCAR' in objects
 
 
 def test_mock_vasp(mock_registry, temp_path):
     """Test the MockVasp class"""
+    import os
 
     # Setup the input directory
     mock_vasp = MockVasp(temp_path, mock_registry)
     base_path = Path(data_path('test_bands_wc', 'inp'))
 
-    for file in ['INCAR']:
-        copy2(base_path / file, temp_path / file)
-
     with pytest.raises(ValueError):
+        # Should fail due to not having any input files present and
+        # we can then not match it to a test dataset
         mock_vasp.run()
 
-    for file in ['POSCAR']:
-        copy2(base_path / file, temp_path / file)
+    for obj in ['INCAR']:
+        copy2(base_path / obj, temp_path / obj)
+
+    with pytest.raises(ValueError):
+        # Should fail due to missing POSCAR
+        mock_vasp.run()
+
+    for obj in ['POSCAR']:
+        copy2(base_path / obj, temp_path / obj)
 
     mock_vasp.run()
 
-    files = [path.name for path in temp_path.glob('*')]
-    assert 'OUTCAR' in files
-    assert 'vasprun.xml' in files
+    objects = [path.name for path in temp_path.glob('*')]
+    assert 'OUTCAR' in objects
+    assert 'vasprun.xml' in objects

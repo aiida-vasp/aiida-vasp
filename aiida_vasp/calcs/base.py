@@ -8,8 +8,8 @@ Base and meta classes for VASP calculation classes.
 # explanation: pylint wrongly complains about Node not implementing query
 import os
 
-from aiida.engine import CalcJob
 from aiida.common import CalcInfo, CodeInfo, ValidationError
+from aiida.engine import CalcJob
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 
@@ -20,7 +20,7 @@ class VaspCalcBase(CalcJob):
 
     * Defines internal parameters common to all vasp calculations.
     * provides a basic, extendable implementation of _prepare_for_submission
-    * provides hooks, so subclasses can extend the behaviour without having to reimplement common functionality
+    * provides hooks, so subclasses can extend the behavior without having to reimplement common functionality
     """
 
     _default_parser = 'vasp.vasp'
@@ -28,11 +28,16 @@ class VaspCalcBase(CalcJob):
     @classmethod
     def define(cls, spec):
         super(VaspCalcBase, cls).define(spec)
-        spec.input('restart_folder', valid_type=get_data_class('remote'), help='A remote folder to restart from if need be', required=False)
+        spec.input(
+            'restart_folder',
+            valid_type=get_data_class('core.remote'),
+            help='A remote folder to restart from if need be',
+            required=False,
+        )
 
     @classmethod
     def max_retrieve_list(cls):
-        """Return a list of all possible output files from a VASP run."""
+        """Return a list of all possible output objects from a VASP run."""
         retrieve_list = [
             'CHG',
             'CHGCAR',
@@ -59,27 +64,27 @@ class VaspCalcBase(CalcJob):
             'wannier90*',  # Wannier90 related
             'OSZICAR',  # Convergence related
             'REPORT',  # Output of molecular dynamics runs
-            'STOPCAR',  # Controlled stopping file
+            'STOPCAR',  # Controlled stopping
             'vasprun.xml',
             'OUTCAR'
         ]
         return retrieve_list
 
-    def prepare_for_submission(self, tempfolder):  # pylint: disable=arguments-differ
+    def prepare_for_submission(self, folder):  # pylint: disable=arguments-differ
         """
-        Writes the four minimum output files, INCAR, POSCAR, POTCAR, KPOINTS.
+        Writes the four minimum outputs: INCAR, POSCAR, POTCAR, KPOINTS.
 
-        Delegates the construction and writing / copying to write_<file> methods.
+        Delegates the construction and writing / copying to write_<object> methods.
         That way, subclasses can use any form of input nodes and just
         have to implement the write_xxx method accordingly.
         Subclasses can extend by calling the super method and if necessary
         modifying it's output CalcInfo before returning it.
         """
-        # write input files
-        incar = tempfolder.get_abs_path('INCAR')
-        structure = tempfolder.get_abs_path('POSCAR')
-        potentials = tempfolder.get_abs_path('POTCAR')
-        kpoints = tempfolder.get_abs_path('KPOINTS')
+        # write input objects
+        incar = folder.get_abs_path('INCAR')
+        structure = folder.get_abs_path('POSCAR')
+        potentials = folder.get_abs_path('POTCAR')
+        kpoints = folder.get_abs_path('KPOINTS')
 
         remote_copy_list = []
 
@@ -103,22 +108,22 @@ class VaspCalcBase(CalcJob):
         # here we need to do the charge density and wave function copy
         # as we need access to the calcinfo
         calcinfo.local_copy_list = []
-        self.write_additional(tempfolder, calcinfo)
+        self.write_additional(folder, calcinfo)
 
         return calcinfo
 
     def remote_copy_restart_folder(self):
-        """Add all files required for restart to the list of files to be copied from the previous calculation."""
+        """Add all objects required for restart to the list of objects to be copied from the previous calculation."""
         restart_folder = self.inputs.restart_folder
         computer = self.node.computer
         included = ['CHGCAR', 'WAVECAR']
-        existing_files = restart_folder.listdir()
+        existing_objects = restart_folder.listdir()
         to_copy = []
         for name in included:
-            if name not in existing_files:
-                # Here we simple issue an warning as the requirement of files will be explicitly checked by
+            if name not in existing_objects:
+                # Here we simple issue an warning as the requirement of objects will be explicitly checked by
                 # `write_additional` method
-                self.report('WARNING: File {} does not exist in the restart folder.'.format(name))
+                self.report(f'WARNING: Object {name} does not exist in the restart folder.')
             else:
                 to_copy.append(name)
         copy_list = [(computer.uuid, os.path.join(restart_folder.get_remote_path(), name), '.') for name in to_copy]
@@ -149,12 +154,12 @@ class VaspCalcBase(CalcJob):
     def store(self, *args, **kwargs):
         """Adds a _prestore subclass hook for operations that should be done just before storing."""
         self._prestore()
-        super(VaspCalcBase, self).store(*args, **kwargs)
+        super().store(*args, **kwargs)
 
-    def _prestore(self):  # pylint: disable=no-self-use
+    def _prestore(self):
         """Subclass hook for updating attributes etc, just before storing."""
         return
 
-    def write_additional(self, tempfolder, calcinfo):  # pylint: disable=no-self-use, unused-argument,
-        """Subclass hook to write additional input files."""
+    def write_additional(self, folder, calcinfo):  # pylint: disable=unused-argument,
+        """Subclass hook to write additional input objects."""
         return
