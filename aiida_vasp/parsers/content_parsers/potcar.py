@@ -10,17 +10,60 @@ import os
 from pathlib import Path
 import re
 
+from parsevasp.potcar import Potcar
+
+from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
+class PotcarParser(BaseFileParser):
+    """A lightweight interface that provides access to POTCAR metadata parsing.
+
+    Similar to the other content parser for VASP in structure, but only used directly in the POTCAR
+    handling logic.
+
+    """
+
+    DEFAULT_SETTINGS = {}
+
+    PARSABLE_QUANTITIES = {}
+
+    def _init_from_handler(self, handler):
+        """Initialize using a file like handler.
+
+        Parameters
+        ----------
+        handler : object
+            A file like object that provides the necessary content to be parsed.
+
+        """
+
+        try:
+            self._content_parser = Potcar(file_handler=handler, logger=self._logger)
+        except SystemExit:
+            self._logger.warning('Parsevasp exited abnormally.')
+
+    @property
+    def metadata(self):
+        """Return the metadata Potcar instance."""
+        return self._content_parser
+
+    def _init_from_data(self, data):
+        """No need to init from an AiiDA data structure."""
+        raise NotImplementedError('PotcarParser does not implement a _init_from_data() method.')
+
+    def _content_data_to_content_parser(self):
+        """Since no need to accept AiiDA data structure, no need to convert it."""
+        raise NotImplementedError('PotcarParser does not implement a _content_data_to_content_parser() method.')
+
+
 class PotcarIo():  # pylint: disable=useless-object-inheritance
     """
-    Use pymatgen.io.vasp.Potcar to deal with VASP pseudopotential IO.
+    Deals with VASP input output of POTCAR files.
 
     Instanciate with one of the following kwargs:
 
-    :param pymatgen: a pymatgen.io.vasp.PotcarSingle instance
     :param path: (string) absolute path to the POTCAR file
     :param potcar_node: a PotcarData node
     :param potcar_file_node: a PotcarFileNode
@@ -58,12 +101,6 @@ class PotcarIo():  # pylint: disable=useless-object-inheritance
             pass
         node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
         self.sha512 = node.sha512
-
-    @property
-    def pymatgen(self):
-        if not self.potcar_obj:
-            self.potcar_obj = self.file_node.get_pymatgen()
-        return self.potcar_obj
 
     @property
     def file_node(self):
@@ -179,7 +216,3 @@ class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
         groups = groupby(kind_name_order)
         counts = [(label, sum(1 for _ in group)) for label, group in groups]
         return counts
-
-    @property
-    def max_enmax(self):
-        return max(potcario.pymatgen.enmax for potcario in self.potcars)

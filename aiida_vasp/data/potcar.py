@@ -98,15 +98,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
                 get corresponding PotcarFileData <-> query for same symbol, family, hash, do not use links
             |
             v
-            for each PotcarFileData:
-                create a pymatgen PotcarSingle object
-            |
-            v
-            create a pymatgen Potcar object from all the PotcarSingle objects
-            (maybe need to take care to order same as in POSCAR)
-            |
-            v
-            use Potcar.write_file
+            write_file using the write() of MultiPotcarIo
 
 """
 # pylint: disable=import-outside-toplevel, too-many-lines
@@ -122,14 +114,13 @@ import shutil
 import tarfile
 import tempfile
 
-from pymatgen.io.vasp import PotcarSingle
-
 from aiida.common import AIIDA_LOGGER as aiidalogger
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.orm import Data  # pylint: disable=no-name-in-module
 from aiida.orm import Group, QueryBuilder
 
 from aiida_vasp.data.archive import ArchiveData
+from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -455,12 +446,13 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
             raise AttributeError('Can only hold one POTCAR file')
         super().add_file(src_abs, dst_filename)
         self.base.attributes.set('sha512', self.get_file_sha512(src_abs))
-        # PotcarSingle needs a string for path
-        potcar = PotcarSingle.from_file(str(src_abs))
-        self.base.attributes.set('title', potcar.keywords['TITEL'])
-        self.base.attributes.set('functional', potcar.functional)
-        self.base.attributes.set('element', potcar.element)
-        self.base.attributes.set('symbol', potcar.symbol)
+        with src_abs.open('r', encoding='utf8') as handler:
+            potcar = PotcarParser(handler=handler)
+        metadata = potcar.metadata
+        self.base.attributes.set('title', metadata.titel)
+        self.base.attributes.set('functional', metadata.functional)
+        self.base.attributes.set('element', metadata.element)
+        self.base.attributes.set('symbol', metadata.symbol)
         src_path = src_abs.resolve()
         src_rel = src_path.relative_to(src_path.parents[2])  # familyfolder/Element/POTCAR
         # Make sure we store string elements of Path in the attributes
@@ -565,10 +557,6 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     def get_content(self):
         with self.get_file_obj() as potcar_fo:
             return potcar_fo.read()
-
-    def get_pymatgen(self):
-        """Create a corresponding pymatgen ``PotcarSingle`` instance."""
-        return PotcarSingle(self.get_content())
 
     @classmethod
     def get_or_create(cls, filepath):
@@ -1026,9 +1014,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     def get_content(self):
         return self.find_file_node().get_content()
-
-    def get_pymatgen(self):
-        return self.find_file_node().get_pymatgen()
 
     @classmethod
     def find(cls, **kwargs):
