@@ -8,6 +8,11 @@ changelog data prior to this present, but it is not to be considered complete.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+[v3.0.1]
+--------
+**Changed**
+- New structure of the Read The Docs configure file to enable more recent Python versions and successful documentation builds.
+
 [v3.0.0]
 --------
 **Added**
