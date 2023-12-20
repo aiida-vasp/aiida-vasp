@@ -14,7 +14,7 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
     - Provide ways to get parsable quantities.
     """
 
-    def __init__(self, vasp_parser_logger=None):
+    def __init__(self, vasp_parser_logger=None):  # pylint: disable=missing-function-docstring
         self._vasp_parser_logger = vasp_parser_logger
 
         self._quantity_keys_to_parse = None
@@ -69,7 +69,9 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         show_screening_steps = False
 
-        self._quantity_items, self._quantity_keys_to_content = self._get_quantity_items_from_definitions(parser_definitions)
+        self._quantity_items, self._quantity_keys_to_content = self._get_quantity_items_from_definitions(
+            parser_definitions
+        )
         if show_screening_steps:
             _show(self._quantity_items, 'self._quantity_items')
             _show(self._quantity_keys_to_content, 'self._quantity_keys_to_content')
@@ -87,7 +89,9 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
         parsable_quantity_keys = self._get_parsable_quantity_keys()
         if show_screening_steps:
             _show(parsable_quantity_keys, 'parsable_quantity_keys')
-        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(parsable_quantity_keys, quantity_names_to_parse, retrieved_content)
+        self._quantity_keys_to_parse = self._get_quantity_keys_to_parse(
+            parsable_quantity_keys, quantity_names_to_parse, retrieved_content
+        )
         if show_screening_steps:
             _show(quantity_names_to_parse, 'quantity_names_to_parse')
             _show(self._quantity_keys_to_parse, 'self._quantity_keys_to_parse')
@@ -108,13 +112,15 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         for quantity_key, quantity_dict in self._waiting_quantity_items.items():
             if 'name' in quantity_dict:
-                self._add_quantity(_quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, quantity_dict['name'])
+                self._add_quantity(
+                    _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, quantity_dict['name']
+                )
             else:
                 raise RuntimeError(f'The added quantity {quantity_key} has to contain a name entry.')
 
         return _quantity_items, _quantity_keys_to_content
 
-    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):  # pylint: disable=no-self-use
+    def _add_quantity(self, _quantity_items, _quantity_keys_to_content, quantity_key, quantity_dict, name):
         """
         Helper to store quantity_dict in self._quantity_items
 
@@ -125,10 +131,12 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
 
         """
         if quantity_key in _quantity_items:
-            raise RuntimeError('The quantity {quantity} defined in {name} has been '
-                               'defined by two object parser classes. Quantity names must '
-                               'be unique. If both quantities are equivalent, define one '
-                               'as an alternative for the other.'.format(quantity=quantity_key, name=name))
+            raise RuntimeError(
+                'The quantity {quantity} defined in {name} has been '
+                'defined by two object parser classes. Quantity names must '
+                'be unique. If both quantities are equivalent, define one '
+                'as an alternative for the other.'.format(quantity=quantity_key, name=name)
+            )
         _quantity_keys_to_content[quantity_key] = name
         _quantity_dict = quantity_dict.copy()
         if 'name' not in _quantity_dict:
@@ -203,10 +211,12 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
                 if not is_parsable:
                     self._issue_warning(retrieve_names, quantity_name)
             else:
-                self._vasp_parser_logger.warning('{quantity} has been requested, '
-                                                 'however its parser has not been implemented. '
-                                                 'Please check the docstrings in aiida_vasp.parsers.vasp.py '
-                                                 'for valid input.'.format(quantity=quantity_name))
+                self._vasp_parser_logger.warning(
+                    '{quantity} has been requested, '
+                    'however its parser has not been implemented. '
+                    'Please check the docstrings in aiida_vasp.parsers.vasp.py '
+                    'for valid input.'.format(quantity=quantity_name)
+                )
         return _quantity_keys_to_parse
 
     def _issue_warning(self, retrieve_names, quantity_name):
@@ -223,12 +233,15 @@ class ParsableQuantities():  # pylint: disable=useless-object-inheritance
         for item in missing_objects:
             if item not in retrieve_names:
                 not_in_retrieve_names = item
-        self._vasp_parser_logger.warning('The quantity {quantity} has been requested for parsing, however the '
-                                         'following objects required for parsing it have not been '
-                                         'retrieved: {missing_objects}.'.format(quantity=quantity_name, missing_objects=missing_objects))
+        self._vasp_parser_logger.warning(
+            'The quantity {quantity} has been requested for parsing, however the '
+            'following objects required for parsing it have not been '
+            'retrieved: {missing_objects}.'.format(quantity=quantity_name, missing_objects=missing_objects)
+        )
         if not_in_retrieve_names is not None:
             self._vasp_parser_logger.warning(
                 'The object {not_in_retrieve_names} is not present '
                 'in the list of retrieved objects. If you want to add additional '
                 'objects, please make sure to define it in the ADDITIONAL_RETRIEVE_LIST, '
-                'which is an option given to calculation settings.'.format(not_in_retrieve_names=not_in_retrieve_names))
+                'which is an option given to calculation settings.'.format(not_in_retrieve_names=not_in_retrieve_names)
+            )

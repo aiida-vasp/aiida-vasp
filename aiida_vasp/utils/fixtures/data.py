@@ -14,7 +14,6 @@ from pathlib import Path
 import subprocess as sp
 
 import numpy
-from pymatgen.io.vasp import Poscar
 import pytest
 
 from aiida.common.exceptions import NotExistent
@@ -36,7 +35,18 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.general import copytree
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn', 'N': 'N', 'H': 'H'}
+POTCAR_MAP = {
+    'In': 'In_sv',
+    'In_d': 'In_d',
+    'As': 'As',
+    'Ga': 'Ga',
+    'Si': 'Si',
+    'P': 'P',
+    'S': 'S',
+    'Zn': 'Zn',
+    'N': 'N',
+    'H': 'H'
+}
 
 
 def path_file_and_settings(name, param):
@@ -48,7 +58,9 @@ def path_file_and_settings(name, param):
         elif len(param) == 2:
             folder, name = param
         else:
-            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
+            raise IndexError(
+                'Please supply either folder and name, or folder, name and settings to the parser fixtures'
+            )
     else:
         folder = param
     path = data_path(folder, name)
@@ -67,18 +79,28 @@ def localhost(fresh_aiida_env, localhost_dir):
     try:
         computer = Computer.collection.get(label='localhost')
     except NotExistent:
-        computer = Computer(label='localhost',
-                            hostname='localhost',
-                            transport_type='core.local',
-                            scheduler_type='core.direct',
-                            workdir=str(localhost_dir)).store()
+        computer = Computer(
+            label='localhost',
+            hostname='localhost',
+            transport_type='core.local',
+            scheduler_type='core.direct',
+            workdir=str(localhost_dir)
+        ).store()
         computer.set_minimum_job_poll_interval(0.)
     return computer
 
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('core.dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    incar_data = get_data_class('core.dict')(
+        dict={
+            'gga': 'PE',
+            'gga_compat': False,
+            'lorbit': 11,
+            'sigma': 0.5,
+            'magmom': '30 * 2*0.'
+        }
+    )
     return incar_data
 
 
@@ -270,14 +292,14 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
 
 @pytest.fixture()
 def vasp2w90_inputs(
-        fresh_aiida_env,  # yapf: disable
-        vasp_params,  # yapf: disable
-        vasp_kpoints,  # yapf: disable
-        vasp_structure,  # yapf: disable
-        potentials,  # yapf: disable
-        vasp_code,  # yapf: disable
-        wannier_projections,  # yapf: disable
-        wannier_params  # yapf: disable
+    fresh_aiida_env,  # yapf: disable
+    vasp_params,  # yapf: disable
+    vasp_kpoints,  # yapf: disable
+    vasp_structure,  # yapf: disable
+    potentials,  # yapf: disable
+    vasp_code,  # yapf: disable
+    wannier_projections,  # yapf: disable
+    wannier_params  # yapf: disable
 ):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict
@@ -594,7 +616,7 @@ def _ref_kp_mesh():
 @pytest.fixture
 def wannier_params():
     from aiida.orm import Dict
-    return Dict(dict=dict(
+    return Dict(dict=dict(  # pylint: disable=use-dict-literal
         dis_num_iter=1000,
         num_bands=24,
         num_iter=0,
@@ -623,32 +645,38 @@ def compare_symmetries():
     return {
         'symmetrized_cell_type': {
             'static': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
+                'face centered cubic supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.', 'face centered cubic supercell.'
             ],
             'dynamic': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.'
+                'face centered cubic supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.', 'face centered cubic supercell.',
+                'face centered cubic supercell.', 'face centered cubic supercell.'
             ]
         },
         'original_cell_type': {
             'static': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell'
             ],
             'dynamic': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell'
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
+                'primitive cell'
             ]
         },
         'num_space_group_operations': {

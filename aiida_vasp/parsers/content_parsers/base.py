@@ -7,7 +7,7 @@ Contains the base classes for the VASP content parsers.
 # pylint: disable=import-outside-toplevel
 
 from aiida.common import AIIDA_LOGGER as aiidalogger
-from aiida.orm import Data
+from aiida.orm import Data  # pylint: disable=no-name-in-module
 
 
 class BaseFileParser():
@@ -65,7 +65,7 @@ class BaseFileParser():
     PARSABLE_QUANTITIES = {}
     DEFAULT_SETTINGS = {'quantities_to_parse': []}
 
-    def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument
+    def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument, missing-function-docstring
         super().__init__()
         # Make sure we only accept initialization with either ``handler`` or ``data``.
         if (handler is not None and data is not None) or (handler is None and data is None):
@@ -242,8 +242,9 @@ class BaseFileParser():
 
         """
 
-        raise NotImplementedError('{classname} does not implement a _content_data_to_content_parser() '
-                                  'method.'.format(classname=self.__class__.__name__))
+        raise NotImplementedError(
+            f'{self.__class__.__name__} does not implement a _content_data_to_content_parser() method.'
+        )
 
     def _parse_content(self):
         """Parse the quantities configured and parseable from the content."""

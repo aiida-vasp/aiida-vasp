@@ -112,18 +112,18 @@ class RelaxModeEnum(enum.IntEnum):
         """Get the correct mode of relaxation for the given degrees of freedom."""
         RELAX_POSSIBILITIES = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
         dof = tuple(kwargs[i] for i in RELAX_POSSIBILITIES)
-        value_from_dof = {
-            (True, False, False): cls.POS_ONLY,
-            (True, True, True): cls.POS_SHAPE_VOL,
-            (True, True, False): cls.POS_SHAPE,
-            (False, True, False): cls.SHAPE_ONLY,
-            (False, True, True): cls.SHAPE_VOL,
-            (False, False, True): cls.VOL_ONLY
-        }
+        value_from_dof = {(True, False, False): cls.POS_ONLY,
+                          (True, True, True): cls.POS_SHAPE_VOL,
+                          (True, True, False): cls.POS_SHAPE,
+                          (False, True, False): cls.SHAPE_ONLY,
+                          (False, True, True): cls.SHAPE_VOL,
+                          (False, False, True): cls.VOL_ONLY}
         try:
             return value_from_dof[dof]
         except KeyError as no_dof:
-            raise ValueError(f'Invalid combination for degrees of freedom: {dict(zip(RELAX_POSSIBILITIES, dof))}') from no_dof
+            raise ValueError(
+                f'Invalid combination for degrees of freedom: {dict(zip(RELAX_POSSIBILITIES, dof))}'
+            ) from no_dof
 
 
 class ParametersMassage():  # pylint: disable=too-many-instance-attributes
@@ -144,7 +144,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
+    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):  # pylint: disable=missing-function-docstring
         self.exit_code = None
 
         # Flag for skipping any validations
@@ -379,7 +379,9 @@ class ParameterSetFunctions():
             shape = self._parameters.get('relax', {}).get('shape', False)
             volume = self._parameters.get('relax', {}).get('volume', False)
             try:
-                self._incar.isif = RelaxModeEnum.get_isif_from_dof(positions=positions, shape=shape, volume=volume).value
+                self._incar.isif = RelaxModeEnum.get_isif_from_dof(
+                    positions=positions, shape=shape, volume=volume
+                ).value
             except AttributeError:
                 pass
 
@@ -478,7 +480,9 @@ class ParameterSetFunctions():
                         phase = self._parameters.bands.phase
                     except AttributeError:
                         phase = False
-                    lorbit = OrbitEnum.get_lorbit_from_combination(lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius).value
+                    lorbit = OrbitEnum.get_lorbit_from_combination(
+                        lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius
+                    ).value
                     self._set_simple('lorbit', lorbit)
             else:
                 try:
@@ -506,7 +510,9 @@ class ParameterSetFunctions():
                 if wigner_seitz_radius[0]:
                     self._set_simple('rwigs', wigner_seitz_radius)
             else:
-                raise ValueError('The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.')
+                raise ValueError(
+                    'The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.'
+                )
         except AttributeError:
             pass
 
@@ -537,7 +543,10 @@ def check_inputs(supplied_inputs):
         elif isinstance(supplied_inputs, AttributeDict):
             inputs = supplied_inputs
         else:
-            raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. Supply a dict, Dict or an AttributeDict.')
+            raise ValueError(
+                f'The supplied type {type(inputs)} of inputs is not supported. '
+                'Supply a dict, Dict or an AttributeDict.'
+            )
 
     return inputs
 
@@ -561,8 +570,9 @@ def inherit_and_merge_parameters(inputs):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
                         raise IndexError(
-                            'The input array with a key {} contains more than one array. Please make sure an input only contains one array.'
-                            .format(key))
+                            f'The input array with a key {key} contains more than one array. '
+                            'Please make sure an input only contains one array.'
+                        )
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
                 elif isinstance(item, DataFactory('core.dict')):
@@ -641,7 +651,9 @@ class ParserSettingsChecker:
                 isif = 0
 
         if isif == 0:
-            raise InputValidationError('Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.')
+            raise InputValidationError(
+                'Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.'
+            )
 
     def check_wavecar_chgcar(self):
         """Check if WAVECAR CHGCAR are set to be written"""
@@ -659,7 +671,9 @@ class ParserSettingsChecker:
 
         lepsilon = self.parameters.get('lepsilon', False)
         if not lepsilon:
-            raise InputValidationError('Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.')
+            raise InputValidationError(
+                'Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.'
+            )
 
     def check_dynmat(self):
         if 'hessian' not in self.quantities and 'dynmat' not in self.quantities:

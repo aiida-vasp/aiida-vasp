@@ -216,10 +216,12 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
     inputs.verbose = get_data_node('core.bool', True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {
-        'add_structure': True,
-        'add_site_magnetization': True,
-    }})
+    inputs.settings = get_data_node(
+        'core.dict', dict={'parser_settings': {
+            'add_structure': True,
+            'add_site_magnetization': True,
+        }}
+    )
     inputs.max_iterations = get_data_node('core.int', 3)
 
     _, node = run.get_node(workchain, **inputs)
@@ -228,7 +230,8 @@ def test_vasp_wc_ionic_magmom_carry(fresh_aiida_env, potentials, mock_vasp_stric
     called_nodes = list(node.called)
     called_nodes.sort(key=lambda x: x.ctime)
     # Check that the second node takes the magnetization of the first node
-    assert called_nodes[1].inputs.site_magnetization['site_magnetization']['sphere']['x']['site_moment']['1']['tot'] == 0.643
+    assert called_nodes[1].inputs.site_magnetization['site_magnetization']['sphere']['x']['site_moment']['1']['tot'
+                                                                                                              ] == 0.643
     assert called_nodes[1].called[0].inputs.parameters['magmom'] == [0.643]
     assert 'site_magnetization' in node.outputs
     #upload_real_workchain(node, 'relax-wc-keep-magmom')

@@ -145,7 +145,9 @@ class KeyValueParser(BaseKeyValueParser):
         elif re.match(cls.bool_false, bool_str):
             value = False
         else:
-            raise ValueError(f'bool string {string_} did not match any of {[cls.bool_true.pattern, cls.bool_false.pattern]}')
+            raise ValueError(
+                f'bool string {string_} did not match any of {[cls.bool_true.pattern, cls.bool_false.pattern]}'
+            )
         comment = ' '.join(vals)
         return cls.retval(value, comment=comment)
 
@@ -196,7 +198,7 @@ class WinParser(KeyValueParser):
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
-    def __init__(self, path):
+    def __init__(self, path):  # pylint: disable=missing-function-docstring
         super().__init__()
         self.result = {}
         with open(path, 'r', encoding='utf8') as winf:

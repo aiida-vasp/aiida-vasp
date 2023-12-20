@@ -44,7 +44,8 @@ class VasprunParser(BaseFileParser):
             'version',
         ],
         'energy_type': ['energy_extrapolated'],
-        'electronic_step_energies': False
+        'electronic_step_energies':
+        False
     }
 
     PARSABLE_QUANTITIES = {
@@ -177,10 +178,16 @@ class VasprunParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize using a file like handler."""
 
+        self.overflow = False
         try:
             self._content_parser = Xml(file_handler=handler, k_before_band=True, logger=self._logger)
-        except SystemExit:
-            self._logger.warning('Parsevasp exited abnormally.')
+        except SystemExit as exception:
+            if exception.code == 509:
+                # Xml might be fine but overflow is detected
+                self.overflow = True
+                self._logger.warning('Parsevasp exited abnormally due to overflow in XML file.')
+            else:
+                self._logger.warning('Parsevasp exited abnormally.')
 
     @property
     def version(self):
@@ -440,7 +447,9 @@ class VasprunParser(BaseFileParser):
     def energies(self):
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
-        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies'])
+        electronic_step_energies = self._settings.get(
+            'electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies']
+        )
 
         return self._energies(nosc=not electronic_step_energies)
 
@@ -483,7 +492,8 @@ class VasprunParser(BaseFileParser):
                 # The energy_extrapolated_final is the entropy term itself in VASP 5
                 # Store the calculated energy_no_entropy under 'energy_extrapolated_final',
                 # which is then recovered as `energy_no_entropy` later
-                energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
+                energies['energy_extrapolated_final'
+                         ] = energies['energy_free_final'] - energies['energy_extrapolated_final']
         else:
             energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
 

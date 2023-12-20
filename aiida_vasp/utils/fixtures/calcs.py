@@ -44,7 +44,8 @@ def sandbox_folder():
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
+    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None):
         # Create a test computer
@@ -64,14 +65,14 @@ def calc_with_retrieved(localhost):
         if input_settings is None:
             input_settings = {}
 
-        settings = Dict(dict=input_settings)
+        settings = DataFactory('core.dict')(dict=input_settings)
         node.base.links.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
         node.store()
 
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
-        retrieved = FolderData()
+        retrieved = DataFactory('core.folder')()
         retrieved.base.repository.put_object_from_tree(file_path)
         retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
@@ -85,7 +86,8 @@ def calc_with_retrieved(localhost):
 def neb_calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer, Dict, FolderData
+    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None, nimgs=3):
         # Create a test computer
@@ -105,7 +107,7 @@ def neb_calc_with_retrieved(localhost):
         if input_settings is None:
             input_settings = {}
 
-        settings = Dict(dict=input_settings)
+        settings = DataFactory('core.dict')(dict=input_settings)
         node.base.links.add_incoming(settings, link_type=LinkType.INPUT_CALC, link_label='settings')
         settings.store()
 
@@ -118,7 +120,7 @@ def neb_calc_with_retrieved(localhost):
 
         # Create a `FolderData` that will represent the `retrieved` folder. Store the test
         # output fixture in there and link it.
-        retrieved = FolderData()
+        retrieved = DataFactory('core.folder')()
         retrieved.base.repository.put_object_from_tree(file_path)
         retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
@@ -263,9 +265,9 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
         if process_type == 'calcjob':
             from aiida.plugins import CalculationFactory
             process = CalculationFactory('vasp.vasp')
-            inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(structure=inpts.structure,
-                                                                                       family_name=POTCAR_FAMILY_NAME,
-                                                                                       mapping=POTCAR_MAP)
+            inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+                structure=inpts.structure, family_name=POTCAR_FAMILY_NAME, mapping=POTCAR_MAP
+            )
             inpts.parameters = get_data_class('core.dict')(dict=parameters)
             inpts.metadata = {}
             inpts.metadata['options'] = options
@@ -280,7 +282,9 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
             inpts.clean_workdir = get_data_node('core.bool', False)
             inpts.verbose = get_data_node('core.bool', True)
         else:
-            raise ValueError(f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'")
+            raise ValueError(
+                f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'"
+            )
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
@@ -300,4 +304,5 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
 
 ONLY_ONE_CALC = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 
-STRUCTURE_TYPES = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')], indirect=True)
+STRUCTURE_TYPES = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')],
+                                          indirect=True)

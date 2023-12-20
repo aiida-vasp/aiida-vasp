@@ -40,7 +40,9 @@ class EosWorkChain(WorkChain):
     def define(cls, spec):
         super(EosWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=['structure'])
-        spec.input_namespace('structures', valid_type=DataFactory('structure'), dynamic=True, help='a dictionary of structures to use')
+        spec.input_namespace(
+            'structures', valid_type=DataFactory('structure'), dynamic=True, help='a dictionary of structures to use'
+        )
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
         spec.exit_code(500, 'ERROR_UNKNOWN', message='unknown error detected in the eos workchain')
@@ -56,8 +58,14 @@ class EosWorkChain(WorkChain):
             cls.finalize
         )  # yapf: disable
 
-        spec.output('eos', valid_type=DataFactory('array'), help='a list containing the cell volumes and total energies')
-        spec.output('eos_minimum', valid_type=DataFactory('dict'), help='a dictionary containing the cell volume at energy minimum')
+        spec.output(
+            'eos', valid_type=DataFactory('array'), help='a list containing the cell volumes and total energies'
+        )
+        spec.output(
+            'eos_minimum',
+            valid_type=DataFactory('dict'),
+            help='a dictionary containing the cell volume at energy minimum'
+        )
 
     def initialize(self):
         """Initialize the eos workchain."""
@@ -105,7 +113,7 @@ class EosWorkChain(WorkChain):
     def init_next_workchain(self):
         """Initialize the next workchain."""
 
-        # Elavate iteraetion index
+        # Elevate iteration index
         self.ctx.iteration += 1
 
         # Check that the context inputs exists
@@ -125,7 +133,7 @@ class EosWorkChain(WorkChain):
         self.ctx.inputs.structure = self.ctx.structures.pop(item)
 
         # Make sure we do not have any floating dict (convert to Dict etc.)
-        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs)
+        self.ctx.inputs = prepare_process_inputs(self.ctx.inputs, namespaces=['dynamics'])
 
     def run_next_workchain(self):
         """
@@ -136,9 +144,8 @@ class EosWorkChain(WorkChain):
         """
         inputs = self.ctx.inputs
         running = self.submit(self._next_workchain, **inputs)
-
         self.report(f'launching {self._next_workchain.__name__}<{running.pk}> iteration #{self.ctx.iteration}')
-        return self.to_context(workchains=append_(running))
+        self.to_context(workchains=append_(running))
 
     def verify_next_workchain(self):
         """Correct for unexpected behavior."""
@@ -157,8 +164,12 @@ class EosWorkChain(WorkChain):
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
-            self.report('The called {}<{}> returned a non-zero exit status. '
-                        'The exit status {} is inherited'.format(workchain.__class__.__name__, workchain.pk, self.ctx.exit_code))
+            self.report(
+                'The called {}<{}> returned a non-zero exit status. '
+                'The exit status {} is inherited'.format(
+                    workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
+                )
+            )
 
         # Stop further execution of workchains if there are no more structure
         # entries in the structures dictionary

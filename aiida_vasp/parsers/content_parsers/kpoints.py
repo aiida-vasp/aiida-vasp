@@ -99,8 +99,8 @@ class KpointsParser(BaseFileParser):
 
         kpoints_dict = {}
         for keyword in [
-                'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
-                'generating_vectors'
+            'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
+            'generating_vectors'
         ]:
             kpoints_dict[keyword] = None
 
@@ -111,7 +111,7 @@ class KpointsParser(BaseFileParser):
 
         return content_parser
 
-    def _get_kpointsdict_explicit(self, kpoints_data):  # pylint: disable=no-self-use
+    def _get_kpointsdict_explicit(self, kpoints_data):
         """
         Turn Aiida ``KpointData`` into a k-points dictionary with explicit generation of points.
 

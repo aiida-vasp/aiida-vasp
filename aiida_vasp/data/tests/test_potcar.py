@@ -4,7 +4,6 @@ from pathlib import Path
 import subprocess as sp
 import tarfile
 
-from pymatgen.io.vasp import PotcarSingle
 import pytest
 
 from aiida.common.exceptions import NotExistent, UniquenessError
@@ -113,21 +112,6 @@ def test_file_get_content(fresh_aiida_env, potcar_node_pair):
     assert original_file.read_text(encoding='utf8') == file_node_as.get_content().decode()
 
 
-#def test_file_get_pymatgen(fresh_aiida_env, potcar_node_pair):
-#    """
-#    Create a pymatgen ``PotcarSingle`` instance from a ``PotcarFileData`` node.
-#
-#    Test equality and completeness of the resulting object.
-#    """
-#    file_node_as = potcar_node_pair['file']
-#    potcar_single_as = file_node_as.get_pymatgen()
-#
-#    assert isinstance(potcar_single_as, PotcarSingle)
-#    assert file_node_as.title == potcar_single_as.keywords['TITEL']
-#
-#    assert potcar_single_as.data == file_node_as.get_content()
-
-
 def test_file_get_or_create(fresh_aiida_env, potcar_node_pair):
     """Test get_or_create of PotcarFileData."""
     potcar_as_path = data_path('potcar', 'As', 'POTCAR')
@@ -173,7 +157,12 @@ def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     indium_2 = get_data_node('core.structure')
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
     indium_2.append_atom(position=[1, 0, 0], symbols='In', name='In1')
-    in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(indium_2, potcar_family, mapping={'In': 'In_d', 'In1': 'In_d'})
+    in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(
+        indium_2, potcar_family, mapping={
+            'In': 'In_d',
+            'In1': 'In_d'
+        }
+    )
     assert set(in2_potcars.keys()) == {'In', 'In1'}
     in_d_potcar = get_data_class('vasp.potcar').find(family_name=potcar_family, full_name='In_d')[0]
     assert in2_potcars['In'].uuid == in_d_potcar.uuid == in2_potcars['In1'].uuid
@@ -204,7 +193,9 @@ def test_upload(fresh_aiida_env, temp_pot_folder):
         potcar_cls.upload_potcar_family(pot_dir, family_name, stop_if_existing=True)
     assert not potcar_ga.exists()
 
-    num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(pot_dir, family_name + '_new', family_desc, stop_if_existing=False)
+    num_files, num_added, num_uploaded = potcar_cls.upload_potcar_family(
+        pot_dir, family_name + '_new', family_desc, stop_if_existing=False
+    )
     assert num_files >= 3
     assert num_added >= 3
     assert num_uploaded == 0
@@ -319,11 +310,15 @@ def test_old_style_detect(potcar_family, legacy_potcar_family):
 
     # The raise Value Error should contain hints for migrate
     with pytest.raises(NotExistent, match=r'.*found in a legacy group.*'):
-        potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False)
+        potcar_dict = potcar_cls.get_potcars_dict(
+            elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False
+        )
 
     # Change the name back and the test should now pass
     new_group.label = new_group.label[:-1]
-    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False)
+    potcar_dict = potcar_cls.get_potcars_dict(
+        elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False
+    )
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
 
@@ -334,7 +329,9 @@ def test_old_style_detect(potcar_family, legacy_potcar_family):
         PotcarGroup.collection.get(label=potcar_family)
 
     # but as long as we do auto migrate it would be fine
-    potcar_dict = potcar_cls.get_potcars_dict(elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=True)
+    potcar_dict = potcar_cls.get_potcars_dict(
+        elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=True
+    )
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]
     # Validate the migrate group

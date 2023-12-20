@@ -49,7 +49,7 @@ class ExampleFileParser(BaseFileParser):
         self._parsable_items = ExampleFileParser.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):  # pylint: disable=no-self-use
+    def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
@@ -73,7 +73,7 @@ class ExampleFileParser2(BaseFileParser):
         self._parsable_items = ExampleFileParser2.PARSABLE_QUANTITIES
         self._parsable_data = {}
 
-    def _parse_object(self, inputs):  # pylint: disable=no-self-use
+    def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
@@ -114,7 +114,13 @@ def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_
 def vasp_parser_with_test(calc_with_retrieved, request):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('_scheduler-stderr.txt', {'parser_class': ExampleFileParser, 'is_critical': False, 'mode': 'r'})
+    parser.add_parser_definition(
+        '_scheduler-stderr.txt', {
+            'parser_class': ExampleFileParser,
+            'is_critical': False,
+            'mode': 'r'
+        }
+    )
     success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
@@ -142,7 +148,13 @@ def test_add_parser_quantity_fail(vasp_parser_without_parsing):
 def test_add_parser_quantity(vasp_parser_without_parsing, aiida_caplog):
     """Add_parsable_quantity with name succeeds."""
     parser, path = vasp_parser_without_parsing
-    parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'name': '_scheduler-stderr.txt'})
+    parser.add_parsable_quantity(
+        'quantity_with_alternatives', {
+            'inputs': [],
+            'prerequisites': [],
+            'name': '_scheduler-stderr.txt'
+        }
+    )
     parser.parse(retrieved_temporary_folder=path)
     quantities = parser._parsable_quantities
     assert 'quantity_with_alternatives' not in quantities.quantity_keys_to_parse
@@ -180,11 +192,19 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     """Make sure non-unique quantity identifiers are detected."""
     parser = vasp_parser_with_test
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
-    parser.add_parser_definition('another_test_parser', {'parser_class': ExampleFileParser2, 'is_critical': False, 'mode': 'r'})
+    parser.add_parser_definition(
+        'another_test_parser', {
+            'parser_class': ExampleFileParser2,
+            'is_critical': False,
+            'mode': 'r'
+        }
+    )
     with pytest.raises(RuntimeError) as excinfo:
-        parser._parsable_quantities.setup(retrieved_content=parser._retrieved_content.keys(),
-                                          parser_definitions=parser._definitions.parser_definitions,
-                                          quantity_names_to_parse=parser._settings.quantity_names_to_parse)
+        parser._parsable_quantities.setup(
+            retrieved_content=parser._retrieved_content.keys(),
+            parser_definitions=parser._definitions.parser_definitions,
+            quantity_names_to_parse=parser._settings.quantity_names_to_parse
+        )
 
     assert 'quantity1' in str(excinfo.value)
 
@@ -211,10 +231,9 @@ def xml_truncate(index, original, tmp):
 def test_parser_nodes(request, calc_with_retrieved):
     """Test a few basic node items of the parser."""
     settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['fermi_level']}}
-    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
-                                            request,
-                                            settings_dict=settings_dict,
-                                            relative_file_path='../../test_data/basic')
+    parser, file_path, _ = _get_vasp_parser(
+        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic'
+    )
 
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
@@ -408,10 +427,9 @@ def test_structure(request, calc_with_retrieved):
         }
     }
 
-    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
-                                            request,
-                                            settings_dict=settings_dict,
-                                            relative_file_path='../../test_data/basic')
+    parser, file_path, _ = _get_vasp_parser(
+        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic'
+    )
 
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
@@ -423,10 +441,9 @@ def test_structure(request, calc_with_retrieved):
     assert isinstance(structure_vasprun, get_data_class('core.structure'))
 
     # Then from POSCAR/CONTCAR
-    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
-                                            request,
-                                            settings_dict=settings_dict,
-                                            relative_file_path='../../test_data/basic_poscar')
+    parser, file_path, _ = _get_vasp_parser(
+        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic_poscar'
+    )
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
@@ -436,7 +453,9 @@ def test_structure(request, calc_with_retrieved):
     structure_poscar = result['structure']
 
     assert isinstance(structure_poscar, get_data_class('core.structure'))
-    np.testing.assert_allclose(np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7), rtol=0, atol=1e-8)
+    np.testing.assert_allclose(
+        np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7), rtol=0, atol=1e-8
+    )
     positions_vasprun = []
     positions_poscar = []
     for site in structure_vasprun.sites:
@@ -495,24 +514,32 @@ def test_custom_outputs(request, calc_with_retrieved):
     parser_settings = {
         'add_custom_outputs': {
             'type': 'core.float',
-            'quantities': ['fermi_level',],
+            'quantities': [
+                'fermi_level',
+            ],
             'link_name': 'custom_outputs.fermi_level',
         },
         'add_custom_outputs2': {
             'type': 'core.float',
-            'quantities': ['fermi_level',],
+            'quantities': [
+                'fermi_level',
+            ],
             'link_name': 'fermi_level3',
         },
         'add_fermi_level2': {
             'type': 'core.float',
-            'quantities': ['fermi_level',],
+            'quantities': [
+                'fermi_level',
+            ],
         },
         'add_fermi_level': {
             'type': 'core.float'
         }
     }
     for parser_setting in parser_settings:
-        parser, file_path, _ = _get_vasp_parser(calc_with_retrieved, request, settings_dict={'parser_settings': parser_settings})
+        parser, file_path, _ = _get_vasp_parser(
+            calc_with_retrieved, request, settings_dict={'parser_settings': parser_settings}
+        )
         parser.parse(retrieved_temporary_folder=file_path)
         assert 'custom_outputs.fermi_level' in parser.outputs
         assert 'fermi_level3' in parser.outputs
@@ -545,7 +572,8 @@ def test_custom_outputs(request, calc_with_retrieved):
                 'recover': False
             }
         }  # pylint: disable=too-many-statements, too-many-branches
-    ])
+    ]
+)
 @pytest.mark.parametrize('misc_input', [[], ['notifications']])
 def test_stream(misc_input, config, request, calc_with_retrieved):
     """Test that the stream parser works and gets stored on a node."""
@@ -571,10 +599,9 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         }
     }
 
-    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
-                                            request,
-                                            settings_dict=settings_dict,
-                                            relative_file_path='../../test_data/stdout/out')
+    parser, file_path, _ = _get_vasp_parser(
+        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/stdout/out'
+    )
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
     parser.parse(retrieved_temporary_folder=file_path)
@@ -590,26 +617,35 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
         misc_dict = misc.get_dict()
         if config is not None:
             if 'random_error' in config:
-                assert len(misc_dict['notifications']) == 2
+                assert len(misc_dict['notifications']) == 3
                 assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
                 assert misc_dict['notifications'][0]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
                 assert misc_dict['notifications'][1]['name'] == 'random_error'
                 assert misc_dict['notifications'][1]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED ERROR'
+                assert misc_dict['notifications'][2]['name'] == 'nostart'
+                assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][2]['regex'] == 'vasp.'
             if 'random_warning' in config:
-                assert len(misc_dict['notifications']) == 2
+                assert len(misc_dict['notifications']) == 3
                 assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
                 assert misc_dict['notifications'][0]['kind'] == 'ERROR'
                 assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
                 assert misc_dict['notifications'][1]['name'] == 'random_warning'
                 assert misc_dict['notifications'][1]['kind'] == 'WARNING'
                 assert misc_dict['notifications'][1]['regex'] == 'I AM A WELL DEFINED WARNING'
+                assert misc_dict['notifications'][2]['name'] == 'nostart'
+                assert misc_dict['notifications'][2]['kind'] == 'ERROR'
+                assert misc_dict['notifications'][2]['regex'] == 'vasp.'
         else:
-            assert len(misc_dict['notifications']) == 1
+            assert len(misc_dict['notifications']) == 2
             assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
             assert misc_dict['notifications'][0]['kind'] == 'ERROR'
             assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+            assert misc_dict['notifications'][1]['name'] == 'nostart'
+            assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+            assert misc_dict['notifications'][1]['regex'] == 'vasp.'
 
 
 def test_stream_history(request, calc_with_retrieved):
@@ -646,10 +682,9 @@ def test_stream_history(request, calc_with_retrieved):
         }
     }
 
-    parser, file_path, _ = _get_vasp_parser(calc_with_retrieved,
-                                            request,
-                                            settings_dict=settings_dict,
-                                            relative_file_path='../../test_data/stdout/out')
+    parser, file_path, _ = _get_vasp_parser(
+        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/stdout/out'
+    )
 
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
@@ -659,7 +694,7 @@ def test_stream_history(request, calc_with_retrieved):
 
     misc = result['misc']
     misc_dict = misc.get_dict()
-    assert len(misc_dict['notifications']) == 3
+    assert len(misc_dict['notifications']) == 4
     assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
     assert misc_dict['notifications'][0]['kind'] == 'ERROR'
     assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
@@ -669,6 +704,9 @@ def test_stream_history(request, calc_with_retrieved):
     assert misc_dict['notifications'][2]['name'] == 'random_error'
     assert misc_dict['notifications'][2]['kind'] == 'ERROR'
     assert misc_dict['notifications'][2]['regex'] == 'I AM A WELL DEFINED ERROR'
+    assert misc_dict['notifications'][3]['name'] == 'nostart'
+    assert misc_dict['notifications'][3]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][3]['regex'] == 'vasp.'
     for item in misc_dict['notifications']:
         assert item['kind'] != 'WARNING'
 
@@ -723,8 +761,20 @@ def test_critical_object_missing(calc_with_retrieved, request):
     """Test raising return code to indicate that one or more critical objects are missing"""
     # Here we add a fictional file as critical
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
-    parser.add_parser_definition('some-critical-file.txt', {'parser_class': ExampleFileParser, 'is_critical': True, 'mode': 'r'})
-    parser.add_parsable_quantity('quantity_with_alternatives', {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'})
+    parser.add_parser_definition(
+        'some-critical-file.txt', {
+            'parser_class': ExampleFileParser,
+            'is_critical': True,
+            'mode': 'r'
+        }
+    )
+    parser.add_parsable_quantity(
+        'quantity_with_alternatives', {
+            'inputs': [],
+            'prerequisites': [],
+            'file_name': '_scheduler-stderr.txt'
+        }
+    )
     success = parser.parse(retrieved_temporary_folder=file_path)
     assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 

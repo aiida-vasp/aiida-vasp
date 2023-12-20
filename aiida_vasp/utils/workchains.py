@@ -137,7 +137,7 @@ def site_magnetization_to_magmom(site_dict):
         if site_dict.get(symbol) and site_dict.get(symbol, {}).get('site_moment'):
             to_use = symbol
             break
-    # No avaliable site magnetization for setting MAGMOM, something is wrong
+    # No available site magnetization for setting MAGMOM, something is wrong
     if to_use is None:
         raise ValueError('No valid site-projected magnetization available')
     # Ensure sorted list

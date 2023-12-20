@@ -1,5 +1,3 @@
-.. _getting_started:
-
 =================
 AiiDA VASP plugin
 =================
@@ -52,6 +50,11 @@ Please have a look at the `AiiDA-VASP documentation`_ for instructions on how to
 Installing the plugin
 ---------------------
 
+..
+  Keep this comment as it is used for including these steps in the install section of the docs.
+  It includes everything past the next line.
+  Start installation description
+
 #. If you are already using `AiiDA`_, simply activate the virtual environment associated with it, here assumed to be located in ``~/env/aiida-vasp``::
 
    $ source ~/env/aiida-vasp/bin/activate
@@ -68,37 +71,36 @@ Installing the plugin
 
    $ (aiida-vasp) pip install aiida-vasp
 
-#. Update the entry points that `AiiDA`_ are using::
-
-   $ (aiida-vasp) reentry scan -r aiida
+  If you need to install the compatibility release of `AiiDA-VASP`_ which works with `AiiDA`_ 1.6.4 you should instead install the plugin
+  using ``pip install aiida-vasp=2.2``, but this is not recommended and only mentioned for legacy support. For the legacy version you
+  also most likely have to run ``reentry scan -r aiida`` after installing the plugin.
 
 This will automatically install the `AiiDA`_ python package(s) as well as any other dependencies of the plugin and register all the plugin classes with `AiiDA`_.
 
 Please consider that `AiiDA`_ have prerequisite that needs to be installed and ensured working. The steps above will not take care of this for you. Please consult `AiiDA prerequisites`_ and follow the instructions therein.
 
+..
+  End installation description
 
-Upgrading from AiiDA 1.x
-------------------------
+Support
+-------
 
-At the moment, only the development version of the plugin supports ``aiida-core >= 2.0.1``.
-If you are upgrading an existing AiiDA 1.x installation. Please upgrade ``aiida-core`` first and reinstall the plugin using::
+..
+  Start support description
 
+The development, maintenance and use of this plugin is considered a community effort. In order to facilitate for the community to contribute,
+we have established a `space on Matrix`_ that users can use to communicate. We encourage users to help each other. In addition,
+the development team is present in the space and users are free to ask.
+First consult the documentation of both `AiiDA-VASP documentation`_ and `AiiDA documentation`_ and also consider that the developers are
+not paid for this work. Please respect potential lead times in getting answers and be polite.
 
-    $ pip install git+https://github.com/aiida-vasp/aiida-vasp.git@develop#egg=aiida-vasp
+..
+  End support description
 
-
-This ensures the installation of the latest development version and registers the entrypoints.
-You can verify the latter with::
-
-    $ verdi plugin list aiida.groups
-
-and there should be entries of ``vasp.potcar``. The ``aiida.workflows`` and ``aiida.calculations`` entrypoints can be checked in a similiar way.
-
-
-
+.. _space on Matrix: https://matrix.to/#/#aiida-vasp:matrix.org
+.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
 .. _AiiDA: https://www.aiida.net
 .. _VASP: https://www.vasp.at
 .. _AiiDA documentation: http://aiida-core.readthedocs.io/en/latest/
-.. _AiiDA-VASP documentation: https://aiida-vasp.readthedocs.io/en/latest/
 .. _AiiDA-VASP: https://github.com/aiida-vasp/aiida-vasp
 .. _AiiDA prerequisites: https://aiida-core.readthedocs.io/en/latest/install/prerequisites.html

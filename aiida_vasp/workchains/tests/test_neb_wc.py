@@ -21,7 +21,8 @@ from aiida_vasp.utils.neb import neb_interpolate
 @pytest.fixture
 def nh3_end_points(fresh_aiida_env):
     """Making NH3 structure for NEB example"""
-    pos1 = StringIO("""#NO COMMENT
+    pos1 = StringIO(
+        """#NO COMMENT
   1.00000000000000
     6.000000    0.000000    0.000000
     0.000000    7.000000    0.000000
@@ -33,8 +34,10 @@ Direct
  0.500000  0.364985  0.5491330
  0.363572  0.567457  0.5491645
  0.500000  0.500000  0.5000000
-""")
-    pos2 = StringIO("""ammonia flipping
+"""
+    )
+    pos2 = StringIO(
+        """ammonia flipping
   1.00000000000000
     6.000000    0.000000    0.000000
     0.000000    7.000000    0.000000
@@ -46,7 +49,8 @@ Direct
  0.500000  0.364985  0.4508670
  0.363572  0.567457  0.4508355
  0.500000  0.500000  0.5000000
-""")
+"""
+    )
     init = PoscarParser(handler=pos1).structure
     final = PoscarParser(handler=pos2).structure
 

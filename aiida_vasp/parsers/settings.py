@@ -126,8 +126,10 @@ CONTENT_PARSER_SETS = {
 
 NODES = {
     'misc': {
-        'link_name': 'misc',
-        'type': 'core.dict',
+        'link_name':
+        'misc',
+        'type':
+        'core.dict',
         'quantities': [
             'total_energies',
             'maximum_stress',
@@ -265,7 +267,7 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
     """
     NODES = NODES
 
-    def __init__(self, settings, default_settings=None, vasp_parser_logger=None):
+    def __init__(self, settings, default_settings=None, vasp_parser_logger=None):  # pylint: disable=missing-function-docstring
         self._vasp_parser_logger = vasp_parser_logger
         if settings is None:
             self._settings = {}

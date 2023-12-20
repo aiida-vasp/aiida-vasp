@@ -74,8 +74,9 @@ def test_additional_override_namespaces(init_relax_parameters):  # pylint: disab
     """Test that we can supply additional override namespaces and that they are unmodified in the massager."""
     init_relax_parameters.myspace = AttributeDict({'myspaceparameter': 1})
     init_relax_parameters.yourspace = AttributeDict({'yourspaceparameter': 1})
-    massager = ParametersMassage(init_relax_parameters,
-                                 settings=AttributeDict({'additional_override_namespaces': ['myspace', 'yourspace']}))
+    massager = ParametersMassage(
+        init_relax_parameters, settings=AttributeDict({'additional_override_namespaces': ['myspace', 'yourspace']})
+    )
     assert massager.parameters.myspace.myspaceparameter == 1
     assert massager.parameters.yourspace.yourspaceparameter == 1
 
@@ -92,7 +93,9 @@ def test_catch_invalid_tags(init_relax_parameters):
 def test_relax_multiple_cutoffs(init_relax_parameters):
     """Test if the massager raise exception if both energy and force cutoff is supplied."""
     init_relax_parameters.relax.energy_cutoff = 0.01
-    matching_string = re.compile(r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$')
+    matching_string = re.compile(
+        r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$'
+    )
     with pytest.raises(ValueError, match=matching_string):
         _ = ParametersMassage(init_relax_parameters)
 
@@ -358,12 +361,16 @@ def test_unsupported_parameters_in_unsupported_namespace():  # pylint: disable=i
     parameters[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
     parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid = 200
     massager = ParametersMassage(
-        parameters, unsupported_parameters={'not_valid': {
-            'default': 1.0,
-            'description': 'Something',
-            'type': float,
-            'values': [1.0, 2.0]
-        }})
+        parameters,
+        unsupported_parameters={
+            'not_valid': {
+                'default': 1.0,
+                'description': 'Something',
+                'type': float,
+                'values': [1.0, 2.0]
+            }
+        }
+    )
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
 
 

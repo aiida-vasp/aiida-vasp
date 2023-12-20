@@ -174,8 +174,10 @@ class NEBNodeComposer(NodeComposer):
             # If the input is empty, we skip creating the node as it is bound to fail
             if not inputs:
                 self._failed_to_create.append(node_name)
-                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
-                                     'No parsed data available.')
+                self._logger.warning(
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
+                    'No parsed data available.'
+                )
                 continue
             exception = None
             # Guard the parsing in case of errors
@@ -188,8 +190,10 @@ class NEBNodeComposer(NodeComposer):
             if node is not None:
                 self._created[node_dict['link_name']] = node
             else:
-                self._logger.warning(f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
-                                     f'exception: {exception}')
+                self._logger.warning(
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
+                    f'exception: {exception}'
+                )
                 self._failed_to_create.append(node_dict['link_name'])
 
     def _compose_nodes_for_image(self, image_idx):
@@ -210,7 +214,8 @@ class NEBNodeComposer(NodeComposer):
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
                     f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed for image {image_idx:02d}. '
-                    'No parsed data available.')
+                    'No parsed data available.'
+                )
                 continue
             exception = None
             # Guard the parsing in case of errors
@@ -225,8 +230,10 @@ class NEBNodeComposer(NodeComposer):
                 # Suffix the output name with image id
                 self._created[link_name] = node
             else:
-                self._logger.warning(f'Creating node {link_name} of type {node_dict["type"]} failed, '
-                                     f'exception: {exception}')
+                self._logger.warning(
+                    f'Creating node {link_name} of type {node_dict["type"]} failed, '
+                    f'exception: {exception}'
+                )
                 self._failed_to_create.append(link_name)
 
         return nodes_failed_to_create
@@ -241,7 +248,8 @@ class NEBNodeComposer(NodeComposer):
             if equivalent_quantities is not None:
                 # Check if these are parsed and pick the first one if multiple exists
                 # Get a dictionary of quantities to be searched from
-                quantity_dict = self._quantities if image_idx is None else self._quantities[self.get_image_str(image_idx)]
+                quantity_dict = self._quantities if image_idx is None else self._quantities[
+                    self.get_image_str(image_idx)]
                 for equivalent_quantity in equivalent_quantities:
                     if equivalent_quantity in quantity_dict:
                         # Make sure we strip prefixes as the quantities can contain
@@ -300,9 +308,11 @@ class VtstNebParser(VaspParser):
     def _setup_parsable(self):
         """Setup the parable quantities. For NEB calculations we collpase the folder structure"""
         filenames = {Path(fname).name for fname in self._retrieved_content}
-        self._parsable_quantities.setup(retrieved_content=list(filenames),
-                                        parser_definitions=self._definitions.parser_definitions,
-                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
+        self._parsable_quantities.setup(
+            retrieved_content=list(filenames),
+            parser_definitions=self._definitions.parser_definitions,
+            quantity_names_to_parse=self._settings.quantity_names_to_parse
+        )
 
     def _parse_quantities(self):
         """
@@ -316,17 +326,18 @@ class VtstNebParser(VaspParser):
         per_image_quantities = {}
         #per_image_failed_quantities = {}
         failed_quantities = []
+        parser_notifications = {'xml_overflow': False}
 
         for image_idx in range(1, nimages + 1):
-            quantities, failed = self._parse_quantities_for_image(image_idx)
+            quantities, failed = self._parse_quantities_for_image(image_idx, parser_notifications)
             per_image_quantities[f'{image_idx:02d}'] = quantities
             #per_image_failed_quantities[f'{image_idx:02d}'] = failed
             failed_quantities.extend([f'image_{image_idx:02d}_{name}' for name in failed])
 
-        return per_image_quantities, failed_quantities
+        return per_image_quantities, failed_quantities, parser_notifications
 
     # Override super class methods
-    def _parse_quantities_for_image(self, image_idx):
+    def _parse_quantities_for_image(self, image_idx, parser_notifications):
         """
         This method dispatch the parsing to file parsers
 
@@ -363,10 +374,21 @@ class VtstNebParser(VaspParser):
                 except Exception:  # pylint: disable=broad-except
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
-                    self.logger.warning('Cannot instantiate {} for image {}, exception {}:'.format(
-                        content_parser_cls, image_idx, traceback.format_exc()))
+                    self.logger.warning(
+                        'Cannot instantiate {} for image {}, exception {}:'.format(
+                            content_parser_cls, image_idx, traceback.format_exc()
+                        )
+                    )
 
                 file_parser_instances[content_parser_cls] = parser
+
+            try:
+                if parser.overflow:
+                    # We check for overflow and set the appropriate exit status
+                    parser_notifications['xml_overflow'] = True
+            except AttributeError:
+                # Not the XML parser
+                pass
 
             # if the parser cannot be instantiated, add the quantity to a list of unavalaible ones
             if parser is None:
@@ -387,13 +409,14 @@ class VtstNebParser(VaspParser):
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
             else:
-                self.logger.warning('Parsing {} from {} failed for image {}, exception: {}'.format(
-                    quantity_key, parser, image_idx, exception))
+                self.logger.warning(
+                    f'Parsing {quantity_key} from {parser} failed for image {image_idx}, exception: {exception}'
+                )
                 failed_to_parse_quantities.append(quantity_key)
 
         return parsed_quantities, failed_to_parse_quantities
 
-    def _check_vasp_errors(self, quantities):
+    def _check_vasp_errors(self, quantities, parser_notifications):  # pylint: disable=too-many-return-statements
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
@@ -404,6 +427,14 @@ class VtstNebParser(VaspParser):
 
         if any(data is None for data in neb_data_list) or any(data is None for data in run_status_list):
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
+
+        try:
+            # We have an overflow in the XML file which is critical, but not reported by VASP in
+            # the standard output, so checking this here.
+            if parser_notifications['xml_overflow']:
+                return self.exit_codes.ERROR_OVERFLOW_IN_XML
+        except AttributeError:
+            pass
 
         # Return errors related to execution and convergence problems.
         # Note that the order is important here - if a calculation is not finished, we cannot
@@ -428,11 +459,9 @@ class VtstNebParser(VaspParser):
 
         ignore_all = self.parser_settings.get('ignore_all_errors', False)
         if not ignore_all:
-            composer = NotificationComposer(all_notifications,
-                                            quantities,
-                                            self.node.inputs,
-                                            self.exit_codes,
-                                            parser_settings=self._settings)
+            composer = NotificationComposer(
+                all_notifications, quantities, self.node.inputs, self.exit_codes, parser_settings=self._settings
+            )
             exit_code = composer.compose()
             if exit_code is not None:
                 return exit_code

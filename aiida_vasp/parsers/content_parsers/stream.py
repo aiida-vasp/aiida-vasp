@@ -43,7 +43,9 @@ class StreamParser(BaseFileParser):
             stream_config = self._settings.get('stream_config', None)
             history = self._settings.get('stream_history', False)
         try:
-            self._content_parser = Stream(file_handler=handler, logger=self._logger, history=history, config=stream_config)
+            self._content_parser = Stream(
+                file_handler=handler, logger=self._logger, history=history, config=stream_config
+            )
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 

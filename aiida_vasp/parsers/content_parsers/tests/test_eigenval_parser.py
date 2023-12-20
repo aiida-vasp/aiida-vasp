@@ -12,7 +12,9 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 def test_parse_eigenval(eigenval_parser):
     """Parse a reference EIGENVAL with the EigenvalParser and compare the result to a reference."""
     result = eigenval_parser.get_quantity('eigenval-eigenvalues')
-    eigenvalues = np.array([[[-1.439825, 2.964373, 2.964373, 2.964373, 7.254542, 7.254542, 7.254542, 11.451811, 11.670398, 11.670398]]])
+    eigenvalues = np.array([[[
+        -1.439825, 2.964373, 2.964373, 2.964373, 7.254542, 7.254542, 7.254542, 11.451811, 11.670398, 11.670398
+    ]]])
     metadata = {
         0: [4, 4, 1, 1],
         1: [16.48482, 4.04e-10, 4.04e-10, 4.04e-10, 1e-16],

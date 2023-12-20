@@ -17,8 +17,8 @@
 .tox
 .pytest_cache
 *.vscode
-
-doc/build
-doc/source/api
+docs/_build
 build/
 dist/
+docs/source/api/
+docs/source/apidoc/

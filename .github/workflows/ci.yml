@@ -8,18 +8,18 @@ jobs:
     timeout-minutes: 90
     strategy:
       matrix:
-        python: ["3.8"]
+        python: ['3.9']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - name: Cache python dependencies
         id: cache-pip
-        uses: actions/cache@v1
+        uses: actions/cache@v3.2.6
         with:
           path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
@@ -39,18 +39,18 @@ jobs:
           - 5672:5672
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10"]
+        python: ['3.9', '3.10', '3.11']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
       - name: Cache python dependencies
         id: cache-pip
-        uses: actions/cache@v1
+        uses: actions/cache@v3.2.6
         with:
           path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/setup.json') }}
+          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install system dependencies
@@ -61,11 +61,11 @@ jobs:
           sudo updatedb
           sudo apt install postgresql
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
-        run: pip install virtualenv>20
+        run: pip install 'virtualenv>20'
       - name: Install Tox
         run: pip install tox
       - name: Install codecov
-        if: matrix.python == '3.8'
+        if: matrix.python == '3.9'
         run: pip install codecov pytest-cov
       - name: Remove dot in Python version for passing version to tox
         uses: frabert/replace-string-action@master
@@ -73,14 +73,13 @@ jobs:
         with:
           pattern: '\.'
           string: ${{ matrix.python }}
-          replace-with: ""
+          replace-with: ''
       - name: Run tox and codecov
-        if: matrix.python == '3.8'
-        run:
-          tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
+        if: matrix.python == '3.9'
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
           --cov=./aiida_vasp --cov-append --cov-report=xml
       - name: Run tox
-        if: matrix.python != '3.8'
+        if: matrix.python != '3.9'
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
       - name: Archive error mock calculations
         uses: actions/upload-artifact@v2
@@ -92,8 +91,8 @@ jobs:
           retention-days: 5
           if-no-files-found: warn
       - name: Upload coverage to Codecov
-        if: matrix.python == '3.8'
-        uses: codecov/codecov-action@v2
+        if: matrix.python == '3.9'
+        uses: codecov/codecov-action@v3
         with:
           name: aiida-vasp
           fail_ci_if_error: true

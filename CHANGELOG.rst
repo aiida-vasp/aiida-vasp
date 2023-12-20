@@ -2,10 +2,61 @@
 Changelog
 =========
 
-All notable changes to this project after version 1.0.1 will be documented in this file.
+All notable changes to this project after version 1.0.1 will be documented in this file. There is
+changelog data prior to this present, but it is not to be considered complete.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+[v3.0.1]
+--------
+**Changed**
+- New structure of the Read The Docs configure file to enable more recent Python versions and successful documentation builds.
+
+[v3.0.0]
+--------
+**Added**
+- ``AiiDA>=2.0`` support.
+
+- Python 3.11 support.
+
+- ``pyproject.toml`` support.
+
+- Option to ommit a static run in the relax workflow.
+
+- Support for generalized k-point grids.
+
+- Wrappers for the moved parsers.
+
+**Changed**
+- Updated documentation.
+
+- Necessary changes to support ``AiiDA>=2.3``.
+
+- LICENSE file to reflect plugin work in recent years.
+
+- Dependency of ``parsevasp~=3.2``.
+
+- Contact info and author info.
+
+**Removed**
+- Python 3.7 support.
+
+- ``pymatgen`` dependency.
+
+- Remaining parsers moved to ``parsevasp``.
+
+[v2.2.0]
+--------
+
+**Added**
+- Error handlers for the ACWF study, disabled by default to retain backwards compatibility. These
+  offer bare minimum, basically changing `ALGO` and `NBANDS` in case that is needed due to lack of
+  electronic convergence.
+
+**Changed**
+- Deviates from the `develop` branch and releases `>2` from commit `837870c4f0080434955a491b269858caa9243005` and forward.
+- Removed pylint requirement in CI.
 
 [v2.1.1]
 --------

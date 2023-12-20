@@ -127,7 +127,9 @@ def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
     group_qb = QueryBuilder(path=[Group])
     group_count = group_qb.count()
 
-    result = run_cmd('uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION, '--dry-run'])
+    result = run_cmd(
+        'uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION, '--dry-run']
+    )
 
     assert not result.exception
 

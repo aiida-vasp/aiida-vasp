@@ -8,7 +8,7 @@ build-backend = "flit_core.buildapi"
 name = "aiida-vasp"
 dynamic = ["version"]  # read from aiida_vasp/__init__.py
 description = "AiiDA plugin for running VASP calculations and workflows."
-authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sintef.no"}]
+authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no"}]
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 classifiers = [
@@ -20,20 +20,20 @@ classifiers = [
 	"Environment :: Plugins",
 	"Intended Audience :: Science/Research",
 	"License :: OSI Approved :: MIT License",
-	"Programming Language :: Python :: 3.8",
 	"Programming Language :: Python :: 3.9",
 	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
 	"Topic :: Scientific/Engineering :: Physics",
 	"Topic :: Scientific/Engineering :: Chemistry",
 	"Framework :: AiiDA"
 ]
 keywords = ["aiida", "plugin"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
-	"aiida-core[atomic_tools]~=2.2",
+	"aiida-core[atomic_tools]~=2.4",
 	"lxml",
 	"packaging",
-	"parsevasp~=3.0"
+	"parsevasp~=3.2"
 ]
 
 [project.urls]
@@ -41,14 +41,24 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
-    "aiida-core[tests]~=2.2",
+    "aiida-core[tests]~=2.4",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
 pre-commit = [
-    "aiida-core[pre-commit]~=2.2",
     "tox>=3.23.0",
-    "virtualenv>20"
+    "virtualenv>20",
+    "pre-commit~=2.2",
+    "pylint~=2.15.0",
+    "sphinx-lint~=0.6"
+]
+docs = [
+    "aiida-core[docs]~=2.4",
+    "sphinx-autobuild",
+    "sphinx-lint",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-apidoc",
+    "sphinxext.remoteliteralinclude"
 ]
 graphs = [
     "matplotlib"
@@ -105,22 +115,51 @@ max-line-length = 140
 
 [tool.pylint.messages_control]
 disable = [
+    "raw-checker-failed",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "R0801",
+    "consider-using-f-string",
+    "no-name-in-module",
+    "missing-function-docstring",
+    "too-many-locals",
+    "missing-class-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-public-methods",
+    "missing-module-docstring",
     "too-many-ancestors",
-    "invalid-name",
-    "duplicate-code",
-    # black compatibility
-    "C0330",
-    "C0326",
+    "too-many-lines"
 ]
 
 [tool.pytest.ini_options]
 # Configuration for [pytest](https://docs.pytest.org)
 python_files = "test_*.py example_*.py"
 filterwarnings = [
-    "ignore::DeprecationWarning:aiida:",
-    "ignore::DeprecationWarning:plumpy:",
+    "ignore:POTCAR data with symbol .* does not match any VASP",
+    "ignore:Using or importing the ABCs from 'collections' instead of from 'collections.abc' in deprecated",
+    "ignore::DeprecationWarning:babel:",
     "ignore::DeprecationWarning:django:",
+    "ignore::DeprecationWarning:frozendict:",
+    "ignore::DeprecationWarning:sqlalchemy:",
     "ignore::DeprecationWarning:yaml:",
+    "ignore::DeprecationWarning:pymatgen:",
+    "ignore::DeprecationWarning:jsonbackend:",
+    "ignore::DeprecationWarning:reentry:",
+    "ignore::DeprecationWarning:past:",
+    "ignore::DeprecationWarning:pkg_resources:",
+    "ignore::pytest.PytestCollectionWarning",
+    "ignore::DeprecationWarning:numpy:",
+    "ignore::DeprecationWarning:pandas:",
+    "ignore::DeprecationWarning:scipy:",
+    "ignore::DeprecationWarning:networkx:",
+    "ignore::DeprecationWarning:ase:",
+    "ignore::DeprecationWarning:aiida:",
+    "ignore::DeprecationWarning:plumpy:"
 ]
 
 [tool.coverage.run]
@@ -151,7 +190,7 @@ indent_dictionary_value = false
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = pre-commit,{py38,py39,py310}-aiida_vasp
+envlist = pre-commit,{py39,py310,py311}-aiida_vasp
 requires = virtualenv >= 20
 isolated_build = True
 

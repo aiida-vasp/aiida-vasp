@@ -60,6 +60,7 @@ DEFAULT_SETTINGS = {
         'add_sgrcon': True,
         'add_no_potimm': True,
         'add_magmom': True,
+        'add_bandocc': True
     }
 }
 
@@ -131,7 +132,9 @@ class VaspParser(BaseParser):
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
         self._definitions = ParserDefinitions()
-        self._settings = ParserSettings(parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger)
+        self._settings = ParserSettings(
+            parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger
+        )
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
     def add_parser_definition(self, name, parser_dict):
@@ -148,9 +151,11 @@ class VaspParser(BaseParser):
 
     def _setup_parsable(self):
 
-        self._parsable_quantities.setup(retrieved_content=self._retrieved_content.keys(),
-                                        parser_definitions=self._definitions.parser_definitions,
-                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
+        self._parsable_quantities.setup(
+            retrieved_content=self._retrieved_content.keys(),
+            parser_definitions=self._definitions.parser_definitions,
+            quantity_names_to_parse=self._settings.quantity_names_to_parse
+        )
 
     def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
         """The function that triggers the parsing of a calculation."""
@@ -160,36 +165,42 @@ class VaspParser(BaseParser):
             return error_code
 
         for name, value_dict in self._definitions.parser_definitions.items():
-            if name not in self._retrieved_content.keys() and value_dict['is_critical']:
+            if name not in self._retrieved_content.keys() and value_dict['is_critical']:  # pylint: disable=consider-iterating-dictionary
                 self.logger.error(f'Missing content: {name} which is tagged as critical by the parser')
                 return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
-        self._parsable_quantities.setup(retrieved_content=self._retrieved_content.keys(),
-                                        parser_definitions=self._definitions.parser_definitions,
-                                        quantity_names_to_parse=self._settings.quantity_names_to_parse)
+        self._parsable_quantities.setup(
+            retrieved_content=self._retrieved_content.keys(),
+            parser_definitions=self._definitions.parser_definitions,
+            quantity_names_to_parse=self._settings.quantity_names_to_parse
+        )
 
         # Update the parser settings to make sure that the quantities that have been requested from
         # the collection of the nodes are included. Quantities already present in settings are preserved.
         self._settings.update_quantities_to_parse(self._parsable_quantities.quantity_keys_to_parse)
 
         # Parse the quantities from retrived objects
-        parsed_quantities, failed_to_parse_quantities = self._parse_quantities()
+        parsed_quantities, failed_to_parse_quantities, parser_notifications = self._parse_quantities()
         # Compose the output nodes using the parsed quantities
         requested_nodes = self._settings.output_nodes_dict
         equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
-        composed_nodes = self.COMPOSER_CLASS(requested_nodes, equivalent_quantity_keys, parsed_quantities, logger=self.logger)
+        composed_nodes = self.COMPOSER_CLASS(
+            requested_nodes, equivalent_quantity_keys, parsed_quantities, logger=self.logger
+        )
         for link_name, node in composed_nodes.successful.items():
             self.out(link_name, node)
 
         nodes_failed_to_create = composed_nodes.failed
 
         # Check for execution related errors
-        exit_code = self._check_vasp_errors(parsed_quantities)
+        exit_code = self._check_vasp_errors(parsed_quantities, parser_notifications)
         if exit_code is not None:
             return exit_code
 
         # Deal with missing quantities
         if failed_to_parse_quantities:
-            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=', '.join(failed_to_parse_quantities))
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
+                quantity=', '.join(failed_to_parse_quantities)
+            )
 
         # Deal with missing node/nodes
         if nodes_failed_to_create:
@@ -207,6 +218,7 @@ class VaspParser(BaseParser):
         # A dictionary for catching instantiated object parser objects
         content_parser_instances = {}
         failed_to_parse_quantities = []
+        parser_notifications = {'xml_overflow': False}
         for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
             name = self._parsable_quantities.quantity_keys_to_content[quantity_key]
             content_parser_cls = self._definitions.parser_definitions[name]['parser_class']
@@ -225,11 +237,20 @@ class VaspParser(BaseParser):
 
                 content_parser_instances[content_parser_cls] = parser
 
+            try:
+                if parser.overflow:
+                    # We check for overflow and set the appropriate exit status
+                    parser_notifications['xml_overflow'] = True
+            except AttributeError:
+                # Not the XML parser
+                pass
+
             if parser is None:
                 # If the parser cannot be instantiated, add the quantity to a list of unavailable ones
                 failed_to_parse_quantities.append(quantity_key)
                 continue
             exception = None
+
             try:
                 # The next line may still except for ill-formated object - some parser load all data at
                 # instantiation time, the others may not.
@@ -244,7 +265,7 @@ class VaspParser(BaseParser):
                 self.logger.warning(f'Parsing {quantity_key} from {parser} failed, exception: {exception}')
                 failed_to_parse_quantities.append(quantity_key)
 
-        return parsed_quantities, failed_to_parse_quantities
+        return parsed_quantities, failed_to_parse_quantities, parser_notifications
 
     @property
     def parser_settings(self):
@@ -274,7 +295,7 @@ class VaspParser(BaseParser):
             settings = {}
         return settings.get('CHECK_IONIC_CONVERGENCE', True)
 
-    def _check_vasp_errors(self, quantities):
+    def _check_vasp_errors(self, quantities, parser_notifications):  # pylint: disable=too-many-return-statements
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
@@ -282,6 +303,14 @@ class VaspParser(BaseParser):
         if 'run_status' not in quantities:
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
         run_status = quantities['run_status']
+
+        try:
+            # We have an overflow in the XML file which is critical, but not reported by VASP in
+            # the standard output, so checking this here.
+            if parser_notifications['xml_overflow']:
+                return self.exit_codes.ERROR_OVERFLOW_IN_XML
+        except AttributeError:
+            pass
 
         # Return errors related to execution and convergence problems.
         # Note that the order is important here - if a calculation is not finished, we cannot
@@ -303,11 +332,9 @@ class VaspParser(BaseParser):
             notifications = quantities['notifications']
             ignore_all = self.parser_settings.get('ignore_all_errors', False)
             if not ignore_all:
-                composer = NotificationComposer(notifications,
-                                                quantities,
-                                                self.node.inputs,
-                                                self.exit_codes,
-                                                parser_settings=self._settings)
+                composer = NotificationComposer(
+                    notifications, quantities, self.node.inputs, self.exit_codes, parser_settings=self._settings
+                )
                 exit_code = composer.compose()
                 if exit_code is not None:
                     return exit_code
@@ -373,3 +400,25 @@ class NotificationComposer:
             return None
 
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['brmix'])
+
+    @property
+    def edddav_zhegv(self):
+        """Check if EDDDAV call to ZHEGV should be emitted. Sometimes it has converged."""
+        if not 'edddav_zhegv' in self.notifications_dict:
+            return None
+
+        if self.parsed_quantities['run_status']['electronic_converged']:
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['edddav_zhegv'])
+
+    @property
+    def eddrmm_zhegv(self):
+        """Check if EDDRMM call to ZHEGV should be emitted. Sometimes it has converged."""
+        if not 'eddrmm_zhegv' in self.notifications_dict:
+            return None
+
+        if self.parsed_quantities['run_status']['electronic_converged']:
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['eddrmm_zhegv'])

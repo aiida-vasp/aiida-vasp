@@ -258,7 +258,7 @@ def test_converge_wc_kgrid(fresh_aiida_env, potentials, mock_vasp, options):
     converge = AttributeDict()
     converge.pwcutoff = get_data_node('core.float', pwcutoff)
     converge.k_dense = get_data_node('core.float', 0.21)  # 10x10x10 mesh
-    converge.k_course = get_data_node('core.float', 0.27)  # 8x8x8 mesh
+    converge.k_coarse = get_data_node('core.float', 0.27)  # 8x8x8 mesh
     converge.k_samples = get_data_node('core.int', 1)
     converge.testing = get_data_node('core.bool', True)
     inputs.converge = converge
