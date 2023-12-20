@@ -317,6 +317,7 @@ class VaspCalculation(VaspCalcBase):
             'ERROR_NOT_ABLE_TO_CREATE_NODE',
             message='the parser is not able to compose one or more output nodes: {nodes}',
         )
+        spec.exit_code(1005, 'ERROR_OVERFLOW_IN_XML', message='Overflow detected in XML while parsing.')
 
     def prepare_for_submission(self, folder):
         """

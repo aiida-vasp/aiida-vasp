@@ -616,7 +616,7 @@ def _ref_kp_mesh():
 @pytest.fixture
 def wannier_params():
     from aiida.orm import Dict
-    return Dict(dict=dict(
+    return Dict(dict=dict(  # pylint: disable=use-dict-literal
         dis_num_iter=1000,
         num_bands=24,
         num_iter=0,
