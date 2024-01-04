@@ -1,6 +1,12 @@
 name: aiida-vasp
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - '**'
+    tags:
+    - v[0-9]+.[0-9]+.[0-9]+*
+  pull_request:
 
 jobs:
   pre-commit:
@@ -96,3 +102,35 @@ jobs:
         with:
           name: aiida-vasp
           fail_ci_if_error: true
+
+  validate-release-tag:
+    if: github.repository == 'aiida-vasp/aiida-vasp' && github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Validate the tag version against the package version
+      run: python .github/workflows/validate_release_tag.py $GITHUB_REF
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [pre-commit, tests, validate-release-tag]
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Install flit
+      run: pip install flit~=3.4
+    - name: Build and publish
+      run: flit publish
+      env:
+        FLIT_USERNAME: __token__
+        FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
