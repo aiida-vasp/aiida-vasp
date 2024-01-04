@@ -1,0 +1,156 @@
+# WARNING - NO GUARANTEE for giving reproducible results - PP not enforced
+global:
+  algo: fast
+  encut: 520
+  ibrion: 2
+  icharg: 1
+  isif: 3
+  ismear: -5
+  ispin: 2
+  isym: 0
+  ldau: true
+  ldauprint: 1
+  lorbit: 11
+  lreal: 'auto'
+  lwave: false
+  nelm: 200
+  nelmin: 6
+  nsw: 99
+  prec: 'accurate'
+  sigma: 0.05
+
+per_atom: {}
+
+ldauu_mapping:
+  Ag: [d, 1.5]
+  Co: [d, 3.4]
+  Cr: [d, 3.5]
+  Cu: [d, 4]
+  Fe: [d, 4.0]
+  Mn: [d, 3.9]
+  Mo: [d, 4.38]
+  Nb: [d, 1.5]
+  Ni: [d, 6]
+  Re: [d, 2]
+  Ta: [d, 2]
+  V: [d, 3.1]
+  W: [d, 4.0]
+
+magmom_mapping:
+  Ce: 5
+  Co: 5
+  Cr: 5
+  Dy: 5
+  Eu: 10
+  Fe: 5
+  Gd: 7
+  Ho: 4
+  La: 0.6
+  Lu: 0.6
+  Mn: 5
+  Mo: 5
+  Nd: 3
+  Ni: 5
+  Pm: 4
+  Pr: 2
+  Sm: 5
+  Tb: 6
+  Tm: 2
+  V: 5
+  W: 5
+  Yb: 1
+  default: 0.6
+
+ldauj_mapping: {}
+
+
+potcar_mapping:
+  Ac: Ac
+  Ag: Ag
+  Al: Al
+  Ar: Ar
+  As: As
+  Au: Au
+  B: B
+  Ba: Ba_sv
+  Be: Be
+  Bi: Bi
+  Br: Br
+  C: C
+  Ca: Ca_sv
+  Cd: Cd
+  Ce: Ce
+  Cl: Cl
+  Co: Co
+  Cr: Cr
+  Cs: Cs_sv
+  Cu: Cu
+  Dy: Dy_3
+  Er: Er_3
+  Eu: Eu
+  F: F
+  Fe: Fe
+  Ga: Ga
+  Gd: Gd
+  Ge: Ge
+  H: H
+  He: He
+  Hf: Hf
+  Hg: Hg
+  Ho: Ho_3
+  I: I
+  In: In
+  Ir: Ir
+  K: K_sv
+  Kr: Kr
+  La: La
+  Li: Li
+  Lu: Lu_3
+  Mg: Mg
+  Mn: Mn
+  Mo: Mo_pv
+  N: N
+  Na: Na
+  Nb: Nb_pv
+  Nd: Nd
+  Ne: Ne
+  Ni: Ni
+  Np: Np
+  O: O
+  Os: Os
+  P: P
+  Pa: Pa
+  Pb: Pb
+  Pd: Pd
+  Pm: Pm
+  Pr: Pr
+  Pt: Pt
+  Pu: Pu
+  Rb: Rb_pv
+  Re: Re
+  Rh: Rh
+  Ru: Ru_pv
+  S: S
+  Sb: Sb
+  Sc: Sc_sv
+  Se: Se
+  Si: Si
+  Sm: Sm_3
+  Sn: Sn_d
+  Sr: Sr_sv
+  Ta: Ta
+  Tb: Tb_3
+  Tc: Tc
+  Te: Te
+  Th: Th
+  Ti: Ti
+  Tl: Tl
+  Tm: Tm_3
+  U: U
+  V: V_pv
+  W: W_pv
+  Xe: Xe
+  Y: Y_sv
+  Yb: Yb
+  Zn: Zn
+  Zr: Zr
