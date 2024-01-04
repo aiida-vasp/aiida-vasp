@@ -23,13 +23,13 @@ class ArchiveData(Data):
 
     @contextmanager
     def get_archive(self):
-        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:  # pylint: disable=not-context-manager
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
     @contextmanager
     def archive(self):
-        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:
+        with self.base.repository.open('archive.tar.gz', mode='rb') as fobj:  # pylint: disable=not-context-manager
             with tarfile.open(fileobj=fobj, mode='r:gz') as tar:
                 yield tar
 
