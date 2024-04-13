@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
-        run: pip install virtualenv>20
+        run: pip install 'virtualenv>20'
       - name: Install Tox
         run: pip install tox
       - name: Run pre-commit in Tox
@@ -39,6 +39,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_DB: test_lammps
+          POSTGRES_PASSWORD: ""
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
       rabbitmq:
         image: rabbitmq:latest
         ports:
@@ -65,7 +78,6 @@ jobs:
           sudo .ci/enable_ssh_localhost.sh
           sudo apt install locate
           sudo updatedb
-          sudo apt install postgresql
       - name: Make sure virtualevn>20 is installed, which will yield newer pip and posibility to pin pip version.
         run: pip install 'virtualenv>20'
       - name: Install Tox
@@ -82,8 +94,7 @@ jobs:
           replace-with: ''
       - name: Run tox and codecov
         if: matrix.python == '3.9'
-        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp --
-          --cov=./aiida_vasp --cov-append --cov-report=xml
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp -- --cov=./aiida_vasp --cov-append --cov-report=xml
       - name: Run tox
         if: matrix.python != '3.9'
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
