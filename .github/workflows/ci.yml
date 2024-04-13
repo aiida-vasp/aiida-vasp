@@ -16,7 +16,7 @@ jobs:
       matrix:
         python: ['3.9']
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4
       - name: Cache python dependencies
         id: cache-pip
         uses: actions/cache@v3.2.6
@@ -60,7 +60,7 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11']
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4
       - name: Cache python dependencies
         id: cache-pip
         uses: actions/cache@v3.2.6
@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -133,7 +133,7 @@ jobs:
     needs: [pre-commit, tests, validate-release-tag]
     steps:
     - name: Checkout source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
