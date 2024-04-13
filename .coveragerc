@@ -1,5 +1,5 @@
 [run]
-source = aiida_vasp
+source = src
 parallel = True
 
 [report]
