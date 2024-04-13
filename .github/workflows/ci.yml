@@ -109,7 +109,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload coverage to Codecov
         if: matrix.python == '3.9'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           name: aiida-vasp
           fail_ci_if_error: true
