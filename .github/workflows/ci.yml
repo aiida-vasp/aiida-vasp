@@ -94,7 +94,7 @@ jobs:
           replace-with: ''
       - name: Run tox and codecov
         if: matrix.python == '3.9'
-        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp -- --cov=./aiida_vasp --cov-append --cov-report=xml
+        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp -- --cov=aiida_vasp --cov-append --cov-report=xml
       - name: Run tox
         if: matrix.python != '3.9'
         run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
@@ -111,7 +111,9 @@ jobs:
         if: matrix.python == '3.9'
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           name: aiida-vasp
+          flags: pytests
           fail_ci_if_error: true
 
   validate-release-tag:
