@@ -1,7 +1,3 @@
-[run]
-source = src
-parallel = True
-
 [report]
 omit =
     *test*
