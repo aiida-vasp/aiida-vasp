@@ -13,7 +13,7 @@ jobs:
       postgres:
         image: postgres:12
         env:
-          POSTGRES_DB: test_lammps
+          POSTGRES_DB: test_vasp
           POSTGRES_PASSWORD: ""
           POSTGRES_HOST_AUTH_METHOD: trust
         options: >-
@@ -36,13 +36,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Install system dependencies
-        run: |
-          curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
-          sudo apt update
-          sudo .ci/enable_ssh_localhost.sh
-          sudo apt install locate
-          sudo updatedb
+
       - name: Upgrade pip
         run: |
           pip install --upgrade pip
@@ -60,23 +54,5 @@ jobs:
         id: install_aiida
         run: |
           pip install git+https://github.com/aiidateam/aiida-core@main
-      - name: Remove dot in Python version for passing version to tox
-        uses: frabert/replace-string-action@master
-        id: tox
-        with:
-          pattern: '\.'
-          string: ${{ matrix.python }}
-          replace-with: ""
       - name: Run tox
-        run: tox -e py${{ steps.tox.outputs.replaced }}-aiida_vasp
-      - name: Notification to Slack channel
-        if: steps.install_plugin.outcome == 'Failure' || steps.install_aiida.outcome == 'Failure' || steps.tox.outcome == 'Failure'
-        uses: rtCamp/action-slack-notify@master
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_ICON: https://www.materialscloud.org/discover/images/0ba0a17d.aiida-logo-128.png
-          SLACK_USERNAME: aiida-vasp
-          SLACK_CHANNEL: nightly
-          SLACK_COLOR: b60205
-          SLACK_TITLE: "Nightly build against `aiida-core/main` failed"
-          SLACK_MESSAGE: "The tests fail with the current version of `aiida-core/main`."
+        run: tox -e ${{ matrix.python }}-aiida_vasp
