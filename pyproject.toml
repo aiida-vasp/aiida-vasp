@@ -184,7 +184,7 @@ indent_dictionary_value = false
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = pre-commit,{py39,py310,py311}-aiida_vasp
+envlist = pre-commit,{3.9,3.10,3.11}-aiida_vasp
 requires = virtualenv >= 20
 isolated_build = True
 
