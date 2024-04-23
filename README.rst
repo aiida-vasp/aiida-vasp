@@ -34,12 +34,17 @@ AiiDA VASP plugin
    :target: https://github.com/aiida-vasp/aiida-vasp/commits/develop
    :alt: GitHub commit activity
 
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.11044629.svg
+   :target: https://doi.org/10.5281/zenodo.11044629
+   :alt: Zenodo DOI
+
 +---------+-------------------------------+
 | Release | |version| |status| |versions| |
 +---------+-------------------------------+
 | Build   | |build| |coverage| |doc|      |
 +---------+-------------------------------+
-| Stats   | |downloads| |commits|         |
+| Stats   | |downloads| |commits|  |DOI|  |
 +---------+-------------------------------+
 
 
