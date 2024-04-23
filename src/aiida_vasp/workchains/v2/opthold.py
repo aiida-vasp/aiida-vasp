@@ -343,10 +343,12 @@ class OptionContainer:
 
         lines = []
         for entry in entries:
-            lines.append(template.format(
-                *entry,
-                width_name=max_width_name,
-                width_name2=max_width_name + 10,
-                default='Default',
-            ))
+            lines.append(
+                template.format(
+                    *entry,
+                    width_name=max_width_name,
+                    width_name2=max_width_name + 10,
+                    default='Default',
+                )
+            )
         return '\n'.join(lines)

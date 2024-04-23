@@ -48,7 +48,7 @@ tests = [
 pre-commit = [
     "tox>=3.23.0",
     "virtualenv>20",
-    "pre-commit~=2.2",
+    "pre-commit>=2.2,<4.0",
     "pylint~=2.15.0",
     "sphinx-lint~=0.6"
 ]
@@ -190,7 +190,7 @@ indent_dictionary_value = false
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = pre-commit,{py39,py310,py311}-aiida_vasp
+envlist = pre-commit,{3.9,3.10,3.11}-aiida_vasp
 requires = virtualenv >= 20
 isolated_build = True
 

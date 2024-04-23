@@ -133,7 +133,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'band_mode',
-            help='Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath, seekpath-aiida and latimer-munro.',
+            help=
+            'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath, seekpath-aiida and latimer-munro.',
             required=False,
             valid_type=orm.Str,
         )
@@ -377,10 +378,14 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         if not np.allclose(self.ctx.current_structure.cell, current_structure_backup.cell):
             if self.inputs.scf.get('kpoints'):
-                self.report('The primitive structure is not the same as the input structure but explicitly kpoints'
-                            ' are supplied - aborting the workchain.')
+                self.report(
+                    'The primitive structure is not the same as the input structure but explicitly kpoints'
+                    ' are supplied - aborting the workchain.'
+                )
                 return self.exit_codes.ERROR_INPUT_STRUCTURE_NOT_PRIMITIVE  # pylint: disable=no-member
-            self.report('The primitive structure is not the same as the input structure - using the former for all calculations from now.')
+            self.report(
+                'The primitive structure is not the same as the input structure - using the former for all calculations from now.'
+            )
         self.ctx.bs_kpoints = kpath_results['explicit_kpoints']
         self.out('primitive_structure', self.ctx.current_structure)
         if 'parameters' in kpath_results:
