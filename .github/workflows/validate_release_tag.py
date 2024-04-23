@@ -31,6 +31,6 @@ if __name__ == '__main__':
     TAG_PREFIX = 'refs/tags/v'
     assert args.GITHUB_REF.startswith(TAG_PREFIX), f'GITHUB_REF should start with "{TAG_PREFIX}": {args.GITHUB_REF}'
     tag_version = args.GITHUB_REF[len(TAG_PREFIX):]
-    package_version = get_version_from_module(Path('aiida_vasp/__init__.py').read_text(encoding='utf-8'))
+    package_version = get_version_from_module(Path('src/aiida_vasp/__init__.py').read_text(encoding='utf-8'))
     error_message = f'The tag version `{tag_version}` is different from the package version `{package_version}`'
     assert tag_version == package_version, error_message

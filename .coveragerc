@@ -1,7 +1,3 @@
-[run]
-source = aiida_vasp
-parallel = True
-
 [report]
 omit =
     *test*
