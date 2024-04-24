@@ -5,9 +5,8 @@ The ``POSCAR``/``CONTCAR`` parser interface.
 Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONTCAR`` content.
 """
 import numpy as np
-from parsevasp.poscar import Poscar, Site
-
 from aiida.common.constants import elements
+from parsevasp.poscar import Poscar, Site
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -54,9 +53,7 @@ class PoscarParser(BaseFileParser):
         """
 
         try:
-            self._content_parser = Poscar(
-                file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger
-            )
+            self._content_parser = Poscar(file_handler=handler, prec=self._precision, conserve_order=True, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 

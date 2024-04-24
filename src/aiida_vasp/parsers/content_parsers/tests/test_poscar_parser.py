@@ -2,9 +2,7 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import numpy as np
 import pytest
-
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, get_data_class
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 
@@ -39,14 +37,23 @@ def test_parse_poscar_write(poscar_parser, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         content = handler.readlines()
     ref_content = [
-        '# Compound: Al4. Old comment: Al\n', '  1.000000000000\n',
-        '  4.040000000000   0.000000000000   0.000000000000\n', '  0.000000000000   4.040000000000   0.000000000000\n',
-        '  0.000000000000   0.000000000000   4.040000000000\n', 'Al\n', '    4\n', 'Direct\n',
-        '  0.000000000000   0.000000000000   0.000000000000\n', '  0.000000000000   0.500000000000   0.500000000000\n',
-        '  0.500000000000   0.000000000000   0.500000000000\n', '  0.500000000000   0.500000000000   0.000000000000\n',
-        '\n', '  0.000000000000   0.000000000000   0.000000000000\n',
-        '  0.000000000000   0.000000000000   0.000000000000\n', '  0.000000000000   0.000000000000   0.000000000000\n',
-        '  0.000000000000   0.000000000000   0.000000000000\n'
+        '# Compound: Al4. Old comment: Al\n',
+        '  1.000000000000\n',
+        '  4.040000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   4.040000000000   0.000000000000\n',
+        '  0.000000000000   0.000000000000   4.040000000000\n',
+        'Al\n',
+        '    4\n',
+        'Direct\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   0.500000000000   0.500000000000\n',
+        '  0.500000000000   0.000000000000   0.500000000000\n',
+        '  0.500000000000   0.500000000000   0.000000000000\n',
+        '\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n',
+        '  0.000000000000   0.000000000000   0.000000000000\n',
     ]
     assert content == ref_content
 
@@ -90,9 +97,8 @@ def test_consistency_with_parsevasp(vasp_structure):
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
     """
-    from parsevasp.poscar import Poscar
-
     from aiida_vasp.parsers.content_parsers.poscar import parsevasp_to_aiida
+    from parsevasp.poscar import Poscar
 
     path = data_path('poscar', 'POSCAR')
     poscar = Poscar(file_path=path, prec=12, conserve_order=True)
@@ -119,45 +125,50 @@ def compare_objects(obj_a, obj_b):
 
 def compare_poscar_content(result, velocities=True, predictors=True):
     """Compare the content of a supplied get_quantity('poscar-structure') with reference data."""
-    unitcell = np.array([[4.04, 0., 0.], [0., 4.04, 0.], [0., 0., 4.04]])
+    unitcell = np.array([[4.04, 0.0, 0.0], [0.0, 4.04, 0.0], [0.0, 0.0, 4.04]])
     keys = ['comment', 'unitcell', 'sites']
-    species = [{
-        'specie': 'Al',
-        'position': np.array([0., 0., 0.]),
-        'selective': [True, True, True],
-        'velocities': None,
-        'predictors': np.array([0., 0., 0.]),
-        'direct': False,
-        'symbol': 'Al',
-        'kind_name': 'Al'
-    }, {
-        'specie': 'Al',
-        'position': np.array([0., 2.02, 2.02]),
-        'selective': [True, True, True],
-        'velocities': None,
-        'predictors': np.array([0., 0., 0.]),
-        'direct': False,
-        'symbol': 'Al',
-        'kind_name': 'Al'
-    }, {
-        'specie': 'Al',
-        'position': np.array([2.02, 0., 2.02]),
-        'selective': [True, True, True],
-        'velocities': None,
-        'predictors': np.array([0., 0., 0.]),
-        'direct': False,
-        'symbol': 'Al',
-        'kind_name': 'Al'
-    }, {
-        'specie': 'Al',
-        'position': np.array([2.02, 2.02, 0.]),
-        'selective': [True, True, True],
-        'velocities': None,
-        'predictors': np.array([0., 0., 0.]),
-        'direct': False,
-        'symbol': 'Al',
-        'kind_name': 'Al'
-    }]
+    species = [
+        {
+            'specie': 'Al',
+            'position': np.array([0.0, 0.0, 0.0]),
+            'selective': [True, True, True],
+            'velocities': None,
+            'predictors': np.array([0.0, 0.0, 0.0]),
+            'direct': False,
+            'symbol': 'Al',
+            'kind_name': 'Al',
+        },
+        {
+            'specie': 'Al',
+            'position': np.array([0.0, 2.02, 2.02]),
+            'selective': [True, True, True],
+            'velocities': None,
+            'predictors': np.array([0.0, 0.0, 0.0]),
+            'direct': False,
+            'symbol': 'Al',
+            'kind_name': 'Al',
+        },
+        {
+            'specie': 'Al',
+            'position': np.array([2.02, 0.0, 2.02]),
+            'selective': [True, True, True],
+            'velocities': None,
+            'predictors': np.array([0.0, 0.0, 0.0]),
+            'direct': False,
+            'symbol': 'Al',
+            'kind_name': 'Al',
+        },
+        {
+            'specie': 'Al',
+            'position': np.array([2.02, 2.02, 0.0]),
+            'selective': [True, True, True],
+            'velocities': None,
+            'predictors': np.array([0.0, 0.0, 0.0]),
+            'direct': False,
+            'symbol': 'Al',
+            'kind_name': 'Al',
+        },
+    ]
     assert set(result.keys()) == set(keys)
     assert np.allclose(result['unitcell'], unitcell)
     for index, item in enumerate(species):

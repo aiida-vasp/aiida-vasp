@@ -8,7 +8,6 @@ parameters instead of the code dependent variables.
 """
 # pylint: disable=attribute-defined-outside-init
 import numpy as np
-
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_, while_
@@ -22,6 +21,7 @@ from aiida_vasp.utils.workchains import compare_structures, compose_exit_code, p
 
 class RelaxWorkChain(WorkChain):
     """Structure relaxation workchain."""
+
     _verbose = False
     _next_workchain_string = 'vasp.vasp'
     _next_workchain = WorkflowFactory(_next_workchain_string)
@@ -488,24 +488,18 @@ class RelaxWorkChain(WorkChain):
         """Check the convergence of the volume, given a cutoff."""
         volume_converged = bool(delta.volume <= self.ctx.inputs.parameters.relax.convergence_volume)
         if not volume_converged:
-            self.report(
-                f'cell volume changed by {delta.volume}, '
-                f'tolerance is {self.ctx.inputs.parameters.relax.convergence_volume}'
-            )
+            self.report(f'cell volume changed by {delta.volume}, ' f'tolerance is {self.ctx.inputs.parameters.relax.convergence_volume}')
         return volume_converged
 
     def check_positions_convergence(self, delta):
         """Check the convergence of the atomic positions, given a cutoff."""
         try:
-            positions_converged = bool(
-                np.nanmax(delta.pos_lengths) <= self.ctx.inputs.parameters.relax.convergence_positions
-            )
+            positions_converged = bool(np.nanmax(delta.pos_lengths) <= self.ctx.inputs.parameters.relax.convergence_positions)
         except RuntimeWarning:
             # Here we encountered the case of having one atom centered at the origin, so
             # we do not know if it is converged, so settings it to False
             self.report(
-                'there is NaN entries in the relative comparison for '
-                'the positions during relaxation, assuming position is not converged'
+                'there is NaN entries in the relative comparison for ' 'the positions during relaxation, assuming position is not converged'
             )
             positions_converged = False
 
@@ -526,9 +520,7 @@ class RelaxWorkChain(WorkChain):
 
         relaxed_structure = workchain.outputs.structure
         if self._verbose:
-            self.report(
-                f"attaching the node {relaxed_structure.__class__.__name__}<{relaxed_structure.pk}> as 'relax.structure'"
-            )
+            self.report(f"attaching the node {relaxed_structure.__class__.__name__}<{relaxed_structure.pk}> as 'relax.structure'")
         self.out('relax.structure', relaxed_structure)
 
     def results(self):

@@ -7,7 +7,6 @@ calculations on which one can for instance test parsing etc.
 """
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
-
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
@@ -18,17 +17,6 @@ from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_class, get_da
 from .data import (
     POTCAR_FAMILY_NAME,
     POTCAR_MAP,
-    potentials,
-    ref_incar,
-    ref_win,
-    vasp_chgcar,
-    vasp_code,
-    vasp_kpoints,
-    vasp_params,
-    vasp_structure,
-    vasp_wavecar,
-    wannier_params,
-    wannier_projections,
 )
 
 
@@ -36,6 +24,7 @@ from .data import (
 def sandbox_folder():
     """Yield a `SandboxFolder` that can be used for tests where a Folder is needed."""
     from aiida.common.folders import SandboxFolder
+
     with SandboxFolder() as folder:
         yield folder
 
@@ -44,7 +33,7 @@ def sandbox_folder():
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.orm import CalcJobNode  # pylint: disable=no-name-in-module
     from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None):
@@ -56,7 +45,7 @@ def calc_with_retrieved(localhost):
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.base.attributes.set('input_filename', 'INCAR')
         node.base.attributes.set('output_filename', 'OUTCAR')
-        #node.set_attribute('error_filename', 'aiida.err')
+        # node.set_attribute('error_filename', 'aiida.err')
         node.base.attributes.set('scheduler_stderr', '_scheduler-stderr.txt')
         node.base.attributes.set('scheduler_stdout', '_scheduler-stdout.txt')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
@@ -86,7 +75,7 @@ def calc_with_retrieved(localhost):
 def neb_calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
     from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, Computer  # pylint: disable=no-name-in-module
+    from aiida.orm import CalcJobNode  # pylint: disable=no-name-in-module
     from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None, nimgs=3):
@@ -98,7 +87,7 @@ def neb_calc_with_retrieved(localhost):
         node = CalcJobNode(computer=computer, process_type=process_type)
         node.base.attributes.set('input_filename', 'INCAR')
         node.base.attributes.set('output_filename', 'OUTCAR')
-        #node.set_attribute('error_filename', 'aiida.err')
+        # node.set_attribute('error_filename', 'aiida.err')
         node.base.attributes.set('scheduler_stderr', '_scheduler-stderr.txt')
         node.base.attributes.set('scheduler_stdout', '_scheduler-stdout.txt')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
@@ -134,6 +123,7 @@ def neb_calc_with_retrieved(localhost):
 def base_calc(fresh_aiida_env, vasp_code):
     """An instance of a VaspCalcBase Process."""
     from aiida_vasp.calcs.base import VaspCalcBase
+
     manager = get_manager()
     runner = manager.get_runner()
     inputs = AttributeDict()
@@ -152,7 +142,6 @@ def vasp_calc(vasp_inputs):
     from aiida_vasp.calcs.vasp import VaspCalculation
 
     def inner(inputs=None, settings=None):
-
         if inputs is None:
             inputs = vasp_inputs(settings)
         manager = get_manager()
@@ -169,7 +158,6 @@ def vasp_neb_calc(vasp_neb_inputs):
     from aiida_vasp.calcs.neb import VaspNEBCalculation
 
     def inner(inputs=None, settings=None):
-
         if inputs is None:
             inputs = vasp_neb_inputs(settings)
         manager = get_manager()
@@ -186,7 +174,6 @@ def vasp2w90_calc(vasp_inputs):
     from aiida_vasp.calcs.vasp2w90 import Vasp2w90Calculation
 
     def inner(inputs=None, settings=None):
-
         if inputs is None:
             inputs = vasp_inputs(settings)
 
@@ -211,7 +198,15 @@ def vasp_calc_and_ref(vasp_calc, vasp_kpoints, ref_incar):
 def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_incar_vasp2w90, ref_win):
     """Fixture for non varying setup of a vasp2w90 calculation."""
 
-    inputs = vasp2w90_inputs(settings={'parser_settings': {'add_bands': True, 'add_dos': True, 'poscar_precision': 12}})
+    inputs = vasp2w90_inputs(
+        settings={
+            'parser_settings': {
+                'add_bands': True,
+                'add_dos': True,
+                'poscar_precision': 12,
+            }
+        }
+    )
 
     calc = vasp2w90_calc(inputs=inputs)
     _, ref_kpoints = vasp_kpoints
@@ -253,26 +248,27 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
         options = {
             'withmpi': False,
             'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
+            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1},
+            'max_wallclock_seconds': 3600,
         }
         if test_case is not None:
             # Allow to fetch special tests cases using the mock-vasp executable
             parameters['system'] = f'test-case:{test_case}'
         if process_type == 'calcjob':
             from aiida.plugins import CalculationFactory
+
             process = CalculationFactory('vasp.vasp')
             inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
-                structure=inpts.structure, family_name=POTCAR_FAMILY_NAME, mapping=POTCAR_MAP
+                structure=inpts.structure,
+                family_name=POTCAR_FAMILY_NAME,
+                mapping=POTCAR_MAP,
             )
             inpts.parameters = get_data_class('core.dict')(dict=parameters)
             inpts.metadata = {}
             inpts.metadata['options'] = options
         elif process_type == 'workchain':
             from aiida.plugins import WorkflowFactory
+
             process = WorkflowFactory('vasp.vasp')
             inpts.potential_family = get_data_node('core.str', POTCAR_FAMILY_NAME)
             inpts.potential_mapping = get_data_node('core.dict', dict=POTCAR_MAP)
@@ -282,9 +278,7 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
             inpts.clean_workdir = get_data_node('core.bool', False)
             inpts.verbose = get_data_node('core.bool', True)
         else:
-            raise ValueError(
-                f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'"
-            )
+            raise ValueError(f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'")
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
@@ -304,5 +298,8 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
 
 ONLY_ONE_CALC = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 
-STRUCTURE_TYPES = pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh'), ('str', 'mesh')],
-                                          indirect=True)
+STRUCTURE_TYPES = pytest.mark.parametrize(
+    ['vasp_structure', 'vasp_kpoints'],
+    [('cif', 'mesh'), ('str', 'mesh')],
+    indirect=True,
+)

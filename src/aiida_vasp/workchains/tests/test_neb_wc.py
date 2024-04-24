@@ -6,10 +6,8 @@ Test for the NEB workchain
 from io import StringIO
 
 import pytest
-
 from aiida import orm
 from aiida.plugins import WorkflowFactory
-
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import create_authinfo
@@ -62,7 +60,7 @@ Direct
 @pytest.fixture
 def neb_wc_input(fresh_aiida_env, potentials, mock_vasp_strict, nh3_end_points):
     """Generate inputs for an NEB workchain"""
-    #upload_real_pseudopotentials('/home/bonan/appdir/VASP/POTCARS/potpaw_PBE.54-2015_subset/')
+    # upload_real_pseudopotentials('/home/bonan/appdir/VASP/POTCARS/potpaw_PBE.54-2015_subset/')
     init, final = nh3_end_points
     neb_frames = neb_interpolate(init, final, orm.Int(3))
     parameters = {
@@ -71,7 +69,7 @@ def neb_wc_input(fresh_aiida_env, potentials, mock_vasp_strict, nh3_end_points):
         'ibrion': 3,
         'nsw': 50,
         'algo': 'normal',
-        'potim': 0.,
+        'potim': 0.0,
         'iopt': 1,
         'ediffg': -0.02,
     }
@@ -105,6 +103,7 @@ def upload_real_pseudopotentials(path):
     correct POTCARs
     """
     from aiida.plugins import DataFactory
+
     global POTCAR_FAMILY_NAME  # pylint: disable=global-statement
     POTCAR_FAMILY_NAME = 'TEMP'
     potcar_data_cls = DataFactory('vasp.potcar')
@@ -118,6 +117,7 @@ def upload_real_workchain(node, name):
     This function should be called once after the REAL vasp calculation is run during the test
     """
     from aiida_vasp.utils.mock_code import VaspMockRegistry
+
     reg = VaspMockRegistry()
     print(reg.base_path)
     reg.upload_aiida_work(node, name)
@@ -127,6 +127,7 @@ def test_vasp_neb_wc(fresh_aiida_env, neb_wc_input):
     """Test the workchain"""
 
     from aiida.engine import run_get_node
+
     _, out_node = run_get_node(neb_wc_input)
     assert out_node.exit_status == 0
-    #upload_real_workchain(out_node, "neb-workchain")
+    # upload_real_workchain(out_node, "neb-workchain")

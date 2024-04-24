@@ -205,11 +205,55 @@ commands = bash -ec 'pre-commit run --all-files || ( git diff; git status; exit 
 extras =
        pre-commit
        tests
-
-[flake8]
-max-line-length = 140
-import-order-style = edited
-
-[pycodestyle]
-max-line-length = 140
 """
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "cookiecutters",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+line-length = 140
+
+[tool.ruff.format]
+"quote-style" = "single"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["F403"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+#    "UP",
+#    "B",
+#    "SIM",
+#    "D",
+     "FLY"
+    ]

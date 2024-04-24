@@ -9,7 +9,6 @@ to make code more compact in the workchains.
 from copy import deepcopy
 
 import numpy as np
-
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.processes.exit_code import ExitCode
 from aiida.orm import Dict
@@ -39,7 +38,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     no_dict = no_dict + namespaces
     # Copy and convert dict
     for key, val in inputs.items():
-        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()])):  # pylint: disable=use-a-generator
+        if key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()]):  # pylint: disable=use-a-generator
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val

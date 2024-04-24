@@ -3,7 +3,6 @@
 # pylint: disable=invalid-name
 import numpy as np
 import pytest
-
 from aiida_vasp.parsers.node_composer import NODES_TYPES, NodeComposer, clean_nan_values
 from aiida_vasp.parsers.settings import NODES
 from aiida_vasp.utils.aiida_utils import get_data_class
@@ -42,10 +41,8 @@ def test_create_node_kpoints(fresh_aiida_env, vasprun_parser):
 
     # Compare
     kpoints = composed_nodes.successful['kpoints']
-    np.testing.assert_allclose(kpoints.get_kpoints()[0], np.array([0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(
-        kpoints.get_kpoints()[-1], np.array([0.42857143, -0.42857143, 0.42857143]), atol=0., rtol=1.0e-7
-    )
+    np.testing.assert_allclose(kpoints.get_kpoints()[0], np.array([0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(kpoints.get_kpoints()[-1], np.array([0.42857143, -0.42857143, 0.42857143]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR'],)], indirect=True)
@@ -84,15 +81,24 @@ def test_create_node_forces(fresh_aiida_env, vasprun_parser):
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
 
     # Compare
-    forces_check = np.array([[-0.24286901, 0., 0.], [-0.24286901, 0., 0.], [3.41460162, 0., 0.], [0.44305748, 0., 0.],
-                             [-0.73887169, 0.43727184, 0.43727184], [-0.94708885, -0.85011586, 0.85011586],
-                             [-0.94708885, 0.85011586, -0.85011586], [-0.73887169, -0.43727184, -0.43727184]])
+    forces_check = np.array(
+        [
+            [-0.24286901, 0.0, 0.0],
+            [-0.24286901, 0.0, 0.0],
+            [3.41460162, 0.0, 0.0],
+            [0.44305748, 0.0, 0.0],
+            [-0.73887169, 0.43727184, 0.43727184],
+            [-0.94708885, -0.85011586, 0.85011586],
+            [-0.94708885, 0.85011586, -0.85011586],
+            [-0.73887169, -0.43727184, -0.43727184],
+        ]
+    )
     data_obj = composed_nodes.successful['forces']
     forces = data_obj.get_array('final')
     # First, third and last position
-    np.testing.assert_allclose(forces[0], forces_check[0], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(forces[2], forces_check[2], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(forces[7], forces_check[7], atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(forces[0], forces_check[0], atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(forces[2], forces_check[2], atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(forces[7], forces_check[7], atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
@@ -107,14 +113,15 @@ def test_create_node_stress(fresh_aiida_env, vasprun_parser):
     composed_nodes = node_composer_test_helper(node_settings_key, NODES, [vasprun_parser])
 
     # Compare
-    stress_check = np.array([[-0.38703740, 0.00000000, 0.00000000], [0.00000000, 12.52362644, -25.93894358],
-                             [0.00000000, -25.93894358, 12.52362644]])
+    stress_check = np.array(
+        [[-0.38703740, 0.00000000, 0.00000000], [0.00000000, 12.52362644, -25.93894358], [0.00000000, -25.93894358, 12.52362644]]
+    )
     data_obj = composed_nodes.successful['stress']
     stress = data_obj.get_array('final')
     # First, third and last position
-    np.testing.assert_allclose(stress[0], stress_check[0], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(stress[1], stress_check[1], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(stress[2], stress_check[2], atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(stress[0], stress_check[0], atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(stress[1], stress_check[1], atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(stress[2], stress_check[2], atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
@@ -131,10 +138,10 @@ def test_create_node_trajectory_forces(fresh_aiida_env, vasprun_parser):
     # Compare
     data_obj = composed_nodes.successful['trajectory']
     traj = data_obj.get_array('forces')
-    np.testing.assert_allclose(traj[0][0], np.array([-0.24286901, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[0][-1], np.array([-0.73887169, -0.43727184, -0.43727184]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[0][-1], traj[1][-1], atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[0][0], traj[1][0], atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][0], np.array([-0.24286901, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][-1], np.array([-0.73887169, -0.43727184, -0.43727184]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][-1], traj[1][-1], atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][0], traj[1][0], atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
@@ -153,14 +160,10 @@ def test_create_node_trajectory_forces_ionic(fresh_aiida_env, vasprun_parser):
     traj = data_obj.get_array('forces')
     assert traj.shape == (19, 8, 3)
     # First and last atom
-    np.testing.assert_allclose(traj[0][0], np.array([-2.42632080e-01, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(
-        traj[0][-1], np.array([-7.38879520e-01, -4.37063010e-01, -4.37063010e-01]), atol=0., rtol=1.0e-7
-    )
-    np.testing.assert_allclose(traj[-1][0], np.array([1.55852000e-03, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(
-        traj[-1][-1], np.array([-1.75970000e-03, 1.12150000e-04, 1.12150000e-04]), atol=0., rtol=1.0e-7
-    )
+    np.testing.assert_allclose(traj[0][0], np.array([-2.42632080e-01, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][-1], np.array([-7.38879520e-01, -4.37063010e-01, -4.37063010e-01]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][0], np.array([1.55852000e-03, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][-1], np.array([-1.75970000e-03, 1.12150000e-04, 1.12150000e-04]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
@@ -179,10 +182,10 @@ def test_create_node_trajectory_cells(fresh_aiida_env, vasprun_parser):
     traj = data_obj.get_array('cells')
     assert traj.shape == (19, 3, 3)
     # First and last entry
-    np.testing.assert_allclose(traj[0][0], np.array([5.46503124e+00, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[0][-1], np.array([0.0, 0.0, 5.46503124e+00]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[-1][0], np.array([5.46702248e+00, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[-1][-1], np.array([0.0, 2.19104000e-03, 5.46705225e+00]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][0], np.array([5.46503124e00, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][-1], np.array([0.0, 0.0, 5.46503124e00]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][0], np.array([5.46702248e00, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][-1], np.array([0.0, 2.19104000e-03, 5.46705225e00]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
@@ -201,10 +204,10 @@ def test_create_node_trajectory_positions(fresh_aiida_env, vasprun_parser):
     traj = data_obj.get_array('positions')
     assert traj.shape == (19, 8, 3)
     # First and last entry
-    np.testing.assert_allclose(traj[0][0], np.array([0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[0][-1], np.array([0.75, 0.75, 0.25]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[-1][0], np.array([-0.00621692, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(traj[-1][-1], np.array([0.7437189, 0.74989833, 0.24989833]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][0], np.array([0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[0][-1], np.array([0.75, 0.75, 0.25]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][0], np.array([-0.00621692, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(traj[-1][-1], np.array([0.7437189, 0.74989833, 0.24989833]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)
@@ -228,16 +231,13 @@ def test_create_node_dielectrics(fresh_aiida_env, vasprun_parser):
     assert real.shape == (1000, 6)
     assert energy.shape == (1000,)
     # A few entries
-    np.testing.assert_allclose(imag[0], np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(imag[500], np.array([0.0933, 0.0924, 0.0924, 0.0, 0.0082, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(imag[999], np.array([0.0035, 0.0035, 0.0035, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(real[0], np.array([12.0757, 11.4969, 11.4969, 0.0, 0.6477, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(real[500], np.array([-0.5237, -0.5366, -0.5366, 0.0, 0.0134, 0.0]), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(imag[0], np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(imag[500], np.array([0.0933, 0.0924, 0.0924, 0.0, 0.0082, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(imag[999], np.array([0.0035, 0.0035, 0.0035, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(real[0], np.array([12.0757, 11.4969, 11.4969, 0.0, 0.6477, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(real[500], np.array([-0.5237, -0.5366, -0.5366, 0.0, 0.0134, 0.0]), atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(
-        real[999],
-        np.array([6.57100000e-01, 6.55100000e-01, 6.55100000e-01, 0.0, -1.00000000e-04, 0.0]),
-        atol=0.,
-        rtol=1.0e-7
+        real[999], np.array([6.57100000e-01, 6.55100000e-01, 6.55100000e-01, 0.0, -1.00000000e-04, 0.0]), atol=0.0, rtol=1.0e-7
     )
     assert energy[500] == pytest.approx(10.2933)
 
@@ -261,10 +261,10 @@ def test_create_node_dielectrics_epsilon(fresh_aiida_env, vasprun_parser):
     assert epsilon.shape == (3, 3)
     assert epsilon_ion.shape == (3, 3)
     # A few entries
-    test = np.array([[13.05544887, -0., 0.], [-0., 13.05544887, -0.], [0., 0., 13.05544887]])
-    np.testing.assert_allclose(epsilon, test, atol=0., rtol=1.0e-7)
-    test = np.array([[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]])
-    np.testing.assert_allclose(epsilon_ion, test, atol=0., rtol=1.0e-7)
+    test = np.array([[13.05544887, -0.0, 0.0], [-0.0, 13.05544887, -0.0], [0.0, 0.0, 13.05544887]])
+    np.testing.assert_allclose(epsilon, test, atol=0.0, rtol=1.0e-7)
+    test = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    np.testing.assert_allclose(epsilon_ion, test, atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('localfield',)], indirect=True)
@@ -284,13 +284,9 @@ def test_create_node_born_charges(fresh_aiida_env, vasprun_parser):
     # Shape of array
     assert born.shape == (8, 3, 3)
     # A few entries
-    np.testing.assert_allclose(born[0][0], np.array([6.37225000e-03, 0.0, 0.0]), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(
-        born[0][-1], np.array([-4.21760000e-04, -2.19570210e-01, 3.20709600e-02]), atol=0., rtol=1.0e-7
-    )
-    np.testing.assert_allclose(
-        born[4][0], np.array([1.68565200e-01, -2.92058000e-02, -2.92058000e-02]), atol=0., rtol=1.0e-7
-    )
+    np.testing.assert_allclose(born[0][0], np.array([6.37225000e-03, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(born[0][-1], np.array([-4.21760000e-04, -2.19570210e-01, 3.20709600e-02]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(born[4][0], np.array([1.68565200e-01, -2.92058000e-02, -2.92058000e-02]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
@@ -359,12 +355,8 @@ def test_create_node_dos_partial(fresh_aiida_env, vasprun_parser):
     assert dos.shape == (8, 1000, 9)
     assert energy.shape == (1000,)
     # A few entries
-    np.testing.assert_allclose(
-        dos[3, 500], np.array([0.0770, 0.0146, 0.0109, 0.0155, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7
-    )
-    np.testing.assert_allclose(
-        dos[7, 500], np.array([0.0747, 0.0121, 0.0092, 0.0116, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7
-    )
+    np.testing.assert_allclose(dos[3, 500], np.array([0.0770, 0.0146, 0.0109, 0.0155, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(dos[7, 500], np.array([0.0747, 0.0121, 0.0092, 0.0116, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
     assert energy[500] == pytest.approx(0.01)
 
 
@@ -385,15 +377,9 @@ def test_create_node_projectors(fresh_aiida_env, vasprun_parser):
     # Shape of array
     assert proj.shape == (8, 64, 21, 9)
     # A few entries
-    np.testing.assert_allclose(
-        proj[0, 0, 5], np.array([0.0, 0.012, 0.0123, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7
-    )
-    np.testing.assert_allclose(
-        proj[7, 0, 5], np.array([0.1909, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7
-    )
-    np.testing.assert_allclose(
-        proj[4, 3, 5], np.array([0.2033, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0., rtol=1.0e-7
-    )
+    np.testing.assert_allclose(proj[0, 0, 5], np.array([0.0, 0.012, 0.0123, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(proj[7, 0, 5], np.array([0.1909, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(proj[4, 3, 5], np.array([0.2033, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0, 0.0, 0.0]), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
@@ -471,30 +457,27 @@ def test_create_node_energies(fresh_aiida_env, vasprun_parser):
 
     # Compare
     energies = composed_nodes.successful['energies']
-    assert set(energies.get_arraynames()
-               ) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    assert set(energies.get_arraynames()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
     energies_ext = energies.get_array('energy_extrapolated_electronic')
     test_array = np.array([-42.91113621])
-    np.testing.assert_allclose(test_array, energies_ext, atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies_ext, atol=0.0, rtol=1.0e-7)
     # Test number of entries
     assert energies_ext.shape == (1,)
     # Electronic steps should be one
     test_array = np.array([1])
-    np.testing.assert_allclose(test_array, energies.get_array('electronic_steps'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('electronic_steps'), atol=0.0, rtol=1.0e-7)
     # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     test_array = np.array([-0.00236711])
     with np.testing.assert_raises(AssertionError):
-        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
     # Instead we correct and it should be
     test_array = np.array([-42.91113621])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
 
 
-@pytest.mark.parametrize(['vasprun_parser'],
-                         [(['basic', 'vasprun.xml', {
-                             'energy_type': ['energy_free', 'energy_no_entropy']
-                         }],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['vasprun_parser'], [(['basic', 'vasprun.xml', {'energy_type': ['energy_free', 'energy_no_entropy']}],)], indirect=True
+)
 def test_create_node_energies_multiple(fresh_aiida_env, vasprun_parser):
     """Check that the node composer works for the energies node and contain the correct set of chosen energies."""
 
@@ -507,21 +490,18 @@ def test_create_node_energies_multiple(fresh_aiida_env, vasprun_parser):
 
     # Compare
     energies = composed_nodes.successful['energies']
-    assert set(energies.get_arraynames()) == set([
-        'electronic_steps', 'energy_free_electronic', 'energy_free', 'energy_no_entropy_electronic', 'energy_no_entropy'
-    ])
+    assert set(energies.get_arraynames()) == set(
+        ['electronic_steps', 'energy_free_electronic', 'energy_free', 'energy_no_entropy_electronic', 'energy_no_entropy']
+    )
     test_array = np.array([-42.91231976])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_free_electronic'), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(test_array, energies.get_array('energy_free'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_free_electronic'), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_free'), atol=0.0, rtol=1.0e-7)
     test_array = np.array([-42.90995265])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_no_entropy_electronic'), atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(test_array, energies.get_array('energy_no_entropy'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_no_entropy_electronic'), atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_no_entropy'), atol=0.0, rtol=1.0e-7)
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [(['basic', 'vasprun.xml', {
-    'electronic_step_energies': True
-}],)],
-                         indirect=True)
+@pytest.mark.parametrize(['vasprun_parser'], [(['basic', 'vasprun.xml', {'electronic_step_energies': True}],)], indirect=True)
 def test_create_node_energies_electronic(fresh_aiida_env, vasprun_parser):
     """Check that the node composer works for the energies node and contain the correct energies for each electronic step update"""
 
@@ -536,19 +516,19 @@ def test_create_node_energies_electronic(fresh_aiida_env, vasprun_parser):
     energies = composed_nodes.successful['energies']
     energies_ext = energies.get_array('energy_extrapolated_electronic')
     test_array = np.array([-42.91113666, -42.91113621])
-    np.testing.assert_allclose(test_array, energies_ext, atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies_ext, atol=0.0, rtol=1.0e-7)
     # Test number of entries
     assert energies_ext.shape == (2,)
     # Electronic steps should be two
     test_array = np.array([2])
-    np.testing.assert_allclose(test_array, energies.get_array('electronic_steps'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('electronic_steps'), atol=0.0, rtol=1.0e-7)
     # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     test_array = np.array([-0.00236711])
     with np.testing.assert_raises(AssertionError):
-        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
     # Instead we correct and it should be
     test_array = np.array([-42.91113621])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('relax',)], indirect=True)
@@ -565,40 +545,90 @@ def test_create_node_energies_relax(fresh_aiida_env, vasprun_parser):
     # Compare
     energies = composed_nodes.successful['energies']
     energies_ext = energies.get_array('energy_extrapolated')
-    assert set(energies.get_arraynames()
-               ) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
-    test_array = np.array([
-        -42.91113348, -43.27757545, -43.36648855, -43.37734069, -43.38062479, -43.38334165, -43.38753003, -43.38708193,
-        -43.38641449, -43.38701639, -43.38699488, -43.38773717, -43.38988315, -43.3898822, -43.39011239, -43.39020751,
-        -43.39034244, -43.39044584, -43.39087657
-    ])
+    assert set(energies.get_arraynames()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    test_array = np.array(
+        [
+            -42.91113348,
+            -43.27757545,
+            -43.36648855,
+            -43.37734069,
+            -43.38062479,
+            -43.38334165,
+            -43.38753003,
+            -43.38708193,
+            -43.38641449,
+            -43.38701639,
+            -43.38699488,
+            -43.38773717,
+            -43.38988315,
+            -43.3898822,
+            -43.39011239,
+            -43.39020751,
+            -43.39034244,
+            -43.39044584,
+            -43.39087657,
+        ]
+    )
     # Test energies
-    np.testing.assert_allclose(test_array, energies_ext, atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(test_array, energies_ext, atol=0.0, rtol=1.0e-7)
     # Test number of entries
     assert energies_ext.shape == test_array.shape
     # Electronic steps should be entries times one
-    np.testing.assert_allclose(np.ones(19, dtype=int), energies.get_array('electronic_steps'), atol=0., rtol=1.0e-7)
+    np.testing.assert_allclose(np.ones(19, dtype=int), energies.get_array('electronic_steps'), atol=0.0, rtol=1.0e-7)
     # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
-    test_array = np.array([
-        -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806,
-        -0.00042762, -0.00043875, -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078,
-        -0.00043053, -0.00043149, -0.00043417
-    ])
+    test_array = np.array(
+        [
+            -0.00236637,
+            -0.00048614,
+            -0.00047201,
+            -0.00043261,
+            -0.00041668,
+            -0.00042584,
+            -0.00043637,
+            -0.00042806,
+            -0.00042762,
+            -0.00043875,
+            -0.00042731,
+            -0.00042705,
+            -0.00043064,
+            -0.00043051,
+            -0.00043161,
+            -0.00043078,
+            -0.00043053,
+            -0.00043149,
+            -0.00043417,
+        ]
+    )
     with np.testing.assert_raises(AssertionError):
-        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+        np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
     # Instead we correct and it should be
-    test_array = np.array([
-        -42.911133, -43.277575, -43.366489, -43.377341, -43.380625, -43.383342, -43.38753, -43.387082, -43.386414,
-        -43.387016, -43.386995, -43.387737, -43.389883, -43.389882, -43.390112, -43.390208, -43.390342, -43.390446,
-        -43.390877
-    ])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+    test_array = np.array(
+        [
+            -42.911133,
+            -43.277575,
+            -43.366489,
+            -43.377341,
+            -43.380625,
+            -43.383342,
+            -43.38753,
+            -43.387082,
+            -43.386414,
+            -43.387016,
+            -43.386995,
+            -43.387737,
+            -43.389883,
+            -43.389882,
+            -43.390112,
+            -43.390208,
+            -43.390342,
+            -43.390446,
+            -43.390877,
+        ]
+    )
+    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [(['relax', 'vasprun.xml', {
-    'electronic_step_energies': True
-}],)],
-                         indirect=True)
+@pytest.mark.parametrize(['vasprun_parser'], [(['relax', 'vasprun.xml', {'electronic_step_energies': True}],)], indirect=True)
 def test_create_node_energies_electronic_relax(fresh_aiida_env, vasprun_parser):
     """Check that the node composer works for the energies node and contain the correct energies for each ionic and ionic step."""
 
@@ -612,14 +642,30 @@ def test_create_node_energies_electronic_relax(fresh_aiida_env, vasprun_parser):
     # Compare
     energies = composed_nodes.successful['energies']
     energies_ext = energies.get_array('energy_extrapolated_electronic')
-    assert set(energies.get_arraynames()
-               ) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
+    assert set(energies.get_arraynames()) == set(['energy_extrapolated', 'energy_extrapolated_electronic', 'electronic_steps'])
     test_array_energies = [
-        np.array([
-            163.37398579, 14.26925896, -23.05190509, -34.91615104, -40.20080347, -42.18390876, -42.97469852,
-            -43.31556073, -43.60169068, -43.61723125, -43.61871511, -43.61879751, -43.12548175, -42.90647187,
-            -42.91031846, -42.91099027, -42.91111107, -42.91113348
-        ]),
+        np.array(
+            [
+                163.37398579,
+                14.26925896,
+                -23.05190509,
+                -34.91615104,
+                -40.20080347,
+                -42.18390876,
+                -42.97469852,
+                -43.31556073,
+                -43.60169068,
+                -43.61723125,
+                -43.61871511,
+                -43.61879751,
+                -43.12548175,
+                -42.90647187,
+                -42.91031846,
+                -42.91099027,
+                -42.91111107,
+                -42.91113348,
+            ]
+        ),
         np.array([-43.34236449, -43.31102002, -43.27768275, -43.27791002, -43.27761357, -43.27757545]),
         np.array([-43.40320524, -43.38084022, -43.36835045, -43.36666248, -43.36666583, -43.36649036, -43.36648855]),
         np.array([-43.37749056, -43.37749102, -43.37734414, -43.37734069]),
@@ -637,7 +683,7 @@ def test_create_node_energies_electronic_relax(fresh_aiida_env, vasprun_parser):
         np.array([-43.39021044, -43.39020751]),
         np.array([-43.39034135, -43.39034244]),
         np.array([-43.39044466, -43.39044584]),
-        np.array([-43.39084354, -43.39088709, -43.39087657])
+        np.array([-43.39084354, -43.39088709, -43.39087657]),
     ]
     test_array_steps = np.array([18, 6, 7, 4, 4, 2, 4, 2, 2, 4, 4, 2, 3, 2, 3, 2, 2, 2, 3])
     # Build a flattened array (not using flatten from NumPy as the content is staggered) and
@@ -646,23 +692,59 @@ def test_create_node_energies_electronic_relax(fresh_aiida_env, vasprun_parser):
     for ionic_step in test_array_energies:
         test_array_energies_flattened = np.append(test_array_energies_flattened, ionic_step)
     assert energies_ext.shape == test_array_energies_flattened.shape
-    np.testing.assert_allclose(test_array_energies_flattened, energies_ext, atol=0., rtol=1.0e-7)
-    np.testing.assert_allclose(test_array_steps, energies.get_array('electronic_steps'), atol=0., rtol=1.0e-7)
-    test_array_energies = np.array([
-        -0.00236637, -0.00048614, -0.00047201, -0.00043261, -0.00041668, -0.00042584, -0.00043637, -0.00042806,
-        -0.00042762, -0.00043875, -0.00042731, -0.00042705, -0.00043064, -0.00043051, -0.00043161, -0.00043078,
-        -0.00043053, -0.00043149, -0.00043417
-    ])
+    np.testing.assert_allclose(test_array_energies_flattened, energies_ext, atol=0.0, rtol=1.0e-7)
+    np.testing.assert_allclose(test_array_steps, energies.get_array('electronic_steps'), atol=0.0, rtol=1.0e-7)
+    test_array_energies = np.array(
+        [
+            -0.00236637,
+            -0.00048614,
+            -0.00047201,
+            -0.00043261,
+            -0.00041668,
+            -0.00042584,
+            -0.00043637,
+            -0.00042806,
+            -0.00042762,
+            -0.00043875,
+            -0.00042731,
+            -0.00042705,
+            -0.00043064,
+            -0.00043051,
+            -0.00043161,
+            -0.00043078,
+            -0.00043053,
+            -0.00043149,
+            -0.00043417,
+        ]
+    )
     # Testing on VASP 5, where the extrapolated energy should be the following due to a bug
     with np.testing.assert_raises(AssertionError):
-        np.testing.assert_allclose(test_array_energies, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+        np.testing.assert_allclose(test_array_energies, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
     # Instead we correct and it should be
-    test_array = np.array([
-        -42.911133, -43.277575, -43.366489, -43.377341, -43.380625, -43.383342, -43.38753, -43.387082, -43.386414,
-        -43.387016, -43.386995, -43.387737, -43.389883, -43.389882, -43.390112, -43.390208, -43.390342, -43.390446,
-        -43.390877
-    ])
-    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0., rtol=1.0e-7)
+    test_array = np.array(
+        [
+            -42.911133,
+            -43.277575,
+            -43.366489,
+            -43.377341,
+            -43.380625,
+            -43.383342,
+            -43.38753,
+            -43.387082,
+            -43.386414,
+            -43.387016,
+            -43.386995,
+            -43.387737,
+            -43.389883,
+            -43.389882,
+            -43.390112,
+            -43.390208,
+            -43.390342,
+            -43.390446,
+            -43.390877,
+        ]
+    )
+    np.testing.assert_allclose(test_array, energies.get_array('energy_extrapolated'), atol=0.0, rtol=1.0e-7)
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('disp',)], indirect=True)
@@ -684,21 +766,65 @@ def test_create_node_hessian(fresh_aiida_env, vasprun_parser):
     # A few entries
     assert np.allclose(
         hessian[0],
-        np.array([
-            -4.63550410e-01, 0.00000000e+00, 0.00000000e+00, -5.91774100e-02, 0.00000000e+00, 0.00000000e+00,
-            3.09711000e-02, 0.00000000e+00, 0.00000000e+00, 3.20435400e-02, 0.00000000e+00, 0.00000000e+00,
-            1.15129840e-01, -8.16138200e-02, 8.17234700e-02, 1.14879520e-01, 8.11324800e-02, 8.27409500e-02,
-            1.14879520e-01, -8.11324800e-02, -8.27409500e-02, 1.15129840e-01, 8.16138200e-02, -8.17234700e-02
-        ])
+        np.array(
+            [
+                -4.63550410e-01,
+                0.00000000e00,
+                0.00000000e00,
+                -5.91774100e-02,
+                0.00000000e00,
+                0.00000000e00,
+                3.09711000e-02,
+                0.00000000e00,
+                0.00000000e00,
+                3.20435400e-02,
+                0.00000000e00,
+                0.00000000e00,
+                1.15129840e-01,
+                -8.16138200e-02,
+                8.17234700e-02,
+                1.14879520e-01,
+                8.11324800e-02,
+                8.27409500e-02,
+                1.14879520e-01,
+                -8.11324800e-02,
+                -8.27409500e-02,
+                1.15129840e-01,
+                8.16138200e-02,
+                -8.17234700e-02,
+            ]
+        ),
     )
     assert np.allclose(
         hessian[-2],
-        np.array([
-            8.16138200e-02, 1.15195590e-01, -8.38411100e-02, -8.17234700e-02, 1.14875090e-01, -8.53388100e-02,
-            3.46686900e-02, 7.00672700e-02, 2.54288300e-02, -8.26222700e-02, 1.16185510e-01, 7.95575600e-02,
-            -3.05970000e-04, 3.16827300e-02, 2.86379000e-03, 5.42080000e-04, 3.27613500e-02, 1.12576000e-03,
-            -1.34305000e-03, -5.86811100e-02, 2.83374000e-03, 4.91688400e-02, -4.22101090e-01, 5.73736900e-02
-        ])
+        np.array(
+            [
+                8.16138200e-02,
+                1.15195590e-01,
+                -8.38411100e-02,
+                -8.17234700e-02,
+                1.14875090e-01,
+                -8.53388100e-02,
+                3.46686900e-02,
+                7.00672700e-02,
+                2.54288300e-02,
+                -8.26222700e-02,
+                1.16185510e-01,
+                7.95575600e-02,
+                -3.05970000e-04,
+                3.16827300e-02,
+                2.86379000e-03,
+                5.42080000e-04,
+                3.27613500e-02,
+                1.12576000e-03,
+                -1.34305000e-03,
+                -5.86811100e-02,
+                2.83374000e-03,
+                4.91688400e-02,
+                -4.22101090e-01,
+                5.73736900e-02,
+            ]
+        ),
     )
 
 
@@ -723,32 +849,74 @@ def test_create_node_dynmat(fresh_aiida_env, vasprun_parser):
     # test a few entries
     assert np.allclose(
         dynvec[0],
-        np.array([
-            7.28517310e-17, 7.25431601e-02, -4.51957676e-02, 1.15412776e-16, 4.51957676e-02, -7.25431601e-02,
-            -1.37347223e-16, 5.16257351e-01, -5.16257351e-01, 8.16789156e-17, 8.95098005e-02, -8.95098005e-02,
-            -4.43838008e-17, -6.38031134e-02, 6.38031134e-02, -1.80132830e-01, -2.97969516e-01, 2.97969516e-01,
-            1.80132830e-01, -2.97969516e-01, 2.97969516e-01, -2.09989969e-16, -6.38031134e-02, 6.38031134e-02
-        ])
+        np.array(
+            [
+                7.28517310e-17,
+                7.25431601e-02,
+                -4.51957676e-02,
+                1.15412776e-16,
+                4.51957676e-02,
+                -7.25431601e-02,
+                -1.37347223e-16,
+                5.16257351e-01,
+                -5.16257351e-01,
+                8.16789156e-17,
+                8.95098005e-02,
+                -8.95098005e-02,
+                -4.43838008e-17,
+                -6.38031134e-02,
+                6.38031134e-02,
+                -1.80132830e-01,
+                -2.97969516e-01,
+                2.97969516e-01,
+                1.80132830e-01,
+                -2.97969516e-01,
+                2.97969516e-01,
+                -2.09989969e-16,
+                -6.38031134e-02,
+                6.38031134e-02,
+            ]
+        ),
     )
     assert np.allclose(
         dynvec[4],
-        np.array([
-            -5.29825122e-13, -2.41759046e-01, -3.28913434e-01, -5.30734671e-13, -3.28913434e-01, -2.41759046e-01,
-            3.26325910e-13, -3.80807441e-02, -3.80807441e-02, -9.22956103e-13, -2.99868012e-01, -2.99868012e-01,
-            1.64418993e-01, 1.81002749e-01, 1.81002749e-01, 3.11984195e-13, 2.73349550e-01, 2.73349550e-01,
-            2.59853610e-13, 2.73349550e-01, 2.73349550e-01, -1.64418993e-01, 1.81002749e-01, 1.81002749e-01
-        ])
+        np.array(
+            [
+                -5.29825122e-13,
+                -2.41759046e-01,
+                -3.28913434e-01,
+                -5.30734671e-13,
+                -3.28913434e-01,
+                -2.41759046e-01,
+                3.26325910e-13,
+                -3.80807441e-02,
+                -3.80807441e-02,
+                -9.22956103e-13,
+                -2.99868012e-01,
+                -2.99868012e-01,
+                1.64418993e-01,
+                1.81002749e-01,
+                1.81002749e-01,
+                3.11984195e-13,
+                2.73349550e-01,
+                2.73349550e-01,
+                2.59853610e-13,
+                2.73349550e-01,
+                2.73349550e-01,
+                -1.64418993e-01,
+                1.81002749e-01,
+                1.81002749e-01,
+            ]
+        ),
     )
-    assert dyneig[0] == pytest.approx(-1.36621537e+00)
+    assert dyneig[0] == pytest.approx(-1.36621537e00)
     assert dyneig[4] == pytest.approx(-8.48939361e-01)
 
 
 @pytest.mark.parametrize(
     ['outcar_parser'],
-    [(['disp_details', 'OUTCAR', {
-        'quantities_to_parse': ['symmetries', 'elastic_moduli', 'run_status', 'run_stats']
-    }],)],
-    indirect=True
+    [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['symmetries', 'elastic_moduli', 'run_status', 'run_stats']}],)],
+    indirect=True,
 )
 def test_create_node_dict_custom(fresh_aiida_env, outcar_parser, compare_symmetries):
     """Check that the node composer works for custom Dict node."""
@@ -796,12 +964,19 @@ def test_create_node_dict_custom(fresh_aiida_env, outcar_parser, compare_symmetr
     assert data_dict['run_status']['nsw'] == 61
 
 
-@pytest.mark.parametrize(['vasprun_parser'], [([
-    'basic', 'vasprun.xml', {
-        'quantities_to_parse': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress']
-    }
-],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['vasprun_parser'],
+    [
+        (
+            [
+                'basic',
+                'vasprun.xml',
+                {'quantities_to_parse': ['fermi_level', 'total_energies', 'energies', 'maximum_force', 'maximum_stress']},
+            ],
+        )
+    ],
+    indirect=True,
+)
 def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
     """Check that the node composer works for yet another custom Dict node."""
 
@@ -827,21 +1002,13 @@ def test_create_node_dict_custom2(fresh_aiida_env, vasprun_parser):
     assert data_dict['maximum_force'] == pytest.approx(3.41460162)
 
 
-@pytest.mark.parametrize(['outcar_parser'],
-                         [(['basic_run', 'OUTCAR', {
-                             'quantities_to_parse': NODES_TYPES['core.dict']
-                         }],)],
-                         indirect=True)
-@pytest.mark.parametrize(['vasprun_parser'],
-                         [(['basic_run', 'vasprun.xml', {
-                             'quantities_to_parse': NODES_TYPES['core.dict']
-                         }],)],
-                         indirect=True)
-@pytest.mark.parametrize(['stream_parser'],
-                         [(['basic_run', 'vasp_output', {
-                             'quantities_to_parse': NODES_TYPES['core.dict']
-                         }],)],
-                         indirect=True)
+@pytest.mark.parametrize(['outcar_parser'], [(['basic_run', 'OUTCAR', {'quantities_to_parse': NODES_TYPES['core.dict']}],)], indirect=True)
+@pytest.mark.parametrize(
+    ['vasprun_parser'], [(['basic_run', 'vasprun.xml', {'quantities_to_parse': NODES_TYPES['core.dict']}],)], indirect=True
+)
+@pytest.mark.parametrize(
+    ['stream_parser'], [(['basic_run', 'vasp_output', {'quantities_to_parse': NODES_TYPES['core.dict']}],)], indirect=True
+)
 def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, stream_parser):
     """Check that the node composer works for the misc node containing all valid quantities."""
 
@@ -887,20 +1054,11 @@ def test_create_node_misc_all(fresh_aiida_env, vasprun_parser, outcar_parser, st
     assert not misc['magnetization']
     assert misc['site_magnetization'] == {
         'sphere': {
-            'x': {
-                'site_moment': {},
-                'total_magnetization': {}
-            },
-            'y': {
-                'site_moment': {},
-                'total_magnetization': {}
-            },
-            'z': {
-                'site_moment': {},
-                'total_magnetization': {}
-            }
+            'x': {'site_moment': {}, 'total_magnetization': {}},
+            'y': {'site_moment': {}, 'total_magnetization': {}},
+            'z': {'site_moment': {}, 'total_magnetization': {}},
         },
-        'full_cell': []
+        'full_cell': [],
     }
 
 

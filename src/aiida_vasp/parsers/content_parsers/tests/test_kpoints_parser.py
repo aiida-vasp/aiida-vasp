@@ -1,15 +1,11 @@
 """Test the KPOINTS parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
-import math
 
 import numpy as np
 import pytest
-
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 @pytest.mark.parametrize(['kpoints_parser'], [('kpoints',)], indirect=True)
@@ -26,7 +22,7 @@ def test_parse_kpoints_explicit(kpoints_parser):
         'comment': 'K-points',
         'divisions': None,
         'shifts': None,
-        'points': [np.array([0., 0., 0.]), np.array([0., 0., 0.5])],
+        'points': [np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.5])],
         'weights': [1.0, 1.0],
         'tetra': None,
         'tetra_volume': None,
@@ -34,7 +30,7 @@ def test_parse_kpoints_explicit(kpoints_parser):
         'centering': None,
         'num_kpoints': 2,
         'cartesian': False,
-        'generating_vectors': None
+        'generating_vectors': None,
     }
     compare_kpoints_content(result, result_ref)
 
@@ -61,7 +57,7 @@ def test_parse_kpoints_mesh(kpoints_parser):
         'centering': 'Monkhorst-Pack',
         'num_kpoints': 0,
         'cartesian': None,
-        'generating_vectors': None
+        'generating_vectors': None,
     }
     compare_kpoints_content(result, result_ref)
 
@@ -82,8 +78,11 @@ def test_parse_kpoints_write(kpoints_parser, tmpdir):
     with open(temp_path, 'r', encoding='utf8') as handler:
         content = handler.readlines()
     ref_content = [
-        '# K-points\n', '     2\n', 'Direct\n', '  0.000000000   0.000000000   0.000000000   1.000000000\n',
-        '  0.000000000   0.000000000   0.500000000   1.000000000\n'
+        '# K-points\n',
+        '     2\n',
+        'Direct\n',
+        '  0.000000000   0.000000000   0.000000000   1.000000000\n',
+        '  0.000000000   0.000000000   0.500000000   1.000000000\n',
     ]
     assert content == ref_content
 
@@ -128,14 +127,14 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
             'centering': 'Gamma',
             'num_kpoints': 0,
             'cartesian': None,
-            'generating_vectors': None
+            'generating_vectors': None,
         }
     else:
         result_ref = {
             'comment': 'No comment',
             'divisions': None,
             'shifts': None,
-            'points': [np.array([0., 0., 0.]), np.array([0., 0., 0.5])],
+            'points': [np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.5])],
             'weights': [1.0, 1.0],
             'tetra': None,
             'tetra_volume': None,
@@ -143,7 +142,7 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
             'centering': None,
             'num_kpoints': 2,
             'cartesian': False,
-            'generating_vectors': None
+            'generating_vectors': None,
         }
     compare_kpoints_content(result, result_ref)
 

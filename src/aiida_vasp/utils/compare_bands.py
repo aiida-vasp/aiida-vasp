@@ -6,6 +6,7 @@ Utilities for comparing band structures. Mostly present for legacy purposes. Wil
 or moved in the future.
 """
 from aiida.engine import calcfunction
+
 # pylint: disable=import-outside-toplevel
 from aiida.plugins import DataFactory
 
@@ -35,6 +36,7 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     fermi energy, bandgap etc of the reference bandstructure.
     """
     import numpy as np
+
     assert isinstance(wannier_bands, BANDS_CLS)
     assert isinstance(vasp_bands, BANDS_CLS)
     assert hasattr(wannier_bands, 'labels')
@@ -110,8 +112,7 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            raise KeyError('Missing window parameters in input to '
-                           'parent calculation:\n' + str(err)) from err
+            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err)) from err
     except AttributeError as err:
         if not silent:
             raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err)) from err
@@ -161,8 +162,7 @@ def band_gap(bands, occ, efermi=None):
     # if lumo crosses efermi, something is wrong
     if efermi:
         if gap_upper < efermi:
-            raise ValueError(('The given E_fermi was higher than '
-                              'the lowest point of the lowest unoccupied band'))
+            raise ValueError(('The given E_fermi was higher than ' 'the lowest point of the lowest unoccupied band'))
     result['gap'] = gap_upper - gap_lower
     result['direct'] = bool(gap_upper_k == gap_lower_k)
     # check wether the two closest points are at the same kpoint (direct)
@@ -173,6 +173,7 @@ def band_gap(bands, occ, efermi=None):
 
 def band_error(band1, band2):
     import numpy as np
+
     return np.square(band1 - band2).sum()
 
 
@@ -183,6 +184,7 @@ def bands_error(bands1, bands2):
     Only works for BandsData nodes with 2d band arrays.
     """
     import numpy as np
+
     bands_1 = bands1.get_bands()
     bands_2 = bands2.get_bands()
     assert bands_1.shape == bands_2.shape
@@ -210,6 +212,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     import numpy as np
 
     import aiida_vasp.utils.bands as btool
+
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
     ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.items()}
     info = {}
@@ -235,10 +238,11 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
             'error_per_band': bands_error(reference, wannier_bands),
             'error_e_gap': wannier_gap['gap'] and abs(wannier_gap['gap'] - ref_gap['gap']),
             'error_direct': wannier_gap['direct'] != ref_gap['direct'],
-            'error_k_gap': error_k_gap
+            'error_k_gap': error_k_gap,
         }
         if plot_folder:
             import os
+
             colors = ['r', 'b', 'g', 'm', 'c', 'y', 'k']
             title = f'Vasp-Wannier comparison for window {[owindow, iwindow]}'
             fig = btool.plot_bstr(reference, efermi=refinfo['efermi'], colors=colors, title=title)
@@ -247,8 +251,7 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
             btool.plt.hlines(iwindow, xlim[0], xlim[1], color='k')
             btool.plt.hlines(refinfo['efermi'], xlim[0], xlim[1], color='k', linestyles='dashed')
             btool.plt.yticks(
-                list(btool.plt.yticks()[0]) + [refinfo['efermi']],
-                [str(line) for line in btool.plt.yticks()[0]] + [r'$E_{fermi}$']
+                list(btool.plt.yticks()[0]) + [refinfo['efermi']], [str(line) for line in btool.plt.yticks()[0]] + [r'$E_{fermi}$']
             )
             pdf = os.path.join(plot_folder, f'comparison_{wannier_calc.pk}.pdf')
             fig.savefig(pdf)
@@ -269,6 +272,7 @@ def plot_errors_vs_iwsize(comparison_info):
     import numpy as np
 
     import aiida_vasp.utils.bands as btool
+
     ows = []
     iws = []
     data = []

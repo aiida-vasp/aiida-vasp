@@ -2,7 +2,6 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
-
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo, PotcarIo
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *
@@ -65,9 +64,7 @@ def test_multi_round_trip(potcar_family, tmp_path):
     test_dir = tmp_path / 'round_trip'
     test_dir.mkdir()
     potcar_cls = get_data_class('vasp.potcar')
-    multi = MultiPotcarIo(
-        potcar_cls.get_potcars_dict(elements=POTCAR_MAP.keys(), family_name=potcar_family, mapping=POTCAR_MAP).values()
-    )
+    multi = MultiPotcarIo(potcar_cls.get_potcars_dict(elements=POTCAR_MAP.keys(), family_name=potcar_family, mapping=POTCAR_MAP).values())
     tempfile = test_dir / 'POTCAR'
     multi.write(tempfile)
     recovered = multi.read(tempfile)
@@ -79,8 +76,6 @@ def test_multi_round_trip(potcar_family, tmp_path):
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_multi_from_structure(potcar_family, vasp_structure_poscar):
     potcar_cls = get_data_class('vasp.potcar')
-    potcar_dict = potcar_cls.get_potcars_dict(
-        elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP
-    )
+    potcar_dict = potcar_cls.get_potcars_dict(elements=['As', 'In', 'In_d'], family_name=potcar_family, mapping=POTCAR_MAP)
     multi = MultiPotcarIo.from_structure(structure=vasp_structure_poscar._content_data, potentials_dict=potcar_dict)  # pylint: disable=protected-access
     assert [potcar.node.full_name for potcar in multi.potcars] == ['In_sv', 'As', 'In_d', 'As']

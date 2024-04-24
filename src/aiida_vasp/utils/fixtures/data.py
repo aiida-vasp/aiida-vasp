@@ -10,12 +10,11 @@ workchains.
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
 # pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg, import-outside-toplevel
 import os
-from pathlib import Path
 import subprocess as sp
+from pathlib import Path
 
 import numpy
 import pytest
-
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Computer
@@ -35,18 +34,7 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.general import copytree
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {
-    'In': 'In_sv',
-    'In_d': 'In_d',
-    'As': 'As',
-    'Ga': 'Ga',
-    'Si': 'Si',
-    'P': 'P',
-    'S': 'S',
-    'Zn': 'Zn',
-    'N': 'N',
-    'H': 'H'
-}
+POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn', 'N': 'N', 'H': 'H'}
 
 
 def path_file_and_settings(name, param):
@@ -58,9 +46,7 @@ def path_file_and_settings(name, param):
         elif len(param) == 2:
             folder, name = param
         else:
-            raise IndexError(
-                'Please supply either folder and name, or folder, name and settings to the parser fixtures'
-            )
+            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
     else:
         folder = param
     path = data_path(folder, name)
@@ -80,27 +66,15 @@ def localhost(fresh_aiida_env, localhost_dir):
         computer = Computer.collection.get(label='localhost')
     except NotExistent:
         computer = Computer(
-            label='localhost',
-            hostname='localhost',
-            transport_type='core.local',
-            scheduler_type='core.direct',
-            workdir=str(localhost_dir)
+            label='localhost', hostname='localhost', transport_type='core.local', scheduler_type='core.direct', workdir=str(localhost_dir)
         ).store()
-        computer.set_minimum_job_poll_interval(0.)
+        computer.set_minimum_job_poll_interval(0.0)
     return computer
 
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('core.dict')(
-        dict={
-            'gga': 'PE',
-            'gga_compat': False,
-            'lorbit': 11,
-            'sigma': 0.5,
-            'magmom': '30 * 2*0.'
-        }
-    )
+    incar_data = get_data_class('core.dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_data
 
 
@@ -137,6 +111,7 @@ def temp_pot_folder(tmp_path):
 def duplicate_potcar_data(potcar_node):
     """Create and store (and return) a duplicate of a given PotcarData node."""
     from aiida_vasp.data.potcar import temp_potcar
+
     file_node = get_data_node('vasp.potcar_file')
     with temp_potcar(potcar_node.get_content()) as potcar_file:
         file_node.add_file(potcar_file)
@@ -203,30 +178,31 @@ def potentials(potcar_family):
 def vasp_structure(request, fresh_aiida_env):
     """Fixture: StructureData or CifData."""
     from aiida.plugins import DataFactory
+
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
         structure = DataFactory('core.cif').get_or_create(cif_path)[0]
     elif request.param == 'str':
-        larray = numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]])
+        larray = numpy.array([[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]])
         alat = 6.058
         structure = DataFactory('core.structure')(cell=larray * alat)
         structure.append_atom(position=[0, 0, 0], symbols='In')
-        structure.append_atom(position=[.25, .25, .25], symbols='As')
-        structure.append_atom(position=[.25, .33, .34], symbols='As')
-        structure.append_atom(position=[.5, .5, .5], symbols='In', name='In_d')
-        structure.append_atom(position=[.7896, .6234, .5], symbols='In', name='In_d')
-        structure.append_atom(position=[.75, .75, .75], symbols='As')
+        structure.append_atom(position=[0.25, 0.25, 0.25], symbols='As')
+        structure.append_atom(position=[0.25, 0.33, 0.34], symbols='As')
+        structure.append_atom(position=[0.5, 0.5, 0.5], symbols='In', name='In_d')
+        structure.append_atom(position=[0.7896, 0.6234, 0.5], symbols='In', name='In_d')
+        structure.append_atom(position=[0.75, 0.75, 0.75], symbols='As')
     elif request.param == 'str-Al':
         larray = numpy.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         alat = 4.04
         structure = DataFactory('core.structure')(cell=larray * alat)
         structure.append_atom(position=numpy.array([0, 0, 0]) * alat, symbols='Al')
-        structure.append_atom(position=numpy.array([0, .5, .5]) * alat, symbols='Al')
-        structure.append_atom(position=numpy.array([.5, 0, .5]) * alat, symbols='Al')
-        structure.append_atom(position=numpy.array([.5, .5, 0]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0, 0.5, 0.5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0.5, 0, 0.5]) * alat, symbols='Al')
+        structure.append_atom(position=numpy.array([0.5, 0.5, 0]) * alat, symbols='Al')
     elif request.param == 'str-InAs':
         structure_cls = DataFactory('core.structure')
-        structure = structure_cls(cell=numpy.array([[0, .5, .5], [.5, 0, .5], [.5, .5, 0]]) * 6.058)
+        structure = structure_cls(cell=numpy.array([[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]]) * 6.058)
         structure.append_atom(position=(0, 0, 0), symbols='In', name='Hamburger')
         structure.append_atom(position=(0.25, 0.25, 0.25), symbols='As', name='Pizza')
     return structure
@@ -247,13 +223,14 @@ def vasp_structure_poscar(vasp_structure):
 def vasp_kpoints(request, fresh_aiida_env):
     """Fixture: (kpoints object, resulting KPOINTS)."""
     from aiida.plugins import DataFactory
+
     if request.param == 'mesh':
         kpoints = DataFactory('core.array.kpoints')()
         kpoints.set_kpoints_mesh([2, 2, 2])
         ref_kpoints = _ref_kp_mesh()
     elif request.param == 'list':
         kpoints = DataFactory('core.array.kpoints')()
-        kpoints.set_kpoints([[0., 0., 0.], [0., 0., .5]], weights=[1., 1.])
+        kpoints.set_kpoints([[0.0, 0.0, 0.0], [0.0, 0.0, 0.5]], weights=[1.0, 1.0])
         ref_kpoints = _ref_kp_list()
     return kpoints, ref_kpoints
 
@@ -264,7 +241,6 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
     from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
-
         inputs = AttributeDict()
 
         metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
@@ -299,13 +275,12 @@ def vasp2w90_inputs(
     potentials,  # yapf: disable
     vasp_code,  # yapf: disable
     wannier_projections,  # yapf: disable
-    wannier_params  # yapf: disable
+    wannier_params,  # yapf: disable
 ):  # pylint: disable=too-many-arguments
     """Inputs dictionary for CalcJob Processes."""
     from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
-
         inputs = AttributeDict()
 
         metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
@@ -341,7 +316,6 @@ def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
     from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
-
         inputs = AttributeDict()
 
         metadata = AttributeDict({'options': {'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}})
@@ -379,6 +353,7 @@ def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
     from aiida.orm import Code
+
     if not localhost.pk:
         localhost.store()
     code = Code()
@@ -423,6 +398,7 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
     """
     from aiida.orm import Code
     from aiida.orm.querybuilder import QueryBuilder
+
     query_builder = QueryBuilder()
     query_builder.append(Code, tag='code')
     query_builder.add_filter('code', {'label': {'==': exec_name}})
@@ -456,6 +432,7 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
 def vasp_chgcar(fresh_aiida_env):
     """CHGCAR node and reference fixture."""
     from aiida.plugins import DataFactory
+
     chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
     with open(chgcar_path, 'r', encoding='utf8') as ref_chgcar_fo:
@@ -467,6 +444,7 @@ def vasp_chgcar(fresh_aiida_env):
 def vasp_wavecar(fresh_aiida_env):
     """WAVECAR node and reference fixture."""
     from aiida.plugins import DataFactory
+
     wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
     with open(wavecar_path, 'r', encoding='utf8') as ref_wavecar_fo:
@@ -497,6 +475,7 @@ def ref_win():
 def ref_retrieved():
     """Fixture: retrieved directory from an NSCF vasp run."""
     from aiida.plugins import DataFactory
+
     retrieved = DataFactory('core.folder')()
     retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved
@@ -504,7 +483,7 @@ def ref_retrieved():
 
 @pytest.fixture()
 def vasprun_parser(request):
-    """Return an instance of VasprunParser for a reference vasprun.xml. Remember rb mode. """
+    """Return an instance of VasprunParser for a reference vasprun.xml. Remember rb mode."""
     path, settings = path_file_and_settings('vasprun.xml', request.param)
     with open(path, 'rb') as handler:  # pylint: disable=unspecified-encoding
         parser = VasprunParser(handler=handler, settings=settings)
@@ -616,18 +595,22 @@ def _ref_kp_mesh():
 @pytest.fixture
 def wannier_params():
     from aiida.orm import Dict
-    return Dict(dict=dict(  # pylint: disable=use-dict-literal
-        dis_num_iter=1000,
-        num_bands=24,
-        num_iter=0,
-        num_wann=14,
-        spinors=True,
-    ))
+
+    return Dict(
+        dict=dict(  # pylint: disable=use-dict-literal
+            dis_num_iter=1000,
+            num_bands=24,
+            num_iter=0,
+            num_wann=14,
+            spinors=True,
+        )
+    )
 
 
 @pytest.fixture
 def wannier_projections():
     from aiida.orm import List
+
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections
@@ -645,42 +628,82 @@ def compare_symmetries():
     return {
         'symmetrized_cell_type': {
             'static': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.', 'face centered cubic supercell.'
+                'face centered cubic supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'face centered cubic supercell.',
+                'face centered cubic supercell.',
+                'face centered cubic supercell.',
             ],
             'dynamic': [
-                'face centered cubic supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'body centered tetragonal supercell.',
-                'body centered tetragonal supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'base centered monoclinic supercell.',
-                'base centered monoclinic supercell.', 'face centered cubic supercell.',
-                'face centered cubic supercell.', 'face centered cubic supercell.'
-            ]
+                'face centered cubic supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'body centered tetragonal supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'base centered monoclinic supercell.',
+                'face centered cubic supercell.',
+                'face centered cubic supercell.',
+                'face centered cubic supercell.',
+            ],
         },
         'original_cell_type': {
             'static': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell'
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
             ],
             'dynamic': [
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell', 'primitive cell',
-                'primitive cell'
-            ]
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+                'primitive cell',
+            ],
         },
         'num_space_group_operations': {
             'static': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
-            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48]
-        }
+            'dynamic': [48, 16, 16, 16, 16, 16, 16, 4, 4, 4, 4, 4, 4, 8, 8, 48],
+        },
     }

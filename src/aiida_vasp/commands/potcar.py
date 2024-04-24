@@ -6,10 +6,9 @@ Commandline util for dealing with potcar files.
 """
 # pylint: disable=import-outside-toplevel
 import click
-from click_spinner import spinner as cli_spinner
 import tabulate
-
 from aiida.cmdline.utils.decorators import with_dbenv
+from click_spinner import spinner as cli_spinner
 
 from aiida_vasp.commands import options
 from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data, get_data_class
@@ -44,6 +43,7 @@ def detect_old_style_groups():
     from aiida.orm import Group, QueryBuilder
 
     from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup
+
     qdb = QueryBuilder()
     qdb.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE}, project=['label'])
     all_old_groups = [qres[0] for qres in qdb.all()]
@@ -55,10 +55,13 @@ def detect_old_style_groups():
         if count == 0:
             not_migrated.append(group_label)
     if any(not_migrated):
-        click.echo((
-            "Some of the old style POTCAR family groups are not migrated. Please run command 'verdi data vasp-potcar migratefamilies.\n'",
-            f'The missing groups are: {not_migrated}.'
-        ))
+        click.echo(
+            (
+                'Some of the old style POTCAR family groups are not migrated. '
+                "Please run command 'verdi data vasp-potcar migratefamilies.\n",
+                f'The missing groups are: {not_migrated}.',
+            )
+        )
 
 
 @potcar.command()
@@ -69,9 +72,7 @@ def detect_old_style_groups():
 )
 @options.FAMILY_NAME()
 @options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
-@click.option(
-    '--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.'
-)
+@click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
 @options.DRY_RUN()
 @with_dbenv()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
@@ -89,9 +90,7 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 
 
 @potcar.command()
-@click.option(
-    '-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.'
-)
+@click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
 @click.option('-d', '--description', is_flag=True, help='Also show the description.')
 @with_dbenv()
@@ -155,4 +154,5 @@ def migratefamilies():
     This commands recreates the old style group using the ``PotcarGroup`` class.
     """
     from aiida_vasp.data.potcar import migrate_potcar_group
+
     migrate_potcar_group()

@@ -5,9 +5,6 @@ VASP NEB workchain.
 Contains the VaspNEBWorkChain class definition which uses the BaseRestartWorkChain.
 """
 import numpy as np
-#pylint: disable=too-many-branches, too-many-statements
-from packaging import version
-
 from aiida import __version__ as aiida_version
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, NotExistent
@@ -16,6 +13,9 @@ from aiida.common.lang import override
 from aiida.engine import while_
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler
 from aiida.plugins import CalculationFactory
+
+# pylint: disable=too-many-branches, too-many-statements
+from packaging import version
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.neb import VaspNEBCalculation
@@ -39,7 +39,7 @@ VTST_ADDITIONAL_TAGS = {
     'ftimedec': 'Factor to decrease dt',
     'ftimeinc': 'Factor to increase dt',
     'falpha': 'Parameter that controls velocity damping',
-    'fnmin': 'Minium number of iterations before adjust alpha and dt'
+    'fnmin': 'Minium number of iterations before adjust alpha and dt',
 }
 
 
@@ -56,6 +56,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
     In addition, implement restarts of calculation when the calculation is net full converged for error handling.
 
     """
+
     _verbose = False
     _process_class = CalculationFactory('vasp.neb')
     _norm_disp_threshold = 1.0
@@ -188,7 +189,6 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
 
     def setup(self):
-
         super().setup()
 
         # Setup the initial inputs
@@ -204,7 +204,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
         # Sanity checks
         self._check_neb_inputs()
-        #self.report('In SETUP, context metadata {}'.format(self.ctx.inputs))
+        # self.report('In SETUP, context metadata {}'.format(self.ctx.inputs))
         return None
 
     # def prepare_inputs(self):
@@ -343,9 +343,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         if ibrion != 3:
             self.report('WARNING: IBRION should be set to 3 for VTST runs, proceed with caution.')
         elif potim != 0:
-            self.report(
-                'WARNING: Using VTST optimisors with IBRION=3, but POTIM is not set to zero, proceed with caution.'
-            )
+            self.report('WARNING: Using VTST optimisors with IBRION=3, but POTIM is not set to zero, proceed with caution.')
         if iopt == 0:
             self.report('WARNING: IOPT not set.')
 
@@ -363,7 +361,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
         last_frame = frames[0]
         # Function for computing the distance using the scaled positions
-        rel_dist = np.vectorize(lambda x: x if x < 0.5 else 1. - x)
+        rel_dist = np.vectorize(lambda x: x if x < 0.5 else 1.0 - x)
         for iframe, frame in enumerate(frames[1:]):
             # Relative displacements
             disp = abs(frame.get_scaled_positions() - last_frame.get_scaled_positions()) % 1.0
@@ -375,9 +373,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             sort_idx = np.argsort(norm_disp)
             if norm_disp[sort_idx[-1]] > self._norm_disp_threshold:
                 raise InputValidationError(
-                    'Large displacement detected for atom {} at frame {} - please check the inputs images'.format(
-                        sort_idx[-1], iframe + 1
-                    )
+                    'Large displacement detected for atom {} at frame {} - please check the inputs images'.format(sort_idx[-1], iframe + 1)
                 )
             last_frame = frame
 
@@ -479,7 +475,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.initial_structure,
                 family_name=self.inputs.potential_family.value,
-                mapping=self.inputs.potential_mapping.get_dict()
+                mapping=self.inputs.potential_mapping.get_dict(),
             )
         except ValueError as err:
             return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))  # pylint: disable=no-member
@@ -500,10 +496,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         # for the outcome of the work chain and so have marked it as `is_finished=True`.
         max_iterations = self.inputs.max_iterations.value  # type: ignore[union-attr]
         if not self.ctx.is_finished and self.ctx.iteration >= max_iterations:
-            self.report(
-                f'reached the maximum number of iterations {max_iterations}: '
-                f'last ran {self.ctx.process_name}<{node.pk}>'
-            )
+            self.report(f'reached the maximum number of iterations {max_iterations}: ' f'last ran {self.ctx.process_name}<{node.pk}>')
             return self.exit_codes.ERROR_MAXIMUM_ITERATIONS_EXCEEDED  # pylint: disable=no-member
 
         self.report(f'work chain completed after {self.ctx.iteration} iterations')
@@ -586,34 +579,27 @@ def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
     for specie in species:
         if specie in mapping:
             uvalue = mapping[specie][1]
-            j = jmapping.get(specie, 0.)
+            j = jmapping.get(specie, 0.0)
             ldaul.append(lsymbols[mapping[specie][0]])
             ldauu.append(mapping[specie][1])
 
-            j = jmapping.get(specie, 0.)
+            j = jmapping.get(specie, 0.0)
             ldauj.append(j)
 
             if specie in FELEMS:
                 felec = True
             # Count the number of valid mappings
-            if uvalue != 0. or j != 0.:
+            if uvalue != 0.0 or j != 0.0:
                 count += 1
 
         else:
-            ldauu.append(0.)
-            ldauj.append(0.)
+            ldauu.append(0.0)
+            ldauj.append(0.0)
             ldaul.append(-1)
 
     if count > 0:
         # Only enable U is there is any non-zero value
-        output = {
-            'ldauu': ldauu,
-            'ldauj': ldauj,
-            'ldautype': utype,
-            'lmaxmix': 6 if felec else 4,
-            'ldaul': ldaul,
-            'ldau': True
-        }
+        output = {'ldauu': ldauu, 'ldauj': ldauj, 'ldautype': utype, 'lmaxmix': 6 if felec else 4, 'ldaul': ldaul, 'ldau': True}
     else:
         output = {}
     return output

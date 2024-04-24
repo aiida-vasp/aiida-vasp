@@ -4,14 +4,14 @@ Utils for setting symbols on chemical elements.
 -----------------------------------------------
 Utilities for choosing appropriate element symbols for a chemical element.
 """
-from lxml import html
 import requests
+from lxml import html
 
 VERSION = {
     'latest': {
         'version': '5.2',
         'url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_PAW_potentials_DFT_calculations_using_vasp_5_2.html',
-        'gw-url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_GW_PAW_potentials_vasp_5_2.html'
+        'gw-url': 'http://cms.mpi.univie.ac.at/vasp/vasp/Recommended_GW_PAW_potentials_vasp_5_2.html',
     }
 }
 

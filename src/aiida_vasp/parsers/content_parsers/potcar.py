@@ -5,10 +5,10 @@ POTCAR parser.
 The file parser that handles the parsing of POTCAR files. Also contains methods to
 find, import, compose and write POTCAR files.
 """
-from itertools import groupby
 import os
-from pathlib import Path
 import re
+from itertools import groupby
+from pathlib import Path
 
 from parsevasp.potcar import Potcar
 
@@ -58,7 +58,7 @@ class PotcarParser(BaseFileParser):
         raise NotImplementedError('PotcarParser does not implement a _content_data_to_content_parser() method.')
 
 
-class PotcarIo():  # pylint: disable=useless-object-inheritance
+class PotcarIo:  # pylint: disable=useless-object-inheritance
     """
     Deals with VASP input output of POTCAR files.
 
@@ -142,7 +142,7 @@ class PotcarIo():  # pylint: disable=useless-object-inheritance
         return self.sha512 == other.sha512
 
 
-class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
+class MultiPotcarIo:  # pylint: disable=useless-object-inheritance
     """Handle file i/o for POTCAR files with one or more potentials."""
 
     def __init__(self, potcars=None):

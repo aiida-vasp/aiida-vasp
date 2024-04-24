@@ -4,7 +4,6 @@ import contextlib
 import os
 
 import pytest
-
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.fixtures import *
@@ -53,7 +52,7 @@ def test_write_chgcar(vasp_calc, vasp_inputs, vasp_chgcar, sandbox_folder):
             'lorbit': 11,
             'sigma': 0.5,
             'magmom': '30 * 2*0.',
-            'icharg': 1
+            'icharg': 1,
         }
     )
 
@@ -75,7 +74,7 @@ def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
             'lorbit': 11,
             'sigma': 0.5,
             'magmom': '30 * 2*0.',
-            'istart': 1
+            'istart': 1,
         }
     )
     inputs.wavefunctions = wavecar
@@ -89,9 +88,10 @@ def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
 def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
     """Test incar with invalid tags raises exception."""
     from aiida.common import ValidationError
+
     inputs_dict = {
         'gga': 'PE',
-        'smear': 3  # <- Invalid tag
+        'smear': 3,  # <- Invalid tag
     }
     inputs = vasp_inputs(parameters=inputs_dict)
     calc = vasp_calc(inputs=inputs)
@@ -113,10 +113,18 @@ def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, sandbox_folder):
     """Check that preparing creates all necessary objects."""
     from aiida_vasp.calcs.vasp import VaspCalculation
+
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
-    inputs_dict = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.', 'icharg': 11}
+    inputs_dict = {
+        'gga': 'PE',
+        'gga_compat': False,
+        'lorbit': 11,
+        'sigma': 0.5,
+        'magmom': '30 * 2*0.',
+        'icharg': 11,
+    }
 
     inputs = vasp_inputs(parameters=inputs_dict)
     inputs.charge_density = chgcar
@@ -170,6 +178,7 @@ def test_verify_fail(vasp_calc, vasp_inputs):
 def managed_temp_object():
     """Create a temp file object for a with context, delete after use."""
     import tempfile
+
     _, temp_object = tempfile.mkstemp()
     try:
         yield temp_object
@@ -181,7 +190,6 @@ def managed_temp_object():
 @pytest.mark.usefixtures('fresh_aiida_env')
 def test_vasp_calc_only_output(run_vasp_process, aiida_caplog):
     """Test a run of a basic VASP calculation which misses critical files."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
     _, node = run_vasp_process(test_case='stdout')
     assert node.exit_status == 352
     vasp_output = node.outputs.retrieved.get_object_content('vasp_output')
@@ -194,6 +202,7 @@ def test_vasp_calc_only_output(run_vasp_process, aiida_caplog):
 def test_vasp_calc(run_vasp_process, aiida_caplog):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
+
     results, node = run_vasp_process()
     assert node.exit_status == 0
 
@@ -212,7 +221,10 @@ def test_vasp_calc(run_vasp_process, aiida_caplog):
 
     # By default we should store all always retrieve objects
     retrieve_temporary_list_ref = []
-    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
+    retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + [
+        '_scheduler-stdout.txt',
+        '_scheduler-stderr.txt',
+    ]
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     retrieve_list = node.get_retrieve_list()
     assert retrieve_temporary_list == retrieve_temporary_list_ref
@@ -248,13 +260,16 @@ def test_vasp_calc_extra(run_vasp_process):
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
+
     inputs = {}
     extra_object_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node('core.dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + [
-        '_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR'
+        '_scheduler-stdout.txt',
+        '_scheduler-stderr.txt',
+        'POSCAR',
     ]
     retrieve_temporary_list = node.get_retrieve_temporary_list()
     retrieve_list = node.get_retrieve_list()
@@ -273,6 +288,7 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
+
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
@@ -280,7 +296,7 @@ def test_vasp_calc_delete_extra(run_vasp_process):
         'core.dict',
         dict={
             'ALWAYS_STORE': False,
-            'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep]
+            'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep],
         },
     )
     _, node = run_vasp_process(inputs)
@@ -301,14 +317,16 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation
+
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
     inputs['settings'] = get_data_node(
-        'core.dict', dict={
+        'core.dict',
+        dict={
             'ALWAYS_STORE': False,
-            'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]
-        }
+            'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep],
+        },
     )
     _, node = run_vasp_process(inputs)
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt', 'POSCAR']
@@ -335,18 +353,23 @@ def test_vasp_no_potcar_in_repo(run_vasp_process):
 
 
 @pytest.mark.parametrize(
-    'test_case,expected,has_notification', [
+    'test_case,expected,has_notification',
+    [
         ['exit_codes/converged-with-error', 703, True],
         ['exit_codes/converged', 0, False],
         ['exit_codes/unfinished', 700, False],
         ['exit_codes/elec-unconverged', 701, False],
         ['exit_codes/ionic-unconverged', 702, False],
-    ]
+    ],
 )
-@pytest.mark.parametrize([
-    'vasp_structure',
-    'vasp_kpoints',
-], [('str', 'mesh')], indirect=True)
+@pytest.mark.parametrize(
+    [
+        'vasp_structure',
+        'vasp_kpoints',
+    ],
+    [('str', 'mesh')],
+    indirect=True,
+)
 def test_vasp_calc_exit_codes(run_vasp_process, test_case, expected, has_notification):
     """
     Test running a VASP calculation with electronic/ionic convergence problems and
@@ -364,10 +387,14 @@ def test_vasp_calc_exit_codes(run_vasp_process, test_case, expected, has_notific
     assert bool(misc['notifications']) is has_notification
 
 
-@pytest.mark.parametrize([
-    'vasp_structure',
-    'vasp_kpoints',
-], [('str', 'mesh')], indirect=True)
+@pytest.mark.parametrize(
+    [
+        'vasp_structure',
+        'vasp_kpoints',
+    ],
+    [('str', 'mesh')],
+    indirect=True,
+)
 def test_vasp_calc_error_suppress(run_vasp_process):
     """
     Test running a VASP calculation with electronic/ionic convergence problems and
@@ -376,11 +403,7 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     results, node = run_vasp_process(
         test_case='exit_codes/converged-with-error',
         settings={
-            'parser_settings': {
-                'critical_notifications': {
-                    'add_brmix': False
-                }
-            },
+            'parser_settings': {'critical_notifications': {'add_brmix': False}},
         },
     )
 
@@ -394,19 +417,22 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     assert bool(misc['notifications'])
 
 
-@pytest.mark.parametrize([
-    'vasp_structure',
-    'vasp_kpoints',
-], [('str', 'mesh')], indirect=True)
+@pytest.mark.parametrize(
+    [
+        'vasp_structure',
+        'vasp_kpoints',
+    ],
+    [('str', 'mesh')],
+    indirect=True,
+)
 def test_vasp_calc_error_ignore_all(run_vasp_process):
     """
     Test running a VASP calculation with electronic/ionic convergence problems and
     check if the exit_codes are set accordingly.
     """
     results, node = run_vasp_process(
-        test_case='exit_codes/converged-with-error', settings={'parser_settings': {
-            'ignore_all_errors': True
-        }}
+        test_case='exit_codes/converged-with-error',
+        settings={'parser_settings': {'ignore_all_errors': True}},
     )
 
     # Check that the standard output is there

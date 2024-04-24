@@ -3,19 +3,15 @@
 from __future__ import absolute_import, print_function
 
 import os
-from pathlib import Path, PurePath
+from pathlib import Path
 
-from click.testing import CliRunner
-from monty.collections import AttrDict
-from packaging import version
 import pytest
-
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.data.potcar import PotcarGroup
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, legacy_potcar_family, potcar_family, temp_pot_folder
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
-from aiida_vasp.utils.fixtures.testdata import data_path
+from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME
+from click.testing import CliRunner
+from monty.collections import AttrDict
 
 
 @pytest.fixture
@@ -47,7 +43,10 @@ def test_no_subcmd():
 def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
     """Upload the test potcar family and check it is there."""
 
-    result = run_cmd('uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
+    result = run_cmd(
+        'uploadfamily',
+        [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION],
+    )
 
     potcar_cls = get_data_class('vasp.potcar')
 
@@ -128,7 +127,13 @@ def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
     group_count = group_qb.count()
 
     result = run_cmd(
-        'uploadfamily', [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION, '--dry-run']
+        'uploadfamily',
+        [
+            cmd_params.PATH_OPTION,
+            cmd_params.NAME_OPTION,
+            cmd_params.DESC_OPTION,
+            '--dry-run',
+        ],
     )
 
     assert not result.exception
@@ -201,7 +206,10 @@ def test_exportfamilies(fresh_aiida_env, potcar_family, tmp_path):
     assert export_path.exists()
 
     new_arch = tmp_path / 'export.tar.gz'
-    result = run_cmd('exportfamily', ['--dry-run', '--as-archive', '--name', potcar_family, '--path', new_arch])
+    result = run_cmd(
+        'exportfamily',
+        ['--dry-run', '--as-archive', '--name', potcar_family, '--path', new_arch],
+    )
     assert not result.exception
     assert not new_arch.exists()
 
@@ -210,6 +218,7 @@ def test_call_from_vasp():
     """Test if the verdi potcar data command works."""
 
     import subprocess
+
     output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
     assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test
 

@@ -4,26 +4,16 @@
 
 import os
 
-import numpy as np
 import pytest
-
-from aiida.common.links import LinkType
-from aiida.plugins import CalculationFactory, ParserFactory
-
-from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida.plugins import ParserFactory
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved, neb_calc_with_retrieved
-from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 def _get_neb_vasp_parser(neb_calc_with_retrieved):
     """Return vasp parser before parsing"""
     settings_dict = {
         # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
-        'parser_settings': {
-            'add_image_forces': True
-        }
+        'parser_settings': {'add_image_forces': True}
     }
     file_path = str(os.path.abspath(os.path.dirname(__file__)) + '/../../test_data/neb')
     node = neb_calc_with_retrieved(file_path, settings_dict, 3)
@@ -35,7 +25,6 @@ def _get_neb_vasp_parser(neb_calc_with_retrieved):
 def neb_parser_with_test(neb_calc_with_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     parser, file_path, node = _get_neb_vasp_parser(neb_calc_with_retrieved)
-    success = parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
     finally:

@@ -40,7 +40,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
     @classmethod
     def _value(cls, val):
         """String format a value of any compatible scalar type."""
-        if isinstance(val, (str, unicode)):  # pylint: disable=undefined-variable
+        if isinstance(val, str):  # pylint: disable=undefined-variable
             return val
         if isinstance(val, bool):
             return cls._bool(val)

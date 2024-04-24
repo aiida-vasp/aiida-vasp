@@ -7,9 +7,7 @@ from __future__ import print_function
 
 import numpy as np
 import pytest
-
 from aiida.common.extendeddicts import AttributeDict
-
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -29,11 +27,8 @@ def options():
         dict={
             'withmpi': False,
             'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
+            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1},
+            'max_wallclock_seconds': 3600,
         },
     )
     return options

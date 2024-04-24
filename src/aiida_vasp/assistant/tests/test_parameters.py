@@ -3,9 +3,7 @@
 import re
 
 import pytest
-
 from aiida.common.extendeddicts import AttributeDict
-
 from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE, ParametersMassage
 
 
@@ -93,9 +91,7 @@ def test_catch_invalid_tags(init_relax_parameters):
 def test_relax_multiple_cutoffs(init_relax_parameters):
     """Test if the massager raise exception if both energy and force cutoff is supplied."""
     init_relax_parameters.relax.energy_cutoff = 0.01
-    matching_string = re.compile(
-        r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$'
-    )
+    matching_string = re.compile(r'^User supplied both a force and an energy cutoff for the relaxation. Please select.$')
     with pytest.raises(ValueError, match=matching_string):
         _ = ParametersMassage(init_relax_parameters)
 
@@ -299,7 +295,6 @@ def test_vasp_parameter_override(init_relax_parameters):
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
     from aiida.plugins import DataFactory
-
     from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
     inputs = AttributeDict()
@@ -322,15 +317,17 @@ def test_inherit_and_merge():
     # Check that an empty parameters is allowed
     inputs.parameters = DataFactory('core.dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
-    test_parameters = AttributeDict({
-        'electronic': AttributeDict({'somekey': True}),
-        'bands': AttributeDict({'somekey': True}),
-        'smearing': AttributeDict({'somekey': True}),
-        'charge': AttributeDict({'somekey': True}),
-        'relax': AttributeDict({'somekey': True}),
-        'converge': AttributeDict({'somekey': True}),
-        'dynamics': AttributeDict({'somekey': True})
-    })
+    test_parameters = AttributeDict(
+        {
+            'electronic': AttributeDict({'somekey': True}),
+            'bands': AttributeDict({'somekey': True}),
+            'smearing': AttributeDict({'somekey': True}),
+            'charge': AttributeDict({'somekey': True}),
+            'relax': AttributeDict({'somekey': True}),
+            'converge': AttributeDict({'somekey': True}),
+            'dynamics': AttributeDict({'somekey': True}),
+        }
+    )
     assert parameters == test_parameters
     # Test ignored
     inputs.ignored = AttributeDict()
@@ -361,15 +358,7 @@ def test_unsupported_parameters_in_unsupported_namespace():  # pylint: disable=i
     parameters[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
     parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid = 200
     massager = ParametersMassage(
-        parameters,
-        unsupported_parameters={
-            'not_valid': {
-                'default': 1.0,
-                'description': 'Something',
-                'type': float,
-                'values': [1.0, 2.0]
-            }
-        }
+        parameters, unsupported_parameters={'not_valid': {'default': 1.0, 'description': 'Something', 'type': float, 'values': [1.0, 2.0]}}
     )
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
 

@@ -2,7 +2,6 @@
 # pylint: disable=redefined-outer-name, unused-wildcard-import, unused-argument, wildcard-import
 
 import pytest
-
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.fixtures import *

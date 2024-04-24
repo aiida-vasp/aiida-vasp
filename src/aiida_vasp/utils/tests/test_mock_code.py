@@ -7,12 +7,7 @@ from shutil import copy2, rmtree
 from tempfile import mkdtemp
 
 import pytest
-
-from aiida.common.extendeddicts import AttributeDict
-
-from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, create_authinfo, get_data_node
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, get_hash
 
@@ -34,16 +29,16 @@ def test_get_hash():
 
 def test_get_hash_list():
     """Test generating has for nested dict/list"""
-    dict1 = {'1': 2, 3: 4, 'a': [1, -0., '3']}
+    dict1 = {'1': 2, 3: 4, 'a': [1, -0.0, '3']}
     hash1 = get_hash(dict1)[0]
-    dict2 = {'1': 2, 3: 4, 'a': [1, 0., '3']}
+    dict2 = {'1': 2, 3: 4, 'a': [1, 0.0, '3']}
     hash2 = get_hash(dict2)[0]
 
     assert hash1 == hash2
 
-    dict1 = {'1': 2, 3: 4, 'a': [1, -0., '3', {'1': 0.}]}
+    dict1 = {'1': 2, 3: 4, 'a': [1, -0.0, '3', {'1': 0.0}]}
     hash1 = get_hash(dict1)[0]
-    dict2 = {'1': 2, 3: 4, 'a': [1, 0., '3', {'1': -0.}]}
+    dict2 = {'1': 2, 3: 4, 'a': [1, 0.0, '3', {'1': -0.0}]}
     hash2 = get_hash(dict2)[0]
 
     assert hash1 == hash2
@@ -127,10 +122,14 @@ def test_registry_folder_upload(mock_registry, custom_registry, temp_path):
     assert 'INCAR' in objects
 
 
-@pytest.mark.parametrize([
-    'vasp_structure',
-    'vasp_kpoints',
-], [('str', 'mesh')], indirect=True)
+@pytest.mark.parametrize(
+    [
+        'vasp_structure',
+        'vasp_kpoints',
+    ],
+    [('str', 'mesh')],
+    indirect=True,
+)
 def test_registry_upload_aiida(run_vasp_process, custom_registry, temp_path):
     """Test upload from an aiida calculation"""
 
@@ -166,7 +165,6 @@ def test_registry_upload_wc(fresh_aiida_env, run_vasp_process, custom_registry, 
 
 def test_mock_vasp(mock_registry, temp_path):
     """Test the MockVasp class"""
-    import os
 
     # Setup the input directory
     mock_vasp = MockVasp(temp_path, mock_registry)

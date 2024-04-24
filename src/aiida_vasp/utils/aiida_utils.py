@@ -8,9 +8,8 @@ that have now standardized in AiiDA will be removed.
 """
 # pylint: disable=import-outside-toplevel
 import numpy as np
-from packaging import version
-
 from aiida.orm import User
+from packaging import version
 
 BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
 
@@ -99,6 +98,7 @@ def compress_cell(structure, volume_change):
 
 def aiida_version():
     from aiida import __version__ as aiida_version_
+
     return version.parse(aiida_version_)
 
 
@@ -138,6 +138,7 @@ def cmp_load_verdi_data():
 def create_authinfo(computer, store=False):
     """Allow the current user to use the given computer."""
     from aiida.orm import AuthInfo
+
     authinfo = AuthInfo(computer=computer, user=get_current_user())
     if store:
         authinfo.store()

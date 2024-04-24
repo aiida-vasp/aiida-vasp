@@ -5,7 +5,6 @@ Performs a self consistent electron convergence run using the standard silicon s
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-
 from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import submit
@@ -34,7 +33,7 @@ def get_structure():
 
     structure_data = DataFactory('core.structure')
     alat = 5.431
-    lattice = np.array([[.5, 0, .5], [.5, .5, 0], [0, .5, .5]]) * alat
+    lattice = np.array([[0.5, 0, 0.5], [0.5, 0.5, 0], [0, 0.5, 0.5]]) * alat
     structure = structure_data(cell=lattice)
     for pos_direct in ([0.875, 0.875, 0.875], [0.125, 0.125, 0.125]):
         pos_cartesian = np.dot(pos_direct, lattice)
@@ -94,7 +93,7 @@ if __name__ == '__main__':
 
     # INCAR equivalent
     # Set input parameters
-    INCAR = {'incar': {'prec': 'NORMAL', 'encut': 200, 'ediff': 1E-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
+    INCAR = {'incar': {'prec': 'NORMAL', 'encut': 200, 'ediff': 1e-4, 'ialgo': 38, 'ismear': -5, 'sigma': 0.1}}
 
     # KPOINTS equivalent
     # Set kpoint mesh

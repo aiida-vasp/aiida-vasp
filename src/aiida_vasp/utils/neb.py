@@ -1,11 +1,10 @@
 """
 Utility functions for running NEB calculations
 """
-from ase.neb import NEB
 import numpy as np
-
 from aiida.engine import calcfunction
 from aiida.orm import StructureData
+from ase.neb import NEB
 
 
 @calcfunction

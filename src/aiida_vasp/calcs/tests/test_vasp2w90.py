@@ -7,7 +7,6 @@ import os
 import re
 
 import pytest
-
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 
@@ -62,6 +61,7 @@ def test_write_win(vasp2w90_calc_and_ref):
 def managed_temp_object():
     """Create a temp file object for a with context, delete after use."""
     import tempfile
+
     _, temp_object = tempfile.mkstemp()
     try:
         yield temp_object
