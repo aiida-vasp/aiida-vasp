@@ -241,7 +241,7 @@ exclude = [
     "venv",
 ]
 
-line-length = 140
+line-length = 120
 
 [tool.ruff.format]
 quote-style = 'single'
