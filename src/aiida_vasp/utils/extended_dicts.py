@@ -49,6 +49,7 @@ def delete_nested_key(dictionary, keys):
     """Delete the dictionary entry corresponding to a nested hierarchy of keys."""
     from collections.abc import MutableMapping  # pylint: disable=import-outside-toplevel
     from contextlib import suppress  # pylint: disable=import-outside-toplevel
+
     if keys and dictionary:
         element = keys[0]
         if element:
@@ -56,9 +57,8 @@ def delete_nested_key(dictionary, keys):
             if len(keys) == 1:
                 with suppress(KeyError):
                     del dictionary[element]
-            else:
-                if isinstance(value, MutableMapping):
-                    delete_nested_key(value, keys[1:])
+            elif isinstance(value, MutableMapping):
+                delete_nested_key(value, keys[1:])
 
 
 def update_nested_dict(dict1, dict2):

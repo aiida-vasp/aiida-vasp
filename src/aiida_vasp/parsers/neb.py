@@ -1,6 +1,7 @@
 """
 Parser for NEB calculations using VASP compiled with VTST
 """
+
 import os
 import traceback
 from pathlib import Path
@@ -16,7 +17,11 @@ from aiida_vasp.parsers.vasp import NotificationComposer, VaspParser
 # pylint: disable=logging-fstring-interpolation
 
 NEB_NODES = {
-    'neb_misc': {'link_name': 'neb_misc', 'type': 'core.dict', 'quantities': ['neb_data']},
+    'neb_misc': {
+        'link_name': 'neb_misc',
+        'type': 'core.dict',
+        'quantities': ['neb_data'],
+    },
     'misc': {
         'link_name': 'misc',
         'type': 'core.dict',
@@ -51,7 +56,11 @@ NEB_NODES = {
         'type': 'core.dict',
         'quantities': ['site_magnetization'],
     },
-    'image_forces': {'link_name': 'image_forces', 'type': 'core.array', 'quantities': ['forces']},
+    'image_forces': {
+        'link_name': 'image_forces',
+        'type': 'core.array',
+        'quantities': ['forces'],
+    },
 }
 
 DEFAULT_SETTINGS = {
@@ -167,7 +176,7 @@ class NEBNodeComposer(NodeComposer):
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed. ' 'No parsed data available.'
+                    (f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed. " "No parsed data available.")
                 )
                 continue
             exception = None
@@ -182,7 +191,7 @@ class NEBNodeComposer(NodeComposer):
                 self._created[node_dict['link_name']] = node
             else:
                 self._logger.warning(
-                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed, ' f'exception: {exception}'
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, ' f"exception: {exception}"
                 )
                 self._failed_to_create.append(node_dict['link_name'])
 
@@ -203,8 +212,9 @@ class NEBNodeComposer(NodeComposer):
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed for image {image_idx:02d}. '
-                    'No parsed data available.'
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} '
+                    f"failed for image {image_idx:02d}. "
+                    "No parsed data available."
                 )
                 continue
             exception = None
@@ -220,7 +230,7 @@ class NEBNodeComposer(NodeComposer):
                 # Suffix the output name with image id
                 self._created[link_name] = node
             else:
-                self._logger.warning(f'Creating node {link_name} of type {node_dict['type']} failed, ' f'exception: {exception}')
+                self._logger.warning(f'Creating node {link_name} of type {node_dict["type"]} failed,' f"exception: {exception}")
                 self._failed_to_create.append(link_name)
 
         return nodes_failed_to_create
@@ -278,7 +288,11 @@ class VtstNebParser(VaspParser):
         if calc_settings:
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
-        self._settings = NEBSettings(parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger)
+        self._settings = NEBSettings(
+            parser_settings,
+            default_settings=DEFAULT_SETTINGS,
+            vasp_parser_logger=self.logger,
+        )
         self._definitions = ParserDefinitions(content_parser_set='neb')
         self._parsable_quantities = NEBParsableQuantities(vasp_parser_logger=self.logger)
 
@@ -443,7 +457,11 @@ class VtstNebParser(VaspParser):
         ignore_all = self.parser_settings.get('ignore_all_errors', False)
         if not ignore_all:
             composer = NotificationComposer(
-                all_notifications, quantities, self.node.inputs, self.exit_codes, parser_settings=self._settings
+                all_notifications,
+                quantities,
+                self.node.inputs,
+                self.exit_codes,
+                parser_settings=self._settings,
             )
             exit_code = composer.compose()
             if exit_code is not None:

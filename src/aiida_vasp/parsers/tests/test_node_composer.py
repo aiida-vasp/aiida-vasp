@@ -1075,7 +1075,7 @@ def test_nan_inf_cleaning():
     assert example['d']['e']['g'] == 'inf'
 
 
-def node_composer_test_helper(node_settings_key, NODES, parsers):
+def node_composer_test_helper(node_settings_key, NODES, parsers):  # noqa: N803
     """A helper routine to minimize code duplication across tests for node composition."""
 
     # Prepare inputs for tqhe node composer

@@ -1,4 +1,3 @@
-# pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 """Unit tests for VaspImmigrant calculation."""
 import pytest
 from aiida.engine import run
@@ -68,7 +67,7 @@ def test_vasp_immigrant(immigrant_with_builder):
 
 
 @pytest.fixture
-def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):  # pylint: disable=invalid-name
+def immigrant_with_builder_example_3(fresh_aiida_env, potcar_family, phonondb_run, localhost, mock_vasp):
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     from aiida_vasp.calcs.vasp import VaspCalculation
 

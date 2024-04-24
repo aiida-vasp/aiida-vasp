@@ -1,7 +1,6 @@
 """
 Test for the NEB workchain
 """
-# pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 
 from io import StringIO
 
@@ -104,7 +103,7 @@ def upload_real_pseudopotentials(path):
     """
     from aiida.plugins import DataFactory
 
-    global POTCAR_FAMILY_NAME  # pylint: disable=global-statement
+    global POTCAR_FAMILY_NAME  # noqa: PLW0603
     POTCAR_FAMILY_NAME = 'TEMP'
     potcar_data_cls = DataFactory('vasp.potcar')
     potcar_data_cls.upload_potcar_family(path, 'TEMP', 'TEMP-REALPOTCARS', stop_if_existing=False, dry_run=False)

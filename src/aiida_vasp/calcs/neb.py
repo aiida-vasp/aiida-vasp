@@ -31,6 +31,7 @@ class VaspNEBCalculation(VaspCalculation):
 
     Output of individual frames are placed in the corresponding namespace under the same convention.
     """
+
     # Use stdout as the name for the diverted stdout to be consistent with those in the image folders
     _VASP_OUTPUT = 'stdout'
     _ALWAYS_RETRIEVE_LIST = ['OUTCAR', 'vasprun.xml', _VASP_OUTPUT]
@@ -41,7 +42,6 @@ class VaspNEBCalculation(VaspCalculation):
 
     @classmethod
     def define(cls, spec):
-
         super(VaspNEBCalculation, cls).define(spec)
         # NEB calculation does not have the structure input port
         spec.inputs.pop('structure')
@@ -210,16 +210,16 @@ class VaspNEBCalculation(VaspCalculation):
         spec.exit_code(
             1003,
             'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
-            message=
-            'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
+            message='the vasprun.xml was truncated and recovery parsing failed to parse at least one of the'
+            'requested quantities: {quantities}, '
             'very likely the VASP calculation did not run properly',
         )
 
         spec.exit_code(
             704,
             'ERROR_DIAGNOSIS_OUTPUTS_MISSING',
-            message=
-            'Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` quantities are requested for parsing.',
+            message='Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` quantities are '
+            'requested for parsing.',
         )
 
     def prepare_for_submission(self, folder):
@@ -270,14 +270,13 @@ class VaspNEBCalculation(VaspCalculation):
             store = True
 
         try:
-            additional_retrieve_list = self.inputs.settings.base.attributes.get(
-                'PER_IMAGE_ADDITIONAL_RETRIEVE_LIST', default=[]
-            )
+            additional_retrieve_list = self.inputs.settings.base.attributes.get('PER_IMAGE_ADDITIONAL_RETRIEVE_LIST', default=[])
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list =\
-                self.inputs.settings.base.attributes.get('PER_IMAGE_ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
+            additional_retrieve_temp_list = self.inputs.settings.base.attributes.get(
+                'PER_IMAGE_ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[]
+            )
         except AttributeError:
             additional_retrieve_temp_list = []
 
@@ -288,13 +287,11 @@ class VaspNEBCalculation(VaspCalculation):
             calcinfo.retrieve_temporary_list.extend(image_folder_paths(image_folders, additional_retrieve_temp_list))
         else:
             calcinfo.retrieve_temporary_list.extend(
-                image_folder_paths(
-                    image_folders, set(self._PER_IMAGE_ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list)
-                )
+                image_folder_paths(image_folders, set(self._PER_IMAGE_ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))
             )
             calcinfo.retrieve_list.extend(image_folder_paths(image_folders, additional_retrieve_list))
 
-        #self.logger.warning('Calcinfo: {}'.format(calcinfo))
+        # self.logger.warning('Calcinfo: {}'.format(calcinfo))
 
         return calcinfo
 
@@ -330,11 +327,13 @@ class VaspNEBCalculation(VaspCalculation):
                     # `write_additional` method
                     self.report(f'WARNING: File {name} does not exist in the restart folder.')
                 else:
-                    copy_list.append((
-                        computer.uuid,
-                        os.path.join(restart_folder.get_remote_path(), fdname, name),
-                        os.path.join(fdname, name),
-                    ))
+                    copy_list.append(
+                        (
+                            computer.uuid,
+                            os.path.join(restart_folder.get_remote_path(), fdname, name),
+                            os.path.join(fdname, name),
+                        )
+                    )
 
         return copy_list
 
@@ -364,15 +363,14 @@ class VaspNEBCalculation(VaspCalculation):
         super().verify_inputs()
         last_order = None
         last_num_sites = None
-        for structure in list(self.inputs.neb_images.values()
-                              ) + [self.inputs.initial_structure, self.inputs.final_structure]:
+        for structure in list(self.inputs.neb_images.values()) + [self.inputs.initial_structure, self.inputs.final_structure]:
             # Convert to StructureData from CifData on demand....
             if not hasattr(structure, 'get_pymatgen'):
-                structure = get_data_node('core.structure', ase=structure.get_ase())
+                structure_data = get_data_node('core.structure', ase=structure.get_ase())
 
-            num_sites = len(structure.sites)
+            num_sites = len(structure_data.sites)
 
-            order = ordered_unique_symbols(structure)
+            order = ordered_unique_symbols(structure_data)
             if last_order is not None and order != last_order:
                 raise InputValidationError('The input structures have non-euqal element orders.')
             if last_order is not None and num_sites != last_num_sites:
@@ -405,9 +403,7 @@ def image_folder_paths(image_folders, retrieve_names):
     return retrieve_list
 
 
-def ensure_structure_data(
-    structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]
-) -> DataFactory('core.structure'):
+def ensure_structure_data(structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]) -> DataFactory('core.structure'):
     """
         Get the input structure as AiiDA StructureData.
 

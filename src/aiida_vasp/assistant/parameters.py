@@ -27,6 +27,7 @@ class ChargeEnum(enum.IntEnum):
 
     See: https://www.vasp.at/wiki/index.php/ICHARG
     """
+
     WAVE = 0
     CHARGE = 1
     ATOMIC = 2
@@ -41,6 +42,7 @@ class IntSmearingEnum(enum.IntEnum):
 
     See: https://www.vasp.at/wiki/index.php/ISMEAR.
     """
+
     MP = 1  # pylint: disable=invalid-name
     GAUSSIAN = 0
     FERMI = -1
@@ -54,6 +56,7 @@ class OrbitEnum(enum.IntEnum):
 
     See: https://www.vasp.at/wiki/index.php/LORBIT
     """
+
     ATOM = 0
     ATOM_LM = 1
     ATOM_LM_PHASE = 2
@@ -77,7 +80,7 @@ class OrbitEnum(enum.IntEnum):
             # Not supported, so also calculate lm decomposed
             (False, True, True): cls.ATOM_LM_PHASE,
             # Not supported, so also calculate lm decomposed
-            (False, True, False): cls.NO_RWIGS_ATOM_LM_PHASE
+            (False, True, False): cls.NO_RWIGS_ATOM_LM_PHASE,
         }
         return value_from_combinations[combination]
 
@@ -88,6 +91,7 @@ class RelaxAlgoEnum(enum.IntEnum):
 
     See: https://www.vasp.at/wiki/index.php/IBRION
     """
+
     NO_UPDATE = -1
     IONIC_RELAXATION_RMM_DIIS = 1
     IONIC_RELAXATION_CG = 2
@@ -110,41 +114,44 @@ class RelaxModeEnum(enum.IntEnum):
     @classmethod
     def get_isif_from_dof(cls, **kwargs):
         """Get the correct mode of relaxation for the given degrees of freedom."""
-        RELAX_POSSIBILITIES = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
-        dof = tuple(kwargs[i] for i in RELAX_POSSIBILITIES)
-        value_from_dof = {(True, False, False): cls.POS_ONLY,
-                          (True, True, True): cls.POS_SHAPE_VOL,
-                          (True, True, False): cls.POS_SHAPE,
-                          (False, True, False): cls.SHAPE_ONLY,
-                          (False, True, True): cls.SHAPE_VOL,
-                          (False, False, True): cls.VOL_ONLY}
+        relax_choices = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
+        dof = tuple(kwargs[i] for i in relax_choices)
+        value_from_dof = {
+            (True, False, False): cls.POS_ONLY,
+            (True, True, True): cls.POS_SHAPE_VOL,
+            (True, True, False): cls.POS_SHAPE,
+            (False, True, False): cls.SHAPE_ONLY,
+            (False, True, True): cls.SHAPE_VOL,
+            (False, False, True): cls.VOL_ONLY,
+        }
         try:
             return value_from_dof[dof]
         except KeyError as no_dof:
-            raise ValueError(
-                f'Invalid combination for degrees of freedom: {dict(zip(RELAX_POSSIBILITIES, dof))}'
-            ) from no_dof
+            raise ValueError(f'Invalid combination for degrees of freedom: {dict(zip(relax_choices, dof))}') from no_dof
 
 
-class ParametersMassage():  # pylint: disable=too-many-instance-attributes
+class ParametersMassage:  # pylint: disable=too-many-instance-attributes
     """
     A class that contains all relevant massaging of the input parameters for VASP.
 
-    The idea is that this class accepts the set input parameters from AiiDA (non code specifics), checks if any code specific
-    parameters supplied are valid VASP input parameters (only rudimentary at this point, should also cross check and check types)
-    and convert the AiiDA input parameters to VASP specific parameters. A set function needs to be developed for each VASP INCAR
-    parameter that we want to set based on supplied AiiDA/AiiDA-VASP specific parameters. These set functions takes these parameters
-    and converts it to VASP INCAR compatible tags. The parameter property should return ready to go parameters containing the
-    default override namespace, the namespaces set in the `_set_extra_parameters` function and any additional namespaces
+    The idea is that this class accepts the set input parameters from AiiDA (non code specifics), checks if any code
+    specific parameters supplied are valid VASP input parameters (only rudimentary at this point, should also cross
+    check and check types) and convert the AiiDA input parameters to VASP specific parameters. A set function needs to
+    be developed for each VASP INCAR parameter that we want to set based on supplied AiiDA/AiiDA-VASP specific
+    parameters. These set functions takes these parameters
+    and converts it to VASP INCAR compatible tags. The parameter property should return ready to go parameters
+    containing the default override namespace, the namespaces set in the `_set_extra_parameters` function and any
+    additional namespaces
     that might have been set using the `additional_override_namespaces` setting entry in settings
     that can be supplied to the VaspWorkChain.
 
-    The default override namespace (see `_DEFAULT_OVERRIDE_NAMESPACE`) should always be present when using this VASP plugin.
+    The default override namespace (see `_DEFAULT_OVERRIDE_NAMESPACE`) should always be present when using this VASP
+    plugin.
     If using additional plugins, one can for instance supply additional namespace override that can be used,
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):  # pylint: disable=missing-function-docstring
+    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
         self.exit_code = None
 
         # Flag for skipping any validations
@@ -175,7 +182,8 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         self._functions = ParameterSetFunctions(self._parameters, self._massage[_DEFAULT_OVERRIDE_NAMESPACE])
         # Convert general parameters to VASP specific ones, using the set functions
         self._set_vasp_parameters()
-        # Override or set parameters that are supplied in the default override namespace (should be valid VASP INCAR tags)
+        # Override or set parameters that are supplied in the default override namespace
+        # (should be valid VASP INCAR tags)
         self._set_override_vasp_parameters()
         # Set any extra parameters not related to INCAR
         self._set_extra_vasp_parameters()
@@ -195,14 +203,14 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         from os import path  # pylint: disable=import-outside-toplevel
 
         from yaml import safe_load  # pylint: disable=import-outside-toplevel
+
         with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
             tags_data = safe_load(handler)
         self._valid_parameters = list(tags_data.keys())
         # Now add any unsupported parameter to the list
         for key, _ in self._unsupported_parameters.items():
-            key = key.lower()
-            if key not in self._valid_parameters:
-                self._valid_parameters.append(key)
+            if key.lower() not in self._valid_parameters:
+                self._valid_parameters.append(key.lower())
 
     def _fetch_additional_override_namespaces(self):
         """Check the settings for any additional supplied override namespace and return it."""
@@ -226,10 +234,9 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         for key, item in self._parameters[_DEFAULT_OVERRIDE_NAMESPACE].items():
             # Sweep the override input parameters (only care about the ones in the default override namespace)
             # to check if they are valid VASP tags.
-            key = key.lower()
-            if self._valid_vasp_parameter(key):
+            if self._valid_vasp_parameter(key.lower()):
                 # Add or override in the default override namespace
-                self._massage[_DEFAULT_OVERRIDE_NAMESPACE][key] = item
+                self._massage[_DEFAULT_OVERRIDE_NAMESPACE][key.lower()] = item
             else:
                 raise ValueError(f'The supplied key: {key} is not a support VASP parameter.')
 
@@ -249,8 +256,8 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         if self._parameters.dynamics:
             self._massage.dynamics = AttributeDict()
 
-        for key, item in self._parameters.dynamics.items():
-            key = key.lower()
+        for key_, item in self._parameters.dynamics.items():
+            key = key_.lower()
             if key in ['positions_dof']:
                 self._massage.dynamics[key] = item
             else:
@@ -275,8 +282,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         """Make sure all the massaged values are recognized as valid VASP input parameters."""
 
         for key in self._massage[_DEFAULT_OVERRIDE_NAMESPACE]:
-            key = key.lower()
-            if not self._valid_vasp_parameter(key):
+            if not self._valid_vasp_parameter(key.lower()):
                 raise ValueError(f'The supplied key: {key} is not a support VASP parameter.')
 
     def _set(self, key):
@@ -294,7 +300,7 @@ class ParametersMassage():  # pylint: disable=too-many-instance-attributes
         return self._massage
 
 
-class ParameterSetFunctions():
+class ParameterSetFunctions:
     """Container for the set functions that converts an AiiDA parameters to a default override specific one."""
 
     def __init__(self, parameters, incar):
@@ -379,9 +385,7 @@ class ParameterSetFunctions():
             shape = self._parameters.get('relax', {}).get('shape', False)
             volume = self._parameters.get('relax', {}).get('volume', False)
             try:
-                self._incar.isif = RelaxModeEnum.get_isif_from_dof(
-                    positions=positions, shape=shape, volume=volume
-                ).value
+                self._incar.isif = RelaxModeEnum.get_isif_from_dof(positions=positions, shape=shape, volume=volume).value
             except AttributeError:
                 pass
 
@@ -413,7 +417,7 @@ class ParameterSetFunctions():
         except AttributeError:
             pass
 
-    def set_icharg(self):  # noqa: MC0001
+    def set_icharg(self):
         """
         Set the flag to start from input charge density and keep it constant.
 
@@ -451,7 +455,7 @@ class ParameterSetFunctions():
         except AttributeError:
             pass
 
-    def set_lorbit(self):  # noqa: MC0001
+    def set_lorbit(self):
         """
         Set the flag that controls the projectors/decomposition onto orbitals.
 
@@ -465,7 +469,7 @@ class ParameterSetFunctions():
                     raise ValueError('Only projections/decompositions on the bands or the wave function are allowed.')
                 wigner_seitz_radius = False
                 try:
-                    if abs(self._incar.rwigs[0]) > 1E-8:
+                    if abs(self._incar.rwigs[0]) > 1e-8:
                         wigner_seitz_radius = True
                 except AttributeError:
                     pass
@@ -480,9 +484,7 @@ class ParameterSetFunctions():
                         phase = self._parameters.bands.phase
                     except AttributeError:
                         phase = False
-                    lorbit = OrbitEnum.get_lorbit_from_combination(
-                        lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius
-                    ).value
+                    lorbit = OrbitEnum.get_lorbit_from_combination(lm=lm, phase=phase, wigner_seitz_radius=wigner_seitz_radius).value
                     self._set_simple('lorbit', lorbit)
             else:
                 try:
@@ -510,17 +512,17 @@ class ParameterSetFunctions():
                 if wigner_seitz_radius[0]:
                     self._set_simple('rwigs', wigner_seitz_radius)
             else:
-                raise ValueError(
-                    'The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.'
-                )
+                raise ValueError('The parameter wigner_seitz_radius should be supplied as a list of floats bigger than zero.')
         except AttributeError:
             pass
 
     def _relax(self):
         """Check if we have enabled relaxation."""
-        return bool(self._parameters.get('relax', {}).get('positions') or \
-            self._parameters.get('relax', {}).get('shape') or \
-            self._parameters.get('relax', {}).get('volume'))
+        return bool(
+            self._parameters.get('relax', {}).get('positions')
+            or self._parameters.get('relax', {}).get('shape')
+            or self._parameters.get('relax', {}).get('volume')
+        )
 
     def _set_simple(self, target, value):
         """Set basic parameter."""
@@ -535,18 +537,14 @@ def check_inputs(supplied_inputs):
     inputs = None
     if supplied_inputs is None:
         inputs = AttributeDict()
+    elif isinstance(supplied_inputs, DataFactory('core.dict')):
+        inputs = AttributeDict(supplied_inputs.get_dict())
+    elif isinstance(supplied_inputs, dict):
+        inputs = AttributeDict(supplied_inputs)
+    elif isinstance(supplied_inputs, AttributeDict):
+        inputs = supplied_inputs
     else:
-        if isinstance(supplied_inputs, DataFactory('core.dict')):
-            inputs = AttributeDict(supplied_inputs.get_dict())
-        elif isinstance(supplied_inputs, dict):
-            inputs = AttributeDict(supplied_inputs)
-        elif isinstance(supplied_inputs, AttributeDict):
-            inputs = supplied_inputs
-        else:
-            raise ValueError(
-                f'The supplied type {type(inputs)} of inputs is not supported. '
-                'Supply a dict, Dict or an AttributeDict.'
-            )
+        raise ValueError(f'The supplied type {type(inputs)} of inputs is not supported. ' 'Supply a dict, Dict or an AttributeDict.')
 
     return inputs
 
@@ -561,7 +559,8 @@ def inherit_and_merge_parameters(inputs):
     parameters = AttributeDict()
     namespaces = _BASE_NAMESPACES
 
-    # We start with a clean parameters and first set the allowed namespaces and its content from the inputs of the workchain
+    # We start with a clean parameters and first set the allowed namespaces and its content from the inputs of the
+    # workchain
     for namespace in namespaces:  # pylint: disable=too-many-nested-blocks
         parameters[namespace] = AttributeDict()
         try:
@@ -651,9 +650,7 @@ class ParserSettingsChecker:
                 isif = 0
 
         if isif == 0:
-            raise InputValidationError(
-                'Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.'
-            )
+            raise InputValidationError('Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.')
 
     def check_wavecar_chgcar(self):
         """Check if WAVECAR CHGCAR are set to be written"""
@@ -671,9 +668,7 @@ class ParserSettingsChecker:
 
         lepsilon = self.parameters.get('lepsilon', False)
         if not lepsilon:
-            raise InputValidationError(
-                'Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.'
-            )
+            raise InputValidationError('Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.')
 
     def check_dynmat(self):
         if 'hessian' not in self.quantities and 'dynmat' not in self.quantities:

@@ -43,8 +43,9 @@ def get_hash(dict_obj):
         dict_obj = dict(enumerate(dict_obj))
 
     rec = []
-    for key, value in dict_obj.items():
-        key = repr(key)
+    for key_, value_ in dict_obj.items():
+        key = repr(key_)
+        value = value_
         # For numpy/list with floating point zero (0.0) we have to converge -0.0 to 0.0
         # as they should be equivalent
         if isinstance(value, np.ndarray):

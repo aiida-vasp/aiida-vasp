@@ -6,11 +6,11 @@ Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
 
-from aiida.common import AIIDA_LOGGER as aiidalogger
-from aiida.orm import Data  # pylint: disable=no-name-in-module
+from aiida.common import AIIDA_LOGGER
+from aiida.orm import Data
 
 
-class BaseFileParser():
+class BaseFileParser:
     """
     Base class for all the content parsers which parse (read and write) VASP files.
 
@@ -72,7 +72,7 @@ class BaseFileParser():
             raise TypeError('Supply at bare minimum either argument handler or data to initialize parser.')
 
         # Make sure logger messages in the parser are passed to the AiiDA logger.
-        self._logger = aiidalogger.getChild(self.__class__.__name__)
+        self._logger = AIIDA_LOGGER.getChild(self.__class__.__name__)
 
         # What quantities the specific content parser can provide.
         self._parsable_quantities = self.PARSABLE_QUANTITIES
@@ -121,8 +121,9 @@ class BaseFileParser():
         if not self._settings.get('quantities_to_parse'):
             # Did not find any quantities to parse in the settings, set it to the default
             # for each content parser or to an empty list of not defined
-            self._settings['quantities_to_parse'] = self.DEFAULT_SETTINGS['quantities_to_parse'] \
-                if self.DEFAULT_SETTINGS.get('quantities_to_parse') else []
+            self._settings['quantities_to_parse'] = (
+                self.DEFAULT_SETTINGS['quantities_to_parse'] if self.DEFAULT_SETTINGS.get('quantities_to_parse') else []
+            )
         # Let us make sure the quantities to parser is in a list form
         if not isinstance(self._settings.get('quantities_to_parse'), list):
             raise TypeError('The quantities_to_parse is not defined as a list of quantities.')
@@ -242,9 +243,7 @@ class BaseFileParser():
 
         """
 
-        raise NotImplementedError(
-            f'{self.__class__.__name__} does not implement a _content_data_to_content_parser() method.'
-        )
+        raise NotImplementedError(f'{self.__class__.__name__} does not implement a _content_data_to_content_parser() method.')
 
     def _parse_content(self):
         """Parse the quantities configured and parseable from the content."""

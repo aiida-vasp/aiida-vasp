@@ -44,35 +44,14 @@ class VasprunParser(BaseFileParser):
             'version',
         ],
         'energy_type': ['energy_extrapolated'],
-        'electronic_step_energies':
-        False
+        'electronic_step_energies': False,
     }
 
     PARSABLE_QUANTITIES = {
-        'structure': {
-            'inputs': [],
-            'name': 'structure',
-            'prerequisites': [],
-            'alternatives': ['poscar-structure']
-        },
-        'eigenvalues': {
-            'inputs': [],
-            'name': 'eigenvalues',
-            'prerequisites': [],
-            'alternatives': ['eigenval-eigenvalues']
-        },
-        'dos': {
-            'inputs': [],
-            'name': 'dos',
-            'prerequisites': [],
-            'alternatives': ['doscar-dos']
-        },
-        'kpoints': {
-            'inputs': [],
-            'name': 'kpoints',
-            'prerequisites': [],
-            'alternatives': ['kpoints-kpoints']
-        },
+        'structure': {'inputs': [], 'name': 'structure', 'prerequisites': [], 'alternatives': ['poscar-structure']},
+        'eigenvalues': {'inputs': [], 'name': 'eigenvalues', 'prerequisites': [], 'alternatives': ['eigenval-eigenvalues']},
+        'dos': {'inputs': [], 'name': 'dos', 'prerequisites': [], 'alternatives': ['doscar-dos']},
+        'kpoints': {'inputs': [], 'name': 'kpoints', 'prerequisites': [], 'alternatives': ['kpoints-kpoints']},
         'occupancies': {
             'inputs': [],
             'name': 'occupancies',
@@ -133,16 +112,8 @@ class VasprunParser(BaseFileParser):
             'name': 'fermi_level',
             'prerequisites': [],
         },
-        'maximum_force': {
-            'inputs': [],
-            'name': 'maximum_force',
-            'prerequisites': []
-        },
-        'maximum_stress': {
-            'inputs': [],
-            'name': 'maximum_stress',
-            'prerequisites': []
-        },
+        'maximum_force': {'inputs': [], 'name': 'maximum_force', 'prerequisites': []},
+        'maximum_stress': {'inputs': [], 'name': 'maximum_stress', 'prerequisites': []},
         'band_properties': {
             'inputs': [],
             'name': 'band_properties',
@@ -152,7 +123,7 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'version',
             'prerequisites': [],
-        }
+        },
     }
 
     # Mapping of the energy names to those returned by parsevasp.vasprunl.Xml
@@ -415,9 +386,7 @@ class VasprunParser(BaseFileParser):
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species.tolist()])
 
-        if (unitcell is not None) and (positions is not None) and \
-           (species is not None) and (forces is not None) and \
-           (stress is not None):
+        if (unitcell is not None) and (positions is not None) and (species is not None) and (forces is not None) and (stress is not None):
             trajectory_data = {}
 
             keys = ('cells', 'positions', 'symbols', 'forces', 'stress', 'steps')
@@ -447,9 +416,7 @@ class VasprunParser(BaseFileParser):
     def energies(self):
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
-        electronic_step_energies = self._settings.get(
-            'electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies']
-        )
+        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies'])
 
         return self._energies(nosc=not electronic_step_energies)
 
@@ -492,8 +459,7 @@ class VasprunParser(BaseFileParser):
                 # The energy_extrapolated_final is the entropy term itself in VASP 5
                 # Store the calculated energy_no_entropy under 'energy_extrapolated_final',
                 # which is then recovered as `energy_no_entropy` later
-                energies['energy_extrapolated_final'
-                         ] = energies['energy_free_final'] - energies['energy_extrapolated_final']
+                energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
         else:
             energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
 
@@ -616,8 +582,7 @@ class VasprunParser(BaseFileParser):
         total = dos.get('total')
         if (upspin is not None) and (downspin is not None):
             tdos = np.stack((upspin['total'], downspin['total']))
-            if (upspin['partial'] is not None) and \
-               (downspin['partial'] is not None):
+            if (upspin['partial'] is not None) and (downspin['partial'] is not None):
                 pdos = np.stack((upspin['partial'], downspin['partial']))
         else:
             tdos = total['total']
@@ -656,11 +621,10 @@ class VasprunParser(BaseFileParser):
         energies = self._content_parser.get_energies('all', nosc=True)
         if energies is None:
             info['ionic_converged'] = False
+        elif len(energies.get('electronic_steps')) < parameters['nsw'] and not self._content_parser.truncated:
+            info['ionic_converged'] = True
         else:
-            if len(energies.get('electronic_steps')) < parameters['nsw'] and not self._content_parser.truncated:
-                info['ionic_converged'] = True
-            else:
-                info['ionic_converged'] = False
+            info['ionic_converged'] = False
         # Override if nsw is 0 - no ionic steps are performed
         if parameters['nsw'] < 1:
             info['ionic_converged'] = None

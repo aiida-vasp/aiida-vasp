@@ -1,4 +1,3 @@
-# pylint: disable=abstract-method
 """
 Representation of the POTCAR files.
 
@@ -114,7 +113,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
 
-from aiida.common import AIIDA_LOGGER as aiidalogger
+from aiida.common import AIIDA_LOGGER
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida.orm import (
     Data,  # pylint: disable=no-name-in-module
@@ -370,13 +369,13 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         from copy import deepcopy
 
         if self.exists(sha512=self.sha512):
-            raise UniquenessError(f'A {str(self.__class__)} node already exists for this file.')
+            raise UniquenessError(f'A {self.__class__!s} node already exists for this file.')
 
         other_attrs = deepcopy(self.base.attributes.all)
 
         other_attrs.pop('sha512')
         if self.exists(**other_attrs):
-            raise UniquenessError(f'A {str(self.__class__)} node with these attributes but a different file exists:\n{str(other_attrs)}')
+            raise UniquenessError(f'A {self.__class__!s} node with these attributes but a different file exists:\n{other_attrs!s}')
 
 
 class VersioningMixin(object):  # pylint: disable=useless-object-inheritance
@@ -889,11 +888,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         for potcar, created, file_path in new_potcars_added:
             if created:
-                aiidalogger.debug(
+                AIIDA_LOGGER.debug(
                     'New PotcarData node %s created while uploading file %s for family %s', potcar.uuid, file_path, group_name
                 )
             else:
-                aiidalogger.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
+                AIIDA_LOGGER.debug('PotcarData node %s used instead of uploading file %s to family %s', potcar.uuid, file_path, group_name)
 
         if not dry_run:
             group.add_nodes([potcar for potcar, created, file_path in new_potcars_added])
@@ -924,11 +923,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                     )
                 list_created.append((potcar, created, file_path))
             except KeyError as err:
-                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
+                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
             except AttributeError as err:
-                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
+                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
             except IndexError as err:
-                print(f'skipping file {file_path} - uploading raised {str(err.__class__)}{str(err)}')
+                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
 
         return list_created
 

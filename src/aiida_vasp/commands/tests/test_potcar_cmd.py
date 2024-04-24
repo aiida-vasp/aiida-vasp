@@ -58,7 +58,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
 
 def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     """Give a tar file as the source."""
-    path_option = f"--path={str(Path(cmd_params.POTCAR_PATH) / 'Ga.tar')}"
+    path_option = f"--path={Path(cmd_params.POTCAR_PATH) / 'Ga.tar'!s}"
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
     potcar_cls = get_data_class('vasp.potcar')
 

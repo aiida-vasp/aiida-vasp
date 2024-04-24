@@ -294,6 +294,6 @@ def clean_nan_values(inputs: dict) -> dict:
         if isinstance(value, dict):
             clean_nan_values(value)
         if isinstance(value, numbers.Real) and (math.isnan(value) or math.isinf(value)):
-            warn(f'Key <{key}> has value <{value}> replaced by <{str(value)}>')
+            warn(f'Key <{key}> has value <{value}> replaced by <{value!s}>')
             inputs[key] = str(value)
     return inputs

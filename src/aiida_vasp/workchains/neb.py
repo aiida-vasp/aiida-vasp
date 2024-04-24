@@ -261,8 +261,8 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             if 'misc' not in node.outputs:
                 self.report('Cannot found the `misc` output containing the parsed per-image data')
                 return None
-            for misc in node.outputs['misc'].values():
-                misc = misc.get_dict()
+            for misc_ in node.outputs['misc'].values():
+                misc = misc_.get_dict()
                 if 'run_status' in misc and misc['run_status'].get('finished'):
                     finished.append(True)
                 else:
