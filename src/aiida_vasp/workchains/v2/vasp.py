@@ -77,37 +77,37 @@ class VaspWorkChain(VanillaVaspWorkChain):
         spec.input('code', valid_type=Code)
         spec.input(
             'structure',
-            valid_type=(get_data_class('structure'), get_data_class('cif')),
+            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
             required=True,
         )
-        spec.input('kpoints', valid_type=get_data_class('array.kpoints'), required=False)
+        spec.input('kpoints', valid_type=get_data_class('core.array.kpoints'), required=False)
         spec.input(
             'potential_family',
-            valid_type=get_data_class('str'),
+            valid_type=get_data_class('core.str'),
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=True,
             validator=parameters_validator,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             serializer=to_aiida_type,
         )
@@ -115,13 +115,13 @@ class VaspWorkChain(VanillaVaspWorkChain):
         spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
         spec.input(
             'site_magnetization',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             help='Site magnetization to be used as MAGMOM',
         )
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('remote'),
+            valid_type=get_data_class('core.remote'),
             required=False,
             help="""
             The restart folder from a previous workchain run that is going to be used.
@@ -129,9 +129,9 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('int'),
+            valid_type=get_data_class('core.int'),
             required=False,
-            default=lambda: get_data_node('int', 5),
+            default=lambda: get_data_node('core.int', 5),
             serializer=to_aiida_type,
             help="""
             The maximum number of iterations to perform.
@@ -139,27 +139,27 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('bool'),
+            valid_type=get_data_class('core.bool'),
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('bool', True),
+            default=lambda: get_data_node('core.bool', True),
             help="""
             If True, clean the work dir upon the completion of a successfull calculation.
             """,
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('bool'),
+            valid_type=get_data_class('core.bool'),
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('bool', False),
+            default=lambda: get_data_node('core.bool', False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
         )
         spec.input(
             'ldau_mapping',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             serializer=to_aiida_type,
             help="""Settings for assign LDA+U related settings according to the input structure.
@@ -171,21 +171,21 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('float'),
+            valid_type=get_data_class('core.float'),
             required=False,
             serializer=to_aiida_type,
             help='Spacing for the kpoints in units A^-1 * 2pi',
         )
         spec.input(
             'auto_parallel',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             serializer=to_aiida_type,
             required=False,
             help='Automatic parallelisation settings, keywords passed to `get_jobscheme` function.',
         )
         spec.input(
             'dynamics.positions_dof',
-            valid_type=get_data_class('list'),
+            valid_type=get_data_class('core.list'),
             serializer=to_aiida_type,
             required=False,
             help="""
@@ -203,7 +203,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             ),
             cls.results,
         )  # yapf: disable
-        spec.output('parallel_settings', valid_type=get_data_class('dict'), required=False)
+        spec.output('parallel_settings', valid_type=get_data_class('core.dict'), required=False)
 
     def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -339,7 +339,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
 
     def run_auto_parallel(self):
         """Wether we should run auto-parallelisation test"""
-        return ('auto_parallel' in self.inputs and self.inputs.auto_parallel.value is True)
+        return 'auto_parallel' in self.inputs and self.inputs.auto_parallel.value is True
 
     def perform_autoparallel(self):
         """Dry run and obtain the best parallelisation settings"""
@@ -360,15 +360,15 @@ class VaspWorkChain(VanillaVaspWorkChain):
         try:
             scheme = get_jobscheme(ind, nprocs, **kwargs)
         except Exception as error:
-            self.report(f"Dry-run errorred, process with cautions, message: {error.args}")  # pylint: disable=not-callable
+            self.report(f'Dry-run errorred, process with cautions, message: {error.args}')  # pylint: disable=not-callable
             return
 
         if (scheme.ncore is None) or (scheme.kpar is None):
-            self.report(f"Error NCORE: {scheme.ncore}, KPAR: {scheme.kpar}")  # pylint: disable=not-callable
+            self.report(f'Error NCORE: {scheme.ncore}, KPAR: {scheme.kpar}')  # pylint: disable=not-callable
             return
 
         parallel_opts = {'ncore': scheme.ncore, 'kpar': scheme.kpar}
-        self.report(f"Found optimum KPAR={scheme.kpar}, NCORE={scheme.ncore}")  # pylint: disable=not-callable
+        self.report(f'Found optimum KPAR={scheme.kpar}, NCORE={scheme.ncore}')  # pylint: disable=not-callable
         self.ctx.inputs.parameters.update(parallel_opts)
         self.out(
             'parallel_settings',

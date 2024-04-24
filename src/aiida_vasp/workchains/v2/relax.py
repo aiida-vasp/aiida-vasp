@@ -58,10 +58,10 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
     def define(cls, spec):
         super().define(spec)
         spec.expose_inputs(cls._base_workchain, 'vasp', exclude=('structure',))
-        spec.input('structure', valid_type=(get_data_class('structure'), get_data_class('cif')))
+        spec.input('structure', valid_type=(get_data_class('core.structure'), get_data_class('core.cif')))
         spec.input(
             'static_calc_parameters',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -70,7 +70,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'static_calc_settings',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -79,7 +79,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'static_calc_options',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -88,7 +88,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'relax_settings',
-            valid_type=get_data_class('dict'),
+            valid_type=get_data_class('core.dict'),
             validator=RelaxOptions.validate_dict,
             serializer=to_aiida_type,
             help=RelaxOptions.get_description(),
@@ -151,7 +151,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )  # yapf: disable
 
         spec.expose_outputs(cls._base_workchain)
-        spec.output('relax.structure', valid_type=get_data_class('structure'), required=False)
+        spec.output('relax.structure', valid_type=get_data_class('core.structure'), required=False)
 
     def initialize(self):
         """Initialize."""
@@ -237,7 +237,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                     f'{key} explicitly set to {incar[key]} - this overrides the relax_settings input - proceed with caution.'
                 )
         isif = incar.get('isif')
-        if isif == 3 and not all([self.ctx.relax_settings.get(key) for key in ['positions', 'volume', 'shape']]):
+        if isif == 3 and not all(self.ctx.relax_settings.get(key) for key in ['positions', 'volume', 'shape']):
             raise InputValidationError(
                 'ISIF = 3 is set explicity for INCAR, which is consistent with the mode of relaxation supplied to the workchain.'
             )

@@ -14,7 +14,7 @@ import numpy as np
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
-import aiida.orm as orm
+from aiida import orm
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
@@ -174,7 +174,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         spec.input(
             'restart_folder',
             required=False,
-            valid_type=get_data_class('remote'),
+            valid_type=get_data_class('core.remote'),
             help='A remote folder containing the CHGCAR file to be used',
         )
         spec.outline(
@@ -335,7 +335,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         if not np.allclose(self.ctx.current_structure.cell, current_structure_backup.cell):
             if self.inputs.scf.get('kpoints'):
                 self.report(
-                    'The primitive structure is not the same as the input structure but explicit kpoints are supplied - aborting the workchain.'
+                    'The primitive structure is not the same as the input structure but explicit kpoints are supplied'
+                    ' - aborting the workchain.'
                 )
                 return self.exit_codes.ERROR_INPUT_STRUCTURE_NOT_PRIMITIVE  # pylint: disable=no-member
             self.report(
