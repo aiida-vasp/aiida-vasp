@@ -30,7 +30,7 @@ classifiers = [
 keywords = ["aiida", "plugin"]
 requires-python = ">=3.9"
 dependencies = [
-	"aiida-core[atomic_tools]~=2.4",
+	"aiida-core[atomic_tools]~=2.3",
 	"lxml",
 	"packaging",
 	"parsevasp~=3.2"
@@ -41,7 +41,7 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
-    "aiida-core[tests]~=2.4",
+    "aiida-core[tests]~=2.3",
     "tox>=3.23.0",
     "virtualenv>20"
 ]

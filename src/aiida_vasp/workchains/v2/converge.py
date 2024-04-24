@@ -7,7 +7,7 @@ Inputs
 - just like a normal VaspWorkChain
 - run with different cut off energies
 - run with different k spacing
-- summaries the results
+- summarise the results
 
 No added wrapper etc.
 """
@@ -18,7 +18,7 @@ from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
 from .common import nested_update_dict_node
-from .opthold import FloatOption, OptionContainer
+from .common.opthold import FloatOption, OptionContainer
 
 #pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
@@ -32,7 +32,7 @@ class VaspConvergenceWorkChain(WorkChain):
     and the cut off energy.
 
     A ``conv_setting`` input controls the range of cut off energies and kpoint spacings.
-    The avaliable options are:
+    The available options are:
       - cutoff_start
       - cutoff_stop
       - cutoff_step
@@ -131,12 +131,12 @@ class VaspConvergenceWorkChain(WorkChain):
             new_param = nested_update_dict_node(inputs.parameters, {'incar': {'encut': cut}})
             inputs.parameters = new_param
             if original_label:
-                inputs.metadata.label = original_label + f' CUTCONV {cut:.2f}'
+                inputs.metadata.label = original_label + f" CUTCONV {cut:.2f}"
             else:
-                inputs.metadata.label = f'CUTCONV {cut:.2f}'
+                inputs.metadata.label = f"CUTCONV {cut:.2f}"
 
             running = self.submit(self._sub_workchain, **inputs)
-            self.report(f'Submitted {running} with cut off energy {cut:.1f} eV.')
+            self.report(f"Submitted {running} with cut off energy {cut:.1f} eV.")
             self.to_context(cutoff_conv_workchains=append_(running))
 
         # Launch kpoints convergence tests
@@ -145,12 +145,12 @@ class VaspConvergenceWorkChain(WorkChain):
             inputs.parameters = new_param
             inputs.kpoints_spacing = kspacing
             if original_label:
-                inputs.metadata.label = original_label + f' KCONV {kspacing:.3f}'
+                inputs.metadata.label = original_label + f" KCONV {kspacing:.3f}"
             else:
-                inputs.metadata.label = f'KCONV {kspacing:.3f}'
+                inputs.metadata.label = f"KCONV {kspacing:.3f}"
 
             running = self.submit(self._sub_workchain, **inputs)
-            self.report(f'Submitted {running} with kpoints spacing {kspacing:.3f}.')
+            self.report(f"Submitted {running} with kpoints spacing {kspacing:.3f}.")
             self.to_context(kpoints_conv_workchains=append_(running))
 
     def analyse(self):
@@ -190,32 +190,30 @@ class VaspConvergenceWorkChain(WorkChain):
         cutoff_miscs = {}
         if 'cutoff_conv_workchains' in self.ctx:
             for iwork, workchain in enumerate(self.ctx.cutoff_conv_workchains):
-
                 if workchain.exit_status != 0:
                     exit_code = self.exit_codes.ERROR_SUBWORKFLOW_ERRORED
-                    self.report(f'Skipping workchain {workchain} with exit status {workchain.exit_status} ')
+                    self.report(f"Skipping workchain {workchain} with exit status {workchain.exit_status} ")
                     continue
 
                 cutoff = workchain.inputs.parameters['incar']['encut']
                 cutoff_data[cutoff] = collect_data(workchain)
                 cutoff_data[cutoff]['mesh'] = workchain.called[0].inputs.kpoints.get_kpoints_mesh()[0]
-                cutoff_miscs[f'worchain_{iwork}'] = workchain.outputs.misc
+                cutoff_miscs[f"worchain_{iwork}"] = workchain.outputs.misc
 
         kspacing_data = {}
         kspacing_miscs = {}
 
         if 'kpoints_conv_workchains' in self.ctx:
             for iwork, workchain in enumerate(self.ctx.kpoints_conv_workchains):
-
                 if workchain.exit_status != 0:
                     exit_code = self.exit_codes.ERROR_SUBWORKFLOW_ERRORED
-                    self.report(f'Skipping Workchain {workchain} with exit status {workchain.exit_status} ')
+                    self.report(f"Skipping Workchain {workchain} with exit status {workchain.exit_status} ")
                     continue
 
                 spacing = float(workchain.inputs.kpoints_spacing)
                 kspacing_data[spacing] = collect_data(workchain)
                 kspacing_data[spacing]['mesh'] = workchain.called[0].inputs.kpoints.get_kpoints_mesh()[0]
-                kspacing_miscs[f'worchain_{iwork}'] = workchain.outputs.misc
+                kspacing_miscs[f"worchain_{iwork}"] = workchain.outputs.misc
                 cutoff = workchain.inputs.parameters['incar']['encut']
                 kspacing_data[spacing]['cutoff_energy'] = cutoff
 
@@ -238,7 +236,7 @@ class VaspConvergenceWorkChain(WorkChain):
         return exit_code
 
     @classproperty
-    def option_class(cls):  #pylint:disable=no-self-use
+    def option_class(cls):
         return ConvOptions
 
     @staticmethod
@@ -340,10 +338,42 @@ def plot_conv_data(cdf, kdf, **kwargs):
             axs[i].set_ylabel(r'$S_{max}$ (kBar)')
         axs[i].set_xticks(kdf.kpoints_spacing)
         axs[i].set_xticklabels(
-            [f'{row.kpoints_spacing:.3f}\n{row.mesh}' for _, row in kdf.iterrows()],
+            [f"{row.kpoints_spacing:.3f}\n{row.mesh}" for _, row in kdf.iterrows()],
             rotation=45,
         )
         axs[i].set_xlabel('K-pointing spacing (mesh)')
         fig.tight_layout()
 
     return figs
+
+
+def get_convergence_builder(structure, config):
+    """
+    Short cut for getting an VaspBuilderUpdater ready to use
+
+    :structure StructureData: The input structure node.
+    :config dict: Configuration dictionary specifying the protocol.
+
+    The following files are used from the configuration: ``code``, ``inputset``, ``conv``, ``options``, ``resources``.
+    """
+
+    from .common.builder_updater import VaspBuilderUpdater
+
+    conv_builder = VaspConvergenceWorkChain.get_builder()
+
+    upd = VaspBuilderUpdater(conv_builder)
+    upd.use_inputset(
+        structure,
+        config.get('inputset', VaspBuilderUpdater.DEFAULT_SET),
+        overrides=config.get('overrides', {}),
+    )
+    upd.set_code(orm.load_code(config['code']))
+
+    upd.set_default_options(**config.get('options', {}))
+    upd.update_resources(**config.get('resources', {}))
+    upd.set_label(f"{structure.label} CONV")
+
+    # Convergence specific options
+    conv = ConvOptions(**config.get('conv', {}))
+    upd.builder.conv_settings = conv.to_aiida_dict()
+    return upd

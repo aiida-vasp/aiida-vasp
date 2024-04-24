@@ -7,16 +7,17 @@ Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 import numpy as np
 
 from aiida.common.exceptions import InputValidationError, NotExistent
+# from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import while_
+from aiida.engine import if_, while_
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, process_handler
-from aiida.orm import Code, KpointsData
+from aiida.orm import Code, Dict, KpointsData
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import CalculationFactory
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
-from aiida_vasp.utils.workchains import compose_exit_code
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 from aiida_vasp.workchains.vasp import VaspWorkChain as VanillaVaspWorkChain
 
 from .common import parameters_validator, site_magnetization_to_magmom
@@ -61,6 +62,9 @@ class VaspWorkChain(VanillaVaspWorkChain):
     - Automatic setting LDA+U key using the ``ldau_mapping`` input port.
 
     - Set kpoints using spacing in A^-1 * 2pi with the ``kpoints_spacing`` input port.
+
+    - Perform dryrun and set parameters such as KPAR and NCORE automatically if ``auto_parallel`` input port exists.
+      this will give rise to an additional output node ``parallel_settings`` containing the strategy obtained.
 
     """
 
@@ -173,6 +177,13 @@ class VaspWorkChain(VanillaVaspWorkChain):
             help='Spacing for the kpoints in units A^-1 * 2pi',
         )
         spec.input(
+            'auto_parallel',
+            valid_type=get_data_class('dict'),
+            serializer=to_aiida_type,
+            required=False,
+            help='Automatic parallelisation settings, keywords passed to `get_jobscheme` function.',
+        )
+        spec.input(
             'dynamics.positions_dof',
             valid_type=get_data_class('list'),
             serializer=to_aiida_type,
@@ -184,6 +195,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
         spec.outline(
             cls.setup,
             cls.init_inputs,
+            if_(cls.run_auto_parallel)(cls.prepare_inputs, cls.perform_autoparallel),
             while_(cls.should_run_process)(
                 cls.prepare_inputs,
                 cls.run_process,
@@ -191,8 +203,9 @@ class VaspWorkChain(VanillaVaspWorkChain):
             ),
             cls.results,
         )  # yapf: disable
+        spec.output('parallel_settings', valid_type=get_data_class('dict'), required=False)
 
-    def init_inputs(self):  #pylint: disable=too-many-branches,too-many-statements
+    def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
 
         #### START OF THE COPY FROM VASPWorkChain ####
@@ -323,6 +336,47 @@ class VaspWorkChain(VanillaVaspWorkChain):
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
         return None
+
+    def run_auto_parallel(self):
+        """Wether we should run auto-parallelisation test"""
+        return ('auto_parallel' in self.inputs and self.inputs.auto_parallel.value is True)
+
+    def perform_autoparallel(self):
+        """Dry run and obtain the best parallelisation settings"""
+        from .common.dryrun import get_jobscheme
+
+        self.report('Performing local dryrun for auto-parallelisation')  # pylint: disable=not-callable
+
+        ind = prepare_process_inputs(self.ctx.inputs)
+
+        nprocs = self.ctx.inputs.metadata['options']['resources']['tot_num_mpiprocs']
+
+        # Take the settings pass it to the function
+        kwargs = self.inputs.auto_parallel.get_dict()
+        if 'cpus_per_node' not in kwargs:
+            kwargs['cpus_per_node'] = self.inputs.code.computer.get_default_mpiprocs_per_machine()
+
+        # If the dryrun errored, proceed the workchain
+        try:
+            scheme = get_jobscheme(ind, nprocs, **kwargs)
+        except Exception as error:
+            self.report(f"Dry-run errorred, process with cautions, message: {error.args}")  # pylint: disable=not-callable
+            return
+
+        if (scheme.ncore is None) or (scheme.kpar is None):
+            self.report(f"Error NCORE: {scheme.ncore}, KPAR: {scheme.kpar}")  # pylint: disable=not-callable
+            return
+
+        parallel_opts = {'ncore': scheme.ncore, 'kpar': scheme.kpar}
+        self.report(f"Found optimum KPAR={scheme.kpar}, NCORE={scheme.ncore}")  # pylint: disable=not-callable
+        self.ctx.inputs.parameters.update(parallel_opts)
+        self.out(
+            'parallel_settings',
+            Dict(dict={
+                'ncore': scheme.ncore,
+                'kpar': scheme.kpar
+            }).store(),
+        )
 
     # In this workchain variant we default to ignore the NELM breaches in the middle of the calculation
     @process_handler(priority=850, enabled=True)

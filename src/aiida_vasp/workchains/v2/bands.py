@@ -1,74 +1,33 @@
 """
 Bands workchain with a more flexible input
+TODO:
+
+- Add option to use alternative pathways obtained using sumo-interface
+- Improve the hybrid workchain by performing local dryrun to extract the full kpoints
+    - If running SOC, the ISYM should be turned to 0 or -1.
 """
 from copy import deepcopy
-from gzip import GzipFile
-from pathlib import Path
-import shutil
-from tempfile import mkdtemp
 from typing import List
 
-from aiida_user_addons.process.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 import numpy as np
-from sumo.symmetry.kpoints import get_path_data
 
-from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
+import aiida.orm as orm
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
-from aiida.tools import get_explicit_kpoints_path
 
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
-from .dryrun import dryrun_relax_builder
+from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithVaspInputSet
 
 try:
     from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 except ImportError:
     from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-
-#pylint:disable=too-many-lines,too-many-branches,too-many-statements,no-member
-
-
-@calcfunction
-def kpath_from_sumo(structure: orm.StructureData, mode: orm.Str, symprec: orm.Float, line_density):
-    """
-    Obtain kpoint path from sumo
-
-    Supports multiple modes: bradcrack, pymatgen, latimer-munro, seekpath
-    """
-
-    struct = structure.get_pymatgen()
-    line_density = line_density.value
-
-    path, kpoints_raw, labels = get_path_data(
-        struct,
-        mode.value,
-        symprec.value,
-        line_density=line_density,
-    )
-    # Primitive structure
-    prim = orm.StructureData(pymatgen=path.prim)
-
-    # kpoints
-    kpoints = orm.KpointsData()
-    kpoints.set_kpoints(kpoints_raw)
-
-    actual_labels = []
-    for idx, label in enumerate(labels):
-        if label != '':
-            # Standarise GAMMA handling
-            if 'GAMMA' in label:
-                label = 'GAMMA'
-            actual_labels.append([idx, label])
-    # Set label locations
-    kpoints.labels = actual_labels
-
-    return {'primitive_structure': prim, 'explicit_kpoints': kpoints}
 
 
 class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
@@ -302,11 +261,10 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         relax_workchain = self.ctx.workchain_relax
         if not relax_workchain.is_finished_ok:
             self.report('Relaxation finished with Error')
-            return self.exit_codes.ERROR_SUB_PROC_RELAX_FAILED  # pylint: disable=no-member
+            return self.exit_codes.ERROR_SUB_PROC_RELAX_FAILED
 
         # Use the relaxed structure as the current structure
         self.ctx.current_structure = relax_workchain.outputs.relax__structure
-        return None
 
     def should_run_scf(self):
         """Wether we should run SCF calculation"""
@@ -320,10 +278,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         Seekpath should only run if no explicit bands is provided or we are just
         running for DOS, in which case the original structure is used.
         """
-        if not self.inputs.get('only_dos', False):
-            if 'bs_kpoints' not in self.inputs:
-                return True
-        return False
+        return 'bs_kpoints' not in self.inputs and (not self.inputs.get('only_dos', False))
 
     def generate_path(self):
         """
@@ -348,6 +303,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             func = seekpath_structure_analysis
         else:
             # Using sumo interface
+            from .common.sumo_kpath import kpath_from_sumo
             inputs = {
                 'line_density': self.inputs.get('line_density', orm.Float(self.DEFAULT_LINE_DENSITY)),
                 'symprec': self.inputs.get('symprec', orm.Float(self.DEFAULT_SYMPREC)),
@@ -379,8 +335,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         if not np.allclose(self.ctx.current_structure.cell, current_structure_backup.cell):
             if self.inputs.scf.get('kpoints'):
                 self.report(
-                    'The primitive structure is not the same as the input structure but explicitly kpoints'
-                    ' are supplied - aborting the workchain.'
+                    'The primitive structure is not the same as the input structure but explicit kpoints are supplied - aborting the workchain.'
                 )
                 return self.exit_codes.ERROR_INPUT_STRUCTURE_NOT_PRIMITIVE  # pylint: disable=no-member
             self.report(
@@ -390,7 +345,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         self.out('primitive_structure', self.ctx.current_structure)
         if 'parameters' in kpath_results:
             self.out('seekpath_parameters', kpath_results['parameters'])
-        return None
 
     def run_scf(self):
         """
@@ -440,7 +394,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             self.ctx.chgcar = None
         self.ctx.restart_folder = scf_workchain.outputs.remote_folder
         self.report(f'SCF calculation {scf_workchain} completed')
-        return None
 
     def run_bands_dos(self):
         """Run the bands and the DOS calculations"""
@@ -513,7 +466,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         # Do DOS calculation if dos input namespace is populated or a
         # dos_kpoints input is passed.
         if ('dos_kpoints_density' in self.inputs) or ('dos' in self.inputs):
-
             if 'dos' in self.inputs:
                 dos_input = AttributeDict(self.exposed_inputs(base_work, namespace='dos'))
             else:
@@ -634,6 +586,7 @@ def seekpath_structure_analysis(structure, **kwargs):
         angle_tolerance: -1.0
     Note that exact parameters that are available and their defaults will depend on your Seekpath version.
     """
+    from aiida.tools import get_explicit_kpoints_path
 
     # All keyword arugments should be `Data` node instances of base type and so should have the `.value` attribute
     unwrapped_kwargs = {key: node.value for key, node in kwargs.items() if isinstance(node, orm.Data)}
@@ -653,7 +606,7 @@ def compose_labelled_bands(bands, kpoints):
 
 
 @calcfunction
-def get_primitive_strucrture_and_scf_kpoints(structure):  #pylint:disable=invalid-name
+def get_primitive_strucrture_and_scf_kpoints(structure):
     """
     This function dryruns a VASP calculation using the primitive structure obtained by performing seekpath analyses
 
@@ -661,6 +614,9 @@ def get_primitive_strucrture_and_scf_kpoints(structure):  #pylint:disable=invali
     VASP and getting the explicity kpoints for SCF calculation.
     """
     # Locate the relaxation work
+    from aiida.tools import get_explicit_kpoints_path
+
+    from .common.dryrun import dryrun_relax_builder
 
     # Locate the relaxation work
     relax_work = structure.get_incoming(link_label_filter='relax__structure').one().node
@@ -805,7 +761,6 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         per_split = orm.Int(self.inputs.kpoints_per_split.value - scf_kpoints.get_kpoints().shape[0])
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
-        return None
 
     def run_scf_multi(self):
         """
@@ -908,6 +863,7 @@ def dryrun_split_kpoints(
     """
     Perform a "dryrun" for splitting the kpoints
     """
+    from aiida.tools import get_explicit_kpoints_path
 
     if kpoints_args is None:
         kpoints_args = {}
@@ -1025,45 +981,18 @@ def _extract_kpoints_from_retrieved(retrieved):
     """
     Extract explicity kpoints from a finished calculation
     """
-    tmpdir = Path(mkdtemp())
-    if 'vasprun.xml' in retrieved.list_object_names():
-        with retrieved.open('vasprun.xml', mode='r') as fsrc:
-            with open(tmpdir / 'vasprun.xml', mode='w', encoding='utf-8') as fdst:
-                shutil.copyfileobj(fsrc, fdst)
-    elif 'vasprun.xml.gz' in retrieved.list_object_names():
-        with retrieved.open('vasprun.xml.gz', mode='rb') as fsrc:
-            with GzipFile(fileobj=fsrc, mode='rb') as gobj:
-                with open(tmpdir / 'vasprun.xml', mode='wb') as fdst:
-                    shutil.copyfileobj(gobj, fdst)
-    else:
-        raise RuntimeError('No valid vasprun.xml file to use!!')
 
-    new_format = False
-
-    try:
-        # NOTE should be deprecated!!!
-        parser = VasprunParser(file_path=str(tmpdir / 'vasprun.xml'))
-    except TypeError:
-        # Use newer version - use file_obj instead
-        new_format = True
-        with open(tmpdir / 'vasprun.xml', encoding='utf-8') as fhandle:
-            parser = VasprunParser(handler=fhandle)
+    with retrieved.base.repository.open('vasprun.xml', 'rb') as fh:
+        parser = VasprunParser(handler=fh)
 
     vkpoints = parser.kpoints
     if vkpoints['mode'] != 'explicit':
         raise ValueError('Only explicity kpoints is supported!')
 
-    if new_format:
-        kpoints_array = vkpoints['points']
-        weights_array = vkpoints['weights']
-    else:
-        kpoints_array = np.stack([kpt.get_point() for kpt in vkpoints['points']], axis=0)
-        weights_array = np.array([kpt.get_weight() for kpt in vkpoints['points']])
+    kpoints_array = vkpoints['points']
+    weights_array = vkpoints['weights']
 
     kpoints_data = orm.KpointsData()
     kpoints_data.set_kpoints(kpoints=kpoints_array, weights=weights_array)
-
-    # Remove the directory tree
-    shutil.rmtree(tmpdir)
 
     return kpoints_data

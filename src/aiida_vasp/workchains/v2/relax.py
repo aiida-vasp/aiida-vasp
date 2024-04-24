@@ -37,8 +37,8 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.workchains import compose_exit_code
 
 from .common import OVERRIDE_NAMESPACE, nested_update_dict_node, site_magnetization_to_magmom
+from .common.opthold import BoolOption, ChoiceOption, FloatOption, IntOption, OptionContainer
 from .mixins import WithVaspInputSet
-from .opthold import BoolOption, ChoiceOption, FloatOption, IntOption, OptionContainer
 
 __version__ = '0.5.0'
 
@@ -237,7 +237,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                     f'{key} explicitly set to {incar[key]} - this overrides the relax_settings input - proceed with caution.'
                 )
         isif = incar.get('isif')
-        if isif == 3 and not all(self.ctx.relax_settings.get(key) for key in ['positions', 'volume', 'shape']):
+        if isif == 3 and not all([self.ctx.relax_settings.get(key) for key in ['positions', 'volume', 'shape']]):
             raise InputValidationError(
                 'ISIF = 3 is set explicity for INCAR, which is consistent with the mode of relaxation supplied to the workchain.'
             )
@@ -462,7 +462,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
 
         return self.ctx.exit_code
 
-    def analyze_convergence(self):  #pylint:disable=too-many-branches,too-many-statements
+    def analyze_convergence(self):
         """
         Analyze the convergence of the relaxation.
 
@@ -553,7 +553,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             # BONAN: Check force - this is because the underlying VASP calculation may not have finished with
             # fully converge geometry, and the vasp plugin does not check it.
             force_cut_off = relax_settings.get('force_cutoff')
-            max_force = workchain.outputs.misc.get_attribute('maximum_force')
+            max_force = workchain.outputs.misc.base.attributes.get('maximum_force')
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
                     f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g} - NOT OK'
@@ -691,7 +691,6 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             workchain = self.ctx.workchains[-1]
             self.out_many(self.exposed_outputs(workchain, self._base_workchain))
             return self.exit_codes.ERROR_RELAX_NOT_CONVERGED  # pylint: disable=no-member
-        return None
 
     def results(self):
         """
@@ -720,7 +719,6 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             self.report(
                 'Unable to presure final check for maximum force, as the tetrahedral method is used for integration.'
             )
-        return None
 
     def finalize(self):
         """
@@ -769,12 +767,12 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                     try:
                         calculation.outputs.remote_folder._clean()  # pylint: disable=protected-access
                         cleaned_calcs.append(calculation.pk)
-                    except BaseException:  # pylint: disable=broad-except
+                    except BaseException:  # pylint: disable=no-self-argument,no-self-use
                         pass
 
                 if cleaned_calcs:
                     self.report(f"cleaned remote folders of calculations: {' '.join(map(str, cleaned_calcs))}")  # pylint: disable=not-callable
-        except BaseException as exception:  # pylint: disable=broad-except
+        except BaseException as exception:  # pylint: disable=no-self-argument,no-self-use
             self.report(f'Exception occurred during the cleaning of the remote contents: {exception.args}')
 
     def perform_relaxation(self):
@@ -799,7 +797,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         return self.ctx.get('verbose', self._verbose)
 
     @classproperty
-    def relax_option_class(cls):  # pylint: disable=no-self-argument,no-self-use
+    def relax_option_class(cls):  # pylint: disable=no-self-argument
         """Class for relax options"""
         return RelaxOptions
 
@@ -849,6 +847,7 @@ def compare_structures(structure_a, structure_b):
 
 class RelaxOptions(OptionContainer):
     """Options for VaspRelaxWorkChain"""
+
     algo = ChoiceOption('The algorithm to use for relaxation', ['cg', 'rd'], default_value='cg')
     energy_cutoff = FloatOption(
         'The cut off energy difference when the relaxation is stopped (e.g. EDIFF)',
