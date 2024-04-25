@@ -3,6 +3,7 @@ An example call script that performs a single static VASP calculation.
 
 Performs a self consistent electron convergence run using the standard silicon structure.
 """
+
 # pylint: disable=too-many-arguments
 import numpy as np
 from aiida import load_profile

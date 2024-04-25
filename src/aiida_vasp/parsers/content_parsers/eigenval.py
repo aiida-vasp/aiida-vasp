@@ -4,6 +4,7 @@ The ``EIGENVAL`` parser interface.
 ----------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``EIGENVAL`` content.
 """
+
 # pylint: disable=abstract-method
 from parsevasp.eigenval import Eigenval
 

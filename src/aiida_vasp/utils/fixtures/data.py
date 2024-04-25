@@ -7,6 +7,7 @@ VASP inputs etc. which you would need to mock a VASP job in this plugin. It
 also contains the set up of the mock VASP executable, which is used to test the
 workchains.
 """
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name,too-many-function-args,
 # pylint: disable=protected-access,abstract-class-instantiated,no-value-for-parameter,unexpected-keyword-arg, import-outside-toplevel
 import os
@@ -34,7 +35,18 @@ from aiida_vasp.utils.fixtures.testdata import data_path
 from aiida_vasp.utils.general import copytree
 
 POTCAR_FAMILY_NAME = 'test_family'
-POTCAR_MAP = {'In': 'In_sv', 'In_d': 'In_d', 'As': 'As', 'Ga': 'Ga', 'Si': 'Si', 'P': 'P', 'S': 'S', 'Zn': 'Zn', 'N': 'N', 'H': 'H'}
+POTCAR_MAP = {
+    'In': 'In_sv',
+    'In_d': 'In_d',
+    'As': 'As',
+    'Ga': 'Ga',
+    'Si': 'Si',
+    'P': 'P',
+    'S': 'S',
+    'Zn': 'Zn',
+    'N': 'N',
+    'H': 'H',
+}
 
 
 def path_file_and_settings(name, param):
@@ -46,7 +58,9 @@ def path_file_and_settings(name, param):
         elif len(param) == 2:
             folder, name = param
         else:
-            raise IndexError('Please supply either folder and name, or folder, name and settings to the parser fixtures')
+            raise IndexError(
+                'Please supply either folder and name, or folder, name and settings to the parser fixtures'
+            )
     else:
         folder = param
     path = data_path(folder, name)
@@ -66,7 +80,11 @@ def localhost(fresh_aiida_env, localhost_dir):
         computer = Computer.collection.get(label='localhost')
     except NotExistent:
         computer = Computer(
-            label='localhost', hostname='localhost', transport_type='core.local', scheduler_type='core.direct', workdir=str(localhost_dir)
+            label='localhost',
+            hostname='localhost',
+            transport_type='core.local',
+            scheduler_type='core.direct',
+            workdir=str(localhost_dir),
         ).store()
         computer.set_minimum_job_poll_interval(0.0)
     return computer
@@ -74,7 +92,9 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('core.dict')(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
+    incar_data = get_data_class('core.dict')(
+        dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}
+    )
     return incar_data
 
 

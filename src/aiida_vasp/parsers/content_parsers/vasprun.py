@@ -4,6 +4,7 @@ The vasprun.xml parser interface.
 ---------------------------------
 Contains the parsing interfaces to ``parsevasp`` used to parse ``vasprun.xml`` content.
 """
+
 # pylint: disable=abstract-method, too-many-public-methods
 import numpy as np
 from parsevasp import constants as parsevaspct
@@ -49,7 +50,12 @@ class VasprunParser(BaseFileParser):
 
     PARSABLE_QUANTITIES = {
         'structure': {'inputs': [], 'name': 'structure', 'prerequisites': [], 'alternatives': ['poscar-structure']},
-        'eigenvalues': {'inputs': [], 'name': 'eigenvalues', 'prerequisites': [], 'alternatives': ['eigenval-eigenvalues']},
+        'eigenvalues': {
+            'inputs': [],
+            'name': 'eigenvalues',
+            'prerequisites': [],
+            'alternatives': ['eigenval-eigenvalues'],
+        },
         'dos': {'inputs': [], 'name': 'dos', 'prerequisites': [], 'alternatives': ['doscar-dos']},
         'kpoints': {'inputs': [], 'name': 'kpoints', 'prerequisites': [], 'alternatives': ['kpoints-kpoints']},
         'occupancies': {
@@ -386,7 +392,13 @@ class VasprunParser(BaseFileParser):
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species.tolist()])
 
-        if (unitcell is not None) and (positions is not None) and (species is not None) and (forces is not None) and (stress is not None):
+        if (
+            (unitcell is not None)
+            and (positions is not None)
+            and (species is not None)
+            and (forces is not None)
+            and (stress is not None)
+        ):
             trajectory_data = {}
 
             keys = ('cells', 'positions', 'symbols', 'forces', 'stress', 'steps')
@@ -416,7 +428,9 @@ class VasprunParser(BaseFileParser):
     def energies(self):
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
-        electronic_step_energies = self._settings.get('electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies'])
+        electronic_step_energies = self._settings.get(
+            'electronic_step_energies', self.DEFAULT_SETTINGS['electronic_step_energies']
+        )
 
         return self._energies(nosc=not electronic_step_energies)
 
@@ -429,8 +443,9 @@ class VasprunParser(BaseFileParser):
         be found in the flattened ndarray where the key `electronic_steps` indicate how many electronic steps
         there is per ionic step. Using the combination, one can rebuild the electronic step energy per ionic step etc.
 
-        Because the VASPrun parser returns both the electronic step energies (at the end of each cycles) and the ionic step
-        energies (_final), we apply a mapping to recovery the naming such that the ionic step energies do not have the suffix,
+        Because the VASPrun parser returns both the electronic step energies (at the end of each cycles) and the ionic
+        step energies (_final), we apply a mapping to recovery the naming such that the ionic step energies do not have
+        the suffix,
         but the electronic step energies do.
         """
 
@@ -459,7 +474,9 @@ class VasprunParser(BaseFileParser):
                 # The energy_extrapolated_final is the entropy term itself in VASP 5
                 # Store the calculated energy_no_entropy under 'energy_extrapolated_final',
                 # which is then recovered as `energy_no_entropy` later
-                energies['energy_extrapolated_final'] = energies['energy_free_final'] - energies['energy_extrapolated_final']
+                energies['energy_extrapolated_final'] = (
+                    energies['energy_free_final'] - energies['energy_extrapolated_final']
+                )
         else:
             energies = self._content_parser.get_energies(status='all', etype=etype, nosc=nosc)
 

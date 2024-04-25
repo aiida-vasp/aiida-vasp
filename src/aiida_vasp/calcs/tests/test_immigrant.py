@@ -1,4 +1,5 @@
 """Unit tests for VaspImmigrant calculation."""
+
 import pytest
 from aiida.engine import run
 from aiida_vasp.utils.aiida_utils import create_authinfo
@@ -39,7 +40,9 @@ def test_immigrant_additional(phonondb_run, localhost, mock_vasp):
     inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, str(phonondb_run), use_chgcar=True, use_wavecar=True)
     potential_family = POTCAR_FAMILY_NAME
     potential_mapping = POTCAR_MAP
-    inputs.potential = PotcarData.get_potcars_from_structure(inputs.structure, potential_family, mapping=potential_mapping)
+    inputs.potential = PotcarData.get_potcars_from_structure(
+        inputs.structure, potential_family, mapping=potential_mapping
+    )
     expected_inputs = {'parameters', 'structure', 'kpoints', 'potential', 'charge_density', 'wavefunctions'}
     for input_link in expected_inputs:
         assert inputs.get(input_link, None) is not None, f'input link "{input_link}" was not set!'

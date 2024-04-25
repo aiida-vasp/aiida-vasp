@@ -27,7 +27,9 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def _block(cls, name, val):
-        """Create a win parameter block with name being the block name, val being the content in python representation."""
+        """
+        Create a win parameter block with name being the block name, val being the content in python representation.
+        """
         res = ['begin ' + name]
         res += cls._value(val)
         res += ['end ' + name]

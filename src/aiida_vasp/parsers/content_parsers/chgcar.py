@@ -4,6 +4,7 @@ The ``CHGCAR`` parser interface.
 --------------------------------
 Contains the parsing interfaces to ``parsevasp`` used to parse ``CHGCAR`` content.
 """
+
 # pylint: disable=abstract-method
 from parsevasp.chgcar import Chgcar
 
@@ -20,16 +21,8 @@ class ChgcarParser(BaseFileParser):
     DEFAULT_SETTINGS = {'quantities_to_parse': ['charge_density']}
 
     PARSABLE_QUANTITIES = {
-        'charge_density': {
-            'inputs': [],
-            'name': 'charge_density',
-            'prerequisites': []
-        },
-        'magnetization_density': {
-            'inputs': [],
-            'name': 'magnetization_density',
-            'prerequisites': []
-        }
+        'charge_density': {'inputs': [], 'name': 'charge_density', 'prerequisites': []},
+        'magnetization_density': {'inputs': [], 'name': 'magnetization_density', 'prerequisites': []},
     }
 
     def _init_from_handler(self, handler):

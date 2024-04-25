@@ -4,6 +4,7 @@ The ``INCAR`` parser interface.
 ---------------------------
 Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
+
 from parsevasp.incar import Incar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -20,11 +21,7 @@ class IncarParser(BaseFileParser):
     DEFAULT_SETTINGS = {'quantities_to_parse': ['incar']}
 
     PARSABLE_QUANTITIES = {
-        'incar': {
-            'inputs': [],
-            'name': 'incar',
-            'prerequisites': []
-        },
+        'incar': {'inputs': [], 'name': 'incar', 'prerequisites': []},
     }
 
     def __init__(self, *args, validate_tags=True, **kwargs):

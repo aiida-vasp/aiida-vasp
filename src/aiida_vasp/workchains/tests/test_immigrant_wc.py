@@ -1,4 +1,5 @@
 """Test submitting a VaspImmigrantWorkChain."""
+
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import numpy as np
 import pytest

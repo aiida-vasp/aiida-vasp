@@ -5,6 +5,7 @@ Utils for the workchains.
 Auxiliary routines that are not part of any of the workchain classes, but needed
 to make code more compact in the workchains.
 """
+
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
 
@@ -101,7 +102,8 @@ def fetch_k_grid(rec_cell, k_spacing):
     """
     Suggest a sensible k-point sampling based on a supplied spacing.
 
-    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector as row elements.
+    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector
+      as row elements.
     :param k_spacing: The k-point spacing.
 
     :return kgrid: The k-point grid given the supplied `rec_cell` and `kstep`

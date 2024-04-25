@@ -4,6 +4,7 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
+
 import math
 import numbers
 
@@ -78,7 +79,8 @@ class NodeComposer:
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed. ' 'No parsed data available.'
+                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed. '
+                    'No parsed data available.'
                 )
                 continue
 
@@ -94,7 +96,8 @@ class NodeComposer:
                 self._created[node_dict['link_name']] = node
             else:
                 self._logger.warning(
-                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed, ' f'exception: {exception}'
+                    f'Creating node {node_dict['link_name']} of type {node_dict['type']} failed, '
+                    f'exception: {exception}'
                 )
                 self._failed_to_create.append(node_dict['link_name'])
 

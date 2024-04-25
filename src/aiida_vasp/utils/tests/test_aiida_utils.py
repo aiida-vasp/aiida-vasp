@@ -1,7 +1,6 @@
 """Test aiida_utils functionss."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member
 
-
 import pytest
 from aiida.common.exceptions import MissingEntryPointError
 from aiida_vasp.utils.aiida_utils import (

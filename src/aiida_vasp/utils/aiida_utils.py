@@ -6,6 +6,7 @@ Utilities for making working against AiiDA a bit easier. Mostly here due to
 historical reasons when AiiDA was rapidly developed. In the future most routines
 that have now standardized in AiiDA will be removed.
 """
+
 # pylint: disable=import-outside-toplevel
 import numpy as np
 from aiida.orm import User

@@ -4,6 +4,7 @@ Test submitting a VaspWorkChain.
 This does not seem to work, for `submit` the daemon will not pick up the workchain
 and `run` just seems to get stuck after a while.
 """
+
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 from __future__ import print_function
 

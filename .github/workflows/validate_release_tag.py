@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Validate that the version in the tag label matches the version of the package."""
+
 import argparse
 import ast
 from pathlib import Path
@@ -17,8 +18,11 @@ def get_version_from_module(content: str) -> str:
 
     try:
         return next(
-            ast.literal_eval(statement.value) for statement in module.body if isinstance(statement, ast.Assign)
-            for target in statement.targets if isinstance(target, ast.Name) and target.id == '__version__'
+            ast.literal_eval(statement.value)
+            for statement in module.body
+            if isinstance(statement, ast.Assign)
+            for target in statement.targets
+            if isinstance(target, ast.Name) and target.id == '__version__'
         )
     except StopIteration as exception:
         raise IOError('Unable to find the `__version__` attribute in the module.') from exception
@@ -30,7 +34,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     TAG_PREFIX = 'refs/tags/v'
     assert args.GITHUB_REF.startswith(TAG_PREFIX), f'GITHUB_REF should start with "{TAG_PREFIX}": {args.GITHUB_REF}'
-    tag_version = args.GITHUB_REF[len(TAG_PREFIX):]
+    tag_version = args.GITHUB_REF[len(TAG_PREFIX) :]
     package_version = get_version_from_module(Path('src/aiida_vasp/__init__.py').read_text(encoding='utf-8'))
     error_message = f'The tag version `{tag_version}` is different from the package version `{package_version}`'
     assert tag_version == package_version, error_message

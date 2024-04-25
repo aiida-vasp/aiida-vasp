@@ -1,4 +1,5 @@
 """Unittests for VaspCalculation."""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
@@ -244,7 +245,9 @@ def test_vasp_calc(run_vasp_process, aiida_caplog):
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete(run_vasp_process):
-    """Test a run of a basic VASP calculation where one does not want to store the always retrieved objects after parsing."""
+    """Test a run of a basic VASP calculation where one does not want to store
+    the always retrieved objects after parsing.
+    """
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False})
@@ -284,7 +287,8 @@ def test_vasp_calc_extra(run_vasp_process):
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc_delete_extra(run_vasp_process):
-    """Test a run of a basic VASP calculation where one wants to retrieve additional objects but not store them after parsing."""
+    """Test a run of a basic VASP calculation where one wants to retrieve additional
+    objects but not store them after parsing."""
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
     from aiida_vasp.calcs.vasp import VaspCalculation

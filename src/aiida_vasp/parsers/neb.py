@@ -176,7 +176,10 @@ class NEBNodeComposer(NodeComposer):
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    (f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed. " "No parsed data available.")
+                    (
+                        f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed. "
+                        "No parsed data available."
+                    )
                 )
                 continue
             exception = None
@@ -191,7 +194,8 @@ class NEBNodeComposer(NodeComposer):
                 self._created[node_dict['link_name']] = node
             else:
                 self._logger.warning(
-                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, ' f"exception: {exception}"
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
+                    f"exception: {exception}"
                 )
                 self._failed_to_create.append(node_dict['link_name'])
 
@@ -230,7 +234,9 @@ class NEBNodeComposer(NodeComposer):
                 # Suffix the output name with image id
                 self._created[link_name] = node
             else:
-                self._logger.warning(f'Creating node {link_name} of type {node_dict["type"]} failed,' f"exception: {exception}")
+                self._logger.warning(
+                    f'Creating node {link_name} of type {node_dict["type"]} failed,' f"exception: {exception}"
+                )
                 self._failed_to_create.append(link_name)
 
         return nodes_failed_to_create
@@ -245,7 +251,9 @@ class NEBNodeComposer(NodeComposer):
             if equivalent_quantities is not None:
                 # Check if these are parsed and pick the first one if multiple exists
                 # Get a dictionary of quantities to be searched from
-                quantity_dict = self._quantities if image_idx is None else self._quantities[self.get_image_str(image_idx)]
+                quantity_dict = (
+                    self._quantities if image_idx is None else self._quantities[self.get_image_str(image_idx)]
+                )
                 for equivalent_quantity in equivalent_quantities:
                     if equivalent_quantity in quantity_dict:
                         # Make sure we strip prefixes as the quantities can contain
@@ -376,7 +384,9 @@ class VtstNebParser(VaspParser):
                     parser = None
                     failed_to_parse_quantities.append(quantity_key)
                     self.logger.warning(
-                        'Cannot instantiate {} for image {}, exception {}:'.format(content_parser_cls, image_idx, traceback.format_exc())
+                        'Cannot instantiate {} for image {}, exception {}:'.format(
+                            content_parser_cls, image_idx, traceback.format_exc()
+                        )
                     )
 
                 file_parser_instances[content_parser_cls] = parser
@@ -408,7 +418,9 @@ class VtstNebParser(VaspParser):
             if parsed_quantity is not None:
                 parsed_quantities[quantity_key] = parsed_quantity
             else:
-                self.logger.warning(f'Parsing {quantity_key} from {parser} failed for image {image_idx}, exception: {exception}')
+                self.logger.warning(
+                    f'Parsing {quantity_key} from {parser} failed for image {image_idx}, exception: {exception}'
+                )
                 failed_to_parse_quantities.append(quantity_key)
 
         return parsed_quantities, failed_to_parse_quantities

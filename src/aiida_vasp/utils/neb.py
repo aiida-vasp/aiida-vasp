@@ -1,6 +1,7 @@
 """
 Utility functions for running NEB calculations
 """
+
 import numpy as np
 from aiida.engine import calcfunction
 from aiida.orm import StructureData

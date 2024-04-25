@@ -10,6 +10,7 @@ modular and contains several modules:
 - ``settings`` general parser settings
 - ``manager`` takes the quantity definitions and executes the actual parsing needed
 """
+
 # encoding: utf-8
 # pylint: disable=no-member
 import traceback
@@ -97,8 +98,8 @@ class VaspParser(BaseParser):
         'charge_density':     SinglefileData node containing the CHGCAR.
        If the value is set to ``False`` the quantity will not be returned.
 
-    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
-      to the `add_<quantity>` syntax described above.
+    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`,
+      similiar to the `add_<quantity>` syntax described above.
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
@@ -207,7 +208,9 @@ class VaspParser(BaseParser):
 
         # Deal with missing quantities
         if failed_to_parse_quantities:
-            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=', '.join(failed_to_parse_quantities))
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
+                quantity=', '.join(failed_to_parse_quantities)
+            )
 
         # Deal with missing node/nodes
         if nodes_failed_to_create:

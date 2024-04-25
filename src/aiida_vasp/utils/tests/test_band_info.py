@@ -1,4 +1,5 @@
 """Test the get_bands_info method"""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import numpy as np
 import pytest

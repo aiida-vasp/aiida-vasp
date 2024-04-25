@@ -3,6 +3,7 @@ An example call script that performs a relaxation of a structure.
 
 Performs a relaxation of the standard silicon structure.
 """
+
 # pylint: disable=too-many-arguments
 import numpy as np
 from aiida import load_profile

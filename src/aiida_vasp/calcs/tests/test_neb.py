@@ -3,7 +3,6 @@ Unittests for VaspNEBCalculation
 """
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 
-
 from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC

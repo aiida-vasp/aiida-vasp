@@ -2,6 +2,7 @@
 Test submitting a ConvergenceWorkChain.
 Only `run` currently works.
 """
+
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, too-many-statements, import-outside-toplevel, too-many-locals
 from __future__ import print_function
 

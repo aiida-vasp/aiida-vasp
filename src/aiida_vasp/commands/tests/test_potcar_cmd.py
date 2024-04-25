@@ -1,4 +1,5 @@
 """Unit tests for vasp-potcar command family."""
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 from __future__ import absolute_import, print_function
 

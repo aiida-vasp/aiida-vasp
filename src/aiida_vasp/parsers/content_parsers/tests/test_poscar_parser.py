@@ -1,4 +1,5 @@
 """Test the POSCAR parser."""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import numpy as np
 import pytest

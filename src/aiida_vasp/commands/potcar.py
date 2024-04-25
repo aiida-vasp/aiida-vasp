@@ -4,6 +4,7 @@ Commands for the potential interface.
 -------------------------------------
 Commandline util for dealing with potcar files.
 """
+
 # pylint: disable=import-outside-toplevel
 import click
 import tabulate
@@ -72,7 +73,9 @@ def detect_old_style_groups():
 )
 @options.FAMILY_NAME()
 @options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
-@click.option('--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.')
+@click.option(
+    '--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.'
+)
 @options.DRY_RUN()
 @with_dbenv()
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
@@ -90,7 +93,9 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 
 
 @potcar.command()
-@click.option('-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.')
+@click.option(
+    '-e', '--element', multiple=True, help='Filter for families containing potentials for all given elements.'
+)
 @click.option('-s', '--symbol', multiple=True, help='Filter for families containing potentials for all given symbols.')
 @click.option('-d', '--description', is_flag=True, help='Also show the description.')
 @with_dbenv()

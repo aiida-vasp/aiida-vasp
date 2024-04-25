@@ -5,11 +5,13 @@ The .win parser interface.
 Contains routines to parse Wannier90 input files. Will in the future be utilizing
 the parser in the Wannier90 plugin, but no input parser exists.
 """
+
 import re
 
 
-class BaseKeyValueParser():  # pylint: disable=useless-object-inheritance
+class BaseKeyValueParser:  # pylint: disable=useless-object-inheritance
     """Common codebase for all parser utilities."""
+
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
     @classmethod
@@ -64,6 +66,7 @@ class KeyValueParser(BaseKeyValueParser):
         FloatParam = 1.0
         BoolParam = True
     """
+
     assignment = re.compile(r'(\w+)\s*[=: ]\s*([^;\n]*);?')
     bool_true = re.compile(r'^T$')
     bool_false = re.compile(r'^F$')
@@ -195,6 +198,7 @@ class KeyValueParser(BaseKeyValueParser):
 
 class WinParser(KeyValueParser):
     """Parses wannier90 input."""
+
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 

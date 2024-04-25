@@ -7,6 +7,7 @@ hash and match from a repository of calculation that has been run.
 This way we can perform tests for workchain without the need for
 injecting test code into the workchain logic itself.
 """
+
 import hashlib
 import logging
 import os

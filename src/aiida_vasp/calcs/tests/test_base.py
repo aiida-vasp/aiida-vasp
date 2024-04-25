@@ -1,4 +1,5 @@
 """Unit tests for aiida_vasp.calcs.base."""
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 from aiida.common.extendeddicts import AttributeDict

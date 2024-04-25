@@ -4,6 +4,7 @@ Immigrant calculation.
 ----------------------
 Enables the immigration of  externally run VASP calculations into AiiDA.
 """
+
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path

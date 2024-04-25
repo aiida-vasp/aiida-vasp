@@ -4,6 +4,7 @@ The ``DOSCAR`` parser interface.
 --------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
+
 # pylint: disable=abstract-method
 from parsevasp.doscar import Doscar
 

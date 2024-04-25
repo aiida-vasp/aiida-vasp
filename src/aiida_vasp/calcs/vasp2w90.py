@@ -4,6 +4,7 @@ VASP to Wannier90 calculation.
 ------------------------------
 VASP2Wannier90 - Calculation.
 """
+
 from aiida.orm import List
 
 # pylint: disable=abstract-method, unreachable, undefined-variable
@@ -58,7 +59,8 @@ class Vasp2w90Calculation(VaspCalculation):
     def write_win(self, dst):
         """Write Wannier90 input."""
         raise NotImplementedError('The AiiDA-Wannier90 plugin is not yet v2 ready.')
-        # write_win(filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
+        # write_win(filename=dst, parameters=self.inputs.wannier_parameters,
+        # projections=self.inputs.wannier_projections)
 
     @staticmethod
     def new_wannier_parameters(**kwargs):

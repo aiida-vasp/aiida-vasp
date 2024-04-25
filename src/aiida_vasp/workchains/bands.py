@@ -116,9 +116,10 @@ class BandsWorkChain(WorkChain):
             valid_type=get_data_class('core.list'),
             required=False,
             default=lambda: get_data_node('core.list', list=[False]),
-            help="""
-            The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors are not utilized.
-            """,
+            help=(
+                'The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors'
+                'are not utilized.'
+            ),
         )
         spec.outline(
             cls.initialize,
@@ -300,6 +301,7 @@ def seekpath_structure_analysis(structure, parameters):
     which case the k-points are only congruent with the primitive cell.
     """
     from aiida.tools import get_explicit_kpoints_path
+
     return get_explicit_kpoints_path(structure, **parameters.get_dict())
 
 

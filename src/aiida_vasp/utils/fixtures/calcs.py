@@ -5,6 +5,7 @@ Fixtures for the VASP calculations.
 Here we set up different pytest fixtures that are used to represent various VASP
 calculations on which one can for instance test parsing etc.
 """
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
 from aiida.common.extendeddicts import AttributeDict
@@ -278,7 +279,9 @@ def run_vasp_process(fresh_aiida_env, vasp_params, potentials, vasp_kpoints, vas
             inpts.clean_workdir = get_data_node('core.bool', False)
             inpts.verbose = get_data_node('core.bool', True)
         else:
-            raise ValueError(f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'")
+            raise ValueError(
+                f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'"
+            )
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)

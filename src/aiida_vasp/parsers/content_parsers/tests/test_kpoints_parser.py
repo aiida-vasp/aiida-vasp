@@ -1,7 +1,6 @@
 """Test the KPOINTS parser."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
-
 import numpy as np
 import pytest
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser

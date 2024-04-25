@@ -7,6 +7,7 @@ to run our tests. In particular, the fresh_aiida_env is crucial in order
 to set up a dummy database and configuration that can be used during
 testing. AiiDA contributes with its own fixture manager, which we use.
 """
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, protected-access
 from __future__ import absolute_import, print_function
 

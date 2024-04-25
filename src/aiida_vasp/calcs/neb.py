@@ -1,6 +1,7 @@
 """
 Module for settings up NEB calculations
 """
+
 import os
 from pathlib import Path
 from typing import Union
@@ -218,8 +219,8 @@ class VaspNEBCalculation(VaspCalculation):
         spec.exit_code(
             704,
             'ERROR_DIAGNOSIS_OUTPUTS_MISSING',
-            message='Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` quantities are '
-            'requested for parsing.',
+            message='Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` '
+            'quantities are requested for parsing.',
         )
 
     def prepare_for_submission(self, folder):
@@ -270,7 +271,9 @@ class VaspNEBCalculation(VaspCalculation):
             store = True
 
         try:
-            additional_retrieve_list = self.inputs.settings.base.attributes.get('PER_IMAGE_ADDITIONAL_RETRIEVE_LIST', default=[])
+            additional_retrieve_list = self.inputs.settings.base.attributes.get(
+                'PER_IMAGE_ADDITIONAL_RETRIEVE_LIST', default=[]
+            )
         except AttributeError:
             additional_retrieve_list = []
         try:
@@ -287,7 +290,9 @@ class VaspNEBCalculation(VaspCalculation):
             calcinfo.retrieve_temporary_list.extend(image_folder_paths(image_folders, additional_retrieve_temp_list))
         else:
             calcinfo.retrieve_temporary_list.extend(
-                image_folder_paths(image_folders, set(self._PER_IMAGE_ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))
+                image_folder_paths(
+                    image_folders, set(self._PER_IMAGE_ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list)
+                )
             )
             calcinfo.retrieve_list.extend(image_folder_paths(image_folders, additional_retrieve_list))
 
@@ -363,7 +368,10 @@ class VaspNEBCalculation(VaspCalculation):
         super().verify_inputs()
         last_order = None
         last_num_sites = None
-        for structure in list(self.inputs.neb_images.values()) + [self.inputs.initial_structure, self.inputs.final_structure]:
+        for structure in list(self.inputs.neb_images.values()) + [
+            self.inputs.initial_structure,
+            self.inputs.final_structure,
+        ]:
             # Convert to StructureData from CifData on demand....
             if not hasattr(structure, 'get_pymatgen'):
                 structure_data = get_data_node('core.structure', ase=structure.get_ase())
@@ -403,7 +411,9 @@ def image_folder_paths(image_folders, retrieve_names):
     return retrieve_list
 
 
-def ensure_structure_data(structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]) -> DataFactory('core.structure'):
+def ensure_structure_data(structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]) -> DataFactory(
+    'core.structure'
+):
     """
         Get the input structure as AiiDA StructureData.
 

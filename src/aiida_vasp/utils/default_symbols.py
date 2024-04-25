@@ -4,6 +4,7 @@ Utils for setting symbols on chemical elements.
 -----------------------------------------------
 Utilities for choosing appropriate element symbols for a chemical element.
 """
+
 import requests
 from lxml import html
 

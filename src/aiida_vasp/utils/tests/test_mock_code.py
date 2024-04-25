@@ -1,6 +1,7 @@
 """
 Tests for mock vasp
 """
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel, too-many-arguments
 from pathlib import Path
 from shutil import copy2, rmtree

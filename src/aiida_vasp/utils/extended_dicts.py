@@ -4,6 +4,7 @@ Extensions of dictionaries.
 ---------------------------
 Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 """
+
 import collections.abc
 from copy import deepcopy
 
