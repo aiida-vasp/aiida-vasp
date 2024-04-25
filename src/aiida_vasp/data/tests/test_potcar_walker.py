@@ -11,6 +11,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.testdata import data_path
 
 

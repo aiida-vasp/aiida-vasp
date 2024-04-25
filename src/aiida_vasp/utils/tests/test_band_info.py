@@ -7,6 +7,7 @@ from aiida_vasp.utils.compare_bands import (
     get_band_properties,
     get_band_properties_from_data,
 )
+from aiida_vasp.utils.fixtures import *
 
 
 @pytest.fixture

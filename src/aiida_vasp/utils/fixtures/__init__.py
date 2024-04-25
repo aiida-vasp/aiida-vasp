@@ -2,6 +2,8 @@
 
 from .calcs import (
     base_calc,
+    calc_with_retrieved,
+    neb_calc_with_retrieved,
     run_vasp_process,
     sandbox_folder,
     vasp2w90_calc,
@@ -96,4 +98,6 @@ __all__ = [
     'vasp_neb_calc',
     'vasp_neb_inputs',
     'sandbox_folder',
+    'calc_with_retrieved',
+    'neb_calc_with_retrieved',
 ]

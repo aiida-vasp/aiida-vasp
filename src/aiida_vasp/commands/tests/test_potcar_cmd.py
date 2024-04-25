@@ -1,8 +1,8 @@
-"""Unit tests for vasp-potcar command family."""
+"""
+Unit tests for vasp-potcar command family.
+"""
 
-# pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
-from __future__ import absolute_import, print_function
-
+# ruff: noqa: F811
 import os
 from pathlib import Path
 
@@ -10,7 +10,8 @@ import pytest
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.data.potcar import PotcarGroup
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME
+from aiida_vasp.utils.fixtures import *
+from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, legacy_potcar_family  # noqa: F401
 from click.testing import CliRunner
 from monty.collections import AttrDict
 

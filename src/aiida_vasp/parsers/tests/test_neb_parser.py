@@ -36,6 +36,7 @@ def test_neb_parser(neb_parser_with_test):
     Test the neb parser
     """
     parser = neb_parser_with_test
+    parser.parse()
     assert 'neb_misc' in neb_parser_with_test.outputs
     neb_misc = parser.outputs.neb_misc.get_dict()
 

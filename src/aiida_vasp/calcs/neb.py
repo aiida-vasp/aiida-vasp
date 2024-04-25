@@ -375,6 +375,8 @@ class VaspNEBCalculation(VaspCalculation):
             # Convert to StructureData from CifData on demand....
             if not hasattr(structure, 'get_pymatgen'):
                 structure_data = get_data_node('core.structure', ase=structure.get_ase())
+            else:
+                structure_data = structure
 
             num_sites = len(structure_data.sites)
 

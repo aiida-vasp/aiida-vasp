@@ -1,6 +1,6 @@
 """Unit test the POTCAR AiiDA data structures."""
 
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
+# ruff: noqa: F811
 import subprocess as sp
 import tarfile
 from pathlib import Path
@@ -9,8 +9,11 @@ import pytest
 from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida_vasp.data.potcar import PotcarGroup, migrate_potcar_group
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import (
     POTCAR_MAP,
+    legacy_potcar_family,  # noqa: F401
+    potcar_node_pair,  # noqa: F401
 )
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 
@@ -23,7 +26,7 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
     assert file_node.pk == potcar_node_pair['file'].pk
 
 
-def test_hashing(fresh_aiida_env):
+def test_hashing(aiida_profile):
     """Ensure the file and content sha512 hash equivalently for the same POTCAR."""
     potcar_file_cls = get_data_class('vasp.potcar_file')
     potcar_path = ['potcar', 'As', 'POTCAR']

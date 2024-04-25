@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from aiida.engine import run
 from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 
 

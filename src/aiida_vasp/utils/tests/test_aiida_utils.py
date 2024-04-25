@@ -9,6 +9,7 @@ from aiida_vasp.utils.aiida_utils import (
     get_data_class,
     get_data_node,
 )
+from aiida_vasp.utils.fixtures import *
 
 
 def test_get_current_user(fresh_aiida_env):
