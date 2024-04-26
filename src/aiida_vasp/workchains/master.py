@@ -5,6 +5,7 @@ Master workchain.
 This is the master workchain, which most users should call when issuing day-day
 calculations.
 """
+
 # pylint: disable=attribute-defined-outside-init
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_
@@ -104,18 +105,12 @@ class MasterWorkChain(WorkChain):
         spec.expose_outputs(
             cls._bands_workchain,
             namespace='bands',
-            namespace_options={
-                'required': False,
-                'populate_defaults': False
-            },
+            namespace_options={'required': False, 'populate_defaults': False},
         )
         spec.expose_outputs(
             cls._dos_workchain,
             namespace='dos',
-            namespace_options={
-                'required': False,
-                'populate_defaults': False
-            },
+            namespace_options={'required': False, 'populate_defaults': False},
         )
         spec.exit_code(
             0,
@@ -291,8 +286,7 @@ class MasterWorkChain(WorkChain):
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report(
-                'The called {}<{}> returned a non-zero exit status. '
-                'The exit status {} is inherited'.format(
+                'The called {}<{}> returned a non-zero exit status. ' 'The exit status {} is inherited'.format(
                     workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
                 )
             )

@@ -10,7 +10,8 @@ modular and contains several modules:
 - ``settings`` general parser settings
 - ``manager`` takes the quantity definitions and executes the actual parsing needed
 """
-#encoding: utf-8
+
+# encoding: utf-8
 # pylint: disable=no-member
 import traceback
 
@@ -51,7 +52,7 @@ DEFAULT_SETTINGS = {
         'add_fock_acc': True,
         'add_non_collinear': True,
         'add_not_hermitian': True,
-        #add_psmaxn': True,
+        # add_psmaxn': True,
         'add_pzstein': True,
         'add_real_optlay': True,
         'add_rhosyg': True,
@@ -60,8 +61,8 @@ DEFAULT_SETTINGS = {
         'add_sgrcon': True,
         'add_no_potimm': True,
         'add_magmom': True,
-        'add_bandocc': True
-    }
+        'add_bandocc': True,
+    },
 }
 
 
@@ -97,8 +98,8 @@ class VaspParser(BaseParser):
         'charge_density':     SinglefileData node containing the CHGCAR.
        If the value is set to ``False`` the quantity will not be returned.
 
-    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`, similiar
-      to the `add_<quantity>` syntax described above.
+    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`,
+      similiar to the `add_<quantity>` syntax described above.
 
     * `output_params`: A list of quantities, that should be added to the 'misc' node.
 
@@ -117,6 +118,7 @@ class VaspParser(BaseParser):
     'is_critical' flag. Keep in mind adding an additional object parsers after 'parse_with_retrieved'
     is called, will only have an effect when parsing a second time.
     """
+
     COMPOSER_CLASS = NodeComposer
 
     def __init__(self, node):
@@ -133,7 +135,9 @@ class VaspParser(BaseParser):
 
         self._definitions = ParserDefinitions()
         self._settings = ParserSettings(
-            parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger
+            parser_settings,
+            default_settings=DEFAULT_SETTINGS,
+            vasp_parser_logger=self.logger,
         )
         self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
 
@@ -150,11 +154,10 @@ class VaspParser(BaseParser):
         self._settings.add_output_node(node_name, node_dict)
 
     def _setup_parsable(self):
-
         self._parsable_quantities.setup(
             retrieved_content=self._retrieved_content.keys(),
             parser_definitions=self._definitions.parser_definitions,
-            quantity_names_to_parse=self._settings.quantity_names_to_parse
+            quantity_names_to_parse=self._settings.quantity_names_to_parse,
         )
 
     def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
@@ -171,7 +174,7 @@ class VaspParser(BaseParser):
         self._parsable_quantities.setup(
             retrieved_content=self._retrieved_content.keys(),
             parser_definitions=self._definitions.parser_definitions,
-            quantity_names_to_parse=self._settings.quantity_names_to_parse
+            quantity_names_to_parse=self._settings.quantity_names_to_parse,
         )
 
         # Update the parser settings to make sure that the quantities that have been requested from
@@ -179,12 +182,19 @@ class VaspParser(BaseParser):
         self._settings.update_quantities_to_parse(self._parsable_quantities.quantity_keys_to_parse)
 
         # Parse the quantities from retrived objects
-        parsed_quantities, failed_to_parse_quantities, parser_notifications = self._parse_quantities()
+        (
+            parsed_quantities,
+            failed_to_parse_quantities,
+            parser_notifications,
+        ) = self._parse_quantities()
         # Compose the output nodes using the parsed quantities
         requested_nodes = self._settings.output_nodes_dict
         equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
         composed_nodes = self.COMPOSER_CLASS(
-            requested_nodes, equivalent_quantity_keys, parsed_quantities, logger=self.logger
+            requested_nodes,
+            equivalent_quantity_keys,
+            parsed_quantities,
+            logger=self.logger,
         )
         for link_name, node in composed_nodes.successful.items():
             self.out(link_name, node)
@@ -333,7 +343,11 @@ class VaspParser(BaseParser):
             ignore_all = self.parser_settings.get('ignore_all_errors', False)
             if not ignore_all:
                 composer = NotificationComposer(
-                    notifications, quantities, self.node.inputs, self.exit_codes, parser_settings=self._settings
+                    notifications,
+                    quantities,
+                    self.node.inputs,
+                    self.exit_codes,
+                    parser_settings=self._settings,
                 )
                 exit_code = composer.compose()
                 if exit_code is not None:
@@ -392,7 +406,7 @@ class NotificationComposer:
     @property
     def brmix(self):
         """Check if BRMIX should be emitted"""
-        if not 'brmix' in self.notifications_dict:
+        if 'brmix' not in self.notifications_dict:
             return None
 
         # If NELECT is set explicitly for the calculation then this is not an critical error
@@ -404,7 +418,7 @@ class NotificationComposer:
     @property
     def edddav_zhegv(self):
         """Check if EDDDAV call to ZHEGV should be emitted. Sometimes it has converged."""
-        if not 'edddav_zhegv' in self.notifications_dict:
+        if 'edddav_zhegv' not in self.notifications_dict:
             return None
 
         if self.parsed_quantities['run_status']['electronic_converged']:
@@ -415,7 +429,7 @@ class NotificationComposer:
     @property
     def eddrmm_zhegv(self):
         """Check if EDDRMM call to ZHEGV should be emitted. Sometimes it has converged."""
-        if not 'eddrmm_zhegv' in self.notifications_dict:
+        if 'eddrmm_zhegv' not in self.notifications_dict:
             return None
 
         if self.parsed_quantities['run_status']['electronic_converged']:

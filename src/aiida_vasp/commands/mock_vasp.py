@@ -5,9 +5,10 @@ Mock vasp command.
 ------------------
 Separate cli interface for commands useful in development and testing.
 """
+
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import click
 

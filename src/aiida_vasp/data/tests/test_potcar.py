@@ -1,24 +1,20 @@
 """Unit test the POTCAR AiiDA data structures."""
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
-from pathlib import Path
+
+# ruff: noqa: F811
 import subprocess as sp
 import tarfile
+from pathlib import Path
 
 import pytest
-
 from aiida.common.exceptions import NotExistent, UniquenessError
-
-from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.data.potcar import PotcarGroup, migrate_potcar_group
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import (
     POTCAR_MAP,
-    legacy_potcar_family,
-    potcar_family,
-    potcar_node_pair,
-    temp_pot_folder,
+    legacy_potcar_family,  # noqa: F401
+    potcar_node_pair,  # noqa: F401
 )
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
 from aiida_vasp.utils.fixtures.testdata import data_path, read_file
 
 
@@ -30,7 +26,7 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
     assert file_node.pk == potcar_node_pair['file'].pk
 
 
-def test_hashing(fresh_aiida_env):
+def test_hashing(aiida_profile):
     """Ensure the file and content sha512 hash equivalently for the same POTCAR."""
     potcar_file_cls = get_data_class('vasp.potcar_file')
     potcar_path = ['potcar', 'As', 'POTCAR']
@@ -158,10 +154,7 @@ def test_potcar_from_structure(fresh_aiida_env, potcar_family):
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
     indium_2.append_atom(position=[1, 0, 0], symbols='In', name='In1')
     in2_potcars = get_data_class('vasp.potcar').get_potcars_from_structure(
-        indium_2, potcar_family, mapping={
-            'In': 'In_d',
-            'In1': 'In_d'
-        }
+        indium_2, potcar_family, mapping={'In': 'In_d', 'In1': 'In_d'}
     )
     assert set(in2_potcars.keys()) == {'In', 'In1'}
     in_d_potcar = get_data_class('vasp.potcar').find(family_name=potcar_family, full_name='In_d')[0]
@@ -311,13 +304,19 @@ def test_old_style_detect(potcar_family, legacy_potcar_family):
     # The raise Value Error should contain hints for migrate
     with pytest.raises(NotExistent, match=r'.*found in a legacy group.*'):
         potcar_dict = potcar_cls.get_potcars_dict(
-            elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False
+            elements=elements,
+            family_name=potcar_family,
+            mapping=mapping,
+            auto_migrate=False,
         )
 
     # Change the name back and the test should now pass
     new_group.label = new_group.label[:-1]
     potcar_dict = potcar_cls.get_potcars_dict(
-        elements=elements, family_name=potcar_family, mapping=mapping, auto_migrate=False
+        elements=elements,
+        family_name=potcar_family,
+        mapping=mapping,
+        auto_migrate=False,
     )
     assert set(potcar_dict.keys()) == set(elements)
     assert [potcar_dict[element].full_name for element in elements] == [mapping[element] for element in elements]

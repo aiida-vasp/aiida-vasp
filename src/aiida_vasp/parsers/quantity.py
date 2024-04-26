@@ -6,7 +6,7 @@ Contains the representation of quantities that users want to parse.
 """
 
 
-class ParsableQuantities():  # pylint: disable=useless-object-inheritance
+class ParsableQuantities:  # pylint: disable=useless-object-inheritance
     """
     A Database of parsable quantities.
 

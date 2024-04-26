@@ -8,17 +8,14 @@ total energies for each structure.
 The data is saved and the energy minimum is calculated and stored.
 """
 # pylint: disable=attribute-defined-outside-init
-import random
 
 import numpy as np
+from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import WorkChain, append_, calcfunction
+from aiida.plugins import DataFactory, WorkflowFactory
+from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
-
-from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import WorkChain, append_, calcfunction, while_
-from aiida.plugins import DataFactory, WorkflowFactory
-
-from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
 class EosParallelWorkChain(WorkChain):
@@ -41,7 +38,10 @@ class EosParallelWorkChain(WorkChain):
         super(EosParallelWorkChain, cls).define(spec)
         spec.expose_inputs(cls._next_workchain, exclude=['structure'])
         spec.input_namespace(
-            'structures', valid_type=DataFactory('structure'), dynamic=True, help='a dictionary of structures to use'
+            'structures',
+            valid_type=DataFactory('structure'),
+            dynamic=True,
+            help='a dictionary of structures to use',
         )
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(420, 'ERROR_NO_CALLED_WORKCHAIN', message='no called workchain detected')
@@ -56,12 +56,14 @@ class EosParallelWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.output(
-            'eos', valid_type=DataFactory('array'), help='a list containing the cell volumes and total energies'
+            'eos',
+            valid_type=DataFactory('array'),
+            help='a list containing the cell volumes and total energies',
         )
         spec.output(
             'eos_minimum',
             valid_type=DataFactory('dict'),
-            help='a dictionary containing the cell volume at energy minimum'
+            help='a dictionary containing the cell volume at energy minimum',
         )
 
     def initialize(self):
@@ -142,8 +144,7 @@ class EosParallelWorkChain(WorkChain):
             else:
                 self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
                 self.report(
-                    'The called {}<{}> returned a non-zero exit status. '
-                    'The exit status {} is inherited'.format(
+                    'The called {}<{}> returned a non-zero exit status. ' 'The exit status {} is inherited'.format(
                         workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
                     )
                 )

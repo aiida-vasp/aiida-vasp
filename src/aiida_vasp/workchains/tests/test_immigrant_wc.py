@@ -1,21 +1,11 @@
 """Test submitting a VaspImmigrantWorkChain."""
+
 # pylint: disable=unused-import,wildcard-import,unused-wildcard-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import numpy as np
 import pytest
-
-from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import run
-
 from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
-from aiida_vasp.utils.fixtures import (
-    fresh_aiida_env,
-    localhost,
-    localhost_dir,
-    mock_vasp,
-    phonondb_run,
-    potcar_family,
-    temp_pot_folder,
-)
+from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, POTCAR_MAP
 
 
@@ -55,11 +45,8 @@ def immigrant_wc_builder_deprecated(fresh_aiida_env, potcar_family, phonondb_run
         dict={
             'withmpi': False,
             'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
+            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1},
+            'max_wallclock_seconds': 3600,
         },
     )
     return builder
@@ -101,11 +88,8 @@ def immigrant_wc_builder(fresh_aiida_env, potcar_family, phonondb_run, localhost
         dict={
             'withmpi': False,
             'queue_name': 'None',
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 3600
+            'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1},
+            'max_wallclock_seconds': 3600,
         },
     )
     return builder

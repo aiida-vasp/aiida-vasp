@@ -5,6 +5,7 @@ Parser settings.
 Defines the object associated with each object parser and the default node
 compositions of quantities.
 """
+
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
 
@@ -20,116 +21,34 @@ from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 CONTENT_PARSER_SETS = {
     'default': {
-        'DOSCAR': {
-            'parser_class': DoscarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'EIGENVAL': {
-            'parser_class': EigenvalParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'IBZKPT': {
-            'parser_class': KpointsParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'OUTCAR': {
-            'parser_class': OutcarParser,
-            'is_critical': True,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'vasprun.xml': {
-            'parser_class': VasprunParser,
-            'is_critical': True,
-            'status': 'Unknown',
-            'mode': 'rb'
-        },
-        'CHGCAR': {
-            'parser_class': ChgcarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'CONTCAR': {
-            'parser_class': PoscarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'vasp_output': {
-            'parser_class': StreamParser,
-            'is_critical': False,
-            'status': 'Unkonwn',
-            'mode': 'r'
-        }
+        'DOSCAR': {'parser_class': DoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'EIGENVAL': {'parser_class': EigenvalParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'IBZKPT': {'parser_class': KpointsParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown', 'mode': 'r'},
+        'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': True, 'status': 'Unknown', 'mode': 'rb'},
+        'CHGCAR': {'parser_class': ChgcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'CONTCAR': {'parser_class': PoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'vasp_output': {'parser_class': StreamParser, 'is_critical': False, 'status': 'Unkonwn', 'mode': 'r'},
     },
     'neb': {
-        'DOSCAR': {
-            'parser_class': DoscarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'EIGENVAL': {
-            'parser_class': EigenvalParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'IBZKPT': {
-            'parser_class': KpointsParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'OUTCAR': {
-            'parser_class': VtstNebOutcarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'vasprun.xml': {
-            'parser_class': VasprunParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'rb'
-        },
-        'CHGCAR': {
-            'parser_class': ChgcarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
-        'CONTCAR': {
-            'parser_class': PoscarParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        },
+        'DOSCAR': {'parser_class': DoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'EIGENVAL': {'parser_class': EigenvalParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'IBZKPT': {'parser_class': KpointsParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'OUTCAR': {'parser_class': VtstNebOutcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'rb'},
+        'CHGCAR': {'parser_class': ChgcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'CONTCAR': {'parser_class': PoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
         # The STDOUT is rename as 'stdout' for NEB calculations, this is because VASP itself
         # divert STDOUT for each image to <ID>/stdout
-        'stdout': {
-            'parser_class': StreamParser,
-            'is_critical': False,
-            'status': 'Unknown',
-            'mode': 'r'
-        }
+        'stdout': {'parser_class': StreamParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
     },
 }
 """ NODES """
 
 NODES = {
     'misc': {
-        'link_name':
-        'misc',
-        'type':
-        'core.dict',
+        'link_name': 'misc',
+        'type': 'core.dict',
         'quantities': [
             'total_energies',
             'maximum_stress',
@@ -138,7 +57,7 @@ NODES = {
             'run_status',
             'run_stats',
             'version',
-        ]
+        ],
     },
     'kpoints': {
         'link_name': 'kpoints',
@@ -228,7 +147,7 @@ NODES = {
 }
 
 
-class ParserDefinitions():  # pylint: disable=useless-object-inheritance
+class ParserDefinitions:  # pylint: disable=useless-object-inheritance
     """Container of parser definitions"""
 
     def __init__(self, content_parser_set='default'):
@@ -251,7 +170,7 @@ class ParserDefinitions():  # pylint: disable=useless-object-inheritance
             self._parser_definitions[name] = deepcopy(parser_dict)
 
 
-class ParserSettings():  # pylint: disable=useless-object-inheritance
+class ParserSettings:  # pylint: disable=useless-object-inheritance
     """
     Settings object for the VaspParser.
 
@@ -265,6 +184,7 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
         * quantities_to_parse: Collection of quantities in nodes_dict.
 
     """
+
     NODES = NODES
 
     def __init__(self, settings, default_settings=None, vasp_parser_logger=None):  # pylint: disable=missing-function-docstring
@@ -312,16 +232,16 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
         if is_custom_node:
             if 'link_name' not in _node_dict:
                 _node_dict['link_name'] = node_name
-                self._vasp_parser_logger.info(f'\'{node_name}\' was set as \'link_name\' in node_dict.')
+                self._vasp_parser_logger.info(f"'{node_name}' was set as 'link_name' in node_dict.")
             if 'quantities' not in node_dict:
                 _node_dict['quantities'] = [node_name]
-                self._vasp_parser_logger.info(f'\'{node_name}\' was set as \'quantities\' in node_dict.')
+                self._vasp_parser_logger.info(f"'{node_name}' was set as 'quantities' in node_dict.")
 
         # Check, whether the node_dict contains required keys.
         exist_missing_key = False
         for key in ['type', 'quantities', 'link_name']:
             if key not in _node_dict:
-                self._vasp_parser_logger.warning(f'\'{key}\' was not found in node_dict.')
+                self._vasp_parser_logger.warning(f"'{key}' was not found in node_dict.")
                 exist_missing_key = True
         if not exist_missing_key:
             self._output_nodes_dict[node_name] = _node_dict
@@ -363,7 +283,8 @@ class ParserSettings():  # pylint: disable=useless-object-inheritance
 
          -  dict: a custom node will be add. The dict must provide 'type' and 'quantities'. 'link_name' is optional
 
-                'add_custom_node': {'type': 'parameter', 'quantities': ['efermi', 'forces'], 'link_name': 'my_custom_node'}
+                'add_custom_node': {'type': 'parameter', 'quantities': ['efermi', 'forces'], 'link_name':
+                                    'my_custom_node'}
         """
         self._output_nodes_dict = {}
 

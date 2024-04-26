@@ -3,8 +3,9 @@ Common code for parsers.
 
 ------------------------
 """
-from contextlib import contextmanager
+
 import os
+from contextlib import contextmanager
 
 from aiida.common.exceptions import NotExistent
 from aiida.parsers.parser import Parser
@@ -60,7 +61,7 @@ class BaseParser(Parser):
                         for subobj in os.listdir(abspath):
                             retrieved[os.path.join(retrieved_object, subobj)] = {
                                 'path': self._retrieved_temporary,
-                                'status': 'temporary'
+                                'status': 'temporary',
                             }
                     else:
                         retrieved[retrieved_object] = {'path': self._retrieved_temporary, 'status': 'temporary'}
@@ -69,7 +70,7 @@ class BaseParser(Parser):
         # if there are any objects in the retrieved_temporary. If not, return an error.
         aiida_required_objects = [
             self.node.base.attributes.get('scheduler_stderr'),
-            self.node.base.attributes.get('scheduler_stdout')
+            self.node.base.attributes.get('scheduler_stdout'),
         ]
         # Check if have some missing objects that we require to be present.
         vasp_output_objects_present = False
@@ -125,7 +126,8 @@ class BaseParser(Parser):
 
         :param name: name of the object
         :param mode: the open mode to use for the respective parser, typically 'r' or 'rb'.
-        :param encoding: the encoding to be used, if binary mode, this is ignored, otherwise defaults to utf8 if not given.
+        :param encoding: the encoding to be used, if binary mode, this is ignored, otherwise defaults
+          to utf8 if not given.
         :returns: a yielded handler for the object
         :rtype: object
         """
@@ -167,9 +169,11 @@ def list_files_recursive(retrieved, top_level=''):
         if obj.file_type == FileType.FILE:
             object_paths.append(os.path.join(top_level, obj.name))
         elif obj.file_type == FileType.DIRECTORY:
-            object_paths.extend([
-                os.path.join(top_level, path)
-                for path in list_files_recursive(retrieved, os.path.join(top_level, obj.name))
-            ])
+            object_paths.extend(
+                [
+                    os.path.join(top_level, path)
+                    for path in list_files_recursive(retrieved, os.path.join(top_level, obj.name))
+                ]
+            )
 
     return object_paths

@@ -4,12 +4,14 @@ A general archive class.
 ------------------------
 Archive data class: store multiple files together in a compressed archive in the repository.
 """
-from contextlib import contextmanager
+
 import os
+
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import tarfile
 import tempfile
+from contextlib import contextmanager
 
 from aiida.orm.nodes import Data
 

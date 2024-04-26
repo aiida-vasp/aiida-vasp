@@ -6,6 +6,7 @@ Provides dictionaries with mappings element to the default potential.
 
 Currently the default for LDA and PBE GW is included.
 """
+
 DEFAULT_LDA = {
     'Ru': 'Ru_pv',
     'Re': 'Re',

@@ -4,6 +4,7 @@ The ``OUTCAR`` parser interface.
 ----------------------------
 Contains the parsing interfaces to parsevasp used to parse ``OUTCAR`` content.
 """
+
 # pylint: disable=abstract-method
 from pathlib import Path
 
@@ -24,26 +25,10 @@ class OutcarParser(BaseFileParser):
     DEFAULT_SETTINGS = {'quantities_to_parse': ['run_status', 'run_stats']}
 
     PARSABLE_QUANTITIES = {
-        'elastic_moduli': {
-            'inputs': [],
-            'name': 'elastic_moduli',
-            'prerequisites': []
-        },
-        'symmetries': {
-            'inputs': [],
-            'name': 'symmetries',
-            'prerequisites': []
-        },
-        'magnetization': {
-            'inputs': [],
-            'name': 'magnetization',
-            'prerequisites': []
-        },
-        'site_magnetization': {
-            'inputs': [],
-            'name': 'site_magnetization',
-            'prerequisites': []
-        },
+        'elastic_moduli': {'inputs': [], 'name': 'elastic_moduli', 'prerequisites': []},
+        'symmetries': {'inputs': [], 'name': 'symmetries', 'prerequisites': []},
+        'magnetization': {'inputs': [], 'name': 'magnetization', 'prerequisites': []},
+        'site_magnetization': {'inputs': [], 'name': 'site_magnetization', 'prerequisites': []},
         'run_stats': {
             'inputs': [],
             'name': 'run_stats',
@@ -53,7 +38,7 @@ class OutcarParser(BaseFileParser):
             'inputs': [],
             'name': 'run_status',
             'prerequisites': [],
-        }
+        },
     }
 
     def _init_from_handler(self, handler):
@@ -191,27 +176,11 @@ class VtstNebOutcarParser(OutcarParser):
 
     DEFAULT_SETTINGS = {'quantities_to_parse': ['run_status', 'run_stats', 'neb_data']}
     PARSABLE_QUANTITIES = {
-        'neb_data': {
-            'inputs': [],
-            'name': 'neb_data',
-            'prerequisites': []
-        },
-        'outcar-forces': {
-            'inputs': [],
-            'name': 'forces',
-            'prerequisites': []
-        },
-        'outcar-positions': {
-            'inputs': [],
-            'name': 'positions',
-            'prerequisites': []
-        },
-        'outcar-cell': {
-            'inputs': [],
-            'name': 'cell',
-            'prerequisites': []
-        },
-        **OutcarParser.PARSABLE_QUANTITIES
+        'neb_data': {'inputs': [], 'name': 'neb_data', 'prerequisites': []},
+        'outcar-forces': {'inputs': [], 'name': 'forces', 'prerequisites': []},
+        'outcar-positions': {'inputs': [], 'name': 'positions', 'prerequisites': []},
+        'outcar-cell': {'inputs': [], 'name': 'cell', 'prerequisites': []},
+        **OutcarParser.PARSABLE_QUANTITIES,
     }
 
     def __init__(self, *args, **kwargs):
@@ -345,12 +314,12 @@ def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,
         elif 'free  energy   TOTEN' in line:
             vtst_data['free_energy'] = float(line.split()[-2])
         elif 'TOTAL-FORCE' in line:
-            positions, forces = _parse_force_block(lines[idx:idx + nions + 10])
+            positions, forces = _parse_force_block(lines[idx : idx + nions + 10])
             inputs['outcar-forces'] = np.array(forces)
             inputs['outcar-positions'] = np.array(positions)
         elif 'direct lattice vectors' in line:
             cell = []
-            for subline in lines[idx + 1:idx + 4]:
+            for subline in lines[idx + 1 : idx + 4]:
                 cell.append([float(tmp) for tmp in subline.split()[:3]])
             inputs['outcar-cell'] = np.array(cell)
 

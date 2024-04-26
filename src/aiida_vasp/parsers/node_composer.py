@@ -4,8 +4,10 @@ Node composer.
 --------------
 A composer that composes different quantities onto AiiDA data nodes.
 """
+
 import math
 import numbers
+
 # pylint: disable=logging-fstring-interpolation
 import traceback
 from warnings import warn
@@ -16,8 +18,17 @@ from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {
     'core.dict': [
-        'total_energies', 'maximum_force', 'maximum_stress', 'symmetries', 'magnetization', 'site_magnetization',
-        'notifications', 'band_properties', 'run_status', 'run_stats', 'version'
+        'total_energies',
+        'maximum_force',
+        'maximum_stress',
+        'symmetries',
+        'magnetization',
+        'site_magnetization',
+        'notifications',
+        'band_properties',
+        'run_status',
+        'run_stats',
+        'version',
     ],
     'core.array.kpoints': ['kpoints'],
     'core.structure': ['structure'],
@@ -52,6 +63,7 @@ class NodeComposer:
             self._logger = logger
         else:
             import logging  # pylint: disable=import-outside-toplevel
+
             logging.basicConfig(level=logging.DEBUG)
             self._logger = logging.getLogger('NodeComposer')
 
@@ -67,7 +79,7 @@ class NodeComposer:
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
+                    f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed. "
                     'No parsed data available.'
                 )
                 continue
@@ -84,7 +96,7 @@ class NodeComposer:
                 self._created[node_dict['link_name']] = node
             else:
                 self._logger.warning(
-                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
+                    f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed, "
                     f'exception: {exception}'
                 )
                 self._failed_to_create.append(node_dict['link_name'])
@@ -285,6 +297,6 @@ def clean_nan_values(inputs: dict) -> dict:
         if isinstance(value, dict):
             clean_nan_values(value)
         if isinstance(value, numbers.Real) and (math.isnan(value) or math.isinf(value)):
-            warn(f'Key <{key}> has value <{value}> replaced by <{str(value)}>')
+            warn(f'Key <{key}> has value <{value}> replaced by <{value!s}>')
             inputs[key] = str(value)
     return inputs

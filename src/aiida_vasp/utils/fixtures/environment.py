@@ -7,15 +7,16 @@ to run our tests. In particular, the fresh_aiida_env is crucial in order
 to set up a dummy database and configuration that can be used during
 testing. AiiDA contributes with its own fixture manager, which we use.
 """
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, protected-access
 from __future__ import absolute_import, print_function
 
 from pathlib import Path
 
 import pytest
-
 from aiida.cmdline.utils.ascii_vis import format_call_graph
-#from aiida.manage.tests.pytest_fixtures import aiida_caplog
+
+# from aiida.manage.tests.pytest_fixtures import aiida_caplog
 from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
 from aiida.orm import CalculationNode, Code, QueryBuilder
 from aiida.tools.archive import create_archive
@@ -40,14 +41,8 @@ def print_and_export_failed_mock():
         CalculationNode,
         filters={
             'or': [
-                {
-                    'attributes.process_state': 'excepted'
-                },
-                {
-                    'attributes.exit_status': {
-                        '!==': 0
-                    }
-                },
+                {'attributes.process_state': 'excepted'},
+                {'attributes.exit_status': {'!==': 0}},
             ],
         },
         project=['*'],

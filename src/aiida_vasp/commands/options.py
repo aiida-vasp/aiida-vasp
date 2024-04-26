@@ -4,6 +4,7 @@ Common click options for verdi.
 -------------------------------
 Common click options for verdi commands.
 """
+
 import click
 
 try:
@@ -14,12 +15,12 @@ except ImportError:
         """
         Wrapper around click option that increases reusability.
 
-        Click options are reusable already but sometimes it can improve the user interface to for example customize a help message
-        for an option on a per-command basis. Sometimes the option should be prompted for if it is not given. On some commands an option
-        might take any folder path, while on another the path only has to exist.
+        Click options are reusable already but sometimes it can improve the user interface to for example customize a
+        help message for an option on a per-command basis. Sometimes the option should be prompted for if it is not
+        given. On some commands an option might take any folder path, while on another the path only has to exist.
 
-        Overridable options store the arguments to click.option and only instanciate the click.Option on call, kwargs given to ``__call__``
-        override the stored ones.
+        Overridable options store the arguments to click.option and only instantiate the click.Option on call, kwargs
+        given to ``__call__`` override the stored ones.
 
         Example::
 
@@ -56,7 +57,7 @@ FAMILY_NAME = OverridableOption(
     required=True,
     help='The name you want to give this family of potential(s). '
     'This is the name you will use in the future when telling which potentials to use '
-    'for a specific calculation or workflow.'
+    'for a specific calculation or workflow.',
 )
 PATH = OverridableOption('-p', '--path', default='.', type=click.Path(exists=True), help='Path to the folder.')
 

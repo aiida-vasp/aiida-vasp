@@ -2,7 +2,6 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 
 import pytest
-
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo, PotcarIo
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *

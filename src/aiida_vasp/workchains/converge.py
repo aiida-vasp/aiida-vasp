@@ -4,11 +4,11 @@ Convergence workchain.
 ----------------------
 Intended to be used to control convergence checks for plane-wave calculations.
 """
+
 # pylint: disable=too-many-lines, too-many-locals, too-many-statements, too-many-public-methods, too-many-branches, attribute-defined-outside-init
 import copy
 
 import numpy as np
-
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction, if_, while_
 from aiida.orm.nodes.data.array.bands import find_bandgap
@@ -420,9 +420,8 @@ class ConvergeWorkChain(WorkChain):
             else:
                 settings = AttributeDict({'parser_settings': dict_entry})
             self.ctx.inputs.settings = settings
-        else:
-            if 'settings' in self.inputs:
-                self.ctx.inputs.settings = AttributeDict(self.inputs.settings.get_dict())
+        elif 'settings' in self.inputs:
+            self.ctx.inputs.settings = AttributeDict(self.inputs.settings.get_dict())
 
     def _init_pw_context(self):
         """Initialize plane wave cutoff variables and store in context."""
@@ -448,7 +447,8 @@ class ConvergeWorkChain(WorkChain):
             electronic = parameters_dict.get('electronic', None)
             if (electronic is not None) and ('pwcutoff' in electronic):
                 self.report(
-                    "The 'pwcutoff' supplied in the global input parameters was overridden by the 'pwcutoff' supplied to the workchain."
+                    "The 'pwcutoff' supplied in the global input parameters was overridden by the"
+                    "'pwcutoff' supplied to the workchain."
                 )
         except AttributeError:
             pass
@@ -687,7 +687,7 @@ class ConvergeWorkChain(WorkChain):
                         pwcutoff=self.ctx.converge.settings.pwcutoff,
                         kgrid0=self.ctx.converge.settings.kgrid[0],
                         kgrid1=self.ctx.converge.settings.kgrid[1],
-                        kgrid2=self.ctx.converge.settings.kgrid[2]
+                        kgrid2=self.ctx.converge.settings.kgrid[2],
                     )
                 )
             else:
@@ -754,17 +754,28 @@ class ConvergeWorkChain(WorkChain):
                     location = 'test-case:test_converge_wc/kgrid'
                 else:
                     location = 'test-case:test_converge_wc/both'
+            elif settings.pwcutoff_org is None and settings.supplied_kmesh:
+                location = 'test-case:test_converge_wc/pw/' + str(int(settings.pwcutoff))
+            elif settings.pwcutoff_org is not None and not settings.supplied_kmesh:
+                location = (
+                    'test-case:test_converge_wc/kgrid/'
+                    + str(settings.kgrid[0])
+                    + '_'
+                    + str(settings.kgrid[1])
+                    + '_'
+                    + str(settings.kgrid[2])
+                )
             else:
-                if settings.pwcutoff_org is None and settings.supplied_kmesh:
-                    location = 'test-case:test_converge_wc/pw/' + str(int(settings.pwcutoff))
-                elif settings.pwcutoff_org is not None and not settings.supplied_kmesh:
-                    location = 'test-case:test_converge_wc/kgrid/' + str(settings.kgrid[0]) + '_' + str(
-                        settings.kgrid[1]
-                    ) + '_' + str(settings.kgrid[2])
-                else:
-                    location = 'test-case:test_converge_wc/both/' + str(int(settings.pwcutoff)) + '_' + str(
-                        settings.kgrid[0]
-                    ) + '_' + str(settings.kgrid[1]) + '_' + str(settings.kgrid[2])
+                location = (
+                    'test-case:test_converge_wc/both/'
+                    + str(int(settings.pwcutoff))
+                    + '_'
+                    + str(settings.kgrid[0])
+                    + '_'
+                    + str(settings.kgrid[1])
+                    + '_'
+                    + str(settings.kgrid[2])
+                )
             param_dict['incar'] = {'system': location}
             self.ctx.converge.parameters = param_dict
 
@@ -845,7 +856,8 @@ class ConvergeWorkChain(WorkChain):
             if self.ctx.converge.settings.supplied_kmesh:
                 self.report(
                     'running plane wave convergence test on the supplied k-point '
-                    'mesh for a plane wave cutoff of {pwcutoff} eV'.format(pwcutoff=pwcutoff) + inform_details
+                    'mesh for a plane wave cutoff of {pwcutoff} eV'.format(pwcutoff=pwcutoff)
+                    + inform_details
                 )
             else:
                 self.report(
@@ -854,8 +866,9 @@ class ConvergeWorkChain(WorkChain):
                         kgrid0=self.ctx.converge.settings.kgrid[0],
                         kgrid1=self.ctx.converge.settings.kgrid[1],
                         kgrid2=self.ctx.converge.settings.kgrid[2],
-                        pwcutoff=pwcutoff
-                    ) + inform_details
+                        pwcutoff=pwcutoff,
+                    )
+                    + inform_details
                 )
 
     def results_pw_conv_calc(self):
@@ -946,8 +959,10 @@ class ConvergeWorkChain(WorkChain):
         if self._verbose:
             self.report(
                 'running k-point convergence test for k-point sampling '
-                'of {}x{}x{} for a plane wave cutoff of {pwcutoff} eV'.
-                format(kgrid[0], kgrid[1], kgrid[2], pwcutoff=self.ctx.converge.settings.pwcutoff) + inform_details
+                'of {}x{}x{} for a plane wave cutoff of {pwcutoff} eV'.format(
+                    kgrid[0], kgrid[1], kgrid[2], pwcutoff=self.ctx.converge.settings.pwcutoff
+                )
+                + inform_details
             )
 
     def results_kpoints_conv_calc(self):
@@ -1006,9 +1021,9 @@ class ConvergeWorkChain(WorkChain):
                 gap = 0.0
 
         # add stuff to the converge context
-        self.ctx.converge.k_data.append([
-            kgrid[0], kgrid[1], kgrid[2], pwcutoff, total_energy, max_force, max_valence_band, gap, success
-        ])
+        self.ctx.converge.k_data.append(
+            [kgrid[0], kgrid[1], kgrid[2], pwcutoff, total_energy, max_force, max_valence_band, gap, success]
+        )
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
@@ -1095,9 +1110,7 @@ class ConvergeWorkChain(WorkChain):
                 'We were not able to obtain a convergence of the plane wave cutoff '
                 'to the specified cutoff. This could also be caused by failures of '
                 'the calculations producing results for the convergence tests. Setting '
-                'the plane wave cutoff to the highest specified value: {pwcutoff} eV'.format(
-                    pwcutoff=settings.pwcutoff
-                )
+                'the plane wave cutoff to the highest specified value: {pwcutoff} eV'.format(pwcutoff=settings.pwcutoff)
             )
         if not settings.supplied_kmesh and self.ctx.converge.settings.kgrid is None:
             self.report(
@@ -1132,9 +1145,8 @@ class ConvergeWorkChain(WorkChain):
         if settings.pwcutoff_org is None:
             if self._verbose:
                 self.report(f'plane wave cutoff: {pwcutoff} eV.')
-        else:
-            if self._verbose:
-                self.report('plane wave cutoff: User supplied.')
+        elif self._verbose:
+            self.report('plane wave cutoff: User supplied.')
 
         if not settings.supplied_kmesh:
             kgrid = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value)
@@ -1153,9 +1165,7 @@ class ConvergeWorkChain(WorkChain):
 
         return pwcutoff, kgrid
 
-    def _analyze_conv_disp_comp(
-        self, pwcutoff_displacement, pwcutoff_comp, kgrid_displacement, kgrid_comp
-    ):  # noqa: MC0001
+    def _analyze_conv_disp_comp(self, pwcutoff_displacement, pwcutoff_comp, kgrid_displacement, kgrid_comp):
         """
         Analyze the convergence when both displacements and compression is performed.
 
@@ -1182,15 +1192,18 @@ class ConvergeWorkChain(WorkChain):
             else:
                 kgrid = kgrid_comp
 
-        if self.ctx.converge.settings.pwcutoff_org is None and pwcutoff_displacement is not None and pwcutoff_comp is not None:
+        if (
+            self.ctx.converge.settings.pwcutoff_org is None
+            and pwcutoff_displacement is not None
+            and pwcutoff_comp is not None
+        ):
             if self._verbose:
                 self.report(f'plane wave cutoff: {pwcutoff} eV')
         elif self.ctx.converge.settings.pwcutoff_org is not None:
             if self._verbose:
                 self.report('plane wave cutoff: User supplied')
-        else:
-            if self._verbose:
-                self.report('plane wave cutoff: Failed')
+        elif self._verbose:
+            self.report('plane wave cutoff: Failed')
 
         if not self.ctx.converge.settings.supplied_kmesh and kgrid_displacement is not None and kgrid_comp is not None:
             if self._verbose:
@@ -1198,16 +1211,15 @@ class ConvergeWorkChain(WorkChain):
         elif self.ctx.converge.settings.supplied_kmesh:
             if self._verbose:
                 self.report('k-point grid: User supplied.')
-        else:
-            if self._verbose:
-                self.report('k-point grid: Failed.')
+        elif self._verbose:
+            self.report('k-point grid: Failed.')
 
         if self._verbose:
             self.report(f'for the convergence criteria {cutoff_type} and a cutoff of {cutoff_value}.')
 
         return pwcutoff, kgrid
 
-    def _analyze_conv_disp(self):  # noqa: MC000
+    def _analyze_conv_disp(self):
         """Analyze the convergence when atomic displacements are performed."""
         settings = self.ctx.converge.settings
         pwcutoff_org = settings.pwcutoff_org
@@ -1230,8 +1242,9 @@ class ConvergeWorkChain(WorkChain):
             for index, _ in enumerate(pw_data):
                 for cutoff_type in self._ALLOWED_CUTOFF_TYPES:
                     critria_position = self._get_pw_data_criteria_position(cutoff_type)
-                    pw_data[index][critria_position] = pw_data_displacement[index][critria_position] - pw_data_org[
-                        index][critria_position]
+                    pw_data[index][critria_position] = (
+                        pw_data_displacement[index][critria_position] - pw_data_org[index][critria_position]
+                    )
 
             pwcutoff_diff_displacement = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
@@ -1243,15 +1256,15 @@ class ConvergeWorkChain(WorkChain):
             for index, _ in enumerate(k_data_displacement):
                 for cutoff_type in self._ALLOWED_CUTOFF_TYPES:
                     critria_position = self._get_k_data_criteria_position(cutoff_type)
-                    k_data[index][critria_position
-                                  ] = k_data_displacement[index][critria_position] - k_data_org[index][critria_position]
+                    k_data[index][critria_position] = (
+                        k_data_displacement[index][critria_position] - k_data_org[index][critria_position]
+                    )
 
             kgrid_diff_displacement = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
             self.report('Performed atomic displacements.')
             self.report(
-                'The convergence test using the difference between '
-                'the original and displaced dataset suggests:'
+                'The convergence test using the difference between ' 'the original and displaced dataset suggests:'
             )
         if pwcutoff_org is None and pwcutoff_diff_displacement is not None and pwcutoff_displacement is not None:
             if self._verbose:
@@ -1259,15 +1272,14 @@ class ConvergeWorkChain(WorkChain):
                     'plane wave cutoff: {pwcutoff_diff_displacement} '
                     '({pwcutoff_displacement} for the isolated displacement tests) eV'.format(
                         pwcutoff_diff_displacement=pwcutoff_diff_displacement,
-                        pwcutoff_displacement=pwcutoff_displacement
+                        pwcutoff_displacement=pwcutoff_displacement,
                     )
                 )
         elif pwcutoff_org:
             if self._verbose:
                 self.report('plane wave cutoff: User supplied')
-        else:
-            if self._verbose:
-                self.report('plane wave cutoff: Failed')
+        elif self._verbose:
+            self.report('plane wave cutoff: Failed')
 
         if not settings.supplied_kmesh and kgrid_diff_displacement is not None and kgrid_displacement is not None:
             if self._verbose:
@@ -1280,15 +1292,14 @@ class ConvergeWorkChain(WorkChain):
                         kgrid_diff_displacement2=kgrid_diff_displacement[2],
                         kgrids0=kgrid_displacement[0],
                         kgrids1=kgrid_displacement[1],
-                        kgrids2=kgrid_displacement[2]
+                        kgrids2=kgrid_displacement[2],
                     )
                 )
         elif settings.supplied_kmesh:
             if self._verbose:
                 self.report('k-point grid: User supplied')
-        else:
-            if self._verbose:
-                self.report('k-point grid: Failed')
+        elif self._verbose:
+            self.report('k-point grid: Failed')
 
         if self._verbose:
             self.report(
@@ -1300,7 +1311,7 @@ class ConvergeWorkChain(WorkChain):
 
         return pwcutoff_diff_displacement, kgrid_diff_displacement
 
-    def _analyze_conv_comp(self):  # noqa: MC0001
+    def _analyze_conv_comp(self):
         """Analyze the relative convergence due to unit cell compression."""
 
         settings = self.ctx.converge.settings
@@ -1324,8 +1335,9 @@ class ConvergeWorkChain(WorkChain):
             for index, _ in enumerate(pw_data):
                 for cutoff_type in self._ALLOWED_CUTOFF_TYPES:
                     criteria_position = self._get_pw_data_criteria_position(cutoff_type)
-                    pw_data[index][criteria_position
-                                   ] = pw_data_comp[index][criteria_position] - pw_data_org[index][criteria_position]
+                    pw_data[index][criteria_position] = (
+                        pw_data_comp[index][criteria_position] - pw_data_org[index][criteria_position]
+                    )
 
             pwcutoff_diff_comp = self._check_pw_converged(pw_data, cutoff_type, cutoff_value_r)
         else:
@@ -1336,8 +1348,9 @@ class ConvergeWorkChain(WorkChain):
             for index, _ in enumerate(k_data_comp):
                 for cutoff_type in self._ALLOWED_CUTOFF_TYPES:
                     criteria_position = self._get_k_data_criteria_position(cutoff_type)
-                    k_data[index][criteria_position
-                                  ] = k_data_comp[index][criteria_position] - k_data_org[index][criteria_position]
+                    k_data[index][criteria_position] = (
+                        k_data_comp[index][criteria_position] - k_data_org[index][criteria_position]
+                    )
 
             kgrid_diff_comp = self._check_kpoints_converged(k_data, cutoff_type, cutoff_value_r)
         if self._verbose:
@@ -1354,9 +1367,8 @@ class ConvergeWorkChain(WorkChain):
         elif pwcutoff_org:
             if self._verbose:
                 self.report('plane wave cutoff: User supplied')
-        else:
-            if self._verbose:
-                self.report('plane wave cutoff: Failed')
+        elif self._verbose:
+            self.report('plane wave cutoff: Failed')
         if not settings.supplied_kmesh and kgrid_diff_comp is not None and kgrid_comp is not None:
             if self._verbose:
                 self.report(
@@ -1368,15 +1380,14 @@ class ConvergeWorkChain(WorkChain):
                         kgrid_diff_comp2=kgrid_diff_comp[2],
                         kgrid_comp0=kgrid_comp[0],
                         kgrid_comp1=kgrid_comp[1],
-                        kgrid_comp2=kgrid_comp[2]
+                        kgrid_comp2=kgrid_comp[2],
                     )
                 )
         elif settings.supplied_kmesh:
             if self._verbose:
                 self.report('k-point grid: User supplied')
-        else:
-            if self._verbose:
-                self.report('k-point grid: Failed')
+        elif self._verbose:
+            self.report('k-point grid: Failed')
 
         if self._verbose:
             self.report(
@@ -1428,8 +1439,9 @@ class ConvergeWorkChain(WorkChain):
             if self._verbose:
                 self.report(
                     "attaching the node {}<{}> as '{}'".format(
-                        pwcutoff_recommended.__class__.__name__, pwcutoff_recommended.pk,
-                        'converge.pwcutoff_recommended'
+                        pwcutoff_recommended.__class__.__name__,
+                        pwcutoff_recommended.pk,
+                        'converge.pwcutoff_recommended',
                     )
                 )
             self.out('converge.pwcutoff_recommended', pwcutoff_recommended)
@@ -1545,8 +1557,7 @@ class ConvergeWorkChain(WorkChain):
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
             self.report(
-                'The called {}<{}> returned a non-zero exit status. '
-                'The exit status {} is inherited'.format(
+                'The called {}<{}> returned a non-zero exit status. ' 'The exit status {} is inherited'.format(
                     workchain.__class__.__name__, workchain.pk, self.ctx.exit_code
                 )
             )

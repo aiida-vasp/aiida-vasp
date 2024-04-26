@@ -15,6 +15,7 @@ import pytest
 def mock_base_workchain():
     """Fixture for a mock-up of the VaspWorkChain."""
     from aiida.plugins import WorkflowFactory
+
     _base_wc_cls = WorkflowFactory('vasp.vasp')
 
     class VaspWorkChain(_base_wc_cls):
@@ -27,6 +28,7 @@ def mock_base_workchain():
 def mock_relax_workchain(mock_base_workchain):
     """Fixture for a RelaxWorkChain using a mock-up for the lower level VaspWorkChain."""
     from aiida.plugins import WorkflowFactory
+
     _base_wc_cls = WorkflowFactory('vasp.relax')
 
     class RelaxWorkChain(_base_wc_cls):
@@ -39,6 +41,7 @@ def mock_relax_workchain(mock_base_workchain):
 def mock_converge_workchain(mock_base_workchain):  # pylint: disable=unused-argument
     """Fixture for a ConvergenceWorkChain using a mock-up for the lower level VaspWorkChain."""
     from aiida.plugins import WorkflowFactory
+
     _base_wc_cls = WorkflowFactory('vasp.converge')
 
     class ConvergeWorkCHain(_base_wc_cls):

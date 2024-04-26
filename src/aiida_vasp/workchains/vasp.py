@@ -30,7 +30,8 @@ This means that for a handler:
     - No error found - just return None
     - No action taken
         - the error is not recoverable - return with a non-zero error code with do break
-        - the error is not recoverable, but other handler may/maynot save it - return with a non-zero code without do break
+        - the error is not recoverable, but other handler may/maynot save it - return with a non-zero code without do
+        break
         - the error is not recoverable, and the workchain should be aborted immediately - non-zero code + do break
 
     - Action taken
@@ -39,10 +40,10 @@ This means that for a handler:
           this mean other handlers (with lower priority) must handle it and return a zero error_code.
 
 """
+
 import math
 
 import numpy as np
-
 from aiida.common.exceptions import InputValidationError, NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.lang import override
@@ -56,7 +57,10 @@ from aiida.engine.processes.workchains.restart import (
 from aiida.orm import CalcJobNode, Code
 from aiida.plugins import CalculationFactory
 
-from aiida_vasp.assistant.parameters import ParametersMassage, inherit_and_merge_parameters
+from aiida_vasp.assistant.parameters import (
+    ParametersMassage,
+    inherit_and_merge_parameters,
+)
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
@@ -99,13 +103,14 @@ class VaspWorkChain(BaseRestartWorkChain):
     To see a working example, including generation of input nodes from scratch, please
     refer to ``examples/run_vasp_lean.py``.
     """
+
     _verbose = False
     _process_class = CalculationFactory('vasp.vasp')
     _algo_switching = {
         'normal': ['fast', 'veryfast', 'damped'],
         'fast': ['normal', 'veryfast', 'damped'],
         'veryfast': ['normal', 'fast', 'damped'],
-        'damped': ['normal', 'fast', 'veryfast']
+        'damped': ['normal', 'fast', 'veryfast'],
     }
 
     @classmethod
@@ -291,8 +296,8 @@ class VaspWorkChain(BaseRestartWorkChain):
         spec.exit_code(
             505,
             'ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX',
-            message=
-            'At least one of the ionic steps during the relaxation has did not have converged electronic structure.',
+            message='At least one of the ionic steps during the relaxation has did not have converged '
+            'electronic structure.',
         )
         spec.exit_code(
             700,
@@ -438,7 +443,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             parameters_massager = ParametersMassage(
                 self.ctx.inputs.parameters,
                 unsupported_parameters,
-                skip_parameters_validation=skip_parameters_validation
+                skip_parameters_validation=skip_parameters_validation,
             )
         except Exception as exception:  # pylint: disable=broad-except
             return self.exit_codes.ERROR_IN_PARAMETER_MASSAGER.format(exception=exception)  # pylint: disable=no-member
@@ -496,7 +501,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
-                mapping=self.inputs.potential_mapping.get_dict()
+                mapping=self.inputs.potential_mapping.get_dict(),
             )
         except ValueError as err:
             return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))  # pylint: disable=no-member
@@ -530,7 +535,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         try:
             last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
             if last_calc is not None:
-                self.report(f'Last calculation: {repr(last_calc)}')  # pylint: disable=not-callable
+                self.report(f'Last calculation: {last_calc!r}')  # pylint: disable=not-callable
                 sched_err = last_calc.outputs.retrieved.get_file_content('_scheduler-stderr.txt')
                 sched_out = last_calc.outputs.retrieved.get_file_content('_scheduler-stdout.txt')
                 self.report(f"Scheduler output:\n{sched_out or ''}")  # pylint: disable=not-callable
@@ -591,7 +596,6 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # Attach the required outputs defined in the spec
         for name, port in self.spec().outputs.items():
-
             try:
                 output = node.get_outgoing(link_label_filter=name).one().node
             except ValueError:
@@ -618,7 +622,7 @@ class VaspWorkChain(BaseRestartWorkChain):
                 do_break=True,
                 exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                     message='VASP executable did not run on the remote computer.'
-                )
+                ),
             )
 
         self.report(f'{node} did not execute - try again')
@@ -656,8 +660,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                     do_break=True,
                     exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                         message='No output structure for restart.'
-                    )
-                )  #pylint: disable=no-member
+                    ),
+                )  # pylint: disable=no-member
             self.report('Continuing geometry optimization using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
@@ -665,7 +669,11 @@ class VaspWorkChain(BaseRestartWorkChain):
             return ProcessHandlerReport(do_break=True)
         return None
 
-    @process_handler(priority=799, enabled=False, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
+    @process_handler(
+        priority=799,
+        enabled=False,
+        exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH],
+    )
     def handler_unfinished_calc_ionic_alt(self, node):
         """
         Handled the problem such that the calculation is not finished, e.g. did not reach the
@@ -685,8 +693,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                     do_break=True,
                     exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                         message='No output structure for restart.'
-                    )
-                )  #pylint: disable=no-member
+                    ),
+                )  # pylint: disable=no-member
             self.report('Continuing geometry optimization using the last geometry.')
             self.ctx.inputs.structure = node.outputs.structure
             self._setup_restart(node)
@@ -707,16 +715,19 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         if self.ctx.last_calc_was_unfinished:
             msg = (
-                'The last calculation was not completed for the second time, potentially due to insufficient walltime/node failure.'
-                'Please revise the resources request and/or input parameters.'
+                'The last calculation was not completed for the second time, potentially due to insufficient '
+                'walltime/node failure. Please revise the resources request and/or input parameters.'
             )
             return ProcessHandlerReport(
-                do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg)
-            )  #pylint: disable=no-member
-        self.report((
-            'The last calculation was not finished - restart using the same set of inputs. '
-            'If it was due to transient problem this may fix it, fingers crossed.'
-        ))
+                do_break=True,
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg),
+            )  # pylint: disable=no-member
+        self.report(
+            (
+                'The last calculation was not finished - restart using the same set of inputs. '
+                'If it was due to transient problem this may fix it, fingers crossed.'
+            )
+        )
         self.ctx.last_calc_was_unfinished = True
         return ProcessHandlerReport(do_break=True)
 
@@ -733,23 +744,27 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         if self.ctx.last_calc_was_unfinished:
             msg = (
-                'The last calculation was not completed for the second time, potentially due to insufficient walltime/node failure.'
-                'Please revise the resources request and/or input parameters.'
+                'The last calculation was not completed for the second time, potentially due to insufficient'
+                'walltime/node failure. Please revise the resources request and/or input parameters.'
             )
             return ProcessHandlerReport(
-                do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg)
-            )  #pylint: disable=no-member
-        self.report((
-            'The last calculation was not finished - restart using the same set of inputs. '
-            'If it was due to transient problem this may fix it, fingers crossed.'
-        ))
+                do_break=True,
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg),
+            )  # pylint: disable=no-member
+        self.report(
+            (
+                'The last calculation was not finished - restart using the same set of inputs. '
+                'If it was due to transient problem this may fix it, fingers crossed.'
+            )
+        )
         self.ctx.last_calc_was_unfinished = True
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=850, enabled=False)
     def ignore_nelm_breach_relax(self, node):
         """
-        Not a actual handler but works as a switch to bypass checks for NELM breaches in the middle of an ionic relaxation.
+        Not a actual handler but works as a switch to bypass checks for NELM
+        breaches in the middle of an ionic relaxation.
         """
         _ = node
         self.ctx.ignore_transient_nelm_breach = True
@@ -759,9 +774,11 @@ class VaspWorkChain(BaseRestartWorkChain):
         enabled=False,
         exit_codes=[
             VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED,
-            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED, VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
-            VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR, VaspCalculation.exit_codes.ERROR_OVERFLOW_IN_XML
-        ]
+            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED,
+            VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
+            VaspCalculation.exit_codes.ERROR_VASP_CRITICAL_ERROR,
+            VaspCalculation.exit_codes.ERROR_OVERFLOW_IN_XML,
+        ],
     )
     def handler_electronic_conv_alt(self, node):  # pylint: disable=too-many-return-statements,too-many-branches
         """Handle electronic convergence problem"""
@@ -773,24 +790,28 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # In case of ionic convergence problem, we also act if electronic convergence problem has been reported.
         if node.exit_status in [
-            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status, VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH
+            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status,
+            VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
         ]:
             perform_fix = False
             if run_status['consistent_nelm_breach']:
                 self.report(
-                    'The NELM limit has been breached in all ionic steps - proceed to take actions for improving convergence.'
+                    'The NELM limit has been breached in all ionic steps - proceed to take actions'
+                    'for improving convergence.'
                 )
                 perform_fix = True
             elif run_status['contains_nelm_breach']:
                 # Then there are some breaches in the ionic cycles
                 if self.ctx.ignore_transient_nelm_breach:
                     self.report(
-                        'WARNING: NELM limit breached in some ionic steps but requested to ignore this - no action taken.'
+                        'WARNING: NELM limit breached in some ionic steps but requested to ignore this -'
+                        'no action taken.'
                     )
                     perform_fix = False
                 else:
                     self.report(
-                        'The NELM limit has been breached in some ionic steps - proceed to take actions for improving convergence.'
+                        'The NELM limit has been breached in some ionic steps - proceed to take actions for'
+                        ' improving convergence.'
                     )
                     perform_fix = True
             if not perform_fix:
@@ -816,9 +837,13 @@ class VaspWorkChain(BaseRestartWorkChain):
                     return ProcessHandlerReport(do_break=True)
                 except KeyError:
                     self.report(
-                        'The topmost band is occupied but did not locate the nbands entry in run_status, so no way to do corrections.'
+                        'The topmost band is occupied but did not locate the nbands entry in run_status, '
+                        'so no way to do corrections.'
                     )
-                    return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
+                    return ProcessHandlerReport(
+                        exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT,
+                        do_break=True,
+                    )  # pylint: disable=no-member
 
         if nelm < 300:
             # Standard NELM might be a bit low, so increase a bit
@@ -846,7 +871,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             do_break=True,
             exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                 message='Cannot apply fix for reaching electronic convergence.'
-            )
+            ),
         )
 
     @process_handler(
@@ -855,7 +880,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             VaspCalculation.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED,
             VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED,
             VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
-        ]
+        ],
     )
     def handler_electronic_conv(self, node):
         """Handle electronic convergence problem"""
@@ -866,24 +891,28 @@ class VaspWorkChain(BaseRestartWorkChain):
 
         # In case of ionic convergence problem, we also act if electronic convergence problem has been reported.
         if node.exit_status in [
-            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status, VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH
+            VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED.status,
+            VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH,
         ]:
             perform_fix = False
             if run_status['consistent_nelm_breach']:
                 self.report(
-                    'The NELM limit has been breached in all ionic steps - proceed to take actions for improving convergence.'
+                    'The NELM limit has been breached in all ionic steps - proceed to take'
+                    ' actions for improving convergence.'
                 )
                 perform_fix = True
             elif run_status['contains_nelm_breach']:
                 # Then there are some breaches in the ionic cycles
                 if self.ctx.ignore_transient_nelm_breach:
                     self.report(
-                        'WARNING: NELM limit breached in some ionic steps but requested to ignore this - no action taken.'
+                        'WARNING: NELM limit breached in some ionic steps but requested to ignore this'
+                        ' - no action taken.'
                     )
                     perform_fix = False
                 else:
                     self.report(
-                        'The NELM limit has been breached in some ionic steps - proceed to take actions for improving convergence.'
+                        'The NELM limit has been breached in some ionic steps - proceed to take actions'
+                        ' for improving convergence.'
                     )
                     perform_fix = True
             if not perform_fix:
@@ -928,11 +957,15 @@ class VaspWorkChain(BaseRestartWorkChain):
             do_break=True,
             exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                 message='Cannot apply fix for reaching electronic convergence.'
-            )
+            ),
         )
 
-    @process_handler(priority=510, exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED], enabled=False)
-    def handler_ionic_conv_enhanced(self, node):  #pylint: disable=too-many-return-statements, too-many-branches
+    @process_handler(
+        priority=510,
+        exit_codes=[VaspCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED],
+        enabled=False,
+    )
+    def handler_ionic_conv_enhanced(self, node):  # pylint: disable=too-many-return-statements, too-many-branches
         """
         Enhanced handling of ionic relaxation problem beyond simple restarts.
 
@@ -947,8 +980,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                 do_break=True,
                 exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                     message='No output structure for restarting ionic relaxation.'
-                )
-            )  #pylint: disable=no-member
+                ),
+            )  # pylint: disable=no-member
 
         # The simplest solution - resubmit the calculation again
         child_nodes = self.ctx.children
@@ -981,7 +1014,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             )
             self.report(msg)
             return ProcessHandlerReport(
-                do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg)
+                do_break=True,
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
             )
 
         # Check if there are very few step performed per launch. Because VASP does not carry over
@@ -993,7 +1027,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             )
             self.report(msg)
             return ProcessHandlerReport(
-                do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg)
+                do_break=True,
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
             )
 
         # Warn about very unusually large number of steps and switch IBRION if needed.
@@ -1033,7 +1068,8 @@ class VaspWorkChain(BaseRestartWorkChain):
             msg = 'Energy increasing for the last two iterations - something can be very wrong...'
             self.report(msg)
             return ProcessHandlerReport(
-                do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg)
+                do_break=True,
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
             )
 
         self.report('No fixes can be applied for ionic convergence.')
@@ -1048,8 +1084,8 @@ class VaspWorkChain(BaseRestartWorkChain):
                 do_break=True,
                 exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(
                     message='No output structure for restarting ionic relaxation.'
-                )
-            )  #pylint: disable=no-member
+                ),
+            )  # pylint: disable=no-member
         # The simplest solution - resubmit the calculation again
         self.report('Continuing geometry optimization using the last geometry.')
         self.ctx.inputs.structure = node.outputs.structure
@@ -1063,10 +1099,13 @@ class VaspWorkChain(BaseRestartWorkChain):
         Check if the calculation contain any critical error.
         """
         notification = node.outputs.misc['notifications']
-        message = f"Critical error detected in the notifications: {', '.join([item.get('name') for item in notification])}"
+        message = (
+            f"Critical error detected in the notifications: {', '.join([item.get('name') for item in notification])}"
+        )
         self.report(message + ' - aborting.')
         return ProcessHandlerReport(
-            do_break=True, exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=message)
+            do_break=True,
+            exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=message),
         )
 
     @process_handler(priority=5)
@@ -1077,7 +1116,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         misc = node.outputs.misc.get_dict()
         if 'run_status' not in misc:
             self.report('`run_status` is not found in misc - cannot verify the integrity of the child calculation.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MISSING_CRITICAL_OUTPUT, do_break=True)
         return None
 
     @process_handler(priority=4)
@@ -1089,7 +1128,7 @@ class VaspWorkChain(BaseRestartWorkChain):
         run_status = misc['run_status']
         if not run_status.get('finished'):
             self.report(f'The child calculation {node} did not reach the end of execution.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCULATION_NOT_FINISHED, do_break=True)  # pylint: disable=no-member
+            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCULATION_NOT_FINISHED, do_break=True)
         return None
 
     @process_handler(priority=3)
@@ -1103,8 +1142,9 @@ class VaspWorkChain(BaseRestartWorkChain):
         if not run_status.get('electronic_converged'):
             self.report(f'The child calculation {node} does not possess a converged electronic structure.')
             return ProcessHandlerReport(
-                exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED, do_break=True
-            )  #pylint: disable=no-member
+                exit_code=self.exit_codes.ERROR_ELECTRONIC_STRUCTURE_NOT_CONVERGED,
+                do_break=True,
+            )  # pylint: disable=no-member
         if run_status.get('contains_nelm_breach'):
             if self.ctx.ignore_transient_nelm_breach:
                 self.report(
@@ -1119,8 +1159,9 @@ class VaspWorkChain(BaseRestartWorkChain):
                     'Treating the calculation as failed. Please inspect, maybe it is salvageable.'
                 )
                 return ProcessHandlerReport(
-                    exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX, do_break=True
-                )  #pylint: disable=no-member
+                    exit_code=self.exit_codes.ERROR_UNCONVERGED_ELECTRONIC_STRUCTURE_IN_RELAX,
+                    do_break=True,
+                )  # pylint: disable=no-member
 
         return None
 
@@ -1143,7 +1184,10 @@ class VaspWorkChain(BaseRestartWorkChain):
         # Check that the ionic structure is converged
         if run_status.get('ionic_converged') is False:
             self.report(f'The child calculation {node} did not have converged ionic structure.')
-            return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED, do_break=True)  #pylint: disable=no-member
+            return ProcessHandlerReport(
+                exit_code=self.exit_codes.ERROR_IONIC_RELAXATION_NOT_CONVERGED,
+                do_break=True,
+            )  # pylint: disable=no-member
         return None
 
     def _calculation_sanity_checks(self, node):  # pylint: disable=unused-argument
@@ -1151,11 +1195,14 @@ class VaspWorkChain(BaseRestartWorkChain):
         Perform additional sanity checks on successfully completed calculation.
         This method acts invokes the 'check' handlers to check the calculations and abort the workchain if any
         problem is found. This is useful when all of the corresponding error handlers are disabled, and allow
-        one to avoid the default behaviour of restarting the calculation one more times regardlessly with unhandled errors.
+        one to avoid the default behaviour of restarting the calculation one more times regardlessly with
+        unhandled errors.
         """
         checks = [
-            self._check_misc_output, self._check_calc_is_finished, self._check_electronic_converged,
-            self._check_ionic_converged
+            self._check_misc_output,
+            self._check_calc_is_finished,
+            self._check_electronic_converged,
+            self._check_ionic_converged,
         ]
 
         # Go though the checks one after another, return report if necessary

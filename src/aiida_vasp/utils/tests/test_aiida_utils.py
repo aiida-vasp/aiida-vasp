@@ -1,14 +1,15 @@
 """Test aiida_utils functionss."""
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member
 
-from importlib import import_module
-
 import pytest
-
 from aiida.common.exceptions import MissingEntryPointError
-
-from aiida_vasp.utils.aiida_utils import BASIC_DATA_TYPES, get_current_user, get_data_class, get_data_node
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
+from aiida_vasp.utils.aiida_utils import (
+    BASIC_DATA_TYPES,
+    get_current_user,
+    get_data_class,
+    get_data_node,
+)
+from aiida_vasp.utils.fixtures import *
 
 
 def test_get_current_user(fresh_aiida_env):

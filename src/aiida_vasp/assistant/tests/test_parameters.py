@@ -1,11 +1,10 @@
 """Test aiida_parameters."""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import re
 
 import pytest
-
 from aiida.common.extendeddicts import AttributeDict
-
 from aiida_vasp.assistant.parameters import _DEFAULT_OVERRIDE_NAMESPACE, ParametersMassage
 
 
@@ -299,7 +298,6 @@ def test_vasp_parameter_override(init_relax_parameters):
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
     from aiida.plugins import DataFactory
-
     from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
 
     inputs = AttributeDict()
@@ -322,15 +320,17 @@ def test_inherit_and_merge():
     # Check that an empty parameters is allowed
     inputs.parameters = DataFactory('core.dict')(dict={})
     parameters = inherit_and_merge_parameters(inputs)
-    test_parameters = AttributeDict({
-        'electronic': AttributeDict({'somekey': True}),
-        'bands': AttributeDict({'somekey': True}),
-        'smearing': AttributeDict({'somekey': True}),
-        'charge': AttributeDict({'somekey': True}),
-        'relax': AttributeDict({'somekey': True}),
-        'converge': AttributeDict({'somekey': True}),
-        'dynamics': AttributeDict({'somekey': True})
-    })
+    test_parameters = AttributeDict(
+        {
+            'electronic': AttributeDict({'somekey': True}),
+            'bands': AttributeDict({'somekey': True}),
+            'smearing': AttributeDict({'somekey': True}),
+            'charge': AttributeDict({'somekey': True}),
+            'relax': AttributeDict({'somekey': True}),
+            'converge': AttributeDict({'somekey': True}),
+            'dynamics': AttributeDict({'somekey': True}),
+        }
+    )
     assert parameters == test_parameters
     # Test ignored
     inputs.ignored = AttributeDict()
@@ -363,13 +363,8 @@ def test_unsupported_parameters_in_unsupported_namespace():  # pylint: disable=i
     massager = ParametersMassage(
         parameters,
         unsupported_parameters={
-            'not_valid': {
-                'default': 1.0,
-                'description': 'Something',
-                'type': float,
-                'values': [1.0, 2.0]
-            }
-        }
+            'not_valid': {'default': 1.0, 'description': 'Something', 'type': float, 'values': [1.0, 2.0]}
+        },
     )
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].not_valid == 200
 

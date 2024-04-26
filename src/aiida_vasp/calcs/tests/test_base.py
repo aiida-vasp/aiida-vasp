@@ -1,11 +1,10 @@
 """Unit tests for aiida_vasp.calcs.base."""
+
 # pylint: disable=unused-import,unused-argument,redefined-outer-name, import-outside-toplevel
 import pytest
-
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-
 from aiida_vasp.utils.fixtures import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
 

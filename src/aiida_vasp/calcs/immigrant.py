@@ -4,6 +4,7 @@ Immigrant calculation.
 ----------------------
 Enables the immigration of  externally run VASP calculations into AiiDA.
 """
+
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path
@@ -96,7 +97,6 @@ class VaspImmigrant(VaspCalculation):
     @override
     def run(self):
         import plumpy
-
         from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
         _ = super().run()
@@ -162,7 +162,7 @@ class VaspImmigrant(VaspCalculation):
                         sandbox_path,
                         structure=inputs.structure,
                         potential_family=kwargs.get('potential_family'),
-                        potential_mapping=kwargs.get('potential_mapping')
+                        potential_mapping=kwargs.get('potential_mapping'),
                     )
                 except InputValidationError:
                     pass
