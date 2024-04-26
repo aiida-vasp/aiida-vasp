@@ -5,6 +5,7 @@ The standard stream parser interface for VASP.
 Contains the parsing interfaces to ``parsevasp`` used to parse standard streams
 for VASP related notification, warnings and errors.
 """
+
 # pylint: disable=abstract-method
 import re
 

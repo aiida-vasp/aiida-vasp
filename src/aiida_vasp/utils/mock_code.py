@@ -7,19 +7,19 @@ hash and match from a repository of calculation that has been run.
 This way we can perform tests for workchain without the need for
 injecting test code into the workchain logic itself.
 """
+
 import hashlib
 import logging
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Union
 
 import numpy as np
+from aiida.repository import FileType
 from parsevasp.incar import Incar
 from parsevasp.kpoints import Kpoints
 from parsevasp.poscar import Poscar
-
-from aiida.repository import FileType
 
 from aiida_vasp.utils.fixtures.testdata import data_path
 
@@ -44,8 +44,9 @@ def get_hash(dict_obj):
         dict_obj = dict(enumerate(dict_obj))
 
     rec = []
-    for key, value in dict_obj.items():
-        key = repr(key)
+    for key_, value_ in dict_obj.items():
+        key = repr(key_)
+        value = value_
         # For numpy/list with floating point zero (0.0) we have to converge -0.0 to 0.0
         # as they should be equivalent
         if isinstance(value, np.ndarray):
@@ -55,7 +56,7 @@ def get_hash(dict_obj):
 
         # Handle if value itself is float zero
         if isinstance(value, float) and value == 0:
-            value = 0.
+            value = 0.0
 
         if isinstance(value, (dict, list)):
             rec.append(key + ':' + get_hash(value)[0])
@@ -260,6 +261,7 @@ class VaspMockRegistry(MockRegistry):
         Register an aiida calc_class
         """
         from aiida import orm
+
         assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
 
         # Check if the repository folder already exists
@@ -299,6 +301,7 @@ class VaspMockRegistry(MockRegistry):
         """
         from aiida import orm
         from aiida.plugins import CalculationFactory
+
         calc_class = CalculationFactory('vasp.vasp')
         neb_class = CalculationFactory('vasp.neb')
         to_upload = []

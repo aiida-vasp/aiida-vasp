@@ -6,9 +6,9 @@ Structure relaxation workchain, which performs the regular duties of relaxing a 
 It has been designed such that calling workchains should try to use human readable
 parameters instead of the code dependent variables.
 """
+
 # pylint: disable=attribute-defined-outside-init
 import numpy as np
-
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_, while_
@@ -22,6 +22,7 @@ from aiida_vasp.utils.workchains import compare_structures, compose_exit_code, p
 
 class RelaxWorkChain(WorkChain):
     """Structure relaxation workchain."""
+
     _verbose = False
     _next_workchain_string = 'vasp.vasp'
     _next_workchain = WorkflowFactory(_next_workchain_string)
@@ -441,7 +442,9 @@ class RelaxWorkChain(WorkChain):
             if self._verbose:
                 self.report('Checking the convergence of the relaxation.')
             comparison = compare_structures(input_structure, self.ctx.current_structure)
-            delta = comparison.absolute if self.ctx.inputs.parameters.relax.convergence_absolute else comparison.relative
+            delta = (
+                comparison.absolute if self.ctx.inputs.parameters.relax.convergence_absolute else comparison.relative
+            )
             if self.ctx.inputs.parameters.relax.positions:
                 converged &= self.check_positions_convergence(delta)
             if self.ctx.inputs.parameters.relax.volume:
@@ -453,9 +456,8 @@ class RelaxWorkChain(WorkChain):
                 self.ctx.current_restart_folder = workchain.outputs.remote_folder
                 if self._verbose:
                     self.report('Relaxation did not converge, restarting the relaxation.')
-            else:
-                if self._verbose:
-                    self.report('Relaxation is considered converged.')
+            elif self._verbose:
+                self.report('Relaxation is considered converged.')
 
         # Update the MAGMOM to be used
         if 'site_magnetization' in workchain.outputs and self.ctx.inputs.parameters.relax.keep_magnetization is True:
@@ -527,7 +529,8 @@ class RelaxWorkChain(WorkChain):
         relaxed_structure = workchain.outputs.structure
         if self._verbose:
             self.report(
-                f"attaching the node {relaxed_structure.__class__.__name__}<{relaxed_structure.pk}> as 'relax.structure'"
+                f'attaching the node {relaxed_structure.__class__.__name__}<{relaxed_structure.pk}>'
+                " as 'relax.structure'"
             )
         self.out('relax.structure', relaxed_structure)
 

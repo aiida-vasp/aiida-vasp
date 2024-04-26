@@ -4,10 +4,10 @@ The ``POSCAR``/``CONTCAR`` parser interface.
 ------------------------------------
 Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONTCAR`` content.
 """
-import numpy as np
-from parsevasp.poscar import Poscar, Site
 
+import numpy as np
 from aiida.common.constants import elements
+from parsevasp.poscar import Poscar, Site
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.aiida_utils import get_data_class

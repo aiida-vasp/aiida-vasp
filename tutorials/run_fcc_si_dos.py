@@ -5,6 +5,7 @@ This particular call script set up a standard calculation that execute a calcula
 the fcc silicon structure.
 """
 from aiida import load_profile
+
 # pylint: disable=too-many-arguments, invalid-name, import-outside-toplevel
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import submit
@@ -16,6 +17,7 @@ load_profile()
 
 def get_structure(label):
     from aiida.orm import QueryBuilder
+
     qb = QueryBuilder()
     qb.append(DataFactory('structure'), filters={'label': {'==': label}}, tag='structure')
     # Pick any structure with this label, here, just the first

@@ -1,15 +1,20 @@
 import numpy as np
-
-from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import submit
 from aiida.manage.configuration import load_profile
-from aiida.orm import Bool, Code, Float, Int, Str
+from aiida.orm import Bool, Code, Str
 from aiida.plugins import DataFactory, WorkflowFactory
 
 load_profile()
 
 
-def launch_aiida(structure, code_string, options, potential_family, potential_mapping, label='SiC VASP calculation'):
+def launch_aiida(
+    structure,
+    code_string,
+    options,
+    potential_family,
+    potential_mapping,
+    label='SiC VASP calculation',
+):
     Dict = DataFactory('dict')
     KpointsData = DataFactory('array.kpoints')
 
@@ -74,9 +79,15 @@ def get_structure_SiC():
     c = 5.073
     lattice = [[a, 0, 0], [-a / 2, a / 2 * np.sqrt(3), 0], [0, 0, c]]
     structure = StructureData(cell=lattice)
-    for pos_direct, symbol in zip(([1. / 3, 2. / 3, 0], [2. / 3, 1. / 3, 0.5], [1. / 3, 2. / 3, 0.375822
-                                                                                ], [2. / 3, 1. / 3, 0.875822]),
-                                  ('Si', 'Si', 'C', 'C')):
+    for pos_direct, symbol in zip(
+        (
+            [1.0 / 3, 2.0 / 3, 0],
+            [2.0 / 3, 1.0 / 3, 0.5],
+            [1.0 / 3, 2.0 / 3, 0.375822],
+            [2.0 / 3, 1.0 / 3, 0.875822],
+        ),
+        ('Si', 'Si', 'C', 'C'),
+    ):
         pos_cartesian = np.dot(pos_direct, lattice)
         structure.append_atom(position=pos_cartesian, symbols=symbol)
     return structure
@@ -90,13 +101,10 @@ def main(code_string, options, potential_family, potential_mapping):
 if __name__ == '__main__':
     code_string = 'vasp@mycluster'
     options = {
-        'resources': {
-            'num_machines': 1,
-            'num_mpiprocs_per_machine': 8
-        },
+        'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 8},
         'account': '',
         'max_memory_kb': 2000000,
-        'max_wallclock_seconds': 3600
+        'max_wallclock_seconds': 3600,
     }
     potential_family = 'PBE.54'
     potential_mapping = {'Si': 'Si', 'C': 'C'}

@@ -4,7 +4,8 @@ VASP calculation.
 -----------------
 The calculation class that prepares a specific VASP calculation.
 """
-#encoding: utf-8
+
+# encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
@@ -291,8 +292,8 @@ class VaspCalculation(VaspCalcBase):
         spec.exit_code(
             704,
             'ERROR_DIAGNOSIS_OUTPUTS_MISSING',
-            message=
-            'Outputs for diagnosis are missing, please make sure `run_status` and `notifications` quantities are requested for parsing.',
+            message='Outputs for diagnosis are missing, please make sure `run_status` and `notifications`'
+            ' quantities are requested for parsing.',
         )
 
         spec.exit_code(
@@ -308,8 +309,8 @@ class VaspCalculation(VaspCalcBase):
         spec.exit_code(
             1003,
             'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
-            message=
-            'the vasprun.xml was truncated and recovery parsing failed to parse at least one of the requested quantities: {quantities}, '
+            message='the vasprun.xml was truncated and recovery parsing failed to parse at least one'
+            'of the requested quantities: {quantities}, '
             'very likely the VASP calculation did not run properly',
         )
         spec.exit_code(
@@ -343,15 +344,16 @@ class VaspCalculation(VaspCalcBase):
         except AttributeError:
             additional_retrieve_list = []
         try:
-            additional_retrieve_temp_list =\
-                self.inputs.settings.base.attributes.get('ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[])  # pylint: disable=invalid-name
+            additional_retrieve_temp_list = self.inputs.settings.base.attributes.get(
+                'ADDITIONAL_RETRIEVE_TEMPORARY_LIST', default=[]
+            )  # pylint: disable=invalid-name
         except AttributeError:
             additional_retrieve_temp_list = []
         if store:
             calcinfo.retrieve_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_list))
             calcinfo.retrieve_temporary_list = additional_retrieve_temp_list  # pylint: disable=invalid-name
         else:
-            calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))  # pylint: disable=invalid-name
+            calcinfo.retrieve_temporary_list = list(set(self._ALWAYS_RETRIEVE_LIST + additional_retrieve_temp_list))
             calcinfo.retrieve_list = additional_retrieve_list
         try:
             provenance_exclude_list = self.inputs.settings.base.attributes.get('PROVENANCE_EXCLUDE_LIST', default=[])

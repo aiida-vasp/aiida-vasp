@@ -4,7 +4,9 @@ VASP to Wannier90 calculation.
 ------------------------------
 VASP2Wannier90 - Calculation.
 """
+
 from aiida.orm import List
+
 # pylint: disable=abstract-method, unreachable, undefined-variable
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from aiida.plugins import DataFactory
@@ -12,7 +14,7 @@ from aiida.plugins import DataFactory
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.utils.aiida_utils import get_data_class
 
-#from aiida_wannier90.io import write_win  # pylint: disable=wrong-import-order, import-error
+# from aiida_wannier90.io import write_win  # pylint: disable=wrong-import-order, import-error
 
 
 class Vasp2w90Calculation(VaspCalculation):
@@ -57,7 +59,8 @@ class Vasp2w90Calculation(VaspCalculation):
     def write_win(self, dst):
         """Write Wannier90 input."""
         raise NotImplementedError('The AiiDA-Wannier90 plugin is not yet v2 ready.')
-        write_win(filename=dst, parameters=self.inputs.wannier_parameters, projections=self.inputs.wannier_projections)
+        # write_win(filename=dst, parameters=self.inputs.wannier_parameters,
+        # projections=self.inputs.wannier_projections)
 
     @staticmethod
     def new_wannier_parameters(**kwargs):

@@ -1,9 +1,10 @@
 """
 Parser for NEB calculations using VASP compiled with VTST
 """
+
 import os
-from pathlib import Path
 import traceback
+from pathlib import Path
 
 from aiida.common.exceptions import NotExistent
 
@@ -19,7 +20,7 @@ NEB_NODES = {
     'neb_misc': {
         'link_name': 'neb_misc',
         'type': 'core.dict',
-        'quantities': ['neb_data']
+        'quantities': ['neb_data'],
     },
     'misc': {
         'link_name': 'misc',
@@ -28,7 +29,7 @@ NEB_NODES = {
             'notifications',
             'run_stats',
             'run_status',
-        ]
+        ],
     },
     'kpoints': {
         'link_name': 'kpoints',
@@ -58,8 +59,8 @@ NEB_NODES = {
     'image_forces': {
         'link_name': 'image_forces',
         'type': 'core.array',
-        'quantities': ['forces']
-    }
+        'quantities': ['forces'],
+    },
 }
 
 DEFAULT_SETTINGS = {
@@ -85,7 +86,7 @@ DEFAULT_SETTINGS = {
         'add_fock_acc': True,
         'add_non_collinear': True,
         'add_not_hermitian': True,
-        #add_psmaxn': True,
+        # add_psmaxn': True,
         'add_pzstein': True,
         'add_real_optlay': True,
         'add_rhosyg': True,
@@ -94,7 +95,7 @@ DEFAULT_SETTINGS = {
         'add_sgrcon': True,
         'add_no_potimm': True,
         'add_magmom': True,
-    }
+    },
 }
 
 _VASP_OUTPUT = 'stdout'
@@ -106,6 +107,7 @@ class NEBNodeComposer(NodeComposer):
 
     Some quantities are composed at a per-image basis
     """
+
     COMBINED_NODES = ['neb_misc', 'image_forces']
     COMBINED_QUANTITY = ['neb_data', 'outcar-forces']
 
@@ -165,7 +167,6 @@ class NEBNodeComposer(NodeComposer):
 
         # Deal with the combined data
         for node_name, node_dict in self._nodes.items():
-
             # Deal with only the nodes containing combined data
             if node_name not in self.COMBINED_NODES:
                 continue
@@ -175,8 +176,10 @@ class NEBNodeComposer(NodeComposer):
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed. '
-                    'No parsed data available.'
+                    (
+                        f"Creating node {node_dict['link_name']} of type {node_dict['type']} failed. "
+                        "No parsed data available."
+                    )
                 )
                 continue
             exception = None
@@ -192,7 +195,7 @@ class NEBNodeComposer(NodeComposer):
             else:
                 self._logger.warning(
                     f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed, '
-                    f'exception: {exception}'
+                    f"exception: {exception}"
                 )
                 self._failed_to_create.append(node_dict['link_name'])
 
@@ -213,8 +216,9 @@ class NEBNodeComposer(NodeComposer):
             if not inputs:
                 self._failed_to_create.append(node_name)
                 self._logger.warning(
-                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} failed for image {image_idx:02d}. '
-                    'No parsed data available.'
+                    f'Creating node {node_dict["link_name"]} of type {node_dict["type"]} '
+                    f"failed for image {image_idx:02d}. "
+                    "No parsed data available."
                 )
                 continue
             exception = None
@@ -231,8 +235,7 @@ class NEBNodeComposer(NodeComposer):
                 self._created[link_name] = node
             else:
                 self._logger.warning(
-                    f'Creating node {link_name} of type {node_dict["type"]} failed, '
-                    f'exception: {exception}'
+                    f'Creating node {link_name} of type {node_dict["type"]} failed,' f"exception: {exception}"
                 )
                 self._failed_to_create.append(link_name)
 
@@ -248,8 +251,9 @@ class NEBNodeComposer(NodeComposer):
             if equivalent_quantities is not None:
                 # Check if these are parsed and pick the first one if multiple exists
                 # Get a dictionary of quantities to be searched from
-                quantity_dict = self._quantities if image_idx is None else self._quantities[
-                    self.get_image_str(image_idx)]
+                quantity_dict = (
+                    self._quantities if image_idx is None else self._quantities[self.get_image_str(image_idx)]
+                )
                 for equivalent_quantity in equivalent_quantities:
                     if equivalent_quantity in quantity_dict:
                         # Make sure we strip prefixes as the quantities can contain
@@ -278,6 +282,7 @@ class VtstNebParser(VaspParser):
     in subfolders. With the only exception being `vasprun.xml` it is not clear what image this file is
     for.
     """
+
     COMPOSER_CLASS = NEBNodeComposer
 
     def __init__(self, node):
@@ -291,7 +296,11 @@ class VtstNebParser(VaspParser):
         if calc_settings:
             parser_settings = calc_settings.get_dict().get('parser_settings')
 
-        self._settings = NEBSettings(parser_settings, default_settings=DEFAULT_SETTINGS, vasp_parser_logger=self.logger)
+        self._settings = NEBSettings(
+            parser_settings,
+            default_settings=DEFAULT_SETTINGS,
+            vasp_parser_logger=self.logger,
+        )
         self._definitions = ParserDefinitions(content_parser_set='neb')
         self._parsable_quantities = NEBParsableQuantities(vasp_parser_logger=self.logger)
 
@@ -311,7 +320,7 @@ class VtstNebParser(VaspParser):
         self._parsable_quantities.setup(
             retrieved_content=list(filenames),
             parser_definitions=self._definitions.parser_definitions,
-            quantity_names_to_parse=self._settings.quantity_names_to_parse
+            quantity_names_to_parse=self._settings.quantity_names_to_parse,
         )
 
     def _parse_quantities(self):
@@ -324,14 +333,14 @@ class VtstNebParser(VaspParser):
         nimages = self.get_num_images()
 
         per_image_quantities = {}
-        #per_image_failed_quantities = {}
+        # per_image_failed_quantities = {}
         failed_quantities = []
         parser_notifications = {'xml_overflow': False}
 
         for image_idx in range(1, nimages + 1):
             quantities, failed = self._parse_quantities_for_image(image_idx, parser_notifications)
             per_image_quantities[f'{image_idx:02d}'] = quantities
-            #per_image_failed_quantities[f'{image_idx:02d}'] = failed
+            # per_image_failed_quantities[f'{image_idx:02d}'] = failed
             failed_quantities.extend([f'image_{image_idx:02d}_{name}' for name in failed])
 
         return per_image_quantities, failed_quantities, parser_notifications
@@ -460,7 +469,11 @@ class VtstNebParser(VaspParser):
         ignore_all = self.parser_settings.get('ignore_all_errors', False)
         if not ignore_all:
             composer = NotificationComposer(
-                all_notifications, quantities, self.node.inputs, self.exit_codes, parser_settings=self._settings
+                all_notifications,
+                quantities,
+                self.node.inputs,
+                self.exit_codes,
+                parser_settings=self._settings,
             )
             exit_code = composer.compose()
             if exit_code is not None:

@@ -5,6 +5,7 @@ AiiDA-VASP documentation build configuration file, created by
 sphinx-quickstart on Mon Feb 12 09:24:45 2018.
 
 """
+
 import datetime
 import os
 import re
@@ -15,9 +16,16 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- General configuration ------------------------------------------------
 
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage',
-    'sphinx.ext.mathjax', 'sphinx.ext.viewcode', 'aiida.sphinxext', 'sphinxcontrib.apidoc',
-    'sphinxext.remoteliteralinclude'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    'aiida.sphinxext',
+    'sphinxcontrib.apidoc',
+    'sphinxext.remoteliteralinclude',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,10 +69,12 @@ on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
     html_theme = 'default'
     from aiida.manage import configuration
+
     configuration.IN_RT_DOC_MODE = True
     configuration.BACKEND = 'django'
 else:
     import sphinx_rtd_theme  # pylint: disable=import-error
+
     html_theme = 'sphinx_rtd_theme'
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
@@ -79,15 +89,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -120,13 +127,18 @@ man_pages = [(master_doc, 'aiida-vasp', 'AiiDA-VASP Documentation', [author], 1)
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc, 'AiiDA-VASP', 'AiiDA-VASP Documentation', author, 'AiiDA-VASP',
-        'A plugin to enable usage of VASP in the AiiDA workflow engine.', 'Miscellaneous'
+        master_doc,
+        'AiiDA-VASP',
+        'AiiDA-VASP Documentation',
+        author,
+        'AiiDA-VASP',
+        'A plugin to enable usage of VASP in the AiiDA workflow engine.',
+        'Miscellaneous',
     ),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
-    'aiida': ('https://aiida.readthedocs.io/projects/aiida-core/en/latest/', None)
+    'aiida': ('https://aiida.readthedocs.io/projects/aiida-core/en/latest/', None),
 }

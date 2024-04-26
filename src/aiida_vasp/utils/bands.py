@@ -5,9 +5,11 @@ Utils for bands structures.
 Utilities for working with band structures. Currently this is legacy and will be
 rewritten or moved.
 """
+
 # pylint: disable=import-outside-toplevel
 try:
     import matplotlib
+
     matplotlib.use('TKAgg')
     from matplotlib import pyplot as plt
 except ImportError as no_matplotlib:
@@ -146,11 +148,12 @@ def plot_bands(bands_node, **kwargs):
     if nspin > 0:
         allbands = np.empty((nkp, nbands * nspin))
         for i in range(nspin):
-            allbands[:, i * nbands:(i + 1) * nbands] = bands[i]
+            allbands[:, i * nbands : (i + 1) * nbands] = bands[i]
         bands = allbands
 
     if 'colors' in kwargs:
         import itertools
+
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
             plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member, not-callable

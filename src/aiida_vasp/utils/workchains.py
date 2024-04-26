@@ -5,11 +5,11 @@ Utils for the workchains.
 Auxiliary routines that are not part of any of the workchain classes, but needed
 to make code more compact in the workchains.
 """
+
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
 
 import numpy as np
-
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.processes.exit_code import ExitCode
 from aiida.orm import Dict
@@ -39,7 +39,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     no_dict = no_dict + namespaces
     # Copy and convert dict
     for key, val in inputs.items():
-        if (key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()])):  # pylint: disable=use-a-generator
+        if key not in no_dict and isinstance(val, dict) and all([isinstance(k, str) for k in val.keys()]):  # pylint: disable=use-a-generator
             prepared_inputs[key] = Dict(dict=val)
         else:
             prepared_inputs[key] = val
@@ -102,7 +102,8 @@ def fetch_k_grid(rec_cell, k_spacing):
     """
     Suggest a sensible k-point sampling based on a supplied spacing.
 
-    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector as row elements.
+    :param rec_cell: A two dimensional ndarray of floats defining the reciprocal lattice with each vector
+      as row elements.
     :param k_spacing: The k-point spacing.
 
     :return kgrid: The k-point grid given the supplied `rec_cell` and `kstep`

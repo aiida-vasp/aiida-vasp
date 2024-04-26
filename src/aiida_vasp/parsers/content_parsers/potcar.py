@@ -5,10 +5,11 @@ POTCAR parser.
 The file parser that handles the parsing of POTCAR files. Also contains methods to
 find, import, compose and write POTCAR files.
 """
-from itertools import groupby
+
 import os
-from pathlib import Path
 import re
+from itertools import groupby
+from pathlib import Path
 
 from parsevasp.potcar import Potcar
 
@@ -58,7 +59,7 @@ class PotcarParser(BaseFileParser):
         raise NotImplementedError('PotcarParser does not implement a _content_data_to_content_parser() method.')
 
 
-class PotcarIo():  # pylint: disable=useless-object-inheritance
+class PotcarIo:  # pylint: disable=useless-object-inheritance
     """
     Deals with VASP input output of POTCAR files.
 
@@ -116,7 +117,8 @@ class PotcarIo():  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def from_(cls, potcar):
-        """Determine the best guess at how the input represents a POTCAR file and construct a PotcarIo instance based on that."""
+        """Determine the best guess at how the input represents a POTCAR file and construct
+        a PotcarIo instance based on that."""
         if isinstance(potcar, str):
             try:
                 path_exists = Path(potcar).exists()
@@ -142,7 +144,7 @@ class PotcarIo():  # pylint: disable=useless-object-inheritance
         return self.sha512 == other.sha512
 
 
-class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
+class MultiPotcarIo:  # pylint: disable=useless-object-inheritance
     """Handle file i/o for POTCAR files with one or more potentials."""
 
     def __init__(self, potcars=None):
@@ -178,7 +180,8 @@ class MultiPotcarIo():  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def from_structure(cls, structure, potentials_dict):
-        """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a potential for each kind in the structure."""
+        """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a
+        potential for each kind in the structure."""
         symbol_order = cls.potentials_order(structure)
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])
 

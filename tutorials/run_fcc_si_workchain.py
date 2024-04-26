@@ -6,15 +6,14 @@ calculation of each structure. In this script we only supply a dictionary of dif
 structures as an input to the workchain, in addition to the standard inputs required by
 the AiiDA-VASP workchain stack.
 """
-from eos_parallel import EosParallelWorkChain
 # pylint: disable=too-many-arguments
 import numpy as np
-
 from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine import run, submit
+from aiida.engine import submit
 from aiida.orm import Bool, Code, Str
 from aiida.plugins import DataFactory
+from eos_parallel import EosParallelWorkChain
 
 load_profile()
 
@@ -36,7 +35,7 @@ def get_structure(alat):
     """
 
     structure_data = DataFactory('structure')
-    lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
+    lattice = np.array([[0.5, 0.5, 0], [0, 0.5, 0.5], [0.5, 0, 0.5]]) * alat
     structure = structure_data(cell=lattice)
     for pos_direct in [[0.0, 0.0, 0.0]]:
         pos_cartesian = np.dot(pos_direct, lattice)
@@ -132,4 +131,12 @@ if __name__ == '__main__':
     LATTICE_CONSTANTS = [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3]
     STRUCTURES = get_structures(LATTICE_CONSTANTS)
 
-    main(CODE_STRING, INCAR, KMESH, STRUCTURES, POTENTIAL_FAMILY, POTENTIAL_MAPPING, OPTIONS)
+    main(
+        CODE_STRING,
+        INCAR,
+        KMESH,
+        STRUCTURES,
+        POTENTIAL_FAMILY,
+        POTENTIAL_MAPPING,
+        OPTIONS,
+    )

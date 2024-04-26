@@ -7,7 +7,6 @@ eos.
 """
 # pylint: disable=too-many-arguments
 import numpy as np
-
 from aiida import load_profile
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import run
@@ -34,7 +33,7 @@ def get_structure(alat):
     """
 
     structure_data = DataFactory('structure')
-    lattice = np.array([[.5, .5, 0], [0, .5, .5], [.5, 0, .5]]) * alat
+    lattice = np.array([[0.5, 0.5, 0], [0, 0.5, 0.5], [0.5, 0, 0.5]]) * alat
     structure = structure_data(cell=lattice)
     for pos_direct in [[0.0, 0.0, 0.0]]:
         pos_cartesian = np.dot(pos_direct, lattice)

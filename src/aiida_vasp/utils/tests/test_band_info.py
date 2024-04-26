@@ -1,18 +1,22 @@
 """Test the get_bands_info method"""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import numpy as np
 import pytest
-
-from aiida_vasp.utils.compare_bands import get_band_properties, get_band_properties_from_data
-from aiida_vasp.utils.fixtures.environment import fresh_aiida_env
+from aiida_vasp.utils.compare_bands import (
+    get_band_properties,
+    get_band_properties_from_data,
+)
+from aiida_vasp.utils.fixtures import *
 
 
 @pytest.fixture
 def example_bands(fresh_aiida_env):
     """Example eigen values and occupations"""
     from aiida.orm import BandsData
+
     bdata = BandsData()
-    bdata.set_kpoints([[0., 0., 0.]])
+    bdata.set_kpoints([[0.0, 0.0, 0.0]])
     occ = np.array([[1, 1, 1, 0, 0, 0]], dtype=np.float64)
     eigen = np.array([[-1, -1, -1, 0, 0, 0]])
     bdata.set_bands(bands=eigen, occupations=occ)
@@ -23,6 +27,7 @@ def example_bands(fresh_aiida_env):
 def example_bands_v2(fresh_aiida_env):
     """Example eigen values and occupations"""
     from aiida.orm import BandsData
+
     bdata = BandsData()
     bdata.set_kpoints([[0, 0, 0], [0.25, 0.25, 0.25]])
     occ = np.array([[1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0]], dtype=np.float64)

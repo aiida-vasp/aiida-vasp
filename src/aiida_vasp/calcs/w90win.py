@@ -27,7 +27,9 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def _block(cls, name, val):
-        """Create a win parameter block with name being the block name, val being the content in python representation."""
+        """
+        Create a win parameter block with name being the block name, val being the content in python representation.
+        """
         res = ['begin ' + name]
         res += cls._value(val)
         res += ['end ' + name]
@@ -40,7 +42,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
     @classmethod
     def _value(cls, val):
         """String format a value of any compatible scalar type."""
-        if isinstance(val, (str, unicode)):  # pylint: disable=undefined-variable
+        if isinstance(val, str):  # pylint: disable=undefined-variable
             return val
         if isinstance(val, bool):
             return cls._bool(val)

@@ -4,9 +4,7 @@
 
 import numpy as np
 import pytest
-
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.testdata import data_path
 
 
 @pytest.mark.parametrize('outcar_parser', ['outcar'], indirect=True)
@@ -32,10 +30,11 @@ def test_parse_outcar_no_quantity(outcar_parser):
     assert outcar_parser.get_quantity('magnetization') is None
 
 
-@pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR', {
-    'quantities_to_parse': ['symmetries']
-}],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['outcar_parser'],
+    [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['symmetries']}],)],
+    indirect=True,
+)
 def test_parse_outcar_symmetry(outcar_parser, compare_symmetries):
     """Load a reference OUTCAR parser.
 
@@ -47,10 +46,11 @@ def test_parse_outcar_symmetry(outcar_parser, compare_symmetries):
     assert set(symmetry) == set(compare_symmetries)
 
 
-@pytest.mark.parametrize(['outcar_parser'], [(['disp_details', 'OUTCAR', {
-    'quantities_to_parse': ['elastic_moduli']
-}],)],
-                         indirect=True)
+@pytest.mark.parametrize(
+    ['outcar_parser'],
+    [(['disp_details', 'OUTCAR', {'quantities_to_parse': ['elastic_moduli']}],)],
+    indirect=True,
+)
 def test_parse_outcar_elastic_moduli(outcar_parser):
     """Load a reference OUTCAR parser.
 
@@ -92,7 +92,10 @@ def test_parse_outcar_status(outcar_parser):
 
 _TEST_DATA = [
     (['outcar_extras', 'OUTCAR.converged'], [True, True, True, False, False]),
-    (['outcar_extras', 'OUTCAR.nelm-breach-consistent'], [True, False, False, True, True]),
+    (
+        ['outcar_extras', 'OUTCAR.nelm-breach-consistent'],
+        [True, False, False, True, True],
+    ),
     (['outcar_extras', 'OUTCAR.nelm-breach-partial'], [True, False, True, False, True]),
     (['outcar_extras', 'OUTCAR.unfinished'], [False, False, False, False, False]),
     (['outcar_extras', 'OUTCAR.not-converged'], [True, False, True, False, False]),
@@ -116,10 +119,17 @@ def test_parse_outcar_status_extended(outcar_parser, expected):
 
 
 @pytest.mark.parametrize(
-    ['outcar_parser'], [(['magnetization', 'OUTCAR', {
-        'quantities_to_parse': ['magnetization', 'site_magnetization']
-    }],)],
-    indirect=True
+    ['outcar_parser'],
+    [
+        (
+            [
+                'magnetization',
+                'OUTCAR',
+                {'quantities_to_parse': ['magnetization', 'site_magnetization']},
+            ],
+        )
+    ],
+    indirect=True,
 )
 def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
     """Load a reference OUTCAR parser.
@@ -132,58 +142,38 @@ def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
         'sphere': {
             'x': {
                 'site_moment': {
-                    1: {
-                        's': -0.014,
-                        'p': -0.051,
-                        'd': 1.687,
-                        'tot': 1.621
-                    },
-                    2: {
-                        's': -0.015,
-                        'p': -0.052,
-                        'd': 1.686,
-                        'tot': 1.619
-                    },
-                    3: {
-                        's': -0.014,
-                        'p': -0.053,
-                        'd': 1.708,
-                        'tot': 1.64
-                    },
-                    4: {
-                        's': -0.014,
-                        'p': -0.053,
-                        'd': 1.708,
-                        'tot': 1.64
-                    }
+                    1: {'s': -0.014, 'p': -0.051, 'd': 1.687, 'tot': 1.621},
+                    2: {'s': -0.015, 'p': -0.052, 'd': 1.686, 'tot': 1.619},
+                    3: {'s': -0.014, 'p': -0.053, 'd': 1.708, 'tot': 1.64},
+                    4: {'s': -0.014, 'p': -0.053, 'd': 1.708, 'tot': 1.64},
                 },
                 'total_magnetization': {
                     's': -0.057,
                     'p': -0.21,
                     'd': 6.788,
-                    'tot': 6.521
-                }
+                    'tot': 6.521,
+                },
             },
-            'y': {
-                'site_moment': {},
-                'total_magnetization': {}
-            },
-            'z': {
-                'site_moment': {},
-                'total_magnetization': {}
-            }
+            'y': {'site_moment': {}, 'total_magnetization': {}},
+            'z': {'site_moment': {}, 'total_magnetization': {}},
         },
-        'full_cell': np.asarray([6.4424922])
+        'full_cell': np.asarray([6.4424922]),
     }
     assert set(magnetization) == set(test)
 
 
 @pytest.mark.parametrize(
     ['outcar_parser'],
-    [(['magnetization_single', 'OUTCAR', {
-        'quantities_to_parse': ['magnetization', 'site_magnetization']
-    }],)],
-    indirect=True
+    [
+        (
+            [
+                'magnetization_single',
+                'OUTCAR',
+                {'quantities_to_parse': ['magnetization', 'site_magnetization']},
+            ],
+        )
+    ],
+    indirect=True,
 )
 def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # pylint: disable=invalid-name
     """Load a reference OUTCAR parser.
@@ -197,30 +187,19 @@ def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # p
         'sphere': {
             'x': {
                 'site_moment': {
-                    1: {
-                        's': -0.012,
-                        'p': -0.043,
-                        'd': 2.49,
-                        'tot': 2.434
-                    },
+                    1: {'s': -0.012, 'p': -0.043, 'd': 2.49, 'tot': 2.434},
                 },
                 'total_magnetization': {
                     's': -0.012,
                     'p': -0.043,
                     'd': 2.49,
-                    'tot': 2.434
-                }
+                    'tot': 2.434,
+                },
             },
-            'y': {
-                'site_moment': {},
-                'total_magnetization': {}
-            },
-            'z': {
-                'site_moment': {},
-                'total_magnetization': {}
-            }
+            'y': {'site_moment': {}, 'total_magnetization': {}},
+            'z': {'site_moment': {}, 'total_magnetization': {}},
         },
-        'full_cell': np.asarray([2.4077611])
+        'full_cell': np.asarray([2.4077611]),
     }
     assert set(magnetization) == set(test)
 

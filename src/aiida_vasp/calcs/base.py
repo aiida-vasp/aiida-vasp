@@ -4,6 +4,7 @@ Base calculation class.
 -----------------------
 Base and meta classes for VASP calculation classes.
 """
+
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
 import os
@@ -66,7 +67,7 @@ class VaspCalcBase(CalcJob):
             'REPORT',  # Output of molecular dynamics runs
             'STOPCAR',  # Controlled stopping
             'vasprun.xml',
-            'OUTCAR'
+            'OUTCAR',
         ]
         return retrieve_list
 

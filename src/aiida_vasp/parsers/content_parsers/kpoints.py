@@ -4,6 +4,7 @@ The ``KPOINTS`` parser interface.
 -----------------------------
 Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
+
 import numpy as np
 from parsevasp.kpoints import Kpoint, Kpoints
 
@@ -99,8 +100,16 @@ class KpointsParser(BaseFileParser):
 
         kpoints_dict = {}
         for keyword in [
-            'comment', 'divisions', 'shifts', 'points', 'tetra', 'tetra_volume', 'mode', 'centering', 'num_kpoints',
-            'generating_vectors'
+            'comment',
+            'divisions',
+            'shifts',
+            'points',
+            'tetra',
+            'tetra_volume',
+            'mode',
+            'centering',
+            'num_kpoints',
+            'generating_vectors',
         ]:
             kpoints_dict[keyword] = None
 
@@ -198,8 +207,7 @@ def parsevasp_to_aiida(kpoints, logger):
 
     if kpoints.entries.get('mode') == 'line':
         # AiiDA does not support line mode
-        logger.warning('The read KPOINTS contained line mode which is'
-                       'not supported. Returning None.')
+        logger.warning('The read KPOINTS contained line mode which is' 'not supported. Returning None.')
         return None
 
     # Fetch a dictionary containing the k-points information

@@ -1,13 +1,12 @@
 """Unit tests for BaseParser."""
+
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import
 import io
 import os
 
 import pytest
-
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import calc_with_retrieved
 
 
 @pytest.fixture()

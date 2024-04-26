@@ -4,6 +4,7 @@ Delegate types.
 ---------------
 Module containing decorators and classes implementing delegate types.
 """
+
 from functools import update_wrapper
 
 

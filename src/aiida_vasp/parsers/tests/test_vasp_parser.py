@@ -3,15 +3,11 @@
 # pylint: disable=protected-access,unused-variable,too-few-public-methods, import-outside-toplevel
 # pylint: disable=abstract-method
 
-import os
 from pathlib import Path
 
 import numpy as np
 import pytest
-
-from aiida.orm import load_node
-from aiida.plugins import CalculationFactory, ParserFactory
-
+from aiida.plugins import ParserFactory
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -19,7 +15,6 @@ from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.vasp import NotificationComposer
 from aiida_vasp.utils.aiida_utils import aiida_version, cmp_version, get_data_class
 from aiida_vasp.utils.fixtures import *
-from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC, calc_with_retrieved
 from aiida_vasp.utils.fixtures.testdata import data_path
 
 
@@ -30,17 +25,17 @@ class ExampleFileParser(BaseFileParser):
         'quantity1': {
             'inputs': [],
             'name': 'quantity_with_alternatives',
-            'prerequisites': []
+            'prerequisites': [],
         },
         'quantity2': {
             'inputs': [],
             'name': 'trajectory',
-            'prerequisites': ['quantity1']
+            'prerequisites': ['quantity1'],
         },
         'quantity3': {
             'inputs': [],
             'name': 'non_existing_quantity',
-            'prerequisites': ['quantity_with_alternatives']
+            'prerequisites': ['quantity_with_alternatives'],
         },
     }
 
@@ -51,6 +46,7 @@ class ExampleFileParser(BaseFileParser):
 
     def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
+
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
             result[quantity] = Dict(dict={})
@@ -64,7 +60,7 @@ class ExampleFileParser2(BaseFileParser):
         'quantity1': {
             'inputs': [],
             'name': 'quantity_with_alternatives',
-            'prerequisites': []
+            'prerequisites': [],
         },
     }
 
@@ -75,6 +71,7 @@ class ExampleFileParser2(BaseFileParser):
 
     def _parse_object(self, inputs):
         from aiida.orm.nodes.data.dict import Dict
+
         result = {}
         for quantity in ExampleFileParser.PARSABLE_QUANTITIES:
             result[quantity] = Dict(dict={})
@@ -91,7 +88,7 @@ def _get_vasp_parser(calc_with_retrieved, request, settings_dict=None, relative_
                 'add_custom': {
                     'link_name': 'custom_node',
                     'type': 'core.dict',
-                    'quantities': ['quantity2', 'quantity_with_alternatives']
+                    'quantities': ['quantity2', 'quantity_with_alternatives'],
                 }
             }
         }
@@ -115,13 +112,10 @@ def vasp_parser_with_test(calc_with_retrieved, request):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
     parser.add_parser_definition(
-        '_scheduler-stderr.txt', {
-            'parser_class': ExampleFileParser,
-            'is_critical': False,
-            'mode': 'r'
-        }
+        '_scheduler-stderr.txt',
+        {'parser_class': ExampleFileParser, 'is_critical': False, 'mode': 'r'},
     )
-    success = parser.parse(retrieved_temporary_folder=file_path)
+    parser.parse(retrieved_temporary_folder=file_path)
     try:
         yield parser
     finally:
@@ -137,10 +131,13 @@ def vasp_parser_without_parsing(calc_with_retrieved, request):
 def test_add_parser_quantity_fail(vasp_parser_without_parsing):
     """Add_parsable_quantity without name must fail"""
     parser, path = vasp_parser_without_parsing
-    parser.add_parsable_quantity('quantity_with_alternatives', {
-        'inputs': [],
-        'prerequisites': [],
-    })
+    parser.add_parsable_quantity(
+        'quantity_with_alternatives',
+        {
+            'inputs': [],
+            'prerequisites': [],
+        },
+    )
     with pytest.raises(RuntimeError):
         parser.parse(retrieved_temporary_folder=path)
 
@@ -149,11 +146,8 @@ def test_add_parser_quantity(vasp_parser_without_parsing, aiida_caplog):
     """Add_parsable_quantity with name succeeds."""
     parser, path = vasp_parser_without_parsing
     parser.add_parsable_quantity(
-        'quantity_with_alternatives', {
-            'inputs': [],
-            'prerequisites': [],
-            'name': '_scheduler-stderr.txt'
-        }
+        'quantity_with_alternatives',
+        {'inputs': [], 'prerequisites': [], 'name': '_scheduler-stderr.txt'},
     )
     parser.parse(retrieved_temporary_folder=path)
     quantities = parser._parsable_quantities
@@ -193,17 +187,14 @@ def test_quantity_uniqeness(vasp_parser_with_test):
     parser = vasp_parser_with_test
     # Add a second ExampleFileParser that defines a quantity with the same identifier as the first one.
     parser.add_parser_definition(
-        'another_test_parser', {
-            'parser_class': ExampleFileParser2,
-            'is_critical': False,
-            'mode': 'r'
-        }
+        'another_test_parser',
+        {'parser_class': ExampleFileParser2, 'is_critical': False, 'mode': 'r'},
     )
     with pytest.raises(RuntimeError) as excinfo:
         parser._parsable_quantities.setup(
             retrieved_content=parser._retrieved_content.keys(),
             parser_definitions=parser._definitions.parser_definitions,
-            quantity_names_to_parse=parser._settings.quantity_names_to_parse
+            quantity_names_to_parse=parser._settings.quantity_names_to_parse,
         )
 
     assert 'quantity1' in str(excinfo.value)
@@ -223,16 +214,25 @@ def xml_truncate(index, original, tmp):
     """Truncate vasprun.xml at the given line number and parse."""
     with open(original, 'r', encoding='utf8') as handler:
         content = handler.read().splitlines()
-        truncated_content = '\n'.join(content[:-index or None])
+        truncated_content = '\n'.join(content[: -index or None])
     with open(tmp, 'w', encoding='utf8') as handler:
         handler.write(str(truncated_content))
 
 
 def test_parser_nodes(request, calc_with_retrieved):
     """Test a few basic node items of the parser."""
-    settings_dict = {'parser_settings': {'add_bands': True, 'add_kpoints': True, 'add_misc': ['fermi_level']}}
+    settings_dict = {
+        'parser_settings': {
+            'add_bands': True,
+            'add_kpoints': True,
+            'add_misc': ['fermi_level'],
+        }
+    }
     parser, file_path, _ = _get_vasp_parser(
-        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic'
+        calc_with_retrieved,
+        request,
+        settings_dict=settings_dict,
+        relative_file_path='../../test_data/basic',
     )
 
     # The test data does not contain OUTCAR - make sure that is allowed
@@ -262,7 +262,13 @@ def test_parser_exception(request, calc_with_retrieved):
         'parser_settings': {
             'add_bands': True,
             'add_kpoints': True,
-            'add_misc': ['total_energies', 'maximum_force', 'run_status', 'run_stats', 'notifications']
+            'add_misc': [
+                'total_energies',
+                'maximum_force',
+                'run_status',
+                'run_stats',
+                'notifications',
+            ],
         }
     }
 
@@ -284,7 +290,10 @@ def test_parser_exception(request, calc_with_retrieved):
     assert isinstance(kpoints, get_data_class('core.array.kpoints'))
 
 
-@pytest.mark.xfail(aiida_version() < cmp_version('1.0.0a1'), reason='Element X only present in Aiida >= 1.x')
+@pytest.mark.xfail(
+    aiida_version() < cmp_version('1.0.0a1'),
+    reason='Element X only present in Aiida >= 1.x',
+)
 def test_parse_poscar_silly_read(fresh_aiida_env):
     """
     Parse (read) a reference POSCAR with silly elemental names.
@@ -428,7 +437,10 @@ def test_structure(request, calc_with_retrieved):
     }
 
     parser, file_path, _ = _get_vasp_parser(
-        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic'
+        calc_with_retrieved,
+        request,
+        settings_dict=settings_dict,
+        relative_file_path='../../test_data/basic',
     )
 
     # The test data does not contain OUTCAR - make sure that is allowed
@@ -442,7 +454,10 @@ def test_structure(request, calc_with_retrieved):
 
     # Then from POSCAR/CONTCAR
     parser, file_path, _ = _get_vasp_parser(
-        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/basic_poscar'
+        calc_with_retrieved,
+        request,
+        settings_dict=settings_dict,
+        relative_file_path='../../test_data/basic_poscar',
     )
     # The test data does not contain OUTCAR - make sure that is allowed
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
@@ -454,7 +469,10 @@ def test_structure(request, calc_with_retrieved):
 
     assert isinstance(structure_poscar, get_data_class('core.structure'))
     np.testing.assert_allclose(
-        np.round(structure_vasprun.cell, 7), np.round(structure_poscar.cell, 7), rtol=0, atol=1e-8
+        np.round(structure_vasprun.cell, 7),
+        np.round(structure_poscar.cell, 7),
+        rtol=0,
+        atol=1e-8,
     )
     positions_vasprun = []
     positions_poscar = []
@@ -480,7 +498,13 @@ def test_misc(request, calc_with_retrieved):
             'add_dos': False,
             'add_kpoints': False,
             'add_energies': False,
-            'add_misc': ['fermi_level', 'maximum_stress', 'maximum_force', 'total_energies', 'symmetries'],
+            'add_misc': [
+                'fermi_level',
+                'maximum_stress',
+                'maximum_force',
+                'total_energies',
+                'symmetries',
+            ],
             'add_structure': False,
             'add_projectors': False,
             'add_born_charges': False,
@@ -532,13 +556,13 @@ def test_custom_outputs(request, calc_with_retrieved):
                 'fermi_level',
             ],
         },
-        'add_fermi_level': {
-            'type': 'core.float'
-        }
+        'add_fermi_level': {'type': 'core.float'},
     }
     for parser_setting in parser_settings:
         parser, file_path, _ = _get_vasp_parser(
-            calc_with_retrieved, request, settings_dict={'parser_settings': parser_settings}
+            calc_with_retrieved,
+            request,
+            settings_dict={'parser_settings': parser_settings},
         )
         parser.parse(retrieved_temporary_folder=file_path)
         assert 'custom_outputs.fermi_level' in parser.outputs
@@ -559,7 +583,7 @@ def test_custom_outputs(request, calc_with_retrieved):
                 'message': 'Okey, this error you do not want.',
                 'suggestion': '',
                 'location': 'STDOUT',
-                'recover': False
+                'recover': False,
             }
         },
         {
@@ -569,10 +593,10 @@ def test_custom_outputs(request, calc_with_retrieved):
                 'message': 'Okey, this warning is nasty.',
                 'suggestion': '',
                 'location': 'STDOUT',
-                'recover': False
+                'recover': False,
             }
-        }  # pylint: disable=too-many-statements, too-many-branches
-    ]
+        },  # pylint: disable=too-many-statements, too-many-branches
+    ],
 )
 @pytest.mark.parametrize('misc_input', [[], ['notifications']])
 def test_stream(misc_input, config, request, calc_with_retrieved):
@@ -595,12 +619,15 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
             'add_dynmat': False,
             'add_wavecar': False,
             'add_site_magnetization': False,
-            'stream_config': config
+            'stream_config': config,
         }
     }
 
     parser, file_path, _ = _get_vasp_parser(
-        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/stdout/out'
+        calc_with_retrieved,
+        request,
+        settings_dict=settings_dict,
+        relative_file_path='../../test_data/stdout/out',
     )
     parser._definitions.parser_definitions['OUTCAR']['is_critical'] = False
     parser._definitions.parser_definitions['vasprun.xml']['is_critical'] = False
@@ -610,7 +637,7 @@ def test_stream(misc_input, config, request, calc_with_retrieved):
 
     if misc_input == []:
         # Test empty misc specification, yields no misc output node
-        with pytest.raises(KeyError) as error:
+        with pytest.raises(KeyError):
             misc = result['misc']
     else:
         misc = result['misc']
@@ -675,15 +702,18 @@ def test_stream_history(request, calc_with_retrieved):
                     'message': 'Okey, this error you do not want.',
                     'suggestion': '',
                     'location': 'STDOUT',
-                    'recover': False
+                    'recover': False,
                 }
             },
-            'stream_history': True
+            'stream_history': True,
         }
     }
 
     parser, file_path, _ = _get_vasp_parser(
-        calc_with_retrieved, request, settings_dict=settings_dict, relative_file_path='../../test_data/stdout/out'
+        calc_with_retrieved,
+        request,
+        settings_dict=settings_dict,
+        relative_file_path='../../test_data/stdout/out',
     )
 
     # The test data does not contain OUTCAR - make sure that is allowed
@@ -719,9 +749,7 @@ def test_notification_composer(vasp_parser_without_parsing):
         notifications,
         {},
         {
-            'parameters': get_data_class('core.dict')(dict={
-                'nelect': 10
-            }),
+            'parameters': get_data_class('core.dict')(dict={'nelect': 10}),
         },
         parser.exit_codes,
         parser_settings=parser._settings,
@@ -735,9 +763,7 @@ def test_notification_composer(vasp_parser_without_parsing):
         notifications,
         {},
         {
-            'parameters': get_data_class('core.dict')(dict={
-                'nelect': 10
-            }),
+            'parameters': get_data_class('core.dict')(dict={'nelect': 10}),
         },
         parser.exit_codes,
         parser_settings=parser._settings,
@@ -762,18 +788,12 @@ def test_critical_object_missing(calc_with_retrieved, request):
     # Here we add a fictional file as critical
     parser, file_path, node = _get_vasp_parser(calc_with_retrieved, request)
     parser.add_parser_definition(
-        'some-critical-file.txt', {
-            'parser_class': ExampleFileParser,
-            'is_critical': True,
-            'mode': 'r'
-        }
+        'some-critical-file.txt',
+        {'parser_class': ExampleFileParser, 'is_critical': True, 'mode': 'r'},
     )
     parser.add_parsable_quantity(
-        'quantity_with_alternatives', {
-            'inputs': [],
-            'prerequisites': [],
-            'file_name': '_scheduler-stderr.txt'
-        }
+        'quantity_with_alternatives',
+        {'inputs': [], 'prerequisites': [], 'file_name': '_scheduler-stderr.txt'},
     )
     success = parser.parse(retrieved_temporary_folder=file_path)
     assert success == parser.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
