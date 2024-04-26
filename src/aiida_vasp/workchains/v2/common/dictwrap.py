@@ -1,6 +1,7 @@
 """
 Wrapper class to simply updating an Node when configuring inputs of a calculation.
 """
+
 from collections import UserDict
 from typing import Any
 

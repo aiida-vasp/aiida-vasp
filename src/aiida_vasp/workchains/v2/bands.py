@@ -6,15 +6,15 @@ TODO:
 - Improve the hybrid workchain by performing local dryrun to extract the full kpoints
     - If running SOC, the ISYM should be turned to 0 or -1.
 """
+
 from copy import deepcopy
 from typing import List
 
 import numpy as np
-
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
-from aiida import orm
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
@@ -92,8 +92,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'band_mode',
-            help=
-            'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath, seekpath-aiida and latimer-munro.',
+            help='Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath, '
+            'seekpath-aiida and latimer-munro.',
             required=False,
             valid_type=orm.Str,
         )
@@ -105,7 +105,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'dos_kpoints_density',
-            help='Kpoints for running DOS calculations in A^-1 * 2pi. Will perform non-SCF DOS calculation is supplied.',
+            help='Kpoints for running DOS calculations in A^-1 * 2pi. Will perform '
+            'non-SCF DOS calculation is supplied.',
             serializer=to_aiida_type,
             required=False,
             valid_type=orm.Float,
@@ -296,21 +297,18 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         if mode == 'seekpath-aiida':
             inputs = {
                 'reference_distance': self.inputs.get('bands_kpoints_distance', None),
-                'metadata': {
-                    'call_link_label': 'seekpath'
-                },
+                'metadata': {'call_link_label': 'seekpath'},
             }
             func = seekpath_structure_analysis
         else:
             # Using sumo interface
             from .common.sumo_kpath import kpath_from_sumo
+
             inputs = {
                 'line_density': self.inputs.get('line_density', orm.Float(self.DEFAULT_LINE_DENSITY)),
                 'symprec': self.inputs.get('symprec', orm.Float(self.DEFAULT_SYMPREC)),
                 'mode': orm.Str(mode),
-                'metadata': {
-                    'call_link_label': 'sumo_kpath'
-                },
+                'metadata': {'call_link_label': 'sumo_kpath'},
             }
             func = kpath_from_sumo
 
@@ -340,7 +338,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
                 )
                 return self.exit_codes.ERROR_INPUT_STRUCTURE_NOT_PRIMITIVE  # pylint: disable=no-member
             self.report(
-                'The primitive structure is not the same as the input structure - using the former for all calculations from now.'
+                'The primitive structure is not the same as the input structure - using the former for all calculations'
+                ' from now.'
             )
         self.ctx.bs_kpoints = kpath_results['explicit_kpoints']
         self.out('primitive_structure', self.ctx.current_structure)
@@ -421,14 +420,12 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             if 'bands' in self.inputs:
                 bands_input = AttributeDict(self.exposed_inputs(base_work, namespace='bands'))
             else:
-                bands_input = AttributeDict({
-                    'settings': orm.Dict(dict={'parser_settings': {
-                        'add_bands': True
-                    }}),
-                    'parameters': orm.Dict(dict={'charge': {
-                        'constant_charge': True
-                    }}),
-                })
+                bands_input = AttributeDict(
+                    {
+                        'settings': orm.Dict(dict={'parser_settings': {'add_bands': True}}),
+                        'parameters': orm.Dict(dict={'charge': {'constant_charge': True}}),
+                    }
+                )
 
             # Special treatment - combine the parameters
             parameters = inputs.parameters.get_dict()
@@ -470,12 +467,12 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             if 'dos' in self.inputs:
                 dos_input = AttributeDict(self.exposed_inputs(base_work, namespace='dos'))
             else:
-                dos_input = AttributeDict({
-                    'settings': orm.Dict(dict={'add_dos': True}),
-                    'parameters': orm.Dict(dict={'charge': {
-                        'constant_charge': True
-                    }}),
-                })
+                dos_input = AttributeDict(
+                    {
+                        'settings': orm.Dict(dict={'add_dos': True}),
+                        'parameters': orm.Dict(dict={'charge': {'constant_charge': True}}),
+                    }
+                )
             # Use the supplied kpoints density for DOS
             if 'dos_kpoints_density' in self.inputs:
                 dos_kpoints = orm.KpointsData()
@@ -746,7 +743,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         if 'kpoints' in self.inputs.scf:
             scf_kpoints = self.inputs.scf.kpoints
         # Relaxation workchain has kpoints output
-        elif ('workchain_relax' in self.ctx and 'kpoints' in self.ctx['workchain_relax'].outputs):
+        elif 'workchain_relax' in self.ctx and 'kpoints' in self.ctx['workchain_relax'].outputs:
             scf_kpoints = self.ctx.workchain_relax.outputs.kpoints
             self.report(f'Using output from <{self.ctx.workchain_relax}> for SCF kpoints.')
         # Parse from relaxation output
@@ -804,7 +801,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         self.report(f'Extracting output bandstructure from {len(self.ctx.workchains)} workchains.')
         kwargs = {}
         for work in workchains:
-            link_label = (work.get_incoming(link_type=LinkType.CALL_WORK).one().link_label)
+            link_label = work.get_incoming(link_type=LinkType.CALL_WORK).one().link_label
             link_idx = int(link_label.split('_')[-1])
             kwargs[f'band_{link_idx:03d}'] = work.outputs.bands
             kwargs[f'kpoint_{link_idx:03d}'] = work.inputs.kpoints
@@ -836,7 +833,7 @@ def _split_kpoints(scf_kpoints: orm.KpointsData, band_kpoints: orm.KpointsData, 
 
     # Split the kpoints
     kpn_per_split = int(kpn_per_split)
-    kpt_splits = [band_kpn[i:i + kpn_per_split] for i in range(0, nband_kpts, kpn_per_split)]
+    kpt_splits = [band_kpn[i : i + kpn_per_split] for i in range(0, nband_kpts, kpn_per_split)]
 
     splitted_kpoints = {}
     for isplit, skpts in enumerate(kpt_splits):

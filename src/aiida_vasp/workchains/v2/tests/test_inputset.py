@@ -1,13 +1,13 @@
 """
 Test for input set specifications
 """
-from ase.build import bulk
-import pytest
 
+import pytest
 from aiida_vasp.workchains.v2.inputset.base import InputSet
 from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
+from ase.build import bulk
 
-#pylint:disable=redefined-outer-name,unused-argument
+# pylint:disable=redefined-outer-name,unused-argument
 
 
 @pytest.fixture

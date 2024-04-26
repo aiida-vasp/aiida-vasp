@@ -1,17 +1,18 @@
 """
 Module for dry-running a VASP calculation
 """
-from pathlib import Path
+
 import shutil
 import subprocess as sb
 import tempfile
 import time
+from pathlib import Path
 
 import click
-from parsevasp.kpoints import Kpoints
 import yaml
+from parsevasp.kpoints import Kpoints
 
-#pylint:disable=too-many-branches,consider-using-with
+# pylint:disable=too-many-branches,consider-using-with
 
 
 @click.command('dryrun-vasp')
@@ -164,14 +165,14 @@ def parse_outcar(outcar_path):
             except ValueError:
                 pass
         elif 'k-points in reciprocal lattice and weights:' in line:
-            kblock = lines[line_number + 1:line_number + 1 + output_dict['num_kpoints']]
+            kblock = lines[line_number + 1 : line_number + 1 + output_dict['num_kpoints']]
             k_list = [[float(token) for token in subline.strip().split()] for subline in kblock]
             output_dict['kpoints_and_weights'] = k_list
         elif 'maximum and minimum number of plane-waves per node :' in line:
             output_dict['plane_waves_min_max'] = [float(token) for token in line.split()[-2:]]
         elif 'total amount of memory used by VASP MPI-rank0' in line:
             output_dict['max_ram_rank0'] = float(line.split()[-2])
-            for subline in lines[line_number + 3:line_number + 9]:
+            for subline in lines[line_number + 3 : line_number + 9]:
                 tokens = subline.replace(':', '').split()
                 output_dict['mem_' + tokens[0]] = float(tokens[-2])
     return output_dict

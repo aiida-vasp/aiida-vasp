@@ -1,16 +1,17 @@
 """
 Module to provide dryrun functionality
 """
-from math import ceil, gcd
+
 import shutil
+from math import ceil, gcd
 from warnings import warn
 
 import numpy as np
-
 from aiida.engine.processes.builder import ProcessBuilder
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.vasp import VaspCalculation
+
 # Import the CMD `dryrun_vasp``
 from aiida_vasp.commands.dryrun_vasp import dryrun_vasp as _vasp_dryrun
 from aiida_vasp.data.potcar import PotcarData
@@ -108,8 +109,9 @@ class JobScheme:
                     break
         if self.size_wavefunction_per_proc > self.wf_size_limit:
             warn(
-                ('Expected wavefunction size per process {} MB '
-                 'is large than the limit {} MB').format(self.size_wavefunction_per_proc, self.wf_size_limit),
+                ('Expected wavefunction size per process {} MB ' 'is large than the limit {} MB').format(
+                    self.size_wavefunction_per_proc, self.wf_size_limit
+                ),
                 UserWarning,
             )
         return kpar
@@ -155,7 +157,7 @@ class JobScheme:
         elif self.ncore_strategy == 'maximise':
             combs.sort(key=lambda x: x[0], reverse=True)  # Sort by decreasing NCORE
         else:
-            raise RuntimeError(f"NCORE strategy: <{self.ncore_strategy}> is invalid")
+            raise RuntimeError(f'NCORE strategy: <{self.ncore_strategy}> is invalid')
 
         # Take the maximum ncore
         ncore, factor, balance, new_nbands = combs[0]

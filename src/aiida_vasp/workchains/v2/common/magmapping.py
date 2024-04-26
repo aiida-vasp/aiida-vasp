@@ -2,6 +2,7 @@
 Module for converting between different representation for
 initial site magnetization.
 """
+
 import re
 
 
@@ -33,17 +34,17 @@ def create_additional_species(species: list, magmom: list):
             if current_symbol in mapping:
                 # The other species having the same symbol has been assigned
                 counter = len(mapping) + 1
-                current_symbol = f"{symbol}{counter}"
+                current_symbol = f'{symbol}{counter}'
             mapping[current_symbol] = this_mag
         new_species.append(current_symbol)
 
     # Rename symbols that has more than one species, so A becomes A1
     for symbol, mapping in current_species_mapping.items():
         if len(mapping) > 1:
-            mapping[f"{symbol}1"] = mapping[symbol]
+            mapping[f'{symbol}1'] = mapping[symbol]
             mapping.pop(symbol)
             # Refresh the new_species list
-            new_species = [f"{sym}1" if sym == symbol else sym for sym in new_species]
+            new_species = [f'{sym}1' if sym == symbol else sym for sym in new_species]
 
     all_mapping = {}
     for value in current_species_mapping.values():
@@ -64,8 +65,10 @@ def convert_to_plain_list(species: list, magmom_mapping: dict):
     symbols = []
     for symbol in species:
         magmoms.append(magmom_mapping[symbol])
+        # Drop the number suffix in the symbol
         match = re.match(r'(\w+)\d+', symbol)
         if match:
-            symbol = match.group(1)
-        symbols.append(symbol)
+            symbols.append(match.group(1))
+        else:
+            symbols.append(symbol)
     return symbols, magmoms

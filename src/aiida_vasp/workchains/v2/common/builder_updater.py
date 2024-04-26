@@ -30,24 +30,23 @@ config_relax = {
 upd = VaspRelaxWorkChain.init_from_config(structure, config_relax)
 ```
 """
+
 from pprint import pprint
 from typing import List, Union
 from warnings import warn
 
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.processes.builder import ProcessBuilder
-import aiida.orm as orm
 
 from ..inputset.vaspsets import VASPInputSet
+from ..relax import RelaxOptions
 from .dictwrap import DictWrapper
 
 # Template for setting options
 OPTIONS_TEMPLATES = {
     'SGE': {
-        'resources': {
-            'tot_num_mpiprocs': 1,
-            'parallel_env': 'mpi'
-        },
+        'resources': {'tot_num_mpiprocs': 1, 'parallel_env': 'mpi'},
         'max_wallclock_seconds': 3600,
         'import_sys_environment': False,
     },
@@ -100,7 +99,6 @@ DEFAULT_SET = 'UCLRelaxSet'
 
 
 class VaspBuilderUpdater(BuilderUpdater):
-
     WF_ENTRYPOINT = 'vaspu.vasp'
     DEFAULT_SET = DEFAULT_SET
 
@@ -136,7 +134,6 @@ class VaspBuilderUpdater(BuilderUpdater):
         return self.root_namespace
 
     def use_inputset(self, structure, set_name='UCLRelaxSet', overrides=None):
-
         inset = VASPInputSet(set_name, structure, overrides=overrides)
         self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict()})
         self.namespace_vasp.potential_family = orm.Str('PBE.54')
@@ -191,22 +188,6 @@ class VaspBuilderUpdater(BuilderUpdater):
         """Return the wrapped options dictionary"""
         self._initialise_options_wrapper()
         return self.options_wrapped
-
-    def clear_incar(self):
-        """Clear existing settings"""
-        if self.namespace_vasp.parameters:
-            del self.namespace_vasp.parameters
-        self.parameters_wrapped = None
-        return self
-
-    def update_incar(self, *args, **kwargs):
-        """Update incar tags"""
-        self._initialise_parameters_wrapper()
-        # Make a copy of the incar for modification
-        incar = dict(self.parameters_wrapped['incar'])
-        incar.update(*args, **kwargs)
-        self.parameters_wrapped['incar'] = incar
-        return self
 
     def set_code(self, code: Union[str, orm.Code]):
         if isinstance(code, str):
@@ -373,7 +354,7 @@ class VaspBuilderUpdater(BuilderUpdater):
         self.update_resources(**config.get('resources', {}))
         if 'settings' in config:
             self.update_settings(**config['settings'])
-        self.set_label(f"{structure.label}")
+        self.set_label(f'{structure.label}')
         return self
 
     @classmethod
@@ -386,7 +367,6 @@ class VaspBuilderUpdater(BuilderUpdater):
 
 
 class VaspNEBUpdater(VaspBuilderUpdater):
-
     WF_ENTRYPOINT = 'vasp.neb'
 
     def __init__(self, builder):
@@ -399,7 +379,6 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         return self.namespace_vasp.initial_structure
 
     def use_inputset(self, initial_structure, set_name='UCLRelaxSet', overrides=None):
-
         inset = VASPInputSet(set_name, initial_structure, overrides=overrides)
         self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict()})
         self.namespace_vasp.potential_family = orm.Str('PBE.54')
@@ -416,7 +395,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         """Set the NEB images"""
 
         if isinstance(images, list):
-            output = {'image_{i:02d}': image for i, image in enumerate(images)}
+            output = {f'image_{i:02d}': image for i, image in enumerate(images)}
         elif isinstance(images, (dict, AttributeDict)):
             output = images
         self.namespace_vasp.neb_images = output
@@ -465,7 +444,6 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     def update_relax_settings(self, **kwargs):
         """Set/update RelaxOptions controlling the operation of the workchain"""
-        from ..relax import RelaxOptions
 
         if self.namespace_relax.relax_settings is None:
             current_options = RelaxOptions()
@@ -498,13 +476,15 @@ def builder_to_dict(builder, unpack=True):
     data = {}
     for key, value in builder._data.items():
         if hasattr(value, '_data'):
-            value = builder_to_dict(builder[key])
+            value_ = builder_to_dict(builder[key])
         if unpack:
             if isinstance(value, orm.Dict):
-                value = value.get_dict()
-            if isinstance(value, orm.List):
-                value = value.get_list()
-        data[key] = value
+                value_ = value.get_dict()
+            elif isinstance(value, orm.List):
+                value_ = value.get_list()
+            else:
+                value_ = value
+        data[key] = value_
     return data
 
 
@@ -652,8 +632,8 @@ class VaspAutoPhononUpdater(VaspBuilderUpdater):
 
     def _get_singlepoint_supercell(self) -> orm.StructureData:
         """Obtain the supercell for the singlepoint calculation"""
-        from ase.build import make_supercell
         import numpy as np
+        from ase.build import make_supercell
 
         ref = self.root_namespace.structure.get_ase()
 

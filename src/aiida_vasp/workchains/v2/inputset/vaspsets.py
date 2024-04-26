@@ -1,6 +1,7 @@
 """
 Default input sets for VASP
 """
+
 from copy import deepcopy
 
 try:

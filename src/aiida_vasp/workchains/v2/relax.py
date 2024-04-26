@@ -3,7 +3,8 @@ Relaxation workchain for VASP
 
 Unfortunately, VASP does not check the convergence criteria properly:
 - it only check *either* force or energy convergence between the last two iterations
-- relaxation is performed with *constant basis set*, so a final singlepoint calculation is necessary if cell is to be relaxed
+- relaxation is performed with *constant basis set*, so a final singlepoint calculation is necessary if cell is to be
+  relaxed
 - no check for the convergence of the atomic positions
 - no check about the convergence of the cell volume
 
@@ -22,9 +23,9 @@ CHANGELOG
 
 
 """
+
 # pylint: disable=attribute-defined-outside-init
 import numpy as np
-
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
@@ -234,12 +235,14 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         for key in exp_key:
             if key in incar:
                 self.report(
-                    f'{key} explicitly set to {incar[key]} - this overrides the relax_settings input - proceed with caution.'
+                    f'{key} explicitly set to {incar[key]} - this overrides the relax_settings input'
+                    ' - proceed with caution.'
                 )
         isif = incar.get('isif')
         if isif == 3 and not all(self.ctx.relax_settings.get(key) for key in ['positions', 'volume', 'shape']):
             raise InputValidationError(
-                'ISIF = 3 is set explicity for INCAR, which is consistent with the mode of relaxation supplied to the workchain.'
+                'ISIF = 3 is set explicity for INCAR, which is consistent with the mode of relaxation '
+                'supplied to the workchain.'
             )
 
     def _init_relax_input_additions(self):
@@ -274,10 +277,12 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             if 'settings' in self.inputs.vasp:
                 self.ctx.static_input_additions.settings = nested_update_dict_node(
                     self.inputs.vasp.settings,
-                    {'parser_settings': {
-                        'add_structure': False,
-                        'add_trajectory': False,
-                    }},
+                    {
+                        'parser_settings': {
+                            'add_structure': False,
+                            'add_trajectory': False,
+                        }
+                    },
                 )
 
             # Apply overrides if supplied
@@ -345,9 +350,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         if self.ctx.current_magmom is not None:
             inputs.parameters = nested_update_dict_node(
                 inputs.parameters,
-                {OVERRIDE_NAMESPACE: {
-                    'magmom': self.ctx.current_magmom
-                }},
+                {OVERRIDE_NAMESPACE: {'magmom': self.ctx.current_magmom}},
             )
 
         # Label the calculation and links by iteration number
@@ -378,9 +381,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         if self.ctx.current_magmom is not None:
             inputs.parameters = nested_update_dict_node(
                 inputs.parameters,
-                {OVERRIDE_NAMESPACE: {
-                    'magmom': self.ctx.current_magmom
-                }},
+                {OVERRIDE_NAMESPACE: {'magmom': self.ctx.current_magmom}},
             )
 
         if 'label' not in inputs.metadata:
@@ -445,12 +446,15 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
-        elif 'misc' in workchain.outputs and 'structure' in workchain.outputs and 'maximum_force' in workchain.outputs.misc.get_dict(
+        elif (
+            'misc' in workchain.outputs
+            and 'structure' in workchain.outputs
+            and 'maximum_force' in workchain.outputs.misc.get_dict()
         ):
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
             self.report(
-                'The called {}<{}> returned a non-zero exit status. Continue the workflow as "misc" and "structure" outputs are present.'
-                .format(workchain.__class__.__name__, workchain.pk)
+                f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status.'
+                ' Continue the workflow as "misc" and "structure" outputs are present.'
             )
         else:
             self.ctx.exit_code = compose_exit_code(next_workchain_exit_status, next_workchain_exit_message)
@@ -473,8 +477,8 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         # Double check presence of structure
         if 'structure' not in workchain.outputs:
             self.report(
-                'The {}<{}> for the relaxation run did not have an output structure and most likely failed. However, its exit status was'
-                ' zero.'.format(workchain.__class__.__name__, workchain.pk)
+                f'The {workchain.__class__.__name__}<{workchain.pk}> for the relaxation run did not have an output '
+                'structure and most likely failed. However, its exit status was  zero.'
             )
             return self.exit_codes.ERROR_MISSING_REQUIRED_OUTPUT  # pylint: disable=no-member
 
@@ -511,7 +515,8 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         elif conv_mode == 'last':
             if 'trajectory' not in workchain.outputs:
                 self.report(
-                    'Warning - trajectory output not found but needed for convergence check - reverting to check input/output structures.'
+                    'Warning - trajectory output not found but needed for convergence check - reverting to check '
+                    'input/output structures.'
                 )
                 compare_from = self.ctx.last_calc_input_structure
                 compare_to = self.ctx.current_structure
@@ -556,7 +561,8 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             max_force = workchain.outputs.misc.base.attributes.get('maximum_force')
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
-                    f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g} - NOT OK'
+                    f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g}'
+                    ' - NOT OK'
                 )
                 converged = False
             elif self.is_verbose():
@@ -565,12 +571,10 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             if not converged:
                 if self.ctx.get('verbose', self._verbose):
                     self.report('Relaxation did not converge, restarting the relaxation.')
-            else:
-                if self.is_verbose():
-                    self.report('Relaxation is converged, finishing with a final static calculation.')
-        else:
-            if self.is_verbose():
-                self.report('Convergence checking is not enabled - finishing with a final static calculation.')
+            elif self.is_verbose():
+                self.report('Relaxation is converged, finishing with a final static calculation.')
+        elif self.is_verbose():
+            self.report('Convergence checking is not enabled - finishing with a final static calculation.')
         self.ctx.current_restart_folder = workchain.outputs.remote_folder
 
         # Update the magmom to be used
@@ -596,11 +600,13 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             lengths_converged = bool(delta.cell_lengths.max() <= threshold_lengths)
         if not lengths_converged:
             self.report(
-                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g} - NOT OK'
+                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g}'
+                ' - NOT OK'
             )
         elif self.is_verbose():
             self.report(
-                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g} - OK'
+                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g}'
+                ' - OK'
             )
 
         angles_converged = bool(delta.cell_angles.max() <= threshold_angles)
@@ -613,7 +619,8 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
 
         if not angles_converged:
             self.report(
-                f'cell angles changed by max {delta.cell_angles.max():.4g}, tolerance is {threshold_angles:.4g} - NOT OK'
+                f'cell angles changed by max {delta.cell_angles.max():.4g}, tolerance is {threshold_angles:.4g}'
+                ' - NOT OK'
             )
         elif self.is_verbose():
             self.report(
@@ -649,14 +656,16 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             # we do not know if it is converged, so settings it to False
             # BONAN: this should never happen now - remove it later
             self.report(
-                'there is NaN entries in the relative comparison for the positions during relaxation, assuming position is not converged'
+                'there is NaN entries in the relative comparison for the positions during relaxation,'
+                ' assuming position is not converged'
             )
             positions_converged = False
 
         if not positions_converged:
             try:
                 self.report(
-                    f'max site position change is {np.nanmax(delta.pos_lengths):.4g}, tolerance is {threshold:.4g} - NOT OK'
+                    f'max site position change is {np.nanmax(delta.pos_lengths):.4g}, tolerance is {threshold:.4g}'
+                    ' - NOT OK'
                 )
             except RuntimeWarning:
                 pass
@@ -707,11 +716,14 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         if not detect_tetrahedral_method(workchain.inputs.parameters.get_dict()):
             max_force_threshold = self.ctx.relax_settings.get('force_cutoff', 0.03)
             actual_max_force = workchain.outputs.misc['maximum_force']
-            if actual_max_force > max(max_force_threshold * 1.5,
-                                      max_force_threshold + 0.001) and self.perform_relaxation():
+            if (
+                actual_max_force > max(max_force_threshold * 1.5, max_force_threshold + 0.001)
+                and self.perform_relaxation()
+            ):
                 if self.is_verbose():
                     self.report(
-                        f'The force of the final SCF is {actual_max_force} eV/A, which is significantly higher than the tolerance'
+                        f'The force of the final SCF is {actual_max_force} eV/A, '
+                        'which is significantly higher than the tolerance'
                         f' {max_force_threshold} eV/A.'
                     )
                 return self.exit_codes.ERROR_FINAL_SCF_HAS_RESIDUAL_FORCE  # pylint: disable=no-member
@@ -739,19 +751,13 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                 if rlx_settings.get('keep_sp_workdir', False):
                     qbd.append(
                         orm.WorkChainNode,
-                        filters={'id': {
-                            'in': [node.pk for node in self.ctx.workchains]
-                        }},
+                        filters={'id': {'in': [node.pk for node in self.ctx.workchains]}},
                     )
                 else:
                     qbd.append(
                         orm.WorkChainNode,
-                        edge_filters={'label': {
-                            'like': 'relax_%'
-                        }},
-                        filters={'id': {
-                            'in': [node.pk for node in self.ctx.workchains]
-                        }},
+                        edge_filters={'label': {'like': 'relax_%'}},
+                        filters={'id': {'in': [node.pk for node in self.ctx.workchains]}},
                     )
 
                 qbd.append(orm.CalcJobNode)
@@ -771,7 +777,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                         pass
 
                 if cleaned_calcs:
-                    self.report(f"cleaned remote folders of calculations: {' '.join(map(str, cleaned_calcs))}")  # pylint: disable=not-callable
+                    self.report(f"cleaned remote folders of calculations: {' '.join(map(str, cleaned_calcs))}")
         except BaseException as exception:  # pylint: disable=no-self-argument,no-self-use
             self.report(f'Exception occurred during the cleaning of the remote contents: {exception.args}')
 
@@ -797,7 +803,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         return self.ctx.get('verbose', self._verbose)
 
     @classproperty
-    def relax_option_class(cls):  # pylint: disable=no-self-argument
+    def relax_option_class(cls):  # noqa: N805
         """Class for relax options"""
         return RelaxOptions
 
@@ -874,7 +880,8 @@ class RelaxOptions(OptionContainer):
         0.1,
     )
     convergence_volume = FloatOption(
-        'The cutoff value for the convergence check on volume between the two structures. A negative value by pass the check.',
+        'The cutoff value for the convergence check on volume between the two structures.'
+        ' A negative value by pass the check.',
         0.01,
     )
     convergence_shape_lengths = FloatOption(
@@ -884,12 +891,14 @@ class RelaxOptions(OptionContainer):
         0.1,
     )
     convergence_shape_angles = FloatOption(
-        'The cutoff value for the convergence check on the angles of the unit cell vectors, between input and the outputs structure. A'
+        'The cutoff value for the convergence check on the angles of the unit cell vectors, '
+        'between input and the outputs structure. A'
         ' negative value by pass the check.',
         0.1,
     )
     convergence_mode = ChoiceOption(
-        "Mode of the convergence check for positions. 'inout' for checking input/output structure, or 'last' to check only the change of"
+        "Mode of the convergence check for positions. 'inout' for checking input/output structure, "
+        "or 'last' to check only the change of"
         ' the last step.',
         choices=['inout', 'last'],
         default_value='last',

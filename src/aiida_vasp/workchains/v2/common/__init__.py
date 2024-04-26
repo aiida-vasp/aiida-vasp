@@ -1,6 +1,7 @@
 """
 Common functions and constants
 """
+
 # Name of the override name space
 # This is the namespace where raw VASP INCAR tags should reside for VaspWorkChain
 from functools import wraps
@@ -13,7 +14,7 @@ from aiida_vasp.assistant.parameters import _BASE_NAMESPACES, ParametersMassage
 
 OVERRIDE_NAMESPACE = 'incar'
 
-#pylint:disable=raise-missing-from
+# pylint:disable=raise-missing-from
 
 
 def aiida_to_python(entity):

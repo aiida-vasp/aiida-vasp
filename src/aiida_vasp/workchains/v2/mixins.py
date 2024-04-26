@@ -1,6 +1,7 @@
 """
 Some convenience mixins
 """
+
 from aiida.common.utils import classproperty
 
 from .inputset.vaspsets import VASPInputSet

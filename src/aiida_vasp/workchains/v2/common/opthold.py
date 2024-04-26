@@ -1,13 +1,14 @@
 """
 Module containing the OptionHolder class
 """
+
 from typing import List, Tuple
 
 from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import Dict
 
-#pylint:disable=raise-missing-from
+# pylint:disable=raise-missing-from
 
 
 class Option(property):
@@ -245,7 +246,7 @@ class OptionContainer:
 
     def to_string(self) -> str:
         """In string format"""
-        return (self.to_dict(check_invalids=False).__repr__().replace('AttributeDict', ''))
+        return self.to_dict(check_invalids=False).__repr__().replace('AttributeDict', '')
 
     def __getitem__(self, key):
         """Set items - we just the getattr method"""
@@ -261,7 +262,7 @@ class OptionContainer:
         return f'{type(self).__name__}<{string}>'
 
     @classmethod
-    def validate_dict(cls, input_dict, port=None) -> None:  #pylint:disable=unused-argument
+    def validate_dict(cls, input_dict, port=None) -> None:  # pylint:disable=unused-argument
         """
         Vaildate a dictionary/Dict node, this can be used as the validator for
         the Port accepting the inputs

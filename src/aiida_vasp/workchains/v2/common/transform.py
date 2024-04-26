@@ -1,15 +1,15 @@
 """
 Collection of process functions for AiiDA, used for structure transformation
 """
+
 import re
 from typing import List, Tuple
 
-from ase import Atoms
 import numpy as np
-
 from aiida import orm
 from aiida.engine import calcfunction
-from aiida.orm import ArrayData, CalcFunctionNode, Node, QueryBuilder, StructureData
+from aiida.orm import StructureData
+from ase import Atoms
 
 
 @calcfunction
@@ -20,9 +20,9 @@ def magnetic_structure_decorate(structure, magmom):
     """
 
     magmom = magmom.get_list()
-    assert (
-        len(magmom) == len(structure.sites)
-    ), f"Mismatch between the magmom ({len(magmom)}) and the nubmer of sites ({len(structure.sites)})."
+    assert len(magmom) == len(
+        structure.sites
+    ), f'Mismatch between the magmom ({len(magmom)}) and the nubmer of sites ({len(structure.sites)}).'
     old_species = [structure.get_kind(site.kind_name).symbol for site in structure.sites]
     new_species, magmom_mapping = create_additional_species(old_species, magmom)
     new_structure = StructureData()
@@ -110,9 +110,8 @@ def get_standard_primitive(structure, **kwargs):
 @calcfunction
 def spglib_refine_cell(structure, symprec):
     """Create the standard primitive structure via seekpath"""
-    from spglib import refine_cell
-
     from aiida.tools.data.structure import spglib_tuple_to_structure, structure_to_spglib_tuple
+    from spglib import refine_cell
 
     structure_tuple, kind_info, kinds = structure_to_spglib_tuple(structure)
 
@@ -136,9 +135,8 @@ def get_standard_conventional(structure):
 @calcfunction
 def get_refined_structure(structure, symprec, angle_tolerance):
     """Create refined structure use pymatgen's interface"""
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
     from aiida.orm import StructureData
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
     pstruct = structure.get_pymatgen()
     ana = SpacegroupAnalyzer(pstruct, symprec=symprec.value, angle_tolerance=angle_tolerance.value)
@@ -151,9 +149,8 @@ def get_refined_structure(structure, symprec, angle_tolerance):
 @calcfunction
 def get_conventional_standard_structure(structure, symprec, angle_tolerance):
     """Create conventional standard structure use pymatgen's interface"""
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
     from aiida.orm import StructureData
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
     pstruct = structure.get_pymatgen()
     ana = SpacegroupAnalyzer(pstruct, symprec=symprec.value, angle_tolerance=angle_tolerance.value)
@@ -166,6 +163,7 @@ def get_conventional_standard_structure(structure, symprec, angle_tolerance):
 @calcfunction
 def make_supercell(structure, supercell, **kwargs):
     """Make supercell structure, keep the tags in order"""
+    from ase.build import sort
     from ase.build.supercells import make_supercell as ase_supercell
 
     if 'tags' in kwargs:
@@ -259,8 +257,8 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
 
     outputs = {'image_init': out_init}
     for i, out in enumerate(neb.images[1:-1]):
-        outputs[f"image_{i+1:02d}"] = StructureData(ase=out)
-        outputs[f"image_{i+1:02d}"].label = init_structure.label + f" FRAME {i+1:02d}"
+        outputs[f'image_{i+1:02d}'] = StructureData(ase=out)
+        outputs[f'image_{i+1:02d}'].label = init_structure.label + f' FRAME {i+1:02d}'
     outputs['image_final'] = out_final
     return outputs
 
@@ -291,7 +289,7 @@ def fix_atom_order(reference, to_fix):
         min_idx = np.argmin(dists)
         min_dist = min(dists)
         if min_dist > 0.5:
-            print(f"Large displacement found - moving atom {j} to {i} - please check if this is correct!")
+            print(f'Large displacement found - moving atom {j} to {i} - please check if this is correct!')
         new_indices[i] = min_idx
 
     afixed = afix[new_indices]
@@ -351,17 +349,17 @@ def create_additional_species(species: list, magmom: list):
             if current_symbol in mapping:
                 # The other species having the same symbol has been assigned
                 counter = len(mapping) + 1
-                current_symbol = f"{symbol}{counter}"
+                current_symbol = f'{symbol}{counter}'
             mapping[current_symbol] = magmom
         new_species.append(current_symbol)
 
     # Rename symbols that has more than one species, so A becomes A1
     for symbol, mapping in current_species_mapping.items():
         if len(mapping) > 1:
-            mapping[f"{symbol}1"] = mapping[symbol]
+            mapping[f'{symbol}1'] = mapping[symbol]
             mapping.pop(symbol)
             # Refresh the new_species list
-            new_species = [f"{sym}1" if sym == symbol else sym for sym in new_species]
+            new_species = [f'{sym}1' if sym == symbol else sym for sym in new_species]
 
     all_mapping = {}
     for value in current_species_mapping.values():
@@ -384,6 +382,7 @@ def convert_to_plain_list(species: list, magmom_mapping: dict):
         magmoms.append(magmom_mapping[symbol])
         match = re.match(r'(\w+)\d+', symbol)
         if match:
-            symbol = match.group(1)
-        symbols.append(symbol)
+            symbols.append(match.group(1))
+        else:
+            symbols.append(symbol)
     return symbols, magmoms

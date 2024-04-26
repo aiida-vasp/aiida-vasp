@@ -6,10 +6,9 @@ from copy import deepcopy
 from math import pi
 from pathlib import Path
 
-from ase import Atoms
 import yaml
-
 from aiida.orm import Dict, KpointsData
+from ase import Atoms
 
 FELEMS = [
     'La',

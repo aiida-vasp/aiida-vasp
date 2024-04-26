@@ -1,11 +1,11 @@
 """
 Tests for the common module
 """
-from aiida.orm import Dict, List
 
+from aiida.orm import Dict, List
 from aiida_vasp.workchains.v2.common import aiida_to_python, plain_python_args, site_magnetization_to_magmom
 
-#pylint:disable=unused-argument
+# pylint:disable=unused-argument
 
 
 def test_conversion(aiida_profile):
@@ -53,14 +53,8 @@ def test_magmom_from_site(aiida_profile):
                         'tot': 15.69,
                     },
                 },
-                'y': {
-                    'site_moment': {},
-                    'total_magnetization': {}
-                },
-                'z': {
-                    'site_moment': {},
-                    'total_magnetization': {}
-                },
+                'y': {'site_moment': {}, 'total_magnetization': {}},
+                'z': {'site_moment': {}, 'total_magnetization': {}},
             },
             'full_cell': [15.9999942],
         }

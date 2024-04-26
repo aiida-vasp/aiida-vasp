@@ -4,9 +4,10 @@ VASP workchain.
 ---------------
 Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 """
-import numpy as np
 
+import numpy as np
 from aiida.common.exceptions import InputValidationError, NotExistent
+
 # from aiida.engine.job_processes import override
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import if_, while_
@@ -372,17 +373,15 @@ class VaspWorkChain(VanillaVaspWorkChain):
         self.ctx.inputs.parameters.update(parallel_opts)
         self.out(
             'parallel_settings',
-            Dict(dict={
-                'ncore': scheme.ncore,
-                'kpar': scheme.kpar
-            }).store(),
+            Dict(dict={'ncore': scheme.ncore, 'kpar': scheme.kpar}).store(),
         )
 
     # In this workchain variant we default to ignore the NELM breaches in the middle of the calculation
     @process_handler(priority=850, enabled=True)
     def ignore_nelm_breach_relax(self, node):
         """
-        Not a actual handler but works as a switch to bypass checks for NELM breaches in the middle of an ionic relaxation.
+        Not a actual handler but works as a switch to bypass checks for NELM breaches
+         in the middle of an ionic relaxation.
         """
         _ = node
         self.ctx.ignore_transient_nelm_breach = True
