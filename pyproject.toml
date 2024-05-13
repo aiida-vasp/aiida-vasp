@@ -30,7 +30,7 @@ classifiers = [
 keywords = ["aiida", "plugin"]
 requires-python = ">=3.9"
 dependencies = [
-	"aiida-core[atomic_tools]~=2.4",
+	"aiida-core[atomic_tools]~=2.3",
 	"lxml",
 	"packaging",
 	"parsevasp~=3.2"
@@ -41,7 +41,7 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = [
-    "aiida-core[tests]~=2.4",
+    "aiida-core[tests]~=2.3",
     "tox>=3.23.0",
     "virtualenv>20"
 ]
@@ -93,12 +93,18 @@ graphs = [
 "vasp.relax" = "aiida_vasp.workchains.relax:RelaxWorkChain"
 "vasp.neb" = "aiida_vasp.workchains.neb:VaspNEBWorkChain"
 "vasp.immigrant" = "aiida_vasp.workchains.immigrant:VaspImmigrantWorkChain"
+"vasp.v2.vasp" = "aiida_vasp.workchains.v2.vasp:VaspWorkChain"
+"vasp.v2.converge" = "aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain"
+"vasp.v2.bands" = "aiida_vasp.workchains.v2.bands:VaspBandsWorkChain"
+"vasp.v2.hybrid_bands" = "aiida_vasp.workchains.v2.bands:VaspHybridBandsWorkChain"
+"vasp.v2.relax" = "aiida_vasp.workchains.v2.relax:VaspRelaxWorkChain"
 
 [project.entry-points."aiida.groups"]
 "vasp.potcar" = "aiida_vasp.data.potcar:PotcarGroup"
 
 [project.scripts]
 "mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
+"dryrun-vasp" = "aiida_vasp.commands.dryrun_vasp:cmd_dryrun_vasp"
 "mock-vasp-strict" = "aiida_vasp.commands.mock_vasp:mock_vasp_strict"
 
 [tool.flit.module]

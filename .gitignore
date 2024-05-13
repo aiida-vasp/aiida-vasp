@@ -17,7 +17,6 @@
 .tox
 .pytest_cache
 *.vscode
-
 docs/_build
 build/
 dist/

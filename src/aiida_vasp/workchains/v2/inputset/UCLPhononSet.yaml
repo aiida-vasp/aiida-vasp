@@ -1,0 +1,150 @@
+# Default input files
+# Note that this is just for a shortcut, the actual input should be check before launching
+# Thanks for AiiDA's provenance preservation it is OK to change this file, since the raw input values are always recorded.
+# NOTE: IBRION and NSW tags are not give, as they will be controlled at the WorkChain level
+
+global:
+  prec: accurate
+  encut: 650
+  lreal: false
+  ismear: 0
+  sigma: 0.05
+  ispin: 2
+  algo: normal
+  nwrite: 1
+  lwave: False  # Don't write the wave function
+  nelm: 200
+  nelmin: 8
+  gga: ps
+  lasph: true
+  addgrid: true
+
+per_atom:
+  ediff: 0.00000001
+
+# More should be added later
+ldauu_mapping:
+  Fe: [d, 4.0]
+  Ti: [d, 4.0]
+
+# Should map to the high spin states
+magmom_mapping:
+  Ce: 5
+  Co: 5
+  Cr: 5
+  Dy: 5
+  Eu: 10
+  Fe: 5
+  Gd: 7
+  Ho: 4
+  La: 0.6
+  Lu: 0.6
+  Mn: 5
+  Mo: 5
+  Nd: 3
+  Ni: 5
+  Pm: 4
+  Pr: 2
+  Sm: 5
+  Tb: 6
+  Tm: 2
+  V: 5
+  W: 5
+  Yb: 1
+  default: 0.6
+
+# Don't use any J
+ldauj_mapping: {}
+
+# POTCAR set
+# Essentially copied from MPRelaxSet
+potcar_mapping:
+  Ac: Ac
+  Ag: Ag
+  Al: Al
+  Ar: Ar
+  As: As
+  Au: Au
+  B: B
+  Ba: Ba_sv
+  Be: Be_sv
+  Bi: Bi
+  Br: Br
+  C: C
+  Ca: Ca_sv
+  Cd: Cd
+  Ce: Ce
+  Cl: Cl
+  Co: Co
+  Cr: Cr_pv
+  Cs: Cs_sv
+  Cu: Cu_pv
+  Dy: Dy_3
+  Er: Er_3
+  Eu: Eu
+  F: F
+  Fe: Fe_pv
+  Ga: Ga_d
+  Gd: Gd
+  Ge: Ge_d
+  H: H
+  He: He
+  Hf: Hf_pv
+  Hg: Hg
+  Ho: Ho_3
+  I: I
+  In: In_d
+  Ir: Ir
+  K: K_sv
+  Kr: Kr
+  La: La
+  Li: Li_sv
+  Lu: Lu_3
+  Mg: Mg_pv
+  Mn: Mn_pv
+  Mo: Mo_pv
+  N: N
+  Na: Na_pv
+  Nb: Nb_pv
+  Nd: Nd_3
+  Ne: Ne
+  Ni: Ni_pv
+  Np: Np
+  O: O
+  Os: Os_pv
+  P: P
+  Pa: Pa
+  Pb: Pb_d
+  Pd: Pd
+  Pm: Pm_3
+  Pr: Pr_3
+  Pt: Pt
+  Pu: Pu
+  Rb: Rb_sv
+  Re: Re_pv
+  Rh: Rh_pv
+  Ru: Ru_pv
+  S: S
+  Sb: Sb
+  Sc: Sc_sv
+  Se: Se
+  Si: Si
+  Sm: Sm_3
+  Sn: Sn_d
+  Sr: Sr_sv
+  Ta: Ta_pv
+  Tb: Tb_3
+  Tc: Tc_pv
+  Te: Te
+  Th: Th
+  Ti: Ti_pv
+  Tl: Tl_d
+  Tm: Tm_3
+  U: U
+  V: V_pv
+  W: W_pv
+  Xe: Xe
+  Y: Y_sv
+  Yb: Yb_2
+  Zn: Zn
+  Zr: Zr_sv
