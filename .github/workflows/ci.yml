@@ -11,25 +11,21 @@ jobs:
         python: ['3.9', '3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - name: Cache python dependencies
-        id: cache-pip
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: pip-${{ matrix.python }}-tests-
-
+    #   - name: Cache python dependencies
+    #     id: cache-pip
+    #     uses: actions/cache@v4.0.2
+    #     with:
+    #       path: ~/.cache/pip
+    #       key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
+    #       restore-keys: pip-${{ matrix.python }}-tests-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
-      - name: Install parsevasp
+      - name: Install aiida-vasp
         run: pip install -e ."[tests]" -vvv
-
       - name: Run tests with codecov
         run: pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc'
-
       - name: Archive error mock calculations
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
@@ -39,7 +35,6 @@ jobs:
             test_mock_error.aiida
           retention-days: 5
           if-no-files-found: warn
-
       - name: Upload coverage to Codecov
         if: matrix.python == '3.12'
         uses: codecov/codecov-action@v4

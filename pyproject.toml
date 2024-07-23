@@ -33,12 +33,12 @@ classifiers = [
 keywords = ["aiida", "plugin"]
 requires-python = ">=3.9"
 dependencies = [
-    "aiida-core~=2.3",
+    "aiida-core>=2.3",
     "ase",
     "lxml",
     "seekpath",
     "packaging",
-    "parsevasp~=3.2",
+    "parsevasp>=3.2",
 ]
 
 [project.urls]
