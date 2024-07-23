@@ -22,6 +22,13 @@ jobs:
           conda activate test
           conda install --yes -c conda-forge python=${{ matrix.python-version }}
           conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
+      - name: Setup parsevasp
+        run: |
+          conda activate test
+          git clone --depth 1 https://github.com/aiida-vasp/parsevasp.git
+          cd parsevasp
+          pip install -e . -vvv
+          cd ..
       - name: Install aiida-vasp
         run: |
           conda activate test
@@ -30,15 +37,15 @@ jobs:
         run: |
           conda activate test
           pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc'
-    #   - name: Archive error mock calculations
-    #     uses: actions/upload-artifact@v4
-    #     if: ${{ failure() }}
-    #     with:
-    #       name: error-mock-calc-archive
-    #       path: |
-    #         test_mock_error.aiida
-    #       retention-days: 5
-    #       if-no-files-found: warn
+      - name: Archive error mock calculations
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: error-mock-calc-archive
+          path: |
+            test_mock_error.aiida
+          retention-days: 5
+          if-no-files-found: warn
       - name: Upload coverage to Codecov
         if: matrix.python == '3.12'
         uses: codecov/codecov-action@v4
