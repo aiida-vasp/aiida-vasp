@@ -24,14 +24,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Make sure virtualevn>20 is installed, which will yield newer pip and possibility to pin pip version.
-        run: pip install 'virtualenv>20'
+      - name: Install parsevasp
+        run: pip install -e ."[tests]" -vvv
 
-      - name: Install codecov
-        if: matrix.python == '3.9'
-        run: pip install codecov pytest-cov
-
-      - name: Run tox and codecov
+      - name: Run tests with codecov
         run: pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc'
 
       - name: Archive error mock calculations
