@@ -32,7 +32,7 @@ def test_vasp_wc(fresh_aiida_env, run_vasp_process):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process, aiida_caplog):
+def test_vasp_wc_chgcar(fresh_aiida_env, run_vasp_process):
     """Test submitting only, not correctness, with mocked vasp code, test fetching and parsing of the CHGCAR content."""
     settings = {
         'ADDITIONAL_RETRIEVE_LIST': ['CHGCAR'],

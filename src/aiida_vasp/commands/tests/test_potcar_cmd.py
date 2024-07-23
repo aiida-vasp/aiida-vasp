@@ -7,19 +7,19 @@ import os
 from pathlib import Path
 
 import pytest
+from aiida.common import AttributeDict
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.data.potcar import PotcarGroup
 from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.fixtures import *
 from aiida_vasp.utils.fixtures.data import POTCAR_FAMILY_NAME, legacy_potcar_family  # noqa: F401
 from click.testing import CliRunner
-from monty.collections import AttrDict
 
 
 @pytest.fixture
 def cmd_params(temp_pot_folder):
     """Common building blocks for ``uploadfamily`` calls."""
-    params = AttrDict()
+    params = AttributeDict()
     params.POTCAR_PATH = str(temp_pot_folder)
     params.FAMILY_NAME = POTCAR_FAMILY_NAME
     params.PATH_OPTION = f'--path={params.POTCAR_PATH}'

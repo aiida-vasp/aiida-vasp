@@ -65,7 +65,7 @@ def test_vasp_immigrant(immigrant_with_builder):
     result, node = run.get_node(builder)
     assert node.exit_status == 0
 
-    expected_output_nodes = {'misc', 'remote_folder', 'retrieved'}
+    expected_output_nodes = {'misc', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))
 
 
@@ -124,5 +124,5 @@ def test_vasp_immigrant_example_3(immigrant_with_builder_example_3):  # pylint: 
     result, node = run.get_node(immigrant, **inputs)
     assert node.exit_status == 0
 
-    expected_output_nodes = {'misc', 'remote_folder', 'retrieved'}
+    expected_output_nodes = {'misc', 'retrieved'}
     assert expected_output_nodes.issubset(set(result))
