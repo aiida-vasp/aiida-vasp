@@ -321,7 +321,7 @@ def match_atomic_order_(atoms: Atoms, atoms_ref: Atoms) -> Tuple[Atoms, List[int
     return atoms[new_index], new_index
 
 
-def create_additional_species(species: list, magmom: list):
+def create_additional_species(species: list, magmoms: list):
     """
     Create additional species depending on magnetic moments.
     For example, create Fe1 and Fe2 if there are Fe with different
@@ -334,7 +334,7 @@ def create_additional_species(species: list, magmom: list):
     unique_species = set(species)
     new_species = []
     current_species_mapping = {sym: {} for sym in unique_species}
-    for symbol, magmom in zip(species, magmom):
+    for symbol, magmom in zip(species, magmoms):
         current_symbol = symbol
         # Mappings for this original symbol
         mapping = current_species_mapping[symbol]

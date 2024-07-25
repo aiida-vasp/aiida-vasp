@@ -142,7 +142,7 @@ def test_add_parser_quantity_fail(vasp_parser_without_parsing):
         parser.parse(retrieved_temporary_folder=path)
 
 
-def test_add_parser_quantity(vasp_parser_without_parsing, aiida_caplog):
+def test_add_parser_quantity(vasp_parser_without_parsing):
     """Add_parsable_quantity with name succeeds."""
     parser, path = vasp_parser_without_parsing
     parser.add_parsable_quantity(

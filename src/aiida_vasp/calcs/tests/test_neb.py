@@ -12,7 +12,6 @@ from aiida_vasp.utils.fixtures.calcs import ONLY_ONE_CALC
 @ONLY_ONE_CALC
 def test_prepare(
     fresh_aiida_env,
-    aiida_instance,
     vasp_neb_calc,
     vasp_neb_inputs,
     localhost_dir,

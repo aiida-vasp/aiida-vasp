@@ -6,51 +6,52 @@ build-backend = "flit_core.buildapi"
 [project]
 # See https://www.python.org/dev/peps/pep-0621/
 name = "aiida-vasp"
-dynamic = ["version"]  # read from aiida_vasp/__init__.py
+dynamic = ["version"] # read from aiida_vasp/__init__.py
 description = "AiiDA plugin for running VASP calculations and workflows."
-authors = [{name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no"}]
+authors = [
+    { name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no" },
+]
 readme = "README.rst"
-license = {file = "LICENSE.txt"}
+license = { file = "LICENSE.txt" }
 classifiers = [
     "Programming Language :: Python",
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Framework :: AiiDA",
     "Development Status :: 5 - Production/Stable",
-	"Environment :: Plugins",
-	"Intended Audience :: Science/Research",
-	"License :: OSI Approved :: MIT License",
-	"Programming Language :: Python :: 3.9",
-	"Programming Language :: Python :: 3.10",
-	"Programming Language :: Python :: 3.11",
-	"Topic :: Scientific/Engineering :: Physics",
-	"Topic :: Scientific/Engineering :: Chemistry",
-	"Framework :: AiiDA"
+    "Environment :: Plugins",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Framework :: AiiDA",
 ]
 keywords = ["aiida", "plugin"]
 requires-python = ">=3.9"
 dependencies = [
-	"aiida-core[atomic_tools]~=2.3",
-	"lxml",
-	"packaging",
-	"parsevasp~=3.2"
+    "aiida-core>=2.3",
+    "ase",
+    "lxml",
+    "seekpath",
+    "packaging",
+    "parsevasp>=3.2",
 ]
 
 [project.urls]
 Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
-tests = [
-    "aiida-core[tests]~=2.3",
-    "tox>=3.23.0",
-    "virtualenv>20"
-]
+tests = ["aiida-core>=2.6", "pytest", "PyCifRW"]
 pre-commit = [
     "tox>=3.23.0",
     "virtualenv>20",
     "pre-commit>=2.2,<4.0",
     "pylint>=2.15,<3.3",
-    "sphinx-lint~=0.6"
+    "sphinx-lint~=0.6",
 ]
 docs = [
     "aiida-core[docs]~=2.4",
@@ -58,11 +59,9 @@ docs = [
     "sphinx-lint",
     "sphinx-rtd-theme",
     "sphinxcontrib-apidoc",
-    "sphinxext.remoteliteralinclude"
+    "sphinxext.remoteliteralinclude",
 ]
-graphs = [
-    "matplotlib"
-]
+graphs = ["matplotlib"]
 
 [project.entry-points."aiida.cmdline.data"]
 "vasp-potcar" = "aiida_vasp.commands.potcar:potcar"
@@ -133,7 +132,7 @@ disable = [
     "too-many-public-methods",
     "missing-module-docstring",
     "too-many-ancestors",
-    "too-many-lines"
+    "too-many-lines",
 ]
 
 [tool.pytest.ini_options]
@@ -159,19 +158,26 @@ filterwarnings = [
     "ignore::DeprecationWarning:networkx:",
     "ignore::DeprecationWarning:ase:",
     "ignore::DeprecationWarning:aiida:",
-    "ignore::DeprecationWarning:plumpy:"
+    "ignore::DeprecationWarning:plumpy:",
 ]
 
 [tool.coverage.run]
 # Configuration of [coverage.py](https://coverage.readthedocs.io)
 # reporting which lines of your plugin are covered by tests
-source=["aiida_vasp"]
+source = ["aiida_vasp"]
 
 [tool.isort]
 # Configuration of [isort](https://isort.readthedocs.io)
 line_length = 120
 force_sort_within_sections = true
-sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'AIIDA', 'FIRSTPARTY', 'LOCALFOLDER']
+sections = [
+    'FUTURE',
+    'STDLIB',
+    'THIRDPARTY',
+    'AIIDA',
+    'FIRSTPARTY',
+    'LOCALFOLDER',
+]
 known_aiida = ['aiida']
 # this configuration is compatible with yapf
 multi_line_output = 3
@@ -214,7 +220,6 @@ extras =
 """
 
 
-
 [tool.ruff]
 exclude = [
     "cookiecutters",
@@ -254,27 +259,27 @@ quote-style = 'single'
 
 [tool.ruff.lint]
 ignore = [
-  'F403',  # Star imports unable to detect undefined names
-  'F405',  # Import may be undefined or defined from star imports
-  'PLR0911',  # Too many return statements
-  'PLR0912',  # Too many branches
-  'PLR0913',  # Too many arguments in function definition
-  'PLR0915',  # Too many statements
-  'PLR2004',  # Magic value used in comparison
-  'RUF005',  # Consider iterable unpacking instead of concatenation
-  'RUF012'  # Mutable class attributes should be annotated with `typing.ClassVar`
+    'F403',    # Star imports unable to detect undefined names
+    'F405',    # Import may be undefined or defined from star imports
+    'PLR0911', # Too many return statements
+    'PLR0912', # Too many branches
+    'PLR0913', # Too many arguments in function definition
+    'PLR0915', # Too many statements
+    'PLR2004', # Magic value used in comparison
+    'RUF005',  # Consider iterable unpacking instead of concatenation
+    'RUF012',  # Mutable class attributes should be annotated with `typing.ClassVar`
 ]
 select = [
-  'E',  # pydocstyle
-  'W',  # pydocstyle
-  'F',  # pyflakes
-  'I',  # isort
-  'N',  # pep8-naming
-  'PLC',  # pylint-convention
-  'PLE',  # pylint-error
-  'PLR',  # pylint-refactor
-  'PLW',  # pylint-warning
-  'RUF'  # ruff
+    'E',   # pydocstyle
+    'W',   # pydocstyle
+    'F',   # pyflakes
+    'I',   # isort
+    'N',   # pep8-naming
+    'PLC', # pylint-convention
+    'PLE', # pylint-error
+    'PLR', # pylint-refactor
+    'PLW', # pylint-warning
+    'RUF', # ruff
 ]
 
 

@@ -189,7 +189,7 @@ def managed_temp_object():
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.usefixtures('fresh_aiida_env')
-def test_vasp_calc_only_output(run_vasp_process, aiida_caplog):
+def test_vasp_calc_only_output(run_vasp_process):
     """Test a run of a basic VASP calculation which misses critical files."""
     _, node = run_vasp_process(test_case='stdout')
     assert node.exit_status == 352
@@ -200,7 +200,7 @@ def test_vasp_calc_only_output(run_vasp_process, aiida_caplog):
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.usefixtures('fresh_aiida_env')
-def test_vasp_calc(run_vasp_process, aiida_caplog):
+def test_vasp_calc(run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
 

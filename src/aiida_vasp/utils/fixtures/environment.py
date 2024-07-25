@@ -23,7 +23,7 @@ from aiida.tools.archive import create_archive
 
 
 @pytest.fixture()
-def fresh_aiida_env(aiida_profile_clean, aiida_caplog):
+def fresh_aiida_env(aiida_profile_clean):
     """Reset the database before and after the test function."""
     try:
         yield aiida_profile_clean
