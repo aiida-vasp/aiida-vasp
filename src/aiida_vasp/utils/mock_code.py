@@ -29,11 +29,11 @@ EXCLUDED = ('POTCAR', '.aiida')
 
 def data_path(*args):
     """Return a path to a file in the test data directory."""
-    # path = pathlib.Path(*args).resolve()
     path = pathlib.Path(__file__).parent.parent.parent.parent / 'tests' / 'test_data' / pathlib.Path(*args)
-    assert path.exists(), f'{path}'
+    path = path.resolve()
+    assert path.exists()
     assert path.is_absolute()
-    return path
+    return str(path)
 
 
 def get_hash(dict_obj):

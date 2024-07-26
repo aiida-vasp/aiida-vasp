@@ -82,6 +82,7 @@ def data_path():
 
     def _data_path(*args):
         path = pathlib.Path(cwd / 'test_data', *args)
+        path = path.resolve()
         assert path.exists()
         assert path.is_absolute()
         return str(path)

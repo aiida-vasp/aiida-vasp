@@ -18,10 +18,6 @@ from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, data_path
 
 
-def output_object(*args):
-    return pathlib.Path(__file__).parent / 'test_data' / data_path(*args)
-
-
 @click.command('mock-vasp')
 def mock_vasp():
     """Original version of mock-vasp"""
@@ -110,13 +106,13 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
             )
             if not strict_match:
                 # Then this is a simple case - assemble the outputs from folders
-                shutil.copy(output_object('outcar', 'OUTCAR'), pwd / 'OUTCAR')
-                shutil.copy(output_object('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
-                shutil.copy(output_object('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
-                shutil.copy(output_object('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
-                shutil.copy(output_object('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
-                shutil.copy(output_object('doscar', 'DOSCAR'), pwd / 'DOSCAR')
-                shutil.copy(output_object('basic_run', 'vasp_output'), pwd / 'vasp_output')
+                shutil.copy(data_path('outcar', 'OUTCAR'), pwd / 'OUTCAR')
+                shutil.copy(data_path('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
+                shutil.copy(data_path('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
+                shutil.copy(data_path('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
+                shutil.copy(data_path('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
+                shutil.copy(data_path('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+                shutil.copy(data_path('basic_run', 'vasp_output'), pwd / 'vasp_output')
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
                 vasp_mock_output.append(
