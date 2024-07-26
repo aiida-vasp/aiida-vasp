@@ -10,6 +10,26 @@ repos:
       - id: check-json
       - id: check-toml
       - id: check-added-large-files
+        exclude: |
+          (?x)^(
+            tests/test_data/test_relax_wc/out/WAVECAR|
+            tests/test_data/outcar_extras/OUTCAR.converged|
+            tests/test_data/neb/01/OUTCAR|
+            tests/test_data/magnetization/OUTCAR|
+            tests/test_data/neb/03/OUTCAR|
+            tests/test_data/vasp_wc_ionic_unfinished/calc-001/out/EIGENVAL|
+            tests/test_data/vasp_wc_ionic_unfinished/calc-001/out/vasprun.xml|
+            tests/test_data/test_relax_wc/out/CHGCAR|
+            tests/test_data/vasp_wc_ionic_unfinished/calc-000/out/OUTCAR|
+            tests/test_data/basic_run_ill_format/vasprun.xml|
+            tests/test_data/test_converge_wc/out/CHGCAR|
+            tests/test_data/outcar_extras/OUTCAR.unfinished|
+            tests/test_data/basic_run/vasprun.xml|
+            tests/test_data/test_converge_wc/out/WAVECAR|
+            tests/test_data/disp_details/OUTCAR|
+            tests/test_data/partial/vasprun.xml|
+            tests/test_data/vasp_wc_ionic_unfinished/calc-001/out/OUTCAR
+          )$
       - id: forbid-new-submodules
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

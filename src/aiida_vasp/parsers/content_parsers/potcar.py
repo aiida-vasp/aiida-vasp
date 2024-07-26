@@ -119,7 +119,7 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
     def from_(cls, potcar):
         """Determine the best guess at how the input represents a POTCAR file and construct
         a PotcarIo instance based on that."""
-        if isinstance(potcar, str):
+        if isinstance(potcar, (str, os.PathLike)):
             try:
                 path_exists = Path(potcar).exists()
             except OSError:
@@ -137,6 +137,7 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
         elif isinstance(potcar, PotcarIo):
             pass
         else:
+            raise TypeError(f'Invalid type of potcar: {type(potcar)}')
             potcar = cls.from_(potcar)
         return potcar
 
