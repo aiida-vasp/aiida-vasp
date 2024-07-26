@@ -47,7 +47,7 @@ jobs:
           retention-days: 5
           if-no-files-found: warn
       - name: Upload coverage to Codecov
-        if: matrix.python == '3.12' && github.event.repository.fork == false
+        if: matrix.python == '3.12'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
