@@ -1,0 +1,6 @@
+VERY BAD NEWS! internal error in subroutine IBZKPT:
+ Tetrahedron method fails for NKPT<4. NKPT =       1
+I AM A WELL DEFINED ERROR
+I AM A WELL DEFINED WARNING
+I AM IGNORED
+I AM A WELL DEFINED ERROR

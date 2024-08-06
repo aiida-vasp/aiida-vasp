@@ -36,7 +36,7 @@ jobs:
       - name: Run tests with codecov
         run: |
           conda activate test
-          pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' src
+          pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
       - name: Archive error mock calculations
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
@@ -47,7 +47,7 @@ jobs:
           retention-days: 5
           if-no-files-found: warn
       - name: Upload coverage to Codecov
-        if: matrix.python == '3.12'
+        if: matrix.python == '3.12' && github.event.repository.fork == false
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

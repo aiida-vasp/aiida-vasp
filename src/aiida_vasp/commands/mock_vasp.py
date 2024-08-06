@@ -7,20 +7,15 @@ Separate cli interface for commands useful in development and testing.
 """
 
 import os
+import pathlib
 import shutil
-from pathlib import Path
 
 import click
 
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.utils.fixtures.testdata import data_path
-from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry
-
-
-def output_object(*args):
-    return Path(data_path(*args))
+from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, data_path
 
 
 @click.command('mock-vasp')
@@ -37,7 +32,7 @@ def mock_vasp_strict():
 
 def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
     """Verify input objects are parsable and copy in output objects."""
-    pwd = Path().absolute()
+    pwd = pathlib.Path().absolute()
     vasp_mock_output = []
     vasp_output_file = pwd / 'vasp_output'
     vasp_mock_output.append('MOCK PREPEND: START ----------------------\n')
@@ -111,13 +106,13 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
             )
             if not strict_match:
                 # Then this is a simple case - assemble the outputs from folders
-                shutil.copy(output_object('outcar', 'OUTCAR'), pwd / 'OUTCAR')
-                shutil.copy(output_object('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
-                shutil.copy(output_object('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
-                shutil.copy(output_object('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
-                shutil.copy(output_object('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
-                shutil.copy(output_object('doscar', 'DOSCAR'), pwd / 'DOSCAR')
-                shutil.copy(output_object('basic_run', 'vasp_output'), pwd / 'vasp_output')
+                shutil.copy(data_path('outcar', 'OUTCAR'), pwd / 'OUTCAR')
+                shutil.copy(data_path('vasprun', 'vasprun.xml'), pwd / 'vasprun.xml')
+                shutil.copy(data_path('chgcar', 'CHGCAR'), pwd / 'CHGCAR')
+                shutil.copy(data_path('wavecar', 'WAVECAR'), pwd / 'WAVECAR')
+                shutil.copy(data_path('eigenval', 'EIGENVAL'), pwd / 'EIGENVAL')
+                shutil.copy(data_path('doscar', 'DOSCAR'), pwd / 'DOSCAR')
+                shutil.copy(data_path('basic_run', 'vasp_output'), pwd / 'vasp_output')
                 shutil.copy(poscar, pwd / 'CONTCAR')
             else:
                 vasp_mock_output.append(
@@ -127,7 +122,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
     else:
         vasp_mock_output.append('MOCK PREPEND: Using test data from folder: ' + test_case + '\n')
         test_data_path = data_path(test_case, 'out')
-        for out_object in Path(test_data_path).iterdir():
+        for out_object in pathlib.Path(test_data_path).iterdir():
             shutil.copy(out_object, pwd)
 
     # Read original vasp_output as we will append mock messages to it
