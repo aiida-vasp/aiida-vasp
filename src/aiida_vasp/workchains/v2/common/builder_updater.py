@@ -6,12 +6,12 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 from warnings import warn
 
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
-from aiida.engine.processes.builder import ProcessBuilder
+from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
 from yaml import safe_load
 
 from ..inputset.vaspsets import VASPInputSet
@@ -63,7 +63,7 @@ OPTIONS_TEMPLATES = {
 
 @dataclass
 class VaspPresetConfig:
-    """Class to store the configuration for a VaspBuilderUpdater"""
+    """Class to store the preset for VaspBuilderUpdater"""
 
     name: str
     inputset: str
@@ -91,7 +91,7 @@ class VaspPresetConfig:
             data = safe_load(fhandle)
         return cls(**data)
 
-    def get_code_specific_options(self, code, namespace):
+    def get_code_specific_options(self, code: str, namespace: str) -> dict:
         """Return code specific options, if exists"""
         if code in self.code_specific:
             if namespace in self.code_specific[code]:
@@ -126,20 +126,35 @@ class BaseBuilderUpdater:
         self.preset = VaspPresetConfig.from_file(preset_name)
 
     @property
-    def builder(self):
+    def builder(self) -> ProcessBuilder:
         """The builder to be used for launching the calculation"""
         return self._builder
 
-    def show_builder(self):
-        """Print stuff defined in the builder"""
-        print(self.builder)
+    def submit(self) -> orm.WorkChainNode:
+        """Submit the workflow to the daemon and return the workchain node"""
+        from aiida.engine import submit
+
+        return submit(self.builder)
+
+    def run_get_node(self) -> orm.WorkChainNode:
+        """Run the workflow with the current python process"""
+        from aiida.engine import run_get_node
+
+        return run_get_node(self.builder)
 
 
 class VaspBuilderUpdater(BaseBuilderUpdater):
     WF_ENTRYPOINT = 'vasp.v2.vasp'
     DEFAULT_INPUTSET = DEFAULT_INPUTSET
 
-    def __init__(self, preset_name=None, builder=None, root_namespace=None, code=None, verbose=False):
+    def __init__(
+        self,
+        preset_name: Optional[str] = None,
+        builder: Optional[ProcessBuilder] = None,
+        root_namespace: Optional[str] = None,
+        code: Optional[str] = None,
+        verbose: bool = False,
+    ):
         """
         Initialise the update object.
 
@@ -162,11 +177,11 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.code = self.preset.default_code if code is None else code
 
     @property
-    def reference_structure(self):
+    def reference_structure(self) -> orm.StructureData:
         """Reference structure used for setting kpoints and other stuff"""
         return self.root_namespace.structure
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the nodes set to the namespace"""
         self.namespace_vasp.parameters = None
         self.namespace_vasp.options = None
@@ -178,12 +193,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.root_namespace.structure = None
         self.root_namespace.metadata.label = None
 
-    @property
-    def builder(self):
-        """The builder to be used for launching the calculation"""
-        return self._builder
-
-    def apply_preset(self, initial_structure, code=None, label=None):
+    def apply_preset(self, initial_structure, code=None, label=None) -> 'VaspBuilderUpdater':
         """
         Apply the preset
         """
@@ -207,7 +217,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         apply_preset=False,
         code=None,
         structure_node_name='structure',
-    ):
+    ) -> 'VaspBuilderUpdater':
         if overrides is None:
             overrides = {}
 
@@ -228,7 +238,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.inputset = inset
         return self
 
-    def set_kspacing(self, kspacing: float):
+    def set_kspacing(self, kspacing: float) -> 'VaspBuilderUpdater':
         self.namespace_vasp.kpoints_spacing = orm.Float(kspacing)
         if self.namespace_vasp.kpoints:
             del self.namespace_vasp.kpoints
@@ -237,21 +247,21 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     update_kspacing = set_kspacing
 
     @property
-    def parameters(self):
+    def parameters(self) -> Union[orm.Dict, None]:
         """Return the parameters node"""
         return self.namespace_vasp.parameters
 
     @property
-    def settings(self):
+    def settings(self) -> Union[orm.Dict, None]:
         """Return the wrapped settings node"""
         return self.namespace_vasp.settings
 
     @property
-    def options(self):
+    def options(self) -> Union[orm.Dict, None]:
         """Return the wrapped options node"""
         return self.namespace_vasp.options
 
-    def set_code(self, code: Union[str, orm.Code, None] = None):
+    def set_code(self, code: Union[str, orm.Code, None] = None) -> 'VaspBuilderUpdater':
         if code is None:
             code = self.preset.default_code
         if isinstance(code, str):
@@ -264,7 +274,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         warn('update_code is deprecated, use set_code instead', DeprecationWarning)
         return self.set_code(code)
 
-    def set_incar(self, *args, **kwargs):
+    def set_incar(self, *args, **kwargs) -> 'VaspBuilderUpdater':
         """Update incar tags"""
         if self.namespace_vasp.parameters is None:
             self.namespace_vasp.parameters = orm.Dict(dict={'incar': {}})
@@ -273,11 +283,13 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.namespace_vasp.parameters = node
         return self
 
-    def update_incar(self, *args, **kwargs):
+    def update_incar(self, *args, **kwargs) -> 'VaspBuilderUpdater':
         warn('update_incar is deprecated, use set_incar instead', DeprecationWarning)
         return self.set_incar(*args, **kwargs)
 
-    def set_options(self, *args, code=None, apply_preset=False, **kwargs):
+    def set_options(
+        self, *args, code: Optional[str] = None, apply_preset: bool = False, **kwargs
+    ) -> 'VaspBuilderUpdater':
         if apply_preset:
             if code is None:
                 code = self.preset.default_code
@@ -292,11 +304,11 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             self.namespace_vasp.options = update_dict_node(self.namespace_vasp.options, odict)
         return self
 
-    def update_options(self, *args, **kwargs):
+    def update_options(self, *args, **kwargs) -> 'VaspBuilderUpdater':
         warn('update_options is deprecated, use set_options instead', DeprecationWarning)
         return self.set_options(*args, **kwargs)
 
-    def set_kpoints_mesh(self, mesh: List[int], offset: List[float]):
+    def set_kpoints_mesh(self, mesh: List[int], offset: List[float]) -> 'VaspBuilderUpdater':
         """Use mesh for kpoints"""
         kpoints = orm.KpointsData()
         kpoints.set_cell_from_structure(self.reference_structure)
@@ -308,11 +320,13 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             pass
         return self
 
-    def update_kpoints_mesh(self, mesh: List[int], offset: List[float]):
+    def update_kpoints_mesh(self, mesh: List[int], offset: List[float]) -> 'VaspBuilderUpdater':
         warn('update_kpoints_mesh is deprecated, use set_kpoints_mesh instead', DeprecationWarning)
         return self.set_kpoints_mesh(mesh, offset)
 
-    def set_settings(self, *args, code=None, apply_preset=False, **kwargs):
+    def set_settings(
+        self, *args, code: Optional[str] = None, apply_preset: bool = False, **kwargs
+    ) -> 'VaspBuilderUpdater':
         """Update the settings"""
 
         if apply_preset:
@@ -334,18 +348,18 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         warn('update_settings is deprecated, use set_settings instead', DeprecationWarning)
         return self.set_settings(*args, **kwargs)
 
-    def set_label(self, label=None):
+    def set_label(self, label: Optional[str] = None) -> 'VaspBuilderUpdater':
         """Set the toplevel label, default to the label of the structure"""
         if label is None:
             label = self.root_namespace.structure.label
         self.root_namespace.metadata.label = label
         return self
 
-    def update_label(self, label=None):
+    def update_label(self, label=None) -> 'VaspBuilderUpdater':
         warn('update_label is deprecated, use set_label instead', DeprecationWarning)
         return self.set_label(label)
 
-    def set_resources(self, *args, **kwargs):
+    def set_resources(self, *args, **kwargs) -> 'VaspBuilderUpdater':
         """Update resources"""
         if self.namespace_vasp.options is None:
             raise RuntimeError('Please set the options before setting resources')
@@ -354,7 +368,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.namespace_vasp.options = update_dict_node(self.namespace_vasp.options, resources, 'resources')
         return self
 
-    def update_resources(self, *args, **kwargs):
+    def update_resources(self, *args, **kwargs) -> 'VaspBuilderUpdater':
         warn('update_resources is deprecated, use set_resources instead', DeprecationWarning)
         return self.set_resources(*args, **kwargs)
 
@@ -367,7 +381,9 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         """Return the reference structure"""
         return self.namespace_vasp.initial_structure
 
-    def apply_preset(self, structure_init, structure_final, code=None, label=None, interpolate=True, nimages=5):
+    def apply_preset(
+        self, structure_init, structure_final, code=None, label=None, interpolate=True, nimages=5
+    ) -> 'VaspNEBUpdater':
         super().apply_preset(structure_init, code, label)
         self.set_final_structure(structure_final)
         if interpolate:
@@ -378,7 +394,14 @@ class VaspNEBUpdater(VaspBuilderUpdater):
 
         return self
 
-    def use_inputset(self, initial_structure, set_name='UCLRelaxSet', overrides=None, apply_preset=False, code=None):
+    def use_inputset(
+        self,
+        initial_structure: orm.StructureData,
+        set_name='UCLRelaxSet',
+        overrides=None,
+        apply_preset=False,
+        code=None,
+    ) -> 'VaspNEBUpdater':
         super().use_inputset(
             structure=initial_structure,
             set_name=set_name,
@@ -389,18 +412,18 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         )
         return self
 
-    def set_label(self, label=None):
+    def set_label(self, label: Optional[str] = None) -> 'VaspNEBUpdater':
         """Set the toplevel label, default to the label of the structure"""
         if label is None:
             label = self.root_namespace.initial_structure.label
         self.root_namespace.metadata.label = label
         return self
 
-    def set_final_structure(self, final_structure):
+    def set_final_structure(self, final_structure: orm.StructureData) -> 'VaspNEBUpdater':
         self.namespace_vasp.final_structure = final_structure
         return self
 
-    def set_neb_images(self, images):
+    def set_neb_images(self, images: Union[list, dict, AttributeDict]) -> 'VaspNEBUpdater':
         """Set the NEB images"""
 
         if isinstance(images, list):
@@ -410,7 +433,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         self.namespace_vasp.neb_images = output
         return self
 
-    def set_interpolated_images(self, nimages):
+    def set_interpolated_images(self, nimages: int) -> 'VaspNEBUpdater':
         """
         Interpolate images and set as inputs structures
 
@@ -429,6 +452,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         self.namespace_vasp.neb_images = images
         # Update the final image - make sure that is atoms are not wrapped around
         self.set_final_structure(interpolated['image_final'])
+        return self
 
 
 class VaspRelaxUpdater(VaspBuilderUpdater):
@@ -438,7 +462,14 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.relax'
 
-    def __init__(self, preset_name=None, builder=None, override_vasp_namespace=None, namespace_relax=None, code=None):
+    def __init__(
+        self,
+        preset_name: Optional[str] = None,
+        builder: Optional[ProcessBuilder] = None,
+        override_vasp_namespace: Optional[ProcessBuilderNamespace] = None,
+        namespace_relax: Optional[ProcessBuilderNamespace] = None,
+        code: Optional[str] = None,
+    ):
         super().__init__(preset_name=preset_name, builder=builder, code=code, root_namespace=builder)
         # The primary VASP namespace is under builder.vasp
         if override_vasp_namespace is None:
@@ -451,12 +482,14 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
         else:
             self.namespace_relax = namespace_relax
 
-    def apply_preset(self, structure, code=None, label=None):
+    def apply_preset(
+        self, structure: orm.StructureData, code: Optional[str] = None, label: Optional[str] = None
+    ) -> 'VaspRelaxUpdater':
         out = super().apply_preset(structure, code, label)
         self.set_relax_settings()
         return out
 
-    def set_relax_settings(self, **kwargs):
+    def set_relax_settings(self, **kwargs) -> 'VaspRelaxUpdater':
         """Set/update RelaxOptions controlling the operation of the workchain"""
 
         if self.namespace_relax.relax_settings is None:
@@ -470,9 +503,14 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     update_relax_settings = set_relax_settings
 
-    def clear_relax_settings(self):
+    def clear_relax_settings(self) -> 'VaspRelaxUpdater':
         """Reset any existing relax options"""
         self.namespace_relax.relax_settings = RelaxOptions().to_aiida_dict()
+        return self
+
+    def clear(self) -> 'VaspRelaxUpdater':
+        super().clear()
+        self.clear_relax_settings()
         return self
 
 
@@ -481,14 +519,19 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
 
-    def set_conv_settings(self, **kwargs):
+    def set_conv_settings(self, **kwargs) -> 'VaspConvUpdater':
         """
         Use the supplied convergence settings
         """
         from ..converge import ConvOptions
 
-        opts = ConvOptions(**kwargs)
+        conv_dict = self.preset.get_code_specific_options(self.code, 'convergence_settings')
+        conv_dict = deepcopy(conv_dict)
+        conv_dict.update(dict(**kwargs))
+
+        opts = ConvOptions(**conv_dict)
         self.builder.conv_settings = opts.to_aiida_dict()
+        return self
 
 
 class VaspBandUpdater(VaspBuilderUpdater):
@@ -504,7 +547,7 @@ class VaspBandUpdater(VaspBuilderUpdater):
         else:
             self.namespace_vasp = override_vasp_namespace
 
-    def apply_preset(self, structure: orm.StructureData, run_relax=False, *args, **kwargs):
+    def apply_preset(self, structure: orm.StructureData, run_relax: bool = False, *args, **kwargs) -> 'VaspBandUpdater':
         super().apply_preset(structure, *args, **kwargs)
 
         # Specify the relaxation and NAC namespace
@@ -518,7 +561,7 @@ class VaspBandUpdater(VaspBuilderUpdater):
             relax_upd.apply_preset(structure, *args, **kwargs)
         return self
 
-    def set_label(self, label=None):
+    def set_label(self, label=None) -> 'VaspBandUpdater':
         """Set the toplevel label, default to the label of the structure"""
         super().set_label(label)
         if label:
@@ -534,7 +577,7 @@ class VaspHybridBandUpdater(VaspBandUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.hybrid_bands'
 
-    def apply_preset(self, structure: orm.StructureData, *args, **kwargs):
+    def apply_preset(self, structure: orm.StructureData, *args, **kwargs) -> 'VaspHybridBandUpdater':
         """Apply the preset"""
         super().apply_preset(structure, *args, **kwargs)
         band_settings = self.preset.get_code_specific_options(self.code, 'band_settings')
@@ -629,12 +672,14 @@ class VaspHybridBandUpdater(VaspBandUpdater):
 #         pprint(builder_to_dict(self.root_namespace, unpack=True))
 
 
-def is_specified(port_namespace):
+def is_specified(port_namespace: ProcessBuilderNamespace) -> bool:
     """Check if there is anything specified under a PortNamespace"""
     return any(map(bool, port_namespace.values()))
 
 
-def update_dict_node(node: orm.Dict, content: dict, namespace=None, reuse_if_possible=True) -> orm.Dict:
+def update_dict_node(
+    node: orm.Dict, content: dict, namespace: Optional[str] = None, reuse_if_possible: bool = True
+) -> orm.Dict:
     """
     Update a Dict node with the content
     Optionally update an item of the Dict node.
@@ -658,7 +703,7 @@ def update_dict_node(node: orm.Dict, content: dict, namespace=None, reuse_if_pos
     return node
 
 
-def builder_to_dict(builder, unpack=True):
+def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict:
     """
     Convert a builder to a dictionary and unpack certain nodes.
 
