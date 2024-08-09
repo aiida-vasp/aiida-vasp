@@ -114,15 +114,14 @@ def read_file(data_path):
 @pytest.fixture()
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
-    from aiida.orm import Code
+    from aiida.orm import InstalledCode
 
     if not localhost.pk:
         localhost.store()
-    code = Code()
+    code = InstalledCode(localhost, '/usr/local/bin/vasp')
     code.label = 'vasp'
     code.description = 'VASP code'
-    code.set_remote_computer_exec((localhost, '/usr/local/bin/vasp'))
-    code.set_input_plugin_name('vasp.vasp')
+    code.default_calc_job_plugin = 'vasp.vasp'
     return code
 
 

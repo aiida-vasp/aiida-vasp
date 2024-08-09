@@ -374,7 +374,7 @@ def get_convergence_builder(structure, config):
     upd = VaspBuilderUpdater(conv_builder)
     upd.use_inputset(
         structure,
-        config.get('inputset', VaspBuilderUpdater.DEFAULT_SET),
+        config.get('inputset', VaspBuilderUpdater.DEFAULT_INPUTSET),
         overrides=config.get('overrides', {}),
     )
     upd.set_code(orm.load_code(config['code']))

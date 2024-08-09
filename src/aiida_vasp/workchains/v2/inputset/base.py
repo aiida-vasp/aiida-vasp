@@ -7,8 +7,7 @@ from math import pi
 from pathlib import Path
 
 import yaml
-from aiida.orm import Dict, KpointsData
-from ase import Atoms
+from aiida.orm import Dict, KpointsData, StructureData
 
 FELEMS = [
     'La',
@@ -58,19 +57,16 @@ class InputSet:
     """
 
     # path from which the set yaml files are read
-    _load_paths = (get_library_path(), Path('~/.inputsets').expanduser())
+    _load_paths = (get_library_path(), Path('~/.aiida-vasp').expanduser())
 
-    def __init__(self, set_name, structure, overrides=None, verbose=True):
+    def __init__(self, set_name, overrides=None, verbose=False):
         """
         Initialise an InputSet
 
         Args:
           set_name: Name of the set to be loaded
-          structure: Structure used for calculation, can be StructureData or Atoms
           overrides: A dictionary of overriding inputs.
-
         """
-        self.structure = structure
         self.set_name = set_name
 
         if overrides is None:
@@ -81,7 +77,7 @@ class InputSet:
         self.verbose = verbose
         self._load_data()
 
-    def get_input_dict(self, raw_python=True):
+    def get_input_dict(self, structure: StructureData, raw_python=True):
         """
         Get a input dictionary for VASP
         """
@@ -89,7 +85,7 @@ class InputSet:
         out_dict = deepcopy(self._presets['global'])
 
         # Set-per atom properties
-        natoms = self.natoms
+        natoms = len(structure.sites)
         for key, value in self._presets.get('per_atom', {}).items():
             out_dict[key] = value * natoms
 
@@ -115,18 +111,6 @@ class InputSet:
         with open(set_path, encoding='utf-8') as fhd:
             self._presets = yaml.load(fhd, Loader=yaml.FullLoader)
 
-    @property
-    def natoms(self):
-        if isinstance(self.structure, Atoms):
-            return len(self.structure)
-        return len(self.structure.sites)
-
-    @property
-    def elements(self):
-        if isinstance(self.structure, Atoms):
-            return self.structure.get_chemical_symbols()
-        return [kind.name for kind in self.structure.kinds]
-
     def apply_overrides(self, out_dict):
         """Apply overrides stored in self.overrides to the dictionary passed"""
         for name, value in self.overrides.items():
@@ -140,7 +124,7 @@ class InputSet:
             else:
                 out_dict[name] = value
 
-    def get_kpoints(self, density):
+    def get_kpoints(self, structure, density=None):
         """
         Return a kpoints object for a given density
 
@@ -151,7 +135,9 @@ class InputSet:
           An KpointsData object with the desired density
         """
 
+        if density is None:
+            density = self._presets['kpoints_spacing']
         kpoints = KpointsData()
-        kpoints.set_cell(self.structure.cell)
+        kpoints.set_cell(structure.cell)
         kpoints.set_kpoints_mesh_from_density(density * 2 * pi)
         return kpoints

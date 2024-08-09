@@ -3,6 +3,7 @@ Test for input set specifications
 """
 
 import pytest
+from aiida import orm
 from aiida_vasp.workchains.v2.inputset.base import InputSet
 from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
 from ase.build import bulk
@@ -11,22 +12,22 @@ from ase.build import bulk
 
 
 @pytest.fixture
-def fe_atoms():
+def fe_atoms(aiida_profile):
     """Get a Fe atoms"""
-    return bulk('Fe', 'fcc', 5.0)
+    return orm.StructureData(ase=bulk('Fe', 'fcc', 5.0))
 
 
 @pytest.fixture
-def mgo_atoms():
+def mgo_atoms(aiida_profile):
     """Get a MgO atoms"""
-    return bulk('MgO', 'rocksalt', 5.0)
+    return orm.StructureData(ase=bulk('MgO', 'rocksalt', 5.0))
 
 
 def test_base(fe_atoms):
     """Base test case"""
-    iset = InputSet('MITRelaxSet', fe_atoms, overrides={'ediff': 1.0, 'nsw': None})
+    iset = InputSet('MITRelaxSet', overrides={'ediff': 1.0, 'nsw': None})
 
-    out = iset.get_input_dict()
+    out = iset.get_input_dict(fe_atoms)
     assert out['ediff'] == 1.0
     assert out['ibrion'] == 2
     assert 'nsw' not in out
@@ -34,9 +35,9 @@ def test_base(fe_atoms):
 
 def test_vasp(fe_atoms):
     """Test VASP inputsets"""
-    iset = VASPInputSet('MITRelaxSet', fe_atoms, overrides={'ediff': 1.0, 'nsw': None, 'ldautype': 3})
+    iset = VASPInputSet('MITRelaxSet', overrides={'ediff': 1.0, 'nsw': None, 'ldautype': 3})
 
-    out = iset.get_input_dict()
+    out = iset.get_input_dict(fe_atoms)
     assert out['ediff'] == 1.0
     assert out['ibrion'] == 2
     assert out['magmom'] == [5]
@@ -50,6 +51,6 @@ def test_vasp(fe_atoms):
 
 def test_kpoints(aiida_profile, fe_atoms):
     """Test generating kpoints"""
-    inset = VASPInputSet('MITRelaxSet', fe_atoms)
-    kpoints = inset.get_kpoints(0.05)
+    inset = VASPInputSet('MITRelaxSet')
+    kpoints = inset.get_kpoints(fe_atoms, 0.05)
     assert kpoints.get_kpoints_mesh()[0][0] == 7
