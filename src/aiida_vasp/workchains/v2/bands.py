@@ -21,6 +21,7 @@ from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
+from .common.opthold import BoolOption, ChoiceOption, FloatOption, IntOption, OptionContainer
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithVaspInputSet
 
@@ -28,6 +29,42 @@ try:
     from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 except ImportError:
     from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+
+
+class BandOptions(OptionContainer):
+    """Options for VaspRelaxWorkChain"""
+
+    symprec = FloatOption(help='Precision of the symmetry determination', default_value=0.01, required=False)
+    band_mode = ChoiceOption(
+        'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath-aiida and latimer-munro.',
+        ['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
+        default_value='bradcrack',
+    )
+    band_kpoints_distance = FloatOption(
+        'Spacing for band distances for automatic kpoints generation, used by seekpath-aiida mode.',
+        default_value=None,
+        required=False,
+    )
+    line_density = IntOption(
+        'Density of the point along the path, used by sumo interface.',
+        default_value=20,
+        required=False,
+    )
+    dos_kpoints_distance = FloatOption(
+        'Kpoints for running DOS calculations in A^-1 * 2pi. Will perform non-SCF DOS calculation is supplied.',
+        default_value=0.03,
+        required=False,
+    )
+    only_dos = BoolOption(
+        'Flag for running only DOS calculations',
+        default_value=False,
+        required=False,
+    )
+    run_dos = BoolOption(
+        'Flag for running DOS calculations',
+        default_value=False,
+        required=False,
+    )
 
 
 class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
@@ -79,37 +116,11 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             required=False,
         )
         spec.input(
-            'bands_kpoints_distance',
-            help='Spacing for band distances for automatic kpoints generation, used by seekpath-aiida mode.',
-            valid_type=orm.Float,
-            required=False,
-        )
-        spec.input(
-            'line_density',
-            help='Density of the point along the path, used by sumo interface.',
-            valid_type=orm.Float,
-            required=False,
-        )
-        spec.input(
-            'band_mode',
-            help='Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath, '
-            'seekpath-aiida and latimer-munro.',
-            required=False,
-            valid_type=orm.Str,
-        )
-        spec.input(
-            'symprec',
-            help='Precision of the symmetry determination',
-            valid_type=orm.Float,
-            required=True,
-        )
-        spec.input(
-            'dos_kpoints_density',
-            help='Kpoints for running DOS calculations in A^-1 * 2pi. Will perform '
-            'non-SCF DOS calculation is supplied.',
+            'band_settings',
+            help=BandOptions.get_description(),
+            valid_type=get_data_class('core.dict'),
+            validator=BandOptions.validate_dict,
             serializer=to_aiida_type,
-            required=False,
-            valid_type=orm.Float,
         )
         spec.expose_inputs(
             relax_work,
@@ -279,7 +290,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         Seekpath should only run if no explicit bands is provided or we are just
         running for DOS, in which case the original structure is used.
         """
-        return 'bs_kpoints' not in self.inputs and (not self.inputs.get('only_dos', False))
+        return 'bs_kpoints' not in self.inputs and (not self.inputs.band_settings['only_dos'])
 
     def generate_path(self):
         """
@@ -288,7 +299,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         current_structure_backup = self.ctx.current_structure
 
-        mode = self.inputs.get('band_mode')
+        mode = self.inputs.band_settings['band_mode']
         if mode is None:
             mode = self.DEFAULT_BAND_MODE
         else:
@@ -296,7 +307,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         if mode == 'seekpath-aiida':
             inputs = {
-                'reference_distance': self.inputs.get('bands_kpoints_distance', None),
+                'reference_distance': self.inputs.band_settings['band_kpoints_distance'],
                 'metadata': {'call_link_label': 'seekpath'},
             }
             func = seekpath_structure_analysis
@@ -305,8 +316,8 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             from .common.sumo_kpath import kpath_from_sumo
 
             inputs = {
-                'line_density': self.inputs.get('line_density', orm.Float(self.DEFAULT_LINE_DENSITY)),
-                'symprec': self.inputs.get('symprec', orm.Float(self.DEFAULT_SYMPREC)),
+                'line_density': self.inputs.band_settings['line_density'],
+                'symprec': self.inputs.band_settings['symprec'],
                 'mode': orm.Str(mode),
                 'metadata': {'call_link_label': 'sumo_kpath'},
             }
@@ -414,9 +425,9 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         running = {}
 
-        only_dos = self.inputs.get('only_dos')
+        only_dos = self.inputs.band_settings['only_dos']
 
-        if (only_dos is None) or (only_dos.value is False):
+        if only_dos.value is False:
             if 'bands' in self.inputs:
                 bands_input = AttributeDict(self.exposed_inputs(base_work, namespace='bands'))
             else:
@@ -463,7 +474,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         # Do DOS calculation if dos input namespace is populated or a
         # dos_kpoints input is passed.
-        if ('dos_kpoints_density' in self.inputs) or ('dos' in self.inputs):
+        if (self.inputs.band_settings['run_dos']) or ('dos' in self.inputs):
             if 'dos' in self.inputs:
                 dos_input = AttributeDict(self.exposed_inputs(base_work, namespace='dos'))
             else:
@@ -474,11 +485,10 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
                     }
                 )
             # Use the supplied kpoints density for DOS
-            if 'dos_kpoints_density' in self.inputs:
-                dos_kpoints = orm.KpointsData()
-                dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
-                dos_kpoints.set_kpoints_mesh_from_density(self.inputs.dos_kpoints_density.value * 2 * np.pi)
-                dos_input.kpoints = dos_kpoints
+            dos_kpoints = orm.KpointsData()
+            dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
+            dos_kpoints.set_kpoints_mesh_from_density(self.inputs.band_settings['dos_kpoints_density'] * 2 * np.pi)
+            dos_input.kpoints = dos_kpoints
 
             # Special treatment - combine the parameters
             parameters = inputs.parameters.get_dict()
@@ -756,7 +766,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             return self.exit_codes.ERROR_NO_VALID_SCF_KPOINTS_INPUT  # pylint: disable=no-member
 
         # Number of kpoints per split, NOT including the SCF kpoints
-        per_split = orm.Int(self.inputs.kpoints_per_split.value - scf_kpoints.get_kpoints().shape[0])
+        per_split = orm.Int(self.inputs.band_settings['kpoints_per_split'] - scf_kpoints.get_kpoints().shape[0])
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
 
