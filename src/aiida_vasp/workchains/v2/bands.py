@@ -34,7 +34,7 @@ except ImportError:
 class BandOptions(OptionContainer):
     """Options for VaspRelaxWorkChain"""
 
-    symprec = FloatOption(help='Precision of the symmetry determination', default_value=0.01, required=False)
+    symprec = FloatOption('Precision of the symmetry determination', default_value=0.01, required=False)
     band_mode = ChoiceOption(
         'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath-aiida and latimer-munro.',
         ['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
@@ -97,9 +97,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
     _base_wk_string = 'vasp.v2.vasp'
     _relax_wk_string = 'vasp.v2.relax'
-    DEFAULT_BAND_MODE = 'bradcrack'
-    DEFAULT_LINE_DENSITY = 20
-    DEFAULT_SYMPREC = 0.01
 
     @classmethod
     def define(cls, spec):
@@ -171,13 +168,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             default=lambda: orm.Str('none'),
         )
         spec.input(
-            'only_dos',
-            required=False,
-            help='Flag for running only DOS calculations',
-            valid_type=orm.Bool,
-            serializer=to_aiida_type,
-        )
-        spec.input(
             'chgcar',
             required=False,
             valid_type=get_data_class('vasp.chargedensity'),
@@ -247,7 +237,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         self.ctx.current_structure = self.inputs.structure
         self.ctx.bs_kpoints = self.inputs.get('bs_kpoints')
         param = self.inputs.scf.parameters.get_dict()
-        if 'magmom' in param[OVERRIDE_NAMESPACE] and not self.inputs.get('only_dos'):
+        if 'magmom' in param[OVERRIDE_NAMESPACE] and not self.inputs.band_settings['only_dos']:
             self.report('Magnetic system passed for BS')
             self.ctx.magmom = param[OVERRIDE_NAMESPACE]['magmom']
         else:
@@ -300,10 +290,6 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         current_structure_backup = self.ctx.current_structure
 
         mode = self.inputs.band_settings['band_mode']
-        if mode is None:
-            mode = self.DEFAULT_BAND_MODE
-        else:
-            mode = mode.value
 
         if mode == 'seekpath-aiida':
             inputs = {
@@ -427,7 +413,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         only_dos = self.inputs.band_settings['only_dos']
 
-        if only_dos.value is False:
+        if only_dos is False:
             if 'bands' in self.inputs:
                 bands_input = AttributeDict(self.exposed_inputs(base_work, namespace='bands'))
             else:

@@ -382,6 +382,18 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         warn('update_resources is deprecated, use set_resources instead', DeprecationWarning)
         return self.set_resources(*args, **kwargs)
 
+    def _set_options(
+        self, option_class, option_name: str, target_namespace: Union[ProcessBuilder, ProcessBuilderNamespace], **kwargs
+    ):
+        if getattr(target_namespace, option_name) is None:
+            current_option = option_class()
+        else:
+            current_option = option_class(**getattr(target_namespace, option_name).get_dict())
+        for key, value in kwargs.items():
+            setattr(current_option, key, value)
+        setattr(target_namespace, option_name, current_option.to_aiida_dict())
+        return self
+
 
 class VaspNEBUpdater(VaspBuilderUpdater):
     WF_ENTRYPOINT = 'vasp.neb'
@@ -501,14 +513,7 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     def set_relax_settings(self, **kwargs) -> 'VaspRelaxUpdater':
         """Set/update RelaxOptions controlling the operation of the workchain"""
-
-        if self.namespace_relax.relax_settings is None:
-            current_options = RelaxOptions()
-        else:
-            current_options = RelaxOptions(**self.namespace_relax.relax_settings.get_dict())
-        for key, value in kwargs.items():
-            setattr(current_options, key, value)
-        self.namespace_relax.relax_settings = current_options.to_aiida_dict()
+        self._set_options(RelaxOptions, 'relax_settings', self.namespace_relax, **kwargs)
         return self
 
     update_relax_settings = set_relax_settings
@@ -535,12 +540,7 @@ class VaspConvUpdater(VaspBuilderUpdater):
         """
         from ..converge import ConvOptions
 
-        conv_dict = self.preset.get_code_specific_options(self.code, 'convergence_settings')
-        conv_dict = deepcopy(conv_dict)
-        conv_dict.update(dict(**kwargs))
-
-        opts = ConvOptions(**conv_dict)
-        self.builder.conv_settings = opts.to_aiida_dict()
+        self._set_options(ConvOptions, 'conv_settings', self.builder, **kwargs)
         return self
 
 
@@ -569,16 +569,13 @@ class VaspBandUpdater(VaspBuilderUpdater):
                 override_vasp_namespace=self.root_namespace.relax.vasp,
             )
             relax_upd.apply_preset(structure, *args, **kwargs)
+        self.set_band_settings()
         return self
 
-    def set_label(self, label=None) -> 'VaspBandUpdater':
-        """Set the toplevel label, default to the label of the structure"""
-        super().set_label(label)
-        if label:
-            if is_specified(self.root_namespace.relax):
-                self.root_namespace.relax.metadata.label = label
-            if is_specified(self.root_namespace.scf):
-                self.root_namespace.scf.metadata.label = label
+    def set_band_settings(self, **kwargs) -> 'VaspBandUpdater':
+        from aiida_vasp.workchains.v2.bands import BandOptions
+
+        self._set_options(BandOptions, 'band_settings', self.root_namespace, **kwargs)
         return self
 
 
