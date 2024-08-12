@@ -98,6 +98,12 @@ class BaseFileParser:
             else:
                 raise TypeError('The supplied handler is not of Data type.')
 
+    def get_all_quantities(self):
+        """
+        Fetch all quantities that can be parsed.
+        """
+        return {name: getattr(self, name) for name in self.PARSABLE_QUANTITIES.keys()}
+
     @property
     def parsable_quantities(self):
         """Fetch the quantities that this content parser can provide."""

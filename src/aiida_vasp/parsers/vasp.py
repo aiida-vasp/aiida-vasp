@@ -16,11 +16,58 @@ modular and contains several modules:
 import traceback
 
 from aiida.common.exceptions import NotExistent
+from pydantic import BaseModel, Field
 
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.settings import ParserDefinitions, ParserSettings
+
+
+class CriticalNotificationsConfig(BaseModel):
+    add_brmix: bool = True
+    add_cnormn: bool = True
+    add_denmp: bool = True
+    add_dentet: bool = True
+    add_edddav_zhegv: bool = True
+    add_eddrmm_zhegv: bool = True
+    add_edwav: bool = True
+    add_fexcp: bool = True
+    add_fock_acc: bool = True
+    add_non_collinear: bool = True
+    add_not_hermitian: bool = True
+    add_psmaxn: bool = True
+    add_pzstein: bool = True
+    add_real_optlay: bool = True
+    add_rhosyg: bool = True
+    add_rspher: bool = True
+    add_set_indpw_full: bool = True
+    add_sgrcon: bool = True
+    add_no_potimm: bool = True
+    add_magmom: bool = True
+    add_bandocc: bool = True
+
+
+class ParserSettingsConfig(BaseModel):
+    add_trajectory: bool = False
+    add_bands: bool = False
+    add_charge_density: bool = False
+    add_dos: bool = False
+    add_kpoints: bool = False
+    add_energies: bool = False
+    add_misc: bool = False
+    add_structure: bool = False
+    add_projectors: bool = False
+    add_born_charges: bool = False
+    add_dielectrics: bool = False
+    add_hessian: bool = False
+    add_dynmat: bool = False
+    add_wavecar: bool = False
+    add_forces: bool = False
+    add_stress: bool = False
+    add_site_magnetization: bool = False
+    critical_notifications: dict = Field(default_factory=CriticalNotificationsConfig)
+
 
 DEFAULT_SETTINGS = {
     'add_trajectory': False,

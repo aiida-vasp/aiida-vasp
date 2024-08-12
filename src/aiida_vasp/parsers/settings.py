@@ -8,41 +8,102 @@ compositions of quantities.
 
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+from dataclasses import dataclass
+from typing import List
 
-from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
-from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
-from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
-from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
-from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutcarParser
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.content_parsers.stream import StreamParser
-from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from pydantic import BaseModel
+
+from aiida_vasp.parsers.content_parsers import *
 from aiida_vasp.utils.extended_dicts import update_nested_dict
+
+
+@dataclass
+class ContentParserConfig:
+    """Content parser set configuration"""
+
+    parser_class: BaseFileParser
+    is_critical: bool
+    mode: str
+    status: str = 'Unknown'
+
 
 CONTENT_PARSER_SETS = {
     'default': {
-        'DOSCAR': {'parser_class': DoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'EIGENVAL': {'parser_class': EigenvalParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'IBZKPT': {'parser_class': KpointsParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'OUTCAR': {'parser_class': OutcarParser, 'is_critical': True, 'status': 'Unknown', 'mode': 'r'},
-        'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': True, 'status': 'Unknown', 'mode': 'rb'},
-        'CHGCAR': {'parser_class': ChgcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'CONTCAR': {'parser_class': PoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'vasp_output': {'parser_class': StreamParser, 'is_critical': False, 'status': 'Unkonwn', 'mode': 'r'},
+        'DOSCAR': ContentParserConfig(DoscarParser, False, 'r'),
+        'EIGENVAL': ContentParserConfig(EigenvalParser, False, 'r'),
+        'IBZKPT': ContentParserConfig(KpointsParser, False, 'r'),
+        'OUTCAR': ContentParserConfig(OutcarParser, True, 'r'),
+        'vasprun.xml': ContentParserConfig(VasprunParser, True, 'rb'),
+        'CHGCAR': ContentParserConfig(ChgcarParser, False, 'r'),
+        'CONTCAR': ContentParserConfig(PoscarParser, False, 'r'),
+        'vasp_output': ContentParserConfig(StreamParser, False, 'r'),
     },
     'neb': {
-        'DOSCAR': {'parser_class': DoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'EIGENVAL': {'parser_class': EigenvalParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'IBZKPT': {'parser_class': KpointsParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'OUTCAR': {'parser_class': VtstNebOutcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'vasprun.xml': {'parser_class': VasprunParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'rb'},
-        'CHGCAR': {'parser_class': ChgcarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
-        'CONTCAR': {'parser_class': PoscarParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'DOSCAR': ContentParserConfig(DoscarParser, False, 'r'),
+        'EIGENVAL': ContentParserConfig(EigenvalParser, False, 'r'),
+        'IBZKPT': ContentParserConfig(KpointsParser, False, 'r'),
+        'OUTCAR': ContentParserConfig(VtstNebOutcarParser, False, 'r'),
+        'vasprun.xml': ContentParserConfig(VasprunParser, False, 'rb'),
+        'CHGCAR': ContentParserConfig(ChgcarParser, False, 'r'),
+        'CONTCAR': ContentParserConfig(PoscarParser, False, 'r'),
         # The STDOUT is rename as 'stdout' for NEB calculations, this is because VASP itself
         # divert STDOUT for each image to <ID>/stdout
-        'stdout': {'parser_class': StreamParser, 'is_critical': False, 'status': 'Unknown', 'mode': 'r'},
+        'stdout': ContentParserConfig(StreamParser, False, 'r'),
     },
 }
+
+
+class NodeConfig(BaseModel):
+    """Output node configuration"""
+
+    link_name: str
+    tyle: str
+    quantities: List[str]
+
+
+class NodeConfig(BaseModel):
+    """Configurations for the output nodes"""
+
+    misc: NodeConfig = NodeConfig(
+        link_name='misc',
+        tyle='core.dict',
+        quantities=[
+            'total_energies',
+            'maximum_stress',
+            'maximum_force',
+            'notifications',
+            'run_status',
+            'run_stats',
+            'version',
+        ],
+    )
+    kpoints: NodeConfig = NodeConfig(link_name='kpoints', tyle='core.array.kpoints', quantities=['kpoints'])
+    structure: NodeConfig = NodeConfig(link_name='structure', tyle='core.structure', quantities=['structure'])
+    poscar_structure: NodeConfig = NodeConfig(
+        link_name='structure', tyle='core.structure', quantities=['poscar-structure']
+    )
+    trajectory: NodeConfig = NodeConfig(link_name='trajectory', tyle='core.array.trajectory', quantities=['trajectory'])
+    forces: NodeConfig = NodeConfig(link_name='forces', tyle='core.array', quantities=['forces'])
+    stress: NodeConfig = NodeConfig(link_name='stress', tyle='core.array', quantities=['stress'])
+    bands: NodeConfig = NodeConfig(
+        link_name='bands', tyle='core.array.bands', quantities=['eigenvalues', 'kpoints', 'occupancies']
+    )
+    dos: NodeConfig = NodeConfig(link_name='dos', tyle='core.array', quantities=['dos'])
+    energies: NodeConfig = NodeConfig(link_name='energies', tyle='core.array', quantities=['energies'])
+    projectors: NodeConfig = NodeConfig(link_name='projectors', tyle='core.array', quantities=['projectors'])
+    born_charges: NodeConfig = NodeConfig(link_name='born_charges', tyle='core.array', quantities=['born_charges'])
+    dielectrics: NodeConfig = NodeConfig(link_name='dielectrics', tyle='core.array', quantities=['dielectrics'])
+    hessian: NodeConfig = NodeConfig(link_name='hessian', tyle='core.array', quantities=['hessian'])
+    dynmat: NodeConfig = NodeConfig(link_name='dynmat', tyle='core.array', quantities=['dynmat'])
+    charge_density: NodeConfig = NodeConfig(
+        link_name='charge_density', tyle='core.array', quantities=['charge_density']
+    )
+    wavecar: NodeConfig = NodeConfig(link_name='wavecar', tyle='vasp.wavefun', quantities=['wavecar'])
+    site_magnetization: NodeConfig = NodeConfig(
+        link_name='site_magnetization', tyle='core.dict', quantities=['site_magnetization']
+    )
+
+
 """ NODES """
 
 NODES = {
@@ -152,22 +213,14 @@ class ParserDefinitions:  # pylint: disable=useless-object-inheritance
 
     def __init__(self, content_parser_set='default'):
         self._parser_definitions = {}
-        self._init_parser_definitions(content_parser_set)
+        if content_parser_set not in CONTENT_PARSER_SETS:
+            return
+        for name, parser_config in CONTENT_PARSER_SETS.get(content_parser_set).items():
+            self._parser_definitions[name] = deepcopy(parser_config)
 
     @property
     def parser_definitions(self):
         return self._parser_definitions
-
-    def add_parser_definition(self, name, parser_dict):
-        """Add custom parser definition"""
-        self._parser_definitions[name] = parser_dict
-
-    def _init_parser_definitions(self, content_parser_set):
-        """Load a set of parser definitions."""
-        if content_parser_set not in CONTENT_PARSER_SETS:
-            return
-        for name, parser_dict in CONTENT_PARSER_SETS.get(content_parser_set).items():
-            self._parser_definitions[name] = deepcopy(parser_dict)
 
 
 class ParserSettings:  # pylint: disable=useless-object-inheritance
