@@ -38,15 +38,16 @@ class BandOptions(OptionContainer):
     band_mode = ChoiceOption(
         'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath-aiida and latimer-munro.',
         ['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
-        default_value='bradcrack',
+        default_value='seekpath-aiida',
     )
+    # TODO: enable explicit seekpath passing
     band_kpoints_distance = FloatOption(
         'Spacing for band distances for automatic kpoints generation, used by seekpath-aiida mode.',
         default_value=None,
         required=False,
     )
     line_density = IntOption(
-        'Density of the point along the path, used by sumo interface.',
+        'Density of the point along the path, used by the sumo interface.',
         default_value=20,
         required=False,
     )
@@ -93,6 +94,9 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
     Input for bands and dos calculations are optional. However, if they are needed, the full list of inputs must
     be passed. For the `parameters` node, one may choose to only specify those fields that need to be updated.
+
+    For optics calculations, one should run with `only_dos`, set 'NBANDS' to a high value and
+    set 'LOPTICS' to be True.
     """
 
     _base_wk_string = 'vasp.v2.vasp'

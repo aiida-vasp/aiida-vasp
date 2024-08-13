@@ -534,6 +534,11 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
 
+    def apply_preset(self, initial_structure, code=None, label=None) -> VaspBuilderUpdater:
+        super().apply_preset(initial_structure, code, label)
+        self.set_conv_settings()
+        return self
+
     def set_conv_settings(self, **kwargs) -> 'VaspConvUpdater':
         """
         Use the supplied convergence settings

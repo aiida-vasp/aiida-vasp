@@ -199,7 +199,7 @@ class VaspConvergenceWorkChain(WorkChain):
 
                 # Setup the energy key from the first workchain
                 if not energy_key:
-                    energy_key = next(iter(workchain.outputs.misc.get_dict()['total_energies'].values()))
+                    energy_key = next(iter(workchain.outputs.misc.get_dict()['total_energies'].keys()))
 
                 cutoff = workchain.inputs.parameters['incar']['encut']
                 cutoff_data[cutoff] = collect_data(workchain, energy_key)
