@@ -391,7 +391,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             current_option = option_class(**getattr(target_namespace, option_name).get_dict())
         for key, value in kwargs.items():
             setattr(current_option, key, value)
-        setattr(target_namespace, option_name, current_option.to_aiida_dict())
+        setattr(target_namespace, option_name, current_option.aiida_dict())
         return self
 
 
@@ -520,7 +520,7 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     def clear_relax_settings(self) -> 'VaspRelaxUpdater':
         """Reset any existing relax options"""
-        self.namespace_relax.relax_settings = RelaxOptions().to_aiida_dict()
+        self.namespace_relax.relax_settings = RelaxOptions().aiida_dict()
         return self
 
     def clear(self) -> 'VaspRelaxUpdater':

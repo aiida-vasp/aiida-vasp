@@ -38,6 +38,7 @@ dependencies = [
     "lxml",
     "seekpath",
     "packaging",
+    "pydantic",
     "parsevasp>=3.2",
 ]
 

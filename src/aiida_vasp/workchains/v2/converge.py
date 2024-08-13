@@ -16,11 +16,28 @@ from aiida import orm
 from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
+from pydantic import Field
+
+from aiida_vasp.utils.opthold import OptionContainer
 
 from .common import nested_update_dict_node
-from .common.opthold import FloatOption, OptionContainer
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
+
+
+class ConvOptions(OptionContainer):
+    """Template for the Dict node controlling the workchain behaviour"""
+
+    cutoff_start: float = Field(description='The starting cut-off energy', default=300.0)
+    cutoff_stop: float = Field(description='The Final cut-off energy', default=700.0)
+    cutoff_step: float = Field(description='Step size of the cut-off energy', default=50.0)
+    kspacing_start: float = Field(description='The starting kspacing', default=0.07)
+    kspacing_stop: float = Field(description='The final kspacing', default=0.02)
+    kspacing_step: float = Field(description='Step size of the cut-off energy', default=0.01)
+    cutoff_kconv: float = Field(description='The cut-off energy used for kpoints convergence tests', default=450.0)
+    kspacing_cutconv: float = Field(
+        description='The kpoints spacing used for cut-off energy convergence tests', default=0.07
+    )
 
 
 class VaspConvergenceWorkChain(WorkChain):
@@ -54,7 +71,13 @@ class VaspConvergenceWorkChain(WorkChain):
         super().define(spec)
 
         spec.expose_inputs(cls._sub_workchain)
-        spec.input('conv_settings', help='Settings of the workchain', valid_type=orm.Dict)
+        spec.input(
+            'conv_settings',
+            help='Settings of the workchain',
+            validator=OptionContainer.aiida_validate,
+            serializer=OptionContainer.aiida_serialize,
+            valid_type=orm.Dict,
+        )
         spec.outline(cls.setup, cls.launch_conv_calcs, cls.analyse)
 
         spec.exit_code(
@@ -266,19 +289,6 @@ class VaspConvergenceWorkChain(WorkChain):
         return cdf, kdf
 
 
-class ConvOptions(OptionContainer):
-    """Template for the Dict node controlling the workchain behaviour"""
-
-    cutoff_start = FloatOption('The starting cut-off energy', 300)
-    cutoff_stop = FloatOption('The Final cut-off energy', 700)
-    cutoff_step = FloatOption('Step size of the cut-off energy', 50)
-    kspacing_start = FloatOption('The starting kspacing', 0.07)
-    kspacing_stop = FloatOption('The final kspacing', 0.02)
-    kspacing_step = FloatOption('Step size of the cut-off energy', 0.01)
-    cutoff_kconv = FloatOption('The cut-off energy used for kpoints convergence tests', 450)
-    kspacing_cutconv = FloatOption('The kpoints spacing used for cut-off energy convergence tests', 0.07)
-
-
 def get_conv_data(conv_work):
     """
     Convenient method for extracting convergence data
@@ -385,5 +395,5 @@ def get_convergence_builder(structure, config):
 
     # Convergence specific options
     conv = ConvOptions(**config.get('conv', {}))
-    upd.builder.conv_settings = conv.to_aiida_dict()
+    upd.builder.conv_settings = conv.aiida_dict()
     return upd
