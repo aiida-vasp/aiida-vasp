@@ -2,7 +2,6 @@
 Module containing the OptionHolder class
 """
 
-from aiida.common.exceptions import InputValidationError
 from aiida.orm import Dict
 from pydantic import BaseModel, ValidationError
 
@@ -21,16 +20,18 @@ class OptionContainer(BaseModel):
         return Dict(dict=python_dict)
 
     @classmethod
-    def aiida_validate(cls, input_dict) -> None:  # pylint:disable=unused-argument
+    def aiida_validate(cls, input_dict, namespace=None) -> None:  # pylint:disable=unused-argument
         """
         Validate a dictionary/Dict node, this can be used as the validator for
         the Port accepting the inputs
         """
+        if isinstance(input_dict, Dict):
+            input_dict = input_dict.get_dict()
         try:
             cls(**input_dict)
         except ValidationError as error:
-            raise InputValidationError(f'Input validation failed: {error}') from error
-        return True
+            return str(error)
+        return None
 
     @classmethod
     def aiida_serialize(cls, python_dict: dict):

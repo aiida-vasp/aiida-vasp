@@ -1,6 +1,5 @@
 import pytest
 from aiida import orm
-from aiida.common.exceptions import InputValidationError
 from aiida_vasp.utils.opthold import OptionContainer
 from aiida_vasp.workchains.v2.bands import BandOptions
 from aiida_vasp.workchains.v2.converge import ConvOptions
@@ -21,9 +20,8 @@ def test_option_container():
     assert holder == holder2
     assert holder.model_dump() == holder2.model_dump()
 
-    assert holder.aiida_validate({'x': 2, 'y': 'test2', 'z': 2.0})
-    with pytest.raises(InputValidationError):
-        holder.aiida_validate({'x': 2, 'y': 2.0, 'z': '2'})
+    assert holder.aiida_validate({'x': 2, 'y': 'test2', 'z': 2.0}) is None
+    assert holder.aiida_validate({'x': 2, 'y': 2.0, 'z': '2'}) is not None
 
     node = holder.aiida_serialize({'x': 2, 'z': 3})
     assert node['x'] == 2
@@ -44,7 +42,7 @@ def test_workchain_options_validate(cls):
     """Test the relax option container"""
     opt = cls()
     out = opt.model_dump()
-    assert cls.validate_dict(out)
+    assert cls.aiida_validate(out) is None
 
 
 @pytest.mark.parametrize('cls', [RelaxOptions, BandOptions, ConvOptions])
@@ -52,12 +50,12 @@ def test_workchain_options_serialize(cls):
     """Test the relax option container"""
     opt = cls()
     out = opt.model_dump()
-    assert isinstance(cls.serialize(out), orm.Dict)
+    assert isinstance(cls.aiida_serialize(out), orm.Dict)
 
 
 @pytest.mark.parametrize('cls', [RelaxOptions, BandOptions, ConvOptions])
 def test_workchain_options_description(cls):
     """Test the relax option container"""
     opt = cls()
-    desc = opt.get_description()
+    desc = opt.aiida_description()
     assert desc

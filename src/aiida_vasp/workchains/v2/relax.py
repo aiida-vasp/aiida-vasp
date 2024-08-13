@@ -64,7 +64,7 @@ class RelaxOptions(OptionContainer):
         default=0.03,
     )
     steps: float = Field(description='Number of relaxation steps to perform (eg. NSW)', default=60)
-    positionn: bool = Field(description='If True, perform relaxation of the atomic positions', default=True)
+    positions: bool = Field(description='If True, perform relaxation of the atomic positions', default=True)
     shape: bool = Field(description='If True, perform relaxation of the cell shape', default=True)
     volume: bool = Field(description='If True, perform relaxation of the cell volume', default=True)
     convergence_on: bool = Field(description='If True, perform convergence checks within the workchain', default=True)
