@@ -55,7 +55,16 @@ DEFAULT_QUANTITIES = (
     'band_properties',
 )
 
-DEFAULT_EXCLUDED_QUANTITIES = ('energies', 'trajectory', 'kpoints', 'chgcar', 'projectors')
+DEFAULT_EXCLUDED_QUANTITIES = (
+    'energies',
+    'trajectory',
+    'kpoints',
+    'chgcar',
+    'wavecar',
+    'projectors',
+    'charge_density',
+    'magnetization_density',
+)
 
 DEFAULT_EXCLUDED_NODE = tuple()
 
@@ -113,15 +122,16 @@ class VaspParser(Parser):
             parser = OutcarParser(handler=handler)
             quantities_each['outcar'] = parser.get_all_quantities()
 
-        with self.retrieved.open('vasp_output', 'r') as handler:
-            parser = StreamParser(handler=handler)
-            quantities_each['vasp_output'] = parser.get_all_quantities()
+        if 'vasp_output' in self.retrieved.list_object_names():
+            with self.retrieved.open('vasp_output', 'r') as handler:
+                parser = StreamParser(handler=handler)
+                quantities_each['vasp_output'] = parser.get_all_quantities()
 
         with self.retrieved.open('CONTCAR', 'r') as handler:
             parser = PoscarParser(handler=handler)
             quantities_each['contcar'] = parser.get_all_quantities()
 
-        if 'chgcar' not in quantities_to_exclude:
+        if any(x not in quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
             with self.retrieved.open('CHGCAR', 'r') as handler:
                 parser = ChgcarParser(handler=handler)
                 quantities_each['chgcar'] = parser.get_all_quantities()
