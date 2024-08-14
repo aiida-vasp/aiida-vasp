@@ -16,28 +16,12 @@ from aiida import orm
 from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
-from pydantic import Field
 
-from aiida_vasp.utils.opthold import OptionContainer
+from aiida_vasp.utils.opthold import ConvOptions
 
 from .common import nested_update_dict_node
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
-
-
-class ConvOptions(OptionContainer):
-    """Template for the Dict node controlling the workchain behaviour"""
-
-    cutoff_start: float = Field(description='The starting cut-off energy', default=300.0)
-    cutoff_stop: float = Field(description='The Final cut-off energy', default=700.0)
-    cutoff_step: float = Field(description='Step size of the cut-off energy', default=50.0)
-    kspacing_start: float = Field(description='The starting kspacing', default=0.07)
-    kspacing_stop: float = Field(description='The final kspacing', default=0.02)
-    kspacing_step: float = Field(description='Step size of the cut-off energy', default=0.01)
-    cutoff_kconv: float = Field(description='The cut-off energy used for kpoints convergence tests', default=450.0)
-    kspacing_cutconv: float = Field(
-        description='The kpoints spacing used for cut-off energy convergence tests', default=0.07
-    )
 
 
 class VaspConvergenceWorkChain(WorkChain):
@@ -73,9 +57,9 @@ class VaspConvergenceWorkChain(WorkChain):
         spec.expose_inputs(cls._sub_workchain)
         spec.input(
             'conv_settings',
-            help='Settings of the workchain',
-            validator=OptionContainer.aiida_validate,
-            serializer=OptionContainer.aiida_serialize,
+            help=ConvOptions.aiida_description(),
+            validator=ConvOptions.aiida_validate,
+            serializer=ConvOptions.aiida_serialize,
             valid_type=orm.Dict,
         )
         spec.outline(cls.setup, cls.launch_conv_calcs, cls.analyse)

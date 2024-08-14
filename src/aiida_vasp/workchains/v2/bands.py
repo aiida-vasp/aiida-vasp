@@ -17,10 +17,9 @@ from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
-from pydantic import Field
 
 from aiida_vasp.utils.aiida_utils import get_data_class
-from aiida_vasp.utils.opthold import OptionContainer
+from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
@@ -30,42 +29,6 @@ try:
     from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 except ImportError:
     from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-
-
-class BandOptions(OptionContainer):
-    """Options for VaspRelaxWorkChain"""
-
-    symprec: float = Field(description='Precision of the symmetry determination', default=0.01)
-    band_mode: str = Field(
-        description=(
-            'Mode for generating the band path. Choose from: bradcrack, pymatgen,' 'seekpath-aiida and latimer-munro.'
-        ),
-        examples=['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
-        default='seekpath-aiida',
-    )
-    # TODO: enable explicit seekpath passing
-    band_kpoints_distance: float = Field(
-        description='Spacing for band distances for automatic kpoints generation, used by seekpath-aiida mode.',
-        default=0.025,
-    )
-    line_density: float = Field(
-        description='Density of the point along the path, used by the sumo interface.',
-        default=20,
-    )
-    dos_kpoints_distance: float = Field(
-        description=(
-            'Kpoints for running DOS calculations in A^-1 * 2pi.' ' Will perform non-SCF DOS calculation is supplied.'
-        ),
-        default=0.03,
-    )
-    only_dos: bool = Field(
-        description='Flag for running only DOS calculations',
-        default=False,
-    )
-    run_dos: bool = Field(
-        description='Flag for running DOS calculations',
-        default=False,
-    )
 
 
 class VaspBandsWorkChain(WorkChain, WithVaspInputSet):

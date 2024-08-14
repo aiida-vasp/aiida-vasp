@@ -1,9 +1,6 @@
 import pytest
 from aiida import orm
-from aiida_vasp.utils.opthold import OptionContainer
-from aiida_vasp.workchains.v2.bands import BandOptions
-from aiida_vasp.workchains.v2.converge import ConvOptions
-from aiida_vasp.workchains.v2.relax import RelaxOptions
+from aiida_vasp.utils.opthold import BandOptions, ConvOptions, OptionContainer, RelaxOptions
 
 
 def test_option_container():
