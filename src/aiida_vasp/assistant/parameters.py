@@ -349,8 +349,9 @@ class ParameterSetFunctions:
             return
         energy_cutoff = False
         try:
-            self._incar.ediffg = self._parameters.relax.energy_cutoff
-            energy_cutoff = True
+            if self._parameters.relax.energy_cutoff is not None:
+                self._incar.ediffg = self._parameters.relax.energy_cutoff
+                energy_cutoff = True
         except AttributeError:
             pass
         try:

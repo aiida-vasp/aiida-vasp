@@ -391,7 +391,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             current_option = option_class(**getattr(target_namespace, option_name).get_dict())
         for key, value in kwargs.items():
             setattr(current_option, key, value)
-        setattr(target_namespace, option_name, current_option.to_aiida_dict())
+        setattr(target_namespace, option_name, current_option.aiida_dict())
         return self
 
 
@@ -520,7 +520,7 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
 
     def clear_relax_settings(self) -> 'VaspRelaxUpdater':
         """Reset any existing relax options"""
-        self.namespace_relax.relax_settings = RelaxOptions().to_aiida_dict()
+        self.namespace_relax.relax_settings = RelaxOptions().aiida_dict()
         return self
 
     def clear(self) -> 'VaspRelaxUpdater':
@@ -533,6 +533,11 @@ class VaspConvUpdater(VaspBuilderUpdater):
     """Update for VaspConvergenceWorkChain"""
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
+
+    def apply_preset(self, initial_structure, code=None, label=None) -> VaspBuilderUpdater:
+        super().apply_preset(initial_structure, code, label)
+        self.set_conv_settings()
+        return self
 
     def set_conv_settings(self, **kwargs) -> 'VaspConvUpdater':
         """

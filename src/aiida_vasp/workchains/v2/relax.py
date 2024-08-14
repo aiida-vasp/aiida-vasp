@@ -25,6 +25,7 @@ CHANGELOG
 """
 
 # pylint: disable=attribute-defined-outside-init
+
 import numpy as np
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
@@ -35,10 +36,10 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
 from .common import OVERRIDE_NAMESPACE, nested_update_dict_node, site_magnetization_to_magmom
-from .common.opthold import BoolOption, ChoiceOption, FloatOption, IntOption, OptionContainer
 from .mixins import WithVaspInputSet
 
 __version__ = '0.5.0'
@@ -90,9 +91,9 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         spec.input(
             'relax_settings',
             valid_type=get_data_class('core.dict'),
-            validator=RelaxOptions.validate_dict,
-            serializer=to_aiida_type,
-            help=RelaxOptions.get_description(),
+            validator=RelaxOptions.aiida_validate,
+            serializer=RelaxOptions.aiida_serialize,
+            help=RelaxOptions.aiida_description(),
         )
         spec.input(
             'verbose',
@@ -849,83 +850,6 @@ def compare_structures(structure_a, structure_b):
     delta.relative.cell_angles = np.absolute(cell_angles_a - np.array(structure_b.cell_angles)) / cell_angles_a
 
     return delta
-
-
-class RelaxOptions(OptionContainer):
-    """Options for VaspRelaxWorkChain"""
-
-    algo = ChoiceOption('The algorithm to use for relaxation', ['cg', 'rd'], default_value='cg')
-    energy_cutoff = FloatOption(
-        'The cut off energy difference when the relaxation is stopped (e.g. EDIFF)',
-        default_value=None,
-        required=False,
-    )
-    force_cutoff = FloatOption(
-        'The maximum force when the relaxation is stopped (e.g. EDIFFG)',
-        default_value=0.03,
-        required=False,
-    )
-    steps = IntOption('Number of relaxation steps to perform (eg. NSW)', 60)
-    positions = BoolOption('If True, perform relaxation of the atomic positions', default_value=True)
-    shape = BoolOption('If True, perform relaxation of the cell shape', default_value=True)
-    volume = BoolOption('If True, perform relaxation of the cell volume', default_value=True)
-    convergence_on = BoolOption('If True, perform convergence checkes withint the workchain', default_value=True)
-    convergence_absolute = BoolOption(
-        'If True, use absolute values where possible when performing convergence checkes',
-        default_value=False,
-    )
-    convergence_max_iterations = IntOption('Maximum interations for convergence checking', 5)
-    convergence_positions = FloatOption(
-        'The cutoff value for the convergence check on positions in Angstram. A negative value by pass the check.',
-        0.1,
-    )
-    convergence_volume = FloatOption(
-        'The cutoff value for the convergence check on volume between the two structures.'
-        ' A negative value by pass the check.',
-        0.01,
-    )
-    convergence_shape_lengths = FloatOption(
-        'The cutoff value for the convergence check on the lengths of the unit cell'
-        ' vectors, between input and the outputs structure. A negative value by pass'
-        ' the check.',
-        0.1,
-    )
-    convergence_shape_angles = FloatOption(
-        'The cutoff value for the convergence check on the angles of the unit cell vectors, '
-        'between input and the outputs structure. A'
-        ' negative value by pass the check.',
-        0.1,
-    )
-    convergence_mode = ChoiceOption(
-        "Mode of the convergence check for positions. 'inout' for checking input/output structure, "
-        "or 'last' to check only the change of"
-        ' the last step.',
-        choices=['inout', 'last'],
-        default_value='last',
-    )
-    reuse = BoolOption(
-        'Whether reuse the previous calculation by copying over the remote folder',
-        default_value=False,
-    )
-    clean_reuse = BoolOption('Whether to perform a final cleaning of the reused calculations', True)
-    keep_sp_workdir = BoolOption('Whether to keep the workdir of the final singlepoint calculation', False)
-    perform = BoolOption("Do not perform any relaxation if set to 'False'", True)
-    hybrid_calc_bootstrap = BoolOption('Wether to bootstrap hybrid calculation by perfroming standard DFT first', None)
-    hybrid_calc_bootstrap_wallclock = IntOption('Wallclock limit in second for the bootstrap calculation', None)
-    keep_magnetization = BoolOption('Wether to keep magnetization from the previous calculation if possible', False)
-
-    @classmethod
-    def validate_dict(cls, input_dict, port=None):
-        """Check mutually exclusive fields"""
-        super().validate_dict(input_dict, port)
-        if isinstance(input_dict, orm.Dict):
-            input_dict = input_dict.get_dict()
-        force_cut = input_dict.get('force_cutoff')
-        energy_cut = input_dict.get('energy_cutoff')
-        if force_cut is None and energy_cut is None:
-            raise InputValidationError("Either 'force_cutoff' or 'energy_cutoff' should be supplied")
-        if (force_cut is not None) and (energy_cut is not None):
-            raise InputValidationError("Cannot set both 'force_cutoff' and 'energy_cutoff'")
 
 
 def get_step_structure(traj, step):

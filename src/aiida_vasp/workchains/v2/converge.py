@@ -17,8 +17,9 @@ from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.utils.opthold import ConvOptions
+
 from .common import nested_update_dict_node
-from .common.opthold import FloatOption, OptionContainer
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
@@ -54,7 +55,13 @@ class VaspConvergenceWorkChain(WorkChain):
         super().define(spec)
 
         spec.expose_inputs(cls._sub_workchain)
-        spec.input('conv_settings', help='Settings of the workchain', valid_type=orm.Dict)
+        spec.input(
+            'conv_settings',
+            help=ConvOptions.aiida_description(),
+            validator=ConvOptions.aiida_validate,
+            serializer=ConvOptions.aiida_serialize,
+            valid_type=orm.Dict,
+        )
         spec.outline(cls.setup, cls.launch_conv_calcs, cls.analyse)
 
         spec.exit_code(
@@ -199,7 +206,7 @@ class VaspConvergenceWorkChain(WorkChain):
 
                 # Setup the energy key from the first workchain
                 if not energy_key:
-                    energy_key = next(iter(workchain.outputs.misc.get_dict()['total_energies'].values()))
+                    energy_key = next(iter(workchain.outputs.misc.get_dict()['total_energies'].keys()))
 
                 cutoff = workchain.inputs.parameters['incar']['encut']
                 cutoff_data[cutoff] = collect_data(workchain, energy_key)
@@ -264,19 +271,6 @@ class VaspConvergenceWorkChain(WorkChain):
         if plot is True:
             plot_conv_data(cdf, kdf, **plot_kwargs)
         return cdf, kdf
-
-
-class ConvOptions(OptionContainer):
-    """Template for the Dict node controlling the workchain behaviour"""
-
-    cutoff_start = FloatOption('The starting cut-off energy', 300)
-    cutoff_stop = FloatOption('The Final cut-off energy', 700)
-    cutoff_step = FloatOption('Step size of the cut-off energy', 50)
-    kspacing_start = FloatOption('The starting kspacing', 0.07)
-    kspacing_stop = FloatOption('The final kspacing', 0.02)
-    kspacing_step = FloatOption('Step size of the cut-off energy', 0.01)
-    cutoff_kconv = FloatOption('The cut-off energy used for kpoints convergence tests', 450)
-    kspacing_cutconv = FloatOption('The kpoints spacing used for cut-off energy convergence tests', 0.07)
 
 
 def get_conv_data(conv_work):
@@ -385,5 +379,5 @@ def get_convergence_builder(structure, config):
 
     # Convergence specific options
     conv = ConvOptions(**config.get('conv', {}))
-    upd.builder.conv_settings = conv.to_aiida_dict()
+    upd.builder.conv_settings = conv.aiida_dict()
     return upd

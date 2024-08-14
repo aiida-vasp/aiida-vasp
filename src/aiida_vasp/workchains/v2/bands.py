@@ -19,9 +19,9 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
-from .common.opthold import BoolOption, ChoiceOption, FloatOption, IntOption, OptionContainer
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithVaspInputSet
 
@@ -29,42 +29,6 @@ try:
     from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 except ImportError:
     from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
-
-
-class BandOptions(OptionContainer):
-    """Options for VaspRelaxWorkChain"""
-
-    symprec = FloatOption('Precision of the symmetry determination', default_value=0.01, required=False)
-    band_mode = ChoiceOption(
-        'Mode for generating the band path. Choose from: bradcrack, pymatgen, seekpath-aiida and latimer-munro.',
-        ['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
-        default_value='bradcrack',
-    )
-    band_kpoints_distance = FloatOption(
-        'Spacing for band distances for automatic kpoints generation, used by seekpath-aiida mode.',
-        default_value=None,
-        required=False,
-    )
-    line_density = IntOption(
-        'Density of the point along the path, used by sumo interface.',
-        default_value=20,
-        required=False,
-    )
-    dos_kpoints_distance = FloatOption(
-        'Kpoints for running DOS calculations in A^-1 * 2pi. Will perform non-SCF DOS calculation is supplied.',
-        default_value=0.03,
-        required=False,
-    )
-    only_dos = BoolOption(
-        'Flag for running only DOS calculations',
-        default_value=False,
-        required=False,
-    )
-    run_dos = BoolOption(
-        'Flag for running DOS calculations',
-        default_value=False,
-        required=False,
-    )
 
 
 class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
@@ -93,6 +57,9 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
     Input for bands and dos calculations are optional. However, if they are needed, the full list of inputs must
     be passed. For the `parameters` node, one may choose to only specify those fields that need to be updated.
+
+    For optics calculations, one should run with `only_dos`, set 'NBANDS' to a high value and
+    set 'LOPTICS' to be True.
     """
 
     _base_wk_string = 'vasp.v2.vasp'
@@ -114,10 +81,10 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'band_settings',
-            help=BandOptions.get_description(),
+            help=BandOptions.aiida_description(),
             valid_type=get_data_class('core.dict'),
-            validator=BandOptions.validate_dict,
-            serializer=to_aiida_type,
+            validator=BandOptions.aiida_validate,
+            serializer=BandOptions.aiida_serialize,
         )
         spec.expose_inputs(
             relax_work,
@@ -294,6 +261,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         if mode == 'seekpath-aiida':
             inputs = {
                 'reference_distance': self.inputs.band_settings['band_kpoints_distance'],
+                'symprec': self.inputs.band_settings['symprec'],
                 'metadata': {'call_link_label': 'seekpath'},
             }
             func = seekpath_structure_analysis
