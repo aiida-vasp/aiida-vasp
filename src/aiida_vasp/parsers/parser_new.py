@@ -11,8 +11,7 @@ The simplified parser outputs the following nodes:
     SCF cycle.
 3. A `trajectory` node for storing the trajectory of geometry optimisation and AIMD.
 4. A `band` node for storing the band structure.
-5. A `dos` node for storing the band structure.
-6. A `chargcar` node for parsed electronic density as array.
+5. A `dos` node for storing the density of states.
 
 Main difference from the previous version
 1. Individual properties are not stored in the separate node in order to reduce the number of nodes created. Scalar and
@@ -20,16 +19,21 @@ Main difference from the previous version
     the `array` output node.
 2. Standard outputs each as the bands and dos are stored in dedicated nodes.
 3. `pydantic` is used to validate the parser settings *at submission* time.
+4. When parsing retrieved data, we take a 'parse as much as possible' approach -
+    the quantities are always parsed if available, and only excluded during the stage of composing the output nodes.
+    This is simpler from the previous 'parse only when needed' approach, where multiple checks have be done to work
+    out which parser to call and which quantities to include.
 """
 
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 from aiida import orm
 from aiida.parsers.parser import Parser
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from aiida_vasp.parsers.content_parsers import *
+from aiida_vasp.utils.opthold import OptionContainer
 
 
 class ParserError(RuntimeError):
@@ -41,6 +45,10 @@ class QuantityMissingError(ParserError):
 
 
 class RequiredQuantityMissingError(ParserError):
+    pass
+
+
+class MissingFileError(ParserError):
     pass
 
 
@@ -64,14 +72,43 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'projectors',
     'charge_density',
     'magnetization_density',
+    'elastic_moduli',
+    'symmetries',
 )
 
 DEFAULT_EXCLUDED_NODE = tuple()
 
 DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats', 'total_energies')
 
+DEFAULT_FILE_MAPPING = {
+    'vasprun.xml': 'vasprun.xml',
+    'vasp_output': 'vasp_output',
+    'OUTCAR': 'OUTCAR',
+    'CONTCAR': 'CONTCAR',
+    'CHGCAR': 'CHGCAR',
+    'IBZKPT': 'IBZKPT',
+}
+MISC_QUANTITIES = (
+    'total_energies',
+    'maximum_stress',
+    'maximum_force',
+    'notifications',
+    'run_status',
+    'run_stats',
+    'version',
+    'forces',
+    'stress',
+    'site_magnetization',
+    'band_properties',
+    'elastic_moduli',
+    'symmetries',
+    'fermi_level',
+    'band_properties',
+    'magnetization',
+)
 
-class ParserSettingsConfig(BaseModel):
+
+class ParserSettingsConfig(OptionContainer):
     """
     Settings for the VASP parser.
     """
@@ -83,7 +120,15 @@ class ParserSettingsConfig(BaseModel):
     )
     include_node: List[str] = Field(description='Output node to include', default_factory=lambda: [])
     exclude_node: List[str] = Field(description='Output node to exclude', default_factory=lambda: [])
+    file_mapping: Dict[str, str] = Field(
+        description='Mapping of file names to quantities', default_factory=lambda: dict(DEFAULT_FILE_MAPPING)
+    )
     kpoints_from_ibzkpt: bool = False
+    check_completeness: bool = True
+    electronic_step_energies: bool = False
+    energy_type: List[str] = Field(
+        description='Energy types to include', default_factory=lambda: ['energy_extrapolated']
+    )
 
 
 class VaspParser(Parser):
@@ -113,44 +158,39 @@ class VaspParser(Parser):
         nodes_to_exclude = [key for key in DEFAULT_EXCLUDED_NODE if key not in user_config.include_node]
         nodes_to_exclude += user_config.exclude_node
 
+        retrieve_object_names = self.retrieved.list_object_names()
+
         # Parse the files
-        with self.retrieved.open('vasprun.xml', 'rb') as handler:
-            parser = VasprunParser(handler=handler)
-            quantities_each['vasprun.xml'] = parser.get_all_quantities()
+        def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
+            """Parse the target file and add the result to the quantities_each dictionary"""
+            resolved_name = user_config.file_mapping[name]
+            if resolved_name in retrieve_object_names:
+                with self.retrieved.open(resolved_name, open_mode) as handler:
+                    parser = parser_cls(handler=handler, settings=content_parser_settings)
+                    quantities_each[name] = parser.get_all_quantities()
+            elif user_config.check_completeness is True and required is True:
+                raise MissingFileError(f'{resolved_name} is missing in the retrieved folder.')
 
-        with self.retrieved.open('OUTCAR', 'r') as handler:
-            parser = OutcarParser(handler=handler)
-            quantities_each['outcar'] = parser.get_all_quantities()
-
-        if 'vasp_output' in self.retrieved.list_object_names():
-            with self.retrieved.open('vasp_output', 'r') as handler:
-                parser = StreamParser(handler=handler)
-                quantities_each['vasp_output'] = parser.get_all_quantities()
-
-        with self.retrieved.open('CONTCAR', 'r') as handler:
-            parser = PoscarParser(handler=handler)
-            quantities_each['contcar'] = parser.get_all_quantities()
+        parse_and_add(
+            'vasprun.xml',
+            VasprunParser,
+            required=True,
+            open_mode='rb',
+            content_parser_settings={
+                'electronic_step_energies': user_config.electronic_step_energies,
+                'energy_type': user_config.energy_type,
+            },
+        )
+        parse_and_add('OUTCAR', OutcarParser, required=True)
+        parse_and_add('vasp_output', StreamParser, required=True)
+        parse_and_add('CONTCAR', PoscarParser, required=True)
 
         if any(x not in quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
-            with self.retrieved.open('CHGCAR', 'r') as handler:
-                parser = ChgcarParser(handler=handler)
-                quantities_each['chgcar'] = parser.get_all_quantities()
+            parse_and_add('CHGCAR', ChgcarParser, required=True)
 
         if user_config.kpoints_from_ibzkpt:
-            with self.retrieved.open('IBZKPT', 'r') as handler:
-                parser = KpointsParser(handler=handler)
-                quantities_each['ibzkpt'] = parser.get_all_quantities()
-
-        # Do we really need DOSCAR and EIGENVAL
-        # if user_config.parse_doscar is True:
-        #     with self.retrieved.open('DOSCAR', 'r'):
-        #         parser = DoscarParser(handler=handler, settings=user_config)
-        #         quantities_each['doscar'] = parser.get_all_quantities()
-
-        # if user_config.parse_eigenval is True:
-        #     with self.retrieved.open('EIGENVAL', 'r'):
-        #         parser = EigenvalParser(handler=handler, settings=user_config)
-        #         quantities_each['eigenval'] = parser.get_all_quantities()
+            parse_and_add('IBZKPT', ChgcarParser, required=True)
+        self._quantities_each = quantities_each
 
         # Remove the quantities
         for name, parsed_quantities in quantities_each.items():
@@ -169,45 +209,36 @@ class VaspParser(Parser):
                 raise RequiredQuantityMissingError(f'Required quantity {name} is missing.')
 
         # Create the outputs
+        self._failed_to_compose = {}
         for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'band', 'dos']:
             if name in nodes_to_exclude:
                 continue
             node = None
             try:
                 node = getattr(self, '_compose_' + name)(quantities_each)
-            except QuantityMissingError:
+            except QuantityMissingError as error:
+                self._failed_to_compose[name] = error
+                self.logger.warning(f'Failed to compose {name} node: {error}')
                 continue
             if node is not None:
                 self.out(name, node)
 
     def _compose_misc(self, quantities_each):
-        misc_quantities = (
-            'total_energies',
-            'maximum_stress',
-            'maximum_force',
-            'notifications',
-            'run_status',
-            'run_stats',
-            'version',
-            'final_forces',
-            'final_stress' 'site_magnetization' 'band_properties',
-        )
+        """Compose the `misc` output node"""
 
         out_dict = {}
-        gather_quantities(quantities_each, 'vasprun.xml', out_dict, misc_quantities)
-        gather_quantities(quantities_each, 'OUTCAR', out_dict, misc_quantities)
+        gather_quantities(quantities_each, 'vasprun.xml', out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, 'OUTCAR', out_dict, MISC_QUANTITIES)
         return orm.Dict(dict=out_dict)
 
     def _compose_structure(self, quantities_each):
-        """Parse structure from the vasprun.xml file, if failed, use
-        that from CONTCAR
-        """
+        """Compose the `structure` output node"""
 
         data = None
         if 'vasprun.xml' in quantities_each:
             data = quantities_each['vasprun.xml'].get('structure')
         if data is None:
-            data = quantities_each['CONTCAR']['structure']
+            data = quantities_each.get('CONTCAR', {}).get('structure')
         if data is None:
             raise QuantityMissingError()
 
@@ -218,7 +249,7 @@ class VaspParser(Parser):
         return node
 
     def _compose_arrays(self, quantities_each):
-        """Generate the generic `Arrays` output"""
+        """Generate the generic `arrays` output node"""
         array_quantities = ('projectors', 'born_charges', 'dielectrics', 'hessian', 'dynmat', 'energies')
         out_arrays = {}
         gather_quantities(quantities_each, 'vasprun.xml', out_arrays, array_quantities, flatten_dict=True)
@@ -229,9 +260,10 @@ class VaspParser(Parser):
         return None
 
     def _compose_kpoints(self, quantities_each):
+        """Compose the `kpoints` output node"""
         kpoints_data = None
         if self.user_config.kpoints_from_ibzkpt is True:
-            kpoints_data = quantities_each['ibzkpt']['kpoints']
+            kpoints_data = quantities_each['IBZKPT']['kpoints']
         elif 'vasprun.xml' in quantities_each:
             kpoints_data = quantities_each['vasprun.xml'].get('kpoints')
 
@@ -249,7 +281,7 @@ class VaspParser(Parser):
         raise QuantityMissingError('No valid kpoints data to use')
 
     def _compose_trajectory(self, quantities_each):
-        """Compose the band output"""
+        """Compose the `trajectory` output"""
 
         node = orm.TrajectoryData()
 
@@ -267,13 +299,13 @@ class VaspParser(Parser):
         return None
 
     def _compose_band(self, quantities_each):
-        """Compose the band structure node"""
+        """Compose the `band` node"""
         if 'vasprun.xml' in quantities_each:
             deigen = quantities_each['vasprun.xml']['eigenvalues']
             docc = quantities_each['vasprun.xml']['occupancies']
             if 'total' in deigen:
                 eigenvalues = np.array(deigen['total'])
-                occupancies = np.array([docc['total']])
+                occupancies = np.array(docc['total'])
             else:
                 eigenvalues = np.array([deigen['up'], deigen['down']])
                 occupancies = np.array([docc['up'], docc['down']])
@@ -284,12 +316,12 @@ class VaspParser(Parser):
             return node
 
     def _compose_dos(self, quantities_each):
-        """Compose the DOS node"""
+        """Compose the `dos` node"""
         arrays_dict = {}
         if 'vasprun.xml' in quantities_each:
             gather_quantities(quantities_each, 'dos', arrays_dict, ['dos'], flatten_dict=True)
         if arrays_dict:
-            node = orm.ArrayData(arrays_dict)
+            node = orm.ArrayData(arrays_dict['dos'])
             return node
 
 

@@ -609,7 +609,11 @@ class VasprunParser(BaseFileParser):
     def fermi_level(self):
         """Fetch Fermi level."""
 
-        return self._content_parser.get_fermi_level()
+        try:
+            fermi_level = self._content_parser.get_fermi_level()
+        except (ValueError, TypeError):
+            fermi_level = None
+        return fermi_level
 
     @property
     def run_status(self):
