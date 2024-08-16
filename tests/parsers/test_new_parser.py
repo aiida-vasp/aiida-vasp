@@ -2,6 +2,7 @@ import pathlib
 
 import numpy as np
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.parser_new import VaspParser
 
 
@@ -24,12 +25,13 @@ def test_parser_bare(calc_with_retrieved, request):
 def parser_with_retrieved(calc_with_retrieved, request):
     """Fixture to create a VaspParser instance with a given pre-computed data folder"""
 
-    def wrapped(name, settings={}):
+    def wrapped(name, settings={}, parse=True):
         _relative_file_path = f'../test_data/{name}'
         file_path = str(pathlib.Path(request.fspath).parent / _relative_file_path)
         node = calc_with_retrieved(file_path, settings)
         parser = VaspParser(node)
-        parser.parse(retrieved_tempoary_folder=file_path)
+        if parse:
+            parser.parse(retrieved_tempoary_folder=file_path)
         return parser
 
     return wrapped
@@ -93,6 +95,10 @@ def test_parser_disp_details(parser_with_retrieved):
     assert data_dict['run_status']['electronic_converged']
     assert data_dict['run_status']['nelm'] == 60
     assert data_dict['run_status']['nsw'] == 61
+    assert data_dict['fermi_level'] == pytest.approx(6.17267267)
+    assert data_dict['maximum_stress'] == pytest.approx(42.96872956444064)
+    assert data_dict['maximum_force'] == pytest.approx(0.21326679)
+    assert data_dict['total_energies']['energy_extrapolated'] == pytest.approx(-10.823296)
 
 
 def test_vasprun_parsing(parser_with_vasprun):
@@ -286,3 +292,105 @@ def test_basic(parser_with_retrieved):
     np.testing.assert_allclose(
         kpoints.get_kpoints()[-1], np.array([0.42857143, -0.42857143, 0.42857143]), atol=0.0, rtol=1.0e-7
     )
+
+
+def test_stream(parser_with_retrieved):
+    """Test the functionality of the stream parser."""
+    parser = parser_with_retrieved(
+        'stdout/out',
+        {'parser_settings': {'check_completeness': False, 'include_quantity': ['stream'], 'required_quantity': []}},
+    )
+    misc_dict = parser.outputs['misc'].get_dict()
+    assert misc_dict['notifications'][0]['name'] == 'ibzkpt'
+    assert misc_dict['notifications'][0]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][0]['regex'] == 'internal error in subroutine IBZKPT'
+    assert misc_dict['notifications'][1]['name'] == 'nostart'
+    assert misc_dict['notifications'][1]['kind'] == 'ERROR'
+    assert misc_dict['notifications'][1]['regex'] == 'vasp.'
+
+
+def test_parser_exception(request, calc_with_retrieved):
+    """
+    This calculation has a missing eigenvalues section in the vasprun.xml
+    """
+    from aiida_vasp.parsers.parser_new import VaspParser
+
+    # This should work as the parser does not output the band by default
+    # But the diagonsis information is missing so the erorr code is not zero
+    settings_dict = {'parser_settings': {'check_completeness': False}}
+    file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
+    node = calc_with_retrieved(file_path, settings_dict)
+    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    assert output.is_finished
+    assert output.exit_status == 704
+
+    # 1004 - node cannot be created as the quantity is missing
+    settings_dict = {'parser_settings': {'check_completeness': True, 'include_node': ['band']}}
+    file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
+    node = calc_with_retrieved(file_path, settings_dict)
+    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    assert output.is_finished
+    assert output.exit_status == 1004
+
+    # 1002 - we explicitly require the eigenvalues to be present, but it is not
+    settings_dict = {
+        'parser_settings': {'check_completeness': True, 'required_quantity': ['eigenvalues'], 'include_node': ['band']}
+    }
+    file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
+    node = calc_with_retrieved(file_path, settings_dict)
+    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+
+    assert output.is_finished
+    assert output.exit_status == 1002
+
+
+def test_notification_composer(parser_with_retrieved):
+    """Test the NotificationComposer class"""
+    from aiida_vasp.parsers.parser_new import NotificationComposer, ParserSettingsConfig
+
+    parser = parser_with_retrieved(
+        'basic',
+        {'parser_settings': {'check_completeness': False, 'include_quantity': ['kpoints'], 'required_quantity': []}},
+        parse=False,
+    )
+
+    notifications = [{'name': 'edwav', 'kind': 'ERROR', 'message': 'Error in EDWAV'}]
+    config = ParserSettingsConfig()
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {
+            'parameters': orm.Dict(dict={'nelect': 10}),
+        },
+        parser.exit_codes,
+        critical_notifications=config.critical_notification_errors,
+    )
+    exit_code = composer.compose()
+    assert exit_code.status == 703
+
+    # BRMIX error but has NELECT defined in the input
+    notifications = [{'name': 'brmix', 'kind': 'ERROR', 'message': 'Error in BRMIX'}]
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {
+            'parameters': orm.Dict(dict={'nelect': 10}),
+        },
+        parser.exit_codes,
+        critical_notifications=config.critical_notification_errors,
+    )
+    exit_code = composer.compose()
+    assert exit_code is None
+
+    # BRMIX error but no NELECT tag
+    composer = NotificationComposer(
+        notifications,
+        {},
+        {'parameters': orm.Dict(dict={})},
+        parser.exit_codes,
+        critical_notifications=config.critical_notification_errors,
+    )
+    exit_code = composer.compose()
+    assert exit_code.status == 703

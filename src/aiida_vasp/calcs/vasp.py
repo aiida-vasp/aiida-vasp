@@ -297,21 +297,9 @@ class VaspCalculation(VaspCalcBase):
         )
 
         spec.exit_code(
-            1001,
-            'ERROR_PARSING_OBJECT_FAILED',
-            message='parsing an object has failed.',
-        )
-        spec.exit_code(
             1002,
             'ERROR_NOT_ABLE_TO_PARSE_QUANTITY',
-            message='the parser is not able to parse the {quantity} quantity',
-        )
-        spec.exit_code(
-            1003,
-            'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
-            message='the vasprun.xml was truncated and recovery parsing failed to parse at least one'
-            'of the requested quantities: {quantities}, '
-            'very likely the VASP calculation did not run properly',
+            message='the parser is not able to parse the {quantity} quantity which is marked as required',
         )
         spec.exit_code(
             1004,

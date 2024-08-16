@@ -162,6 +162,7 @@ class VasprunParser(BaseFileParser):
             if exception.code == 509:
                 # Xml might be fine but overflow is detected
                 self.overflow = True
+                self.parser_notifications['vasprun_xml_overflow'] = True
                 self._logger.warning('Parsevasp exited abnormally due to overflow in XML file.')
             else:
                 self._logger.warning('Parsevasp exited abnormally.')

@@ -74,9 +74,10 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'magnetization_density',
     'elastic_moduli',
     'symmetries',
+    'band',
 )
 
-DEFAULT_EXCLUDED_NODE = tuple()
+DEFAULT_EXCLUDED_NODE = tuple(['band', 'dos'])
 
 DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats', 'total_energies')
 
@@ -129,6 +130,39 @@ class ParserSettingsConfig(OptionContainer):
     energy_type: List[str] = Field(
         description='Energy types to include', default_factory=lambda: ['energy_extrapolated']
     )
+    keep_stream_history: bool = Field(
+        description='Whether to keep the history of all notifications in the parsed stream' ' (stdout)', default=False
+    )
+    ignore_notification_errors: bool = Field(
+        description='Whether to ignore errors in the notifications parsed from vasp_output', default=False
+    )
+    critical_notification_errors: List[str] = Field(
+        description='Critical stream errors to raise',
+        default_factory=lambda: [
+            'brmix',
+            'edwave',
+            'brmix',
+            'cnormn',
+            'denmp',
+            'dentet',
+            'edddav_zhegv',
+            'eddrmm_zhegv',
+            'edwav',
+            'fexcp',
+            'fock_acc',
+            'non_collinear',
+            'not_hermitian',
+            'pzstein',
+            'real_optlay',
+            'rhosyg',
+            'rspher',
+            'set_indpw_full',
+            'sgrcon',
+            'no_potimm',
+            'magmom',
+            'bandocc',
+        ],
+    )
 
 
 class VaspParser(Parser):
@@ -159,6 +193,7 @@ class VaspParser(Parser):
         nodes_to_exclude += user_config.exclude_node
 
         retrieve_object_names = self.retrieved.list_object_names()
+        parser_notifications = {}
 
         # Parse the files
         def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
@@ -166,7 +201,9 @@ class VaspParser(Parser):
             resolved_name = user_config.file_mapping[name]
             if resolved_name in retrieve_object_names:
                 with self.retrieved.open(resolved_name, open_mode) as handler:
-                    parser = parser_cls(handler=handler, settings=content_parser_settings)
+                    parser: BaseFileParser = parser_cls(handler=handler, settings=content_parser_settings)
+                    if parser.parser_notifications:
+                        parser_notifications.update(parser.parser_notifications)
                     quantities_each[name] = parser.get_all_quantities()
             elif user_config.check_completeness is True and required is True:
                 raise MissingFileError(f'{resolved_name} is missing in the retrieved folder.')
@@ -179,6 +216,7 @@ class VaspParser(Parser):
             content_parser_settings={
                 'electronic_step_energies': user_config.electronic_step_energies,
                 'energy_type': user_config.energy_type,
+                'stream_history': user_config.keep_stream_history,
             },
         )
         parse_and_add('OUTCAR', OutcarParser, required=True)
@@ -199,6 +237,7 @@ class VaspParser(Parser):
                     del parsed_quantities[sub_key]
 
         # Check in required quantities are present
+        missing_required = []
         for name in user_config.required_quantity:
             exists = False
             for _, value in quantities_each.items():
@@ -206,7 +245,9 @@ class VaspParser(Parser):
                     exists = True
                     break
             if exists is False:
-                raise RequiredQuantityMissingError(f'Required quantity {name} is missing.')
+                missing_required.append(name)
+        if missing_required:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=','.join(missing_required))
 
         # Create the outputs
         self._failed_to_compose = {}
@@ -216,19 +257,25 @@ class VaspParser(Parser):
             node = None
             try:
                 node = getattr(self, '_compose_' + name)(quantities_each)
-            except QuantityMissingError as error:
+            except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
                 self._failed_to_compose[name] = error
                 self.logger.warning(f'Failed to compose {name} node: {error}')
                 continue
             if node is not None:
                 self.out(name, node)
+        if self._failed_to_compose and user_config.check_completeness is True:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(self._failed_to_compose.keys()))
+        # Check for errors
+        error = self._check_vasp_errors(parser_notifications)
+        return error
 
     def _compose_misc(self, quantities_each):
         """Compose the `misc` output node"""
 
         out_dict = {}
-        gather_quantities(quantities_each, 'vasprun.xml', out_dict, MISC_QUANTITIES)
-        gather_quantities(quantities_each, 'OUTCAR', out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, self.user_config.file_mapping['OUTCAR'], out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, self.user_config.file_mapping['vasp_output'], out_dict, MISC_QUANTITIES)
         return orm.Dict(dict=out_dict)
 
     def _compose_structure(self, quantities_each):
@@ -324,6 +371,61 @@ class VaspParser(Parser):
             node = orm.ArrayData(arrays_dict['dos'])
             return node
 
+    def _check_vasp_errors(self, parser_notifications):  # pylint: disable=too-many-return-statements
+        """
+        Detect simple vasp execution problems and returns the exit_codes to be set
+        """
+        quantities = {}
+        for key, value in self._quantities_each.items():
+            quantities[key] = value
+
+        if 'run_status' not in quantities:
+            return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
+        run_status = quantities['run_status']
+
+        try:
+            # We have an overflow in the XML file which is critical, but not reported by VASP in
+            # the standard output, so checking this here.
+            if parser_notifications['vasprun_xml_overflow']:
+                return self.exit_codes.ERROR_OVERFLOW_IN_XML
+        except AttributeError:
+            pass
+
+        # Return errors related to execution and convergence problems.
+        # Note that the order is important here - if a calculation is not finished, we cannot
+        # comment on wether properties are converged are not.
+        if run_status['finished'] is False:
+            return self.exit_codes.ERROR_DID_NOT_FINISH
+
+        if run_status['electronic_converged'] is False:
+            return self.exit_codes.ERROR_ELECTRONIC_NOT_CONVERGED
+
+        # Check the ionic convergence issues
+        if run_status['ionic_converged'] is False:
+            if self._check_ionic_convergence:
+                return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
+            self.logger.warning('The ionic relaxation is not converged, but the calculation is treated as successful.')
+
+        # Check for the existence of critical warnings
+        if 'notifications' in quantities:
+            notifications = quantities['notifications']
+            ignore_all = self._user_config.ignore_notification_errors
+            if not ignore_all:
+                composer = NotificationComposer(
+                    notifications,
+                    quantities,
+                    self.node.inputs,
+                    self.exit_codes,
+                    critical_notifications=self._user_config.critical_notification_errors,
+                )
+                exit_code = composer.compose()
+                if exit_code is not None:
+                    return exit_code
+        else:
+            self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
+
+        return None
+
 
 def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=False):
     """
@@ -337,3 +439,83 @@ def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=Fals
                     dst[key + '_' + key2] = value2
             else:
                 dst[key] = value
+
+
+class NotificationComposer:
+    """Compose errors codes based on the notifications"""
+
+    def __init__(self, notifications, parsed_quantities, inputs, exit_codes, critical_notifications):
+        """
+        Composed error codes based on the notifications
+
+        Some of the errors need to have additional properties inspected before they can be emitted,
+        as they might be trigged in a harmless way.
+
+        To add new checkers, one needs to implement a property with the name of the error for this class and
+        contains the code for checking. This property should return the exit_code or return None. The property
+        is inspected if its name is in the list critical notifications.
+
+        :param notification: The list of parsed notifications from the stream parser.
+        :param parsed_quantities: The dictionary of parsed quantities.
+        :param inputs: The dictionary of the input nodes.
+        :param exit_codes: The dictionary of the exit codes from the parser.
+        :param ignored: A list of critical notification that are allowed to have
+        """
+        self.notifications = notifications
+        self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
+        self.parsed_quantities = parsed_quantities
+        self.inputs = inputs
+        self.exit_codes = exit_codes
+        self.critical_notifications = critical_notifications
+
+    def compose(self):
+        """
+        Compose the exit codes
+
+        Returns None if no exit code should be emitted, otherwise emit the error code.
+        """
+
+        for critical in self.critical_notifications:
+            # Check for any special handling
+            if hasattr(self, critical):
+                output = getattr(self, critical)
+                if output:
+                    return output
+            # No special handling, just check if it exists
+            elif critical in self.notifications_dict:
+                return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict[critical])
+        return None
+
+    @property
+    def brmix(self):
+        """Check if BRMIX should be emitted"""
+        if 'brmix' not in self.notifications_dict:
+            return None
+
+        # If NELECT is set explicitly for the calculation then this is not an critical error
+        if 'parameters' in self.inputs and 'nelect' in self.inputs['parameters'].get_dict():
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['brmix'])
+
+    @property
+    def edddav_zhegv(self):
+        """Check if EDDDAV call to ZHEGV should be emitted. Sometimes it has converged."""
+        if 'edddav_zhegv' not in self.notifications_dict:
+            return None
+
+        if self.parsed_quantities['run_status']['electronic_converged']:
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['edddav_zhegv'])
+
+    @property
+    def eddrmm_zhegv(self):
+        """Check if EDDRMM call to ZHEGV should be emitted. Sometimes it has converged."""
+        if 'eddrmm_zhegv' not in self.notifications_dict:
+            return None
+
+        if self.parsed_quantities['run_status']['electronic_converged']:
+            return None
+
+        return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['eddrmm_zhegv'])
