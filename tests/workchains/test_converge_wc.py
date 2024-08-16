@@ -9,6 +9,7 @@ from __future__ import print_function
 import numpy as np
 import pytest
 from aiida.common.extendeddicts import AttributeDict
+from aiida.orm import load_code
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -35,7 +36,6 @@ def options():
 def test_converge_wc(fresh_aiida_env, upload_potcar, mock_vasp, options, data_path, potcar_family_name, potcar_mapping):
     """Test submitting only, not correctness, with mocked vasp code."""
     from aiida.engine import run
-    from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.converge')
@@ -61,7 +61,7 @@ def test_converge_wc(fresh_aiida_env, upload_potcar, mock_vasp, options, data_pa
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})
     inputs.potential_family = get_data_node('core.str', potcar_family_name)
@@ -128,7 +128,6 @@ def test_converge_wc_pw(
 ):
     """Test convergence workflow using mock code."""
     from aiida.engine import run
-    from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.converge')
@@ -161,7 +160,7 @@ def test_converge_wc_pw(
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
     inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})
@@ -212,7 +211,6 @@ def test_converge_wc_kgrid(
 ):
     """Test convergence workflow using mock code."""
     from aiida.engine import run
-    from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.converge')
@@ -241,7 +239,7 @@ def test_converge_wc_kgrid(
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.parameters = get_data_node('core.dict', dict=parameters)
     inputs.potential_family = get_data_node('core.str', potcar_family_name)
@@ -288,7 +286,6 @@ def test_converge_wc_on_failed(
 ):
     """Test convergence workflow using mock code."""
     from aiida.engine import run
-    from aiida.orm import Code
     from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.converge')
@@ -321,7 +318,7 @@ def test_converge_wc_on_failed(
     restart_clean_workdir.store()
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
     inputs.parameters = get_data_node('core.dict', dict={'incar': parameters})

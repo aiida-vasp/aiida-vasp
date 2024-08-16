@@ -77,9 +77,9 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'band',
 )
 
-DEFAULT_EXCLUDED_NODE = tuple(['band', 'dos'])
+DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints'])
 
-DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats', 'total_energies')
+DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats')
 
 DEFAULT_FILE_MAPPING = {
     'vasprun.xml': 'vasprun.xml',
@@ -163,6 +163,13 @@ class ParserSettingsConfig(OptionContainer):
             'bandocc',
         ],
     )
+    critical_objects: List[str] = Field(
+        description='Critical objects to be present', default_factory=lambda: ['vasprun.xml', 'OUTCAR']
+    )
+    check_errors: bool = Field(description='Whether to check for errors in calculation', default=True)
+    check_ionic_convergence: bool = Field(
+        description='Whether to check for convergence during the relaxation based on the INCAR settings', default=True
+    )
 
 
 class VaspParser(Parser):
@@ -179,9 +186,12 @@ class VaspParser(Parser):
         Parse outputs, store results in database.
         """
 
-        user_config: ParserSettingsConfig = ParserSettingsConfig(
-            **self.node.inputs.settings.get_dict().get('parser_settings', {})
-        )
+        if 'settings' in self.node.inputs:
+            user_config: ParserSettingsConfig = ParserSettingsConfig(
+                **self.node.inputs.settings.get_dict().get('parser_settings', {})
+            )
+        else:
+            user_config = ParserSettingsConfig()
         self.user_config = user_config
 
         quantities_each = {}
@@ -192,8 +202,21 @@ class VaspParser(Parser):
         nodes_to_exclude = [key for key in DEFAULT_EXCLUDED_NODE if key not in user_config.include_node]
         nodes_to_exclude += user_config.exclude_node
 
+        # Check for critical missing objects
         retrieve_object_names = self.retrieved.list_object_names()
+        missing = False
+        for name, value in user_config.file_mapping.items():
+            if name in user_config.critical_objects and name not in retrieve_object_names:
+                missing = True
+        if missing is True:
+            return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
+
         parser_notifications = {}
+        errored_quantities = {}
+        errored_parsers = {}
+
+        self.errored_quantities = errored_quantities
+        self.errored_parsers = errored_parsers
 
         # Parse the files
         def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
@@ -201,12 +224,24 @@ class VaspParser(Parser):
             resolved_name = user_config.file_mapping[name]
             if resolved_name in retrieve_object_names:
                 with self.retrieved.open(resolved_name, open_mode) as handler:
-                    parser: BaseFileParser = parser_cls(handler=handler, settings=content_parser_settings)
+                    try:
+                        parser: BaseFileParser = parser_cls(handler=handler, settings=content_parser_settings)
+                    except Exception as error:
+                        errored_parsers[name] = error
+                        return
                     if parser.parser_notifications:
                         parser_notifications.update(parser.parser_notifications)
-                    quantities_each[name] = parser.get_all_quantities()
+                    quantities_each[name], errored = parser.get_all_quantities()
+                    errored_quantities.update(errored)
             elif user_config.check_completeness is True and required is True:
                 raise MissingFileError(f'{resolved_name} is missing in the retrieved folder.')
+
+        if errored_quantities:
+            self.logger.warning(
+                'The following quantities cannot be parsed due to errors:' f' {", ".join(errored_quantities)}'
+            )
+        if errored_parsers:
+            self.logger.warning('The following parsers cannot be instantiated due to:' f' {", ".join(errored_parsers)}')
 
         parse_and_add(
             'vasprun.xml',
@@ -251,7 +286,7 @@ class VaspParser(Parser):
 
         # Create the outputs
         self._failed_to_compose = {}
-        for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'band', 'dos']:
+        for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'bands', 'dos']:
             if name in nodes_to_exclude:
                 continue
             node = None
@@ -263,11 +298,15 @@ class VaspParser(Parser):
                 continue
             if node is not None:
                 self.out(name, node)
-        if self._failed_to_compose and user_config.check_completeness is True:
+        if (
+            any(name in user_config.include_node for name in self._failed_to_compose)
+            and user_config.check_completeness is True
+        ):
             return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(self._failed_to_compose.keys()))
         # Check for errors
-        error = self._check_vasp_errors(parser_notifications)
-        return error
+        if user_config.check_errors is True:
+            error = self._check_vasp_errors(parser_notifications)
+            return error
 
     def _compose_misc(self, quantities_each):
         """Compose the `misc` output node"""
@@ -345,7 +384,7 @@ class VaspParser(Parser):
             return node
         return None
 
-    def _compose_band(self, quantities_each):
+    def _compose_bands(self, quantities_each):
         """Compose the `band` node"""
         if 'vasprun.xml' in quantities_each:
             deigen = quantities_each['vasprun.xml']['eigenvalues']
@@ -377,8 +416,8 @@ class VaspParser(Parser):
         """
         quantities = {}
         for key, value in self._quantities_each.items():
-            quantities[key] = value
-
+            for key_, value_ in value.items():
+                quantities[key_] = value_
         if 'run_status' not in quantities:
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
         run_status = quantities['run_status']
@@ -386,7 +425,7 @@ class VaspParser(Parser):
         try:
             # We have an overflow in the XML file which is critical, but not reported by VASP in
             # the standard output, so checking this here.
-            if parser_notifications['vasprun_xml_overflow']:
+            if parser_notifications.get('vasprun_xml_overflow'):
                 return self.exit_codes.ERROR_OVERFLOW_IN_XML
         except AttributeError:
             pass
@@ -402,21 +441,21 @@ class VaspParser(Parser):
 
         # Check the ionic convergence issues
         if run_status['ionic_converged'] is False:
-            if self._check_ionic_convergence:
+            if self.user_config.check_ionic_convergence is True:
                 return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
             self.logger.warning('The ionic relaxation is not converged, but the calculation is treated as successful.')
 
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            ignore_all = self._user_config.ignore_notification_errors
+            ignore_all = self.user_config.ignore_notification_errors
             if not ignore_all:
                 composer = NotificationComposer(
                     notifications,
                     quantities,
                     self.node.inputs,
                     self.exit_codes,
-                    critical_notifications=self._user_config.critical_notification_errors,
+                    critical_notifications=self.user_config.critical_notification_errors,
                 )
                 exit_code = composer.compose()
                 if exit_code is not None:

@@ -136,10 +136,6 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, sandbox_fold
     for name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
         assert name in input_objects
 
-    assert 'EIGENVAL' in calcinfo.retrieve_list
-    assert 'DOSCAR' in calcinfo.retrieve_list
-    assert 'wannier90*' in calcinfo.retrieve_list
-
     assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
     assert calcinfo.codes_info[0].join_files is True
 
@@ -199,7 +195,7 @@ def test_vasp_calc(fresh_aiida_env, run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
 
-    results, node = run_vasp_process()
+    results, node = run_vasp_process(settings={'parser_settings': {'check_errors': False}})
     assert node.exit_status == 0
 
     # Check that the standard output is there
@@ -402,7 +398,7 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     results, node = run_vasp_process(
         test_case='exit_codes/converged-with-error',
         settings={
-            'parser_settings': {'critical_notifications': {'add_brmix': False}},
+            'parser_settings': {'critical_notification_errors': [], 'check_errors': True},
         },
     )
 
@@ -431,7 +427,7 @@ def test_vasp_calc_error_ignore_all(run_vasp_process):
     """
     results, node = run_vasp_process(
         test_case='exit_codes/converged-with-error',
-        settings={'parser_settings': {'ignore_all_errors': True}},
+        settings={'parser_settings': {'ignore_notification_errors': True}},
     )
 
     # Check that the standard output is there

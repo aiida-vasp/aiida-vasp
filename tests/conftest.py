@@ -10,7 +10,7 @@ from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import CalculationNode, Code, Computer, QueryBuilder
+from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, QueryBuilder, load_code
 from aiida.tools.archive import create_archive
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarGroup
 from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_class, get_data_node
@@ -114,7 +114,6 @@ def read_file(data_path):
 @pytest.fixture()
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
-    from aiida.orm import InstalledCode
 
     if not localhost.pk:
         localhost.store()
@@ -371,14 +370,14 @@ def run_vasp_process(
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
-        inpts.code = Code.get_from_string('mock-vasp@localhost')
+        inpts.code = load_code('mock-vasp@localhost')
         kpoints, _ = vasp_kpoints
         inpts.kpoints = kpoints
         if inputs is not None:
             # Allow overrides of the input
             inpts.update(inputs)
         if settings is not None and isinstance(settings, dict):
-            inpts.settings = get_data_node('core.dict', dict=settings)
+            inpts.settings = Dict(dict=settings)
         results_and_node = run.get_node(process, **inpts)
         return results_and_node
 
@@ -478,11 +477,10 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
         if os.environ.get('REAL_VASP_PATH'):
             mock_vasp_path = os.environ['REAL_VASP_PATH']
 
-        code = Code()
+        code = InstalledCode(localhost, mock_vasp_path)
         code.label = exec_name
         code.description = 'Mock VASP for tests'
-        code.set_remote_computer_exec((localhost, mock_vasp_path))
-        code.set_input_plugin_name('vasp.vasp')
+        code.default_calc_job_plugin = 'vasp.vasp'
         code.store()
         code.base.extras.set('is_mock_code', True)
 

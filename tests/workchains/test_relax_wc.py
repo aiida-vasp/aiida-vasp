@@ -96,7 +96,7 @@ def test_relax_wc(fresh_aiida_env, upload_potcar, mock_vasp, data_path, potcar_f
     parameters['relax']['force_cutoff'] = 0.01
 
     inputs = AttributeDict()
-    inputs.code = orm.Code.get_from_string('mock-vasp@localhost')
+    inputs.code = orm.load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.kpoints = kpoints
     inputs.parameters = get_data_node('core.dict', dict=parameters)
@@ -192,7 +192,7 @@ def setup_vasp_relax_workchain(structure, incar, nkpts, potcar_family_name, potc
 
     # If code is not passed, use the mock code
     if code is None:
-        mock = orm.Code.get_from_string('mock-vasp-strict@localhost')
+        mock = orm.load_code('mock-vasp-strict@localhost')
         inputs.code = mock
     else:
         inputs.code = code

@@ -104,7 +104,15 @@ class BaseFileParser:
         """
         Fetch all quantities that can be parsed.
         """
-        return {name: getattr(self, name) for name in self.PARSABLE_QUANTITIES.keys()}
+        parsed = {}
+        errored = {}
+        for name in self.PARSABLE_QUANTITIES:
+            try:
+                parsed[name] = getattr(self, name)
+            except (TypeError, ValueError, KeyError, AttributeError, IndexError) as error:
+                errored[name] = error
+                continue
+        return parsed, errored
 
     @property
     def parsable_quantities(self):

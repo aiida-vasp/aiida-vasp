@@ -11,6 +11,7 @@ from __future__ import print_function
 import numpy as np
 import pytest
 from aiida.common.extendeddicts import AttributeDict
+from aiida.orm import load_code
 from aiida.plugins.factories import DataFactory
 from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
 from aiida_vasp.utils.mock_code import VaspMockRegistry
@@ -167,7 +168,6 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
     """
     Setup the inputs for a VaspWorkChain.
     """
-    from aiida.orm import Code
 
     inputs = AttributeDict()
 
@@ -193,7 +193,7 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
 
     # If code is not passed, use the mock code
     if code is None:
-        mock = Code.get_from_string('mock-vasp-strict@localhost')
+        mock = load_code('mock-vasp-strict@localhost')
         inputs.code = mock
     else:
         inputs.code = code

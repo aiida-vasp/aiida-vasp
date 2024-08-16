@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
+from aiida.orm import load_code
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.node_composer import NodeComposer
@@ -22,7 +23,6 @@ def test_bands_wc(fresh_aiida_env, upload_potcar, mock_vasp, data_path, potcar_f
     """Test with mocked vasp code."""
     from aiida.engine import run
     from aiida.orm import (
-        Code,
         RemoteData,  # pylint: disable=no-name-in-module
     )
     from aiida.plugins import WorkflowFactory
@@ -49,7 +49,7 @@ def test_bands_wc(fresh_aiida_env, upload_potcar, mock_vasp, data_path, potcar_f
     parameters['electronic'] = {'pwcutoff': 200}
 
     inputs = AttributeDict()
-    inputs.code = Code.get_from_string('mock-vasp@localhost')
+    inputs.code = load_code('mock-vasp@localhost')
     inputs.structure = structure
     inputs.parameters = get_data_node('core.dict', dict=parameters)
     inputs.potential_family = get_data_node('core.str', potcar_family_name)
