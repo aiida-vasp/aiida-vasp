@@ -49,8 +49,7 @@ def test_parse_charge(chgcar_parser):
     """
     result = chgcar_parser.get_quantity('charge_density')
     assert result is not None
-    assert 'charge_density' in result
-    assert np.allclose(result['charge_density'], compare_charge_density)
+    assert np.allclose(result, compare_charge_density)
 
 
 @pytest.mark.parametrize(
@@ -74,13 +73,11 @@ def test_parse_magnetization(chgcar_parser):
     """
     result = chgcar_parser.get_quantity('charge_density')
     assert result is not None
-    assert 'charge_density' in result
-    assert np.allclose(result['charge_density'], compare_charge_density)
+    assert np.allclose(result, compare_charge_density)
     # Magnetization density if turned off by default, enable it
     result = chgcar_parser.get_quantity('magnetization_density')
     assert result is not None
-    assert 'magnetization_density' in result
-    assert np.allclose(result['magnetization_density'], compare_charge_density)
+    assert np.allclose(result, compare_charge_density)
 
 
 @pytest.mark.parametrize(
@@ -104,11 +101,9 @@ def test_parse_magnetization_ncl(chgcar_parser):
     """
     result = chgcar_parser.get_quantity('charge_density')
     assert result is not None
-    assert 'charge_density' in result
-    assert np.allclose(result['charge_density'], compare_charge_density)
+    assert np.allclose(result, compare_charge_density)
     result = chgcar_parser.get_quantity('magnetization_density')
     assert result is not None
-    assert 'magnetization_density' in result
-    assert set(['x', 'y', 'z']) == set(result['magnetization_density'].keys())
-    for item in result['magnetization_density'].values():
+    assert set(['x', 'y', 'z']) == set(result.keys())
+    for item in result.values():
         assert np.allclose(item, compare_charge_density)

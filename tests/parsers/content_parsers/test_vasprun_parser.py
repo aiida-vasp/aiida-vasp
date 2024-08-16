@@ -185,7 +185,6 @@ def test_parse_vasprun_born(vasprun_parser):
     """Load a reference vasprun.xml and test that the Born effective charges are
     returned correctly."""
     born = vasprun_parser.get_quantity('born_charges')
-    born = born['born_charges']
     # Test shape of array
     assert born.shape == (8, 3, 3)
     # Test a few entries
@@ -266,7 +265,6 @@ def test_parse_vasprun_projectors(vasprun_parser):
     """Load a reference vasprun.xml and test that the state projectors are
     returned correctly."""
     proj = vasprun_parser.get_quantity('projectors')
-    proj = proj['projectors']
     # Test shape of array
     assert proj.shape == (8, 64, 21, 9)
     # Test a few entries
@@ -647,7 +645,6 @@ def test_parse_vasprun_hessian(vasprun_parser):
     """Load a reference vasprun.xml and check that the Hessian matrix
     are returned correctly."""
     hessian = vasprun_parser.get_quantity('hessian')
-    hessian = hessian['hessian']
     # Test shape
     assert hessian.shape == (24, 24)
     # Test a few entries

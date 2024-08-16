@@ -27,7 +27,7 @@ class PoscarParser(BaseFileParser):
 
     """
 
-    DEFAULT_SETTINGS = {'quantities_to_parse': ['poscar-structure']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['structure']}
 
     PARSABLE_QUANTITIES = {
         'structure': {
