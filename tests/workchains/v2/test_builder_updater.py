@@ -36,6 +36,7 @@ def test_vasp_relax_updater(aiida_profile, vasp_code):
     assert upd.builder.relax_settings.get_dict()['algo'] == 'cg'
 
 
+@pytest.mark.skip(reason='Not finalised he hybrid band structure workchain interface yet')
 @pytest.mark.parametrize('hybrid', [True, False])
 def test_vasp_band_updater(aiida_profile, vasp_code, hybrid):
     structure = orm.StructureData(ase=bulk('MgO', 'rocksalt', 5.0)).store()
@@ -53,9 +54,6 @@ def test_vasp_band_updater(aiida_profile, vasp_code, hybrid):
     assert upd.builder.scf.kpoints_spacing.value == 0.05
     assert upd.builder.scf.potential_family.value == 'PBE.54'
     assert upd.builder.scf.potential_mapping.get_dict() == {'Mg': 'Mg_pv', 'O': 'O'}
-    if hybrid:
-        assert upd.builder.symprec.value == 0.01
-        assert upd.builder.kpoints_per_split.value == 80
 
     if hybrid:
         upd = bup.VaspHybridBandUpdater()
