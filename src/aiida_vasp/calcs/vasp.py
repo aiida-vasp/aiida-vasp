@@ -152,6 +152,12 @@ class VaspCalculation(VaspCalcBase):
             help='The output trajectory data.',
         )
         spec.output(
+            'arrays',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='The output trajectory data.',
+        )
+        spec.output(
             'chgcar',
             valid_type=get_data_class('vasp.chargedensity'),
             required=False,

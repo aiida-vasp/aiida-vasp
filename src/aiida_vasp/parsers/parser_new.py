@@ -382,12 +382,11 @@ class VaspParser(Parser):
             traj_data = quantities_each['vasprun.xml'].get('trajectory')
             if traj_data is None:
                 return None
-            for item in traj_data:
-                for key, value in traj_data[item].items():
-                    if key == 'symbols':
-                        node.base.attributes.set(key, value)
-                    else:
-                        node.set_array(key, value)
+            for key, value in traj_data.items():
+                if key == 'symbols':
+                    node.base.attributes.set(key, value)
+                else:
+                    node.set_array(key, value)
             return node
         return None
 

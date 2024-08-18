@@ -89,7 +89,7 @@ def site_magnetization_to_magmom(site_dict):
 
 
 def nested_update(dict_in, update_dict, extend_list=False):
-    """Update the dictionary - combine nested subdictionary with update as well"""
+    """Update the dictionary - combine nested sub-dictionary with update as well"""
     for key, value in update_dict.items():
         if key in dict_in and isinstance(value, (dict, AttributeDict)):
             nested_update(dict_in[key], value, extend_list=extend_list)
