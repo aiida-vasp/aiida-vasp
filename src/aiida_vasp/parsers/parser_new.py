@@ -65,8 +65,6 @@ DEFAULT_QUANTITIES = (
 
 DEFAULT_EXCLUDED_QUANTITIES = (
     'energies',
-    'trajectory',
-    'kpoints',
     'chgcar',
     'wavecar',
     'projectors',
@@ -74,10 +72,9 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'magnetization_density',
     'elastic_moduli',
     'symmetries',
-    'band',
 )
 
-DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints'])
+DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints', 'trajectory'])
 
 DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats')
 
@@ -169,6 +166,9 @@ class ParserSettingsConfig(OptionContainer):
     check_errors: bool = Field(description='Whether to check for errors in calculation', default=True)
     check_ionic_convergence: bool = Field(
         description='Whether to check for convergence during the relaxation based on the INCAR settings', default=True
+    )
+    omit_structure: bool = Field(
+        description='Whether to omit the structure node from the output if no ionic movement', default=True
     )
 
 
@@ -321,6 +321,13 @@ class VaspParser(Parser):
         """Compose the `structure` output node"""
 
         data = None
+        incar_dict = {key.lower(): value for key, value in self.node.inputs.parameters.get_dict().items()}
+        if (
+            incar_dict.get('ibrion', -1) < 0 or incar_dict.get('nsw', 0) <= 0
+        ) and self.user_config.omit_structure is True:
+            self.logger.info('No ionic movement detected, omitting the structure output node.')
+            return None
+
         if 'vasprun.xml' in quantities_each:
             data = quantities_each['vasprun.xml'].get('structure')
         if data is None:

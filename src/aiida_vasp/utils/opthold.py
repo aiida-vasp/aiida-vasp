@@ -227,3 +227,8 @@ class BandOptions(OptionContainer):
         description='Flag for running DOS calculations',
         default=False,
     )
+    additional_band_analysis_parameters: dict = Field(
+        description='Additional keyword arguments for the seekpath/ interface, available keys are:'
+        "  ['with_time_reversal', 'reference_distance', 'recipe', 'threshold', 'symprec', 'angle_tolerance']",
+        default={},
+    )

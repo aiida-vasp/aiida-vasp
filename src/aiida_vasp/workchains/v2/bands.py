@@ -260,22 +260,35 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
         if mode == 'seekpath-aiida':
             inputs = {
-                'reference_distance': self.inputs.band_settings['band_kpoints_distance'],
-                'symprec': self.inputs.band_settings['symprec'],
+                'band_settings': orm.Dict(
+                    {
+                        'reference_distance': self.inputs.band_settings['band_kpoints_distance'],
+                        'symprec': self.inputs.band_settings['symprec'],
+                        **self.inputs.band_settings['additional_band_analysis_parameters'],
+                    }
+                ),
                 'metadata': {'call_link_label': 'seekpath'},
             }
             func = seekpath_structure_analysis
         else:
             # Using sumo interface
-            from .common.sumo_kpath import kpath_from_sumo
+            try:
+                from .common.sumo_kpath import kpath_from_sumo_v2
+            except ImportError:
+                raise ImportError('Sumo is not installed, please install it to use this feature.')
 
             inputs = {
-                'line_density': self.inputs.band_settings['line_density'],
-                'symprec': self.inputs.band_settings['symprec'],
-                'mode': orm.Str(mode),
+                'band_settings': orm.Dict(
+                    {
+                        'line_density': self.inputs.band_settings['line_density'],
+                        'symprec': self.inputs.band_settings['symprec'],
+                        'mode': mode,
+                        **self.inputs.band_settings['additional_band_analysis_parameters'],
+                    }
+                ),
                 'metadata': {'call_link_label': 'sumo_kpath'},
             }
-            func = kpath_from_sumo
+            func = kpath_from_sumo_v2
 
         magmom = self.ctx.get('magmom', None)
 
@@ -387,7 +400,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             else:
                 bands_input = AttributeDict(
                     {
-                        'settings': orm.Dict(dict={'parser_settings': {'add_bands': True}}),
+                        'settings': orm.Dict(dict={'parser_settings': {'include_node': ['bands']}}),
                         'parameters': orm.Dict(dict={'charge': {'constant_charge': True}}),
                     }
                 )
@@ -409,11 +422,11 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
             # Check if add_bands
             settings = inputs.get('settings')
-            essential = {'parser_settings': {'add_bands': True}}
+            essential = {'parser_settings': {'include_node': ['bands']}}
             if settings is None:
                 inputs.settings = orm.Dict(dict=essential)
             else:
-                inputs.settings = nested_update_dict_node(settings, essential)
+                inputs.settings = nested_update_dict_node(settings, essential, extend_list=True)
 
             # Swap with the default kpoints generated
             inputs.kpoints = self.ctx.bs_kpoints
@@ -463,12 +476,12 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
                 # kindly add `add_dos` if the `dos` input namespace is not
                 # explicitly defined.
                 settings = inputs.get('settings')
-                essential = {'parser_settings': {'add_dos': True}}
+                essential = {'parser_settings': {'include_node': ['dos', 'bands']}}
 
                 if settings is None:
                     inputs.settings = orm.Dict(dict=essential)
                 else:
-                    inputs.settings = nested_update_dict_node(settings, essential)
+                    inputs.settings = nested_update_dict_node(settings, essential, extend_list=True)
 
             # Set the label
             inputs.metadata.label = self.inputs.metadata.label + ' DOS'
@@ -534,7 +547,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
 
 @calcfunction
-def seekpath_structure_analysis(structure, **kwargs):
+def seekpath_structure_analysis(structure, band_settings):
     """Primitivize the structure with SeeKpath and generate the high symmetry k-point path through its Brillouin zone.
     This calcfunction will take a structure and pass it through SeeKpath to get the normalized primitive cell and the
     path of high symmetry k-points through its Brillouin zone. Note that the returned primitive cell may differ from the
@@ -551,9 +564,7 @@ def seekpath_structure_analysis(structure, **kwargs):
     from aiida.tools import get_explicit_kpoints_path
 
     # All keyword arugments should be `Data` node instances of base type and so should have the `.value` attribute
-    unwrapped_kwargs = {key: node.value for key, node in kwargs.items() if isinstance(node, orm.Data)}
-
-    return get_explicit_kpoints_path(structure, **unwrapped_kwargs)
+    return get_explicit_kpoints_path(structure, **band_settings.get_dict())
 
 
 @calcfunction
@@ -737,10 +748,12 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
 
             # Ensure that the bands are parsed
             if 'settings' not in inputs:
-                inputs.settings = orm.Dict(dict={'parser_settings': {'add_bands': True}})
+                inputs.settings = orm.Dict(dict={'parser_settings': {'include_node': ['bands']}})
             else:
                 # Merge with 'parser_settings'
-                inputs.settings = nested_update_dict_node(inputs.settings, {'parser_settings': {'add_bands': True}})
+                inputs.settings = nested_update_dict_node(
+                    inputs.settings, {'parser_settings': {'include_node': ['bands']}}, extend_list=True
+                )
 
             # Swap the kpoints the the one with zero-weight parts
             inputs.kpoints = value
