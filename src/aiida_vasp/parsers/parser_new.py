@@ -321,12 +321,15 @@ class VaspParser(Parser):
         """Compose the `structure` output node"""
 
         data = None
-        incar_dict = {key.lower(): value for key, value in self.node.inputs.parameters.get_dict().items()}
-        if (
-            incar_dict.get('ibrion', -1) < 0 or incar_dict.get('nsw', 0) <= 0
-        ) and self.user_config.omit_structure is True:
-            self.logger.info('No ionic movement detected, omitting the structure output node.')
-            return None
+        # Omit output structure if not doing ionic relaxation
+        # Better to inspect the parameters recorded directly inside the vasprun.xml
+        if 'parameters' in self.node.inputs:
+            incar_dict = {key.lower(): value for key, value in self.node.inputs.parameters.get_dict().items()}
+            if (
+                incar_dict.get('ibrion', -1) < 0 or incar_dict.get('nsw', 0) <= 0
+            ) and self.user_config.omit_structure is True:
+                self.logger.info('No ionic movement detected, omitting the structure output node.')
+                return None
 
         if 'vasprun.xml' in quantities_each:
             data = quantities_each['vasprun.xml'].get('structure')
