@@ -13,7 +13,6 @@ import traceback
 from warnings import warn
 
 import numpy as np
-
 from aiida_vasp.utils.aiida_utils import get_data_class
 
 NODES_TYPES = {

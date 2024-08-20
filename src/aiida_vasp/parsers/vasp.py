@@ -1,362 +1,458 @@
 """
-VASP parser.
+Parser module for composing output of a VASP calculation.
 
-------------
-The main driver routine for parsing VASP related objects. The parser is
-modular and contains several modules:
+The simplified parser outputs the following nodes:
 
-- ``node_composer`` handles the quantity composition of nodes
-- ``quantity`` the actual quantity to parse and what object parsers to use to obtain it
-- ``settings`` general parser settings
-- ``manager`` takes the quantity definitions and executes the actual parsing needed
+1. A `misc` node that stores simple summary information such as total energies,
+    total run times, any warnings issues during the calculation and if the calculation
+    was finished.
+2. A `arrays` node that for storing the properties that are arrays by nature and typically
+    have a large size.
+    This includes the dielectric function, hessian matrix as well as the energies of each
+    SCF cycle.
+3. A `trajectory` node for storing the trajectory of geometry optimisation and AIMD.
+4. A `bands` node for storing the band structure.
+5. A `dos` node for storing the density of states.
+
+Main difference from the previous version
+
+1. Individual properties are not stored in the separate node in order to reduce the number of nodes created. Scalar and
+   small arrays are stored in misc (final energies and forces), and larger none-standard output arrays are stored in
+   the `array` output node.
+2. `pydantic` is used to validate the parser settings *at submission* time.
+3. When parsing retrieved data, we take a 'parse as much as possible' approach -
+   the quantities are always parsed if available, and only excluded during the stage of composing the output nodes.
+   This is simpler from the previous 'parse only when needed' approach, where multiple checks have be done to work
+   out which parser to call and which quantities to include.
+4. All parser logic is contained in a single class and can be extended by updating content parsers and modify the
+   default settings and update/add the `_compose_xx` methods.
 """
 
-# encoding: utf-8
-# pylint: disable=no-member
-import traceback
+from typing import Any, Dict, List
 
-from aiida.common.exceptions import NotExistent
-from pydantic import BaseModel, Field
+import numpy as np
+from aiida import orm
+from aiida.parsers.parser import Parser
+from pydantic import Field
 
-from aiida_vasp.parsers.base import BaseParser
-from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.parsers.quantity import ParsableQuantities
-from aiida_vasp.parsers.settings import ParserDefinitions, ParserSettings
+from aiida_vasp.parsers.content_parsers import *
+from aiida_vasp.utils.opthold import OptionContainer
 
 
-class CriticalNotificationsConfig(BaseModel):
-    add_brmix: bool = True
-    add_cnormn: bool = True
-    add_denmp: bool = True
-    add_dentet: bool = True
-    add_edddav_zhegv: bool = True
-    add_eddrmm_zhegv: bool = True
-    add_edwav: bool = True
-    add_fexcp: bool = True
-    add_fock_acc: bool = True
-    add_non_collinear: bool = True
-    add_not_hermitian: bool = True
-    add_psmaxn: bool = True
-    add_pzstein: bool = True
-    add_real_optlay: bool = True
-    add_rhosyg: bool = True
-    add_rspher: bool = True
-    add_set_indpw_full: bool = True
-    add_sgrcon: bool = True
-    add_no_potimm: bool = True
-    add_magmom: bool = True
-    add_bandocc: bool = True
+class ParserError(RuntimeError):
+    pass
 
 
-class ParserSettingsConfig(BaseModel):
-    add_trajectory: bool = False
-    add_bands: bool = False
-    add_charge_density: bool = False
-    add_dos: bool = False
-    add_kpoints: bool = False
-    add_energies: bool = False
-    add_misc: bool = False
-    add_structure: bool = False
-    add_projectors: bool = False
-    add_born_charges: bool = False
-    add_dielectrics: bool = False
-    add_hessian: bool = False
-    add_dynmat: bool = False
-    add_wavecar: bool = False
-    add_forces: bool = False
-    add_stress: bool = False
-    add_site_magnetization: bool = False
-    critical_notifications: dict = Field(default_factory=CriticalNotificationsConfig)
+class QuantityMissingError(ParserError):
+    pass
 
 
-DEFAULT_SETTINGS = {
-    'add_trajectory': False,
-    'add_bands': False,
-    'add_charge_density': False,
-    'add_dos': False,
-    'add_kpoints': False,
-    'add_energies': False,
-    'add_misc': True,
-    'add_structure': False,
-    'add_projectors': False,
-    'add_born_charges': False,
-    'add_dielectrics': False,
-    'add_hessian': False,
-    'add_dynmat': False,
-    'add_wavecar': False,
-    'add_forces': False,
-    'add_stress': False,
-    'add_site_magnetization': False,
-    'critical_notifications': {
-        'add_brmix': True,
-        'add_cnormn': True,
-        'add_denmp': True,
-        'add_dentet': True,
-        'add_edddav_zhegv': True,
-        'add_eddrmm_zhegv': True,
-        'add_edwav': True,
-        'add_fexcp': True,
-        'add_fock_acc': True,
-        'add_non_collinear': True,
-        'add_not_hermitian': True,
-        # add_psmaxn': True,
-        'add_pzstein': True,
-        'add_real_optlay': True,
-        'add_rhosyg': True,
-        'add_rspher': True,
-        'add_set_indpw_full': True,
-        'add_sgrcon': True,
-        'add_no_potimm': True,
-        'add_magmom': True,
-        'add_bandocc': True,
-    },
+class RequiredQuantityMissingError(ParserError):
+    pass
+
+
+class MissingFileError(ParserError):
+    pass
+
+
+DEFAULT_QUANTITIES = (
+    'total_energies',
+    'maximum_stress',
+    'maximum_force',
+    'notifications',
+    'run_status',
+    'run_stats',
+    'version',
+    'band_properties',
+)
+
+DEFAULT_EXCLUDED_QUANTITIES = (
+    'energies',
+    'chgcar',
+    'wavecar',
+    'projectors',
+    'charge_density',
+    'magnetization_density',
+    'elastic_moduli',
+    'symmetries',
+)
+
+DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints', 'trajectory'])
+
+DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats')
+
+DEFAULT_FILE_MAPPING = {
+    'vasprun.xml': 'vasprun.xml',
+    'vasp_output': 'vasp_output',
+    'OUTCAR': 'OUTCAR',
+    'CONTCAR': 'CONTCAR',
+    'CHGCAR': 'CHGCAR',
+    'IBZKPT': 'IBZKPT',
 }
+MISC_QUANTITIES = (
+    'total_energies',
+    'maximum_stress',
+    'maximum_force',
+    'notifications',
+    'run_status',
+    'run_stats',
+    'version',
+    'forces',
+    'stress',
+    'site_magnetization',
+    'band_properties',
+    'elastic_moduli',
+    'symmetries',
+    'fermi_level',
+    'band_properties',
+    'magnetization',
+)
 
 
-class VaspParser(BaseParser):
+class ParserSettingsConfig(OptionContainer):
     """
-    Parses all VASP calculations.
-
-    This particular class manages all the specific parsers located in
-    aiida_vasp.parsers.content_parsers. The parser will check which quantities to parse
-    and which nodes to add to the calculation based on the 'parser_settings' card in
-    the 'settings' Dict of the corresponding VaspCalculation.
-
-    Parser Settings usage:
-
-    Parser settings can be passed through the input node `settings` as follows::
-
-        settings = Dict(dict={
-            'parser_settings': {
-                ...
-            }
-        })
-
-    Valid keys for `parser_settings` are:
-
-    * `add_<quantity>`, where quantity is one of:
-
-        'misc': (Default) Parameterdata node containing various quantities from OUTCAR and vasprun.xml.
-        'structure':  (Default) StructureData node parsed from CONTCAR
-        'bands':      Band structure node parsed from EIGENVAL.
-        'dos':        ArrayData node containing the DOS parsed from DOSCAR.
-        'kpoints':    KpointsData node parsed from IBZKPT.
-        'wavecar':    SinglefileData node containing the WAVECAR.
-        'charge_density':     SinglefileData node containing the CHGCAR.
-       If the value is set to ``False`` the quantity will not be returned.
-
-    * `critical_notifications`: A dictionary of critical errors to be checked with items like `'add_<key>': True`,
-      similiar to the `add_<quantity>` syntax described above.
-
-    * `output_params`: A list of quantities, that should be added to the 'misc' node.
-
-    * `content_parser_set`: String (DEFAULT = 'default').
-
-        By this option the default set of object parsers can be chosen. See settings.py
-        for available options.
-
-    * `ignore_all_errors`: If set to `True`, will skip checks for critical error messages. Defaults to `False`.
-
-    Additional object parsers can be added to the VaspParser by using
-
-        VaspParser.add_content_parser(parser_name, parser_definition_dict),
-
-    where the 'parser_definition_dict' should contain the 'parser_class' and the
-    'is_critical' flag. Keep in mind adding an additional object parsers after 'parse_with_retrieved'
-    is called, will only have an effect when parsing a second time.
+    Settings for the VASP parser.
     """
 
-    COMPOSER_CLASS = NodeComposer
+    include_quantity: List[str] = Field(description='Properties to include', default_factory=lambda: [])
+    exclude_quantity: List[str] = Field(description='Quantities to be excluded', default_factory=lambda: [])
+    required_quantity: List[str] = Field(
+        description='Quantities that most be present', default_factory=lambda: list(DEFAULT_REQUIRED_QUANTITIES)
+    )
+    include_node: List[str] = Field(description='Output node to include', default_factory=lambda: [])
+    exclude_node: List[str] = Field(description='Output node to exclude', default_factory=lambda: [])
+    file_mapping: Dict[str, str] = Field(
+        description='Mapping of file names to quantities', default_factory=lambda: dict(DEFAULT_FILE_MAPPING)
+    )
+    kpoints_from_ibzkpt: bool = False
+    check_completeness: bool = True
+    electronic_step_energies: bool = False
+    energy_type: List[str] = Field(
+        description='Energy types to include', default_factory=lambda: ['energy_extrapolated']
+    )
+    keep_stream_history: bool = Field(
+        description='Whether to keep the history of all notifications in the parsed stream' ' (stdout)', default=False
+    )
+    ignore_notification_errors: bool = Field(
+        description='Whether to ignore errors in the notifications parsed from vasp_output', default=False
+    )
+    critical_notification_errors: List[str] = Field(
+        description='Critical stream errors to raise',
+        default_factory=lambda: [
+            'brmix',
+            'edwave',
+            'brmix',
+            'cnormn',
+            'denmp',
+            'dentet',
+            'edddav_zhegv',
+            'eddrmm_zhegv',
+            'edwav',
+            'fexcp',
+            'fock_acc',
+            'non_collinear',
+            'not_hermitian',
+            'pzstein',
+            'real_optlay',
+            'rhosyg',
+            'rspher',
+            'set_indpw_full',
+            'sgrcon',
+            'no_potimm',
+            'magmom',
+            'bandocc',
+        ],
+    )
+    critical_objects: List[str] = Field(
+        description='Critical objects to be present', default_factory=lambda: ['vasprun.xml', 'OUTCAR']
+    )
+    check_errors: bool = Field(description='Whether to check for errors in calculation', default=True)
+    check_ionic_convergence: bool = Field(
+        description='Whether to check for convergence during the relaxation based on the INCAR settings', default=True
+    )
+    omit_structure: bool = Field(
+        description='Whether to omit the structure node from the output if no ionic movement', default=True
+    )
+
+
+class VaspParser(Parser):
+    """Class for parsing VASP output files and storing the results in AiiDA."""
 
     def __init__(self, node):
-        super().__init__(node)
+        """
+        Initialize the Parser instance
+        """
+        super(VaspParser, self).__init__(node)
+        # Create the containers
+        self.user_config = None
+        self.quantities_each: Dict[str, Any] = {}
+        self.errored_quantities: Dict[str, Any] = {}
+        self.errored_parsers: Dict[str, Any] = {}
+        self.parser_notifications: Dict[str, List[str]] = {}
+        self.retrieve_object_names: List[str] = []
+        self.quantities_to_exclude: List[str] = []
+        self.nodes_to_exclude: List[str] = []
 
-        try:
-            calc_settings = self.node.inputs.settings
-        except NotExistent:
-            calc_settings = None
+    def _init_user_settings(self):
+        """Initialize the settings from the inputs."""
+        if 'settings' in self.node.inputs:
+            user_config: ParserSettingsConfig = ParserSettingsConfig(
+                **self.node.inputs.settings.get_dict().get('parser_settings', {})
+            )
+        else:
+            user_config = ParserSettingsConfig()
+        # Initialize the containers
+        self.user_config = user_config
+        return user_config
 
-        parser_settings = None
-        if calc_settings:
-            parser_settings = calc_settings.get_dict().get('parser_settings')
+    def _get_quantities_to_parse(self):
+        """Return the list of quantities to parse."""
+        # Apply the modifiers
+        user_config = self.user_config
+        quantities_to_exclude = [key for key in DEFAULT_EXCLUDED_QUANTITIES if key not in user_config.include_quantity]
+        quantities_to_exclude += user_config.exclude_quantity
+        nodes_to_exclude = [key for key in DEFAULT_EXCLUDED_NODE if key not in user_config.include_node]
+        nodes_to_exclude += user_config.exclude_node
+        self.quantities_to_exclude = quantities_to_exclude
+        self.nodes_to_exclude = nodes_to_exclude
 
-        self._definitions = ParserDefinitions()
-        self._settings = ParserSettings(
-            parser_settings,
-            default_settings=DEFAULT_SETTINGS,
-            vasp_parser_logger=self.logger,
-        )
-        self._parsable_quantities = ParsableQuantities(vasp_parser_logger=self.logger)
+        # Check for critical missing objects
+        self.retrieve_object_names = self.retrieved.list_object_names()
+        missing = False
+        for name, _ in user_config.file_mapping.items():
+            if name in user_config.critical_objects and name not in self.retrieve_object_names:
+                missing = True
+        if missing is True:
+            return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-    def add_parser_definition(self, name, parser_dict):
-        """Add the definition of an oobject parser to self._definitions."""
-        self._definitions.add_parser_definition(name, parser_dict)
+    def _post_process_quantities(self):
+        """Post-process the parsed quantities."""
 
-    def add_parsable_quantity(self, quantity_name, quantity_dict):
-        """Add a single parsable quantity to the _parsable_quantities."""
-        self._parsable_quantities.add_parsable_quantity(quantity_name, quantity_dict)
+        # Warn about errored/missing quantities and parsers
 
-    def add_custom_node(self, node_name, node_dict):
-        """Add a custom node to the settings."""
-        self._settings.add_output_node(node_name, node_dict)
+        if self.errored_quantities:
+            self.logger.warning(
+                'The following quantities cannot be parsed due to errors:' f' {", ".join(self.errored_quantities)}'
+            )
+        if self.errored_parsers:
+            self.logger.warning(
+                'The following parsers cannot be instantiated due to:' f' {", ".join(self.errored_parsers)}'
+            )
 
-    def _setup_parsable(self):
-        self._parsable_quantities.setup(
-            retrieved_content=self._retrieved_content.keys(),
-            parser_definitions=self._definitions.parser_definitions,
-            quantity_names_to_parse=self._settings.quantity_names_to_parse,
-        )
+        # Remove the quantities
+        for name, parsed_quantities in self.quantities_each.items():
+            for sub_key in list(parsed_quantities.keys()):
+                if sub_key in self.quantities_to_exclude:
+                    del parsed_quantities[sub_key]
 
-    def parse(self, **kwargs):  # pylint: disable=too-many-return-statements
-        """The function that triggers the parsing of a calculation."""
+        # Check in required quantities are present
+        missing_required = []
+        for name in self.user_config.required_quantity:
+            exists = False
+            for _, value in self.quantities_each.items():
+                if value.get(name) is not None:
+                    exists = True
+                    break
+            if exists is False:
+                missing_required.append(name)
+        if missing_required:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=','.join(missing_required))
 
-        error_code = self._compose_retrieved_content(kwargs)
-        if error_code is not None:
-            return error_code
+    def parse(self, **kwargs):
+        """
+        Parse outputs, store results in database.
+        """
+        user_config = self._init_user_settings()
 
-        for name, value_dict in self._definitions.parser_definitions.items():
-            if name not in self._retrieved_content.keys() and value_dict['is_critical']:  # pylint: disable=consider-iterating-dictionary
-                self.logger.error(f'Missing content: {name} which is tagged as critical by the parser')
-                return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
-        self._parsable_quantities.setup(
-            retrieved_content=self._retrieved_content.keys(),
-            parser_definitions=self._definitions.parser_definitions,
-            quantity_names_to_parse=self._settings.quantity_names_to_parse,
-        )
-
-        # Update the parser settings to make sure that the quantities that have been requested from
-        # the collection of the nodes are included. Quantities already present in settings are preserved.
-        self._settings.update_quantities_to_parse(self._parsable_quantities.quantity_keys_to_parse)
-
-        # Parse the quantities from retrived objects
-        (
-            parsed_quantities,
-            failed_to_parse_quantities,
-            parser_notifications,
-        ) = self._parse_quantities()
-        # Compose the output nodes using the parsed quantities
-        requested_nodes = self._settings.output_nodes_dict
-        equivalent_quantity_keys = dict(self._parsable_quantities.equivalent_quantity_keys)
-        composed_nodes = self.COMPOSER_CLASS(
-            requested_nodes,
-            equivalent_quantity_keys,
-            parsed_quantities,
-            logger=self.logger,
-        )
-        for link_name, node in composed_nodes.successful.items():
-            self.out(link_name, node)
-
-        nodes_failed_to_create = composed_nodes.failed
-
-        # Check for execution related errors
-        exit_code = self._check_vasp_errors(parsed_quantities, parser_notifications)
+        exit_code = self._get_quantities_to_parse()
         if exit_code is not None:
             return exit_code
 
-        # Deal with missing quantities
-        if failed_to_parse_quantities:
-            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(
-                quantity=', '.join(failed_to_parse_quantities)
-            )
+        # Parse the files
+        def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
+            """Parse the target file and add the result to the quantities_each dictionary"""
+            resolved_name = user_config.file_mapping[name]
+            if resolved_name in self.retrieve_object_names:
+                with self.retrieved.open(resolved_name, open_mode) as handler:
+                    try:
+                        parser: BaseFileParser = parser_cls(handler=handler, settings=content_parser_settings)
+                    except Exception as error:
+                        self.errored_parsers[name] = error
+                        return
+                    if parser.parser_notifications:
+                        self.parser_notifications.update(parser.parser_notifications)
+                    self.quantities_each[name], errored = parser.get_all_quantities()
+                    self.errored_quantities.update(errored)
+            elif user_config.check_completeness is True and required is True:
+                raise MissingFileError(f'{resolved_name} is missing in the retrieved folder.')
 
-        # Deal with missing node/nodes
-        if nodes_failed_to_create:
-            return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(nodes_failed_to_create))
+        parse_and_add(
+            'vasprun.xml',
+            VasprunParser,
+            required=True,
+            open_mode='rb',
+            content_parser_settings={
+                'electronic_step_energies': user_config.electronic_step_energies,
+                'energy_type': user_config.energy_type,
+                'stream_history': user_config.keep_stream_history,
+            },
+        )
+        parse_and_add('OUTCAR', OutcarParser, required=True)
+        parse_and_add('vasp_output', StreamParser, required=True)
+        parse_and_add('CONTCAR', PoscarParser, required=True)
 
-        return self.exit_codes.NO_ERROR
+        # Parse if needed
+        if any(x not in self.quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
+            parse_and_add('CHGCAR', ChgcarParser, required=True)
 
-    def _parse_quantities(self):
-        """
-        This method dispatch the parsing to object parsers
+        if user_config.kpoints_from_ibzkpt:
+            parse_and_add('IBZKPT', ChgcarParser, required=True)
 
-        :returns: A tuple of parsed quantities dictionary and a list of quantities failed to obtain due to exceptions
-        """
-        parsed_quantities = {}
-        # A dictionary for catching instantiated object parser objects
-        content_parser_instances = {}
-        failed_to_parse_quantities = []
-        parser_notifications = {'xml_overflow': False}
-        for quantity_key in self._parsable_quantities.quantity_keys_to_parse:
-            name = self._parsable_quantities.quantity_keys_to_content[quantity_key]
-            content_parser_cls = self._definitions.parser_definitions[name]['parser_class']
-            # If a parsed object has been instantiated, use it.
-            if content_parser_cls in content_parser_instances:
-                parser = content_parser_instances[content_parser_cls]
-            else:
-                try:
-                    # The next line may except for ill-formated object
-                    with self._get_handler(name, mode=content_parser_cls.OPEN_MODE) as handler:
-                        parser = content_parser_cls(settings=self._settings.settings, handler=handler)
-                except Exception:  # pylint: disable=broad-except
-                    parser = None
-                    failed_to_parse_quantities.append(quantity_key)
-                    self.logger.warning(f'Cannot instantiate {content_parser_cls}, exception {traceback.format_exc()}:')
+        exit_code = self._post_process_quantities()
+        if exit_code is not None:
+            return exit_code
 
-                content_parser_instances[content_parser_cls] = parser
+        return self._create_outputs()
 
-            try:
-                if parser.overflow:
-                    # We check for overflow and set the appropriate exit status
-                    parser_notifications['xml_overflow'] = True
-            except AttributeError:
-                # Not the XML parser
-                pass
-
-            if parser is None:
-                # If the parser cannot be instantiated, add the quantity to a list of unavailable ones
-                failed_to_parse_quantities.append(quantity_key)
+    def _create_outputs(self):
+        """Create the output nodes"""
+        # Create the outputs
+        self._failed_to_compose = {}
+        for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'bands', 'dos']:
+            if name in self.nodes_to_exclude:
                 continue
-            exception = None
-
+            node = None
             try:
-                # The next line may still except for ill-formated object - some parser load all data at
-                # instantiation time, the others may not.
-                parsed_quantity = parser.get_quantity(quantity_key)
-            except Exception:  # pylint: disable=broad-except
-                parsed_quantity = None
-                exception = traceback.format_exc()
+                node = getattr(self, '_compose_' + name)(self.quantities_each)
+            except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
+                self._failed_to_compose[name] = error
+                self.logger.warning(f'Failed to compose {name} node: {error}')
+                continue
+            if node is not None:
+                self.out(name, node)
+        if (
+            any(name in self.user_config.include_node for name in self._failed_to_compose)
+            and self.user_config.check_completeness is True
+        ):
+            return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(self._failed_to_compose.keys()))
+        # Check for errors
+        if self.user_config.check_errors is True:
+            error = self._check_vasp_errors(self.parser_notifications)
+            return error
 
-            if parsed_quantity is not None:
-                parsed_quantities[quantity_key] = parsed_quantity
+    def _compose_misc(self, quantities_each):
+        """Compose the `misc` output node"""
+
+        out_dict = {}
+        gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, self.user_config.file_mapping['OUTCAR'], out_dict, MISC_QUANTITIES)
+        gather_quantities(quantities_each, self.user_config.file_mapping['vasp_output'], out_dict, MISC_QUANTITIES)
+        return orm.Dict(dict=out_dict)
+
+    def _compose_structure(self, quantities_each):
+        """Compose the `structure` output node"""
+
+        data = None
+        # Omit output structure if not doing ionic relaxation
+        # Better to inspect the parameters recorded directly inside the vasprun.xml
+        if 'parameters' in self.node.inputs:
+            incar_dict = {key.lower(): value for key, value in self.node.inputs.parameters.get_dict().items()}
+            if (
+                incar_dict.get('ibrion', -1) < 0 or incar_dict.get('nsw', 0) <= 0
+            ) and self.user_config.omit_structure is True:
+                self.logger.info('No ionic movement detected, omitting the structure output node.')
+                return None
+
+        if 'vasprun.xml' in quantities_each:
+            data = quantities_each['vasprun.xml'].get('structure')
+        if data is None:
+            data = quantities_each.get('CONTCAR', {}).get('structure')
+        if data is None:
+            raise QuantityMissingError()
+        return get_structure_node(data)
+
+    def _compose_arrays(self, quantities_each):
+        """Generate the generic `arrays` output node"""
+        array_quantities = ('projectors', 'born_charges', 'dielectrics', 'hessian', 'dynmat', 'energies')
+        out_arrays = {}
+        gather_quantities(quantities_each, 'vasprun.xml', out_arrays, array_quantities, flatten_dict=True)
+        # Remove None values in the arrays
+        out_arrays = {key: value for key, value in out_arrays.items() if value is not None}
+        if out_arrays:
+            return orm.ArrayData(out_arrays)
+        return None
+
+    def _compose_kpoints(self, quantities_each):
+        """Compose the `kpoints` output node"""
+        kpoints_data = None
+        if self.user_config.kpoints_from_ibzkpt is True:
+            kpoints_data = quantities_each['IBZKPT']['kpoints']
+        elif 'vasprun.xml' in quantities_each:
+            kpoints_data = quantities_each['vasprun.xml'].get('kpoints')
+
+        if kpoints_data is not None:
+            node = orm.KpointsData()
+            if kpoints_data['mode'] == 'explicit':
+                node.set_kpoints(
+                    kpoints_data['points'], weights=kpoints_data['weights'], cartesian=kpoints_data['cartesian']
+                )
+            elif kpoints_data['mode'] == 'automatic':
+                node.set_kpoints_mesh(kpoints_data['divisions'], offset=kpoints_data['shifts'])
             else:
-                self.logger.warning(f'Parsing {quantity_key} from {parser} failed, exception: {exception}')
-                failed_to_parse_quantities.append(quantity_key)
+                raise ValueError(f'Unknown kpoints mode {kpoints_data["mode"]}')
+            return node
+        raise QuantityMissingError('No valid kpoints data to use')
 
-        return parsed_quantities, failed_to_parse_quantities, parser_notifications
+    def _compose_trajectory(self, quantities_each):
+        """Compose the `trajectory` output"""
 
-    @property
-    def parser_settings(self):
-        """The `parser_settings` dictionary passed"""
-        return self._settings._settings  # pylint: disable=protected-access
+        if 'vasprun.xml' in quantities_each:
+            node = orm.TrajectoryData()
+            traj_data = quantities_each['vasprun.xml'].get('trajectory')
+            if traj_data is None:
+                return None
+            for key, value in traj_data.items():
+                if key == 'symbols':
+                    node.base.attributes.set(key, value)
+                else:
+                    node.set_array(key, value)
+            return node
+        return None
 
-    @property
-    def _check_ionic_convergence(self):
-        """
-        Wether to check the ionic convergence
+    def _compose_bands(self, quantities_each):
+        """Compose the `band` node"""
+        if 'vasprun.xml' in quantities_each:
+            deigen = quantities_each['vasprun.xml']['eigenvalues']
+            docc = quantities_each['vasprun.xml']['occupancies']
+            if 'total' in deigen:
+                eigenvalues = np.array(deigen['total'])
+                occupancies = np.array(docc['total'])
+            else:
+                eigenvalues = np.array([deigen['up'], deigen['down']])
+                occupancies = np.array([docc['up'], docc['down']])
+            node = orm.BandsData()
+            kpoints = self._compose_kpoints(quantities_each)
+            node.set_kpointsdata(kpoints)
+            node.set_bands(eigenvalues, occupations=occupancies)
+            return node
 
-        This can be customised using flag in the settings of the calculation
+    def _compose_dos(self, quantities_each):
+        """Compose the `dos` node"""
+        arrays_dict = {}
+        if 'vasprun.xml' in quantities_each:
+            gather_quantities(quantities_each, 'dos', arrays_dict, ['dos'], flatten_dict=True)
+        if arrays_dict:
+            node = orm.ArrayData(arrays_dict['dos'])
+            return node
 
-        Usage::
-
-          builder.settings = Dict(dict={
-              'CHECK_IONIC_CONVERGENCE': True
-          })
-
-        The default is `True` so a calculation that has ran for NSW steps is treated
-        as not converged.
-        """
-
-        if 'settings' in self.node.inputs:
-            settings = self.node.inputs.settings.get_dict()
-        else:
-            settings = {}
-        return settings.get('CHECK_IONIC_CONVERGENCE', True)
-
-    def _check_vasp_errors(self, quantities, parser_notifications):  # pylint: disable=too-many-return-statements
+    def _check_vasp_errors(self, parser_notifications):
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
-
+        quantities = {}
+        for key, value in self.quantities_each.items():
+            for key_, value_ in value.items():
+                quantities[key_] = value_
         if 'run_status' not in quantities:
             return self.exit_codes.ERROR_DIAGNOSIS_OUTPUTS_MISSING
         run_status = quantities['run_status']
@@ -364,7 +460,7 @@ class VaspParser(BaseParser):
         try:
             # We have an overflow in the XML file which is critical, but not reported by VASP in
             # the standard output, so checking this here.
-            if parser_notifications['xml_overflow']:
+            if parser_notifications.get('vasprun_xml_overflow'):
                 return self.exit_codes.ERROR_OVERFLOW_IN_XML
         except AttributeError:
             pass
@@ -380,21 +476,21 @@ class VaspParser(BaseParser):
 
         # Check the ionic convergence issues
         if run_status['ionic_converged'] is False:
-            if self._check_ionic_convergence:
+            if self.user_config.check_ionic_convergence is True:
                 return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
             self.logger.warning('The ionic relaxation is not converged, but the calculation is treated as successful.')
 
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
             notifications = quantities['notifications']
-            ignore_all = self.parser_settings.get('ignore_all_errors', False)
+            ignore_all = self.user_config.ignore_notification_errors
             if not ignore_all:
                 composer = NotificationComposer(
                     notifications,
-                    quantities,
+                    quantities['run_status'],
                     self.node.inputs,
                     self.exit_codes,
-                    parser_settings=self._settings,
+                    critical_notifications=self.user_config.critical_notification_errors,
                 )
                 exit_code = composer.compose()
                 if exit_code is not None:
@@ -405,10 +501,24 @@ class VaspParser(BaseParser):
         return None
 
 
+def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=False):
+    """
+    Gather quantities and put them into the target dictionary
+    """
+    for key, value in quantities_each.get(namespace, {}).items():
+        if key in fields:
+            if isinstance(value, dict) and flatten_dict:
+                # flatten the dictionary - prepend the key with the name of the quantity
+                for key2, value2 in value.items():
+                    dst[key + '_' + key2] = value2
+            else:
+                dst[key] = value
+
+
 class NotificationComposer:
     """Compose errors codes based on the notifications"""
 
-    def __init__(self, notifications, parsed_quantities, inputs, exit_codes, parser_settings):
+    def __init__(self, notifications, run_status, inputs, exit_codes, critical_notifications):
         """
         Composed error codes based on the notifications
 
@@ -418,19 +528,13 @@ class NotificationComposer:
         To add new checkers, one needs to implement a property with the name of the error for this class and
         contains the code for checking. This property should return the exit_code or return None. The property
         is inspected if its name is in the list critical notifications.
-
-        :param notification: The list of parsed notifications from the stream parser.
-        :param parsed_quantities: The dictionary of parsed quantities.
-        :param inputs: The dictionary of the input nodes.
-        :param exit_codes: The dictionary of the exit codes from the parser.
-        :param ignored: A list of critical notification that are allowed to have
         """
         self.notifications = notifications
         self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
-        self.parsed_quantities = parsed_quantities
+        self.run_status = run_status
         self.inputs = inputs
         self.exit_codes = exit_codes
-        self.parser_settings = parser_settings
+        self.critical_notifications = critical_notifications
 
     def compose(self):
         """
@@ -439,7 +543,7 @@ class NotificationComposer:
         Returns None if no exit code should be emitted, otherwise emit the error code.
         """
 
-        for critical in self.parser_settings.critical_notifications_to_check:
+        for critical in self.critical_notifications:
             # Check for any special handling
             if hasattr(self, critical):
                 output = getattr(self, critical)
@@ -468,7 +572,7 @@ class NotificationComposer:
         if 'edddav_zhegv' not in self.notifications_dict:
             return None
 
-        if self.parsed_quantities['run_status']['electronic_converged']:
+        if self.run_status['electronic_converged']:
             return None
 
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['edddav_zhegv'])
@@ -479,7 +583,16 @@ class NotificationComposer:
         if 'eddrmm_zhegv' not in self.notifications_dict:
             return None
 
-        if self.parsed_quantities['run_status']['electronic_converged']:
+        if self.run_status['electronic_converged']:
             return None
 
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['eddrmm_zhegv'])
+
+
+def get_structure_node(structure_dict):
+    """Compose a structure node from the dictionary output by the parser"""
+    node = orm.StructureData()
+    node.set_cell(structure_dict['unitcell'])
+    for site in structure_dict['sites']:
+        node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
+    return node

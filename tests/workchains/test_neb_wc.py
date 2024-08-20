@@ -8,7 +8,7 @@ import pytest
 from aiida import orm
 from aiida.plugins import WorkflowFactory
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.parsers.node_composer import NodeComposer
+from aiida_vasp.parsers.vasp import get_structure_node
 from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.neb import neb_interpolate
 
@@ -49,9 +49,7 @@ Direct
     init = PoscarParser(handler=pos1).structure
     final = PoscarParser(handler=pos2).structure
 
-    init_structure = NodeComposer.compose_core_structure('core.structure', {'structure': init})
-    final_structure = NodeComposer.compose_core_structure('core.structure', {'structure': final})
-    return init_structure, final_structure
+    return get_structure_node(init), get_structure_node(final)
 
 
 @pytest.fixture

@@ -9,12 +9,9 @@ Contains utils and definitions that are used together with the parameters.
 import enum
 from warnings import warn
 
-from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
 
-from aiida_vasp.parsers.settings import ParserSettings
-from aiida_vasp.parsers.vasp import DEFAULT_SETTINGS
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
 _BASE_NAMESPACES = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
@@ -610,82 +607,83 @@ def inherit_and_merge_parameters(inputs):
     return parameters
 
 
-class ParserSettingsChecker:
-    """
-    Check for inconsistency between the parser settings and the INCAR tags.
-    """
+# class ParserSettingsChecker:
+#     """
+#     Check for inconsistency between the parser settings and the INCAR tags.
+#     """
 
-    def __init__(self, parameters: dict, settings: dict, default_settings=None):
-        """
-        Instantiate an ParserSettingsChecker object.
+#     def __init__(self, parameters: dict, settings: dict, default_settings=None):
+#         """
+#         Instantiate an ParserSettingsChecker object.
 
-        :param parameters: A dictionary of INCAR tags to be used
-        :param settings: The settings dictionary
-        :param default_option: The default options to be used for instantiating the ParserSetting object.
+#         :param parameters: A dictionary of INCAR tags to be used
+#         :param settings: The settings dictionary
+#         :param default_option: The default options to be used for instantiating the ParserSetting object.
 
-        """
+#         """
 
-        if default_settings is None:
-            default_settings = DEFAULT_SETTINGS
+#         if default_settings is None:
+#             default_settings = DEFAULT_SETTINGS
 
-        # Obtain the expected quantities names to be parsed
-        self.settings = ParserSettings(settings, default_settings)
-        self.quantities = settings.quantity_names_to_parse
-        self.parameters = parameters
+#         # Obtain the expected quantities names to be parsed
+#         self.settings = ParserSettings(settings, default_settings)
+#         self.quantities = settings.quantity_names_to_parse
+#         self.parameters = parameters
 
-    def check(self):
-        """
-        Check the consistency between the supplied INCAR tags the requested quantities to be parsed.
-        """
+#     def check(self):
+#         """
+#         Check the consistency between the supplied INCAR tags the requested quantities to be parsed.
+#         """
 
-        self.check_maximum_stress()
-        self.check_wavecar_chgcar()
-        self.check_born_charges()
-        self.check_dynmat()
+#         self.check_maximum_stress()
+#         self.check_wavecar_chgcar()
+#         self.check_born_charges()
+#         self.check_dynmat()
 
-    def check_maximum_stress(self):
-        """Check the the maximum_stress can be parsed"""
+#     def check_maximum_stress(self):
+#         """Check the the maximum_stress can be parsed"""
 
-        if 'maximum_stress' not in self.quantities and 'stress' not in self.quantities:
-            return
+#         if 'maximum_stress' not in self.quantities and 'stress' not in self.quantities:
+#             return
 
-        isif = self.parameters.get('isif')
-        ibrion = self.parameters.get('ibrion', -1)
-        lhfcalc = self.parameters.get('lhfcalc', False)
-        if isif is None:
-            if ibrion == 0:
-                isif = 0
-            if lhfcalc:
-                isif = 0
+#         isif = self.parameters.get('isif')
+#         ibrion = self.parameters.get('ibrion', -1)
+#         lhfcalc = self.parameters.get('lhfcalc', False)
+#         if isif is None:
+#             if ibrion == 0:
+#                 isif = 0
+#             if lhfcalc:
+#                 isif = 0
 
-        if isif == 0:
-            raise InputValidationError(
-                'Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.'
-            )
+#         if isif == 0:
+#             raise InputValidationError(
+#                 'Requested to parse <maximum_stress> but it would not be calculated due to ISIF settings.'
+#             )
 
-    def check_wavecar_chgcar(self):
-        """Check if WAVECAR CHGCAR are set to be written"""
+#     def check_wavecar_chgcar(self):
+#         """Check if WAVECAR CHGCAR are set to be written"""
 
-        if 'wavecar' in self.quantities and not self.parameters.get('lwave', True):
-            raise InputValidationError('Requested to retrieve <WAVECAR> but it not set to be written.')
+#         if 'wavecar' in self.quantities and not self.parameters.get('lwave', True):
+#             raise InputValidationError('Requested to retrieve <WAVECAR> but it not set to be written.')
 
-        if 'chgcar' in self.quantities and not self.parameters.get('lwave', True):
-            raise InputValidationError('Requested to retrieve <CHGCAR> but it not set to be written.')
+#         if 'chgcar' in self.quantities and not self.parameters.get('lwave', True):
+#             raise InputValidationError('Requested to retrieve <CHGCAR> but it not set to be written.')
 
-    def check_born_charges(self):
-        """Check if projectors can be parsed"""
-        if 'born_charges' not in self.quantities and 'dielectrics' not in self.quantities:
-            return
+#     def check_born_charges(self):
+#         """Check if projectors can be parsed"""
+#         if 'born_charges' not in self.quantities and 'dielectrics' not in self.quantities:
+#             return
 
-        lepsilon = self.parameters.get('lepsilon', False)
-        if not lepsilon:
-            raise InputValidationError(
-                'Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.'
-            )
+#         lepsilon = self.parameters.get('lepsilon', False)
+#         if not lepsilon:
+#             raise InputValidationError(
+#                 'Requested to parse "born_charges"/"dielectrics" but they are not going to be calculated.'
+#             )
 
-    def check_dynmat(self):
-        if 'hessian' not in self.quantities and 'dynmat' not in self.quantities:
-            return
-        ibrion = self.parameters.get('ibrion', -1)
-        if ibrion not in [5, 6, 7, 8]:
-            raise InputValidationError('Requsted to parse "hessian"/"dynmat" but they are not going to be calculated.')
+#     def check_dynmat(self):
+#         if 'hessian' not in self.quantities and 'dynmat' not in self.quantities:
+#             return
+#         ibrion = self.parameters.get('ibrion', -1)
+#         if ibrion not in [5, 6, 7, 8]:
+#             raise InputValidationError('Requsted to parse "hessian"/"dynmat" '
+#                                      'but they are not going to be calculated.')

@@ -3,7 +3,7 @@ import pathlib
 import numpy as np
 import pytest
 from aiida import orm
-from aiida_vasp.parsers.parser_new import VaspParser
+from aiida_vasp.parsers.vasp import NotificationComposer, ParserSettingsConfig, VaspParser
 
 
 def test_parser_bare(calc_with_retrieved, request):
@@ -349,8 +349,6 @@ def test_parser_exception(request, calc_with_retrieved):
     """
     This calculation has a missing eigenvalues section in the vasprun.xml
     """
-    from aiida_vasp.parsers.parser_new import VaspParser
-
     # This should work as the parser does not output the band by default
     # But the diagonsis information is missing so the erorr code is not zero
     settings_dict = {
@@ -391,7 +389,6 @@ def test_parser_exception(request, calc_with_retrieved):
 
 def test_notification_composer(parser_with_retrieved):
     """Test the NotificationComposer class"""
-    from aiida_vasp.parsers.parser_new import NotificationComposer, ParserSettingsConfig
 
     parser, exit_code = parser_with_retrieved(
         'basic',

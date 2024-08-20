@@ -62,7 +62,9 @@ docs = [
     "sphinx-rtd-theme",
     "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
+    "myst-parser"
 ]
+
 graphs = ["matplotlib"]
 
 [project.entry-points."aiida.cmdline.data"]
@@ -82,9 +84,8 @@ graphs = ["matplotlib"]
 "vasp.potcar_file" = "aiida_vasp.data.potcar:PotcarFileData"
 
 [project.entry-points."aiida.parsers"]
-"vasp.vasp" = "aiida_vasp.parsers.parser_new:VaspParser"
-"vasp.neb" = "aiida_vasp.parsers.neb:VtstNebParser"
-"vasp.vasp2w90" = "aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+"vasp.vasp" = "aiida_vasp.parsers.vasp:VaspParser"
+"vasp.neb" = "aiida_vasp.parsers.neb:NebParser"
 
 [project.entry-points."aiida.workflows"]
 "vasp.vasp" = "aiida_vasp.workchains.vasp:VaspWorkChain"
