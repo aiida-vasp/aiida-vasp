@@ -1,5 +1,5 @@
 [build-system]
-# build the package with [flit](https://flit.readthedocs.io)
+# build the package with [flit](https://flit.readtheocs.io)
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
@@ -59,6 +59,9 @@ docs = [
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_togglebutton",
     "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
 ]
