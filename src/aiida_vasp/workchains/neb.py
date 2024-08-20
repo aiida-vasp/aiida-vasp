@@ -150,12 +150,11 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         spec.outline(
             cls.setup,
             while_(cls.should_run_process)(
-                #cls.prepare_inputs,
                 cls.run_process,
                 cls.inspect_process,
             ),
             cls.results,
-        )  # yapf: disable
+        )
 
         spec.expose_outputs(cls._process_class)
         spec.exit_code(
@@ -205,16 +204,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
         # Sanity checks
         self._check_neb_inputs()
-        # self.report('In SETUP, context metadata {}'.format(self.ctx.inputs))
         return None
-
-    # def prepare_inputs(self):
-    #     """
-    #     Prepare the inputs stored under self.ctx.inputs
-    #     """
-
-    #     # Applied the staged NEB images
-    #     self.ctx.inputs.neb_images = self.ctx.neb_images
 
     @process_handler(priority=500, exit_codes=[VaspNEBCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])  # pylint: disable=no-member
     def handle_unconverged(self, node):
@@ -224,18 +214,17 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         Note that VASP could reach NSW before the actual convergence.
         Hence this check is necessary even for finished runs.
         """
-        if 'neb_misc' not in node.outputs:
-            self.report('Cannot found the `neb_misc` output containing the NEB run data')
+        if 'misc' not in node.outputs:
+            self.report('Cannot found the `misc` output containing the NEB run data')
             return None
-        neb_misc = node.outputs.neb_misc.get_dict()
+        misc_dict = node.outputs.misc.get_dict()
 
-        if not neb_misc.get('neb_data'):
+        neb_data = misc_dict.get('neb_data')
+        if neb_data is None:
             self.report('Cannot found the `neb_data` dictionary containing the NEB run data')
             return None
 
-        neb_data = neb_misc.get('neb_data')
-
-        converged = [tmp['neb_converged'] for tmp in neb_data.values()]
+        converged = [tmp.get('neb_converged', False) for tmp in neb_data.values()]
         if not all(converged):
             self.report('At least one image is not converged in the run. Restart required.')
 
@@ -262,25 +251,12 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             if 'misc' not in node.outputs:
                 self.report('Cannot found the `misc` output containing the parsed per-image data')
                 return None
-            for misc_ in node.outputs['misc'].values():
-                misc = misc_.get_dict()
-                if 'run_status' in misc and misc['run_status'].get('finished'):
-                    finished.append(True)
-                else:
-                    finished.append(False)
-        else:
-            if 'misc__image_01' not in node.outputs:
-                self.report('Cannot found the `misc` output containing the parsed per-image data')
-                return None
-            for key in node.outputs:
-                if key.startswith('misc__'):
-                    misc = node.outputs[key].get_dict()
-                    if 'run_stats' in misc and misc['run_status'].get('finished'):
-                        finished.append(True)
-                    else:
-                        finished.append(False)
 
-        if not all(finished):
+            misc_dict = node.outputs.misc.get_dict()
+            if 'run_status' in misc_dict:
+                finished = {key: value.get('finished', False) for key, value in misc_dict['run_status'].items()}
+
+        if not all(finished.values()):
             self.report('At least one image did not reach the end of VASP execution - calculation not finished!')
 
             out = self._attach_output_structure(node)
@@ -299,14 +275,8 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         next workchain launch.
         """
         output_images = AttributeDict()  # A dictionary holding the structures with keys like 'image_xx'
-        # For version older than 1.6.3 the rested output namespace is correctly handled
-        # Hence, we need to access directly using the and other than the `__` in the link name.
-        if version.parse(aiida_version) >= version.parse('1.6.3'):
-            output_images = node.outputs['structure']
-        else:
-            for key in node.outputs:
-                if key.startswith('structure__'):
-                    output_images[key.split('__')[1]] = node.outputs[key]
+        output_images = node.outputs['structure']
+
         nout = len(output_images)
         nexists = len(self.inputs.neb_images)
         if nout != nexists:
@@ -387,6 +357,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         Setup the inputs for VASP calculation
 
         This method is called once by ``self.setup``
+        TODO: merge with vasp.v2.vasp
         """
 
         # Set the kpoints (kpoints)

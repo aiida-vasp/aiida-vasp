@@ -177,9 +177,10 @@ class VtstNebOutcarParser(OutcarParser):
     DEFAULT_SETTINGS = {'quantities_to_parse': ['run_status', 'run_stats', 'neb_data']}
     PARSABLE_QUANTITIES = {
         'neb_data': {'inputs': [], 'name': 'neb_data', 'prerequisites': []},
-        'outcar-forces': {'inputs': [], 'name': 'forces', 'prerequisites': []},
-        'outcar-positions': {'inputs': [], 'name': 'positions', 'prerequisites': []},
-        'outcar-cell': {'inputs': [], 'name': 'cell', 'prerequisites': []},
+        'forces': {'inputs': [], 'name': 'forces', 'prerequisites': []},
+        'outcar_positions': {'inputs': [], 'name': 'positions', 'prerequisites': []},
+        'outcar_cell': {'inputs': [], 'name': 'cell', 'prerequisites': []},
+        'total_energies': {'inputs': [], 'name': 'total_energies', 'prerequisites': []},
         **OutcarParser.PARSABLE_QUANTITIES,
     }
 
@@ -206,17 +207,22 @@ class VtstNebOutcarParser(OutcarParser):
     @property
     def forces(self):
         """Parsed forces"""
-        return self._parsed_neb_data.get('outcar-forces')
+        return self._parsed_neb_data.get('forces')
 
     @property
-    def positions(self):
-        """Parsed forces"""
-        return self._parsed_neb_data.get('outcar-positions')
+    def outcar_positions(self):
+        """Parsed positions"""
+        return self._parsed_neb_data.get('outcar_positions')
 
     @property
-    def cell(self):
+    def outcar_cell(self):
         """Parsed cell vectors"""
-        return self._parsed_neb_data.get('outcar-cell')
+        return self._parsed_neb_data.get('outcar_cell')
+
+    @property
+    def total_energies(self):
+        """Parsed total energies"""
+        return self._parsed_neb_data.get('total_energies')
 
 
 def _parse_force_block(lines):
@@ -312,16 +318,23 @@ def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,
             vtst_data['energy_extrapolated'] = float(tokens[-1])
             vtst_data['energy_without_entropy'] = float(tokens[-4])
         elif 'free  energy   TOTEN' in line:
-            vtst_data['free_energy'] = float(line.split()[-2])
+            vtst_data['energy_free'] = float(line.split()[-2])
         elif 'TOTAL-FORCE' in line:
             positions, forces = _parse_force_block(lines[idx : idx + nions + 10])
-            inputs['outcar-forces'] = np.array(forces)
-            inputs['outcar-positions'] = np.array(positions)
+            inputs['forces'] = np.array(forces)
+            inputs['outcar_positions'] = np.array(positions)
         elif 'direct lattice vectors' in line:
             cell = []
             for subline in lines[idx + 1 : idx + 4]:
                 cell.append([float(tmp) for tmp in subline.split()[:3]])
-            inputs['outcar-cell'] = np.array(cell)
+            inputs['outcar_cell'] = np.array(cell)
 
     inputs['neb_data'] = vtst_data
+    # Remove the energy keys from the vtst_data dictionary and return them separately
+    energies = {}
+    for key in ['energy_extrapolated', 'energy_without_entropy', 'energy_free']:
+        if key in vtst_data:
+            energies[key] = vtst_data.pop(key)
+    inputs['total_energies'] = energies
+
     return inputs

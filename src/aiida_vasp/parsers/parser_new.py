@@ -25,7 +25,7 @@ Main difference from the previous version
     out which parser to call and which quantities to include.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import numpy as np
 from aiida import orm
@@ -180,68 +180,108 @@ class VaspParser(Parser):
         Initialize the Parser instance
         """
         super(VaspParser, self).__init__(node)
+        # Create the containers
+        self.user_config = None
+        self.quantities_each: Dict[str, Any] = {}
+        self.errored_quantities: Dict[str, Any] = {}
+        self.errored_parsers: List[str] = []
+        self.parser_notifications: Dict[str, List[str]] = {}
+        self.retrieve_object_names: List[str] = []
+        self.quantities_to_exclude: List[str] = []
+        self.nodes_to_exclude: List[str] = []
 
-    def parse(self, **kwargs):
-        """
-        Parse outputs, store results in database.
-        """
-
+    def _init_user_settings(self):
+        """Initialize the settings from the inputs."""
         if 'settings' in self.node.inputs:
             user_config: ParserSettingsConfig = ParserSettingsConfig(
                 **self.node.inputs.settings.get_dict().get('parser_settings', {})
             )
         else:
             user_config = ParserSettingsConfig()
+        # Initialize the containers
         self.user_config = user_config
+        return user_config
 
-        quantities_each = {}
-
+    def _get_quantities_to_parse(self):
+        """Return the list of quantities to parse."""
         # Apply the modifiers
+        user_config = self.user_config
         quantities_to_exclude = [key for key in DEFAULT_EXCLUDED_QUANTITIES if key not in user_config.include_quantity]
         quantities_to_exclude += user_config.exclude_quantity
         nodes_to_exclude = [key for key in DEFAULT_EXCLUDED_NODE if key not in user_config.include_node]
         nodes_to_exclude += user_config.exclude_node
+        self.quantities_to_exclude = quantities_to_exclude
+        self.nodes_to_exclude = nodes_to_exclude
 
         # Check for critical missing objects
-        retrieve_object_names = self.retrieved.list_object_names()
+        self.retrieve_object_names = self.retrieved.list_object_names()
         missing = False
-        for name, value in user_config.file_mapping.items():
-            if name in user_config.critical_objects and name not in retrieve_object_names:
+        for name, _ in user_config.file_mapping.items():
+            if name in user_config.critical_objects and name not in self.retrieve_object_names:
                 missing = True
         if missing is True:
             return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-        parser_notifications = {}
-        errored_quantities = {}
-        errored_parsers = {}
+    def _post_process_quantities(self):
+        """Post-process the parsed quantities."""
 
-        self.errored_quantities = errored_quantities
-        self.errored_parsers = errored_parsers
+        # Warn about errored/missing quantities and parsers
+
+        if self.errored_quantities:
+            self.logger.warning(
+                'The following quantities cannot be parsed due to errors:' f' {", ".join(self.errored_quantities)}'
+            )
+        if self.errored_parsers:
+            self.logger.warning(
+                'The following parsers cannot be instantiated due to:' f' {", ".join(self.errored_parsers)}'
+            )
+
+        # Remove the quantities
+        for name, parsed_quantities in self.quantities_each.items():
+            for sub_key in list(parsed_quantities.keys()):
+                if sub_key in self.quantities_to_exclude:
+                    del parsed_quantities[sub_key]
+
+        # Check in required quantities are present
+        missing_required = []
+        for name in self.user_config.required_quantity:
+            exists = False
+            for _, value in self.quantities_each.items():
+                if value.get(name) is not None:
+                    exists = True
+                    break
+            if exists is False:
+                missing_required.append(name)
+        if missing_required:
+            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=','.join(missing_required))
+
+    def parse(self, **kwargs):
+        """
+        Parse outputs, store results in database.
+        """
+        user_config = self._init_user_settings()
+
+        exit_code = self._get_quantities_to_parse()
+        if exit_code is not None:
+            return exit_code
 
         # Parse the files
         def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
             """Parse the target file and add the result to the quantities_each dictionary"""
             resolved_name = user_config.file_mapping[name]
-            if resolved_name in retrieve_object_names:
+            if resolved_name in self.retrieve_object_names:
                 with self.retrieved.open(resolved_name, open_mode) as handler:
                     try:
                         parser: BaseFileParser = parser_cls(handler=handler, settings=content_parser_settings)
                     except Exception as error:
-                        errored_parsers[name] = error
+                        self.errored_parsers[name] = error
                         return
                     if parser.parser_notifications:
-                        parser_notifications.update(parser.parser_notifications)
-                    quantities_each[name], errored = parser.get_all_quantities()
-                    errored_quantities.update(errored)
+                        self.parser_notifications.update(parser.parser_notifications)
+                    self.quantities_each[name], errored = parser.get_all_quantities()
+                    self.errored_quantities.update(errored)
             elif user_config.check_completeness is True and required is True:
                 raise MissingFileError(f'{resolved_name} is missing in the retrieved folder.')
-
-        if errored_quantities:
-            self.logger.warning(
-                'The following quantities cannot be parsed due to errors:' f' {", ".join(errored_quantities)}'
-            )
-        if errored_parsers:
-            self.logger.warning('The following parsers cannot be instantiated due to:' f' {", ".join(errored_parsers)}')
 
         parse_and_add(
             'vasprun.xml',
@@ -258,40 +298,27 @@ class VaspParser(Parser):
         parse_and_add('vasp_output', StreamParser, required=True)
         parse_and_add('CONTCAR', PoscarParser, required=True)
 
-        if any(x not in quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
+        if any(x not in self.quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
             parse_and_add('CHGCAR', ChgcarParser, required=True)
 
         if user_config.kpoints_from_ibzkpt:
             parse_and_add('IBZKPT', ChgcarParser, required=True)
-        self._quantities_each = quantities_each
 
-        # Remove the quantities
-        for name, parsed_quantities in quantities_each.items():
-            for sub_key in list(parsed_quantities.keys()):
-                if sub_key in quantities_to_exclude:
-                    del parsed_quantities[sub_key]
+        exit_code = self._post_process_quantities()
+        if exit_code is not None:
+            return exit_code
 
-        # Check in required quantities are present
-        missing_required = []
-        for name in user_config.required_quantity:
-            exists = False
-            for _, value in quantities_each.items():
-                if value.get(name) is not None:
-                    exists = True
-                    break
-            if exists is False:
-                missing_required.append(name)
-        if missing_required:
-            return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=','.join(missing_required))
+        return self._create_outputs()
 
+    def _create_outputs(self):
         # Create the outputs
         self._failed_to_compose = {}
         for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'bands', 'dos']:
-            if name in nodes_to_exclude:
+            if name in self.nodes_to_exclude:
                 continue
             node = None
             try:
-                node = getattr(self, '_compose_' + name)(quantities_each)
+                node = getattr(self, '_compose_' + name)(self.quantities_each)
             except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
                 self._failed_to_compose[name] = error
                 self.logger.warning(f'Failed to compose {name} node: {error}')
@@ -299,13 +326,13 @@ class VaspParser(Parser):
             if node is not None:
                 self.out(name, node)
         if (
-            any(name in user_config.include_node for name in self._failed_to_compose)
-            and user_config.check_completeness is True
+            any(name in self.user_config.include_node for name in self._failed_to_compose)
+            and self.user_config.check_completeness is True
         ):
             return self.exit_codes.ERROR_NOT_ABLE_TO_CREATE_NODE.format(nodes=', '.join(self._failed_to_compose.keys()))
         # Check for errors
-        if user_config.check_errors is True:
-            error = self._check_vasp_errors(parser_notifications)
+        if self.user_config.check_errors is True:
+            error = self._check_vasp_errors(self.parser_notifications)
             return error
 
     def _compose_misc(self, quantities_each):
@@ -424,7 +451,7 @@ class VaspParser(Parser):
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
         quantities = {}
-        for key, value in self._quantities_each.items():
+        for key, value in self.quantities_each.items():
             for key_, value_ in value.items():
                 quantities[key_] = value_
         if 'run_status' not in quantities:
@@ -461,7 +488,7 @@ class VaspParser(Parser):
             if not ignore_all:
                 composer = NotificationComposer(
                     notifications,
-                    quantities,
+                    quantities['run_status'],
                     self.node.inputs,
                     self.exit_codes,
                     critical_notifications=self.user_config.critical_notification_errors,
@@ -492,7 +519,7 @@ def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=Fals
 class NotificationComposer:
     """Compose errors codes based on the notifications"""
 
-    def __init__(self, notifications, parsed_quantities, inputs, exit_codes, critical_notifications):
+    def __init__(self, notifications, run_status, inputs, exit_codes, critical_notifications):
         """
         Composed error codes based on the notifications
 
@@ -511,7 +538,7 @@ class NotificationComposer:
         """
         self.notifications = notifications
         self.notifications_dict = {item['name']: item['message'] for item in self.notifications}
-        self.parsed_quantities = parsed_quantities
+        self.run_status = run_status
         self.inputs = inputs
         self.exit_codes = exit_codes
         self.critical_notifications = critical_notifications
@@ -552,7 +579,7 @@ class NotificationComposer:
         if 'edddav_zhegv' not in self.notifications_dict:
             return None
 
-        if self.parsed_quantities['run_status']['electronic_converged']:
+        if self.run_status['electronic_converged']:
             return None
 
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['edddav_zhegv'])
@@ -563,7 +590,7 @@ class NotificationComposer:
         if 'eddrmm_zhegv' not in self.notifications_dict:
             return None
 
-        if self.parsed_quantities['run_status']['electronic_converged']:
+        if self.run_status['electronic_converged']:
             return None
 
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['eddrmm_zhegv'])

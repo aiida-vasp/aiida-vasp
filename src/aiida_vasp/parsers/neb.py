@@ -304,6 +304,7 @@ class VtstNebParser(VaspParser):
         self._definitions = ParserDefinitions(content_parser_set='neb')
         self._parsable_quantities = NEBParsableQuantities(vasp_parser_logger=self.logger)
 
+    # TODO - read the input data for the number of image that should be present
     def get_num_images(self):
         """
         Return the number of images

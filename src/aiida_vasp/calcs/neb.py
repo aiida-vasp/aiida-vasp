@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from typing import Union
 
+from aiida import orm
 from aiida.common.exceptions import InputValidationError
-from aiida.plugins import DataFactory
 
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
@@ -51,23 +51,23 @@ class VaspNEBCalculation(VaspCalculation):
         # options is passed automatically.
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             help='The VASP input parameters (INCAR).',
         )
         spec.input(
             'dynamics',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
             required=False,
         )
         spec.input(
             'initial_structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             help='The input structure (POSCAR) for initial image.',
         )
         spec.input(
             'final_structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             help='The input structure (POSCAR) for the final image.',
         )
         spec.input(
@@ -78,7 +78,7 @@ class VaspNEBCalculation(VaspCalculation):
         )
         spec.input_namespace(
             'neb_images',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             help='Starting structure for the NEB images',
             dynamic=True,
         )
@@ -92,7 +92,7 @@ class VaspNEBCalculation(VaspCalculation):
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             help='The kpoints to use (KPOINTS).',
         )
         spec.input_namespace(
@@ -111,7 +111,7 @@ class VaspNEBCalculation(VaspCalculation):
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help='Additional parameters not related to VASP itself.',
         )
@@ -129,93 +129,28 @@ class VaspNEBCalculation(VaspCalculation):
         spec.output_namespace(
             'structure',
             required=True,
-            valid_type=get_data_class('core.structure'),
+            valid_type=orm.StructureData,
             help='NEB images',
             dynamic=True,
         )
-        spec.output_namespace(
-            'chgcar',
-            valid_type=get_data_class('vasp.chargedensity'),
-            required=False,
-            help='The output charge density.',
-            dynamic=True,
-        )
-        spec.output_namespace(
-            'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
-            required=False,
-            help='Kpoints for each image.',
-            dynamic=True,
-        )
-        spec.output_namespace(
+        spec.output(
             'misc',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
             help='Per-image misc output.',
-            dynamic=True,
-        )
-        spec.output_namespace(
-            'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
-            required=False,
-            dynamic=True,
-            help='The output file containing the plane wave coefficients.',
-        )
-        spec.output_namespace(
-            'site_magnetization',
-            valid_type=get_data_class('core.dict'),
-            required=False,
-            dynamic=True,
-            help='The output of the site magnetization for each image.',
         )
         spec.output(
-            'neb_misc',
-            valid_type=get_data_class('core.dict'),
-            help='NEB related data combined for each image',
+            'arrays',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='Array data from each image.',
         )
-        spec.exit_code(
-            0,
-            'NO_ERROR',
-            message='the sun is shining',
-        )
-        spec.exit_code(
-            350,
-            'ERROR_NO_RETRIEVED_FOLDER',
-            message='the retrieved folder data node could not be accessed.',
-        )
-        spec.exit_code(
-            351,
-            'ERROR_NO_RETRIEVED_TEMPORARY_FOLDER',
-            message='the retrieved_temporary folder data node could not be accessed.',
-        )
-        spec.exit_code(
-            352,
-            'ERROR_CRITICAL_MISSING_FILE',
-            message='a file that is marked by the parser as critical is missing.',
-        )
-        spec.exit_code(
-            333,
-            'ERROR_VASP_DID_NOT_EXECUTE',
-            message='VASP did not produce any output files and did likely not execute properly.',
-        )
-        spec.exit_code(
-            1002,
-            'ERROR_NOT_ABLE_TO_PARSE_QUANTITY',
-            message='the parser is not able to parse the {quantity} quantity',
-        )
-        spec.exit_code(
-            1003,
-            'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
-            message='the vasprun.xml was truncated and recovery parsing failed to parse at least one of the'
-            'requested quantities: {quantities}, '
-            'very likely the VASP calculation did not run properly',
-        )
-
-        spec.exit_code(
-            704,
-            'ERROR_DIAGNOSIS_OUTPUTS_MISSING',
-            message='Outputs for diagnosis are missing, please make sure the `neb_data` and `run_status` '
-            'quantities are requested for parsing.',
+        spec.output_namespace(
+            'trajectory',
+            valid_type=orm.TrajectoryData,
+            dynamic=True,
+            required=False,
+            help='The NEB trajectory.',
         )
 
     def prepare_for_submission(self, folder):
@@ -408,9 +343,7 @@ def image_folder_paths(image_folders, retrieve_names):
     return retrieve_list
 
 
-def ensure_structure_data(structure: Union[DataFactory('core.structure'), DataFactory('core.cif')]) -> DataFactory(
-    'core.structure'
-):
+def ensure_structure_data(structure: Union[orm.StructureData, orm.CifData]) -> orm.StructureData:
     """
         Get the input structure as AiiDA StructureData.
 

@@ -127,4 +127,9 @@ def test_vasp_neb_wc(fresh_aiida_env, neb_wc_input):
 
     _, out_node = run_get_node(neb_wc_input)
     assert out_node.exit_status == 0
+    assert 'image_01' in out_node.outputs.structure
+    assert 'image_02' in out_node.outputs.structure
+    assert 'image_03' in out_node.outputs.structure
+    assert 'total_energies' in out_node.outputs.misc
+    assert 'forces' in out_node.outputs.misc
     # upload_real_workchain(out_node, "neb-workchain")

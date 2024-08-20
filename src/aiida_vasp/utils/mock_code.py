@@ -58,8 +58,6 @@ def get_hash(dict_obj):
         # as they should be equivalent
         if isinstance(value, np.ndarray):
             value[value == 0] = 0
-        elif isinstance(value, list) and 0 in value:
-            value = [type(tmp)(0) if tmp == 0 else tmp for tmp in value]
 
         # Handle if value itself is float zero
         if isinstance(value, float) and value == 0:
@@ -91,10 +89,12 @@ class MockRegistry:
 
     CODE_NAME = 'ABSTRACT'
 
-    def __init__(self, base_path=data_path('.')):
+    def __init__(self, base_path=None):
         """
         Instantiate and Registry
         """
+        base_path = data_path('.') if base_path is None else pathlib.Path(base_path).absolute()
+
         if isinstance(base_path, (pathlib.Path, str)):
             self._search_paths = [pathlib.Path(base_path)]
         else:

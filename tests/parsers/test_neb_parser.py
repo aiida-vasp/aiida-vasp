@@ -2,6 +2,7 @@
 
 import pathlib
 
+import numpy as np
 import pytest
 from aiida.plugins import ParserFactory
 
@@ -12,7 +13,7 @@ def _get_neb_vasp_parser(neb_calc_with_retrieved):
     """Return vasp parser before parsing"""
     settings_dict = {
         # 'ADDITIONAL_RETRIEVE_LIST': CalculationFactory('vasp.vasp')._ALWAYS_RETRIEVE_LIST,
-        'parser_settings': {'add_image_forces': True}
+        'parser_settings': {}
     }
     file_path = cwd / '..' / 'test_data/neb'
     node = neb_calc_with_retrieved(file_path, settings_dict, 3)
@@ -36,22 +37,23 @@ def test_neb_parser(neb_parser_with_test):
     """
     parser = neb_parser_with_test
     parser.parse()
-    assert 'neb_misc' in neb_parser_with_test.outputs
-    neb_misc = parser.outputs.neb_misc.get_dict()
+    assert 'misc' in neb_parser_with_test.outputs
+    misc_dict = parser.outputs.misc.get_dict()
 
-    assert neb_misc['neb_data']['01']['neb_converged']
-    assert neb_misc['neb_data']['01']['free_energy'] == -19.49164066
+    assert misc_dict['neb_data']['01']['neb_converged']
+    assert misc_dict['total_energies']['01']['energy_free'] == -19.49164066
+    assert '02' in misc_dict['total_energies']
 
-    assert neb_misc['neb_data']['03']
+    assert misc_dict['neb_data']['03']
 
     # Check that notifications exists
-    assert 'notifications' in parser.outputs['misc.image_01'].get_dict()
-    assert 'notifications' in parser.outputs['misc.image_03'].get_dict()
+    assert 'notifications' in misc_dict
 
     # Make sure structures are parsed as well
     assert 'structure.image_01' in parser.outputs
 
-    # Check that the forces is parserd
-    forces = parser.outputs.image_forces.get_array('forces_01')
-    assert forces[0].tolist() == [0.008815, 0.005492, -0.000661]
-    assert forces.shape == (4, 3)
+    # Check that the forces is parsed
+    forces = misc_dict['forces']['01']
+    assert np.all(forces[0] == np.array([0.008815, 0.005492, -0.000661]))
+
+    assert np.array(forces).shape == (4, 3)
