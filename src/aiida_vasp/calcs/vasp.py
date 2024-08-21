@@ -177,7 +177,7 @@ class VaspCalculation(VaspCalcBase):
         )
         spec.output(
             'dos',
-            valid_type=get_data_class('core.array'),
+            valid_type=orm.ArrayData,
             required=False,
             help='The output dos.',
         )

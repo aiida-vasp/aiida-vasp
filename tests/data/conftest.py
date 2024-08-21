@@ -9,13 +9,14 @@ workchains.
 """
 
 import pytest
+from aiida import orm
 from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @pytest.fixture
 def vasp2w90_params(fresh_aiida_env, vasp_params):
     vasp_params_data = vasp_params()
-    incar_data = get_data_class('core.dict')(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
+    incar_data = orm.Dict(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
     return incar_data
 
 

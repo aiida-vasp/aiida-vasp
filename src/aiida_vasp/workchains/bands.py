@@ -7,12 +7,13 @@ to extract the k-point path.
 """
 
 # pylint: disable=attribute-defined-outside-init, import-outside-toplevel
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
@@ -32,17 +33,17 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'smearing.gaussian',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
@@ -51,7 +52,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'smearing.sigma',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.05),
             help="""
@@ -60,7 +61,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             required=True,
             help="""
             The folder to restart in, which contains the outputs from the prerun to extract the charge density.
@@ -68,7 +69,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.kpoints_distance',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.05),
             help="""
@@ -77,7 +78,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.decompose_bands',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -86,7 +87,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.decompose_wave',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -95,7 +96,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.lm',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -104,7 +105,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.phase',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -113,7 +114,7 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.wigner_seitz_radius',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             required=False,
             default=lambda: get_data_node('core.list', list=[False]),
             help=(
@@ -134,7 +135,7 @@ class BandsWorkChain(WorkChain):
         spec.expose_outputs(cls._next_workchain)
         spec.output(
             'bands',
-            valid_type=get_data_class('core.array.bands'),
+            valid_type=orm.BandsData,
         )
         spec.exit_code(
             0,

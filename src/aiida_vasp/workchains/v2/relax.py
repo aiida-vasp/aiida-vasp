@@ -35,7 +35,6 @@ from aiida.engine import ToContext, WorkChain, append_, if_, while_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
@@ -60,10 +59,10 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
     def define(cls, spec):
         super().define(spec)
         spec.expose_inputs(cls._base_workchain, 'vasp', exclude=('structure',))
-        spec.input('structure', valid_type=(get_data_class('core.structure'), get_data_class('core.cif')))
+        spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
         spec.input(
             'static_calc_parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -72,7 +71,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'static_calc_settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -81,7 +80,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'static_calc_options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
             help="""
@@ -90,7 +89,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )
         spec.input(
             'relax_settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             validator=RelaxOptions.aiida_validate,
             serializer=RelaxOptions.aiida_serialize,
             help=RelaxOptions.aiida_description(),
@@ -153,7 +152,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         )  # yapf: disable
 
         spec.expose_outputs(cls._base_workchain)
-        spec.output('relax.structure', valid_type=get_data_class('core.structure'), required=False)
+        spec.output('relax.structure', valid_type=orm.StructureData, required=False)
 
     def initialize(self):
         """Initialize."""

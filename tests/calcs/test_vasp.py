@@ -5,8 +5,9 @@ import contextlib
 import os
 
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
@@ -33,7 +34,7 @@ def test_write_potcar(vasp_calc_and_ref):
         assert 'In_d' in result_potcar
         assert result_potcar.count('End of Dataset') == 2, result_potcar
 
-        if isinstance(vasp_calc.inputs.structure, get_data_class('core.structure')):
+        if isinstance(vasp_calc.inputs.structure, orm.StructureData):
             multipotcar = MultiPotcarIo.read(temp_object)
             potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
             assert potcar_order == ['In_sv', 'As', 'In_d', 'As']

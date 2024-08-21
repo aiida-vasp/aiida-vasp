@@ -82,7 +82,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         spec.input(
             'band_settings',
             help=BandOptions.aiida_description(),
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             validator=BandOptions.aiida_validate,
             serializer=BandOptions.aiida_serialize,
         )
@@ -143,7 +143,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         spec.input(
             'restart_folder',
             required=False,
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             help='A remote folder containing the CHGCAR file to be used',
         )
         spec.outline(

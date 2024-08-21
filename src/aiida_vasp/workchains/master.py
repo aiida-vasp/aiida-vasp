@@ -7,11 +7,12 @@ calculations.
 """
 
 # pylint: disable=attribute-defined-outside-init
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
@@ -32,12 +33,12 @@ class MasterWorkChain(WorkChain):
         spec.expose_inputs(cls._base_workchain, exclude=['settings', 'clean_workdir'])
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
         )
         spec.input_namespace(
@@ -47,21 +48,21 @@ class MasterWorkChain(WorkChain):
         )
         spec.input(
             'extract_bands',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""Do you want to extract the band structure?""",
         )
         spec.input(
             'extract_dos',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""Do you want to extract the density of states?""",
         )
         spec.input(
             'dos.kpoints_distance',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.1),
             help="""
@@ -70,7 +71,7 @@ class MasterWorkChain(WorkChain):
         )
         spec.input(
             'dos.kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
             help="""
             The target k-point distance for density of states extraction.
@@ -78,7 +79,7 @@ class MasterWorkChain(WorkChain):
         )
         spec.input(
             'kpoints_distance',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help="""The maximum distance between k-points in inverse AA.""",
         )
@@ -183,7 +184,7 @@ class MasterWorkChain(WorkChain):
                 # If neither, return, we need to run convergence tests
                 return None
             return kpoints
-        kpoints = get_data_class('core.array.kpoints')()
+        kpoints = orm.KpointsData()
         kpoints.set_cell_from_structure(self.ctx.inputs.structure)
         kpoints.set_kpoints_mesh_from_density(distance)
 

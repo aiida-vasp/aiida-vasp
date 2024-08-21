@@ -6,6 +6,7 @@ import subprocess as sp
 
 import numpy as np
 import pytest
+from aiida import orm
 from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
 from aiida.common.exceptions import NotExistent
@@ -126,9 +127,7 @@ def vasp_code(localhost):
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('core.dict')(
-        dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}
-    )
+    incar_data = orm.Dict(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_data
 
 
@@ -349,7 +348,7 @@ def run_vasp_process(
                 family_name=potcar_family_name,
                 mapping=potcar_mapping,
             )
-            inpts.parameters = get_data_class('core.dict')(dict=parameters)
+            inpts.parameters = orm.Dict(dict=parameters)
             inpts.metadata = {}
             inpts.metadata['options'] = options
         elif process_type == 'workchain':

@@ -9,6 +9,7 @@ parameters instead of the code dependent variables.
 
 # pylint: disable=attribute-defined-outside-init
 import numpy as np
+from aiida import orm
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_, while_
@@ -16,7 +17,7 @@ from aiida.orm import CalcJobNode, QueryBuilder, StructureData
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compare_structures, compose_exit_code, prepare_process_inputs
 
 
@@ -36,20 +37,20 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'relax.perform_static',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
@@ -58,7 +59,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.perform',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -67,7 +68,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.keep_magnetization',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
@@ -76,7 +77,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.algo',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             default=lambda: get_data_node('core.str', 'cg'),
             help="""
             The algorithm to use during relaxation.
@@ -84,7 +85,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.energy_cutoff',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
@@ -94,7 +95,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.force_cutoff',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help="""
             The cutoff that determines when the relaxation procedure is stopped. In this
@@ -104,7 +105,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.steps',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 60),
             help="""
@@ -114,28 +115,28 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.positions',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""If True, perform relaxation of the atomic positions.""",
         )
         spec.input(
             'relax.shape',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""If True, perform relaxation of the unit cell shape.""",
         )
         spec.input(
             'relax.volume',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""If True, perform relaxation of the unit cell volume..""",
         )
         spec.input(
             'relax.convergence_on',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -144,14 +145,14 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.convergence_absolute',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""If True, test convergence based on absolute differences.""",
         )
         spec.input(
             'relax.convergence_max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 5),
             help="""
@@ -160,7 +161,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.convergence_volume',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.01),
             help="""
@@ -170,7 +171,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.convergence_positions',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.01),
             help="""
@@ -180,7 +181,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.convergence_shape_lengths',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.1),
             help="""
@@ -191,7 +192,7 @@ class RelaxWorkChain(WorkChain):
         )
         spec.input(
             'relax.convergence_shape_angles',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.1),
             help="""
@@ -246,7 +247,7 @@ class RelaxWorkChain(WorkChain):
         )  # yapf: disable
 
         spec.expose_outputs(cls._next_workchain)
-        spec.output('relax.structure', valid_type=get_data_class('core.structure'), required=False)
+        spec.output('relax.structure', valid_type=orm.StructureData, required=False)
 
     def initialize(self):
         """Initialize."""

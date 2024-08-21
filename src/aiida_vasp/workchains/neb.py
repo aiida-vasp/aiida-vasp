@@ -41,6 +41,12 @@ VTST_ADDITIONAL_TAGS = {
     'ftimeinc': 'Factor to increase dt',
     'falpha': 'Parameter that controls velocity damping',
     'fnmin': 'Minium number of iterations before adjust alpha and dt',
+    'lclimb': 'Use climbing image mode',
+    'ichain': 'Indicates which method to run. NEB (ICHAIN=0) is the default',
+    'ltangentold': 'Flag to turn on the old central difference tangent',
+    'ldneb': 'Flag to turn on modified double nudging',
+    'lnebcell': 'Flag to turn on SS-NEB. Used with ISIF=3 and IOPT=3.',
+    'jacobian': 'Controls weight of lattice to atomic motion. Ω is volume and N is the number of atoms.',
 }
 
 
@@ -71,32 +77,32 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
         )
         spec.input(
             'potential_family',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=True,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 5),
             help="""
@@ -105,7 +111,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -114,7 +120,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', True),
             help="""
@@ -123,7 +129,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'dynamics.positions_dof',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             required=False,
             help="""
             Site dependent flag for selective dynamics when performing relaxation
@@ -131,19 +137,19 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'ldau_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help="Mappings, see the doc string of 'get_ldau_keys'",
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help='Spacing for the kpoints in units A^-1 * 2pi (CASTEP style `kpoints_mp_spacing`)',
         )
         spec.input(
             'kpoints_spacing_vasp',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help='Spacing for the kpoints in units A^-1 (VASP style)',
         )

@@ -9,13 +9,14 @@ Intended to be used to control convergence checks for plane-wave calculations.
 import copy
 
 import numpy as np
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction, if_, while_
 from aiida.orm.nodes.data.array.bands import find_bandgap
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import compressed_structure, displaced_structure, get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import compressed_structure, displaced_structure, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, fetch_k_grid, prepare_process_inputs
 
 
@@ -34,20 +35,20 @@ class ConvergeWorkChain(WorkChain):
         spec.expose_inputs(cls._next_workchain, exclude=('kpoints', 'parameters', 'structure', 'settings', 'relax'))
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
         )
         spec.input(
             'structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input_namespace(
@@ -57,7 +58,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.pwcutoff',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help="""
             The plane-wave cutoff to be used during convergence tests in electron volts.
@@ -65,20 +66,20 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.kgrid',
-            valid_type=get_data_class('core.array'),
+            valid_type=orm.ArrayData,
             required=False,
             help="""The k-point grid to be used during convergence tests.""",
         )
         spec.input(
             'converge.pwcutoff_start',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 200.0),
             help="""The plane-wave cutoff in electron volts.""",
         )
         spec.input(
             'converge.pwcutoff_step',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 50.0),
             help="""
@@ -87,14 +88,14 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.pwcutoff_samples',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 10),
             help="""The number of plane-wave cutoff samples.""",
         )
         spec.input(
             'converge.k_dense',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.07),
             help="""
@@ -103,7 +104,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.k_coarse',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.35),
             help="""
@@ -112,21 +113,21 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.k_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.1),
             help="""The default k-point spacing in inverse AA.""",
         )
         spec.input(
             'converge.k_samples',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 10),
             help="""The number of k-point samples.""",
         )
         spec.input(
             'converge.cutoff_type',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=False,
             default=lambda: get_data_node('core.str', 'energy'),
             help="""
@@ -140,7 +141,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.cutoff_value',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.01),
             help="""
@@ -151,7 +152,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.cutoff_value_r',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.01),
             help="""
@@ -164,7 +165,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.compress',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -177,7 +178,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.displace',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -190,7 +191,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.displacement_vector',
-            valid_type=get_data_class('core.array'),
+            valid_type=orm.ArrayData,
             required=False,
             default=lambda: default_array('array', np.array([1.0, 1.0, 1.0])),
             help="""
@@ -200,7 +201,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.displacement_distance',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             default=lambda: get_data_node('core.float', 0.2),
             help="""
@@ -210,7 +211,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.displacement_atom',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
             default=lambda: get_data_node('core.int', 1),
             help="""
@@ -220,7 +221,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.volume_change',
-            valid_type=get_data_class('core.array'),
+            valid_type=orm.ArrayData,
             required=False,
             default=lambda: default_array('array', np.array([1.05, 1.05, 1.05])),
             help="""
@@ -229,14 +230,14 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.relax',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""If True, we relax for each convergence test.""",
         )
         spec.input(
             'converge.total_energy_type',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=False,
             default=lambda: get_data_node('core.str', 'energy_extrapolated'),
             help="""
@@ -246,7 +247,7 @@ class ConvergeWorkChain(WorkChain):
         )
         spec.input(
             'converge.testing',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             default=lambda: get_data_node('core.bool', False),
             help="""
@@ -317,17 +318,17 @@ class ConvergeWorkChain(WorkChain):
         spec.outputs.dynamic = True
         spec.output(
             'converge.data',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.output(
             'converge.pwcutoff_recommended',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
         )
         spec.output(
             'converge.kpoints_recommended',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
         )
         spec.exit_code(
@@ -501,7 +502,7 @@ class ConvergeWorkChain(WorkChain):
             self.ctx.converge.structure = self.inputs.structure
         # Also create a dummy KpointsData in order to calculate the reciprocal
         # unit cell
-        kpoints = get_data_class('core.array.kpoints')()
+        kpoints = orm.KpointsData()
         kpoints.set_kpoints_mesh([1, 1, 1])
         kpoints.set_cell_from_structure(self.ctx.converge.structure)
         self.ctx.converge.kpoints = kpoints
@@ -638,7 +639,7 @@ class ConvergeWorkChain(WorkChain):
         kgrid = fetch_k_grid(rec_cell, k_spacing)
         converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('core.array.kpoints')()
+        kpoints = orm.KpointsData()
         kpoints.set_kpoints_mesh(kgrid)
         kpoints.set_cell_from_structure(converge.structure)
         converge.kpoints = kpoints
@@ -666,7 +667,7 @@ class ConvergeWorkChain(WorkChain):
         # And finally, the k-point grid needs to be updated to the set value, but
         # only if a kpoint mesh was not supplied
         if not self.ctx.converge.settings.supplied_kmesh:
-            kpoints = get_data_class('core.array.kpoints')()
+            kpoints = orm.KpointsData()
             kpoints.set_kpoints_mesh(self.ctx.converge.settings.kgrid)
             kpoints.set_cell_from_structure(self.ctx.inputs.structure)
             self.ctx.inputs.kpoints = kpoints
@@ -945,7 +946,7 @@ class ConvergeWorkChain(WorkChain):
             kgrid = [element + 1 for element in kgrid]
         self.ctx.converge.settings.kgrid = kgrid
         # Update grid.
-        kpoints = get_data_class('core.array.kpoints')()
+        kpoints = orm.KpointsData()
         kpoints.set_kpoints_mesh(kgrid)
         kpoints.set_cell_from_structure(self.ctx.converge.structure)
         self.ctx.converge.kpoints = kpoints
@@ -1598,7 +1599,7 @@ class ConvergeWorkChain(WorkChain):
         # Apply compression and tension
         comp_structure = compressed_structure(self.ctx.converge.structure, volume_change)
         # Make sure we also reset the reciprocal cell
-        kpoints = get_data_class('core.array.kpoints')()
+        kpoints = orm.KpointsData()
         kpoints.set_kpoints_mesh([1, 1, 1])
         kpoints.set_cell_from_structure(comp_structure)
         self.ctx.converge.kpoints = kpoints
@@ -1616,7 +1617,7 @@ class ConvergeWorkChain(WorkChain):
 
 def default_array(name, array):
     """Used to set ArrayData for spec.input."""
-    array_cls = get_data_node('core.array')
+    array_cls = orm.ArrayData()
     array_cls.set_array(name, array)
 
     return array_cls
@@ -1627,7 +1628,7 @@ def store_conv_pwcutoff(convergence_context):
     """Store the recommended energy from the convergence."""
     converge = convergence_context.get_dict()
     try:
-        return get_data_class('core.float')(converge['pwcutoff_recommended'])
+        return orm.Float(converge['pwcutoff_recommended'])
     except (KeyError, ValueError):
         return None
 
@@ -1637,7 +1638,7 @@ def store_conv_kgrid(convergence_context):
     """Store the recommended kpoints from the convergence."""
     converge = convergence_context.get_dict()
     try:
-        kpoints_recommended = get_data_class('core.array.kpoints')()
+        kpoints_recommended = orm.KpointsData()
         kpoints_recommended.set_kpoints_mesh(converge['kgrid_recommended'])
         return kpoints_recommended
     except (KeyError, ValueError):
@@ -1647,7 +1648,7 @@ def store_conv_kgrid(convergence_context):
 @calcfunction
 def store_conv_data(convergence_context):
     """Store convergence data in the array."""
-    convergence = get_data_class('core.dict')()
+    convergence = orm.Dict()
     converge = convergence_context.get_dict()
     # Store regular conversion data
     try:

@@ -9,10 +9,9 @@ Base and meta classes for VASP calculation classes.
 # explanation: pylint wrongly complains about Node not implementing query
 import os
 
+from aiida import orm
 from aiida.common import CalcInfo, CodeInfo, ValidationError
 from aiida.engine import CalcJob
-
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class VaspCalcBase(CalcJob):
@@ -31,7 +30,7 @@ class VaspCalcBase(CalcJob):
         super(VaspCalcBase, cls).define(spec)
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             help='A remote folder to restart from if need be',
             required=False,
         )

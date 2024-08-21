@@ -1,4 +1,5 @@
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
@@ -8,7 +9,7 @@ from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutca
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 @pytest.fixture()
@@ -57,7 +58,7 @@ def calc_with_retrieved(localhost):
 def vasp_structure_poscar(vasp_structure):
     """Fixture: Well formed POSCAR contents."""
     aiida_structure = vasp_structure
-    if isinstance(vasp_structure, get_data_class('core.cif')):
+    if isinstance(vasp_structure, orm.CifData):
         ase_structure = vasp_structure.get_ase()
         aiida_structure = get_data_node('core.structure', ase=ase_structure)
     writer = PoscarParser(data=aiida_structure)
@@ -298,7 +299,7 @@ def neb_calc_with_retrieved(localhost):
         settings.store()
 
         # Add inputs with the number of images
-        param = get_data_class('core.dict')(dict={'images': nimgs})
+        param = orm.Dict(dict={'images': nimgs})
         node.base.links.add_incoming(param, link_type=LinkType.INPUT_CALC, link_label='parameters')
         param.store()
 

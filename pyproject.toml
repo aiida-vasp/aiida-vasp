@@ -37,7 +37,6 @@ dependencies = [
     "ase",
     "lxml",
     "seekpath",
-    "pydantic",
     "packaging",
     "pydantic",
     "parsevasp>=3.2",
@@ -62,7 +61,6 @@ docs = [
     "sphinx-rtd-theme",
     "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
-    "myst-parser"
 ]
 
 graphs = ["matplotlib"]
