@@ -2,8 +2,8 @@
 # pylint: disable=redefined-outer-name, unused-wildcard-import, unused-argument, wildcard-import
 
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
-from aiida_vasp.utils.aiida_utils import get_data_node
 
 compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}
 
@@ -103,7 +103,7 @@ def test_parse_incar_invalid_tag(vasp_params, tmpdir):
     """Test parsing an INCAR with an invalid tag."""
     params = vasp_params.get_dict()
     params.update(foo='bar')
-    vasp_params_modified = get_data_node('core.dict', dict=params)
+    vasp_params_modified = orm.Dict(dict=params)
     parser = IncarParser(data=vasp_params_modified)
     temp_path = str(tmpdir.join('INCAR'))
     with pytest.raises(SystemExit):

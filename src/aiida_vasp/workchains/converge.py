@@ -16,7 +16,7 @@ from aiida.orm.nodes.data.array.bands import find_bandgap
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import compressed_structure, displaced_structure, get_data_node
+from aiida_vasp.utils.aiida_utils import compressed_structure, displaced_structure
 from aiida_vasp.utils.workchains import compose_exit_code, fetch_k_grid, prepare_process_inputs
 
 
@@ -74,14 +74,14 @@ class ConvergeWorkChain(WorkChain):
             'converge.pwcutoff_start',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 200.0),
+            default=lambda: orm.Float(200.0),
             help="""The plane-wave cutoff in electron volts.""",
         )
         spec.input(
             'converge.pwcutoff_step',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 50.0),
+            default=lambda: orm.Float(50.0),
             help="""
             The plane-wave cutoff step (increment) in electron volts.
             """,
@@ -90,14 +90,14 @@ class ConvergeWorkChain(WorkChain):
             'converge.pwcutoff_samples',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 10),
+            default=lambda: orm.Int(10),
             help="""The number of plane-wave cutoff samples.""",
         )
         spec.input(
             'converge.k_dense',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.07),
+            default=lambda: orm.Float(0.07),
             help="""
             The target k-point stepping at the densest grid in inverse AA.
             """,
@@ -106,7 +106,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.k_coarse',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.35),
+            default=lambda: orm.Float(0.35),
             help="""
             The target k-point stepping at the coarsest grid in inverse AA.
             """,
@@ -115,21 +115,21 @@ class ConvergeWorkChain(WorkChain):
             'converge.k_spacing',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.1),
+            default=lambda: orm.Float(0.1),
             help="""The default k-point spacing in inverse AA.""",
         )
         spec.input(
             'converge.k_samples',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 10),
+            default=lambda: orm.Int(10),
             help="""The number of k-point samples.""",
         )
         spec.input(
             'converge.cutoff_type',
             valid_type=orm.Str,
             required=False,
-            default=lambda: get_data_node('core.str', 'energy'),
+            default=lambda: orm.Str('energy'),
             help="""
             The cutoff_type to check convergence against. Currently the following
             options are accepted:
@@ -143,7 +143,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.cutoff_value',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.01),
+            default=lambda: orm.Float(0.01),
             help="""
             The cutoff value to be used. When the difference between two convergence
             calculations are within this value for ``cutoff_type``, then it is
@@ -154,7 +154,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.cutoff_value_r',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.01),
+            default=lambda: orm.Float(0.01),
             help="""
             The relative cutoff value to be used. When the difference between two convergence
             calculations are within this value for ``cutoff_type``, then it is
@@ -167,7 +167,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.compress',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, a convergence test of the compressed structure is also
             performed. The difference of the ``cutoff_type`` values for each
@@ -180,7 +180,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.displace',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, a convergence test of the displaced structure is also
             performed. The difference of the ``cutoff_type`` values for each
@@ -203,7 +203,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.displacement_distance',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.2),
+            default=lambda: orm.Float(0.2),
             help="""
             The displacement distance (L2 norm) for the displacement test in AA. Follows
             the direction of ``displacement_vector``.
@@ -213,7 +213,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.displacement_atom',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 1),
+            default=lambda: orm.Int(1),
             help="""
             Which atom to displace? Index starts from 1 and follows the sequence for the
             sites in the Aiida ``structure`` object.
@@ -232,14 +232,14 @@ class ConvergeWorkChain(WorkChain):
             'converge.relax',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""If True, we relax for each convergence test.""",
         )
         spec.input(
             'converge.total_energy_type',
             valid_type=orm.Str,
             required=False,
-            default=lambda: get_data_node('core.str', 'energy_extrapolated'),
+            default=lambda: orm.Str('energy_extrapolated'),
             help="""
             The energy type that is used when ``cutoff_type`` is set to `energy`.
             Consult the options available in the parser for the current version.
@@ -249,7 +249,7 @@ class ConvergeWorkChain(WorkChain):
             'converge.testing',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, we assume testing to be performed (e.g. dummy calculations).
             """,
@@ -1429,7 +1429,7 @@ class ConvergeWorkChain(WorkChain):
                 convergence_dict[key] = value
 
         self.report(convergence_dict)
-        convergence_context = get_data_node('core.dict', dict=convergence_dict)
+        convergence_context = orm.Dict(dict=convergence_dict)
         convergence = store_conv_data(convergence_context)
         if self._verbose:
             self.report(f"attaching the node {convergence.__class__.__name__}<{convergence.pk}> as 'converge.data'")

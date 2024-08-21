@@ -45,7 +45,7 @@ class BandsWorkChain(WorkChain):
             'smearing.gaussian',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`.
             """,
@@ -54,7 +54,7 @@ class BandsWorkChain(WorkChain):
             'smearing.sigma',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.05),
+            default=lambda: orm.Float(0.05),
             help="""
             Magnitude of the smearing in eV.
             """,
@@ -71,7 +71,7 @@ class BandsWorkChain(WorkChain):
             'bands.kpoints_distance',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.05),
+            default=lambda: orm.Float(0.05),
             help="""
             The distance between each k-point along each high-symmetry line.
             """,
@@ -80,7 +80,7 @@ class BandsWorkChain(WorkChain):
             'bands.decompose_bands',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Decompose the band structure on each atom.
             """,
@@ -89,7 +89,7 @@ class BandsWorkChain(WorkChain):
             'bands.decompose_wave',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Decompose the wave function.
             """,
@@ -98,7 +98,7 @@ class BandsWorkChain(WorkChain):
             'bands.lm',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Further decompose the decomposition into l- and m-states.
             """,
@@ -107,7 +107,7 @@ class BandsWorkChain(WorkChain):
             'bands.phase',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Further decompose the l- and m-state decomposition into phases.
             """,
@@ -116,7 +116,7 @@ class BandsWorkChain(WorkChain):
             'bands.wigner_seitz_radius',
             valid_type=orm.List,
             required=False,
-            default=lambda: get_data_node('core.list', list=[False]),
+            default=lambda: orm.List(list=[False]),
             help=(
                 'The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors'
                 'are not utilized.'

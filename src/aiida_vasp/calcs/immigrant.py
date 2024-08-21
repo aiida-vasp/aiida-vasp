@@ -9,6 +9,7 @@ Enables the immigration of  externally run VASP calculations into AiiDA.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path
 
+from aiida import orm
 from aiida.common import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.folders import SandboxFolder
@@ -145,7 +146,7 @@ class VaspImmigrant(VaspCalculation):
         inputs.metadata.options = options
         inputs.remote_workdir = remote_workdir
         if 'settings' in kwargs:
-            inputs.settings = get_data_node('core.dict', dict=kwargs['settings'])
+            inputs.settings = orm.Dict(dict=kwargs['settings'])
         _remote_workdir = Path(remote_workdir)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:

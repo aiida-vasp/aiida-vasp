@@ -20,8 +20,8 @@ from packaging import version
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.neb import VaspNEBCalculation
+from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 
 # Additional tags for VTST calculations - these are not the tags used by standard VASP
@@ -104,7 +104,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             'max_iterations',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             help="""
             The maximum number of iterations to perform.
             """,
@@ -113,7 +113,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             'clean_workdir',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
@@ -122,7 +122,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             'verbose',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
@@ -454,7 +454,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             )
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.initial_structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),

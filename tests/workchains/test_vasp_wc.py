@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import numpy as np
 import pytest
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import load_code
 from aiida.plugins.factories import DataFactory
@@ -173,14 +174,14 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
     inputs = AttributeDict()
 
     inputs.structure = structure
-    inputs.parameters = get_data_node('core.dict', dict={'incar': incar})
+    inputs.parameters = orm.Dict(dict={'incar': incar})
 
     kpoints = get_data_node('core.array.kpoints')
     kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
     inputs.kpoints = kpoints
 
-    inputs.potential_family = get_data_node('core.str', potcar_family_name)
-    inputs.potential_mapping = get_data_node('core.dict', dict=potcar_mapping)
+    inputs.potential_family = orm.Str(potcar_family_name)
+    inputs.potential_mapping = orm.Dict(dict=potcar_mapping)
     inputs.options = get_data_node(
         'core.dict',
         dict={
@@ -190,7 +191,7 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
             'max_wallclock_seconds': 3600,
         },
     )
-    inputs.settings = get_data_node('core.dict', dict={'parser_settings': {'add_structure': True}})
+    inputs.settings = orm.Dict(dict={'parser_settings': {'add_structure': True}})
 
     # If code is not passed, use the mock code
     if code is None:
@@ -213,7 +214,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, upload_potcar, potcar_family_name, potcar
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
     inputs = setup_vasp_workchain(si_structure(), INCAR_ELEC_CONV, 8, potcar_family_name, potcar_mapping)
-    inputs.verbose = get_data_node('core.bool', True)
+    inputs.verbose = orm.Bool(True)
     results, node = run.get_node(workchain, **inputs)
 
     called_nodes = list(node.called)
@@ -273,9 +274,9 @@ def test_vasp_wc_ionic_continue(
     create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
     inputs = setup_vasp_workchain(si_structure(), incar, nkpts, potcar_family_name, potcar_mapping)
-    inputs.verbose = get_data_node('core.bool', True)
+    inputs.verbose = orm.Bool(True)
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = get_data_node('core.dict', dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
@@ -312,10 +313,10 @@ def test_vasp_wc_ionic_magmom_carry(
     incar['lorbit'] = 10
     incar['nupdown'] = 2
     inputs = setup_vasp_workchain(si_structure(), incar, 8, potcar_family_name, potcar_mapping)
-    inputs.verbose = get_data_node('core.bool', True)
+    inputs.verbose = orm.Bool(True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = get_data_node('core.dict', dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
     inputs.settings = get_data_node(
         'core.dict',
         dict={
@@ -325,7 +326,7 @@ def test_vasp_wc_ionic_magmom_carry(
             }
         },
     )
-    inputs.max_iterations = get_data_node('core.int', 2)
+    inputs.max_iterations = orm.Int(2)
 
     _, node = run.get_node(workchain, **inputs)
     assert node.exit_status == 0

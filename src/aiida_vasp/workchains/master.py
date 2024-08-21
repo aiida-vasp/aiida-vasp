@@ -12,7 +12,6 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, if_
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
@@ -50,21 +49,21 @@ class MasterWorkChain(WorkChain):
             'extract_bands',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""Do you want to extract the band structure?""",
         )
         spec.input(
             'extract_dos',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""Do you want to extract the density of states?""",
         )
         spec.input(
             'dos.kpoints_distance',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.1),
+            default=lambda: orm.Float(0.1),
             help="""
             The target k-point distance for density of states extraction.
             """,
@@ -150,7 +149,7 @@ class MasterWorkChain(WorkChain):
             pass
         # If we want to keep previous outputs for relaunch, do not clean remote folders
         if self.extract_bands() or self.extract_dos():
-            self.ctx.inputs.clean_workdir = get_data_node('core.bool', False)
+            self.ctx.inputs.clean_workdir = orm.Bool(False)
         self._init_structure()
         self._init_kpoints()
 
@@ -238,7 +237,7 @@ class MasterWorkChain(WorkChain):
         # copied locally, but is present in the folder of the previous remote directory)
         self.ctx.inputs.restart_folder = self.ctx.workchains[-1].outputs.remote_folder
         # Also enable the clean_workdir again
-        self.ctx.inputs.clean_workdir = get_data_node('core.bool', True)
+        self.ctx.inputs.clean_workdir = orm.Bool(True)
 
     def _clean_inputs(self, exclude=None):
         """Clean the inputs for the next workchain in order not to pass redundant inputs."""

@@ -355,13 +355,13 @@ def run_vasp_process(
             from aiida.plugins import WorkflowFactory
 
             process = WorkflowFactory('vasp.vasp')
-            inpts.potential_family = get_data_node('core.str', potcar_family_name)
-            inpts.potential_mapping = get_data_node('core.dict', dict=potcar_mapping)
-            inpts.parameters = get_data_node('core.dict', dict={'incar': parameters})
-            inpts.options = get_data_node('core.dict', dict=options)
-            inpts.max_iterations = get_data_node('core.int', 1)
-            inpts.clean_workdir = get_data_node('core.bool', False)
-            inpts.verbose = get_data_node('core.bool', True)
+            inpts.potential_family = orm.Str(potcar_family_name)
+            inpts.potential_mapping = orm.Dict(dict=potcar_mapping)
+            inpts.parameters = orm.Dict(dict={'incar': parameters})
+            inpts.options = orm.Dict(dict=options)
+            inpts.max_iterations = orm.Int(1)
+            inpts.clean_workdir = orm.Bool(False)
+            inpts.verbose = orm.Bool(True)
         else:
             raise ValueError(
                 f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'"

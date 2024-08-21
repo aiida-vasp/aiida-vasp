@@ -14,11 +14,13 @@ from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
 
 from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspCalculation(VaspCalcBase):
@@ -94,7 +96,7 @@ class VaspCalculation(VaspCalcBase):
         # until execution.
         spec.input_namespace(
             'potential',
-            valid_type=get_data_class('vasp.potcar'),
+            valid_type=PotcarData,
             help='The potentials (POTCAR).',
             dynamic=True,
         )
@@ -105,13 +107,13 @@ class VaspCalculation(VaspCalcBase):
         )
         spec.input(
             'charge_density',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
             help='The charge density. (CHGCAR)',
         )
         spec.input(
             'wavefunctions',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
             help='The wave function coefficients. (WAVECAR)',
         )
@@ -159,13 +161,13 @@ class VaspCalculation(VaspCalcBase):
         )
         spec.output(
             'chgcar',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
             help='The output charge density CHGCAR file.',
         )
         spec.output(
             'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
             help='The output plane wave coefficients file.',
         )
@@ -366,7 +368,7 @@ class VaspCalculation(VaspCalcBase):
         """
         structure = self.inputs.structure
         if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('core.structure', ase=structure.get_ase())
+            structure = orm.StructureData(ase=structure.get_ase())
         return structure
 
     def write_additional(self, folder, calcinfo):
@@ -500,7 +502,7 @@ class VaspCalculation(VaspCalcBase):
         builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': str(remote_path)})
-        builder.settings = get_data_node('core.dict', dict=settings)
+        builder.settings = orm.Dict(dict=settings)
 
         return proc_cls, builder
 

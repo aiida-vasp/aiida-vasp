@@ -63,7 +63,7 @@ from aiida_vasp.assistant.parameters import (
     inherit_and_merge_parameters,
 )
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 
 # pylint: disable=no-member
@@ -184,7 +184,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             'max_iterations',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             help="""
             The maximum number of iterations to perform.
             """,
@@ -193,7 +193,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             'clean_workdir',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
@@ -202,7 +202,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             'verbose',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,

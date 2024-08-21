@@ -12,8 +12,6 @@ from aiida.engine import while_
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain
 from aiida.plugins import CalculationFactory, WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_node
-
 
 class VaspImmigrantWorkChain(BaseRestartWorkChain):
     """Import a VASP run executed in the directory specified by folder_path."""
@@ -67,7 +65,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             'use_chgcar',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, WavefunData (of WAVECAR) is attached.
             """,
@@ -76,7 +74,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             'use_wavecar',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, WavefunData (of WAVECAR) is attached.
             """,
@@ -85,7 +83,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             'max_iterations',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 1),
+            default=lambda: orm.Int(1),
             help="""
             The maximum number of iterations to perform.
             """,
@@ -94,7 +92,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             'clean_workdir',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
@@ -103,7 +101,7 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
             'verbose',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,

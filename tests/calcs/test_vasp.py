@@ -242,7 +242,7 @@ def test_vasp_calc_delete(run_vasp_process):
     """
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
-    inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False})
+    inputs['settings'] = orm.Dict(dict={'ALWAYS_STORE': False})
     _, node = run_vasp_process(inputs)
     objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
@@ -258,7 +258,7 @@ def test_vasp_calc_extra(run_vasp_process):
 
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('core.dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
+    inputs['settings'] = orm.Dict(dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + [

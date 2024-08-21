@@ -10,8 +10,10 @@ from aiida import orm
 from aiida.common.exceptions import InputValidationError
 
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspNEBCalculation(VaspCalculation):
@@ -86,7 +88,7 @@ class VaspNEBCalculation(VaspCalculation):
         # until execution.
         spec.input_namespace(
             'potential',
-            valid_type=get_data_class('vasp.potcar'),
+            valid_type=PotcarData,
             help='The potentials (POTCAR).',
             dynamic=True,
         )
@@ -98,13 +100,13 @@ class VaspNEBCalculation(VaspCalculation):
         spec.input_namespace(
             'charge_density',
             dynamic=True,
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
             help='The charge density. (CHGCAR)',
         )
         spec.input_namespace(
             'wavefunctions',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             dynamic=True,
             required=False,
             help='The wave function coefficients. (WAVECAR)',
@@ -238,7 +240,7 @@ class VaspNEBCalculation(VaspCalculation):
         """
         structure = self.inputs.initial_structure
         if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('structure', ase=structure.get_ase())
+            structure = orm.StructureData(ase=structure.get_ase())
         return structure
 
     def remote_copy_restart_folder(self):
@@ -304,7 +306,7 @@ class VaspNEBCalculation(VaspCalculation):
         ]:
             # Convert to StructureData from CifData on demand....
             if not hasattr(structure, 'get_pymatgen'):
-                structure_data = get_data_node('core.structure', ase=structure.get_ase())
+                structure_data = orm.StructureData(ase=structure.get_ase())
             else:
                 structure_data = structure
 
@@ -350,5 +352,5 @@ def ensure_structure_data(structure: Union[orm.StructureData, orm.CifData]) -> o
     This is required in order to support CifData as input as well.
     """
     if not hasattr(structure, 'get_pymatgen'):
-        structure = get_data_node('structure', ase=structure.get_ase())
+        structure = orm.StructureData(ase=structure.get_ase())
     return structure

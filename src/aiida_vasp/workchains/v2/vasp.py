@@ -18,7 +18,9 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import CalculationFactory
 
 from aiida_vasp.assistant.parameters import ParametersMassage
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 from aiida_vasp.workchains.vasp import VaspWorkChain as VanillaVaspWorkChain
 
@@ -113,8 +115,8 @@ class VaspWorkChain(VanillaVaspWorkChain):
             required=False,
             serializer=to_aiida_type,
         )
-        spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.input('wavecar', valid_type=WavefunData, required=False)
+        spec.input('chgcar', valid_type=ChargedensityData, required=False)
         spec.input(
             'site_magnetization',
             valid_type=orm.Dict,
@@ -133,7 +135,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             'max_iterations',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             serializer=to_aiida_type,
             help="""
             The maximum number of iterations to perform.
@@ -144,7 +146,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             valid_type=orm.Bool,
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, clean the work dir upon the completion of a successfull calculation.
             """,
@@ -154,7 +156,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             valid_type=orm.Bool,
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
@@ -294,7 +296,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),

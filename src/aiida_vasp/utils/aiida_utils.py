@@ -9,6 +9,7 @@ that have now standardized in AiiDA will be removed.
 
 # pylint: disable=import-outside-toplevel
 import numpy as np
+from aiida import orm
 from aiida.orm import User
 from packaging import version
 
@@ -63,7 +64,7 @@ def get_current_user():
 
 def copy_parameter(old_parameter):
     """Assemble a new Dict."""
-    return get_data_node('core.dict', dict=old_parameter.get_dict())
+    return orm.Dict(dict=old_parameter.get_dict())
 
 
 def displaced_structure(structure, displacement, entry):

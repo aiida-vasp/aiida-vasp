@@ -9,7 +9,6 @@ from aiida_vasp.parsers.content_parsers.outcar import OutcarParser, VtstNebOutca
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.stream import StreamParser
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 @pytest.fixture()
@@ -60,7 +59,7 @@ def vasp_structure_poscar(vasp_structure):
     aiida_structure = vasp_structure
     if isinstance(vasp_structure, orm.CifData):
         ase_structure = vasp_structure.get_ase()
-        aiida_structure = get_data_node('core.structure', ase=ase_structure)
+        aiida_structure = orm.StructureData(ase=ase_structure)
     writer = PoscarParser(data=aiida_structure)
     return writer
 

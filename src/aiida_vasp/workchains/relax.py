@@ -17,7 +17,6 @@ from aiida.orm import CalcJobNode, QueryBuilder, StructureData
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compare_structures, compose_exit_code, prepare_process_inputs
 
 
@@ -52,7 +51,7 @@ class RelaxWorkChain(WorkChain):
             'relax.perform_static',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, perform static calculation after relaxation to obtain a more sane electronic structure etc.
             """,
@@ -61,7 +60,7 @@ class RelaxWorkChain(WorkChain):
             'relax.perform',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, perform relaxation.
             """,
@@ -70,7 +69,7 @@ class RelaxWorkChain(WorkChain):
             'relax.keep_magnetization',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, try to keep the site magnetization from the previous calculation.
             """,
@@ -78,7 +77,7 @@ class RelaxWorkChain(WorkChain):
         spec.input(
             'relax.algo',
             valid_type=orm.Str,
-            default=lambda: get_data_node('core.str', 'cg'),
+            default=lambda: orm.Str('cg'),
             help="""
             The algorithm to use during relaxation.
             """,
@@ -107,7 +106,7 @@ class RelaxWorkChain(WorkChain):
             'relax.steps',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 60),
+            default=lambda: orm.Int(60),
             help="""
             The number of relaxation steps to perform (updates to the atomic positions,
             unit cell size or shape).
@@ -117,28 +116,28 @@ class RelaxWorkChain(WorkChain):
             'relax.positions',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""If True, perform relaxation of the atomic positions.""",
         )
         spec.input(
             'relax.shape',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""If True, perform relaxation of the unit cell shape.""",
         )
         spec.input(
             'relax.volume',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""If True, perform relaxation of the unit cell volume..""",
         )
         spec.input(
             'relax.convergence_on',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, test convergence based on selected criterias set.
             """,
@@ -147,14 +146,14 @@ class RelaxWorkChain(WorkChain):
             'relax.convergence_absolute',
             valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""If True, test convergence based on absolute differences.""",
         )
         spec.input(
             'relax.convergence_max_iterations',
             valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             help="""
             The number of iterations to perform if the convergence criteria is not met.
             """,
@@ -163,7 +162,7 @@ class RelaxWorkChain(WorkChain):
             'relax.convergence_volume',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.01),
+            default=lambda: orm.Float(0.01),
             help="""
             The cutoff value for the convergence check on volume. If ``convergence_absolute``
             is True in AA, otherwise in relative.
@@ -173,7 +172,7 @@ class RelaxWorkChain(WorkChain):
             'relax.convergence_positions',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.01),
+            default=lambda: orm.Float(0.01),
             help="""
             The cutoff value for the convergence check on positions. If ``convergence_absolute``
             is True in AA, otherwise in relative difference.
@@ -183,7 +182,7 @@ class RelaxWorkChain(WorkChain):
             'relax.convergence_shape_lengths',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.1),
+            default=lambda: orm.Float(0.1),
             help="""
             The cutoff value for the convergence check on the lengths of the unit cell
             vectors. If ``convergence_absolute``
@@ -194,7 +193,7 @@ class RelaxWorkChain(WorkChain):
             'relax.convergence_shape_angles',
             valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.1),
+            default=lambda: orm.Float(0.1),
             help="""
             The cutoff value for the convergence check on the angles of the unit cell.
             If ``convergence_absolute`` is True in degrees, otherwise in relative difference.

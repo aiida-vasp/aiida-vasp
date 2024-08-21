@@ -100,7 +100,7 @@ class RelaxOptions(OptionContainer):
         description='The maximum force when the relaxation is stopped (e.g. EDIFFG)',
         default=0.03,
     )
-    steps: float = Field(description='Number of relaxation steps to perform (eg. NSW)', default=60)
+    steps: int = Field(description='Number of relaxation steps to perform (eg. NSW)', default=60)
     positions: bool = Field(description='If True, perform relaxation of the atomic positions', default=True)
     shape: bool = Field(description='If True, perform relaxation of the cell shape', default=True)
     volume: bool = Field(description='If True, perform relaxation of the cell volume', default=True)
