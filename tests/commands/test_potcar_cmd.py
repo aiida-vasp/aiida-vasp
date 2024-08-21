@@ -9,8 +9,7 @@ from pathlib import Path
 import pytest
 from aiida.common import AttributeDict
 from aiida_vasp.commands.potcar import potcar
-from aiida_vasp.data.potcar import PotcarGroup
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.data.potcar import PotcarData, PotcarGroup
 from click.testing import CliRunner
 
 
@@ -48,7 +47,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
         [cmd_params.PATH_OPTION, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION],
     )
 
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
@@ -60,7 +59,7 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     """Give a tar file as the source."""
     path_option = f"--path={Path(cmd_params.POTCAR_PATH) / 'Ga.tar'!s}"
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
 
     assert not result.exception
     assert potcar_cls.exists(element='Ga')
@@ -77,7 +76,7 @@ def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
 
     result = run_cmd('uploadfamily', [cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
 
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
 
     assert not result.exception
     assert potcar_cls.exists(element='In')
@@ -157,7 +156,7 @@ def test_listfamilies_nofilter(fresh_aiida_env, upload_potcar, potcar_family_nam
     assert not result.exception
     assert potcar_family_name in result.output
 
-    family_group = get_data_class('vasp.potcar').get_potcar_group(potcar_family_name)
+    family_group = PotcarData.get_potcar_group(potcar_family_name)
     result = run_cmd('listfamilies', ['--description'])
     assert not result.exception
     assert 'Description' in result.output

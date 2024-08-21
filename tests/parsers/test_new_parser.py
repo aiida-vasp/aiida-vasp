@@ -19,6 +19,8 @@ def test_parser_bare(calc_with_retrieved, request):
     parser = VaspParser(node)
     parser.parse(retrieved_tempoary_folder=file_path)
     assert 'arrays' in parser.outputs
+    assert 'dielectrics`' not in parser.outputs
+    assert 'born_charges' not in parser.outputs
 
 
 @pytest.fixture
@@ -47,6 +49,25 @@ def parser_with_vasprun(parser_with_retrieved):
 
 
 @pytest.fixture
+def parser_incomplete_output(parser_with_retrieved):
+    """Fixture for tests with incomplete output"""
+    default_settings = {
+        'parser_settings': {
+            'check_completeness': False,
+            'critical_objects': [],
+            'required_quantity': [],
+        }
+    }
+
+    def wrapped(case, settings={}):
+        if 'parser_settings' in settings:
+            default_settings['parser_settings'].update(settings['parser_settings'])
+        return parser_with_retrieved(case, default_settings)
+
+    return wrapped
+
+
+@pytest.fixture
 def parser_with_outcar(parser_with_retrieved):
     def wrapped(settings={}):
         return parser_with_retrieved('outcar', settings)
@@ -66,7 +87,36 @@ def test_parser_born(parser_with_retrieved):
             }
         },
     )
-    assert 'born_charges' in parser.outputs['arrays'].get_arraynames()
+    assert 'born_charges' in parser.outputs
+
+
+def test_parser_dielectrics(parser_incomplete_output):
+    """Test parsing dielectrics"""
+    parser, exit_code = parser_incomplete_output('dielectric')
+    assert 'dielectrics' in parser.outputs
+
+
+def test_parser_magnetization(parser_incomplete_output):
+    """Test parsing dielectrics"""
+    parser, exit_code = parser_incomplete_output('magnetization')
+    assert 'misc' in parser.outputs
+    assert parser.outputs['misc']['magnetization'][0] == 6.4424922
+
+
+def test_parser_lepsilon(parser_incomplete_output):
+    """Test parsing dielectrics"""
+    parser, exit_code = parser_incomplete_output('lepsilon')
+    assert 'misc' in parser.outputs
+    assert 'epsilon' in parser.outputs['dielectrics'].get_arraynames()
+    assert 'born_charges' in parser.outputs['born_charges'].get_arraynames()
+
+
+def test_parser_localfield(parser_incomplete_output):
+    """Test parsing dielectrics"""
+    parser, exit_code = parser_incomplete_output('localfield')
+    assert 'misc' in parser.outputs
+    assert 'epsilon' in parser.outputs['dielectrics'].get_arraynames()
+    assert 'born_charges' in parser.outputs['born_charges'].get_arraynames()
 
 
 def test_parser_disp_details(parser_with_retrieved):

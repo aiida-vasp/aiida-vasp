@@ -7,7 +7,6 @@ import os
 import pytest
 from aiida import orm
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
@@ -288,8 +287,7 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node(
-        'core.dict',
+    inputs['settings'] = orm.Dict(
         dict={
             'ALWAYS_STORE': False,
             'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep],
@@ -317,8 +315,7 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node(
-        'core.dict',
+    inputs['settings'] = orm.Dict(
         dict={
             'ALWAYS_STORE': False,
             'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep],

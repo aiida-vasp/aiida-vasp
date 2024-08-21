@@ -13,7 +13,6 @@ from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
@@ -189,9 +188,7 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node(
-            'core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value}
-        )
+        self.ctx.seekpath_parameters = orm.Dict(dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value

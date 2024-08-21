@@ -183,8 +183,14 @@ class VaspCalculation(VaspCalcBase):
             required=False,
             help='The output dos.',
         )
-
-        spec.output_namespace('custom_outputs', required=False, dynamic=True)
+        # Standalone array quantities
+        for name in ['hessian', 'dynmat', 'born_charges', 'dielectrics']:
+            spec.output(
+                name,
+                valid_type=orm.ArrayData,
+                required=False,
+                help='The output {name} data.',
+            )
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(
             350,

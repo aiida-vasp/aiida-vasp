@@ -10,7 +10,7 @@ workchains.
 
 import pytest
 from aiida import orm
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def vasp2w90_params(fresh_aiida_env, vasp_params):
 def potcar_node_pair(fresh_aiida_env, data_path):
     """Create a POTCAR node pair."""
     potcar_path = data_path('potcar', 'As', 'POTCAR')
-    potcar_file_node = get_data_node('vasp.potcar_file', file=potcar_path)
+    potcar_file_node = PotcarFileData(file=potcar_path)
     potcar_file_node.store()
-    return {'file': potcar_file_node, 'potcar': get_data_class('vasp.potcar').find_one(symbol='As')}
+    return {'file': potcar_file_node, 'potcar': PotcarData.find_one(symbol='As')}
 
 
 @pytest.fixture()

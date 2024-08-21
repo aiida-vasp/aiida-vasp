@@ -1,8 +1,8 @@
 """Test the POTCAR parser."""
 
 import pytest
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo, PotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 def verify_potcario(potcario):
@@ -22,7 +22,7 @@ def test_potcar_from_path(fresh_aiida_env, data_path):
 
 def test_potcar_from_file_node(upload_potcar):
     """Create a PotcarIo instance from a PotcarFileData node."""
-    potcar_file_in = get_data_class('vasp.potcar_file').find_one(element='In')
+    potcar_file_in = PotcarFileData.find_one(element='In')
     from_ctor = PotcarIo(potcar_file_node=potcar_file_in)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_file_in)
@@ -31,7 +31,7 @@ def test_potcar_from_file_node(upload_potcar):
 
 def test_potcar_from_node(upload_potcar):
     """Create a PotcarIo instance from a PotcarData node."""
-    potcar_ga = get_data_class('vasp.potcar').find_one(element='Ga')
+    potcar_ga = PotcarData.find_one(element='Ga')
     from_ctor = PotcarIo(potcar_node=potcar_ga)
     verify_potcario(from_ctor)
     from_from = PotcarIo.from_(potcar_ga)
@@ -43,7 +43,7 @@ def test_potcar_from_contents(upload_potcar, read_file):
     contents_as = read_file('potcar', 'As', 'POTCAR')
     from_ctor = PotcarIo(contents=contents_as.encode('utf-8'))
     verify_potcario(from_ctor)
-    assert from_ctor.node.uuid == get_data_class('vasp.potcar').find_one(element='As').uuid
+    assert from_ctor.node.uuid == PotcarData.find_one(element='As').uuid
     from_from = PotcarIo.from_(contents_as)
     assert from_ctor == from_from
 
@@ -59,7 +59,7 @@ def test_multi_round_trip(upload_potcar, potcar_family_name, tmp_path, potcar_ma
     """Write multiple POTCAR potentials to a file and recover the nodes stored in the db."""
     test_dir = tmp_path / 'round_trip'
     test_dir.mkdir()
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     multi = MultiPotcarIo(
         potcar_cls.get_potcars_dict(
             elements=potcar_mapping.keys(), family_name=potcar_family_name, mapping=potcar_mapping
@@ -75,7 +75,7 @@ def test_multi_round_trip(upload_potcar, potcar_family_name, tmp_path, potcar_ma
 
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_multi_from_structure(upload_potcar, potcar_family_name, vasp_structure_poscar, potcar_mapping):
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     potcar_dict = potcar_cls.get_potcars_dict(
         elements=['As', 'In', 'In_d'], family_name=potcar_family_name, mapping=potcar_mapping
     )

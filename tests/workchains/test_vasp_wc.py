@@ -14,7 +14,7 @@ from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import load_code
 from aiida.plugins.factories import DataFactory
-from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_node
+from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.mock_code import VaspMockRegistry
 
 
@@ -176,14 +176,13 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
     inputs.structure = structure
     inputs.parameters = orm.Dict(dict={'incar': incar})
 
-    kpoints = get_data_node('core.array.kpoints')
+    kpoints = orm.KpointsData()
     kpoints.set_kpoints_mesh((nkpts, nkpts, nkpts))
     inputs.kpoints = kpoints
 
     inputs.potential_family = orm.Str(potcar_family_name)
     inputs.potential_mapping = orm.Dict(dict=potcar_mapping)
-    inputs.options = get_data_node(
-        'core.dict',
+    inputs.options = orm.Dict(
         dict={
             'withmpi': False,
             'queue_name': 'None',
@@ -317,8 +316,7 @@ def test_vasp_wc_ionic_magmom_carry(
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
     inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
-    inputs.settings = get_data_node(
-        'core.dict',
+    inputs.settings = orm.Dict(
         dict={
             'parser_settings': {
                 'add_structure': True,

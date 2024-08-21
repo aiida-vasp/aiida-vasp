@@ -3,7 +3,7 @@ Unittests for VaspNEBCalculation
 """
 
 import pytest
-from aiida_vasp.utils.aiida_utils import get_data_node
+from aiida import orm
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
@@ -43,8 +43,7 @@ def test_prepare(
     assert calcinfo.codes_info[0].join_files is True
 
     # Test retriving more files
-    settings = get_data_node(
-        'core.dict',
+    settings = orm.Dict(
         dict={
             'PER_IMAGE_ADDITIONAL_RETRIEVE_LIST': ['IBZKPT'],
         },

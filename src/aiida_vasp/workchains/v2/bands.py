@@ -18,7 +18,7 @@ from aiida.engine import WorkChain, append_, calcfunction, if_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
@@ -137,7 +137,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         spec.input(
             'chgcar',
             required=False,
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             help='Explicit CHGCAR file used for DOS/Bands calculations',
         )
         spec.input(

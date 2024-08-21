@@ -16,10 +16,6 @@ from packaging import version
 BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
 
 
-def get_data_node(data_type, *args, **kwargs):
-    return get_data_class(data_type)(*args, **kwargs)
-
-
 def querybuild(cls, **kwargs):
     """
     Instantiates and returns a QueryBuilder instance.

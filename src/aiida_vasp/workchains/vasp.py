@@ -63,7 +63,9 @@ from aiida_vasp.assistant.parameters import (
     inherit_and_merge_parameters,
 )
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.utils.aiida_utils import get_data_class
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 
 # pylint: disable=no-member
@@ -158,12 +160,12 @@ class VaspWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
         )
         spec.input(
             'chgcar',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
         )
         spec.input(
@@ -499,7 +501,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),

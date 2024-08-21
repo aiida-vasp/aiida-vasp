@@ -13,8 +13,8 @@ from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, QueryBuilder, load_code
 from aiida.tools.archive import create_archive
-from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarGroup
-from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_class, get_data_node
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup
+from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.general import copytree
 
 pytest_plugins = 'aiida.tools.pytest_fixtures'
@@ -238,19 +238,19 @@ def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_pat
         """Create and store (and return) a duplicate of a given PotcarData node."""
         from aiida_vasp.data.potcar import temp_potcar
 
-        file_node = get_data_node('vasp.potcar_file')
+        file_node = PotcarFileData()
         with temp_potcar(potcar_node.get_content()) as potcar_file:
             file_node.add_file(potcar_file)
             file_node.base.attributes.set('sha512', 'abcd')
             file_node.base.attributes.set('full_name', potcar_node.full_name)
             file_node.store()
-        data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
+        data_node, _ = PotcarData.get_or_create(file_node)
         return data_node
 
     potcar_ga = pathlib.Path(data_path('potcar')) / 'Ga'
     family_name = potcar_family_name
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     potcar_cls.upload_potcar_family(str(temp_pot_folder), family_name, family_desc, stop_if_existing=False)
     if len(potcar_cls.find(full_name='In_d')) == 1:
         family_group = potcar_cls.get_potcar_group(potcar_family_name)
@@ -267,7 +267,7 @@ def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_pat
 @pytest.fixture
 def potentials(upload_potcar, potcar_family_name, potcar_mapping):
     """Fixture for two incomplete POTPAW potentials."""
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     potentials = potcar_cls.get_potcars_dict(
         ['In', 'In_d', 'As'], family_name=potcar_family_name, mapping=potcar_mapping
     )
@@ -343,7 +343,7 @@ def run_vasp_process(
             from aiida.plugins import CalculationFactory
 
             process = CalculationFactory('vasp.vasp')
-            inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            inpts.potential = PotcarData.get_potcars_from_structure(
                 structure=inpts.structure,
                 family_name=potcar_family_name,
                 mapping=potcar_mapping,

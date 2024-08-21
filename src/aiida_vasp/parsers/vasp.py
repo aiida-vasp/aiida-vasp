@@ -6,25 +6,22 @@ The simplified parser outputs the following nodes:
 1. A `misc` node that stores simple summary information such as total energies,
     total run times, any warnings issues during the calculation and if the calculation
     was finished.
-2. A `arrays` node that for storing the properties that are arrays by nature and typically
+2. A `arrays` node that for storing miscellaneous quantities that are arrays by nature and typically
     have a large size.
-    This includes the dielectric function, hessian matrix as well as the energies of each
-    SCF cycle.
 3. A `trajectory` node for storing the trajectory of geometry optimisation and AIMD.
 4. A `bands` node for storing the band structure.
 5. A `dos` node for storing the density of states.
+6. Other nodes for storing other relevant quantities such as the born effective charges.
+
 
 Main difference from the previous version
 
-1. Individual properties are not stored in the separate node in order to reduce the number of nodes created. Scalar and
-   small arrays are stored in misc (final energies and forces), and larger none-standard output arrays are stored in
-   the `array` output node.
-2. `pydantic` is used to validate the parser settings *at submission* time.
-3. When parsing retrieved data, we take a 'parse as much as possible' approach -
+1. `pydantic` is used to validate the parser settings *at submission* time.
+2. When parsing retrieved data, we take a 'parse as much as possible' approach -
    the quantities are always parsed if available, and only excluded during the stage of composing the output nodes.
    This is simpler from the previous 'parse only when needed' approach, where multiple checks have be done to work
    out which parser to call and which quantities to include.
-4. All parser logic is contained in a single class and can be extended by updating content parsers and modify the
+3. All parser logic is contained in a single class and can be extended by updating content parsers and modify the
    default settings and update/add the `_compose_xx` methods.
 """
 
@@ -107,6 +104,16 @@ MISC_QUANTITIES = (
     'band_properties',
     'magnetization',
 )
+
+# Miscellaneous quantities that should be collected into an `arrays`` node
+COLLECTED_ARRAY_QUANTITIES = ('projectors', 'energies')
+# Standalone array quantities that should be stored in a separate node
+STANDALONE_ARRAY_QUANTITIES = {
+    'born_charges': 'vasprun.xml',
+    'dielectrics': 'vasprun.xml',
+    'dynmat': 'vasprun.xml',
+    'hessian': 'vasprun.xml',
+}
 
 
 class ParserSettingsConfig(OptionContainer):
@@ -318,18 +325,24 @@ class VaspParser(Parser):
         """Create the output nodes"""
         # Create the outputs
         self._failed_to_compose = {}
-        for name in ['misc', 'structure', 'trajectory', 'kpoints', 'arrays', 'bands', 'dos']:
+
+        # Call the _compose_xx methods to create the output nodes
+        for method_name in [item for item in self.__dir__() if item.startswith('_compose_')]:
+            name = method_name.replace('_compose_', '')
             if name in self.nodes_to_exclude:
                 continue
-            node = None
+            node_or_dict = None
             try:
-                node = getattr(self, '_compose_' + name)(self.quantities_each)
+                node_or_dict = getattr(self, '_compose_' + name)(self.quantities_each)
             except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
                 self._failed_to_compose[name] = error
                 self.logger.warning(f'Failed to compose {name} node: {error}')
                 continue
-            if node is not None:
-                self.out(name, node)
+            if isinstance(node_or_dict, orm.Data):
+                self.out(name, node_or_dict)
+            elif isinstance(node_or_dict, dict):
+                for key, value in node_or_dict.items():
+                    self.out(key, value)
         if (
             any(name in self.user_config.include_node for name in self._failed_to_compose)
             and self.user_config.check_completeness is True
@@ -373,13 +386,32 @@ class VaspParser(Parser):
 
     def _compose_arrays(self, quantities_each):
         """Generate the generic `arrays` output node"""
-        array_quantities = ('projectors', 'born_charges', 'dielectrics', 'hessian', 'dynmat', 'energies')
         out_arrays = {}
-        gather_quantities(quantities_each, 'vasprun.xml', out_arrays, array_quantities, flatten_dict=True)
+        collected_arrays = {}
+        gather_quantities(
+            quantities_each, 'vasprun.xml', collected_arrays, COLLECTED_ARRAY_QUANTITIES, flatten_dict=True
+        )
         # Remove None values in the arrays
-        out_arrays = {key: value for key, value in out_arrays.items() if value is not None}
-        if out_arrays:
-            return orm.ArrayData(out_arrays)
+        collected_arrays = {key: value for key, value in collected_arrays.items() if value is not None}
+        if len(collected_arrays) > 0:
+            out_arrays['arrays'] = orm.ArrayData(collected_arrays)
+
+        # Compose the standalone arrays - each corresponds to a single quantity
+        for name, file_name in STANDALONE_ARRAY_QUANTITIES.items():
+            array_node = self._make_standalone_array(quantities_each, name, file_name)
+            if array_node is not None:
+                out_arrays[name] = array_node
+        return out_arrays
+
+    def _make_standalone_array(self, quantities_each, name, file_name='vasprun.xml'):
+        """Compose the `dielectrics` output node"""
+        # The output can be an array or a dictionary of arrays - both cases should be handled
+        arrays_or_dict = quantities_each.get(file_name, {}).get(name)
+        if isinstance(arrays_or_dict, dict):
+            arrays_or_dict = {key: value for key, value in arrays_or_dict.items() if value is not None}
+            return orm.ArrayData(arrays_or_dict)
+        elif isinstance(arrays_or_dict, (np.ndarray, list)):
+            return orm.ArrayData({name: arrays_or_dict})
         return None
 
     def _compose_kpoints(self, quantities_each):

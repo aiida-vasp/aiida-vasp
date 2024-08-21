@@ -13,8 +13,8 @@ from pathlib import Path
 
 from parsevasp.potcar import Potcar
 
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
 
@@ -83,7 +83,7 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
 
     def _init_with_path(self, file_path):
         """Initialize with a path."""
-        node, _ = get_data_class('vasp.potcar').get_or_create_from_file(file_path=file_path)
+        node, _ = PotcarData.get_or_create_from_file(file_path=file_path)
         self.sha512 = node.sha512
 
     def _init_with_potcar_file_node(self, node):
@@ -100,16 +100,16 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
             contents = contents.encode('utf-8')
         except AttributeError:
             pass
-        node, _ = get_data_class('vasp.potcar').get_or_create_from_contents(contents)
+        node, _ = PotcarData.get_or_create_from_contents(contents)
         self.sha512 = node.sha512
 
     @property
     def file_node(self):
-        return get_data_class('vasp.potcar').find_one(sha512=self.sha512).find_file_node()
+        return PotcarData.find_one(sha512=self.sha512).find_file_node()
 
     @property
     def node(self):
-        return get_data_class('vasp.potcar').find_one(sha512=self.sha512)
+        return PotcarData.find_one(sha512=self.sha512)
 
     @property
     def content(self):
@@ -130,9 +130,9 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
                 potcar = cls(path=potcar)
             else:
                 potcar = cls(contents=potcar)
-        elif isinstance(potcar, get_data_class('vasp.potcar')):
+        elif isinstance(potcar, PotcarData):
             potcar = cls(potcar_node=potcar)
-        elif isinstance(potcar, get_data_class('vasp.potcar_file')):
+        elif isinstance(potcar, PotcarFileData):
             potcar = cls(potcar_file_node=potcar)
         elif isinstance(potcar, PotcarIo):
             pass

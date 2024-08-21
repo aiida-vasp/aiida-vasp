@@ -12,7 +12,8 @@ from aiida.cmdline.utils.decorators import with_dbenv
 from click_spinner import spinner as cli_spinner
 
 from aiida_vasp.commands import options
-from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data, get_data_class
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
 
 VERDI_DATA = cmp_load_verdi_data()
 
@@ -28,7 +29,7 @@ def try_grab_description(ctx, param, value):
 
     This is a click parameter callback.
     """
-    potcar_data_cls = get_data_class('vasp.potcar')
+    potcar_data_cls = PotcarData
     group_name = ctx.params['name']
     existing_groups = potcar_data_cls.get_potcar_groups()
     existing_group_names = [group.label for group in existing_groups]
@@ -81,7 +82,7 @@ def detect_old_style_groups():
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
-    potcar_data_cls = get_data_class('vasp.potcar')
+    potcar_data_cls = PotcarData
     with cli_spinner():
         num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
             path, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run
@@ -103,7 +104,7 @@ def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
     detect_old_style_groups()
 
-    potcar_data_cls = get_data_class('vasp.potcar')
+    potcar_data_cls = PotcarData
     groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
 
     table = [['Family', 'Num Potentials']]
@@ -132,7 +133,7 @@ def listfamilies(element, symbol, description):
 @with_dbenv()
 def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
-    potcar_data_cls = get_data_class('vasp.potcar')
+    potcar_data_cls = PotcarData
 
     if not as_archive:
         files = potcar_data_cls.export_family_folder(name, path, dry_run)
