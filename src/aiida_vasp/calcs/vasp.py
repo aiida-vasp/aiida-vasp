@@ -10,14 +10,17 @@ The calculation class that prepares a specific VASP calculation.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
 
+from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
 
 from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspCalculation(VaspCalcBase):
@@ -25,7 +28,7 @@ class VaspCalculation(VaspCalcBase):
     General-purpose VASP calculation.
 
     ---------------------------------
-    By default retrieves only the 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR'
+    By default retrieves only the 'OUTCAR', 'vasprun.xml', 'CONTCAR'
     and Wannier90 input / output objects. These objects are deleted after parsing.
     Additional retrieve objects can be specified via the
     ``settings['ADDITIONAL_RETRIEVE_TEMPORARY_LIST']`` input. In addition, if you want to keep
@@ -63,7 +66,7 @@ class VaspCalculation(VaspCalcBase):
     """
 
     _VASP_OUTPUT = 'vasp_output'
-    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'EIGENVAL', 'DOSCAR', 'wannier90*', _VASP_OUTPUT]
+    _ALWAYS_RETRIEVE_LIST = ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'wannier90*', _VASP_OUTPUT]
     _query_type_string = 'vasp.vasp'
     _plugin_type_string = 'vasp.vasp'
 
@@ -74,18 +77,18 @@ class VaspCalculation(VaspCalcBase):
         # options is passed automatically.
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             help='The VASP input parameters (INCAR).',
         )
         spec.input(
             'dynamics',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
             required=False,
         )
         spec.input(
             'structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             help='The input structure (POSCAR).',
         )
 
@@ -93,30 +96,30 @@ class VaspCalculation(VaspCalcBase):
         # until execution.
         spec.input_namespace(
             'potential',
-            valid_type=get_data_class('vasp.potcar'),
+            valid_type=PotcarData,
             help='The potentials (POTCAR).',
             dynamic=True,
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             help='The kpoints to use (KPOINTS).',
         )
         spec.input(
             'charge_density',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
             help='The charge density. (CHGCAR)',
         )
         spec.input(
             'wavefunctions',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
             help='The wave function coefficients. (WAVECAR)',
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help='Additional parameters not related to VASP itself.',
         )
@@ -129,118 +132,65 @@ class VaspCalculation(VaspCalcBase):
         # remote_folder and retrieved are passed automatically
         spec.output(
             'misc',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             help='The output parameters containing smaller quantities that do not depend on system size.',
         )
         spec.output(
             'structure',
-            valid_type=get_data_class('core.structure'),
+            valid_type=orm.StructureData,
             required=False,
             help='The output structure.',
         )
         spec.output(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
             help='The output k-points.',
         )
         spec.output(
             'trajectory',
-            valid_type=get_data_class('core.array.trajectory'),
+            valid_type=orm.TrajectoryData,
+            required=False,
+            help='The output trajectory data.',
+        )
+        spec.output(
+            'arrays',
+            valid_type=orm.ArrayData,
             required=False,
             help='The output trajectory data.',
         )
         spec.output(
             'chgcar',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
             help='The output charge density CHGCAR file.',
         )
         spec.output(
             'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
             help='The output plane wave coefficients file.',
         )
         spec.output(
             'bands',
-            valid_type=get_data_class('core.array.bands'),
+            valid_type=orm.BandsData,
             required=False,
             help='The output band structure.',
         )
         spec.output(
-            'forces',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output forces.',
-        )
-        spec.output(
-            'stress',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output stress.',
-        )
-        spec.output(
             'dos',
-            valid_type=get_data_class('core.array'),
+            valid_type=orm.ArrayData,
             required=False,
             help='The output dos.',
         )
-        spec.output(
-            'energies',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output total energies.',
-        )
-        spec.output(
-            'projectors',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output projectors of decomposition.',
-        )
-        spec.output(
-            'dielectrics',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output dielectric functions.',
-        )
-        spec.output(
-            'born_charges',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output Born effective charges.',
-        )
-        spec.output(
-            'hessian',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output Hessian matrix.',
-        )
-        spec.output(
-            'dynmat',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output dynamical matrix.',
-        )
-        spec.output(
-            'charge_density',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output charge density.',
-        )
-        spec.output(
-            'magnetization_density',
-            valid_type=get_data_class('core.array'),
-            required=False,
-            help='The output magnetization density.',
-        )
-        spec.output(
-            'site_magnetization',
-            valid_type=get_data_class('core.dict'),
-            required=False,
-            help='The output of the site magnetization',
-        )
-        spec.output_namespace('custom_outputs', required=False, dynamic=True)
+        # Standalone array quantities
+        for name in ['hessian', 'dynmat', 'born_charges', 'dielectrics']:
+            spec.output(
+                name,
+                valid_type=orm.ArrayData,
+                required=False,
+                help='The output {name} data.',
+            )
         spec.exit_code(0, 'NO_ERROR', message='the sun is shining')
         spec.exit_code(
             350,
@@ -297,21 +247,9 @@ class VaspCalculation(VaspCalcBase):
         )
 
         spec.exit_code(
-            1001,
-            'ERROR_PARSING_OBJECT_FAILED',
-            message='parsing an object has failed.',
-        )
-        spec.exit_code(
             1002,
             'ERROR_NOT_ABLE_TO_PARSE_QUANTITY',
-            message='the parser is not able to parse the {quantity} quantity',
-        )
-        spec.exit_code(
-            1003,
-            'ERROR_RECOVERY_PARSING_OF_XML_FAILED',
-            message='the vasprun.xml was truncated and recovery parsing failed to parse at least one'
-            'of the requested quantities: {quantities}, '
-            'very likely the VASP calculation did not run properly',
+            message='the parser is not able to parse the {quantity} quantity which is marked as required',
         )
         spec.exit_code(
             1004,
@@ -372,7 +310,7 @@ class VaspCalculation(VaspCalcBase):
             _settings = self.inputs.settings.get_dict()
         else:
             _settings = {}
-        _site_magnetization = _settings.get('parser_settings', {}).get('add_site_magnetization', False)
+        _site_magnetization = 'site_magnetization' in _settings.get('parser_settings', {}).get('include_quantity', [])
         if _site_magnetization and _lorbit < 10:
             raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
 
@@ -436,7 +374,7 @@ class VaspCalculation(VaspCalcBase):
         """
         structure = self.inputs.structure
         if not hasattr(structure, 'get_pymatgen'):
-            structure = get_data_node('core.structure', ase=structure.get_ase())
+            structure = orm.StructureData(ase=structure.get_ase())
         return structure
 
     def write_additional(self, folder, calcinfo):
@@ -570,7 +508,7 @@ class VaspCalculation(VaspCalcBase):
         builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
         settings = kwargs.get('settings', {})
         settings.update({'import_from_path': str(remote_path)})
-        builder.settings = get_data_node('core.dict', dict=settings)
+        builder.settings = orm.Dict(dict=settings)
 
         return proc_cls, builder
 

@@ -5,10 +5,10 @@ The ``INCAR`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
 
+from aiida import orm
 from parsevasp.incar import Incar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class IncarParser(BaseFileParser):
@@ -53,7 +53,7 @@ class IncarParser(BaseFileParser):
 
         """
 
-        if isinstance(data, get_data_class('core.dict')):
+        if isinstance(data, orm.Dict):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a Dict.')

@@ -88,20 +88,22 @@ def site_magnetization_to_magmom(site_dict):
     return [entry[1]['tot'] for entry in tmp]
 
 
-def nested_update(dict_in, update_dict):
-    """Update the dictionary - combine nested subdictionary with update as well"""
+def nested_update(dict_in, update_dict, extend_list=False):
+    """Update the dictionary - combine nested sub-dictionary with update as well"""
     for key, value in update_dict.items():
         if key in dict_in and isinstance(value, (dict, AttributeDict)):
-            nested_update(dict_in[key], value)
+            nested_update(dict_in[key], value, extend_list=extend_list)
+        if key in dict_in and isinstance(value, list) and extend_list:
+            dict_in[key].extend(value)
         else:
             dict_in[key] = value
     return dict_in
 
 
-def nested_update_dict_node(dict_node, update_dict):
+def nested_update_dict_node(dict_node, update_dict, extend_list=False):
     """Utility to update a Dict node in a nested way"""
     pydict = dict_node.get_dict()
-    nested_update(pydict, update_dict)
+    nested_update(pydict, update_dict, extend_list=extend_list)
     if pydict == dict_node.get_dict():
         return dict_node
     return orm.Dict(dict=pydict)

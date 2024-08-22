@@ -1,5 +1,8 @@
 """
 Wrapper class to simply updating an Node when configuring inputs of a calculation.
+
+This module is currently not used in the code, but kept here for future reference.
+It is not clear such wrapper for Dict would truly benefit the usability of the code.
 """
 
 from collections import UserDict

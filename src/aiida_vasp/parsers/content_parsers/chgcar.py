@@ -52,11 +52,7 @@ class ChgcarParser(BaseFileParser):
 
         """
 
-        charge_density = self._content_parser.charge_density
-        if charge_density is None:
-            return None
-        charge_density = {'charge_density': charge_density}
-        return charge_density
+        return self._content_parser.charge_density
 
     @property
     def magnetization_density(self):
@@ -73,8 +69,4 @@ class ChgcarParser(BaseFileParser):
             direction.
 
         """
-        magnetization_density = self._content_parser.magnetization_density
-        if magnetization_density is None:
-            return None
-        magnetization_density = {'magnetization_density': magnetization_density}
-        return magnetization_density
+        return self._content_parser.magnetization_density

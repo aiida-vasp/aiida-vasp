@@ -1,0 +1,29 @@
+name: 'VaspPreset'
+inputset: 'UCLRelaxSet'
+default_code: 'vasp@localhost'
+
+code_specific:
+    # These are code specific settings for the VaspCalculation
+    'vasp@localhost':
+        options:
+            max_wallclock_seconds: 3600
+            resources:
+                tot_num_mpiprocs: 1
+                num_machines: 1
+        settings: {}
+        inputset_overrides: {}
+default_options:
+    # Put default options for the VaspCalculation here
+    max_wallclock_seconds: 3600
+    resources:
+        tot_num_mpiprocs: 1
+        num_machines: 1
+# default_settings:
+    # Put default settings for the VaspCalculation here
+# default_inputset_overrides:
+    # Put overrides for input set here
+# default_relax_settings:
+    # Put relaxation calculation settings here
+default_band_settings:
+    # Put band structure calculation settings here
+    symprec: 1e-5

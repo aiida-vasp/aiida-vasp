@@ -38,6 +38,7 @@ dependencies = [
     "lxml",
     "seekpath",
     "packaging",
+    "pydantic",
     "parsevasp>=3.2",
 ]
 
@@ -61,6 +62,7 @@ docs = [
     "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
 ]
+
 graphs = ["matplotlib"]
 
 [project.entry-points."aiida.cmdline.data"]
@@ -81,8 +83,7 @@ graphs = ["matplotlib"]
 
 [project.entry-points."aiida.parsers"]
 "vasp.vasp" = "aiida_vasp.parsers.vasp:VaspParser"
-"vasp.neb" = "aiida_vasp.parsers.neb:VtstNebParser"
-"vasp.vasp2w90" = "aiida_vasp.parsers.vasp2w90:Vasp2w90Parser"
+"vasp.neb" = "aiida_vasp.parsers.neb:NebParser"
 
 [project.entry-points."aiida.workflows"]
 "vasp.vasp" = "aiida_vasp.workchains.vasp:VaspWorkChain"

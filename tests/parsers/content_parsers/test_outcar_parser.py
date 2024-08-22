@@ -214,6 +214,6 @@ def test_neb(fresh_aiida_env, neb_outcar_parser):
     data = neb_outcar_parser.get_quantity('neb_data')
     assert data['neb_converged']
     assert data['force_prep_real'] == pytest.approx(0.017467)
-    assert data['energy_extrapolated'] == pytest.approx(-19.49550593)
+    assert neb_outcar_parser.total_energies['energy_extrapolated'] == pytest.approx(-19.49550593)
 
     np.testing.assert_allclose(neb_outcar_parser.forces[0], np.array([0.008815, 0.005492, -0.000661]))

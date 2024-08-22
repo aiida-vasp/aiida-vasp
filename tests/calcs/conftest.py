@@ -9,10 +9,10 @@ calculations on which one can for instance test parsing etc.
 import pathlib
 
 import pytest
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 @pytest.fixture()
@@ -71,12 +71,12 @@ def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
             parameters['images'] = 3
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata
@@ -198,11 +198,11 @@ def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, pote
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
         inputs.code = vasp_code
         inputs.metadata = metadata
         inputs.parameters = parameters
@@ -257,11 +257,11 @@ def vasp2w90_inputs(
             inputs.settings = Dict(dict=settings)
 
         if isinstance(parameters, dict):
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
 
         if parameters is None:
             parameters = AttributeDict(vasp_params.get_dict())
-            parameters = get_data_class('core.dict')(dict=parameters)
+            parameters = orm.Dict(dict=parameters)
 
         inputs.code = vasp_code
         inputs.metadata = metadata

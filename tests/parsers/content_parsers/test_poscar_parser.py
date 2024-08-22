@@ -15,7 +15,7 @@ def test_parse_poscar(poscar_parser):
     """
 
     # The structure for the POSCAR parser should have the key `poscar-structure`
-    result = poscar_parser.get_quantity('poscar-structure')
+    result = poscar_parser.get_quantity('structure')
     compare_poscar_content(result)
 
 
@@ -83,7 +83,7 @@ def test_parse_poscar_data(vasp_structure, tmpdir):
     parser = None
     with open(temp_path, 'r', encoding='utf8') as handler:
         parser = PoscarParser(handler=handler)
-    result = parser.get_quantity('poscar-structure')
+    result = parser.get_quantity('structure')
     # When we start from StructureData we do not have any velocity or predictor
     # values present, so let us not compare them. The reference POSCAR has no
     # velocities, but predictors, so we can not compare those directly.

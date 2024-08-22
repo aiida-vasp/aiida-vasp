@@ -6,10 +6,10 @@ Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
 
 import numpy as np
+from aiida import orm
 from parsevasp.kpoints import Kpoint, Kpoints
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class KpointsParser(BaseFileParser):
@@ -48,7 +48,7 @@ class KpointsParser(BaseFileParser):
     def _init_from_data(self, data):
         """Initialize using AiiDA KpointsData."""
 
-        if isinstance(data, get_data_class('core.array.kpoints')):
+        if isinstance(data, orm.KpointsData):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a KpointsData.')

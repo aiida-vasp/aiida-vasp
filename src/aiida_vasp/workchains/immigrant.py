@@ -6,13 +6,11 @@ Workchain to import a successful VASP run that has not been executed in the AiiD
 """
 
 # pylint: disable=attribute-defined-outside-init
+from aiida import orm
 from aiida.common import InputValidationError
 from aiida.engine import while_
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain
-from aiida.orm import Code
 from aiida.plugins import CalculationFactory, WorkflowFactory
-
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 class VaspImmigrantWorkChain(BaseRestartWorkChain):
@@ -28,12 +26,12 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         super().define(spec)
         spec.input(
             'code',
-            valid_type=Code,
+            valid_type=orm.Code,
             required=True,
         )
         spec.input(
             'folder_path',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=False,
             help='Deprecated.',
         )
@@ -45,65 +43,65 @@ class VaspImmigrantWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'potential_family',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=False,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'use_chgcar',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, WavefunData (of WAVECAR) is attached.
             """,
         )
         spec.input(
             'use_wavecar',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, WavefunData (of WAVECAR) is attached.
             """,
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 1),
+            default=lambda: orm.Int(1),
             help="""
             The maximum number of iterations to perform.
             """,
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,

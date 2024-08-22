@@ -7,12 +7,12 @@ to extract the k-point path.
 """
 
 # pylint: disable=attribute-defined-outside-init, import-outside-toplevel
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.assistant.parameters import inherit_and_merge_parameters
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 
 
@@ -32,35 +32,35 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'smearing.gaussian',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             Whether or not gaussian smearing will be used. Equivalent to `ISMEAR=0`.
             """,
         )
         spec.input(
             'smearing.sigma',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.05),
+            default=lambda: orm.Float(0.05),
             help="""
             Magnitude of the smearing in eV.
             """,
         )
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             required=True,
             help="""
             The folder to restart in, which contains the outputs from the prerun to extract the charge density.
@@ -68,54 +68,54 @@ class BandsWorkChain(WorkChain):
         )
         spec.input(
             'bands.kpoints_distance',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
-            default=lambda: get_data_node('core.float', 0.05),
+            default=lambda: orm.Float(0.05),
             help="""
             The distance between each k-point along each high-symmetry line.
             """,
         )
         spec.input(
             'bands.decompose_bands',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Decompose the band structure on each atom.
             """,
         )
         spec.input(
             'bands.decompose_wave',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Decompose the wave function.
             """,
         )
         spec.input(
             'bands.lm',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Further decompose the decomposition into l- and m-states.
             """,
         )
         spec.input(
             'bands.phase',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             Further decompose the l- and m-state decomposition into phases.
             """,
         )
         spec.input(
             'bands.wigner_seitz_radius',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             required=False,
-            default=lambda: get_data_node('core.list', list=[False]),
+            default=lambda: orm.List(list=[False]),
             help=(
                 'The Wigner-Seitz radius for each atom type in AA as a list. If set, the internal projectors'
                 'are not utilized.'
@@ -134,7 +134,7 @@ class BandsWorkChain(WorkChain):
         spec.expose_outputs(cls._next_workchain)
         spec.output(
             'bands',
-            valid_type=get_data_class('core.array.bands'),
+            valid_type=orm.BandsData,
         )
         spec.exit_code(
             0,
@@ -188,9 +188,7 @@ class BandsWorkChain(WorkChain):
 
         # Do not put the SeeKPath parameters in the inputs to avoid port checking
         # of the next workchain
-        self.ctx.seekpath_parameters = get_data_node(
-            'core.dict', dict={'reference_distance': self.inputs.bands.kpoints_distance.value}
-        )
+        self.ctx.seekpath_parameters = orm.Dict(dict={'reference_distance': self.inputs.bands.kpoints_distance.value})
 
         try:
             self._verbose = self.inputs.verbose.value

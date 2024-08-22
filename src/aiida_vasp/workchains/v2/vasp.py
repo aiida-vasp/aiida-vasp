@@ -6,6 +6,7 @@ Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 """
 
 import numpy as np
+from aiida import orm
 from aiida.common.exceptions import InputValidationError, NotExistent
 
 # from aiida.engine.job_processes import override
@@ -17,7 +18,9 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import CalculationFactory
 
 from aiida_vasp.assistant.parameters import ParametersMassage
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs
 from aiida_vasp.workchains.vasp import VaspWorkChain as VanillaVaspWorkChain
 
@@ -78,51 +81,51 @@ class VaspWorkChain(VanillaVaspWorkChain):
         spec.input('code', valid_type=Code)
         spec.input(
             'structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             required=True,
         )
-        spec.input('kpoints', valid_type=get_data_class('core.array.kpoints'), required=False)
+        spec.input('kpoints', valid_type=orm.KpointsData, required=False)
         spec.input(
             'potential_family',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
             validator=parameters_validator,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
             serializer=to_aiida_type,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
         )
-        spec.input('wavecar', valid_type=get_data_class('vasp.wavefun'), required=False)
-        spec.input('chgcar', valid_type=get_data_class('vasp.chargedensity'), required=False)
+        spec.input('wavecar', valid_type=WavefunData, required=False)
+        spec.input('chgcar', valid_type=ChargedensityData, required=False)
         spec.input(
             'site_magnetization',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help='Site magnetization to be used as MAGMOM',
         )
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             required=False,
             help="""
             The restart folder from a previous workchain run that is going to be used.
@@ -130,9 +133,9 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             serializer=to_aiida_type,
             help="""
             The maximum number of iterations to perform.
@@ -140,27 +143,27 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, clean the work dir upon the completion of a successfull calculation.
             """,
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
             serializer=to_aiida_type,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
         )
         spec.input(
             'ldau_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
             help="""Settings for assign LDA+U related settings according to the input structure.
@@ -172,21 +175,21 @@ class VaspWorkChain(VanillaVaspWorkChain):
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             serializer=to_aiida_type,
             help='Spacing for the kpoints in units A^-1 * 2pi',
         )
         spec.input(
             'auto_parallel',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             serializer=to_aiida_type,
             required=False,
             help='Automatic parallelisation settings, keywords passed to `get_jobscheme` function.',
         )
         spec.input(
             'dynamics.positions_dof',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             serializer=to_aiida_type,
             required=False,
             help="""
@@ -204,7 +207,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             ),
             cls.results,
         )  # yapf: disable
-        spec.output('parallel_settings', valid_type=get_data_class('core.dict'), required=False)
+        spec.output('parallel_settings', valid_type=orm.Dict, required=False)
 
     def init_inputs(self):
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -293,7 +296,7 @@ class VaspWorkChain(VanillaVaspWorkChain):
             self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),

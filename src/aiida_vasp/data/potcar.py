@@ -124,7 +124,6 @@ from aiida.orm import (
 )
 
 from aiida_vasp.data.archive import ArchiveData
-from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -450,6 +449,8 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
+        from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
+
         self.set_version()
         if self._filelist:
             raise AttributeError('Can only hold one POTCAR file')

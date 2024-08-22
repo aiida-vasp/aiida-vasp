@@ -6,14 +6,15 @@ import subprocess as sp
 
 import numpy as np
 import pytest
+from aiida import orm
 from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import CalculationNode, Code, Computer, QueryBuilder
+from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, QueryBuilder, load_code
 from aiida.tools.archive import create_archive
-from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarGroup
-from aiida_vasp.utils.aiida_utils import create_authinfo, get_data_class, get_data_node
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup
+from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.general import copytree
 
 pytest_plugins = 'aiida.tools.pytest_fixtures'
@@ -114,23 +115,19 @@ def read_file(data_path):
 @pytest.fixture()
 def vasp_code(localhost):
     """Fixture for a vasp code, the executable it points to does not exist."""
-    from aiida.orm import Code
 
     if not localhost.pk:
         localhost.store()
-    code = Code()
+    code = InstalledCode(localhost, '/usr/local/bin/vasp')
     code.label = 'vasp'
     code.description = 'VASP code'
-    code.set_remote_computer_exec((localhost, '/usr/local/bin/vasp'))
-    code.set_input_plugin_name('vasp.vasp')
+    code.default_calc_job_plugin = 'vasp.vasp'
     return code
 
 
 @pytest.fixture
 def vasp_params(fresh_aiida_env):
-    incar_data = get_data_class('core.dict')(
-        dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'}
-    )
+    incar_data = orm.Dict(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_data
 
 
@@ -241,19 +238,19 @@ def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_pat
         """Create and store (and return) a duplicate of a given PotcarData node."""
         from aiida_vasp.data.potcar import temp_potcar
 
-        file_node = get_data_node('vasp.potcar_file')
+        file_node = PotcarFileData()
         with temp_potcar(potcar_node.get_content()) as potcar_file:
             file_node.add_file(potcar_file)
             file_node.base.attributes.set('sha512', 'abcd')
             file_node.base.attributes.set('full_name', potcar_node.full_name)
             file_node.store()
-        data_node, _ = get_data_class('vasp.potcar').get_or_create(file_node)
+        data_node, _ = PotcarData.get_or_create(file_node)
         return data_node
 
     potcar_ga = pathlib.Path(data_path('potcar')) / 'Ga'
     family_name = potcar_family_name
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     potcar_cls.upload_potcar_family(str(temp_pot_folder), family_name, family_desc, stop_if_existing=False)
     if len(potcar_cls.find(full_name='In_d')) == 1:
         family_group = potcar_cls.get_potcar_group(potcar_family_name)
@@ -270,7 +267,7 @@ def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_pat
 @pytest.fixture
 def potentials(upload_potcar, potcar_family_name, potcar_mapping):
     """Fixture for two incomplete POTPAW potentials."""
-    potcar_cls = get_data_class('vasp.potcar')
+    potcar_cls = PotcarData
     potentials = potcar_cls.get_potcars_dict(
         ['In', 'In_d', 'As'], family_name=potcar_family_name, mapping=potcar_mapping
     )
@@ -346,25 +343,25 @@ def run_vasp_process(
             from aiida.plugins import CalculationFactory
 
             process = CalculationFactory('vasp.vasp')
-            inpts.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            inpts.potential = PotcarData.get_potcars_from_structure(
                 structure=inpts.structure,
                 family_name=potcar_family_name,
                 mapping=potcar_mapping,
             )
-            inpts.parameters = get_data_class('core.dict')(dict=parameters)
+            inpts.parameters = orm.Dict(dict=parameters)
             inpts.metadata = {}
             inpts.metadata['options'] = options
         elif process_type == 'workchain':
             from aiida.plugins import WorkflowFactory
 
             process = WorkflowFactory('vasp.vasp')
-            inpts.potential_family = get_data_node('core.str', potcar_family_name)
-            inpts.potential_mapping = get_data_node('core.dict', dict=potcar_mapping)
-            inpts.parameters = get_data_node('core.dict', dict={'incar': parameters})
-            inpts.options = get_data_node('core.dict', dict=options)
-            inpts.max_iterations = get_data_node('core.int', 1)
-            inpts.clean_workdir = get_data_node('core.bool', False)
-            inpts.verbose = get_data_node('core.bool', True)
+            inpts.potential_family = orm.Str(potcar_family_name)
+            inpts.potential_mapping = orm.Dict(dict=potcar_mapping)
+            inpts.parameters = orm.Dict(dict={'incar': parameters})
+            inpts.options = orm.Dict(dict=options)
+            inpts.max_iterations = orm.Int(1)
+            inpts.clean_workdir = orm.Bool(False)
+            inpts.verbose = orm.Bool(True)
         else:
             raise ValueError(
                 f"The supplied process_type: {process_type} is not supported. Use either 'calcjob' or 'workchain.'"
@@ -372,14 +369,14 @@ def run_vasp_process(
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
-        inpts.code = Code.get_from_string('mock-vasp@localhost')
+        inpts.code = load_code('mock-vasp@localhost')
         kpoints, _ = vasp_kpoints
         inpts.kpoints = kpoints
         if inputs is not None:
             # Allow overrides of the input
             inpts.update(inputs)
         if settings is not None and isinstance(settings, dict):
-            inpts.settings = get_data_node('core.dict', dict=settings)
+            inpts.settings = Dict(dict=settings)
         results_and_node = run.get_node(process, **inpts)
         return results_and_node
 
@@ -479,11 +476,10 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
         if os.environ.get('REAL_VASP_PATH'):
             mock_vasp_path = os.environ['REAL_VASP_PATH']
 
-        code = Code()
+        code = InstalledCode(localhost, mock_vasp_path)
         code.label = exec_name
         code.description = 'Mock VASP for tests'
-        code.set_remote_computer_exec((localhost, mock_vasp_path))
-        code.set_input_plugin_name('vasp.vasp')
+        code.default_calc_job_plugin = 'vasp.vasp'
         code.store()
         code.base.extras.set('is_mock_code', True)
 

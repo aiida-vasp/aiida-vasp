@@ -9,6 +9,7 @@ Enables the immigration of  externally run VASP calculations into AiiDA.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path
 
+from aiida import orm
 from aiida.common import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.folders import SandboxFolder
@@ -24,7 +25,7 @@ from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 from aiida_vasp.parsers.node_composer import NodeComposer
-from aiida_vasp.utils.aiida_utils import cmp_get_transport, get_data_node
+from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
 # _IMMIGRANT_EXTRA_KWARGS = """
 # vasp.vasp specific kwargs:
@@ -109,7 +110,7 @@ class VaspImmigrant(VaspCalculation):
             raise InputValidationError('immigrant calculations need inputs.remote_workdir.')
 
         self.node.set_remote_workdir(self.inputs.remote_workdir)  # pylint: disable=protected-access
-        remotedata = get_data_node('core.remote', computer=self.node.computer, remote_path=self.inputs.remote_workdir)
+        remotedata = orm.RemoteData(computer=self.node.computer, remote_path=self.inputs.remote_workdir)
         remotedata.base.links.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
         remotedata.store()
 
@@ -145,7 +146,7 @@ class VaspImmigrant(VaspCalculation):
         inputs.metadata.options = options
         inputs.remote_workdir = remote_workdir
         if 'settings' in kwargs:
-            inputs.settings = get_data_node('core.dict', dict=kwargs['settings'])
+            inputs.settings = orm.Dict(dict=kwargs['settings'])
         _remote_workdir = Path(remote_workdir)
         with cmp_get_transport(code.computer) as transport:
             with SandboxFolder() as sandbox:

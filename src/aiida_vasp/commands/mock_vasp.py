@@ -126,9 +126,10 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
             shutil.copy(out_object, pwd)
 
     # Read original vasp_output as we will append mock messages to it
+    vasp_output_content = []
     if vasp_output_file.exists():
         with open(vasp_output_file, 'r', encoding='utf8') as handler:
-            vasp_output = handler.readlines()
+            vasp_output_content = handler.readlines()
 
     vasp_mock_output.append('MOCK PREPEND: Mock folder contains the following files: ' + str(os.listdir(pwd)) + '\n')
     vasp_mock_output.append('MOCK PREPEND: END ----------------------\n')
@@ -136,7 +137,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
 
     # Make sure we add the mock details in case we need to inspect later
     with open(vasp_output_file, 'w', encoding='utf8') as handler:
-        handler.write(''.join(vasp_mock_output + vasp_output))
+        handler.write(''.join(vasp_mock_output + vasp_output_content))
 
 
 def stop_and_return(vasp_mock_output):

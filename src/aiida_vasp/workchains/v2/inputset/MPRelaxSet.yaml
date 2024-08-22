@@ -148,3 +148,5 @@ potcar_mapping:
   Yb: Yb_2
   Zn: Zn
   Zr: Zr_sv
+
+potcar_family: 'PBE'

@@ -88,6 +88,8 @@ class BaseFileParser:
         # Parser options.
         self._options = options
 
+        self.parser_notifications = {}
+
         # Set ``handler`` (parsing from some source) or ``data`` (eventually for example executing write)
         if handler is not None:
             self._init_from_handler(handler)
@@ -97,6 +99,20 @@ class BaseFileParser:
                 self._init_from_data(data)
             else:
                 raise TypeError('The supplied handler is not of Data type.')
+
+    def get_all_quantities(self):
+        """
+        Fetch all quantities that can be parsed.
+        """
+        parsed = {}
+        errored = {}
+        for name in self.PARSABLE_QUANTITIES:
+            try:
+                parsed[name] = getattr(self, name)
+            except (TypeError, ValueError, KeyError, AttributeError, IndexError) as error:
+                errored[name] = error
+                continue
+        return parsed, errored
 
     @property
     def parsable_quantities(self):

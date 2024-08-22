@@ -162,6 +162,7 @@ class VasprunParser(BaseFileParser):
             if exception.code == 509:
                 # Xml might be fine but overflow is detected
                 self.overflow = True
+                self.parser_notifications['vasprun_xml_overflow'] = True
                 self._logger.warning('Parsevasp exited abnormally due to overflow in XML file.')
             else:
                 self._logger.warning('Parsevasp exited abnormally.')
@@ -505,7 +506,7 @@ class VasprunParser(BaseFileParser):
         proj = self._content_parser.get_projectors()
         if proj is None:
             return None
-        projectors = {}
+        projectors = None
         prj = []
         try:
             prj.append(proj['total'])  # pylint: disable=unsubscriptable-object
@@ -516,9 +517,9 @@ class VasprunParser(BaseFileParser):
             except KeyError:
                 self._logger.error('Did not detect any projectors. Returning.')
         if len(prj) == 1:
-            projectors['projectors'] = prj[0]
+            projectors = prj[0]
         else:
-            projectors['projectors'] = np.asarray(prj)
+            projectors = np.asarray(prj)
 
         return projectors
 
@@ -552,11 +553,7 @@ class VasprunParser(BaseFileParser):
     def born_charges(self):
         """Fetch the Born effective charges."""
 
-        brn = self._content_parser.get_born()
-        if brn is None:
-            return None
-        born = {'born_charges': brn}
-        return born
+        return self._content_parser.get_born()
 
     @property
     def hessian(self):
@@ -565,8 +562,7 @@ class VasprunParser(BaseFileParser):
         hessian = self._content_parser.get_hessian()
         if hessian is None:
             return None
-        hess = {'hessian': hessian}
-        return hess
+        return hessian
 
     @property
     def dynmat(self):
@@ -614,7 +610,11 @@ class VasprunParser(BaseFileParser):
     def fermi_level(self):
         """Fetch Fermi level."""
 
-        return self._content_parser.get_fermi_level()
+        try:
+            fermi_level = self._content_parser.get_fermi_level()
+        except (ValueError, TypeError):
+            fermi_level = None
+        return fermi_level
 
     @property
     def run_status(self):

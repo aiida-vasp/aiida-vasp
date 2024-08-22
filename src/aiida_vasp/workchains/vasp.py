@@ -44,6 +44,7 @@ This means that for a handler:
 import math
 
 import numpy as np
+from aiida import orm
 from aiida.common.exceptions import InputValidationError, NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.lang import override
@@ -62,7 +63,9 @@ from aiida_vasp.assistant.parameters import (
     inherit_and_merge_parameters,
 )
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.utils.workchains import compose_exit_code, site_magnetization_to_magmom
 
 # pylint: disable=no-member
@@ -122,58 +125,58 @@ class VaspWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'structure',
-            valid_type=(get_data_class('core.structure'), get_data_class('core.cif')),
+            valid_type=(orm.StructureData, orm.CifData),
             required=True,
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=True,
         )
         spec.input(
             'potential_family',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=True,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'parameters',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'settings',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
         )
         spec.input(
             'wavecar',
-            valid_type=get_data_class('vasp.wavefun'),
+            valid_type=WavefunData,
             required=False,
         )
         spec.input(
             'chgcar',
-            valid_type=get_data_class('vasp.chargedensity'),
+            valid_type=ChargedensityData,
             required=False,
         )
         spec.input(
             'site_magnetization',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help='Site magnetization to be used as MAGMOM',
         )
         spec.input(
             'restart_folder',
-            valid_type=get_data_class('core.remote'),
+            valid_type=orm.RemoteData,
             required=False,
             help="""
             The restart folder from a previous workchain run that is going to be used.
@@ -181,34 +184,34 @@ class VaspWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             help="""
             The maximum number of iterations to perform.
             """,
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
         )
         spec.input(
             'dynamics.positions_dof',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             required=False,
             help="""
             Site dependent flag for selective dynamics when performing relaxation
@@ -498,7 +501,7 @@ class VaspWorkChain(BaseRestartWorkChain):
             self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),

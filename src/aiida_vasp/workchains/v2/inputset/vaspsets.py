@@ -3,13 +3,15 @@ Default input sets for VASP
 """
 
 from copy import deepcopy
+from typing import Union
+
+from aiida.orm import Dict, StructureData
 
 try:
     from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 except ImportError:
     from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
 
-from aiida.orm import Dict, StructureData
 
 from .base import FELEMS, InputSet
 
@@ -17,9 +19,11 @@ from .base import FELEMS, InputSet
 class VASPInputSet(InputSet):
     """Input set for VASP"""
 
-    def get_input_dict(self, raw_python=True):
-        """Get a input dictionary"""
-        out_dict = super().get_input_dict(raw_python=True)
+    def get_input_dict(self, structure, raw_python=True) -> Union[dict, Dict]:
+        """
+        Compose the Dict object containing the input settings.
+        """
+        out_dict = super().get_input_dict(structure, raw_python=True)
 
         # Check if there is any magnetic elements
         spin = False
@@ -27,8 +31,9 @@ class VASPInputSet(InputSet):
         # Update with overrides
         mapping.update(self.overrides.get('magmom_mapping', {}))
         default = mapping['default']
+        kind_symbols = [kind.name for kind in structure.kinds]
         for symbol in mapping:
-            if symbol in self.elements:
+            if symbol in kind_symbols:
                 spin = True
                 break
         if 'magmom_mapping' in self.overrides or 'magmom' in self.overrides:
@@ -37,11 +42,11 @@ class VASPInputSet(InputSet):
         # Setup magnetic moments
         magmom = []
         if spin:
-            if isinstance(self.structure, StructureData):
-                for site in self.structure.sites:
+            if isinstance(structure, StructureData):
+                for site in structure.sites:
                     magmom.append(mapping.get(site.kind_name, default))
             else:
-                for atom in self.structure:
+                for atom in structure:
                     magmom.append(mapping.get(atom.symbol, default))
         if magmom:
             out_dict['ispin'] = 2
@@ -54,7 +59,7 @@ class VASPInputSet(InputSet):
         ldaujmap = deepcopy(self._presets['ldauj_mapping'])
         ldaujmap.update(self.overrides.get('ldauj_mapping', {}))
 
-        ldaukeys = get_ldau_keys(self.structure, ldauumap, utype=2, jmapping=ldaujmap)
+        ldaukeys = get_ldau_keys(structure, ldauumap, utype=2, jmapping=ldaujmap)
         out_dict.update(ldaukeys)
 
         # Apply overrides again over the automatically applied keys
@@ -64,9 +69,9 @@ class VASPInputSet(InputSet):
             out_dict = Dict(dict=out_dict)
         return out_dict
 
-    def get_pp_mapping(self):
+    def get_pp_mapping(self, structure: StructureData) -> dict:
         """Return the mapping from element to the POTCAR name"""
-        elms = set(self.elements)
+        elms = [kind.name for kind in structure.kinds]
 
         pmap = deepcopy(self._presets['potcar_mapping'])
         # Update the mapping from override, if any
@@ -74,6 +79,12 @@ class VASPInputSet(InputSet):
 
         out_dict = {key: pmap[key] for key in elms}
         return out_dict
+
+    def get_potcar_family(self) -> str:
+        return self._presets['potcar_family']
+
+    def get_kpoints_spacing(self):
+        return self._presets.get('kpoints_spacing')
 
 
 def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
@@ -87,7 +98,7 @@ def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
         mapping: a dictionary in the format of  {"Mn": [d, 4]...} for U
         utype: the type of LDA+U, default to 2, which is the one with only one parameter
         jmapping: a dictionary in the format of  {"Mn": [d, 4]...} but for J
-        felec: Wether we are dealing with f electrons, will increase lmaxmix if we are.
+        felec: Whether we are dealing with f electrons, will increase lmaxmix if we are.
 
 
     Returns:

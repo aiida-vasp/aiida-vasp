@@ -5,8 +5,8 @@ import contextlib
 import os
 
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
@@ -33,7 +33,7 @@ def test_write_potcar(vasp_calc_and_ref):
         assert 'In_d' in result_potcar
         assert result_potcar.count('End of Dataset') == 2, result_potcar
 
-        if isinstance(vasp_calc.inputs.structure, get_data_class('core.structure')):
+        if isinstance(vasp_calc.inputs.structure, orm.StructureData):
             multipotcar = MultiPotcarIo.read(temp_object)
             potcar_order = [potcar.node.full_name for potcar in multipotcar.potcars]
             assert potcar_order == ['In_sv', 'As', 'In_d', 'As']
@@ -136,10 +136,6 @@ def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, sandbox_fold
     for name in ['INCAR', 'KPOINTS', 'POSCAR', 'POTCAR']:
         assert name in input_objects
 
-    assert 'EIGENVAL' in calcinfo.retrieve_list
-    assert 'DOSCAR' in calcinfo.retrieve_list
-    assert 'wannier90*' in calcinfo.retrieve_list
-
     assert calcinfo.codes_info[0].stdout_name == VaspCalculation._VASP_OUTPUT
     assert calcinfo.codes_info[0].join_files is True
 
@@ -199,7 +195,7 @@ def test_vasp_calc(fresh_aiida_env, run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
     from aiida_vasp.calcs.vasp import VaspCalculation
 
-    results, node = run_vasp_process()
+    results, node = run_vasp_process(settings={'parser_settings': {'check_errors': False}})
     assert node.exit_status == 0
 
     # Check that the standard output is there
@@ -245,7 +241,7 @@ def test_vasp_calc_delete(run_vasp_process):
     """
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
-    inputs['settings'] = get_data_node('core.dict', dict={'ALWAYS_STORE': False})
+    inputs['settings'] = orm.Dict(dict={'ALWAYS_STORE': False})
     _, node = run_vasp_process(inputs)
     objects = node.outputs.retrieved.base.repository.list_objects()
     names = [single_object.name for single_object in objects]
@@ -261,7 +257,7 @@ def test_vasp_calc_extra(run_vasp_process):
 
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node('core.dict', dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
+    inputs['settings'] = orm.Dict(dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
     _, node = run_vasp_process(inputs)
     retrieve_temporary_list_ref = []
     retrieve_list_ref = VaspCalculation._ALWAYS_RETRIEVE_LIST + [
@@ -291,8 +287,7 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node(
-        'core.dict',
+    inputs['settings'] = orm.Dict(
         dict={
             'ALWAYS_STORE': False,
             'ADDITIONAL_RETRIEVE_TEMPORARY_LIST': [extra_object_to_keep],
@@ -320,8 +315,7 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
-    inputs['settings'] = get_data_node(
-        'core.dict',
+    inputs['settings'] = orm.Dict(
         dict={
             'ALWAYS_STORE': False,
             'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep],
@@ -402,7 +396,7 @@ def test_vasp_calc_error_suppress(run_vasp_process):
     results, node = run_vasp_process(
         test_case='exit_codes/converged-with-error',
         settings={
-            'parser_settings': {'critical_notifications': {'add_brmix': False}},
+            'parser_settings': {'critical_notification_errors': [], 'check_errors': True},
         },
     )
 
@@ -431,7 +425,7 @@ def test_vasp_calc_error_ignore_all(run_vasp_process):
     """
     results, node = run_vasp_process(
         test_case='exit_codes/converged-with-error',
-        settings={'parser_settings': {'ignore_all_errors': True}},
+        settings={'parser_settings': {'ignore_notification_errors': True}},
     )
 
     # Check that the standard output is there

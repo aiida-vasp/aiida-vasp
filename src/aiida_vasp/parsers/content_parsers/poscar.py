@@ -6,11 +6,11 @@ Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONT
 """
 
 import numpy as np
+from aiida import orm
 from aiida.common.constants import elements
 from parsevasp.poscar import Poscar, Site
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_class
 
 
 class PoscarParser(BaseFileParser):
@@ -27,10 +27,10 @@ class PoscarParser(BaseFileParser):
 
     """
 
-    DEFAULT_SETTINGS = {'quantities_to_parse': ['poscar-structure']}
+    DEFAULT_SETTINGS = {'quantities_to_parse': ['structure']}
 
     PARSABLE_QUANTITIES = {
-        'poscar-structure': {
+        'structure': {
             'inputs': [],
             'name': 'structure',
             'prerequisites': [],
@@ -70,7 +70,7 @@ class PoscarParser(BaseFileParser):
 
         """
 
-        if isinstance(data, get_data_class('core.structure')):
+        if isinstance(data, orm.StructureData):
             self._content_data = data
         else:
             raise TypeError('The supplied AiiDA data structure is not a StructureData.')

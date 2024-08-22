@@ -2,8 +2,8 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,protected-access
 
 import pytest
+from aiida import orm
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
-from aiida_vasp.utils.aiida_utils import get_data_node
 
 
 def test_base_content_parser(tmpdir):
@@ -18,7 +18,7 @@ def test_base_content_parser(tmpdir):
             _ = BaseFileParser(handler=handler)
     with pytest.raises(NotImplementedError):
         # Does not have a init_data method, should be implemented in child
-        _ = BaseFileParser(data=get_data_node('core.dict', dict={}))
+        _ = BaseFileParser(data=orm.Dict(dict={}))
     with pytest.raises(TypeError):
         # Check that something else than Data for the AiiDA data type raises an exception.
         _ = BaseFileParser(data=[])

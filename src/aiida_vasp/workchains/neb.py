@@ -20,8 +20,8 @@ from packaging import version
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.neb import VaspNEBCalculation
+from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import get_data_class, get_data_node
 from aiida_vasp.utils.workchains import compose_exit_code
 
 # Additional tags for VTST calculations - these are not the tags used by standard VASP
@@ -41,6 +41,12 @@ VTST_ADDITIONAL_TAGS = {
     'ftimeinc': 'Factor to increase dt',
     'falpha': 'Parameter that controls velocity damping',
     'fnmin': 'Minium number of iterations before adjust alpha and dt',
+    'lclimb': 'Use climbing image mode',
+    'ichain': 'Indicates which method to run. NEB (ICHAIN=0) is the default',
+    'ltangentold': 'Flag to turn on the old central difference tangent',
+    'ldneb': 'Flag to turn on modified double nudging',
+    'lnebcell': 'Flag to turn on SS-NEB. Used with ISIF=3 and IOPT=3.',
+    'jacobian': 'Controls weight of lattice to atomic motion. Ω is volume and N is the number of atoms.',
 }
 
 
@@ -71,59 +77,59 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'kpoints',
-            valid_type=get_data_class('core.array.kpoints'),
+            valid_type=orm.KpointsData,
             required=False,
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
         )
         spec.input(
             'potential_family',
-            valid_type=get_data_class('core.str'),
+            valid_type=orm.Str,
             required=True,
         )
         spec.input(
             'potential_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'options',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=True,
         )
         spec.input(
             'max_iterations',
-            valid_type=get_data_class('core.int'),
+            valid_type=orm.Int,
             required=False,
-            default=lambda: get_data_node('core.int', 5),
+            default=lambda: orm.Int(5),
             help="""
             The maximum number of iterations to perform.
             """,
         )
         spec.input(
             'clean_workdir',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', False),
+            default=lambda: orm.Bool(False),
             help="""
             If True, clean the work dir upon the completion of a successful calculation.
             """,
         )
         spec.input(
             'verbose',
-            valid_type=get_data_class('core.bool'),
+            valid_type=orm.Bool,
             required=False,
-            default=lambda: get_data_node('core.bool', True),
+            default=lambda: orm.Bool(True),
             help="""
             If True, enable more detailed output during workchain execution.
             """,
         )
         spec.input(
             'dynamics.positions_dof',
-            valid_type=get_data_class('core.list'),
+            valid_type=orm.List,
             required=False,
             help="""
             Site dependent flag for selective dynamics when performing relaxation
@@ -131,31 +137,30 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         )
         spec.input(
             'ldau_mapping',
-            valid_type=get_data_class('core.dict'),
+            valid_type=orm.Dict,
             required=False,
             help="Mappings, see the doc string of 'get_ldau_keys'",
         )
         spec.input(
             'kpoints_spacing',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help='Spacing for the kpoints in units A^-1 * 2pi (CASTEP style `kpoints_mp_spacing`)',
         )
         spec.input(
             'kpoints_spacing_vasp',
-            valid_type=get_data_class('core.float'),
+            valid_type=orm.Float,
             required=False,
             help='Spacing for the kpoints in units A^-1 (VASP style)',
         )
         spec.outline(
             cls.setup,
             while_(cls.should_run_process)(
-                #cls.prepare_inputs,
                 cls.run_process,
                 cls.inspect_process,
             ),
             cls.results,
-        )  # yapf: disable
+        )
 
         spec.expose_outputs(cls._process_class)
         spec.exit_code(
@@ -205,16 +210,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
         # Sanity checks
         self._check_neb_inputs()
-        # self.report('In SETUP, context metadata {}'.format(self.ctx.inputs))
         return None
-
-    # def prepare_inputs(self):
-    #     """
-    #     Prepare the inputs stored under self.ctx.inputs
-    #     """
-
-    #     # Applied the staged NEB images
-    #     self.ctx.inputs.neb_images = self.ctx.neb_images
 
     @process_handler(priority=500, exit_codes=[VaspNEBCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])  # pylint: disable=no-member
     def handle_unconverged(self, node):
@@ -224,18 +220,17 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         Note that VASP could reach NSW before the actual convergence.
         Hence this check is necessary even for finished runs.
         """
-        if 'neb_misc' not in node.outputs:
-            self.report('Cannot found the `neb_misc` output containing the NEB run data')
+        if 'misc' not in node.outputs:
+            self.report('Cannot found the `misc` output containing the NEB run data')
             return None
-        neb_misc = node.outputs.neb_misc.get_dict()
+        misc_dict = node.outputs.misc.get_dict()
 
-        if not neb_misc.get('neb_data'):
+        neb_data = misc_dict.get('neb_data')
+        if neb_data is None:
             self.report('Cannot found the `neb_data` dictionary containing the NEB run data')
             return None
 
-        neb_data = neb_misc.get('neb_data')
-
-        converged = [tmp['neb_converged'] for tmp in neb_data.values()]
+        converged = [tmp.get('neb_converged', False) for tmp in neb_data.values()]
         if not all(converged):
             self.report('At least one image is not converged in the run. Restart required.')
 
@@ -262,25 +257,12 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             if 'misc' not in node.outputs:
                 self.report('Cannot found the `misc` output containing the parsed per-image data')
                 return None
-            for misc_ in node.outputs['misc'].values():
-                misc = misc_.get_dict()
-                if 'run_status' in misc and misc['run_status'].get('finished'):
-                    finished.append(True)
-                else:
-                    finished.append(False)
-        else:
-            if 'misc__image_01' not in node.outputs:
-                self.report('Cannot found the `misc` output containing the parsed per-image data')
-                return None
-            for key in node.outputs:
-                if key.startswith('misc__'):
-                    misc = node.outputs[key].get_dict()
-                    if 'run_stats' in misc and misc['run_status'].get('finished'):
-                        finished.append(True)
-                    else:
-                        finished.append(False)
 
-        if not all(finished):
+            misc_dict = node.outputs.misc.get_dict()
+            if 'run_status' in misc_dict:
+                finished = {key: value.get('finished', False) for key, value in misc_dict['run_status'].items()}
+
+        if not all(finished.values()):
             self.report('At least one image did not reach the end of VASP execution - calculation not finished!')
 
             out = self._attach_output_structure(node)
@@ -299,14 +281,8 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         next workchain launch.
         """
         output_images = AttributeDict()  # A dictionary holding the structures with keys like 'image_xx'
-        # For version older than 1.6.3 the rested output namespace is correctly handled
-        # Hence, we need to access directly using the and other than the `__` in the link name.
-        if version.parse(aiida_version) >= version.parse('1.6.3'):
-            output_images = node.outputs['structure']
-        else:
-            for key in node.outputs:
-                if key.startswith('structure__'):
-                    output_images[key.split('__')[1]] = node.outputs[key]
+        output_images = node.outputs['structure']
+
         nout = len(output_images)
         nexists = len(self.inputs.neb_images)
         if nout != nexists:
@@ -387,6 +363,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         Setup the inputs for VASP calculation
 
         This method is called once by ``self.setup``
+        TODO: merge with vasp.v2.vasp
         """
 
         # Set the kpoints (kpoints)
@@ -477,7 +454,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             )
             return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
         try:
-            self.ctx.inputs.potential = get_data_class('vasp.potcar').get_potcars_from_structure(
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
                 structure=self.inputs.initial_structure,
                 family_name=self.inputs.potential_family.value,
                 mapping=self.inputs.potential_mapping.get_dict(),
