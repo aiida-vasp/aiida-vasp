@@ -8,9 +8,11 @@ that have now standardized in AiiDA will be removed.
 """
 
 # pylint: disable=import-outside-toplevel
+from functools import wraps
+
 import numpy as np
 from aiida import orm
-from aiida.orm import User
+from aiida.orm import User, load_node
 from packaging import version
 
 BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
@@ -153,3 +155,35 @@ def cmp_get_transport(computer):
         return computer.get_transport()
     authinfo = cmp_get_authinfo(computer)
     return authinfo.get_transport()
+
+
+def ensure_node_first_arg(func):
+    """Decorator to load a node if it is passed as a string."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        """Make sure the first node is a Node instance."""
+        if len(args) > 0:
+            node = args[0]
+            if not isinstance(node, orm.Node):
+                node = load_node(node)
+        args = list(args)
+        args[0] = node
+        func(*args, **kwargs)
+
+    return wrapper
+
+
+def ensure_node_kwargs(func):
+    """Decorator to load a node if it is passed as a key word argument ends with 'node'."""
+
+    @wraps(func)
+    def wrapper(node, *args, **kwargs):
+        """Make sure the key world arguments ends with '_node' node is a Node instance."""
+        for name in kwargs.keys():
+            if name.endswith('node'):
+                if not isinstance(kwargs[name], orm.Node):
+                    kwargs[name] = load_node(kwargs[name])
+        func(node, *args, **kwargs)
+
+    return wrapper
