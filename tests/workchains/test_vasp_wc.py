@@ -14,6 +14,7 @@ from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.orm import load_code
 from aiida.plugins.factories import DataFactory
+
 from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.mock_code import VaspMockRegistry
 

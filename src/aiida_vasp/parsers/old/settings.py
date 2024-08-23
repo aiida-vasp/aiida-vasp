@@ -11,9 +11,10 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import List
 
+from pydantic import BaseModel
+
 from aiida_vasp.parsers.content_parsers import *
 from aiida_vasp.utils.extended_dicts import update_nested_dict
-from pydantic import BaseModel
 
 
 @dataclass

@@ -8,6 +8,7 @@ import tarfile
 import pytest
 from aiida import orm
 from aiida.common.exceptions import NotExistent, UniquenessError
+
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData, PotcarGroup, migrate_potcar_group
 
 

@@ -1,5 +1,6 @@
 import pytest
 from aiida import orm
+
 from aiida_vasp.utils.opthold import BandOptions, ConvOptions, OptionContainer, RelaxOptions
 
 

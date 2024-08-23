@@ -1,6 +1,7 @@
 """Test the POTCAR parser."""
 
 import pytest
+
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo, PotcarIo
 

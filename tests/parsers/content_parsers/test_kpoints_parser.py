@@ -3,6 +3,7 @@
 
 import numpy as np
 import pytest
+
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 
 

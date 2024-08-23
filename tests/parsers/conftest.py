@@ -1,5 +1,6 @@
 import pytest
 from aiida import orm
+
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
 from aiida_vasp.parsers.content_parsers.eigenval import EigenvalParser
