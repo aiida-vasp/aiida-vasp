@@ -1,4 +1,4 @@
-{concepts}=
+(concepts)=
 # Concepts
 
 Here we introduce the basic concepts of aiida-vasp.

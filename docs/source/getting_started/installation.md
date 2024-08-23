@@ -1,4 +1,4 @@
-{installation}=
+(installation)=
 # Installation
 
 Here we briefly describe how to install the [aiida-vasp] plugin. The plugin is available on PyPI and can be installed using `pip`. However, it is recommended to install the plugin from the source code if you plan to contribute to its development.
