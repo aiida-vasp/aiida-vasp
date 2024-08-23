@@ -1,5 +1,4 @@
 {simple-calculation}=
-
 # Running a simple VASP calculation
 
 In this example, we will run a simple VASP calculation using the aiida-vasp plugin.

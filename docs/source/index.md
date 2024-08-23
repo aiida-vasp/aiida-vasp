@@ -105,9 +105,7 @@ Also, please consider that [AiiDA-VASP] is no substitute for not knowing how to 
 training material for [AiiDA-VASP] or when using [AiiDA-VASP], consult for instance [VASP lectures], [VASP tutorials], [VASP howtos],
 [VASP tutorials using notebooks] or [VASP videos] or ask experienced [VASP] users.
 
-:::{warning}
 Please accept that the development of this plugin is a community effort and any error, bug or missing functionality that might appear is the responsibility of the individual user. If you detect something that needs to be improved we highly encourage to [open an issue] or even better, [submit a pull request], where you try to fix the issue yourself. You can do this on our Github repository.
-:::
 
 
 

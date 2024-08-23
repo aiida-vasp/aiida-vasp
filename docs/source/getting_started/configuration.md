@@ -1,5 +1,4 @@
 {configuration}=
-
 # Configurations
 
 Here we explain the post-installation configuration steps for [AiiDA-VASP].
