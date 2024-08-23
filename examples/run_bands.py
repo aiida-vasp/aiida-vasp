@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     # POTCAR equivalent
     # Potential_family is chosen among the list given by
-    # 'verdi data vasp-potcar listfamilies'
+    # 'verdi data vasp.potcar listfamilies'
     POTENTIAL_FAMILY = 'pbe'
     # The potential mapping selects which potential to use, here we use the standard
     # for silicon, this could for instance be {'Si': 'Si_GW'} to use the GW ready

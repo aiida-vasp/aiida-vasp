@@ -18,7 +18,7 @@ from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
 VERDI_DATA = cmp_load_verdi_data()
 
 
-@VERDI_DATA.group('vasp-potcar')
+@VERDI_DATA.group('vasp.potcar')
 def potcar():
     """Top level command for handling VASP POTCAR files."""
 
@@ -60,7 +60,7 @@ def detect_old_style_groups():
         click.echo(
             (
                 'Some of the old style POTCAR family groups are not migrated. '
-                "Please run command 'verdi data vasp-potcar migratefamilies.\n",
+                "Please run command 'verdi data vasp.potcar migratefamilies.\n",
                 f'The missing groups are: {not_migrated}.',
             )
         )

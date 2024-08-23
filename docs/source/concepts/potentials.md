@@ -19,8 +19,8 @@ AiiDA-VASP takes care of managing your POTCAR files, but you need to obtain them
 The command line tools for these tasks are written as plugins to [AiiDA], and can be called through the [AiiDA] command `verdi`:
 
 ```
-$ (aiida-vasp) verdi data vasp-potcar --help
-Usage: verdi data vasp-potcar [OPTIONS] COMMAND [ARGS]...
+$ (aiida-vasp) verdi data vasp.potcar --help
+Usage: verdi data vasp.potcar [OPTIONS] COMMAND [ARGS]...
 
    Top level command for handling VASP POTCAR files.
 
@@ -34,7 +34,7 @@ Commands:
 ```
 
 ```
-$ verdi data vasp-potcar uploadfamily --path=<path> --name=<potential_family> --description=<desc>
+$ verdi data vasp.potcar uploadfamily --path=<path> --name=<potential_family> --description=<desc>
 ```
 
 Where `<path>` is the path to the folder or tar archive containing the POTCAR set. The command expects the folder or archive to look like:
@@ -63,8 +63,8 @@ Custom sets can simply be arranged in a matching folder structure and then impor
 For this purpose, we can use that the `uploadfamily` command by default adds any POTCAR files not yet uploaded to the family of the given `name`, for example:
 
 ```
-$ verdi data vasp-potcar uploadfamily --path=path/to/Ac --name="PBE_custom" --description="A custom set"
-$ verdi data vasp-potcar uploadfamily --path=other/path/to/Ag --name="PBE_custom"
+$ verdi data vasp.potcar uploadfamily --path=path/to/Ac --name="PBE_custom" --description="A custom set"
+$ verdi data vasp.potcar uploadfamily --path=other/path/to/Ag --name="PBE_custom"
 ```
 
 Note, that the description does not have to be given if the family already exists.
@@ -74,7 +74,7 @@ Due to the recursive nature of the search, this also works for combining several
 ## How to check what potential families are present in the database?
 
 ```
-$ verdi data vasp-potcar listfamilies
+$ verdi data vasp.potcar listfamilies
 ```
 
 ## How to access uploaded potentials and search?
@@ -118,7 +118,7 @@ The `mapping` dictionary is required to decide which of the variants should be c
 
 ## How to pass potentials to a VASP calculation?
 
-For a single [VASP] calculation run, you should at the very minimum use the {ref}`vasp_workchain` (although we recommend to use the {ref}`converge_workchain` as the standard entry point), which takes the family as a database-storable string and a dictionary mapping elements to a particular variant for that element:
+For a single [VASP] calculation run, you should at the very minimum use the VaspWorkChain, which takes the family as a database-storable string and a dictionary mapping elements to a particular variant for that element:
 
 ```
 from aiida.plugins import DataFactory
@@ -130,7 +130,7 @@ inputs.potential_family = Str('<potential_family>')
 inputs.potential_mapping = DataFactory('dict')(dict={'In': 'In_d', 'As': 'As'})
 ```
 
-The {ref}`vasp_workchain` takes care of finding the right files and concatenating them for you.
+The VaspWorkChain takes care of finding the right files and concatenating them for you.
 
 For a more complex workflow, the process may be different, it may for example use heuristics to find a default potential for you.
 
