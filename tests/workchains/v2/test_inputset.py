@@ -4,9 +4,10 @@ Test for input set specifications
 
 import pytest
 from aiida import orm
+from ase.build import bulk
+
 from aiida_vasp.workchains.v2.inputset.base import InputSet
 from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
-from ase.build import bulk
 
 # pylint:disable=redefined-outer-name,unused-argument
 

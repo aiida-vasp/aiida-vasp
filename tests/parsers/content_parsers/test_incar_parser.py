@@ -3,6 +3,7 @@
 
 import pytest
 from aiida import orm
+
 from aiida_vasp.parsers.content_parsers.incar import IncarParser
 
 compare_incar = {'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'magmom': '30 * 2*0.', 'sigma': 0.5}

@@ -1,7 +1,8 @@
 import pytest
 from aiida import orm
-from aiida_vasp.workchains.v2.common import builder_updater as bup
 from ase.build import bulk
+
+from aiida_vasp.workchains.v2.common import builder_updater as bup
 
 
 def test_vasp_builder_updater(aiida_profile, vasp_code):

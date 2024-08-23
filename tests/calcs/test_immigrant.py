@@ -2,6 +2,7 @@
 
 import pytest
 from aiida.engine import run
+
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 

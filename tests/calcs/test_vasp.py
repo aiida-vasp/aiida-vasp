@@ -6,6 +6,7 @@ import os
 
 import pytest
 from aiida import orm
+
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 
 

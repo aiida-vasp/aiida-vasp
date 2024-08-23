@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import pytest
 from aiida import orm
+
 from aiida_vasp.parsers.vasp import NotificationComposer, ParserSettingsConfig, VaspParser
 
 

@@ -3,6 +3,7 @@
 
 import pytest
 from aiida import orm
+
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 

@@ -16,11 +16,12 @@ modular and contains several modules:
 import traceback
 
 from aiida.common.exceptions import NotExistent
+from pydantic import BaseModel, Field
+
 from aiida_vasp.parsers.base import BaseParser
 from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.parsers.quantity import ParsableQuantities
 from aiida_vasp.parsers.settings import ParserDefinitions, ParserSettings
-from pydantic import BaseModel, Field
 
 
 class CriticalNotificationsConfig(BaseModel):

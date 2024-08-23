@@ -7,6 +7,7 @@ from io import StringIO
 import pytest
 from aiida import orm
 from aiida.plugins import WorkflowFactory
+
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.vasp import get_structure_node
 from aiida_vasp.utils.aiida_utils import create_authinfo

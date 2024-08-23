@@ -10,6 +10,7 @@ workchains.
 
 import pytest
 from aiida import orm
+
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
 

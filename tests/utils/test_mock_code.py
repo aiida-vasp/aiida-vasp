@@ -8,6 +8,7 @@ from shutil import copy2, rmtree
 from tempfile import mkdtemp
 
 import pytest
+
 from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, get_hash
 
 

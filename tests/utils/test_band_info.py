@@ -3,6 +3,7 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import numpy as np
 import pytest
+
 from aiida_vasp.utils.compare_bands import (
     get_band_properties,
     get_band_properties_from_data,

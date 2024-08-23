@@ -8,9 +8,10 @@ from pathlib import Path
 
 import pytest
 from aiida.common import AttributeDict
+from click.testing import CliRunner
+
 from aiida_vasp.commands.potcar import potcar
 from aiida_vasp.data.potcar import PotcarData, PotcarGroup
-from click.testing import CliRunner
 
 
 @pytest.fixture
