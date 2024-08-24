@@ -20,7 +20,12 @@ from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, data_path
 
 @click.command('mock-vasp')
 def mock_vasp():
-    """Original version of mock-vasp"""
+    """
+    Original version of mock-vasp
+
+    If `MOCK_VASP_VASP_CMD` is set in the environment, it will use that command to run VASP if needed and add the
+    calculation to the registry.
+    """
     return _mock_vasp(False)
 
 
@@ -31,7 +36,9 @@ def mock_vasp_strict():
 
 
 def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
-    """Verify input objects are parsable and copy in output objects."""
+    """
+    Verify input objects are parsable and copy in output objects.
+    """
     pwd = pathlib.Path().absolute()
     vasp_mock_output = []
     vasp_output_file = pwd / 'vasp_output'
@@ -93,13 +100,15 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         mock_registry_path = os.environ.get('VASP_MOCK_CODE_BASE', data_path('.'))
         mock_registry = VaspMockRegistry(mock_registry_path)
         vasp_mock_output.append(f'MOCK PREPEND: registry search paths: {mock_registry.search_paths}\n')
-        mock = MockVasp(pwd, mock_registry)
+
+        # Setup the mock code
+        mock = MockVasp(pwd, mock_registry, vasp_cmd=os.environ.get('MOCK_VASP_VASP_CMD'))
         if mock.is_runnable:
+            mock.run()
             detected_path = mock.registry.get_path_by_hash(mock_registry.compute_hash(pwd))
             vasp_mock_output.append(
                 f'MOCK PREPEND: Using test data in path {detected_path} based detection from inputs.\n'
             )
-            mock.run()
         else:
             vasp_mock_output.append(
                 'MOCK PREPEND: Using default test data in the respective folders named similar to the file name.\n'

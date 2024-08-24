@@ -13,7 +13,8 @@ import logging
 import os
 import pathlib
 import shutil
-from typing import Union
+from subprocess import run
+from typing import List, Optional, Union
 
 import numpy as np
 from aiida.repository import FileType
@@ -356,18 +357,32 @@ class MockVasp:
     Mock VaspExecutable
     """
 
-    def __init__(self, workdir: Union[str, pathlib.Path], registry: VaspMockRegistry):
+    def __init__(
+        self,
+        workdir: Union[str, pathlib.Path],
+        registry: VaspMockRegistry,
+        vasp_cmd: Optional[Union[str, List[str]]] = None,
+        stdout_fname: str = 'vasp_output',
+    ):
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.
 
         Notice that we do not set the hash value at init of workdir as we allow
-        the unit of the MockVasp at any point, typically, you are prepping for
+        the unit of the MockVasp at any point, typically, you are preparing for
         a VASP calculation. Only when you execute VASP is the files checked, in this
         case when executing run. Thus, we calculate the hash of the workdir only then.
+
+        If the `vasp_cmd` is provided the mock vasp will run the command if needed and
+        upload the results to the registry. This can be useful for generating test/demo
+        data.
         """
         self.workdir = workdir
         self.registry = registry
+        if isinstance(vasp_cmd, str):
+            vasp_cmd = [vasp_cmd]
+        self.vasp_cmd = vasp_cmd
+        self.stdout_fname = stdout_fname
 
     def run(self, debug=True):
         """
@@ -386,13 +401,29 @@ class MockVasp:
         else:
             if debug:
                 print(f'Registered hashes: {self.registry.reg_hash}')
-            raise ValueError('The calculation is not registered.')
+            if self.vasp_cmd is not None:
+                with open(pathlib.Path(self.workdir) / self.stdout_fname, 'w') as stdout_handle:
+                    out = run(self.vasp_cmd, cwd=self.workdir, stdout=stdout_handle, check=False)
+                    if out.returncode != 0:
+                        raise ValueError(f'The command {self.vasp_cmd} failed with return code {out.returncode}')
+                    self.registry.upload_calc(self.workdir, hash_val)
+                if debug:
+                    print(f'Uploaded current calculation with hash: {hash_val}')
+            else:
+                raise ValueError('The calculation is not registered.')
 
     @property
     def is_runnable(self) -> bool:
         """Check if the mock code can be executed."""
         hash_val = self.registry.compute_hash(self.workdir)
-        return hash_val in self.registry.reg_hash
+        if hash_val in self.registry.reg_hash:
+            return True
+        # Can we run vasp it self?
+        if self.vasp_cmd is not None:
+            out = run(['which', self.vasp_cmd[0]], check=False)
+            if out.returncode == 0:
+                return True
+        return False
 
 
 def copy_from_aiida(name: str, node, dst: pathlib.Path):

@@ -54,7 +54,7 @@ comp.set_workdir('/tmp/aiida_run/')
 comp.configure()
 ```
 
-If you are using `mock-vasp`, run the the code below to create the `InstalledCode` node`:
+Here we use `mock-vasp` to simulate the VASP executable.
 
 ```{code-cell} python3
 vasp_path = !which mock-vasp
@@ -62,15 +62,20 @@ vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.
 vasp_code.label ='vasp'
 vasp_code.store()
 ```
-
-And to use VASP installed locally:
+If you have VASP installed, uncomment and run the the code below to create the `InstalledCode` node`:
 
 ```{code-cell} python3
 #vasp_path = !which vasp_std
 #vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
 #vasp_code.label ='vasp'
-#vasp_code.store()
+vasp_code.store()
 ```
+
+:::{hint}
+Setting the `MOCK_VASP_VASP_CMD` environment variable will allow the mock-vasp to run real VASP
+calculation and add the results to the registry whenever needed.
+This environmental variable should be set when generating the test/demo data.
+:::
 
 We also need to upload the pseudopotential family, here we use the sample Si POTCAR with a family name of `PBE.EXAMPLE`:
 
