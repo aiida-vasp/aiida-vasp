@@ -5,6 +5,7 @@ AiiDA-VASP is a plug-in for the workflow management and data provenance tracking
 ______________________________________________________________________
 
 
+% Start of the card definitions
 ::::{grid} 1 2 2 2
 :gutter: 3
 
@@ -89,9 +90,30 @@ Learn to use workflows.
 ```
 :::
 
+:::{grid-item-card} {fa}`cogs;mr-1` Development
+:text-align: center
+:shadow: md
+
+Information on how to develop the plugin.
+
++++
+
+```{button-ref} development/index
+:ref-type: doc
+:click-parent:
+:expand:
+:color: primary
+:outline:
+
+
+Learn to contribute.
+```
+:::
+
 
 ::::
 
+% End of the card definitions
 
 AiiDA-VASP is under active development, check out the [changelog].
 
@@ -120,6 +142,17 @@ workflows/index
 concepts/index
 ```
 
+# Getting help
+
+The development, maintenance and use of this plugin is considered a community effort. In order to facilitate for the community to contribute,
+we have established a [space on Matrix] that users can use to communicate. We encourage users to help each other. In addition,
+the development team is present in the space and users are free to ask.
+First consult the documentation of both [AiiDA-VASP documentation] and [AiiDA documentation] and also consider that the developers are
+not paid for this work. Please respect potential lead times in getting answers and be polite.
+
+
+
+
 [aiida]: https://www.aiida.net
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
 [changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
@@ -133,3 +166,6 @@ concepts/index
 [vasp tutorials using notebooks]: https://www.vasp.at/tutorials/latest/
 [vasp videos]: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw
 [vasp wiki]: https://cms.mpi.univie.ac.at/wiki/index.php
+[aiida documentation]: http://aiida-core.readthedocs.io/en/latest/
+[aiida-vasp documentation]: https://aiida-vasp.readthedocs.io/en/latest/
+[space on matrix]: https://matrix.to/#/#aiida-vasp:matrix.org
