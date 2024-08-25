@@ -18,20 +18,20 @@ from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, data_path
 
 
-@click.command('mock-vasp')
-def mock_vasp():
+@click.command('mock-vasp-loose')
+def mock_vasp_loose():
     """
-    Original version of mock-vasp
-
-    If `MOCK_VASP_VASP_CMD` is set in the environment, it will use that command to run VASP if needed and add the
-    calculation to the registry.
+    Loose version of mock-vasp that has default test data - only useful for testing and development.
     """
     return _mock_vasp(False)
 
 
-@click.command('mock-vasp-strict')
-def mock_vasp_strict():
-    """A stricter version of mock-vasp does not allow default matching"""
+@click.command('mock-vasp')
+def mock_vasp():
+    """
+    If `MOCK_VASP_VASP_CMD` is set in the environment, it will use that command to run VASP if needed and add the
+    calculation to the registry.
+    """
     return _mock_vasp(True)
 
 

@@ -62,7 +62,7 @@ def mock_vasp(fresh_aiida_env, localhost):
     calculations from the registry is found. This makes it suitable for simple
     tests.
     """
-    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp')
+    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp-loose')
 
 
 @pytest.fixture()
@@ -74,7 +74,7 @@ def mock_vasp_strict(fresh_aiida_env, localhost):
     registry is found. It is suitable for testsing complex multi-step workchains.
     tests.
     """
-    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp-strict')
+    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp')
 
 
 @pytest.fixture()
@@ -369,7 +369,7 @@ def run_vasp_process(
 
         mock_vasp.store()
         create_authinfo(computer=mock_vasp.computer, store=True)
-        inpts.code = load_code('mock-vasp@localhost')
+        inpts.code = load_code('mock-vasp-loose@localhost')
         kpoints, _ = vasp_kpoints
         inpts.kpoints = kpoints
         if inputs is not None:

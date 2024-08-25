@@ -152,6 +152,29 @@ class BaseBuilderUpdater:
 
         return run_get_node(self.builder)
 
+    def _get_help(self, namespace: str, print_to_stdout=True, inout='inputs'):
+        """
+        Return the help message for a given namespace
+        The `.` syntax for the namespace is supported.
+        """
+        levels = namespace.split('.')
+        data_dict = self.builder._process_spec.get_description()[inout]
+        for key in levels:
+            data_dict = data_dict[key]
+
+        if print_to_stdout is True:
+            print(data_dict.get('help', 'No help message information found'))
+        else:
+            return data_dict.get('help', 'No help message information found')
+
+    def get_output_help(self, namespace: str, print_to_stdout=True):
+        """Return the help message for a given namespace"""
+        self._get_help(namespace, print_to_stdout=print_to_stdout, inout='outputs')
+
+    def get_input_help(self, namespace: str, print_to_stdout=True):
+        """Return the help message for a given namespace"""
+        self._get_help(namespace, print_to_stdout=print_to_stdout, inout='inputs')
+
 
 class VaspBuilderUpdater(BaseBuilderUpdater):
     WF_ENTRYPOINT = 'vasp.v2.vasp'

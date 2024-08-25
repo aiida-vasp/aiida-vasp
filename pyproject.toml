@@ -109,7 +109,7 @@ graphs = ["matplotlib"]
 [project.scripts]
 "mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
 "dryrun-vasp" = "aiida_vasp.commands.dryrun_vasp:cmd_dryrun_vasp"
-"mock-vasp-strict" = "aiida_vasp.commands.mock_vasp:mock_vasp_strict"
+"mock-vasp-loose" = "aiida_vasp.commands.mock_vasp:mock_vasp_loose"
 
 [tool.flit.module]
 name = "aiida_vasp"
