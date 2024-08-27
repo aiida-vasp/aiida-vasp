@@ -195,7 +195,7 @@ def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
     if exclude and re.match(exclude, name):
         return
 
-    obj = node.get_object(name)
+    obj = node.base.repository.get_object(name)
 
     # If it is a directory, copy the contents one by one
     if obj.file_type == FileType.DIRECTORY:
