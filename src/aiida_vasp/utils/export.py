@@ -97,16 +97,13 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
     # Write POSCAR file for the input
     try:
-        out_structure = workchain_node.outputs.relax__structure
+        out_structure = workchain_node.inputs.outputs.relax.structure
     except AttributeError:
-        try:
-            out_structure = workchain_node.inputs.outputs.relax.structure
-        except AttributeError:
-            print(
-                'Cannot find the output structure - skipping.'
-                ' This usually means that the relaxation did not finish without error.'
-            )
-            out_structure = None
+        print(
+            'Cannot find the output structure - skipping.'
+            ' This usually means that the relaxation did not finish without error.'
+        )
+        out_structure = None
     if out_structure:
         poscar_parser = PoscarParser(data=out_structure, precision=10)
         poscar_parser.write(str(dst / 'POSCAR_RELAXED'))
@@ -120,10 +117,10 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
 
 @ensure_node_first_arg
-def export_neb(workchain, dst, decompress=True, include_potcar=True):
+def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type='energy_extrapolated'):
     """Export the neb calculation"""
-
-    energies = {key: value['energy_without_entropy'] for key, value in workchain.outputs.neb_misc['neb_data'].items()}
+    from aiida.plugins import WorkflowFactory
+    energies = {key: value[energy_type] for key, value in workchain.outputs.misc['total_energies'].items()}
 
     # Query for the energy computed for the end structures
     q = orm.QueryBuilder()
@@ -138,7 +135,7 @@ def export_neb(workchain, dst, decompress=True, include_potcar=True):
         edge_project=['label'],
     )
     q.append(
-        orm.WorkflowFactory('vaspu.relax'),
+        WorkflowFactory('vasp.v2.relax'),
         with_outgoing='relaxed',
         project=['label', 'uuid'],
         tag='relaxation',
@@ -202,7 +199,7 @@ def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
 
     # If it is a directory, copy the contents one by one
     if obj.file_type == FileType.DIRECTORY:
-        for sub_obj in node.list_objects(name):
+        for sub_obj in node.base.repository.list_objects(name):
             copy_from_aiida(os.path.join(name, sub_obj.name), node, dst, exclude=exclude)
     else:
         # It is a file
