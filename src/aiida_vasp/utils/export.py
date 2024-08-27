@@ -120,7 +120,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
 
 @ensure_node_first_arg
-def export_neb(workchain, dst):
+def export_neb(workchain, dst, decompress=True):
     """Export the neb calculation"""
 
     energies = {key: value['energy_without_entropy'] for key, value in workchain.outputs.neb_misc['neb_data'].items()}
@@ -153,7 +153,7 @@ def export_neb(workchain, dst):
     q.distinct()
 
     # First export the original calculation
-    export_vasp_calc(workchain, dst, decompress=True, include_potcar=False)
+    export_vasp_calc(workchain, dst, decompress=decompress, include_potcar=False)
     ends = {}
     end_id = f'{len(energies) + 1:02d}'
     for _, _, _, relax_uuid, eng, calcjob, label in q.all():
@@ -178,7 +178,7 @@ def export_neb(workchain, dst):
                 ends[end_id] = calcjob
     # Export the end point calculation
     for key, value in ends.items():
-        export_vasp_calc(value, Path(dst) / key, decompress=True, include_potcar=False)
+        export_vasp_calc(value, Path(dst) / key, decompress=decompress, include_potcar=False)
 
 
 @ensure_node_kwargs
