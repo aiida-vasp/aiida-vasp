@@ -4,9 +4,9 @@ kernelspec:
   display_name: Python 3
   name: python3
 ---
-(silicon_band_dos)=
+(band_dos)=
 
-# Silicon band structure and DOS calculation
+# Band structure and density of states
 
 In this example we will perform band structure and DOS calculation for silicon using VASP. We will use the `VaspBandWorkChain` from the `aiida-vasp` plugin.
 

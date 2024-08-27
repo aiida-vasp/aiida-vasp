@@ -5,7 +5,7 @@ kernelspec:
   name: python3
 ---
 (silicon_sp_tutorial)=
-# Silicon single point calculation
+# Single point and general calculation
 
 :::{note}
 This tutorial is can be executed as a jupyter notebook.

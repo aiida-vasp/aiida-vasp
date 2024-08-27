@@ -24,6 +24,7 @@ Also we would encourage users to focus on writing workchains that uses {ref}`con
 ./documentation.md
 ./vasp.md
 ./contributions.md
+./writing_tutorials.md
 ```
 
 [aiida documentation]: https://aiida.readthedocs.io/projects/aiida-core/en/latest/index.html

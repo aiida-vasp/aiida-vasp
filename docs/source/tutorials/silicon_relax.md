@@ -4,9 +4,9 @@ kernelspec:
   display_name: Python 3
   name: python3
 ---
-(silicon_sp_relax)=
+(silicon_relax)=
 
-# Silicon geometry optimisation calculation
+# Geometry optimisation
 
 In this example we will perform a geometry optimisation of silicon using VASP.
 We will use the VASP code and the AiiDA plugin for VASP.

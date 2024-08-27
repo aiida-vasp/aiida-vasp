@@ -51,12 +51,14 @@ def export_vasp(process, folder, decompress, include_potcar):
     )
 
     # Dispatch export function based on process type
-    if process.process_type in ('vasp.vasp', 'vasp.v2.vasp'):
+    if process.process_type.endswith('vasp.vasp') or process.process_type.endswith('vasp.v2.vasp'):
         export_vasp_calc(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type == 'vasp.neb':
+    elif process.process_type.endswith('workflows:vasp.neb'):
         export_neb(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type == 'vasp.v2.relax':
+    elif process.process_type.endswith('vasp.v2.relax'):
         export_relax(process, folder, decompress=decompress, include_potcar=include_potcar)
+    else:
+        echo_error(f'Unsupported process type: {process.process_type}')
 
 
 def select_calcjob_from_work(func):
