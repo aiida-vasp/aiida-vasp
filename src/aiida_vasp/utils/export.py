@@ -123,7 +123,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 def export_neb(workchain, dst, decompress=True, include_potcar=True):
     """Export the neb calculation"""
 
-    energies = {key: value['energy_without_entropy'] for key, value in workchain.outputs.neb_misc['neb_data'].items()}
+    energies = {key: value['energy_without_entropy'] for key, value in workchain.outputs.misc['neb_data'].items()}
 
     # Query for the energy computed for the end structures
     q = orm.QueryBuilder()
@@ -198,11 +198,11 @@ def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
     if exclude and re.match(exclude, name):
         return
 
-    obj = node.get_object(name)
+    obj = node.base.repository.get_object(name)
 
     # If it is a directory, copy the contents one by one
     if obj.file_type == FileType.DIRECTORY:
-        for sub_obj in node.list_objects(name):
+        for sub_obj in node.base.repository.list_objects(name):
             copy_from_aiida(os.path.join(name, sub_obj.name), node, dst, exclude=exclude)
     else:
         # It is a file

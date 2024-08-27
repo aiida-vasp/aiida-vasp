@@ -34,7 +34,7 @@ def tools():
     '--include-potcar',
     default=False,
     is_flag=True,
-    help='Wether to include POTCAR in the export folder',
+    help='Whether to include POTCAR in the export folder',
 )
 @click.option(
     '--decompress',
