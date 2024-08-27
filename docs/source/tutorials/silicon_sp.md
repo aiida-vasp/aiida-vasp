@@ -61,6 +61,7 @@ vasp_path = !which mock-vasp
 vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
 vasp_code.label ='vasp'
 vasp_code.store()
+os.environ['MOCK_VASP_REG_BASE'] = (Path() / 'mock_registry').absolute()
 ```
 If you have VASP installed, uncomment and run the the code below to create the `InstalledCode` node`:
 

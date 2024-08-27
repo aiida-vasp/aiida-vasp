@@ -94,7 +94,9 @@ class MockRegistry:
         """
         Instantiate and Registry
         """
-        base_path = data_path('.') if base_path is None else pathlib.Path(base_path).absolute()
+        if base_path is None:
+            base_path = os.environ.get(f'MOCK_{self.CODE_NAME}_REG_BASE', data_path('.'))
+        base_path = pathlib.Path(base_path).absolute()
 
         if isinstance(base_path, (pathlib.Path, str)):
             self._search_paths = [pathlib.Path(base_path)]
@@ -260,7 +262,12 @@ class MockRegistry:
 
 
 class VaspMockRegistry(MockRegistry):
-    """Registry of mock code for VASP"""
+    """
+    Registry of mock code for VASP
+
+    The registry's base folder defaults to the `test_data` folder, but can be modified with the
+    `MOCK_VASP_REG_BASE` environmental variable.
+    """
 
     CODE_NAME = 'VASP'
 
