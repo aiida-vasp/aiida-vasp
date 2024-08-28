@@ -3,6 +3,8 @@ file_format: mystnb
 kernelspec:
   display_name: Python 3
   name: python3
+execution:
+  timeout: 300
 ---
 (band_dos)=
 
@@ -21,6 +23,7 @@ Please see the [single point example](#silicon_sp_tutorial) for more details.
 
 ```{code-cell} python3
 from aiida_vasp.utils.temp_profile import *
+from subprocess import check_output
 print(load_temp_profile())
 
 
@@ -30,13 +33,17 @@ comp.store()
 
 
 # Some configuration may be needed for first-time user
+import os
+from pathlib import Path
 comp.set_workdir('/tmp/aiida_run/')
 comp.configure()
-vasp_path = !which mock-vasp
-vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
-vasp_code.label ='vasp'
+vasp_path = check_output(['which', 'mock-vasp'], universal_newlines=True).strip()
+
+vasp_code = orm.InstalledCode(comp, vasp_path, default_calc_job_plugin='vasp.vasp')
+vasp_code.label ='mock-vasp'
 vasp_code.store()
-os.environ['MOCK_VASP_REG_BASE'] = (Path() / 'mock_registry').absolute()
+os.environ['MOCK_VASP_REG_BASE'] = str((Path() / 'mock_registry').absolute())
+os.environ['MOCK_VASP_UPLOAD_PREFIX'] = 'band'
 
 # Upload the POTCAR files
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData
@@ -53,27 +60,13 @@ si_node = orm.StructureData(ase=si)
 ## Setting up the band structure and DOS calculation
 
 Similar to the single point calculation tutorial, we will use a `BuilderUpdater` to setup the inputs
-for the `VaspRelaxWorkChain`.
-
-```{code-cell}
-from aiida import orm
-from aiida_vasp.workchains.v2 import VaspRelaxUpdater
-
-upd = VaspRelaxUpdater().apply_preset(si_node)
-upd.builder.vasp.potential_family = 'PBE.EXAMPLE'
-upd.builder
-```
-
-
-
-Similar to the single point calculation tutorial, we will use a `BuilderUpdater` to setup the inputs
 for the `VaspBandsWorkChain`:
 
 ```{code-cell}
 from aiida_vasp.workchains.v2.bands import BandOptions
 from aiida_vasp.workchains.v2 import VaspBandUpdater
 
-upd = VaspBandUpdater().apply_preset(si_node)
+upd = VaspBandUpdater().apply_preset(si_node, code='mock-vasp@localhost')
 upd.builder.scf.potential_family = 'PBE.EXAMPLE'
 ```
 

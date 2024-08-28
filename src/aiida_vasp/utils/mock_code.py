@@ -25,7 +25,22 @@ from parsevasp.poscar import Poscar
 # pylint: disable=logging-format-interpolation, import-outside-toplevel
 
 INPUT_OBJECTS = ('POSCAR', 'INCAR', 'KPOINTS')
-EXCLUDED = ('POTCAR', '.aiida')
+# Objects (files) that should be excluded from storing in the repository
+# These objects are mostly not used for parsing and can be large in size
+DEFAULT_EXCLUDED = (
+    'POTCAR',
+    '.aiida',
+    'LOCPOT',
+    'DOSCAR',
+    'PCDAT',
+    'EIGENVAL',
+    'OSZICAR',
+    'PCDAT',
+    'XDATCAR',
+    'REPORT',
+    'WAVECAR',
+    'CHG',
+)
 
 
 def data_path(*args):
@@ -86,6 +101,14 @@ class MockRegistry:
     A class to create and manage a registry of completed calculations.
 
     Calculations are identified using the hash of the parsed inputs.
+
+    The class uses environmental variables to control its behaviour:
+
+    - MOCK_{CODE}_REG_BASE: Prefix to the upload relative path
+    - MOCK_{CODE}_UPLOAD_PREFIX: Prefix to the upload relative path
+
+    The `{CODE}` is replaced with the `CODE_NAME` class attribute of the subclass.
+
     """
 
     CODE_NAME = 'ABSTRACT'
@@ -192,17 +215,25 @@ class MockRegistry:
         """
         self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst, include_inputs)
 
-    def upload_calc(self, folder: pathlib.Path, rel_path: Union[pathlib.Path, str], excluded_object=None):
+    def upload_calc(
+        self, folder: pathlib.Path, rel_path: Union[pathlib.Path, str], excluded_object=None, included_object=None
+    ):
         """
         Register a calculation folder to primary search path of the registry
         """
         inp = list(INPUT_OBJECTS)
-        excluded = list(EXCLUDED)
+        excluded = list(DEFAULT_EXCLUDED)
+        # Exclude certain objects
         if excluded_object:
             excluded.extend(excluded_object)
+        # Include certain objects
+        if included_object is not None:
+            for name in included_object:
+                if name in excluded:
+                    del excluded[excluded.index(name)]
 
         # Check if the repository folder already exists
-        repo_calc_base = self.base_path / rel_path
+        repo_calc_base = self.base_path / pathlib.Path(self.get_upload_prefix() + str(rel_path))
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
@@ -260,6 +291,15 @@ class MockRegistry:
         """Update all calculations run by an workflow into the registry"""
         raise NotImplementedError
 
+    def get_upload_prefix(self):
+        """Prefix of the name of the calculation folder"""
+        prefix = os.environ.get(f'MOCK_{self.CODE_NAME}_UPLOAD_PREFIX')
+        if prefix:
+            prefix = prefix + '-'
+        else:
+            prefix = ''
+        return prefix
+
 
 class VaspMockRegistry(MockRegistry):
     """
@@ -280,7 +320,7 @@ class VaspMockRegistry(MockRegistry):
         assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
 
         # Check if the repository folder already exists
-        repo_calc_base = self.base_path / rel_path
+        repo_calc_base = self.base_path / pathlib.Path(self.get_upload_prefix() + str(rel_path))
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
@@ -291,7 +331,7 @@ class VaspMockRegistry(MockRegistry):
         repo_in.mkdir(parents=True)
         repo_out.mkdir(parents=True)
 
-        exclude = list(EXCLUDED)
+        exclude = list(DEFAULT_EXCLUDED)
         if excluded_names:
             exclude.extend(excluded_names)
 

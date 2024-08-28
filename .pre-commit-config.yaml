@@ -30,6 +30,7 @@ repos:
             tests/test_data/partial/vasprun.xml|
             tests/test_data/vasp_wc_ionic_unfinished/calc-001/out/OUTCAR
           )$
+        args: ["--maxkb=2000"]
       - id: forbid-new-submodules
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

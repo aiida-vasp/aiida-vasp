@@ -57,11 +57,14 @@ comp.configure()
 Here we use `mock-vasp` to simulate the VASP executable.
 
 ```{code-cell} python3
+from pathlib import Path
+import os
 vasp_path = !which mock-vasp
 vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
-vasp_code.label ='vasp'
+vasp_code.label ='mock-vasp'
 vasp_code.store()
-os.environ['MOCK_VASP_REG_BASE'] = (Path() / 'mock_registry').absolute()
+os.environ['MOCK_VASP_REG_BASE'] = str((Path() / 'mock_registry').absolute())
+os.environ['MOCK_VASP_UPLOAD_PREFIX'] = 'singlepoint'
 ```
 If you have VASP installed, uncomment and run the the code below to create the `InstalledCode` node`:
 
@@ -119,7 +122,7 @@ from aiida_vasp.workchains.v2 import VaspBuilderUpdater
 # The default name is VaspPreset stored in the code repository.
 # You can place your own preset at ~/.aiida-vasp/ and use them for production
 # calculations.
-upd = VaspBuilderUpdater().apply_preset(si_node, label='si singlepoint')
+upd = VaspBuilderUpdater().apply_preset(si_node, code='mock-vasp@localhost')
 # This preset defaults to use the PBE.54 family, we switch to 'PBE.EXAMPLE' family
 # just uploaded.
 upd.builder.potential_family = 'PBE.EXAMPLE'

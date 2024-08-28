@@ -3,6 +3,8 @@ file_format: mystnb
 kernelspec:
   display_name: Python 3
   name: python3
+execution:
+  timeout: 300
 ---
 (silicon_relax)=
 
@@ -28,13 +30,16 @@ comp.store()
 
 
 # Some configuration may be needed for first-time user
+from pathlib import Path
+import os
 comp.set_workdir('/tmp/aiida_run/')
 comp.configure()
 vasp_path = !which mock-vasp
 vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
-vasp_code.label ='vasp'
+vasp_code.label ='mock-vasp'
 vasp_code.store()
-os.environ['MOCK_VASP_REG_BASE'] = (Path() / 'mock_registry').absolute()
+os.environ['MOCK_VASP_REG_BASE'] = str((Path() / 'mock_registry').absolute())
+os.environ['MOCK_VASP_UPLOAD_PREFIX'] = 'relax'
 
 # Upload the POTCAR files
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData
@@ -57,7 +62,7 @@ for the `VaspRelaxWorkChain`.
 from aiida import orm
 from aiida_vasp.workchains.v2 import VaspRelaxUpdater
 
-upd = VaspRelaxUpdater().apply_preset(si_node)
+upd = VaspRelaxUpdater().apply_preset(si_node, code='mock-vasp@localhost')
 upd.builder.vasp.potential_family = 'PBE.EXAMPLE'
 upd.builder
 ```
