@@ -18,6 +18,7 @@ code_specific:
             resources:
                 tot_num_mpiprocs: 1
                 num_machines: 1
+            withmpi: false
         settings: {}
         inputset_overrides:
             nedos: 100

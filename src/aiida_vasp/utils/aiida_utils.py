@@ -169,7 +169,7 @@ def ensure_node_first_arg(func):
                 node = load_node(node)
         args = list(args)
         args[0] = node
-        func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
@@ -184,6 +184,6 @@ def ensure_node_kwargs(func):
             if name.endswith('node'):
                 if not isinstance(kwargs[name], orm.Node):
                     kwargs[name] = load_node(kwargs[name])
-        func(node, *args, **kwargs)
+        return func(node, *args, **kwargs)
 
     return wrapper
