@@ -8,12 +8,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import List, Optional
 
-import pymatgen.io.vasp as pvasp
+try:
+    import pymatgen.io.vasp as pvasp
+except ImportError:
+    raise ImportError('You need to install pymatgen to use this feature.')
 
-from aiida_vasp.utils.export import export_vasp
 
 from .aiida_utils import ensure_node_first_arg, ensure_node_kwargs
-from .export import export_vasp_calc
+from .export import export_vasp, export_vasp_calc
 
 
 @contextmanager
