@@ -13,6 +13,7 @@ import logging
 import os
 import pathlib
 import shutil
+import warnings
 from subprocess import run
 from typing import List, Optional, Union
 
@@ -47,8 +48,8 @@ def data_path(*args):
     """Return a path to a file in the test data directory."""
     path = pathlib.Path(__file__).parent.parent.parent.parent / 'tests' / 'test_data' / pathlib.Path(*args)
     path = path.resolve()
-    assert path.exists()
-    assert path.is_absolute()
+    if not path.exists():
+        warnings.warn(f'Path {path} for test data does not exist.')
     return str(path)
 
 
