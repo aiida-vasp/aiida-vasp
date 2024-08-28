@@ -42,23 +42,11 @@ def tools():
     is_flag=True,
     help='Wether to decompress the contents',
 )
-def export_vasp(process, folder, decompress, include_potcar):
+def export(process, folder, decompress, include_potcar):
     """Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`"""
-    from aiida_vasp.utils.export import (
-        export_neb,
-        export_relax,
-        export_vasp_calc,
-    )
+    from aiida_vasp.utils.export import export_vasp
 
-    # Dispatch export function based on process type
-    if process.process_type.endswith('vasp.vasp') or process.process_type.endswith('vasp.v2.vasp'):
-        export_vasp_calc(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('workflows:vasp.neb'):
-        export_neb(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('vasp.v2.relax'):
-        export_relax(process, folder, decompress=decompress, include_potcar=include_potcar)
-    else:
-        echo_error(f'Unsupported process type: {process.process_type}')
+    export_vasp(process, folder, decompress, include_potcar)
 
 
 def select_calcjob_from_work(func):

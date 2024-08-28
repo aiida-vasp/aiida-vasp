@@ -12,6 +12,7 @@ code_specific:
                 num_machines: 1
         settings: {}
         inputset_overrides: {}
+    # Code used for testing and demonstration
     'mock-vasp@localhost':
         options:
             max_wallclock_seconds: 3600

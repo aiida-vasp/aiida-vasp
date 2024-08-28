@@ -13,6 +13,22 @@ from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 from .aiida_utils import ensure_node_first_arg, ensure_node_kwargs
 
 
+def export_vasp(process, folder, decompress=True, include_potcar=True):
+    """
+    Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`
+    """
+
+    # Dispatch export function based on process type
+    if process.process_type.endswith('vasp.vasp') or process.process_type.endswith('vasp.v2.vasp'):
+        export_vasp_calc(process, folder, decompress=decompress, include_potcar=include_potcar)
+    elif process.process_type.endswith('workflows:vasp.neb'):
+        export_neb(process, folder, decompress=decompress, include_potcar=include_potcar)
+    elif process.process_type.endswith('vasp.v2.relax'):
+        export_relax(process, folder, decompress=decompress, include_potcar=include_potcar)
+    else:
+        raise TypeError(f'Unsupported process type: {process.process_type}')
+
+
 @ensure_node_kwargs
 @ensure_node_first_arg
 def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
@@ -120,6 +136,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type='energy_extrapolated'):
     """Export the neb calculation"""
     from aiida.plugins import WorkflowFactory
+
     energies = {key: value[energy_type] for key, value in workchain.outputs.misc['total_energies'].items()}
 
     # Query for the energy computed for the end structures
