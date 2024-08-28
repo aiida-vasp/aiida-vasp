@@ -146,11 +146,22 @@ class BaseBuilderUpdater:
 
         return submit(self.builder)
 
-    def run_get_node(self) -> orm.WorkChainNode:
+    def run_get_node(self, verbose=True) -> orm.WorkChainNode:
         """Run the workflow with the current python process"""
         from aiida.engine import run_get_node
 
-        return run_get_node(self.builder)
+        output = run_get_node(self.builder)
+        # Verbose output (for debugging)
+        if not output.node.is_finished_ok and verbose:
+            for node in output.node.called_descendants:
+                if isinstance(node, orm.CalcJobNode):
+                    stdout = node.called[0].outputs.retrieved.get_object_content('vasp_output')
+                    print(node, 'STDOUT:', stdout)
+                    print(node, 'Retrieved files:', node.retrieved.list_object_names())
+                    script = node.base.repository.get_object_content('_aiidasubmit.sh')
+                    print(node, 'Submission script:', script)
+                    print(node, 'Exit_message', node.exit_message)
+        return output
 
     def _get_help(self, namespace: str, print_to_stdout=True, inout='inputs'):
         """

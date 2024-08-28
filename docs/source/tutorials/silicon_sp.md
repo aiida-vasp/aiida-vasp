@@ -141,14 +141,7 @@ If this looks all fine, we can run the calculation using the `run_get_node` meth
 
 ```{code-cell} python3
 results = upd.run_get_node()
-if not results.node.is_finished_ok:
-  stdout = results.node.called[0].outputs.retrieved.get_object_content('vasp_output')
-  print(stdout)
-  print(results.node.called[0].outputs.retrieved.list_object_names())
-  script = results.node.called[0].base.repository.get_object_content('_aiidasubmit.sh')
-  print(script)
-  print(results.node.exit_message)
-
+results
 ```
 
 ## Accessing the results
