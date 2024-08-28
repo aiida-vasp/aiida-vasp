@@ -98,7 +98,7 @@ Information on how to develop the plugin.
 
 +++
 
-```{button-ref} development/index
+```{button-ref} developments/index
 :ref-type: doc
 :click-parent:
 :expand:
