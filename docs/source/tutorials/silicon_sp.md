@@ -61,10 +61,12 @@ from pathlib import Path
 import os
 vasp_path = !which mock-vasp
 vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
+print(vasp_path[0])
 vasp_code.label ='mock-vasp'
 vasp_code.store()
 os.environ['MOCK_VASP_REG_BASE'] = str((Path() / 'mock_registry').absolute())
 os.environ['MOCK_VASP_UPLOAD_PREFIX'] = 'singlepoint'
+print(os.environ['MOCK_VASP_REG_BASE'])
 ```
 If you have VASP installed, uncomment and run the the code below to create the `InstalledCode` node`:
 
@@ -72,7 +74,7 @@ If you have VASP installed, uncomment and run the the code below to create the `
 #vasp_path = !which vasp_std
 #vasp_code = orm.InstalledCode(comp, vasp_path[0], default_calc_job_plugin='vasp.vasp')
 #vasp_code.label ='vasp'
-vasp_code.store()
+#vasp_code.store()
 ```
 
 :::{hint}
@@ -138,7 +140,17 @@ upd.builder
 If this looks all fine, we can run the calculation using the `run_get_node` method:
 
 ```{code-cell} python3
-results = upd.run_get_node()
+try:
+  results = upd.run_get_node()
+except Exception as e:
+  output = results.node.called[0].outputs.retrieved.get_object_content('vasp_output')
+  print(output)
+  print(results.node.called[0].outputs.retrieved.list_object_names())
+  script = results.node.called[0].base.repository.get_object_content('_aiidasubmit.sh')
+  print(script)
+  print(results.node.exit_message)
+  raise e
+
 results
 ```
 
