@@ -729,6 +729,10 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
                 'Unable to presure final check for maximum force, as the tetrahedral method is used for integration.'
             )
 
+        # If we bypassed the relax by setting perform=False, still attached the input structure as the output structure
+        if not RelaxOptions(**self.inputs.relax_settings.get_dict()).perform:
+            self.out('relax.structure', workchain.inputs.structure)
+
     def finalize(self):
         """
         Finalize the workchain.

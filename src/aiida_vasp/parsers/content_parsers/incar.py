@@ -84,7 +84,10 @@ class IncarParser(BaseFileParser):
             An instance of ``Incar`` from ``parsevasp``.
 
         """
-        dictionary = self._content_data.get_dict()
+        # Filter away None values from the dictionary - these are not valid for ``parsevasp``
+        # This allow easier workflow control and parameters merging - setting a key to None means it should not be
+        # set
+        dictionary = {key: value for key, value in self._content_data.get_dict().items() if value is not None}
 
         # We brake hard if ``parsevasp`` fail here. If we can not write we will not try another parser.
         content_parser = Incar(incar_dict=dictionary, logger=self._logger, validate_tags=self._validate_tags)

@@ -237,7 +237,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.root_namespace.structure = None
         self.root_namespace.metadata.label = None
 
-    def apply_preset(self, initial_structure, code=None, label=None) -> 'VaspBuilderUpdater':
+    def apply_preset(self, initial_structure, code=None, label=None, overrides=None) -> 'VaspBuilderUpdater':
         """
         Apply the preset
         """
@@ -245,7 +245,11 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             code = self.code
             logging.info(f'Using code {code}')
         self.use_inputset(
-            initial_structure, set_name=self.preset.inputset, overrides=None, apply_preset=True, code=code
+            initial_structure,
+            set_name=self.preset.inputset,
+            overrides=overrides,
+            apply_preset=True,
+            code=code,
         )
         self.set_code(code=code)
         self.set_options(code=code, apply_preset=True)
@@ -438,9 +442,16 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         return self.namespace_vasp.initial_structure
 
     def apply_preset(
-        self, structure_init, structure_final, code=None, label=None, interpolate=True, nimages=5
+        self,
+        structure_init,
+        structure_final,
+        code=None,
+        label=None,
+        interpolate=True,
+        nimages=5,
+        **kwargs,
     ) -> 'VaspNEBUpdater':
-        super().apply_preset(structure_init, code, label)
+        super().apply_preset(structure_init, code, label, **kwargs)
         self.set_final_structure(structure_final)
         if interpolate:
             self.set_interpolated_images(nimages)
@@ -539,9 +550,13 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
             self.namespace_relax = namespace_relax
 
     def apply_preset(
-        self, structure: orm.StructureData, code: Optional[str] = None, label: Optional[str] = None
+        self,
+        structure: orm.StructureData,
+        code: Optional[str] = None,
+        label: Optional[str] = None,
+        **kwargs,
     ) -> 'VaspRelaxUpdater':
-        out = super().apply_preset(structure, code, label)
+        out = super().apply_preset(structure, code, label, **kwargs)
         self.set_relax_settings()
         return out
 
@@ -568,8 +583,8 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
 
-    def apply_preset(self, initial_structure, code=None, label=None) -> VaspBuilderUpdater:
-        super().apply_preset(initial_structure, code, label)
+    def apply_preset(self, initial_structure, code=None, label=None, **kwargs) -> VaspBuilderUpdater:
+        super().apply_preset(initial_structure, code, label, **kwargs)
         self.set_conv_settings()
         return self
 
@@ -596,18 +611,32 @@ class VaspBandUpdater(VaspBuilderUpdater):
         else:
             self.namespace_vasp = override_vasp_namespace
 
-    def apply_preset(self, structure: orm.StructureData, run_relax: bool = False, *args, **kwargs) -> 'VaspBandUpdater':
-        super().apply_preset(structure, *args, **kwargs)
+    def get_relax_updater(self):
+        """
+        Return the relax updater for this band structure calculation
+
+        The relax updater can be used to populate the `.relax` namespace which will
+        trigger the relaxation of the structure.
+        """
+        # Apply relax settings if requested
+        relax = VaspRelaxUpdater(
+            preset_name=self.preset_name,
+            builder=self.builder,
+            namespace_relax=self.builder.relax,
+            override_vasp_namespace=self.builder.relax.vasp,
+            code=self.code,
+        )
+        return relax
+
+    def apply_preset(
+        self, structure: orm.StructureData, run_relax: bool = False, label=None, **kwargs
+    ) -> 'VaspBandUpdater':
+        super().apply_preset(structure, label=label, **kwargs)
 
         # Specify the relaxation and NAC namespace
         if run_relax:
-            relax_upd = VaspRelaxUpdater(
-                preset_name=self.preset_name,
-                builder=self.builder,
-                namespace_relax=self.root_namespace.relax,
-                override_vasp_namespace=self.root_namespace.relax.vasp,
-            )
-            relax_upd.apply_preset(structure, *args, **kwargs)
+            relax_upd = self.get_relax_updater()
+            relax_upd.apply_preset(structure, label=label, **kwargs)
         self.set_band_settings()
         return self
 
@@ -716,7 +745,10 @@ def is_specified(port_namespace: ProcessBuilderNamespace) -> bool:
 
 
 def update_dict_node(
-    node: orm.Dict, content: dict, namespace: Optional[str] = None, reuse_if_possible: bool = True
+    node: orm.Dict,
+    content: dict,
+    namespace: Optional[str] = None,
+    reuse_if_possible: bool = True,
 ) -> orm.Dict:
     """
     Update a Dict node with the content
