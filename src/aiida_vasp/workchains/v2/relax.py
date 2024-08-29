@@ -35,10 +35,11 @@ from aiida.engine import ToContext, WorkChain, append_, if_, while_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
-from .common import OVERRIDE_NAMESPACE, nested_update_dict_node, site_magnetization_to_magmom
+from .common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
 from .mixins import WithVaspInputSet
 
 __version__ = '0.5.0'
@@ -193,7 +194,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             settings = orm.Dict(dict={})
 
         if self.perform_relaxation():
-            settings = nested_update_dict_node(
+            settings = update_nested_dict_node(
                 settings,
                 {'parser_settings': {'include_node': ['structure', 'trajectory'], 'include_quantity': ['energies']}},
                 extend_list=True,
@@ -251,7 +252,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         # Update the "relax" field inside the parameters - this is needed because some of the
         # settings will be translated into VASP parameters
         if self.perform_relaxation():
-            parameters = nested_update_dict_node(self.inputs.vasp.parameters, {'relax': self.ctx.relax_settings})
+            parameters = update_nested_dict_node(self.inputs.vasp.parameters, {'relax': self.ctx.relax_settings})
             additions.parameters = parameters
 
         return additions
@@ -270,7 +271,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         else:
             # For the final static run we do not need to parse the output structure
             if 'settings' in self.inputs.vasp:
-                self.ctx.static_input_additions.settings = nested_update_dict_node(
+                self.ctx.static_input_additions.settings = update_nested_dict_node(
                     self.inputs.vasp.settings,
                     {
                         'parser_settings': {
@@ -290,7 +291,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
 
             # Override INCARs for the final relaxation
             if 'static_calc_parameters' in self.inputs:
-                self.ctx.static_input_additions.parameters = nested_update_dict_node(
+                self.ctx.static_input_additions.parameters = update_nested_dict_node(
                     self.inputs.vasp.parameters,
                     self.inputs.static_calc_parameters.get_dict(),
                 )
@@ -320,7 +321,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
         # Check if we need to boot strap hybrid calculation
         if self.ctx.get('hybrid_status') == 'dft':
             # Turn off HF and turn off relaxation
-            inputs.parameters = nested_update_dict_node(
+            inputs.parameters = update_nested_dict_node(
                 inputs.parameters,
                 {
                     OVERRIDE_NAMESPACE: {
@@ -340,11 +341,11 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
             # Update the wallclock seconds
             wallclock = self.ctx.relax_settings.get('hybrid_calc_bootstrap_wallclock')
             if wallclock:
-                inputs.options = nested_update_dict_node(inputs.options, {'max_wallclock_seconds': wallclock})
+                inputs.options = update_nested_dict_node(inputs.options, {'max_wallclock_seconds': wallclock})
 
         # Update the MAGMOM
         if self.ctx.current_magmom is not None:
-            inputs.parameters = nested_update_dict_node(
+            inputs.parameters = update_nested_dict_node(
                 inputs.parameters,
                 {OVERRIDE_NAMESPACE: {'magmom': self.ctx.current_magmom}},
             )
@@ -375,7 +376,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
 
         # Update the MAGMOM if information is present
         if self.ctx.current_magmom is not None:
-            inputs.parameters = nested_update_dict_node(
+            inputs.parameters = update_nested_dict_node(
                 inputs.parameters,
                 {OVERRIDE_NAMESPACE: {'magmom': self.ctx.current_magmom}},
             )

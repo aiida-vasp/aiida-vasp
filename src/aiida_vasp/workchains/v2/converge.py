@@ -17,9 +17,8 @@ from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
-
-from .common import nested_update_dict_node
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
@@ -136,7 +135,7 @@ class VaspConvergenceWorkChain(WorkChain):
         inputs.kpoints_spacing = kspacing_for_cutoffconv
         original_label = inputs.metadata.get('label', '')
         for cut in self.ctx.cutoff_list:
-            new_param = nested_update_dict_node(inputs.parameters, {'incar': {'encut': cut}})
+            new_param = update_nested_dict_node(inputs.parameters, {'incar': {'encut': cut}})
             inputs.parameters = new_param
             if original_label:
                 inputs.metadata.label = original_label + f' CUTCONV {cut:.2f}'
@@ -148,7 +147,7 @@ class VaspConvergenceWorkChain(WorkChain):
             self.to_context(cutoff_conv_workchains=append_(running))
 
         # Launch kpoints convergence tests
-        new_param = nested_update_dict_node(inputs.parameters, {'incar': {'encut': cutoff_for_kconv}})
+        new_param = update_nested_dict_node(inputs.parameters, {'incar': {'encut': cutoff_for_kconv}})
         for kspacing in self.ctx.kspacing_list:
             inputs.parameters = new_param
             inputs.kpoints_spacing = kspacing

@@ -623,14 +623,6 @@ class VaspHybridBandUpdater(VaspBandUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.hybrid_bands'
 
-    def apply_preset(self, structure: orm.StructureData, *args, **kwargs) -> 'VaspHybridBandUpdater':
-        """Apply the preset"""
-        super().apply_preset(structure, *args, **kwargs)
-        band_settings = self.preset.get_code_specific_options(self.code, 'band_settings')
-        self.builder.symprec = orm.Float(band_settings.get('symprec', 0.01))
-        self.builder.kpoints_per_split = orm.Int(band_settings.get('kpoints_per_split', 80))
-        return self
-
 
 # class VaspAutoPhononUpdater(VaspBuilderUpdater):
 #     """Updater for VaspAutoPhononWorkChain"""
