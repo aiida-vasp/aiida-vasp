@@ -13,7 +13,6 @@ No added wrapper etc.
 """
 
 from aiida import orm
-from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
@@ -48,6 +47,7 @@ class VaspConvergenceWorkChain(WorkChain):
     _sub_workchain_string = 'vasp.v2.vasp'
     _sub_workchain = WorkflowFactory(_sub_workchain_string)
     ENERGY_KEY = 'energy_extrapolated'
+    option_class = ConvOptions
 
     @classmethod
     def define(cls, spec):
@@ -250,10 +250,6 @@ class VaspConvergenceWorkChain(WorkChain):
             self.out('cutoff_conv_data', create_links_cutconv(**cutoff_miscs))
 
         return exit_code
-
-    @classproperty
-    def option_class(cls):  # noqa: N805
-        return ConvOptions
 
     @staticmethod
     def get_conv_data(conv_work, plot=False, **plot_kwargs):

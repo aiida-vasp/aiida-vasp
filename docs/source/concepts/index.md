@@ -10,6 +10,5 @@ Here we introduce the basic concepts of aiida-vasp.
  parameters.md
  parsing.md
  potentials.md
- workchains.md
  workflows.md
  ```

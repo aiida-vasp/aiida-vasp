@@ -55,6 +55,7 @@ class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
     _verbose = True
     _base_workchain_string = 'vasp.v2.vasp'
     _base_workchain = WorkflowFactory(_base_workchain_string)
+    option_class = RelaxOptions
 
     @classmethod
     def define(cls, spec):

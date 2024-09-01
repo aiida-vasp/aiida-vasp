@@ -65,6 +65,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
     _base_wk_string = 'vasp.v2.vasp'
     _relax_wk_string = 'vasp.v2.relax'
+    option_class = BandOptions
 
     @classmethod
     def define(cls, spec):
