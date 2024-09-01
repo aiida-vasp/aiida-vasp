@@ -23,6 +23,10 @@ load_temp_profile()
 
 # Workflows in aiida-vasp
 
+:::{note}
+See [this tutorial](#silicon_sp_tutorial) for a quick tour on how to use workflows in aiida-vasp.
+:::
+
 There are several workflows bundled with aiida-vasp. They can be referred using the entry point started with `vasp.`
 
 For example, the following code load the standard `VaspWorkChain` in a shell launched by using the command `verdi shell`:
@@ -109,7 +113,7 @@ PS you can also print the input and output ports of the workchain using:
 
 ```{code-cell}
 from aiida.plugins import WorkflowFactory
-!verdi workflow show vasp.v2.relax
+!verdi plugin list aiida.workflows vasp.v2.relax
 ```
 
 By default, every input to the workchain has to be specified in full before submission, this can be quiet tedious for daily calculation.

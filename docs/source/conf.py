@@ -55,7 +55,7 @@ myst_enable_extensions = [
     'substitution',
 ]
 
-nb_execution_mode = 'force'
+nb_execution_mode = 'auto'
 
 # The master toctree document.
 master_doc = 'index'
