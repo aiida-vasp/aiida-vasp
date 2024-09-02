@@ -19,10 +19,12 @@ from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
+from .mixins import WithBuilderUpdater
+
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
 
-class VaspConvergenceWorkChain(WorkChain):
+class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     """
     A workchain to perform convergence tests.
 

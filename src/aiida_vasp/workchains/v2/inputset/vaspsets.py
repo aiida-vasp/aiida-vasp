@@ -7,11 +7,7 @@ from typing import Union
 
 from aiida.orm import Dict, StructureData
 
-try:
-    from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-except ImportError:
-    from aiida_vasp.parsers.file_parsers.potcar import MultiPotcarIo
-
+from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 
 from .base import FELEMS, InputSet
 

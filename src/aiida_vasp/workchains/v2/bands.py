@@ -19,20 +19,16 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
-from .mixins import WithVaspInputSet
-
-try:
-    from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-except ImportError:
-    from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from .mixins import WithBuilderUpdater
 
 
-class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
+class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
     """
     Workchain for running bands calculations.
 

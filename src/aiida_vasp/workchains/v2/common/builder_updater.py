@@ -26,6 +26,7 @@ __all__ = (
     'VaspPresetConfig',
     'VaspRelaxUpdater',
     'VaspNEBUpdater',
+    'VaspConvUpdater',
     'VaspBandUpdater',
     'VaspHybridBandUpdater',
 )

@@ -26,13 +26,14 @@ from aiida_vasp.workchains.vasp import VaspWorkChain as VanillaVaspWorkChain
 
 from .common import parameters_validator, site_magnetization_to_magmom
 from .inputset.vaspsets import get_ldau_keys
+from .mixins import WithBuilderUpdater
 
 assert issubclass(
     VanillaVaspWorkChain, BaseRestartWorkChain
 ), 'vasp.vasp workchain is not a subclass of BaseRestartWorkChain from aiida-core'
 
 
-class VaspWorkChain(VanillaVaspWorkChain):
+class VaspWorkChain(VanillaVaspWorkChain, WithBuilderUpdater):
     """
     The VASP workchain.
 

@@ -40,7 +40,7 @@ from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
 from .common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
-from .mixins import WithVaspInputSet
+from .mixins import WithBuilderUpdater
 
 __version__ = '0.5.0'
 
@@ -49,7 +49,7 @@ __version__ = '0.5.0'
 # 0.5.0 update the logic of convergence checking. Cell comparsion is always done using the input/output structures.
 
 
-class VaspRelaxWorkChain(WorkChain, WithVaspInputSet):
+class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
     """Structure relaxation workchain."""
 
     _verbose = True
