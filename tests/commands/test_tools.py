@@ -5,8 +5,9 @@ Test the export command.
 from pathlib import Path
 
 import pytest
-from aiida_vasp.commands.tools import tools
 from click.testing import CliRunner
+
+from aiida_vasp.commands.tools import tools
 
 
 def run_cmd(command=None, args=None, **kwargs):
