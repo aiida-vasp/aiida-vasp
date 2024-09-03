@@ -26,6 +26,7 @@ __all__ = (
     'VaspPresetConfig',
     'VaspRelaxUpdater',
     'VaspNEBUpdater',
+    'VaspConvUpdater',
     'VaspBandUpdater',
     'VaspHybridBandUpdater',
 )
@@ -146,11 +147,45 @@ class BaseBuilderUpdater:
 
         return submit(self.builder)
 
-    def run_get_node(self) -> orm.WorkChainNode:
+    def run_get_node(self, verbose=True) -> orm.WorkChainNode:
         """Run the workflow with the current python process"""
         from aiida.engine import run_get_node
 
-        return run_get_node(self.builder)
+        output = run_get_node(self.builder)
+        # Verbose output (for debugging)
+        if not output.node.is_finished_ok and verbose:
+            for node in output.node.called_descendants:
+                if isinstance(node, orm.CalcJobNode):
+                    stdout = node.called[0].outputs.retrieved.get_object_content('vasp_output')
+                    print(node, 'STDOUT:', stdout)
+                    print(node, 'Retrieved files:', node.retrieved.list_object_names())
+                    script = node.base.repository.get_object_content('_aiidasubmit.sh')
+                    print(node, 'Submission script:', script)
+                    print(node, 'Exit_message', node.exit_message)
+        return output
+
+    def _get_help(self, namespace: str, print_to_stdout=True, inout='inputs'):
+        """
+        Return the help message for a given namespace
+        The `.` syntax for the namespace is supported.
+        """
+        levels = namespace.split('.')
+        data_dict = self.builder._process_spec.get_description()[inout]
+        for key in levels:
+            data_dict = data_dict[key]
+
+        if print_to_stdout is True:
+            print(data_dict.get('help', 'No help message information found'))
+        else:
+            return data_dict.get('help', 'No help message information found')
+
+    def get_output_help(self, namespace: str, print_to_stdout=True):
+        """Return the help message for a given namespace"""
+        self._get_help(namespace, print_to_stdout=print_to_stdout, inout='outputs')
+
+    def get_input_help(self, namespace: str, print_to_stdout=True):
+        """Return the help message for a given namespace"""
+        self._get_help(namespace, print_to_stdout=print_to_stdout, inout='inputs')
 
 
 class VaspBuilderUpdater(BaseBuilderUpdater):
@@ -203,7 +238,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.root_namespace.structure = None
         self.root_namespace.metadata.label = None
 
-    def apply_preset(self, initial_structure, code=None, label=None) -> 'VaspBuilderUpdater':
+    def apply_preset(self, initial_structure, code=None, label=None, overrides=None) -> 'VaspBuilderUpdater':
         """
         Apply the preset
         """
@@ -211,7 +246,11 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             code = self.code
             logging.info(f'Using code {code}')
         self.use_inputset(
-            initial_structure, set_name=self.preset.inputset, overrides=None, apply_preset=True, code=code
+            initial_structure,
+            set_name=self.preset.inputset,
+            overrides=overrides,
+            apply_preset=True,
+            code=code,
         )
         self.set_code(code=code)
         self.set_options(code=code, apply_preset=True)
@@ -404,9 +443,16 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         return self.namespace_vasp.initial_structure
 
     def apply_preset(
-        self, structure_init, structure_final, code=None, label=None, interpolate=True, nimages=5
+        self,
+        structure_init,
+        structure_final,
+        code=None,
+        label=None,
+        interpolate=True,
+        nimages=5,
+        **kwargs,
     ) -> 'VaspNEBUpdater':
-        super().apply_preset(structure_init, code, label)
+        super().apply_preset(structure_init, code, label, **kwargs)
         self.set_final_structure(structure_final)
         if interpolate:
             self.set_interpolated_images(nimages)
@@ -505,9 +551,13 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
             self.namespace_relax = namespace_relax
 
     def apply_preset(
-        self, structure: orm.StructureData, code: Optional[str] = None, label: Optional[str] = None
+        self,
+        structure: orm.StructureData,
+        code: Optional[str] = None,
+        label: Optional[str] = None,
+        **kwargs,
     ) -> 'VaspRelaxUpdater':
-        out = super().apply_preset(structure, code, label)
+        out = super().apply_preset(structure, code, label, **kwargs)
         self.set_relax_settings()
         return out
 
@@ -534,8 +584,8 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
 
-    def apply_preset(self, initial_structure, code=None, label=None) -> VaspBuilderUpdater:
-        super().apply_preset(initial_structure, code, label)
+    def apply_preset(self, initial_structure, code=None, label=None, **kwargs) -> VaspBuilderUpdater:
+        super().apply_preset(initial_structure, code, label, **kwargs)
         self.set_conv_settings()
         return self
 
@@ -562,18 +612,32 @@ class VaspBandUpdater(VaspBuilderUpdater):
         else:
             self.namespace_vasp = override_vasp_namespace
 
-    def apply_preset(self, structure: orm.StructureData, run_relax: bool = False, *args, **kwargs) -> 'VaspBandUpdater':
-        super().apply_preset(structure, *args, **kwargs)
+    def get_relax_updater(self):
+        """
+        Return the relax updater for this band structure calculation
+
+        The relax updater can be used to populate the `.relax` namespace which will
+        trigger the relaxation of the structure.
+        """
+        # Apply relax settings if requested
+        relax = VaspRelaxUpdater(
+            preset_name=self.preset_name,
+            builder=self.builder,
+            namespace_relax=self.builder.relax,
+            override_vasp_namespace=self.builder.relax.vasp,
+            code=self.code,
+        )
+        return relax
+
+    def apply_preset(
+        self, structure: orm.StructureData, run_relax: bool = False, label=None, **kwargs
+    ) -> 'VaspBandUpdater':
+        super().apply_preset(structure, label=label, **kwargs)
 
         # Specify the relaxation and NAC namespace
         if run_relax:
-            relax_upd = VaspRelaxUpdater(
-                preset_name=self.preset_name,
-                builder=self.builder,
-                namespace_relax=self.root_namespace.relax,
-                override_vasp_namespace=self.root_namespace.relax.vasp,
-            )
-            relax_upd.apply_preset(structure, *args, **kwargs)
+            relax_upd = self.get_relax_updater()
+            relax_upd.apply_preset(structure, label=label, **kwargs)
         self.set_band_settings()
         return self
 
@@ -588,14 +652,6 @@ class VaspHybridBandUpdater(VaspBandUpdater):
     """Updater for VaspHybridBandsWorkChain"""
 
     WF_ENTRYPOINT = 'vasp.v2.hybrid_bands'
-
-    def apply_preset(self, structure: orm.StructureData, *args, **kwargs) -> 'VaspHybridBandUpdater':
-        """Apply the preset"""
-        super().apply_preset(structure, *args, **kwargs)
-        band_settings = self.preset.get_code_specific_options(self.code, 'band_settings')
-        self.builder.symprec = orm.Float(band_settings.get('symprec', 0.01))
-        self.builder.kpoints_per_split = orm.Int(band_settings.get('kpoints_per_split', 80))
-        return self
 
 
 # class VaspAutoPhononUpdater(VaspBuilderUpdater):
@@ -690,7 +746,10 @@ def is_specified(port_namespace: ProcessBuilderNamespace) -> bool:
 
 
 def update_dict_node(
-    node: orm.Dict, content: dict, namespace: Optional[str] = None, reuse_if_possible: bool = True
+    node: orm.Dict,
+    content: dict,
+    namespace: Optional[str] = None,
+    reuse_if_possible: bool = True,
 ) -> orm.Dict:
     """
     Update a Dict node with the content

@@ -13,18 +13,18 @@ No added wrapper etc.
 """
 
 from aiida import orm
-from aiida.common.utils import classproperty
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
-from .common import nested_update_dict_node
+from .mixins import WithBuilderUpdater
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
 
-class VaspConvergenceWorkChain(WorkChain):
+class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     """
     A workchain to perform convergence tests.
 
@@ -49,6 +49,7 @@ class VaspConvergenceWorkChain(WorkChain):
     _sub_workchain_string = 'vasp.v2.vasp'
     _sub_workchain = WorkflowFactory(_sub_workchain_string)
     ENERGY_KEY = 'energy_extrapolated'
+    option_class = ConvOptions
 
     @classmethod
     def define(cls, spec):
@@ -136,7 +137,7 @@ class VaspConvergenceWorkChain(WorkChain):
         inputs.kpoints_spacing = kspacing_for_cutoffconv
         original_label = inputs.metadata.get('label', '')
         for cut in self.ctx.cutoff_list:
-            new_param = nested_update_dict_node(inputs.parameters, {'incar': {'encut': cut}})
+            new_param = update_nested_dict_node(inputs.parameters, {'incar': {'encut': cut}})
             inputs.parameters = new_param
             if original_label:
                 inputs.metadata.label = original_label + f' CUTCONV {cut:.2f}'
@@ -148,7 +149,7 @@ class VaspConvergenceWorkChain(WorkChain):
             self.to_context(cutoff_conv_workchains=append_(running))
 
         # Launch kpoints convergence tests
-        new_param = nested_update_dict_node(inputs.parameters, {'incar': {'encut': cutoff_for_kconv}})
+        new_param = update_nested_dict_node(inputs.parameters, {'incar': {'encut': cutoff_for_kconv}})
         for kspacing in self.ctx.kspacing_list:
             inputs.parameters = new_param
             inputs.kpoints_spacing = kspacing
@@ -251,10 +252,6 @@ class VaspConvergenceWorkChain(WorkChain):
             self.out('cutoff_conv_data', create_links_cutconv(**cutoff_miscs))
 
         return exit_code
-
-    @classproperty
-    def option_class(cls):  # noqa: N805
-        return ConvOptions
 
     @staticmethod
     def get_conv_data(conv_work, plot=False, **plot_kwargs):

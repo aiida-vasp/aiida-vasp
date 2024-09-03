@@ -775,7 +775,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
                         (
                             'No POTCAR found for full name {} in family {}, but it was found in a legacy '
                             'group with the same name.'
-                            ' Please run `verdi data vasp-potcar migratefamilies`.'
+                            ' Please run `verdi data vasp.potcar migratefamilies`.'
                         ).format(full_name, family_name)
                     )
 

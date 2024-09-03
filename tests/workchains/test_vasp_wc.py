@@ -195,7 +195,7 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
 
     # If code is not passed, use the mock code
     if code is None:
-        mock = load_code('mock-vasp-strict@localhost')
+        mock = load_code('mock-vasp@localhost')
         inputs.code = mock
     else:
         inputs.code = code

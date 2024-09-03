@@ -8,6 +8,7 @@ Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 import collections.abc
 from copy import deepcopy
 
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 
 
@@ -62,17 +63,19 @@ def delete_nested_key(dictionary, keys):
                 delete_nested_key(value, keys[1:])
 
 
-def update_nested_dict(dict1, dict2):
+def update_nested_dict(dict1: dict, dict2: dict, extend_list: bool = False):
     """Updated a nested dictionary, where dict1 is updated with values in dict2."""
     for key, value in dict2.items():
         dict1_value = dict1.get(key)
         if isinstance(value, collections.abc.Mapping) and isinstance(dict1_value, collections.abc.Mapping):
             update_nested_dict(dict1_value, value)
+        elif isinstance(value, list) and isinstance(dict1_value, list) and extend_list:
+            dict1_value.extend(value)
         else:
             dict1[key] = deepcopy(value)
 
 
-def find_key_in_dicts(dictionary, supplied_key):
+def find_key_in_dicts(dictionary: dict, supplied_key: str):
     """Find a key in a nested dictionary."""
     for key, value in dictionary.items():
         if key == supplied_key:
@@ -80,3 +83,13 @@ def find_key_in_dicts(dictionary, supplied_key):
         elif isinstance(value, dict):
             for result in find_key_in_dicts(value, supplied_key):
                 yield result
+
+
+def update_nested_dict_node(dict_node: orm.Dict, update_dict: dict, extend_list: bool = False):
+    """Utility to update a Dict node in a nested way"""
+    pydict = dict_node.get_dict()
+    update_nested_dict(pydict, update_dict, extend_list=extend_list)
+    # Check if we have updated the node. If not, return the same node.
+    if pydict == dict_node.get_dict():
+        return dict_node
+    return orm.Dict(dict=pydict)

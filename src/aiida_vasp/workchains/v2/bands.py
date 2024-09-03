@@ -19,19 +19,16 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import BandOptions
 
-from .common import OVERRIDE_NAMESPACE, nested_update, nested_update_dict_node
+from .common import OVERRIDE_NAMESPACE
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
-from .mixins import WithVaspInputSet
-
-try:
-    from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-except ImportError:
-    from aiida_vasp.parsers.file_parsers.vasprun import VasprunParser
+from .mixins import WithBuilderUpdater
 
 
-class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
+class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
     """
     Workchain for running bands calculations.
 
@@ -64,6 +61,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
 
     _base_wk_string = 'vasp.v2.vasp'
     _relax_wk_string = 'vasp.v2.relax'
+    option_class = BandOptions
 
     @classmethod
     def define(cls, spec):
@@ -352,7 +350,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
         # Take magmom from the context, in case that the magmom is rearranged in the primitive cell
         magmom = self.ctx.get('magmom')
         if magmom:
-            inputs.parameters = nested_update_dict_node(inputs.parameters, {OVERRIDE_NAMESPACE: {'magmom': magmom}})
+            inputs.parameters = update_nested_dict_node(inputs.parameters, {OVERRIDE_NAMESPACE: {'magmom': magmom}})
 
         running = self.submit(base_work, **inputs)
         self.report(f'Running SCF calculation {running}')
@@ -414,7 +412,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             else:
                 bands_parameters['charge'] = {'constant_charge': True}
 
-            nested_update(parameters, bands_parameters)
+            update_nested_dict(parameters, bands_parameters)
 
             # Apply updated parameters
             inputs.update(bands_input)
@@ -426,7 +424,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             if settings is None:
                 inputs.settings = orm.Dict(dict=essential)
             else:
-                inputs.settings = nested_update_dict_node(settings, essential, extend_list=True)
+                inputs.settings = update_nested_dict_node(settings, essential, extend_list=True)
 
             # Swap with the default kpoints generated
             inputs.kpoints = self.ctx.bs_kpoints
@@ -460,7 +458,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
             # Special treatment - combine the parameters
             parameters = inputs.parameters.get_dict()
             dos_parameters = dos_input.parameters.get_dict()
-            nested_update(parameters, dos_parameters)
+            update_nested_dict(parameters, dos_parameters)
 
             # Ensure we start from constant charge
             if 'charge' in dos_parameters:
@@ -481,7 +479,7 @@ class VaspBandsWorkChain(WorkChain, WithVaspInputSet):
                 if settings is None:
                     inputs.settings = orm.Dict(dict=essential)
                 else:
-                    inputs.settings = nested_update_dict_node(settings, essential, extend_list=True)
+                    inputs.settings = update_nested_dict_node(settings, essential, extend_list=True)
 
             # Set the label
             inputs.metadata.label = self.inputs.metadata.label + ' DOS'
@@ -636,12 +634,6 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         relax_work = WorkflowFactory(cls._relax_wk_string)
         base_work = WorkflowFactory(cls._base_wk_string)
 
-        spec.input(
-            'kpoints_per_split',
-            valid_type=orm.Int,
-            help='Number of kpoints per split, INCLUDING the weighted SCF kpoints.',
-            required=True,
-        )
         spec.input('structure', help='The input structure', valid_type=orm.StructureData)
         spec.expose_inputs(
             relax_work,
@@ -751,7 +743,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 inputs.settings = orm.Dict(dict={'parser_settings': {'include_node': ['bands']}})
             else:
                 # Merge with 'parser_settings'
-                inputs.settings = nested_update_dict_node(
+                inputs.settings = update_nested_dict_node(
                     inputs.settings, {'parser_settings': {'include_node': ['bands']}}, extend_list=True
                 )
 

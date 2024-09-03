@@ -1,5 +1,5 @@
 """
-Unit tests for vasp-potcar command family.
+Unit tests for vasp.potcar command family.
 """
 
 # ruff: noqa: F811
@@ -27,7 +27,7 @@ def cmd_params(temp_pot_folder, potcar_family_name):
 
 
 def run_cmd(command=None, args=None, **kwargs):
-    """Run verdi data vasp-potcar <command> [args]."""
+    """Run verdi data vasp.potcar <command> [args]."""
     runner = CliRunner()
     params = args or []
     if command:
@@ -219,8 +219,8 @@ def test_call_from_vasp():
 
     import subprocess
 
-    output = subprocess.check_output(['verdi', 'data', 'vasp-potcar', '--help'], universal_newlines=True)
-    assert 'Usage: verdi data vasp-potcar' in output  # pylint: disable=unsupported-membership-test
+    output = subprocess.check_output(['verdi', 'data', 'vasp.potcar', '--help'], universal_newlines=True)
+    assert 'Usage: verdi data vasp.potcar' in output  # pylint: disable=unsupported-membership-test
 
 
 def test_migrate_command(fresh_aiida_env, legacy_potcar_family):

@@ -1,0 +1,58 @@
+ running on    1 total cores
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ vasp.6.2.0 18Jan21 (build May 29 2021 13:05:38) complex
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+G   !!!           |
+|                                                                             |
+|     You use a magnetic or noncollinear calculation, but did not specify     |
+|     the initial magnetic moment with the MAGMOM tag. Note that a            |
+|     default of 1 will be used for all atoms. This ferromagnetic setup       |
+|     may break the symmetry of the crystal, in particular it may rule        |
+|     out finding an antiferromagnetic solution. Thence, we recommend         |
+|     setting the initial magnetic moment manually or verifying carefully     |
+|     that this magnetic setup is desired.                                    |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You enforced a specific xc type in the INCAR file but a different       |
+|     type was found in the POTCAR file.                                      |
+|     I HOPE YOU KNOW WHAT YOU ARE DOING!                                     |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.144645832115E+00    0.14465E+00   -0.21636E+03   720   0.384E+02
+DAV:   2    -0.101186509319E+02   -0.10263E+02   -0.98359E+01  1074   0.603E+01
+DAV:   3    -0.103166569684E+02   -0.19801E+00   -0.19685E+00   877   0.813E+00
+DAV:   4    -0.103175085260E+02   -0.85156E-03   -0.85152E-03  1069   0.636E-01
+DAV:   5    -0.103175112032E+02   -0.26772E-05   -0.26773E-05   935   0.240E-02    0.468E+00
+RMM:   6    -0.106546867452E+02   -0.33718E+00   -0.75349E-02   732   0.182E+00    0.202E+00
+RMM:   7    -0.106091737483E+02    0.45513E-01   -0.45188E-02   759   0.137E+00    0.114E+00
+RMM:   8    -0.106208045947E+02   -0.11631E-01   -0.24982E-02   766   0.106E+00    0.232E-01
+RMM:   9    -0.106203334996E+02    0.47110E-03   -0.22986E-03   823   0.356E-01    0.879E-02
+RMM:  10    -0.106204154457E+02   -0.81946E-04   -0.48443E-04   809   0.158E-01    0.225E-02
+RMM:  11    -0.106204555292E+02   -0.40084E-04   -0.17851E-04   810   0.993E-02    0.125E-02
+RMM:  12    -0.106204562644E+02   -0.73521E-06   -0.24973E-05   858   0.380E-02    0.530E-03
+RMM:  13    -0.106204574143E+02   -0.11499E-05   -0.58264E-06   725   0.184E-02
+   1 F= -.10620457E+02 E0= -.10620457E+02  d E =-.266528E-11  mag=    -0.0000

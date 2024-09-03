@@ -13,7 +13,9 @@ import logging
 import os
 import pathlib
 import shutil
-from typing import Union
+import warnings
+from subprocess import run
+from typing import List, Optional, Union
 
 import numpy as np
 from aiida.repository import FileType
@@ -24,15 +26,30 @@ from parsevasp.poscar import Poscar
 # pylint: disable=logging-format-interpolation, import-outside-toplevel
 
 INPUT_OBJECTS = ('POSCAR', 'INCAR', 'KPOINTS')
-EXCLUDED = ('POTCAR', '.aiida')
+# Objects (files) that should be excluded from storing in the repository
+# These objects are mostly not used for parsing and can be large in size
+DEFAULT_EXCLUDED = (
+    'POTCAR',
+    '.aiida',
+    'LOCPOT',
+    'DOSCAR',
+    'PCDAT',
+    'EIGENVAL',
+    'OSZICAR',
+    'PCDAT',
+    'XDATCAR',
+    'REPORT',
+    'WAVECAR',
+    'CHG',
+)
 
 
 def data_path(*args):
     """Return a path to a file in the test data directory."""
     path = pathlib.Path(__file__).parent.parent.parent.parent / 'tests' / 'test_data' / pathlib.Path(*args)
     path = path.resolve()
-    assert path.exists()
-    assert path.is_absolute()
+    if not path.exists():
+        warnings.warn(f'Path {path} for test data does not exist.')
     return str(path)
 
 
@@ -85,6 +102,14 @@ class MockRegistry:
     A class to create and manage a registry of completed calculations.
 
     Calculations are identified using the hash of the parsed inputs.
+
+    The class uses environmental variables to control its behaviour:
+
+    - MOCK_{CODE}_REG_BASE: Prefix to the upload relative path
+    - MOCK_{CODE}_UPLOAD_PREFIX: Prefix to the upload relative path
+
+    The `{CODE}` is replaced with the `CODE_NAME` class attribute of the subclass.
+
     """
 
     CODE_NAME = 'ABSTRACT'
@@ -93,7 +118,9 @@ class MockRegistry:
         """
         Instantiate and Registry
         """
-        base_path = data_path('.') if base_path is None else pathlib.Path(base_path).absolute()
+        if base_path is None:
+            base_path = os.environ.get(f'MOCK_{self.CODE_NAME}_REG_BASE', data_path('.'))
+        base_path = pathlib.Path(base_path).absolute()
 
         if isinstance(base_path, (pathlib.Path, str)):
             self._search_paths = [pathlib.Path(base_path)]
@@ -189,17 +216,25 @@ class MockRegistry:
         """
         self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst, include_inputs)
 
-    def upload_calc(self, folder: pathlib.Path, rel_path: Union[pathlib.Path, str], excluded_object=None):
+    def upload_calc(
+        self, folder: pathlib.Path, rel_path: Union[pathlib.Path, str], excluded_object=None, included_object=None
+    ):
         """
         Register a calculation folder to primary search path of the registry
         """
         inp = list(INPUT_OBJECTS)
-        excluded = list(EXCLUDED)
+        excluded = list(DEFAULT_EXCLUDED)
+        # Exclude certain objects
         if excluded_object:
             excluded.extend(excluded_object)
+        # Include certain objects
+        if included_object is not None:
+            for name in included_object:
+                if name in excluded:
+                    del excluded[excluded.index(name)]
 
         # Check if the repository folder already exists
-        repo_calc_base = self.base_path / rel_path
+        repo_calc_base = self.base_path / pathlib.Path(self.get_upload_prefix() + str(rel_path))
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
@@ -257,9 +292,23 @@ class MockRegistry:
         """Update all calculations run by an workflow into the registry"""
         raise NotImplementedError
 
+    def get_upload_prefix(self):
+        """Prefix of the name of the calculation folder"""
+        prefix = os.environ.get(f'MOCK_{self.CODE_NAME}_UPLOAD_PREFIX')
+        if prefix:
+            prefix = prefix + '-'
+        else:
+            prefix = ''
+        return prefix
+
 
 class VaspMockRegistry(MockRegistry):
-    """Registry of mock code for VASP"""
+    """
+    Registry of mock code for VASP
+
+    The registry's base folder defaults to the `test_data` folder, but can be modified with the
+    `MOCK_VASP_REG_BASE` environmental variable.
+    """
 
     CODE_NAME = 'VASP'
 
@@ -272,7 +321,7 @@ class VaspMockRegistry(MockRegistry):
         assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
 
         # Check if the repository folder already exists
-        repo_calc_base = self.base_path / rel_path
+        repo_calc_base = self.base_path / pathlib.Path(self.get_upload_prefix() + str(rel_path))
         if repo_calc_base.exists():
             raise FileExistsError(f'There is already a directory at {repo_calc_base.resolve()}.')
 
@@ -283,7 +332,7 @@ class VaspMockRegistry(MockRegistry):
         repo_in.mkdir(parents=True)
         repo_out.mkdir(parents=True)
 
-        exclude = list(EXCLUDED)
+        exclude = list(DEFAULT_EXCLUDED)
         if excluded_names:
             exclude.extend(excluded_names)
 
@@ -356,18 +405,32 @@ class MockVasp:
     Mock VaspExecutable
     """
 
-    def __init__(self, workdir: Union[str, pathlib.Path], registry: VaspMockRegistry):
+    def __init__(
+        self,
+        workdir: Union[str, pathlib.Path],
+        registry: VaspMockRegistry,
+        vasp_cmd: Optional[Union[str, List[str]]] = None,
+        stdout_fname: str = 'vasp_output',
+    ):
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.
 
         Notice that we do not set the hash value at init of workdir as we allow
-        the unit of the MockVasp at any point, typically, you are prepping for
+        the unit of the MockVasp at any point, typically, you are preparing for
         a VASP calculation. Only when you execute VASP is the files checked, in this
         case when executing run. Thus, we calculate the hash of the workdir only then.
+
+        If the `vasp_cmd` is provided the mock vasp will run the command if needed and
+        upload the results to the registry. This can be useful for generating test/demo
+        data.
         """
         self.workdir = workdir
         self.registry = registry
+        if isinstance(vasp_cmd, str):
+            vasp_cmd = [vasp_cmd]
+        self.vasp_cmd = vasp_cmd
+        self.stdout_fname = stdout_fname
 
     def run(self, debug=True):
         """
@@ -386,13 +449,29 @@ class MockVasp:
         else:
             if debug:
                 print(f'Registered hashes: {self.registry.reg_hash}')
-            raise ValueError('The calculation is not registered.')
+            if self.vasp_cmd is not None:
+                with open(pathlib.Path(self.workdir) / self.stdout_fname, 'w') as stdout_handle:
+                    out = run(self.vasp_cmd, cwd=self.workdir, stdout=stdout_handle, check=False)
+                    if out.returncode != 0:
+                        raise ValueError(f'The command {self.vasp_cmd} failed with return code {out.returncode}')
+                    self.registry.upload_calc(self.workdir, hash_val)
+                if debug:
+                    print(f'Uploaded current calculation with hash: {hash_val}')
+            else:
+                raise ValueError('The calculation is not registered.')
 
     @property
     def is_runnable(self) -> bool:
         """Check if the mock code can be executed."""
         hash_val = self.registry.compute_hash(self.workdir)
-        return hash_val in self.registry.reg_hash
+        if hash_val in self.registry.reg_hash:
+            return True
+        # Can we run vasp it self?
+        if self.vasp_cmd is not None:
+            out = run(['which', self.vasp_cmd[0]], check=False)
+            if out.returncode == 0:
+                return True
+        return False
 
 
 def copy_from_aiida(name: str, node, dst: pathlib.Path):

@@ -12,6 +12,23 @@ code_specific:
                 num_machines: 1
         settings: {}
         inputset_overrides: {}
+    # Code used for testing and demonstration
+    'mock-vasp@localhost':
+        options:
+            max_wallclock_seconds: 3600
+            resources:
+                tot_num_mpiprocs: 1
+                num_machines: 1
+            withmpi: false
+        settings: {}
+        inputset_overrides:
+            nedos: 100
+            lorbit: null
+            encut: 250
+            prec: normal
+            algo: fast
+            lcharg: false
+
 default_options:
     # Put default options for the VaspCalculation here
     max_wallclock_seconds: 3600

@@ -232,3 +232,7 @@ class BandOptions(OptionContainer):
         "  ['with_time_reversal', 'reference_distance', 'recipe', 'threshold', 'symprec', 'angle_tolerance']",
         default={},
     )
+    kpoints_per_split: int = Field(
+        description='Number of kpoints per split for the band structure calculation',
+        default=80,
+    )

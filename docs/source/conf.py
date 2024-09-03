@@ -9,9 +9,11 @@ sphinx-quickstart on Mon Feb 12 09:24:45 2018.
 import datetime
 import os
 import re
-import sys
 
-sys.path.insert(0, os.path.abspath('.'))
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+# sys.path.insert(0, os.path.abspath('.'))
 
 # -- General configuration ------------------------------------------------
 
@@ -26,14 +28,34 @@ extensions = [
     'aiida.sphinxext',
     'sphinxcontrib.apidoc',
     'sphinxext.remoteliteralinclude',
-    'myst_parser',
+    'sphinx_copybutton',
+    'sphinx_togglebutton',
+    'sphinx_design',
+    'myst_nb',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'myst-nb',
+    '.ipynb': 'myst-nb',
+    '.myst': 'myst-nb',
+}
+
+# myst extensions
+myst_enable_extensions = [
+    'amsmath',
+    'colon_fence',
+    'deflist',
+    'dollarmath',
+    'html_image',
+    'substitution',
+]
+
+nb_execution_mode = 'auto'
 
 # The master toctree document.
 master_doc = 'index'
@@ -65,20 +87,31 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
-if on_rtd:
-    html_theme = 'default'
-    from aiida.manage import configuration
+# #
+# on_rtd = os.environ.get('READTHEDOCS') == 'True'
+# if on_rtd:
+#     html_theme = 'default'
+#     from aiida.manage import configuration
 
-    configuration.IN_RT_DOC_MODE = True
-    configuration.BACKEND = 'django'
-else:
-    import sphinx_rtd_theme  # pylint: disable=import-error
+#     configuration.IN_RT_DOC_MODE = True
+#     configuration.BACKEND = 'django'
+# else:
+#     import sphinx_rtd_theme  # pylint: disable=import-error
 
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#     html_theme = 'sphinx_rtd_theme'
+#     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
+html_theme = 'pydata_sphinx_theme'
+html_theme_options = {
+    'github_url': 'https://github.com/aiida-vasp/aiida-vasp',
+    'use_edit_page_button': True,
+}
+html_context = {
+    'github_user': 'aiida-vasp',
+    'github_repo': 'aiida-vasp',
+    'github_version': 'main',
+    'doc_path': 'docs/source',
+}
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
