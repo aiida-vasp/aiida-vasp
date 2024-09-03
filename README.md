@@ -1,7 +1,7 @@
 # AiiDA VASP plugin
 
 | Release |  [![PyPI](https://img.shields.io/pypi/v/aiida-vasp)](https://pypi.org/project/aiida-vasp/) | [![PyPI](https://img.shields.io/pypi/status/aiida-vasp )](https://pypi.org/project/aiida-vasp/)|
-| --------| ------ | ----|
+|:--------|:------ |:----|
 | Build   | [![Coverage](https://codecov.io/gh/espenfl/aiida-vasp/branch/master/graph/badge.svg)](https://codecov.io/gh/espenfl/aiida-vasp)| [![Docs](https://readthedocs.org/projects/aiida-vasp-plugin/badge/?version=latest)](http://aiida-vasp-plugin.readthedocs.io/en/latest/?badge=latest)  |
 | Stats  | [![Dowloads](https://img.shields.io/pypi/dm/aiida-vasp)](https://pypi.org/project/aiida-vasp/) | [![Commits]( https://img.shields.io/github/commit-activity/m/aiida-vasp/aiida-vasp)](https://github.com/aiida-vasp/aiida-vasp/commits/develop) |
 
