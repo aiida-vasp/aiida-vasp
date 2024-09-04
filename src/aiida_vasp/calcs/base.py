@@ -1,7 +1,6 @@
 """
 Base calculation class.
 
------------------------
 Base and meta classes for VASP calculation classes.
 """
 

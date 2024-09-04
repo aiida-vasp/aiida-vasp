@@ -10,7 +10,7 @@ substitutions:
 
 (using-workflows)=
 
-# Workflows in aiida-vasp
+# Workflows
 
 :::{note}
 See [this tutorial](#silicon_sp_tutorial) for a quick tour on how to use workflows in aiida-vasp.
@@ -48,6 +48,7 @@ You can also try to turn off the {py:func}`process handler <aiida.engine.process
 ./inputs
 ./design_principles
 ./bundled
+./writing_workflows
 ```
 
 

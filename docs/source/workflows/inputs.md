@@ -3,13 +3,15 @@ file_format: mystnb
 kernelspec:
   display_name: Python 3
   name: python3
-substitutions:
-  VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
-  VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
-  VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
-  VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
-  calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
-  workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
+
+myst:
+  substitutions:
+    VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+    VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
+    VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
+    VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
+    calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
+    workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
 ---
 
 (workflow_inputs)=
@@ -83,7 +85,7 @@ pseudopotential configurations.
 The default `UCLRelaxSet` is stored in the `<root>/src/workchains/v2/inputset` folder with the
 following content:
 
-:::{literal-include} ../../../src/aiida_vasp/workchains/v2/inputset/UCLRelaxSet.yaml
+:::{literalinclude} ../../../src/aiida_vasp/workchains/v2/inputset/UCLRelaxSet.yaml
 :::
 
 
@@ -93,7 +95,7 @@ default size of the jobs, wall time limits, etc., may vary.
 
 The default configuration is stored in the `<root>/src/aiida_vasp/workchains/v2/common` with the following content:
 
-:::{literal-include} ../../../src/aiida_vasp/workchains/v2/common/VaspPreset.yaml
+:::{literalinclude} ../../../src/aiida_vasp/workchains/v2/common/VaspPreset.yaml
 :::
 
 :::{hint}

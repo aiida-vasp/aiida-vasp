@@ -137,10 +137,13 @@ Please accept that the development of this plugin is a community effort and any 
 
 getting_started/index
 tutorials/index
-workchains/index
 workflows/index
 concepts/index
+developments/index
+apidocs/index
+./changelog.md
 ```
+
 
 # Getting help
 
@@ -155,7 +158,7 @@ not paid for this work. Please respect potential lead times in getting answers a
 
 [aiida]: https://www.aiida.net
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
-[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
+[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 [conda]: https://docs.conda.io/en/latest/
 [open an issue]: https://github.com/aiida-vasp/aiida-vasp/issues
 [submit a pull request]: https://github.com/aiida-vasp/aiida-vasp/pull

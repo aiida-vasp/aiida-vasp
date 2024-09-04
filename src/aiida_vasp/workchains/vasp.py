@@ -1,7 +1,7 @@
 """
 VASP workchain.
-
 ---------------
+
 Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 
 

@@ -1,7 +1,6 @@
 """
 Representation of the POTCAR files.
 
------------------------------------
 Attempt to create a convenient but license-respecting storage system that also guarantees provenance.
 
 Consists of two classes, PotcarData and PotcarFileData. Between the two data node classes exists a
@@ -236,7 +235,8 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     """
     Walk the file system and find POTCAR files under a given directory.
 
-    Build a list of potcars including their full path and wether they are archived inside a tar archive.
+    Build a list of POTCARs including their full path and whether they are archived
+    inside a tar archive.
     """
 
     def __init__(self, path):  # pylint: disable=missing-function-docstring

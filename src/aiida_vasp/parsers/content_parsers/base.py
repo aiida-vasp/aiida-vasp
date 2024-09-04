@@ -1,7 +1,6 @@
 """
 Base classes for the VASP content parsers.
 
-------------------------------------------
 Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
@@ -43,6 +42,7 @@ class BaseFileParser:
 
     Parameters
     ----------
+
     handler : object, optional
         A file like object, for instance a file handler representing the file or object
         containing content to be parsed. Typically used when parsing completed calculations and is
@@ -124,6 +124,7 @@ class BaseFileParser:
 
         Parameters
         ----------
+
         settings : None or a dict
             The settings to be used for the content parser. Can be None if no settings is supplied
             to init. Defaults are then set.
@@ -153,11 +154,13 @@ class BaseFileParser:
 
         Parameters
         ----------
+
         quantity_key : str
             A string specifying the key of the quantity to be fetched.
 
         Returns
         -------
+
         result : object
             If we have initialized the content parser with an AiiDA data structure, we return it in
             its original form. If the ``quantity_key`` is not find to be parsable by this content
@@ -220,6 +223,7 @@ class BaseFileParser:
 
         Parameters
         ----------
+
         handler : object
             A file like object that provides the necessary content to be parsed.
 
@@ -236,6 +240,7 @@ class BaseFileParser:
 
         Parameters
         ----------
+
         data : object
             A valid AiiDA data structure object.
 

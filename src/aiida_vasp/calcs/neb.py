@@ -20,7 +20,6 @@ class VaspNEBCalculation(VaspCalculation):
     """
     NEB calculations using VASP
 
-    ------------------------------------
     Calculations for performing NEB calculations.
     NEB calculations requires standard VASP inputs, but POSCAR are placed in
     folder names 00, 01, 02... N for N-1 number of images.

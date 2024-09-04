@@ -11,7 +11,7 @@ description = "AiiDA plugin for running VASP calculations and workflows."
 authors = [
     { name = "Espen Flage-Larsen", email = "espen.flage-larsen@sigma2.no" },
 ]
-readme = "README.rst"
+readme = "README.md"
 license = { file = "LICENSE.txt" }
 classifiers = [
     "Programming Language :: Python",

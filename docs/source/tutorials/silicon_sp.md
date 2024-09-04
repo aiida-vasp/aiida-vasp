@@ -9,6 +9,8 @@ kernelspec:
 
 :::{note}
 This tutorial is can be executed as a jupyter notebook.
+Please copy the `mock_registry` folder found to your directory of execution, otherwise the mock
+code cannot locate the pre-computed calculations to be used as dummy output.
 :::
 
 `VaspBuilderUpdater` provides a simplified interface for setting up calculations

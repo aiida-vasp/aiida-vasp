@@ -1,7 +1,6 @@
 """
 Commands for the potential interface.
 
--------------------------------------
 Commandline util for dealing with potcar files.
 """
 

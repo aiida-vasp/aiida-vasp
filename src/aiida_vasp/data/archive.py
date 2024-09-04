@@ -1,7 +1,6 @@
 """
 A general archive class.
 
-------------------------
 Archive data class: store multiple files together in a compressed archive in the repository.
 """
 

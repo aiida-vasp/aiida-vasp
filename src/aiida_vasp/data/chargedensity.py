@@ -1,7 +1,6 @@
 """
 Representation of CHGCAR objects.
 
--------------------------------
 Charge density data node (stores CHGCAR objects in the repository).
 """
 

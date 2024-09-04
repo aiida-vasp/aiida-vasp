@@ -5,9 +5,10 @@ kernelspec:
   name: python3
 substitutions:
   VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
-  VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
+  VaspBandsWorkchain: "{py:class}`VaspBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
+  VaspHybridBandsWorkchain: "{py:class}`VaspHybridBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspHybridBandsWorkchain>`"
   VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
-  VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
+  VaspConvergenceWorkChain: "{py:class}`VaspConvergenceWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
   calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
   workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
 ---

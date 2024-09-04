@@ -18,13 +18,6 @@ In the documentation you will also find details on how to setup a `profile`, `Co
 
 [VASP] is licensed software and you need to obtain your own [VASP license]. If you need to install [VASP] yourself or need to assist someone, for instance HPC maintenance staff, please consult the [VASP wiki].
 
-[aiida]: https://www.aiida.net
-[online documentation]: https://aiida.readthedocs.io/projects/aiida-core/en/latest/index.html
-[aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
-[vasp]: https://www.vasp.at
-[vasp license]: https://www.vasp.at/sign_in/registration_form/
-[vasp wiki]: https://www.vasp.at/wiki/index.php/The_VASP_Manual
-
 
 ## Install the plugin
 
@@ -85,3 +78,7 @@ and the printed list should include the  `vasp.vasp` entry.
 [pymatgen]: https://pymatgen.org
 [aiida-quantumespresso]: https://github.com/aiidateam/aiida-quantumespresso
 [aiida-castep]: https://github.com/zhubonan/aiida-castep
+[aiida]: https://www.aiida.net
+[online documentation]: https://aiida.readthedocs.io/projects/aiida-core/en/latest/index.html
+[vasp license]: https://www.vasp.at/sign_in/registration_form/
+[vasp wiki]: https://www.vasp.at/wiki/index.php/The_VASP_Manual

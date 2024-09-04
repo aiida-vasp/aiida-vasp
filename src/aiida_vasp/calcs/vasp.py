@@ -27,7 +27,6 @@ class VaspCalculation(VaspCalcBase):
     """
     General-purpose VASP calculation.
 
-    ---------------------------------
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'CONTCAR'
     and Wannier90 input / output objects. These objects are deleted after parsing.
     Additional retrieve objects can be specified via the
@@ -331,6 +330,7 @@ class VaspCalculation(VaspCalcBase):
             True if input kpoints node is needed
             (py:method::VaspCalculation.use_kpoints),
             False otherwise
+
         needs 'parameters' input to be set
         (py:method::VaspCalculation.use_parameters)
         """
@@ -344,6 +344,7 @@ class VaspCalculation(VaspCalcBase):
             True if CHGCAR must be present
             (py:method::NscfCalculation.use_charge_densities),
             False otherwise
+
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
         """
