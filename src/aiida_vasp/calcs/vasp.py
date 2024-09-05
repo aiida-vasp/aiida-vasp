@@ -12,6 +12,7 @@ import os
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
+from aiida.orm.nodes.data.base import to_aiida_type
 
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -77,11 +78,13 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'parameters',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             help='The VASP input parameters (INCAR).',
         )
         spec.input(
             'dynamics',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
             required=False,
         )
@@ -119,6 +122,7 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'settings',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             required=False,
             help='Additional parameters not related to VASP itself.',
         )

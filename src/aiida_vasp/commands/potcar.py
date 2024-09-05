@@ -16,6 +16,25 @@ from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
 
 VERDI_DATA = cmp_load_verdi_data()
 
+FUNCTIONAL_CHOICES = [
+    'PBE',
+    'PBE_52',
+    'PBE_52_W_HASH',
+    'PBE_54',
+    'PBE_54_W_HASH',
+    'PBE_64',
+    'LDA',
+    'LDA_52',
+    'LDA_52_W_HASH',
+    'LDA_54',
+    'LDA_54_W_HASH',
+    'LDA_64',
+    'PW91',
+    'LDA_US',
+    'PW91_US',
+    'Perdew_Zunger81',
+]
+
 
 @VERDI_DATA.group('vasp.potcar')
 def potcar():
@@ -90,6 +109,57 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
     click.echo(f'POTCAR files found: {num_found}. New files uploaded: {num_uploaded}, Added to Family: {num_added}')
     if dry_run:
         click.echo('No files were uploaded due to --dry-run.')
+
+
+@potcar.command()
+@click.option(
+    '--functional',
+    help='Name of the functional to be used for the POTCAR files.',
+    choices=FUNCTIONAL_CHOICES,
+    default='PBE',
+)
+@options.FAMILY_NAME()
+@options.DESCRIPTION(help='A description for the family.', callback=try_grab_description)
+@click.option(
+    '--stop-if-existing', is_flag=True, help='An option to abort when encountering a previously uploaded POTCAR file.'
+)
+@options.DRY_RUN()
+@with_dbenv()
+def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_run):
+    """
+    Upload a family of VASP potcar files from pymatgen
+
+    If you have pymatgen installed and configured to locate the correct VASP POTCAR files,
+    you can use this command to upload a family of VASP potcar files into aiida-vasp.
+    """
+    from pathlib import Path
+
+    from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle
+
+    from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder
+
+    funcdir = PotcarSingle.functional_dir[functional]
+    pmg_vasp_psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')
+    if pmg_vasp_psp_dir is None:
+        raise click.Abort(
+            'PMG_VASP_PSP_DIR is not set, please set it in your .pmgrc.yaml file' ' or set the environment variable'
+        )
+    source_folder = f'{pmg_vasp_psp_dir}/{funcdir}'
+    if not Path(source_folder).exists():
+        raise click.Abort(f'The source folder {source_folder} does not exist.')
+    with cli_spinner():
+        # Convert the pymatgen potcar folder to a temporary folder with the same structure as the VASP potcar folder
+        with temporary_folder() as temp_folder:
+            converted_folder = convert_pymatgen_potcar_folder(source_folder, temp_folder)
+            # Try to upload from this folder
+            num_found, num_added, num_uploaded = PotcarData.upload_potcar_family(
+                converted_folder, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run
+            )
+            click.echo(
+                f'POTCAR files found: {num_found}. New files uploaded: {num_uploaded}, Added to Family: {num_added}'
+            )
+            if dry_run:
+                click.echo('No files were uploaded due to --dry-run.')
 
 
 @potcar.command()
