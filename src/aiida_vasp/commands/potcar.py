@@ -115,7 +115,7 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
 @click.option(
     '--functional',
     help='Name of the functional to be used for the POTCAR files.',
-    choices=FUNCTIONAL_CHOICES,
+    type=click.Choice(FUNCTIONAL_CHOICES),
     default='PBE',
 )
 @options.FAMILY_NAME()
@@ -150,10 +150,10 @@ def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_ru
     with cli_spinner():
         # Convert the pymatgen potcar folder to a temporary folder with the same structure as the VASP potcar folder
         with temporary_folder() as temp_folder:
-            converted_folder = convert_pymatgen_potcar_folder(source_folder, temp_folder)
+            convert_pymatgen_potcar_folder(source_folder, temp_folder)
             # Try to upload from this folder
             num_found, num_added, num_uploaded = PotcarData.upload_potcar_family(
-                converted_folder, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run
+                temp_folder, name, description, stop_if_existing=stop_if_existing, dry_run=dry_run
             )
             click.echo(
                 f'POTCAR files found: {num_found}. New files uploaded: {num_uploaded}, Added to Family: {num_added}'
