@@ -1,11 +1,12 @@
 ---
-substitutions:
-  VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
-  VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
-  VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
-  VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
-  calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
-  workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
+myst:
+  substitutions:
+    VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+    VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
+    VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
+    VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
+    calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
+    workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
 ---
 
 (using-workflows)=

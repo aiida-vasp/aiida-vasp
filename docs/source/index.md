@@ -70,6 +70,26 @@ Learn the concepts.
 ```
 :::
 
+:::{grid-item-card} {fa}`cogs;mr-1` How-to guides
+:text-align: center
+:shadow: md
+
+Guides for achieving specific goals.
++++
+
+```{button-ref} howto/index
+:ref-type: doc
+:click-parent:
+:expand:
+:color: primary
+:outline:
+
+
+How-to guides.
+```
+:::
+
+
 :::{grid-item-card} {fa}`cogs;mr-1` Workflows
 :text-align: center
 :shadow: md
@@ -77,6 +97,8 @@ Learn the concepts.
 Automate your VASP calculations with pre-defined workflows.
 
 +++
+
+
 
 ```{button-ref} workflows/index
 :ref-type: doc
@@ -139,6 +161,7 @@ getting_started/index
 tutorials/index
 workflows/index
 concepts/index
+howto/index
 developments/index
 apidocs/index
 ./changelog.md

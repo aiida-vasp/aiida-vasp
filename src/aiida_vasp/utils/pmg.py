@@ -30,6 +30,9 @@ class PymatgenAdapator:
     """
     Adaptor for getting pymatgen objects from a VASP calculation/workflow
     This work by first exporting the calculation to a temporary folder and then parsing the files using pymatgen.
+
+    Some of the pymatgen objects does not have the from_dict method implemented as required by MSONable.
+    Hence, they can only be reconstructed as a dictionary.
     """
 
     FILES = {
@@ -88,6 +91,10 @@ class PymatgenAdapator:
                     obj = cls(fname)
                 self.pmg_objects[name] = obj
 
+    def export_files(self, dst: Union[Path, str]):
+        """Export the VASP calculation files to a destination folder"""
+        export_vasp(self.node, dst)
+
     def _get_pmg_object(self, name: str):
         """
         Get a pymatgen object
@@ -95,6 +102,8 @@ class PymatgenAdapator:
         1. If we can find the object in parsed object , then just return it.
         2. If it is not already parsed, try to load the cache (stored in the extras)
         3. Otherwise, try to export and parse from the files explicitly. (slow)
+
+        :param name: Name of the object to get (e.g. 'vasprun', 'outcar', 'poscar', 'incar', 'kpoints', 'ibzkpt')
         """
         # We already parsed the calculation, so we can just return the object
         # Since we have access it - save it to the cache
@@ -217,33 +226,43 @@ class PymatgenAdapator:
 
 
 @ensure_node_first_arg
-def get_vasprun(node, store_cache=True):
+def get_vasprun(node, store_cache=True) -> pvasp.Vasprun:
+    """Return the Vasprun object"""
     return PymatgenAdapator(node, store_cache=store_cache).vasprun
 
 
 @ensure_node_first_arg
-def get_outcar(node, store_cache=True):
+def get_outcar(node, store_cache=True) -> pvasp.Outcar:
+    """Return the OUTCAR object"""
     return PymatgenAdapator(node, store_cache=store_cache).outcar
 
 
 @ensure_node_first_arg
-def get_incar(node, store_cache=True):
+def get_incar(node, store_cache=True) -> pvasp.Incar:
+    """Return the INCAR object"""
     return PymatgenAdapator(node, store_cache=store_cache).incar
 
 
 @ensure_node_first_arg
-def get_kpoints(node, store_cache=True):
+def get_kpoints(node, store_cache=True) -> pvasp.Kpoints:
+    """Return the Kpoints object"""
     return PymatgenAdapator(node, store_cache=store_cache).kpoints
 
 
 @ensure_node_first_arg
-def get_ibzkpt(node, store_cache=True):
+def get_ibzkpt(node, store_cache=True) -> pvasp.Kpoints:
+    """Return the Kpoints object using the IBZKPT file"""
     return PymatgenAdapator(node, store_cache=store_cache).ibzkpt
 
 
 def convert_pymatgen_potcar_folder(src: Union[Path, str], dst: Union[Path, str]):
     """
     Convert pymatgen potcar folder to a structure used by aiida-vasp
+
+    :param src: Path to the pymatgen potcar folder
+    :param dst: Path to the aiida-vasp potcar folder
+
+    :returns: None
     """
     import gzip
 

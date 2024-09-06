@@ -1,9 +1,6 @@
 """
-The standard stream parser interface for VASP.
-
-----------------------------------------------
-Contains the parsing interfaces to ``parsevasp`` used to parse standard streams
-for VASP related notification, warnings and errors.
+This module contains the parsing interfaces to ``parsevasp`` used to parse standard streams
+for VASP related notification, warnings, and errors.
 """
 
 # pylint: disable=abstract-method
@@ -15,7 +12,12 @@ from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 
 
 class StreamParser(BaseFileParser):
-    """Parser used for parsing errors and warnings from VASP."""
+    """
+    Parser used for parsing errors and warnings from VASP.
+
+    :ivar DEFAULT_SETTINGS: Default settings for quantities to parse.
+    :ivar PARSABLE_QUANTITIES: The quantities that can be parsed.
+    """
 
     DEFAULT_SETTINGS = {'quantities_to_parse': ['notifications']}
 
@@ -28,13 +30,11 @@ class StreamParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize a ``parsevasp`` object of ``Stream`` using a file like handler.
+        """
+        Initialize a ``parsevasp`` object of ``Stream`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary standard stream content to be parsed.
-
+        :param handler: A file like object that provides the necessary standard stream content to be parsed.
+        :type handler: file-like object
         """
 
         # First get any special config from the parser settings, else use the default
@@ -52,15 +52,15 @@ class StreamParser(BaseFileParser):
 
     @property
     def notifications(self):
-        """Fetch the notifications that VASP generated.
+        """
+        Fetch the notifications that VASP generated.
 
-        Returns
-        -------
-        notifications : list
-            A list of all notifications from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
-            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
-            of the notification and the regular expression detected as string values.
-
+        :returns: A list of all notifications from VASP. Each entry is a dict with the keys ``name``,
+            ``kind``, ``message``
+            and ``regex`` containing the name of the message, what kind it is (``ERROR`` or ``WARNING``),
+            a description
+            of the notification, and the regular expression detected as string values.
+        :rtype: list
         """
 
         # ``parsevasp`` returns ``VaspStream`` objects, which we cannot serialize. We could serialize this, but
@@ -79,43 +79,37 @@ class StreamParser(BaseFileParser):
 
     @property
     def errors(self):
-        """Fetch the errors that VASP generated.
+        """
+        Fetch the errors that VASP generated.
 
-        Returns
-        -------
-        errors : list
-            A list of all errors from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
-            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
-            of the error and the regular expression detected as string values.
-
+        :returns: A list of all errors from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
+            and ``regex`` containing the name of the message, what kind it is (``ERROR``), a description
+            of the error, and the regular expression detected as string values.
+        :rtype: list
         """
 
         return [item for item in self._content_parser.entries if item.kind == 'ERROR']
 
     @property
     def warnings(self):
-        """Fetch the warnings that VASP generated.
+        """
+        Fetch the warnings that VASP generated.
 
-        Returns
-        -------
-        warnings : list
-            A list of all warnings from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
-            and ``regex`` containing name of the message, what kind it is (``ERROR`` or ``WARNING``), a description
-            of the error and the regular expression detected as string values.
-
+        :returns: A list of all warnings from VASP. Each entry is a dict with the keys ``name``, ``kind``, ``message``
+            and ``regex`` containing the name of the message, what kind it is (``WARNING``), a description
+            of the warning, and the regular expression detected as string values.
+        :rtype: list
         """
 
         return [item for item in self._content_parser.entries if item.kind == 'WARNING']
 
     @property
     def has_entries(self):
-        """Check if there are notifications from VASP present according to the config after parsning.
+        """
+        Check if there are notifications from VASP present according to the config after parsing.
 
-        Returns
-        -------
-        entries : bool
-            ``True`` if notifications was detected, ``False`` otherwise.
-
+        :returns: ``True`` if notifications were detected, ``False`` otherwise.
+        :rtype: bool
         """
 
         entries = self._content_parser.has_entries
@@ -123,13 +117,11 @@ class StreamParser(BaseFileParser):
 
     @property
     def number_of_entries(self):
-        """Find the number of unique notifications from VASP.
+        """
+        Find the number of unique notifications from VASP.
 
-        Returns
-        -------
-        number_of_entries : int
-            The number of unique notification entries that VASP generated.
-
+        :returns: The number of unique notification entries that VASP generated.
+        :rtype: int
         """
 
         number_of_entries = len(self._content_parser)

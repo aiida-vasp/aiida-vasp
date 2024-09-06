@@ -227,14 +227,13 @@ def dryrun_vasp(input_dict, vasp_exe='vasp_std', timeout=10, work_dir=None, keep
 def get_jobscheme(input_dict, nprocs, vasp_exe='vasp_std', **kwargs):
     """
     Perform a dryrun for the input and workout the best parallelisation strategy
-    Args:
-        input_dict (dict,ProcessBuilder): Inputs of the VaspCalculation
-        nprocs (int): Target number of processes to be used
-        vasp_exe (str): The executable of local VASP program to be used
-        kwargs: Addition keyword arguments to be passed to `JobScheme`
 
-    Returns:
-        int, int: The KPAR and NCORE that should be used
+    :param input_dict (dict,ProcessBuilder): Inputs of the VaspCalculation
+    :param nprocs (int): Target number of processes to be used
+    :param vasp_exe (str): The executable of local VASP program to be used
+    :param kwargs: Addition keyword arguments to be passed to `JobScheme`
+
+    :returns tuple(int, int): The KPAR and NCORE that should be used
 
     """
     dryout = dryrun_vasp(input_dict, vasp_exe)
