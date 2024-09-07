@@ -102,7 +102,7 @@ vasprun PymatgenAdapter(vasp_calc).vasprun  # This WILL re-export the files to t
 (potcar-from-pymatgen)=
 ### Uploading pseduopotentials from a pymatgen installation
 
-If you have a pymatgen installation with VASP POTCARs configured, you can use the `verdi data vasp.potcar upload-from-pymatgen` command to upload them to the AiiDA database.
+If you have a pymatgen installation with VASP POTCARs configured (following this [guide](https://pymatgen.org/installation.html#potcar-setup)), you can use the `verdi data vasp.potcar upload-from-pymatgen` command to upload them to the AiiDA database.
 As in the normal upload, the family name must be specified.
 Pymatgen distinguishes different POTCAR sets as different *functionals*, so the functional must also be specified.
 The `PBE.54` family mentioned in the documentation refers to the `potpaw.54` POTCAR set, which is the `PBE_54` functional as in pymatgen.
