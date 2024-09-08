@@ -494,7 +494,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         query = orm.QueryBuilder()
         query.append(
             orm.StructureData,
-            filters={'id': workchain.outputs.structure.id},
+            filters={'id': workchain.outputs.structure.pk},
             tag='workchain-out',
         )
         query.append(orm.CalcJobNode, with_outgoing='workchain-out', tag='calcjob')

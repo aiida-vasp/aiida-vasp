@@ -592,7 +592,7 @@ def get_primitive_strucrture_and_scf_kpoints(structure):
     from .common.dryrun import dryrun_relax_builder
 
     # Locate the relaxation work
-    relax_work = structure.get_incoming(link_label_filter='relax__structure').one().node
+    relax_work = structure.base.links.get_incoming(link_label_filter='relax__structure').one().node
     primitive = get_explicit_kpoints_path(structure)['primitive_structure']
 
     # Create an restart builder
@@ -772,7 +772,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         self.report(f'Extracting output bandstructure from {len(self.ctx.workchains)} workchains.')
         kwargs = {}
         for work in workchains:
-            link_label = work.get_incoming(link_type=LinkType.CALL_WORK).one().link_label
+            link_label = work.base.links.get_incoming(link_type=LinkType.CALL_WORK).one().link_label
             link_idx = int(link_label.split('_')[-1])
             kwargs[f'band_{link_idx:03d}'] = work.outputs.bands
             kwargs[f'kpoint_{link_idx:03d}'] = work.inputs.kpoints
