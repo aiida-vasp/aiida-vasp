@@ -224,10 +224,14 @@ def niggli_reduce_spglib(structure):
 @calcfunction
 def neb_interpolate(init_structure, final_strucrture, nimages):
     """
-    Interplate NEB frames using the starting and the final structures
+    Interpolate NEB frames using the starting and the final structures
 
-    Get around the PBC warpping problem by calculating the MIC displacements
+    Get around the PBC wrapping problem by calculating the MIC displacements
     from the initial to the final structure
+
+    The initial structure is not changed, while the final structure is
+    modified to be consistent with the initial structure in terms of absolute
+    displacements, i.e. the final structure is *unwrapped*.
     """
     from ase.neb import NEB
 

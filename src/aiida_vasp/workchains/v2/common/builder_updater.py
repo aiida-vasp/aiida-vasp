@@ -522,6 +522,19 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         self.set_final_structure(interpolated['image_final'])
         return self
 
+    def view_images(self):
+        """
+        Visualize the images using ASE
+        """
+        from ase.visualize import view
+
+        view(
+            map(
+                lambda x: x.get_ase(),
+                [self.builder.initial_structure, *self.builder.neb_images.values(), self.builder.final_structure],
+            )
+        )
+
 
 class VaspRelaxUpdater(VaspBuilderUpdater):
     """
