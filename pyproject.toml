@@ -47,13 +47,7 @@ Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
 tests = ["aiida-core>=2.6", "pytest", "PyCifRW"]
-pre-commit = [
-    "tox>=3.23.0",
-    "virtualenv>20",
-    "pre-commit>=2.2,<4.0",
-    "pylint>=2.15,<3.3",
-    "sphinx-lint>=0.6,<2.0",
-]
+pre-commit = ["pre-commit"]
 docs = [
     "aiida-core[docs]~=2.4",
     "sphinx-autobuild",
@@ -65,7 +59,6 @@ docs = [
     "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
 ]
-
 graphs = ["matplotlib"]
 
 [project.entry-points."aiida.cmdline.data"]
