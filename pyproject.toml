@@ -52,7 +52,7 @@ pre-commit = [
     "virtualenv>20",
     "pre-commit>=2.2,<4.0",
     "pylint>=2.15,<3.3",
-    "sphinx-lint~=0.6",
+    "sphinx-lint>=0.6,<2.0",
 ]
 docs = [
     "aiida-core[docs]~=2.4",
