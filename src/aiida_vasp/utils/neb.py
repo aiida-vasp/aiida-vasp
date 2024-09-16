@@ -29,7 +29,6 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
         dist = acombined.get_distance(i, i + len(ainit), vector=True, mic=True)
         disps.append(dist.tolist())
     disps = np.asarray(disps)
-    ainit.wrap(eps=1e-1)
     afinal = ainit.copy()
 
     # Displace the atoms according to MIC distances

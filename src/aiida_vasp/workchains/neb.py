@@ -66,7 +66,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
     _verbose = False
     _process_class = CalculationFactory('vasp.neb')
-    _norm_disp_threshold = 1.0
+    _norm_disp_threshold = 4.0
 
     @classmethod
     def define(cls, spec):

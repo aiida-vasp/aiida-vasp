@@ -407,10 +407,11 @@ class VaspParser(Parser):
         """Compose the `dielectrics` output node"""
         # The output can be an array or a dictionary of arrays - both cases should be handled
         arrays_or_dict = quantities_each.get(file_name, {}).get(name)
-        if isinstance(arrays_or_dict, dict):
+        # Avoid creating empty arrays
+        if isinstance(arrays_or_dict, dict) and len(arrays_or_dict) > 1:
             arrays_or_dict = {key: value for key, value in arrays_or_dict.items() if value is not None}
             return orm.ArrayData(arrays_or_dict)
-        elif isinstance(arrays_or_dict, (np.ndarray, list)):
+        elif isinstance(arrays_or_dict, (np.ndarray, list)) and len(arrays_or_dict) > 0:
             return orm.ArrayData({name: arrays_or_dict})
         return None
 
