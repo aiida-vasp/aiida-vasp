@@ -113,7 +113,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
     # Write POSCAR file for the input
     try:
-        out_structure = workchain_node.inputs.outputs.relax.structure
+        out_structure = workchain_node.outputs.relax.structure
     except AttributeError:
         print(
             'Cannot find the output structure - skipping.'
