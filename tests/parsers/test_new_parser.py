@@ -4,7 +4,22 @@ import numpy as np
 import pytest
 from aiida import orm
 
-from aiida_vasp.parsers.vasp import NotificationComposer, ParserSettingsConfig, VaspParser
+from aiida_vasp.parsers.vasp import NotificationComposer, ParserSettingsConfig, VaspParser, is_all_empty
+
+
+def test_all_empty_check():
+    """Test the is_all_empty function"""
+    empty = {'A': [], 'B': {'C': {}}}
+    assert is_all_empty(empty)
+    empty = []
+    assert is_all_empty(empty)
+    empty = {'A': []}
+    assert is_all_empty(empty)
+    not_empty = {'A': {'B': [1]}}
+    assert not is_all_empty(not_empty)
+    not_empty = {'A': [1, 2], 'B': 2}
+    assert not is_all_empty(not_empty)
+    assert not is_all_empty([1])
 
 
 def test_parser_bare(calc_with_retrieved, request):
@@ -14,6 +29,7 @@ def test_parser_bare(calc_with_retrieved, request):
     parser = VaspParser(node)
     parser.parse(retrieved_tempoary_folder=file_path)
     assert 'misc' in parser.outputs
+    assert 'site_magnetization' not in parser.outputs.misc.get_dict()
     assert 'structure' in parser.outputs
 
     node = calc_with_retrieved(file_path, {'parser_settings': {'include_quantity': ['projectors']}})
@@ -219,15 +235,8 @@ def test_basic_run(parser_with_retrieved):
     assert misc['run_stats']['user_time'] == pytest.approx(11.266)
     assert misc['run_stats']['system_time'] == pytest.approx(9.197)
     assert misc['run_stats']['elapsed_time'] == pytest.approx(22.518)
-    assert not misc['magnetization']
-    assert misc['site_magnetization'] == {
-        'sphere': {
-            'x': {'site_moment': {}, 'total_magnetization': {}},
-            'y': {'site_moment': {}, 'total_magnetization': {}},
-            'z': {'site_moment': {}, 'total_magnetization': {}},
-        },
-        'full_cell': [],
-    }
+    assert misc.get('magnetization') is None
+    assert misc.get('site_magnetization') is None
 
 
 def test_relax_run(parser_with_retrieved):

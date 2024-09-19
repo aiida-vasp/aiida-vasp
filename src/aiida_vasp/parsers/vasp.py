@@ -25,7 +25,7 @@ Main difference from the previous version
    default settings and update/add the `_compose_xx` methods.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import numpy as np
 from aiida import orm
@@ -360,6 +360,8 @@ class VaspParser(Parser):
         gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, MISC_QUANTITIES)
         gather_quantities(quantities_each, self.user_config.file_mapping['OUTCAR'], out_dict, MISC_QUANTITIES)
         gather_quantities(quantities_each, self.user_config.file_mapping['vasp_output'], out_dict, MISC_QUANTITIES)
+        # Filter field with all empty container
+        out_dict = {key: value for key, value in out_dict.items() if not is_all_empty(value)}
         return orm.Dict(dict=out_dict)
 
     def _compose_structure(self, quantities_each):
@@ -408,7 +410,7 @@ class VaspParser(Parser):
         # The output can be an array or a dictionary of arrays - both cases should be handled
         arrays_or_dict = quantities_each.get(file_name, {}).get(name)
         # Avoid creating empty arrays
-        if isinstance(arrays_or_dict, dict) and len(arrays_or_dict) > 1:
+        if isinstance(arrays_or_dict, dict) and len(arrays_or_dict) > 0:
             arrays_or_dict = {key: value for key, value in arrays_or_dict.items() if value is not None}
             return orm.ArrayData(arrays_or_dict)
         elif isinstance(arrays_or_dict, (np.ndarray, list)) and len(arrays_or_dict) > 0:
@@ -629,3 +631,19 @@ def get_structure_node(structure_dict):
     for site in structure_dict['sites']:
         node.append_atom(position=site['position'], symbols=site['symbol'], name=site['kind_name'])
     return node
+
+
+def is_all_empty(obj: Union[dict, list]):
+    """Check if all elements of a dictionary or list are empty"""
+    if isinstance(obj, dict):
+        if len(obj) == 0:
+            return True
+        else:
+            return all(is_all_empty(value) for value in obj.values())
+    elif isinstance(obj, list):
+        if len(obj) == 0:
+            return True
+        else:
+            return all(is_all_empty(value) for value in obj)
+    else:
+        return False
