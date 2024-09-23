@@ -51,7 +51,7 @@ pre-commit = [
     "tox>=3.23.0",
     "virtualenv>20",
     "pre-commit>=2.2,<4.0",
-    "pylint>=2.15,<3.3",
+    "pylint>=2.15,<3.4",
     "sphinx-lint>=0.6,<2.0",
 ]
 docs = [
