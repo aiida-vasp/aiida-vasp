@@ -105,6 +105,8 @@ MISC_QUANTITIES = (
     'magnetization',
 )
 
+ALLOW_EMPTY = ('notifications',)
+
 # Miscellaneous quantities that should be collected into an `arrays`` node
 COLLECTED_ARRAY_QUANTITIES = ('projectors', 'energies')
 # Standalone array quantities that should be stored in a separate node
@@ -361,7 +363,7 @@ class VaspParser(Parser):
         gather_quantities(quantities_each, self.user_config.file_mapping['OUTCAR'], out_dict, MISC_QUANTITIES)
         gather_quantities(quantities_each, self.user_config.file_mapping['vasp_output'], out_dict, MISC_QUANTITIES)
         # Filter field with all empty container
-        out_dict = {key: value for key, value in out_dict.items() if not is_all_empty(value)}
+        out_dict = {key: value for key, value in out_dict.items() if not is_all_empty(value) or key in ALLOW_EMPTY}
         return orm.Dict(dict=out_dict)
 
     def _compose_structure(self, quantities_each):
