@@ -727,7 +727,9 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         # Number of kpoints per split, NOT including the SCF kpoints
         nscf = scf_kpoints.get_kpoints().shape[0]
         per_split = orm.Int(self.inputs.band_settings['kpoints_per_split'] - nscf)
-        assert per_split.value > 10, 'Less than 10 actual band k points per split, please increase kpoints_per_split!'
+        if (per_split / nscf) <= 0.5:
+            per_split = int(nscf * 0.5)
+            self.report(f'WARNING: Too few actual band k points per split, setting it to: {per_split + nscf}')
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
 
