@@ -452,7 +452,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
             # Use the supplied kpoints density for DOS
             dos_kpoints = orm.KpointsData()
             dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
-            dos_kpoints.set_kpoints_mesh_from_density(self.inputs.band_settings['dos_kpoints_density'] * 2 * np.pi)
+            dos_kpoints.set_kpoints_mesh_from_density(self.inputs.band_settings['dos_kpoints_distance'] * 2 * np.pi)
             dos_input.kpoints = dos_kpoints
 
             # Special treatment - combine the parameters
