@@ -14,6 +14,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
 from yaml import safe_load
 
+from ..inputset.base import convert_lowercase
 from ..inputset.vaspsets import VASPInputSet
 from ..relax import RelaxOptions
 
@@ -273,7 +274,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         if apply_preset:
             if code is None:
                 code = self.preset.default_code
-            overrides_ = self.preset.get_code_specific_options(code, 'inputset_overrides')
+            overrides_ = convert_lowercase(self.preset.get_code_specific_options(code, 'inputset_overrides'))
             overrides_.update(overrides)
         else:
             overrides_ = overrides
