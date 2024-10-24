@@ -161,9 +161,13 @@ There are a few differences to note:
 
 There are also a few other input set such as `MPRelaxSet` and one can have their own input set files defined in the `~/.aiida-vasp/` folder. This folder will be searched first when looking for input sets.
 
-:::{note}
-The `VaspBuilderUpdater` takes an argument of the **preset** name which gives a higher level of control over how the calculation
+The `VaspBuilderUpdater` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
 should be configured. The **preset** includes which input set should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
 For example, different NCORE may be applied when running VASP on different machines.
 In practice, we recommend uses to define their own **preset** rather than creating/modifying the input sets directly.
+
+Since AiiDA can store the structure files as `StructureData` nodes, it is possible to first read files and then use a single structure as inputs to multiple subsequent calculations, rather than creating new but identical ` StructureData` nodes each time that a calculation is submitted.
+
+:::{note}
+We recommend using `VaspRelaxUpdater` rather than `VaspBuilderUpdater` for setting up VASP geometry optimisation calculations, as the former offers more checks and control for the optimisation process.
 :::
