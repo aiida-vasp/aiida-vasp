@@ -112,3 +112,58 @@ Pymatgen defaults to the `PBE` POTCAR set (*functional*) which is quite OLD had 
 Certain POTCARs in this set can be problematic (such as the `W_pv`, which is removed in `PBE_54`).
 One should avoid using this set unless direct comparison of raw energies with the Materials Project is required.
 :::
+
+
+
+(pymatgen-vasp-io)=
+### Coming from pymatgen based workflows
+
+If you are coming from using pymatgen for setting up VASP input files, the BuilderUpdater interface would feel
+very familiar, which uses the same approach of using a preset of input parameters.
+
+Consider the following code using pymatgen to set up a VASP calculation:
+
+```python
+from pymatgen.core import Structure
+from pymatgen.io.vasp.sets import MITRelaxSet
+
+incar_dict = { 'EDIFFG': -1e-2, 'IVDW': 11, 'ISYM':2,'NSW':1500, 'ENCUT':520}
+structure = Structure.from_file("Al_empty.cif")
+inputset = MITRelaxSet(structure = structure,user_incar_settings=incar_dict,
+                       user_kpoints_settings={'length':25})
+inputset.write_input(output_dir='./DFT_calc',include_cif=True)
+```
+
+Which loads the `Al_empty.cif` file, sets up a `MITRelaxSet` with some user defined settings, and writes the input files to the `DFT_calc` directory.
+
+To achieve a similar (but not equivalent) effect with aiida-vasp:
+
+```python
+from aiida import orm
+from pymatgen.core import Structure
+from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+
+structure = Structure.from_file("Al_empty.cif")
+overrides = { 'ediffg': -1e-2, 'ivdw': 11, 'isym':2,'nsw':1500, 'encut':520}
+upd = VaspBuilderUpdater(inputset='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp-6.4.2@localhost', overrides=overrides)
+upd.set_resources(num_machines=1, tot_num_mpiprocs=16)
+upd.set_options(max_wallclock_seconds=3600)
+upd.set_kspacing(0.05)
+upd.submit()
+```
+
+There are a few differences to note:
+
+1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MITRelaxSet` inputset preset which is based on the pymatgen's `MITRelaxSet`.
+2. The `apply_preset` method takes an `orm.StructureData` as input, which is converted from a pymatgen `Structure`. This input structure is stored in the database as a `StructureData` node.
+3. The kpoints are configured with a spacing of 0.05 (*2pi), rather than being implicitly set by the VASP code itself. When using AiidA, it is preferable to store explicit kpoints (grid) in the database as `KpointsData` nodes.
+4. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
+
+There are also a few other input set such as `MPRelaxSet` and one can have their own input set files defined in the `~/.aiida-vasp/` folder. This folder will be searched first when looking for input sets.
+
+:::{note}
+The `VaspBuilderUpdater` takes an argument of the **preset** name which gives a higher level of control over how the calculation
+should be configured. The **preset** includes which input set should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
+For example, different NCORE may be applied when running VASP on different machines.
+In practice, we recommend uses to define their own **preset** rather than creating/modifying the input sets directly.
+:::

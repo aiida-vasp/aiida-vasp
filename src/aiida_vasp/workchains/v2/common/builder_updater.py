@@ -121,7 +121,11 @@ class BaseBuilderUpdater:
     """Base class for builder updater"""
 
     def __init__(
-        self, preset_name: Union[None, str] = None, builder: Union[ProcessBuilder, None] = None, verbose=False
+        self,
+        preset_name: Union[None, str] = None,
+        builder: Union[ProcessBuilder, None] = None,
+        verbose=False,
+        inputset=None,
     ):
         """Instantiate a pipeline"""
         # Configure the builder
@@ -136,6 +140,7 @@ class BaseBuilderUpdater:
             preset_name = DEFAULT_PRESET
         self.preset_name = preset_name
         self.preset = VaspPresetConfig.from_file(preset_name)
+        self.inputset = inputset if inputset is not None else self.preset.inputset
 
     @property
     def builder(self) -> ProcessBuilder:
@@ -248,7 +253,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             logging.info(f'Using code {code}')
         self.use_inputset(
             initial_structure,
-            set_name=self.preset.inputset,
+            set_name=self.inputset,
             overrides=overrides,
             apply_preset=True,
             code=code,
@@ -262,12 +267,15 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def use_inputset(
         self,
         structure,
-        set_name='UCLRelaxSet',
+        set_name=None,
         overrides=None,
         apply_preset=False,
         code=None,
         structure_node_name='structure',
     ) -> 'VaspBuilderUpdater':
+        # Use the default inputset name if not defined
+        if set_name is None:
+            set_name = self.DEFAULT_INPUTSET
         if overrides is None:
             overrides = {}
 
@@ -466,7 +474,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
     def use_inputset(
         self,
         initial_structure: orm.StructureData,
-        set_name='UCLRelaxSet',
+        set_name=None,
         overrides=None,
         apply_preset=False,
         code=None,
