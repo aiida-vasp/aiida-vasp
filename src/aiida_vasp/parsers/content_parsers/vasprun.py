@@ -43,7 +43,7 @@ class VasprunParser(BaseFileParser):
             'maximum_stress',
             'band_properties',
             'version',
-            'parameters'
+            'parameters',
         ],
         'energy_type': ['energy_extrapolated'],
         'electronic_step_energies': False,
@@ -135,7 +135,7 @@ class VasprunParser(BaseFileParser):
             'inputs': [],
             'name': 'parameters',
             'prerequesites': [],
-        }
+        },
     }
 
     # Mapping of the energy names to those returned by parsevasp.vasprunl.Xml
@@ -672,7 +672,7 @@ class VasprunParser(BaseFileParser):
             occ = np.array([occupancies['up'], occupancies['down']])
 
         return get_band_properties(eig, occ)
-    
+
     @property
     def parameters(self):
         """
@@ -683,8 +683,6 @@ class VasprunParser(BaseFileParser):
         parameters = self._content_parser.get_parameters()
 
         return parameters
-
-
 
 
 def _build_structure(lattice):
