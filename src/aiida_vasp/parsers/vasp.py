@@ -545,7 +545,6 @@ def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=Fals
     """
     Gather quantities and put them into the target dictionary
     """
-    print('Gather Quantities')
     for key, value in quantities_each.get(namespace, {}).items():
         if key in fields:
             if isinstance(value, dict) and flatten_dict:
