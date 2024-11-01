@@ -427,7 +427,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         if getattr(target_namespace, option_name) is None:
             current_option = option_class()
         else:
-            current_option = option_class(**getattr(target_namespace, option_name).model_dump())
+            current_option = option_class(**getattr(target_namespace, option_name))
         for key, value in kwargs.items():
             setattr(current_option, key, value)
         setattr(target_namespace, option_name, current_option.aiida_dict())
