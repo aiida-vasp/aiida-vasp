@@ -27,6 +27,8 @@ from .common import OVERRIDE_NAMESPACE
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithBuilderUpdater
 
+SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
+
 
 class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
     """
@@ -738,10 +740,29 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         """
 
         workflow_class = WorkflowFactory(self._base_wk_string)
+
+        # Check if we need to turn off spin polarization
+        inputs = self.exposed_inputs(workflow_class, 'scf')
+        pdict = inputs.parameters.get_dict()
+        # Check if we really need to run spin polarized calculation
+        relax_work = self.ctx.get('workchain_relax', None)
+        if relax_work is not None and pdict.get('incar', {}).get('ispin') == 2:
+            self.report('Checking the magnetization of the relaxed structure.')
+            # Check if the site magnetizations are all zero
+            mag = relax_work.outputs.misc.get('site_magnetization')
+            if not _is_magnetic_via_site_moment(mag):
+                pdict['incar']['ispin'] = 1
+                self.report('Turnning off spin polarization for band structure calculation for non-magnetic system.')
+                inputs.parameters = orm.Dict(pdict)
+
+        pnode = inputs.parameters
+
         for key, value in self.ctx.kpoints_for_calc.items():
             idx = int(key.split('_')[-1])
 
             inputs = self.exposed_inputs(workflow_class, 'scf')
+            # Use the updated parameters
+            inputs.parameters = pnode
 
             # Ensure that the bands are parsed
             if 'settings' not in inputs:
@@ -968,3 +989,14 @@ def _extract_kpoints_from_retrieved(retrieved):
     kpoints_data.set_kpoints(kpoints=kpoints_array, weights=weights_array)
 
     return kpoints_data
+
+
+def _is_magnetic_via_site_moment(mag):
+    has_mag = False
+    # Iterate over dictionaries of the site moments of each site
+    for site in mag['sphere']['x']['site_moment'].values():
+        # Check if any of the moments is non-zero
+        if any(abs(x) > SITE_MAG_THRESHOLD for x in site.values()):
+            has_mag = True
+            break
+    return has_mag
