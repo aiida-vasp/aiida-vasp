@@ -117,6 +117,7 @@ class VaspCalcBase(CalcJob):
         restart_folder = self.inputs.restart_folder
         computer = self.node.computer
         included = ['CHGCAR', 'WAVECAR']
+        included += self.inputs.settings.base.attributes.get('ADDITIONAL_REMOTE_COPY_LIST', [])
         existing_objects = restart_folder.listdir()
         to_copy = []
         for name in included:
