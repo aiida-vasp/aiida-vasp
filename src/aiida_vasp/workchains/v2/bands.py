@@ -8,6 +8,7 @@ TODO:
 """
 
 from copy import deepcopy
+from logging import getLogger
 from typing import List
 
 import numpy as np
@@ -28,6 +29,9 @@ from .common.transform import magnetic_structure_decorate, magnetic_structure_de
 from .mixins import WithBuilderUpdater
 
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
+
+
+logger = getLogger(__name__)
 
 
 class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
@@ -905,8 +909,10 @@ def _combine_bands_data(
     bands_array_combine = []
     occu_array_combine = []
     kpoints_combine = []
+    fermi_levels = []
 
     for skpts, sbands in zip(kpoints_list, bands_list):
+        fermi_levels.append(sbands.base.attributes.get('feremi_level', None))
         kpt_array, weights_array = skpts.get_kpoints(also_weights=True)
         zero_weight_mask = weights_array == 0.0
         kpoints_combine.append(kpt_array[zero_weight_mask, :])
@@ -950,6 +956,13 @@ def _combine_bands_data(
     band_data = orm.BandsData()
     band_data.set_kpointsdata(bs_kpoints)
     band_data.set_bands(band_array_full, occupations=occu_array_full)
+    # Set the fermi level of the combined bands
+    if any(abs(entry - fermi_levels[0]) > 0.01 for entry in fermi_levels):
+        logger.warning(
+            f'Fermi level of the splitted calculations ({fermi_levels}) are not consistent! '
+            'Using the first one as the combined fermi level.'
+        )
+    band_data.base.attributes.set('efermi', fermi_levels[0])
 
     return band_data
 

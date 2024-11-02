@@ -471,6 +471,9 @@ class VaspParser(Parser):
             kpoints = self._compose_kpoints(quantities_each)
             node.set_kpointsdata(kpoints)
             node.set_bands(eigenvalues, occupations=occupancies)
+
+            # Record the Fermi level if available
+            node.base.extras.set('efermi', quantities_each['vasprun.xml'].get('fermi_level'))
             return node
 
     def _compose_dos(self, quantities_each):
