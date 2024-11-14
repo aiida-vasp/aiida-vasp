@@ -4,18 +4,6 @@ from aiida_vasp.parsers.content_parsers import *
 
 from .vasp import MissingFileError, NotificationComposer, QuantityMissingError, VaspParser, get_structure_node
 
-DEFAULT_QUANTITIES = (
-    'total_energies',
-    'maximum_stress',
-    'maximum_force',
-    'notifications',
-    'run_status',
-    'run_stats',
-    'version',
-    'band_properties',
-)
-
-
 DEFAULT_EXCLUDED_QUANTITIES = (
     'energies',
     'chgcar',

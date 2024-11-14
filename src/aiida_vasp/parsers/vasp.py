@@ -52,17 +52,6 @@ class MissingFileError(ParserError):
     pass
 
 
-DEFAULT_QUANTITIES = (
-    'total_energies',
-    'maximum_stress',
-    'maximum_force',
-    'notifications',
-    'run_status',
-    'run_stats',
-    'version',
-    'band_properties',
-)
-
 DEFAULT_EXCLUDED_QUANTITIES = (
     'energies',
     'chgcar',
@@ -72,6 +61,7 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'magnetization_density',
     'elastic_moduli',
     'symmetries',
+    'parameters',  # The parameters used for the calculation
 )
 
 DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints', 'trajectory'])
@@ -103,6 +93,7 @@ MISC_QUANTITIES = (
     'fermi_level',
     'band_properties',
     'magnetization',
+    'parameters',
 )
 
 # Miscellaneous quantities that should be collected into an `arrays`` node
@@ -353,13 +344,13 @@ class VaspParser(Parser):
             error = self._check_vasp_errors(self.parser_notifications)
             return error
 
-    def _compose_parameters(self, quantities_each):
-        """
-        Compose the `parameters` output node.
-        """
-        out_dict = {}
-        gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, ('parameters'))
-        return orm.Dict(dict=out_dict)
+    # def _compose_parameters(self, quantities_each):
+    #     """
+    #     Compose the `parameters` output node.
+    #     """
+    #     out_dict = {}
+    #     gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, ('parameters'))
+    #     return orm.Dict(dict=out_dict)
 
     def _compose_misc(self, quantities_each):
         """Compose the `misc` output node"""
