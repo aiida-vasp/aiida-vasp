@@ -223,7 +223,7 @@ class BandOptions(OptionContainer):
 
 
 class CalcSettings(OptionContainer):
-    """Schema for the .setting port"""
+    """Schema for the .settings port"""
 
     parser_setting: Optional[dict] = Field(description='Settings for the parser')
     ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(description='Additional list of files to be retrieved')
