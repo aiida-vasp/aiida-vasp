@@ -1,0 +1,42 @@
+ running    1 mpi-ranks, on    1 nodes
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ vasp.6.4.1 05Apr23 (build Oct 13 2024 10:31:27) complex
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You enforced a specific xc type in the INCAR file but a different       |
+|     type was found in the POTCAR file.                                      |
+|     I HOPE YOU KNOW WHAT YOU ARE DOING!                                     |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.246951645855E+00   -0.24695E+00   -0.23152E+03   352   0.451E+02
+DAV:   2    -0.115751696344E+02   -0.11328E+02   -0.11115E+02   560   0.612E+01
+DAV:   3    -0.116876930890E+02   -0.11252E+00   -0.11252E+00   432   0.780E+00
+DAV:   4    -0.116880949942E+02   -0.40191E-03   -0.40191E-03   608   0.516E-01
+DAV:   5    -0.116880951097E+02   -0.11547E-06   -0.11547E-06   464   0.743E-03    0.539E+00
+RMM:   6    -0.115335327009E+02    0.15456E+00   -0.56563E-02   354   0.144E+00    0.325E+00
+RMM:   7    -0.114630423272E+02    0.70490E-01   -0.12344E-01   380   0.223E+00    0.194E-01
+RMM:   8    -0.114639881963E+02   -0.94587E-03   -0.85435E-03   374   0.715E-01    0.861E-02
+RMM:   9    -0.114641813992E+02   -0.19320E-03   -0.18954E-03   402   0.305E-01    0.891E-02
+RMM:  10    -0.114642169787E+02   -0.35580E-04   -0.36520E-04   384   0.150E-01    0.158E-02
+RMM:  11    -0.114642264741E+02   -0.94953E-05   -0.90850E-05   400   0.717E-02    0.156E-02
+RMM:  12    -0.114642280831E+02   -0.16090E-05   -0.13311E-05   348   0.255E-02
+   1 F= -.11464228E+02 E0= -.11464228E+02  d E =-.510274E-11

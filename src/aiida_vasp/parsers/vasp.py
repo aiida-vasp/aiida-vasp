@@ -451,6 +451,8 @@ class VaspParser(Parser):
             for key, value in traj_data.items():
                 if key == 'symbols':
                     node.base.attributes.set(key, value)
+                elif value.dtype.hasobject:
+                    self.report(f'Cannot set array {key}: {value} in TrajectoryData as it is not numerical.')
                 else:
                     node.set_array(key, value)
             return node
@@ -473,7 +475,8 @@ class VaspParser(Parser):
             node.set_bands(eigenvalues, occupations=occupancies)
 
             # Record the Fermi level if available
-            node.base.extras.set('efermi', quantities_each['vasprun.xml'].get('fermi_level'))
+            node.base.attributes.set('fermi_level', quantities_each['vasprun.xml'].get('fermi_level'))
+            node.base.attributes.set('efermi', quantities_each['vasprun.xml'].get('fermi_level'))
             return node
 
     def _compose_dos(self, quantities_each):

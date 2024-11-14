@@ -912,7 +912,7 @@ def _combine_bands_data(
     fermi_levels = []
 
     for skpts, sbands in zip(kpoints_list, bands_list):
-        fermi_levels.append(sbands.base.attributes.get('feremi_level', None))
+        fermi_levels.append(sbands.base.attributes.get('fermi_level', None))
         kpt_array, weights_array = skpts.get_kpoints(also_weights=True)
         zero_weight_mask = weights_array == 0.0
         kpoints_combine.append(kpt_array[zero_weight_mask, :])
@@ -957,12 +957,13 @@ def _combine_bands_data(
     band_data.set_kpointsdata(bs_kpoints)
     band_data.set_bands(band_array_full, occupations=occu_array_full)
     # Set the fermi level of the combined bands
-    if any(abs(entry - fermi_levels[0]) > 0.01 for entry in fermi_levels):
+    if any(x is None for x in fermi_levels) or any(abs(entry - fermi_levels[0]) > 0.01 for entry in fermi_levels):
         logger.warning(
             f'Fermi level of the splitted calculations ({fermi_levels}) are not consistent! '
             'Using the first one as the combined fermi level.'
         )
-    band_data.base.attributes.set('efermi', fermi_levels[0])
+    band_data.base.attributes.set('fermi_level', fermi_levels[0])
+    band_data.base.attributes.set('efermi', fermi_levels[0])  # Alias for fermi level
 
     return band_data
 

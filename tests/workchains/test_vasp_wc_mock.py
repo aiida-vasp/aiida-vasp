@@ -4,7 +4,7 @@ WorkChain test using mock code
 The tests here uses mock-vasp to simulate running VASP.
 To generate the test data, set the following environment variables:
 
-- `MOCK_VASP_POTCARS_PATH`: path to the directory containing the POTCAR files
+- `MOCK_VASP_POTCAR_PATH`: path to the directory containing the POTCAR files
 - `MOCK_VASP_VASP_CMD`: command to run VASP
 
 When generating the mock data, make sure to add:
@@ -91,8 +91,16 @@ def test_silicon_band(mock_potcars, mock_vasp_strict):
     results = upd.run_get_node()
     assert results.node.is_finished_ok
 
+
+def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
+    """Test the hybrid (split-path) SCF  band structure workchain"""
+
+    from ase.build import bulk
+
     from aiida_vasp.workchains import VaspHybridBandsWorkChain
 
+    si = bulk('Si', 'diamond', 5.4)
+    si_node = orm.StructureData(ase=si)
     upd = VaspHybridBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
     upd.apply_preset(si_node, run_relax=True)
     upd.set_band_settings(kpoints_per_split=120)
