@@ -344,14 +344,6 @@ class VaspParser(Parser):
             error = self._check_vasp_errors(self.parser_notifications)
             return error
 
-    # def _compose_parameters(self, quantities_each):
-    #     """
-    #     Compose the `parameters` output node.
-    #     """
-    #     out_dict = {}
-    #     gather_quantities(quantities_each, self.user_config.file_mapping['vasprun.xml'], out_dict, ('parameters'))
-    #     return orm.Dict(dict=out_dict)
-
     def _compose_misc(self, quantities_each):
         """Compose the `misc` output node"""
 
