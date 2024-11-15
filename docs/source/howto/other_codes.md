@@ -1,3 +1,10 @@
+---
+myst:
+  substitutions:
+    get_sumo_bands_plotter: "{py:func}`get_sumo_bands_plotter <aiida_vasp.utils.sumo.get_sumo_bands_plotter>`"
+    get_sumo_dos_plotter: "{py:class}`get_sumo_dos_plotter<aiida_vasp.utils.sumo.get_sumo_dos_plotter>`"
+---
+
 (other_codes)=
 # Working with other codes
 
@@ -171,3 +178,12 @@ Since AiiDA can store the structure files as `StructureData` nodes, it is possib
 :::{note}
 We recommend using `VaspRelaxUpdater` rather than `VaspBuilderUpdater` for setting up VASP geometry optimisation calculations, as the former offers more checks and control for the optimisation process.
 :::
+
+
+## Sumo
+
+Sumo is a code for plotting electronic band structures and DOS. It can be used with calculations done by aiida-vasp. There are two ways to use sumo with this package:
+
+1. You can export the calculation with `verdi data vasp.tools export <node> <folder>` and then use sumo's command line interface to plot.
+   This approach works best for DOS plots and for band structure calculations the exported KPOINTS files currently does not have band labels.
+2. Use the `vasp.utils.sumo` module to plot the band structure from a band structure workflow with the get_sumo_dos_plotter and get_sumo_bands_plotter functions.

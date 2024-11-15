@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Validate the tag version against the package version
       run: python .github/workflows/validate_release_tag.py $GITHUB_REF
 
@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 90
     strategy:
       matrix:
-        python: ['3.9']
+        python: ['3.10']
     steps:
       - uses: actions/checkout@v4
       - name: Cache python dependencies
@@ -46,76 +46,40 @@ jobs:
         run: tox -e pre-commit
 
   tests:
-    needs: [pre-commit]
     runs-on: ubuntu-latest
+    defaults:
+        run:
+          shell: bash -l {0}
     timeout-minutes: 90
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_DB: test_vasp
-          POSTGRES_PASSWORD: ""
-          POSTGRES_HOST_AUTH_METHOD: trust
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      rabbitmq:
-        image: rabbitmq:latest
-        ports:
-          - 5672:5672
     strategy:
       matrix:
-        python: ['3.9', '3.10', '3.11']
+        python: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - name: Cache python dependencies
-        id: cache-pip
-        uses: actions/cache@v4.1.0
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: pip-${{ matrix.python }}-tests-
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
-      - name: Make sure virtualevn>20 is installed, which will yield newer pip and possibility to pin pip version.
-        run: pip install 'virtualenv>20'
-
-      - name: Install Tox
-        run: pip install tox
-
-      - name: Install codecov
-        if: matrix.python == '3.9'
-        run: pip install codecov pytest-cov
-
-      - name: Run tox and codecov
-        run: tox -e ${{ matrix.python }}-aiida_vasp -- --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing  -k 'not converge_wc'
-
-      - name: Archive error mock calculations
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() }}
-        with:
-          name: error-mock-calc-archive
-          path: |
-            test_mock_error.aiida
-          retention-days: 5
-          if-no-files-found: warn
-
-      - name: Upload coverage to Codecov
-        if: matrix.python == '3.9'
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: aiida-vasp
-          flags: pytests
-          fail_ci_if_error: true
+          miniforge-version: latest
+      - name: Install dependencies
+        run: |
+          conda activate test
+          conda install --yes -c conda-forge python=${{ matrix.python }}
+          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
+      - name: Setup parsevasp
+        run: |
+          conda activate test
+          git clone --depth 1 https://github.com/aiida-vasp/parsevasp.git
+          cd parsevasp
+          pip install -e . -vvv
+          cd ..
+      - name: Install aiida-vasp
+        run: |
+          conda activate test
+          pip install pymatgen
+          pip install -e . -vvv
+      - name: Run tests with
+        run: |
+          conda activate test
+          pytest  tests
 
   publish:
     name: Publish to PyPI
@@ -127,7 +91,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     - name: Install flit
       run: pip install flit~=3.4
     - name: Build and publish

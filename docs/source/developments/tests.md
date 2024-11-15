@@ -28,7 +28,7 @@ the output to the registry.
 
 To generate the test data for `pytest` when developing the plugin, set the following environment variables:
 
-- `MOCK_VASP_POTCARS_PATH`: path to the directory containing the POTCAR files
+- `MOCK_VASP_POTCAR_PATH`: path to the directory containing the POTCAR files
 - `MOCK_VASP_VASP_CMD`: command to run VASP
 - `MOCK_VASP_REG_BASE`: Base of the registry for the mock VASP executable, defaults to the `<root>/tests/test_data` folder.
 - `MOCK_VASP_UPLOAD_PREFIX`: A prefix to use when creating folders of containing the registered VASP calculations.
@@ -39,7 +39,7 @@ The POTCAR files are simply ignored when computing the hash of calculation input
 :::
 
 To test a new workchain and record the calculation data, set `MOCK_VASP_VASP_CMD` to your real vasp executable (optionally, with the MPI launcher and arguments).
-Set `MOCK_VASP_POTCARS_PATH` to the path containing the POTCAR files, this will upload the POTCAR and create a corresponding `PBE.54` potcar family.
+Set `MOCK_VASP_POTCAR_PATH` to the path containing the POTCAR files, this will upload the POTCAR and create a corresponding `PBE.54` potcar family.
 The `MOCK_VASP_UPLOAD_PREFIX` should be set when constructing the calculation input, as the
 custom scheduler comments.
 This allows one to known which calculation data is for which test case.

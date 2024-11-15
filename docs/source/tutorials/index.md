@@ -12,5 +12,4 @@ the `BuilderUpdater` class that allows you to create workflows using pre-define,
 ./silicon_sp.md
 ./silicon_relax.md
 ./silicon_band_dos.md
-./using_pymatgen.md
 ```

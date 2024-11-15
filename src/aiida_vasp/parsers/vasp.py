@@ -477,6 +477,7 @@ class VaspParser(Parser):
             # Record the Fermi level if available
             node.base.attributes.set('fermi_level', quantities_each['vasprun.xml'].get('fermi_level'))
             node.base.attributes.set('efermi', quantities_each['vasprun.xml'].get('fermi_level'))
+            node.set_cell(quantities_each['vasprun.xml']['structure']['unitcell'])
             return node
 
     def _compose_dos(self, quantities_each):
