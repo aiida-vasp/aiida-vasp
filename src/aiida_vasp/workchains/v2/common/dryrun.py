@@ -1,9 +1,10 @@
 """
-Module to provide dryrun functionality
+Module to provide dryrun functionality.
 """
 
 import shutil
 from math import ceil, gcd
+from typing import Optional
 from warnings import warn
 
 import numpy as np
@@ -11,47 +12,39 @@ from aiida.engine.processes.builder import ProcessBuilder
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.vasp import VaspCalculation
-
-# Import the CMD `dryrun_vasp``
 from aiida_vasp.commands.dryrun_vasp import dryrun_vasp as _vasp_dryrun
 from aiida_vasp.data.potcar import PotcarData
 
 
 class JobScheme:
     """
-    A class representing the scheme of the jobs
+    A class representing the scheme of the jobs.
     """
 
     def __init__(
         self,
-        n_kpoints,
-        n_procs,
-        n_nodes=None,
-        cpus_per_node=None,
-        npw=None,
-        nbands=None,
-        ncore_within_node=True,
-        ncore_strategy='maximise',
-        wf_size_limit=1000,
+        n_kpoints: int,
+        n_procs: int,
+        n_nodes: Optional[int] = None,
+        cpus_per_node: Optional[int] = None,
+        npw: Optional[int] = None,
+        nbands: Optional[int] = None,
+        ncore_within_node: bool = True,
+        ncore_strategy: str = 'maximise',
+        wf_size_limit: float = 1000,
     ):
         """
-        Instantiate a JobScheme object
+        Instantiate a JobScheme object.
 
-        Args:
-            n_kpoints (int): Number of kpoints.
-            n_procs (int): Number of processes.
-            n_nodes (int): Number of nodes.
-            cpus_per_node (int): Number of CPUs per node.
-            npw (int): Number of plane waves.
-            nbands (int): Number of bands
-            ncore_within_node (bool): If True, will limit plane-wave parallelisation to be within each node.
-            ncore_strategy (str): Strategy for optimise NCORE, choose from 'maximise' and 'balance'.
-            wf_size_limit (float): Limit of the ideal wavefunction size per process in MB.
-                This should be set to less than the actual memory limit by a good margin (eg. 500 MB) as other
-                things such as the charge density, projector, and electronic solver will also occupy the memory.
-
-        Returns:
-            JobScheme: A `JobScheme` object
+        :param n_kpoints: Number of kpoints.
+        :param n_procs: Number of processes.
+        :param n_nodes: Number of nodes.
+        :param cpus_per_node: Number of CPUs per node.
+        :param npw: Number of plane waves.
+        :param nbands: Number of bands.
+        :param ncore_within_node: If True, limit plane-wave parallelisation to within each node.
+        :param ncore_strategy: Strategy for optimising NCORE, choose from 'maximise' and 'balance'.
+        :param wf_size_limit: Limit of the ideal wavefunction size per process in MB.
         """
         self.n_kpoints = n_kpoints
         self.n_procs = n_procs
@@ -78,17 +71,27 @@ class JobScheme:
         self.solve_ncore()
 
     @classmethod
-    def from_dryrun(cls, dryrun_outcome, n_procs, **kwargs):
-        """Construct from dryrun results"""
+    def from_dryrun(cls, dryrun_outcome: dict, n_procs: int, **kwargs) -> 'JobScheme':
+        """
+        Construct from dryrun results.
+
+        :param dryrun_outcome: The outcome from a dryrun.
+        :param n_procs: Number of processes.
+        :param kwargs: Additional keyword arguments.
+
+        :returns: A `JobScheme` object
+        """
         kwargs['n_kpoints'] = dryrun_outcome.get('num_kpoints')
         kwargs['nbands'] = dryrun_outcome.get('num_bands')
         kwargs['npw'] = dryrun_outcome.get('num_plane_waves')
         kwargs['n_procs'] = n_procs
         return cls(**kwargs)
 
-    def solve_kpar(self):
+    def solve_kpar(self) -> int:
         """
-        Solve for the optimum strategy
+        Solve for the optimum strategy for KPAR.
+
+        :returns: The optimized KPAR value.
         """
         kpar = gcd(self.n_kpoints, self.n_procs)
         self.kpar = kpar
@@ -109,7 +112,7 @@ class JobScheme:
                     break
         if self.size_wavefunction_per_proc > self.wf_size_limit:
             warn(
-                ('Expected wavefunction size per process {} MB ' 'is large than the limit {} MB').format(
+                ('Expected wavefunction size per process {} MB is larger than the limit {} MB').format(
                     self.size_wavefunction_per_proc, self.wf_size_limit
                 ),
                 UserWarning,
@@ -117,21 +120,20 @@ class JobScheme:
         return kpar
 
     @property
-    def nk_per_group(self):
+    def nk_per_group(self) -> int:
+        """Number of kpoints per group."""
         return self.n_kpoints // self.kpar
 
     @property
-    def procs_per_kgroup(self):
+    def procs_per_kgroup(self) -> int:
+        """Number of processes per kpoint group."""
         return self.n_procs // self.kpar
 
-    def solve_ncore(self):
+    def solve_ncore(self) -> int:
         """
-        Solve for NCORE
+        Solve for NCORE.
 
-        The logic is that we prefer NPAR/NCORE close to one, and reject any combination that
-        will result in an increase of the NBANDS more than 20%.
-        Optionally, keep NCORE a factor of the number of CPUS per node - this will help keep
-        the plane-wave parallelisation within each node as it is sensitive to network latency.
+        :returns: The optimized NCORE value.
         """
         # Cannot solve if no nbands provided or does not know how many cpus per node
         if self.nbands is None:
@@ -148,14 +150,14 @@ class JobScheme:
                 continue
             npar = self.procs_per_kgroup // ncore
             new_nbands = ceil(self.nbands / npar) * npar
-            factor = new_nbands / self.nbands  # Amplification factor for the ncore
-            combs.append((ncore, factor, abs(ncore / npar - 1), new_nbands))  # Balance factor, the smaller the better
+            factor = new_nbands / self.nbands
+            combs.append((ncore, factor, abs(ncore / npar - 1), new_nbands))
 
         combs = list(filter(lambda x: x[1] < 1.2, combs))
         if self.ncore_strategy == 'balance':
-            combs.sort(key=lambda x: x[2])  # Sort by increasing balance factor
+            combs.sort(key=lambda x: x[2])
         elif self.ncore_strategy == 'maximise':
-            combs.sort(key=lambda x: x[0], reverse=True)  # Sort by decreasing NCORE
+            combs.sort(key=lambda x: x[0], reverse=True)
         else:
             raise RuntimeError(f'NCORE strategy: <{self.ncore_strategy}> is invalid')
 
@@ -170,19 +172,24 @@ class JobScheme:
         return ncore
 
     @property
-    def size_wavefunction(self):
-        """Memory requirement for the wavefunction in MB"""
+    def size_wavefunction(self) -> float:
+        """Memory requirement for the wavefunction in MB."""
         return self.n_kpoints * self.new_nbands * self.npw * 16 / 1048576
 
     @property
-    def size_wavefunction_per_proc(self):
-        """Memory requirement for the wavefunction per process"""
-        # No data distribution between K point groups
+    def size_wavefunction_per_proc(self) -> float:
+        """Memory requirement for the wavefunction per process."""
         return self.size_wavefunction / self.procs_per_kgroup
 
 
-def factors(num):
-    """Return all factors of a number in descending order, including the number itself"""
+def factors(num: int) -> list:
+    """
+    Return all factors of a number in descending order, including the number itself.
+
+    :param num: The number to factor.
+
+    :returns: A list of factors.
+    """
     result = [num]
     for i in range(num // 2 + 1, 0, -1):
         if num % i == 0:
@@ -190,19 +197,19 @@ def factors(num):
     return result
 
 
-def dryrun_vasp(input_dict, vasp_exe='vasp_std', timeout=10, work_dir=None, keep=False):
+def dryrun_vasp(
+    input_dict: dict, vasp_exe: str = 'vasp_std', timeout: int = 10, work_dir: Optional[str] = None, keep: bool = False
+) -> dict:
     """
-    Perform a dryrun for a VASP calculation, return obtained information
+    Perform a dryrun for a VASP calculation, return obtained information.
 
-    Args:
-        input_dict (dict): The input dictionary/builder for `VaspCalculation`.
-        vasp_exe (str): The VASP executable to be used.
-        timeout (int): Timeout for the underlying VASP process in seconds.
-        work_dir (str): Working directory, if not supply, will use a temporary directory.
-        keep (bool): Wether to keep the dryrun output.
+    :param input_dict: The input dictionary/builder for `VaspCalculation`.
+    :param vasp_exe: The VASP executable to be used.
+    :param timeout: Timeout for the underlying VASP process in seconds.
+    :param work_dir: Working directory, if not supplied, will use a temporary directory.
+    :param keep: Whether to keep the dryrun output.
 
-    Returns:
-        dict: A dictionary of the dry run results parsed from OUTCAR
+    :returns: A dictionary of the dry run results parsed from OUTCAR.
     """
     # Deal with passing an process builder
     if isinstance(input_dict, ProcessBuilder):
@@ -224,27 +231,30 @@ def dryrun_vasp(input_dict, vasp_exe='vasp_std', timeout=10, work_dir=None, keep
     return outcome
 
 
-def get_jobscheme(input_dict, nprocs, vasp_exe='vasp_std', **kwargs):
+def get_jobscheme(input_dict: dict, nprocs: int, vasp_exe: str = 'vasp_std', **kwargs) -> JobScheme:
     """
-    Perform a dryrun for the input and workout the best parallelisation strategy
+    Perform a dryrun for the input and work out the best parallelisation strategy.
 
-    :param input_dict (dict,ProcessBuilder): Inputs of the VaspCalculation
-    :param nprocs (int): Target number of processes to be used
-    :param vasp_exe (str): The executable of local VASP program to be used
-    :param kwargs: Addition keyword arguments to be passed to `JobScheme`
+    :param input_dict: Inputs of the VaspCalculation.
+    :param nprocs: Target number of processes to be used.
+    :param vasp_exe: The executable of local VASP program to be used.
+    :param kwargs: Additional keyword arguments to be passed to `JobScheme`.
 
-    :returns tuple(int, int): The KPAR and NCORE that should be used
-
+    :returns: A `JobScheme` object.
     """
     dryout = dryrun_vasp(input_dict, vasp_exe)
     scheme = JobScheme.from_dryrun(dryout, nprocs, **kwargs)
     return scheme
 
 
-def prepare_inputs(inputs):
-    """Prepare inputs"""
+def prepare_inputs(inputs: dict) -> VaspCalculation:
+    """
+    Prepare inputs for VASP calculation.
 
-    # Have to turn store_provenance to False
+    :param inputs: The inputs to prepare.
+
+    :returns: The prepared inputs.
+    """
     inputs = dict(inputs)
     inputs['metadata'] = dict(inputs['metadata'])
     inputs['metadata']['store_provenance'] = False
@@ -273,8 +283,15 @@ def prepare_inputs(inputs):
     return vasp.node
 
 
-def dryrun_relax_builder(builder, **kwargs):
-    """Dry run a relaxation workchain builder"""
+def dryrun_relax_builder(builder: ProcessBuilder, **kwargs) -> dict:
+    """
+    Dry run a relaxation workchain builder.
+
+    :param builder: The builder to dry run.
+    :param kwargs: Additional keyword arguments.
+
+    :returns: The results of the dry run.
+    """
     from aiida.orm import Dict, KpointsData
 
     vasp_builder = VaspCalculation.get_builder()
@@ -307,8 +324,15 @@ def dryrun_relax_builder(builder, **kwargs):
     return dryrun_vasp(vasp_builder, **kwargs)
 
 
-def dryrun_vaspu_builder(builder, **kwargs):
-    """Dry run a vaspu.vasp workchain builder"""
+def dryrun_vaspu_builder(builder: ProcessBuilder, **kwargs) -> dict:
+    """
+    Dry run a vaspu.vasp workchain builder.
+
+    :param builder: The builder to dry run.
+    :param kwargs: Additional keyword arguments.
+
+    :returns: The results of the dry run.
+    """
     from aiida.orm import Dict, KpointsData
 
     pdict = builder.parameters.get_dict()

@@ -126,14 +126,12 @@ def get_sumo_bands_plotter(bands, efermi=None, structure=None, **kwargs):
     """
     Return a sumo `SBSPlotter` object
 
-    Arguments:
-        bands_node: A BandsData object
-        structure (optionsal): a StructureData object, required if `bands_node`
-          does not have information about the cell.
-        efermi (float): Explicit value of the fermi energy.
+    :param bands_node: A BandsData object
+    :param structure (optional): a StructureData object, required if `bands_node`
+      does not have information about the cell.
+      efermi (float): Explicit value of the fermi energy.
 
-    Returns:
-        A `SBSPlotter` object
+    :returns: A `SBSPlotter` object
     """
     bands_structure = get_pmg_bandstructure(bands, efermi=efermi, structure=structure, **kwargs)
     return SBSPlotter(bands_structure)
@@ -228,37 +226,6 @@ def bandstats(
 
     Searches forward and backward from the extrema point, but will only sample
     there data if there are enough points in that direction.
-
-    Args:
-        bs (:obj:`~pymatgen.electronic_structure.bandstructure.BandStructureSymmLine`):
-            The band structure.
-        spin (:obj:`~pymatgen.electronic_structure.core.Spin`): Which spin
-            channel to sample.
-        band_id (int): Index of the band to sample.
-        kpoint_id (int): Index of the kpoint to sample.
-
-    Returns:
-        list: The data necessary to calculate the effective mass, along with
-        some metadata. Formatted as a :obj:`list` of :obj:`dict`, each with the
-        keys:
-
-        'energies' (:obj:`numpy.ndarray`)
-            Band eigenvalues in eV.
-
-        'distances' (:obj:`numpy.ndarray`)
-            Distances of the k-points in reciprocal space.
-
-        'band_id' (:obj:`int`)
-            The index of the band,
-
-        'spin' (:obj:`~pymatgen.electronic_structure.core.Spin`)
-            The spin channel
-
-        'start_kpoint' (:obj:`int`)
-            The index of the k-point at which the band extrema occurs
-
-        'end_kpoint' (:obj:`int`)
-            The k-point towards which the data has been sampled.
     """
     if isinstance(bs, BandsData):
         bs = get_pmg_bandstructure(bs, structure=structure, efermi=efermi, **kwargs)

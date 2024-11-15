@@ -35,8 +35,7 @@ def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
     """
     Export a AiiDA VASP calculation
 
-    Arguments:
-        node: A VaspCalculation node or VaspWorkChain node
+    :param node: A VaspCalculation node or VaspWorkChain node
     """
     from aiida.common.links import LinkType
     from aiida.orm import CalcJobNode, WorkChainNode
