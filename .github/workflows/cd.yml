@@ -19,32 +19,6 @@ jobs:
     - name: Validate the tag version against the package version
       run: python .github/workflows/validate_release_tag.py $GITHUB_REF
 
-  pre-commit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    strategy:
-      matrix:
-        python: ['3.10']
-    steps:
-      - uses: actions/checkout@v4
-      - name: Cache python dependencies
-        id: cache-pip
-        uses: actions/cache@v4.1.0
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ matrix.python }}-tests-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: pip-${{ matrix.python }}-tests-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Make sure virtualevn>20 is installed, which will yield newer pip and possibility to pin pip version.
-        run: pip install 'virtualenv>20'
-      - name: Install Tox
-        run: pip install tox
-      - name: Run pre-commit in Tox
-        run: tox -e pre-commit
-
   tests:
     runs-on: ubuntu-latest
     defaults:
