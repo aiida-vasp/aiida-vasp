@@ -70,6 +70,26 @@ Learn the concepts.
 ```
 :::
 
+:::{grid-item-card} {fa}`cogs;mr-1` How-to guides
+:text-align: center
+:shadow: md
+
+Guides for achieving specific goals.
++++
+
+```{button-ref} howto/index
+:ref-type: doc
+:click-parent:
+:expand:
+:color: primary
+:outline:
+
+
+How-to guides.
+```
+:::
+
+
 :::{grid-item-card} {fa}`cogs;mr-1` Workflows
 :text-align: center
 :shadow: md
@@ -77,6 +97,8 @@ Learn the concepts.
 Automate your VASP calculations with pre-defined workflows.
 
 +++
+
+
 
 ```{button-ref} workflows/index
 :ref-type: doc
@@ -137,10 +159,14 @@ Please accept that the development of this plugin is a community effort and any 
 
 getting_started/index
 tutorials/index
-workchains/index
 workflows/index
 concepts/index
+howto/index
+developments/index
+apidocs/index
+./changelog.md
 ```
+
 
 # Getting help
 
@@ -155,7 +181,7 @@ not paid for this work. Please respect potential lead times in getting answers a
 
 [aiida]: https://www.aiida.net
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
-[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.rst
+[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 [conda]: https://docs.conda.io/en/latest/
 [open an issue]: https://github.com/aiida-vasp/aiida-vasp/issues
 [submit a pull request]: https://github.com/aiida-vasp/aiida-vasp/pull

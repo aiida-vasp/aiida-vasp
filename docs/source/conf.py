@@ -18,21 +18,25 @@ import re
 # -- General configuration ------------------------------------------------
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
+    #'sphinx.ext.autodoc',
+    'autodoc2',
+    #    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'aiida.sphinxext',
-    'sphinxcontrib.apidoc',
+    #    'sphinxcontrib.apidoc',
     'sphinxext.remoteliteralinclude',
     'sphinx_copybutton',
     'sphinx_togglebutton',
     'sphinx_design',
     'myst_nb',
 ]
+
+
+autodoc2_packages = ['../../src/aiida_vasp']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -105,13 +109,18 @@ html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
     'github_url': 'https://github.com/aiida-vasp/aiida-vasp',
     'use_edit_page_button': True,
+    'logo': {
+        'text': 'AiiDA-VASP',
+    },
 }
 html_context = {
     'github_user': 'aiida-vasp',
     'github_repo': 'aiida-vasp',
-    'github_version': 'main',
+    'github_version': 'develop',
     'doc_path': 'docs/source',
 }
+
+
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
@@ -173,6 +182,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/', None),
+    'python': ('https://docs.python.org/3', None),
     'aiida': ('https://aiida.readthedocs.io/projects/aiida-core/en/latest/', None),
 }

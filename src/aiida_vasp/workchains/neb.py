@@ -1,7 +1,6 @@
 """
 VASP NEB workchain.
 
----------------
 Contains the VaspNEBWorkChain class definition which uses the BaseRestartWorkChain.
 """
 
@@ -52,9 +51,8 @@ VTST_ADDITIONAL_TAGS = {
 
 class VaspNEBWorkChain(BaseRestartWorkChain):
     """
-    The NEB workchain.
+    A NEB workchain
 
-    -------------------
     Error handling enriched wrapper around VaspNEBCalculation.
 
     Deliberately conserves most of the interface (required inputs) of the VaspNEBCalculation class, but
@@ -66,7 +64,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
 
     _verbose = False
     _process_class = CalculationFactory('vasp.neb')
-    _norm_disp_threshold = 1.0
+    _norm_disp_threshold = 4.0
 
     @classmethod
     def define(cls, spec):
@@ -529,20 +527,18 @@ FELEMS = [
 
 def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
     """
-    Setup LDAU mapping. In VASP, the U for each species has to be
-    defined in the order that they appear in POSCAR. This is a helper
-    to make sure the values of U are associated to each specie
+    Setup LDAU mapping.
 
-    Arguments:
-        structure: the structure, either StructureData or ase.Atoms is fine
-        mapping: a dictionary in the format of  {"Mn": [d, 4]...} for U
-        utype: the type of LDA+U, default to 2, which is the one with only one parameter
-        jmapping: a dictionary in the format of  {"Mn": [d, 4]...} but for J
-        felec: Wether we are dealing with f electrons, will increase lmaxmix if we are.
+    In VASP, the U for each species has to be defined in the order that they appear in POSCAR.
+    This is a helper to make sure the values of U are associated to each species.
 
+    :param structure: The structure, either StructureData or ase.Atoms is fine.
+    :param mapping: A dictionary in the format of  ``{"Mn": [d, 4]...}`` for U.
+    :param utype: The type of LDA+U, default to 2, which is the one with only one parameter.
+    :param jmapping: A dictionary in the format of  ``{"Mn": [d, 4]...}`` but for J.
+    :param felec: Whether we are dealing with f electrons; will increase lmaxmix if we are.
 
-    Returns:
-        dict_update: a dictionary to be used to update the raw input parameters for VASP
+    :returns: A dictionary to be used to update the raw input parameters for VASP.
     """
     if isinstance(structure, orm.StructureData):
         species = MultiPotcarIo.potentials_order(structure)

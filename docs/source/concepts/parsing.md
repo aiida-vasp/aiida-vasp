@@ -2,9 +2,10 @@
 file_format: mystnb
 kernelspec:
   name: python3
-substitutions:
-  VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
-  VaspCalculation: "{py:class}`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`"
+myst:
+  substitutions:
+    VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+    VaspCalculation: "{py:class}`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`"
 ---
 
 (parsing)=

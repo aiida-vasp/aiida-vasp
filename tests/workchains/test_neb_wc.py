@@ -10,7 +10,6 @@ from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.vasp import get_structure_node
-from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.neb import neb_interpolate
 
 
@@ -83,7 +82,7 @@ def neb_wc_input(fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapp
     builder.final_structure = neb_frames['image_final']
     builder.neb_images = {f'image_{i:02d}': neb_frames[f'image_{i:02d}'] for i in (1, 2, 3)}
     builder.code = mock_vasp_strict
-    create_authinfo(computer=mock_vasp_strict.computer, store=True)
+    #    create_authinfo(computer=mock_vasp_strict.computer, store=True)
 
     builder.metadata.label = 'NH3 NEB'
 

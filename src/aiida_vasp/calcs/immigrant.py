@@ -1,7 +1,7 @@
 """
 Immigrant calculation.
 
-----------------------
+
 Enables the immigration of  externally run VASP calculations into AiiDA.
 """
 
@@ -45,6 +45,7 @@ class VaspImmigrant(VaspCalculation):
 
     Usage examples
     --------------
+
     Immigrant calculation can be perfomed as follows.
 
     ::
@@ -77,6 +78,7 @@ class VaspImmigrant(VaspCalculation):
 
     Note
     ----
+
     The defaul metadata is set automatically as follows::
 
        {'options': {'max_wallclock_seconds': 1,

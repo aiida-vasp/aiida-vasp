@@ -51,7 +51,7 @@ Any development work takes place performing pull requests against the current `d
    what it is called with `git remote -v`. In the following, we assume this is called
    `origin`.
 
-4. Make sure your AiiDA-VASP Python virtual environment is enabled, consult {ref}`the installation instructions <install>`.
+4. Make sure your AiiDA-VASP Python virtual environment is enabled, consult [installation](#installation).
 
 5. Make sure you are ready for development work on the plugin, meaning, you need to make
    sure you have installed everything you need. Make sure you have installed the plugin in

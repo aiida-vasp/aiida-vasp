@@ -1,8 +1,15 @@
+---
+myst:
+  substitutions:
+      VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+---
+
 (parameters)=
 
 # Parameters
 
-Before describing how parameter passing works in this plugin it is worthwhile to restate that the design principle is that all higher lying workchains ultimately call the `VaspWorkChain` ({ref}`vasp_workchain`) which should handle [VASP] specific translations and setups in order to execute your problem with [VASP]. At that point what we in general call parameters are fully converted to INCAR tags or flags in POSCAR, for instance in the case of selective dynamics.
+Before describing how parameter passing works in this plugin it is worthwhile to restate that the design principle is that all higher lying workchains ultimately call the {{ VaspWorkChain }}
+which should handle [VASP] specific translations and setups in order to execute your problem with [VASP]. At that point what we in general call parameters are fully converted to INCAR tags or flags in POSCAR, for instance in the case of selective dynamics.
 
 :::{note}
 In this documentation, there is the parameters, which is the general description of something you can adjust to get some specific behavior, or `parameters` which is

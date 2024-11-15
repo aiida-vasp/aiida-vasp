@@ -2,7 +2,6 @@
 """
 Mock vasp command.
 
-------------------
 Separate cli interface for commands useful in development and testing.
 """
 

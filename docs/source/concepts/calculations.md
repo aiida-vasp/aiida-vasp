@@ -1,7 +1,8 @@
 ---
-substitutions:
-  VaspNEBCalculation: "{py:class}`VaspNEBCalculation <aiida_vasp.calcs.neb.VaspNEBCalculation>`"
-  VaspCalculation: "{py:class}`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`"
+myst:
+  substitutions:
+    VaspNEBCalculation: "{py:class}`VaspNEBCalculation <aiida_vasp.calcs.neb.VaspNEBCalculation>`"
+    VaspCalculation: "{py:class}`VaspCalculation<aiida_vasp.calcs.vasp.VaspCalculation>`"
 ---
 
 (vasp_calculation)=
@@ -31,7 +32,7 @@ $ vasp_neb = CalculationFactory('vasp.neb')
 
 Calculations should be placed in the `src/aiida_vasp/calcs` folder.
 
-The general user should not care too much about the calculation itself as we believe it is better for the user to interact with VASP, or the other calculators from the {ref}`workchains`.
+The general user should not care too much about the calculation itself as we believe it is better for the user to interact with VASP, or the other calculators from the workchains.
 Nevertheless, defining calculations is a crucial part of the plugin as it defines how we interact with VASP and how the input and output data are stored in the database.
 
 [verdi_shell]: https://aiida.readthedocs.io/projects/aiida-core/en/latest/howto/interact.html#how-to-interact-scripts

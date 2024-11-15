@@ -14,6 +14,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
 from yaml import safe_load
 
+from ..inputset.base import convert_lowercase
 from ..inputset.vaspsets import VASPInputSet
 from ..relax import RelaxOptions
 
@@ -120,7 +121,11 @@ class BaseBuilderUpdater:
     """Base class for builder updater"""
 
     def __init__(
-        self, preset_name: Union[None, str] = None, builder: Union[ProcessBuilder, None] = None, verbose=False
+        self,
+        preset_name: Union[None, str] = None,
+        builder: Union[ProcessBuilder, None] = None,
+        verbose=False,
+        inputset=None,
     ):
         """Instantiate a pipeline"""
         # Configure the builder
@@ -135,6 +140,7 @@ class BaseBuilderUpdater:
             preset_name = DEFAULT_PRESET
         self.preset_name = preset_name
         self.preset = VaspPresetConfig.from_file(preset_name)
+        self.inputset = inputset if inputset is not None else self.preset.inputset
 
     @property
     def builder(self) -> ProcessBuilder:
@@ -247,7 +253,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             logging.info(f'Using code {code}')
         self.use_inputset(
             initial_structure,
-            set_name=self.preset.inputset,
+            set_name=self.inputset,
             overrides=overrides,
             apply_preset=True,
             code=code,
@@ -261,19 +267,22 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def use_inputset(
         self,
         structure,
-        set_name='UCLRelaxSet',
+        set_name=None,
         overrides=None,
         apply_preset=False,
         code=None,
         structure_node_name='structure',
     ) -> 'VaspBuilderUpdater':
+        # Use the default inputset name if not defined
+        if set_name is None:
+            set_name = self.DEFAULT_INPUTSET
         if overrides is None:
             overrides = {}
 
         if apply_preset:
             if code is None:
                 code = self.preset.default_code
-            overrides_ = self.preset.get_code_specific_options(code, 'inputset_overrides')
+            overrides_ = convert_lowercase(self.preset.get_code_specific_options(code, 'inputset_overrides'))
             overrides_.update(overrides)
         else:
             overrides_ = overrides
@@ -465,7 +474,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
     def use_inputset(
         self,
         initial_structure: orm.StructureData,
-        set_name='UCLRelaxSet',
+        set_name=None,
         overrides=None,
         apply_preset=False,
         code=None,
@@ -521,6 +530,19 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         # Update the final image - make sure that is atoms are not wrapped around
         self.set_final_structure(interpolated['image_final'])
         return self
+
+    def view_images(self):
+        """
+        Visualize the images using ASE
+        """
+        from ase.visualize import view
+
+        view(
+            map(
+                lambda x: x.get_ase(),
+                [self.builder.initial_structure, *self.builder.neb_images.values(), self.builder.final_structure],
+            )
+        )
 
 
 class VaspRelaxUpdater(VaspBuilderUpdater):

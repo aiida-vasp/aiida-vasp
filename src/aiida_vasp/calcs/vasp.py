@@ -12,6 +12,7 @@ import os
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
+from aiida.orm.nodes.data.base import to_aiida_type
 
 from aiida_vasp.calcs.base import VaspCalcBase
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -27,7 +28,6 @@ class VaspCalculation(VaspCalcBase):
     """
     General-purpose VASP calculation.
 
-    ---------------------------------
     By default retrieves only the 'OUTCAR', 'vasprun.xml', 'CONTCAR'
     and Wannier90 input / output objects. These objects are deleted after parsing.
     Additional retrieve objects can be specified via the
@@ -78,11 +78,13 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'parameters',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             help='The VASP input parameters (INCAR).',
         )
         spec.input(
             'dynamics',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
             required=False,
         )
@@ -120,6 +122,7 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'settings',
             valid_type=orm.Dict,
+            serializer=to_aiida_type,
             required=False,
             help='Additional parameters not related to VASP itself.',
         )
@@ -331,6 +334,7 @@ class VaspCalculation(VaspCalcBase):
             True if input kpoints node is needed
             (py:method::VaspCalculation.use_kpoints),
             False otherwise
+
         needs 'parameters' input to be set
         (py:method::VaspCalculation.use_parameters)
         """
@@ -344,6 +348,7 @@ class VaspCalculation(VaspCalcBase):
             True if CHGCAR must be present
             (py:method::NscfCalculation.use_charge_densities),
             False otherwise
+
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
         """

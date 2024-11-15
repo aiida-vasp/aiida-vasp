@@ -15,7 +15,6 @@ from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, Quer
 from aiida.tools.archive import create_archive
 
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup
-from aiida_vasp.utils.aiida_utils import create_authinfo
 from aiida_vasp.utils.general import copytree
 
 pytest_plugins = 'aiida.tools.pytest_fixtures'
@@ -51,6 +50,7 @@ def localhost(fresh_aiida_env, localhost_dir):
             workdir=str(localhost_dir),
         ).store()
         computer.set_minimum_job_poll_interval(0.0)
+        computer.configure()
     return computer
 
 
@@ -369,7 +369,7 @@ def run_vasp_process(
             )
 
         mock_vasp.store()
-        create_authinfo(computer=mock_vasp.computer, store=True)
+        # create_authinfo(computer=mock_vasp.computer, store=True)
         inpts.code = load_code('mock-vasp-loose@localhost')
         kpoints, _ = vasp_kpoints
         inpts.kpoints = kpoints
@@ -382,6 +382,36 @@ def run_vasp_process(
         return results_and_node
 
     return inner
+
+
+@pytest.fixture()
+def mock_potcars(fresh_aiida_env, temp_pot_folder):
+    """Create family of potcars for mock-vasp"""
+    from aiida_vasp.data.potcar import PotcarData
+
+    path = os.environ.get('MOCK_VASP_POTCAR_PATH', None)
+    if path:
+        PotcarData.upload_potcar_family(path, 'PBE.54', 'Family for mock calculation', stop_if_existing=False)
+        return 'PBE.54'
+    else:
+        PotcarData.upload_potcar_family(
+            str(temp_pot_folder), 'PBE.54', 'Family for mock calculation', stop_if_existing=False
+        )
+    return None
+
+
+@pytest.fixture()
+def builder_updater(
+    fresh_aiida_env,
+    mock_potcars,
+    mock_vasp,
+):
+    """
+    Return a Builder Updater object for mock-vasp
+    """
+    from aiida_vasp.workchains.v2.common.builder_updater import VaspBuilderUpdater
+
+    return VaspBuilderUpdater(code='mock-vasp@localhost')
 
 
 def print_and_export_failed_mock():

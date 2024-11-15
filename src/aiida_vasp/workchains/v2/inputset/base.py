@@ -2,6 +2,7 @@
 Module for preparing standardised input for calculations
 """
 
+import logging
 from copy import deepcopy
 from math import pi
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 import yaml
 from aiida.orm import Dict, KpointsData, StructureData
 
+logger = logging.getLogger(__name__)
 FELEMS = [
     'La',
     'Ce',
@@ -65,13 +67,13 @@ class InputSet:
 
         Args:
           set_name: Name of the set to be loaded
-          overrides: A dictionary of overriding inputs.
+          overrides: A dictionary of overriding inputs, the keys should be in lower case.
         """
         self.set_name = set_name
 
         if overrides is None:
             overrides = {}
-        self.overrides = overrides
+        self.overrides = convert_lowercase(overrides)
 
         self._presets = None
         self.verbose = verbose
@@ -141,3 +143,13 @@ class InputSet:
         kpoints.set_cell(structure.cell)
         kpoints.set_kpoints_mesh_from_density(density * 2 * pi)
         return kpoints
+
+
+def convert_lowercase(indict):
+    """Convert all keys in a dictionary to lowercase"""
+
+    has_uppercase = any(any(letter.isupper() for letter in c) for c in indict.keys())
+    if not has_uppercase:
+        return indict
+    logger.warning('Overrides uses lowercase keys - converting all keys to lowercase.')
+    return {k.lower(): v for k, v in indict.items()}

@@ -1,3 +1,8 @@
+---
+myst:
+  substitutions:
+      VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+---
 (general-info)=
 
 # Development
@@ -16,12 +21,11 @@ Another consideration is that changing a calculation or workchain that has alrea
 
 In order to adapt and / or extend the plug-in's calculations and workchains, one should be familiar with the plug-in developer section of the [AiiDA documentation].
 
-Also we would encourage users to focus on writing workchains that uses {ref}`converge_workchain` or at least, the very minimal
-{ref}`vasp_workchain` as the workchain that is used to fetch [VASP] results and as an entry point to the VASP calculation.
+Also we would encourage users to focus on writing workchains that uses
+{{ VaspWorkChain }} as the workchain that is used to fetch [VASP] results and as an entry point to the VASP calculation.
 
 ```{toctree}
 ./tests.md
-./documentation.md
 ./vasp.md
 ./contributions.md
 ./writing_tutorials.md

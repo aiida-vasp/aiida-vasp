@@ -19,11 +19,11 @@ def export_vasp(process, folder, decompress=True, include_potcar=True):
     """
 
     # Dispatch export function based on process type
-    if process.process_type.endswith('vasp.vasp') or process.process_type.endswith('vasp.v2.vasp'):
+    if process.process_type.endswith('vasp'):
         export_vasp_calc(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('workflows:vasp.neb'):
+    elif process.process_type.endswith('neb'):
         export_neb(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('vasp.v2.relax'):
+    elif process.process_type.endswith('relax'):
         export_relax(process, folder, decompress=decompress, include_potcar=include_potcar)
     else:
         raise TypeError(f'Unsupported process type: {process.process_type}')
@@ -35,8 +35,7 @@ def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
     """
     Export a AiiDA VASP calculation
 
-    Arguments:
-        node: A VaspCalculation node or VaspWorkChain node
+    :param node: A VaspCalculation node or VaspWorkChain node
     """
     from aiida.common.links import LinkType
     from aiida.orm import CalcJobNode, WorkChainNode
@@ -113,7 +112,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
     # Write POSCAR file for the input
     try:
-        out_structure = workchain_node.inputs.outputs.relax.structure
+        out_structure = workchain_node.outputs.relax.structure
     except AttributeError:
         print(
             'Cannot find the output structure - skipping.'

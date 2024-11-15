@@ -8,6 +8,7 @@ TODO:
 """
 
 from copy import deepcopy
+from logging import getLogger
 from typing import List
 
 import numpy as np
@@ -26,6 +27,11 @@ from aiida_vasp.utils.opthold import BandOptions
 from .common import OVERRIDE_NAMESPACE
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithBuilderUpdater
+
+SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
+
+
+logger = getLogger(__name__)
 
 
 class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
@@ -550,12 +556,14 @@ def seekpath_structure_analysis(structure, band_settings):
     path of high symmetry k-points through its Brillouin zone. Note that the returned primitive cell may differ from the
     original structure in which case the k-points are only congruent with the primitive cell.
     The keyword arguments can be used to specify various Seekpath parameters, such as:
-        with_time_reversal: True
-        reference_distance: 0.025
-        recipe: 'hpkot'
-        threshold: 1e-07
-        symprec: 1e-05
-        angle_tolerance: -1.0
+
+    - with_time_reversal: True
+    - reference_distance: 0.025
+    - recipe: 'hpkot'
+    - threshold: 1e-07
+    - symprec: 1e-05
+    - angle_tolerance: -1.0
+
     Note that exact parameters that are available and their defaults will depend on your Seekpath version.
     """
     from aiida.tools import get_explicit_kpoints_path
@@ -589,7 +597,7 @@ def get_primitive_strucrture_and_scf_kpoints(structure):
     from .common.dryrun import dryrun_relax_builder
 
     # Locate the relaxation work
-    relax_work = structure.get_incoming(link_label_filter='relax__structure').one().node
+    relax_work = structure.base.links.get_incoming(link_label_filter='relax__structure').one().node
     primitive = get_explicit_kpoints_path(structure)['primitive_structure']
 
     # Create an restart builder
@@ -722,7 +730,11 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             return self.exit_codes.ERROR_NO_VALID_SCF_KPOINTS_INPUT  # pylint: disable=no-member
 
         # Number of kpoints per split, NOT including the SCF kpoints
-        per_split = orm.Int(self.inputs.band_settings['kpoints_per_split'] - scf_kpoints.get_kpoints().shape[0])
+        nscf = scf_kpoints.get_kpoints().shape[0]
+        per_split = orm.Int(self.inputs.band_settings['kpoints_per_split'] - nscf)
+        if (per_split / nscf) <= 0.5:
+            per_split = int(nscf * 0.5)
+            self.report(f'WARNING: Too few actual band k points per split, setting it to: {per_split + nscf}')
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
 
@@ -732,10 +744,29 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         """
 
         workflow_class = WorkflowFactory(self._base_wk_string)
+
+        # Check if we need to turn off spin polarization
+        inputs = self.exposed_inputs(workflow_class, 'scf')
+        pdict = inputs.parameters.get_dict()
+        # Check if we really need to run spin polarized calculation
+        relax_work = self.ctx.get('workchain_relax', None)
+        if relax_work is not None and pdict.get('incar', {}).get('ispin') == 2:
+            self.report('Checking the magnetization of the relaxed structure.')
+            # Check if the site magnetizations are all zero
+            mag = relax_work.outputs.misc.get('site_magnetization')
+            if not _is_magnetic_via_site_moment(mag):
+                pdict['incar']['ispin'] = 1
+                self.report('Turnning off spin polarization for band structure calculation for non-magnetic system.')
+                inputs.parameters = orm.Dict(pdict)
+
+        pnode = inputs.parameters
+
         for key, value in self.ctx.kpoints_for_calc.items():
             idx = int(key.split('_')[-1])
 
             inputs = self.exposed_inputs(workflow_class, 'scf')
+            # Use the updated parameters
+            inputs.parameters = pnode
 
             # Ensure that the bands are parsed
             if 'settings' not in inputs:
@@ -769,7 +800,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         self.report(f'Extracting output bandstructure from {len(self.ctx.workchains)} workchains.')
         kwargs = {}
         for work in workchains:
-            link_label = work.get_incoming(link_type=LinkType.CALL_WORK).one().link_label
+            link_label = work.base.links.get_incoming(link_type=LinkType.CALL_WORK).one().link_label
             link_idx = int(link_label.split('_')[-1])
             kwargs[f'band_{link_idx:03d}'] = work.outputs.bands
             kwargs[f'kpoint_{link_idx:03d}'] = work.inputs.kpoints
@@ -878,8 +909,10 @@ def _combine_bands_data(
     bands_array_combine = []
     occu_array_combine = []
     kpoints_combine = []
+    fermi_levels = []
 
     for skpts, sbands in zip(kpoints_list, bands_list):
+        fermi_levels.append(sbands.base.attributes.get('fermi_level', None))
         kpt_array, weights_array = skpts.get_kpoints(also_weights=True)
         zero_weight_mask = weights_array == 0.0
         kpoints_combine.append(kpt_array[zero_weight_mask, :])
@@ -923,6 +956,14 @@ def _combine_bands_data(
     band_data = orm.BandsData()
     band_data.set_kpointsdata(bs_kpoints)
     band_data.set_bands(band_array_full, occupations=occu_array_full)
+    # Set the fermi level of the combined bands
+    if any(x is None for x in fermi_levels) or any(abs(entry - fermi_levels[0]) > 0.01 for entry in fermi_levels):
+        logger.warning(
+            f'Fermi level of the splitted calculations ({fermi_levels}) are not consistent! '
+            'Using the first one as the combined fermi level.'
+        )
+    band_data.base.attributes.set('fermi_level', fermi_levels[0])
+    band_data.base.attributes.set('efermi', fermi_levels[0])  # Alias for fermi level
 
     return band_data
 
@@ -962,3 +1003,14 @@ def _extract_kpoints_from_retrieved(retrieved):
     kpoints_data.set_kpoints(kpoints=kpoints_array, weights=weights_array)
 
     return kpoints_data
+
+
+def _is_magnetic_via_site_moment(mag):
+    has_mag = False
+    # Iterate over dictionaries of the site moments of each site
+    for site in mag['sphere']['x']['site_moment'].values():
+        # Check if any of the moments is non-zero
+        if any(abs(x) > SITE_MAG_THRESHOLD for x in site.values()):
+            has_mag = True
+            break
+    return has_mag
