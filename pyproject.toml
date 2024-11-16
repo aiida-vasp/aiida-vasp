@@ -49,13 +49,13 @@ tests = ["aiida-core>=2.6", "pytest", "PyCifRW"]
 pre-commit = ["pre-commit"]
 docs = [
     "aiida-core[docs]~=2.4",
+    "autodoc2",
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_togglebutton",
-    "sphinxcontrib-apidoc",
     "sphinxext.remoteliteralinclude",
 ]
 graphs = ["matplotlib"]
