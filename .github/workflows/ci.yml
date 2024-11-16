@@ -55,3 +55,38 @@ jobs:
           name: aiida-vasp
           flags: pytests
           fail_ci_if_error: true
+  docs:
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+          shell: bash -l {0}
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        python: ['3.10']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+      - name: Install dependencies
+        run: |
+          conda activate test
+          conda install --yes -c conda-forge python=${{ matrix.python }}
+          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
+      - name: Setup parsevasp
+        run: |
+          conda activate test
+          git clone --depth 1 https://github.com/aiida-vasp/parsevasp.git
+          cd parsevasp
+          pip install -e . -vvv
+          cd ..
+      - name: Install aiida-vasp
+        run: |
+          conda activate test
+          pip install pymatgen
+          pip install -e .[docs] -vvv
+      - name: Build the documentation
+        run: |
+          cd docs
+          make html
