@@ -226,6 +226,13 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         inputs.metadata.call_link_label = 'relax'
         inputs.structure = self.ctx.current_structure
 
+        # Ensure the WAVECAR is written by the calculation
+        if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+            pdict = inputs.vasp.parameters.get_dict()
+            pdict['incar']['lwave'] = True
+            if pdict != inputs.vasp.parameters.get_dict():
+                inputs.vasp.parameters = orm.Dict(dict=pdict)
+
         running = self.submit(relax_work, **inputs)
         return self.to_context(workchain_relax=running)
 
@@ -758,6 +765,13 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 pdict['incar']['ispin'] = 1
                 self.report('Turnning off spin polarization for band structure calculation for non-magnetic system.')
                 inputs.parameters = orm.Dict(pdict)
+
+        # Reuse the wavecar if requested
+        if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+            inputs.restart_folder = relax_work.outputs.remote_folder
+            self.report('Setting ISTART=1 to reuse WAVECAR from the previous calculation.')
+            pdict['incar']['istart'] = 1
+            inputs.parameters = orm.Dict(pdict)
 
         pnode = inputs.parameters
 

@@ -236,3 +236,6 @@ class BandOptions(OptionContainer):
         description='Number of kpoints per split for the band structure calculation',
         default=80,
     )
+    hybrid_reuse_wavecar: bool = Field(
+        description='Whether to reuse the WAVECAR from the previous relax/singlepoint calculation', default=False
+    )

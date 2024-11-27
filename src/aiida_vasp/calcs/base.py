@@ -145,10 +145,7 @@ class VaspCalcBase(CalcJob):
 
     def _is_restart(self):
         restart_folder = self.inputs.get('restart_folder', None)
-        is_restart = False
-        if restart_folder:
-            is_restart = True
-        return is_restart
+        return bool(restart_folder)
 
     def store(self, *args, **kwargs):
         """Adds a _prestore subclass hook for operations that should be done just before storing."""
