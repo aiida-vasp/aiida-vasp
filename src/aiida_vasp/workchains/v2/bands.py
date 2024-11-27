@@ -768,7 +768,6 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
 
         # Reuse the wavecar if requested
         if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
-            inputs.restart_folder = relax_work.outputs.remote_folder
             self.report('Setting ISTART=1 to reuse WAVECAR from the previous calculation.')
             pdict['incar']['istart'] = 1
             inputs.parameters = orm.Dict(pdict)
@@ -781,6 +780,9 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             inputs = self.exposed_inputs(workflow_class, 'scf')
             # Use the updated parameters
             inputs.parameters = pnode
+
+            if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+                inputs.restart_folder = relax_work.outputs.remote_folder
 
             # Ensure that the bands are parsed
             if 'settings' not in inputs:
