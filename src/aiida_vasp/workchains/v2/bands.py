@@ -229,6 +229,12 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         # Ensure the WAVECAR is written by the calculation
         if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
             pdict = inputs.vasp.parameters.get_dict()
+            # Update the relax settings so we do not clean the final singepoint calculation
+            rdict = inputs.relax_settings.get_dict()
+            rdict['keep_sp_workdir'] = True
+            if rdict != inputs.relax_settings.get_dict():
+                inputs.relax_settings = orm.Dict(dict=rdict)
+
             pdict['incar']['lwave'] = True
             if pdict != inputs.vasp.parameters.get_dict():
                 inputs.vasp.parameters = orm.Dict(dict=pdict)

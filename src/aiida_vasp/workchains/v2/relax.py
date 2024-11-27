@@ -375,6 +375,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                     self.report(f'Using previous remote folder <{restart_folder}> for restart')
                 inputs.restart_folder = restart_folder
 
+        # The workdir is not cleaned by the called VaspWorkChain for the static calculation
+        # if `keep_sp_workdir`` is set to True
+        if self.ctx.relax_settings.get('keep_sp_workdir'):
+            inputs.vasp.clean_workdir = orm.Bool(False)
+
         # Update the MAGMOM if information is present
         if self.ctx.current_magmom is not None:
             inputs.parameters = update_nested_dict_node(
@@ -748,17 +753,17 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 cleaned_calcs = []
                 qbd = orm.QueryBuilder()
                 qbd.append(orm.WorkChainNode, filters={'id': self.node.pk})
-
                 # Options for keeping the single point calculation work directory
                 if rlx_settings.get('keep_sp_workdir', False):
+                    # Only gather the relax calculations
                     qbd.append(
                         orm.WorkChainNode,
+                        edge_filters={'label': {'like': 'relax_%'}},
                         filters={'id': {'in': [node.pk for node in self.ctx.workchains]}},
                     )
                 else:
                     qbd.append(
                         orm.WorkChainNode,
-                        edge_filters={'label': {'like': 'relax_%'}},
                         filters={'id': {'in': [node.pk for node in self.ctx.workchains]}},
                     )
 
