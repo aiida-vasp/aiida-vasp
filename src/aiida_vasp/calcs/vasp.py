@@ -186,6 +186,9 @@ class VaspCalculation(VaspCalcBase):
             required=False,
             help='The output dos.',
         )
+        spec.output(
+            'parameters', valid_type=orm.Dict, required=False, help='All input parameters including the default values.'
+        )
         # Standalone array quantities
         for name in ['hessian', 'dynmat', 'born_charges', 'dielectrics']:
             spec.output(
