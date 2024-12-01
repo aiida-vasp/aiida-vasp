@@ -379,7 +379,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # The workdir is not cleaned by the called VaspWorkChain for the static calculation
         # if `keep_sp_workdir`` is set to True
         if self.ctx.relax_settings.get('keep_sp_workdir'):
-            inputs.vasp.keep_last_workdir = orm.Bool(True)
+            inputs.keep_last_workdir = orm.Bool(True)
 
         # Update the MAGMOM if information is present
         if self.ctx.current_magmom is not None:
