@@ -73,7 +73,7 @@ class OptionContainer(BaseModel):
 
 
 class CalcSettingsConfig(OptionContainer):
-    """Schema for the .setting port"""
+    """Schema for the .settings port used by both VaspCalculation and VaspWorkChain"""
 
     parser_setting: Optional[dict] = Field(description='Settings for the parser')
     ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(description='Additional list of files to be retrieved')
@@ -86,6 +86,10 @@ class CalcSettingsConfig(OptionContainer):
     ALWAYS_STORE: Optional[list] = Field(
         description=('Additional list of files to be retrieved, ' 'but not store in the storage')
     )
+    skip_param_validation: Optional[bool] = Field(
+        description='Skip the validation of the input parameters', default=False
+    )
+    unsupported_parameters: Optional[dict] = Field(description='None-standard VASP parameters that are valid')
 
 
 class RelaxOptions(OptionContainer):

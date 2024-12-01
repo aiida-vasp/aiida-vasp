@@ -144,7 +144,6 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 ),
                 cls.store_relaxed,
             ),
-            cls.init_relaxed,
             if_(cls.should_run_static_calculation)(
                 cls.run_static_calculation,
                 cls.verify_next_workchain,
@@ -262,43 +261,6 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         within_max_iterations = bool(self.ctx.iteration < self.ctx.relax_settings.convergence_max_iterations)
         return bool(within_max_iterations and not self.ctx.is_converged)
 
-    def init_relaxed(self):
-        """Initialize a calculation based on a relaxed or assumed relaxed structure."""
-
-        # Did not perform the relaxation - going into the final singlepoint directly
-        if not self.perform_relaxation():
-            if self.is_verbose():
-                self.report('skipping structure relaxation and forwarding input to the next workchain.')
-        else:
-            # For the final static run we do not need to parse the output structure
-            if 'settings' in self.inputs.vasp:
-                self.ctx.static_input_additions.settings = update_nested_dict_node(
-                    self.inputs.vasp.settings,
-                    {
-                        'parser_settings': {
-                            'include_node': ['structure', 'trajectory'],
-                            'required_node': ['structure', 'trajectory'],
-                        }
-                    },
-                    extend_list=True,
-                )
-
-            # Apply overrides if supplied
-            if 'static_calc_settings' in self.inputs:
-                self.ctx.static_input_additions.settings = self.inputs.static_calc_settings
-
-            if 'static_calc_options' in self.inputs:
-                self.ctx.static_input_additions.options = self.inputs.static_calc_options
-
-            # Override INCARs for the final relaxation
-            if 'static_calc_parameters' in self.inputs:
-                self.ctx.static_input_additions.parameters = update_nested_dict_node(
-                    self.inputs.vasp.parameters,
-                    self.inputs.static_calc_parameters.get_dict(),
-                )
-            if self.is_verbose():
-                self.report('performing a final calculation using the relaxed structure.')
-
     def run_relax(self):
         """Perform the relaxation"""
         self.ctx.iteration += 1
@@ -355,6 +317,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         inputs.metadata.label += f' ITER {self.ctx.iteration:02d}'
         inputs.metadata.call_link_label = f'relax_{self.ctx.iteration:02d}'
 
+        # Keep the workdir if keep_sp_workdir is set to True but we are not having static calculation at all
+        # This ensure that we have a valid remote_data output which is not cleaned by the called VaspWorkChain
+        if self.inputs.relax_settings.get('keep_sp_workdir') and not self.should_run_static_calculation():
+            inputs.keep_last_workdir = orm.Bool(True)
+
         running = self.submit(self._base_workchain, **inputs)
         self.report(f'launching {self._base_workchain.__name__}<{running.pk}> iterations #{self.ctx.iteration}')
 
@@ -362,6 +329,40 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
     def run_static_calculation(self):
         """Perform the relaxation"""
+
+        # For the final static run we do not need to parse the output structure
+        if 'settings' in self.inputs.vasp:
+            self.ctx.static_input_additions.settings = update_nested_dict_node(
+                self.inputs.vasp.settings,
+                {
+                    'parser_settings': {
+                        'include_node': ['structure', 'trajectory'],
+                        'required_node': ['structure', 'trajectory'],
+                    }
+                },
+                extend_list=True,
+            )
+
+        # Apply overrides if supplied
+        if 'static_calc_settings' in self.inputs:
+            self.ctx.static_input_additions.settings = self.inputs.static_calc_settings
+
+        if 'static_calc_options' in self.inputs:
+            self.ctx.static_input_additions.options = self.inputs.static_calc_options
+
+        # Override INCARs for the final relaxation
+        if 'static_calc_parameters' in self.inputs:
+            self.ctx.static_input_additions.parameters = update_nested_dict_node(
+                self.inputs.vasp.parameters,
+                self.inputs.static_calc_parameters.get_dict(),
+            )
+
+        if self.is_verbose():
+            if not self.perform_relaxation():
+                self.report('Skiped structure relaxation and forwarding inputs to the static calculation.')
+            else:
+                self.report('performing a final calculation using the relaxed structure.')
+
         self.ctx.iteration += 1
 
         inputs = self.exposed_inputs(self._base_workchain, 'vasp')
@@ -378,7 +379,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # The workdir is not cleaned by the called VaspWorkChain for the static calculation
         # if `keep_sp_workdir`` is set to True
         if self.ctx.relax_settings.get('keep_sp_workdir'):
-            inputs.vasp.clean_workdir = orm.Bool(False)
+            inputs.vasp.keep_last_workdir = orm.Bool(True)
 
         # Update the MAGMOM if information is present
         if self.ctx.current_magmom is not None:

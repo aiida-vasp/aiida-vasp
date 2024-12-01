@@ -353,11 +353,8 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         inputs.structure = self.ctx.current_structure
 
         # Turn off cleaning of the working directory
-        clean = inputs.get('clean_workdir')
-        if clean and clean.value is False:
-            pass
-        else:
-            inputs.clean_workdir = orm.Bool(False)
+        if not inputs.get('keep_last_workdir', False):
+            inputs.keep_last_workdir = orm.Bool(True)
 
         # Ensure that writing the CHGCAR file is on
         pdict = inputs.parameters.get_dict()
