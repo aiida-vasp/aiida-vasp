@@ -52,17 +52,6 @@ class MissingFileError(ParserError):
     pass
 
 
-DEFAULT_QUANTITIES = (
-    'total_energies',
-    'maximum_stress',
-    'maximum_force',
-    'notifications',
-    'run_status',
-    'run_stats',
-    'version',
-    'band_properties',
-)
-
 DEFAULT_EXCLUDED_QUANTITIES = (
     'energies',
     'chgcar',
@@ -72,6 +61,7 @@ DEFAULT_EXCLUDED_QUANTITIES = (
     'magnetization_density',
     'elastic_moduli',
     'symmetries',
+    'parameters',  # The parameters used for the calculation
 )
 
 DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints', 'trajectory'])
@@ -103,6 +93,7 @@ MISC_QUANTITIES = (
     'fermi_level',
     'band_properties',
     'magnetization',
+    'parameters',
 )
 
 ALLOW_EMPTY = ('notifications',)

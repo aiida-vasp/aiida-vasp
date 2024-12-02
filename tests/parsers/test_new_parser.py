@@ -38,6 +38,14 @@ def test_parser_bare(calc_with_retrieved, request):
     assert 'arrays' in parser.outputs
     assert 'dielectrics`' not in parser.outputs
     assert 'born_charges' not in parser.outputs
+    assert 'parameters' not in parser.outputs['misc']
+
+    # Test the parameters outputs
+    node = calc_with_retrieved(file_path, {'parser_settings': {'include_quantity': ['parameters']}})
+    parser = VaspParser(node)
+    parser.parse(retrieved_tempoary_folder=file_path)
+    assert 'parameters' in parser.outputs['misc']
+    assert 'system' in parser.outputs['misc']['parameters']
 
 
 @pytest.fixture
