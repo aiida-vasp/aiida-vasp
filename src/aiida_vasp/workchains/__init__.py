@@ -5,10 +5,10 @@ from .v2.relax import VaspRelaxWorkChain
 from .v2.vasp import VaspWorkChain
 
 __all__ = (
-    'VaspWorkChain',
-    'VaspNEBWorkChain',
     'VaspBandsWorkChain',
-    'VaspHybridBandsWorkChain',
     'VaspConvergenceWorkChain',
+    'VaspHybridBandsWorkChain',
+    'VaspNEBWorkChain',
     'VaspRelaxWorkChain',
+    'VaspWorkChain',
 )

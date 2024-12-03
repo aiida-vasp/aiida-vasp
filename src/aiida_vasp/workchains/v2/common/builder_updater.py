@@ -23,13 +23,13 @@ DEFAULT_INPUTSET = 'UCLRelaxSet'
 
 
 __all__ = (
+    'VaspBandUpdater',
     'VaspBuilderUpdater',
+    'VaspConvUpdater',
+    'VaspHybridBandUpdater',
+    'VaspNEBUpdater',
     'VaspPresetConfig',
     'VaspRelaxUpdater',
-    'VaspNEBUpdater',
-    'VaspConvUpdater',
-    'VaspBandUpdater',
-    'VaspHybridBandUpdater',
 )
 
 
