@@ -72,6 +72,26 @@ class OptionContainer(BaseModel):
         return '\n'.join(lines)
 
 
+class CalcSettingsConfig(OptionContainer):
+    """Schema for the .settings port used by both VaspCalculation and VaspWorkChain"""
+
+    parser_setting: Optional[dict] = Field(description='Settings for the parser')
+    ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(description='Additional list of files to be retrieved')
+    ADDITIONAL_RETRIEVE_TEMPORARY_LIST: Optional[list] = Field(
+        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+    )
+    PROVENANCE_EXCLUDE_LIST: Optional[list] = Field(
+        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+    )
+    ALWAYS_STORE: Optional[list] = Field(
+        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+    )
+    skip_param_validation: Optional[bool] = Field(
+        description='Skip the validation of the input parameters', default=False
+    )
+    unsupported_parameters: Optional[dict] = Field(description='None-standard VASP parameters that are valid')
+
+
 class RelaxOptions(OptionContainer):
     """Options for VaspRelaxWorkChain"""
 
@@ -220,25 +240,6 @@ class BandOptions(OptionContainer):
         description='Number of kpoints per split for the band structure calculation',
         default=80,
     )
-
-
-class CalcSettings(OptionContainer):
-    """Schema for the .settings port"""
-
-    parser_setting: Optional[dict] = Field(description='Settings for the parser')
-    ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(description='Additional list of files to be retrieved')
-    ADDITIONAL_RETRIEVE_TEMPORARY_LIST: Optional[list] = Field(
-        description=('Additional list of files to be retrieved, ' 'but not store in the storage'),
-    )
-    PROVENANCE_EXCLUDE_LIST: Optional[list] = Field(
-        description='Files to be excluded from the provenance storage, e.g. large files or large directories',
-    )
-    ALWAYS_STORE: Optional[list] = Field(
-        description=('Always store the retrieved files'),
-    )
-    PER_IMAGE_ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(
-        description=('Additional list of files to be retrieved per image for NEB calculations.'),
-    )
-    ADDITIONAL_REMOTE_COPY_LIST: Optional[list] = Field(
-        description=('Additional list of files to be copied when restarting calculations on a remote machine.'),
+    hybrid_reuse_wavecar: bool = Field(
+        description='Whether to reuse the WAVECAR from the previous relax/singlepoint calculation', default=False
     )

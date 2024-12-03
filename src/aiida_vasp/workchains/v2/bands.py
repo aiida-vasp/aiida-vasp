@@ -226,6 +226,19 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         inputs.metadata.call_link_label = 'relax'
         inputs.structure = self.ctx.current_structure
 
+        # Ensure the WAVECAR is written by the calculation
+        if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+            pdict = inputs.vasp.parameters.get_dict()
+            # Update the relax settings so we do not clean the final singepoint calculation
+            rdict = inputs.relax_settings.get_dict()
+            rdict['keep_sp_workdir'] = True
+            if rdict != inputs.relax_settings.get_dict():
+                inputs.relax_settings = orm.Dict(dict=rdict)
+
+            pdict['incar']['lwave'] = True
+            if pdict != inputs.vasp.parameters.get_dict():
+                inputs.vasp.parameters = orm.Dict(dict=pdict)
+
         running = self.submit(relax_work, **inputs)
         return self.to_context(workchain_relax=running)
 
@@ -340,11 +353,8 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         inputs.structure = self.ctx.current_structure
 
         # Turn off cleaning of the working directory
-        clean = inputs.get('clean_workdir')
-        if clean and clean.value is False:
-            pass
-        else:
-            inputs.clean_workdir = orm.Bool(False)
+        if not inputs.get('keep_last_workdir', False):
+            inputs.keep_last_workdir = orm.Bool(True)
 
         # Ensure that writing the CHGCAR file is on
         pdict = inputs.parameters.get_dict()
@@ -759,6 +769,12 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 self.report('Turnning off spin polarization for band structure calculation for non-magnetic system.')
                 inputs.parameters = orm.Dict(pdict)
 
+        # Reuse the wavecar if requested
+        if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+            self.report('Setting ISTART=1 to reuse WAVECAR from the previous calculation.')
+            pdict['incar']['istart'] = 1
+            inputs.parameters = orm.Dict(pdict)
+
         pnode = inputs.parameters
 
         for key, value in self.ctx.kpoints_for_calc.items():
@@ -767,6 +783,9 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             inputs = self.exposed_inputs(workflow_class, 'scf')
             # Use the updated parameters
             inputs.parameters = pnode
+
+            if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+                inputs.restart_folder = relax_work.outputs.remote_folder
 
             # Ensure that the bands are parsed
             if 'settings' not in inputs:

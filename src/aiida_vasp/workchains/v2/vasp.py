@@ -201,6 +201,13 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             """,
         )
         spec.input(
+            'keep_last_workdir',
+            valid_type=orm.Bool,
+            default=lambda: orm.Bool(False),
+            serializer=to_aiida_type,
+            help='If True, prevent the last workdir from being cleaned in case the files are needed for restarts.',
+        )
+        spec.input(
             'verbose',
             valid_type=orm.Bool,
             required=False,
@@ -647,12 +654,18 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             self.report('remote folders will not be cleaned because the workchain finished with error.')
             return
 
-        cleaned_calcs = []
+        # Find the remote folder of the last calculation which should be kept from cleaning
+        out_remote_pk = None
+        if self.inputs.keep_last_workdir.value is True:
+            out_remote_pk = self.outputs.remote_folder.pk
 
+        cleaned_calcs = []
         for called_descendant in self.node.called_descendants:
             if isinstance(called_descendant, CalcJobNode):
                 try:
-                    called_descendant.outputs.remote_folder._clean()  # pylint: disable=protected-access
+                    remote_folder = called_descendant.outputs.remote_folder
+                    if remote_folder.pk != out_remote_pk:
+                        remote_folder._clean()  # pylint: disable=protected-access
                     cleaned_calcs.append(str(called_descendant.pk))
                 except (IOError, OSError, KeyError):
                     pass

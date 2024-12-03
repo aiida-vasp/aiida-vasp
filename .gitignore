@@ -18,7 +18,17 @@
 .pytest_cache
 *.vscode
 docs/_build
+docs/source/apidocs
 build/
 dist/
 docs/source/api/
 docs/source/apidoc/
+.ipynb_checkpoints
+DOSCAR
+CHG
+CHGCAR
+IBZKPT
+REPORT
+WAVECAR
+PCDAT
+XDATCAR
