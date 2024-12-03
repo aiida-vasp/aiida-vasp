@@ -180,10 +180,11 @@ def ensure_node_kwargs(func):
     @wraps(func)
     def wrapper(node, *args, **kwargs):
         """Make sure the key world arguments ends with '_node' node is a Node instance."""
-        for name in kwargs.keys():
+        new_kwargs = dict(kwargs)
+        for name, value in kwargs.items():
             if name.endswith('node'):
                 if not isinstance(kwargs[name], orm.Node):
-                    kwargs[name] = load_node(kwargs[name])
-        return func(node, *args, **kwargs)
+                    new_kwargs[name] = load_node(value)
+        return func(node, *args, **new_kwargs)
 
     return wrapper
