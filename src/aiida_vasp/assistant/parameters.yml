@@ -3590,3 +3590,8 @@ fnmin:
   description: Minimum number of iterations before adjusting alpha and dt
   values: null
   type: integer
+ioptcell:
+  default: null
+  description: Tag for selecting the active optimisation directions for the cell for Chengcheng Xiao's patch, see https://github.com/Chengcheng-Xiao/VASP_OPT_AXIS
+  type: string
+  values: null
