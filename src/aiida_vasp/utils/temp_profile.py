@@ -7,7 +7,7 @@ from aiida.storage.sqlite_temp import SqliteTempBackend
 
 from aiida_vasp.utils.mock_code import VaspMockRegistry
 
-__all__ = ('load_temp_profile', 'orm', 'VaspMockRegistry')
+__all__ = ('VaspMockRegistry', 'load_temp_profile', 'orm')
 
 
 def load_temp_profile():
