@@ -169,6 +169,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             self.inputs.relax_settings.get_dict()
         )  # relax_settings controls the logic of the workchain
         self.ctx.current_magmom = None
+        self.ctx.is_double_relax = self.inputs.relax_settings.get('double_relax_mode', False)
 
         # Check potential issues in the the input parameters
         self._check_input_parameters()
@@ -263,6 +264,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
     def run_relax(self):
         """Perform the relaxation"""
+        # Iteration starts from 1, not 0
         self.ctx.iteration += 1
 
         inputs = self.exposed_inputs(self._base_workchain, 'vasp')
@@ -590,6 +592,16 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 pass
 
         self.ctx.is_converged = converged
+
+        # Check if we are in 'double_relax' mode and the relaxation is not converged
+        if self.ctx.is_double_relax and not converged:
+            if self.ctx.iteration >= 2:
+                self.report(
+                    'DOUBLE RELAX: The second relaxation is not converged, '
+                    ' but we will finish with a final static calculation.'
+                )
+                self.ctx.is_converged = True
+
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
@@ -730,10 +742,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                         'which is significantly higher than the tolerance'
                         f' {max_force_threshold} eV/A.'
                     )
-                return self.exit_codes.ERROR_FINAL_SCF_HAS_RESIDUAL_FORCE  # pylint: disable=no-member
+                if not self.ctx.is_double_relax:
+                    return self.exit_codes.ERROR_FINAL_SCF_HAS_RESIDUAL_FORCE  # pylint: disable=no-member
         else:
             self.report(
-                'Unable to presure final check for maximum force, as the tetrahedral method is used for integration.'
+                'Unable to perform final check for maximum force, as the tetrahedral method is used for integration.'
             )
 
         # If we bypassed the relax by setting perform=False, still attached the input structure as the output structure

@@ -165,6 +165,10 @@ class RelaxOptions(OptionContainer):
     keep_magnetization: bool = Field(
         description='Whether to keep magnetization from the previous calculation if possible', default=False
     )
+    double_relax_mode: bool = Field(
+        description='Run in double relax mode - relaxation is only performed up to two times without'
+        ' checking convergence.'
+    )
 
     # TODO: implement pyandtic checks
 
