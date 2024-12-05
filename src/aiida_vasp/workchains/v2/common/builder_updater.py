@@ -399,7 +399,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         if self.namespace_vasp.settings is None:
             self.namespace_vasp.settings = orm.Dict(sdict)
         else:
-            self.namespace_vasp.settings = update_dict_node(self.namespace_vasp.options, sdict)
+            self.namespace_vasp.settings = update_dict_node(self.namespace_vasp.settings, sdict)
         return self
 
     def update_settings(self, *args, **kwargs):
