@@ -896,7 +896,7 @@ def detect_tetrahedral_method(input_dict: dict) -> bool:
     return False
 
 
-class VaspStagedRelaxWorkChain:
+class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
     """
     Relxation with multiple stages
 
@@ -910,7 +910,7 @@ class VaspStagedRelaxWorkChain:
     Example:
 
     ```
-    vasp_staged_relax = VaspStagedRelaxWorkChain.get_builder()
+    vasp_staged_relax = VaspMultiStageRelaxWorkChain.get_builder()
     vasp_staged_relax.structure = structure
     vasp_staged_relax.relax = <usual relax inputs>
     # Set ismear to 0 for the first stage, -5 for the second stage
@@ -947,7 +947,7 @@ class VaspStagedRelaxWorkChain:
         spec.input(
             'use_nested_update',
             valid_type=orm.Bool,
-            default=orm.Bool(False),
+            default=orm.Bool(True),
             help='Use nested update for parameters, options, relax_settings, and settings. '
             'Otherwise full dictionary should be provided',
         )
@@ -976,11 +976,11 @@ class VaspStagedRelaxWorkChain:
         """
         relax_inputs = self.exposed_inputs(self._base_workchain, 'relax')
         self.ctx.current_stage = 0
-        self.ctx.current_structure = relax_inputs.structure
-        self.ctx.parameters = relax_inputs.parameters.get_dict()
-        self.ctx.settings = relax_inputs.settings.get_dict()
-        self.ctx.options = relax_inputs.options.get_dict()
-        self.ctx.relax_settings = self.inputs.relax_settings.get_dict()
+        self.ctx.current_structure = self.inputs.structure
+        self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
+        self.ctx.settings = relax_inputs.vasp.settings.get_dict()
+        self.ctx.options = relax_inputs.vasp.options.get_dict()
+        self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
         self.ctx.n_stages = len(self.inputs.parameters_stages)
 
     def should_run_stage(self):

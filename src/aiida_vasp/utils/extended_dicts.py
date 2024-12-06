@@ -73,16 +73,7 @@ def update_nested_dict(dict1: dict, dict2: dict, extend_list: bool = False):
             dict1_value.extend(value)
         else:
             dict1[key] = deepcopy(value)
-
-
-def find_key_in_dicts(dictionary: dict, supplied_key: str):
-    """Find a key in a nested dictionary."""
-    for key, value in dictionary.items():
-        if key == supplied_key:
-            yield value
-        elif isinstance(value, dict):
-            for result in find_key_in_dicts(value, supplied_key):
-                yield result
+    return dict1
 
 
 def update_nested_dict_node(dict_node: orm.Dict, update_dict: dict, extend_list: bool = False):

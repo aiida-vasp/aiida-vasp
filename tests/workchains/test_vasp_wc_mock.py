@@ -108,3 +108,34 @@ def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_hybrid')
     results = upd.run_get_node()
     assert results.node.is_finished_ok
+
+
+def test_silicon_relax_staged(mock_potcars, mock_vasp_strict, builder_updater):
+    """Test running a VASP workchain on silicon using the mock code."""
+    from ase.build import bulk
+
+    si = bulk('Si', 'diamond', 5.4)
+    si_node = orm.StructureData(ase=si)
+
+    from aiida_vasp.workchains import VaspMultiStageRelaxWorkChain
+
+    upd = VaspMultiStageRelaxWorkChain.get_builder_updater(code='mock-vasp@localhost')
+    upd.apply_preset(si_node)
+    upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_relax_staged')
+
+    upd.builder.parameters_stages = {
+        '0': orm.Dict(dict={'incar': {'gga': 'pe'}}),
+        '1': orm.Dict(dict={'incar': {'encut': 400}}),
+    }
+    results = upd.run_get_node()
+    # Add prefix to the registry folder
+    assert results.node.is_finished_ok
+
+    first_relax, second_relax = results.node.called
+    assert first_relax.exit_status == 0
+    assert second_relax.exit_status == 0
+    assert first_relax.inputs.vasp.parameters['incar']['gga'] == 'pe'
+    assert first_relax.inputs.vasp.parameters['incar'].get('encut') != 400
+    assert second_relax.inputs.vasp.parameters['incar']['encut'] == 400
+    assert second_relax.inputs.vasp.parameters['incar']['gga'] == 'pe'
+    assert second_relax.outputs.relax.structure == results.node.outputs.relax.structure
