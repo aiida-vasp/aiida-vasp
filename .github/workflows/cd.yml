@@ -50,15 +50,15 @@ jobs:
           conda activate test
           pip install pymatgen
           pip install -e . -vvv
-      - name: Run tests with
+      - name: Run tests with pytest
         run: |
           conda activate test
-          pytest  tests
+          pytest tests
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [pre-commit, tests, validate-release-tag]
+    needs: [tests, validate-release-tag]
     steps:
     - name: Checkout source
       uses: actions/checkout@v4
