@@ -916,7 +916,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
     # Set ismear to 0 for the first stage, -5 for the second stage
     vasp_staged_relax.parameters_stages = {
         '0': {'incar': {'ismear': 0}},
-        '1': {'incar': {'ismear': 1, 'nsw': 0}},
+        '1': {'incar': {'ismear': 1, 'gga': 'pe', 'lhfcalc': True}},
         }
     # Switch to RMM-DIIS for the second stage
     vasp_staged_relax.relax_settings_stages = {
@@ -925,6 +925,9 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
     vasp_staged_relax.settings_stages = {
         '1': {'parser_settings': {'inlude_node': ['dos']}},
         }
+    ```
+
+    Note that the index starts from 0 - e.g. '0' for the first stage, '1' for the second stage, etc.
     """
 
     _base_workchain = VaspRelaxWorkChain
@@ -947,7 +950,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         spec.input(
             'use_nested_update',
             valid_type=orm.Bool,
-            default=orm.Bool(True),
+            default=lambda: orm.Bool(True),
             help='Use nested update for parameters, options, relax_settings, and settings. '
             'Otherwise full dictionary should be provided',
         )
@@ -1037,14 +1040,16 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         workchain = self.ctx.workchains[-1]
         self.report(f'Inspecting stage {self.ctx.current_stage} - {workchain}')
         if not workchain.is_finished_ok:
-            self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status}')
+            self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status} - aborting.')
             if not self.inputs.ignored_failed:
+                self.out_many(self.exposed_outputs(workchain, self._base_workchain))
                 return self.exit_codes.ERROR_SUB_PROCESS_FAILED
             else:
                 try:
                     self.ctx.current_structure = workchain.outputs.relax.structure
                 except AttributeError:
                     self.report('Cannot get the relaxed structure from the last workchain - aborting.')
+                    self.out_many(self.exposed_outputs(workchain, self._base_workchain))
                     return self.exit_codes.ERROR_SUB_PROCESS_FAILED
         else:
             self.ctx.current_structure = workchain.outputs.relax.structure
