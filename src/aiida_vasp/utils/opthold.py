@@ -167,7 +167,8 @@ class RelaxOptions(OptionContainer):
     )
     double_relax_mode: bool = Field(
         description='Run in double relax mode - relaxation is only performed up to two times without'
-        ' checking convergence.'
+        ' checking convergence.',
+        default=False,
     )
 
     # TODO: implement pyandtic checks
