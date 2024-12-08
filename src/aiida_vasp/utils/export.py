@@ -83,12 +83,11 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
     """
     from aiida.orm import Node, QueryBuilder, WorkChainNode
 
-    from aiida_vasp.workchains.relax import RelaxWorkChain
     from aiida_vasp.workchains.v2.relax import VaspRelaxWorkChain
 
     dst = Path(dst)
     dst.mkdir(exist_ok=True)
-    if workchain_node.process_class not in (VaspRelaxWorkChain, RelaxWorkChain):
+    if workchain_node.process_class not in (VaspRelaxWorkChain):
         raise ValueError(
             f'Error {workchain_node} should be `VaspRelaxWorkChain` or `RelaxWorkChain`,'
             f' but it is {workchain_node.process_class}'
