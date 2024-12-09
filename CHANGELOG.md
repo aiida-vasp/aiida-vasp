@@ -23,6 +23,75 @@ and this project adheres to \[Semantic Versioning\](<http://semver.org/spec/v2.0
 - No longer using `tox` for test running.
 - Switched to `ruff` from `pylint` for faster linting.
 
+**Notes for updating from v3.x.x to v4.x.x**
+
+**Configuring the parsers**
+
+The script for launching calculation should be updated. In particular, note that the new parser systems takes a
+different format for the `parser_settings`.
+
+Previously, this looks like:
+```python
+parser_settings = {
+        "add_energies": True,
+        "add_forces": True,
+        "add_stress": True,
+        "add_bands": True,
+        "electronic_step_energies": True,
+    }
+builder.settings = Dict({'parser_settings' : parser_settings})
+```
+
+Now, one should use:
+
+```python
+parser_settings = {
+'include_quantity': ['energies', 'forces', 'stress'],
+'electronic_step_energies': True
+}
+builder.settings = Dict({'parser_settings' : parser_settings})
+# Getting energies
+energies = node.outputs.arrays.get_array("energy_extrapolated")
+forces = node.outputs.misc['forces']
+```
+
+The new parser system adapts a parse-if-exists principles with some quantities disabled by default, such as
+the eigenvalues and electronic step energies. The `include_quantity` key in the `parser_settings` dictionary
+allows to selectively enable these quantities.
+If a quantity exists, the relavent output node would be created, but again some output nodes are disabled by default, such as `bands` and `dos` and `trajectory`. This is because the underlying quantities exist in almost
+all calculations, but the output are only useful in specific cases.
+
+
+**Controlling workchains**
+
+The `VaspConvergenceWorkChain`, `VaspRelaxWorkChain` and `VaspBandsWorkChain` are controlled by special ports
+`conv_settings`, `relax_settings` and `band_settings` respectively. These ports should be used to pass the
+desired settings to the respective workchains.
+Previously, each key is made a single input port, make these workchains takes a large amount of input nodes.
+
+
+**Deploying workchains**
+
+We now recommend using the `BuilderUpdater` system to quickly set up calculation with pre-define default calculation/code specific parameters and remote job launching settings.
+The old approach was to use a dictionary or a `ProcessBuilder` object, which requires the user to explicitly specify all the required inputs.
+
+While `BuilderUpdater` is a convenient way to quickly set up a calculation, it is not recommended to still
+manually verify the inputs in case of unexpected behavior.
+
+**Rerunning workchains**
+
+The workchain nowentry points such as `vasp.vasp` now points to different workchains. Unfortunately,
+this means that the `get_builder_restart` method no longer works.
+
+**Calculation and workchain output**
+
+There are a few notable changes to the calculation and workchain output
+
+- The forces of the calculations are now included in the `misc` output under the key `forces`. This quantities is parsed and stored by default.
+- The `arrays` output includes array-like quantities, such as `energy_extrapolated` of individual ionic steps (excluded by default).
+- The key under which the quantities are stored inside the `ArrayData` node of the `arrays`, `dielectrics` may change. Please refer to the [code](src/aiida_vasp/parsers/vasp.py) for details.
+
+
 ## \[v3.0.1\]
 
 **Changed**

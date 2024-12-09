@@ -80,7 +80,6 @@ def test_parse_vasprun_structure(vasprun_parser):
 def test_parse_vasprun_final_force(vasprun_parser):
     """Load a reference vasprun.xml and test that the forces are returned correctly."""
     forces = vasprun_parser.get_quantity('forces')
-    forces = forces['final']
     forces_check = np.array(
         [
             [-0.24286901, 0.0, 0.0],
@@ -97,13 +96,14 @@ def test_parse_vasprun_final_force(vasprun_parser):
     np.testing.assert_allclose(forces[0], forces_check[0], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(forces[2], forces_check[2], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(forces[7], forces_check[7], atol=0.0, rtol=1.0e-7)
+    all_forces = vasprun_parser.all_forces
+    assert '1' in all_forces
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
 def test_parse_vasprun_final_stress(vasprun_parser):
     """Load a reference vasprun.xml and test that the stress are returned correctly."""
     stress = vasprun_parser.get_quantity('stress')
-    stress = stress['final']
     stress_check = np.array(
         [
             [-0.38703740, 0.00000000, 0.00000000],
@@ -111,10 +111,14 @@ def test_parse_vasprun_final_stress(vasprun_parser):
             [0.00000000, -25.93894358, 12.52362644],
         ]
     )
+
     # Check entries
     np.testing.assert_allclose(stress[0], stress_check[0], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(stress[1], stress_check[1], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(stress[2], stress_check[2], atol=0.0, rtol=1.0e-7)
+
+    all_stress = vasprun_parser.all_stress
+    assert '1' in all_stress
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)

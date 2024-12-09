@@ -54,6 +54,8 @@ class MissingFileError(ParserError):
 
 DEFAULT_EXCLUDED_QUANTITIES = (
     'energies',
+    'all_forces',
+    'all_stress',
     'chgcar',
     'wavecar',
     'projectors',

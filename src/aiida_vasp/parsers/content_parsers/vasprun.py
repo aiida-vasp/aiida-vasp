@@ -94,7 +94,17 @@ class VasprunParser(BaseFileParser):
             'name': 'stress',
             'prerequisites': [],
         },
+        'all_stress': {
+            'inputs': [],
+            'name': 'forces',
+            'prerequisites': [],
+        },
         'forces': {
+            'inputs': [],
+            'name': 'forces',
+            'prerequisites': [],
+        },
+        'all_forces': {
             'inputs': [],
             'name': 'forces',
             'prerequisites': [],
@@ -299,18 +309,16 @@ class VasprunParser(BaseFileParser):
     @property
     def forces(self):
         """
-        Fetch forces.
-
-        This container should contain all relevant forces.
-        Currently, it only contains the final forces, which can be obtain
-        by the id `final_forces`.
-
+        Fetch final forces.
         """
+        return self.final_forces
 
-        final_forces = self.final_forces
-        forces = {'final': final_forces}
-
-        return forces
+    @property
+    def all_forces(self):
+        """
+        Fetch final forces.
+        """
+        return {str(key): value for key, value in self._content_parser.get_forces('all').items()}
 
     @property
     def maximum_force(self):
@@ -356,9 +364,14 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        final_stress = self.final_stress
-        stress = {'final': final_stress}
-        return stress
+        return self.final_stress
+
+    @property
+    def all_stress(self):
+        """
+        Fetch final forces.
+        """
+        return {str(key): value for key, value in self._content_parser.get_stress('all').items()}
 
     @property
     def maximum_stress(self):
