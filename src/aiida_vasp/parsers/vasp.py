@@ -98,9 +98,7 @@ MISC_QUANTITIES = (
 
 ALLOW_EMPTY = ('notifications',)
 
-# Miscellaneous quantities that should be collected into an `arrays`` node
-COLLECTED_ARRAY_QUANTITIES = ('projectors', 'energies')
-# Standalone array quantities that should be stored in a separate node
+# Quantities that should be stored inside separate nodes
 STANDALONE_ARRAY_QUANTITIES = {
     'born_charges': 'vasprun.xml',
     'dielectrics': 'vasprun.xml',
