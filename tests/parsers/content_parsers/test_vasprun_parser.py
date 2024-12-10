@@ -96,8 +96,6 @@ def test_parse_vasprun_final_force(vasprun_parser):
     np.testing.assert_allclose(forces[0], forces_check[0], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(forces[2], forces_check[2], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(forces[7], forces_check[7], atol=0.0, rtol=1.0e-7)
-    all_forces = vasprun_parser.all_forces
-    assert '1' in all_forces
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
@@ -116,9 +114,6 @@ def test_parse_vasprun_final_stress(vasprun_parser):
     np.testing.assert_allclose(stress[0], stress_check[0], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(stress[1], stress_check[1], atol=0.0, rtol=1.0e-7)
     np.testing.assert_allclose(stress[2], stress_check[2], atol=0.0, rtol=1.0e-7)
-
-    all_stress = vasprun_parser.all_stress
-    assert '1' in all_stress
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)

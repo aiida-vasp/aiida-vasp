@@ -53,20 +53,12 @@ class MissingFileError(ParserError):
 
 
 DEFAULT_EXCLUDED_QUANTITIES = (
-    'energies',
-    'all_forces',
-    'all_stress',
-    'chgcar',
-    'wavecar',
-    'projectors',
-    'charge_density',
-    'magnetization_density',
     'elastic_moduli',
     'symmetries',
     'parameters',  # The parameters used for the calculation
 )
 
-DEFAULT_EXCLUDED_NODE = tuple(['bands', 'dos', 'kpoints', 'trajectory'])
+DEFAULT_EXCLUDED_NODE = ('bands', 'dos', 'kpoints', 'trajectory', 'energies', 'wavecar', 'chgcar', 'projectors')
 
 DEFAULT_REQUIRED_QUANTITIES = ('run_status', 'run_stats')
 
@@ -301,12 +293,8 @@ class VaspParser(Parser):
         parse_and_add('vasp_output', StreamParser, required=True)
         parse_and_add('CONTCAR', PoscarParser, required=True)
 
-        # Parse if needed
-        if any(x not in self.quantities_to_exclude for x in ('charge_density', 'magnetization_density')):
-            parse_and_add('CHGCAR', ChgcarParser, required=True)
-
         if user_config.kpoints_from_ibzkpt:
-            parse_and_add('IBZKPT', ChgcarParser, required=True)
+            parse_and_add('IBZKPT', KpointsParser, required=True)
 
         exit_code = self._post_process_quantities()
         if exit_code is not None:
@@ -379,12 +367,38 @@ class VaspParser(Parser):
             raise QuantityMissingError()
         return get_structure_node(data)
 
+    def _compose_wavecar(self, quantities_each):
+        """Compose the `wavecar` output node"""
+
+        # Check if WAVECAR is present in the retrieved folder
+        if 'WAVECAR' in self.retrieve_object_names:
+            from aiida_vasp.data.wavefun import WavefunData
+
+            with self.retrieved.base.repository.open('WAVECAR', 'rb') as handler:
+                self.outputs['wavecar'] = WavefunData(file=handler, filename='WAVECAR')
+        else:
+            self.logger.warning('WAVECAR is not present in the retrieved folder.')
+
+    def _compose_chgcar(self, quantities_each):
+        """Compose the `chgcar` output node"""
+
+        # Check if WAVECAR is present in the retrieved folder
+        if 'CHGCAR' in self.retrieve_object_names:
+            from aiida_vasp.data.chargedensity import ChargedensityData
+
+            with self.retrieved.base.repository.open('CHGCAR', 'rb') as handler:
+                self.outputs['chgcar'] = ChargedensityData(file=handler, filename='CHGCAR')
+        else:
+            self.logger.warning('CHGCAR is not present in the retrieved folder.')
+
     def _compose_arrays(self, quantities_each):
         """Generate the generic `arrays` output node"""
         out_arrays = {}
 
         # Compose the standalone arrays - each corresponds to a single quantity
         for name, file_name in STANDALONE_ARRAY_QUANTITIES.items():
+            if name in self.nodes_to_exclude:
+                continue
             array_node = self._make_standalone_array(quantities_each, name, file_name)
             if array_node is not None:
                 out_arrays[name] = array_node
@@ -438,6 +452,8 @@ class VaspParser(Parser):
                     self.logger.warning(f'Cannot set array {key}: {value} in TrajectoryData as it is not numerical.')
                 else:
                     node.set_array(key, value)
+            for key, value in quantities_each['vasprun.xml']['energies'].items():
+                node.set_array(key, value)
             return node
         return None
 

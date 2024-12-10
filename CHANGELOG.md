@@ -46,7 +46,7 @@ Now, one should use:
 
 ```python
 parser_settings = {
-'include_quantity': ['energies', 'forces', 'stress'],
+  include_node: ['energies', 'bands'],
 'electronic_step_energies': True
 }
 builder.settings = Dict({'parser_settings' : parser_settings})
@@ -55,11 +55,14 @@ energies = node.outputs.arrays.get_array("energy_extrapolated")
 forces = node.outputs.misc['forces']
 ```
 
-The new parser system adapts a parse-if-exists principles with some quantities disabled by default, such as
-the eigenvalues and electronic step energies. The `include_quantity` key in the `parser_settings` dictionary
-allows to selectively enable these quantities.
-If a quantity exists, the relavent output node would be created, but again some output nodes are disabled by default, such as `bands` and `dos` and `trajectory`. This is because the underlying quantities exist in almost
-all calculations, but the output are only useful in specific cases.
+The new parser system adapts a parse-if-exists principle with some quantities disabled by default, such as
+the eigenvalues and electronic step energies. The `'include_node'` key in the `parser_settings` dictionary
+allows to selectively enable output nodes.
+This is because some output nodes are disabled by default, such as `'bands'` and `'dos'` and `'trajectory'`. This is because the underlying quantities exist in almost all calculations, but the output are only useful in specific cases.
+
+Previously forces was stored in an `ArrayData` node with link name `forces`.
+Now the last forces and stress are stored in `misc` node (`Dict`) which is **enabled by default**.
+To obtain forces at every structure iteration, add `'trajectory'` to the `'include_node'` field in `parser_settings` as shown above.
 
 
 **Controlling workchains**

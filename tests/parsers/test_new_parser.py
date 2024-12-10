@@ -38,6 +38,8 @@ def test_parser_bare(calc_with_retrieved, request):
     assert 'dielectrics`' not in parser.outputs
     assert 'born_charges' not in parser.outputs
     assert 'parameters' not in parser.outputs['misc']
+    assert 'trajectory' not in parser.outputs
+    assert 'energies' not in parser.outputs
 
     # Test the parameters outputs
     node = calc_with_retrieved(file_path, {'parser_settings': {'include_quantity': ['parameters']}})
@@ -251,7 +253,8 @@ def test_relax_run(parser_with_retrieved):
         'relax',
         {
             'parser_settings': {
-                'include_quantity': ['born_charges', 'energies'],
+                'include_quantity': ['born_charges'],
+                'include_node': ['energies', 'trajectory'],
                 'check_completeness': False,
                 'required_quantity': [],
                 'electronic_step_energies': True,
@@ -366,6 +369,17 @@ def test_relax_run(parser_with_retrieved):
         ]
     )
     np.testing.assert_allclose(test_array, energies_ext, atol=0.0, rtol=1.0e-7)
+
+    traj = parser.outputs['trajectory']
+    assert 'energy_extrapolated' in traj.get_arraynames()
+    assert 'forces' in traj.get_arraynames()
+    assert 'stress' in traj.get_arraynames()
+    assert traj.get_array('forces').shape == (19, 8, 3)
+    traj.get_stepids()
+    traj.get_cells()
+    traj.get_positions()
+    traj.get_step_data(1)
+    assert isinstance(traj.get_step_structure(1), orm.StructureData)
 
 
 def test_basic(parser_with_retrieved):
