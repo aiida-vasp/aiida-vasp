@@ -80,8 +80,6 @@ DEFAULT_FILE_MAPPING = {
 }
 MISC_QUANTITIES = (
     'total_energies',
-    'maximum_stress',
-    'maximum_force',
     'notifications',
     'run_status',
     'run_stats',
@@ -108,6 +106,8 @@ STANDALONE_ARRAY_QUANTITIES = {
     'dielectrics': 'vasprun.xml',
     'dynmat': 'vasprun.xml',
     'hessian': 'vasprun.xml',
+    'projectors': 'vasprun.xml',
+    'energies': 'vasprun.xml',
 }
 
 
@@ -384,14 +384,6 @@ class VaspParser(Parser):
     def _compose_arrays(self, quantities_each):
         """Generate the generic `arrays` output node"""
         out_arrays = {}
-        collected_arrays = {}
-        gather_quantities(
-            quantities_each, 'vasprun.xml', collected_arrays, COLLECTED_ARRAY_QUANTITIES, flatten_dict=True
-        )
-        # Remove None values in the arrays
-        collected_arrays = {key: value for key, value in collected_arrays.items() if value is not None}
-        if len(collected_arrays) > 0:
-            out_arrays['arrays'] = orm.ArrayData(collected_arrays)
 
         # Compose the standalone arrays - each corresponds to a single quantity
         for name, file_name in STANDALONE_ARRAY_QUANTITIES.items():

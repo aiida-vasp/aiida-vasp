@@ -39,8 +39,6 @@ class VasprunParser(BaseFileParser):
             'forces',
             'stress',
             'total_energies',
-            'maximum_force',
-            'maximum_stress',
             'band_properties',
             'version',
             'parameters',
@@ -129,8 +127,6 @@ class VasprunParser(BaseFileParser):
             'name': 'fermi_level',
             'prerequisites': [],
         },
-        'maximum_force': {'inputs': [], 'name': 'maximum_force', 'prerequisites': []},
-        'maximum_stress': {'inputs': [], 'name': 'maximum_stress', 'prerequisites': []},
         'band_properties': {
             'inputs': [],
             'name': 'band_properties',
@@ -321,16 +317,6 @@ class VasprunParser(BaseFileParser):
         return {str(key): value for key, value in self._content_parser.get_forces('all').items()}
 
     @property
-    def maximum_force(self):
-        """Fetch the maximum force of at the last ionic run."""
-
-        forces = self.final_forces
-        if forces is None:
-            return None
-        norm = np.linalg.norm(forces, axis=1)
-        return np.amax(np.abs(norm))
-
-    @property
     def last_stress(self):
         """
         Fetch stess.
@@ -372,16 +358,6 @@ class VasprunParser(BaseFileParser):
         Fetch final forces.
         """
         return {str(key): value for key, value in self._content_parser.get_stress('all').items()}
-
-    @property
-    def maximum_stress(self):
-        """Fetch the maximum stress of at the last ionic run."""
-
-        stress = self.final_stress
-        if stress is None:
-            return None
-        norm = np.linalg.norm(stress, axis=1)
-        return np.amax(np.abs(norm))
 
     @property
     def trajectory(self):

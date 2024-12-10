@@ -187,6 +187,18 @@ class VaspCalculation(VaspCalcBase):
             help='The output dos.',
         )
         spec.output(
+            'energies',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='Energies of the calculation at each ionic/electronic step.',
+        )
+        spec.output(
+            'projectors',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='The projectors for the calculation.',
+        )
+        spec.output(
             'parameters', valid_type=orm.Dict, required=False, help='All input parameters including the default values.'
         )
         # Standalone array quantities

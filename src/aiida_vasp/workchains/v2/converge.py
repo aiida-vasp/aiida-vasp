@@ -12,6 +12,7 @@ Inputs
 No added wrapper etc.
 """
 
+import numpy as np
 from aiida import orm
 from aiida.engine import WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
@@ -168,16 +169,22 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         Collect data to be plotted/analysed against the cut off energy and kpoints spacing
         """
 
+        def get_maximum(forces):
+            if forces is None:
+                return None
+            norm = np.linalg.norm(forces, axis=1)
+            return np.amax(np.abs(norm))
+
         def collect_data(workchain, energy_key):
             """Collect the data from workchain output"""
             output = workchain.outputs.misc.get_dict()
             data = {}
-            data['maximum_force'] = output.get('maximum_force')
+            data['maximum_force'] = get_maximum(output.get('forces'))
             # Extract the magnetization
             magnetization = output.get('magnetization')
             if magnetization:
                 data['magnetization'] = magnetization[0]
-            data['maximum_stress'] = output.get('maximum_stress', None)
+            data['maximum_stress'] = get_maximum(output.get('stress'))
             data['energy'] = output['total_energies'][energy_key]
             return data
 

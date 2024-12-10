@@ -35,7 +35,6 @@ def test_parser_bare(calc_with_retrieved, request):
     node = calc_with_retrieved(file_path, {'parser_settings': {'include_quantity': ['projectors']}})
     parser = VaspParser(node)
     parser.parse(retrieved_tempoary_folder=file_path)
-    assert 'arrays' in parser.outputs
     assert 'dielectrics`' not in parser.outputs
     assert 'born_charges' not in parser.outputs
     assert 'parameters' not in parser.outputs['misc']
@@ -184,8 +183,8 @@ def test_parser_disp_details(parser_with_retrieved):
     assert data_dict['run_status']['nelm'] == 60
     assert data_dict['run_status']['nsw'] == 61
     assert data_dict['fermi_level'] == pytest.approx(6.17267267)
-    assert data_dict['maximum_stress'] == pytest.approx(42.96872956444064)
-    assert data_dict['maximum_force'] == pytest.approx(0.21326679)
+    assert np.amax(np.linalg.norm(data_dict['stress'], axis=1)) == pytest.approx(42.96872956444064)
+    assert np.amax(np.abs(np.linalg.norm(data_dict['forces'], axis=1))) == pytest.approx(0.21326679)
     assert data_dict['total_energies']['energy_extrapolated'] == pytest.approx(-10.823296)
 
 
@@ -194,7 +193,7 @@ def test_vasprun_parsing(parser_with_vasprun):
         {'parser_settings': {'check_completeness': False, 'required_quantity': [], 'critical_objects': []}}
     )
     misc = parser.outputs['misc'].get_dict()
-    shoud_exists = ['fermi_level', 'forces', 'maximum_force', 'stress', 'maximum_stress', 'band_properties']
+    shoud_exists = ['fermi_level', 'forces', 'stress', 'band_properties']
     for name in shoud_exists:
         assert name in misc
 
@@ -221,8 +220,8 @@ def test_basic_run(parser_with_retrieved):
     assert not misc['band_properties']['is_direct_gap']
     assert misc['version'] == '5.3.5'
     assert misc['total_energies']['energy_extrapolated'] == pytest.approx(-36.09616894)
-    assert misc['maximum_stress'] == pytest.approx(8.50955439)
-    assert misc['maximum_force'] == pytest.approx(0.0)
+    assert np.amax(np.linalg.norm(misc['stress'], axis=1)) == pytest.approx(8.50955439)
+    assert np.amax(np.linalg.norm(misc['forces'], axis=1)) == pytest.approx(0.0)
     assert misc['run_status']['nelm'] == 60
     assert misc['run_status']['last_iteration_index'] == [1, 2]
     assert misc['run_status']['nsw'] == 0
@@ -261,10 +260,10 @@ def test_relax_run(parser_with_retrieved):
         },
     )
 
-    array = parser.outputs['arrays']
-    energies_ext = array.get_array('energies_energy_extrapolated')
-    energies_ext_elec = array.get_array('energies_energy_extrapolated_electronic')
-    energies_elec_steps = array.get_array('energies_electronic_steps')
+    array = parser.outputs['energies']
+    energies_ext = array.get_array('energy_extrapolated')
+    energies_ext_elec = array.get_array('energy_extrapolated_electronic')
+    energies_elec_steps = array.get_array('electronic_steps')
     test_array_energies = [
         np.array(
             [
