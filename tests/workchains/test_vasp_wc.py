@@ -25,7 +25,7 @@ def test_vasp_wc(fresh_aiida_env, run_vasp_process):
     assert 'misc' in results
     assert 'remote_folder' in results
     misc = results['misc'].get_dict()
-    assert np.amax(np.linalg.norm(misc['stress'], aixs=1)) == pytest.approx(22.8499295)
+    assert np.amax(np.linalg.norm(misc['stress'], axis=1)) == pytest.approx(22.8499295)
     assert misc['total_energies']['energy_extrapolated'] == pytest.approx(-14.16209692)
 
 
