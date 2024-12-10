@@ -138,6 +138,8 @@ class VaspCalculation(VaspCalcBase):
             valid_type=orm.Dict,
             help='The output parameters containing smaller quantities that do not depend on system size.',
         )
+        # Mark misc as the default output node
+        spec.default_output_node = 'misc'
         spec.output(
             'structure',
             valid_type=orm.StructureData,
