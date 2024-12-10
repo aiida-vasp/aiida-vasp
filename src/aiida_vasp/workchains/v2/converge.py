@@ -173,7 +173,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
             if forces is None:
                 return None
             norm = np.linalg.norm(forces, axis=1)
-            return np.amax(np.abs(norm))
+            return np.amax(norm)
 
         def collect_data(workchain, energy_key):
             """Collect the data from workchain output"""
