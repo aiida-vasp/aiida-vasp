@@ -92,17 +92,7 @@ class VasprunParser(BaseFileParser):
             'name': 'stress',
             'prerequisites': [],
         },
-        'all_stress': {
-            'inputs': [],
-            'name': 'forces',
-            'prerequisites': [],
-        },
         'forces': {
-            'inputs': [],
-            'name': 'forces',
-            'prerequisites': [],
-        },
-        'all_forces': {
             'inputs': [],
             'name': 'forces',
             'prerequisites': [],
@@ -310,13 +300,6 @@ class VasprunParser(BaseFileParser):
         return self.final_forces
 
     @property
-    def all_forces(self):
-        """
-        Fetch final forces.
-        """
-        return {str(key): value for key, value in self._content_parser.get_forces('all').items()}
-
-    @property
     def last_stress(self):
         """
         Fetch stess.
@@ -351,13 +334,6 @@ class VasprunParser(BaseFileParser):
         """
 
         return self.final_stress
-
-    @property
-    def all_stress(self):
-        """
-        Fetch final forces.
-        """
-        return {str(key): value for key, value in self._content_parser.get_stress('all').items()}
 
     @property
     def trajectory(self):
