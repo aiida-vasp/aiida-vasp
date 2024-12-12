@@ -39,8 +39,6 @@ class VasprunParser(BaseFileParser):
             'forces',
             'stress',
             'total_energies',
-            'maximum_force',
-            'maximum_stress',
             'band_properties',
             'version',
             'parameters',
@@ -119,8 +117,6 @@ class VasprunParser(BaseFileParser):
             'name': 'fermi_level',
             'prerequisites': [],
         },
-        'maximum_force': {'inputs': [], 'name': 'maximum_force', 'prerequisites': []},
-        'maximum_stress': {'inputs': [], 'name': 'maximum_stress', 'prerequisites': []},
         'band_properties': {
             'inputs': [],
             'name': 'band_properties',
@@ -299,28 +295,9 @@ class VasprunParser(BaseFileParser):
     @property
     def forces(self):
         """
-        Fetch forces.
-
-        This container should contain all relevant forces.
-        Currently, it only contains the final forces, which can be obtain
-        by the id `final_forces`.
-
+        Fetch final forces.
         """
-
-        final_forces = self.final_forces
-        forces = {'final': final_forces}
-
-        return forces
-
-    @property
-    def maximum_force(self):
-        """Fetch the maximum force of at the last ionic run."""
-
-        forces = self.final_forces
-        if forces is None:
-            return None
-        norm = np.linalg.norm(forces, axis=1)
-        return np.amax(np.abs(norm))
+        return self.final_forces
 
     @property
     def last_stress(self):
@@ -356,19 +333,7 @@ class VasprunParser(BaseFileParser):
 
         """
 
-        final_stress = self.final_stress
-        stress = {'final': final_stress}
-        return stress
-
-    @property
-    def maximum_stress(self):
-        """Fetch the maximum stress of at the last ionic run."""
-
-        stress = self.final_stress
-        if stress is None:
-            return None
-        norm = np.linalg.norm(stress, axis=1)
-        return np.amax(np.abs(norm))
+        return self.final_stress
 
     @property
     def trajectory(self):

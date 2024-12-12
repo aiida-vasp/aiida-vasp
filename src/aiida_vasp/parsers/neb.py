@@ -29,8 +29,6 @@ DEFAULT_FILE_MAPPING = {
 }
 MISC_QUANTITIES = (
     'total_energies',
-    'maximum_stress',
-    'maximum_force',
     'notifications',
     'run_status',
     'run_stats',

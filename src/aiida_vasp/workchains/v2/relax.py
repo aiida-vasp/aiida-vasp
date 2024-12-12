@@ -450,11 +450,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         next_workchain_exit_message = workchain.exit_message
         if not next_workchain_exit_status:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
-        elif (
-            'misc' in workchain.outputs
-            and 'structure' in workchain.outputs
-            and 'maximum_force' in workchain.outputs.misc.get_dict()
-        ):
+        elif 'misc' in workchain.outputs and 'structure' in workchain.outputs and 'forces' in workchain.outputs.misc:
             self.ctx.exit_code = self.exit_codes.NO_ERROR  # pylint: disable=no-member
             self.report(
                 f'The called {workchain.__class__.__name__}<{workchain.pk}> returned a non-zero exit status.'
@@ -562,7 +558,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             # BONAN: Check force - this is because the underlying VASP calculation may not have finished with
             # fully converge geometry, and the vasp plugin does not check it.
             force_cut_off = relax_settings.get('force_cutoff')
-            max_force = workchain.outputs.misc.base.attributes.get('maximum_force')
+            max_force = get_maximum_force(workchain.outputs.misc.get('forces'))
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
                     f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g}'
@@ -719,7 +715,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # Try to get the smearing type, there is no point to perform check if the tetrahedral smearing is used.
         if not detect_tetrahedral_method(workchain.inputs.parameters.get_dict()):
             max_force_threshold = self.ctx.relax_settings.get('force_cutoff', 0.03)
-            actual_max_force = workchain.outputs.misc['maximum_force']
+            actual_max_force = get_maximum_force(workchain.outputs.misc['forces'])
             if (
                 actual_max_force > max(max_force_threshold * 1.5, max_force_threshold + 0.001)
                 and self.perform_relaxation()
@@ -881,3 +877,9 @@ def detect_tetrahedral_method(input_dict: dict) -> bool:
     if input_dict.get('smearing', {}).get('tetra') and not incar.get('ismear'):
         return True
     return False
+
+
+def get_maximum_force(forces):
+    """Return the maximum value of an array of forces with size (N, 3)"""
+    norm = np.linalg.norm(forces, axis=1)
+    return np.amax(norm)
