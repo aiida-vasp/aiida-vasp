@@ -125,7 +125,7 @@ class BaseBuilderUpdater:
         preset_name: Union[None, str] = None,
         builder: Union[ProcessBuilder, None] = None,
         verbose=False,
-        inputset=None,
+        set_name=None,
     ):
         """Instantiate a pipeline"""
         # Configure the builder
@@ -140,7 +140,7 @@ class BaseBuilderUpdater:
             preset_name = DEFAULT_PRESET
         self.preset_name = preset_name
         self.preset = VaspPresetConfig.from_file(preset_name)
-        self.inputset = inputset if inputset is not None else self.preset.inputset
+        self.set_name = set_name if set_name is not None else self.preset.inputset
 
     @property
     def builder(self) -> ProcessBuilder:
@@ -205,6 +205,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         root_namespace: Optional[str] = None,
         code: Optional[str] = None,
         verbose: bool = False,
+        set_name: Optional[str] = None,
     ):
         """
         Initialise the update object.
@@ -215,7 +216,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         :param root_namespace: The namespace to be assumed to be the *root*, e.g. where the input structure
           should be specified.
         """
-        super().__init__(preset_name=preset_name, builder=builder, verbose=verbose)
+        super().__init__(preset_name=preset_name, builder=builder, verbose=verbose, set_name=set_name)
         # Define the root namespace - e.g. the VaspWorkChain namespace where structure should be specified
         if root_namespace is None:
             self.root_namespace = self._builder
@@ -223,8 +224,6 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             self.root_namespace = root_namespace
 
         self.namespace_vasp = self._builder
-        # Defult
-        self.inputset = None
         self.code = self.preset.default_code if code is None else code
 
     @property
@@ -253,7 +252,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             logging.info(f'Using code {code}')
         self.use_inputset(
             initial_structure,
-            set_name=self.inputset,
+            set_name=self.set_name,
             overrides=overrides,
             apply_preset=True,
             code=code,
@@ -293,7 +292,6 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.namespace_vasp.potential_mapping = orm.Dict(dict=inset.get_pp_mapping(structure))
         self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
         setattr(self.root_namespace, structure_node_name, structure)
-        self.inputset = inset
         return self
 
     def set_kspacing(self, kspacing: float) -> 'VaspBuilderUpdater':

@@ -165,6 +165,7 @@ howto/index
 developments/index
 apidocs/index
 ./changelog.md
+./faq.md
 ```
 
 

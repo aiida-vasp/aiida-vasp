@@ -50,7 +50,7 @@ def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
     elif isinstance(node, WorkChainNode):
         # In this case the node is an workchain we export the
         # 'retrieved' output link and trace to its ancestor
-        calcjob = retrieved.get_incoming(link_label_filter='retrieved', link_type=LinkType.CREATE).one().node
+        calcjob = retrieved.base.links.get_incoming(link_label_filter='retrieved', link_type=LinkType.CREATE).one().node
     else:
         raise RuntimeError(f'The node {node} is not a valid calculation')
     info_file = folder / ('aiida_info')
@@ -83,12 +83,11 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
     """
     from aiida.orm import Node, QueryBuilder, WorkChainNode
 
-    from aiida_vasp.workchains.relax import RelaxWorkChain
     from aiida_vasp.workchains.v2.relax import VaspRelaxWorkChain
 
     dst = Path(dst)
     dst.mkdir(exist_ok=True)
-    if workchain_node.process_class not in (VaspRelaxWorkChain, RelaxWorkChain):
+    if workchain_node.process_class not in (VaspRelaxWorkChain):
         raise ValueError(
             f'Error {workchain_node} should be `VaspRelaxWorkChain` or `RelaxWorkChain`,'
             f' but it is {workchain_node.process_class}'
@@ -219,7 +218,7 @@ def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
             copy_from_aiida(os.path.join(name, sub_obj.name), node, dst, exclude=exclude)
     else:
         # It is a file
-        with node.open(name, mode='rb') as fsource:
+        with node.base.repository.open(name, mode='rb') as fsource:
             # Make parent directory if needed
             frepo_path = dst / name
             Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)

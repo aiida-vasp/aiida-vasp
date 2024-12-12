@@ -19,6 +19,8 @@ def test_vasp_builder_updater(aiida_profile, vasp_code):
     assert upd.builder.kpoints_spacing.value == 0.05
     assert upd.builder.potential_family.value == 'PBE.54'
     assert upd.builder.potential_mapping.get_dict() == {'Mg': 'Mg_pv', 'O': 'O'}
+    # Re-apply the preset - this should work without any errors
+    upd.apply_preset(structure, code='vasp@localhost')
 
 
 def test_vasp_relax_updater(aiida_profile, vasp_code):

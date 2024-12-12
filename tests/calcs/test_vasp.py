@@ -208,7 +208,7 @@ def test_vasp_calc(fresh_aiida_env, run_vasp_process):
     # None if parsing somehow failed.
     misc = results['misc'].get_dict()
     assert 'total_energies' in misc
-    assert 'maximum_stress' in misc
+    assert 'stress' in misc
     assert 'run_status' in misc
     assert 'run_stats' in misc
 

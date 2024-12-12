@@ -138,6 +138,8 @@ class VaspCalculation(VaspCalcBase):
             valid_type=orm.Dict,
             help='The output parameters containing smaller quantities that do not depend on system size.',
         )
+        # Mark misc as the default output node
+        spec.default_output_node = 'misc'
         spec.output(
             'structure',
             valid_type=orm.StructureData,
@@ -185,6 +187,18 @@ class VaspCalculation(VaspCalcBase):
             valid_type=orm.ArrayData,
             required=False,
             help='The output dos.',
+        )
+        spec.output(
+            'energies',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='Energies of the calculation at each ionic/electronic step.',
+        )
+        spec.output(
+            'projectors',
+            valid_type=orm.ArrayData,
+            required=False,
+            help='The projectors for the calculation.',
         )
         spec.output(
             'parameters', valid_type=orm.Dict, required=False, help='All input parameters including the default values.'
