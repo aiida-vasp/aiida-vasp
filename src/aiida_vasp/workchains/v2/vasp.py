@@ -151,6 +151,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             valid_type=orm.Dict,
             required=True,
             validator=parameters_validator,
+            serializer=to_aiida_type,
         )
         spec.input(
             'options',
