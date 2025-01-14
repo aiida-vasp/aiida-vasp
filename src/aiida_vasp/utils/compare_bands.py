@@ -113,7 +113,7 @@ def get_outer_window(bands_node, silent=False):
         owindow = (wset['dis_win_min'], wset['dis_win_max'])
     except KeyError as err:
         if not silent:
-            raise KeyError('Missing window parameters in input to ' 'parent calculation:\n' + str(err)) from err
+            raise KeyError('Missing window parameters in input to parent calculation:\n' + str(err)) from err
     except AttributeError as err:
         if not silent:
             raise AttributeError('bands_node is not an output of an appropriate calc node.' + str(err)) from err
@@ -163,7 +163,7 @@ def band_gap(bands, occ, efermi=None):
     # if lumo crosses efermi, something is wrong
     if efermi:
         if gap_upper < efermi:
-            raise ValueError(('The given E_fermi was higher than ' 'the lowest point of the lowest unoccupied band'))
+            raise ValueError(('The given E_fermi was higher than the lowest point of the lowest unoccupied band'))
     result['gap'] = gap_upper - gap_lower
     result['direct'] = bool(gap_upper_k == gap_lower_k)
     # check wether the two closest points are at the same kpoint (direct)

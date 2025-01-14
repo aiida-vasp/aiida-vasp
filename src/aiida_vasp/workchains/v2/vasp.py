@@ -626,8 +626,8 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
                 self.report(f'Last calculation: {last_calc!r}')  # pylint: disable=not-callable
                 sched_err = last_calc.outputs.retrieved.get_file_content('_scheduler-stderr.txt')
                 sched_out = last_calc.outputs.retrieved.get_file_content('_scheduler-stdout.txt')
-                self.report(f"Scheduler output:\n{sched_out or ''}")  # pylint: disable=not-callable
-                self.report(f"Scheduler stderr:\n{sched_err or ''}")  # pylint: disable=not-callable
+                self.report(f'Scheduler output:\n{sched_out or ""}')  # pylint: disable=not-callable
+                self.report(f'Scheduler stderr:\n{sched_err or ""}')  # pylint: disable=not-callable
         except AttributeError:
             self.report(
                 'No calculation was found in the context. '  # pylint: disable=not-callable
@@ -671,7 +671,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
                     pass
 
         if cleaned_calcs:
-            self.report(f"cleaned remote folders of calculations: {' '.join(cleaned_calcs)}")
+            self.report(f'cleaned remote folders of calculations: {" ".join(cleaned_calcs)}')
 
     @process_handler(priority=2000, enabled=False)
     def handler_always_attach_outputs(self, node):
@@ -1029,7 +1029,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
                     incar['nelm'] = nelm + 20
                     self._setup_restart(node)
                     self.ctx.inputs.parameters.update(incar)
-                    self.report(f"Reducing AMIX to {incar['amix']}")
+                    self.report(f'Reducing AMIX to {incar["amix"]}')
                     return ProcessHandlerReport(do_break=True)
             # Change to ALGO if options have been exhausted
             incar['algo'] = 'all'
@@ -1185,7 +1185,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         """
         notification = node.outputs.misc['notifications']
         message = (
-            f"Critical error detected in the notifications: {', '.join([item.get('name') for item in notification])}"
+            f'Critical error detected in the notifications: {", ".join([item.get("name") for item in notification])}'
         )
         self.report(message + ' - aborting.')
         return ProcessHandlerReport(

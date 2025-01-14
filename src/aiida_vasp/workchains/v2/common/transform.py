@@ -20,9 +20,9 @@ def magnetic_structure_decorate(structure, magmom):
     """
 
     magmom = magmom.get_list()
-    assert len(magmom) == len(
-        structure.sites
-    ), f'Mismatch between the magmom ({len(magmom)}) and the nubmer of sites ({len(structure.sites)}).'
+    assert len(magmom) == len(structure.sites), (
+        f'Mismatch between the magmom ({len(magmom)}) and the nubmer of sites ({len(structure.sites)}).'
+    )
     old_species = [structure.get_kind(site.kind_name).symbol for site in structure.sites]
     new_species, magmom_mapping = create_additional_species(old_species, magmom)
     new_structure = StructureData()
@@ -260,8 +260,8 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
 
     outputs = {'image_init': out_init}
     for i, out in enumerate(neb.images[1:-1]):
-        outputs[f'image_{i+1:02d}'] = StructureData(ase=out)
-        outputs[f'image_{i+1:02d}'].label = init_structure.label + f' FRAME {i+1:02d}'
+        outputs[f'image_{i + 1:02d}'] = StructureData(ase=out)
+        outputs[f'image_{i + 1:02d}'].label = init_structure.label + f' FRAME {i + 1:02d}'
     outputs['image_final'] = out_final
     return outputs
 

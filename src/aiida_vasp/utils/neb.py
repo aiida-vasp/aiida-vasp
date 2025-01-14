@@ -46,8 +46,8 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
 
     outputs = {'image_init': out_init}
     for i, out in enumerate(neb.images[1:-1]):
-        outputs[f'image_{i+1:02d}'] = StructureData(ase=out)
-        outputs[f'image_{i+1:02d}'].label = init_structure.label + f' FRAME {i+1:02d}'
+        outputs[f'image_{i + 1:02d}'] = StructureData(ase=out)
+        outputs[f'image_{i + 1:02d}'].label = init_structure.label + f' FRAME {i + 1:02d}'
     outputs['image_final'] = out_final
     return outputs
 
