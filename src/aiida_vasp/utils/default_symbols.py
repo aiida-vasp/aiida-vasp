@@ -93,5 +93,5 @@ if __name__ == '__main__':
         defaults.writelines([f'"{k}": "{v}",\n' for k, v in DEF_PAW.items()])
         defaults.write('}\n\n')
         defaults.write('gw = {\n')
-        defaults.writelines([f"\"{k}\": \"{v.replace('_GW', '')}\",\n" for k, v in DEF_GW.items()])
+        defaults.writelines([f'"{k}": "{v.replace("_GW", "")}",\n' for k, v in DEF_GW.items()])
         defaults.write('}\n\n')

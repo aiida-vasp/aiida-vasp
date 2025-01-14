@@ -78,13 +78,13 @@ class CalcSettingsConfig(OptionContainer):
     parser_setting: Optional[dict] = Field(description='Settings for the parser')
     ADDITIONAL_RETRIEVE_LIST: Optional[list] = Field(description='Additional list of files to be retrieved')
     ADDITIONAL_RETRIEVE_TEMPORARY_LIST: Optional[list] = Field(
-        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+        description=('Additional list of files to be retrieved, but not store in the storage')
     )
     PROVENANCE_EXCLUDE_LIST: Optional[list] = Field(
-        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+        description=('Additional list of files to be retrieved, but not store in the storage')
     )
     ALWAYS_STORE: Optional[list] = Field(
-        description=('Additional list of files to be retrieved, ' 'but not store in the storage')
+        description=('Additional list of files to be retrieved, but not store in the storage')
     )
     skip_param_validation: Optional[bool] = Field(
         description='Skip the validation of the input parameters', default=False
@@ -116,8 +116,7 @@ class RelaxOptions(OptionContainer):
     convergence_max_iterations: int = Field(description='Maximum iterations for convergence checking', default=5)
     convergence_positions: float = Field(
         description=(
-            'The cutoff value for the convergence check on positions in Angstram.'
-            ' A negative value by pass the check.'
+            'The cutoff value for the convergence check on positions in Angstram. A negative value by pass the check.'
         ),
         default=0.1,
     )
@@ -203,7 +202,7 @@ class BandOptions(OptionContainer):
     symprec: float = Field(description='Precision of the symmetry determination', default=0.01)
     band_mode: str = Field(
         description=(
-            'Mode for generating the band path. Choose from: bradcrack, pymatgen,' 'seekpath-aiida and latimer-munro.'
+            'Mode for generating the band path. Choose from: bradcrack, pymatgen,seekpath-aiida and latimer-munro.'
         ),
         examples=['bradcrack', 'pymatgen', 'seekpath', 'seekpath-aiida', 'latimer-munro'],
         default='seekpath-aiida',
@@ -219,7 +218,7 @@ class BandOptions(OptionContainer):
     )
     dos_kpoints_distance: float = Field(
         description=(
-            'Kpoints for running DOS calculations in A^-1 * 2pi.' ' Will perform non-SCF DOS calculation is supplied.'
+            'Kpoints for running DOS calculations in A^-1 * 2pi. Will perform non-SCF DOS calculation is supplied.'
         ),
         default=0.03,
     )

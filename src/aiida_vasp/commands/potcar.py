@@ -142,7 +142,7 @@ def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_ru
     pmg_vasp_psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')
     if pmg_vasp_psp_dir is None:
         raise click.Abort(
-            'PMG_VASP_PSP_DIR is not set, please set it in your .pmgrc.yaml file' ' or set the environment variable'
+            'PMG_VASP_PSP_DIR is not set, please set it in your .pmgrc.yaml file or set the environment variable'
         )
     source_folder = f'{pmg_vasp_psp_dir}/{funcdir}'
     if not Path(source_folder).exists():

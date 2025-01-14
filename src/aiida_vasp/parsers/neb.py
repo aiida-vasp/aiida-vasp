@@ -243,7 +243,7 @@ class NebParser(VaspParser):
                 if self.user_config.check_ionic_convergence is True:
                     return self.exit_codes.ERROR_IONIC_NOT_CONVERGED
                 self.logger.warning(
-                    'The ionic relaxation is not converged, ' 'but the calculation is treated as successful.'
+                    'The ionic relaxation is not converged, but the calculation is treated as successful.'
                 )
 
         # Check for the existence of critical warnings

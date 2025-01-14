@@ -605,8 +605,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             )
         elif self.is_verbose():
             self.report(
-                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g}'
-                ' - OK'
+                f'cell lengths changed by max {delta.cell_lengths.max():.4g}, tolerance is {threshold_lengths:.4g} - OK'
             )
 
         angles_converged = bool(delta.cell_angles.max() <= threshold_angles)
@@ -781,7 +780,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                         pass
 
                 if cleaned_calcs:
-                    self.report(f"cleaned remote folders of calculations: {' '.join(map(str, cleaned_calcs))}")
+                    self.report(f'cleaned remote folders of calculations: {" ".join(map(str, cleaned_calcs))}')
         except BaseException as exception:  # pylint: disable=no-self-argument,no-self-use
             self.report(f'Exception occurred during the cleaning of the remote contents: {exception.args}')
 

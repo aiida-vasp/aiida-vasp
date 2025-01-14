@@ -123,7 +123,7 @@ class ParserSettingsConfig(OptionContainer):
         description='Energy types to include', default_factory=lambda: ['energy_extrapolated']
     )
     keep_stream_history: bool = Field(
-        description='Whether to keep the history of all notifications in the parsed stream' ' (stdout)', default=False
+        description='Whether to keep the history of all notifications in the parsed stream (stdout)', default=False
     )
     ignore_notification_errors: bool = Field(
         description='Whether to ignore errors in the notifications parsed from vasp_output', default=False
@@ -224,11 +224,11 @@ class VaspParser(Parser):
 
         if self.errored_quantities:
             self.logger.warning(
-                'The following quantities cannot be parsed due to errors:' f' {", ".join(self.errored_quantities)}'
+                f'The following quantities cannot be parsed due to errors: {", ".join(self.errored_quantities)}'
             )
         if self.errored_parsers:
             self.logger.warning(
-                'The following parsers cannot be instantiated due to:' f' {", ".join(self.errored_parsers)}'
+                f'The following parsers cannot be instantiated due to: {", ".join(self.errored_parsers)}'
             )
 
         # Remove the quantities

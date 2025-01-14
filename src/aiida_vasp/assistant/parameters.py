@@ -548,7 +548,7 @@ def check_inputs(supplied_inputs):
         inputs = supplied_inputs
     else:
         raise ValueError(
-            f'The supplied type {type(inputs)} of inputs is not supported. ' 'Supply a dict, Dict or an AttributeDict.'
+            f'The supplied type {type(inputs)} of inputs is not supported. Supply a dict, Dict or an AttributeDict.'
         )
 
     return inputs
