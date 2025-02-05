@@ -315,7 +315,7 @@ class VaspParser(Parser):
             node_or_dict = None
             try:
                 node_or_dict = getattr(self, '_compose_' + name)(self.quantities_each)
-            except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
+            except (QuantityMissingError, KeyError, ValueError, TypeError, AttributeError) as error:
                 self._failed_to_compose[name] = error
                 self.logger.warning(f'Failed to compose {name} node: {error}')
                 continue
