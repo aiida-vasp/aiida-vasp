@@ -443,7 +443,8 @@ class VaspParser(Parser):
         if 'vasprun.xml' in quantities_each:
             node = orm.TrajectoryData()
             traj_data = quantities_each['vasprun.xml'].get('trajectory')
-            if traj_data is None:
+            # No need to carry on if there are no trajectory data
+            if traj_data is None or len(traj_data) == 0:
                 return None
             for key, value in traj_data.items():
                 if key == 'symbols':
