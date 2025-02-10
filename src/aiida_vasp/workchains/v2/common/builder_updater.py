@@ -243,7 +243,9 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.root_namespace.structure = None
         self.root_namespace.metadata.label = None
 
-    def apply_preset(self, initial_structure, code=None, label=None, overrides=None) -> 'VaspBuilderUpdater':
+    def apply_preset(
+        self, initial_structure, code=None, label=None, overrides=None, set_name=None
+    ) -> 'VaspBuilderUpdater':
         """
         Apply the preset
         """
@@ -252,7 +254,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             logging.info(f'Using code {code}')
         self.use_inputset(
             initial_structure,
-            set_name=self.set_name,
+            set_name=self.set_name if set_name is None else set_name,
             overrides=overrides,
             apply_preset=True,
             code=code,
