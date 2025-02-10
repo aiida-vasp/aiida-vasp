@@ -315,7 +315,7 @@ class VaspParser(Parser):
             node_or_dict = None
             try:
                 node_or_dict = getattr(self, '_compose_' + name)(self.quantities_each)
-            except (QuantityMissingError, KeyError, ValueError, TypeError) as error:
+            except (QuantityMissingError, KeyError, ValueError, TypeError, AttributeError) as error:
                 self._failed_to_compose[name] = error
                 self.logger.warning(f'Failed to compose {name} node: {error}')
                 continue
@@ -443,7 +443,8 @@ class VaspParser(Parser):
         if 'vasprun.xml' in quantities_each:
             node = orm.TrajectoryData()
             traj_data = quantities_each['vasprun.xml'].get('trajectory')
-            if traj_data is None:
+            # No need to carry on if there are no trajectory data
+            if traj_data is None or len(traj_data) == 0:
                 return None
             for key, value in traj_data.items():
                 if key == 'symbols':
