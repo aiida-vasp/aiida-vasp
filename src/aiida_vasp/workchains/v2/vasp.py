@@ -252,6 +252,12 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             Site dependent flag for selective dynamics when performing relaxation
             """,
         )
+        spec.input(
+            'vdw_kernel',
+            valid_type=orm.SinglefileData,
+            required=False,
+            help='The vdw_kerenl.bindat file to be used for vdw calculations.',
+        )
         spec.outline(
             cls.setup,
             cls.init_inputs,
@@ -552,6 +558,9 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         # Set the wave functions (wavecar)
         if 'wavecar' in self.inputs:
             self.ctx.inputs.wavefunctions = self.inputs.wavecar
+
+        if 'vdw_kernel' in self.inputs:
+            self.ctx.inputs.vdw_kernel = self.inputs.vdw_kernel
 
         ##### END OF THE COPY from VaspWorkChain   #####
 
