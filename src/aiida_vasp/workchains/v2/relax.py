@@ -35,7 +35,7 @@ from aiida.engine import ToContext, WorkChain, append_, if_, while_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
-from aiida_vasp.utils.extended_dicts import update_nested_dict_node
+from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
@@ -169,6 +169,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             self.inputs.relax_settings.get_dict()
         )  # relax_settings controls the logic of the workchain
         self.ctx.current_magmom = None
+        self.ctx.is_double_relax = self.inputs.relax_settings.get('double_relax_mode', False)
 
         # Check potential issues in the the input parameters
         self._check_input_parameters()
@@ -263,6 +264,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
     def run_relax(self):
         """Perform the relaxation"""
+        # Iteration starts from 1, not 0
         self.ctx.iteration += 1
 
         inputs = self.exposed_inputs(self._base_workchain, 'vasp')
@@ -586,6 +588,16 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 pass
 
         self.ctx.is_converged = converged
+
+        # Check if we are in 'double_relax' mode and the relaxation is not converged
+        if self.ctx.is_double_relax and not converged:
+            if self.ctx.iteration >= 2:
+                self.report(
+                    'DOUBLE RELAX: The second relaxation is not converged, '
+                    ' but we will finish with a final static calculation.'
+                )
+                self.ctx.is_converged = True
+
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
     def check_shape_convergence(self, delta):
@@ -725,10 +737,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                         'which is significantly higher than the tolerance'
                         f' {max_force_threshold} eV/A.'
                     )
-                return self.exit_codes.ERROR_FINAL_SCF_HAS_RESIDUAL_FORCE  # pylint: disable=no-member
+                if not self.ctx.is_double_relax:
+                    return self.exit_codes.ERROR_FINAL_SCF_HAS_RESIDUAL_FORCE  # pylint: disable=no-member
         else:
             self.report(
-                'Unable to presure final check for maximum force, as the tetrahedral method is used for integration.'
+                'Unable to perform final check for maximum force, as the tetrahedral method is used for integration.'
             )
 
         # If we bypassed the relax by setting perform=False, still attached the input structure as the output structure
@@ -876,6 +889,178 @@ def detect_tetrahedral_method(input_dict: dict) -> bool:
     if input_dict.get('smearing', {}).get('tetra') and not incar.get('ismear'):
         return True
     return False
+
+
+class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
+    """
+    Relxation with multiple stages
+
+    This workchain allows to run multiple stages of relaxation with different parameters,
+    options and settings. The workchain takes a structure as input and runs a series of
+    VaspRelaxWorkChain calculations, each with updated set of parameters, options and
+    settings as specified in <name>_stages.
+
+    The output of the final workchain is exposed.
+
+    Example:
+
+    ```
+    vasp_staged_relax = VaspMultiStageRelaxWorkChain.get_builder()
+    vasp_staged_relax.structure = structure
+    vasp_staged_relax.relax = <usual relax inputs>
+    # Set ismear to 0 for the first stage, -5 for the second stage
+    vasp_staged_relax.parameters_stages = {
+        '0': {'incar': {'ismear': 0}},
+        '1': {'incar': {'ismear': 1, 'gga': 'pe', 'lhfcalc': True}},
+        }
+    # Switch to RMM-DIIS for the second stage
+    vasp_staged_relax.relax_settings_stages = {
+    '1': {'algo': 'rd'}}
+    # Include node in the second stage of the relaxation
+    vasp_staged_relax.settings_stages = {
+        '1': {'parser_settings': {'inlude_node': ['dos']}},
+        }
+    ```
+
+    Note that the index starts from 0 - e.g. '0' for the first stage, '1' for the second stage, etc.
+    """
+
+    _base_workchain = VaspRelaxWorkChain
+
+    @classmethod
+    def define(cls, spec):
+        super().define(spec)
+        spec.input_namespace('parameters_stages', required=False, dynamic=True, help='Parameters for each stage')
+        spec.input_namespace('settings_stages', required=False, dynamic=True, help='Settings for each stage')
+        spec.input_namespace('options_stages', required=False, dynamic=True, help='Options for each stage')
+        spec.input_namespace(
+            'relax_settings_stages', required=False, dynamic=True, help='relax_settings for each stage'
+        )
+        spec.input_namespace(
+            'others_stages',
+            required=False,
+            dynamic=True,
+            help='Others for each stage, for example, set "1_kpoints" to apply kpoints to the first stage',
+        )
+        spec.input(
+            'use_nested_update',
+            valid_type=orm.Bool,
+            default=lambda: orm.Bool(True),
+            help='Use nested update for parameters, options, relax_settings, and settings. '
+            'Otherwise full dictionary should be provided',
+        )
+        spec.expose_inputs(cls._base_workchain, 'relax', exclude=('structure',))
+        spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
+        spec.expose_outputs(cls._base_workchain)
+
+        # Outline of the workchain
+        spec.outline(
+            cls.setup,
+            while_(cls.should_run_stage)(
+                cls.run_stage,
+                cls.inspect_stage,
+            ),
+            cls.results,
+        )
+        spec.exit_code(
+            500,
+            'ERROR_SUB_PROCESS_FAILED',
+            message='The subprocess has failed.',
+        )
+
+    def setup(self):
+        """
+        Initialize context variables
+        """
+        relax_inputs = self.exposed_inputs(self._base_workchain, 'relax')
+        self.ctx.current_stage = 0
+        self.ctx.current_structure = self.inputs.structure
+        self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
+        self.ctx.settings = relax_inputs.vasp.settings.get_dict()
+        self.ctx.options = relax_inputs.vasp.options.get_dict()
+        self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
+        self.ctx.n_stages = len(self.inputs.parameters_stages)
+
+    def should_run_stage(self):
+        """
+        Check if a stage should be run
+        """
+        return self.ctx.current_stage < self.ctx.n_stages
+
+    def run_stage(self):
+        """
+        Run a stage
+        """
+        self.report(f'Running stage {self.ctx.current_stage}')
+        istage = self.ctx.current_stage
+        # Update the parameters, options and settings - apply the changes to the self.ctx
+        for name in ['parameters', 'options', 'settings', 'relax_settings']:
+            if str(istage) in self.inputs.get(name + '_stages', {}):
+                if self.inputs.use_nested_update.value:
+                    self.ctx[name] = update_nested_dict(
+                        self.ctx[name], self.inputs[name + '_stages'][str(istage)].get_dict()
+                    )
+                else:
+                    self.ctx[name] = self.inputs[name + '_stages'][str(istage)].get_dict()
+
+        relax_inputs = self.exposed_inputs(self._base_workchain, 'relax')
+
+        # Apply others changes {'1_relax_settings': {'algo': 'rd'}}
+        for key, value in self.inputs.get('others_stages', {}):
+            stage = key.split('_')[0]
+            name = key.split('_')[1]
+            if stage == istage:
+                if name in ['static_calc_settings', 'static_calc_options', 'static_calc_parameters']:
+                    relax_inputs[name] = value
+                else:
+                    relax_inputs.vasp[name] = value
+        # Modify the inputs
+        for name in ['parameters', 'options', 'settings']:
+            if relax_inputs.vasp[name].get_dict() != self.ctx[name]:
+                relax_inputs.vasp[name] = orm.Dict(dict=self.ctx[name])
+
+        # Modify the relax_settings
+        if relax_inputs.relax_settings.get_dict() != self.ctx.relax_settings:
+            relax_inputs.relax_settings = orm.Dict(dict=self.ctx.relax_settings)
+
+        relax_inputs.structure = self.ctx.current_structure
+
+        running = self.submit(self._base_workchain, **relax_inputs)
+        return ToContext(workchains=append_(running))
+
+    def inspect_stage(self):
+        """
+        Inspect a stage
+        """
+        workchain = self.ctx.workchains[-1]
+        self.report(f'Inspecting stage {self.ctx.current_stage} - {workchain}')
+        if not workchain.is_finished_ok:
+            self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status} - aborting.')
+            if not self.inputs.ignored_failed:
+                self.out_many(self.exposed_outputs(workchain, self._base_workchain))
+                return self.exit_codes.ERROR_SUB_PROCESS_FAILED
+            else:
+                try:
+                    self.ctx.current_structure = workchain.outputs.relax.structure
+                except AttributeError:
+                    self.report('Cannot get the relaxed structure from the last workchain - aborting.')
+                    self.out_many(self.exposed_outputs(workchain, self._base_workchain))
+                    return self.exit_codes.ERROR_SUB_PROCESS_FAILED
+        else:
+            self.ctx.current_structure = workchain.outputs.relax.structure
+        self.ctx.current_stage += 1
+        return
+
+    def results(self):
+        """
+        Attach the remaining output results.
+        This can either be the final static calculation or the last relaxation if the
+        former is not needed.
+
+        As a final check - check if the `maximum_force` is lower than the predefined value.
+        """
+        workchain = self.ctx.workchains[-1]
+        self.out_many(self.exposed_outputs(workchain, self._base_workchain))
 
 
 def get_maximum_force(forces):

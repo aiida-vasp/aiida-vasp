@@ -164,6 +164,12 @@ class RelaxOptions(OptionContainer):
     keep_magnetization: bool = Field(
         description='Whether to keep magnetization from the previous calculation if possible', default=False
     )
+    double_relax_mode: bool = Field(
+        description='Experimental: Run in double relax mode - launch of the sub workflow is only performed up to two '
+        'times without checking convergence in the end. This is useful for cases where the convergence is difficult '
+        'due to change of basis set with variable cell and high-throughput studies.',
+        default=False,
+    )
 
     # TODO: implement pyandtic checks
 

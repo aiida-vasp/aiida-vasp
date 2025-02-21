@@ -601,6 +601,38 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
         return self
 
 
+class VaspMultiStageRelaxUpdater(VaspRelaxUpdater):
+    """
+    An updater for VaspRelaxWorkChain
+    """
+
+    WF_ENTRYPOINT = 'vasp.v2.staged_relax'
+
+    def __init__(
+        self,
+        preset_name: Optional[str] = None,
+        builder: Optional[ProcessBuilder] = None,
+        override_vasp_namespace: Optional[ProcessBuilderNamespace] = None,
+        namespace_relax: Optional[ProcessBuilderNamespace] = None,
+        code: Optional[str] = None,
+    ):
+        if builder is None:
+            from aiida_vasp.workchains import VaspMultiStageRelaxWorkChain
+
+            builder = VaspMultiStageRelaxWorkChain.get_builder()
+        if override_vasp_namespace is None:
+            override_vasp_namespace = builder.relax.vasp
+        if namespace_relax is None:
+            namespace_relax = builder.relax
+        super().__init__(
+            preset_name=preset_name,
+            builder=builder,
+            code=code,
+            override_vasp_namespace=override_vasp_namespace,
+            namespace_relax=namespace_relax,
+        )
+
+
 class VaspConvUpdater(VaspBuilderUpdater):
     """Update for VaspConvergenceWorkChain"""
 

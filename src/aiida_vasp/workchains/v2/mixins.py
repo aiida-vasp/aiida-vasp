@@ -16,6 +16,7 @@ class WithBuilderUpdater:
             VaspBuilderUpdater,
             VaspConvUpdater,
             VaspHybridBandUpdater,
+            VaspMultiStageRelaxUpdater,
             VaspNEBUpdater,
             VaspRelaxUpdater,
         )
@@ -24,6 +25,8 @@ class WithBuilderUpdater:
             return VaspBuilderUpdater(*args, **kwargs)
         elif cls.__name__ == 'VaspRelaxWorkChain':
             return VaspRelaxUpdater(*args, **kwargs)
+        elif cls.__name__ == 'VaspMultiStageRelaxWorkChain':
+            return VaspMultiStageRelaxUpdater(*args, **kwargs)
         elif cls.__name__ == 'VaspBandsWorkChain':
             return VaspBandUpdater(*args, **kwargs)
         elif cls.__name__ == 'VaspHybridBandsWorkChain':
