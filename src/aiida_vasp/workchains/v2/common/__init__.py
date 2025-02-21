@@ -12,6 +12,7 @@ from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.assistant.parameters import _BASE_NAMESPACES, ParametersMassage
+from aiida_vasp.utils.aiida_utils import convert_dict_case
 
 OVERRIDE_NAMESPACE = 'incar'
 
@@ -54,6 +55,13 @@ def parameters_validator(node, port=None):
         return
 
     pdict = node.get_dict()
+    try:
+        convert_dict_case(pdict, lower=True, raise_convert=True)
+    except ValueError as error:
+        raise InputValidationError(
+            'Case inconsistency found in the parameters dictionary ' f'please use lower case keys: {error}'
+        )
+
     if OVERRIDE_NAMESPACE not in pdict:
         raise InputValidationError(f'Would expect some incar tags supplied under {OVERRIDE_NAMESPACE} key!')
 

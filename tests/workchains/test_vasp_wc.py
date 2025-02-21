@@ -11,8 +11,11 @@ from __future__ import print_function
 import numpy as np
 import pytest
 from aiida import orm
+from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
+from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
-from aiida.orm import load_code
+from aiida.engine import run
+from aiida.plugins import WorkflowFactory
 from aiida.plugins.factories import DataFactory
 
 
@@ -114,18 +117,25 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
 
     # If code is not passed, use the mock code
     if code is None:
-        mock = load_code('mock-vasp@localhost')
+        mock = orm.load_code('mock-vasp@localhost')
         inputs.code = mock
     else:
         inputs.code = code
     return inputs
 
 
+def test_vasp_incar_case(fresh_aiida_env):
+    """Test catching inconsistent incar key cases"""
+    from aiida.plugins import WorkflowFactory
+
+    workchain = WorkflowFactory('vasp.vasp')
+    builder = workchain.get_builder()
+    with pytest.raises(InputValidationError):
+        builder.parameters = orm.Dict(dict={'incar': {'ALGO': 21}})
+
+
 def test_vasp_wc_nelm(fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict):
     """Test with mocked vasp code for handling electronic convergence issues"""
-    from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
-    from aiida.engine import run
-    from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.vasp')
 

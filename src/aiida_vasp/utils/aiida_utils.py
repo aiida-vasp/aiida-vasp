@@ -7,7 +7,7 @@ historical reasons when AiiDA was rapidly developed. In the future most routines
 that have now standardized in AiiDA will be removed.
 """
 
-# pylint: disable=import-outside-toplevel
+import warnings
 from functools import wraps
 
 import numpy as np
@@ -188,3 +188,33 @@ def ensure_node_kwargs(func):
         return func(node, *args, **new_kwargs)
 
     return wrapper
+
+
+def convert_dict_case(dict_in: dict, recursive=True, warn=False, lower=True, raise_convert=False):
+    """
+    Recursively convert the keys of a dictionary to lower or upper cases, returns a new dictionary.
+
+    :param dict_in: The input dictionary whose keys need to be converted.
+    :param recursive: If True, the function will recursively convert keys in nested dictionaries.
+    :param warn: If True, the function will print a warning if a key is converted.
+    :param lower: If True, convert keys to lowercase; otherwise, convert to uppercase.
+    :param raise_convert: If True, raise an error if a key is converted.
+    :return: A new dictionary with keys converted to the specified case.
+    """
+
+    converted_dict = {}
+    for key, value in dict_in.items():
+        new_key = key.lower() if lower else key.upper()
+        if new_key != key:
+            expected = 'upper' if lower is False else 'lower'
+            if warn:
+                expected = 'upper' if lower is False else 'lower'
+                warnings.warn(f"Key '{key}' converted to '{new_key}' - please use {expected} case keys")
+            if raise_convert:
+                raise ValueError(f"Key '{key}' converted to '{new_key}' - please use {expected} case keys")
+
+        if recursive and isinstance(value, dict):
+            converted_dict[new_key] = convert_dict_case(value, recursive, warn, lower, raise_convert)
+        else:
+            converted_dict[new_key] = value
+    return converted_dict
