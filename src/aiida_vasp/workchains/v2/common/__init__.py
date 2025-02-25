@@ -59,7 +59,7 @@ def parameters_validator(node, port=None):
         convert_dict_case(pdict, lower=True, raise_convert=True)
     except ValueError as error:
         raise InputValidationError(
-            'Case inconsistency found in the parameters dictionary ' f'please use lower case keys: {error}'
+            f'Case inconsistency found in the parameters dictionary please use lower case keys: {error}'
         )
 
     if OVERRIDE_NAMESPACE not in pdict:
