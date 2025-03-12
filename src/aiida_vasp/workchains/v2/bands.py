@@ -18,6 +18,7 @@ from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
+from ase.geometry import cell_to_cellpar
 
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
@@ -687,6 +688,13 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 cls.verify_relax,
             ),
             if_(cls.should_generate_path)(cls.generate_path),
+            # Check if we need to re-do a SCF calculation to obtain the IBZKPT
+            # since the primitive structure may not be the relaxed structure. If they are the same, we can just use
+            # the kpoints from the latter, otherwise we need to get the SCF kpoints for the CURRENT primitive structure
+            if_(cls.should_do_scf_for_scf_kpoints)(
+                cls.run_scf_for_kpoints,
+                cls.verify_scf_for_kpoints,
+            ),
             cls.make_splitted_kpoints,  # Split the kpoints
             cls.run_scf_multi,  # Launch split calculation
             cls.inspect_and_combine_bands,  # Combined the band structure
@@ -719,10 +727,12 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             message='The input structure is not the primitive one!',
         )
 
-    def make_splitted_kpoints(self):
-        """Split the kpoints"""
-        # Fully specified band structure kpoints
-        full_kpoints = self.ctx.bs_kpoints
+    def get_scf_kpoints(self) -> orm.KpointsData:
+        """Return the SCF kpoints"""
+        scf_kpoints = None
+        # Return if we already done a scf calculation to obtain the current kpoints
+        if 'scf_kpoints' in self.ctx:
+            return self.ctx.scf_kpoints
 
         if 'kpoints' in self.inputs.scf:
             scf_kpoints = self.inputs.scf.kpoints
@@ -735,7 +745,16 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             # Try getting the kpoints from the retrieved folder
             scf_kpoints = extract_kpoints_from_calc(self.ctx.workchain_relax)
             self.report(f'Extracted SCF kpoints from retrieved vasprun.xml of <{self.ctx.workchain_relax}>.')
-        else:
+
+        return scf_kpoints
+
+    def make_splitted_kpoints(self):
+        """Split the kpoints"""
+        # Fully specified band structure kpoints
+        full_kpoints = self.ctx.bs_kpoints
+
+        scf_kpoints = self.get_scf_kpoints()
+        if scf_kpoints is None:
             self.report('No valid SCF kpoints is avaliable to use. Please define scf.kpoints explicitly!')
             return self.exit_codes.ERROR_NO_VALID_SCF_KPOINTS_INPUT  # pylint: disable=no-member
 
@@ -747,6 +766,69 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             self.report(f'WARNING: Too few actual band k points per split, setting it to: {per_split + nscf}')
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
+
+    def should_do_scf_for_scf_kpoints(self):
+        """Check if one should redo a SCF run to obtain the IBZKPT"""
+        scf_kpoints = self.get_scf_kpoints()
+        if scf_kpoints is None:
+            return True
+
+        # Check if the scf_kpoints is consistent with the current structure
+        scf_cell = np.array(scf_kpoints.cell)
+        current_cell = np.array(self.ctx.current_structure.cell)
+        assert scf_cell.shape == (3, 3)
+        assert current_cell.shape == (3, 3)
+        # Compute the cell parameters
+        par1 = cell_to_cellpar(scf_cell)
+        par2 = cell_to_cellpar(current_cell)
+
+        # If the cells parameters are different - we should run a SCF calculation to get the kpoint for this new cell
+        if not np.allclose(par1, par2, 1e-5):
+            return True
+        return False
+
+    def run_scf_for_kpoints(self):
+        """
+        Run an SCF calculation to just obtain the kpoints for the current structure
+        Ideally we should do this in a dryrun mode @ local machine
+        """
+        workflow_class = WorkflowFactory(self._base_wk_string)
+
+        # Check if we need to turn off spin polarization
+        inputs = self.exposed_inputs(workflow_class, 'scf')
+        pdict = inputs.parameters.get_dict()
+
+        # Reuse the wavecar if requested
+        if self.inputs.band_settings.get('hybrid_reuse_wavecar', False):
+            self.report('Setting ISTART=1 to reuse WAVECAR from the previous calculation.')
+            pdict['incar']['istart'] = 1
+            inputs.parameters = orm.Dict(pdict)
+
+        # Ensure that the kpoints are returned by the parser
+        if 'settings' not in inputs:
+            inputs.settings = orm.Dict(dict={'parser_settings': {'include_node': ['kpoints']}})
+        else:
+            # Merge with 'parser_settings'
+            inputs.settings = update_nested_dict_node(
+                inputs.settings, {'parser_settings': {'include_node': ['kpoints']}}, extend_list=True
+            )
+
+        inputs.metadata.label = self.inputs.metadata.label + ' SCF KPOINTS'
+        inputs.metadata.call_link_label = 'scf_for_kpoints'
+        inputs.structure = self.ctx.current_structure  # Use the current structure as reference
+        running = self.submit(workflow_class, **inputs)
+        return self.to_context(workchain_scf_for_kpoints=running)
+
+    def verify_scf_for_kpoints(self):
+        """Inspect the SCF for kpoints calculation"""
+        scf_workchain = self.ctx.workchain_scf_for_kpoints
+        if not scf_workchain.is_finished_ok:
+            self.report('SCF for kpoints workchain finished with Error')
+            return self.exit_codes.ERROR_SUB_PROC_SCF_FAILED
+
+        # Save the obtained kpoints
+        self.ctx.scf_kpoints = scf_workchain.outputs.kpoints
+        self.report(f'SCF calculation {scf_workchain} completed and obtained kpoints {self.ctx.scf_kpoints}')
 
     def run_scf_multi(self):
         """
@@ -1020,6 +1102,7 @@ def _extract_kpoints_from_retrieved(retrieved):
 
     kpoints_data = orm.KpointsData()
     kpoints_data.set_kpoints(kpoints=kpoints_array, weights=weights_array)
+    kpoints_data.set_cell(parser.structure['unitcell'])
 
     return kpoints_data
 

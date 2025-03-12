@@ -434,6 +434,8 @@ class VaspParser(Parser):
                 node.set_kpoints_mesh(kpoints_data['divisions'], offset=kpoints_data['shifts'])
             else:
                 raise ValueError(f'Unknown kpoints mode {kpoints_data["mode"]}')
+            # Record the cell for which the kpoints are defined for
+            node.set_cell(quantities_each['vasprun.xml']['structure']['unitcell'])
             return node
         raise QuantityMissingError('No valid kpoints data to use')
 
