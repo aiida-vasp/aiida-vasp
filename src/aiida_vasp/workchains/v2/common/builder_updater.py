@@ -409,7 +409,9 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def set_label(self, label: Optional[str] = None) -> 'VaspBuilderUpdater':
         """Set the toplevel label, default to the label of the structure"""
         if label is None:
-            label = self.root_namespace.structure.label
+            # Default to the label of the structure if available
+            if 'structure' in self.root_namespace:
+                label = self.root_namespace.structure.label
         self.root_namespace.metadata.label = label
         return self
 
