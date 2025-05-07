@@ -15,6 +15,26 @@ class PymatgenInputSet(InputSet):
     Provides basic compatibility with pymatgen sets.
     """
 
+    # An none-exhaust list of supported pymatgen input sets
+    KNOWN_SETS = (
+        'MPRelaxSet',
+        'MITRelaxSet',
+        'MPScanRelaxSet',
+        'MP24RelaxSet',
+        'MPMetalRelaxSet',
+        'MPHSERelaxSet',
+        'MVLGWSet',
+        'MPAbsorptionSet',
+        'MatPESStaticSet',
+        'MPScanStaticSet',
+        'MP24StaticSet',
+        'MPHSEBSSet',
+        'MPNonSCFSet',
+        'MPSOCSet',
+        'MPNMRSet',
+        'MPStaticSet',
+    )
+
     def __init__(self, set_name: str, overrides=None, verbose=None, pmg_kwargs=None):
         """
         Instantiate a PymatgenInputSet.
@@ -23,6 +43,7 @@ class PymatgenInputSet(InputSet):
         :param verbose: If True, print additional information.
         :param pmg_kwargs: A dictionary of keyword arguments to pass to the pymatgen input set.
         """
+        assert set_name in self.SUPPORTED_SETS, f'Unsupported set name: {set_name}'
         super().__init__(set_name, overrides=overrides, verbose=verbose)
         self._pmg_kwargs = pmg_kwargs or {}
 

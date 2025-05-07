@@ -15,6 +15,7 @@ from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespa
 from yaml import safe_load
 
 from ..inputset.base import convert_lowercase
+from ..inputset.pmgset import PymatgenInputSet
 from ..inputset.vaspsets import VASPInputSet
 from ..relax import RelaxOptions
 
@@ -288,11 +289,17 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         else:
             overrides_ = overrides
 
-        inset = VASPInputSet(set_name, overrides=overrides_, verbose=self.verbose)
-        self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict(structure)})
+        if set_name in PymatgenInputSet.KNOWN_SETS:
+            inset = VASPInputSet(set_name, overrides=overrides_, verbose=self.verbose)
+            self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
+        else:
+            inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose)
+            # PymatgenInputSet uses explicit kpoints
+            self.namespace_vasp.kpoints = inset.get_kpoints(structure)
+
+        self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict(structure, raw_python=True)})
         self.namespace_vasp.potential_family = orm.Str(inset.get_potcar_family())
         self.namespace_vasp.potential_mapping = orm.Dict(dict=inset.get_pp_mapping(structure))
-        self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
         setattr(self.root_namespace, structure_node_name, structure)
         return self
 
