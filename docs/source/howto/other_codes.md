@@ -151,10 +151,10 @@ from pymatgen.core import Structure
 from aiida_vasp.workchains.v2 import VaspBuilderUpdater
 
 structure = Structure.from_file("Al_empty.cif")
-upd = VaspBuilderUpdater(set_name='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp-6.4.2@localhost', overrides=overrides)
+upd = VaspBuilderUpdater(set_name='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp@localhost')
 upd.set_resources(num_machines=1, tot_num_mpiprocs=16)
 upd.set_options(max_wallclock_seconds=3600)
-upd.submit()
+upd.builder
 ```
 
 There are a few differences to note:
