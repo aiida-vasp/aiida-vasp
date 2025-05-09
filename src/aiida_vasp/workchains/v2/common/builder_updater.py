@@ -289,7 +289,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         else:
             overrides_ = overrides
 
-        if set_name not in PymatgenInputSet.KNOWN_SETS:
+        if set_name in PymatgenInputSet.KNOWN_SETS:
             inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose)
             # PymatgenInputSet uses explicit kpoints
             self.namespace_vasp.kpoints = inset.get_kpoints(structure)
