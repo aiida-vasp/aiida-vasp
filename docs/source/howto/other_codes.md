@@ -151,22 +151,17 @@ from pymatgen.core import Structure
 from aiida_vasp.workchains.v2 import VaspBuilderUpdater
 
 structure = Structure.from_file("Al_empty.cif")
-overrides = { 'ediffg': -1e-2, 'ivdw': 11, 'isym':2,'nsw':1500, 'encut':520}
-upd = VaspBuilderUpdater(inputset='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp-6.4.2@localhost', overrides=overrides)
+upd = VaspBuilderUpdater(set_name='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp-6.4.2@localhost', overrides=overrides)
 upd.set_resources(num_machines=1, tot_num_mpiprocs=16)
 upd.set_options(max_wallclock_seconds=3600)
-upd.set_kspacing(0.05)
 upd.submit()
 ```
 
 There are a few differences to note:
 
-1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MITRelaxSet` inputset preset which is based on the pymatgen's `MITRelaxSet`.
+1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MITRelaxSet` as the set name. The code will automatically load use the `pymatgen.io.vasp.sets.MITRelaxSet` class to setup the input parameters subsequently. The supported pymatgen sets can be found in the `aiida_vasp.workchains.v2.pmgset` module.
 2. The `apply_preset` method takes an `orm.StructureData` as input, which is converted from a pymatgen `Structure`. This input structure is stored in the database as a `StructureData` node.
-3. The kpoints are configured with a spacing of 0.05 (*2pi), rather than being implicitly set by the VASP code itself. When using AiidA, it is preferable to store explicit kpoints (grid) in the database as `KpointsData` nodes.
-4. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
-
-There are also a few other input set such as `MPRelaxSet` and one can have their own input set files defined in the `~/.aiida-vasp/` folder. This folder will be searched first when looking for input sets.
+3. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
 
 The `VaspBuilderUpdater` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
 should be configured. The **preset** includes which input set should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.

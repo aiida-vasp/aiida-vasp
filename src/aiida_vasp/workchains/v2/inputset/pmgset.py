@@ -72,7 +72,8 @@ class PymatgenInputSet(InputSet):
                 incar_dict[key] = value
         if raw_python:
             return incar_dict
-
+        # pop icharg which conflicts with aiida-vasp's input checks
+        incar_dict.pop('icharg', None)
         return orm.Dict(dict=incar_dict)
 
     def get_pp_mapping(self, structure):

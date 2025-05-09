@@ -289,13 +289,13 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         else:
             overrides_ = overrides
 
-        if set_name in PymatgenInputSet.KNOWN_SETS:
-            inset = VASPInputSet(set_name, overrides=overrides_, verbose=self.verbose)
-            self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
-        else:
+        if set_name not in PymatgenInputSet.KNOWN_SETS:
             inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose)
             # PymatgenInputSet uses explicit kpoints
             self.namespace_vasp.kpoints = inset.get_kpoints(structure)
+        else:
+            inset = VASPInputSet(set_name, overrides=overrides_, verbose=self.verbose)
+            self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
 
         self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict(structure, raw_python=True)})
         self.namespace_vasp.potential_family = orm.Str(inset.get_potcar_family())
