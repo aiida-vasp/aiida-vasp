@@ -2,6 +2,8 @@
 Test for input set specifications
 """
 
+import os
+
 import numpy as np
 import pytest
 from aiida import orm
@@ -82,6 +84,12 @@ def test_pmg_kpoints(aiida_profile, fe_atoms):
     assert kpoints.get_kpoints_mesh()[0][0] == 6
     assert kpoints.get_kpoints_mesh()[1][0] == -0.5
 
+    inset = PymatgenInputSet('MP24RelaxSet')
+    kpoints = inset.get_kpoints(fe_atoms)
+    assert kpoints is None
+    kspacing = inset.get_kpoints_spacing(fe_atoms)
+    assert kspacing == 0.22 / np.pi / 2
+
 
 def test_pmg(fe_atoms, feo_atoms):
     """Test pymatgen inputsets"""
@@ -100,10 +108,16 @@ def test_pmg(fe_atoms, feo_atoms):
     # Check equivalence with pymatgen
     from pymatgen.io.vasp.sets import MPRelaxSet
 
+    has_potcar = os.environ.get('PMG_VASP_PSP_DIR', '')
     for structure in feo_atoms, fe_atoms:
         pmgset = MPRelaxSet(structure.get_pymatgen())
         vpmgset = PymatgenInputSet('MPRelaxSet')
+        ref_dict = dict(pmgset.incar)
+        ref_dict.pop('icharg', None)
+        ref_dict.pop('istart', None)
+        ref_dict.pop('kspacing', None)
         out = vpmgset.get_input_dict(structure)
-        assert dict(pmgset.incar) == {key.upper(): value for key, value in out.items()}
+        assert ref_dict == {key.upper(): value for key, value in out.items()}
         assert pmgset.kpoints.kpts[0] == tuple(vpmgset.get_kpoints(structure).get_kpoints_mesh()[0])
-        assert {p.element: p.symbol for p in pmgset.potcar} == vpmgset.get_pp_mapping(structure)
+        if has_potcar == '':
+            assert {p.element: p.symbol for p in pmgset.potcar} == vpmgset.get_pp_mapping(structure)

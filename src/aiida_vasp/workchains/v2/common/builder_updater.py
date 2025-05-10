@@ -292,7 +292,12 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         if set_name in PymatgenInputSet.KNOWN_SETS:
             inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose)
             # PymatgenInputSet uses explicit kpoints
-            self.namespace_vasp.kpoints = inset.get_kpoints(structure)
+            kpt = inset.get_kpoints(structure)
+            # Use kpoints mesh or kspacing provided by pymatgen inputset
+            if kpt is not None:
+                self.namespace_vasp.kpoints = kpt
+            else:
+                self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing(structure))
         else:
             inset = VASPInputSet(set_name, overrides=overrides_, verbose=self.verbose)
             self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
@@ -581,6 +586,15 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
         else:
             self.namespace_relax = namespace_relax
 
+    def use_inputset(self, *args, set_name=None, **kwargs):
+        super().use_inputset(*args, set_name=set_name, **kwargs)
+        if set_name is not None:
+            if set_name in PymatgenInputSet.KNOWN_SETS:
+                incar_in = self.namespace_vasp.parameters['incar']
+                incar_out, relax_update = incar_dict_to_relax_settings(incar_in)
+                self.set_incar(**incar_out)
+                self.set_relax_settings(**relax_update)
+
     def apply_preset(
         self,
         structure: orm.StructureData,
@@ -858,3 +872,26 @@ def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict:
                 value_ = value
         data[key] = value_
     return data
+
+
+def incar_dict_to_relax_settings(incar_in):
+    """
+    Convert INCAR tags to relax_settings and remove them
+    """
+    # Convert INCAR tags to relax_settings
+    updated = {}
+    incar_out = dict(incar_in)
+    nsw = incar_out['incar'].pop('nsw', None)
+    if nsw is not None:
+        updated['steps'] = nsw
+    # Convert ibrion
+    ibrion = incar_out['incar'].pop('ibrion', None)
+    if ibrion == 1:
+        updated['algo'] = 'rd'
+    if ibrion == 2:
+        updated['algo'] = 'cg'
+    # Convert ediffg
+    ediffg = incar_out['incar'].pop('ediffg', None)
+    if ediffg is not None:
+        updated['force_cutoff'] = ediffg
+    return incar_out, updated

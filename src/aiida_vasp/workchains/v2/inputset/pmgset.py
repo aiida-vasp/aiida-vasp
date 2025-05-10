@@ -4,6 +4,7 @@ Module for using pymatgen.io.vasp.sets based input sets.
 
 from typing import Union
 
+import numpy as np
 from aiida import orm
 
 from .base import InputSet
@@ -70,10 +71,14 @@ class PymatgenInputSet(InputSet):
                     incar_dict.pop(key)
             else:
                 incar_dict[key] = value
-        if raw_python:
-            return incar_dict
+
         # pop icharg which conflicts with aiida-vasp's input checks
         incar_dict.pop('icharg', None)
+        incar_dict.pop('istart', None)
+        incar_dict.pop('kspacing', None)
+
+        if raw_python:
+            return incar_dict
         return orm.Dict(dict=incar_dict)
 
     def get_pp_mapping(self, structure):
@@ -95,14 +100,22 @@ class PymatgenInputSet(InputSet):
         """
         ps = structure.get_pymatgen()
         pmgset = self._pmg_class(ps, **self._pmg_kwargs)
+        if pmgset.kpoints is None:
+            return None
         # Currently only supports Gamma and Monkhorst-Pack
         kpoints_data = pmg_kpoints2kpointsdata(pmgset.kpoints)
         kpoints_data.set_cell_from_structure(structure)
         return kpoints_data
 
-    def get_kpoints_spacing(self):
+    def get_kpoints_spacing(self, structure):
         """Get the spacing of the kpoints used by the input set."""
-        raise NotImplementedError
+        ps = structure.get_pymatgen()
+        pmgset = self._pmg_class(ps, **self._pmg_kwargs)
+        incar_dict = {key.lower(): value for key, value in pmgset.incar.items()}
+        kspacing = incar_dict.pop('kspacing', None)
+        if kspacing is not None:
+            return kspacing / np.pi / 2
+        return None
 
 
 def pmg_kpoints2kpointsdata(pmg_kpoints):
