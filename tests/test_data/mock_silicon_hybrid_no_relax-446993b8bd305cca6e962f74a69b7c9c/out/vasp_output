@@ -1,0 +1,62 @@
+ running    1 mpi-ranks, on    1 nodes
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ vasp.6.4.2 20Jul23 (build Feb  9 2025 10:30:41) complex
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     You use a magnetic or noncollinear calculation, but did not specify     |
+|     the initial magnetic moment with the MAGMOM tag. Note that a            |
+|     default of 1 will be used for all atoms. This ferromagnetic setup       |
+|     may break the symmetry of the crystal, in particular it may rule        |
+|     out finding an antiferromagnetic solution. Thence, we recommend         |
+|     setting the initial magnetic moment manually or verifying carefully     |
+|     that this magnetic setup is desired.                                    |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You enforced a specific xc type in the INCAR file but a different       |
+|     type was found in the POTCAR file.                                      |
+|     I HOPE YOU KNOW WHAT YOU ARE DOING!                                     |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.212966900185E+01    0.21297E+01   -0.23593E+03  5451   0.410E+02
+DAV:   2    -0.109139238814E+02   -0.13044E+02   -0.12789E+02  8504   0.678E+01
+DAV:   3    -0.111633683061E+02   -0.24944E+00   -0.24797E+00  6493   0.934E+00
+DAV:   4    -0.111647605850E+02   -0.13923E-02   -0.13922E-02  8219   0.873E-01
+DAV:   5    -0.111647620398E+02   -0.14547E-05   -0.14546E-05  6862   0.209E-02    0.659E+00
+RMM:   6    -0.114948867936E+02   -0.33012E+00   -0.78787E-02  5438   0.185E+00    0.357E+00
+RMM:   7    -0.114385501030E+02    0.56337E-01   -0.52110E-02  5627   0.147E+00    0.191E+00
+RMM:   8    -0.114583735271E+02   -0.19823E-01   -0.23107E-02  5726   0.103E+00    0.511E-01
+RMM:   9    -0.114584582636E+02   -0.84737E-04   -0.20738E-03  6140   0.334E-01    0.123E-01
+RMM:  10    -0.114585862053E+02   -0.12794E-03   -0.39031E-04  6086   0.143E-01    0.683E-02
+RMM:  11    -0.114586359606E+02   -0.49755E-04   -0.12733E-04  6133   0.834E-02    0.542E-02
+RMM:  12    -0.114586368355E+02   -0.87489E-06   -0.20610E-05  6258   0.330E-02    0.277E-02
+RMM:  13    -0.114586429786E+02   -0.61431E-05   -0.13280E-05  5947   0.267E-02    0.266E-03
+WARNING in EDDRMM: call to ZHEGV failed, returncode =   8  4      9
+RMM:  14    -0.114586434158E+02   -0.43722E-06   -0.15873E-06  4425   0.890E-03
+   1 F= -.11458643E+02 E0= -.11458643E+02  d E =-.148654E-10  mag=     0.0000

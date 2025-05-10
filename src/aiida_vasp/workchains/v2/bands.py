@@ -23,6 +23,7 @@ from ase.geometry import cell_to_cellpar
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
+from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE
@@ -688,13 +689,12 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 cls.verify_relax,
             ),
             if_(cls.should_generate_path)(cls.generate_path),
-            # Check if we need to re-do a SCF calculation to obtain the IBZKPT
-            # since the primitive structure may not be the relaxed structure. If they are the same, we can just use
-            # the kpoints from the latter, otherwise we need to get the SCF kpoints for the CURRENT primitive structure
-            if_(cls.should_do_scf_for_scf_kpoints)(
-                cls.run_scf_for_kpoints,
-                cls.verify_scf_for_kpoints,
-            ),
+            # Find the SCF kpoints from geometry optimisation
+            if_(cls.no_scf_kpoints)(cls.get_scf_kpoints_relax),
+            # Generate the SCF kpoints using spglib
+            if_(cls.no_scf_kpoints)(cls.get_scf_kpoints_spglib),
+            # If the above fails, we need to run a SCF calculation to get the kpoints
+            if_(cls.no_scf_kpoints)(cls.run_scf_for_kpoints, cls.verify_scf_for_kpoints),
             cls.make_splitted_kpoints,  # Split the kpoints
             cls.run_scf_multi,  # Launch split calculation
             cls.inspect_and_combine_bands,  # Combined the band structure
@@ -727,33 +727,92 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             message='The input structure is not the primitive one!',
         )
 
-    def get_scf_kpoints(self) -> orm.KpointsData:
-        """Return the SCF kpoints"""
-        scf_kpoints = None
-        # Return if we already done a scf calculation to obtain the current kpoints
-        if 'scf_kpoints' in self.ctx:
-            return self.ctx.scf_kpoints
-
+    def setup(self):
+        super().setup()
+        self.ctx.scf_kpoints = None
         if 'kpoints' in self.inputs.scf:
-            scf_kpoints = self.inputs.scf.kpoints
-        # Relaxation workchain has kpoints output
-        elif 'workchain_relax' in self.ctx and 'kpoints' in self.ctx['workchain_relax'].outputs:
-            scf_kpoints = self.ctx.workchain_relax.outputs.kpoints
-            self.report(f'Using output from <{self.ctx.workchain_relax}> for SCF kpoints.')
-        # Parse from relaxation output
-        elif 'workchain_relax' in self.ctx:
-            # Try getting the kpoints from the retrieved folder
-            scf_kpoints = extract_kpoints_from_calc(self.ctx.workchain_relax)
-            self.report(f'Extracted SCF kpoints from retrieved vasprun.xml of <{self.ctx.workchain_relax}>.')
+            self.ctx.scf_kpoints = self.inputs.scf.kpoints
 
-        return scf_kpoints
+    def no_scf_kpoints(self):
+        """Check if the kpoints for SCF has NOT been set"""
+        if self.ctx.scf_kpoints is None:
+            return True
+        return False
+
+    def get_scf_kpoints_relax(self):
+        """Try extract SCF kpoints from relaxation workchain"""
+
+        if 'workchain_relax' not in self.ctx:
+            self.report('No workchain_relax found in context - skip extracting scf kpoints from previous calculation')
+            return
+
+        # Check if symmetry is consistent
+        incar_relax = self.ctx['workchain_relax'].inputs.vasp.parameters['incar']
+        incar_scf = self.inputs.scf.parameters['incar']
+        if incar_scf.get('isym', 2) != incar_relax.get('isym', 2):
+            self.report(
+                'The symmetry of the SCF calculation is not consistent with the relaxation calculation. '
+                'Cannot reuse the IBZ kpoitns from the relaxation calculation.'
+            )
+            return
+
+        # Check if the scf_kpoints is consistent with the current structure
+        relaxed = self.ctx.workchain_relax.outputs.relax.structure
+        kpt_cell = np.array(relaxed.cell)
+        current_cell = np.array(self.ctx.current_structure.cell)
+        assert kpt_cell.shape == (3, 3)
+        assert current_cell.shape == (3, 3)
+        # Compute the cell parameters
+        par1 = cell_to_cellpar(kpt_cell)
+        par2 = cell_to_cellpar(current_cell)
+        if not np.allclose(par1, par2, 1e-5):
+            self.report(
+                'Cell of the last relaxation step does not match the current structure.SCF kpoints cannot be used'
+            )
+            return
+
+        # Extract the kpoints from the relaxation calculation.
+        if 'kpoints' in self.ctx['workchain_relax'].outputs:
+            self.report(f'Using output from <{self.ctx.workchain_relax}> for SCF kpoints.')
+            self.ctx.scf_kpoints = self.ctx.workchain_relax.outputs.kpoints
+        else:
+            # Parse from relaxation output
+            # Try getting the kpoints from the retrieved folder
+            self.report(f'Extracted SCF kpoints from retrieved vasprun.xml of <{self.ctx.workchain_relax}>.')
+            self.ctx.scf_kpoints = extract_kpoints_from_calc(self.ctx.workchain_relax)
+
+    def get_scf_kpoints_spglib(self):
+        """
+        Generate SCF kpoints using spglib
+        """
+        incar_scf = self.inputs.scf.parameters['incar']
+        magmom = incar_scf.get('magmom', None)
+        symmetry_reduce = incar_scf.get('isym', 2) > 0
+        if symmetry_reduce and magmom is not None:
+            # Check if symmetry is broken by magnetic moments
+            species = self.inputs.structure.get_ase().get_chemical_symbols()
+            if isinstance(magmom, str):
+                magmom = magmom.split()
+            assert len(magmom) == len(species), (
+                f'Mismatch between the magmom ({len(magmom)}) and the number of atoms ({len(species)}).'
+            )
+            if len(set(zip(magmom, species))) != len(set(species)):
+                self.report('Symmetry is broken by magnetic magmoms, cannot use spglib to generate the kpoints')
+                return
+        kpt = get_ir_kpoints_data(
+            self.ctx.current_structure,
+            self.inputs.scf.kpoints_spacing * np.pi * 2,  # Note that aiida-vasp assumes a 2pi factor in the unit
+            symprec=self.inputs.band_settings.get('symprec', 1e-5),
+            symmetry_reduce=symmetry_reduce,
+        )
+        self.ctx.scf_kpoints = kpt
 
     def make_splitted_kpoints(self):
         """Split the kpoints"""
         # Fully specified band structure kpoints
         full_kpoints = self.ctx.bs_kpoints
 
-        scf_kpoints = self.get_scf_kpoints()
+        scf_kpoints = self.ctx.scf_kpoints
         if scf_kpoints is None:
             self.report('No valid SCF kpoints is avaliable to use. Please define scf.kpoints explicitly!')
             return self.exit_codes.ERROR_NO_VALID_SCF_KPOINTS_INPUT  # pylint: disable=no-member
