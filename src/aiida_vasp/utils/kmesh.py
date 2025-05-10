@@ -2,7 +2,6 @@
 Generating (symmetry-reduced) k-point grids using spglib
 """
 
-import ase
 import numpy as np
 from aiida import orm
 from aiida.engine import calcfunction
@@ -21,7 +20,7 @@ def grid_address_to_recip_coord(points, mesh, is_shift=None):
 
 
 def get_ir_kpoints_and_weights(
-    atoms: ase.Atoms, mesh, is_time_reversal=True, symprec=1e-5, is_shift=None, symmetry_reduce=True
+    cell, scaled_positions, numbers, mesh, is_time_reversal=True, symprec=1e-5, is_shift=None, symmetry_reduce=True
 ):
     """
     Return fractional coordinates of irreducible k-points from a given mesh.
@@ -40,11 +39,11 @@ def get_ir_kpoints_and_weights(
     # We are actually using a distance rather than a mesh - convert it to a mesh
     if not isinstance(mesh, (list, tuple, np.ndarray)):
         distance = mesh
-        the_cell = np.array(atoms.cell)
+        the_cell = np.array(cell)
         reciprocal_cell = 2.0 * np.pi * np.linalg.inv(the_cell).transpose()
         mesh = [max(int(np.ceil(round(np.linalg.norm(b) / distance, 5))), 1) for b in reciprocal_cell]
 
-    spgcell = (atoms.cell, atoms.get_scaled_positions(), atoms.get_atomic_numbers())
+    spgcell = (cell, scaled_positions, numbers)
     grid_map_table, grid_address = get_ir_reciprocal_mesh(
         mesh, spgcell, is_time_reversal=is_time_reversal, is_shift=is_shift, symprec=symprec, is_dense=False
     )
@@ -87,8 +86,18 @@ def get_ir_kpoints_data(
         mesh_or_spacing = mesh_or_spacing.get_list()
     elif isinstance(mesh_or_spacing, orm.Float):
         mesh_or_spacing = mesh_or_spacing.value
+    # Construct inputs required by spglib
+    cell = np.array(structure.cell)
+    positions = np.array([site.position for site in structure.sites])
+    scaled_positions = np.linalg.solve(cell.T, np.transpose(positions)).T
+    kind_names = [site.kind_name for site in structure.sites]
+    # Map kind_name to number identifiers
+    unique_kinds = {name: i + 1 for i, name in enumerate(set(kind_names))}
+    numbers = [unique_kinds[name] for name in kind_names]
     coords, weights = get_ir_kpoints_and_weights(
-        structure.get_ase(),
+        cell,
+        scaled_positions,
+        numbers,
         mesh_or_spacing,
         is_time_reversal=is_time_reversal.value,
         symprec=symprec.value,

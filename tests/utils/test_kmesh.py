@@ -27,16 +27,20 @@ def test_get_ir_kpoints_from_structure(atoms):
     mesh = [8, 8, 8]
 
     # Test gamma-center grids
-    ir_kpoints, weights = get_ir_kpoints_and_weights(atoms, mesh)
+    ir_kpoints, weights = get_ir_kpoints_and_weights(atoms.cell, atoms.get_scaled_positions(), atoms.numbers, mesh)
     assert ir_kpoints.shape == (29, 3)
     assert np.sum(weights) == 1
     # Test shifted grids
-    ir_kpoints, weights = get_ir_kpoints_and_weights(atoms, mesh, is_shift=[1, 1, 1])
+    ir_kpoints, weights = get_ir_kpoints_and_weights(
+        atoms.cell, atoms.get_scaled_positions(), atoms.numbers, mesh, is_shift=[1, 1, 1]
+    )
     assert ir_kpoints.shape == (60, 3)
     assert np.sum(weights) == 1
 
     # Test not doing reduction at all
-    ir_kpoints, weights = get_ir_kpoints_and_weights(atoms, mesh, symmetry_reduce=False)
+    ir_kpoints, weights = get_ir_kpoints_and_weights(
+        atoms.cell, atoms.get_scaled_positions(), atoms.numbers, mesh, symmetry_reduce=False
+    )
     assert ir_kpoints.shape == (8 * 8 * 8, 3)
     assert np.sum(weights) == 1
 
