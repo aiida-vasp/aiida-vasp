@@ -22,6 +22,9 @@ Make sure you unset the environmental variables and rerun the tests to check it 
 """
 
 from aiida import orm
+from ase.build import bulk
+
+from aiida_vasp.workchains import VaspHybridBandsWorkChain
 
 
 def test_silicon_sp(mock_potcars, mock_vasp_strict, builder_updater):
@@ -95,10 +98,6 @@ def test_silicon_band(mock_potcars, mock_vasp_strict):
 def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
     """Test the hybrid (split-path) SCF  band structure workchain"""
 
-    from ase.build import bulk
-
-    from aiida_vasp.workchains import VaspHybridBandsWorkChain
-
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
     upd = VaspHybridBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
@@ -106,6 +105,20 @@ def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
     upd.set_band_settings(kpoints_per_split=120)
     # Add prefix to the registry folder
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_hybrid')
+    results = upd.run_get_node()
+    assert results.node.is_finished_ok
+
+
+def test_silicon_band_hybrid_no_relax(mock_potcars, mock_vasp_strict):
+    """Test the hybrid (split-path) SCF  band structure workchain"""
+
+    si = bulk('Si', 'diamond', 5.4)
+    si_node = orm.StructureData(ase=si)
+    upd = VaspHybridBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
+    upd.apply_preset(si_node, run_relax=False)
+    upd.set_band_settings(kpoints_per_split=150)
+    # Add prefix to the registry folder
+    upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_hybrid_no_relax')
     results = upd.run_get_node()
     assert results.node.is_finished_ok
 
