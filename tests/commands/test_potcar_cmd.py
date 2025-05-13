@@ -36,8 +36,8 @@ def run_cmd(command=None, args=None, **kwargs):
 
 
 def test_no_subcmd():
-    result = run_cmd()
-    assert not result.exception
+    result = run_cmd('--help')
+    assert result.exception is None
 
 
 def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
