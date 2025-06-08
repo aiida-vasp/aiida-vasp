@@ -39,6 +39,7 @@ dependencies = [
     "packaging",
     "pydantic",
     "parsevasp>=3.2",
+    "spglib",
 ]
 
 [project.urls]
