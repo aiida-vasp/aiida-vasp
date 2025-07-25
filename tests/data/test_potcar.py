@@ -1,6 +1,5 @@
 """Unit test the POTCAR AiiDA data structures."""
 
-# ruff: noqa: F811
 import pathlib
 import subprocess as sp
 import tarfile

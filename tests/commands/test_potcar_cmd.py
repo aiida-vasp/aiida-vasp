@@ -2,7 +2,6 @@
 Unit tests for vasp.potcar command family.
 """
 
-# ruff: noqa: F811
 import os
 from pathlib import Path
 

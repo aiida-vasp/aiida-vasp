@@ -183,7 +183,7 @@ def ensure_node_kwargs(func):
         new_kwargs = dict(kwargs)
         for name, value in kwargs.items():
             if name.endswith('node'):
-                if not isinstance(kwargs[name], orm.Node):
+                if not isinstance(value, orm.Node):
                     new_kwargs[name] = load_node(value)
         return func(node, *args, **new_kwargs)
 
