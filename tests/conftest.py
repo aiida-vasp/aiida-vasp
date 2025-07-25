@@ -11,11 +11,14 @@ from aiida.cmdline.utils.ascii_vis import format_call_graph
 from aiida.cmdline.utils.common import get_calcjob_report, get_node_info, get_workchain_report
 from aiida.common.exceptions import NotExistent
 from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run
 from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, QueryBuilder, load_code
+from aiida.plugins import CalculationFactory, DataFactory, WorkflowFactory
 from aiida.tools.archive import create_archive
 
-from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup, temp_potcar
 from aiida_vasp.utils.general import copytree
+from aiida_vasp.workchains.v2.common.builder_updater import VaspBuilderUpdater
 
 pytest_plugins = 'aiida.tools.pytest_fixtures'
 
@@ -135,8 +138,6 @@ def vasp_params(fresh_aiida_env):
 @pytest.fixture(params=['cif', 'str'])
 def vasp_structure(request, fresh_aiida_env, data_path):
     """Fixture: StructureData or CifData."""
-    from aiida.plugins import DataFactory
-
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
         structure = DataFactory('core.cif').get_or_create(cif_path)[0]
@@ -179,8 +180,6 @@ def vasp_kpoints(request, fresh_aiida_env, data_path):
         with open(data_path('kpoints', 'KPOINTS_mesh'), 'r', encoding='utf8') as reference_kpoints_fo:
             ref_kp_list = reference_kpoints_fo.read()
         return ref_kp_list
-
-    from aiida.plugins import DataFactory
 
     if request.param == 'mesh':
         kpoints = DataFactory('core.array.kpoints')()
@@ -237,8 +236,6 @@ def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_pat
 
     def duplicate_potcar_data(potcar_node):
         """Create and store (and return) a duplicate of a given PotcarData node."""
-        from aiida_vasp.data.potcar import temp_potcar
-
         file_node = PotcarFileData()
         with temp_potcar(potcar_node.get_content()) as potcar_file:
             file_node.add_file(potcar_file)
@@ -326,8 +323,6 @@ def run_vasp_process(
 
         The type of process is set with the process_type parameter.
         """
-        from aiida.engine import run
-
         inpts = AttributeDict()
         inpts.structure = vasp_structure
         parameters = vasp_params.get_dict()
@@ -341,8 +336,6 @@ def run_vasp_process(
             # Allow to fetch special tests cases using the mock-vasp executable
             parameters['system'] = f'test-case:{test_case}'
         if process_type == 'calcjob':
-            from aiida.plugins import CalculationFactory
-
             process = CalculationFactory('vasp.vasp')
             inpts.potential = PotcarData.get_potcars_from_structure(
                 structure=inpts.structure,
@@ -353,8 +346,6 @@ def run_vasp_process(
             inpts.metadata = {}
             inpts.metadata['options'] = options
         elif process_type == 'workchain':
-            from aiida.plugins import WorkflowFactory
-
             process = WorkflowFactory('vasp.vasp')
             inpts.potential_family = orm.Str(potcar_family_name)
             inpts.potential_mapping = orm.Dict(dict=potcar_mapping)
@@ -387,8 +378,6 @@ def run_vasp_process(
 @pytest.fixture()
 def mock_potcars(fresh_aiida_env, temp_pot_folder):
     """Create family of potcars for mock-vasp"""
-    from aiida_vasp.data.potcar import PotcarData
-
     path = os.environ.get('MOCK_VASP_POTCAR_PATH', None)
     if path:
         PotcarData.upload_potcar_family(path, 'PBE.54', 'Family for mock calculation', stop_if_existing=False)
@@ -409,8 +398,6 @@ def builder_updater(
     """
     Return a Builder Updater object for mock-vasp
     """
-    from aiida_vasp.workchains.v2.common.builder_updater import VaspBuilderUpdater
-
     return VaspBuilderUpdater(code='mock-vasp@localhost')
 
 
@@ -486,9 +473,6 @@ def _mock_vasp(fresh_aiida_env, localhost, exec_name):
     to point to the REAL VASP executable. This is used to generate the
     actual outputs for mock tests later
     """
-    from aiida.orm import Code
-    from aiida.orm.querybuilder import QueryBuilder
-
     query_builder = QueryBuilder()
     query_builder.append(Code, tag='code')
     query_builder.add_filter('code', {'label': {'==': exec_name}})

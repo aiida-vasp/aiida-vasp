@@ -18,6 +18,7 @@ from aiida.common.links import LinkType
 from aiida.engine import WorkChain, append_, calcfunction, if_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
+from aiida.tools import get_explicit_kpoints_path
 from ase.geometry import cell_to_cellpar
 
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -27,6 +28,7 @@ from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
 
 from .common import OVERRIDE_NAMESPACE
+from .common.dryrun import dryrun_relax_builder
 from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithBuilderUpdater
 
@@ -292,7 +294,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         else:
             # Using sumo interface
             try:
-                from .common.sumo_kpath import kpath_from_sumo_v2
+                from .common.sumo_kpath import kpath_from_sumo_v2  # noqa: PLC0415
             except ImportError:
                 raise ImportError('Sumo is not installed, please install it to use this feature.')
 
@@ -578,7 +580,6 @@ def seekpath_structure_analysis(structure, band_settings):
 
     Note that exact parameters that are available and their defaults will depend on your Seekpath version.
     """
-    from aiida.tools import get_explicit_kpoints_path
 
     # All keyword arugments should be `Data` node instances of base type and so should have the `.value` attribute
     return get_explicit_kpoints_path(structure, **band_settings.get_dict())
@@ -604,9 +605,6 @@ def get_primitive_strucrture_and_scf_kpoints(structure):
     VASP and getting the explicity kpoints for SCF calculation.
     """
     # Locate the relaxation work
-    from aiida.tools import get_explicit_kpoints_path
-
-    from .common.dryrun import dryrun_relax_builder
 
     # Locate the relaxation work
     relax_work = structure.base.links.get_incoming(link_label_filter='relax__structure').one().node
@@ -1020,8 +1018,6 @@ def dryrun_split_kpoints(
     """
     Perform a "dryrun" for splitting the kpoints
     """
-    from aiida.tools import get_explicit_kpoints_path
-
     if kpoints_args is None:
         kpoints_args = {}
     seekpath_results = get_explicit_kpoints_path(structure, **kpoints_args)

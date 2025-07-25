@@ -1,5 +1,8 @@
 import pytest
 from aiida import orm
+from aiida.common.links import LinkType
+from aiida.orm import CalcJobNode
+from aiida.plugins import DataFactory
 
 from aiida_vasp.parsers.content_parsers.chgcar import ChgcarParser
 from aiida_vasp.parsers.content_parsers.doscar import DoscarParser
@@ -15,9 +18,6 @@ from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 @pytest.fixture()
 def calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
-    from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode
-    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None):
         # Create a test computer
@@ -272,9 +272,6 @@ def compare_symmetries():
 @pytest.fixture()
 def neb_calc_with_retrieved(localhost):
     """A rigged CalcJobNode for testing the parser and that the calculation retrieve what is expected."""
-    from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode
-    from aiida.plugins import DataFactory
 
     def _inner(file_path, input_settings=None, nimgs=3):
         # Create a test computer

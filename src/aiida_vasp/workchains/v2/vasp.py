@@ -72,6 +72,7 @@ from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs, site_magnetization_to_magmom
 
 from .common import parameters_validator
+from .common.dryrun import get_jobscheme
 from .inputset.vaspsets import get_ldau_keys
 from .mixins import WithBuilderUpdater
 
@@ -590,7 +591,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
 
     def perform_autoparallel(self):
         """Dry run and obtain the best parallelisation settings"""
-        from .common.dryrun import get_jobscheme
 
         self.report('Performing local dryrun for auto-parallelisation')  # pylint: disable=not-callable
 

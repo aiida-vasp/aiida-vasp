@@ -32,6 +32,8 @@ from aiida import orm
 from aiida.parsers.parser import Parser
 from pydantic import Field
 
+from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.data.wavefun import WavefunData
 from aiida_vasp.parsers.content_parsers import *
 from aiida_vasp.utils.opthold import OptionContainer
 
@@ -372,8 +374,6 @@ class VaspParser(Parser):
 
         # Check if WAVECAR is present in the retrieved folder
         if 'WAVECAR' in self.retrieve_object_names:
-            from aiida_vasp.data.wavefun import WavefunData
-
             with self.retrieved.base.repository.open('WAVECAR', 'rb') as handler:
                 self.outputs['wavecar'] = WavefunData(file=handler, filename='WAVECAR')
         else:
@@ -384,8 +384,6 @@ class VaspParser(Parser):
 
         # Check if WAVECAR is present in the retrieved folder
         if 'CHGCAR' in self.retrieve_object_names:
-            from aiida_vasp.data.chargedensity import ChargedensityData
-
             with self.retrieved.base.repository.open('CHGCAR', 'rb') as handler:
                 self.outputs['chgcar'] = ChargedensityData(file=handler, filename='CHGCAR')
         else:

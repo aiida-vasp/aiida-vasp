@@ -528,8 +528,7 @@ class VaspCalculation(VaspCalcBase):
         :param use_wavecar: bool. Try to read WAVECAR.
         :param use_chgcar bool. Try to read CHGCAR.
         """
-
-        from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel
+        from aiida_vasp.calcs.immigrant import VaspImmigrant  # noqa: PLC0415
 
         proc_cls = VaspImmigrant
         builder = proc_cls.get_builder_from_folder(code, str(remote_path), **kwargs)

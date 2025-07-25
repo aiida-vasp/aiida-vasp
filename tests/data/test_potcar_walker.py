@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from aiida_vasp.data.potcar import PotcarWalker
+
 
 @pytest.fixture
 def temp_data_folder(tmpdir, data_path):
@@ -22,8 +24,6 @@ def temp_data_folder(tmpdir, data_path):
 
 @pytest.fixture
 def potcar_walker_cls(fresh_aiida_env):
-    from aiida_vasp.data.potcar import PotcarWalker
-
     return PotcarWalker
 
 

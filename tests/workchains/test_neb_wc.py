@@ -6,10 +6,12 @@ from io import StringIO
 
 import pytest
 from aiida import orm
-from aiida.plugins import WorkflowFactory
+from aiida.engine import run_get_node
+from aiida.plugins import DataFactory, WorkflowFactory
 
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.vasp import get_structure_node
+from aiida_vasp.utils.mock_code import VaspMockRegistry
 from aiida_vasp.utils.neb import neb_interpolate
 
 
@@ -97,8 +99,6 @@ def upload_real_pseudopotentials(path):
     This function should be called once before the REAL vasp calculation is launch to setup the
     correct POTCARs
     """
-    from aiida.plugins import DataFactory
-
     global POTCAR_FAMILY_NAME  # noqa: PLW0603
     POTCAR_FAMILY_NAME = 'TEMP'
     potcar_data_cls = DataFactory('vasp.potcar')
@@ -111,7 +111,6 @@ def upload_real_workchain(node, name):
 
     This function should be called once after the REAL vasp calculation is run during the test
     """
-    from aiida_vasp.utils.mock_code import VaspMockRegistry
 
     reg = VaspMockRegistry()
     print(reg.base_path)
@@ -120,8 +119,6 @@ def upload_real_workchain(node, name):
 
 def test_vasp_neb_wc(fresh_aiida_env, neb_wc_input):
     """Test the workchain"""
-
-    from aiida.engine import run_get_node
 
     _, out_node = run_get_node(neb_wc_input)
     assert out_node.exit_status == 0

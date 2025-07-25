@@ -3,8 +3,9 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import numpy as np
 import pytest
+from parsevasp.poscar import Poscar
 
-from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
+from aiida_vasp.parsers.content_parsers.poscar import PoscarParser, parsevasp_to_aiida
 
 
 @pytest.mark.parametrize(['poscar_parser'], [('poscar',)], indirect=True)
@@ -97,10 +98,6 @@ def test_consistency_with_parsevasp(vasp_structure, data_path):
 
     This tests purpose is to give a warning if we are overriding keys in parsevasps poscar-dict.
     """
-    from parsevasp.poscar import Poscar
-
-    from aiida_vasp.parsers.content_parsers.poscar import parsevasp_to_aiida
-
     path = data_path('poscar', 'POSCAR')
     poscar = Poscar(file_path=path, prec=12, conserve_order=True)
 

@@ -6,10 +6,12 @@ Contains utils and definitions that are used together with the parameters.
 # pylint: disable=too-many-branches
 
 import enum
+from os import path  # pylint: disable=import-outside-toplevel
 from warnings import warn
 
 from aiida.common.extendeddicts import AttributeDict
 from aiida.plugins import DataFactory
+from yaml import safe_load  # pylint: disable=import-outside-toplevel
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
@@ -196,9 +198,6 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
 
     def _load_valid_params(self):
         """Import a list of valid parameters for VASP. This is generated from the manual."""
-        from os import path  # pylint: disable=import-outside-toplevel
-
-        from yaml import safe_load  # pylint: disable=import-outside-toplevel
 
         with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
             tags_data = safe_load(handler)

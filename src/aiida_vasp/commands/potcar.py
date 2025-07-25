@@ -5,14 +5,18 @@ Commandline util for dealing with potcar files.
 """
 
 # pylint: disable=import-outside-toplevel
+from pathlib import Path
+
 import click
 import tabulate
 from aiida.cmdline.utils.decorators import with_dbenv
+from aiida.orm import Group, QueryBuilder
 from click_spinner import spinner as cli_spinner
 
 from aiida_vasp.commands import options
-from aiida_vasp.data.potcar import PotcarData
+from aiida_vasp.data.potcar import PotcarData, migrate_potcar_group
 from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
+from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder
 
 VERDI_DATA = cmp_load_verdi_data()
 
@@ -60,9 +64,8 @@ def try_grab_description(ctx, param, value):
 
 def detect_old_style_groups():
     """Check for the existence of old style groups and prompt the user"""
-    from aiida.orm import Group, QueryBuilder
 
-    from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup
+    from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup  # noqa: PLC0415
 
     qdb = QueryBuilder()
     qdb.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE}, project=['label'])
@@ -132,11 +135,7 @@ def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_ru
     If you have pymatgen installed and configured to locate the correct VASP POTCAR files,
     you can use this command to upload a family of VASP potcar files into aiida-vasp.
     """
-    from pathlib import Path
-
-    from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle
-
-    from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder
+    from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle  # noqa: PLC0415
 
     funcdir = PotcarSingle.functional_dir[functional]
     pmg_vasp_psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')
@@ -228,6 +227,5 @@ def migratefamilies():
     Since AiiDA 1.2, groups used by plugins should be defined by subclass and entrypoint names.
     This commands recreates the old style group using the ``PotcarGroup`` class.
     """
-    from aiida_vasp.data.potcar import migrate_potcar_group
 
     migrate_potcar_group()
