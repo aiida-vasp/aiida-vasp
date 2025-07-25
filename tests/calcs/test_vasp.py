@@ -231,8 +231,9 @@ def test_vasp_calc(fresh_aiida_env, run_vasp_process):
     # Check that we always try to parse notifications
     assert misc.get('notifications') is not None
 
-    # Check that we do not have any notifications
-    assert not misc['notifications']
+    # vasp_output contains boxed WARNING
+    assert len(misc['notifications']) == 1
+    assert misc['notifications'][0]['kind'] == 'WARNING'
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
