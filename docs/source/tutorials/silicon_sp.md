@@ -5,12 +5,17 @@ kernelspec:
   name: python3
 ---
 (silicon_sp_tutorial)=
+
+
 # Single point and general calculation
+
 
 :::{note}
 This tutorial is can be executed as a jupyter notebook.
 Please copy the `mock_registry` folder found to your directory of execution, otherwise the mock
 code cannot locate the pre-computed calculations to be used as dummy output.
+
+This notebook can be downloaded as **{nb-download}`silicon_sp.ipynb`** and {download}`silicon_sp.md`
 :::
 
 `VaspBuilderUpdater` provides a simplified interface for setting up calculations

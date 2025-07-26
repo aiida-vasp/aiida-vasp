@@ -12,6 +12,10 @@ myst:
 
 # Parsing
 
+:::{note}
+This notebook can be downloaded as **{nb-download}`parsing.ipynb`** and {download}`parsing.md`
+:::
+
 AiiDA-VASP provides flexible parsing of VASP output files to store data in the AiiDA database and repository.
 
 The user interface for configuring the parsing settings takes place in the `settings['parser_settings']` dictionary entry. The default `parser_settings` is presently:

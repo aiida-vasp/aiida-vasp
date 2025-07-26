@@ -10,6 +10,10 @@ execution:
 
 # Geometry optimisation
 
+:::{note}
+This notebook can be downloaded as **{nb-download}`silicon_relax.ipynb`** and {download}`silicon_relax.md`
+:::
+
 In this example we will perform a geometry optimisation of silicon using VASP.
 We will use the VASP code and the AiiDA plugin for VASP.
 
@@ -86,6 +90,7 @@ or simply hit `<Shift>+<Tab>` after `upd.builder.relax_settings` in the Notebook
 We can now run the relaxation using the same `run_get_node` method as in the single point example.
 
 ```{code-cell}
+:tags: [remove-stderr]
 results = upd.run_get_node()
 ```
 

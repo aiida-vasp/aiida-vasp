@@ -86,7 +86,7 @@ def test_pmg_kpoints(aiida_profile, fe_atoms):
     scaled_fe_atoms = fe_atoms.get_ase()
     scaled_fe_atoms.set_cell(scaled_fe_atoms.get_cell() * 1.2)
     # Breaks the symmetry so it is not face centred
-    scaled_fe_atoms.cell += np.random.rand(3, 3) * 0.01
+    scaled_fe_atoms.cell += np.random.rand(3, 3) * 0.1
     scaled_fe_atoms = orm.StructureData(ase=scaled_fe_atoms)
     kpoints = inset.get_kpoints(scaled_fe_atoms)
     assert kpoints.get_kpoints_mesh()[0][0] == 6

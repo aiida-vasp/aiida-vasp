@@ -10,6 +10,10 @@ execution:
 
 # Band structure and density of states
 
+:::{note}
+This notebook can be downloaded as **{nb-download}`silicon_band_dos.ipynb`** and {download}`silicon_band_dos.md`
+:::
+
 In this example we will perform band structure and DOS calculation for silicon using VASP. We will use the `VaspBandWorkChain` from the `aiida-vasp` plugin.
 
 It is recommended to go through the [single point calculation tutorial](#silicon_sp) first before proceeding with this example.
@@ -87,6 +91,7 @@ This can also be done for other Option classes such as `relax_settings` for the 
 We can now run the workchain and get the returned `WorkChainNode` object.
 
 ```{code-cell}
+:tags: [remove-stderr]
 band_out = upd.run_get_node().node
 ```
 

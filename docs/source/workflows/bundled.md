@@ -17,6 +17,11 @@ myst:
 (bundled_workflows)=
 # Bundled workflows
 
+:::{note}
+This notebook can be downloaded as **{nb-download}`bundled.ipynb`** and {download}`bundled.md`
+:::
+
+
 This section we give some brief introduction to the bundled workflows in AiiDA-VASP.
 
 ## Convergence workchain

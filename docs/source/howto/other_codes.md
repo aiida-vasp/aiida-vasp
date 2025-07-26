@@ -12,6 +12,11 @@ myst:
 (other_codes)=
 # Working with other codes
 
+
+:::{note}
+This notebook can be downloaded as **{nb-download}`other_codes.ipynb`** and {download}`other_codes.md`
+:::
+
 This section will show how to use aiida-vasp to work with other codes.
 
 ## Atomic Simulation Environment (ASE)
