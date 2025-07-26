@@ -2,8 +2,6 @@
 Test for input set specifications
 """
 
-import os
-
 import numpy as np
 import pytest
 from aiida import orm
@@ -14,6 +12,9 @@ from aiida_vasp.workchains.v2.inputset.pmgset import PymatgenInputSet
 from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
 
 try:
+    # Import SETTINGS
+    from pymatgen.core import SETTINGS
+
     # Check equivalence with pymatgen
     from pymatgen.io.vasp.sets import MPRelaxSet
 except ImportError:
@@ -113,7 +114,7 @@ def test_pmg(fe_atoms, feo_atoms):
     out = vpmgset.get_input_dict(feo_atoms)
     assert 'ldau' in out
 
-    has_potcar = os.environ.get('PMG_VASP_PSP_DIR', '')
+    psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')
     for structure in feo_atoms, fe_atoms:
         pmgset = MPRelaxSet(structure.get_pymatgen())
         vpmgset = PymatgenInputSet('MPRelaxSet')
@@ -124,5 +125,5 @@ def test_pmg(fe_atoms, feo_atoms):
         out = vpmgset.get_input_dict(structure)
         assert ref_dict == {key.upper(): value for key, value in out.items()}
         assert pmgset.kpoints.kpts[0] == tuple(vpmgset.get_kpoints(structure).get_kpoints_mesh()[0])
-        if has_potcar == '':
+        if psp_dir:
             assert {p.element: p.symbol for p in pmgset.potcar} == vpmgset.get_pp_mapping(structure)
