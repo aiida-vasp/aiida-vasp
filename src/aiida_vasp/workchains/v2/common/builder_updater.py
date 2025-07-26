@@ -295,7 +295,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         Initialise the update object.
 
         :param builder: The ``ProcessBuilder`` or ``ProcessBuilderNamespace`` to be used for setting
-          standared VaspWorkChain inputs.
+          standard VaspWorkChain inputs.
 
         :param root_namespace: The namespace to be assumed to be the *root*, e.g. where the input structure
           should be specified. The v2 series of workchain in aiida-vasp usually has the StructureData input

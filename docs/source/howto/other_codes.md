@@ -1,4 +1,8 @@
 ---
+file_format: mystnb
+kernelspec:
+  name: python3
+  display_name: 'Python 3'
 myst:
   substitutions:
     get_sumo_bands_plotter: "{py:func}`get_sumo_bands_plotter <aiida_vasp.utils.sumo.get_sumo_bands_plotter>`"
@@ -130,22 +134,36 @@ very familiar, which uses the same approach of using a preset of input parameter
 
 Consider the following code using pymatgen to set up a VASP calculation:
 
-```python
+```{code-cell}
+:tags: [remove-stderr]
 from pymatgen.core import Structure
 from pymatgen.io.vasp.sets import MPRelaxSet
+from pymatgen.util.testing import PymatgenTest
 
 incar_dict = { 'EDIFFG': -1e-2, 'IVDW': 11, 'ISYM':2,'NSW':1500, 'ENCUT':520}
-structure = Structure.from_file("Al_empty.cif")
+# Load structure from some file
+#structure = Structure.from_file("Al_empty.cif")
+# We use a built-in structure for now
+structure = PymatgenTest.get_structure("CsCl")
 inputset = MPRelaxSet(structure = structure,user_incar_settings=incar_dict,
                        user_kpoints_settings={'length':25})
 inputset.write_input(output_dir='./DFT_calc',include_cif=True)
+inputset
 ```
 
 Which loads the `Al_empty.cif` file, sets up a `MPRelaxSet` with some user defined settings, and writes the input files to the `DFT_calc` directory.
 
 To achieve a similar (but not equivalent) effect with aiida-vasp:
 
-```python
+```{code-cell}
+:tags: [remove-cell]
+# Configure the temp profile environment
+from aiida_vasp.utils.temp_profile import load_temp_profile_with_mock
+load_temp_profile_with_mock()
+```
+
+```{code-cell}
+:tags: [remove-stderr]
 from aiida import orm
 from pymatgen.util.testing import PymatgenTest
 from pymatgen.core import Structure
