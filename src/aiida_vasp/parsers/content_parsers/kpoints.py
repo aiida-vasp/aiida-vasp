@@ -4,6 +4,8 @@ The ``KPOINTS`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
 
+from __future__ import annotations
+
 import numpy as np
 from aiida import orm
 from parsevasp.kpoints import Kpoint, Kpoints

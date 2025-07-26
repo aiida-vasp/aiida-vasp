@@ -5,9 +5,13 @@ Utilities for comparing band structures. Mostly present for legacy purposes. Wil
 or moved in the future.
 """
 
+from __future__ import annotations
+
 import os
+from typing import Any
 
 import numpy as np
+from aiida import orm
 from aiida.engine import calcfunction
 from aiida.plugins import DataFactory
 
@@ -16,7 +20,7 @@ import aiida_vasp.utils.bands as btool
 BANDS_CLS = DataFactory('core.array.bands')
 
 
-def _firstspin(bands):
+def _firstspin(bands: np.ndarray) -> np.ndarray:
     """Get only the bands for the first spin if multiple are contained."""
     if bands.ndim not in [2, 3]:
         raise ValueError('invalid input')
@@ -27,7 +31,9 @@ def _firstspin(bands):
 
 @calcfunction
 # pylint: disable=too-many-locals
-def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
+def make_reference_bands_inline(
+    wannier_bands: orm.BandsData, vasp_bands: orm.BandsData, efermi: orm.Float | None = None
+) -> dict[str, Any]:
     """
     Compare bandstructure results from wannier and vasp.
 
@@ -95,7 +101,7 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     return {'bands': ref_bands, 'info': ref_info}
 
 
-def get_outer_window(bands_node, silent=False):
+def get_outer_window(bands_node: orm.BandsData, silent: bool = False) -> tuple[float, float] | None:
     """
     Get the ``outer_window`` parameter as a tuple (min, max), if it was given.
 
@@ -121,7 +127,7 @@ def get_outer_window(bands_node, silent=False):
     return owindow
 
 
-def band_gap(bands, occ, efermi=None):
+def band_gap(bands: np.ndarray, occ: np.ndarray, efermi: float | None = None) -> dict[str, Any]:
     """
     Find the band gap in a bandstructure.
 
@@ -173,11 +179,11 @@ def band_gap(bands, occ, efermi=None):
     return result
 
 
-def band_error(band1, band2):
+def band_error(band1: np.ndarray, band2: np.ndarray) -> float:
     return np.square(band1 - band2).sum()
 
 
-def bands_error(bands1, bands2):
+def bands_error(bands1: orm.BandsData, bands2: orm.BandsData) -> np.ndarray:
     """
     Band for band rms error sqrt((\\|B1_i - B2_i\\|^2)/n) where BX_i is the i-th band of Band Structure Node X.
 
@@ -198,7 +204,9 @@ def bands_error(bands1, bands2):
 
 
 # pylint: disable=too-many-locals
-def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
+def compare_bands(
+    vasp_bands: orm.BandsData, wannier_bands_list: list[orm.BandsData], plot_folder: str | None = None
+) -> dict[int, Any]:
     """
     Compare a band structure from vasp with different ones from wannier90 obtained for different window parameters.
 
@@ -254,14 +262,14 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     return info
 
 
-def compare_from_window_wf(workflow, **kwargs):
+def compare_from_window_wf(workflow: orm.WorkflowNode, **kwargs: Any) -> dict[int, Any]:
     """Find the relevant bands in the window workflow and compare them."""
     wblist = [v for k, v in workflow.get_results().iteritems() if 'bands_' in k]
     vbands = workflow.get_result('reference_bands')
     return compare_bands(vasp_bands=vbands, wannier_bands_list=wblist, **kwargs)
 
 
-def plot_errors_vs_iwsize(comparison_info):
+def plot_errors_vs_iwsize(comparison_info: dict[int, Any]) -> tuple[Any, Any]:
     """Plot Band structure errors versus size of the inner window parameter for wannier90."""
 
     ows = []
@@ -287,7 +295,7 @@ def plot_errors_vs_iwsize(comparison_info):
     return fig, zip(ows, iws, data)
 
 
-def get_band_properties_from_data(bandsdata):
+def get_band_properties_from_data(bandsdata: orm.BandsData) -> dict[str, Any]:
     """Acquire bands information from BandsData.
 
     :param bandsdata: A BandsData node to be processed
@@ -300,7 +308,7 @@ def get_band_properties_from_data(bandsdata):
     return get_band_properties(eigenvalues, occupations)
 
 
-def get_band_properties(eigenvalues, occupations):
+def get_band_properties(eigenvalues: np.ndarray, occupations: np.ndarray) -> dict[str, Any]:
     """Get some key information about the band structure.
 
     :param eigenvalues: The eigenvalue array has shape (NS, NB, NK) or (NB, NK), where NS is the number of spins,

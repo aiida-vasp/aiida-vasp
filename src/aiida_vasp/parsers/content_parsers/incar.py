@@ -4,10 +4,17 @@ The ``INCAR`` parser interface.
 Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from aiida import orm
 from parsevasp.incar import Incar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
+
+if TYPE_CHECKING:
+    from io import TextIO
 
 
 class IncarParser(BaseFileParser):
@@ -23,11 +30,11 @@ class IncarParser(BaseFileParser):
         'incar': {'inputs': [], 'name': 'incar', 'prerequisites': []},
     }
 
-    def __init__(self, *args, validate_tags=True, **kwargs):
+    def __init__(self, *args, validate_tags: bool = True, **kwargs) -> None:
         self._validate_tags = validate_tags
         super().__init__(*args, **kwargs)
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """Initialize a ``parsevasp`` object of ``Incar`` using a file like handler.
 
         :param handler: A file like object that provides the necessary ``INCAR`` content to be parsed.
@@ -39,7 +46,7 @@ class IncarParser(BaseFileParser):
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 
-    def _init_from_data(self, data):
+    def _init_from_data(self, data: orm.Dict) -> None:
         """Initialize using an AiiDA ``Dict`` instance.
 
         :param data: A valid AiiDA ``Dict`` object.
@@ -52,7 +59,7 @@ class IncarParser(BaseFileParser):
             raise TypeError('The supplied AiiDA data structure is not a Dict.')
 
     @property
-    def incar(self):
+    def incar(self) -> dict | None:
         """Return the parameters in the ``INCAR``.
 
         :returns: A dictionary containing the parameter tags as keys and its settings as values.
@@ -64,7 +71,7 @@ class IncarParser(BaseFileParser):
             return params
         return None
 
-    def _content_data_to_content_parser(self):
+    def _content_data_to_content_parser(self) -> Incar:
         """Convert an AiiDA ``Dict`` to a content parser instance of ``Incar`` from ``parsevasp``.
 
         :returns: An instance of ``Incar`` from ``parsevasp``.

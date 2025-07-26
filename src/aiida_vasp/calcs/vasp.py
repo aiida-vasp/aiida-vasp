@@ -2,10 +2,13 @@
 This module contains the class that prepares a specific VASP calculation.
 """
 
+from __future__ import annotations
+
 # encoding: utf-8
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
+from typing import TYPE_CHECKING
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
@@ -19,6 +22,10 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+
+if TYPE_CHECKING:
+    from aiida.common import CalcInfo
+    from aiida.common.folders import Folder
 
 
 class VaspCalculation(VaspCalcBase):
@@ -68,7 +75,7 @@ class VaspCalculation(VaspCalcBase):
     _plugin_type_string = 'vasp.vasp'
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec) -> None:
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
@@ -281,7 +288,7 @@ class VaspCalculation(VaspCalcBase):
         )
         spec.exit_code(1005, 'ERROR_OVERFLOW_IN_XML', message='Overflow detected in XML while parsing.')
 
-    def prepare_for_submission(self, folder):
+    def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         """
         Add all objects to the list of objects to be retrieved.
 

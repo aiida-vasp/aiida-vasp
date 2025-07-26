@@ -2,6 +2,8 @@
 Utility functions for running NEB calculations
 """
 
+from __future__ import annotations
+
 import numpy as np
 from aiida.engine import calcfunction
 from aiida.orm import StructureData
@@ -9,7 +11,9 @@ from ase.neb import NEB
 
 
 @calcfunction
-def neb_interpolate(init_structure, final_strucrture, nimages):
+def neb_interpolate(
+    init_structure: StructureData, final_strucrture: StructureData, nimages: int
+) -> dict[str, StructureData]:
     """
     Interpolate NEB frames using the starting and the final structures
 
@@ -53,7 +57,7 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
 
 
 @calcfunction
-def fix_atom_order(reference, to_fix):
+def fix_atom_order(reference: StructureData, to_fix: StructureData) -> StructureData:
     """
     Fix atom order by finding NN distances bet ween two frames. This resolves
     the issue where two closely matching structures having diffferent atomic orders.

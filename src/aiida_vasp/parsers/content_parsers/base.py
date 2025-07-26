@@ -7,6 +7,10 @@ Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
 
+from __future__ import annotations
+
+from typing import Any, BinaryIO, TextIO
+
 from aiida.common import AIIDA_LOGGER
 from aiida.orm import Data
 
@@ -38,11 +42,18 @@ class BaseFileParser:
     :type options: dict, optional
     """
 
-    OPEN_MODE = 'r'
-    PARSABLE_QUANTITIES = {}
-    DEFAULT_SETTINGS = {'quantities_to_parse': []}
+    OPEN_MODE: str = 'r'
+    PARSABLE_QUANTITIES: dict[str, Any] = {}
+    DEFAULT_SETTINGS: dict[str, Any] = {'quantities_to_parse': []}
 
-    def __init__(self, *, handler=None, data=None, settings=None, options=None):  # pylint: disable=unused-argument, missing-function-docstring
+    def __init__(
+        self,
+        *,
+        handler: TextIO | BinaryIO | None = None,
+        data: Data | None = None,
+        settings: dict[str, Any] | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> None:  # pylint: disable=unused-argument, missing-function-docstring
         super().__init__()
         # Make sure we only accept initialization with either ``handler`` or ``data``.
         if (handler is not None and data is not None) or (handler is None and data is None):
@@ -77,7 +88,7 @@ class BaseFileParser:
             else:
                 raise TypeError('The supplied handler is not of Data type.')
 
-    def get_all_quantities(self):
+    def get_all_quantities(self) -> tuple[dict[str, Any], dict[str, Any]]:
         """
         Fetch all quantities that can be parsed.
 
@@ -95,7 +106,7 @@ class BaseFileParser:
         return parsed, errored
 
     @property
-    def parsable_quantities(self):
+    def parsable_quantities(self) -> list[str]:
         """
         Fetch the quantities that this content parser can provide.
 
@@ -104,7 +115,7 @@ class BaseFileParser:
         """
         return self._parsable_quantities
 
-    def _set_settings(self, settings):
+    def _set_settings(self, settings: dict[str, Any] | None) -> None:
         """
         Set the settings to be used for the content parser.
 
@@ -127,7 +138,7 @@ class BaseFileParser:
         if not isinstance(self._settings.get('quantities_to_parse'), list):
             raise TypeError('The quantities_to_parse is not defined as a list of quantities.')
 
-    def get_quantity(self, quantity_key):
+    def get_quantity(self, quantity_key: str) -> Any:
         """
         Fetch the required quantity from the content parser.
 
@@ -159,7 +170,7 @@ class BaseFileParser:
 
         return self._parsed_content.get(quantity_key)
 
-    def write(self, path):
+    def write(self, path: str) -> None:
         """
         Write VASP content to file using the loaded content parser.
 
@@ -182,7 +193,7 @@ class BaseFileParser:
         else:
             raise ValueError('The content parser has not been initialized or no AiiDA data structure is preparred.')
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO | BinaryIO) -> None:
         """
         Initialize using a file-like object.
 
@@ -195,7 +206,7 @@ class BaseFileParser:
 
         raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_handler() method.')
 
-    def _init_from_data(self, data):
+    def _init_from_data(self, data: Data) -> None:
         """
         Initialize using an AiiDA data structure.
 
@@ -209,7 +220,7 @@ class BaseFileParser:
 
         raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_data() method.')
 
-    def _content_data_to_content_parser(self):
+    def _content_data_to_content_parser(self) -> Any:
         """
         Convert an AiiDA data structure to a content parser instance relevant for that
         data structure. E.g. ``Poscar`` from ``parsevasp`` for an AiiDA ``StructureData``.
@@ -226,7 +237,7 @@ class BaseFileParser:
             f'{self.__class__.__name__} does not implement a _content_data_to_content_parser() method.'
         )
 
-    def _parse_content(self):
+    def _parse_content(self) -> dict[str, Any]:
         """
         Parse the quantities configured and parseable from the content.
 

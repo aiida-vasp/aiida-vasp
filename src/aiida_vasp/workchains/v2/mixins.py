@@ -2,10 +2,14 @@
 Some convenience mixins
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 
 class WithBuilderUpdater:
     @classmethod
-    def get_builder_updater(cls, *args, **kwargs):
+    def get_builder_updater(cls, *args: Any, **kwargs: Any) -> Any:
         """
         Return the corresponding builder updater class for the workchain.
 

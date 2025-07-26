@@ -5,6 +5,8 @@ Contains utils and definitions that are used together with the parameters.
 """
 # pylint: disable=too-many-branches
 
+from __future__ import annotations
+
 import enum
 from os import path  # pylint: disable=import-outside-toplevel
 from warnings import warn
@@ -15,8 +17,8 @@ from yaml import safe_load  # pylint: disable=import-outside-toplevel
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
-_BASE_NAMESPACES = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
-_DEFAULT_OVERRIDE_NAMESPACE = 'incar'
+_BASE_NAMESPACES: list[str] = ['electronic', 'smearing', 'charge', 'dynamics', 'bands', 'relax', 'converge']
+_DEFAULT_OVERRIDE_NAMESPACE: str = 'incar'
 
 
 class ChargeEnum(enum.IntEnum):

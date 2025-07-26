@@ -4,13 +4,17 @@ Common click options for verdi.
 Common click options for verdi commands.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import click
 
 try:
     from aiida.cmdline.params.options import DESCRIPTION, FORCE, OverridableOption  # pylint: disable=unused-import
 except ImportError:
     # pylint: disable=too-few-public-methods
-    class OverridableOption(object):  # pylint: disable=useless-object-inheritance
+    class OverridableOption:  # pylint: disable=useless-object-inheritance
         """
         Wrapper around click option that increases reusability.
 
@@ -36,12 +40,12 @@ except ImportError:
                 click.echo(os.listdir(folder))
         """
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             """Store the defaults."""
             self.args = args
             self.kwargs = kwargs
 
-        def __call__(self, **kwargs):
+        def __call__(self, **kwargs: Any) -> click.Option:
             """Override kwargs (no name changes) and return option."""
             kw_copy = self.kwargs.copy()
             kw_copy.update(kwargs)

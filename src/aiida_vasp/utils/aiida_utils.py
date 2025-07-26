@@ -6,8 +6,11 @@ historical reasons when AiiDA was rapidly developed. In the future most routines
 that have now standardized in AiiDA will be removed.
 """
 
+from __future__ import annotations
+
 import warnings
 from functools import wraps
+from typing import Any, Callable
 
 import numpy as np
 from aiida import __version__ as aiida_version_
@@ -17,10 +20,10 @@ from aiida.orm import AuthInfo, QueryBuilder, User, load_node
 from aiida.plugins import DataFactory
 from packaging import version
 
-BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
+BASIC_DATA_TYPES: list[str] = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
 
 
-def querybuild(cls, **kwargs):
+def querybuild(cls: type, **kwargs: Any) -> QueryBuilder:
     """
     Instantiates and returns a QueryBuilder instance.
 
@@ -41,7 +44,7 @@ def querybuild(cls, **kwargs):
     return query_builder
 
 
-def get_data_class(data_type):
+def get_data_class(data_type: str) -> type:
     """Provide access to the orm.data classes with deferred dbenv loading."""
 
     data_cls = None
@@ -52,30 +55,30 @@ def get_data_class(data_type):
     return data_cls
 
 
-def get_current_user():
+def get_current_user() -> User:
     """Get current user."""
     current_user = User.collection.get_default()
     return current_user
 
 
-def copy_parameter(old_parameter):
+def copy_parameter(old_parameter: orm.Dict) -> orm.Dict:
     """Assemble a new Dict."""
     return orm.Dict(dict=old_parameter.get_dict())
 
 
-def displaced_structure(structure, displacement, entry):
+def displaced_structure(structure: orm.StructureData, displacement: np.ndarray, entry: int) -> orm.StructureData:
     disp_structure = structure.clone()
     displace_position(disp_structure, displacement, entry)
     return disp_structure
 
 
-def compressed_structure(structure, volume_change):
+def compressed_structure(structure: orm.StructureData, volume_change: float) -> orm.StructureData:
     comp_structure = structure.clone()
     compress_cell(comp_structure, volume_change)
     return comp_structure
 
 
-def displace_position(structure, displacement, entry):
+def displace_position(structure: orm.StructureData, displacement: np.ndarray, entry: int) -> None:
     """Displace a position in the StructureData."""
     sites = structure.sites
     positions = []
@@ -87,22 +90,22 @@ def displace_position(structure, displacement, entry):
     structure.reset_sites_positions(positions)
 
 
-def compress_cell(structure, volume_change):
+def compress_cell(structure: orm.StructureData, volume_change: float) -> None:
     """Apply compression or tensile forces to the unit cell."""
     cell = structure.cell
     new_cell = np.array(cell) * volume_change
     structure.reset_cell(new_cell.tolist())
 
 
-def aiida_version():
+def aiida_version() -> version.Version:
     return version.parse(aiida_version_)
 
 
-def cmp_version(string):
+def cmp_version(string: str) -> version.Version:
     return version.parse(string)
 
 
-def cmp_load_verdi_data():
+def cmp_load_verdi_data() -> Any:
     """Load the verdi data click command group for any version since 0.11."""
     verdi_data = None
     import_errors = []
@@ -131,7 +134,7 @@ def cmp_load_verdi_data():
     return verdi_data
 
 
-def create_authinfo(computer, store=False):
+def create_authinfo(computer: orm.Computer, store: bool = False) -> AuthInfo:
     """Allow the current user to use the given computer."""
 
     authinfo = AuthInfo(computer=computer, user=get_current_user())
@@ -140,23 +143,23 @@ def create_authinfo(computer, store=False):
     return authinfo
 
 
-def cmp_get_authinfo(computer):
+def cmp_get_authinfo(computer: orm.Computer) -> AuthInfo | None:
     """Get an existing authinfo or None for the given computer and current user."""
     return computer.get_authinfo(get_current_user())
 
 
-def cmp_get_transport(computer):
+def cmp_get_transport(computer: orm.Computer) -> Any:
     if hasattr(computer, 'get_transport'):
         return computer.get_transport()
     authinfo = cmp_get_authinfo(computer)
     return authinfo.get_transport()
 
 
-def ensure_node_first_arg(func):
+def ensure_node_first_arg(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to load a node if it is passed as a string."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         """Make sure the first node is a Node instance."""
         if len(args) > 0:
             node = args[0]
@@ -169,11 +172,11 @@ def ensure_node_first_arg(func):
     return wrapper
 
 
-def ensure_node_kwargs(func):
+def ensure_node_kwargs(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to load a node if it is passed as a key word argument ends with 'node'."""
 
     @wraps(func)
-    def wrapper(node, *args, **kwargs):
+    def wrapper(node: Any, *args: Any, **kwargs: Any) -> Any:
         """Make sure the key world arguments ends with '_node' node is a Node instance."""
         new_kwargs = dict(kwargs)
         for name, value in kwargs.items():
@@ -185,7 +188,13 @@ def ensure_node_kwargs(func):
     return wrapper
 
 
-def convert_dict_case(dict_in: dict, recursive=True, warn=False, lower=True, raise_convert=False):
+def convert_dict_case(
+    dict_in: dict[str, Any],
+    recursive: bool = True,
+    warn: bool = False,
+    lower: bool = True,
+    raise_convert: bool = False,
+) -> dict[str, Any]:
     """
     Recursively convert the keys of a dictionary to lower or upper cases, returns a new dictionary.
 

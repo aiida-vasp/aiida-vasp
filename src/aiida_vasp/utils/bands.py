@@ -5,6 +5,10 @@ Utilities for working with band structures. Currently this is legacy and will be
 rewritten or moved.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 # pylint: disable=import-outside-toplevel
 try:
     import matplotlib
@@ -18,8 +22,11 @@ import itertools
 
 import numpy as np
 
+if TYPE_CHECKING:
+    from aiida import orm
 
-def get_bs_dims(bands_array):
+
+def get_bs_dims(bands_array: np.ndarray) -> tuple[int, int, int]:
     """
     Get the dimensions from the bands array of a BandsData node.
 
@@ -41,7 +48,9 @@ def get_bs_dims(bands_array):
     return nbd, nkp, nsp
 
 
-def get_kp_labels(bands_node, kpoints_node=None):
+def get_kp_labels(
+    bands_node: orm.BandsData, kpoints_node: orm.KpointsData | None = None
+) -> tuple[list[int], list[str]]:
     """
     Get Kpoint labels with their x-positions in matplotlib compatible format.
 
@@ -80,7 +89,7 @@ def get_kp_labels(bands_node, kpoints_node=None):
     return kpx, kpl
 
 
-def get_efermi(calc):
+def get_efermi(calc: orm.CalcJobNode) -> float | None:
     """Get the fermi energy from a finished calculation."""
     efermi = None
     if calc:
@@ -89,14 +98,21 @@ def get_efermi(calc):
     return efermi
 
 
-def get_kp_node(calc):
+def get_kp_node(calc: orm.CalcJobNode) -> orm.KpointsData | None:
     kpoints_node = None
     if calc:
         kpoints_node = calc.get_inputs_dict().get('kpoints')
     return kpoints_node
 
 
-def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent_calc=False, **kwargs):
+def plot_bstr(
+    bands_node: orm.BandsData,
+    kpoints_node: orm.KpointsData | None = None,
+    title: str | None = None,
+    efermi: float | None = None,
+    use_parent_calc: bool = False,
+    **kwargs: Any,
+) -> plt.Figure:
     """
     Use matplotlib to plot the bands stored in a BandsData node.
 
@@ -142,7 +158,7 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
     return fig
 
 
-def plot_bands(bands_node, **kwargs):
+def plot_bands(bands_node: orm.BandsData, **kwargs: Any) -> None:
     """Plot a bandstructure node using matplotlib."""
 
     bands = bands_node.get_bands()
