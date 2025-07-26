@@ -288,7 +288,7 @@ def get_conv_data(conv_work):
     Returns:
       A tuple of cut-off convergence and k-point convergence result data frame
     """
-    import pandas as pd
+    import pandas as pd  # noqa: PLC0415
 
     if 'cutoff_conv_data' in conv_work.outputs:
         cutdf = pd.DataFrame(conv_work.outputs.cutoff_conv_data.get_dict())
@@ -310,7 +310,7 @@ def plot_conv_data(cdf, kdf, **kwargs):
     """
     Make two combined plots for the convergence test results.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     # Create a subplot
     figs = []
@@ -365,8 +365,7 @@ def get_convergence_builder(structure, config):
 
     The following files are used from the configuration: ``code``, ``inputset``, ``conv``, ``options``, ``resources``.
     """
-
-    from .common.builder_updater import VaspBuilderUpdater
+    from .common.builder_updater import VaspBuilderUpdater  # noqa: PLC0415
 
     conv_builder = VaspConvergenceWorkChain.get_builder()
 

@@ -3,6 +3,7 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import,no-member, import-outside-toplevel
 import numpy as np
 import pytest
+from aiida.orm import BandsData
 
 from aiida_vasp.utils.compare_bands import (
     get_band_properties,
@@ -13,7 +14,6 @@ from aiida_vasp.utils.compare_bands import (
 @pytest.fixture
 def example_bands(fresh_aiida_env):
     """Example eigen values and occupations"""
-    from aiida.orm import BandsData
 
     bdata = BandsData()
     bdata.set_kpoints([[0.0, 0.0, 0.0]])
@@ -26,8 +26,6 @@ def example_bands(fresh_aiida_env):
 @pytest.fixture
 def example_bands_v2(fresh_aiida_env):
     """Example eigen values and occupations"""
-    from aiida.orm import BandsData
-
     bdata = BandsData()
     bdata.set_kpoints([[0, 0, 0], [0.25, 0.25, 0.25]])
     occ = np.array([[1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0]], dtype=np.float64)

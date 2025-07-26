@@ -2,9 +2,16 @@
 Module for easy access to aiida-vasp calculations.
 """
 
+import os
+import subprocess
+import sys
+import tempfile
 from functools import wraps
+from shutil import copyfileobj
 
 import click
+from aiida import orm
+from aiida.cmdline.commands.cmd_calcjob import calcjob_outputcat
 from aiida.cmdline.params.arguments import (
     CALCULATION,
     PROCESS,
@@ -16,8 +23,12 @@ from aiida.cmdline.utils.echo import (
     echo_info,
     echo_success,
 )
+from aiida.common.escaping import escape_for_bash
+from aiida.common.exceptions import NotExistent
+from aiida.orm import CalcJobNode, QueryBuilder, WorkChainNode
 
 from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
+from aiida_vasp.utils.export import export_vasp
 
 VERDI_DATA = cmp_load_verdi_data()
 
@@ -44,8 +55,6 @@ def tools():
 )
 def export(process, folder, decompress, include_potcar):
     """Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`"""
-    from aiida_vasp.utils.export import export_vasp
-
     export_vasp(process, folder, decompress, include_potcar)
 
 
@@ -56,7 +65,6 @@ def select_calcjob_from_work(func):
     def wrapper(*args, **kwargs):
         calcjob = kwargs['calcjob']
         index = kwargs.pop('index', 0)
-        from aiida import orm
 
         if isinstance(calcjob, orm.WorkChainNode):
             valid = [process for process in calcjob.called_descendants if not process.is_finished]
@@ -95,11 +103,6 @@ def remotecat(calcjob, fname, save_to):
     Useful for analysing running calculations.
     """
 
-    import os
-    import sys
-    import tempfile
-    from shutil import copyfileobj
-
     rfolder = calcjob.outputs.remote_folder
     if save_to is None:
         fd, temppath = tempfile.mkstemp()
@@ -132,7 +135,6 @@ def remotepull(calcjob, dest, max_size):
     This command for pull a calculation folder to a local folder.
     `rsync` is used for doing the heavy lifting.
     """
-    import subprocess
 
     rfolder = calcjob.outputs.remote_folder
     cmd_args = ['rsync', '-av']
@@ -164,9 +166,6 @@ def remotetail(calcjob, fname):
     This command will launch a ssh session dedicated for following a file
     using the `tail -f` command
     """
-    import os
-
-    from aiida.common.exceptions import NotExistent
 
     try:
         transport = calcjob.get_transport()
@@ -187,8 +186,6 @@ def remotetail(calcjob, fname):
 @click.argument('fname')
 def relaxcat(workflow, fname):
     """Cat the output of the last calculation of a finished workflow"""
-    from aiida.cmdline.commands.cmd_calcjob import calcjob_outputcat
-    from aiida.orm import CalcJobNode, QueryBuilder, WorkChainNode
 
     q = QueryBuilder()
     q.append(WorkChainNode, filters={'id': workflow.id})
@@ -205,7 +202,6 @@ def tailf_command(transport, remotedir, fname):
     Specific gotocomputer string to connect to a given remote computer via
     ssh and directly go to the calculation folder and then do tail -f of the target file.
     """
-    from aiida.common.escaping import escape_for_bash
 
     further_params = []
     if 'username' in transport._connect_args:

@@ -11,13 +11,21 @@ from warnings import warn
 
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run_get_node, submit
 from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
+from aiida.plugins import WorkflowFactory
+from ase.visualize import view
 from yaml import safe_load
 
+from aiida_vasp.workchains.v2.bands import BandOptions
+from aiida_vasp.workchains.v2.relax import VaspMultiStageRelaxWorkChain
+
+from ..converge import ConvOptions
 from ..inputset.base import convert_lowercase
 from ..inputset.pmgset import PymatgenInputSet
 from ..inputset.vaspsets import VASPInputSet
 from ..relax import RelaxOptions
+from .transform import neb_interpolate
 
 DEFAULT_PRESET = 'VaspPreset'
 DEFAULT_INPUTSET = 'UCLRelaxSet'
@@ -161,7 +169,6 @@ class BaseBuilderUpdater:
     ):
         """Instantiate a pipeline"""
         # Configure the builder
-        from aiida.plugins import WorkflowFactory
 
         assert hasattr(self, 'WF_ENTRYPOINT'), 'WF_ENTRYPOINT must be specified by the class'
         self.verbose = verbose
@@ -194,8 +201,6 @@ class BaseBuilderUpdater:
         :returns: The submitted workchain node
         :rtype: orm.WorkChainNode
         """
-        from aiida.engine import submit
-
         return submit(self.builder)
 
     def run_get_node(self, verbose=True) -> orm.WorkChainNode:
@@ -208,8 +213,6 @@ class BaseBuilderUpdater:
         :returns: Tuple containing the workflow outputs and the workchain node
         :rtype: orm.WorkChainNode
         """
-        from aiida.engine import run_get_node
-
         output = run_get_node(self.builder)
         # Verbose output (for debugging)
         if not output.node.is_finished_ok and verbose:
@@ -802,7 +805,6 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         :returns: Self for method chaining
         :rtype: VaspNEBUpdater
         """
-        from .transform import neb_interpolate
 
         initial = self.namespace_vasp.initial_structure
         final = self.namespace_vasp.final_structure
@@ -825,11 +827,6 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         Hint: In a notebook environment, you can pass "viewer='weas'" to use weas-widget viewer.
         This requires the ase-weas-widget package to be installed.
         """
-        try:
-            from ase.visualize import view
-        except ImportError:
-            raise ImportError('ASE is not installed. Please install it to use the view_images method.')
-
         view(
             map(
                 lambda x: x.get_ase(),
@@ -939,8 +936,6 @@ class VaspMultiStageRelaxUpdater(VaspRelaxUpdater):
         code: Optional[str] = None,
     ):
         if builder is None:
-            from aiida_vasp.workchains import VaspMultiStageRelaxWorkChain
-
             builder = VaspMultiStageRelaxWorkChain.get_builder()
         if override_vasp_namespace is None:
             override_vasp_namespace = builder.relax.vasp
@@ -974,8 +969,6 @@ class VaspConvUpdater(VaspBuilderUpdater):
         :returns: Self for method chaining
         :rtype: VaspConvUpdater
         """
-        from ..converge import ConvOptions
-
         self._set_options(ConvOptions, 'conv_settings', self.builder, **kwargs)
         return self
 
@@ -1034,8 +1027,6 @@ class VaspBandUpdater(VaspBuilderUpdater):
         :returns: Self for method chaining
         :rtype: VaspBandUpdater
         """
-        from aiida_vasp.workchains.v2.bands import BandOptions
-
         self._set_options(BandOptions, 'band_settings', self.root_namespace, **kwargs)
         return self
 

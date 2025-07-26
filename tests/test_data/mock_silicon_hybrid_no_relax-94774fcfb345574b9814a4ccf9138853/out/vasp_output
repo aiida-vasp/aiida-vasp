@@ -1,0 +1,61 @@
+ running    1 mpi-ranks, on    1 nodes
+ distrk:  each k-point on    1 cores,    1 groups
+ distr:  one band on    1 cores,    1 groups
+ vasp.6.4.2 20Jul23 (build Feb  9 2025 10:30:41) complex
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     You use a magnetic or noncollinear calculation, but did not specify     |
+|     the initial magnetic moment with the MAGMOM tag. Note that a            |
+|     default of 1 will be used for all atoms. This ferromagnetic setup       |
+|     may break the symmetry of the crystal, in particular it may rule        |
+|     out finding an antiferromagnetic solution. Thence, we recommend         |
+|     setting the initial magnetic moment manually or verifying carefully     |
+|     that this magnetic setup is desired.                                    |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ scaLAPACK will be used
+ -----------------------------------------------------------------------------
+|                                                                             |
+|               ----> ADVICE to this user running VASP <----                  |
+|                                                                             |
+|     You enforced a specific xc type in the INCAR file but a different       |
+|     type was found in the POTCAR file.                                      |
+|     I HOPE YOU KNOW WHAT YOU ARE DOING!                                     |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR Si
+ POSCAR found :  1 types and       2 ions
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.197585099958E+01    0.19759E+01   -0.23232E+03  3368   0.408E+02
+DAV:   2    -0.109052495047E+02   -0.12881E+02   -0.12543E+02  4695   0.679E+01
+DAV:   3    -0.111633815622E+02   -0.25813E+00   -0.25784E+00  4237   0.939E+00
+DAV:   4    -0.111647612863E+02   -0.13797E-02   -0.13796E-02  5189   0.825E-01
+DAV:   5    -0.111647620471E+02   -0.76077E-06   -0.76137E-06  4396   0.165E-02    0.659E+00
+RMM:   6    -0.114948866839E+02   -0.33012E+00   -0.78794E-02  3345   0.185E+00    0.357E+00
+RMM:   7    -0.114385497545E+02    0.56337E-01   -0.52124E-02  3451   0.147E+00    0.191E+00
+RMM:   8    -0.114583731848E+02   -0.19823E-01   -0.23120E-02  3513   0.103E+00    0.511E-01
+RMM:   9    -0.114584582047E+02   -0.85020E-04   -0.20755E-03  3782   0.334E-01    0.123E-01
+RMM:  10    -0.114585861694E+02   -0.12796E-03   -0.39094E-04  3716   0.143E-01    0.683E-02
+RMM:  11    -0.114586359453E+02   -0.49776E-04   -0.12741E-04  3746   0.834E-02    0.542E-02
+RMM:  12    -0.114586368299E+02   -0.88468E-06   -0.20642E-05  3815   0.331E-02    0.277E-02
+RMM:  13    -0.114586429780E+02   -0.61480E-05   -0.13286E-05  3633   0.268E-02    0.266E-03
+RMM:  14    -0.114586434159E+02   -0.43794E-06   -0.15903E-06  2898   0.891E-03
+   1 F= -.11458643E+02 E0= -.11458643E+02  d E =-.804615E-11  mag=     0.0000

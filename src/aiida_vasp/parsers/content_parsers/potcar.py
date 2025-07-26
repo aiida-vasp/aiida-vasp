@@ -10,9 +10,6 @@ import re
 from itertools import groupby
 from pathlib import Path
 
-from parsevasp.potcar import Potcar
-
-from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -36,6 +33,8 @@ class PotcarParser(BaseFileParser):
         :type handler: file-like object
         """
 
+        from parsevasp.potcar import Potcar  # noqa: PLC0415
+
         try:
             self._content_parser = Potcar(file_handler=handler, logger=self._logger)
         except SystemExit:
@@ -55,10 +54,11 @@ class PotcarParser(BaseFileParser):
         raise NotImplementedError('PotcarParser does not implement a _content_data_to_content_parser() method.')
 
 
-class PotcarIo:  # pylint: disable=useless-object-inheritance
-    """Deals with VASP input output of POTCAR files.
+class PotcarIo:
+    """
+    Deals with VASP input output of POTCAR files.
 
-    Instanciate with one of the following kwargs:
+    Instantiate with one of the following kwargs:
 
     :param path: (string) absolute path to the POTCAR file
     :param potcar_node: a PotcarData node
@@ -78,6 +78,8 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
 
     def _init_with_path(self, file_path):
         """Initialize with a path."""
+        from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
+
         node, _ = PotcarData.get_or_create_from_file(file_path=file_path)
         self.sha512 = node.sha512
 
@@ -91,6 +93,8 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
 
     def _init_with_contents(self, contents):
         """Initialize with a string."""
+        from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
+
         try:
             contents = contents.encode('utf-8')
         except AttributeError:
@@ -100,10 +104,14 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
 
     @property
     def file_node(self):
+        from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
+
         return PotcarData.find_one(sha512=self.sha512).find_file_node()
 
     @property
     def node(self):
+        from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
+
         return PotcarData.find_one(sha512=self.sha512)
 
     @property
@@ -114,6 +122,8 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
     def from_(cls, potcar):
         """Determine the best guess at how the input represents a POTCAR file and construct
         a PotcarIo instance based on that."""
+        from aiida_vasp.data.potcar import PotcarData, PotcarFileData  # noqa: PLC0415
+
         if isinstance(potcar, (str, os.PathLike)):
             try:
                 path_exists = Path(potcar).exists()
@@ -138,6 +148,9 @@ class PotcarIo:  # pylint: disable=useless-object-inheritance
 
     def __eq__(self, other):
         return self.sha512 == other.sha512
+
+    def __hash__(self):
+        return hash(self.sha512)
 
 
 class MultiPotcarIo:  # pylint: disable=useless-object-inheritance

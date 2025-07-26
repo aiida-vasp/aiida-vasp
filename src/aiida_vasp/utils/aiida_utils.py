@@ -10,8 +10,11 @@ import warnings
 from functools import wraps
 
 import numpy as np
+from aiida import __version__ as aiida_version_
 from aiida import orm
-from aiida.orm import User, load_node
+from aiida.common.exceptions import MissingEntryPointError
+from aiida.orm import AuthInfo, QueryBuilder, User, load_node
+from aiida.plugins import DataFactory
 from packaging import version
 
 BASIC_DATA_TYPES = ['core.bool', 'core.float', 'core.int', 'core.list', 'core.str', 'core.dict']
@@ -31,8 +34,6 @@ def querybuild(cls, **kwargs):
     :returns: a QueryBuilder instance.
     """
 
-    from aiida.orm import QueryBuilder
-
     query_builder = QueryBuilder()
     filters = kwargs.pop('filters', {})
     query_builder.append(cls, filters=filters, **kwargs)
@@ -42,8 +43,6 @@ def querybuild(cls, **kwargs):
 
 def get_data_class(data_type):
     """Provide access to the orm.data classes with deferred dbenv loading."""
-    from aiida.common.exceptions import MissingEntryPointError
-    from aiida.plugins import DataFactory
 
     data_cls = None
     try:
@@ -96,8 +95,6 @@ def compress_cell(structure, volume_change):
 
 
 def aiida_version():
-    from aiida import __version__ as aiida_version_
-
     return version.parse(aiida_version_)
 
 
@@ -111,19 +108,19 @@ def cmp_load_verdi_data():
     import_errors = []
 
     try:
-        from aiida.cmdline.commands import data_cmd as verdi_data
+        from aiida.cmdline.commands import data_cmd as verdi_data  # noqa: PLC0415
     except ImportError as err:
         import_errors.append(err)
 
     if not verdi_data:
         try:
-            from aiida.cmdline.commands import verdi_data
+            from aiida.cmdline.commands import verdi_data  # noqa: PLC0415
         except ImportError as err:
             import_errors.append(err)
 
     if not verdi_data:
         try:
-            from aiida.cmdline.commands.cmd_data import verdi_data
+            from aiida.cmdline.commands.cmd_data import verdi_data  # noqa: PLC0415
         except ImportError as err:
             import_errors.append(err)
 
@@ -136,7 +133,6 @@ def cmp_load_verdi_data():
 
 def create_authinfo(computer, store=False):
     """Allow the current user to use the given computer."""
-    from aiida.orm import AuthInfo
 
     authinfo = AuthInfo(computer=computer, user=get_current_user())
     if store:
@@ -182,7 +178,7 @@ def ensure_node_kwargs(func):
         new_kwargs = dict(kwargs)
         for name, value in kwargs.items():
             if name.endswith('node'):
-                if not isinstance(kwargs[name], orm.Node):
+                if not isinstance(value, orm.Node):
                     new_kwargs[name] = load_node(value)
         return func(node, *args, **new_kwargs)
 

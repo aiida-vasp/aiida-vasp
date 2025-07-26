@@ -126,8 +126,6 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
 
 def test_vasp_incar_case(fresh_aiida_env):
     """Test catching inconsistent incar key cases"""
-    from aiida.plugins import WorkflowFactory
-
     workchain = WorkflowFactory('vasp.vasp')
     builder = workchain.get_builder()
     with pytest.raises(InputValidationError):
@@ -195,9 +193,6 @@ def test_vasp_wc_ionic_continue(
     fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict, incar, nkpts, exit_codes
 ):
     """Test with mocked vasp code for handling ionic convergence issues"""
-    from aiida.engine import run
-    from aiida.plugins import WorkflowFactory
-
     workchain = WorkflowFactory('vasp.vasp')
 
     mock_vasp_strict.store()
@@ -230,8 +225,6 @@ def test_vasp_wc_ionic_magmom_carry(
     fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict
 ):
     """Test with mocked vasp code for handling ionic convergence issues"""
-    from aiida.engine import run
-    from aiida.plugins import WorkflowFactory
 
     workchain = WorkflowFactory('vasp.vasp')
 

@@ -14,6 +14,10 @@ try:
 except ImportError as no_matplotlib:
     raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality') from no_matplotlib
 
+import itertools
+
+import numpy as np
+
 
 def get_bs_dims(bands_array):
     """
@@ -140,7 +144,6 @@ def plot_bstr(bands_node, kpoints_node=None, title=None, efermi=None, use_parent
 
 def plot_bands(bands_node, **kwargs):
     """Plot a bandstructure node using matplotlib."""
-    import numpy as np
 
     bands = bands_node.get_bands()
     nbands, nkp, nspin = get_bs_dims(bands)
@@ -151,8 +154,6 @@ def plot_bands(bands_node, **kwargs):
         bands = allbands
 
     if 'colors' in kwargs:
-        import itertools
-
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
             plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member, not-callable

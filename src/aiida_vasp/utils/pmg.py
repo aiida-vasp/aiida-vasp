@@ -14,6 +14,8 @@ except ImportError:
     raise ImportError('You need to install pymatgen to use this feature.')
 
 
+import gzip
+
 from .aiida_utils import ensure_node_first_arg
 from .export import export_vasp
 
@@ -220,7 +222,7 @@ class PymatgenAdapator:
 
     def load_msonable(self, name: str) -> Any:
         """Load msonable object from the node extras"""
-        from monty.json import MontyDecoder
+        from monty.json import MontyDecoder  # noqa: PLC0415
 
         return MontyDecoder().process_decoded(self.node.base.extras.get(f'pmg_cache_{name}'))
 
@@ -264,7 +266,6 @@ def convert_pymatgen_potcar_folder(src: Union[Path, str], dst: Union[Path, str])
 
     :returns: None
     """
-    import gzip
 
     src = Path(src)
     dst = Path(dst)

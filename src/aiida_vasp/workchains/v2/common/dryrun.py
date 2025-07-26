@@ -8,7 +8,11 @@ from typing import Optional
 from warnings import warn
 
 import numpy as np
+from aiida.common.folders import SubmitTestFolder
+from aiida.engine.daemon.execmanager import upload_calculation
 from aiida.engine.processes.builder import ProcessBuilder
+from aiida.orm import Dict, KpointsData
+from aiida.transports.plugins.local import LocalTransport
 
 from aiida_vasp.assistant.parameters import ParametersMassage
 from aiida_vasp.calcs.vasp import VaspCalculation
@@ -260,9 +264,6 @@ def prepare_inputs(inputs: dict) -> VaspCalculation:
     inputs['metadata']['store_provenance'] = False
     inputs['metadata']['dry_run'] = True
     vasp = VaspCalculation(inputs=inputs)
-    from aiida.common.folders import SubmitTestFolder
-    from aiida.engine.daemon.execmanager import upload_calculation
-    from aiida.transports.plugins.local import LocalTransport
 
     with LocalTransport() as transport:
         with SubmitTestFolder() as folder:
@@ -292,8 +293,6 @@ def dryrun_relax_builder(builder: ProcessBuilder, **kwargs) -> dict:
 
     :returns: The results of the dry run.
     """
-    from aiida.orm import Dict, KpointsData
-
     vasp_builder = VaspCalculation.get_builder()
 
     # Setup the builder for the bare calculation
@@ -333,8 +332,6 @@ def dryrun_vaspu_builder(builder: ProcessBuilder, **kwargs) -> dict:
 
     :returns: The results of the dry run.
     """
-    from aiida.orm import Dict, KpointsData
-
     pdict = builder.parameters.get_dict()
     vasp_builder = VaspCalculation.get_builder()
 

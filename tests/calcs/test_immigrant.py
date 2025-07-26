@@ -3,6 +3,9 @@
 import pytest
 from aiida.engine import run
 
+from aiida_vasp.calcs.immigrant import VaspImmigrant
+from aiida_vasp.calcs.vasp import VaspCalculation
+from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.utils.aiida_utils import create_authinfo
 
 
@@ -15,8 +18,6 @@ def immigrant_with_builder(
     The list of objects in test_data/phonondb doesn't contain POTCAR.
 
     """
-    from aiida_vasp.calcs.immigrant import VaspImmigrant
-
     create_authinfo(localhost, store=True)
     builder = VaspImmigrant.get_builder_from_folder(
         mock_vasp, str(phonondb_run), potential_family=potcar_family_name, potential_mapping=potcar_mapping
@@ -33,9 +34,6 @@ def test_immigrant_additional(
     fresh_aiida_env, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
 ):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
-    from aiida_vasp.calcs.immigrant import VaspImmigrant
-    from aiida_vasp.data.potcar import PotcarData
-
     create_authinfo(localhost, store=True)
     inputs = VaspImmigrant.get_inputs_from_folder(mock_vasp, str(phonondb_run), use_chgcar=True, use_wavecar=True)
     inputs.potential = PotcarData.get_potcars_from_structure(
@@ -73,7 +71,6 @@ def immigrant_with_builder_example_3(
     fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, phonondb_run, localhost, mock_vasp
 ):
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
 
     create_authinfo(localhost, store=True)
     proc, builder = VaspCalculation.immigrant(
@@ -91,8 +88,6 @@ def test_immigrant_additional_example_3(
     fresh_aiida_env, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
 ):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
-
     create_authinfo(localhost, store=True)
     proc, builder = VaspCalculation.immigrant(
         code=mock_vasp,

@@ -112,6 +112,8 @@ import tarfile
 import tempfile
 from collections import namedtuple
 from contextlib import contextmanager
+from copy import deepcopy
+from functools import cmp_to_key
 from pathlib import Path
 
 from aiida.common import AIIDA_LOGGER
@@ -123,6 +125,7 @@ from aiida.orm import (
 )
 
 from aiida_vasp.data.archive import ArchiveData
+from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -305,7 +308,6 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         if not query_builder.count():
             raise NotExistent()
         results = [result[0] for result in query_builder.all()]
-        from functools import cmp_to_key
 
         results.sort(key=cmp_to_key(by_older))
         return results
@@ -370,7 +372,6 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
 
     def verify_unique(self):
         """Raise a UniquenessError if an equivalent node exists."""
-        from copy import deepcopy
 
         if self.exists(sha512=self.sha512):
             raise UniquenessError(f'A {self.__class__!s} node already exists for this file.')
@@ -449,7 +450,6 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     def add_file(self, src_abs, dst_filename=None):
         """Add the POTCAR file to the archive and set attributes."""
-        from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
 
         self.set_version()
         if self._filelist:
@@ -1062,7 +1062,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not query.count():
             raise NotExistent()
         results = [result[0] for result in query.all()]
-        from functools import cmp_to_key
 
         results.sort(key=cmp_to_key(by_older))
         return results
