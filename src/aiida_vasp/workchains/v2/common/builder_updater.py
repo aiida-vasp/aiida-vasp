@@ -35,7 +35,12 @@ __all__ = (
 
 
 def get_library_path():
-    """Get the path where the YAML files are stored within this package"""
+    """
+    Get the path where the YAML files are stored within this package.
+
+    :returns: Path to the library directory containing YAML configuration files
+    :rtype: pathlib.Path
+    """
     return Path(__file__).parent
 
 
@@ -90,8 +95,20 @@ class VaspPresetConfig:
 
     @classmethod
     def from_file(cls, fname):
-        """Load from file"""
+        """
+        Load preset configuration from a YAML file.
 
+        Searches for the configuration file in the package library path and user's
+        home directory (~/.aiida-vasp).
+
+        :param fname: Name of the configuration file (without .yaml extension)
+        :type fname: str
+
+        :returns: VaspPresetConfig instance loaded from file
+        :rtype: VaspPresetConfig
+
+        :raises RuntimeError: If the preset definition file cannot be found
+        """
         _load_paths = (get_library_path(), Path('~/.aiida-vasp').expanduser())
         for parent in _load_paths:
             target_path = parent / (fname + '.yaml')
@@ -105,7 +122,20 @@ class VaspPresetConfig:
         return cls(**data)
 
     def get_code_specific_options(self, code: str, namespace: str) -> dict:
-        """Return code specific options, if exists"""
+        """
+        Return code-specific options for a given namespace.
+
+        If code-specific options exist, they are merged with the default options
+        for the namespace, with code-specific options taking precedence.
+
+        :param code: Name/identifier of the computational code
+        :type code: str
+        :param namespace: Configuration namespace (e.g., 'options', 'settings')
+        :type namespace: str
+
+        :returns: Dictionary containing the merged options
+        :rtype: dict
+        """
         if code in self.code_specific:
             if namespace in self.code_specific[code]:
                 code_specific = self.code_specific[code][namespace]
@@ -126,6 +156,7 @@ class BaseBuilderUpdater:
         preset_name: Union[None, str] = None,
         builder: Union[ProcessBuilder, None] = None,
         verbose=False,
+        inputset_name=None,
         set_name=None,
     ):
         """Instantiate a pipeline"""
@@ -141,21 +172,42 @@ class BaseBuilderUpdater:
             preset_name = DEFAULT_PRESET
         self.preset_name = preset_name
         self.preset = VaspPresetConfig.from_file(preset_name)
-        self.set_name = set_name if set_name is not None else self.preset.inputset
+        if set_name is not None:
+            inputset_name = set_name
+            warn("The 'set_name' parameter is deprecated, use 'inputset_name' instead.")
+        self.inputset_name = inputset_name if inputset_name is not None else self.preset.inputset
 
     @property
     def builder(self) -> ProcessBuilder:
-        """The builder to be used for launching the calculation"""
+        """
+        The builder to be used for launching the calculation.
+
+        :returns: Process builder instance
+        :rtype: ProcessBuilder
+        """
         return self._builder
 
     def submit(self) -> orm.WorkChainNode:
-        """Submit the workflow to the daemon and return the workchain node"""
+        """
+        Submit the workflow to the daemon and return the workchain node.
+
+        :returns: The submitted workchain node
+        :rtype: orm.WorkChainNode
+        """
         from aiida.engine import submit
 
         return submit(self.builder)
 
     def run_get_node(self, verbose=True) -> orm.WorkChainNode:
-        """Run the workflow with the current python process"""
+        """
+        Run the workflow with the current python process.
+
+        :param verbose: If True, print debugging information for failed calculations
+        :type verbose: bool
+
+        :returns: Tuple containing the workflow outputs and the workchain node
+        :rtype: orm.WorkChainNode
+        """
         from aiida.engine import run_get_node
 
         output = run_get_node(self.builder)
@@ -173,8 +225,19 @@ class BaseBuilderUpdater:
 
     def _get_help(self, namespace: str, print_to_stdout=True, inout='inputs'):
         """
-        Return the help message for a given namespace
-        The `.` syntax for the namespace is supported.
+        Return the help message for a given namespace.
+
+        The `.` syntax for the namespace is supported for nested namespaces.
+
+        :param namespace: Namespace path (e.g., 'vasp.parameters')
+        :type namespace: str
+        :param print_to_stdout: Whether to print help to stdout or return it
+        :type print_to_stdout: bool
+        :param inout: Whether to get help for 'inputs' or 'outputs'
+        :type inout: str
+
+        :returns: Help message if print_to_stdout is False, otherwise None
+        :rtype: str or None
         """
         levels = namespace.split('.')
         data_dict = self.builder._process_spec.get_description()[inout]
@@ -187,11 +250,31 @@ class BaseBuilderUpdater:
             return data_dict.get('help', 'No help message information found')
 
     def get_output_help(self, namespace: str, print_to_stdout=True):
-        """Return the help message for a given namespace"""
+        """
+        Return the help message for a given output namespace.
+
+        :param namespace: Output namespace path
+        :type namespace: str
+        :param print_to_stdout: Whether to print help to stdout or return it
+        :type print_to_stdout: bool
+
+        :returns: Help message if print_to_stdout is False, otherwise None
+        :rtype: str or None
+        """
         self._get_help(namespace, print_to_stdout=print_to_stdout, inout='outputs')
 
     def get_input_help(self, namespace: str, print_to_stdout=True):
-        """Return the help message for a given namespace"""
+        """
+        Return the help message for a given input namespace.
+
+        :param namespace: Input namespace path
+        :type namespace: str
+        :param print_to_stdout: Whether to print help to stdout or return it
+        :type print_to_stdout: bool
+
+        :returns: Help message if print_to_stdout is False, otherwise None
+        :rtype: str or None
+        """
         self._get_help(namespace, print_to_stdout=print_to_stdout, inout='inputs')
 
 
@@ -206,7 +289,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         root_namespace: Optional[str] = None,
         code: Optional[str] = None,
         verbose: bool = False,
-        set_name: Optional[str] = None,
+        inputset_name: Optional[str] = None,
     ):
         """
         Initialise the update object.
@@ -215,9 +298,18 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
           standared VaspWorkChain inputs.
 
         :param root_namespace: The namespace to be assumed to be the *root*, e.g. where the input structure
-          should be specified.
+          should be specified. The v2 series of workchain in aiida-vasp usually has the StructureData input
+          port at the top level interface, although there are a few exceptions.
+        :param preset_name: The name of the Preset to be used for the updater.
+        :param code: The code to be used for the calculation. If not specified, the default code from the
+          preset will be used.
+        :param verbose: If True, print additional information during the update.
+        :param set_name: The name of the input set to be used. If not specified, the default input set from the preset
+          will be used.
+
+        returns: An instance of VaspBuilderUpdater with the specified preset and builder.
         """
-        super().__init__(preset_name=preset_name, builder=builder, verbose=verbose, set_name=set_name)
+        super().__init__(preset_name=preset_name, builder=builder, verbose=verbose, inputset_name=inputset_name)
         # Define the root namespace - e.g. the VaspWorkChain namespace where structure should be specified
         if root_namespace is None:
             self.root_namespace = self._builder
@@ -229,11 +321,21 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
 
     @property
     def reference_structure(self) -> orm.StructureData:
-        """Reference structure used for setting kpoints and other stuff"""
+        """
+        Reference structure used for setting kpoints and other calculations.
+
+        :returns: The structure data node used as reference
+        :rtype: orm.StructureData
+        """
         return self.root_namespace.structure
 
     def clear(self) -> None:
-        """Clear the nodes set to the namespace"""
+        """
+        Clear all nodes set in the VASP and root namespaces.
+
+        Resets parameters, options, settings, kpoints, potential family/mapping,
+        structure, and metadata label to None.
+        """
         self.namespace_vasp.parameters = None
         self.namespace_vasp.options = None
         self.namespace_vasp.settings = None
@@ -245,17 +347,34 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.root_namespace.metadata.label = None
 
     def apply_preset(
-        self, initial_structure, code=None, label=None, overrides=None, set_name=None
+        self, initial_structure, code=None, label=None, overrides=None, inputset_name=None
     ) -> 'VaspBuilderUpdater':
         """
-        Apply the preset
+        Apply the complete preset configuration to the builder.
+
+        This method applies the input set, sets the computational code, options,
+        settings, and label according to the preset configuration.
+
+        :param initial_structure: Structure to be used for the calculation
+        :type initial_structure: orm.StructureData
+        :param code: Computational code to use (defaults to preset default)
+        :type code: str or None
+        :param label: Label for the calculation (defaults to structure label)
+        :type label: str or None
+        :param overrides: Dictionary of parameter overrides
+        :type overrides: dict or None
+        :param inputset_name: Name of input set to use (defaults to preset default)
+        :type inputset_name: str or None
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
         """
         if code is None:
             code = self.code
             logging.info(f'Using code {code}')
         self.use_inputset(
             initial_structure,
-            set_name=self.set_name if set_name is None else set_name,
+            set_name=self.inputset_name if inputset_name is None else inputset_name,
             overrides=overrides,
             apply_preset=True,
             code=code,
@@ -273,8 +392,22 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         overrides=None,
         apply_preset=False,
         code=None,
-        structure_node_name='structure',
+        structure_port_name='structure',
+        pmg_kwargs=None,
     ) -> 'VaspBuilderUpdater':
+        """
+        Use the input set to set the inputs for the VASP calculation.
+        :param structure: The structure to be used for the calculation.
+        :param set_name: The name of the input set to be used.
+        :param overrides: Any overrides to be applied to the input set.
+        :param apply_preset: Whether to apply the preset options.
+        :param code: The code to be used for the calculation.
+        :param structure_node_name: The name of in put port where the structure should be set.
+        :param pmg_kwargs: Additional kwargs to be passed to pymatgen's InputSet when using a pymatgen
+            inputset.
+
+        :returns : self, the VaspBuilderUpdater instance with the input set applied.
+        """
         # Use the default inputset name if not defined
         if set_name is None:
             set_name = self.DEFAULT_INPUTSET
@@ -290,7 +423,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             overrides_ = overrides
 
         if set_name in PymatgenInputSet.KNOWN_SETS:
-            inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose)
+            inset = PymatgenInputSet(set_name, overrides=overrides_, verbose=self.verbose, pmg_kwargs=pmg_kwargs)
             # PymatgenInputSet uses explicit kpoints
             kpt = inset.get_kpoints(structure)
             # Use kpoints mesh or kspacing provided by pymatgen inputset
@@ -305,10 +438,19 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict(structure, raw_python=True)})
         self.namespace_vasp.potential_family = orm.Str(inset.get_potcar_family())
         self.namespace_vasp.potential_mapping = orm.Dict(dict=inset.get_pp_mapping(structure))
-        setattr(self.root_namespace, structure_node_name, structure)
+        setattr(self.root_namespace, structure_port_name, structure)
         return self
 
     def set_kspacing(self, kspacing: float) -> 'VaspBuilderUpdater':
+        """
+        Set the k-point spacing and remove any existing k-point mesh.
+
+        :param kspacing: K-point spacing value in inverse Angstroms
+        :type kspacing: float
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         self.namespace_vasp.kpoints_spacing = orm.Float(kspacing)
         if self.namespace_vasp.kpoints:
             del self.namespace_vasp.kpoints
@@ -318,20 +460,44 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
 
     @property
     def parameters(self) -> Union[orm.Dict, None]:
-        """Return the parameters node"""
+        """
+        Return the parameters node containing INCAR settings.
+
+        :returns: Parameters node or None if not set
+        :rtype: orm.Dict or None
+        """
         return self.namespace_vasp.parameters
 
     @property
     def settings(self) -> Union[orm.Dict, None]:
-        """Return the wrapped settings node"""
+        """
+        Return the settings node for VASP calculation options.
+
+        :returns: Settings node or None if not set
+        :rtype: orm.Dict or None
+        """
         return self.namespace_vasp.settings
 
     @property
     def options(self) -> Union[orm.Dict, None]:
-        """Return the wrapped options node"""
+        """
+        Return the computational options node.
+
+        :returns: Options node or None if not set
+        :rtype: orm.Dict or None
+        """
         return self.namespace_vasp.options
 
     def set_code(self, code: Union[str, orm.Code, None] = None) -> 'VaspBuilderUpdater':
+        """
+        Set the Code for the VASP calculation.
+
+        :param code: Code identifier string or Code node (defaults to preset default)
+        :type code: str, orm.Code, or None
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         if code is None:
             code = self.preset.default_code
         if isinstance(code, str):
@@ -345,7 +511,15 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         return self.set_code(code)
 
     def set_incar(self, *args, **kwargs) -> 'VaspBuilderUpdater':
-        """Update incar tags"""
+        """
+        Update INCAR parameters for the VASP calculation.
+
+        :param args: Positional arguments passed to dict constructor
+        :param kwargs: INCAR parameter key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         if self.namespace_vasp.parameters is None:
             self.namespace_vasp.parameters = orm.Dict(dict={'incar': {}})
         content = dict(*args, **kwargs)
@@ -360,6 +534,19 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def set_options(
         self, *args, code: Optional[str] = None, apply_preset: bool = False, **kwargs
     ) -> 'VaspBuilderUpdater':
+        """
+        Set computational options for the VASP calculation.
+
+        :param args: Positional arguments passed to dict constructor
+        :param code: Code name for code-specific options
+        :type code: str or None
+        :param apply_preset: Whether to apply preset-defined options
+        :type apply_preset: bool
+        :param kwargs: Option key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         if apply_preset:
             if code is None:
                 code = self.preset.default_code
@@ -378,11 +565,23 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         warn('update_options is deprecated, use set_options instead', DeprecationWarning)
         return self.set_options(*args, **kwargs)
 
-    def set_kpoints_mesh(self, mesh: List[int], offset: List[float]) -> 'VaspBuilderUpdater':
-        """Use mesh for kpoints"""
+    def set_kpoints_mesh(self, mesh: List[int], offset: List[float] = (0.0, 0.0, 0.0)) -> 'VaspBuilderUpdater':
+        """
+        Set explicit k-points mesh for the calculation.
+        The plugin generates the KPOINTS file with a Gamma-centered mesh.
+        Monkhorst-Pack meshes can be applied by using the offset parameter, e.g. (0.5, 0.5, 0.5)
+
+        :param mesh: K-point mesh dimensions [nx, ny, nz]
+        :type mesh: List[int]
+        :param offset: K-point mesh offset [ox, oy, oz]
+        :type offset: List[float]
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         kpoints = orm.KpointsData()
         kpoints.set_cell_from_structure(self.reference_structure)
-        kpoints.set_kpoints_mesh(mesh, offset)
+        kpoints.set_kpoints_mesh(mesh, list(offset))
         self.namespace_vasp.kpoints = kpoints
         try:
             del self.namespace_vasp.kpoints_spacing
@@ -397,8 +596,19 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def set_settings(
         self, *args, code: Optional[str] = None, apply_preset: bool = False, **kwargs
     ) -> 'VaspBuilderUpdater':
-        """Update the settings"""
+        """
+        Set the 'settings' input port.
 
+        :param args: Positional arguments passed to dict constructor
+        :param code: Code name for code-specific settings
+        :type code: str or None
+        :param apply_preset: Whether to apply preset-defined settings
+        :type apply_preset: bool
+        :param kwargs: Setting key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         if apply_preset:
             if code is None:
                 code = self.preset.default_code
@@ -419,7 +629,15 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         return self.set_settings(*args, **kwargs)
 
     def set_label(self, label: Optional[str] = None) -> 'VaspBuilderUpdater':
-        """Set the toplevel label, default to the label of the structure"""
+        """
+        Set the top-level label for the calculation.
+
+        :param label: Label string (defaults to structure label if available)
+        :type label: str or None
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
         if label is None:
             # Default to the label of the structure if available
             if 'structure' in self.root_namespace:
@@ -432,7 +650,19 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         return self.set_label(label)
 
     def set_resources(self, *args, **kwargs) -> 'VaspBuilderUpdater':
-        """Update resources"""
+        """
+        Update computational resources in the options.
+        NOTE: The available options can be found in the documentation of the Calculation class. These are
+            identical to those used in the metadata.options namespace.
+
+        :param args: Positional arguments passed to dict constructor
+        :param kwargs: Resource key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+
+        :raises RuntimeError: If options are not set before calling this method
+        """
         if self.namespace_vasp.options is None:
             raise RuntimeError('Please set the options before setting resources')
         resources = dict(self.namespace_vasp.options['resources'])
@@ -447,6 +677,18 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
     def _set_options(
         self, option_class, option_name: str, target_namespace: Union[ProcessBuilder, ProcessBuilderNamespace], **kwargs
     ):
+        """
+        Set options using a specific option class.
+
+        :param option_class: Class used to validate and structure options
+        :param option_name: Name of the option attribute in the target namespace
+        :type option_name: str
+        :param target_namespace: Namespace where options should be set
+        :type target_namespace: ProcessBuilder or ProcessBuilderNamespace
+        :param kwargs: Option key-value pairs
+
+        :returns: Self for method chaining
+        """
         if getattr(target_namespace, option_name) is None:
             current_option = option_class()
         else:
@@ -462,7 +704,12 @@ class VaspNEBUpdater(VaspBuilderUpdater):
 
     @property
     def reference_structure(self):
-        """Return the reference structure"""
+        """
+        Return the reference structure for NEB calculations.
+
+        :returns: Initial structure for NEB calculation
+        :rtype: orm.StructureData
+        """
         return self.namespace_vasp.initial_structure
 
     def apply_preset(
@@ -499,24 +746,41 @@ class VaspNEBUpdater(VaspBuilderUpdater):
             overrides=overrides,
             apply_preset=apply_preset,
             code=code,
-            structure_node_name='initial_structure',
+            structure_port_name='initial_structure',
         )
         return self
 
     def set_label(self, label: Optional[str] = None) -> 'VaspNEBUpdater':
-        """Set the toplevel label, default to the label of the structure"""
+        """
+        Set the toplevel label, default to the label of the structure"""
         if label is None:
             label = self.root_namespace.initial_structure.label
         self.root_namespace.metadata.label = label
         return self
 
     def set_final_structure(self, final_structure: orm.StructureData) -> 'VaspNEBUpdater':
+        """
+        Set the final structure for NEB calculation.
+
+        :param final_structure: Final structure for the NEB path
+        :type final_structure: orm.StructureData
+
+        :returns: Self for method chaining
+        :rtype: VaspNEBUpdater
+        """
         self.namespace_vasp.final_structure = final_structure
         return self
 
     def set_neb_images(self, images: Union[list, dict, AttributeDict]) -> 'VaspNEBUpdater':
-        """Set the NEB images"""
+        """
+        Set the intermediate NEB images.
 
+        :param images: List of structures or dictionary mapping image names to structures
+        :type images: list, dict, or AttributeDict
+
+        :returns: Self for method chaining
+        :rtype: VaspNEBUpdater
+        """
         if isinstance(images, list):
             output = {f'image_{i:02d}': image for i, image in enumerate(images)}
         elif isinstance(images, (dict, AttributeDict)):
@@ -526,10 +790,16 @@ class VaspNEBUpdater(VaspBuilderUpdater):
 
     def set_interpolated_images(self, nimages: int) -> 'VaspNEBUpdater':
         """
-        Interpolate images and set as inputs structures
+        Generate and set interpolated images between initial and final structures.
 
-        This requires the initial and final structure to be set already.
-        This function also update the final image with PBC issue fixed.
+        This requires the initial and final structures to be set already.
+        Also updates the final structure with PBC issues fixed.
+
+        :param nimages: Number of intermediate images to generate
+        :type nimages: int
+
+        :returns: Self for method chaining
+        :rtype: VaspNEBUpdater
         """
         from .transform import neb_interpolate
 
@@ -545,17 +815,27 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         self.set_final_structure(interpolated['image_final'])
         return self
 
-    def view_images(self):
+    def view_images(self, *args, **kwargs):
         """
-        Visualize the images using ASE
+        Visualize the NEB images using ASE viewer.
+
+        Displays all images including initial, intermediate, and final structures.
+
+        Hint: In a notebook environment, you can pass "viewer='weas'" to use weas-widget viewer.
+        This requires the ase-weas-widget package to be installed.
         """
-        from ase.visualize import view
+        try:
+            from ase.visualize import view
+        except ImportError:
+            raise ImportError('ASE is not installed. Please install it to use the view_images method.')
 
         view(
             map(
                 lambda x: x.get_ase(),
                 [self.builder.initial_structure, *self.builder.neb_images.values(), self.builder.final_structure],
-            )
+            ),
+            *args,
+            **kwargs,
         )
 
 
@@ -607,18 +887,36 @@ class VaspRelaxUpdater(VaspBuilderUpdater):
         return out
 
     def set_relax_settings(self, **kwargs) -> 'VaspRelaxUpdater':
-        """Set/update RelaxOptions controlling the operation of the workchain"""
+        """
+        Set/update RelaxOptions controlling the operation of the workchain.
+
+        :param kwargs: Relaxation option key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspRelaxUpdater
+        """
         self._set_options(RelaxOptions, 'relax_settings', self.namespace_relax, **kwargs)
         return self
 
     update_relax_settings = set_relax_settings
 
     def clear_relax_settings(self) -> 'VaspRelaxUpdater':
-        """Reset any existing relax options"""
+        """
+        Reset any existing relax options to defaults.
+
+        :returns: Self for method chaining
+        :rtype: VaspRelaxUpdater
+        """
         self.namespace_relax.relax_settings = RelaxOptions().aiida_dict()
         return self
 
     def clear(self) -> 'VaspRelaxUpdater':
+        """
+        Clear all settings including relax-specific settings.
+
+        :returns: Self for method chaining
+        :rtype: VaspRelaxUpdater
+        """
         super().clear()
         self.clear_relax_settings()
         return self
@@ -668,7 +966,12 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     def set_conv_settings(self, **kwargs) -> 'VaspConvUpdater':
         """
-        Use the supplied convergence settings
+        Set the convergence testing settings.
+
+        :param kwargs: Convergence option key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspConvUpdater
         """
         from ..converge import ConvOptions
 
@@ -691,10 +994,13 @@ class VaspBandUpdater(VaspBuilderUpdater):
 
     def get_relax_updater(self):
         """
-        Return the relax updater for this band structure calculation
+        Return the relax updater for this band structure calculation.
 
         The relax updater can be used to populate the `.relax` namespace which will
-        trigger the relaxation of the structure.
+        trigger the relaxation of the structure before band structure calculation.
+
+        :returns: VaspRelaxUpdater instance configured for this band calculation
+        :rtype: VaspRelaxUpdater
         """
         # Apply relax settings if requested
         relax = VaspRelaxUpdater(
@@ -719,6 +1025,14 @@ class VaspBandUpdater(VaspBuilderUpdater):
         return self
 
     def set_band_settings(self, **kwargs) -> 'VaspBandUpdater':
+        """
+        Set band structure calculation specific settings.
+
+        :param kwargs: Band calculation option key-value pairs
+
+        :returns: Self for method chaining
+        :rtype: VaspBandUpdater
+        """
         from aiida_vasp.workchains.v2.bands import BandOptions
 
         self._set_options(BandOptions, 'band_settings', self.root_namespace, **kwargs)
@@ -818,7 +1132,15 @@ class VaspHybridBandUpdater(VaspBandUpdater):
 
 
 def is_specified(port_namespace: ProcessBuilderNamespace) -> bool:
-    """Check if there is anything specified under a PortNamespace"""
+    """
+    Check if there is anything specified under a PortNamespace.
+
+    :param port_namespace: Namespace to check for specified values
+    :type port_namespace: ProcessBuilderNamespace
+
+    :returns: True if any values are specified in the namespace
+    :rtype: bool
+    """
     return any(map(bool, port_namespace.values()))
 
 
@@ -829,8 +1151,22 @@ def update_dict_node(
     reuse_if_possible: bool = True,
 ) -> orm.Dict:
     """
-    Update a Dict node with the content
-    Optionally update an item of the Dict node.
+    Update a Dict node with new content.
+
+    Optionally updates a specific namespace within the Dict node.
+    If the node is stored and immutable, creates a new node with updated content.
+
+    :param node: The Dict node to update
+    :type node: orm.Dict
+    :param content: Dictionary content to merge into the node
+    :type content: dict
+    :param namespace: Optional namespace key within the Dict to update
+    :type namespace: str or None
+    :param reuse_if_possible: Whether to reuse the existing node if content is unchanged
+    :type reuse_if_possible: bool
+
+    :returns: Updated Dict node (may be the same or a new node)
+    :rtype: orm.Dict
     """
     # Get pure-python dictionary
     dtmp = node.get_dict()
@@ -853,11 +1189,18 @@ def update_dict_node(
 
 def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict:
     """
-    Convert a builder to a dictionary and unpack certain nodes.
+    Convert a builder to a dictionary and optionally unpack certain nodes.
 
     When unpacked, the resulting dictionary cannot be used for `submit`/`run`.
+    The primary usage of the resulting dictionary is for pretty printing.
 
-    The primary useage of the resulting dictionary is for pretty printing.
+    :param builder: Process builder to convert
+    :type builder: ProcessBuilder
+    :param unpack: Whether to unpack Dict/List nodes to Python objects
+    :type unpack: bool
+
+    :returns: Dictionary representation of the builder
+    :rtype: dict
     """
     data = {}
     for key, value in builder._data.items():
@@ -876,7 +1219,16 @@ def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict:
 
 def incar_dict_to_relax_settings(incar_in):
     """
-    Convert INCAR tags to relax_settings and remove them
+    Convert INCAR tags to relax_settings and remove them from INCAR.
+
+    Extracts relaxation-specific INCAR parameters (NSW, IBRION, EDIFFG) and
+    converts them to equivalent relax_settings options.
+
+    :param incar_in: Input dictionary containing INCAR parameters
+    :type incar_in: dict
+
+    :returns: Tuple of (updated_incar_dict, relax_settings_dict)
+    :rtype: tuple
     """
     # Convert INCAR tags to relax_settings
     updated = {}

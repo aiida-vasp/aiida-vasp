@@ -132,26 +132,29 @@ Consider the following code using pymatgen to set up a VASP calculation:
 
 ```python
 from pymatgen.core import Structure
-from pymatgen.io.vasp.sets import MITRelaxSet
+from pymatgen.io.vasp.sets import MPRelaxSet
 
 incar_dict = { 'EDIFFG': -1e-2, 'IVDW': 11, 'ISYM':2,'NSW':1500, 'ENCUT':520}
 structure = Structure.from_file("Al_empty.cif")
-inputset = MITRelaxSet(structure = structure,user_incar_settings=incar_dict,
+inputset = MPRelaxSet(structure = structure,user_incar_settings=incar_dict,
                        user_kpoints_settings={'length':25})
 inputset.write_input(output_dir='./DFT_calc',include_cif=True)
 ```
 
-Which loads the `Al_empty.cif` file, sets up a `MITRelaxSet` with some user defined settings, and writes the input files to the `DFT_calc` directory.
+Which loads the `Al_empty.cif` file, sets up a `MPRelaxSet` with some user defined settings, and writes the input files to the `DFT_calc` directory.
 
 To achieve a similar (but not equivalent) effect with aiida-vasp:
 
 ```python
 from aiida import orm
+from pymatgen.util.testing import PymatgenTest
 from pymatgen.core import Structure
 from aiida_vasp.workchains.v2 import VaspBuilderUpdater
 
-structure = Structure.from_file("Al_empty.cif")
-upd = VaspBuilderUpdater(set_name='MITRelaxSet').apply_preset(orm.StructureData(pymatgen=structure), code='vasp@localhost')
+#structure = Structure.from_file("Al_empty.cif")
+structure = PymatgenTest.get_structure("CsCl")
+upd = VaspBuilderUpdater().apply_preset(orm.StructureData(pymatgen=structure), code='vasp@localhost',
+inputset_name="MPRelaxSet")
 upd.set_resources(num_machines=1, tot_num_mpiprocs=16)
 upd.set_options(max_wallclock_seconds=3600)
 upd.builder
@@ -159,7 +162,7 @@ upd.builder
 
 There are a few differences to note:
 
-1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MITRelaxSet` as the set name. The code will automatically load use the `pymatgen.io.vasp.sets.MITRelaxSet` class to setup the input parameters subsequently. The supported pymatgen sets can be found in the `aiida_vasp.workchains.v2.pmgset` module.
+1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MPRelaxSet` as the set name. The code will automatically load use the `pymatgen.io.vasp.sets.MPRelaxSet` class to setup the input parameters subsequently. The supported pymatgen sets can be found in the `aiida_vasp.workchains.v2.pmgset` module.
 2. The `apply_preset` method takes an `orm.StructureData` as input, which is converted from a pymatgen `Structure`. This input structure is stored in the database as a `StructureData` node.
 3. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
 
