@@ -374,6 +374,7 @@ class VaspCalculation(VaspCalcBase):
 
         needs 'parameters' input to be set
         (py:method::NscfCalculation.use_parameters)
+
         """
         ichrg_d = 0 if self._need_wavecar() else 2
         icharg = self._parameters.get('icharg', ichrg_d)
@@ -443,6 +444,7 @@ class VaspCalculation(VaspCalcBase):
         preparation and writes to dst.
 
         :param dst: absolute path of the object to write to
+
         """
         # Check if parameters validation is turned off
         if self.inputs.get('settings'):
@@ -527,6 +529,7 @@ class VaspCalculation(VaspCalcBase):
         :param potential_mapping: dict.
         :param use_wavecar: bool. Try to read WAVECAR.
         :param use_chgcar bool. Try to read CHGCAR.
+
         """
 
         from aiida_vasp.calcs.immigrant import VaspImmigrant  # pylint: disable=import-outside-toplevel

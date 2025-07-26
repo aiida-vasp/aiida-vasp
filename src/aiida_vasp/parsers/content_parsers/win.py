@@ -1,7 +1,6 @@
 """
 The .win parser interface.
 
---------------------------
 Contains routines to parse Wannier90 input files. Will in the future be utilizing
 the parser in the Wannier90 plugin, but no input parser exists.
 """
@@ -38,13 +37,13 @@ class BaseKeyValueParser:  # pylint: disable=useless-object-inheritance
 
 
 class KeyValueParser(BaseKeyValueParser):
-    """
-    Key and value parser.
-    ---------------------
+    """Key and value parser.
+
     This baseclass has some utility functions for parsing files that are
     (mostly) in a `key` = `value` format.
     This class does not integrate with the VaspParser class currently.
     A simple example, which tries to convert values to python objects on a best effort basis. Usage::
+
         import re
         from aiida_vasp.parsers.file_parsers.parser import KeyValueParser
         ParamParser(KeyValueParser):
@@ -61,7 +60,9 @@ class KeyValueParser(BaseKeyValueParser):
             def parse_file(self):
                 assignments = re.findall(self.assignment, self._file_path.read())
                 return {key: self.convert_or_not(value)}
+
     Parses files like::
+
         StrParam = value_1
         FloatParam = 1.0
         BoolParam = True

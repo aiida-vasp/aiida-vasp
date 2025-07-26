@@ -1,7 +1,6 @@
 """
 Default mapping between atomic element and potential.
 
------------------------------------------------------
 Provides dictionaries with mappings element to the default potential.
 
 Currently the default for LDA and PBE GW is included.

@@ -1,7 +1,6 @@
 """
 The ``KPOINTS`` parser interface.
 
------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``KPOINTS`` content.
 """
 

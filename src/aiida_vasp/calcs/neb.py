@@ -281,6 +281,7 @@ class VaspNEBCalculation(VaspCalculation):
         preparation and writes to dst.
 
         :param dst: absolute path of the file to write to
+
         """
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}

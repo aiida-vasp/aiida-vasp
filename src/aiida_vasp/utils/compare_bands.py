@@ -180,7 +180,7 @@ def band_error(band1, band2):
 
 def bands_error(bands1, bands2):
     """
-    Band for band rms error sqrt((|B1_i - B2_i|^2)/n) where BX_i is the i-th band of Band Structure Node X.
+    Band for band rms error sqrt((\\|B1_i - B2_i\\|^2)/n) where BX_i is the i-th band of Band Structure Node X.
 
     Only works for BandsData nodes with 2d band arrays.
     """

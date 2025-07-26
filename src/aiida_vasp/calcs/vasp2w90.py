@@ -1,7 +1,6 @@
 """
 VASP to Wannier90 calculation.
 
-------------------------------
 VASP2Wannier90 - Calculation.
 """
 

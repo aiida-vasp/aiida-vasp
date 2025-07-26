@@ -2,6 +2,7 @@
 Relaxation workchain for VASP
 
 Unfortunately, VASP does not check the convergence criteria properly:
+
 - it only check *either* force or energy convergence between the last two iterations
 - relaxation is performed with *constant basis set*, so a final singlepoint calculation is necessary if cell is to be
   relaxed

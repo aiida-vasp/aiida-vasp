@@ -1,7 +1,6 @@
 """
 The ``INCAR`` parser interface.
 
----------------------------
 Contains the parsing interfaces to parsevasp used to parse ``INCAR`` content.
 """
 

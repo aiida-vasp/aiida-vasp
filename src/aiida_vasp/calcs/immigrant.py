@@ -78,7 +78,6 @@ class VaspImmigrant(VaspCalculation):
 
     Note
     ----
-
     The defaul metadata is set automatically as follows::
 
        {'options': {'max_wallclock_seconds': 1,
@@ -139,6 +138,7 @@ class VaspImmigrant(VaspCalculation):
         :param potential_mapping: dict. This will be obsolete at v3.0.
         :param use_wavecar: bool. Try to read WAVECAR.
         :param use_chgcar bool. Try to read CHGCAR.
+
         """
 
         inputs = AttributeDict()

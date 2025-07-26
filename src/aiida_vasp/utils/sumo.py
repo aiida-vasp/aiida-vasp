@@ -40,6 +40,7 @@ def get_sumo_dos_plotter(scf_node, **kwargs):
 
     Returns:
         A `SDOSPlotter` object to be used for plotting the density of states.
+
     """
     adapt = PymatgenAdapator(scf_node)
     vasprun = adapt.vasprun

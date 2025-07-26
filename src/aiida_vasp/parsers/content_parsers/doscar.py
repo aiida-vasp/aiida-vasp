@@ -1,7 +1,6 @@
 """
 The ``DOSCAR`` parser interface.
 
---------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
 

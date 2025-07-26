@@ -1,7 +1,6 @@
 """
 The ``POSCAR``/``CONTCAR`` parser interface.
 
-------------------------------------
 Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONTCAR`` content.
 """
 

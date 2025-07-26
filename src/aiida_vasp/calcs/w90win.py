@@ -1,7 +1,6 @@
 """
 Utilities for Wannier90.
 
-------------------------
 Utility to convert raw input data to .win format.
 """
 

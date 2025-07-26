@@ -1,7 +1,6 @@
 """
-The vasprun.xml parser interface.
+The ``vasprun.xml`` parser interface.
 
----------------------------------
 Contains the parsing interfaces to ``parsevasp`` used to parse ``vasprun.xml`` content.
 """
 

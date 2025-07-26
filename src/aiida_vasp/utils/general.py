@@ -1,7 +1,6 @@
 """
 General utils.
 
---------------
 Contains general utils that is not directly coupled to the plugin or AiiDA.
 """
 

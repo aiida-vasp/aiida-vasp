@@ -15,7 +15,9 @@ Below is a copy of the error handler logic from aiida-core.
 
         Process  Handler    Handler     Action
         result   report?    exit code
+
         -----------------------------------------
+
         Success      yes        == 0     Restart
         Success      yes        != 0     Abort
         Failed       yes        == 0     Restart
@@ -82,7 +84,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
     """
     The VASP workchain.
 
-    -------------------
     Error handling enriched wrapper around VaspCalculation.
 
     Deliberately conserves most of the interface (required inputs) of the VaspCalculation class, but
