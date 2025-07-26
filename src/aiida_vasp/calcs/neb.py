@@ -4,10 +4,12 @@ Module for settings up NEB calculations
 
 import os
 from pathlib import Path
-from typing import Union
+from typing import Any
 
 from aiida import orm
+from aiida.common import CalcInfo
 from aiida.common.exceptions import InputValidationError
+from aiida.common.folders import Folder
 
 from aiida_vasp.calcs.vasp import VaspCalculation, ordered_unique_symbols
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -44,7 +46,7 @@ class VaspNEBCalculation(VaspCalculation):
     _default_parser = 'vasp.neb'
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: Any) -> None:
         super(VaspNEBCalculation, cls).define(spec)
         # NEB calculation does not have the structure input port
         spec.inputs.pop('structure')
@@ -155,7 +157,7 @@ class VaspNEBCalculation(VaspCalculation):
             help='The NEB trajectory.',
         )
 
-    def prepare_for_submission(self, folder):
+    def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         """
         Add all files to the list of files to be retrieved.
 
@@ -232,7 +234,7 @@ class VaspNEBCalculation(VaspCalculation):
 
         return calcinfo
 
-    def _structure(self):
+    def _structure(self) -> orm.StructureData:
         """
         Get the input structure as AiiDa StructureData.
 
@@ -243,7 +245,7 @@ class VaspNEBCalculation(VaspCalculation):
             structure = orm.StructureData(ase=structure.get_ase())
         return structure
 
-    def remote_copy_restart_folder(self):
+    def remote_copy_restart_folder(self) -> list[tuple[str, str, str]]:
         """
         Add all files required for restart to the list of files to be copied from the previous calculation.
 
@@ -274,7 +276,9 @@ class VaspNEBCalculation(VaspCalculation):
 
         return copy_list
 
-    def write_neb_poscar(self, structure, dst, positions_dof=None):  # pylint: disable=unused-argument
+    def write_neb_poscar(
+        self, structure: orm.StructureData | orm.CifData, dst: str, positions_dof: list | None = None
+    ) -> None:
         """
         Write the POSCAR.
 
@@ -294,7 +298,7 @@ class VaspNEBCalculation(VaspCalculation):
         poscar_parser = PoscarParser(data=ensure_structure_data(structure), precision=poscar_precision, options=options)
         poscar_parser.write(dst)
 
-    def verify_inputs(self):
+    def verify_inputs(self) -> None:
         """
         Verify the order of elements
         """
@@ -321,7 +325,7 @@ class VaspNEBCalculation(VaspCalculation):
             last_order = order
             last_num_sites = num_sites
 
-    def write_incar(self, dst, validate_tags=False):  # pylint: disable=unused-argument
+    def write_incar(self, dst: str, validate_tags: bool = False) -> None:
         """
         Write the INCAR without tag validation.
         Validation is performed at `parsevasp` level and VTST tags are not included.
@@ -331,7 +335,7 @@ class VaspNEBCalculation(VaspCalculation):
         super().write_incar(dst, validate_tags=validate_tags)
 
 
-def image_folder_paths(image_folders, retrieve_names):
+def image_folder_paths(image_folders: list[str], retrieve_names: list[str]) -> list[list[str | int]]:
     """
     Return a list of folders paths to be retrieved
     """
@@ -346,7 +350,7 @@ def image_folder_paths(image_folders, retrieve_names):
     return retrieve_list
 
 
-def ensure_structure_data(structure: Union[orm.StructureData, orm.CifData]) -> orm.StructureData:
+def ensure_structure_data(structure: orm.StructureData | orm.CifData) -> orm.StructureData:
     """
         Get the input structure as AiiDA StructureData.
 

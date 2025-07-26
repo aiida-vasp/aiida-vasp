@@ -10,6 +10,7 @@ NOTE: This module is no longer maintained and not working.
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path
+from typing import Any
 
 import plumpy
 from aiida import orm
@@ -18,6 +19,7 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida.common.folders import SandboxFolder
 from aiida.common.lang import override
 from aiida.common.links import LinkType
+from aiida.engine import ProcessBuilder, ProcessSpec
 from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
 from aiida_vasp.calcs.vasp import VaspCalculation
@@ -87,12 +89,12 @@ class VaspImmigrant(VaspCalculation):
     """
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
         spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
 
     @override
-    def run(self):
+    def run(self) -> plumpy.Wait:
         _ = super().run()
 
         # Make sure the retrieve list is set (done in presubmit so we need to call that also)
@@ -110,7 +112,7 @@ class VaspImmigrant(VaspCalculation):
         return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
 
     @classmethod
-    def get_inputs_from_folder(cls, code, remote_workdir: str, **kwargs):
+    def get_inputs_from_folder(cls, code: orm.Code, remote_workdir: str, **kwargs: Any) -> AttributeDict:
         """
         Create inputs to launch immigrant from a code and a remote path on the associated computer.
 
@@ -167,7 +169,7 @@ class VaspImmigrant(VaspCalculation):
         return inputs
 
     @classmethod
-    def get_builder_from_folder(cls, code, remote_workdir: str, **kwargs):
+    def get_builder_from_folder(cls, code: orm.Code, remote_workdir: str, **kwargs: Any) -> ProcessBuilder:
         """
         Create an immigrant builder from a code and a remote path on the associated computer.
         See more details in the docstring of ``get_inputs_from_folder``.
@@ -180,7 +182,9 @@ class VaspImmigrant(VaspCalculation):
         return builder
 
     @classmethod
-    def _add_inputs(cls, transport, remote_path, sandbox_path, inputs, **kwargs):
+    def _add_inputs(
+        cls, transport: Any, remote_path: Path, sandbox_path: Path, inputs: AttributeDict, **kwargs: Any
+    ) -> None:
         """Add some more inputs"""
         add_wavecar = kwargs.get('use_wavecar') or bool(inputs.parameters.get_dict().get('istart', 0))
         add_chgcar = kwargs.get('use_chgcar') or inputs.parameters.get_dict().get('icharg', -1) in [1, 11]
@@ -192,7 +196,7 @@ class VaspImmigrant(VaspCalculation):
             inputs.wavefunctions = get_wavecar_input(sandbox_path)
 
 
-def get_incar_input(dir_path):
+def get_incar_input(dir_path: Path) -> orm.Dict:
     """Create a node that contains the INCAR content."""
     from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
 
@@ -204,7 +208,7 @@ def get_incar_input(dir_path):
     return node
 
 
-def get_poscar_input(dir_path):
+def get_poscar_input(dir_path: Path) -> orm.StructureData:
     """Create a node that contains the POSCAR content."""
     from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
 
@@ -216,7 +220,12 @@ def get_poscar_input(dir_path):
     return node
 
 
-def get_potcar_input(dir_path, structure=None, potential_family=None, potential_mapping=None):
+def get_potcar_input(
+    dir_path: Path,
+    structure: orm.StructureData | None = None,
+    potential_family: str | None = None,
+    potential_mapping: dict | None = None,
+) -> dict[str, PotcarData]:
     """Read potentials from POTCAR or set it up from a structure."""
     local_potcar = dir_path / 'POTCAR'
     structure = structure or get_poscar_input(dir_path)
@@ -232,7 +241,7 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
     return potentials
 
 
-def get_kpoints_input(dir_path, structure=None):
+def get_kpoints_input(dir_path: Path, structure: orm.StructureData | None = None) -> orm.KpointsData:
     """Create a node that contains the KPOINTS content."""
     from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
 
@@ -246,13 +255,13 @@ def get_kpoints_input(dir_path, structure=None):
     return node
 
 
-def get_chgcar_input(dir_path):
+def get_chgcar_input(dir_path: Path) -> ChargedensityData:
     node = ChargedensityData(str(dir_path / 'CHGCAR'))
 
     return node
 
 
-def get_wavecar_input(dir_path):
+def get_wavecar_input(dir_path: Path) -> WavefunData:
     node = WavefunData(str(dir_path / 'WAVECAR'))
 
     return node

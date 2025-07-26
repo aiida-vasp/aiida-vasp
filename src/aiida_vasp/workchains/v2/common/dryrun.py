@@ -186,7 +186,7 @@ class JobScheme:
         return self.size_wavefunction / self.procs_per_kgroup
 
 
-def factors(num: int) -> list:
+def factors(num: int) -> list[int]:
     """
     Return all factors of a number in descending order, including the number itself.
 
@@ -202,7 +202,11 @@ def factors(num: int) -> list:
 
 
 def dryrun_vasp(
-    input_dict: dict, vasp_exe: str = 'vasp_std', timeout: int = 10, work_dir: Optional[str] = None, keep: bool = False
+    input_dict: dict | ProcessBuilder,
+    vasp_exe: str = 'vasp_std',
+    timeout: int = 10,
+    work_dir: str | None = None,
+    keep: bool = False,
 ) -> dict:
     """
     Perform a dryrun for a VASP calculation, return obtained information.

@@ -131,7 +131,7 @@ class VasprunParser(BaseFileParser):
         'parameters': {
             'inputs': [],
             'name': 'parameters',
-            'prerequesites': [],
+            'prerequisites': [],
         },
     }
 

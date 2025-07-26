@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import enum
 from os import path  # pylint: disable=import-outside-toplevel
+from typing import Any
 from warnings import warn
 
 from aiida.common.extendeddicts import AttributeDict
@@ -67,7 +68,7 @@ class OrbitEnum(enum.IntEnum):
     ATOM_LM_WAVE = 5
 
     @classmethod
-    def get_lorbit_from_combination(cls, **kwargs):
+    def get_lorbit_from_combination(cls, **kwargs) -> 'OrbitEnum':
         """Get the correct mode of the projectors/decomposition."""
         combination = tuple(kwargs[i] for i in ['lm', 'phase', 'wigner_seitz_radius'])
         value_from_combinations = {
@@ -112,7 +113,7 @@ class RelaxModeEnum(enum.IntEnum):
     VOL_ONLY = 7
 
     @classmethod
-    def get_isif_from_dof(cls, **kwargs):
+    def get_isif_from_dof(cls, **kwargs) -> 'RelaxModeEnum':
         """Get the correct mode of relaxation for the given degrees of freedom."""
         relax_choices = ('positions', 'shape', 'volume')  # pylint: disable=invalid-name
         dof = tuple(kwargs[i] for i in relax_choices)
@@ -151,7 +152,13 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
-    def __init__(self, parameters, unsupported_parameters=None, settings=None, skip_parameters_validation=False):
+    def __init__(
+        self,
+        parameters: Any,
+        unsupported_parameters: Any = None,
+        settings: Any = None,
+        skip_parameters_validation: bool = False,
+    ) -> None:
         self.exit_code = None
 
         # Flag for skipping any validations
@@ -192,13 +199,13 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
         # Finally, we validate the INCAR parameters in order to prepare it for dispatch
         self._validate_vasp_parameters()
 
-    def _check_valid_namespaces(self):
+    def _check_valid_namespaces(self) -> None:
         """Check that we do not have namespaces on the input parameters that is unsupported."""
         for key in self._parameters.keys():
             if key not in list(_BASE_NAMESPACES + self._additional_override_namespaces + [_DEFAULT_OVERRIDE_NAMESPACE]):
                 raise ValueError(f'The supplied namespace: {key} is not supported.')
 
-    def _load_valid_params(self):
+    def _load_valid_params(self) -> None:
         """Import a list of valid parameters for VASP. This is generated from the manual."""
 
         with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
@@ -209,7 +216,7 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
             if key.lower() not in self._valid_parameters:
                 self._valid_parameters.append(key.lower())
 
-    def _fetch_additional_override_namespaces(self):
+    def _fetch_additional_override_namespaces(self) -> list[str]:
         """Check the settings for any additional supplied override namespace and return it."""
         try:
             override_namespaces = self._settings.additional_override_namespaces
@@ -218,12 +225,12 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
 
         return override_namespaces
 
-    def _set_vasp_parameters(self):
+    def _set_vasp_parameters(self) -> None:
         """Iterate over the valid parameters and call the set function associated with that parameter."""
         for key in self._valid_parameters:
             self._set(key)
 
-    def _set_override_vasp_parameters(self):
+    def _set_override_vasp_parameters(self) -> None:
         """Set the any supplied override parameters."""
         if _DEFAULT_OVERRIDE_NAMESPACE not in self._parameters:
             return
@@ -237,7 +244,7 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
             else:
                 raise ValueError(f'The supplied key: {key} is not a support VASP parameter.')
 
-    def _set_extra_vasp_parameters(self):
+    def _set_extra_vasp_parameters(self) -> None:
         """
         Find if there are any extra parameters that are not part of the INCAR that needs to be set.
 
@@ -260,7 +267,7 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
             else:
                 warn(f"Key {key} is not supported for 'dynamics' input.")
 
-    def _set_additional_override_parameters(self):
+    def _set_additional_override_parameters(self) -> None:
         """Set any customized parameter namespace, including its content on the massaged container."""
         parameters_keys = self._parameters.keys()
         for item in self._additional_override_namespaces:
@@ -268,21 +275,21 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
                 # Only add if namespace exists in parameters
                 self._massage[item] = AttributeDict(self._parameters[item])
 
-    def _valid_vasp_parameter(self, key):
+    def _valid_vasp_parameter(self, key: str) -> bool:
         """Make sure a key are recognized as a valid VASP input parameter."""
         if self._skip_validation or (key in self._valid_parameters):
             return True
 
         return False
 
-    def _validate_vasp_parameters(self):
+    def _validate_vasp_parameters(self) -> None:
         """Make sure all the massaged values are recognized as valid VASP input parameters."""
 
         for key in self._massage[_DEFAULT_OVERRIDE_NAMESPACE]:
             if not self._valid_vasp_parameter(key.lower()):
                 raise ValueError(f'The supplied key: {key} is not a support VASP parameter.')
 
-    def _set(self, key):
+    def _set(self, key: str) -> None:
         """Call the necessary function to set each parameter."""
         try:
             getattr(self._functions, 'set_' + key)()
@@ -292,7 +299,7 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
             pass
 
     @property
-    def parameters(self):
+    def parameters(self) -> AttributeDict:
         """Return the massaged parameter set ready to go in VASP format."""
         return self._massage
 
@@ -300,11 +307,11 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
 class ParameterSetFunctions:
     """Container for the set functions that converts an AiiDA parameters to a default override specific one."""
 
-    def __init__(self, parameters, incar):
+    def __init__(self, parameters: AttributeDict, incar: AttributeDict) -> None:
         self._parameters = parameters
         self._incar = incar
 
-    def set_encut(self):
+    def set_encut(self) -> None:
         """
         Set which plane wave cutoff to use.
 
@@ -316,7 +323,7 @@ class ParameterSetFunctions:
         except AttributeError:
             pass
 
-    def set_ibrion(self):
+    def set_ibrion(self) -> None:
         """
         Set which algorithm to use for ionic movements.
 
@@ -334,7 +341,7 @@ class ParameterSetFunctions:
             except AttributeError:
                 pass
 
-    def set_ediffg(self):
+    def set_ediffg(self) -> None:
         """
         Set the cutoff to use for relaxation.
 
@@ -358,7 +365,7 @@ class ParameterSetFunctions:
         except AttributeError:
             pass
 
-    def set_nsw(self):
+    def set_nsw(self) -> None:
         """
         Set the number of ionic steps to perform.
 
@@ -371,7 +378,7 @@ class ParameterSetFunctions:
             except AttributeError:
                 pass
 
-    def set_isif(self):
+    def set_isif(self) -> None:
         """
         Set relaxation mode according to the chosen degrees of freedom.
 
@@ -389,7 +396,7 @@ class ParameterSetFunctions:
             except AttributeError:
                 pass
 
-    def set_ismear(self):
+    def set_ismear(self) -> None:
         """
         Make sure we do not supply invalid integration methods when running explicit k-point grids.
 
@@ -417,7 +424,7 @@ class ParameterSetFunctions:
         except AttributeError:
             pass
 
-    def set_icharg(self):
+    def set_icharg(self) -> None:
         """
         Set the flag to start from input charge density and keep it constant.
 
@@ -455,7 +462,7 @@ class ParameterSetFunctions:
         except AttributeError:
             pass
 
-    def set_lorbit(self):
+    def set_lorbit(self) -> None:
         """
         Set the flag that controls the projectors/decomposition onto orbitals.
 
@@ -501,7 +508,7 @@ class ParameterSetFunctions:
             except AttributeError:
                 pass
 
-    def _set_wigner_seitz_radius(self):
+    def _set_wigner_seitz_radius(self) -> None:
         """
         Set the Wigner Seitz radius that is used to project/decompose.
 
@@ -520,7 +527,7 @@ class ParameterSetFunctions:
         except AttributeError:
             pass
 
-    def _relax(self):
+    def _relax(self) -> bool:
         """Check if we have enabled relaxation."""
         return bool(
             self._parameters.get('relax', {}).get('positions')
@@ -528,7 +535,7 @@ class ParameterSetFunctions:
             or self._parameters.get('relax', {}).get('volume')
         )
 
-    def _set_simple(self, target, value):
+    def _set_simple(self, target: str, value: Any) -> None:
         """Set basic parameter."""
         try:
             self._incar[target] = value
@@ -536,7 +543,7 @@ class ParameterSetFunctions:
             pass
 
 
-def check_inputs(supplied_inputs):
+def check_inputs(supplied_inputs: Any) -> AttributeDict:
     """Check that the inputs are of some correct type and returned as AttributeDict."""
     inputs = None
     if supplied_inputs is None:
@@ -555,7 +562,7 @@ def check_inputs(supplied_inputs):
     return inputs
 
 
-def inherit_and_merge_parameters(inputs):
+def inherit_and_merge_parameters(inputs: dict[str, Any]) -> AttributeDict:
     """
     Goes trough the inputs namespaces and the namespaces in the inputs.parameters and merge them.
 

@@ -184,5 +184,6 @@ def parse_outcar(outcar_path: Union[str, Path]) -> Dict[str, Union[List[str], in
             output_dict['max_ram_rank0'] = float(line.split()[-2])
             for subline in lines[line_number + 3 : line_number + 9]:
                 tokens = subline.replace(':', '').split()
-                output_dict['mem_' + tokens[0]] = float(tokens[-2])
+                if len(tokens) >= 2:
+                    output_dict['mem_' + tokens[0]] = float(tokens[-2])
     return output_dict

@@ -53,7 +53,7 @@ class BaseFileParser:
         data: Data | None = None,
         settings: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
-    ) -> None:  # pylint: disable=unused-argument, missing-function-docstring
+    ) -> None:
         super().__init__()
         # Make sure we only accept initialization with either ``handler`` or ``data``.
         if (handler is not None and data is not None) or (handler is None and data is None):

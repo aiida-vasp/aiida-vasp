@@ -8,10 +8,11 @@ from __future__ import annotations
 # pylint: disable=abstract-method
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
+from aiida.engine import ProcessBuilder
 from aiida.orm.nodes.data.base import to_aiida_type
 
 from aiida_vasp.calcs.base import VaspCalcBase
@@ -75,7 +76,7 @@ class VaspCalculation(VaspCalcBase):
     _plugin_type_string = 'vasp.vasp'
 
     @classmethod
-    def define(cls, spec) -> None:
+    def define(cls, spec: Any) -> None:
         super(VaspCalculation, cls).define(spec)
         # Define the inputs.
         # options is passed automatically.
@@ -332,7 +333,7 @@ class VaspCalculation(VaspCalcBase):
 
         return calcinfo
 
-    def verify_inputs(self):
+    def verify_inputs(self) -> None:
         super().verify_inputs()
         _parameters = self.inputs.parameters.get_dict()
         _lorbit = _parameters.get('lorbit', 0)
@@ -345,7 +346,7 @@ class VaspCalculation(VaspCalcBase):
             raise InputValidationError(f'Site magnetization requires "LORBIT>=10", value given {_lorbit}')
 
     @property
-    def _parameters(self):
+    def _parameters(self) -> dict[str, Any]:
         """Make sure all parameters are lowercase."""
         all_parameters = self.inputs.parameters.get_dict()
         try:
@@ -353,7 +354,7 @@ class VaspCalculation(VaspCalcBase):
         except KeyError:
             return {}
 
-    def _need_kp(self):
+    def _need_kp(self) -> bool:
         """
         Return wether an input kpoints node is needed or not.
 
@@ -361,7 +362,7 @@ class VaspCalculation(VaspCalcBase):
         """
         return not bool('kspacing' in self._parameters or 'kgamma' in self._parameters)
 
-    def _need_chgcar(self):
+    def _need_chgcar(self) -> bool:
         """
         Test wether an charge_densities input is needed or not.
 
@@ -372,7 +373,7 @@ class VaspCalculation(VaspCalcBase):
         icharg = self._parameters.get('icharg', ichrg_d)
         return bool(icharg in [1, 11])
 
-    def _need_wavecar(self):
+    def _need_wavecar(self) -> bool:
         """
         Test wether a wavefunctions input is needed or not.
 
@@ -382,7 +383,7 @@ class VaspCalculation(VaspCalcBase):
         istart = self._parameters.get('istart', istrt_d)
         return bool(istart in [1, 2, 3])
 
-    def _structure(self):
+    def _structure(self) -> orm.StructureData:
         """
         Get the input structure as AiiDa StructureData.
 
@@ -393,7 +394,7 @@ class VaspCalculation(VaspCalcBase):
             structure = orm.StructureData(ase=structure.get_ase())
         return structure
 
-    def write_additional(self, folder, calcinfo):
+    def write_additional(self, folder: Folder, calcinfo: CalcInfo) -> None:
         """Write CHGAR and WAVECAR if needed."""
         super().write_additional(folder, calcinfo)
         # a list of object names to be copied
@@ -423,7 +424,7 @@ class VaspCalculation(VaspCalcBase):
                 (self.inputs.vdw_kernel.uuid, self.inputs.vdw_kernel.filename, 'vdw_kernel.bindat')
             )
 
-    def write_incar(self, dst, validate_tags=True):  # pylint: disable=unused-argument
+    def write_incar(self, dst: str, validate_tags: bool = True) -> None:
         """
         Write the INCAR.
 
@@ -444,7 +445,7 @@ class VaspCalculation(VaspCalcBase):
         except SystemExit as parser_error:
             raise ValidationError('The INCAR content did not pass validation.') from parser_error
 
-    def write_poscar(self, dst):  # pylint: disable=unused-argument
+    def write_poscar(self, dst: str) -> None:
         """
         Write the POSCAR.
 
@@ -470,7 +471,7 @@ class VaspCalculation(VaspCalcBase):
         except SystemExit as parser_error:
             raise ValidationError('The POSCAR content did not pass validation.') from parser_error
 
-    def write_potcar(self, dst):
+    def write_potcar(self, dst: str) -> None:
         """
         Concatenates multiple POTCARs into one in the same order as the elements appear in POSCAR.
 
@@ -480,7 +481,7 @@ class VaspCalculation(VaspCalcBase):
         multi_potcar = MultiPotcarIo.from_structure(structure, self.inputs.potential)
         multi_potcar.write(dst)
 
-    def write_kpoints(self, dst):  # pylint: disable=unused-argument
+    def write_kpoints(self, dst: str) -> None:
         """
         Write the KPOINTS.
 
@@ -495,16 +496,16 @@ class VaspCalculation(VaspCalcBase):
         except SystemExit as parser_error:
             raise ValidationError('The KPOINTS content did not pass validation.') from parser_error
 
-    def write_chgcar(self, dst, calcinfo):  # pylint: disable=unused-argument
+    def write_chgcar(self, dst: str, calcinfo: CalcInfo) -> None:
         charge_density = self.inputs.charge_density
         calcinfo.local_copy_list.append((charge_density.uuid, charge_density.filename, dst))
 
-    def write_wavecar(self, dst, calcinfo):  # pylint: disable=unused-argument
+    def write_wavecar(self, dst: str, calcinfo: CalcInfo) -> None:
         wave_functions = self.inputs.wavefunctions
         calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
 
     @classmethod
-    def immigrant(cls, code, remote_path, **kwargs):
+    def immigrant(cls, code: orm.Code, remote_path: str, **kwargs: Any) -> tuple[type, ProcessBuilder]:
         """
         Returns VaspImmigrant class and associated inputs. This method will be obsolete at v3.0
 
@@ -536,7 +537,7 @@ class VaspCalculation(VaspCalcBase):
         return proc_cls, builder
 
 
-def ordered_unique_list(in_list):
+def ordered_unique_list(in_list: list) -> list:
     """List unique elements in input list, in order of first occurrence."""
     out_list = []
     for i in in_list:
@@ -545,7 +546,7 @@ def ordered_unique_list(in_list):
     return out_list
 
 
-def ordered_unique_symbols(structure):
+def ordered_unique_symbols(structure: orm.StructureData) -> list[str]:
     """
     Return a list of ordered unique symbols in the structure
     """

@@ -1,4 +1,7 @@
+from typing import Any
+
 from aiida import orm
+from aiida.engine import ExitCode
 
 from aiida_vasp.parsers.content_parsers import *
 
@@ -53,7 +56,7 @@ class NebParser(VaspParser):
     Parser for handling NEB calculations.
     """
 
-    def parse(self, **kwargs):
+    def parse(self, **kwargs: Any) -> ExitCode | None:
         user_config = self._init_user_settings()
         # Clear the critical objects list as they do not apply for NEB
         user_config.critical_objects = []
@@ -117,7 +120,7 @@ class NebParser(VaspParser):
 
         return self._create_outputs()
 
-    def get_num_images(self):
+    def get_num_images(self) -> int:
         """
         Return the number of images
         """
@@ -127,7 +130,7 @@ class NebParser(VaspParser):
             raise ValueError('No `images` key defined in inputs - this is really an NEB calculation?') from no_images
         return nimages
 
-    def _create_outputs(self):
+    def _create_outputs(self) -> ExitCode | None:
         """Create the outputs"""
         # Create the outputs
         self._failed_to_compose = {}
@@ -158,7 +161,7 @@ class NebParser(VaspParser):
             error = self._check_vasp_errors(self.parser_notifications)
             return error
 
-    def _compose_structure(self, quantities_each):
+    def _compose_structure(self, quantities_each: dict[str, Any]) -> dict[str, orm.StructureData]:
         """Compose the `structure` output nodes"""
 
         data = quantities_each['CONTCAR'].get('structure')
@@ -182,7 +185,7 @@ class NebParser(VaspParser):
     #         return orm.ArrayData(out_arrays)
     #     return None
 
-    def _compose_trajectory(self, quantities_each):
+    def _compose_trajectory(self, quantities_each: dict[str, Any]) -> dict[str, orm.TrajectoryData] | None:
         """Compose the `trajectory` output node"""
         output = {}
         for index in self.neb_indices:
@@ -199,7 +202,7 @@ class NebParser(VaspParser):
                 output['image_' + index] = node
         return output
 
-    def _compose_misc(self, quantities_each):
+    def _compose_misc(self, quantities_each: dict[str, Any]) -> orm.Dict:
         """Compose the `misc` output node"""
 
         out_dict = {}
@@ -208,7 +211,7 @@ class NebParser(VaspParser):
         gather_quantities_neb(quantities_each, self.user_config.file_mapping['vasp_output'], out_dict, MISC_QUANTITIES)
         return orm.Dict(dict=out_dict)
 
-    def _check_vasp_errors(self, parser_notifications):  # pylint: disable=too-many-return-statements
+    def _check_vasp_errors(self, parser_notifications: dict[str, Any]) -> ExitCode | None:
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
@@ -267,7 +270,9 @@ class NebParser(VaspParser):
         return None
 
 
-def gather_quantities_neb(quantities_each, namespace, dst, fields):
+def gather_quantities_neb(
+    quantities_each: dict[str, Any], namespace: str, dst: dict[str, Any], fields: list[str]
+) -> None:
     """
     Gather quantities and put them into the target dictionary
     """

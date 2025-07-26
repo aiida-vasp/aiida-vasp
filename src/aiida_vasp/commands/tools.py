@@ -8,6 +8,7 @@ import sys
 import tempfile
 from functools import wraps
 from shutil import copyfileobj
+from typing import Any, Callable
 
 import click
 from aiida import orm
@@ -34,7 +35,7 @@ VERDI_DATA = cmp_load_verdi_data()
 
 
 @VERDI_DATA.group('vasp-tools')
-def tools():
+def tools() -> None:
     """Tool for aiida-vasp related data"""
 
 
@@ -53,12 +54,12 @@ def tools():
     is_flag=True,
     help='Wether to decompress the contents',
 )
-def export(process, folder, decompress, include_potcar):
+def export(process: orm.ProcessNode, folder: str, decompress: bool, include_potcar: bool) -> None:
     """Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`"""
     export_vasp(process, folder, decompress, include_potcar)
 
 
-def select_calcjob_from_work(func):
+def select_calcjob_from_work(func: Callable) -> Callable:
     """Select calcjob from work"""
 
     @wraps(func)
@@ -95,7 +96,7 @@ def select_calcjob_from_work(func):
 @click.argument('fname')
 @click.option('--save-to', '-s', help='Name of the file to save to')
 @select_calcjob_from_work
-def remotecat(calcjob, fname, save_to):
+def remotecat(calcjob: orm.CalcJobNode, fname: str, save_to: str | None) -> None:
     """
     Print the conetent of a remote file to STDOUT
 
@@ -128,7 +129,7 @@ def remotecat(calcjob, fname, save_to):
     help='Maximum size of the files to be retrieved - this is passed to rsync',
 )
 @select_calcjob_from_work
-def remotepull(calcjob, dest, max_size):
+def remotepull(calcjob: orm.CalcJobNode, dest: str, max_size: str | None) -> None:
     """
     Pull a calculation folder from the remote
 
@@ -159,7 +160,7 @@ def remotepull(calcjob, dest, max_size):
 @tools.command('remotetail')
 @CALCULATION('calcjob')
 @click.argument('fname')
-def remotetail(calcjob, fname):
+def remotetail(calcjob: orm.CalcJobNode, fname: str) -> None:
     """
     Follow a file on the remote computer
 
@@ -184,7 +185,7 @@ def remotetail(calcjob, fname):
 @tools.command('relaxcat')
 @WORKFLOW('workflow')
 @click.argument('fname')
-def relaxcat(workflow, fname):
+def relaxcat(workflow: orm.WorkChainNode, fname: str) -> None:
     """Cat the output of the last calculation of a finished workflow"""
 
     q = QueryBuilder()
@@ -197,7 +198,7 @@ def relaxcat(workflow, fname):
     click.Context(calcjob_outputcat).invoke(calcjob_outputcat, calcjob=calc, path=fname)
 
 
-def tailf_command(transport, remotedir, fname):
+def tailf_command(transport: Any, remotedir: str, fname: str) -> str:
     """
     Specific gotocomputer string to connect to a given remote computer via
     ssh and directly go to the calculation folder and then do tail -f of the target file.

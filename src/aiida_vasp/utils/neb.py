@@ -13,7 +13,7 @@ from ase.neb import NEB
 
 @calcfunction
 def neb_interpolate(
-    init_structure: StructureData, final_strucrture: StructureData, nimages: orm.Int
+    init_structure: StructureData, final_structure: StructureData, nimages: orm.Int
 ) -> dict[str, StructureData]:
     """
     Interpolate NEB frames using the starting and the final structures
@@ -27,7 +27,7 @@ def neb_interpolate(
     """
 
     ainit = init_structure.get_ase()
-    afinal = final_strucrture.get_ase()
+    afinal = final_structure.get_ase()
     disps = []
 
     # Find distances
@@ -60,8 +60,8 @@ def neb_interpolate(
 @calcfunction
 def fix_atom_order(reference: StructureData, to_fix: StructureData) -> StructureData:
     """
-    Fix atom order by finding NN distances bet ween two frames. This resolves
-    the issue where two closely matching structures having diffferent atomic orders.
+    Fix atom order by finding NN distances between two frames. This resolves
+    the issue where two closely matching structures having different atomic orders.
     Note that the two frames must be close enough for this to work
     """
 
