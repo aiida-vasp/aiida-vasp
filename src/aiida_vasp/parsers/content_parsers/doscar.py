@@ -5,6 +5,8 @@ Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
 
 # pylint: disable=abstract-method
+from typing import TextIO
+
 from parsevasp.doscar import Doscar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -28,7 +30,7 @@ class DoscarParser(BaseFileParser):
         },
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """Initialize a ``parsevasp`` object of ``Doscar`` using a file like handler.
 
         :param handler: A file like object that provides the necessary ``DOSCAR`` content to be parsed.

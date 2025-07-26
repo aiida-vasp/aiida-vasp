@@ -5,6 +5,7 @@ for VASP related notification, warnings, and errors.
 
 # pylint: disable=abstract-method
 import re
+from typing import TextIO
 
 from parsevasp.stream import Stream
 
@@ -29,7 +30,7 @@ class StreamParser(BaseFileParser):
         }
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """
         Initialize a ``parsevasp`` object of ``Stream`` using a file like handler.
 

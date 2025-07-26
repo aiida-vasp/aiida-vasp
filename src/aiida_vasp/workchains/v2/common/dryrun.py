@@ -36,7 +36,7 @@ class JobScheme:
         ncore_within_node: bool = True,
         ncore_strategy: str = 'maximise',
         wf_size_limit: float = 1000,
-    ):
+    ) -> None:
         """
         Instantiate a JobScheme object.
 

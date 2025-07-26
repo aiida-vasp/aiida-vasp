@@ -5,6 +5,8 @@ Contains the parsing interfaces to parsevasp used to parse ``EIGENVAL`` content.
 """
 
 # pylint: disable=abstract-method
+from typing import TextIO
+
 from parsevasp.eigenval import Eigenval
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -34,7 +36,7 @@ class EigenvalParser(BaseFileParser):
         },
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """Initialize a ``parsevasp`` object of ``Eigenval`` using a file like handler.
 
         :param handler: A file like object that provides the necessary ``EIGENVAL`` content to be parsed.

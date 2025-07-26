@@ -39,7 +39,7 @@ def plain_python_args(func: Callable[..., Any]) -> Callable[..., Any]:
     """Ensure that the first argument is a plain dictionary"""
 
     @wraps(func)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
         new_args = list(args)
         new_args[0] = aiida_to_python(args[0])
         return func(*new_args, **kwargs)

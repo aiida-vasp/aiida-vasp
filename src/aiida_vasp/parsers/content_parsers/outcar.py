@@ -6,6 +6,7 @@ Contains the parsing interfaces to parsevasp used to parse ``OUTCAR`` content.
 
 # pylint: disable=abstract-method
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from parsevasp.outcar import Outcar
@@ -40,7 +41,7 @@ class OutcarParser(BaseFileParser):
         },
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: Any) -> None:
         """Initialize a ``parsevasp`` object of ``Outcar`` using a file like handler.
 
         :param handler: A file like object that provides the necessary ``OUTCAR`` content to be parsed.
@@ -166,7 +167,7 @@ class VtstNebOutcarParser(OutcarParser):
         self._parsed_neb_data = {}
         super().__init__(*args, **kwargs)
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: Any) -> None:
         """Initial from the handler."""
         super()._init_from_handler(handler)
         # Parse the NEB results from the handle and store in a dictionary
@@ -200,7 +201,7 @@ class VtstNebOutcarParser(OutcarParser):
         return self._parsed_neb_data.get('total_energies')
 
 
-def _parse_force_block(lines):
+def _parse_force_block(lines: List[str]) -> Tuple[List[List[float]], List[List[float]]]:
     """Parse the block of total forces from the OUTCAR file.
 
     :param lines: A list of lines containing lines including the TOTAL-FORCE block
@@ -225,7 +226,7 @@ def _parse_force_block(lines):
     return positions, forces
 
 
-def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,too-many-statements
+def _parse_neb_outputs(path: Union[str, Path, Any], inputs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:  # pylint: disable=too-many-branches,too-many-statements
     """Scan for NEB output in the OUTCAR content.
 
     :param path: Input path or fileobj

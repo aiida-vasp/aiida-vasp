@@ -4,6 +4,8 @@ VASP to Wannier90 calculation.
 VASP2Wannier90 - Calculation.
 """
 
+from typing import Any
+
 from aiida import orm
 
 # pylint: disable=abstract-method, unreachable, undefined-variable
@@ -21,7 +23,7 @@ class Vasp2w90Calculation(VaspCalculation):
     _default_parser = 'vasp.vasp2w90'
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: Any) -> None:
         super(Vasp2w90Calculation, cls).define(spec)
         spec.input(
             'wannier_parameters',
@@ -36,7 +38,7 @@ class Vasp2w90Calculation(VaspCalculation):
             help='Projections to be defined in the Wannier90 input.',
         )
 
-    def prepare_for_submission(self, folder):
+    def prepare_for_submission(self, folder: Any) -> None:
         """Override the method such that we can add the flag that executes Wannier90 in library mode."""
         raise NotImplementedError('The AiiDA-Wannier90 plugin is not yet v2 ready.')
         # Create a new parameters node that contain the flag that turns on the Wannier90 library mode such
@@ -54,17 +56,17 @@ class Vasp2w90Calculation(VaspCalculation):
         # Then call the super function.
         return super().prepare_for_submission(folder)
 
-    def write_win(self, dst):
+    def write_win(self, dst: Any) -> None:
         """Write Wannier90 input."""
         raise NotImplementedError('The AiiDA-Wannier90 plugin is not yet v2 ready.')
         # write_win(filename=dst, parameters=self.inputs.wannier_parameters,
         # projections=self.inputs.wannier_projections)
 
     @staticmethod
-    def new_wannier_parameters(**kwargs):
+    def new_wannier_parameters(**kwargs: Any) -> Any:
         return DataFactory('core.dict')(**kwargs)
 
-    def write_additional(self, folder, calcinfo):
+    def write_additional(self, folder: Any, calcinfo: Any) -> None:
         super().write_additional(folder, calcinfo)
         win = folder.get_abs_path('wannier90.win')
         self.write_win(win)

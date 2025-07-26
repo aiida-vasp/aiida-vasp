@@ -9,7 +9,7 @@ from __future__ import annotations
 # pylint: disable=abstract-method,invalid-metaclass,ungrouped-imports
 # explanation: pylint wrongly complains about Node not implementing query
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from aiida import orm
 from aiida.common import CalcInfo, CodeInfo, ValidationError
@@ -17,6 +17,7 @@ from aiida.engine import CalcJob
 
 if TYPE_CHECKING:
     from aiida.common.folders import Folder
+    from aiida.engine.processes.calcjobs.calcjob import CalcJobProcessSpec
 
 
 class VaspCalcBase(CalcJob):
@@ -31,7 +32,7 @@ class VaspCalcBase(CalcJob):
     _default_parser = 'vasp.vasp'
 
     @classmethod
-    def define(cls, spec) -> None:
+    def define(cls, spec: CalcJobProcessSpec) -> None:
         super(VaspCalcBase, cls).define(spec)
         spec.input(
             'restart_folder',
@@ -154,7 +155,7 @@ class VaspCalcBase(CalcJob):
         restart_folder = self.inputs.get('restart_folder', None)
         return bool(restart_folder)
 
-    def store(self, *args, **kwargs) -> None:
+    def store(self, *args: Any, **kwargs: Any) -> None:
         """Adds a _prestore subclass hook for operations that should be done just before storing."""
         self._prestore()
         super().store(*args, **kwargs)

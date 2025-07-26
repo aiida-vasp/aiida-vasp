@@ -366,7 +366,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             message='the exception: {exception} was thrown while massaging the parameters',
         )
 
-    def setup(self):
+    def setup(self) -> None:
         super().setup()
         self.ctx.restart_calc = None
         self.ctx.vasp_did_not_execute = False
@@ -378,7 +378,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         self.ctx.handler = AttributeDict()
         self.ctx.handler.nbands_increase_tries = 0
 
-    def _init_parameters(self):
+    def _init_parameters(self) -> Dict:
         """Collect input to the workchain in the converge namespace and put that into the parameters."""
 
         # At some point we will replace this with possibly input checking using the PortNamespace on
@@ -388,12 +388,12 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
 
         return parameters
 
-    def verbose_report(self, *args, **kwargs):
+    def verbose_report(self, *args, **kwargs) -> None:
         """Send report if self.ctx.verbose is True"""
         if self.ctx.verbose is True:
             self.report(*args, **kwargs)
 
-    def prepare_inputs(self):
+    def prepare_inputs(self) -> None:
         """
         Enforce some settings for the restart folder and set parameters tags for a restart.
         This is called because launching the sub process.
@@ -428,7 +428,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         self.ctx.last_calc_remote_objects = []
         self.ctx.restart_calc = None
 
-    def update_magmom(self, node=None):
+    def update_magmom(self, node: CalcJobNode = None) -> None:
         """
         Update magmom from site magnetization information if available
 
@@ -449,7 +449,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             except ValueError:
                 pass
 
-    def init_inputs(self):
+    def init_inputs(self) -> None:
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
 
         #### START OF THE COPY FROM VASPWorkChain ####
@@ -584,11 +584,11 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             self.ctx.inputs.parameters.update(ldau_keys)
         return None
 
-    def run_auto_parallel(self):
+    def run_auto_parallel(self) -> bool:
         """Wether we should run auto-parallelisation test"""
         return 'auto_parallel' in self.inputs and self.inputs.auto_parallel.value is True
 
-    def perform_autoparallel(self):
+    def perform_autoparallel(self) -> None:
         """Dry run and obtain the best parallelisation settings"""
 
         self.report('Performing local dryrun for auto-parallelisation')  # pylint: disable=not-callable
@@ -622,12 +622,12 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         )
 
     @property
-    def is_noncollinear(self):
+    def is_noncollinear(self) -> bool:
         """Check if the calculation is a noncollinear one"""
         return self.ctx.inputs.parameters.get('lnoncollinear') or self.ctx.inputs.parameters.get('lsorbit')
 
     @override
-    def on_except(self, exc_info):
+    def on_except(self, exc_info) -> None:
         """Handle excepted state."""
         try:
             last_calc = self.ctx.calculations[-1] if self.ctx.calculations else None
@@ -647,7 +647,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return super().on_except(exc_info)
 
     @override
-    def on_terminated(self):
+    def on_terminated(self) -> None:
         """
         Clean the working directories of all child calculation jobs if `clean_workdir=True` in the inputs and
         the calculation is finished without problem.
@@ -683,7 +683,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             self.report(f'cleaned remote folders of calculations: {" ".join(cleaned_calcs)}')
 
     @process_handler(priority=2000, enabled=False)
-    def handler_always_attach_outputs(self, node):
+    def handler_always_attach_outputs(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         Handle the case where we attach the outputs even if underlying child calculation ends up
         with some exit status.
@@ -717,7 +717,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_MAXIMUM_ITERATION_EXCEEDED, do_break=True)
 
     @process_handler(priority=1100, exit_codes=VaspCalculation.exit_codes.ERROR_VASP_DID_NOT_EXECUTE)
-    def handler_calculation_did_not_run(self, node):
+    def handler_calculation_did_not_run(self, node: CalcJobNode) -> ProcessHandlerReport:
         """Handle the case where the calculation is not performed"""
         if self.ctx.vasp_did_not_execute:
             self.report(f'{node} did not execute, and this is the second time - aborting.')
@@ -733,7 +733,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=1000)
-    def handler_misc_not_exist(self, node):
+    def handler_misc_not_exist(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         Handle the case where misc output is not available, in which case we cannot do anything for it.
         """
@@ -744,7 +744,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return None
 
     @process_handler(priority=910, exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH])
-    def handler_unfinished_calc_ionic(self, node):
+    def handler_unfinished_calc_ionic(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         Handled the problem such that the calculation is not finished, e.g. did not reach the
         end of execution.
@@ -777,7 +777,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         enabled=False,
         exit_codes=[VaspCalculation.exit_codes.ERROR_DID_NOT_FINISH],
     )
-    def handler_unfinished_calc_ionic_alt(self, node):
+    def handler_unfinished_calc_ionic_alt(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         Handled the problem such that the calculation is not finished, e.g. did not reach the
         end of execution.
@@ -806,7 +806,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return None
 
     @process_handler(priority=798, enabled=False)
-    def handler_unfinished_calc_generic_alt(self, node):
+    def handler_unfinished_calc_generic_alt(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         A generic handler for unfinished calculations, we attempt to restart it once.
         """
@@ -835,7 +835,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         return ProcessHandlerReport(do_break=True)
 
     @process_handler(priority=900)
-    def handler_unfinished_calc_generic(self, node):
+    def handler_unfinished_calc_generic(self, node: CalcJobNode) -> ProcessHandlerReport:
         """
         A generic handler for unfinished calculations, we attempt to restart it once.
         """
@@ -874,7 +874,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             VaspCalculation.exit_codes.ERROR_OVERFLOW_IN_XML,
         ],
     )
-    def handler_electronic_conv_alt(self, node):  # pylint: disable=too-many-return-statements,too-many-branches
+    def handler_electronic_conv_alt(self, node: CalcJobNode) -> ProcessHandlerReport:  # pylint: disable=too-many-return-statements,too-many-branches
         """Handle electronic convergence problem"""
         incar = node.inputs.parameters.get_dict()
         run_status = node.outputs.misc['run_status']

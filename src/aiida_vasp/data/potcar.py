@@ -395,11 +395,11 @@ class VersioningMixin:  # pylint: disable=useless-object-inheritance
         self.base.attributes.set('_MODEL_VERSION', self._VERSION)
 
     @property
-    def model_version(self):
+    def model_version(self) -> Any:
         return self.base.attributes.get('_MODEL_VERSION')
 
     @classmethod
-    def old_versions_in_db(cls):
+    def old_versions_in_db(cls) -> bool:
         """Determine whether there are Nodes created with an older version of the model."""
         label = 'versioned'
         query = querybuild(cls, tag=label)
@@ -427,7 +427,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
     _plugin_type_string = 'data.vasp.potcar_file.PotcarFileData.'
     _VERSION = 1
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # remove file in kwargs as this is not accepted in the subsequent inits
         path = kwargs.pop('file', None)
         super().__init__(*args, **kwargs)
@@ -441,14 +441,14 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                 raise ValueError('The supplied argument for file is not a Path object or a string.')
 
     @delegate_method_kwargs(prefix='_init_with_')
-    def init_with_kwargs(self, **kwargs):
+    def init_with_kwargs(self, **kwargs: Any) -> None:
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_file(self, filepath):
+    def _init_with_file(self, filepath: Path) -> None:
         """Initialized from a file path."""
         self.add_file(filepath)
 
-    def add_file(self, src_abs, dst_filename=None):
+    def add_file(self, src_abs: Path, dst_filename: Any = None) -> None:
         """Add the POTCAR file to the archive and set attributes."""
 
         self.set_version()
@@ -473,7 +473,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self.base.attributes.set('potential_set', str(src_path.parts[-3]))
 
     @classmethod
-    def get_file_sha512(cls, path):
+    def get_file_sha512(cls, path: Path) -> str:
         """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
         path = Path(path)
         with path.open('r', encoding='utf8') as potcar_fo:
@@ -481,12 +481,12 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return sha512
 
     @classmethod
-    def get_contents_sha512(cls, contents):
+    def get_contents_sha512(cls, contents: str) -> str:
         """Get the sha512 sum for the contents of a POTCAR file (after normalization)."""
         return sha512_potcar(contents)
 
     # pylint: disable=arguments-differ
-    def store(self, *args, **kwargs):
+    def store(self, *args: Any, **kwargs: Any) -> Any:
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         self.set_version()
         _ = PotcarData.get_or_create(self)
@@ -494,7 +494,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return super().store(*args, **kwargs)
 
     @contextmanager
-    def get_file_obj(self):
+    def get_file_obj(self) -> Any:
         """Open a readonly file object to read the stored POTCAR file."""
         file_obj = None
         with self.get_archive() as archive:
@@ -506,7 +506,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                     file_obj.close()
 
     @contextmanager
-    def get_file_obj_and_tar_obj(self):
+    def get_file_obj_and_tar_obj(self) -> Any:
         """Return both decompressed file object and the archive object"""
         file_obj = None
         with self.get_archive() as archive:
@@ -517,7 +517,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                 if file_obj:
                     file_obj.close()
 
-    def export_archive(self, archive, dry_run=False):
+    def export_archive(self, archive: Any, dry_run: bool = False) -> None:
         """Add the stored POTCAR file to an archive for export."""
         with self.get_file_obj_and_tar_obj() as objects:
             potcar_fo, tar_fo = objects
@@ -528,7 +528,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                 archive.addfile(tarinfo, fileobj=potcar_fo)
         return tarinfo.name
 
-    def export_file(self, path, dry_run=False):
+    def export_file(self, path: Path, dry_run: bool = False) -> Path:
         """
         Write the contents of the stored POTCAR file to a destination on the local file system.
 
@@ -564,12 +564,12 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                 dest_fo.write(self.get_content())
         return path
 
-    def get_content(self):
+    def get_content(self) -> bytes:
         with self.get_file_obj() as potcar_fo:
             return potcar_fo.read()
 
     @classmethod
-    def get_or_create(cls, filepath):
+    def get_or_create(cls, filepath: Path) -> Any:
         """Get or create (store) a PotcarFileData node."""
         sha512 = cls.get_file_sha512(filepath)
         if cls.exists(sha512=sha512):
@@ -582,7 +582,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return node, created
 
     @classmethod
-    def get_or_create_from_contents(cls, contents):
+    def get_or_create_from_contents(cls, contents: str) -> Any:
         """Get or create (store) a PotcarFileData node from a string containing the POTCAR contents."""
         with temp_potcar(contents) as potcar_file:
             return cls.get_or_create(potcar_file)
@@ -601,31 +601,31 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     _plugin_type_string = 'data.vasp.potcar.PotcarData.'
     _VERSION = 1
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         potcar_file_node = kwargs.pop('potcar_file_node', None)
         super().__init__(**kwargs)
         if potcar_file_node is not None:
             self.set_potcar_file_node(potcar_file_node)
 
-    def set_potcar_file_node(self, potcar_file_node):
+    def set_potcar_file_node(self, potcar_file_node: Any) -> None:
         """Initialize from a PotcarFileData node."""
         self.set_version()
         for attr_name in potcar_file_node.base.attributes.all.keys():
             self.base.attributes.set(attr_name, potcar_file_node.base.attributes.get(attr_name))
 
-    def find_file_node(self):
+    def find_file_node(self) -> Any:
         """Find and return the matching PotcarFileData node."""
         return PotcarFileData.find_one(sha512=self.sha512)
 
     # pylint: disable=arguments-differ,signature-differs
-    def store(self, *args, **kwargs):
+    def store(self, *args: Any, **kwargs: Any) -> Any:
         """Ensure uniqueness before storing."""
         self.set_version()
         self.verify_unique()
         return super().store(*args, **kwargs)
 
     @classmethod
-    def get_or_create(cls, file_node):
+    def get_or_create(cls, file_node: Any) -> Any:
         """Get or create (store) a PotcarData node."""
 
         if cls.exists(sha512=file_node.sha512):

@@ -8,6 +8,7 @@ Separate cli interface for commands useful in development and testing.
 import os
 import pathlib
 import shutil
+from typing import List
 
 import click
 
@@ -18,7 +19,7 @@ from aiida_vasp.utils.mock_code import MockVasp, VaspMockRegistry, data_path
 
 
 @click.command('mock-vasp-loose')
-def mock_vasp_loose():
+def mock_vasp_loose() -> None:
     """
     Loose version of mock-vasp that has default test data - only useful for testing and development.
     """
@@ -26,7 +27,7 @@ def mock_vasp_loose():
 
 
 @click.command('mock-vasp')
-def mock_vasp():
+def mock_vasp() -> None:
     """
     If `MOCK_VASP_VASP_CMD` is set in the environment, it will use that command to run VASP if needed and add the
     calculation to the registry.
@@ -34,7 +35,7 @@ def mock_vasp():
     return _mock_vasp(True)
 
 
-def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
+def _mock_vasp(strict_match: bool) -> None:  # pylint: disable=too-many-statements, too-many-locals, too-many-branches
     """
     Verify input objects are parsable and copy in output objects.
     """
@@ -148,7 +149,7 @@ def _mock_vasp(strict_match):  # pylint: disable=too-many-statements, too-many-l
         handler.write(''.join(vasp_mock_output + vasp_output_content))
 
 
-def stop_and_return(vasp_mock_output):
+def stop_and_return(vasp_mock_output: List[str]) -> None:
     """Halts mock-vasp, rebuilds the vasp_output and returns."""
     # Assemble the
     print(''.join(vasp_mock_output))

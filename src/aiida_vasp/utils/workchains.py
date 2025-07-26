@@ -7,6 +7,7 @@ to make code more compact in the workchains.
 
 # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+from typing import Any, List, Optional
 
 import numpy as np
 from aiida.common.extendeddicts import AttributeDict
@@ -17,7 +18,9 @@ from aiida.plugins import DataFactory
 from aiida_vasp.utils.extended_dicts import delete_keys_from_dict
 
 
-def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
+def prepare_process_inputs(
+    inputs: Any, namespaces: Optional[List[str]] = None, exclude_parameters: Optional[List[str]] = None
+) -> AttributeDict:
     """
     Prepare the inputs dictionary for a calculation.
 
@@ -66,7 +69,7 @@ def prepare_process_inputs(inputs, namespaces=None, exclude_parameters=None):
     return prepared_inputs
 
 
-def compare_structures(structure_a, structure_b):
+def compare_structures(structure_a: Any, structure_b: Any) -> AttributeDict:
     """Compare two StructureData objects A, B and return a delta (A - B) of the relevant properties."""
 
     delta = AttributeDict()
@@ -97,7 +100,7 @@ def compare_structures(structure_a, structure_b):
     return delta
 
 
-def fetch_k_grid(rec_cell, k_spacing):
+def fetch_k_grid(rec_cell: Any, k_spacing: Any) -> List[int]:
     """
     Suggest a sensible k-point sampling based on a supplied spacing.
 
@@ -117,13 +120,13 @@ def fetch_k_grid(rec_cell, k_spacing):
     return kgrid.astype('int').tolist()
 
 
-def compose_exit_code(status, message):
+def compose_exit_code(status: int, message: str) -> ExitCode:
     """Compose an ExitCode instance based on a status and message."""
     exit_code = ExitCode(status=status, message=message)
     return exit_code
 
 
-def site_magnetization_to_magmom(site_dict):
+def site_magnetization_to_magmom(site_dict: Any) -> List[Any]:
     """
     Convert site magnetization to MAGMOM used for restart
     NOTE: Only tested for colinear cases

@@ -9,7 +9,7 @@ TODO:
 
 from copy import deepcopy
 from logging import getLogger
-from typing import List
+from typing import Any, List
 
 import numpy as np
 from aiida import orm
@@ -74,7 +74,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
     option_class = BandOptions
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: Any) -> None:
         """Initialise the WorkChain class"""
         super().define(spec)
         relax_work = WorkflowFactory(cls._relax_wk_string)
@@ -193,7 +193,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
             message='The input structure is not the primitive one!',
         )
 
-    def select_chgcar_from_inputs(self):
+    def select_chgcar_from_inputs(self) -> None:
         """Setup CHGCAR from inputs"""
         if self.inputs.get('chgcar'):
             self.ctx.chgcar = self.inputs.chgcar
@@ -207,7 +207,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         else:
             self.ctx.restart_folder = None
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup the calculation"""
         self.ctx.current_structure = self.inputs.structure
         self.ctx.bs_kpoints = self.inputs.get('bs_kpoints')
@@ -218,11 +218,11 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         else:
             self.ctx.magmom = None
 
-    def should_do_relax(self):
+    def should_do_relax(self) -> bool:
         """Wether we should do relax or not"""
         return 'relax' in self.inputs
 
-    def run_relax(self):
+    def run_relax(self) -> Any:
         """Run the relaxation"""
         relax_work = WorkflowFactory(self._relax_wk_string)
         inputs = self.exposed_inputs(relax_work, 'relax', agglomerate=True)
@@ -246,7 +246,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         running = self.submit(relax_work, **inputs)
         return self.to_context(workchain_relax=running)
 
-    def verify_relax(self):
+    def verify_relax(self) -> Any:
         """Verify the relaxation"""
         relax_workchain = self.ctx.workchain_relax
         if not relax_workchain.is_finished_ok:
@@ -256,21 +256,21 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         # Use the relaxed structure as the current structure
         self.ctx.current_structure = relax_workchain.outputs.relax__structure
 
-    def should_run_scf(self):
+    def should_run_scf(self) -> bool:
         """Wether we should run SCF calculation"""
         # Setup the CHGCAR and remote folder input if necessary
         self.select_chgcar_from_inputs()
         # Only need to run SCF calculation when no explicity CHGCAR or folder set
         return not (self.ctx.chgcar or self.ctx.restart_folder)
 
-    def should_generate_path(self):
+    def should_generate_path(self) -> bool:
         """
         Seekpath should only run if no explicit bands is provided or we are just
         running for DOS, in which case the original structure is used.
         """
         return 'bs_kpoints' not in self.inputs and (not self.inputs.band_settings['only_dos'])
 
-    def generate_path(self):
+    def generate_path(self) -> None:
         """
         Run seekpath to obtain the primitive structure and bands
         """
@@ -345,7 +345,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         if 'parameters' in kpath_results:
             self.out('seekpath_parameters', kpath_results['parameters'])
 
-    def run_scf(self):
+    def run_scf(self) -> None:
         """
         Run the SCF calculation
         """
@@ -376,7 +376,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Running SCF calculation {running}')
         self.to_context(workchain_scf=running)
 
-    def verify_scf(self):
+    def verify_scf(self) -> Any:
         """Inspect the SCF calculation"""
         scf_workchain = self.ctx.workchain_scf
         if not scf_workchain.is_finished_ok:
@@ -391,7 +391,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         self.ctx.restart_folder = scf_workchain.outputs.remote_folder
         self.report(f'SCF calculation {scf_workchain} completed')
 
-    def run_bands_dos(self):
+    def run_bands_dos(self) -> Any:
         """Run the bands and the DOS calculations"""
         base_work = WorkflowFactory(self._base_wk_string)
 
@@ -510,7 +510,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
 
         return self.to_context(**running)
 
-    def inspect_bands_dos(self):
+    def inspect_bands_dos(self) -> Any:
         """Inspect the bands and dos calculations"""
 
         exit_code = None
@@ -542,7 +542,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
 
         return exit_code
 
-    def on_terminated(self):
+    def on_terminated(self) -> None:
         """
         Clean the remote directories of all called childrens
         """
@@ -564,7 +564,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
 
 
 @calcfunction
-def seekpath_structure_analysis(structure, band_settings):
+def seekpath_structure_analysis(structure: orm.StructureData, band_settings: orm.Dict) -> Any:
     """Primitivize the structure with SeeKpath and generate the high symmetry k-point path through its Brillouin zone.
     This calcfunction will take a structure and pass it through SeeKpath to get the normalized primitive cell and the
     path of high symmetry k-points through its Brillouin zone. Note that the returned primitive cell may differ from the
@@ -586,7 +586,7 @@ def seekpath_structure_analysis(structure, band_settings):
 
 
 @calcfunction
-def compose_labelled_bands(bands, kpoints):
+def compose_labelled_bands(bands: orm.BandsData, kpoints: orm.KpointsData) -> orm.BandsData:
     """
     Add additional information from the kpoints allow richer informations
     to be stored such as band structure labels.
@@ -597,7 +597,7 @@ def compose_labelled_bands(bands, kpoints):
 
 
 @calcfunction
-def get_primitive_strucrture_and_scf_kpoints(structure):
+def get_primitive_strucrture_and_scf_kpoints(structure: orm.StructureData) -> Any:
     """
     This function dryruns a VASP calculation using the primitive structure obtained by performing seekpath analyses
 
@@ -645,7 +645,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
     """
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: Any) -> None:
         """Initialise the WorkChain class"""
         super().define(spec)
         relax_work = WorkflowFactory(cls._relax_wk_string)
@@ -725,19 +725,19 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             message='The input structure is not the primitive one!',
         )
 
-    def setup(self):
+    def setup(self) -> None:
         super().setup()
         self.ctx.scf_kpoints = None
         if 'kpoints' in self.inputs.scf:
             self.ctx.scf_kpoints = self.inputs.scf.kpoints
 
-    def no_scf_kpoints(self):
+    def no_scf_kpoints(self) -> bool:
         """Check if the kpoints for SCF has NOT been set"""
         if self.ctx.scf_kpoints is None:
             return True
         return False
 
-    def get_scf_kpoints_relax(self):
+    def get_scf_kpoints_relax(self) -> None:
         """Try extract SCF kpoints from relaxation workchain"""
 
         if 'workchain_relax' not in self.ctx:
@@ -779,7 +779,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             self.report(f'Extracted SCF kpoints from retrieved vasprun.xml of <{self.ctx.workchain_relax}>.')
             self.ctx.scf_kpoints = extract_kpoints_from_calc(self.ctx.workchain_relax)
 
-    def get_scf_kpoints_spglib(self):
+    def get_scf_kpoints_spglib(self) -> None:
         """
         Generate SCF kpoints using spglib
         """
@@ -805,7 +805,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         )
         self.ctx.scf_kpoints = kpt
 
-    def make_splitted_kpoints(self):
+    def make_splitted_kpoints(self) -> Any:
         """Split the kpoints"""
         # Fully specified band structure kpoints
         full_kpoints = self.ctx.bs_kpoints
@@ -824,7 +824,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         kpoints_for_calc = split_kpoints(scf_kpoints, full_kpoints, per_split)
         self.ctx.kpoints_for_calc = kpoints_for_calc
 
-    def should_do_scf_for_scf_kpoints(self):
+    def should_do_scf_for_scf_kpoints(self) -> bool:
         """Check if one should redo a SCF run to obtain the IBZKPT"""
         scf_kpoints = self.get_scf_kpoints()
         if scf_kpoints is None:
@@ -844,7 +844,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             return True
         return False
 
-    def run_scf_for_kpoints(self):
+    def run_scf_for_kpoints(self) -> Any:
         """
         Run an SCF calculation to just obtain the kpoints for the current structure
         Ideally we should do this in a dryrun mode @ local machine
@@ -876,7 +876,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         running = self.submit(workflow_class, **inputs)
         return self.to_context(workchain_scf_for_kpoints=running)
 
-    def verify_scf_for_kpoints(self):
+    def verify_scf_for_kpoints(self) -> Any:
         """Inspect the SCF for kpoints calculation"""
         scf_workchain = self.ctx.workchain_scf_for_kpoints
         if not scf_workchain.is_finished_ok:
@@ -887,7 +887,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         self.ctx.scf_kpoints = scf_workchain.outputs.kpoints
         self.report(f'SCF calculation {scf_workchain} completed and obtained kpoints {self.ctx.scf_kpoints}')
 
-    def run_scf_multi(self):
+    def run_scf_multi(self) -> Any:
         """
         Launch multiple SCF calculations with zero-weighted kpoints for segments of the band structure
         """
@@ -944,7 +944,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
             self.report(f'launching {workflow_class.__name__}<{running.pk}> for split #{idx}')
             self.to_context(workchains=append_(running))
 
-    def inspect_and_combine_bands(self):
+    def inspect_and_combine_bands(self) -> None:
         """
         Inspect that all calculations have finished OK
         """
@@ -968,7 +968,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
 
 
 @calcfunction
-def split_kpoints(scf_kpoints, band_kpoints, kpn_per_split):
+def split_kpoints(scf_kpoints: orm.KpointsData, band_kpoints: orm.KpointsData, kpn_per_split: orm.Int) -> Any:
     """
     Split the kpoints into multiple one and combined with SCF kpoints
 
@@ -977,7 +977,7 @@ def split_kpoints(scf_kpoints, band_kpoints, kpn_per_split):
     return _split_kpoints(scf_kpoints, band_kpoints, kpn_per_split)
 
 
-def _split_kpoints(scf_kpoints: orm.KpointsData, band_kpoints: orm.KpointsData, kpn_per_split: orm.Int):
+def _split_kpoints(scf_kpoints: orm.KpointsData, band_kpoints: orm.KpointsData, kpn_per_split: orm.Int) -> Any:
     """
     Split the kpoints into multiple one and combined with SCF kpoints
 
@@ -1012,9 +1012,9 @@ def dryrun_split_kpoints(
     structure: orm.StructureData,
     scf_kpoints: orm.KpointsData,
     kpn_per_split: orm.Int,
-    kpoints_args=None,
-    verbose=True,
-):
+    kpoints_args: Any = None,
+    verbose: bool = True,
+) -> Any:
     """
     Perform a "dryrun" for splitting the kpoints
     """
@@ -1031,7 +1031,7 @@ def dryrun_split_kpoints(
 
 
 @calcfunction
-def combine_bands_data(bs_kpoints, **kwargs):
+def combine_bands_data(bs_kpoints: orm.KpointsData, **kwargs: Any) -> orm.BandsData:
     """
     Combine splitted bands and kpoints data
 
@@ -1056,7 +1056,7 @@ def _combine_bands_data(
     bs_kpoints: orm.KpointsData,
     kpoints_list: List[orm.KpointsData],
     bands_list: List[orm.BandsData],
-):
+) -> orm.BandsData:
     """
     Combine bands from splitted kpoints into a single bands node.
 
@@ -1124,7 +1124,7 @@ def _combine_bands_data(
     return band_data
 
 
-def extract_kpoints_from_calc(calc):
+def extract_kpoints_from_calc(calc: Any) -> Any:
     """
     Extract computed kpoints from a existing calculation
     """
@@ -1133,14 +1133,14 @@ def extract_kpoints_from_calc(calc):
 
 
 @calcfunction
-def extract_kpoints_from_retrieved(retrieved):
+def extract_kpoints_from_retrieved(retrieved: orm.FolderData) -> orm.KpointsData:
     """
     Extract explicity kpoints from a finished calculation
     """
     return _extract_kpoints_from_retrieved(retrieved)
 
 
-def _extract_kpoints_from_retrieved(retrieved):
+def _extract_kpoints_from_retrieved(retrieved: orm.FolderData) -> orm.KpointsData:
     """
     Extract explicity kpoints from a finished calculation
     """
@@ -1162,7 +1162,7 @@ def _extract_kpoints_from_retrieved(retrieved):
     return kpoints_data
 
 
-def _is_magnetic_via_site_moment(mag):
+def _is_magnetic_via_site_moment(mag: Any) -> bool:
     has_mag = False
     # Iterate over dictionaries of the site moments of each site
     for site in mag['sphere']['x']['site_moment'].values():

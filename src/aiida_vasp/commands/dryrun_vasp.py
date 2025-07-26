@@ -7,6 +7,7 @@ import subprocess as sb
 import tempfile
 import time
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import click
 import yaml
@@ -38,7 +39,9 @@ from parsevasp.kpoints import Kpoints
     is_flag=True,
     show_default=True,
 )
-def cmd_dryrun_vasp(input_dir, vasp_exe, timeout, work_dir, keep, force):
+def cmd_dryrun_vasp(
+    input_dir: str, vasp_exe: str, timeout: int, work_dir: Optional[str], keep: bool, force: bool
+) -> None:
     """
     A simple tool to dryrun a VASP calculation. The calculation will be run for
     up to <timeout> seconds. The underlying VASP process will be terminated once it enters
@@ -56,7 +59,14 @@ def cmd_dryrun_vasp(input_dir, vasp_exe, timeout, work_dir, keep, force):
         yaml.dump(result, fhandle, Dumper=yaml.SafeDumper)
 
 
-def dryrun_vasp(input_dir, vasp_exe='vasp_std', timeout=10, work_dir=None, keep=False, force=False):
+def dryrun_vasp(
+    input_dir: Union[str, Path],
+    vasp_exe: str = 'vasp_std',
+    timeout: int = 10,
+    work_dir: Optional[Union[str, Path]] = None,
+    keep: bool = False,
+    force: bool = False,
+) -> Dict[str, Union[int, float, str]]:
     """
     Perform a "dryrun" for a VASP calculation - get the number of kpoints, bands and
     estimated memory usage.
@@ -110,7 +120,7 @@ def dryrun_vasp(input_dir, vasp_exe='vasp_std', timeout=10, work_dir=None, keep=
     return result
 
 
-def parse_ibzkpt(ibzkpt_path):
+def parse_ibzkpt(ibzkpt_path: Union[str, Path]) -> List[List[float]]:
     """
     Parsing the IBZKPT file
     """
@@ -128,7 +138,7 @@ def parse_ibzkpt(ibzkpt_path):
     return normalised
 
 
-def parse_outcar(outcar_path):
+def parse_outcar(outcar_path: Union[str, Path]) -> Dict[str, Union[List[str], int, float]]:
     """
     Parse the header part of the OUTCAR
 
