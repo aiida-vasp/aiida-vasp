@@ -178,7 +178,7 @@ class MockRegistry:
         """
         return pathlib.Path(self.reg_hash[self.reg_name[name]])
 
-    def extract_calc_by_path(self, rel_path: pathlib.Path, dst_path: pathlib.Path, include_inputs: bool = True):
+    def extract_calc_by_path(self, rel_path: pathlib.Path, dst_path: pathlib.Path, include_inputs: bool = True) -> None:
         """
         Copy the content of a give hash to a destination.
 
@@ -188,10 +188,10 @@ class MockRegistry:
         """
         rel_path = pathlib.Path(rel_path)
         dst_path = pathlib.Path(dst_path)
-        found = False
+        found: bool = False
         for reg_path in self.search_paths:
-            base_out = reg_path / rel_path / 'out'
-            base_in = reg_path / rel_path / 'inp'
+            base_out: pathlib.Path = reg_path / rel_path / 'out'
+            base_in: pathlib.Path = reg_path / rel_path / 'inp'
 
             # Not a valid folder - skip this
             if not (base_out.exists() and base_in.exists()):
@@ -199,15 +199,17 @@ class MockRegistry:
 
             found = True
             # Copy the content of input and then the output folder
-            paths = [base_in, base_out] if include_inputs else [base_out]
+            paths: list[pathlib.Path] = [base_in, base_out] if include_inputs else [base_out]
             for folder in paths:
                 for fpath in folder.glob('*'):
                     if fpath.is_file():
                         shutil.copy2(fpath, dst_path)
                     # Directory - then copy the sub files - this only handles one level down
                     elif fpath.is_dir():
+                        dst_subdir: pathlib.Path = dst_path / fpath.name
+                        dst_subdir.mkdir(exist_ok=True)
                         for subfile in fpath.glob('*'):
-                            shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
+                            shutil.copy2(subfile, dst_subdir / subfile.name)
             break
         if not found:
             raise ValueError(f'The path give: {rel_path}, is not found in any search paths.')

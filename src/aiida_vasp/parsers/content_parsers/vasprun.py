@@ -134,7 +134,7 @@ class VasprunParser(BaseFileParser):
     }
 
     # Mapping of the energy names to those returned by parsevasp.vasprunl.Xml
-    ENERGY_MAPPING = {
+    ENERGY_MAPPING: dict[str, str] = {
         'energy_extrapolated': 'energy_extrapolated_final',
         'energy_free': 'energy_free_final',
         'energy_no_entropy': 'energy_no_entropy_final',
@@ -143,7 +143,7 @@ class VasprunParser(BaseFileParser):
         'energy_no_entropy_electronic': 'energy_no_entropy',
     }
 
-    ENERGY_MAPPING_VASP5 = {
+    ENERGY_MAPPING_VASP5: dict[str, str] = {
         'energy_extrapolated': 'energy_no_entropy_final',
         'energy_free': 'energy_free_final',
         # Not that energy_extrapolated_final parsed is the entropy term

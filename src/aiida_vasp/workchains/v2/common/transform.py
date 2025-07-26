@@ -315,7 +315,7 @@ def match_atomic_order_(atoms: Atoms, atoms_ref: Atoms) -> Tuple[Atoms, List[int
     return atoms[new_index], new_index
 
 
-def create_additional_species(species: list, magmoms: list):
+def create_additional_species(species: list[str], magmoms: list[float]) -> tuple[list[str], dict[str, float]]:
     """
     Create additional species depending on magnetic moments.
     For example, create Fe1 and Fe2 if there are Fe with different
@@ -325,15 +325,15 @@ def create_additional_species(species: list, magmoms: list):
         a tuples of (newspecies, magmom_mapping)
     """
 
-    unique_species = set(species)
-    new_species = []
-    current_species_mapping = {sym: {} for sym in unique_species}
+    unique_species: set[str] = set(species)
+    new_species: list[str] = []
+    current_species_mapping: dict[str, dict[str, float]] = {sym: {} for sym in unique_species}
     for symbol, magmom in zip(species, magmoms):
-        current_symbol = symbol
+        current_symbol: str = symbol
         # Mappings for this original symbol
-        mapping = current_species_mapping[symbol]
+        mapping: dict[str, float] = current_species_mapping[symbol]
         # First check if this magmom has been treated
-        not_seen = True
+        not_seen: bool = True
         for sym_, mag_ in mapping.items():
             if mag_ == magmom:
                 current_symbol = sym_
@@ -342,7 +342,7 @@ def create_additional_species(species: list, magmoms: list):
         if not_seen:
             if current_symbol in mapping:
                 # The other species having the same symbol has been assigned
-                counter = len(mapping) + 1
+                counter: int = len(mapping) + 1
                 current_symbol = f'{symbol}{counter}'
             mapping[current_symbol] = magmom
         new_species.append(current_symbol)
@@ -355,7 +355,7 @@ def create_additional_species(species: list, magmoms: list):
             # Refresh the new_species list
             new_species = [f'{sym}1' if sym == symbol else sym for sym in new_species]
 
-    all_mapping = {}
+    all_mapping: dict[str, float] = {}
     for value in current_species_mapping.values():
         all_mapping.update(value)
 

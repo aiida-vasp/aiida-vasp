@@ -6,7 +6,7 @@ initial site magnetization.
 import re
 
 
-def create_additional_species(species: list, magmom: list):
+def create_additional_species(species: list[str], magmom: list[float]) -> tuple[list[str], dict[str, float]]:
     """
     Create additional species depending on magnetic moments.
     For example, create Fe1 and Fe2 if there are Fe with different
@@ -46,14 +46,14 @@ def create_additional_species(species: list, magmom: list):
             # Refresh the new_species list
             new_species = [f'{sym}1' if sym == symbol else sym for sym in new_species]
 
-    all_mapping = {}
+    all_mapping: dict[str, float] = {}
     for value in current_species_mapping.values():
         all_mapping.update(value)
 
     return new_species, all_mapping
 
 
-def convert_to_plain_list(species: list, magmom_mapping: dict):
+def convert_to_plain_list(species: list[str], magmom_mapping: dict[str, float]) -> tuple[list[str], list[float]]:
     """
     Covert from a decorated species list to a plain list of symbols
     and magnetic moments.
@@ -61,8 +61,8 @@ def convert_to_plain_list(species: list, magmom_mapping: dict):
     Returns:
         A tuple of (symbols, magmoms)
     """
-    magmoms = []
-    symbols = []
+    magmoms: list[float] = []
+    symbols: list[str] = []
     for symbol in species:
         magmoms.append(magmom_mapping[symbol])
         # Drop the number suffix in the symbol

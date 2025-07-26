@@ -31,7 +31,7 @@ class KpointsParser(BaseFileParser):
         },
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler) -> None:
         """Initialize using a file like handler.
 
         :param handler: A file like object that provides the necessary content to be parsed.

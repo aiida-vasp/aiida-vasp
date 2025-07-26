@@ -205,10 +205,9 @@ def temp_potcar(contents):
         yield potcar_file
 
 
-def extract_tarfile(file_path):
+def extract_tarfile(file_path) -> Path:
     """Extract a .tar archive into an appropriately named folder, return the path of the folder, avoid extracting if
     folder exists."""
-    new_path = None
     with tarfile.open(str(file_path)) as archive:
         new_dir = file_path.name.split('.tar')[0]
         new_path = file_path.parent / new_dir
@@ -264,7 +263,7 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
                 for file_name in files:
                     self.file_dispatch(root, dirs, file_name)
 
-    def file_dispatch(self, root, dirs, file_name):
+    def file_dispatch(self, root: str, dirs: list[str], file_name: str) -> Path | None:
         """Add POTCAR files to the list and dispatch handling of different kinds of files to other methods."""
         file_path = Path(root) / file_name
         if tarfile.is_tarfile(str(file_path)):
@@ -274,10 +273,10 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
         return None
 
     @classmethod
-    def handle_tarfile(cls, dirs, file_path):
+    def handle_tarfile(cls, dirs: list[str], file_path: Path) -> Path:
         """Handle .tar archives: extract and add the extracted folder to be searched."""
         new_dir = extract_tarfile(file_path)
-        if new_dir not in dirs:
+        if str(new_dir) not in dirs:
             dirs.append(str(new_dir))
         return new_dir
 
@@ -691,7 +690,6 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
-        group_query.append(PotcarGroup, with_node='potcar_data', tag='potcar_data', project='*')
 
         groups = [group_list[0] for group_list in group_query.all()]
 

@@ -6,6 +6,7 @@ Common functions and constants
 # This is the namespace where raw VASP INCAR tags should reside for VaspWorkChain
 import warnings
 from functools import wraps
+from typing import Any
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
@@ -97,7 +98,7 @@ def site_magnetization_to_magmom(site_dict):
     return [entry[1]['tot'] for entry in tmp]
 
 
-def nested_update(dict_in, update_dict, extend_list=False):
+def nested_update(dict_in: dict[str, Any], update_dict: dict[str, Any], extend_list: bool = False) -> dict[str, Any]:
     """Update the dictionary - combine nested sub-dictionary with update as well"""
     warnings.warn('nested_update is deprecated, use updated_nested_dict', DeprecationWarning)
     for key, value in update_dict.items():

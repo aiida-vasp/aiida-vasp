@@ -27,12 +27,14 @@ CHANGELOG
 
 # pylint: disable=attribute-defined-outside-init
 
+from __future__ import annotations
+
 import numpy as np
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.utils import classproperty
-from aiida.engine import ToContext, WorkChain, append_, if_, while_
+from aiida.engine import ExitCode, ToContext, WorkChain, append_, if_, while_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
@@ -53,13 +55,13 @@ __version__ = '0.5.0'
 class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
     """Structure relaxation workchain."""
 
-    _verbose = True
-    _base_workchain_string = 'vasp.v2.vasp'
+    _verbose: bool = True
+    _base_workchain_string: str = 'vasp.v2.vasp'
     _base_workchain = WorkflowFactory(_base_workchain_string)
     option_class = RelaxOptions
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec) -> None:
         super().define(spec)
         spec.expose_inputs(cls._base_workchain, 'vasp', exclude=('structure',))
         spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
@@ -156,15 +158,15 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         spec.expose_outputs(cls._base_workchain)
         spec.output('relax.structure', valid_type=orm.StructureData, required=False)
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialize."""
 
         # Initialise the contexts
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
-        self.ctx.is_converged = False
-        self.ctx.relax = False
-        self.ctx.iteration = 0
-        self.ctx.workchains = []
+        self.ctx.is_converged: bool = False
+        self.ctx.relax: bool = False
+        self.ctx.iteration: int = 0
+        self.ctx.workchains: list = []
         self.ctx.inputs = AttributeDict()  # This may not be necessary anymore
         self.ctx.relax_settings = AttributeDict(
             self.inputs.relax_settings.get_dict()
@@ -225,7 +227,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # Check the input parameters
         self._check_input_parameters()
 
-    def _check_input_parameters(self):
+    def _check_input_parameters(self) -> None:
         """Validate the input parameters and detect problems before running the workchain"""
         exposed = self.exposed_inputs(self._base_workchain, 'vasp')
         incar = exposed.parameters['incar']
@@ -243,7 +245,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 'supplied to the workchain.'
             )
 
-    def _init_relax_input_additions(self):
+    def _init_relax_input_additions(self) -> AttributeDict:
         """
         Initialise the `relax_additions` field inside the context.
         It is a AttributeDict that contains the inputs that should be updated
@@ -259,11 +261,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return additions
 
-    def run_next_relax(self):
+    def run_next_relax(self) -> bool:
         within_max_iterations = bool(self.ctx.iteration < self.ctx.relax_settings.convergence_max_iterations)
         return bool(within_max_iterations and not self.ctx.is_converged)
 
-    def run_relax(self):
+    def run_relax(self) -> ToContext:
         """Perform the relaxation"""
         # Iteration starts from 1, not 0
         self.ctx.iteration += 1
@@ -330,7 +332,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return ToContext(workchains=append_(running))
 
-    def run_static_calculation(self):
+    def run_static_calculation(self) -> ToContext:
         """Perform the relaxation"""
 
         # For the final static run we do not need to parse the output structure
@@ -413,7 +415,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'launching {self._base_workchain.__name__}<{running.pk}> iterations #{self.ctx.iteration}')
         return ToContext(workchains=append_(running))
 
-    def verify_next_workchain(self):
+    def verify_next_workchain(self) -> None | ExitCode:
         """Verify and inherit exit status from child workchains."""
 
         try:
@@ -438,7 +440,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return self.ctx.exit_code
 
-    def verify_last_relax(self):
+    def verify_last_relax(self) -> None | ExitCode:
         """Verify and inherit exit status from the last relaxation"""
 
         try:
@@ -469,7 +471,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return self.ctx.exit_code
 
-    def analyze_convergence(self):
+    def analyze_convergence(self) -> None | ExitCode:
         """
         Analyze the convergence of the relaxation.
 
@@ -601,7 +603,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
-    def check_shape_convergence(self, delta):
+    def check_shape_convergence(self, delta) -> bool:
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
         threshold_angles = self.ctx.relax_settings.convergence_shape_angles
         threshold_lengths = self.ctx.relax_settings.convergence_shape_lengths
@@ -639,9 +641,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 f'cell angles changed by max {delta.cell_angles.max():.4g}, tolerance is {threshold_angles:.4g} - OK'
             )
 
-        return bool(lengths_converged and angles_converged)
+        return lengths_converged and angles_converged
 
-    def check_volume_convergence(self, delta):
+    def check_volume_convergence(self, delta) -> bool:
         """Check the convergence of the volume, given a cutoff."""
         threshold = self.ctx.relax_settings.convergence_volume
         if threshold < 0:
@@ -655,7 +657,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return volume_converged
 
-    def check_positions_convergence(self, delta):
+    def check_positions_convergence(self, delta) -> bool:
         """Check the convergence of the atomic positions, given a cutoff."""
         threshold = self.ctx.relax_settings.convergence_positions
         if threshold < 0:
@@ -691,7 +693,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return positions_converged
 
-    def store_relaxed(self):
+    def store_relaxed(self) -> None | ExitCode:
         """Store the relaxed structure."""
         workchain = self.ctx.workchains[-1]
 
@@ -713,7 +715,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             self.out_many(self.exposed_outputs(workchain, self._base_workchain))
             return self.exit_codes.ERROR_RELAX_NOT_CONVERGED  # pylint: disable=no-member
 
-    def results(self):
+    def results(self) -> None | ExitCode:
         """
         Attach the remaining output results.
         This can either be the final static calculation or the last relaxation if the
@@ -749,7 +751,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         if not RelaxOptions(**self.inputs.relax_settings.get_dict()).perform:
             self.out('relax.structure', workchain.inputs.structure)
 
-    def finalize(self):
+    def finalize(self) -> None:
         """
         Finalize the workchain.
         Clean the remote working directories of the called calcjobs
@@ -798,11 +800,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         except BaseException as exception:  # pylint: disable=no-self-argument,no-self-use
             self.report(f'Exception occurred during the cleaning of the remote contents: {exception.args}')
 
-    def perform_relaxation(self):
+    def perform_relaxation(self) -> bool:
         """Check if a relaxation is to be performed."""
         return self.ctx.relax_settings.perform
 
-    def should_run_static_calculation(self):
+    def should_run_static_calculation(self) -> bool:
         """Control whether the static calculation should be run"""
         # If the relaxation itself by passed - run the final static calculation
         if not self.perform_relaxation():
@@ -815,7 +817,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # Otherwise, we skip the final calculation
         return False
 
-    def is_verbose(self):
+    def is_verbose(self) -> bool:
         """Are we in the verbose mode?"""
         return self.ctx.get('verbose', self._verbose)
 
@@ -825,7 +827,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         return RelaxOptions
 
 
-def compare_structures(structure_a, structure_b):
+def compare_structures(structure_a, structure_b) -> AttributeDict:
     """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
 
     delta = AttributeDict()
@@ -868,7 +870,7 @@ def compare_structures(structure_a, structure_b):
     return delta
 
 
-def get_step_structure(traj, step):
+def get_step_structure(traj, step) -> orm.StructureData:
     """Get the step structure, but assume the positions are fractional"""
     _, _, cell, symbols, positions, _ = traj.get_step_data(step)
     # Convert to cartesian coorindates
@@ -927,7 +929,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
     _base_workchain = VaspRelaxWorkChain
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec) -> None:
         super().define(spec)
         spec.input_namespace('parameters_stages', required=False, dynamic=True, help='Parameters for each stage')
         spec.input_namespace('settings_stages', required=False, dynamic=True, help='Settings for each stage')
@@ -967,26 +969,26 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
             message='The subprocess has failed.',
         )
 
-    def setup(self):
+    def setup(self) -> None:
         """
         Initialize context variables
         """
         relax_inputs = self.exposed_inputs(self._base_workchain, 'relax')
-        self.ctx.current_stage = 0
+        self.ctx.current_stage: int = 0
         self.ctx.current_structure = self.inputs.structure
         self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
         self.ctx.settings = relax_inputs.vasp.settings.get_dict()
         self.ctx.options = relax_inputs.vasp.options.get_dict()
         self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
-        self.ctx.n_stages = len(self.inputs.parameters_stages)
+        self.ctx.n_stages: int = len(self.inputs.parameters_stages)
 
-    def should_run_stage(self):
+    def should_run_stage(self) -> bool:
         """
         Check if a stage should be run
         """
         return self.ctx.current_stage < self.ctx.n_stages
 
-    def run_stage(self):
+    def run_stage(self) -> ToContext:
         """
         Run a stage
         """
@@ -1027,7 +1029,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         running = self.submit(self._base_workchain, **relax_inputs)
         return ToContext(workchains=append_(running))
 
-    def inspect_stage(self):
+    def inspect_stage(self) -> None:
         """
         Inspect a stage
         """
@@ -1050,7 +1052,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.ctx.current_stage += 1
         return
 
-    def results(self):
+    def results(self) -> None:
         """
         Attach the remaining output results.
         This can either be the final static calculation or the last relaxation if the

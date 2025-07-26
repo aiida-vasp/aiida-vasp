@@ -6,7 +6,7 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 from warnings import warn
 
 from aiida import orm
@@ -1138,8 +1138,8 @@ def is_specified(port_namespace: ProcessBuilderNamespace) -> bool:
 
 def update_dict_node(
     node: orm.Dict,
-    content: dict,
-    namespace: Optional[str] = None,
+    content: dict[str, Any],
+    namespace: str | None = None,
     reuse_if_possible: bool = True,
 ) -> orm.Dict:
     """
@@ -1179,7 +1179,7 @@ def update_dict_node(
     return node
 
 
-def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict:
+def builder_to_dict(builder: ProcessBuilder, unpack: bool = True) -> dict[str, Any]:
     """
     Convert a builder to a dictionary and optionally unpack certain nodes.
 

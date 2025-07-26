@@ -93,7 +93,7 @@ class PymatgenAdapator:
                     obj = cls(fname)
                 self.pmg_objects[name] = obj
 
-    def export_files(self, dst: Union[Path, str]):
+    def export_files(self, dst: str | Path) -> None:
         """Export the VASP calculation files to a destination folder"""
         export_vasp(self.node, dst)
 

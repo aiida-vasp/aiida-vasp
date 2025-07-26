@@ -21,6 +21,8 @@ def update_docstring(
 
     For subclasses that use hooks to change behavior of superclass methods.
 
+    :param method_name: Name of the method to update
+    :param content: Content to add or replace
     :param append: If true, append to the docstring, else overwrite it entirely.
 
     Example::
