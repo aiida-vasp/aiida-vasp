@@ -31,16 +31,13 @@ from .pmg import PymatgenAdapator
 
 
 def get_sumo_dos_plotter(scf_node, **kwargs):
-    """
-    Get density of state by raeding directly from the vasprun.xml file
+    """Get density of state by reading directly from the vasprun.xml file.
 
-    Args:
-        scf_node (ProcessNode): A node with `retrieved` output attached.
-        kwargs: additional parameters passed to `load_dos` function from sumo
-
-    Returns:
-        A `SDOSPlotter` object to be used for plotting the density of states.
-
+    :param scf_node: A node with `retrieved` output attached.
+    :type scf_node: ProcessNode
+    :param kwargs: additional parameters passed to `load_dos` function from sumo
+    :returns: A `SDOSPlotter` object to be used for plotting the density of states.
+    :rtype: SDOSPlotter
     """
     adapt = PymatgenAdapator(scf_node)
     vasprun = adapt.vasprun
@@ -50,17 +47,18 @@ def get_sumo_dos_plotter(scf_node, **kwargs):
 
 
 def get_pmg_bandstructure(bands_node, structure=None, efermi=None, **kwargs):
-    """
-    Return a pymatgen `BandStructureSymmLine` object from BandsData
+    """Return a pymatgen `BandStructureSymmLine` object from BandsData.
 
-    Arguments:
-        bands_node: A BandsData object
-        structure (optional): a StructureData object, required if `bands_node`
-          does not have information about the cell.
-        efermi (float): Explicit value of the fermi energy.
-
-    Returns:
-        A `BandStructureSymmLine` object
+    :param bands_node: A BandsData object
+    :type bands_node: BandsData
+    :param structure: a StructureData object, required if `bands_node`
+                      does not have information about the cell.
+    :type structure: StructureData, optional
+    :param efermi: Explicit value of the fermi energy.
+    :type efermi: float, optional
+    :param kwargs: additional keyword arguments
+    :returns: A `BandStructureSymmLine` object
+    :rtype: BandStructureSymmLine
     """
     if not isinstance(bands_node, BandsData):
         raise ValueError('The input argument must be a BandsData')

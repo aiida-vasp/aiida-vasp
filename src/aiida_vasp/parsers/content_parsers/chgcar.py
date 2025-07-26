@@ -27,11 +27,8 @@ class ChgcarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Chgcar`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``CHGCAR`` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``CHGCAR`` content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -41,31 +38,23 @@ class ChgcarParser(BaseFileParser):
 
     @property
     def charge_density(self):
-        """
-        Return the charge density.
+        """Return the charge density.
 
-        Returns
-        -------
-        charge_density : ndarray
-            A NumPy array containing the charge density in the unit cell in C order.
-
+        :returns: A NumPy array containing the charge density in the unit cell in C order.
+        :rtype: ndarray
         """
 
         return self._content_parser.charge_density
 
     @property
     def magnetization_density(self):
-        """
-        Return the magnetization density.
+        """Return the magnetization density.
 
-        Returns
-        -------
-        magnetization_density : dict or ndarray
-            If collinear spin calculations have been performed, a NumPy array containing
-            the magnetization density in the unit cell in C order is returned. If however
-            a non-collinear spin calculation have been performed, a dictionary is returned
-            with keys `x`, `y` and `z`, each containing the same NumPy array, but for each
-            direction.
-
+        :returns: If collinear spin calculations have been performed, a NumPy array containing
+                  the magnetization density in the unit cell in C order is returned. If however
+                  a non-collinear spin calculation have been performed, a dictionary is returned
+                  with keys `x`, `y` and `z`, each containing the same NumPy array, but for each
+                  direction.
+        :rtype: dict or ndarray
         """
         return self._content_parser.magnetization_density

@@ -396,7 +396,8 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         pmg_kwargs=None,
     ) -> 'VaspBuilderUpdater':
         """
-        Use the input set to set the inputs for the VASP calculation.
+        Update the inputs ports for the VASP calculation.
+
         :param structure: The structure to be used for the calculation.
         :param set_name: The name of the input set to be used.
         :param overrides: Any overrides to be applied to the input set.
@@ -653,7 +654,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         """
         Update computational resources in the options.
         NOTE: The available options can be found in the documentation of the Calculation class. These are
-            identical to those used in the metadata.options namespace.
+        identical to those used in the metadata.options namespace.
 
         :param args: Positional arguments passed to dict constructor
         :param kwargs: Resource key-value pairs

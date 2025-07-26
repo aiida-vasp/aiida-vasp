@@ -32,11 +32,8 @@ class PotcarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary content to be parsed.
-
+        :param handler: A file like object that provides the necessary content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -59,8 +56,7 @@ class PotcarParser(BaseFileParser):
 
 
 class PotcarIo:  # pylint: disable=useless-object-inheritance
-    """
-    Deals with VASP input output of POTCAR files.
+    """Deals with VASP input output of POTCAR files.
 
     Instanciate with one of the following kwargs:
 
@@ -210,10 +206,12 @@ class MultiPotcarIo:  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def count_kinds(cls, structure):
-        """
-        Count consecutive kinds that compose the different sites.
+        """Count consecutive kinds that compose the different sites.
 
-        :return: [(kind_name, num), ... ]
+        :param structure: Structure containing sites and kinds
+        :type structure: object
+        :returns: List of tuples with kind names and counts
+        :rtype: list
         """
         kind_name_order = [site.kind_name for site in structure.sites]
         groups = groupby(kind_name_order)

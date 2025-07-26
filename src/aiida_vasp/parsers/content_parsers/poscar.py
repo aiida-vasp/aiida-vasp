@@ -19,7 +19,7 @@ class PoscarParser(BaseFileParser):
     will on the other hand parse the structure using the XML parser.
 
     :param precision: An integer specifying the number of digits for floating point numbers that will be written
-        to ``POSCAR``/``CONTCAR``. Defaults to 12.
+                      to ``POSCAR``/``CONTCAR``. Defaults to 12.
     :type precision: int, optional
     """
 
@@ -34,12 +34,7 @@ class PoscarParser(BaseFileParser):
     }
 
     def __init__(self, *, precision=12, **kwargs):
-        """Initialize an instance of this class.
-
-        :param precision: Number of digits for floating point numbers
-        :type precision: int
-        :param kwargs: Additional keyword arguments
-        """
+        """Initialize an instance of this class."""
 
         self._precision = precision
         super().__init__(**kwargs)
@@ -47,8 +42,8 @@ class PoscarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Poscar`` using a file like handler.
 
-        :param handler: A file like object that provides the necessary ``POSCAR``/``CONTCAR`` content to be parsed
-        :type handler: object
+        :param handler: A file like object that provides the necessary ``POSCAR``/``CONTCAR`` content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -61,9 +56,8 @@ class PoscarParser(BaseFileParser):
     def _init_from_data(self, data):
         """Initialize using an AiiDA ``StructureData`` instance.
 
-        :param data: A valid AiiDA ``StructureData`` object
+        :param data: A valid AiiDA ``StructureData`` object.
         :type data: object
-        :raises TypeError: If the supplied AiiDA data structure is not a StructureData
         """
 
         if isinstance(data, orm.StructureData):
@@ -73,15 +67,11 @@ class PoscarParser(BaseFileParser):
 
     @property
     def structure(self):
-        """
-        Return a structure that is ready to be consumed by the the AiiDA ``StructureData``.
+        """Return a structure that is ready to be consumed by the the AiiDA ``StructureData``.
 
-        Returns
-        -------
-        aiida_structure : dict
-            A dict that contain keys ``comment``, ``unitcell`` and ``sites``, which are compatible
-            with consumption of the initialization of the AiiDA ``StructureData``.
-
+        :returns: A dict that contain keys ``comment``, ``unitcell`` and ``sites``, which are compatible
+                  with consumption of the initialization of the AiiDA ``StructureData``.
+        :rtype: dict
         """
 
         aiida_structure = parsevasp_to_aiida(self._content_parser)
@@ -89,14 +79,10 @@ class PoscarParser(BaseFileParser):
         return aiida_structure
 
     def _content_data_to_content_parser(self):
-        """
-        Convert an AiiDA ``StructureData`` to a content parser instance of ``Poscar`` from ``parsevasp``.
+        """Convert an AiiDA ``StructureData`` to a content parser instance of ``Poscar`` from ``parsevasp``.
 
-        Returns
-        -------
-        content_parser : object
-            An instance of ``Poscar`` from ``parsevasp``.
-
+        :returns: An instance of ``Poscar`` from ``parsevasp``.
+        :rtype: object
         """
         dictionary = {}
         dictionary['comment'] = self._content_data.label or self._content_data.get_formula()
@@ -137,17 +123,11 @@ def parsevasp_to_aiida(poscar):
     Generate an AiiDA structure that can be consumed by ``StructureData`` on initialization
     from the ``parsevasp`` instance of the ``Poscar`` class.
 
-    Parameters
-    ----------
-    poscar : object
-        An instance of the ``Poscar`` class in ``parsevasp``.
-
-    Returns
-    -------
-    poscar_dict : dict
-        A dictionary representation which are ready to be used when creating an
-        AiiDA ``StructureData`` instance.
-
+    :param poscar: An instance of the ``Poscar`` class in ``parsevasp``.
+    :type poscar: object
+    :returns: A dictionary representation which are ready to be used when creating an
+              AiiDA ``StructureData`` instance.
+    :rtype: dict
     """
 
     # Fetch a dictionary containing the entries, make sure all coordinates are

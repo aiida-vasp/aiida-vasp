@@ -195,13 +195,18 @@ def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type
 
 @ensure_node_kwargs
 def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
-    """
-    Copy objects from aiida repository.
+    """Copy objects from aiida repository.
 
-    Args:
-        name (str): The full name (including the parent path) of the object.
-        node (orm.Node): Node object for which the files in the repo to be copied.
-        dst (Path): Path of the destination folder.
+    :param name: The full name (including the parent path) of the object.
+    :type name: str
+    :param node: Node object for which the files in the repo to be copied.
+    :type node: orm.Node
+    :param dst: Path of the destination folder.
+    :type dst: Path
+    :param decompress: Whether to decompress files
+    :type decompress: bool, optional
+    :param exclude: Pattern to exclude files
+    :type exclude: str, optional
 
     This is a recursive function so directory copying also works.
     """

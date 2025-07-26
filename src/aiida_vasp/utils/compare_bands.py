@@ -298,18 +298,12 @@ def plot_errors_vs_iwsize(comparison_info):
 
 
 def get_band_properties_from_data(bandsdata):
-    """
-    Acquire bands information from BandsData
+    """Acquire bands information from BandsData.
 
-    Parameters
-    ----------
-    bandsdata : BandsData
-        A BandsData node to be processed
-
-    Returns
-    -------
-    bands_info : dict
-        Same output as get_band_properties
+    :param bandsdata: A BandsData node to be processed
+    :type bandsdata: BandsData
+    :returns: Same output as get_band_properties
+    :rtype: dict
     """
 
     eigenvalues, occupations = bandsdata.get_bands(also_occupations=True)
@@ -317,23 +311,15 @@ def get_band_properties_from_data(bandsdata):
 
 
 def get_band_properties(eigenvalues, occupations):
-    """
-    Get some key information about the band structure
+    """Get some key information about the band structure.
 
-    Parameters
-    ----------
-    eigenvalues : np.ndarray
-        The eigenvalue array has shape (NS, NB, NK) or (NB, NK), where NS is the number of spins,
-        NB is the number of bands and NK is the number of kpoints.
-
-    occupations: np.ndarray
-        Same format as eigenvalues but instead holds occupation numbers.
-
-    Returns
-    -------
-    bands_info : dict
-        A dictionary holds information about VBM and CBM locations and bandgaps.
-
+    :param eigenvalues: The eigenvalue array has shape (NS, NB, NK) or (NB, NK), where NS is the number of spins,
+                        NB is the number of bands and NK is the number of kpoints.
+    :type eigenvalues: np.ndarray
+    :param occupations: Same format as eigenvalues but instead holds occupation numbers.
+    :type occupations: np.ndarray
+    :returns: A dictionary holds information about VBM and CBM locations and bandgaps.
+    :rtype: dict
     """
     import numpy as np
 

@@ -3,6 +3,8 @@ Immigrant calculation.
 
 
 Enables the immigration of  externally run VASP calculations into AiiDA.
+
+NOTE: This module is no longer maintained and not working.
 """
 
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import

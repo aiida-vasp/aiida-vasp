@@ -43,11 +43,8 @@ class OutcarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Outcar`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``OUTCAR`` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``OUTCAR`` content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -57,21 +54,17 @@ class OutcarParser(BaseFileParser):
 
     @property
     def run_status(self):
-        """
-        Fetch status of calculations.
+        """Fetch status of calculations.
 
-        Returns
-        -------
-        status : dict
-            A dictionary containing the keys ``finished``, which is True if the VASP calculation
-            contain timing information in the end of the ``OUTCAR``. The key ``ionic_converged`` is
-            True if the number of ionic steps detected is smaller than the supplied NSW.
-            The key ``electronic_converged`` is True if the number of electronic steps is smaller than
-            NELM (defaults to 60 in VASP). It is also possible to check if all the ionic steps
-            did reached NELM and thus did not converged if the key ``consistent_nelm_breach`` is ``True``,
-            while ``contains_nelm_breach`` is True if one or more ionic steps reached NELM and thus
-            did not converge electronically.
-
+        :returns: A dictionary containing the keys ``finished``, which is True if the VASP calculation
+                  contain timing information in the end of the ``OUTCAR``. The key ``ionic_converged`` is
+                  True if the number of ionic steps detected is smaller than the supplied NSW.
+                  The key ``electronic_converged`` is True if the number of electronic steps is smaller than
+                  NELM (defaults to 60 in VASP). It is also possible to check if all the ionic steps
+                  did reached NELM and thus did not converged if the key ``consistent_nelm_breach`` is ``True``,
+                  while ``contains_nelm_breach`` is True if one or more ionic steps reached NELM and thus
+                  did not converge electronically.
+        :rtype: dict
         """
         status = self._content_parser.get_run_status()
         return status
@@ -80,15 +73,12 @@ class OutcarParser(BaseFileParser):
     def run_stats(self):
         """Fetch the run statistics, which included timings and memory consumption.
 
-        Returns
-        -------
-        stats : dict
-            A dictionary containing timing and memory consumption information
-            that are parsed from the end of the ``OUTCAR`` file. The key names are
-            mostly preserved, except for the memory which is prefixed with ``mem_usage_``.
-            Units are preserved from ``OUTCAR`` and there are some differences between
-            VASP 5 and 6.
-
+        :returns: A dictionary containing timing and memory consumption information
+                  that are parsed from the end of the ``OUTCAR`` file. The key names are
+                  mostly preserved, except for the memory which is prefixed with ``mem_usage_``.
+                  Units are preserved from ``OUTCAR`` and there are some differences between
+                  VASP 5 and 6.
+        :rtype: dict
         """
         stats = self._content_parser.get_run_stats()
         return stats
@@ -97,15 +87,12 @@ class OutcarParser(BaseFileParser):
     def symmetries(self):
         """Fetch some basic symmetry data.
 
-        Returns
-        -------
-        sym : dict
-            A dictionary containing the number of space group operations in the
-            key ``num_space_group_operations`` and the detected supplied cell in
-            ``original_cell_type``. In ``symmetrized_cell_type`` the cell on which
-            VASP performs the calculation has been included. Each value in the
-            dictionary is a list, where each entry represent one ionic step.
-
+        :returns: A dictionary containing the number of space group operations in the
+                  key ``num_space_group_operations`` and the detected supplied cell in
+                  ``original_cell_type``. In ``symmetrized_cell_type`` the cell on which
+                  VASP performs the calculation has been included. Each value in the
+                  dictionary is a list, where each entry represent one ionic step.
+        :rtype: dict
         """
 
         sym = self._content_parser.get_symmetry()
@@ -115,14 +102,11 @@ class OutcarParser(BaseFileParser):
     def elastic_moduli(self):
         """Fetch the elastic moduli tensor.
 
-        Returns
-        -------
-        moduli : dict
-            A dictionary containing ndarrays with the rigid ion elastic moduli, both symmetrized and
-            non-symmetrized for the keys ``symmetrized`` and ``non_symmetrized`` respectively.
-            The key ``total`` contain both the rigid ion and the ionic contributions to the
-            elastic tensor for the symmetrized case.
-
+        :returns: A dictionary containing ndarrays with the rigid ion elastic moduli, both symmetrized and
+                  non-symmetrized for the keys ``symmetrized`` and ``non_symmetrized`` respectively.
+                  The key ``total`` contain both the rigid ion and the ionic contributions to the
+                  elastic tensor for the symmetrized case.
+        :rtype: dict
         """
 
         moduli = self._content_parser.get_elastic_moduli()
@@ -132,20 +116,17 @@ class OutcarParser(BaseFileParser):
     def site_magnetization(self):
         """Fetch the site dependent magnetization.
 
-        Returns
-        -------
-        magnetization : dict
-            A dictionary containing the key ``sphere`` which contains the integrated
-            magnetization in units of Bohr magneton. Additional keys under ``sphere`` are
-            given for each direction and for non-collinear calculations all of them are used.
-            The ``site_moment`` yields the magnetization per site, with a key describing the
-            site number and then the ``s``, ``p``, ``d`` etc. the projections of the site magnetization
-            and ``tot`` containing the total magnetization for that site.
-            The ``total_magnetization`` gives the sum of each magnetization projection and
-            magnetization total for each site.
-            The ``full_cell`` key yields the magnetization from the electronic part of the last
-            electronic step in a list.
-
+        :returns: A dictionary containing the key ``sphere`` which contains the integrated
+                  magnetization in units of Bohr magneton. Additional keys under ``sphere`` are
+                  given for each direction and for non-collinear calculations all of them are used.
+                  The ``site_moment`` yields the magnetization per site, with a key describing the
+                  site number and then the ``s``, ``p``, ``d`` etc. the projections of the site magnetization
+                  and ``tot`` containing the total magnetization for that site.
+                  The ``total_magnetization`` gives the sum of each magnetization projection and
+                  magnetization total for each site.
+                  The ``full_cell`` key yields the magnetization from the electronic part of the last
+                  electronic step in a list.
+        :rtype: dict
         """
         magnetization = self._content_parser.get_magnetization()
         return magnetization
@@ -154,13 +135,10 @@ class OutcarParser(BaseFileParser):
     def magnetization(self):
         """Fetch the full cell magnetization.
 
-        Returns
-        -------
-        magnetization : list
-            A list containing an entry that is the total magnetization in the cell in unit of
-            Bohr magneton. The magnetization returned is the one associated with the electrons for the
-            last electronic step.
-
+        :returns: A list containing an entry that is the total magnetization in the cell in unit of
+                  Bohr magneton. The magnetization returned is the one associated with the electrons for the
+                  last electronic step.
+        :rtype: list
         """
         magnetization = self.site_magnetization
         if magnetization is not None:
@@ -184,14 +162,12 @@ class VtstNebOutcarParser(OutcarParser):
     }
 
     def __init__(self, *args, **kwargs):
-        """
-        Instantiate the parser
-        """
+        """Instantiate the parser."""
         self._parsed_neb_data = {}
         super().__init__(*args, **kwargs)
 
     def _init_from_handler(self, handler):
-        """Initial fro the handler"""
+        """Initial from the handler."""
         super()._init_from_handler(handler)
         # Parse the NEB results from the handle and store in a dictionary
         self._parsed_neb_data = _parse_neb_outputs(handler)
@@ -225,12 +201,12 @@ class VtstNebOutcarParser(OutcarParser):
 
 
 def _parse_force_block(lines):
-    """
-    Parse the block of total forces from the OUTCAR file
+    """Parse the block of total forces from the OUTCAR file.
 
     :param lines: A list of lines containing lines including the TOTAL-FORCE block
-
+    :type lines: list
     :returns: A tuple of position and forces
+    :rtype: tuple
     """
     forces = []
     positions = []
@@ -250,13 +226,14 @@ def _parse_force_block(lines):
 
 
 def _parse_neb_outputs(path, inputs=None):  # pylint: disable=too-many-branches,too-many-statements
-    """
-    Scan for NEB output in the OUTCAR content
+    """Scan for NEB output in the OUTCAR content.
 
     :param path: Input path or fileobj
-    :param inputs(dict): Dictionary where the parsed data should be placed
-
-    :returns dict: A dictionary of the parsed data
+    :type path: str or Path or file-like object
+    :param inputs: Dictionary where the parsed data should be placed
+    :type inputs: dict, optional
+    :returns: A dictionary of the parsed data
+    :rtype: dict
     """
     inputs = {} if inputs is None else inputs
 

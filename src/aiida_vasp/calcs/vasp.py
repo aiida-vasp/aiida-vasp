@@ -350,13 +350,7 @@ class VaspCalculation(VaspCalcBase):
         """
         Return wether an input kpoints node is needed or not.
 
-        :return output:
-            True if input kpoints node is needed
-            (py:method::VaspCalculation.use_kpoints),
-            False otherwise
-
-        needs 'parameters' input to be set
-        (py:method::VaspCalculation.use_parameters)
+        :return output: True if input kpoints node is needed False otherwise needs 'parameters' input to be set.
         """
         return not bool('kspacing' in self._parameters or 'kgamma' in self._parameters)
 
