@@ -5,10 +5,14 @@ import shutil
 from pathlib import Path
 
 from aiida import orm
+from aiida.common.links import LinkType
+from aiida.orm import CalcJobNode, Node, QueryBuilder, WorkChainNode
+from aiida.plugins import WorkflowFactory
 from aiida.repository import FileType
 
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.workchains.v2.relax import VaspRelaxWorkChain
 
 from .aiida_utils import ensure_node_first_arg, ensure_node_kwargs
 
@@ -37,8 +41,6 @@ def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
 
     :param node: A VaspCalculation node or VaspWorkChain node
     """
-    from aiida.common.links import LinkType
-    from aiida.orm import CalcJobNode, WorkChainNode
 
     folder = Path(folder)
     folder.mkdir(exist_ok=True)
@@ -81,9 +83,6 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
     This function exports a series of relaxation calculations in sub-folders
     """
-    from aiida.orm import Node, QueryBuilder, WorkChainNode
-
-    from aiida_vasp.workchains.v2.relax import VaspRelaxWorkChain
 
     dst = Path(dst)
     dst.mkdir(exist_ok=True)
@@ -133,8 +132,6 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 @ensure_node_first_arg
 def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type='energy_extrapolated'):
     """Export the neb calculation"""
-    from aiida.plugins import WorkflowFactory
-
     energies = {key: value[energy_type] for key, value in workchain.outputs.misc['total_energies'].items()}
 
     # Query for the energy computed for the end structures

@@ -3,10 +3,13 @@
 # pylint: disable=unused-import,redefined-outer-name,unused-argument,unused-wildcard-import,wildcard-import, import-outside-toplevel
 import contextlib
 import os
+import tempfile
 
 import pytest
 from aiida import orm
+from aiida.common import ValidationError
 
+from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
 
 
@@ -87,8 +90,6 @@ def test_write_wavecar(vasp_calc, vasp_inputs, vasp_wavecar, sandbox_folder):
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
     """Test incar with invalid tags raises exception."""
-    from aiida.common import ValidationError
-
     inputs_dict = {
         'gga': 'PE',
         'smear': 3,  # <- Invalid tag
@@ -111,8 +112,6 @@ def test_incar_validate(vasp_calc, vasp_inputs, sandbox_folder):
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 def test_prepare(vasp_calc, vasp_chgcar, vasp_wavecar, vasp_inputs, sandbox_folder):
     """Check that preparing creates all necessary objects."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
-
     wavecar, _ = vasp_wavecar
     chgcar, _ = vasp_chgcar
 
@@ -172,8 +171,6 @@ def test_verify_fail(vasp_calc, vasp_inputs):
 @contextlib.contextmanager
 def managed_temp_object():
     """Create a temp file object for a with context, delete after use."""
-    import tempfile
-
     _, temp_object = tempfile.mkstemp()
     try:
         yield temp_object
@@ -194,7 +191,6 @@ def test_vasp_calc_only_output(fresh_aiida_env, run_vasp_process):
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_vasp_calc(fresh_aiida_env, run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
 
     results, node = run_vasp_process(settings={'parser_settings': {'check_errors': False}})
     assert node.exit_status == 0
@@ -255,8 +251,6 @@ def test_vasp_calc_extra(run_vasp_process):
     """Test a run of a basic VASP calculation where one wants to keep additional objects after parsing is completed."""
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
-    from aiida_vasp.calcs.vasp import VaspCalculation
-
     inputs = {}
     extra_object_to_keep = 'POSCAR'
     inputs['settings'] = orm.Dict(dict={'ADDITIONAL_RETRIEVE_LIST': [extra_object_to_keep]})
@@ -284,8 +278,6 @@ def test_vasp_calc_delete_extra(run_vasp_process):
     objects but not store them after parsing."""
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
-    from aiida_vasp.calcs.vasp import VaspCalculation
-
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'
@@ -312,8 +304,6 @@ def test_vasp_calc_del_str_ext(run_vasp_process):
     """Test a run of a basic VASP calculation where one wants to retrieve additional objects and store only those."""
     # Let us add an additional object to the retrieve_list (which do not delete the object after parse)
     # and check if it is actually there
-    from aiida_vasp.calcs.vasp import VaspCalculation
-
     retrieve_list_ref = ['_scheduler-stdout.txt', '_scheduler-stderr.txt']
     inputs = {}
     extra_object_to_keep = 'POSCAR'

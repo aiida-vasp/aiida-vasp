@@ -6,6 +6,8 @@ Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 """
 
 import collections.abc
+from collections.abc import MutableMapping  # pylint: disable=import-outside-toplevel
+from contextlib import suppress  # pylint: disable=import-outside-toplevel
 from copy import deepcopy
 
 from aiida import orm
@@ -49,8 +51,6 @@ def delete_keys_from_dict(dictionary, keys):
 
 def delete_nested_key(dictionary, keys):
     """Delete the dictionary entry corresponding to a nested hierarchy of keys."""
-    from collections.abc import MutableMapping  # pylint: disable=import-outside-toplevel
-    from contextlib import suppress  # pylint: disable=import-outside-toplevel
 
     if keys and dictionary:
         element = keys[0]

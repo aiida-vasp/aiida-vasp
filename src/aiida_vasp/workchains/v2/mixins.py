@@ -11,7 +11,7 @@ class WithBuilderUpdater:
 
         The arguments are passed directly to the underling `BuilderUpdater` constructor.
         """
-        from .common.builder_updater import (
+        from .common.builder_updater import (  # noqa: PLC0415
             VaspBandUpdater,
             VaspBuilderUpdater,
             VaspConvUpdater,

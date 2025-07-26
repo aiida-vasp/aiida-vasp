@@ -5,6 +5,8 @@ Unittests for VaspNEBCalculation
 import pytest
 from aiida import orm
 
+from aiida_vasp.calcs.neb import VaspNEBCalculation
+
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 def test_prepare(
@@ -14,8 +16,6 @@ def test_prepare(
     sandbox_folder,
 ):
     """Check that preparing creates all necessary files."""
-    from aiida_vasp.calcs.neb import VaspNEBCalculation
-
     inputs_dict = {
         'gga': 'PE',
         'gga_compat': False,

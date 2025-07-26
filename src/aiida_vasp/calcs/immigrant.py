@@ -9,12 +9,14 @@ Enables the immigration of  externally run VASP calculations into AiiDA.
 # explanation: pylint wrongly complains about (aiida) Node not implementing query
 from pathlib import Path
 
+import plumpy
 from aiida import orm
 from aiida.common import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.folders import SandboxFolder
 from aiida.common.lang import override
 from aiida.common.links import LinkType
+from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -24,7 +26,6 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.parsers.node_composer import NodeComposer
 from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
 # _IMMIGRANT_EXTRA_KWARGS = """
@@ -99,9 +100,6 @@ class VaspImmigrant(VaspCalculation):
 
     @override
     def run(self):
-        import plumpy
-        from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
-
         _ = super().run()
 
         # Make sure the retrieve list is set (done in presubmit so we need to call that also)
@@ -202,6 +200,8 @@ class VaspImmigrant(VaspCalculation):
 
 def get_incar_input(dir_path):
     """Create a node that contains the INCAR content."""
+    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
+
     with open(str(dir_path / 'INCAR'), 'r', encoding='utf8') as handler:
         incar_parser = IncarParser(handler=handler)
     incar = incar_parser.get_quantity('incar')
@@ -212,6 +212,8 @@ def get_incar_input(dir_path):
 
 def get_poscar_input(dir_path):
     """Create a node that contains the POSCAR content."""
+    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
+
     with open(str(dir_path / 'POSCAR'), 'r', encoding='utf8') as handler:
         poscar_parser = PoscarParser(handler=handler)
     poscar = poscar_parser.get_quantity('poscar-structure')
@@ -238,6 +240,8 @@ def get_potcar_input(dir_path, structure=None, potential_family=None, potential_
 
 def get_kpoints_input(dir_path, structure=None):
     """Create a node that contains the KPOINTS content."""
+    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
+
     structure = structure or get_poscar_input(dir_path)
     with open(str(dir_path / 'KPOINTS'), 'r', encoding='utf8') as handler:
         kpoints_parser = KpointsParser(handler=handler)

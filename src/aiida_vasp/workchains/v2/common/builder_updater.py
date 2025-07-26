@@ -11,12 +11,20 @@ from warnings import warn
 
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
+from aiida.engine import run_get_node, submit
 from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
+from aiida.plugins import WorkflowFactory
+from ase.visualize import view
 from yaml import safe_load
 
+from aiida_vasp.workchains.v2.bands import BandOptions
+from aiida_vasp.workchains.v2.relax import VaspMultiStageRelaxWorkChain
+
+from ..converge import ConvOptions
 from ..inputset.base import convert_lowercase
 from ..inputset.vaspsets import VASPInputSet
 from ..relax import RelaxOptions
+from .transform import neb_interpolate
 
 DEFAULT_PRESET = 'VaspPreset'
 DEFAULT_INPUTSET = 'UCLRelaxSet'
@@ -129,7 +137,6 @@ class BaseBuilderUpdater:
     ):
         """Instantiate a pipeline"""
         # Configure the builder
-        from aiida.plugins import WorkflowFactory
 
         assert hasattr(self, 'WF_ENTRYPOINT'), 'WF_ENTRYPOINT must be specified by the class'
         self.verbose = verbose
@@ -149,13 +156,11 @@ class BaseBuilderUpdater:
 
     def submit(self) -> orm.WorkChainNode:
         """Submit the workflow to the daemon and return the workchain node"""
-        from aiida.engine import submit
 
         return submit(self.builder)
 
     def run_get_node(self, verbose=True) -> orm.WorkChainNode:
         """Run the workflow with the current python process"""
-        from aiida.engine import run_get_node
 
         output = run_get_node(self.builder)
         # Verbose output (for debugging)
@@ -519,7 +524,6 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         This requires the initial and final structure to be set already.
         This function also update the final image with PBC issue fixed.
         """
-        from .transform import neb_interpolate
 
         initial = self.namespace_vasp.initial_structure
         final = self.namespace_vasp.final_structure
@@ -537,8 +541,6 @@ class VaspNEBUpdater(VaspBuilderUpdater):
         """
         Visualize the images using ASE
         """
-        from ase.visualize import view
-
         view(
             map(
                 lambda x: x.get_ase(),
@@ -619,8 +621,6 @@ class VaspMultiStageRelaxUpdater(VaspRelaxUpdater):
         code: Optional[str] = None,
     ):
         if builder is None:
-            from aiida_vasp.workchains import VaspMultiStageRelaxWorkChain
-
             builder = VaspMultiStageRelaxWorkChain.get_builder()
         if override_vasp_namespace is None:
             override_vasp_namespace = builder.relax.vasp
@@ -649,8 +649,6 @@ class VaspConvUpdater(VaspBuilderUpdater):
         """
         Use the supplied convergence settings
         """
-        from ..converge import ConvOptions
-
         self._set_options(ConvOptions, 'conv_settings', self.builder, **kwargs)
         return self
 
@@ -698,8 +696,6 @@ class VaspBandUpdater(VaspBuilderUpdater):
         return self
 
     def set_band_settings(self, **kwargs) -> 'VaspBandUpdater':
-        from aiida_vasp.workchains.v2.bands import BandOptions
-
         self._set_options(BandOptions, 'band_settings', self.root_namespace, **kwargs)
         return self
 

@@ -11,14 +11,21 @@ import pathlib
 import pytest
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
+from aiida.common.folders import SandboxFolder
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
+from aiida.orm import Dict, List
+from aiida.plugins import DataFactory
+
+from aiida_vasp.calcs.base import VaspCalcBase
+from aiida_vasp.calcs.neb import VaspNEBCalculation
+from aiida_vasp.calcs.vasp import VaspCalculation
+from aiida_vasp.calcs.vasp2w90 import Vasp2w90Calculation
 
 
 @pytest.fixture()
 def sandbox_folder():
     """Yield a `SandboxFolder` that can be used for tests where a Folder is needed."""
-    from aiida.common.folders import SandboxFolder
 
     with SandboxFolder() as folder:
         yield folder
@@ -27,7 +34,6 @@ def sandbox_folder():
 @pytest.fixture()
 def base_calc(fresh_aiida_env, vasp_code):
     """An instance of a VaspCalcBase Process."""
-    from aiida_vasp.calcs.base import VaspCalcBase
 
     manager = get_manager()
     runner = manager.get_runner()
@@ -44,7 +50,6 @@ def base_calc(fresh_aiida_env, vasp_code):
 @pytest.fixture()
 def vasp_calc(vasp_inputs):
     """An instance of a VaspCalculation Process."""
-    from aiida_vasp.calcs.vasp import VaspCalculation
 
     def inner(inputs=None, settings=None):
         if inputs is None:
@@ -60,7 +65,6 @@ def vasp_calc(vasp_inputs):
 @pytest.fixture()
 def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
     """Inputs dictionary for CalcJob Processes."""
-    from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
         inputs = AttributeDict()
@@ -99,7 +103,6 @@ def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, 
 @pytest.fixture()
 def vasp_neb_calc(vasp_neb_inputs):
     """An instance of a VaspCalculation Process."""
-    from aiida_vasp.calcs.neb import VaspNEBCalculation
 
     def inner(inputs=None, settings=None):
         if inputs is None:
@@ -115,7 +118,6 @@ def vasp_neb_calc(vasp_neb_inputs):
 @pytest.fixture()
 def vasp2w90_calc(vasp_inputs):
     """An instance of a VaspCalculation Process."""
-    from aiida_vasp.calcs.vasp2w90 import Vasp2w90Calculation
 
     def inner(inputs=None, settings=None):
         if inputs is None:
@@ -161,7 +163,6 @@ def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_inca
 @pytest.fixture()
 def vasp_chgcar(fresh_aiida_env, data_path):
     """CHGCAR node and reference fixture."""
-    from aiida.plugins import DataFactory
 
     chgcar_path = data_path('chgcar', 'CHGCAR')
     chgcar = DataFactory('vasp.chargedensity')(file=chgcar_path)
@@ -187,7 +188,6 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
 @pytest.fixture()
 def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
     """Inputs dictionary for CalcJob Processes."""
-    from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
         inputs = AttributeDict()
@@ -225,7 +225,6 @@ def ref_incar(data_path):
 @pytest.fixture()
 def vasp_wavecar(fresh_aiida_env, data_path):
     """WAVECAR node and reference fixture."""
-    from aiida.plugins import DataFactory
 
     wavecar_path = data_path('wavecar', 'WAVECAR')
     wavecar = DataFactory('vasp.wavefun')(file=wavecar_path)
@@ -246,7 +245,6 @@ def vasp2w90_inputs(
     wannier_params,
 ):
     """Inputs dictionary for CalcJob Processes."""
-    from aiida.orm import Dict
 
     def inner(settings=None, parameters=None):
         inputs = AttributeDict()
@@ -280,8 +278,6 @@ def vasp2w90_inputs(
 
 @pytest.fixture
 def wannier_projections():
-    from aiida.orm import List
-
     wannier_projections = List()
     wannier_projections.extend(['Ga : s; px; py; pz', 'As : px; py; pz'])
     return wannier_projections
@@ -289,8 +285,6 @@ def wannier_projections():
 
 @pytest.fixture
 def wannier_params():
-    from aiida.orm import Dict
-
     return Dict(
         dict=dict(  # pylint: disable=use-dict-literal
             dis_num_iter=1000,

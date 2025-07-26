@@ -3,10 +3,13 @@ Unit tests for vasp.potcar command family.
 """
 
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
 from aiida.common import AttributeDict
+from aiida.orm import Group, Node
+from aiida.orm.querybuilder import QueryBuilder
 from click.testing import CliRunner
 
 from aiida_vasp.commands.potcar import potcar
@@ -97,8 +100,6 @@ def test_uploadfamily_again(fresh_aiida_env, upload_potcar, cmd_params):
         * Adds no nodes
         * Adds no groups
     """
-    from aiida.orm import Group, Node
-    from aiida.orm.querybuilder import QueryBuilder
 
     node_qb = QueryBuilder(path=[Node])
     node_count = node_qb.count()
@@ -117,9 +118,6 @@ def test_uploadfamily_again(fresh_aiida_env, upload_potcar, cmd_params):
 
 def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
     """Make sure --dry-run does not affect the db."""
-    from aiida.orm import Group, Node
-    from aiida.orm.querybuilder import QueryBuilder
-
     node_qb = QueryBuilder(path=[Node])
     node_count = node_qb.count()
     group_qb = QueryBuilder(path=[Group])
@@ -215,8 +213,6 @@ def test_exportfamilies(fresh_aiida_env, upload_potcar, potcar_family_name, tmp_
 
 def test_call_from_vasp():
     """Test if the verdi potcar data command works."""
-
-    import subprocess
 
     output = subprocess.check_output(['verdi', 'data', 'vasp.potcar', '--help'], universal_newlines=True)
     assert 'Usage: verdi data vasp.potcar' in output  # pylint: disable=unsupported-membership-test

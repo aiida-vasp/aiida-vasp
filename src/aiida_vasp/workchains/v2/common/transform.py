@@ -9,7 +9,15 @@ import numpy as np
 from aiida import orm
 from aiida.engine import calcfunction
 from aiida.orm import StructureData
+from aiida.tools.data.array.kpoints import get_kpoints_path
+from aiida.tools.data.structure import spglib_tuple_to_structure, structure_to_spglib_tuple
 from ase import Atoms
+from ase.build import niggli_reduce as niggli_reduce_
+from ase.build import sort
+from ase.build.supercells import make_supercell as ase_supercell
+from ase.neb import NEB
+from spglib import niggli_reduce as niggli_reduce_spg
+from spglib import refine_cell
 
 
 @calcfunction
@@ -84,8 +92,6 @@ def rattle(structure, amp):
 @calcfunction
 def get_primitive(structure):
     """Create primitive structure use pymatgen interface"""
-    from aiida.orm import StructureData
-
     pstruct = structure.get_pymatgen()
     ps = pstruct.get_primitive_structure()
     out = StructureData(pymatgen=ps)
@@ -96,7 +102,6 @@ def get_primitive(structure):
 @calcfunction
 def get_standard_primitive(structure, **kwargs):
     """Create the standard primitive structure via seekpath"""
-    from aiida.tools.data.array.kpoints import get_kpoints_path
 
     parameters = kwargs.get('parameters', {'symprec': 1e-5})
     if isinstance(parameters, orm.Dict):
@@ -110,8 +115,6 @@ def get_standard_primitive(structure, **kwargs):
 @calcfunction
 def spglib_refine_cell(structure, symprec):
     """Create the standard primitive structure via seekpath"""
-    from aiida.tools.data.structure import spglib_tuple_to_structure, structure_to_spglib_tuple
-    from spglib import refine_cell
 
     structure_tuple, kind_info, kinds = structure_to_spglib_tuple(structure)
 
@@ -125,8 +128,6 @@ def spglib_refine_cell(structure, symprec):
 @calcfunction
 def get_standard_conventional(structure):
     """Create the standard primitive structure via seekpath"""
-    from aiida.tools.data.array.kpoints import get_kpoints_path
-
     out = get_kpoints_path(structure)['conv_structure']
     out.label = structure.label + ' PRIMITIVE'
     return out
@@ -135,8 +136,7 @@ def get_standard_conventional(structure):
 @calcfunction
 def get_refined_structure(structure, symprec, angle_tolerance):
     """Create refined structure use pymatgen's interface"""
-    from aiida.orm import StructureData
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer  # noqa: PLC0415
 
     pstruct = structure.get_pymatgen()
     ana = SpacegroupAnalyzer(pstruct, symprec=symprec.value, angle_tolerance=angle_tolerance.value)
@@ -149,8 +149,7 @@ def get_refined_structure(structure, symprec, angle_tolerance):
 @calcfunction
 def get_conventional_standard_structure(structure, symprec, angle_tolerance):
     """Create conventional standard structure use pymatgen's interface"""
-    from aiida.orm import StructureData
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer  # noqa: PLC0415
 
     pstruct = structure.get_pymatgen()
     ana = SpacegroupAnalyzer(pstruct, symprec=symprec.value, angle_tolerance=angle_tolerance.value)
@@ -163,8 +162,6 @@ def get_conventional_standard_structure(structure, symprec, angle_tolerance):
 @calcfunction
 def make_supercell(structure, supercell, **kwargs):
     """Make supercell structure, keep the tags in order"""
-    from ase.build import sort
-    from ase.build.supercells import make_supercell as ase_supercell
 
     if 'tags' in kwargs:
         tags = kwargs['tags']
@@ -198,8 +195,6 @@ def make_supercell(structure, supercell, **kwargs):
 @calcfunction
 def niggli_reduce(structure):
     """Peroform niggli reduction using ase as the backend - this will rotate the structure into the standard setting"""
-    from ase.build import niggli_reduce as niggli_reduce_
-
     atoms = structure.get_ase()
     niggli_reduce_(atoms)
     new_structure = StructureData(ase=atoms)
@@ -210,8 +205,6 @@ def niggli_reduce(structure):
 @calcfunction
 def niggli_reduce_spglib(structure):
     """Peroform niggli reduction using spglib as backend - this does not rotate the structure"""
-    from spglib import niggli_reduce as niggli_reduce_spg
-
     atoms = structure.get_ase()
     reduced_cell = niggli_reduce_spg(atoms.cell)
     atoms.set_cell(reduced_cell)
@@ -233,8 +226,6 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
     modified to be consistent with the initial structure in terms of absolute
     displacements, i.e. the final structure is *unwrapped*.
     """
-    from ase.neb import NEB
-
     ainit = init_structure.get_ase()
     afinal = final_strucrture.get_ase()
     disps = []

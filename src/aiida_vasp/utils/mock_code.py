@@ -18,6 +18,8 @@ from subprocess import run
 from typing import List, Optional, Union
 
 import numpy as np
+from aiida import orm
+from aiida.plugins import CalculationFactory
 from aiida.repository import FileType
 from parsevasp.incar import Incar
 from parsevasp.kpoints import Kpoints
@@ -316,7 +318,6 @@ class VaspMockRegistry(MockRegistry):
         """
         Register an aiida calc_class
         """
-        from aiida import orm
 
         assert isinstance(calc_node, orm.CalcJobNode), f'{calc_node} is not an CalcJobNode!'
 
@@ -355,8 +356,6 @@ class VaspMockRegistry(MockRegistry):
         """
         Upload all calculations in a workchain node
         """
-        from aiida import orm
-        from aiida.plugins import CalculationFactory
 
         calc_class = CalculationFactory('vasp.vasp')
         neb_class = CalculationFactory('vasp.neb')

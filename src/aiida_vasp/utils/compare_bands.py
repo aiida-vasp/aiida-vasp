@@ -6,10 +6,13 @@ Utilities for comparing band structures. Mostly present for legacy purposes. Wil
 or moved in the future.
 """
 
-from aiida.engine import calcfunction
+import os
 
-# pylint: disable=import-outside-toplevel
+import numpy as np
+from aiida.engine import calcfunction
 from aiida.plugins import DataFactory
+
+import aiida_vasp.utils.bands as btool
 
 BANDS_CLS = DataFactory('core.array.bands')
 
@@ -36,7 +39,6 @@ def make_reference_bands_inline(wannier_bands, vasp_bands, efermi=None):
     Also returns a parameter data node with linkname 'bandinfo' containing
     fermi energy, bandgap etc of the reference bandstructure.
     """
-    import numpy as np
 
     assert isinstance(wannier_bands, BANDS_CLS)
     assert isinstance(vasp_bands, BANDS_CLS)
@@ -173,8 +175,6 @@ def band_gap(bands, occ, efermi=None):
 
 
 def band_error(band1, band2):
-    import numpy as np
-
     return np.square(band1 - band2).sum()
 
 
@@ -184,8 +184,6 @@ def bands_error(bands1, bands2):
 
     Only works for BandsData nodes with 2d band arrays.
     """
-    import numpy as np
-
     bands_1 = bands1.get_bands()
     bands_2 = bands2.get_bands()
     assert bands_1.shape == bands_2.shape
@@ -210,9 +208,6 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
     :param plot_folder: if given, create a plot for each comparison in that folder
     :return:
     """
-    import numpy as np
-
-    import aiida_vasp.utils.bands as btool
 
     owindows = {get_outer_window(b): b for b in wannier_bands_list}
     ref_bands = {k: make_reference_bands_inline(wannier_bands=b, vasp_bands=vasp_bands) for k, b in owindows.items()}
@@ -242,8 +237,6 @@ def compare_bands(vasp_bands, wannier_bands_list, plot_folder=None):
             'error_k_gap': error_k_gap,
         }
         if plot_folder:
-            import os
-
             colors = ['r', 'b', 'g', 'm', 'c', 'y', 'k']
             title = f'Vasp-Wannier comparison for window {[owindow, iwindow]}'
             fig = btool.plot_bstr(reference, efermi=refinfo['efermi'], colors=colors, title=title)
@@ -271,9 +264,6 @@ def compare_from_window_wf(workflow, **kwargs):
 
 def plot_errors_vs_iwsize(comparison_info):
     """Plot Band structure errors versus size of the inner window parameter for wannier90."""
-    import numpy as np
-
-    import aiida_vasp.utils.bands as btool
 
     ows = []
     iws = []
@@ -336,7 +326,6 @@ def get_band_properties(eigenvalues, occupations):
         A dictionary holds information about VBM and CBM locations and bandgaps.
 
     """
-    import numpy as np
 
     info = {}
     vbm = -float('inf')

@@ -10,6 +10,7 @@ workchains.
 
 import pytest
 from aiida import orm
+from aiida.plugins import DataFactory
 
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
@@ -33,8 +34,6 @@ def potcar_node_pair(fresh_aiida_env, data_path):
 @pytest.fixture()
 def ref_retrieved(data_path):
     """Fixture: retrieved directory from an NSCF vasp run."""
-    from aiida.plugins import DataFactory
-
     retrieved = DataFactory('core.folder')()
     retrieved.put_object_from_tree(path=data_path('basic_run'))
     return retrieved

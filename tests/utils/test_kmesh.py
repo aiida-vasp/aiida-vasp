@@ -3,6 +3,8 @@ import numpy as np
 import pytest
 from aiida import orm
 
+from aiida_vasp.utils.kmesh import get_ir_kpoints_and_weights, get_ir_kpoints_data
+
 
 @pytest.fixture
 def atoms():
@@ -22,7 +24,6 @@ def structure(atoms):
 
 def test_get_ir_kpoints_from_structure(atoms):
     """Test the get_ir_kpoints_from_structure function"""
-    from aiida_vasp.utils.kmesh import get_ir_kpoints_and_weights
 
     mesh = [8, 8, 8]
 
@@ -47,8 +48,6 @@ def test_get_ir_kpoints_from_structure(atoms):
 
 def test_get_ir_kpoints_data(structure):
     """Test the get_ir_kpoints_data function"""
-    from aiida_vasp.utils.kmesh import get_ir_kpoints_data
-
     mesh = [8, 8, 8]
     kpt = get_ir_kpoints_data(structure, mesh)
     coords, weights = kpt.get_kpoints(also_weights=True)

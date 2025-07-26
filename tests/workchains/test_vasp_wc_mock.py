@@ -24,13 +24,17 @@ Make sure you unset the environmental variables and rerun the tests to check it 
 from aiida import orm
 from ase.build import bulk
 
-from aiida_vasp.workchains import VaspHybridBandsWorkChain
+from aiida_vasp.workchains import (
+    VaspBandsWorkChain,
+    VaspConvergenceWorkChain,
+    VaspHybridBandsWorkChain,
+    VaspMultiStageRelaxWorkChain,
+    VaspRelaxWorkChain,
+)
 
 
 def test_silicon_sp(mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
-    from ase.build import bulk
-
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
 
@@ -45,12 +49,8 @@ def test_silicon_sp(mock_potcars, mock_vasp_strict, builder_updater):
 
 def test_silicon_relax(mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
-    from ase.build import bulk
-
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
-
-    from aiida_vasp.workchains import VaspRelaxWorkChain
 
     upd = VaspRelaxWorkChain.get_builder_updater(code='mock-vasp@localhost')
     upd.apply_preset(si_node)
@@ -62,12 +62,8 @@ def test_silicon_relax(mock_potcars, mock_vasp_strict, builder_updater):
 
 def test_silicon_converge(mock_potcars, mock_vasp_strict):
     """Test running a VASP workchain on silicon using the mock code."""
-    from ase.build import bulk
-
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
-
-    from aiida_vasp.workchains import VaspConvergenceWorkChain
 
     upd = VaspConvergenceWorkChain.get_builder_updater(code='mock-vasp@localhost')
     upd.apply_preset(si_node)
@@ -80,12 +76,8 @@ def test_silicon_converge(mock_potcars, mock_vasp_strict):
 
 def test_silicon_band(mock_potcars, mock_vasp_strict):
     """Test running a VASP workchain on silicon using the mock code."""
-    from ase.build import bulk
-
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
-
-    from aiida_vasp.workchains import VaspBandsWorkChain
 
     upd = VaspBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
     upd.apply_preset(si_node)
@@ -125,12 +117,9 @@ def test_silicon_band_hybrid_no_relax(mock_potcars, mock_vasp_strict):
 
 def test_silicon_relax_staged(mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
-    from ase.build import bulk
 
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
-
-    from aiida_vasp.workchains import VaspMultiStageRelaxWorkChain
 
     upd = VaspMultiStageRelaxWorkChain.get_builder_updater(code='mock-vasp@localhost')
     upd.apply_preset(si_node)
