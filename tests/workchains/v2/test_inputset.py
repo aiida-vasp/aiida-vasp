@@ -13,6 +13,12 @@ from aiida_vasp.workchains.v2.inputset.base import InputSet
 from aiida_vasp.workchains.v2.inputset.pmgset import PymatgenInputSet
 from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
 
+try:
+    # Check equivalence with pymatgen
+    from pymatgen.io.vasp.sets import MPRelaxSet
+except ImportError:
+    MPRelaxSet = None
+
 # pylint:disable=redefined-outer-name,unused-argument
 
 
@@ -67,6 +73,7 @@ def test_kpoints(aiida_profile, fe_atoms):
     assert kpoints.get_kpoints_mesh()[0][0] == 7
 
 
+@pytest.mark.skipif(MPRelaxSet is None, reason='pymatgen is not installed')
 def test_pmg_kpoints(aiida_profile, fe_atoms):
     """Test generating kpoints"""
     inset = PymatgenInputSet('MPRelaxSet')
@@ -91,6 +98,7 @@ def test_pmg_kpoints(aiida_profile, fe_atoms):
     assert kspacing == 0.22 / np.pi / 2
 
 
+@pytest.mark.skipif(MPRelaxSet is None, reason='pymatgen is not installed')
 def test_pmg(fe_atoms, feo_atoms):
     """Test pymatgen inputsets"""
     vpmgset = PymatgenInputSet('MPRelaxSet', overrides={'ediff': 1.0, 'nsw': None, 'ldautype': 3})
@@ -104,9 +112,6 @@ def test_pmg(fe_atoms, feo_atoms):
     vpmgset = PymatgenInputSet('MPRelaxSet', overrides={'ediff': 1.0, 'nsw': None})
     out = vpmgset.get_input_dict(feo_atoms)
     assert 'ldau' in out
-
-    # Check equivalence with pymatgen
-    from pymatgen.io.vasp.sets import MPRelaxSet
 
     has_potcar = os.environ.get('PMG_VASP_PSP_DIR', '')
     for structure in feo_atoms, fe_atoms:
