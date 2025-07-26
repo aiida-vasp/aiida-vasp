@@ -1,7 +1,6 @@
 """
 Utils for comparing band structures.
 
-------------------------------------
 Utilities for comparing band structures. Mostly present for legacy purposes. Will be rewritten
 or moved in the future.
 """

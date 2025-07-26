@@ -18,12 +18,9 @@ class PoscarParser(BaseFileParser):
     The parser is triggered by using the ``poscar-structure`` quantity key. The quantity key ``structure``
     will on the other hand parse the structure using the XML parser.
 
-    Parameters
-    ----------
-    precision : int, optional
-        An integer specifying the number of digits for floating point numbers that will be written
+    :param precision: An integer specifying the number of digits for floating point numbers that will be written
         to ``POSCAR``/``CONTCAR``. Defaults to 12.
-
+    :type precision: int, optional
     """
 
     DEFAULT_SETTINGS = {'quantities_to_parse': ['structure']}
@@ -37,7 +34,12 @@ class PoscarParser(BaseFileParser):
     }
 
     def __init__(self, *, precision=12, **kwargs):
-        """Initialize an instance of this class."""
+        """Initialize an instance of this class.
+
+        :param precision: Number of digits for floating point numbers
+        :type precision: int
+        :param kwargs: Additional keyword arguments
+        """
 
         self._precision = precision
         super().__init__(**kwargs)
@@ -45,11 +47,8 @@ class PoscarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Poscar`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``POSCAR`/``CONTCAR``` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``POSCAR``/``CONTCAR`` content to be parsed
+        :type handler: object
         """
 
         try:
@@ -62,11 +61,9 @@ class PoscarParser(BaseFileParser):
     def _init_from_data(self, data):
         """Initialize using an AiiDA ``StructureData`` instance.
 
-        Parameters
-        ----------
-        data : object
-            A valid AiiDA ``StructureData`` object.
-
+        :param data: A valid AiiDA ``StructureData`` object
+        :type data: object
+        :raises TypeError: If the supplied AiiDA data structure is not a StructureData
         """
 
         if isinstance(data, orm.StructureData):

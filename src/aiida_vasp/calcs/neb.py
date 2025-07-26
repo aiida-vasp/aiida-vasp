@@ -25,6 +25,7 @@ class VaspNEBCalculation(VaspCalculation):
     folder names 00, 01, 02... N for N-1 number of images.
 
     Input frames should be placed under the ``neb_images`` input namespace as a dictionary like::
+
       {
           'image_00': structure_1,
           'image_01': structure_2

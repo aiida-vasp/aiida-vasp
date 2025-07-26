@@ -7,7 +7,7 @@ myst:
   substitutions:
     VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
     VaspBandsWorkchain: "{py:class}`VaspBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
-    VaspHybridBandsWorkchain: "{py:class}`VaspHybridBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspHybridBandsWorkchain>`"
+    hybrid_bands: "{py:class}`VaspHybridBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspHybridBandsWorkchain>`"
     VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
     VaspConvergenceWorkChain: "{py:class}`VaspConvergenceWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
     calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
@@ -30,8 +30,6 @@ The convergence settings are specified using the `convergence_settings` input wh
 ```python
 print(WorkflowFactory('vasp.v2.relax').option_class.aiida_description())
 ```
-
-See [this tutorial](#silicon_converge) for an example of how to run the {{ VaspConvergenceWorkChain }}.
 
 ## Relaxation workchain
 
@@ -95,13 +93,13 @@ print(WorkflowFactory('vasp.v2.bands').option_class.aiida_description())
 ```
 
 
-The {{ VaspHybridBandsWorkChain }} is an variant of the {{ VaspBandsWorkchain }} for running band structure calculation with hybrid functional.
+The {{ hybrid_bands }} is an variant of the {{ VaspBandsWorkchain }} for running band structure calculation with hybrid functional.
 In this case, the potential is not completely determined from the electron density, hence one cannot use the standard
 approach that first compute the ground state electron density and then use it to solve the Kohn-Sham equation.
 Instead, the Kohn-Sham equation has to be solved self-consistently, and the k-points along the path are inserted
 as *zero-weighted k-points*.
 
-The {{ VaspHybridBandsWorkchain }} is designed for this purpose.
+The {{ hybrid_bands }} is designed for this purpose.
 In addition, the large compute cost of hybrid functional means it may be advantageous to split the full k-point path into smaller sub-paths,
 and run multiple self-consistent calculations in parallel instead of doing a single large calculation,
 given the constraints of the available computing resources.

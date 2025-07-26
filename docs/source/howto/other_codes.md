@@ -167,7 +167,7 @@ load_temp_profile_with_mock()
 from aiida import orm
 from pymatgen.util.testing import PymatgenTest
 from pymatgen.core import Structure
-from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+from aiida_vasp.workchains import VaspBuilderUpdater
 
 #structure = Structure.from_file("Al_empty.cif")
 structure = PymatgenTest.get_structure("CsCl")

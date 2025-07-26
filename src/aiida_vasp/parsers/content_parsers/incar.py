@@ -14,7 +14,6 @@ class IncarParser(BaseFileParser):
     """The parser interface that enables parsing of ``INCAR`` content.
 
     The parser is triggered by using the ``incar`` quantity key.
-
     """
 
     DEFAULT_SETTINGS = {'quantities_to_parse': ['incar']}
@@ -30,11 +29,8 @@ class IncarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Incar`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``INCAR`` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``INCAR`` content to be parsed
+        :type handler: object
         """
 
         try:
@@ -45,11 +41,9 @@ class IncarParser(BaseFileParser):
     def _init_from_data(self, data):
         """Initialize using an AiiDA ``Dict`` instance.
 
-        Parameters
-        ----------
-        data : object
-            A valid AiiDA ``Dict`` object.
-
+        :param data: A valid AiiDA ``Dict`` object
+        :type data: object
+        :raises TypeError: If the supplied AiiDA data structure is not a Dict
         """
 
         if isinstance(data, orm.Dict):
@@ -61,12 +55,9 @@ class IncarParser(BaseFileParser):
     def incar(self):
         """Return the parameters in the ``INCAR``.
 
-        Returns
-        -------
-        params : dict or None
-            A dictionary containing the parameter tags as keys and its settings as values.
+        :returns: A dictionary containing the parameter tags as keys and its settings as values.
             ``None`` is returned if the quantity can not be parsed.
-
+        :rtype: dict or None
         """
         if self._content_parser is not None:
             params = self._content_parser.get_dict()
@@ -74,14 +65,10 @@ class IncarParser(BaseFileParser):
         return None
 
     def _content_data_to_content_parser(self):
-        """
-        Convert an AiiDA ``Dict`` to a content parser instance of ``Incar`` from ``parsevasp``.
+        """Convert an AiiDA ``Dict`` to a content parser instance of ``Incar`` from ``parsevasp``.
 
-        Returns
-        -------
-        content_parser : object
-            An instance of ``Incar`` from ``parsevasp``.
-
+        :returns: An instance of ``Incar`` from ``parsevasp``
+        :rtype: object
         """
         # Filter away None values from the dictionary - these are not valid for ``parsevasp``
         # This allow easier workflow control and parameters merging - setting a key to None means it should not be

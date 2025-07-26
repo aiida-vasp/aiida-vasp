@@ -903,25 +903,23 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
     The output of the final workchain is exposed.
 
-    Example:
+    Example::
 
-    ```
-    vasp_staged_relax = VaspMultiStageRelaxWorkChain.get_builder()
-    vasp_staged_relax.structure = structure
-    vasp_staged_relax.relax = <usual relax inputs>
-    # Set ismear to 0 for the first stage, -5 for the second stage
-    vasp_staged_relax.parameters_stages = {
-        '0': {'incar': {'ismear': 0}},
-        '1': {'incar': {'ismear': 1, 'gga': 'pe', 'lhfcalc': True}},
-        }
-    # Switch to RMM-DIIS for the second stage
-    vasp_staged_relax.relax_settings_stages = {
-    '1': {'algo': 'rd'}}
-    # Include node in the second stage of the relaxation
-    vasp_staged_relax.settings_stages = {
-        '1': {'parser_settings': {'inlude_node': ['dos']}},
-        }
-    ```
+        vasp_staged_relax = VaspMultiStageRelaxWorkChain.get_builder()
+        vasp_staged_relax.structure = structure
+        vasp_staged_relax.relax = <usual relax inputs>
+        # Set ismear to 0 for the first stage, -5 for the second stage
+        vasp_staged_relax.parameters_stages = {
+            '0': {'incar': {'ismear': 0}},
+            '1': {'incar': {'ismear': 1, 'gga': 'pe', 'lhfcalc': True}},
+            }
+        # Switch to RMM-DIIS for the second stage
+        vasp_staged_relax.relax_settings_stages = {
+        '1': {'algo': 'rd'}}
+        # Include node in the second stage of the relaxation
+        vasp_staged_relax.settings_stages = {
+            '1': {'parser_settings': {'inlude_node': ['dos']}},
+            }
 
     Note that the index starts from 0 - e.g. '0' for the first stage, '1' for the second stage, etc.
     """

@@ -64,7 +64,7 @@ for the `VaspBandsWorkChain`:
 
 ```{code-cell}
 from aiida_vasp.workchains.v2.bands import BandOptions
-from aiida_vasp.workchains.v2 import VaspBandUpdater
+from aiida_vasp.workchains import VaspBandUpdater
 
 upd = VaspBandUpdater().apply_preset(si_node, code='mock-vasp@localhost')
 upd.builder.scf.potential_family = 'PBE.EXAMPLE'
