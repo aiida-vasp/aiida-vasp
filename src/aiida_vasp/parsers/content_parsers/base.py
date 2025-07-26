@@ -63,20 +63,20 @@ class BaseFileParser:
         self._logger = AIIDA_LOGGER.getChild(self.__class__.__name__)
 
         # What quantities the specific content parser can provide.
-        self._parsable_quantities: dict[str, Any] = self.PARSABLE_QUANTITIES
+        self._parsable_quantities = self.PARSABLE_QUANTITIES
         # The container for the parsed data when the ``get_quantity`` is executed, i.e. in the node composer
         # at a later stage.
-        self._parsed_content: dict[str, Any] = {}
+        self._parsed_content = {}
         # The content parser, which will be an instance of one of the parsevasp parser classes.
-        self._content_parser: Any = None
+        self._content_parser = None
         # Content data, which is an AiiDA data structure.
-        self._content_data: Data | None = None
+        self._content_data = None
         # Parser settings.
         self._set_settings(settings)
         # Parser options.
-        self._options: dict[str, Any] | None = options
+        self._options = options
 
-        self.parser_notifications: dict[str, Any] = {}
+        self.parser_notifications = {}
 
         # Set ``handler`` (parsing from some source) or ``data`` (eventually for example executing write)
         if handler is not None:

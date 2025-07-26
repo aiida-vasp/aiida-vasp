@@ -5,6 +5,7 @@ Utility functions for running NEB calculations
 from __future__ import annotations
 
 import numpy as np
+from aiida import orm
 from aiida.engine import calcfunction
 from aiida.orm import StructureData
 from ase.neb import NEB
@@ -12,7 +13,7 @@ from ase.neb import NEB
 
 @calcfunction
 def neb_interpolate(
-    init_structure: StructureData, final_strucrture: StructureData, nimages: int
+    init_structure: StructureData, final_strucrture: StructureData, nimages: orm.Int
 ) -> dict[str, StructureData]:
     """
     Interpolate NEB frames using the starting and the final structures

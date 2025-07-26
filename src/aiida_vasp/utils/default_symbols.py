@@ -40,7 +40,7 @@ def get_recommendations(version_nr: str = 'latest', use_gw: bool = False) -> dic
 
 
 # pylint: disable=too-few-public-methods
-class PawInfo(object):  # pylint: disable=useless-object-inheritance
+class PawInfo:  # pylint: disable=useless-object-inheritance
     """Simple class to bundle and pass around info about a PAW."""
 
     def __init__(self, symbol: str, default_enmax: int, valency: float) -> None:

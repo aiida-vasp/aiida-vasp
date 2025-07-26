@@ -188,10 +188,10 @@ class MockRegistry:
         """
         rel_path = pathlib.Path(rel_path)
         dst_path = pathlib.Path(dst_path)
-        found: bool = False
+        found = False
         for reg_path in self.search_paths:
-            base_out: pathlib.Path = reg_path / rel_path / 'out'
-            base_in: pathlib.Path = reg_path / rel_path / 'inp'
+            base_out = reg_path / rel_path / 'out'
+            base_in = reg_path / rel_path / 'inp'
 
             # Not a valid folder - skip this
             if not (base_out.exists() and base_in.exists()):
@@ -199,17 +199,15 @@ class MockRegistry:
 
             found = True
             # Copy the content of input and then the output folder
-            paths: list[pathlib.Path] = [base_in, base_out] if include_inputs else [base_out]
+            paths = [base_in, base_out] if include_inputs else [base_out]
             for folder in paths:
                 for fpath in folder.glob('*'):
                     if fpath.is_file():
                         shutil.copy2(fpath, dst_path)
                     # Directory - then copy the sub files - this only handles one level down
                     elif fpath.is_dir():
-                        dst_subdir: pathlib.Path = dst_path / fpath.name
-                        dst_subdir.mkdir(exist_ok=True)
                         for subfile in fpath.glob('*'):
-                            shutil.copy2(subfile, dst_subdir / subfile.name)
+                            shutil.copy2(subfile, dst_path / fpath.name / subfile.name)
             break
         if not found:
             raise ValueError(f'The path give: {rel_path}, is not found in any search paths.')
@@ -288,15 +286,17 @@ class MockRegistry:
         """Compute the hash for a target folder"""
         raise NotImplementedError
 
-    def upload_aiida_calc(self, calc_node, rel_path: Union[str, pathlib.Path], excluded_names=None):
+    def upload_aiida_calc(
+        self, calc_node: orm.CalcJobNode, rel_path: str | pathlib.Path, excluded_names: list[str] | None = None
+    ) -> None:
         """Update a calculation into the registry"""
         raise NotImplementedError
 
-    def upload_aiida_work(self, work_node, rel_path: Union[str, pathlib.Path]):
+    def upload_aiida_work(self, work_node: orm.WorkChainNode, rel_path: str | pathlib.Path) -> None:
         """Update all calculations run by an workflow into the registry"""
         raise NotImplementedError
 
-    def get_upload_prefix(self):
+    def get_upload_prefix(self) -> str:
         """Prefix of the name of the calculation folder"""
         prefix = os.environ.get(f'MOCK_{self.CODE_NAME}_UPLOAD_PREFIX')
         if prefix:

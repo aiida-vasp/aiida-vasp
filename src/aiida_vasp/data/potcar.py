@@ -115,6 +115,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from functools import cmp_to_key
 from pathlib import Path
+from typing import Any
 
 from aiida.common import AIIDA_LOGGER
 from aiida.common.exceptions import NotExistent, UniquenessError
@@ -140,7 +141,7 @@ class PotcarGroup(Group):
     """
 
 
-def migrate_potcar_group():
+def migrate_potcar_group() -> None:
     """
     Migrate existing potcar family groups to new specification.
     This creates copies of the old potcar family groups using the new `PotcarGroup` class.
@@ -165,7 +166,7 @@ def migrate_potcar_group():
             print(f'Adding nodes to existing new style Group <{new_group}> from <{old_group.label}>')
 
 
-def normalize_potcar_contents(potcar_contents):
+def normalize_potcar_contents(potcar_contents: str | bytes) -> str:
     """Normalize whitespace in a POTCAR given as a string."""
     try:
         potcar_contents = potcar_contents.decode()
@@ -178,7 +179,7 @@ def normalize_potcar_contents(potcar_contents):
     return normalized
 
 
-def sha512_potcar(potcar_contents):
+def sha512_potcar(potcar_contents: str) -> str:
     """Hash the contents of a POTCAR file (given as str)."""
     sha512_hash = hashlib.sha512()
     sha512_hash.update(normalize_potcar_contents(potcar_contents).encode('utf-8'))
@@ -186,7 +187,7 @@ def sha512_potcar(potcar_contents):
 
 
 @contextmanager
-def temp_dir():
+def temp_dir() -> Any:
     """Temporary directory context manager that deletes the tempdir after use."""
     try:
         tempdir = tempfile.mkdtemp()
@@ -196,7 +197,7 @@ def temp_dir():
 
 
 @contextmanager
-def temp_potcar(contents):
+def temp_potcar(contents: bytes) -> Any:
     """Temporary POTCAR file from contents."""
     with temp_dir() as tempdir:
         potcar_file = tempdir / 'POTCAR'
@@ -205,7 +206,7 @@ def temp_potcar(contents):
         yield potcar_file
 
 
-def extract_tarfile(file_path) -> Path:
+def extract_tarfile(file_path: Path) -> Path:
     """Extract a .tar archive into an appropriately named folder, return the path of the folder, avoid extracting if
     folder exists."""
     with tarfile.open(str(file_path)) as archive:
@@ -217,7 +218,7 @@ def extract_tarfile(file_path) -> Path:
     return new_path
 
 
-def by_older(left, right):
+def by_older(left: Any, right: Any) -> int:
     if left.ctime < right.ctime:
         return -1
     if left.ctime > right.ctime:
@@ -225,7 +226,7 @@ def by_older(left, right):
     return 0
 
 
-def by_user(left, right):
+def by_user(left: Any, right: Any) -> int:
     if left.user.is_active and not right.user.is_active:
         return -1
     if not left.user.is_active and right.user.is_active:
@@ -233,7 +234,7 @@ def by_user(left, right):
     return 0
 
 
-class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
+class PotcarWalker:  # pylint: disable=useless-object-inheritance
     """
     Walk the file system and find POTCAR files under a given directory.
 
@@ -241,7 +242,7 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
     inside a tar archive.
     """
 
-    def __init__(self, path):  # pylint: disable=missing-function-docstring
+    def __init__(self, path: Path | str) -> None:  # pylint: disable=missing-function-docstring
         # Only accept a Path object or a string
         if isinstance(path, Path):
             self.path = path
@@ -251,7 +252,7 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
             raise ValueError('The supplied path is not a Path object or a string.')
         self.potcars = set()
 
-    def walk(self):
+    def walk(self) -> None:
         """Walk the folder tree to find POTCAR, extracting any tar archives along the way."""
         if self.path.is_file():
             extracted = self.file_dispatch(self.path.parent, [], self.path.name)
@@ -281,13 +282,13 @@ class PotcarWalker(object):  # pylint: disable=useless-object-inheritance
         return new_dir
 
 
-class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
+class PotcarMetadataMixin:  # pylint: disable=useless-object-inheritance
     """Provide common Potcar metadata access and querying functionality."""
 
     _query_label = 'label'
 
     @classmethod
-    def query_by_attrs(cls, query=None, **kwargs):
+    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> Any:
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
@@ -301,7 +302,7 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         return query
 
     @classmethod
-    def find(cls, **kwargs):
+    def find(cls, **kwargs: Any) -> list[Any]:
         """Find nodes by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
         if not query_builder.count():
@@ -312,7 +313,7 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         return results
 
     @classmethod
-    def find_one(cls, **kwargs):
+    def find_one(cls, **kwargs: Any) -> Any:
         """
         Find one single node.
 
@@ -325,51 +326,51 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
         return res[0]
 
     @classmethod
-    def exists(cls, **kwargs):
+    def exists(cls, **kwargs: Any) -> bool:
         """Answers the question wether a node with attributes given in kwargs exists."""
         return bool(cls.query_by_attrs(**kwargs).count() >= 1)
 
     @property
-    def sha512(self):
+    def sha512(self) -> str:
         """Sha512 hash of the POTCAR file (readonly)."""
         return self.base.attributes.get('sha512')
 
     @property
-    def title(self):
+    def title(self) -> str:
         """Title of the POTCAR file (readonly)."""
         return self.base.attributes.get('title')
 
     @property
-    def functional(self):
+    def functional(self) -> str:
         """Functional class of the POTCAR potential (readonly)."""
         return self.base.attributes.get('functional')
 
     @property
-    def element(self):
+    def element(self) -> str:
         """Chemical element described by the POTCAR (readonly)."""
         return self.base.attributes.get('element')
 
     @property
-    def symbol(self):
+    def symbol(self) -> str:
         """Element symbol property (VASP term) of the POTCAR potential (readonly)."""
         return self.base.attributes.get('symbol')
 
     @property
-    def original_file_name(self):
+    def original_file_name(self) -> str:
         """The name of the original file uploaded into AiiDA."""
         return self.base.attributes.get('original_filename')
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         """The name of the original file uploaded into AiiDA."""
         return self.base.attributes.get('full_name')
 
     @property
-    def potential_set(self):
+    def potential_set(self) -> str:
         """The name of the original file uploaded into AiiDA."""
         return self.base.attributes.get('potential_set')
 
-    def verify_unique(self):
+    def verify_unique(self) -> None:
         """Raise a UniquenessError if an equivalent node exists."""
 
         if self.exists(sha512=self.sha512):
@@ -384,13 +385,13 @@ class PotcarMetadataMixin(object):  # pylint: disable=useless-object-inheritance
             )
 
 
-class VersioningMixin(object):  # pylint: disable=useless-object-inheritance
+class VersioningMixin:  # pylint: disable=useless-object-inheritance
     """Minimalistic Node versioning."""
 
     _HAS_MODEL_VERSIONING = True
     _VERSION = None
 
-    def set_version(self):
+    def set_version(self) -> None:
         self.base.attributes.set('_MODEL_VERSION', self._VERSION)
 
     @property
@@ -690,6 +691,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         :param filter_symbols: list of strings with symbols to filter for.
         """
         group_query = QueryBuilder()
+        group_query.append(PotcarGroup, with_node='potcar_data', tag='potcar_data', project='*')
 
         groups = [group_list[0] for group_list in group_query.all()]
 

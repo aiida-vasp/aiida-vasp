@@ -333,7 +333,7 @@ def create_additional_species(species: list[str], magmoms: list[float]) -> tuple
         # Mappings for this original symbol
         mapping: dict[str, float] = current_species_mapping[symbol]
         # First check if this magmom has been treated
-        not_seen: bool = True
+        not_seen = True
         for sym_, mag_ in mapping.items():
             if mag_ == magmom:
                 current_symbol = sym_
@@ -342,7 +342,7 @@ def create_additional_species(species: list[str], magmoms: list[float]) -> tuple
         if not_seen:
             if current_symbol in mapping:
                 # The other species having the same symbol has been assigned
-                counter: int = len(mapping) + 1
+                counter = len(mapping) + 1
                 current_symbol = f'{symbol}{counter}'
             mapping[current_symbol] = magmom
         new_species.append(current_symbol)
@@ -362,7 +362,7 @@ def create_additional_species(species: list[str], magmoms: list[float]) -> tuple
     return new_species, all_mapping
 
 
-def convert_to_plain_list(species: list, magmom_mapping: dict):
+def convert_to_plain_list(species: list[str], magmom_mapping: dict[str, float]) -> tuple[list[str], list[float]]:
     """
     Covert from a decorated species list to a plain list of symbols
     and magnetic moments.

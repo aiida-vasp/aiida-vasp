@@ -53,7 +53,7 @@ def update_docstring(
     def wrapper(cls: type[ClassType]) -> type[ClassType]:
         """Update the method docstring and return the class."""
         if append:
-            getattr(cls, method_name).__func__.__doc__ = ''
+            getattr(cls, method_name).__func__.__doc__ += content
         else:
             getattr(cls, method_name).__func__.__doc__ = content
         return cls

@@ -8,6 +8,7 @@ the parser in the Wannier90 plugin, but no input parser exists yet.
 """
 
 import re
+from typing import Any, Callable
 
 
 class BaseKeyValueParser:  # pylint: disable=useless-object-inheritance
@@ -20,7 +21,7 @@ class BaseKeyValueParser:  # pylint: disable=useless-object-inheritance
     empty_line = re.compile(r'[\r\n]\s*[\r\n]')
 
     @classmethod
-    def line(cls, fobj_or_str, d_type=str):
+    def line(cls, fobj_or_str: str | Any, d_type: type = str) -> Any:
         """
         Grab a line from a file object or string and convert it to ``d_type`` (default: ``str``).
 
@@ -41,7 +42,7 @@ class BaseKeyValueParser:  # pylint: disable=useless-object-inheritance
         return res
 
     @classmethod
-    def splitlines(cls, fobj_or_str, d_type=float):
+    def splitlines(cls, fobj_or_str: str | Any, d_type: type = float) -> list[Any]:
         """
         Split a chunk of text into a list of lines and convert each line to ``d_type`` (default: ``float``).
 
@@ -101,7 +102,7 @@ class KeyValueParser(BaseKeyValueParser):
     comment = True
 
     @classmethod
-    def get_lines(cls, filename):
+    def get_lines(cls, filename: str) -> list[str]:
         """
         Read all lines from a file.
 
@@ -115,7 +116,7 @@ class KeyValueParser(BaseKeyValueParser):
         return lines
 
     @classmethod
-    def retval(cls, *args, **kwargs):
+    def retval(cls, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """
         Normalize return values from value conversion functions.
 
@@ -130,7 +131,7 @@ class KeyValueParser(BaseKeyValueParser):
         return ret
 
     @classmethod
-    def flatten(cls, lst):
+    def flatten(cls, lst: list[list[Any]]) -> list[Any]:
         """
         Flatten a list of lists into a single list.
 
@@ -142,7 +143,7 @@ class KeyValueParser(BaseKeyValueParser):
         return [i for j in lst for i in j]
 
     @classmethod
-    def find_kv(cls, line):
+    def find_kv(cls, line: str) -> list[tuple[str, str]]:
         """
         Find key-value pairs in a line using the assignment regex.
 
@@ -154,7 +155,7 @@ class KeyValueParser(BaseKeyValueParser):
         return re.findall(cls.assignment, line)
 
     @classmethod
-    def float(cls, string_):
+    def float(cls, string_: str) -> dict[str, Any]:
         """
         Parse a string into a float value followed by a comment.
 
@@ -169,7 +170,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, comment=comment)
 
     @classmethod
-    def float_unit(cls, string_):
+    def float_unit(cls, string_: str) -> dict[str, Any]:
         """
         Parse string into a float number with attached unit.
 
@@ -185,7 +186,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, unit, comment=comment)
 
     @classmethod
-    def int(cls, string_):
+    def int(cls, string_: str) -> dict[str, Any]:
         """
         Parse a string into an integer value followed by a comment.
 
@@ -200,7 +201,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, comment=comment)
 
     @classmethod
-    def int_unit(cls, string_):
+    def int_unit(cls, string_: str) -> dict[str, Any]:
         """
         Convert a string into a python value, associated unit and optional comment.
 
@@ -216,7 +217,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, unit, comment=comment)
 
     @classmethod
-    def string(cls, string_):
+    def string(cls, string_: str) -> dict[str, Any]:
         """
         Parse a string into value and comment, assuming only the first word is the value.
 
@@ -231,7 +232,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, comment=comment)
 
     @classmethod
-    def bool(cls, string_):
+    def bool(cls, string_: str) -> dict[str, Any]:
         """
         Parse string into a boolean value.
 
@@ -255,7 +256,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cls.retval(value, comment=comment)
 
     @classmethod
-    def kv_list(cls, filename):
+    def kv_list(cls, filename: str) -> list[Any]:
         """
         Read a file and return a list of key-value pairs for each line.
 
@@ -269,7 +270,7 @@ class KeyValueParser(BaseKeyValueParser):
         return kv_list
 
     @classmethod
-    def kv_dict(cls, kv_list):
+    def kv_dict(cls, kv_list: list[Any]) -> dict[str, Any]:
         """
         Convert a list of key-value pairs into a dictionary.
 
@@ -282,7 +283,7 @@ class KeyValueParser(BaseKeyValueParser):
         return kv_dict
 
     @classmethod
-    def clean_value(cls, str_value):
+    def clean_value(cls, str_value: str) -> dict[str, Any]:
         """
         Get the converted python value from a string.
 
@@ -300,7 +301,7 @@ class KeyValueParser(BaseKeyValueParser):
         return cleaned_value
 
     @classmethod
-    def get_converter_iter(cls):
+    def get_converter_iter(cls) -> Any:
         """
         Get an iterator over the value converter functions in order.
 
@@ -310,7 +311,7 @@ class KeyValueParser(BaseKeyValueParser):
         return (i for i in converter_order)
 
     @classmethod
-    def try_convert(cls, input_value, converter):
+    def try_convert(cls, input_value: str, converter: Callable[[str], dict[str, Any]]) -> dict[str, Any] | None:
         """
         Try to convert the input string into a python value given a conversion function.
 
@@ -343,7 +344,7 @@ class WinParser(KeyValueParser):
     block = re.compile(r'begin (?P<name>\w*)\s*\n\s*(?P<content>[\w\W]*)\s*\n\s*end \1')
     comment = re.compile(r'(!.*)\n?')
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         """
         Initialize the parser and parse the Wannier90 input file.
 
@@ -358,7 +359,7 @@ class WinParser(KeyValueParser):
         self.result.update(self.blocks)
 
     @classmethod
-    def parse_win(cls, fobj_or_str):
+    def parse_win(cls, fobj_or_str: str | Any) -> tuple[dict[str, Any], dict[str, list[str]], list[str]]:
         """
         Parse a Wannier90 input file or string.
 
