@@ -9,6 +9,12 @@ from aiida import orm
 
 from .base import InputSet
 
+try:
+    import pymatgen.io.vasp.sets as pmg_sets
+    from pymatgen.io.vasp.inputs import KpointsSupportedModes
+except ImportError:
+    pmg_sets = None
+
 
 class PymatgenInputSet(InputSet):
     """
@@ -71,11 +77,8 @@ class PymatgenInputSet(InputSet):
 
         :raises ImportError: If pymatgen is not installed or cannot be imported
         """
-        try:
-            import pymatgen.io.vasp.sets as pmg_sets
-        except ImportError:
-            raise ImportError('pymatgen has to be installed to use this feature.')
-
+        if pmg_sets is None:
+            raise ImportError('pymatgen is not installed. Please install it to use PymatgenInputSet.')
         self._pmg_class = getattr(pmg_sets, self.set_name)
 
     def get_input_dict(self, structure: orm.StructureData, raw_python: bool = True) -> Union[Dict, orm.Dict]:
@@ -207,7 +210,6 @@ def pmg_kpoints2kpointsdata(pmg_kpoints, structure: orm.StructureData) -> orm.Kp
 
     :raises ValueError: If the k-point style is not supported
     """
-    from pymatgen.io.vasp.inputs import KpointsSupportedModes
 
     # Currently only supports Gamma and Monkhorst-Pack
     style = pmg_kpoints.style
