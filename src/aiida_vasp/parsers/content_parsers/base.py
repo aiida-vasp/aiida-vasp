@@ -1,6 +1,8 @@
 """
 Base classes for the VASP content parsers.
 
+===============================
+
 Contains the base classes for the VASP content parsers.
 """
 # pylint: disable=import-outside-toplevel
@@ -13,52 +15,27 @@ class BaseFileParser:
     """
     Base class for all the content parsers which parse (read and write) VASP files.
 
-    The actually read, interpret and write to/from files is handled by
-    parsevasp and this interface ensures that the parsing framework in AiiDA and
-    preparation before submission is successful. The specific content parser
-    interfaces are always childs of this class.
+    This class provides the interface for parsing and writing VASP files using parsevasp.
+    It ensures integration with the AiiDA parsing framework and preparation before submission.
+    Specific content parser interfaces should inherit from this class.
 
-    We assume that there are two main paths when parsing of VASP files takes place.
-    One is when a file is present and we want to interpret it and convert its
-    content into one of the usable data structures in AiiDA.
-    The second is when we already have an AiiDA data structure  and want to write a
-    file based on its content. In the former case we basically
-    read from a file, while in the latter we write to a file.
+    There are two main usage patterns:
 
-    The first approach is enabled if we initialize the parser with the argument ``handler``.
-    This should be a file like handler, i.e. from a context manager telling where the
-    content can be located. The respective quantities can then be fetched using the
-    ``get_quantity`` function of the instance with the key representing the quantity.
-    The content of the handler is parsed after
-    initialization. The valid keys representing fetchable quantities is defined for each
-    content parser class using the ~`PARSABLE_QUANTITIES~` class parameter.
+    1. **Parsing from file**: Initialize with ``handler`` (a file-like object), then fetch quantities
+       using :meth:`get_quantity` with the appropriate key. The valid keys are defined in the
+       ``PARSABLE_QUANTITIES`` class parameter of each subclass.
 
-    The second approach is enabled if we initialize with an argument ``data``. This should be
-    a valid AiiDA data structure node. Using the ``get_quantity('somekey')`` function of the instance
-    return the same AiiDA data structure node back as was supplied to ``data``.
+    2. **Writing from data**: Initialize with ``data`` (an AiiDA data node), then use :meth:`get_quantity`
+       to retrieve the same node, or use :meth:`write` to write the content to a file.
 
-    One can write the parsed content or the content of the StructureData using the
-    function ``write`` of the class instance.
-
-    Parameters
-    ----------
-
-    handler : object, optional
-        A file like object, for instance a file handler representing the file or object
-        containing content to be parsed. Typically used when parsing completed calculations and is
-        also the parameter used during initialization of the content parser, when the ``parse``
-        function of this AiiDA plugin is executed.
-    data : object. optional
-        An AiiDA data structure node. Typically used when one later want to write VASP input
-        files.
-    settings : dict, optional
-        Parser settings. Used to set parser settings, e.g. which quantities to compose into nodes etc.
-    options : dict, optional
-        Parser options. Used to set extra options to the content parsers. For instance for the
-        ``POSCAR``/``CONTAR`` parser one set ``options.positions_dof`` to supply selective tags to enable proper
-        construction of selective dynamics ``POSCAR``/``CONTCAR`` from a ``StructureData``. The ``StructureData`` does
-        not contain this type of possibilities.
-
+    :param handler: File-like object containing content to be parsed. Used when parsing completed calculations.
+    :type handler: file-like object, optional
+    :param data: AiiDA data node. Used when writing VASP input files.
+    :type data: object, optional
+    :param settings: Parser settings, e.g. which quantities to compose into nodes.
+    :type settings: dict, optional
+    :param options: Parser options, e.g. extra options for content parsers such as selective dynamics for POSCAR.
+    :type options: dict, optional
     """
 
     OPEN_MODE = 'r'
@@ -103,6 +80,9 @@ class BaseFileParser:
     def get_all_quantities(self):
         """
         Fetch all quantities that can be parsed.
+
+        :return: Tuple of (parsed, errored) dictionaries.
+        :rtype: tuple
         """
         parsed = {}
         errored = {}
@@ -116,19 +96,21 @@ class BaseFileParser:
 
     @property
     def parsable_quantities(self):
-        """Fetch the quantities that this content parser can provide."""
+        """
+        Fetch the quantities that this content parser can provide.
+
+        :return: List of parsable quantity keys.
+        :rtype: list
+        """
         return self._parsable_quantities
 
     def _set_settings(self, settings):
-        """Sets the settings to be used for the content parser.
+        """
+        Set the settings to be used for the content parser.
 
-        Parameters
-        ----------
-
-        settings : None or a dict
-            The settings to be used for the content parser. Can be None if no settings is supplied
-            to init. Defaults are then set.
-
+        :param settings: The settings to be used for the content parser. Can be None if no settings
+          is supplied to init. Defaults are then set.
+        :type settings: None or dict
         """
         if settings is None:
             # Apply defaults
@@ -146,27 +128,17 @@ class BaseFileParser:
             raise TypeError('The quantities_to_parse is not defined as a list of quantities.')
 
     def get_quantity(self, quantity_key):
-        """Fetch the required quantity from the content parser.
+        """
+        Fetch the required quantity from the content parser.
 
         Either fetch it from an existing AiiDA data structure, a parsed content dictionary
         if that exists, otherwise parse this specific quantity using the loaded instance,
         which is now a specific content parser.
 
-        Parameters
-        ----------
-
-        quantity_key : str
-            A string specifying the key of the quantity to be fetched.
-
-        Returns
-        -------
-
-        result : object
-            If we have initialized the content parser with an AiiDA data structure, we return it in
-            its original form. If the ``quantity_key`` is not find to be parsable by this content
-            parser None is returned. Finally, if the content parser was initialized with a file like
-            object and the requested ``quantity_key`` is found to be parsable we return the quantity.
-
+        :param quantity_key: Key of the quantity to be fetched.
+        :type quantity_key: str
+        :return: The requested quantity, or None if not parsable.
+        :rtype: object or None
         """
         if self._content_data is not None:
             # If we have already set an AiiDA data structure, return it.
@@ -189,15 +161,10 @@ class BaseFileParser:
 
     def write(self, path):
         """
-        Writes VASP content to file.
+        Write VASP content to file using the loaded content parser.
 
-        Uses the write method defined in this loaded content parser.
-
-        Parameters
-        ----------
-        path : str
-            A string describing the relative path in the submission folder to write the file.
-
+        :param path: Path to write the file to.
+        :type path: str
         """
 
         if self._content_parser is None or self._content_data is None:
@@ -216,34 +183,28 @@ class BaseFileParser:
             raise ValueError('The content parser has not been initialized or no AiiDA data structure is preparred.')
 
     def _init_from_handler(self, handler):
-        """Initialize using a file like object.
+        """
+        Initialize using a file-like object.
 
         Should be overridden in specific content parsers under ``content_parsers``
         if it will accept parsable content.
 
-        Parameters
-        ----------
-
-        handler : object
-            A file like object that provides the necessary content to be parsed.
-
+        :param handler: File-like object that provides the necessary content to be parsed.
+        :type handler: object
         """
 
         raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_handler() method.')
 
     def _init_from_data(self, data):
-        """Initialize using an AiiDA data structure.
+        """
+        Initialize using an AiiDA data structure.
 
         Should be overridden in specific content parsers under ``content_parsers``
         if it will accept an AiiDA data structure. It should also check that the
         right structure is supplied.
 
-        Parameters
-        ----------
-
-        data : object
-            A valid AiiDA data structure object.
-
+        :param data: A valid AiiDA data structure object.
+        :type data: object
         """
 
         raise NotImplementedError(f'{self.__class__.__name__} does not implement a _init_from_data() method.')
@@ -257,11 +218,8 @@ class BaseFileParser:
         if it will accept an AiiDA data structure. It should also check that the
         right structure is supplied.
 
-        Returns
-        -------
-        content_parser : object
-            An instance of a content parser from ``parsevasp``, e.g. ``Poscar``.
-
+        :return: Instance of a content parser from ``parsevasp``, e.g. ``Poscar``.
+        :rtype: object
         """
 
         raise NotImplementedError(
@@ -269,7 +227,12 @@ class BaseFileParser:
         )
 
     def _parse_content(self):
-        """Parse the quantities configured and parseable from the content."""
+        """
+        Parse the quantities configured and parseable from the content.
+
+        :return: Dictionary of parsed quantities.
+        :rtype: dict
+        """
         quantities_to_parse = self._settings.get('quantities_to_parse')
         result = {}
         if self._content_parser is None:

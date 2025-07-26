@@ -1,7 +1,6 @@
 """
 The ``EIGENVAL`` parser interface.
 
-----------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``EIGENVAL`` content.
 """
 
@@ -38,11 +37,8 @@ class EigenvalParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize a ``parsevasp`` object of ``Eigenval`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``EIGENVAL`` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``EIGENVAL`` content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -54,12 +50,9 @@ class EigenvalParser(BaseFileParser):
     def eigenvalues(self):
         """Return the eigenvalue and metadata in the ``EIGENVAL``.
 
-        Returns
-        -------
-        eigenvalues : dict
-            A dict containing the keys ``eigenvalues`` and ``metadata``, which contain
-            a NumPy array of the eigenvalues and a dict with metadata, respectively.
-
+        :returns: A dict containing the keys ``eigenvalues`` and ``metadata``, which contain
+                  a NumPy array of the eigenvalues and a dict with metadata, respectively.
+        :rtype: dict
         """
 
         metadata = self._content_parser.get_metadata()
@@ -72,12 +65,9 @@ class EigenvalParser(BaseFileParser):
     def kpoints(self):
         """Return the kpoints and metadata in the ``EIGENVAL``.
 
-        Returns
-        -------
-        kpoints : dict
-            A dict containing the keys ``kpoints`` and ``metadata``, which contain
-            a NumPy array of the k-points and a dict with metadata, respectively.
-
+        :returns: A dict containing the keys ``kpoints`` and ``metadata``, which contain
+                  a NumPy array of the k-points and a dict with metadata, respectively.
+        :rtype: dict
         """
 
         metadata = self._content_parser.get_metadata()

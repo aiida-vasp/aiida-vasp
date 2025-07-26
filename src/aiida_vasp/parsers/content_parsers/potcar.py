@@ -1,7 +1,6 @@
 """
 POTCAR parser.
 
---------------
 The file parser that handles the parsing of POTCAR files. Also contains methods to
 find, import, compose and write POTCAR files.
 """
@@ -30,11 +29,8 @@ class PotcarParser(BaseFileParser):
     def _init_from_handler(self, handler):
         """Initialize using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary content to be parsed.
-
+        :param handler: A file like object that provides the necessary content to be parsed.
+        :type handler: file-like object
         """
 
         from parsevasp.potcar import Potcar  # noqa: PLC0415
@@ -62,7 +58,7 @@ class PotcarIo:
     """
     Deals with VASP input output of POTCAR files.
 
-    Instanciate with one of the following kwargs:
+    Instantiate with one of the following kwargs:
 
     :param path: (string) absolute path to the POTCAR file
     :param potcar_node: a PotcarData node
@@ -223,10 +219,12 @@ class MultiPotcarIo:  # pylint: disable=useless-object-inheritance
 
     @classmethod
     def count_kinds(cls, structure):
-        """
-        Count consecutive kinds that compose the different sites.
+        """Count consecutive kinds that compose the different sites.
 
-        :return: [(kind_name, num), ... ]
+        :param structure: Structure containing sites and kinds
+        :type structure: object
+        :returns: List of tuples with kind names and counts
+        :rtype: list
         """
         kind_name_order = [site.kind_name for site in structure.sites]
         groups = groupby(kind_name_order)

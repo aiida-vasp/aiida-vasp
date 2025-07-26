@@ -3,6 +3,8 @@ Immigrant calculation.
 
 
 Enables the immigration of  externally run VASP calculations into AiiDA.
+
+NOTE: This module is no longer maintained and not working.
 """
 
 # pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
@@ -39,17 +41,13 @@ from aiida_vasp.utils.aiida_utils import cmp_get_transport
 
 
 class VaspImmigrant(VaspCalculation):
-    """Parse VASP output objects stored in a specified directory.
+    """
+    Parse VASP output objects stored in a specified directory.
 
     Simulate running the VaspCalculation up to the point where it can be
     retrieved and parsed, then hand over control to the runner for the rest.
 
-    Usage examples
-    --------------
-
-    Immigrant calculation can be perfomed as follows.
-
-    ::
+    Immigrant calculation can be perfomed as follows::
 
        code = Code.get_from_string('vasp@local')
        folder = '/home/username/vasp-calc-dir'
@@ -62,9 +60,7 @@ class VaspImmigrant(VaspCalculation):
                                                        settings=settings)
        submit(builder)
 
-    Instead of ``builder``, inputs dict is obtained similarly as
-
-    ::
+    Instead of ``builder``, inputs dict is obtained similarly as::
 
        code = Code.get_from_string('vasp@local')
        folder = '/home/username/vasp-calc-dir'
@@ -77,10 +73,7 @@ class VaspImmigrant(VaspCalculation):
                                                      settings=settings)
        submit(VaspImmigrant, **inputs)
 
-    Note
-    ----
-
-    The defaul metadata is set automatically as follows::
+    The default metadata is set automatically as follows::
 
        {'options': {'max_wallclock_seconds': 1,
         'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}}
@@ -137,6 +130,7 @@ class VaspImmigrant(VaspCalculation):
         :param potential_mapping: dict. This will be obsolete at v3.0.
         :param use_wavecar: bool. Try to read WAVECAR.
         :param use_chgcar bool. Try to read CHGCAR.
+
         """
 
         inputs = AttributeDict()

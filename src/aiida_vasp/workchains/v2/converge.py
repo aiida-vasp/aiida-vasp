@@ -35,14 +35,15 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
 
     A ``conv_setting`` input controls the range of cut off energies and kpoint spacings.
     The available options are:
-      - cutoff_start
-      - cutoff_stop
-      - cutoff_step
-      - kspacing_start
-      - kspacing_stop
-      - kspacing_step
-      - cutoff_kconv : cut-off energy for the kpoints convergence tests.
-      - kspacing_cutconv : the kpoint spacing to be used for cut-off energy convergence tests.
+
+    - cutoff_start
+    - cutoff_stop
+    - cutoff_step
+    - kspacing_start
+    - kspacing_stop
+    - kspacing_step
+    - cutoff_kconv : cut-off energy for the kpoints convergence tests.
+    - kspacing_cutconv : the kpoint spacing to be used for cut-off energy convergence tests.
 
     The the output data are collected and stored in two ``Dict`` output nodes.
     """

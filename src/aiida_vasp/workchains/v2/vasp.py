@@ -1,43 +1,43 @@
 """
-VASP workchain.
----------------
+This file contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
 
-Contains the VaspWorkChain class definition which uses the BaseRestartWorkChain.
+Below is a copy of the error handler logic from aiida-core:
 
+If the process is excepted or killed, the work chain will abort. Otherwise any attached handlers will be called
+in order of their specified priority. If the process was failed and no handler returns a report indicating that
+the error was handled, it is considered an unhandled process failure and the process is relaunched. If this
+happens twice in a row, the work chain is aborted. In the case that at least one handler returned a report the
+following matrix determines the logic that is followed::
 
-Below is a copy of the error handler logic from aiida-core.
+    Process  Handler    Handler     Action
+    result   report?    exit code
 
-    If the process is excepted or killed, the work chain will abort. Otherwise any attached handlers will be called
-    in order of their specified priority. If the process was failed and no handler returns a report indicating that
-    the error was handled, it is considered an unhandled process failure and the process is relaunched. If this
-    happens twice in a row, the work chain is aborted. In the case that at least one handler returned a report the
-    following matrix determines the logic that is followed:
+    -----------------------------------------
 
-        Process  Handler    Handler     Action
-        result   report?    exit code
-        -----------------------------------------
-        Success      yes        == 0     Restart
-        Success      yes        != 0     Abort
-        Failed       yes        == 0     Restart
-        Failed       yes        != 0     Abort
+    Success      yes        == 0     Restart
+    Success      yes        != 0     Abort
+    Failed       yes        == 0     Restart
+    Failed       yes        != 0     Abort
 
-    If no handler returned a report and the process finished successfully, the work chain's work is considered done
-    and it will move on to the next step that directly follows the `while` conditional, if there is one defined in
-    the outline.
+If no handler returned a report and the process finished successfully, the work chain's work is considered done
+and it will move on to the next step that directly follows the `while` conditional, if there is one defined in
+the outline.
 
 This means that for a handler:
 
-    - No error found - just return None
-    - No action taken
-        - the error is not recoverable - return with a non-zero error code with do break
-        - the error is not recoverable, but other handler may/maynot save it - return with a non-zero code without do
-        break
-        - the error is not recoverable, and the workchain should be aborted immediately - non-zero code + do break
+- No error found - just return None
+- No action taken
 
-    - Action taken
-        - the error is fixed in full - return with a zero error code with `do_break=True`
-        - the error is not fixed in full - return with a report with `do_break=False` but has a `exit_code`.
-          this mean other handlers (with lower priority) must handle it and return a zero error_code.
+  - the error is not recoverable - return with a non-zero error code with do break
+  - the error is not recoverable, but other handler may/maynot save it - return with a non-zero code without do
+    break
+  - the error is not recoverable, and the workchain should be aborted immediately - non-zero code + do break
+
+- Action taken
+
+  - the error is fixed in full - return with a zero error code with `do_break=True`
+  - the error is not fixed in full - return with a report with `do_break=False` but has a `exit_code`.
+    this mean other handlers (with lower priority) must handle it and return a zero error_code.
 
 """
 
@@ -83,7 +83,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
     """
     The VASP workchain.
 
-    -------------------
     Error handling enriched wrapper around VaspCalculation.
 
     Deliberately conserves most of the interface (required inputs) of the VaspCalculation class, but

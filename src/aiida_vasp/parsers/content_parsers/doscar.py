@@ -1,7 +1,6 @@
 """
 The ``DOSCAR`` parser interface.
 
---------------------------------
 Contains the parsing interfaces to parsevasp used to parse ``DOSCAR`` content.
 """
 
@@ -30,13 +29,10 @@ class DoscarParser(BaseFileParser):
     }
 
     def _init_from_handler(self, handler):
-        """Initialize a ``parsevasp`` object of ``Chgcar`` using a file like handler.
+        """Initialize a ``parsevasp`` object of ``Doscar`` using a file like handler.
 
-        Parameters
-        ----------
-        handler : object
-            A file like object that provides the necessary ``DOSCAR`` content to be parsed.
-
+        :param handler: A file like object that provides the necessary ``DOSCAR`` content to be parsed.
+        :type handler: file-like object
         """
 
         try:
@@ -47,16 +43,12 @@ class DoscarParser(BaseFileParser):
 
     @property
     def dos(self):
-        """
-        Return the total and partial density of states, and in addition some metadata.
+        """Return the total and partial density of states, and in addition some metadata.
 
-        Returns
-        -------
-        dos : dict
-            A dict containing the keys ``tdos``, ``pdos`` and ``header``, which contain
-            for the two first, NumPy arrays for the total density of states and partial
-            density of states, respectively.
-
+        :returns: A dict containing the keys ``tdos``, ``pdos`` and ``header``, which contain
+                  for the two first, NumPy arrays for the total density of states and partial
+                  density of states, respectively.
+        :rtype: dict
         """
         metadata = self._content_parser.get_metadata()
         total_dos = self._content_parser.get_dos()

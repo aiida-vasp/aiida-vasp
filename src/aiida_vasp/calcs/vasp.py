@@ -1,8 +1,5 @@
 """
-VASP calculation.
-
------------------
-The calculation class that prepares a specific VASP calculation.
+This module contains the class that prepares a specific VASP calculation.
 """
 
 # encoding: utf-8
@@ -353,13 +350,7 @@ class VaspCalculation(VaspCalcBase):
         """
         Return wether an input kpoints node is needed or not.
 
-        :return output:
-            True if input kpoints node is needed
-            (py:method::VaspCalculation.use_kpoints),
-            False otherwise
-
-        needs 'parameters' input to be set
-        (py:method::VaspCalculation.use_parameters)
+        :return output: True if input kpoints node is needed False otherwise needs 'parameters' input to be set.
         """
         return not bool('kspacing' in self._parameters or 'kgamma' in self._parameters)
 
@@ -367,13 +358,8 @@ class VaspCalculation(VaspCalcBase):
         """
         Test wether an charge_densities input is needed or not.
 
-        :return output:
-            True if CHGCAR must be present
-            (py:method::NscfCalculation.use_charge_densities),
-            False otherwise
+        :return output: True if CHGCAR must be present False otherwise.
 
-        needs 'parameters' input to be set
-        (py:method::NscfCalculation.use_parameters)
         """
         ichrg_d = 0 if self._need_wavecar() else 2
         icharg = self._parameters.get('icharg', ichrg_d)
@@ -383,12 +369,7 @@ class VaspCalculation(VaspCalcBase):
         """
         Test wether a wavefunctions input is needed or not.
 
-        :return output:
-            True if WAVECAR must be present
-            used (py:method::NscfCalculation.use_wavefunctions),
-            False otherwise
-        needs 'parameters' input to be set
-        (py:method::NscfCalculation.use_parameters)
+        :return output: True if WAVECAR must be present used False otherwise.
         """
         istrt_d = 1 if self.inputs.get('wavefunctions') else 0
         istart = self._parameters.get('istart', istrt_d)
@@ -443,6 +424,7 @@ class VaspCalculation(VaspCalcBase):
         preparation and writes to dst.
 
         :param dst: absolute path of the object to write to
+
         """
         # Check if parameters validation is turned off
         if self.inputs.get('settings'):
@@ -527,6 +509,7 @@ class VaspCalculation(VaspCalcBase):
         :param potential_mapping: dict.
         :param use_wavecar: bool. Try to read WAVECAR.
         :param use_chgcar bool. Try to read CHGCAR.
+
         """
         from aiida_vasp.calcs.immigrant import VaspImmigrant  # noqa: PLC0415
 

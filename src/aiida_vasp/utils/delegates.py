@@ -1,7 +1,6 @@
 """
 Delegate types.
 
----------------
 Module containing decorators and classes implementing delegate types.
 """
 

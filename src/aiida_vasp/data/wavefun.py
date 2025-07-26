@@ -1,7 +1,6 @@
 """
 Representation of WAVECAR and WAVEDER objects.
 
---------------------------------------------
 Wave function data node (stores WAVECAR and WAVEDER objects in the repository).
 """
 

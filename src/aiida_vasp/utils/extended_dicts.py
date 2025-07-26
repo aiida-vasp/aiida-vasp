@@ -1,7 +1,6 @@
 """
 Extensions of dictionaries.
 
----------------------------
 Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 """
 

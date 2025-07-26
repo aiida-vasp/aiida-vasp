@@ -25,6 +25,7 @@ class VaspNEBCalculation(VaspCalculation):
     folder names 00, 01, 02... N for N-1 number of images.
 
     Input frames should be placed under the ``neb_images`` input namespace as a dictionary like::
+
       {
           'image_00': structure_1,
           'image_01': structure_2
@@ -281,6 +282,7 @@ class VaspNEBCalculation(VaspCalculation):
         preparation and writes to dst.
 
         :param dst: absolute path of the file to write to
+
         """
         settings = self.inputs.get('settings')
         settings = settings.get_dict() if settings else {}
