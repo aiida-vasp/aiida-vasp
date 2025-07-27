@@ -288,18 +288,3 @@ def gather_quantities_neb(
     for key, value in quantities_each.get(namespace, {}).items():
         if key in fields:
             dst[key] = value
-
-
-def parse_neb_images(calculation_node: Any) -> dict[str, Any]:
-    """
-    Parse the NEB images from the calculation node.
-
-    :param calculation_node: The AiiDA calculation node.
-    :return: A dictionary with the parsed NEB images.
-    """
-    parser = NebParser(calculation_node)
-    exit_code = parser.parse()
-    if exit_code is not None:
-        raise RuntimeError(f'Parsing failed with exit code: {exit_code}')
-
-    return parser.quantities_each

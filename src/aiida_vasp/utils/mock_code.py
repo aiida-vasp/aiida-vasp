@@ -15,7 +15,7 @@ import pathlib
 import shutil
 import warnings
 from subprocess import run
-from typing import Any
+from typing import List, Optional, Union
 
 import numpy as np
 from aiida import orm
@@ -46,7 +46,7 @@ DEFAULT_EXCLUDED = (
 )
 
 
-def data_path(*args: Any) -> str:
+def data_path(*args):
     """Return a path to a file in the test data directory."""
     path = pathlib.Path(__file__).parent.parent.parent.parent / 'tests' / 'test_data' / pathlib.Path(*args)
     path = path.resolve()
@@ -55,7 +55,7 @@ def data_path(*args: Any) -> str:
     return str(path)
 
 
-def get_hash(dict_obj: dict | list) -> tuple[str, list[bytes]]:
+def get_hash(dict_obj):
     """
     Return the hash for a dictionary of arbitrary items.
 
@@ -116,7 +116,7 @@ class MockRegistry:
 
     CODE_NAME = 'ABSTRACT'
 
-    def __init__(self, base_path: str | list[str] | None = None) -> None:
+    def __init__(self, base_path=None):
         """
         Instantiate and Registry
         """
@@ -135,21 +135,21 @@ class MockRegistry:
         self._setup_logger()
         self.scan()
 
-    def append_search_path(self, path: str) -> None:
+    def append_search_path(self, path):
         """Add a path to the list of search paths"""
         self.search_paths.append(pathlib.Path(path))
 
     @property
-    def base_path(self) -> pathlib.Path:
-        """Return the first search path as the base path"""
+    def base_path(self):
+        """Return the base repository path of the registry"""
         return self._search_paths[0]
 
     @property
-    def search_paths(self) -> list[pathlib.Path]:
-        """Return the list of search paths"""
+    def search_paths(self):
+        """Return a list of all search paths"""
         return self._search_paths
 
-    def _setup_logger(self, level: int = logging.INFO) -> None:
+    def _setup_logger(self, level=logging.INFO):
         """Setup the logger"""
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler = logging.StreamHandler()
@@ -157,7 +157,7 @@ class MockRegistry:
         handler.setFormatter(formatter)
         self.logger.setLevel(level)
 
-    def scan(self) -> None:
+    def scan(self):
         """
         Scan the base folder and locate input/output folders
         """
@@ -166,17 +166,19 @@ class MockRegistry:
                 calc_base_folder = output_folder.parent.absolute()
                 self._register_folder(calc_base_folder)
 
-    def get_path_by_hash(self, hash_val: str) -> pathlib.Path:
-        """Get the path to a calculation by its hash"""
+    def get_path_by_hash(self, hash_val):
+        """
+        Return the output folder for a given hash
+        """
         return pathlib.Path(self.reg_hash[hash_val])
 
-    def get_path_by_name(self, name: str) -> pathlib.Path:
+    def get_path_by_name(self, name):
         """
         Return the output folder for a given hash
         """
         return pathlib.Path(self.reg_hash[self.reg_name[name]])
 
-    def extract_calc_by_path(self, rel_path: pathlib.Path, dst_path: pathlib.Path, include_inputs: bool = True) -> None:
+    def extract_calc_by_path(self, rel_path: pathlib.Path, dst_path: pathlib.Path, include_inputs: bool = True):
         """
         Copy the content of a give hash to a destination.
 
@@ -210,19 +212,15 @@ class MockRegistry:
         if not found:
             raise ValueError(f'The path give: {rel_path}, is not found in any search paths.')
 
-    def extract_calc_by_hash(self, hash_val: str, dst: pathlib.Path, include_inputs: bool = False) -> None:
+    def extract_calc_by_hash(self, hash_val, dst, include_inputs=False):
         """
         Extract an registerred calculation using hash.
         """
         self.extract_calc_by_path(self.get_path_by_hash(hash_val), dst, include_inputs)
 
     def upload_calc(
-        self,
-        folder: pathlib.Path,
-        rel_path: pathlib.Path | str,
-        excluded_object: list[str] | None = None,
-        included_object: list[str] | None = None,
-    ) -> None:
+        self, folder: pathlib.Path, rel_path: Union[pathlib.Path, str], excluded_object=None, included_object=None
+    ):
         """
         Register a calculation folder to primary search path of the registry
         """
@@ -261,7 +259,7 @@ class MockRegistry:
         # Update the hash table
         self._register_folder(repo_calc_base)
 
-    def _register_folder(self, calc_base: pathlib.Path) -> None:
+    def _register_folder(self, calc_base: pathlib.Path):
         """
         Register a folder inside the repository
         """
@@ -274,7 +272,7 @@ class MockRegistry:
         self.reg_name[str(rel)] = hash_val
 
     @classmethod
-    def from_env(cls) -> 'MockRegistry':
+    def from_env(cls):
         """Instantiate from environmental variable"""
         path = os.environ.get(f'{cls.CODE_NAME}_MOCK_CODE_BASE')
         if path is None:
@@ -284,21 +282,19 @@ class MockRegistry:
         return cls(paths)
 
     @staticmethod
-    def compute_hash(folder: pathlib.Path) -> str:
+    def compute_hash(folder):
         """Compute the hash for a target folder"""
         raise NotImplementedError
 
-    def upload_aiida_calc(
-        self, calc_node: orm.CalcJobNode, rel_path: str | pathlib.Path, excluded_names: list[str] | None = None
-    ) -> None:
+    def upload_aiida_calc(self, calc_node, rel_path: Union[str, pathlib.Path], excluded_names=None):
         """Update a calculation into the registry"""
         raise NotImplementedError
 
-    def upload_aiida_work(self, work_node: orm.WorkChainNode, rel_path: str | pathlib.Path) -> None:
+    def upload_aiida_work(self, work_node, rel_path: Union[str, pathlib.Path]):
         """Update all calculations run by an workflow into the registry"""
         raise NotImplementedError
 
-    def get_upload_prefix(self) -> str:
+    def get_upload_prefix(self):
         """Prefix of the name of the calculation folder"""
         prefix = os.environ.get(f'MOCK_{self.CODE_NAME}_UPLOAD_PREFIX')
         if prefix:
@@ -318,9 +314,7 @@ class VaspMockRegistry(MockRegistry):
 
     CODE_NAME = 'VASP'
 
-    def upload_aiida_calc(
-        self, calc_node: orm.CalcJobNode, rel_path: str | pathlib.Path, excluded_names: list[str] | None = None
-    ) -> None:
+    def upload_aiida_calc(self, calc_node, rel_path: Union[str, pathlib.Path], excluded_names=None):
         """
         Register an aiida calc_class
         """
@@ -358,7 +352,7 @@ class VaspMockRegistry(MockRegistry):
         self.logger.info('Calculation %s has been registered', calc_node)
         self._register_folder(repo_calc_base)
 
-    def upload_aiida_work(self, work_node: orm.WorkChainNode, rel_path: str | pathlib.Path) -> None:
+    def upload_aiida_work(self, work_node, rel_path: Union[str, pathlib.Path]):
         """
         Upload all calculations in a workchain node
         """
@@ -379,26 +373,29 @@ class VaspMockRegistry(MockRegistry):
         self.logger.info('WorkChain %s has been uploaded.', work_node)
 
     @staticmethod
-    def compute_hash(folder: pathlib.Path) -> str:
+    def compute_hash(folder: pathlib.Path):
         """
         Compute the hash of a input folder
         """
         items = {}
         kpt_path = folder / 'KPOINTS'
         if kpt_path.is_file():
-            kpt = Kpoints(file_path=str(kpt_path))
-            items['kpoints'] = kpt.get_dict()
+            kpoints = Kpoints(file_path=str(kpt_path))
+            items['kpoints'] = kpoints.get_dict()
+            items['kpoints'].pop('comment', None)
 
         incar_path = folder / 'INCAR'
         if incar_path.is_file():
-            incar = Incar(file_path=str(incar_path))
+            incar = Incar(file_path=str(incar_path), validate_tags=False)
             items['incar'] = incar.get_dict()
 
         poscar_path = folder / 'POSCAR'
+        if not poscar_path.is_file():
+            poscar_path = folder / '00/POSCAR'
         if poscar_path.is_file():
             poscar = Poscar(file_path=str(poscar_path))
             items['poscar'] = poscar.get_dict()
-
+            items['poscar'].pop('comment', None)
         return get_hash(items)[0]
 
 
@@ -409,11 +406,11 @@ class MockVasp:
 
     def __init__(
         self,
-        workdir: str | pathlib.Path,
+        workdir: Union[str, pathlib.Path],
         registry: VaspMockRegistry,
-        vasp_cmd: str | list[str] | None = None,
+        vasp_cmd: Optional[Union[str, List[str]]] = None,
         stdout_fname: str = 'vasp_output',
-    ) -> None:
+    ):
         """
         Mock VASP executable that copies over outputs from existing calculations.
         Inputs are hash and looked for.
@@ -434,7 +431,7 @@ class MockVasp:
         self.vasp_cmd = vasp_cmd
         self.stdout_fname = stdout_fname
 
-    def run(self, debug: bool = True) -> None:
+    def run(self, debug=True):
         """
         Run the mock vasp
         """
@@ -476,7 +473,7 @@ class MockVasp:
         return False
 
 
-def copy_from_aiida(name: str, node: orm.Node, dst: pathlib.Path) -> None:
+def copy_from_aiida(name: str, node, dst: pathlib.Path):
     """
     Copy objects from aiida repository.
 
@@ -499,10 +496,5 @@ def copy_from_aiida(name: str, node: orm.Node, dst: pathlib.Path) -> None:
             frepo_path = dst / name
             pathlib.Path(frepo_path.parent).mkdir(exist_ok=True, parents=True)
             # Write the object
-            with open(frepo_path, 'w', encoding='utf8') as fdst:
-                shutil.copyfileobj(fsource, fdst)
-            # Write the object
-            with open(frepo_path, 'w', encoding='utf8') as fdst:
-                shutil.copyfileobj(fsource, fdst)
             with open(frepo_path, 'w', encoding='utf8') as fdst:
                 shutil.copyfileobj(fsource, fdst)
