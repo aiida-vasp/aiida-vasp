@@ -19,9 +19,9 @@ To add a code with label `vasp`:
 Report: enter ? for help.
 Report: enter ! to ignore the default and set no value.
 Computer: mycluster
-Absolute filepath executable: /cluster/software/vasp/vasp6.3.2/vasp
-Label: vasp
-Description: VASP 6.3.2 standard version
+Absolute filepath executable: /cluster/software/vasp/vasp6.3.2/vasp_std
+Label: vasp-std
+Description: VASP 6.3.2 standard version (complex)
 Default `CalcJob` plugin: vasp.vasp
 Escape using double quotes [y/N]:
 Success: Created InstalledCode<6>
@@ -29,7 +29,11 @@ Success: Created InstalledCode<6>
 
 The `Absolute filepath executable` is the full path to the VASP executable installed on the remote computer.
 Very often one needs to utilize different versions/executables VASP, for instance, running calculations with the gamma only or non-collinear configurations or with additional auxiliary libraries, like BEEF included.
-One can add multiple `InstalledCode` objects to [AiiDA] for different versions of VASP with different labels.
+One can add multiple `InstalledCode` objects to AiiDA for different versions of VASP with different labels.
+
+:::{tip}
+Use
+:::
 
 During the end of the setup, the user will be  asked to enter the prepend and append text.
 The prepend section is any command that should run before the VASP executed.

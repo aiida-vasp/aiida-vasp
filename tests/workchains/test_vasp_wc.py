@@ -31,6 +31,9 @@ def test_vasp_wc(fresh_aiida_env, run_vasp_process):
     assert np.amax(np.linalg.norm(misc['stress'], axis=1)) == pytest.approx(22.8499295)
     assert misc['total_energies']['energy_extrapolated'] == pytest.approx(-14.16209692)
 
+    assert 'stdout' in node.called[0].inputs.monitors
+    assert 'loop_time' in node.called[0].inputs.monitors
+
 
 def si_structure():
     """

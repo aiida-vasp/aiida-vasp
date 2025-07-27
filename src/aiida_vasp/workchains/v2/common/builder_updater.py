@@ -40,6 +40,7 @@ from typing import Any, Union
 from warnings import warn
 
 from aiida import orm
+from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import run_get_node, submit
 from aiida.engine.processes.builder import ProcessBuilder, ProcessBuilderNamespace
@@ -475,7 +476,13 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
             self.namespace_vasp.kpoints_spacing = orm.Float(inset.get_kpoints_spacing())
 
         self.namespace_vasp.parameters = orm.Dict(dict={'incar': inset.get_input_dict(structure, raw_python=True)})
-        self.namespace_vasp.potential_family = orm.Str(inset.get_potcar_family())
+        try:
+            self.namespace_vasp.potential_family = orm.Str(inset.get_potcar_family())
+        except InputValidationError:
+            warn(
+                f'Error validating potential family {inset.get_potcar_family()} for input set {set_name}. '
+                'Potential family will not be set. '
+            )
         self.namespace_vasp.potential_mapping = orm.Dict(dict=inset.get_pp_mapping(structure))
         setattr(self.root_namespace, structure_port_name, structure)
         return self
@@ -493,6 +500,32 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         self.namespace_vasp.kpoints_spacing = orm.Float(kspacing)
         if self.namespace_vasp.kpoints:
             del self.namespace_vasp.kpoints
+        return self
+
+    def set_potential_family(self, family: str) -> VaspBuilderUpdater:
+        """
+        Set the potential family for the VASP calculation.
+
+        :param family: Name of the potential family
+        :type family: str
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
+        self.namespace_vasp.potential_family = orm.Str(family)
+        return self
+
+    def set_potential_mapping(self, mapping: dict[str, str]) -> VaspBuilderUpdater:
+        """
+        Set the potential mapping for the VASP calculation.
+
+        :param mapping: Dictionary mapping element symbols to potential names
+        :type mapping: dict[str, str]
+
+        :returns: Self for method chaining
+        :rtype: VaspBuilderUpdater
+        """
+        self.namespace_vasp.potential_mapping = orm.Dict(dict=mapping)
         return self
 
     update_kspacing = set_kspacing

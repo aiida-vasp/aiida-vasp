@@ -143,6 +143,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             valid_type=orm.Str,
             required=True,
             serializer=to_aiida_type,
+            validator=potential_family_validator,
         )
         spec.input(
             'potential_mapping',
@@ -472,6 +473,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         # Set settings
         unsupported_parameters = None
         skip_parameters_validation = False
+        settings_dict = {}
         if self.inputs.get('settings'):
             self.ctx.inputs.settings = self.inputs.settings
             # Also check if the user supplied additional tags that is not in the supported file.
@@ -586,6 +588,13 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             ldau_keys = get_ldau_keys(self.ctx.inputs.structure, **ldau_settings)
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
+
+        # Attach default monitors if not provided by the user
+        if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):
+            self.ctx.inputs.monitors = {
+                'stdout': Dict(dict={'entry_point': 'vasp.stdout'}),
+                'loop_time': Dict(dict={'entry_point': 'vasp.loop_time', 'minimum_poll_interval': 600}),
+            }
         return None
 
     def run_auto_parallel(self) -> bool:
@@ -1365,3 +1374,21 @@ def list_valid_objects_in_remote(remote: orm.RemoteData, path: str = '.', size_t
         if obj['attributes'].st_size > size_threshold and not obj['isdir']:
             none_empty.append(obj['name'])
     return none_empty
+
+
+def potential_family_validator(family: orm.Str, _) -> None:
+    """
+    Validate the potential family input.
+
+    :param faimly: The potential family to be validated.
+    :raises ValueError: If the potential family is not valid.
+    """
+    if not family.value:
+        raise InputValidationError('The potential family cannot be empty.')
+
+    group = PotcarData.get_potcar_group(family.value)
+    if group is None:
+        raise InputValidationError(
+            f'The potential family "{family.value}" is not found. '
+            'Please use verdi data vasp.potcars tool to verify your settings.'
+        )
