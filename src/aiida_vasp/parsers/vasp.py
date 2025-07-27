@@ -29,6 +29,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 from aiida import orm
+from aiida.engine import ExitCode
 from aiida.parsers.parser import Parser
 from pydantic import Field
 

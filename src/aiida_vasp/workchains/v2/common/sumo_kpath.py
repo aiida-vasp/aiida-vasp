@@ -62,10 +62,10 @@ def kpath_from_sumo_v2(
 
     path, kpoints_raw, labels = get_path_data(struct, **band_settings.get_dict())
     # Primitive structure
-    prim: orm.StructureData = orm.StructureData(pymatgen=path.prim)
+    prim = orm.StructureData(pymatgen=path.prim)
 
     # kpoints
-    kpoints: orm.KpointsData = orm.KpointsData()
+    kpoints = orm.KpointsData()
     kpoints.set_kpoints(kpoints_raw)
 
     actual_labels: list[list[int | str]] = []

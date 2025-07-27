@@ -12,6 +12,7 @@ Inputs
 No added wrapper etc.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 from aiida import orm
 from aiida.engine import WorkChain, append_, calcfunction
@@ -20,6 +21,7 @@ from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
+from .common.builder_updater import VaspBuilderUpdater
 from .mixins import WithBuilderUpdater
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
@@ -310,7 +312,6 @@ def plot_conv_data(cdf, kdf, **kwargs):
     """
     Make two combined plots for the convergence test results.
     """
-    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     # Create a subplot
     figs = []
@@ -365,7 +366,6 @@ def get_convergence_builder(structure, config):
 
     The following files are used from the configuration: ``code``, ``inputset``, ``conv``, ``options``, ``resources``.
     """
-    from .common.builder_updater import VaspBuilderUpdater  # noqa: PLC0415
 
     conv_builder = VaspConvergenceWorkChain.get_builder()
 

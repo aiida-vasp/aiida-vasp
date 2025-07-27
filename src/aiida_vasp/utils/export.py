@@ -17,44 +17,42 @@ from aiida_vasp.workchains.v2.relax import VaspRelaxWorkChain
 from .aiida_utils import ensure_node_first_arg, ensure_node_kwargs
 
 
-def export_vasp(process, folder, decompress=True, include_potcar=True):
-    """
-    Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`
-    """
+def export_vasp(
+    process_node: orm.Node, dst: str | Path, decompress: bool = False, include_potcar: bool = False
+) -> None:
+    """Export VASP calculation files to destination."""
 
     # Dispatch export function based on process type
-    if process.process_type.endswith('vasp'):
-        export_vasp_calc(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('neb'):
-        export_neb(process, folder, decompress=decompress, include_potcar=include_potcar)
-    elif process.process_type.endswith('relax'):
-        export_relax(process, folder, decompress=decompress, include_potcar=include_potcar)
+    if process_node.process_type.endswith('vasp'):
+        _export_calculation(process_node, dst, decompress=decompress, include_potcar=include_potcar)
+    elif process_node.process_type.endswith('neb'):
+        export_neb(process_node, dst, decompress=decompress, include_potcar=include_potcar)
+    elif process_node.process_type.endswith('relax'):
+        _export_workchain(process_node, dst, decompress=decompress, include_potcar=include_potcar)
     else:
-        raise TypeError(f'Unsupported process type: {process.process_type}')
+        raise TypeError(f'Unsupported process type: {process_node.process_type}')
 
 
 @ensure_node_kwargs
 @ensure_node_first_arg
-def export_vasp_calc(node, folder, decompress=False, include_potcar=True):
-    """
-    Export a AiiDA VASP calculation
+def _export_calculation(
+    calc_node: orm.CalcJobNode, dst: Path, decompress: bool = False, include_potcar: bool = False
+) -> None:
+    """Export a single calculation."""
 
-    :param node: A VaspCalculation node or VaspWorkChain node
-    """
-
-    folder = Path(folder)
+    folder = Path(dst)
     folder.mkdir(exist_ok=True)
 
     # Inputs
-    retrieved = node.get_outgoing(link_label_filter='retrieved').one().node
-    if isinstance(node, CalcJobNode):
-        calcjob = node
-    elif isinstance(node, WorkChainNode):
+    retrieved = calc_node.get_outgoing(link_label_filter='retrieved').one().node
+    if isinstance(calc_node, CalcJobNode):
+        calcjob = calc_node
+    elif isinstance(calc_node, WorkChainNode):
         # In this case the node is an workchain we export the
         # 'retrieved' output link and trace to its ancestor
         calcjob = retrieved.base.links.get_incoming(link_label_filter='retrieved', link_type=LinkType.CREATE).one().node
     else:
-        raise RuntimeError(f'The node {node} is not a valid calculation')
+        raise RuntimeError(f'The node {calc_node} is not a valid calculation')
     info_file = folder / ('aiida_info')
     info_content = f'Label: {calcjob.label}\nDescription: {calcjob.description}\nUUID: {calcjob.uuid}\n'
     info_file.write_text(info_content)
@@ -77,40 +75,37 @@ def export_pseudos(calc_job_node, folder):
 
 @ensure_node_first_arg
 @ensure_node_kwargs
-def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
-    """
-    Export a relaxation workflow (e.g. VaspRelaxWorkChain)
-
-    This function exports a series of relaxation calculations in sub-folders
-    """
+def _export_workchain(
+    work_node: orm.WorkChainNode, dst: Path, decompress: bool = False, include_potcar: bool = False
+) -> None:
+    """Export a workchain."""
 
     dst = Path(dst)
     dst.mkdir(exist_ok=True)
-    if workchain_node.process_class not in (VaspRelaxWorkChain):
+    if work_node.process_class not in (VaspRelaxWorkChain):
         raise ValueError(
-            f'Error {workchain_node} should be `VaspRelaxWorkChain` or `RelaxWorkChain`,'
-            f' but it is {workchain_node.process_class}'
+            f'Error {work_node} should be `VaspRelaxWorkChain` or `RelaxWorkChain`, but it is {work_node.process_class}'
         )
 
     q = QueryBuilder()
-    q.append(Node, filters={'id': workchain_node.pk})
+    q.append(Node, filters={'id': work_node.pk})
     q.append(WorkChainNode, tag='vaspwork', project=['id', '*'])
     q.order_by({'vaspwork': {'id': 'asc'}})  # Sort by ascending PK
     for index, (pk, node) in enumerate(q.iterall()):
         relax_folder = dst / f'relax_calc_{index:03d}'
         try:
-            export_vasp_calc(node, relax_folder, decompress=decompress, include_potcar=include_potcar)
+            _export_calculation(node, relax_folder, decompress=decompress, include_potcar=include_potcar)
         except (ValueError, AttributeError, KeyError):
             print(f'Error exporting calculation {pk}')
 
     # Write POSCAR file for the input
-    input_structure = workchain_node.inputs.structure
+    input_structure = work_node.inputs.structure
     poscar_parser = PoscarParser(data=input_structure, precision=10)
     poscar_parser.write(str(dst / 'POSCAR'))
 
     # Write POSCAR file for the input
     try:
-        out_structure = workchain_node.outputs.relax.structure
+        out_structure = work_node.outputs.relax.structure
     except AttributeError:
         print(
             'Cannot find the output structure - skipping.'
@@ -123,9 +118,7 @@ def export_relax(workchain_node, dst, include_potcar=False, decompress=False):
 
     # Write the info
     info_file = dst / ('aiida_info')
-    info_content = (
-        f'Label: {workchain_node.label}\nDescription: {workchain_node.description}\nUUID: {workchain_node.uuid}\n'
-    )
+    info_content = f'Label: {work_node.label}\nDescription: {work_node.description}\nUUID: {work_node.uuid}\n'
     info_file.write_text(info_content)
 
 
@@ -162,7 +155,7 @@ def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type
     q.distinct()
 
     # First export the original calculation
-    export_vasp_calc(workchain, dst, decompress=decompress, include_potcar=include_potcar)
+    _export_calculation(workchain, dst, decompress=decompress, include_potcar=include_potcar)
     ends = {}
     end_id = f'{len(energies) + 1:02d}'
     for _, _, _, relax_uuid, eng, calcjob, label in q.all():
@@ -187,7 +180,7 @@ def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type
                 ends[end_id] = calcjob
     # Export the end point calculation
     for key, value in ends.items():
-        export_vasp_calc(value, Path(dst) / key, decompress=decompress, include_potcar=include_potcar)
+        _export_calculation(value, Path(dst) / key, decompress=decompress, include_potcar=include_potcar)
 
 
 @ensure_node_kwargs

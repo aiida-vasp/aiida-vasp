@@ -3,7 +3,7 @@ Collection of process functions for AiiDA, used for structure transformation
 """
 
 import re
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 from aiida import orm
@@ -21,7 +21,7 @@ from spglib import refine_cell
 
 
 @calcfunction
-def magnetic_structure_decorate(structure, magmom):
+def magnetic_structure_decorate(structure: orm.StructureData, magmom: orm.List) -> dict[str, Any]:
     """
     Create Quantum Espresso style decorated structure with
     given magnetic moments.
@@ -46,7 +46,7 @@ def magnetic_structure_decorate(structure, magmom):
 
 
 @calcfunction
-def magnetic_structure_dedecorate(structure, mapping):
+def magnetic_structure_dedecorate(structure: orm.StructureData, mapping: orm.Dict) -> dict[str, Any]:
     """
     Remove decorations of a structure with multiple names for the same specie
     given that the decoration was previously created to give different species
@@ -70,7 +70,7 @@ def magnetic_structure_dedecorate(structure, mapping):
 
 
 @calcfunction
-def rattle(structure, amp):
+def rattle(structure: orm.StructureData, amp: orm.Float) -> orm.StructureData:
     """
     Rattle the structure by a certain amplitude
     """
@@ -90,7 +90,7 @@ def rattle(structure, amp):
 
 
 @calcfunction
-def get_primitive(structure):
+def get_primitive(structure: orm.StructureData) -> orm.StructureData:
     """Create primitive structure use pymatgen interface"""
     pstruct = structure.get_pymatgen()
     ps = pstruct.get_primitive_structure()
@@ -100,7 +100,7 @@ def get_primitive(structure):
 
 
 @calcfunction
-def get_standard_primitive(structure, **kwargs):
+def get_standard_primitive(structure: orm.StructureData, **kwargs: Any) -> orm.StructureData:
     """Create the standard primitive structure via seekpath"""
 
     parameters = kwargs.get('parameters', {'symprec': 1e-5})
@@ -113,7 +113,7 @@ def get_standard_primitive(structure, **kwargs):
 
 
 @calcfunction
-def spglib_refine_cell(structure, symprec):
+def spglib_refine_cell(structure: orm.StructureData, symprec: Any) -> orm.StructureData:
     """Create the standard primitive structure via seekpath"""
 
     structure_tuple, kind_info, kinds = structure_to_spglib_tuple(structure)
@@ -126,7 +126,7 @@ def spglib_refine_cell(structure, symprec):
 
 
 @calcfunction
-def get_standard_conventional(structure):
+def get_standard_conventional(structure: orm.StructureData) -> orm.StructureData:
     """Create the standard primitive structure via seekpath"""
     out = get_kpoints_path(structure)['conv_structure']
     out.label = structure.label + ' PRIMITIVE'
@@ -134,7 +134,7 @@ def get_standard_conventional(structure):
 
 
 @calcfunction
-def get_refined_structure(structure, symprec, angle_tolerance):
+def get_refined_structure(structure: orm.StructureData, symprec: orm.Float, angle_tolerance: Any) -> orm.StructureData:
     """Create refined structure use pymatgen's interface"""
     from pymatgen.symmetry.analyzer import SpacegroupAnalyzer  # noqa: PLC0415
 
@@ -147,7 +147,7 @@ def get_refined_structure(structure, symprec, angle_tolerance):
 
 
 @calcfunction
-def get_conventional_standard_structure(structure, symprec, angle_tolerance):
+def get_conventional_standard_structure(structure: orm.StructureData, symprec: orm.Float, angle_tolerance: Any) -> Any:
     """Create conventional standard structure use pymatgen's interface"""
     from pymatgen.symmetry.analyzer import SpacegroupAnalyzer  # noqa: PLC0415
 
@@ -160,7 +160,7 @@ def get_conventional_standard_structure(structure, symprec, angle_tolerance):
 
 
 @calcfunction
-def make_supercell(structure, supercell, **kwargs):
+def make_supercell(structure: Any, supercell: Any, **kwargs: Any) -> dict[str, Any]:
     """Make supercell structure, keep the tags in order"""
 
     if 'tags' in kwargs:
@@ -193,7 +193,7 @@ def make_supercell(structure, supercell, **kwargs):
 
 
 @calcfunction
-def niggli_reduce(structure):
+def niggli_reduce(structure: orm.StructureData) -> orm.StructureData:
     """Peroform niggli reduction using ase as the backend - this will rotate the structure into the standard setting"""
     atoms = structure.get_ase()
     niggli_reduce_(atoms)
@@ -203,7 +203,7 @@ def niggli_reduce(structure):
 
 
 @calcfunction
-def niggli_reduce_spglib(structure):
+def niggli_reduce_spglib(structure: orm.StructureData) -> orm.StructureData:
     """Peroform niggli reduction using spglib as backend - this does not rotate the structure"""
     atoms = structure.get_ase()
     reduced_cell = niggli_reduce_spg(atoms.cell)
@@ -215,7 +215,9 @@ def niggli_reduce_spglib(structure):
 
 
 @calcfunction
-def neb_interpolate(init_structure, final_strucrture, nimages):
+def neb_interpolate(
+    init_structure: orm.StructureData, final_strucrture: orm.StructureData, nimages: orm.Int
+) -> dict[str, orm.StructureData]:
     """
     Interpolate NEB frames using the starting and the final structures
 
@@ -258,7 +260,7 @@ def neb_interpolate(init_structure, final_strucrture, nimages):
 
 
 @calcfunction
-def fix_atom_order(reference, to_fix):
+def fix_atom_order(reference: orm.StructureData, to_fix: orm.StructureData) -> orm.StructureData:
     """
     Fix atom order by finding NN distances bet ween two frames. This resolves
     the issue where two closely matching structures having diffferent atomic orders.
@@ -321,8 +323,7 @@ def create_additional_species(species: list[str], magmoms: list[float]) -> tuple
     For example, create Fe1 and Fe2 if there are Fe with different
     magnetisations.
 
-    Returns:
-        a tuples of (newspecies, magmom_mapping)
+    :return: a tuples of (newspecies, magmom_mapping)
     """
 
     unique_species: set[str] = set(species)
@@ -367,8 +368,7 @@ def convert_to_plain_list(species: list[str], magmom_mapping: dict[str, float]) 
     Covert from a decorated species list to a plain list of symbols
     and magnetic moments.
 
-    Returns:
-        A tuple of (symbols, magmoms)
+    :return: A tuple of (symbols, magmoms)
     """
     magmoms = []
     symbols = []

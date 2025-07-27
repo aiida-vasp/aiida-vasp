@@ -140,12 +140,12 @@ class MockRegistry:
 
     @property
     def base_path(self) -> pathlib.Path:
-        """Return the base repository path of the registry"""
+        """Return the first search path as the base path"""
         return self._search_paths[0]
 
     @property
     def search_paths(self) -> list[pathlib.Path]:
-        """Return a list of all search paths"""
+        """Return the list of search paths"""
         return self._search_paths
 
     def _setup_logger(self, level: int = logging.INFO) -> None:
@@ -166,9 +166,7 @@ class MockRegistry:
                 self._register_folder(calc_base_folder)
 
     def get_path_by_hash(self, hash_val: str) -> pathlib.Path:
-        """
-        Return the output folder for a given hash
-        """
+        """Get the path to a calculation by its hash"""
         return pathlib.Path(self.reg_hash[hash_val])
 
     def get_path_by_name(self, name: str) -> pathlib.Path:
@@ -503,5 +501,7 @@ def copy_from_aiida(name: str, node, dst: pathlib.Path):
             with open(frepo_path, 'w', encoding='utf8') as fdst:
                 shutil.copyfileobj(fsource, fdst)
             # Write the object
+            with open(frepo_path, 'w', encoding='utf8') as fdst:
+                shutil.copyfileobj(fsource, fdst)
             with open(frepo_path, 'w', encoding='utf8') as fdst:
                 shutil.copyfileobj(fsource, fdst)

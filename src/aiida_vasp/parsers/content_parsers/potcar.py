@@ -9,6 +9,7 @@ import os
 import re
 from itertools import groupby
 from pathlib import Path
+from typing import TextIO
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.delegates import delegate_method_kwargs
@@ -26,7 +27,7 @@ class PotcarParser(BaseFileParser):
 
     PARSABLE_QUANTITIES = {}
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """Initialize using a file like handler.
 
         :param handler: A file like object that provides the necessary content to be parsed.
@@ -143,7 +144,6 @@ class PotcarIo:
             pass
         else:
             raise TypeError(f'Invalid type of potcar: {type(potcar)}')
-            potcar = cls.from_(potcar)
         return potcar
 
     def __eq__(self, other):
@@ -153,8 +153,10 @@ class PotcarIo:
         return hash(self.sha512)
 
 
-class MultiPotcarIo:  # pylint: disable=useless-object-inheritance
-    """Handle file i/o for POTCAR files with one or more potentials."""
+class MultiPotcarIo:
+    """
+    Handle file i/o for POTCAR files with one or more potentials.
+    """
 
     def __init__(self, potcars=None):
         self._potcars = []

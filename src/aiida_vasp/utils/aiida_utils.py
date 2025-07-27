@@ -6,6 +6,7 @@ historical reasons when AiiDA was rapidly developed. In the future most routines
 that have now standardized in AiiDA will be removed.
 """
 
+# ruff: noqa: PLC0415
 from __future__ import annotations
 
 import warnings
@@ -111,19 +112,19 @@ def cmp_load_verdi_data() -> Any:
     import_errors = []
 
     try:
-        from aiida.cmdline.commands import data_cmd as verdi_data  # noqa: PLC0415
+        from aiida.cmdline.commands import data_cmd as verdi_data
     except ImportError as err:
         import_errors.append(err)
 
     if not verdi_data:
         try:
-            from aiida.cmdline.commands import verdi_data  # noqa: PLC0415
+            from aiida.cmdline.commands import verdi_data
         except ImportError as err:
             import_errors.append(err)
 
     if not verdi_data:
         try:
-            from aiida.cmdline.commands.cmd_data import verdi_data  # noqa: PLC0415
+            from aiida.cmdline.commands.cmd_data import verdi_data
         except ImportError as err:
             import_errors.append(err)
 

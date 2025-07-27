@@ -163,10 +163,10 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         # Initialise the contexts
         self.ctx.exit_code = self.exit_codes.ERROR_UNKNOWN  # pylint: disable=no-member
-        self.ctx.is_converged: bool = False
-        self.ctx.relax: bool = False
-        self.ctx.iteration: int = 0
-        self.ctx.workchains: list = []
+        self.ctx.is_converged = False
+        self.ctx.relax = False
+        self.ctx.iteration = 0
+        self.ctx.workchains = []
         self.ctx.inputs = AttributeDict()  # This may not be necessary anymore
         self.ctx.relax_settings = AttributeDict(
             self.inputs.relax_settings.get_dict()
@@ -603,7 +603,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return self.exit_codes.NO_ERROR  # pylint: disable=no-member
 
-    def check_shape_convergence(self, delta) -> bool:
+    def check_shape_convergence(self, delta: AttributeDict) -> bool:
         """Check the difference in cell shape before / after the last iteratio against a tolerance."""
         threshold_angles = self.ctx.relax_settings.convergence_shape_angles
         threshold_lengths = self.ctx.relax_settings.convergence_shape_lengths
@@ -643,7 +643,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return lengths_converged and angles_converged
 
-    def check_volume_convergence(self, delta) -> bool:
+    def check_volume_convergence(self, delta: AttributeDict) -> bool:
         """Check the convergence of the volume, given a cutoff."""
         threshold = self.ctx.relax_settings.convergence_volume
         if threshold < 0:
@@ -657,7 +657,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         return volume_converged
 
-    def check_positions_convergence(self, delta) -> bool:
+    def check_positions_convergence(self, delta: AttributeDict) -> bool:
         """Check the convergence of the atomic positions, given a cutoff."""
         threshold = self.ctx.relax_settings.convergence_positions
         if threshold < 0:
@@ -827,7 +827,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         return RelaxOptions
 
 
-def compare_structures(structure_a, structure_b) -> AttributeDict:
+def compare_structures(structure_a: orm.StructureData, structure_b: orm.StructureData) -> AttributeDict:
     """Compare two StructreData objects A, B and return a delta (A - B) of the relevant properties."""
 
     delta = AttributeDict()
@@ -870,7 +870,7 @@ def compare_structures(structure_a, structure_b) -> AttributeDict:
     return delta
 
 
-def get_step_structure(traj, step) -> orm.StructureData:
+def get_step_structure(traj: orm.TrajectoryData, step: int) -> orm.StructureData:
     """Get the step structure, but assume the positions are fractional"""
     _, _, cell, symbols, positions, _ = traj.get_step_data(step)
     # Convert to cartesian coorindates
@@ -974,13 +974,13 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         Initialize context variables
         """
         relax_inputs = self.exposed_inputs(self._base_workchain, 'relax')
-        self.ctx.current_stage: int = 0
+        self.ctx.current_stage = 0
         self.ctx.current_structure = self.inputs.structure
         self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
         self.ctx.settings = relax_inputs.vasp.settings.get_dict()
         self.ctx.options = relax_inputs.vasp.options.get_dict()
         self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
-        self.ctx.n_stages: int = len(self.inputs.parameters_stages)
+        self.ctx.n_stages = len(self.inputs.parameters_stages)
 
     def should_run_stage(self) -> bool:
         """
@@ -1029,7 +1029,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         running = self.submit(self._base_workchain, **relax_inputs)
         return ToContext(workchains=append_(running))
 
-    def inspect_stage(self) -> None:
+    def inspect_stage(self) -> None | ExitCode:
         """
         Inspect a stage
         """
@@ -1064,7 +1064,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.out_many(self.exposed_outputs(workchain, self._base_workchain))
 
 
-def get_maximum_force(forces):
+def get_maximum_force(forces: np.ndarray) -> float:
     """Return the maximum value of an array of forces with size (N, 3)"""
     norm = np.linalg.norm(forces, axis=1)
     return np.amax(norm)
