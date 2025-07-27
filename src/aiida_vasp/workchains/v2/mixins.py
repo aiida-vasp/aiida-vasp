@@ -2,19 +2,10 @@
 Some convenience mixins
 """
 
+# ruff: noqa: PLC0415
 from __future__ import annotations
 
 from typing import Any
-
-from .common.builder_updater import (
-    VaspBandUpdater,
-    VaspBuilderUpdater,
-    VaspConvUpdater,
-    VaspHybridBandUpdater,
-    VaspMultiStageRelaxUpdater,
-    VaspNEBUpdater,
-    VaspRelaxUpdater,
-)
 
 
 class WithBuilderUpdater:
@@ -25,6 +16,16 @@ class WithBuilderUpdater:
 
         The arguments are passed directly to the underling `BuilderUpdater` constructor.
         """
+        from .common.builder_updater import (
+            VaspBandUpdater,
+            VaspBuilderUpdater,
+            VaspConvUpdater,
+            VaspHybridBandUpdater,
+            VaspMultiStageRelaxUpdater,
+            VaspNEBUpdater,
+            VaspRelaxUpdater,
+        )
+
         if cls.__name__ == 'VaspWorkChain':
             return VaspBuilderUpdater(*args, **kwargs)
         elif cls.__name__ == 'VaspRelaxWorkChain':

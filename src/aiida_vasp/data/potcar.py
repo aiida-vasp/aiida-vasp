@@ -102,7 +102,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 """
 
 # pylint: disable=import-outside-toplevel, too-many-lines
-from __future__ import print_function
+from __future__ import annotations, print_function
 
 import hashlib
 import os
@@ -126,7 +126,6 @@ from aiida.orm import (
 )
 
 from aiida_vasp.data.archive import ArchiveData
-from aiida_vasp.parsers.content_parsers.potcar import PotcarParser
 from aiida_vasp.utils.aiida_utils import get_current_user, querybuild
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -450,6 +449,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
 
     def add_file(self, src_abs: Path, dst_filename: Any = None) -> None:
         """Add the POTCAR file to the archive and set attributes."""
+        from aiida_vasp.parsers.content_parsers.potcar import PotcarParser  # noqa: PLC0415
 
         self.set_version()
         if self._filelist:
@@ -473,7 +473,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         self.base.attributes.set('potential_set', str(src_path.parts[-3]))
 
     @classmethod
-    def get_file_sha512(cls, path: Path) -> str:
+    def get_file_sha512(cls, path: Path | str) -> str:
         """Get the sha512 sum for a POTCAR file (after whitespace normalization)."""
         path = Path(path)
         with path.open('r', encoding='utf8') as potcar_fo:
@@ -517,7 +517,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
                 if file_obj:
                     file_obj.close()
 
-    def export_archive(self, archive: Any, dry_run: bool = False) -> None:
+    def export_archive(self, archive: Any, dry_run: bool = False) -> str:
         """Add the stored POTCAR file to an archive for export."""
         with self.get_file_obj_and_tar_obj() as objects:
             potcar_fo, tar_fo = objects
@@ -569,7 +569,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
             return potcar_fo.read()
 
     @classmethod
-    def get_or_create(cls, filepath: Path) -> Any:
+    def get_or_create(cls, filepath: Path) -> tuple[Any, bool]:
         """Get or create (store) a PotcarFileData node."""
         sha512 = cls.get_file_sha512(filepath)
         if cls.exists(sha512=sha512):
@@ -582,7 +582,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return node, created
 
     @classmethod
-    def get_or_create_from_contents(cls, contents: str) -> Any:
+    def get_or_create_from_contents(cls, contents: str) -> tuple[Any, bool]:
         """Get or create (store) a PotcarFileData node from a string containing the POTCAR contents."""
         with temp_potcar(contents) as potcar_file:
             return cls.get_or_create(potcar_file)
@@ -625,7 +625,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return super().store(*args, **kwargs)
 
     @classmethod
-    def get_or_create(cls, file_node: Any) -> Any:
+    def get_or_create(cls, file_node: Any) -> tuple[Any, bool]:
         """Get or create (store) a PotcarData node."""
 
         if cls.exists(sha512=file_node.sha512):
@@ -638,7 +638,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return node, created
 
     @classmethod
-    def get_or_create_from_file(cls, file_path):
+    def get_or_create_from_file(cls, file_path: str | Path) -> tuple[Data, bool]:
         """Get or create (store) a PotcarData node from a POTCAR file."""
         sha512 = PotcarFileData.get_file_sha512(file_path)
         file_node = (
@@ -652,13 +652,13 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return node, created
 
     @classmethod
-    def get_or_create_from_contents(cls, contents):
+    def get_or_create_from_contents(cls, contents: str) -> tuple[Data, bool]:
         """Get or create (store) a PotcarData node from a string containing the POTCAR contents."""
         with temp_potcar(contents) as potcar_file:
             return cls.get_or_create_from_file(str(potcar_file))
 
     @classmethod
-    def file_not_uploaded(cls, file_path):
+    def file_not_uploaded(cls, file_path: str | Path) -> PotcarFileData | tuple:
         sha512 = PotcarFileData.get_file_sha512(file_path)
         return (
             PotcarFileData.find_one(sha512=sha512)
@@ -666,12 +666,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             else namedtuple('potcar', ('uuid'))('-1')
         )
 
-    def get_family_names(self):
+    def get_family_names(self) -> list[str]:
         """List potcar families to which this instance belongs."""
         return [group.label for group in PotcarGroup.query(nodes=self)]
 
     @classmethod
-    def get_potcar_group(cls, group_name):
+    def get_potcar_group(cls, group_name: str) -> PotcarGroup | None:
         """Return the PotcarFamily group with the given name."""
         try:
             group = PotcarGroup.collection.get(label=group_name)
@@ -680,7 +680,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return group
 
     @classmethod
-    def get_potcar_groups(cls, filter_elements=None, filter_symbols=None):
+    def get_potcar_groups(
+        cls, filter_elements: list[str] | str | None = None, filter_symbols: list[str] | None = None
+    ) -> list[PotcarGroup]:
         """
         List all names of groups of type PotcarFamily, possibly with some filters.
 
@@ -724,7 +726,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return groups
 
     @classmethod
-    def get_potcars_dict(cls, elements, family_name, mapping=None, auto_migrate=True):
+    def get_potcars_dict(
+        cls, elements: list[str], family_name: str, mapping: dict[str, str] | None = None, auto_migrate: bool = True
+    ) -> dict[str, Any]:
         """
         Get a dictionary {element: ``PotcarData.full_name``} for all given symbols.
 
@@ -788,7 +792,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return result_potcars
 
     @classmethod
-    def query_by_attrs(cls, query=None, **kwargs):
+    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> Any:
         family_name = kwargs.pop('family_name', None)
         if family_name:
             group_filters = {'label': {'==': family_name}}
@@ -798,7 +802,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return super(PotcarData, cls).query_by_attrs(query=query, **kwargs)
 
     @classmethod
-    def get_full_names(cls, family_name=None, element=None):
+    def get_full_names(cls, family_name: str | None = None, element: str | None = None) -> list[str]:
         """
         Gives a set of symbols provided by this family.
 
@@ -809,7 +813,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return [name[0] for name in query.all()]
 
     @classmethod
-    def get_potcars_from_structure(cls, structure, family_name, mapping=None):
+    def get_potcars_from_structure(
+        cls, structure: Any, family_name: str, mapping: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with
         its PotcarData object.
@@ -862,7 +868,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return potcar_dict
 
     @classmethod
-    def _prepare_group_for_upload(cls, group_name, group_description=None, dry_run=False):
+    def _prepare_group_for_upload(
+        cls, group_name: str, group_description: str | None = None, dry_run: bool = False
+    ) -> PotcarGroup:
         """Prepare a (possibly new) group to upload a POTCAR family to."""
         if not dry_run:
             group, group_created = PotcarGroup.collection.get_or_create(label=group_name)
@@ -887,7 +895,14 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return group
 
     @classmethod
-    def upload_potcar_family(cls, source, group_name, group_description=None, stop_if_existing=True, dry_run=False):
+    def upload_potcar_family(
+        cls,
+        source: str | Path,
+        group_name: str,
+        group_description: str | None = None,
+        stop_if_existing: bool = True,
+        dry_run: bool = False,
+    ) -> tuple[int, int, int]:
         """
         Upload a set of POTCAR potentials as a family.
 
@@ -941,7 +956,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return num_files, num_added, num_uploaded
 
     @classmethod
-    def _try_upload_potcars(cls, file_paths, stop_if_existing=True, dry_run=False):
+    def _try_upload_potcars(
+        cls, file_paths: list[Path], stop_if_existing: bool = True, dry_run: bool = False
+    ) -> list[tuple[Any, bool, str]]:
         """Given a list of absolute paths to potcar files, try to upload them (or pretend to if dry_run=True)."""
         list_created = []
         for file_path_obj in file_paths:
@@ -970,7 +987,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return list_created
 
     @classmethod
-    def export_family_folder(cls, family_name, path=None, dry_run=False):
+    def export_family_folder(
+        cls, family_name: str, path: str | Path | None = None, dry_run: bool = False
+    ) -> list[Path]:
         """
         Export a family of POTCAR nodes into a file hierarchy similar to the one POTCARs are distributed in.
 
@@ -1006,7 +1025,9 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return files_written
 
     @classmethod
-    def export_family_archive(cls, family_name, path=None, dry_run=False):
+    def export_family_archive(
+        cls, family_name: str, path: str | Path | None = None, dry_run: bool = False
+    ) -> tuple[Path, list[str]]:
         """Export a family of POTCAR nodes into a compressed archive."""
         # Only allow Path or string
         if path is not None:
@@ -1037,11 +1058,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         return path, files_added
 
-    def get_content(self):
+    def get_content(self) -> bytes:
         return self.find_file_node().get_content()
 
     @classmethod
-    def find(cls, **kwargs):
+    def find(cls, **kwargs: Any) -> list[Any]:
         """
         Extend :py:meth:`PotcarMetadataMixin.find` with filtering by POTCAR family.
 

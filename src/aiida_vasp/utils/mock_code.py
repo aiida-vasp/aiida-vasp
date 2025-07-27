@@ -15,6 +15,7 @@ import pathlib
 import shutil
 import warnings
 from subprocess import run
+from typing import Any
 
 import numpy as np
 from aiida import orm
@@ -45,7 +46,7 @@ DEFAULT_EXCLUDED = (
 )
 
 
-def data_path(*args):
+def data_path(*args: Any) -> str:
     """Return a path to a file in the test data directory."""
     path = pathlib.Path(__file__).parent.parent.parent.parent / 'tests' / 'test_data' / pathlib.Path(*args)
     path = path.resolve()
@@ -433,7 +434,7 @@ class MockVasp:
         self.vasp_cmd = vasp_cmd
         self.stdout_fname = stdout_fname
 
-    def run(self, debug=True):
+    def run(self, debug: bool = True) -> None:
         """
         Run the mock vasp
         """
@@ -475,7 +476,7 @@ class MockVasp:
         return False
 
 
-def copy_from_aiida(name: str, node, dst: pathlib.Path):
+def copy_from_aiida(name: str, node: orm.Node, dst: pathlib.Path) -> None:
     """
     Copy objects from aiida repository.
 

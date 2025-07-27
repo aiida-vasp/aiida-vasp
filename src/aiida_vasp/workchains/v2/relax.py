@@ -34,7 +34,7 @@ from aiida import orm
 from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.utils import classproperty
-from aiida.engine import ExitCode, ToContext, WorkChain, append_, if_, while_
+from aiida.engine import ExitCode, ProcessSpec, ToContext, WorkChain, append_, if_, while_
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
@@ -61,7 +61,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
     option_class = RelaxOptions
 
     @classmethod
-    def define(cls, spec) -> None:
+    def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
         spec.expose_inputs(cls._base_workchain, 'vasp', exclude=('structure',))
         spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
@@ -822,7 +822,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         return self.ctx.get('verbose', self._verbose)
 
     @classproperty
-    def relax_option_class(cls):  # noqa: N805
+    def relax_option_class(cls) -> RelaxOptions:  # noqa: N805
         """Class for relax options"""
         return RelaxOptions
 
@@ -929,7 +929,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
     _base_workchain = VaspRelaxWorkChain
 
     @classmethod
-    def define(cls, spec) -> None:
+    def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
         spec.input_namespace('parameters_stages', required=False, dynamic=True, help='Parameters for each stage')
         spec.input_namespace('settings_stages', required=False, dynamic=True, help='Settings for each stage')

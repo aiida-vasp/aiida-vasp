@@ -22,10 +22,12 @@ class OptionContainer(BaseModel):
         return Dict(dict=python_dict)
 
     @classmethod
-    def aiida_validate(cls, input_dict, namespace=None) -> None:  # pylint:disable=unused-argument
+    def aiida_validate(cls, input_dict: dict | Dict, namespace: None | str = None) -> None:  # pylint:disable=unused-argument
         """
         Validate a dictionary/Dict node, this can be used as the validator for
         the Port accepting the inputs
+
+        This is used as validator for the `spec.input` call.
         """
         if isinstance(input_dict, Dict):
             input_dict = input_dict.get_dict()

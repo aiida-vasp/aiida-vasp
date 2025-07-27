@@ -7,7 +7,7 @@ from importlib.util import find_spec
 from typing import Optional, Union
 
 import numpy as np
-from aiida.orm import BandsData, StructureData
+from aiida.orm import BandsData, CalcJobNode, StructureData
 from pymatgen.core import Lattice
 from pymatgen.electronic_structure.bandstructure import (
     BandStructureSymmLine,
@@ -30,7 +30,7 @@ from sumo.plotting.phonon_bs_plotter import SPhononBSPlotter
 from .pmg import PymatgenAdapator
 
 
-def get_sumo_dos_plotter(scf_node, **kwargs):
+def get_sumo_dos_plotter(scf_node: CalcJobNode, **kwargs) -> dos_plotter.SDOSPlotter:
     """Get density of state by reading directly from the vasprun.xml file.
 
     :param scf_node: A node with `retrieved` output attached.
@@ -46,7 +46,9 @@ def get_sumo_dos_plotter(scf_node, **kwargs):
     return dp
 
 
-def get_pmg_bandstructure(bands_node, structure=None, efermi=None, **kwargs):
+def get_pmg_bandstructure(
+    bands_node: BandsData, structure: StructureData = None, efermi: Optional[float] = None, **kwargs
+) -> BandStructureSymmLine:
     """Return a pymatgen `BandStructureSymmLine` object from BandsData.
 
     :param bands_node: A BandsData object
@@ -121,7 +123,9 @@ def get_pmg_bandstructure(bands_node, structure=None, efermi=None, **kwargs):
     return bands_structure
 
 
-def get_sumo_bands_plotter(bands, efermi=None, structure=None, **kwargs):
+def get_sumo_bands_plotter(
+    bands: BandsData, efermi: Optional[float] = None, structure: Optional[StructureData] = None, **kwargs
+) -> SBSPlotter:
     """
     Return a sumo `SBSPlotter` object
 
@@ -136,7 +140,7 @@ def get_sumo_bands_plotter(bands, efermi=None, structure=None, **kwargs):
     return SBSPlotter(bands_structure)
 
 
-def find_vbm(bands, occupations, tol=1e-4):
+def find_vbm(bands: np.ndarray, occupations: np.ndarray, tol: float = 1e-4) -> float:
     """
     Find the fermi energy, put it at the top of VBM
     NOTE: this differs from the fermi energy reported in VASP when there is any
@@ -145,7 +149,7 @@ def find_vbm(bands, occupations, tol=1e-4):
     return bands[occupations > tol].max()
 
 
-def find_cbm(bands, occupations, tol=1e-4):
+def find_cbm(bands: np.ndarray, occupations: np.ndarray, tol: float = 1e-4) -> float:
     """
     Find the fermi energy, put it at the top of VBM
     NOTE: this differs from the fermi energy reported in VASP when there is any
@@ -173,7 +177,7 @@ def make_latex_labels(labels: list) -> list:
 
 
 def get_pymatgen_phonon_bands(
-    band_structure: BandsData, input_structure: StructureData, has_nac=False
+    band_structure: BandsData, input_structure: StructureData, has_nac: bool = False
 ) -> PhononBandStructureSymmLine:
     """
     Obtain a pymatgen phonon bandstructure plotter
@@ -199,8 +203,8 @@ def get_pymatgen_phonon_bands(
 def get_sumo_phonon_plotter(
     band_structure: BandsData,
     input_structure: StructureData,
-    has_nac=False,
-    imag_tol=-5e-2,
+    has_nac: bool = False,
+    imag_tol: float = -5e-2,
 ) -> SPhononBSPlotter:
     """
     Obtain a sumo phonon plotter object
@@ -272,7 +276,7 @@ def bandstats(
     return {'hole_data': hole_data, 'electron_data': elec_data}
 
 
-def get_efermi_from_band(bands_node):
+def get_efermi_from_band(bands_node: BandsData) -> Optional[float]:
     """Get the fermi energy from a BandsData node"""
     efermi = bands_node.base.attributes.get('efermi', None)
     if efermi is None:

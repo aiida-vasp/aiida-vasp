@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from aiida import orm
@@ -70,7 +72,14 @@ class NebParser(VaspParser):
         self.neb_indices = [f'{i:02d}' for i in range(1, nimages + 1)]
 
         # Parse the files
-        def parse_and_add(name, parser_cls, index, required=True, open_mode='r', content_parser_settings=None):
+        def parse_and_add(
+            name: str,
+            parser_cls: Any,
+            index: Any,
+            required: bool = True,
+            open_mode: str = 'r',
+            content_parser_settings: dict | None = None,
+        ) -> None:
             """
             Parse the target file and add the result to the quantities_each dictionary
             For NEB calculations, the results are in the individual folders named with the image index.
@@ -279,3 +288,18 @@ def gather_quantities_neb(
     for key, value in quantities_each.get(namespace, {}).items():
         if key in fields:
             dst[key] = value
+
+
+def parse_neb_images(calculation_node: Any) -> dict[str, Any]:
+    """
+    Parse the NEB images from the calculation node.
+
+    :param calculation_node: The AiiDA calculation node.
+    :return: A dictionary with the parsed NEB images.
+    """
+    parser = NebParser(calculation_node)
+    exit_code = parser.parse()
+    if exit_code is not None:
+        raise RuntimeError(f'Parsing failed with exit code: {exit_code}')
+
+    return parser.quantities_each

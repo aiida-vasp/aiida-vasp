@@ -5,12 +5,18 @@ The file parser that handles the parsing of POTCAR files. Also contains methods 
 find, import, compose and write POTCAR files.
 """
 
+from __future__ import annotations
+
 import os
 import re
 from itertools import groupby
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
+from aiida import orm
+from parsevasp.potcar import Potcar
+
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
 from aiida_vasp.utils.delegates import delegate_method_kwargs
 
@@ -34,23 +40,21 @@ class PotcarParser(BaseFileParser):
         :type handler: file-like object
         """
 
-        from parsevasp.potcar import Potcar  # noqa: PLC0415
-
         try:
             self._content_parser = Potcar(file_handler=handler, logger=self._logger)
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 
     @property
-    def metadata(self):
+    def metadata(self) -> Potcar:
         """Return the metadata Potcar instance."""
         return self._content_parser
 
-    def _init_from_data(self, data):
+    def _init_from_data(self, data: dict) -> None:
         """No need to init from an AiiDA data structure."""
         raise NotImplementedError('PotcarParser does not implement a _init_from_data() method.')
 
-    def _content_data_to_content_parser(self):
+    def _content_data_to_content_parser(self) -> None:
         """Since no need to accept AiiDA data structure, no need to convert it."""
         raise NotImplementedError('PotcarParser does not implement a _content_data_to_content_parser() method.')
 
@@ -67,32 +71,30 @@ class PotcarIo:
     :param contents: a string with the POTCAR content
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Init from Potcar object or delegate to kwargs initializers."""
         self.potcar_obj = None
         self.sha512 = None
         self.init_with_kwargs(**kwargs)
 
     @delegate_method_kwargs(prefix='_init_with_')
-    def init_with_kwargs(self, **kwargs):
+    def init_with_kwargs(self, **kwargs: Any) -> None:
         """Delegate initialization to _init_with - methods."""
 
-    def _init_with_path(self, file_path):
+    def _init_with_path(self, file_path: str | Path) -> None:
         """Initialize with a path."""
-        from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
-
         node, _ = PotcarData.get_or_create_from_file(file_path=file_path)
         self.sha512 = node.sha512
 
-    def _init_with_potcar_file_node(self, node):
+    def _init_with_potcar_file_node(self, node: PotcarFileData) -> None:
         """Initialize with an existing potential file node."""
         self.sha512 = node.sha512
 
-    def _init_with_potcar_node(self, node):
+    def _init_with_potcar_node(self, node: PotcarData) -> None:
         """Initialize with an existing potential node."""
         self._init_with_potcar_file_node(node.find_file_node())
 
-    def _init_with_contents(self, contents):
+    def _init_with_contents(self, contents: str) -> None:
         """Initialize with a string."""
         from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
 
@@ -104,23 +106,23 @@ class PotcarIo:
         self.sha512 = node.sha512
 
     @property
-    def file_node(self):
+    def file_node(self) -> PotcarFileData:
         from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
 
         return PotcarData.find_one(sha512=self.sha512).find_file_node()
 
     @property
-    def node(self):
+    def node(self) -> PotcarData:
         from aiida_vasp.data.potcar import PotcarData  # noqa: PLC0415
 
         return PotcarData.find_one(sha512=self.sha512)
 
     @property
-    def content(self):
+    def content(self) -> bytes:
         return self.file_node.get_content()
 
     @classmethod
-    def from_(cls, potcar):
+    def from_(cls, potcar: str | Path | PotcarData | PotcarFileData | PotcarIo) -> PotcarIo:
         """Determine the best guess at how the input represents a POTCAR file and construct
         a PotcarIo instance based on that."""
         from aiida_vasp.data.potcar import PotcarData, PotcarFileData  # noqa: PLC0415
@@ -146,10 +148,10 @@ class PotcarIo:
             raise TypeError(f'Invalid type of potcar: {type(potcar)}')
         return potcar
 
-    def __eq__(self, other):
+    def __eq__(self, other: PotcarIo) -> bool:
         return self.sha512 == other.sha512
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.sha512)
 
 
@@ -158,23 +160,23 @@ class MultiPotcarIo:
     Handle file i/o for POTCAR files with one or more potentials.
     """
 
-    def __init__(self, potcars=None):
+    def __init__(self, potcars: list[Any] | None = None) -> None:
         self._potcars = []
         if potcars:
             for potcar in potcars:
                 self.append(PotcarIo.from_(potcar))
 
-    def append(self, potcar):
+    def append(self, potcar: Any) -> None:
         self._potcars.append(PotcarIo.from_(potcar))
 
-    def write(self, path):
+    def write(self, path: str | Path) -> None:
         path = Path(path)
         with path.open('wb') as dest_fo:
             for potcar in self._potcars:
                 dest_fo.write(potcar.content)
 
     @classmethod
-    def read(cls, path):
+    def read(cls, path: str | Path) -> MultiPotcarIo:
         """Read a POTCAR file that may contain one or more potentials into a list of PotcarIo objects."""
         potcars = cls()
         path = Path(path)
@@ -186,17 +188,17 @@ class MultiPotcarIo:
         return potcars
 
     @property
-    def potcars(self):
+    def potcars(self) -> list[PotcarIo]:
         return self._potcars
 
     @classmethod
-    def from_structure(cls, structure, potentials_dict):
+    def from_structure(cls, structure: orm.StructureData, potentials_dict: dict[str, Any]) -> MultiPotcarIo:
         """Create a MultiPotcarIo from an AiiDA `StructureData` object and a dictionary with a
         potential for each kind in the structure."""
         symbol_order = cls.potentials_order(structure)
         return cls(potcars=[potentials_dict[symbol] for symbol in symbol_order])
 
-    def get_potentials_dict(self, structure):
+    def get_potentials_dict(self, structure: orm.StructureData) -> dict[str, Any]:
         """
         Get a dictionary {kind_name: PotcarData} that would fit the structure.
 
@@ -212,15 +214,15 @@ class MultiPotcarIo:
         return {kind.name: element_potcars[kind.symbol] for kind in structure.kinds}
 
     @property
-    def element_symbols(self):
+    def element_symbols(self) -> set[str]:
         return {potcario.node.element for potcario in self.potcars}
 
     @classmethod
-    def potentials_order(cls, structure):
+    def potentials_order(cls, structure: orm.StructureData) -> list[str]:
         return [kind[0] for kind in cls.count_kinds(structure)]
 
     @classmethod
-    def count_kinds(cls, structure):
+    def count_kinds(cls, structure: orm.StructureData) -> list[tuple[str, int]]:
         """Count consecutive kinds that compose the different sites.
 
         :param structure: Structure containing sites and kinds

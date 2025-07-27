@@ -8,7 +8,7 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 try:
     import pymatgen.io.vasp as pvasp
@@ -25,7 +25,7 @@ from .export import export_vasp
 
 
 @contextmanager
-def temporary_folder():
+def temporary_folder() -> Generator[Path, None, None]:
     """Get a temporary folder and delete it after use."""
     tmpf = Path(tempfile.mkdtemp())
     yield tmpf

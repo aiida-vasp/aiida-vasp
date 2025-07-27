@@ -264,7 +264,13 @@ class VaspParser(Parser):
             return exit_code
 
         # Parse the files
-        def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
+        def parse_and_add(
+            name: str,
+            parser_cls: Any,
+            required: bool = True,
+            open_mode: str = 'r',
+            content_parser_settings: dict | None = None,
+        ) -> None:
             """Parse the target file and add the result to the quantities_each dictionary"""
             resolved_name = user_config.file_mapping[name]
             if resolved_name in self.retrieve_object_names:

@@ -2,6 +2,8 @@
 Module to provide dryrun functionality.
 """
 
+from __future__ import annotations
+
 import shutil
 from math import ceil, gcd
 from typing import Optional
@@ -75,7 +77,7 @@ class JobScheme:
         self.solve_ncore()
 
     @classmethod
-    def from_dryrun(cls, dryrun_outcome: dict, n_procs: int, **kwargs) -> 'JobScheme':
+    def from_dryrun(cls, dryrun_outcome: dict, n_procs: int, **kwargs) -> JobScheme:
         """
         Construct from dryrun results.
 

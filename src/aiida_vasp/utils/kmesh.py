@@ -73,10 +73,10 @@ def get_ir_kpoints_and_weights(
 def get_ir_kpoints_data(
     structure: orm.StructureData,
     mesh_or_spacing: orm.List | orm.Float,
-    is_time_reversal: orm.Bool = orm.Bool(True),
-    symprec: orm.Float = orm.Float(1e-5),
+    is_time_reversal: orm.Bool | bool = True,
+    symprec: orm.Float | float = 1e-5,
     is_shift: orm.List | None = None,
-    symmetry_reduce: orm.Bool = orm.Bool(True),
+    symmetry_reduce: orm.Bool | bool = True,
 ) -> orm.KpointsData:
     """
     Return fractional coordinates of irreducible k-points from a given mesh.

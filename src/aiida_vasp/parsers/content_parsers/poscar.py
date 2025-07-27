@@ -68,7 +68,7 @@ class PoscarParser(BaseFileParser):
             raise TypeError('The supplied AiiDA data structure is not a StructureData.')
 
     @property
-    def poscar_structure(self) -> dict[str, Any]:
+    def structure(self) -> dict[str, Any]:
         """Return structure from POSCAR.
 
         :returns: A dict that contain keys ``comment``, ``unitcell`` and ``sites``, which are compatible
@@ -110,7 +110,7 @@ class PoscarParser(BaseFileParser):
 
         return content_parser
 
-    def transform_to_bool(self, value):
+    def transform_to_bool(self, value: str | int) -> bool:
         """Helper function to transform the dictionary from strings or integers to bools"""
         if value in [0, 'F', 'f']:
             return False
@@ -119,7 +119,7 @@ class PoscarParser(BaseFileParser):
         return True
 
 
-def parsevasp_to_aiida(poscar):
+def parsevasp_to_aiida(poscar: Poscar) -> dict[str, Any]:
     """``parsevasp`` to AiiDA conversion.
 
     Generate an AiiDA structure that can be consumed by ``StructureData`` on initialization
@@ -135,6 +135,8 @@ def parsevasp_to_aiida(poscar):
     # Fetch a dictionary containing the entries, make sure all coordinates are
     # cartesian
     poscar_dict = poscar.get_dict(direct=False)
+    # Inverted dictionary with element names being the keys and numbers being the values
+    symbols = {value['symbol']: key for key, value in elements.items()}
 
     for site in poscar_dict['sites']:
         specie = site['specie']
@@ -145,24 +147,11 @@ def parsevasp_to_aiida(poscar):
         # Strip trailing _ in case user specifies potential
         symbol = specie.split('_')[0].capitalize()
         # Check if leading entry is part of
-        # aiida.common.constants.elements{}, otherwise set to X, but first
-        # invert
-        symbols = fetch_symbols_from_elements(elements)
-        try:
-            symbols[symbol]
-        except KeyError:
+        # aiida.common.constants.elements{}, otherwise set to X
+        if symbol not in symbols:
             symbol = 'X'
 
         site['symbol'] = symbol
         site['kind_name'] = specie
 
     return poscar_dict
-
-
-def fetch_symbols_from_elements(elmnts):
-    """Fetch the symbol entry in the elements dictionary in Aiida."""
-
-    new_dict = {}
-    for key, value in elmnts.items():
-        new_dict[value['symbol']] = key
-    return new_dict

@@ -1,21 +1,53 @@
 """
-Redesigned convergence testing workchain.
+VASP Convergence WorkChain for AiiDA
+====================================
 
-Make it more simple and easy to use.
+This module provides a workchain for performing convergence tests in VASP calculations using the AiiDA workflow engine.
+It automates the process of running multiple VASP calculations with varying plane-wave cutoff energies and
+k-point spacings, collects the results, and provides utilities for analyzing and plotting the convergence data.
+The pandas package is needed for generated DataFrames of the convergence test results.
+
+
+Main Features
+-------------
+
+- Defines the `VaspConvergenceWorkChain`, which orchestrates a series of VASP calculations to test convergence with
+  respect to:
+    - Plane-wave cutoff energy (`ENCUT`)
+    - K-point spacing
+- Collects and summarizes output data such as total energy, maximum force, maximum stress, and magnetization.
+- Provides helper functions to extract convergence data as pandas DataFrames and to plot the results.
+- Includes a utility to generate a builder for the convergence workchain with user-specified protocols and options.
 
 Inputs
-- just like a normal VaspWorkChain
-- run with different cut off energies
-- run with different k spacing
-- summarise the results
+------
 
-No added wrapper etc.
+- Structure and calculation parameters as required by the underlying VASP workchain.
+- `conv_settings`: A dictionary specifying the convergence test ranges and steps for cutoff energy and k-point spacing.
+
+Outputs
+-------
+
+- `cutoff_conv_data`: Summary of results for cutoff energy convergence.
+- `kpoints_conv_data`: Summary of results for k-point spacing convergence.
+
+Usage
+-----
+
+This module is intended to be used as part of an AiiDA plugin for VASP. Users can launch the convergence workchain
+by providing the required inputs and analyze the results using the provided utility functions.
+
+
 """
+
+from __future__ import annotations
+
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from aiida import orm
-from aiida.engine import WorkChain, append_, calcfunction
+from aiida.engine import ProcessSpec, WorkChain, append_, calcfunction
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
@@ -56,7 +88,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     option_class = ConvOptions
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
 
         spec.expose_inputs(cls._sub_workchain)
@@ -77,7 +109,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         spec.output('kpoints_conv_data', required=False)
         spec.output('cutoff_conv_data', required=False)
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup the convergence workflow"""
         settings = self.inputs.conv_settings.get_dict()
         self.ctx.settings = settings
@@ -120,7 +152,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         self.ctx.cutoff_list = cutoff_list
         self.ctx.kspacing_list = kspacing_list
 
-    def launch_conv_calcs(self):
+    def launch_conv_calcs(self) -> None:
         """
         Setup and launch the convergence calculations
         """
@@ -166,19 +198,19 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
             self.report(f'Submitted {running} with kpoints spacing {kspacing:.3f}.')
             self.to_context(kpoints_conv_workchains=append_(running))
 
-    def analyse(self):
+    def analyse(self) -> None:
         """
         Analyse the output of the calculations.
         Collect data to be plotted/analysed against the cut off energy and kpoints spacing
         """
 
-        def get_maximum(forces):
+        def get_maximum(forces: np.ndarray | None) -> float | None:
             if forces is None:
                 return None
             norm = np.linalg.norm(forces, axis=1)
             return np.amax(norm)
 
-        def collect_data(workchain, energy_key):
+        def collect_data(workchain: orm.WorkChainNode, energy_key: str) -> dict[str, Any]:
             """Collect the data from workchain output"""
             output = workchain.outputs.misc.get_dict()
             data = {}
@@ -191,7 +223,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
             data['energy'] = output['total_energies'][energy_key]
             return data
 
-        def unpack(name, input_data):
+        def unpack(name: str, input_data: dict[Any, Any]) -> dict[str, list[Any]]:
             """Unpack a dict with numberical keys"""
             output_dict = {name: []}
             for key, data in input_data.items():
@@ -247,12 +279,12 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
 
         # Calcfunction to link with the calculation output to the summary data node
         @calcfunction
-        def create_links_kconv(**miscs):
+        def create_links_kconv(**miscs: Any) -> orm.Dict:
             """Alias calcfunction to link summary node with miscs"""
             return orm.Dict(dict=unpack('kpoints_spacing', kspacing_data))
 
         @calcfunction
-        def create_links_cutconv(**miscs):
+        def create_links_cutconv(**miscs: Any) -> orm.Dict:
             """Alias calcfunction to link summary node with miscs"""
             return orm.Dict(dict=unpack('cutoff_energy', cutoff_data))
 
@@ -264,7 +296,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         return exit_code
 
     @staticmethod
-    def get_conv_data(conv_work, plot=False, **plot_kwargs):
+    def get_conv_data(conv_work: orm.WorkChainNode, plot: bool = False, **plot_kwargs: Any) -> tuple[Any, Any]:
         """
         Convenient method for extracting convergence data
 
@@ -280,7 +312,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         return cdf, kdf
 
 
-def get_conv_data(conv_work):
+def get_conv_data(conv_work: orm.WorkChainNode) -> tuple[Any, Any]:
     """
     Convenient method for extracting convergence data
 
@@ -308,7 +340,7 @@ def get_conv_data(conv_work):
     return cutdf, kdf
 
 
-def plot_conv_data(cdf, kdf, **kwargs):
+def plot_conv_data(cdf: Any, kdf: Any, **kwargs: Any) -> list[Any]:
     """
     Make two combined plots for the convergence test results.
     """
@@ -357,7 +389,7 @@ def plot_conv_data(cdf, kdf, **kwargs):
     return figs
 
 
-def get_convergence_builder(structure, config):
+def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]) -> VaspBuilderUpdater:
     """
     Short cut for getting an VaspBuilderUpdater ready to use
 

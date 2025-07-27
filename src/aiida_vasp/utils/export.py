@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import gzip
 import os
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 from aiida import orm
 from aiida.common.links import LinkType
@@ -65,7 +68,7 @@ def _export_calculation(
 
 @ensure_node_first_arg
 @ensure_node_kwargs
-def export_pseudos(calc_job_node, folder):
+def export_pseudos(calc_job_node: Any, folder: Path) -> None:
     """Save the pseudopotential file (POTCAR)"""
     pps = calc_job_node.get_incoming(link_label_filter='potential%').nested()['potential']
     multi_potcar = MultiPotcarIo.from_structure(calc_job_node.inputs.structure, pps)
@@ -123,7 +126,13 @@ def _export_workchain(
 
 
 @ensure_node_first_arg
-def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type='energy_extrapolated'):
+def export_neb(
+    workchain: Any,
+    dst: str | Path,
+    decompress: bool = True,
+    include_potcar: bool = True,
+    energy_type: str = 'energy_extrapolated',
+) -> None:
     """Export the neb calculation"""
     energies = {key: value[energy_type] for key, value in workchain.outputs.misc['total_energies'].items()}
 
@@ -184,7 +193,7 @@ def export_neb(workchain, dst, decompress=True, include_potcar=True, energy_type
 
 
 @ensure_node_kwargs
-def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
+def copy_from_aiida(name: str, node: orm.Node, dst: Path, decompress: bool = False, exclude: str | None = None) -> None:
     """Copy objects from aiida repository.
 
     :param name: The full name (including the parent path) of the object.
@@ -235,7 +244,9 @@ def copy_from_aiida(name: str, node, dst: Path, decompress=False, exclude=None):
 
 
 @ensure_node_first_arg
-def save_all_repository_objects(node: orm.Node, target_path: Path, decompress=False, exclude=None):
+def save_all_repository_objects(
+    node: orm.Node, target_path: Path, decompress: bool = False, exclude: str | None = None
+) -> None:
     """Copy all objects of a node saved in the repository to the disc"""
     for name in node.list_object_names():
         copy_from_aiida(name, node, target_path, decompress, exclude=exclude)

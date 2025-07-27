@@ -6,6 +6,7 @@ import logging
 from copy import deepcopy
 from math import pi
 from pathlib import Path
+from typing import Any
 
 import yaml
 from aiida.orm import Dict, KpointsData, StructureData
@@ -45,7 +46,7 @@ FELEMS = [
 ]
 
 
-def get_library_path():
+def get_library_path() -> Path:
     """Get the path where the YAML files are stored within this package"""
     return Path(__file__).parent
 
@@ -79,7 +80,7 @@ class InputSet:
         self.verbose = verbose
         self._load_data()
 
-    def get_input_dict(self, structure: StructureData, raw_python=True):
+    def get_input_dict(self, structure: StructureData, raw_python: bool = True) -> Dict | dict[str, Any]:
         """
         Get a input dictionary for VASP
         """
@@ -97,7 +98,7 @@ class InputSet:
             return out_dict
         return Dict(dict=out_dict)
 
-    def _load_data(self):
+    def _load_data(self) -> None:
         """Load stored data"""
         set_path = None
         for parent in self._load_paths:
@@ -113,7 +114,7 @@ class InputSet:
         with open(set_path, encoding='utf-8') as fhd:
             self._presets = yaml.load(fhd, Loader=yaml.FullLoader)
 
-    def apply_overrides(self, out_dict):
+    def apply_overrides(self, out_dict: dict[str, Any]) -> None:
         """Apply overrides stored in self.overrides to the dictionary passed"""
         for name, value in self.overrides.items():
             # Keys ends with '_mapping' are treated differently here
@@ -126,7 +127,7 @@ class InputSet:
             else:
                 out_dict[name] = value
 
-    def get_kpoints(self, structure, density=None):
+    def get_kpoints(self, structure: StructureData, density: float | None = None) -> KpointsData:
         """
         Return a kpoints object for a given density
 
@@ -145,7 +146,7 @@ class InputSet:
         return kpoints
 
 
-def convert_lowercase(indict):
+def convert_lowercase(indict: dict[str, Any]) -> dict[str, Any]:
     """Convert all keys in a dictionary to lowercase"""
 
     has_uppercase = any(any(letter.isupper() for letter in c) for c in indict.keys())
