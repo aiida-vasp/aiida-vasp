@@ -11,7 +11,7 @@ from .base import InputSet
 
 try:
     import pymatgen.io.vasp.sets as pmg_sets
-    from pymatgen.io.vasp.inputs import KpointsSupportedModes
+    from pymatgen.io.vasp.inputs import Kpoints, KpointsSupportedModes
 except ImportError:
     pmg_sets = None
 
@@ -191,7 +191,7 @@ class PymatgenInputSet(InputSet):
         return None
 
 
-def pmg_kpoints2kpointsdata(pmg_kpoints, structure: orm.StructureData) -> orm.KpointsData:
+def pmg_kpoints2kpointsdata(pmg_kpoints: Kpoints, structure: orm.StructureData) -> orm.KpointsData:
     """
     Convert a pymatgen Kpoints object to an AiiDA KpointsData object.
 

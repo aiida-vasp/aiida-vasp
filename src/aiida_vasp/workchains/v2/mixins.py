@@ -2,16 +2,21 @@
 Some convenience mixins
 """
 
+# ruff: noqa: PLC0415
+from __future__ import annotations
+
+from typing import Any
+
 
 class WithBuilderUpdater:
     @classmethod
-    def get_builder_updater(cls, *args, **kwargs):
+    def get_builder_updater(cls, *args: Any, **kwargs: Any) -> Any:
         """
         Return the corresponding builder updater class for the workchain.
 
         The arguments are passed directly to the underling `BuilderUpdater` constructor.
         """
-        from .common.builder_updater import (  # noqa: PLC0415
+        from .common.builder_updater import (
             VaspBandUpdater,
             VaspBuilderUpdater,
             VaspConvUpdater,

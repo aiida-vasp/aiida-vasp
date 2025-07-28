@@ -5,6 +5,8 @@ Contains the parsing interfaces to ``parsevasp`` used to parse ``CHGCAR`` conten
 """
 
 # pylint: disable=abstract-method
+from typing import TextIO
+
 from parsevasp.chgcar import Chgcar
 
 from aiida_vasp.parsers.content_parsers.base import BaseFileParser
@@ -24,7 +26,7 @@ class ChgcarParser(BaseFileParser):
         'magnetization_density': {'inputs': [], 'name': 'magnetization_density', 'prerequisites': []},
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: TextIO) -> None:
         """Initialize a ``parsevasp`` object of ``Chgcar`` using a file like handler.
 
         :param handler: A file like object that provides the necessary ``CHGCAR`` content to be parsed.

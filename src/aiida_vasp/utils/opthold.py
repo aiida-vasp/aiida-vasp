@@ -15,17 +15,19 @@ class OptionContainer(BaseModel):
     Base class for a container of options
     """
 
-    def aiida_dict(self):
+    def aiida_dict(self) -> Dict:
         """Return an ``aiida.orm.Dict`` presentation"""
 
         python_dict = self.model_dump()
         return Dict(dict=python_dict)
 
     @classmethod
-    def aiida_validate(cls, input_dict, namespace=None) -> None:  # pylint:disable=unused-argument
+    def aiida_validate(cls, input_dict: dict | Dict, namespace: None | str = None) -> None:  # pylint:disable=unused-argument
         """
         Validate a dictionary/Dict node, this can be used as the validator for
         the Port accepting the inputs
+
+        This is used as validator for the `spec.input` call.
         """
         if isinstance(input_dict, Dict):
             input_dict = input_dict.get_dict()
@@ -36,7 +38,7 @@ class OptionContainer(BaseModel):
         return None
 
     @classmethod
-    def aiida_serialize(cls, python_dict: dict):
+    def aiida_serialize(cls, python_dict: dict) -> Dict:
         """
         serialize a dictionary into Dict
 
@@ -46,7 +48,7 @@ class OptionContainer(BaseModel):
         return obj.aiida_dict()
 
     @classmethod
-    def aiida_description(cls):
+    def aiida_description(cls) -> str:
         """
         Return a string for the options of a OptionContains in a human-readable format.
         """

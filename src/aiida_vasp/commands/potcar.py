@@ -41,7 +41,7 @@ FUNCTIONAL_CHOICES = [
 
 
 @VERDI_DATA.group('vasp.potcar')
-def potcar():
+def potcar() -> None:
     """Top level command for handling VASP POTCAR files."""
 
 
@@ -62,7 +62,7 @@ def try_grab_description(ctx, param, value):
     return value
 
 
-def detect_old_style_groups():
+def detect_old_style_groups() -> None:
     """Check for the existence of old style groups and prompt the user"""
 
     from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup  # noqa: PLC0415

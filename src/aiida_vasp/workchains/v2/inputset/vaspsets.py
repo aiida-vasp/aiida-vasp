@@ -15,7 +15,7 @@ from .base import FELEMS, InputSet
 class VASPInputSet(InputSet):
     """Input set for VASP"""
 
-    def get_input_dict(self, structure, raw_python=True) -> Union[dict, Dict]:
+    def get_input_dict(self, structure: StructureData, raw_python: bool = True) -> Union[dict, Dict]:
         """
         Compose the Dict object containing the input settings.
         """
@@ -79,11 +79,17 @@ class VASPInputSet(InputSet):
     def get_potcar_family(self) -> str:
         return self._presets['potcar_family']
 
-    def get_kpoints_spacing(self):
+    def get_kpoints_spacing(self) -> float:
         return self._presets.get('kpoints_spacing')
 
 
-def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
+def get_ldau_keys(
+    structure: StructureData,
+    mapping: dict[str, list[int | float | str]],
+    utype: int = 2,
+    jmapping: dict[str, list[int | float | str]] | None = None,
+    felec: bool = False,
+) -> dict[str, str | float]:
     """
     Setup LDAU mapping. In VASP, the U for each species has to be
     defined in the order that they appear in POSCAR. This is a helper

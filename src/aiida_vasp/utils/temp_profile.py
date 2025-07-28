@@ -7,6 +7,7 @@ from pathlib import Path
 from subprocess import check_output
 
 from aiida import load_profile, manage, orm
+from aiida.manage import Profile
 from aiida.storage.sqlite_temp import SqliteTempBackend
 
 from aiida_vasp.utils.mock_code import VaspMockRegistry
@@ -14,7 +15,7 @@ from aiida_vasp.utils.mock_code import VaspMockRegistry
 __all__ = ('VaspMockRegistry', 'load_temp_profile', 'orm')
 
 
-def load_temp_profile(force=True):
+def load_temp_profile(force: bool = True) -> Profile:
     """Load a temporary profile for testing/demo purposes."""
     profile = load_profile(
         SqliteTempBackend.create_profile('myprofile', options={'runner.poll.interval': 1}, debug=False),
@@ -27,7 +28,7 @@ def load_temp_profile(force=True):
     return profile
 
 
-def load_temp_profile_with_mock(force=True):
+def load_temp_profile_with_mock(force: bool = True) -> Profile:
     """Load a temporary profile with mock VASP codes for testing/demo purposes."""
     # Skip creation
     profile = load_temp_profile()

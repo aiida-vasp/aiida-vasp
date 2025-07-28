@@ -4,11 +4,19 @@ General utils.
 Contains general utils that is not directly coupled to the plugin or AiiDA.
 """
 
+from __future__ import annotations
+
 import os
 import shutil
+from typing import Callable
 
 
-def copytree(src, dst, symlinks=False, ignore=None):
+def copytree(
+    src: str,
+    dst: str,
+    symlinks: bool = False,
+    ignore: Callable[[str, list[str]], list[str]] | None = None,
+) -> None:
     """
     Fixes annoying complaint about existing directory running tests
 

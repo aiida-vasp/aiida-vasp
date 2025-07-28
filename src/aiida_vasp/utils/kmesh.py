@@ -2,13 +2,17 @@
 Generating (symmetry-reduced) k-point grids using spglib
 """
 
+from __future__ import annotations
+
 import numpy as np
 from aiida import orm
 from aiida.engine import calcfunction
 from spglib import get_ir_reciprocal_mesh
 
 
-def grid_address_to_recip_coord(points, mesh, is_shift=None):
+def grid_address_to_recip_coord(
+    points: np.ndarray, mesh: list[int] | tuple[int, ...], is_shift: list[bool] | None = None
+) -> np.ndarray:
     """
     Convert grid address to fractional coordinates in the reciprocal space
     """
@@ -20,8 +24,15 @@ def grid_address_to_recip_coord(points, mesh, is_shift=None):
 
 
 def get_ir_kpoints_and_weights(
-    cell, scaled_positions, numbers, mesh, is_time_reversal=True, symprec=1e-5, is_shift=None, symmetry_reduce=True
-):
+    cell: np.ndarray,
+    scaled_positions: np.ndarray,
+    numbers: list[int],
+    mesh: int | list[int] | tuple[int, ...],
+    is_time_reversal: bool = True,
+    symprec: float = 1e-5,
+    is_shift: list[bool] | None = None,
+    symmetry_reduce: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Return fractional coordinates of irreducible k-points from a given mesh.
     Note: The current implementation does not support using only time-reversal symmetry.
@@ -61,12 +72,12 @@ def get_ir_kpoints_and_weights(
 @calcfunction
 def get_ir_kpoints_data(
     structure: orm.StructureData,
-    mesh_or_spacing,
-    is_time_reversal=True,
-    symprec=1e-5,
-    is_shift=None,
-    symmetry_reduce=True,
-):
+    mesh_or_spacing: orm.List | orm.Float,
+    is_time_reversal: orm.Bool | bool = True,
+    symprec: orm.Float | float = 1e-5,
+    is_shift: orm.List | None = None,
+    symmetry_reduce: orm.Bool | bool = True,
+) -> orm.KpointsData:
     """
     Return fractional coordinates of irreducible k-points from a given mesh.
     Note: The current implementation does not support using only time-reversal symmetry.

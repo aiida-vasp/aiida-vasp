@@ -83,7 +83,7 @@ class DictWrapper(UserDict):
         if self.namespace is not None:
             self.namespace[self.port] = self.node
 
-    def _ensure_unstored(self):
+    def _ensure_unstored(self) -> None:
         """
         Ensure that self._unstored_node is indeed unstored
         If it is not the case - we move it to self._stored_node an create a new
@@ -110,12 +110,12 @@ class DictWrapper(UserDict):
         if self.namespace is not None:
             self.namespace[self.port] = self.node
 
-    def validate(self):
+    def validate(self) -> None:
         """Validate the consistency between the node and the python dictionary"""
         assert self.data == self.node.get_dict()
 
     @classmethod
-    def serializer(cls, data, port=None):
+    def serializer(cls, data: dict | 'DictWrapper', port: Any = None) -> Dict:
         """
         The `serializer` function can be used for `ProcessSpec.input`.
 

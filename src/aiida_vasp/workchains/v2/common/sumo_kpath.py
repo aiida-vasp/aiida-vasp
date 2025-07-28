@@ -9,7 +9,9 @@ from sumo.symmetry.kpoints import get_path_data
 
 
 @calcfunction
-def kpath_from_sumo(structure: orm.StructureData, mode: orm.Str, symprec: orm.Float, line_density):
+def kpath_from_sumo(
+    structure: orm.StructureData, mode: orm.Str, symprec: orm.Float, line_density: orm.Float
+) -> dict[str, orm.StructureData | orm.KpointsData]:
     """
     Obtain kpoint path from sumo
 
@@ -17,22 +19,22 @@ def kpath_from_sumo(structure: orm.StructureData, mode: orm.Str, symprec: orm.Fl
     """
 
     struct = structure.get_pymatgen()
-    line_density = line_density.value
+    line_density_value: float = line_density.value
 
     path, kpoints_raw, labels = get_path_data(
         struct,
         mode.value,
         symprec.value,
-        line_density=line_density,
+        line_density=line_density_value,
     )
     # Primitive structure
-    prim = orm.StructureData(pymatgen=path.prim)
+    prim: orm.StructureData = orm.StructureData(pymatgen=path.prim)
 
     # kpoints
-    kpoints = orm.KpointsData()
+    kpoints: orm.KpointsData = orm.KpointsData()
     kpoints.set_kpoints(kpoints_raw)
 
-    actual_labels = []
+    actual_labels: list[list[int | str]] = []
     for idx, label in enumerate(labels):
         if label != '':
             # Standardise GAMMA handling
@@ -47,7 +49,9 @@ def kpath_from_sumo(structure: orm.StructureData, mode: orm.Str, symprec: orm.Fl
 
 
 @calcfunction
-def kpath_from_sumo_v2(structure: orm.StructureData, band_settings: orm.Dict):
+def kpath_from_sumo_v2(
+    structure: orm.StructureData, band_settings: orm.Dict
+) -> dict[str, orm.StructureData | orm.KpointsData]:
     """
     Obtain kpoint path from sumo
 
@@ -64,7 +68,7 @@ def kpath_from_sumo_v2(structure: orm.StructureData, band_settings: orm.Dict):
     kpoints = orm.KpointsData()
     kpoints.set_kpoints(kpoints_raw)
 
-    actual_labels = []
+    actual_labels: list[list[int | str]] = []
     for idx, label in enumerate(labels):
         if label != '':
             # Standardise GAMMA handling

@@ -4,13 +4,17 @@ VASP NEB workchain.
 Contains the VaspNEBWorkChain class definition which uses the BaseRestartWorkChain.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import numpy as np
 from aiida import __version__ as aiida_version
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, NotExistent
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.lang import override
-from aiida.engine import while_
+from aiida.engine import ExitCode, ProcessSpec, while_
 from aiida.engine.processes.workchains.restart import BaseRestartWorkChain, ProcessHandlerReport, process_handler
 from aiida.plugins import CalculationFactory
 
@@ -67,7 +71,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
     _norm_disp_threshold = 4.0
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: ProcessSpec) -> None:
         super(VaspNEBWorkChain, cls).define(spec)
         spec.expose_inputs(
             cls._process_class,
@@ -192,7 +196,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
             message='Unrecoverable error in launched NEB calculations.',
         )
 
-    def setup(self):
+    def setup(self) -> None | ExitCode:
         super().setup()
 
         # Setup the initial inputs
@@ -211,7 +215,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         return None
 
     @process_handler(priority=500, exit_codes=[VaspNEBCalculation.exit_codes.ERROR_IONIC_NOT_CONVERGED])  # pylint: disable=no-member
-    def handle_unconverged(self, node):
+    def handle_unconverged(self, node: orm.WorkChainNode) -> ProcessHandlerReport | None:
         """
         Handle the problem where the NEB optimization is not converged.
 
@@ -243,7 +247,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         return None
 
     @process_handler(priority=900, exit_codes=[VaspNEBCalculation.exit_codes.ERROR_DID_NOT_FINISH])  # pylint: disable=no-member
-    def handle_unfinished(self, node):
+    def handle_unfinished(self, node: orm.WorkChainNode) -> ProcessHandlerReport | None:
         """
         Handle the case where the calculations is not fully finished.
         This checks the existing of the run_stats field in the parsed per-image misc output
@@ -273,7 +277,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         self.report(f'Cannot handle unfinished calculation {node}.')
         return None
 
-    def _attach_output_structure(self, node):
+    def _attach_output_structure(self, node: orm.WorkChainNode) -> ProcessHandlerReport | None:
         """
         Attached the output structure of a children node as the inputs for the
         next workchain launch.
@@ -290,7 +294,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         self.ctx.inputs.neb_images = output_images
         return None
 
-    def _check_neb_inputs(self):
+    def _check_neb_inputs(self) -> None:
         """
         Perform some simple checks for the NEB inputs
 
@@ -356,7 +360,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
                 )
             last_frame = frame
 
-    def _setup_vasp_inputs(self):
+    def _setup_vasp_inputs(self) -> None:
         """
         Setup the inputs for VASP calculation
 
@@ -467,7 +471,7 @@ class VaspNEBWorkChain(BaseRestartWorkChain):
         return None
 
     @override
-    def results(self):
+    def results(self) -> ExitCode | None:
         """Attach the outputs specified in the output specification from the last completed process."""
         node = self.ctx.children[self.ctx.iteration - 1]
 
@@ -525,7 +529,13 @@ FELEMS = [
 ]
 
 
-def get_ldau_keys(structure, mapping, utype=2, jmapping=None, felec=False):
+def get_ldau_keys(
+    structure: orm.StructureData,
+    mapping: dict[str, list[float]],
+    utype: int = 2,
+    jmapping: dict[str, float] | None = None,
+    felec: bool = False,
+) -> dict[str, Any]:
     """
     Setup LDAU mapping.
 

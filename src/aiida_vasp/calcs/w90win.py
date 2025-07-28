@@ -4,16 +4,18 @@ Utilities for Wannier90.
 Utility to convert raw input data to .win format.
 """
 
+from typing import Any, Sequence
+
 
 class DictToWin(object):  # pylint: disable=useless-object-inheritance
     """Format parameters given in a dictionary into Wannier90 .win format."""
 
     @classmethod
-    def _bool(cls, val):
+    def _bool(cls, val: Any) -> bool:
         return 'T' if val else 'F'
 
     @classmethod
-    def _seq(cls, val):
+    def _seq(cls, val: Sequence) -> str:
         """String format a sequence."""
         res = []
         for i in val:
@@ -25,7 +27,7 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
         return res
 
     @classmethod
-    def _block(cls, name, val):
+    def _block(cls, name: str, val: Any) -> list[str]:
         """
         Create a win parameter block with name being the block name, val being the content in python representation.
         """
@@ -35,11 +37,11 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
         return res
 
     @classmethod
-    def _assign(cls, key, val):
+    def _assign(cls, key: str, val: Any) -> str:
         return f'{key} = {val}'
 
     @classmethod
-    def _value(cls, val):
+    def _value(cls, val: Any) -> str:
         """String format a value of any compatible scalar type."""
         if isinstance(val, str):  # pylint: disable=undefined-variable
             return val
@@ -50,13 +52,13 @@ class DictToWin(object):  # pylint: disable=useless-object-inheritance
         return str(val)
 
     @classmethod
-    def _item(cls, key, val):
+    def _item(cls, key: str, val: Any) -> list[str]:
         if isinstance(val, (list, tuple)):
             return cls._block(key, val)
         return [cls._assign(key, cls._value(val))]
 
     @classmethod
-    def parse(cls, in_dict):
+    def parse(cls, in_dict: dict) -> str:
         """Parse a dictionary into win formatted string."""
         res = []
         for key, value in in_dict.items():

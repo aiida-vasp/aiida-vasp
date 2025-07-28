@@ -2,11 +2,13 @@
 Tools for using the Pymatgen library with aiida-vasp.
 """
 
+from __future__ import annotations
+
 import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional
 
 try:
     import pymatgen.io.vasp as pvasp
@@ -16,12 +18,14 @@ except ImportError:
 
 import gzip
 
+from aiida import orm
+
 from .aiida_utils import ensure_node_first_arg
 from .export import export_vasp
 
 
 @contextmanager
-def temporary_folder():
+def temporary_folder() -> Generator[Path, None, None]:
     """Get a temporary folder and delete it after use."""
     tmpf = Path(tempfile.mkdtemp())
     yield tmpf
@@ -31,7 +35,7 @@ def temporary_folder():
 class PymatgenAdapator:
     """
     Adaptor for getting pymatgen objects from a VASP calculation/workflow
-    This work by first exporting the calculation to a temporary folder and then parsing the files using pymatgen.
+    This work by first exporting the calculation to a temporary folder and then parsing the files using pymmatgen.
 
     Some of the pymatgen objects does not have the from_dict method implemented as required by MSONable.
     Hence, they can only be reconstructed as a dictionary.
@@ -51,26 +55,26 @@ class PymatgenAdapator:
     # Classes where from_dict is not implemented but still MSONable
     NO_RECONSTRUCT = ['vasprun', 'outcar', 'chgcar']
 
-    def __init__(self, node, store_cache=True):
+    def __init__(self, node: orm.CalcJobNode, store_cache: bool = True) -> None:
         """Adaptor for getting pymatgen objects from a VASP calculation/workflow"""
         self.node = node
         self.pmg_objects = {}
         self.cache = {}
         self.store_cache = store_cache
 
-    def _parse_full(self, names: Optional[List[str]] = None):
+    def _parse_full(self, file_names: Optional[List[str]] = None) -> None:
         """
         Parse all files and save to the pmg_objects attribute
         The assumption is that exporting the calculation folder is the slowest part of the process.
         """
-        if names is None:
-            names = self.FILES
+        if file_names is None:
+            file_names = self.FILES
         else:
-            names = {key: self.FILES[key] for key in names}
+            file_names = {key: self.FILES[key] for key in file_names}
 
         with temporary_folder() as tmpf:
             export_vasp(self.node, tmpf)
-            for name, (cls_name, file) in names.items():
+            for name, (cls_name, file) in file_names.items():
                 # Instantiate the pymatgen object
                 cls = getattr(pvasp, cls_name)
                 if not Path(tmpf / file).is_file():
@@ -93,11 +97,11 @@ class PymatgenAdapator:
                     obj = cls(fname)
                 self.pmg_objects[name] = obj
 
-    def export_files(self, dst: Union[Path, str]):
+    def export_files(self, dst: str | Path) -> None:
         """Export the VASP calculation files to a destination folder"""
         export_vasp(self.node, dst)
 
-    def _get_pmg_object(self, name: str):
+    def _get_pmg_object(self, name: str) -> Any:
         """
         Get a pymatgen object
 
@@ -228,43 +232,43 @@ class PymatgenAdapator:
 
 
 @ensure_node_first_arg
-def get_vasprun(node, store_cache=True) -> pvasp.Vasprun:
+def get_vasprun(node: Any, store_cache: bool = True) -> pvasp.Vasprun:
     """Return the Vasprun object"""
     return PymatgenAdapator(node, store_cache=store_cache).vasprun
 
 
 @ensure_node_first_arg
-def get_outcar(node, store_cache=True) -> pvasp.Outcar:
+def get_outcar(node: Any, store_cache: bool = True) -> pvasp.Outcar:
     """Return the OUTCAR object"""
     return PymatgenAdapator(node, store_cache=store_cache).outcar
 
 
 @ensure_node_first_arg
-def get_incar(node, store_cache=True) -> pvasp.Incar:
+def get_incar(node: Any, store_cache: bool = True) -> pvasp.Incar:
     """Return the INCAR object"""
     return PymatgenAdapator(node, store_cache=store_cache).incar
 
 
 @ensure_node_first_arg
-def get_kpoints(node, store_cache=True) -> pvasp.Kpoints:
+def get_kpoints(node: Any, store_cache: bool = True) -> pvasp.Kpoints:
     """Return the Kpoints object"""
     return PymatgenAdapator(node, store_cache=store_cache).kpoints
 
 
 @ensure_node_first_arg
-def get_ibzkpt(node, store_cache=True) -> pvasp.Kpoints:
+def get_ibzkpt(node: Any, store_cache: bool = True) -> pvasp.Kpoints:
     """Return the Kpoints object using the IBZKPT file"""
     return PymatgenAdapator(node, store_cache=store_cache).ibzkpt
 
 
-def convert_pymatgen_potcar_folder(src: Union[Path, str], dst: Union[Path, str]):
+def convert_pymatgen_potcar_folder(src: Path | str, dst: Path | str) -> None:
     """
     Convert pymatgen potcar folder to a structure used by aiida-vasp
 
     :param src: Path to the pymatgen potcar folder
     :param dst: Path to the aiida-vasp potcar folder
 
-    :returns: None
+    :return: None
     """
 
     src = Path(src)

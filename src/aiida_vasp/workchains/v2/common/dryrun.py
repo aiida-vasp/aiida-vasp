@@ -2,6 +2,8 @@
 Module to provide dryrun functionality.
 """
 
+from __future__ import annotations
+
 import shutil
 from math import ceil, gcd
 from typing import Optional
@@ -36,7 +38,7 @@ class JobScheme:
         ncore_within_node: bool = True,
         ncore_strategy: str = 'maximise',
         wf_size_limit: float = 1000,
-    ):
+    ) -> None:
         """
         Instantiate a JobScheme object.
 
@@ -75,7 +77,7 @@ class JobScheme:
         self.solve_ncore()
 
     @classmethod
-    def from_dryrun(cls, dryrun_outcome: dict, n_procs: int, **kwargs) -> 'JobScheme':
+    def from_dryrun(cls, dryrun_outcome: dict, n_procs: int, **kwargs) -> JobScheme:
         """
         Construct from dryrun results.
 
@@ -186,7 +188,7 @@ class JobScheme:
         return self.size_wavefunction / self.procs_per_kgroup
 
 
-def factors(num: int) -> list:
+def factors(num: int) -> list[int]:
     """
     Return all factors of a number in descending order, including the number itself.
 
@@ -202,7 +204,11 @@ def factors(num: int) -> list:
 
 
 def dryrun_vasp(
-    input_dict: dict, vasp_exe: str = 'vasp_std', timeout: int = 10, work_dir: Optional[str] = None, keep: bool = False
+    input_dict: dict | ProcessBuilder,
+    vasp_exe: str = 'vasp_std',
+    timeout: int = 10,
+    work_dir: str | None = None,
+    keep: bool = False,
 ) -> dict:
     """
     Perform a dryrun for a VASP calculation, return obtained information.

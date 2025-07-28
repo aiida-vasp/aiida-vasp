@@ -25,10 +25,11 @@ Main difference from the previous version
    default settings and update/add the `_compose_xx` methods.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import numpy as np
 from aiida import orm
+from aiida.engine import ExitCode
 from aiida.parsers.parser import Parser
 from pydantic import Field
 
@@ -172,7 +173,7 @@ class ParserSettingsConfig(OptionContainer):
 class VaspParser(Parser):
     """Class for parsing VASP output files and storing the results in AiiDA."""
 
-    def __init__(self, node):
+    def __init__(self, node: orm.CalcJobNode) -> None:
         """
         Initialize the Parser instance
         """
@@ -187,7 +188,7 @@ class VaspParser(Parser):
         self.quantities_to_exclude: List[str] = []
         self.nodes_to_exclude: List[str] = []
 
-    def _init_user_settings(self):
+    def _init_user_settings(self) -> ParserSettingsConfig:
         """Initialize the settings from the inputs."""
         if 'settings' in self.node.inputs:
             user_config: ParserSettingsConfig = ParserSettingsConfig(
@@ -199,7 +200,7 @@ class VaspParser(Parser):
         self.user_config = user_config
         return user_config
 
-    def _get_quantities_to_parse(self):
+    def _get_quantities_to_parse(self) -> ExitCode | None:
         """Return the list of quantities to parse."""
         # Apply the modifiers
         user_config = self.user_config
@@ -219,7 +220,7 @@ class VaspParser(Parser):
         if missing is True:
             return self.exit_codes.ERROR_CRITICAL_MISSING_OBJECT
 
-    def _post_process_quantities(self):
+    def _post_process_quantities(self) -> ExitCode | None:
         """Post-process the parsed quantities."""
 
         # Warn about errored/missing quantities and parsers
@@ -252,7 +253,7 @@ class VaspParser(Parser):
         if missing_required:
             return self.exit_codes.ERROR_NOT_ABLE_TO_PARSE_QUANTITY.format(quantity=','.join(missing_required))
 
-    def parse(self, **kwargs):
+    def parse(self, **kwargs: Any) -> ExitCode | None:
         """
         Parse outputs, store results in database.
         """
@@ -263,7 +264,13 @@ class VaspParser(Parser):
             return exit_code
 
         # Parse the files
-        def parse_and_add(name, parser_cls, required=True, open_mode='r', content_parser_settings=None):
+        def parse_and_add(
+            name: str,
+            parser_cls: Any,
+            required: bool = True,
+            open_mode: str = 'r',
+            content_parser_settings: dict | None = None,
+        ) -> None:
             """Parse the target file and add the result to the quantities_each dictionary"""
             resolved_name = user_config.file_mapping[name]
             if resolved_name in self.retrieve_object_names:
@@ -304,7 +311,7 @@ class VaspParser(Parser):
 
         return self._create_outputs()
 
-    def _create_outputs(self):
+    def _create_outputs(self) -> ExitCode | None:
         """Create the output nodes"""
         # Create the outputs
         self._failed_to_compose = {}
@@ -336,7 +343,7 @@ class VaspParser(Parser):
             error = self._check_vasp_errors(self.parser_notifications)
             return error
 
-    def _compose_misc(self, quantities_each):
+    def _compose_misc(self, quantities_each: dict[str, Any]) -> orm.Dict:
         """Compose the `misc` output node"""
 
         out_dict = {}
@@ -347,7 +354,7 @@ class VaspParser(Parser):
         out_dict = {key: value for key, value in out_dict.items() if not is_all_empty(value) or key in ALLOW_EMPTY}
         return orm.Dict(dict=out_dict)
 
-    def _compose_structure(self, quantities_each):
+    def _compose_structure(self, quantities_each: dict[str, Any]) -> orm.StructureData | None:
         """Compose the `structure` output node"""
 
         data = None
@@ -369,7 +376,7 @@ class VaspParser(Parser):
             raise QuantityMissingError()
         return get_structure_node(data)
 
-    def _compose_wavecar(self, quantities_each):
+    def _compose_wavecar(self, quantities_each: dict[str, Any]) -> None:
         """Compose the `wavecar` output node"""
 
         # Check if WAVECAR is present in the retrieved folder
@@ -379,7 +386,7 @@ class VaspParser(Parser):
         else:
             self.logger.warning('WAVECAR is not present in the retrieved folder.')
 
-    def _compose_chgcar(self, quantities_each):
+    def _compose_chgcar(self, quantities_each: dict[str, Any]) -> None:
         """Compose the `chgcar` output node"""
 
         # Check if WAVECAR is present in the retrieved folder
@@ -389,7 +396,7 @@ class VaspParser(Parser):
         else:
             self.logger.warning('CHGCAR is not present in the retrieved folder.')
 
-    def _compose_arrays(self, quantities_each):
+    def _compose_arrays(self, quantities_each: dict[str, Any]) -> dict[str, orm.ArrayData]:
         """Generate the generic `arrays` output node"""
         out_arrays = {}
 
@@ -402,7 +409,9 @@ class VaspParser(Parser):
                 out_arrays[name] = array_node
         return out_arrays
 
-    def _make_standalone_array(self, quantities_each, name, file_name='vasprun.xml'):
+    def _make_standalone_array(
+        self, quantities_each: dict[str, Any], name: str, file_name: str = 'vasprun.xml'
+    ) -> orm.ArrayData | None:
         """Compose the `dielectrics` output node"""
         # The output can be an array or a dictionary of arrays - both cases should be handled
         arrays_or_dict = quantities_each.get(file_name, {}).get(name)
@@ -414,7 +423,7 @@ class VaspParser(Parser):
             return orm.ArrayData({name: arrays_or_dict})
         return None
 
-    def _compose_kpoints(self, quantities_each):
+    def _compose_kpoints(self, quantities_each: dict[str, Any]) -> orm.KpointsData:
         """Compose the `kpoints` output node"""
         kpoints_data = None
         if self.user_config.kpoints_from_ibzkpt is True:
@@ -437,7 +446,7 @@ class VaspParser(Parser):
             return node
         raise QuantityMissingError('No valid kpoints data to use')
 
-    def _compose_trajectory(self, quantities_each):
+    def _compose_trajectory(self, quantities_each: dict[str, Any]) -> orm.TrajectoryData | None:
         """Compose the `trajectory` output"""
 
         if 'vasprun.xml' in quantities_each:
@@ -458,7 +467,7 @@ class VaspParser(Parser):
             return node
         return None
 
-    def _compose_bands(self, quantities_each):
+    def _compose_bands(self, quantities_each: dict[str, Any]) -> orm.BandsData:
         """Compose the `band` node"""
         if 'vasprun.xml' in quantities_each:
             deigen = quantities_each['vasprun.xml']['eigenvalues']
@@ -480,7 +489,7 @@ class VaspParser(Parser):
             node.set_cell(quantities_each['vasprun.xml']['structure']['unitcell'])
             return node
 
-    def _compose_dos(self, quantities_each):
+    def _compose_dos(self, quantities_each: dict[str, Any]) -> orm.ArrayData | None:
         """Compose the `dos` node"""
         arrays_dict = {}
         if 'vasprun.xml' in quantities_each:
@@ -489,7 +498,7 @@ class VaspParser(Parser):
             node = orm.ArrayData(arrays_dict['dos'])
             return node
 
-    def _check_vasp_errors(self, parser_notifications):
+    def _check_vasp_errors(self, parser_notifications: dict[str, Any]) -> ExitCode | None:
         """
         Detect simple vasp execution problems and returns the exit_codes to be set
         """
@@ -545,7 +554,9 @@ class VaspParser(Parser):
         return None
 
 
-def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=False):
+def gather_quantities(
+    quantities_each: dict[str, Any], namespace: str, dst: dict[str, Any], fields: list[str], flatten_dict: bool = False
+) -> None:
     """
     Gather quantities and put them into the target dictionary
     """
@@ -562,7 +573,14 @@ def gather_quantities(quantities_each, namespace, dst, fields, flatten_dict=Fals
 class NotificationComposer:
     """Compose errors codes based on the notifications"""
 
-    def __init__(self, notifications, run_status, inputs, exit_codes, critical_notifications):
+    def __init__(
+        self,
+        notifications: list[dict[str, Any]],
+        run_status: dict[str, Any],
+        inputs: dict[str, Any],
+        exit_codes: Any,
+        critical_notifications: list[str],
+    ) -> None:
         """
         Composed error codes based on the notifications
 
@@ -580,7 +598,7 @@ class NotificationComposer:
         self.exit_codes = exit_codes
         self.critical_notifications = critical_notifications
 
-    def compose(self):
+    def compose(self) -> ExitCode | None:
         """
         Compose the exit codes
 
@@ -599,7 +617,7 @@ class NotificationComposer:
         return None
 
     @property
-    def brmix(self):
+    def brmix(self) -> ExitCode | None:
         """Check if BRMIX should be emitted"""
         if 'brmix' not in self.notifications_dict:
             return None
@@ -611,7 +629,7 @@ class NotificationComposer:
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['brmix'])
 
     @property
-    def edddav_zhegv(self):
+    def edddav_zhegv(self) -> ExitCode | None:
         """Check if EDDDAV call to ZHEGV should be emitted. Sometimes it has converged."""
         if 'edddav_zhegv' not in self.notifications_dict:
             return None
@@ -622,7 +640,7 @@ class NotificationComposer:
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['edddav_zhegv'])
 
     @property
-    def eddrmm_zhegv(self):
+    def eddrmm_zhegv(self) -> ExitCode | None:
         """Check if EDDRMM call to ZHEGV should be emitted. Sometimes it has converged."""
         if 'eddrmm_zhegv' not in self.notifications_dict:
             return None
@@ -633,7 +651,7 @@ class NotificationComposer:
         return self.exit_codes.ERROR_VASP_CRITICAL_ERROR.format(error_message=self.notifications_dict['eddrmm_zhegv'])
 
 
-def get_structure_node(structure_dict):
+def get_structure_node(structure_dict: dict[str, Any]) -> orm.StructureData:
     """Compose a structure node from the dictionary output by the parser"""
     node = orm.StructureData()
     node.set_cell(structure_dict['unitcell'])
@@ -642,7 +660,7 @@ def get_structure_node(structure_dict):
     return node
 
 
-def is_all_empty(obj: Union[dict, list]):
+def is_all_empty(obj: dict | list) -> bool:
     """Check if all elements of a dictionary or list are empty"""
     if isinstance(obj, dict):
         if len(obj) == 0:

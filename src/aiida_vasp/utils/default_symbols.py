@@ -4,6 +4,8 @@ Utils for setting symbols on chemical elements.
 Utilities for choosing appropriate element symbols for a chemical element.
 """
 
+from __future__ import annotations
+
 import requests
 from lxml import html
 
@@ -16,7 +18,7 @@ VERSION = {
 }
 
 
-def get_recommendations(version_nr='latest', use_gw=False):
+def get_recommendations(version_nr: str = 'latest', use_gw: bool = False) -> dict[str, str]:
     """
     Get recommendations for a certain type of PAW.
 
@@ -24,36 +26,36 @@ def get_recommendations(version_nr='latest', use_gw=False):
     :param use_gw: get recommendations for GW instead LDA pseudopotentials
     :return: recommendations dict
     """
-    urlkey = 'gw-url' if use_gw else 'url'
+    urlkey: str = 'gw-url' if use_gw else 'url'
     page = requests.get(VERSION[version_nr][urlkey], timeout=10)
     tree = html.fromstring(page.text)
     tags = tree.xpath('//table//td[1]/b')
-    rec = {}
+    rec: dict[str, str] = {}
     for tag in tags:
-        item = tag.text.strip().split(' ')
-        element = item[0]
-        symbol = '_'.join([i for i in item if i])
+        item: list[str] = tag.text.strip().split(' ')
+        element: str = item[0]
+        symbol: str = '_'.join([i for i in item if i])
         rec[element] = symbol
     return rec
 
 
 # pylint: disable=too-few-public-methods
-class PawInfo(object):  # pylint: disable=useless-object-inheritance
+class PawInfo:  # pylint: disable=useless-object-inheritance
     """Simple class to bundle and pass around info about a PAW."""
 
-    def __init__(self, symbol, default_enmax, valency):
-        self.symbol = symbol
-        self.default_enmax = default_enmax
-        self.valency = valency
+    def __init__(self, symbol: str, default_enmax: int, valency: float) -> None:
+        self.symbol: str = symbol
+        self.default_enmax: int = default_enmax
+        self.valency: float = valency
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.symbol
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<paw: {self.symbol} at {hex(id(self))}>'
 
 
-def get_all(version_nr='latest', use_gw=False):
+def get_all(version_nr: str = 'latest', use_gw: bool = False) -> dict[str, dict[str, PawInfo]]:
     """
     Get recommendations for all symbols.
 
@@ -85,8 +87,8 @@ def get_all(version_nr='latest', use_gw=False):
 
 
 if __name__ == '__main__':
-    DEF_PAW = get_recommendations()
-    DEF_GW = get_recommendations(use_gw=True)
+    DEF_PAW: dict[str, str] = get_recommendations()
+    DEF_GW: dict[str, str] = get_recommendations(use_gw=True)
     with open('default_paws.py', 'w', encoding='utf8') as defaults:
         defaults.write('lda = {\n')
         defaults.writelines([f'"{k}": "{v}",\n' for k, v in DEF_PAW.items()])

@@ -4,6 +4,8 @@ The ``POSCAR``/``CONTCAR`` parser interface.
 Contains the parsing interfaces to ``parsevasp`` used to parse ``POSCAR``/``CONTCAR`` content.
 """
 
+from typing import Any, TextIO
+
 import numpy as np
 from aiida import orm
 from aiida.common.constants import elements
@@ -39,8 +41,8 @@ class PoscarParser(BaseFileParser):
         self._precision = precision
         super().__init__(**kwargs)
 
-    def _init_from_handler(self, handler):
-        """Initialize a ``parsevasp`` object of ``Poscar`` using a file like handler.
+    def _init_from_handler(self, handler: TextIO) -> None:
+        """Initialize using a file like handler.
 
         :param handler: A file like object that provides the necessary ``POSCAR``/``CONTCAR`` content to be parsed.
         :type handler: file-like object
@@ -53,8 +55,8 @@ class PoscarParser(BaseFileParser):
         except SystemExit:
             self._logger.warning('Parsevasp exited abnormally.')
 
-    def _init_from_data(self, data):
-        """Initialize using an AiiDA ``StructureData`` instance.
+    def _init_from_data(self, data: orm.StructureData) -> None:
+        """Initialize using AiiDA ``StructureData`` instance.
 
         :param data: A valid AiiDA ``StructureData`` object.
         :type data: object
@@ -66,8 +68,8 @@ class PoscarParser(BaseFileParser):
             raise TypeError('The supplied AiiDA data structure is not a StructureData.')
 
     @property
-    def structure(self):
-        """Return a structure that is ready to be consumed by the the AiiDA ``StructureData``.
+    def structure(self) -> dict[str, Any]:
+        """Return structure from POSCAR.
 
         :returns: A dict that contain keys ``comment``, ``unitcell`` and ``sites``, which are compatible
                   with consumption of the initialization of the AiiDA ``StructureData``.
@@ -78,7 +80,7 @@ class PoscarParser(BaseFileParser):
 
         return aiida_structure
 
-    def _content_data_to_content_parser(self):
+    def _content_data_to_content_parser(self) -> 'PoscarParser':
         """Convert an AiiDA ``StructureData`` to a content parser instance of ``Poscar`` from ``parsevasp``.
 
         :returns: An instance of ``Poscar`` from ``parsevasp``.
@@ -108,7 +110,7 @@ class PoscarParser(BaseFileParser):
 
         return content_parser
 
-    def transform_to_bool(self, value):
+    def transform_to_bool(self, value: str | int) -> bool:
         """Helper function to transform the dictionary from strings or integers to bools"""
         if value in [0, 'F', 'f']:
             return False
@@ -117,7 +119,7 @@ class PoscarParser(BaseFileParser):
         return True
 
 
-def parsevasp_to_aiida(poscar):
+def parsevasp_to_aiida(poscar: Poscar) -> dict[str, Any]:
     """``parsevasp`` to AiiDA conversion.
 
     Generate an AiiDA structure that can be consumed by ``StructureData`` on initialization
@@ -133,6 +135,8 @@ def parsevasp_to_aiida(poscar):
     # Fetch a dictionary containing the entries, make sure all coordinates are
     # cartesian
     poscar_dict = poscar.get_dict(direct=False)
+    # Inverted dictionary with element names being the keys and numbers being the values
+    symbols = {value['symbol']: key for key, value in elements.items()}
 
     for site in poscar_dict['sites']:
         specie = site['specie']
@@ -143,24 +147,11 @@ def parsevasp_to_aiida(poscar):
         # Strip trailing _ in case user specifies potential
         symbol = specie.split('_')[0].capitalize()
         # Check if leading entry is part of
-        # aiida.common.constants.elements{}, otherwise set to X, but first
-        # invert
-        symbols = fetch_symbols_from_elements(elements)
-        try:
-            symbols[symbol]
-        except KeyError:
+        # aiida.common.constants.elements{}, otherwise set to X
+        if symbol not in symbols:
             symbol = 'X'
 
         site['symbol'] = symbol
         site['kind_name'] = specie
 
     return poscar_dict
-
-
-def fetch_symbols_from_elements(elmnts):
-    """Fetch the symbol entry in the elements dictionary in Aiida."""
-
-    new_dict = {}
-    for key, value in elmnts.items():
-        new_dict[value['symbol']] = key
-    return new_dict

@@ -5,6 +5,8 @@ Contains the parsing interfaces to ``parsevasp`` used to parse ``vasprun.xml`` c
 """
 
 # pylint: disable=abstract-method, too-many-public-methods
+from typing import Any, BinaryIO, TextIO
+
 import numpy as np
 from parsevasp import constants as parsevaspct
 from parsevasp.vasprun import Xml
@@ -129,7 +131,7 @@ class VasprunParser(BaseFileParser):
         'parameters': {
             'inputs': [],
             'name': 'parameters',
-            'prerequesites': [],
+            'prerequisites': [],
         },
     }
 
@@ -153,7 +155,7 @@ class VasprunParser(BaseFileParser):
         'energy_no_entropy_electronic': 'energy_no_entropy',
     }
 
-    def _init_from_handler(self, handler):
+    def _init_from_handler(self, handler: BinaryIO | TextIO) -> None:
         """Initialize using a file like handler."""
 
         self.overflow = False
@@ -169,7 +171,7 @@ class VasprunParser(BaseFileParser):
                 self._logger.warning('Parsevasp exited abnormally.')
 
     @property
-    def version(self):
+    def version(self) -> str | None:
         """Fetch the VASP version from ``parsevasp`` and return it as a string object."""
 
         # fetch version
@@ -181,7 +183,7 @@ class VasprunParser(BaseFileParser):
         return version
 
     @property
-    def eigenvalues(self):
+    def eigenvalues(self) -> dict[str, Any] | None:
         """Fetch eigenvalues."""
 
         # Fetch eigenvalues
@@ -193,7 +195,7 @@ class VasprunParser(BaseFileParser):
         return eigenvalues
 
     @property
-    def occupancies(self):
+    def occupancies(self) -> dict[str, Any] | None:
         """Fetch occupancies."""
 
         # Fetch occupancies
@@ -206,7 +208,7 @@ class VasprunParser(BaseFileParser):
         return occupancies
 
     @property
-    def kpoints(self):
+    def kpoints(self) -> dict[str, Any] | None:
         """Fetch the kpoints an prepare for consumption by the NodeComposer."""
 
         kpts = self._content_parser.get_kpoints()
@@ -226,7 +228,7 @@ class VasprunParser(BaseFileParser):
         return kpoints_data
 
     @property
-    def structure(self):
+    def structure(self) -> dict[str, Any] | None:
         """
         Fetch a given structure.
 
@@ -243,7 +245,7 @@ class VasprunParser(BaseFileParser):
         return self.last_structure
 
     @property
-    def last_structure(self):
+    def last_structure(self) -> dict[str, Any] | None:
         """
         Fetch the structure.
 
@@ -257,7 +259,7 @@ class VasprunParser(BaseFileParser):
         return _build_structure(last_lattice)
 
     @property
-    def final_structure(self):
+    def final_structure(self) -> dict[str, Any] | None:
         """
         Fetch the structure.
 
@@ -269,7 +271,7 @@ class VasprunParser(BaseFileParser):
         return self.last_structure
 
     @property
-    def last_forces(self):
+    def last_forces(self) -> np.ndarray | None:
         """
         Fetch forces.
 
@@ -281,7 +283,7 @@ class VasprunParser(BaseFileParser):
         return force
 
     @property
-    def final_forces(self):
+    def final_forces(self) -> np.ndarray | None:
         """
         Fetch forces.
 
@@ -292,14 +294,14 @@ class VasprunParser(BaseFileParser):
         return self.last_forces
 
     @property
-    def forces(self):
+    def forces(self) -> np.ndarray | None:
         """
         Fetch final forces.
         """
         return self.final_forces
 
     @property
-    def last_stress(self):
+    def last_stress(self) -> np.ndarray | None:
         """
         Fetch stess.
 
@@ -311,7 +313,7 @@ class VasprunParser(BaseFileParser):
         return stress
 
     @property
-    def final_stress(self):
+    def final_stress(self) -> np.ndarray | None:
         """
         Fetch stress.
 
@@ -322,7 +324,7 @@ class VasprunParser(BaseFileParser):
         return self.last_stress
 
     @property
-    def stress(self):
+    def stress(self) -> np.ndarray | None:
         """
         Fetch stress.
 
@@ -335,7 +337,7 @@ class VasprunParser(BaseFileParser):
         return self.final_stress
 
     @property
-    def trajectory(self):
+    def trajectory(self) -> dict[str, Any] | None:
         """
         Fetch unitcells, positions, species, forces and stress.
 
@@ -382,7 +384,7 @@ class VasprunParser(BaseFileParser):
         return None
 
     @property
-    def total_energies(self):
+    def total_energies(self) -> dict[str, float] | None:
         """Fetch the total energies after the last ionic run."""
         energies = self.energies
         if energies is None:
@@ -396,7 +398,7 @@ class VasprunParser(BaseFileParser):
         return energies_dict
 
     @property
-    def energies(self):
+    def energies(self) -> dict[str, Any] | None:
         """Fetch the total energies."""
         # Check if we want total energy entries for each electronic step.
         electronic_step_energies = self._settings.get(
@@ -405,7 +407,7 @@ class VasprunParser(BaseFileParser):
 
         return self._energies(nosc=not electronic_step_energies)
 
-    def _energies(self, nosc):
+    def _energies(self, nosc: bool) -> dict[str, Any] | None:
         """
         Fetch the total energies for all energy types, calculations (ionic steps) and electronic steps.
 
@@ -470,7 +472,7 @@ class VasprunParser(BaseFileParser):
         return mapped_energies
 
     @property
-    def projectors(self):
+    def projectors(self) -> np.ndarray | None:
         """Fetch the projectors."""
 
         proj = self._content_parser.get_projectors()
@@ -494,7 +496,7 @@ class VasprunParser(BaseFileParser):
         return projectors
 
     @property
-    def dielectrics(self):
+    def dielectrics(self) -> dict[str, Any] | None:
         """Fetch the dielectric function."""
 
         diel = self._content_parser.get_dielectrics()
@@ -520,13 +522,13 @@ class VasprunParser(BaseFileParser):
         return dielectrics
 
     @property
-    def born_charges(self):
+    def born_charges(self) -> np.ndarray | None:
         """Fetch the Born effective charges."""
 
         return self._content_parser.get_born()
 
     @property
-    def hessian(self):
+    def hessian(self) -> np.ndarray | None:
         """Fetch the Hessian matrix."""
 
         hessian = self._content_parser.get_hessian()
@@ -535,7 +537,7 @@ class VasprunParser(BaseFileParser):
         return hessian
 
     @property
-    def dynmat(self):
+    def dynmat(self) -> dict[str, Any] | None:
         """Fetch the dynamical eigenvectors and eigenvalues."""
 
         dynmat = self._content_parser.get_dynmat()
@@ -547,7 +549,7 @@ class VasprunParser(BaseFileParser):
         return dyn
 
     @property
-    def dos(self):
+    def dos(self) -> dict[str, Any] | None:
         """Fetch the total density of states."""
 
         dos = self._content_parser.get_dos()
@@ -577,7 +579,7 @@ class VasprunParser(BaseFileParser):
         return densta
 
     @property
-    def fermi_level(self):
+    def fermi_level(self) -> float | None:
         """Fetch Fermi level."""
 
         try:
@@ -587,7 +589,7 @@ class VasprunParser(BaseFileParser):
         return fermi_level
 
     @property
-    def run_status(self):
+    def run_status(self) -> dict[str, bool | None]:
         """Fetch run_status information"""
         info = {}
         # First check electronic convergence by comparing executed steps to the
@@ -619,7 +621,7 @@ class VasprunParser(BaseFileParser):
         return info
 
     @property
-    def band_properties(self):
+    def band_properties(self) -> dict[str, Any] | None:
         """Fetch key properties of the electronic structure."""
 
         eigenvalues = self.eigenvalues
@@ -638,7 +640,7 @@ class VasprunParser(BaseFileParser):
         return get_band_properties(eig, occ)
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict[str, Any] | None:
         """
         Fetch the parsed input parameters which will include default values
         defined in the XML file.
@@ -649,7 +651,7 @@ class VasprunParser(BaseFileParser):
         return parameters
 
 
-def _build_structure(lattice):
+def _build_structure(lattice: dict[str, Any]) -> dict[str, Any]:
     """Builds a structure according to AiiDA spec."""
     structure_dict = {}
     structure_dict['unitcell'] = lattice['unitcell']
@@ -667,5 +669,5 @@ def _build_structure(lattice):
     return structure_dict
 
 
-def _invert_dict(dct):
+def _invert_dict(dct: dict[Any, Any]) -> dict[Any, Any]:
     return dct.__class__(map(reversed, dct.items()))

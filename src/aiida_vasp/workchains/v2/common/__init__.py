@@ -6,6 +6,7 @@ Common functions and constants
 # This is the namespace where raw VASP INCAR tags should reside for VaspWorkChain
 import warnings
 from functools import wraps
+from typing import Any, Callable
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
@@ -19,7 +20,7 @@ OVERRIDE_NAMESPACE = 'incar'
 # pylint:disable=raise-missing-from
 
 
-def aiida_to_python(entity):
+def aiida_to_python(entity: Any) -> Any:
     """
     Convert AiiDA entity to plain python objects
     """
@@ -34,11 +35,11 @@ def aiida_to_python(entity):
     raise ValueError(f'{entity} cannot be converted to plain python object')
 
 
-def plain_python_args(func):
+def plain_python_args(func: Callable[..., Any]) -> Callable[..., Any]:
     """Ensure that the first argument is a plain dictionary"""
 
     @wraps(func)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
         new_args = list(args)
         new_args[0] = aiida_to_python(args[0])
         return func(*new_args, **kwargs)
@@ -46,7 +47,7 @@ def plain_python_args(func):
     return wrapped
 
 
-def parameters_validator(node, port=None):
+def parameters_validator(node: orm.Dict | None, port: Any = None) -> None:
     """
     Validate the parameters input by passing it through the massager
     """
@@ -74,7 +75,7 @@ def parameters_validator(node, port=None):
 
 
 @plain_python_args
-def site_magnetization_to_magmom(site_dict):
+def site_magnetization_to_magmom(site_dict: dict[str, Any]) -> list[float]:
     """
     Convert site mangetization to MAGMOM used for restart
     NOTE: to be replaced by stock function in aiida_vasp.utils.workchains
@@ -97,7 +98,7 @@ def site_magnetization_to_magmom(site_dict):
     return [entry[1]['tot'] for entry in tmp]
 
 
-def nested_update(dict_in, update_dict, extend_list=False):
+def nested_update(dict_in: dict[str, Any], update_dict: dict[str, Any], extend_list: bool = False) -> dict[str, Any]:
     """Update the dictionary - combine nested sub-dictionary with update as well"""
     warnings.warn('nested_update is deprecated, use updated_nested_dict', DeprecationWarning)
     for key, value in update_dict.items():
@@ -110,7 +111,7 @@ def nested_update(dict_in, update_dict, extend_list=False):
     return dict_in
 
 
-def nested_update_dict_node(dict_node, update_dict, extend_list=False):
+def nested_update_dict_node(dict_node: orm.Dict, update_dict: dict[str, Any], extend_list: bool = False) -> orm.Dict:
     """Utility to update a Dict node in a nested way"""
     warnings.warn('nested_update_dict_node is deprecated, use updated_nested_dict_node', DeprecationWarning)
     pydict = dict_node.get_dict()

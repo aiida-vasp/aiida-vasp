@@ -4,10 +4,13 @@ Extensions of dictionaries.
 Extensions of Pythons standard dict as well as Aiida's AttributeDict.
 """
 
+from __future__ import annotations
+
 import collections.abc
 from collections.abc import MutableMapping  # pylint: disable=import-outside-toplevel
 from contextlib import suppress  # pylint: disable=import-outside-toplevel
 from copy import deepcopy
+from typing import Any
 
 from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
@@ -24,16 +27,16 @@ class DictWithAttributes(AttributeDict):
     If the key is not in the dict a default value will be returned.
     """
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         """Read a key as an attribute. Return a Default value on missing key."""
         return self.get(attr)
 
-    def __setattr__(self, attr, value):
+    def __setattr__(self, attr: str, value: Any) -> None:
         """Set a key as an attribute."""
         self[attr] = value
 
 
-def delete_keys_from_dict(dictionary, keys):
+def delete_keys_from_dict(dictionary: dict[str, Any], keys: str | list[str]) -> None:
     """
     Delete a key from a nested dictionary.
 
@@ -48,7 +51,7 @@ def delete_keys_from_dict(dictionary, keys):
         delete_nested_key(dictionary, nested_keys)
 
 
-def delete_nested_key(dictionary, keys):
+def delete_nested_key(dictionary: dict[str, Any], keys: list[str]) -> None:
     """Delete the dictionary entry corresponding to a nested hierarchy of keys."""
 
     if keys and dictionary:
@@ -62,7 +65,7 @@ def delete_nested_key(dictionary, keys):
                 delete_nested_key(value, keys[1:])
 
 
-def update_nested_dict(dict1: dict, dict2: dict, extend_list: bool = False):
+def update_nested_dict(dict1: dict[str, Any], dict2: dict[str, Any], extend_list: bool = False) -> dict[str, Any]:
     """Updated a nested dictionary, where dict1 is updated with values in dict2."""
     for key, value in dict2.items():
         dict1_value = dict1.get(key)
@@ -75,7 +78,7 @@ def update_nested_dict(dict1: dict, dict2: dict, extend_list: bool = False):
     return dict1
 
 
-def update_nested_dict_node(dict_node: orm.Dict, update_dict: dict, extend_list: bool = False):
+def update_nested_dict_node(dict_node: orm.Dict, update_dict: dict[str, Any], extend_list: bool = False) -> orm.Dict:
     """Utility to update a Dict node in a nested way"""
     pydict = dict_node.get_dict()
     update_nested_dict(pydict, update_dict, extend_list=extend_list)

@@ -6,13 +6,23 @@ classes. This makes it simple to add further details to or replace the
 docstring present on the base class.
 """
 
+from __future__ import annotations
 
-def update_docstring(method_name, content, append=True):
+from typing import Callable, TypeVar
+
+ClassType = TypeVar('ClassType')
+
+
+def update_docstring(
+    method_name: str, content: str, append: bool = True
+) -> Callable[[type[ClassType]], type[ClassType]]:
     r"""
     Update docstring of (an inherited) class method.
 
     For subclasses that use hooks to change behavior of superclass methods.
 
+    :param method_name: Name of the method to update
+    :param content: Content to add or replace
     :param append: If true, append to the docstring, else overwrite it entirely.
 
     Example::
@@ -40,10 +50,10 @@ def update_docstring(method_name, content, append=True):
                     print value
     """
 
-    def wrapper(cls):
+    def wrapper(cls: type[ClassType]) -> type[ClassType]:
         """Update the method docstring and return the class."""
         if append:
-            getattr(cls, method_name).__func__.__doc__ = ''
+            getattr(cls, method_name).__func__.__doc__ += content
         else:
             getattr(cls, method_name).__func__.__doc__ = content
         return cls
