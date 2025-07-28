@@ -32,7 +32,6 @@ jobs:
       - name: Install aiida-vasp
         run: |
           conda activate test
-          pip install pymatgen
           pip install -e . -vvv
       - name: Run tests with codecov
         run: |
@@ -84,7 +83,6 @@ jobs:
       - name: Install aiida-vasp
         run: |
           conda activate test
-          pip install pymatgen
           pip install -e .[docs] -vvv
       - name: Build the documentation
         run: |
