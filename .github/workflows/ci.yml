@@ -31,7 +31,7 @@ jobs:
           cd ..
       - name: Install aiida-vasp
         run: |
-          [tests]conda activate test
+          conda activate test
           pip install -e .[tests] -vvv
       - name: Run tests with codecov
         run: |
