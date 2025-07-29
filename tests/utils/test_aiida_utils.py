@@ -5,7 +5,13 @@ import warnings
 import pytest
 
 from aiida_vasp.utils.aiida_utils import convert_dict_case, get_current_user
-from aiida_vasp.utils.pmg import PymatgenAdapator, get_incar, get_kpoints, get_outcar, get_vasprun
+
+try:
+    from aiida_vasp.utils.pmg import PymatgenAdapator, get_incar, get_kpoints, get_outcar, get_vasprun
+except ImportError:
+    PMG_INSTALLED = False
+else:
+    PMG_INSTALLED = True
 
 
 def test_get_current_user(aiida_profile_clean):
@@ -17,6 +23,7 @@ def test_get_current_user(aiida_profile_clean):
     assert user.email
 
 
+@pytest.mark.skipif(not PMG_INSTALLED, reason='pymatgen not installed')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 def test_pmg_adaptor(aiida_profile_clean, tmp_path, run_vasp_process):
     """

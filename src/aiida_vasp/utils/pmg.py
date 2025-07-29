@@ -13,7 +13,7 @@ from typing import Any, Dict, Generator, List, Optional
 try:
     import pymatgen.io.vasp as pvasp
 except ImportError:
-    raise ImportError('You need to install pymatgen to use this feature.')
+    raise ImportError('You need to install pymatgen to use this module.')
 
 
 import gzip
