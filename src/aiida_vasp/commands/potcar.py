@@ -16,7 +16,6 @@ from click_spinner import spinner as cli_spinner
 from aiida_vasp.commands import options
 from aiida_vasp.data.potcar import PotcarData, migrate_potcar_group
 from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
-from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder
 
 VERDI_DATA = cmp_load_verdi_data()
 
@@ -136,6 +135,8 @@ def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_ru
     you can use this command to upload a family of VASP potcar files into aiida-vasp.
     """
     from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle  # noqa: PLC0415
+
+    from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder  # noqa: PLC0415
 
     funcdir = PotcarSingle.functional_dir[functional]
     pmg_vasp_psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')

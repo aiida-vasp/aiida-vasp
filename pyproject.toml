@@ -46,7 +46,7 @@ dependencies = [
 Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
-tests = ["aiida-core>=2.6", "pytest", "PyCifRW"]
+tests = ["aiida-core>=2.6", "pytest", "PyCifRW", "pymatgen"]
 pre-commit = ["pre-commit"]
 docs = [
     "aiida-core[docs]~=2.4",
@@ -58,6 +58,7 @@ docs = [
     "sphinx_design",
     "sphinx_togglebutton",
     "sphinxext.remoteliteralinclude",
+    "pymatgen"
 ]
 graphs = ["matplotlib"]
 
