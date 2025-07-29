@@ -33,7 +33,7 @@ from aiida_vasp.workchains import (
 )
 
 
-def test_silicon_sp(mock_potcars, mock_vasp_strict, builder_updater):
+def test_silicon_sp(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
@@ -47,7 +47,7 @@ def test_silicon_sp(mock_potcars, mock_vasp_strict, builder_updater):
     assert results.node.is_finished_ok
 
 
-def test_silicon_relax(mock_potcars, mock_vasp_strict, builder_updater):
+def test_silicon_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
@@ -60,7 +60,7 @@ def test_silicon_relax(mock_potcars, mock_vasp_strict, builder_updater):
     assert results.node.is_finished_ok
 
 
-def test_silicon_converge(mock_potcars, mock_vasp_strict):
+def test_silicon_converge(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     """Test running a VASP workchain on silicon using the mock code."""
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
@@ -74,7 +74,7 @@ def test_silicon_converge(mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_band(mock_potcars, mock_vasp_strict):
+def test_silicon_band(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     """Test running a VASP workchain on silicon using the mock code."""
     si = bulk('Si', 'diamond', 5.4)
     si_node = orm.StructureData(ase=si)
@@ -87,7 +87,7 @@ def test_silicon_band(mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
+def test_silicon_band_hybrid(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     """Test the hybrid (split-path) SCF  band structure workchain"""
 
     si = bulk('Si', 'diamond', 5.4)
@@ -101,7 +101,7 @@ def test_silicon_band_hybrid(mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_band_hybrid_no_relax(mock_potcars, mock_vasp_strict):
+def test_silicon_band_hybrid_no_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     """Test the hybrid (split-path) SCF  band structure workchain"""
 
     si = bulk('Si', 'diamond', 5.4)
@@ -115,7 +115,7 @@ def test_silicon_band_hybrid_no_relax(mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_relax_staged(mock_potcars, mock_vasp_strict, builder_updater):
+def test_silicon_relax_staged(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
     """Test running a VASP workchain on silicon using the mock code."""
 
     si = bulk('Si', 'diamond', 5.4)

@@ -22,7 +22,7 @@ def run_cmd(command=None, args=None, **kwargs):
 # TODO - add tests for other commands
 # Combine export test with workflow execution test to save time
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_uploadfamily_withpath(fresh_aiida_env, tmp_path, run_vasp_process):
+def test_uploadfamily_withpath(aiida_profile_clean, tmp_path, run_vasp_process):
     """
     Test export vasp calculation
     """

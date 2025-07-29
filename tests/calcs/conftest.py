@@ -32,7 +32,7 @@ def sandbox_folder():
 
 
 @pytest.fixture()
-def base_calc(fresh_aiida_env, vasp_code):
+def base_calc(aiida_profile, vasp_code):
     """An instance of a VaspCalcBase Process."""
 
     manager = get_manager()
@@ -63,7 +63,7 @@ def vasp_calc(vasp_inputs):
 
 
 @pytest.fixture()
-def vasp_neb_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
+def vasp_neb_inputs(aiida_profile, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
     """Inputs dictionary for CalcJob Processes."""
 
     def inner(settings=None, parameters=None):
@@ -161,7 +161,7 @@ def vasp2w90_calc_and_ref(vasp2w90_calc, vasp_kpoints, vasp2w90_inputs, ref_inca
 
 
 @pytest.fixture()
-def vasp_chgcar(fresh_aiida_env, data_path):
+def vasp_chgcar(aiida_profile, data_path):
     """CHGCAR node and reference fixture."""
 
     chgcar_path = data_path('chgcar', 'CHGCAR')
@@ -186,7 +186,7 @@ def vasp_nscf_and_ref(vasp_calc_and_ref, vasp_chgcar, vasp_wavecar):
 
 
 @pytest.fixture()
-def vasp_inputs(fresh_aiida_env, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
+def vasp_inputs(aiida_profile, vasp_params, vasp_kpoints, vasp_structure, potentials, vasp_code):
     """Inputs dictionary for CalcJob Processes."""
 
     def inner(settings=None, parameters=None):
@@ -223,7 +223,7 @@ def ref_incar(data_path):
 
 
 @pytest.fixture()
-def vasp_wavecar(fresh_aiida_env, data_path):
+def vasp_wavecar(aiida_profile, data_path):
     """WAVECAR node and reference fixture."""
 
     wavecar_path = data_path('wavecar', 'WAVECAR')
@@ -235,7 +235,7 @@ def vasp_wavecar(fresh_aiida_env, data_path):
 
 @pytest.fixture()
 def vasp2w90_inputs(
-    fresh_aiida_env,
+    aiida_profile,
     vasp_params,
     vasp_kpoints,
     vasp_structure,

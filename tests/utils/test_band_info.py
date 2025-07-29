@@ -12,7 +12,7 @@ from aiida_vasp.utils.compare_bands import (
 
 
 @pytest.fixture
-def example_bands(fresh_aiida_env):
+def example_bands(aiida_profile_clean):
     """Example eigen values and occupations"""
 
     bdata = BandsData()
@@ -24,7 +24,7 @@ def example_bands(fresh_aiida_env):
 
 
 @pytest.fixture
-def example_bands_v2(fresh_aiida_env):
+def example_bands_v2(aiida_profile_clean):
     """Example eigen values and occupations"""
     bdata = BandsData()
     bdata.set_kpoints([[0, 0, 0], [0.25, 0.25, 0.25]])

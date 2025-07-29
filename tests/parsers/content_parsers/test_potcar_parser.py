@@ -12,7 +12,7 @@ def verify_potcario(potcario):
     assert potcario.content
 
 
-def test_potcar_from_path(fresh_aiida_env, data_path):
+def test_potcar_from_path(aiida_profile, data_path):
     """Create a PotcarIo instance from a file path."""
     potcar_path_as = data_path('potcar', 'As', 'POTCAR')
     from_ctor = PotcarIo(path=potcar_path_as)
@@ -49,7 +49,7 @@ def test_potcar_from_contents(upload_potcar, read_file):
     assert from_ctor == from_from
 
 
-def test_file_contents_equivalence(fresh_aiida_env, data_path, read_file):
+def test_file_contents_equivalence(aiida_profile, data_path, read_file):
     potcar_path_as = ['potcar', 'As', 'POTCAR']
     from_file = PotcarIo(path=data_path(*potcar_path_as))
     from_contents = PotcarIo(contents=read_file(*potcar_path_as).encode('utf-8'))

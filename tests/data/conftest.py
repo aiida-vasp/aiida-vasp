@@ -16,14 +16,14 @@ from aiida_vasp.data.potcar import PotcarData, PotcarFileData
 
 
 @pytest.fixture
-def vasp2w90_params(fresh_aiida_env, vasp_params):
+def vasp2w90_params(aiida_profile, vasp_params):
     vasp_params_data = vasp_params()
     incar_data = orm.Dict(dict=vasp_params_data.code.get_dict().update({'lwannier90': True}))
     return incar_data
 
 
 @pytest.fixture
-def potcar_node_pair(fresh_aiida_env, data_path):
+def potcar_node_pair(aiida_profile, data_path):
     """Create a POTCAR node pair."""
     potcar_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_node = PotcarFileData(file=potcar_path)

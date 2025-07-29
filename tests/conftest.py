@@ -40,7 +40,7 @@ def localhost_dir(tmp_path_factory):
 
 
 @pytest.fixture()
-def localhost(fresh_aiida_env, localhost_dir):
+def localhost(aiida_profile, localhost_dir):
     """Fixture for a local computer called localhost. This is currently not in the AiiDA fixtures."""
     try:
         computer = Computer.collection.get(label='localhost')
@@ -58,7 +58,7 @@ def localhost(fresh_aiida_env, localhost_dir):
 
 
 @pytest.fixture()
-def mock_vasp(fresh_aiida_env, localhost):
+def mock_vasp(aiida_profile, localhost):
     """
     Give an mock-up of the VASP executable
 
@@ -66,11 +66,11 @@ def mock_vasp(fresh_aiida_env, localhost):
     calculations from the registry is found. This makes it suitable for simple
     tests.
     """
-    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp-loose')
+    return _create_mock_vasp_code(aiida_profile, localhost, 'mock-vasp-loose')
 
 
 @pytest.fixture()
-def mock_vasp_strict(fresh_aiida_env, localhost):
+def mock_vasp_strict(aiida_profile, localhost):
     """
     Give an mock-up of the VASP executable with strict input matching.
 
@@ -78,7 +78,7 @@ def mock_vasp_strict(fresh_aiida_env, localhost):
     registry is found. It is suitable for testsing complex multi-step workchains.
     tests.
     """
-    return _mock_vasp(fresh_aiida_env, localhost, 'mock-vasp')
+    return _create_mock_vasp_code(aiida_profile, localhost, 'mock-vasp')
 
 
 @pytest.fixture()
@@ -130,13 +130,13 @@ def vasp_code(localhost):
 
 
 @pytest.fixture
-def vasp_params(fresh_aiida_env):
+def vasp_params(aiida_profile):
     incar_data = orm.Dict(dict={'gga': 'PE', 'gga_compat': False, 'lorbit': 11, 'sigma': 0.5, 'magmom': '30 * 2*0.'})
     return incar_data
 
 
 @pytest.fixture(params=['cif', 'str'])
-def vasp_structure(request, fresh_aiida_env, data_path):
+def vasp_structure(request, aiida_profile, data_path):
     """Fixture: StructureData or CifData."""
     if request.param == 'cif':
         cif_path = data_path('cif', 'EntryWithCollCode43360.cif')
@@ -168,7 +168,7 @@ def vasp_structure(request, fresh_aiida_env, data_path):
 
 
 @pytest.fixture(params=['mesh', 'list'])
-def vasp_kpoints(request, fresh_aiida_env, data_path):
+def vasp_kpoints(request, aiida_profile, data_path):
     """Fixture: (kpoints object, resulting KPOINTS)."""
 
     def _ref_kp_list():
@@ -231,8 +231,11 @@ def temp_pot_folder(tmp_path, data_path):
 
 
 @pytest.fixture
-def upload_potcar(fresh_aiida_env, temp_pot_folder, potcar_family_name, data_path):
+def upload_potcar(aiida_profile, temp_pot_folder, potcar_family_name, data_path):
     """Upload a POTCAR family to DB."""
+    if PotcarData.get_potcar_group(potcar_family_name) is not None:
+        # Already uploaded, so we do not need to do it again.
+        return
 
     def duplicate_potcar_data(potcar_node):
         """Create and store (and return) a duplicate of a given PotcarData node."""
@@ -304,7 +307,7 @@ def phonondb_run(tmp_path, data_path):
 
 @pytest.fixture()
 def run_vasp_process(
-    fresh_aiida_env,
+    aiida_profile,
     upload_potcar,
     vasp_params,
     potcar_family_name,
@@ -376,7 +379,7 @@ def run_vasp_process(
 
 
 @pytest.fixture()
-def mock_potcars(fresh_aiida_env, temp_pot_folder):
+def mock_potcars(aiida_profile, temp_pot_folder):
     """Create family of potcars for mock-vasp"""
     path = os.environ.get('MOCK_VASP_POTCAR_PATH', None)
     if path:
@@ -391,7 +394,7 @@ def mock_potcars(fresh_aiida_env, temp_pot_folder):
 
 @pytest.fixture()
 def builder_updater(
-    fresh_aiida_env,
+    aiida_profile,
     mock_potcars,
     mock_vasp,
 ):
@@ -465,7 +468,7 @@ def get_call_root(node):
     return caller
 
 
-def _mock_vasp(fresh_aiida_env, localhost, exec_name):
+def _create_mock_vasp_code(aiida_profile, localhost, exec_name):
     """
     Points to a mock-up of a VASP executable.
 

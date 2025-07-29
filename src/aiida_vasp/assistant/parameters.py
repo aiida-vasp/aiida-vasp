@@ -8,13 +8,14 @@ Contains utils and definitions that are used together with the parameters.
 from __future__ import annotations
 
 import enum
-from os import path  # pylint: disable=import-outside-toplevel
+from copy import deepcopy
+from pathlib import Path
 from typing import Any
 from warnings import warn
 
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
-from aiida.plugins import DataFactory
-from yaml import safe_load  # pylint: disable=import-outside-toplevel
+from yaml import safe_load
 
 from aiida_vasp.utils.extended_dicts import update_nested_dict
 
@@ -152,6 +153,8 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
     depending on what is needed in those plugins and how you construct your workchains.
     """
 
+    _valid_parameters_and_mtime: tuple[list[str], int] = None
+
     def __init__(
         self,
         parameters: Any,
@@ -208,10 +211,20 @@ class ParametersMassage:  # pylint: disable=too-many-instance-attributes
     def _load_valid_params(self) -> None:
         """Import a list of valid parameters for VASP. This is generated from the manual."""
 
-        with open(path.join(path.dirname(path.realpath(__file__)), 'parameters.yml'), 'r', encoding='utf8') as handler:
-            tags_data = safe_load(handler)
-        self._valid_parameters = list(tags_data.keys())
+        # Cache the valid parameters as class attributes to void repeated loading
+        filepath = Path(__file__).parent / 'parameters.yml'
+        mtime = Path(filepath).stat().st_mtime
+
+        if (
+            ParametersMassage._valid_parameters_and_mtime is None
+            or mtime != ParametersMassage._valid_parameters_and_mtime[1]
+        ):
+            with open(filepath, 'r', encoding='utf8') as handler:
+                tags_data = safe_load(handler)
+                ParametersMassage._valid_parameters_and_mtime = (list(tags_data.keys()), mtime)
+
         # Now add any unsupported parameter to the list
+        self._valid_parameters = deepcopy(ParametersMassage._valid_parameters_and_mtime[0])
         for key, _ in self._unsupported_parameters.items():
             if key.lower() not in self._valid_parameters:
                 self._valid_parameters.append(key.lower())
@@ -543,12 +556,12 @@ class ParameterSetFunctions:
             pass
 
 
-def check_inputs(supplied_inputs: Any) -> AttributeDict:
+def check_inputs(supplied_inputs: None | AttributeDict | orm.Dict | dict) -> AttributeDict:
     """Check that the inputs are of some correct type and returned as AttributeDict."""
     inputs = None
     if supplied_inputs is None:
         inputs = AttributeDict()
-    elif isinstance(supplied_inputs, DataFactory('core.dict')):
+    elif isinstance(supplied_inputs, orm.Dict):
         inputs = AttributeDict(supplied_inputs.get_dict())
     elif isinstance(supplied_inputs, dict):
         inputs = AttributeDict(supplied_inputs)
@@ -578,7 +591,7 @@ def inherit_and_merge_parameters(inputs: dict[str, Any]) -> AttributeDict:
         parameters[namespace] = AttributeDict()
         try:
             for key, item in inputs[namespace].items():
-                if isinstance(item, DataFactory('core.array')):
+                if isinstance(item, orm.ArrayData):
                     # Only allow one array per input
                     if len(item.get_arraynames()) > 1:
                         raise IndexError(
@@ -587,9 +600,9 @@ def inherit_and_merge_parameters(inputs: dict[str, Any]) -> AttributeDict:
                         )
                     for array in item.get_arraynames():
                         parameters[namespace][key] = item.get_array(array)
-                elif isinstance(item, DataFactory('core.dict')):
+                elif isinstance(item, orm.Dict):
                     parameters[namespace][key] = item.get_dict()
-                elif isinstance(item, DataFactory('core.list')):
+                elif isinstance(item, orm.List):
                     parameters[namespace][key] = item.get_list()
                 else:
                     parameters[namespace][key] = item.value

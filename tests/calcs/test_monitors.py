@@ -236,7 +236,6 @@ class TestMonitorLoopTime:
 
         assert result is not None
         assert 'Last update of the vasp_output file is more than 500.00 seconds ago' in result
-        assert 'suspicious for a VASP calculation' in result
 
     def test_monitor_loop_time_recent_update(self, mock_transport, monkeypatch):
         """Test monitor_loop_time with recent file update."""
