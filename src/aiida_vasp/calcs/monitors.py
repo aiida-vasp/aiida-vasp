@@ -21,6 +21,7 @@ situations.
 """
 
 import time
+from pathlib import Path
 
 from aiida.orm import CalcJobNode
 from aiida.transports import Transport
@@ -61,14 +62,14 @@ def monitor_stdout(node: CalcJobNode, transport: Transport, size_threshold_mb: f
     """
 
     # Check the current size of the VASP stdout file
-    stdout_name = node.process_class._VASP_OUTPUT
-    file_stat = transport.get_attribute(stdout_name)
+    stdout_path = str(Path(node.get_remote_workdir()) / node.process_class._VASP_OUTPUT)
+    file_stat = transport.get_attribute(stdout_path)
     if file_stat.st_size > 1024 * 1024 * size_threshold_mb:
         # Stdout file is dangerously large - truncate it to prevent system crashes
         # This typically indicates convergence problems or infinite loops in VASP
         # The calculation is lost, but we prevent the AiiDA daemon from crashing
         # when attempting to retrieve and parse the oversized file
-        transport.exec_command_wait(f'truncate -s {size_threshold_mb}M {stdout_name}')
+        transport.exec_command_wait(f'truncate -s {size_threshold_mb}M {stdout_path}')
         return f'Very large stdout detected: {file_stat.st_size / (1024 * 1024):.2f} MB, potential critical crash.'
     # TODO: add detection of critical messages emitted when vasp got stuck
 
@@ -113,7 +114,8 @@ def monitor_loop_time(
     :rtype: str or None
     """
 
-    stdout_name = node.process_class._VASP_OUTPUT
+    stdout_path = str(Path(node.get_remote_workdir(), node.process_class._VASP_OUTPUT))
+    outcar_path = str(Path(node.get_remote_workdir(), 'OURCAR'))
     walltime_limit = node.get_option('max_wallclock_seconds')
     if walltime_limit is None:
         # Cannot monitor timing without a walltime limit
@@ -121,7 +123,7 @@ def monitor_loop_time(
 
     # Extract electronic loop timings from OUTCAR file
     # LOOP entries contain timing information for each self-consistency cycle
-    returncode, stdout, stderr = transport.exec_command_wait("grep 'LOOP:' OUTCAR")
+    returncode, stdout, stderr = transport.exec_command_wait(f"grep 'LOOP:' {outcar_path}")
 
     # Skip monitoring if no LOOP entries found (calculation hasn't started electronic steps)
     if returncode != 0:
@@ -156,13 +158,13 @@ def monitor_loop_time(
         )
 
     # Monitor for stalled calculations by checking stdout file modification time
-    file_stat = transport.get_attribute(stdout_name)
+    file_stat = transport.get_attribute(stdout_path)
     elapsed = time.time() - file_stat.st_mtime
     # Consider calculation stalled if:
     # 1. Minimum patience time has elapsed AND
     # 2. Time since last update exceeds expected time for several loops
     if elapsed > patience_minimum_time and elapsed > last_loop_time * patience_num_loops:
         return (
-            f'Last update of the {stdout_name} file is more than {last_loop_time * patience_num_loops:.2f} '
+            f'Last update of the {stdout_path} file is more than {last_loop_time * patience_num_loops:.2f} '
             'seconds ago. It is very likely that the calculation is stalled or crashed.'
         )

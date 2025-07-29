@@ -1,11 +1,14 @@
 """Unit tests for VASP calculation monitoring functions."""
 
+import os
 import time
+from pathlib import Path
 
 import pytest
 from aiida.common.extendeddicts import AttributeDict
 
 from aiida_vasp.calcs.monitors import monitor_loop_time, monitor_stdout
+from aiida_vasp.calcs.vasp import VaspCalculation
 
 
 class MockFileStatResult:
@@ -72,6 +75,10 @@ class MockNode:
         """Mocked get_option method"""
         return self.options[key]
 
+    def get_remote_workdir(self):
+        """Mocked get_remote_workdir method"""
+        return os.getcwd()  # Use current working directory for simplicity
+
 
 @pytest.fixture
 def mock_transport():
@@ -97,8 +104,9 @@ class TestMonitorStdout:
         result = monitor_stdout(mock_node, mock_transport, size_threshold_mb=5)
 
         # Assertions
+        stdout_path = str(Path(os.getcwd()) / VaspCalculation._VASP_OUTPUT)
         assert result is None
-        assert mock_transport.get_attribute_calls == ['vasp_output']
+        assert mock_transport.get_attribute_calls == [stdout_path]
         assert mock_transport.exec_command_wait_calls == []
 
     def test_monitor_stdout_oversized_file(self, mock_node, mock_transport):
@@ -116,8 +124,9 @@ class TestMonitorStdout:
         assert '10.00 MB' in result
         assert 'potential critical crash' in result
 
-        assert mock_transport.get_attribute_calls == ['vasp_output']
-        assert mock_transport.exec_command_wait_calls == ['truncate -s 5M vasp_output']
+        stdout_path = str(Path(os.getcwd()) / VaspCalculation._VASP_OUTPUT)
+        assert mock_transport.get_attribute_calls == [stdout_path]
+        assert mock_transport.exec_command_wait_calls == [f'truncate -s 5M {stdout_path}']
 
         # Apply a custom threshold
         mock_transport.reset()
@@ -162,7 +171,8 @@ class TestMonitorLoopTime:
 
         # Assertions
         assert result is None
-        assert mock_transport.exec_command_wait_calls == ["grep 'LOOP:' OUTCAR"]
+        outcar_path = Path(os.getcwd()) / 'OURCAR'
+        assert mock_transport.exec_command_wait_calls == [f"grep 'LOOP:' {outcar_path}"]
 
     def test_monitor_loop_time_fast_loops(self, mock_transport):
         """Test monitor_loop_time with fast electronic loops."""
@@ -235,7 +245,7 @@ class TestMonitorLoopTime:
         result = monitor_loop_time(mock_node, mock_transport)
 
         assert result is not None
-        assert 'Last update of the vasp_output file is more than 500.00 seconds ago' in result
+        assert 'file is more than 500.00 seconds ago' in result
 
     def test_monitor_loop_time_recent_update(self, mock_transport, monkeypatch):
         """Test monitor_loop_time with recent file update."""
