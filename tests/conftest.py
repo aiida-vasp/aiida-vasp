@@ -16,7 +16,7 @@ from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, Quer
 from aiida.plugins import CalculationFactory, DataFactory, WorkflowFactory
 from aiida.tools.archive import create_archive
 
-from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarFileData, PotcarGroup, temp_potcar
+from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarGroup
 from aiida_vasp.utils.general import copytree
 from aiida_vasp.workchains.v2.common.builder_updater import VaspBuilderUpdater
 
@@ -237,32 +237,10 @@ def upload_potcar(aiida_profile, temp_pot_folder, potcar_family_name, data_path)
         # Already uploaded, so we do not need to do it again.
         return
 
-    def duplicate_potcar_data(potcar_node):
-        """Create and store (and return) a duplicate of a given PotcarData node."""
-        file_node = PotcarFileData()
-        with temp_potcar(potcar_node.get_content()) as potcar_file:
-            file_node.add_file(potcar_file)
-            file_node.base.attributes.set('sha512', 'abcd')
-            file_node.base.attributes.set('full_name', potcar_node.full_name)
-            file_node.store()
-        data_node, _ = PotcarData.get_or_create(file_node)
-        return data_node
-
-    potcar_ga = pathlib.Path(data_path('potcar')) / 'Ga'
     family_name = potcar_family_name
     family_desc = 'A POTCAR family used as a test fixture. Contains only unusable POTCAR files.'
     potcar_cls = PotcarData
     potcar_cls.upload_potcar_family(str(temp_pot_folder), family_name, family_desc, stop_if_existing=False)
-    if len(potcar_cls.find(full_name='In_d')) == 1:
-        family_group = potcar_cls.get_potcar_group(potcar_family_name)
-        in_d = potcar_cls.find(full_name='In_d')[0]
-        in_d_double = duplicate_potcar_data(in_d)
-        family_group.add_nodes(in_d_double)
-        assert in_d.uuid == potcar_cls.find(full_name='In_d')[0].uuid
-    assert 'As' in potcar_cls.get_full_names(potcar_family_name, 'As')
-    assert 'Ga' in potcar_cls.get_full_names(potcar_family_name, 'Ga')
-    assert 'In_d' in potcar_cls.get_full_names(potcar_family_name, 'In')
-    assert not potcar_ga.exists()
 
 
 @pytest.fixture

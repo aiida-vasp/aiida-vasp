@@ -90,6 +90,29 @@ def rattle(structure: orm.StructureData, amp: orm.Float) -> orm.StructureData:
 
 
 @calcfunction
+def random_rattle(structure: orm.StructureData, amp: orm.Float) -> orm.StructureData:
+    """
+    Rattle the structure by a certain amplitude
+
+    This function is similar to `rattle`, but it uses a random seed so it generates
+    different structures when called with the same structure.
+    """
+    native_keys = ['cell', 'pbc1', 'pbc2', 'pbc3', 'kinds', 'sites', 'mp_id']
+    # Keep the foreign keys as it is
+    foreign_attrs = {key: value for key, value in structure.attributes.items() if key not in native_keys}
+    atoms = structure.get_ase()
+    atoms.rattle(amp.value, np.random.randint(0, 100000000))
+    # Clean any tags etc
+    atoms.set_tags(None)
+    atoms.set_masses(None)
+    # Convert it back
+    out = StructureData(ase=atoms)
+    out.base.attributes.set_many(foreign_attrs)
+    out.label = structure.label + ' RATTLED'
+    return out
+
+
+@calcfunction
 def get_primitive(structure: orm.StructureData) -> orm.StructureData:
     """Create primitive structure use pymatgen interface"""
     pstruct = structure.get_pymatgen()

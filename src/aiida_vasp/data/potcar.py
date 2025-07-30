@@ -287,7 +287,7 @@ class PotcarMetadataMixin:  # pylint: disable=useless-object-inheritance
     _query_label = 'label'
 
     @classmethod
-    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> Any:
+    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> QueryBuilder:
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
@@ -304,11 +304,11 @@ class PotcarMetadataMixin:  # pylint: disable=useless-object-inheritance
     def find(cls, **kwargs: Any) -> list[Any]:
         """Find nodes by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
-        if not query_builder.count():
-            raise NotExistent()
-        results = [result[0] for result in query_builder.all()]
-
-        results.sort(key=cmp_to_key(by_older))
+        query_builder.order_by({cls._query_label: [{'ctime': 'asc'}]})
+        output = query_builder.all()
+        if len(output) == 0:
+            raise NotExistent(f'No {cls.__name__} nodes found with attributes {kwargs}')
+        results = [result[0] for result in output]
         return results
 
     @classmethod
@@ -486,11 +486,13 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return sha512_potcar(contents)
 
     # pylint: disable=arguments-differ
-    def store(self, *args: Any, **kwargs: Any) -> Any:
+    def store(self, *args: Any, create_data_node=True, verify=True, **kwargs: Any) -> Any:
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         self.set_version()
-        _ = PotcarData.get_or_create(self)
-        self.verify_unique()
+        if create_data_node:
+            _ = PotcarData.get_or_create(self)
+        if verify:
+            self.verify_unique()
         return super().store(*args, **kwargs)
 
     @contextmanager
@@ -618,10 +620,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return PotcarFileData.find_one(sha512=self.sha512)
 
     # pylint: disable=arguments-differ,signature-differs
-    def store(self, *args: Any, **kwargs: Any) -> Any:
+    def store(self, *args: Any, verify=True, **kwargs: Any) -> Any:
         """Ensure uniqueness before storing."""
         self.set_version()
-        self.verify_unique()
+        if verify:
+            self.verify_unique()
         return super().store(*args, **kwargs)
 
     @classmethod
@@ -649,6 +652,51 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not file_node.is_stored:
             file_node.store()
         return node, created
+
+    @classmethod
+    def get_or_create_from_file_many(cls, file_paths: list[str | Path]) -> list[tuple[Data, bool]]:
+        """
+        Get or create (store) many PotcarData node from a POTCAR file.
+
+        :param file_paths: A list of file paths to POTCAR files.
+
+        :return: A list of tuples (PotcarData node, created flag) for each file.
+        """
+        sha512s = [PotcarFileData.get_file_sha512(file_path) for file_path in file_paths]
+        filters = {}
+        filters = {'attributes.sha512': {'in': sha512s}}
+        query_builder = QueryBuilder()
+        query_builder.append(
+            PotcarFileData, filters=filters, tag=PotcarFileData._query_label, project=['*', 'attributes.sha512']
+        )
+        existing_file_nodes = {value[1]: value[0] for value in query_builder.all()}
+        # Query for data
+        query_builder = QueryBuilder()
+        query_builder.append(cls, filters=filters, tag=cls._query_label, project=['*', 'attributes.sha512'])
+        existing_data_nodes = {value[1]: value[0] for value in query_builder.all()}
+        data_nodes = []
+        created_flags = []
+        for file_path, sha512 in zip(file_paths, sha512s):
+            # Construct the PotcarFileData node if needed
+            if sha512 in existing_file_nodes:
+                file_node = existing_file_nodes[sha512]
+            # Need to create a new PotcarFileData node
+            else:
+                # Create PotcarFileNode and PotcarDataNode pair
+                file_node = PotcarFileData(file=file_path)
+                file_node.store(create_data_node=False, verify=False)
+            # Construct the PotcarData if needed
+            if sha512 in existing_data_nodes:
+                data_node = existing_data_nodes[sha512]
+                created = False
+            else:
+                data_node = cls(potcar_file_node=file_node)
+                data_node.store(verify=False)
+                created = True
+
+            data_nodes.append(data_node)
+            created_flags.append(created)
+        return data_nodes, created_flags
 
     @classmethod
     def get_or_create_from_contents(cls, contents: str) -> tuple[Data, bool]:
@@ -960,28 +1008,33 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     ) -> list[tuple[Any, bool, str]]:
         """Given a list of absolute paths to potcar files, try to upload them (or pretend to if dry_run=True)."""
         list_created = []
-        for file_path_obj in file_paths:
-            file_path = str(file_path_obj)
-            try:
-                if not dry_run:
-                    potcar, created = cls.get_or_create_from_file(file_path)
-                else:
-                    potcar = cls.file_not_uploaded(file_path)
-                    created = bool(potcar.uuid == -1)
-                if stop_if_existing and not created:
-                    raise ValueError(
-                        (
-                            'A POTCAR with identical SHA512 to {} is already in the DB,'
-                            'therefore it cannot be added with the stop_if_existing kwarg.'
-                        ).format(file_path)
-                    )
-                list_created.append((potcar, created, file_path))
-            except KeyError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
-            except AttributeError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
-            except IndexError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+        if stop_if_existing or dry_run:
+            for file_path_obj in file_paths:
+                file_path = str(file_path_obj)
+                try:
+                    if not dry_run:
+                        potcar, created = cls.get_or_create_from_file(file_path)
+                    else:
+                        potcar = cls.file_not_uploaded(file_path)
+                        created = bool(potcar.uuid == -1)
+                    if stop_if_existing and not created:
+                        raise ValueError(
+                            (
+                                'A POTCAR with identical SHA512 to {} is already in the DB,'
+                                'therefore it cannot be added with the stop_if_existing kwarg.'
+                            ).format(file_path)
+                        )
+                    list_created.append((potcar, created, file_path))
+                except KeyError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+                except AttributeError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+                except IndexError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+        else:
+            # Not dry and not stop_if_existing - use faster method
+            potcar, created = cls.get_or_create_from_file_many(file_paths)
+            list_created = list(zip(potcar, created, file_paths))
 
         return list_created
 
