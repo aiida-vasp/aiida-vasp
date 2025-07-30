@@ -58,6 +58,7 @@ docs = [
     "sphinx_design",
     "sphinx_togglebutton",
     "sphinxext.remoteliteralinclude",
+    "matplotlib",
     "pymatgen"
 ]
 graphs = ["matplotlib"]

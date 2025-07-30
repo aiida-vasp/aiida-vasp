@@ -114,8 +114,8 @@ def monitor_loop_time(
     :rtype: str or None
     """
 
-    stdout_path = str(Path(node.get_remote_workdir(), node.process_class._VASP_OUTPUT))
     outcar_path = str(Path(node.get_remote_workdir(), 'OURCAR'))
+    stdout_path = str(Path(node.get_remote_workdir()) / node.process_class._VASP_OUTPUT)
     walltime_limit = node.get_option('max_wallclock_seconds')
     if walltime_limit is None:
         # Cannot monitor timing without a walltime limit
