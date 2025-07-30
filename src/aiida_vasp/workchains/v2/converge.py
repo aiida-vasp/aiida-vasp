@@ -52,7 +52,6 @@ from aiida.plugins import WorkflowFactory
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
-from .common.builder_updater import VaspBuilderUpdater
 from .mixins import WithBuilderUpdater
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
@@ -390,7 +389,7 @@ def plot_conv_data(cdf: Any, kdf: Any, **kwargs: Any) -> list[Any]:
     return figs
 
 
-def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]) -> VaspBuilderUpdater:
+def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]):
     """
     Short cut for getting an VaspBuilderUpdater ready to use
 
@@ -399,6 +398,7 @@ def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]
 
     The following files are used from the configuration: ``code``, ``inputset``, ``conv``, ``options``, ``resources``.
     """
+    from aiida_vasp.common.builder_updater import VaspBuilderUpdater  # noqa: PLC0415
 
     conv_builder = VaspConvergenceWorkChain.get_builder()
 

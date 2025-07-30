@@ -50,7 +50,7 @@ required is the `structure`.
 For example:
 
 ```python
-from aiida_vasp.workchains.v2.common import VaspBuilderUpdater
+from aiida_vasp.common import VaspBuilderUpdater
 
 >>> upd = VaspBuilderUpdater("MyInputPreset").apply_preset(structure, label='My Awesome Calculation')
 >>> upd.builder   # Inspect the builder - alway good to check if everything is as expected

@@ -16,7 +16,7 @@ class WithBuilderUpdater:
 
         The arguments are passed directly to the underling `BuilderUpdater` constructor.
         """
-        from .common.builder_updater import (
+        from aiida_vasp.common.builder_updater import (
             VaspBandUpdater,
             VaspBuilderUpdater,
             VaspConvUpdater,

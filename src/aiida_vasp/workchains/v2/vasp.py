@@ -70,14 +70,14 @@ from aiida_vasp.assistant.parameters import (
     inherit_and_merge_parameters,
 )
 from aiida_vasp.calcs.vasp import VaspCalculation
+from aiida_vasp.common import parameters_validator
+from aiida_vasp.common.dryrun import get_jobscheme
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.data.wavefun import WavefunData
+from aiida_vasp.inputset.vaspsets import get_ldau_keys
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs, site_magnetization_to_magmom
 
-from .common import parameters_validator
-from .common.dryrun import get_jobscheme
-from .inputset.vaspsets import get_ldau_keys
 from .mixins import WithBuilderUpdater
 
 # pylint: disable=no-member

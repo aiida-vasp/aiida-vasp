@@ -125,7 +125,7 @@ using the `VaspBuilderUpdater` class:
 
 ```{code-cell} python3
 from aiida import orm
-from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+from aiida_vasp.common.builder_updater import VaspBuilderUpdater
 
 # This instantiate a VaspBuilderUpdater object and apply the preset
 # The default name is VaspPreset stored in the code repository.

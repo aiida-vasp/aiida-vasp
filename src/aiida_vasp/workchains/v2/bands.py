@@ -21,15 +21,15 @@ from aiida.plugins import WorkflowFactory
 from aiida.tools import get_explicit_kpoints_path
 from ase.geometry import cell_to_cellpar
 
+from aiida_vasp.common import OVERRIDE_NAMESPACE
+from aiida_vasp.common.dryrun import dryrun_relax_builder
+from aiida_vasp.common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
 
-from .common import OVERRIDE_NAMESPACE
-from .common.dryrun import dryrun_relax_builder
-from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithBuilderUpdater
 
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
@@ -294,7 +294,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         else:
             # Using sumo interface
             try:
-                from .common.sumo_kpath import kpath_from_sumo_v2  # noqa: PLC0415
+                from aiida_vasp.common.sumo_kpath import kpath_from_sumo_v2  # noqa: PLC0415
             except ImportError:
                 raise ImportError('Sumo is not installed, please install it to use this feature.')
 

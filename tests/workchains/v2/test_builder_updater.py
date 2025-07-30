@@ -2,7 +2,7 @@ import pytest
 from aiida import orm
 from ase.build import bulk
 
-from aiida_vasp.workchains.v2.common import builder_updater as bup
+from aiida_vasp.common import builder_updater as bup
 
 
 def test_vasp_builder_updater(aiida_profile_clean, vasp_code, upload_potcar, potcar_family_name):

@@ -1,11 +1,15 @@
-from .common.builder_updater import *
+from .bands import VaspBandsWorkChain, VaspHybridBandsWorkChain
+from .converge import VaspConvergenceWorkChain
+from .neb import VaspNEBWorkChain
+from .relax import VaspMultiStageRelaxWorkChain, VaspRelaxWorkChain
+from .vasp import VaspWorkChain
 
 __all__ = (
-    'VaspBandUpdater',
-    'VaspBuilderUpdater',
-    'VaspConvUpdater',
-    'VaspHybridBandUpdater',
-    'VaspNEBUpdater',
-    'VaspPresetConfig',
-    'VaspRelaxUpdater',
+    'VaspBandsWorkChain',
+    'VaspConvergenceWorkChain',
+    'VaspHybridBandsWorkChain',
+    'VaspMultiStageRelaxWorkChain',
+    'VaspNEBWorkChain',
+    'VaspRelaxWorkChain',
+    'VaspWorkChain',
 )

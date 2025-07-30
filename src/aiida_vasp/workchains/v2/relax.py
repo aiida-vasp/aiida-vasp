@@ -38,11 +38,11 @@ from aiida.engine import ExitCode, ProcessSpec, ToContext, WorkChain, append_, i
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
-from .common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
 from .mixins import WithBuilderUpdater
 
 __version__ = '0.5.0'

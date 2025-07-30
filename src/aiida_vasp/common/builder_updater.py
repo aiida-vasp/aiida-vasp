@@ -48,14 +48,12 @@ from aiida.plugins import WorkflowFactory
 from ase.visualize import view
 from yaml import safe_load
 
-from aiida_vasp.utils.opthold import ConvOptions
-from aiida_vasp.workchains.v2.bands import BandOptions
+from aiida_vasp.inputset.base import convert_lowercase
+from aiida_vasp.inputset.pmgset import PymatgenInputSet
+from aiida_vasp.inputset.vaspsets import VASPInputSet
+from aiida_vasp.utils.opthold import BandOptions, ConvOptions, RelaxOptions
 from aiida_vasp.workchains.v2.relax import VaspMultiStageRelaxWorkChain
 
-from ..inputset.base import convert_lowercase
-from ..inputset.pmgset import PymatgenInputSet
-from ..inputset.vaspsets import VASPInputSet
-from ..relax import RelaxOptions
 from .transform import neb_interpolate
 
 DEFAULT_PRESET = 'VaspPreset'

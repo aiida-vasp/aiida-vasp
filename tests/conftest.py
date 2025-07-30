@@ -16,9 +16,9 @@ from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, Quer
 from aiida.plugins import CalculationFactory, DataFactory, WorkflowFactory
 from aiida.tools.archive import create_archive
 
+from aiida_vasp.common.builder_updater import VaspBuilderUpdater
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarGroup
 from aiida_vasp.utils.general import copytree
-from aiida_vasp.workchains.v2.common.builder_updater import VaspBuilderUpdater
 
 pytest_plugins = 'aiida.tools.pytest_fixtures'
 
