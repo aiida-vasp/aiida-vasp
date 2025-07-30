@@ -130,7 +130,7 @@ def test_parse_outcar_status_extended(outcar_parser, expected):
     ],
     indirect=True,
 )
-def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
+def test_parse_outcar_magnetizationr(aiida_profile, outcar_parser):
     """Load a reference OUTCAR parser.
 
     We check that it parses and provides the correct content for the magnetization.
@@ -174,7 +174,7 @@ def test_parse_outcar_magnetizationr(fresh_aiida_env, outcar_parser):
     ],
     indirect=True,
 )
-def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # pylint: disable=invalid-name
+def test_parse_outcar_magnetization_single(aiida_profile, outcar_parser):  # pylint: disable=invalid-name
     """Load a reference OUTCAR parser.
 
     We check that it parses and provides the correct content for the magnetization
@@ -204,7 +204,7 @@ def test_parse_outcar_magnetization_single(fresh_aiida_env, outcar_parser):  # p
 
 
 @pytest.mark.parametrize('neb_outcar_parser', ['neb/01'], indirect=True)
-def test_neb(fresh_aiida_env, neb_outcar_parser):
+def test_neb(aiida_profile, neb_outcar_parser):
     """
     Test that the parameter node is a ParametersData instance.
 

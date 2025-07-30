@@ -14,7 +14,7 @@ else:
     PMG_INSTALLED = True
 
 
-def test_get_current_user(fresh_aiida_env):
+def test_get_current_user(aiida_profile_clean):
     """Assert that get_current_user returns a user."""
     user = get_current_user()
     assert user.pk
@@ -25,7 +25,7 @@ def test_get_current_user(fresh_aiida_env):
 
 @pytest.mark.skipif(not PMG_INSTALLED, reason='pymatgen not installed')
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_pmg_adaptor(fresh_aiida_env, tmp_path, run_vasp_process):
+def test_pmg_adaptor(aiida_profile_clean, tmp_path, run_vasp_process):
     """
     Test export vasp calculation
     """

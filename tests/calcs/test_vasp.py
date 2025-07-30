@@ -179,7 +179,7 @@ def managed_temp_object():
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc_only_output(fresh_aiida_env, run_vasp_process):
+def test_vasp_calc_only_output(run_vasp_process):
     """Test a run of a basic VASP calculation which misses critical files."""
     _, node = run_vasp_process(test_case='stdout')
     assert node.exit_status == 352
@@ -189,7 +189,7 @@ def test_vasp_calc_only_output(fresh_aiida_env, run_vasp_process):
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_calc(fresh_aiida_env, run_vasp_process):
+def test_vasp_calc(run_vasp_process):
     """Test a run of a basic VASP calculation and its details."""
 
     results, node = run_vasp_process(settings={'parser_settings': {'check_errors': False}})

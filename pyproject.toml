@@ -58,6 +58,7 @@ docs = [
     "sphinx_design",
     "sphinx_togglebutton",
     "sphinxext.remoteliteralinclude",
+    "matplotlib",
     "pymatgen"
 ]
 graphs = ["matplotlib"]
@@ -82,6 +83,10 @@ graphs = ["matplotlib"]
 [project.entry-points."aiida.parsers"]
 "vasp.vasp" = "aiida_vasp.parsers.vasp:VaspParser"
 "vasp.neb" = "aiida_vasp.parsers.neb:NebParser"
+
+[project.entry-points."aiida.calculations.monitors"]
+"vasp.loop_time" = "aiida_vasp.calcs.monitors:monitor_loop_time"
+"vasp.stdout" = "aiida_vasp.calcs.monitors:monitor_stdout"
 
 [project.entry-points."aiida.workflows"]
 "vasp.vasp" = "aiida_vasp.workchains.v2.vasp:VaspWorkChain"

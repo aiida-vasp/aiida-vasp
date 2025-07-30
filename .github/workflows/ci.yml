@@ -14,29 +14,20 @@ jobs:
         python: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniforge-version: latest
-      - name: Install dependencies
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+      - name: Setup venv
         run: |
-          conda activate test
-          conda install --yes -c conda-forge python=${{ matrix.python }}
-          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
-      - name: Setup parsevasp
+          uv venv --python=${{ matrix.python }}
+      - name: Install parsevasp development and pytest-cov
         run: |
-          conda activate test
-          git clone --depth 1 https://github.com/aiida-vasp/parsevasp.git
-          cd parsevasp
-          pip install -e . -vvv
-          cd ..
+          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop pytest-cov
       - name: Install aiida-vasp
         run: |
-          conda activate test
-          pip install -e .[tests] -vvv
+          uv pip install -v -e .[tests]
       - name: Run tests with codecov
         run: |
-          conda activate test
-          pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
+          uv run pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
       - name: Archive error mock calculations
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
@@ -65,26 +56,19 @@ jobs:
         python: ['3.10']
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniforge-version: latest
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+      - name: Setup venv
         run: |
-          conda activate test
-          conda install --yes -c conda-forge python=${{ matrix.python }}
-          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
-      - name: Setup parsevasp
+          uv venv --python=${{ matrix.python }}
+      - name: Install parsevasp development
         run: |
-          conda activate test
-          git clone --depth 1 https://github.com/aiida-vasp/parsevasp.git
-          cd parsevasp
-          pip install -e . -vvv
-          cd ..
+          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop
       - name: Install aiida-vasp
         run: |
-          conda activate test
-          pip install -e .[docs] -vvv
+          uv pip install -v -e .[docs]
       - name: Build the documentation
         run: |
           cd docs
-          make html
+          uv run make html

@@ -11,7 +11,7 @@ from aiida_vasp.utils.aiida_utils import create_authinfo
 
 @pytest.fixture
 def immigrant_with_builder(
-    fresh_aiida_env, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
+    aiida_profile_clean, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
 ):
     """Provide process class and inputs for importing a AiiDA-external VASP run.
 
@@ -31,7 +31,7 @@ def immigrant_with_builder(
 
 @pytest.mark.skip(reason='This immigrant not working with the new parser code')
 def test_immigrant_additional(
-    fresh_aiida_env, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
+    aiida_profile_clean, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
 ):
     """Provide process class and inputs for importing a AiiDA-external VASP run."""
     create_authinfo(localhost, store=True)
@@ -68,7 +68,7 @@ def test_vasp_immigrant(immigrant_with_builder):
 
 @pytest.fixture
 def immigrant_with_builder_example_3(
-    fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, phonondb_run, localhost, mock_vasp
+    aiida_profile_clean, upload_potcar, potcar_family_name, potcar_mapping, phonondb_run, localhost, mock_vasp
 ):
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
 
@@ -85,7 +85,7 @@ def immigrant_with_builder_example_3(
 
 @pytest.mark.skip(reason='This immigrant not working with the new parser code')
 def test_immigrant_additional_example_3(
-    fresh_aiida_env, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
+    aiida_profile_clean, upload_potcar, phonondb_run, localhost, mock_vasp, potcar_family_name, potcar_mapping
 ):  # pylint: disable=invalid-name
     """Provide process class and inputs for importing a AiiDA-external VASP run. This will be obsolete at v3."""
     create_authinfo(localhost, store=True)

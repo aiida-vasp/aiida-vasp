@@ -11,7 +11,7 @@ from aiida.common.exceptions import NotExistent, UniquenessError
 from aiida_vasp.data.potcar import PotcarData, PotcarFileData, PotcarGroup, migrate_potcar_group
 
 
-def test_creation(fresh_aiida_env, potcar_node_pair):
+def test_creation(aiida_profile_clean, potcar_node_pair):
     """Test creating a data node pair."""
     potcar_node = PotcarData.find_one(symbol='As')
     file_node = potcar_node.find_file_node()
@@ -19,7 +19,7 @@ def test_creation(fresh_aiida_env, potcar_node_pair):
     assert file_node.pk == potcar_node_pair['file'].pk
 
 
-def test_hashing(aiida_profile, data_path, read_file):
+def test_hashing(aiida_profile_clean, data_path, read_file):
     """Ensure the file and content sha512 hash equivalently for the same POTCAR."""
     potcar_file_cls = PotcarFileData
     potcar_path = ['potcar', 'As', 'POTCAR']
@@ -30,7 +30,7 @@ def test_hashing(aiida_profile, data_path, read_file):
 
 
 # pylint: disable=protected-access
-def test_store_duplicate(fresh_aiida_env, potcar_node_pair, data_path):
+def test_store_duplicate(aiida_profile_clean, potcar_node_pair, data_path):
     """
     Storing a duplicate POTCAR node must fail.
 
@@ -65,7 +65,7 @@ def test_store_duplicate(fresh_aiida_env, potcar_node_pair, data_path):
     assert PotcarFileData.find_one(symbol='As')
 
 
-def test_export_import(fresh_aiida_env, potcar_node_pair, tmp_path, data_path):
+def test_export_import(aiida_profile_clean, potcar_node_pair, tmp_path, data_path):
     """Exporting and importing back may not store duplicates."""
     tempfile = tmp_path / 'potcar.aiida'
 
@@ -84,24 +84,24 @@ def test_export_import(fresh_aiida_env, potcar_node_pair, tmp_path, data_path):
     assert PotcarFileData.find_one(symbol='As')
 
 
-def test_exists(fresh_aiida_env, potcar_node_pair):
+def test_exists(aiida_profile_clean, potcar_node_pair):
     assert PotcarFileData.exists(element='As')
     assert not PotcarData.exists(element='Xe')
 
 
-def test_find(fresh_aiida_env, potcar_node_pair):
+def test_find(aiida_profile_clean, potcar_node_pair):
     assert PotcarData.find_one(element='As').uuid == potcar_node_pair['potcar'].uuid
     with pytest.raises(NotExistent):
         _ = PotcarFileData.find_one(element='Xe')
 
 
-def test_file_get_content(fresh_aiida_env, potcar_node_pair, data_path):
+def test_file_get_content(aiida_profile_clean, potcar_node_pair, data_path):
     file_node_as = potcar_node_pair['file']
     original_file = pathlib.Path(data_path(file_node_as.original_file_name))
     assert original_file.read_text(encoding='utf8') == file_node_as.get_content().decode()
 
 
-def test_file_get_or_create(fresh_aiida_env, potcar_node_pair, data_path):
+def test_file_get_or_create(aiida_profile_clean, potcar_node_pair, data_path):
     """Test get_or_create of PotcarFileData."""
     potcar_as_path = data_path('potcar', 'As', 'POTCAR')
     potcar_file_cls = PotcarFileData
@@ -116,7 +116,7 @@ def test_file_get_or_create(fresh_aiida_env, potcar_node_pair, data_path):
     assert potcar_file_cls.exists(sha512=node_file_in.sha512)
 
 
-def test_potcar_get_or_create(fresh_aiida_env, potcar_node_pair, data_path):
+def test_potcar_get_or_create(aiida_profile_clean, potcar_node_pair, data_path):
     """Test get_or_create method of PotcarData."""
     potcar_cls = PotcarData
     file_cls = PotcarFileData
@@ -132,7 +132,7 @@ def test_potcar_get_or_create(fresh_aiida_env, potcar_node_pair, data_path):
     assert potcar_cls.exists(sha512=node_potcar_in.sha512)
 
 
-def test_potcar_from_file(fresh_aiida_env, data_path):
+def test_potcar_from_file(aiida_profile_clean, data_path):
     """Test creating a node pair from a file, creating the data node first."""
     potcar_cls = PotcarData
     _, created = potcar_cls.get_or_create_from_file(data_path('potcar', 'As', 'POTCAR'))
@@ -141,7 +141,7 @@ def test_potcar_from_file(fresh_aiida_env, data_path):
     assert not created
 
 
-def test_potcar_from_structure(fresh_aiida_env, upload_potcar, potcar_family_name):
+def test_potcar_from_structure(aiida_profile_clean, upload_potcar, potcar_family_name):
     """Test getting POTCARS from a family for a structure."""
     indium_2 = orm.StructureData()
     indium_2.append_atom(position=[0, 0, 0], symbols='In')
@@ -154,7 +154,7 @@ def test_potcar_from_structure(fresh_aiida_env, upload_potcar, potcar_family_nam
     assert in2_potcars['In'].uuid == in_d_potcar.uuid == in2_potcars['In1'].uuid
 
 
-def test_upload(fresh_aiida_env, temp_pot_folder, data_path):
+def test_upload(aiida_profile_clean, temp_pot_folder, data_path):
     """Test uploading a family of POTCAR files."""
     family_name = 'test_family'
     family_desc = 'Test Family'
@@ -188,7 +188,7 @@ def test_upload(fresh_aiida_env, temp_pot_folder, data_path):
     assert not potcar_ga.exists()
 
 
-def test_export_family_folder(fresh_aiida_env, upload_potcar, potcar_family_name, tmp_path):
+def test_export_family_folder(aiida_profile_clean, upload_potcar, potcar_family_name, tmp_path):
     """Test exporting to folder."""
     export_dir = tmp_path / 'export'
     export_dir.mkdir()
@@ -217,7 +217,7 @@ def test_export_family_folder(fresh_aiida_env, upload_potcar, potcar_family_name
     assert new_dir.exists()
 
 
-def test_export_family_archive(fresh_aiida_env, upload_potcar, potcar_family_name, tmp_path):
+def test_export_family_archive(aiida_profile_clean, upload_potcar, potcar_family_name, tmp_path):
     """Test exporting to archive."""
     export_dir = tmp_path / 'export'
     export_dir.mkdir()
@@ -280,7 +280,7 @@ def test_family_migrate(upload_potcar, legacy_potcar_family):
     assert uuids_migrated == uuids_original
 
 
-def test_old_style_detect(potcar_family_name, potcar_mapping, legacy_potcar_family):
+def test_old_style_detect(aiida_profile_clean, potcar_family_name, potcar_mapping, legacy_potcar_family):
     """Test the assestion that the potcars are found old in the legacy group not the new"""
     potcar_cls = PotcarData
     elements = potcar_mapping.keys()

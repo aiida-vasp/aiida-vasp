@@ -5,25 +5,15 @@ Utilities for working with band structures. Currently this is legacy and will be
 rewritten or moved.
 """
 
+# ruff: noqa: PLC0415
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-# pylint: disable=import-outside-toplevel
-try:
-    import matplotlib
-
-    matplotlib.use('TKAgg')
-    from matplotlib import pyplot as plt
-except ImportError as no_matplotlib:
-    raise ImportError('Error: matplotlib must be ' + 'installed to use this functionality') from no_matplotlib
-
 import itertools
+from typing import Any
 
 import numpy as np
-
-if TYPE_CHECKING:
-    from aiida import orm
+from aiida import orm
 
 
 def get_bs_dims(bands_array: np.ndarray) -> tuple[int, int, int]:
@@ -112,7 +102,7 @@ def plot_bstr(
     efermi: float | None = None,
     use_parent_calc: bool = False,
     **kwargs: Any,
-) -> plt.Figure:
+):
     """
     Use matplotlib to plot the bands stored in a BandsData node.
 
@@ -128,6 +118,8 @@ def plot_bstr(
         present on the BandsData node. No consistency checks are performed.
     :return: the matplotlib figure containing the plot
     """
+    import matplotlib.pyplot as plt
+
     fig = plt.figure()
     title = title or f'Band Structure (pk={bands_node.pk})'
     bands = bands_node.get_bands()
@@ -161,6 +153,8 @@ def plot_bstr(
 def plot_bands(bands_node: orm.BandsData, **kwargs: Any) -> None:
     """Plot a bandstructure node using matplotlib."""
 
+    import matplotlib.pyplot as plt
+
     bands = bands_node.get_bands()
     nbands, nkp, nspin = get_bs_dims(bands)
     if nspin > 0:
@@ -172,6 +166,6 @@ def plot_bands(bands_node: orm.BandsData, **kwargs: Any) -> None:
     if 'colors' in kwargs:
         colors = itertools.cycle(kwargs.pop('colors'))
         for b_idx in range(bands.shape[1]):
-            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)  # pylint: disable=no-member, not-callable
+            plt.plot(bands[:, b_idx], color=colors.next(), **kwargs)
     else:
         plt.plot(bands, **kwargs)

@@ -10,7 +10,7 @@ from aiida_vasp.calcs.neb import VaspNEBCalculation
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('cif', 'mesh')], indirect=True)
 def test_prepare(
-    fresh_aiida_env,
+    aiida_profile,
     vasp_neb_calc,
     vasp_neb_inputs,
     sandbox_folder,

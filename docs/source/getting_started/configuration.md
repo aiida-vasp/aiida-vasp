@@ -1,11 +1,17 @@
+---
+myst:
+  substitutions:
+    InstalledCode: "{external:py:class}`InstalledCode <aiida.orm.InstalledCode>`"
+---
+
 (configuration)=
 # Configurations
 
 Here we explain the post-installation configuration steps for [AiiDA-VASP].
 
-## Setting up a `InstalledCode` for your VASP executable
+## Setting up a {{ InstalledCode }} for your VASP executable
 
-A `InstalledCode` is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a `InstalledCode` for this executable in [AiiDA].
+A {{ InstalledCode  }} is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a {{ InstalledCode }} for this executable in [AiiDA].
 
 The `verdi code` commands allow one to setup/update/duplicate `InstalledCode` objects in [AiiDA].
 Please consult the [AiiDA documentation] for more details.
@@ -19,9 +25,9 @@ To add a code with label `vasp`:
 Report: enter ? for help.
 Report: enter ! to ignore the default and set no value.
 Computer: mycluster
-Absolute filepath executable: /cluster/software/vasp/vasp6.3.2/vasp
-Label: vasp
-Description: VASP 6.3.2 standard version
+Absolute filepath executable: /cluster/software/vasp/vasp6.3.2/vasp_std
+Label: vasp-std
+Description: VASP 6.3.2 standard version (complex)
 Default `CalcJob` plugin: vasp.vasp
 Escape using double quotes [y/N]:
 Success: Created InstalledCode<6>
@@ -29,9 +35,19 @@ Success: Created InstalledCode<6>
 
 The `Absolute filepath executable` is the full path to the VASP executable installed on the remote computer.
 Very often one needs to utilize different versions/executables VASP, for instance, running calculations with the gamma only or non-collinear configurations or with additional auxiliary libraries, like BEEF included.
-One can add multiple `InstalledCode` objects to [AiiDA] for different versions of VASP with different labels.
+One can add multiple `InstalledCode` objects to AiiDA for different versions of VASP with different labels.
 
-During the end of the setup, the user will be  asked to enter the prepend and append text.
+:::{tip}
+You can first create a Code for the `vasp_std` executable, then use:
+
+```
+verdi code duplicate vasp-std@mycluster vasp-ncl@mycluster
+```
+
+to create a new {{ InstalledCode }} for `vasp_ncl`. The previous configurations will be used as default and the only one you need to change is the *Absolute filepath executable* field.
+:::
+
+During the end of the setup, the user will be asked to enter the prepend and append text.
 The prepend section is any command that should run before the VASP executed.
 For most cluster systems, they corresponds to loading the correct modules.
 
@@ -53,8 +69,9 @@ One may want to enter cleanup routines etc, or just keep it empty.
 
 
 :::{note}
-For local VASP installation, just create a compute with `localhost` as the hostname, `core.local` transport and `core.direct` scheduler.
-Then create a `InstalledCode` with the absolute path to the VASP executable and label `vasp`.
+For local VASP installation, just create a computer with `localhost` as the hostname, `core.local` transport and `core.direct` scheduler.
+The `localhost` computer should be created already if you used the `verdi presto` command to initialize the profile.
+Then create a {{ InstalledCode }}  with the absolute path to the VASP executable and label `vasp`.
 :::
 
 
@@ -99,6 +116,12 @@ Execute the following command to upload the whole potential family to the databa
 POTCAR files found: 327. New files uploaded: 327, Added to Family: 327
 ```
 
+:::{tip}
+For historical reasons we used `PBE.54` as the name for the `PBE_54` PAW dataset.
+Any name can be used of course, but some of the presets of the workflows expect the naming convention with
+a `.` instead of `_`.
+:::
+
 
 The `name` and `description` are not optional and have to be specified.
 The `path` could be either an archive, or one could use a folder name.
@@ -110,7 +133,7 @@ We use the POTCAR parser from [pymatgen] to get the metadata and sometimes this 
 
 :::{note}
 A *potential family* here can have multiple potential for a single element.
-This is different from the same terminologies used in [aiida-quantumespresso] and [aiida-castep] where a *potential family* provides a one-to-one mapping between elements and pseudopotentials.
+This is different from the same terminologies used in [aiida-pseudo] and [aiida-castep] where a *potential family* provides a one-to-one mapping between elements and pseudopotentials.
 Hence, a *potential mapping* is also need when running calculations/workflows, to provided the one-to-one  mapping between the symbols and the potentials with the *potential family*.
 :::
 
@@ -118,5 +141,5 @@ Hence, a *potential mapping* is also need when running calculations/workflows, t
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
 [vasp]: https://www.vasp.at
 [pymatgen]: https://pymatgen.org
-[aiida-quantumespresso]: https://github.com/aiidateam/aiida-quantumespresso
+[aiida-quantumespresso]: https://aiida-pseudo.readthedocs.io/en/latest/design.html#families
 [aiida-castep]: https://github.com/zhubonan/aiida-castep

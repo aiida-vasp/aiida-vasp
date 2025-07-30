@@ -789,7 +789,7 @@ def test_parse_vasprun_dynmat(vasprun_parser):
 
 
 @pytest.mark.parametrize(['vasprun_parser'], [('spin',)], indirect=True)
-def test_band_properties(fresh_aiida_env, vasprun_parser):
+def test_band_properties(aiida_profile, vasprun_parser):
     """Load a reference vasprun.xml and check that key properties of the electric structure
     are returned correctly."""
     data = vasprun_parser.get_quantity('band_properties')

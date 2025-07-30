@@ -42,7 +42,7 @@ def test_no_subcmd():
     assert result.exception is None
 
 
-def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
+def test_uploadfamily_withpath(aiida_profile_clean, cmd_params):
     """Upload the test potcar family and check it is there."""
 
     result = run_cmd(
@@ -58,7 +58,7 @@ def test_uploadfamily_withpath(fresh_aiida_env, cmd_params):
     assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
-def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
+def test_uploadfamily_tar(aiida_profile_clean, cmd_params):
     """Give a tar file as the source."""
     path_option = f'--path={Path(cmd_params.POTCAR_PATH) / "Ga.tar"!s}'
     result = run_cmd('uploadfamily', [path_option, cmd_params.NAME_OPTION, cmd_params.DESC_OPTION])
@@ -69,7 +69,7 @@ def test_uploadfamily_tar(fresh_aiida_env, cmd_params):
     assert [g.label for g in potcar_cls.get_potcar_groups()] == [cmd_params.FAMILY_NAME]
 
 
-def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
+def test_uploadfamily_inworkdir(aiida_profile_clean, cmd_params):
     """Upload the test potcar family from the working env."""
 
     potcar_dir = Path(cmd_params.POTCAR_PATH)
@@ -90,7 +90,7 @@ def test_uploadfamily_inworkdir(fresh_aiida_env, cmd_params):
     assert str(old_work_dir) == str(Path().cwd())
 
 
-def test_uploadfamily_again(fresh_aiida_env, upload_potcar, cmd_params):
+def test_uploadfamily_again(aiida_profile_clean, upload_potcar, cmd_params):
     """
     Re-upload a potcar family.
 
@@ -116,7 +116,7 @@ def test_uploadfamily_again(fresh_aiida_env, upload_potcar, cmd_params):
     assert group_count == group_qb.count()
 
 
-def test_uploadfamily_dryrun(fresh_aiida_env, cmd_params):
+def test_uploadfamily_dryrun(aiida_profile_clean, cmd_params):
     """Make sure --dry-run does not affect the db."""
     node_qb = QueryBuilder(path=[Node])
     node_count = node_qb.count()
@@ -148,7 +148,7 @@ def test_listfamilies_existence():
     assert result.output
 
 
-def test_listfamilies_nofilter(fresh_aiida_env, upload_potcar, potcar_family_name):
+def test_listfamilies_nofilter(aiida_profile_clean, upload_potcar, potcar_family_name):
     """Test typical usecases without filtering."""
     result = run_cmd('listfamilies')
     assert not result.exception
@@ -161,7 +161,7 @@ def test_listfamilies_nofilter(fresh_aiida_env, upload_potcar, potcar_family_nam
     assert family_group.description in result.output
 
 
-def test_listfamilies_filtering(fresh_aiida_env, upload_potcar, potcar_family_name):
+def test_listfamilies_filtering(aiida_profile_clean, upload_potcar, potcar_family_name):
     """Test filtering families by elements & symbols."""
     result = run_cmd('listfamilies', ['--element', 'In', '--element', 'As'])
     assert potcar_family_name in result.output
@@ -182,7 +182,7 @@ def test_listfamilies_filtering(fresh_aiida_env, upload_potcar, potcar_family_na
     assert potcar_family_name not in result.output
 
 
-def test_exportfamilies(fresh_aiida_env, upload_potcar, potcar_family_name, tmp_path):
+def test_exportfamilies(aiida_profile_clean, upload_potcar, potcar_family_name, tmp_path):
     """Test exporting potcar family."""
     result = run_cmd('exportfamily', ['--name', potcar_family_name, '--path', str(tmp_path)])
     assert not result.exception
@@ -218,7 +218,7 @@ def test_call_from_vasp():
     assert 'Usage: verdi data vasp.potcar' in output  # pylint: disable=unsupported-membership-test
 
 
-def test_migrate_command(fresh_aiida_env, legacy_potcar_family):
+def test_migrate_command(aiida_profile_clean, legacy_potcar_family):
     """Test the migration command"""
 
     legacy_name, legacy_group_class = legacy_potcar_family

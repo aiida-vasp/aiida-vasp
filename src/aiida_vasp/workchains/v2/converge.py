@@ -44,7 +44,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 from aiida import orm
 from aiida.engine import ProcessSpec, WorkChain, append_, calcfunction
@@ -344,6 +343,8 @@ def plot_conv_data(cdf: Any, kdf: Any, **kwargs: Any) -> list[Any]:
     """
     Make two combined plots for the convergence test results.
     """
+
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     # Create a subplot
     figs = []

@@ -119,7 +119,7 @@ class InputSet:
         for name, value in self.overrides.items():
             # Keys ends with '_mapping' are treated differently here
             # Those valuse should have been applied already implemented in the `get_input_dict` method.
-            if '_mapping' in name or '_list' in name:
+            if '_mapping' in name or '_list' in name or '_family' in name:
                 continue
             # Delete the key
             if value is None:

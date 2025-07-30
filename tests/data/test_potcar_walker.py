@@ -23,7 +23,7 @@ def temp_data_folder(tmpdir, data_path):
 
 
 @pytest.fixture
-def potcar_walker_cls(fresh_aiida_env):
+def potcar_walker_cls(aiida_profile):
     return PotcarWalker
 
 

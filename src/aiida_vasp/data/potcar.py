@@ -628,12 +628,12 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_or_create(cls, file_node: Any) -> tuple[Any, bool]:
         """Get or create (store) a PotcarData node."""
 
-        if cls.exists(sha512=file_node.sha512):
-            created = False
+        created = False
+        try:
             node = cls.find_one(sha512=file_node.sha512)
-        else:
-            created = True
+        except NotExistent:
             node = cls(potcar_file_node=file_node)
+            created = True
             node.store()
         return node, created
 
@@ -641,11 +641,10 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     def get_or_create_from_file(cls, file_path: str | Path) -> tuple[Data, bool]:
         """Get or create (store) a PotcarData node from a POTCAR file."""
         sha512 = PotcarFileData.get_file_sha512(file_path)
-        file_node = (
-            PotcarFileData.find_one(sha512=sha512)
-            if PotcarFileData.exists(sha512=sha512)
-            else PotcarFileData(file=file_path)
-        )
+        try:
+            file_node = PotcarFileData.find_one(sha512=sha512)
+        except NotExistent:
+            file_node = PotcarFileData(file=file_path)
         node, created = cls.get_or_create(file_node)
         if not file_node.is_stored:
             file_node.store()

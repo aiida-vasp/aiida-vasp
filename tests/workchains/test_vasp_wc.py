@@ -20,7 +20,7 @@ from aiida.plugins.factories import DataFactory
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_wc(fresh_aiida_env, run_vasp_process):
+def test_vasp_wc(run_vasp_process):
     """Test submitting only, not correctness, with mocked vasp code."""
     results, node = run_vasp_process(process_type='workchain')
     assert node.exit_status == 0
@@ -30,6 +30,9 @@ def test_vasp_wc(fresh_aiida_env, run_vasp_process):
     misc = results['misc'].get_dict()
     assert np.amax(np.linalg.norm(misc['stress'], axis=1)) == pytest.approx(22.8499295)
     assert misc['total_energies']['energy_extrapolated'] == pytest.approx(-14.16209692)
+
+    assert 'stdout' in node.called[0].inputs.monitors
+    assert 'loop_time' in node.called[0].inputs.monitors
 
 
 def si_structure():
@@ -124,7 +127,7 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
     return inputs
 
 
-def test_vasp_incar_case(fresh_aiida_env):
+def test_vasp_incar_case(aiida_profile):
     """Test catching inconsistent incar key cases"""
     workchain = WorkflowFactory('vasp.vasp')
     builder = workchain.get_builder()
@@ -132,7 +135,7 @@ def test_vasp_incar_case(fresh_aiida_env):
         builder.parameters = orm.Dict(dict={'incar': {'ALGO': 21}})
 
 
-def test_vasp_wc_nelm(fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict):
+def test_vasp_wc_nelm(aiida_profile, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict):
     """Test with mocked vasp code for handling electronic convergence issues"""
 
     workchain = WorkflowFactory('vasp.vasp')
@@ -190,7 +193,7 @@ def test_vasp_wc_nelm(fresh_aiida_env, upload_potcar, potcar_family_name, potcar
     [[INCAR_IONIC_CONV, 8, [702, 0]], [INCAR_IONIC_UNFINISHED, 16, [700, 0]]],
 )
 def test_vasp_wc_ionic_continue(
-    fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict, incar, nkpts, exit_codes
+    aiida_profile, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict, incar, nkpts, exit_codes
 ):
     """Test with mocked vasp code for handling ionic convergence issues"""
     workchain = WorkflowFactory('vasp.vasp')
@@ -221,9 +224,7 @@ def test_vasp_wc_ionic_continue(
 
 
 @pytest.mark.skip(reason='This test is not working yet')
-def test_vasp_wc_ionic_magmom_carry(
-    fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict
-):
+def test_vasp_wc_ionic_magmom_carry(aiida_profile, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict):
     """Test with mocked vasp code for handling ionic convergence issues"""
 
     workchain = WorkflowFactory('vasp.vasp')
