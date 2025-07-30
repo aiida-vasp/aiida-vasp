@@ -21,7 +21,7 @@ jobs:
           uv venv --python=${{ matrix.python }}
       - name: Install parsevasp development
         run: |
-          uv pip install https://github.com/aiida-vasp/parsevasp.git@develop
+          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop
       - name: Install aiida-vasp
         run: |
           uv pip install -e .[tests] -vvv
@@ -64,7 +64,7 @@ jobs:
           uv venv --python=${{ matrix.python }}
       - name: Install parsevasp development
         run: |
-          uv pip install https://github.com/aiida-vasp/parsevasp.git@develop
+          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop
       - name: Install aiida-vasp
         run: |
           uv pip install -e .[tests] -vvv
