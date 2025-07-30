@@ -19,15 +19,16 @@ jobs:
       - name: Setup venv
         run: |
           uv venv --python=${{ matrix.python }}
-      - name: Install parsevasp development
+      - name: Install parsevasp development and pytest-cov
         run: |
-          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop
+          uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop pytest-cov
       - name: Install aiida-vasp
         run: |
-          uv pip install -e .[tests] -vvv
+          uv pip install -v -e .[tests]
       - name: Run tests with codecov
         run: |
-          uv run pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
+          source .venv/bin/activate
+          pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
       - name: Archive error mock calculations
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
@@ -67,7 +68,7 @@ jobs:
           uv pip install git+https://github.com/aiida-vasp/parsevasp.git@develop
       - name: Install aiida-vasp
         run: |
-          uv pip install -e .[tests] -vvv
+          uv pip install -v -e .[docs]
       - name: Build the documentation
         run: |
           cd docs
