@@ -24,4 +24,5 @@ def cmd_aiida_vasp() -> None:
     pass
 
 
-from .launch import launch_cmd as launch_cmd
+# These lines simply triggers python to include the sub-commands
+from .launch import launch_workchain as launch_workchain

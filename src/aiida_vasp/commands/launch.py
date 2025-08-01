@@ -11,12 +11,6 @@ from . import cmd_aiida_vasp
 # ruff: noqa: PLC0415
 
 
-# @click.group(name='vasp-tools')  # pylint: disable=invalid-name
-@cmd_aiida_vasp.group('launch')
-def launch_cmd() -> None:
-    """Top level command for aiida-vasp launch commands"""
-
-
 def common_vasp_options(func):
     """Decorator to add common VASP calculation options."""
     func = click.option('--preset', '-p', default='VaspPreset', help='Preset to use for the calculation.')(func)
