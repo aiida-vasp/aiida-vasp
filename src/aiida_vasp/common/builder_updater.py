@@ -35,6 +35,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
+from itertools import chain
 from pathlib import Path
 from typing import Any, Union
 from warnings import warn
@@ -79,6 +80,22 @@ def get_library_path() -> Path:
     :rtype: pathlib.Path
     """
     return Path(__file__).parent
+
+
+def list_presets() -> list[Path]:
+    """
+    List all available presets in the package.
+    """
+    _load_paths = (get_library_path(), Path('~/.aiida-vasp').expanduser())
+    presets = []
+    for parent in _load_paths:
+        files = chain(parent.glob('*.yaml'), parent.glob('*.yml'))
+        for file in files:
+            with open(file) as fh:
+                data = safe_load(fh)
+            if 'name' in data and 'inputset' in data:
+                presets.append(file.absolute())
+    return presets
 
 
 # Template for setting options

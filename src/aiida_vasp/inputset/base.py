@@ -4,6 +4,7 @@ Module for preparing standardised input for calculations
 
 import logging
 from copy import deepcopy
+from itertools import chain
 from math import pi
 from pathlib import Path
 from typing import Any
@@ -49,6 +50,22 @@ FELEMS = [
 def get_library_path() -> Path:
     """Get the path where the YAML files are stored within this package"""
     return Path(__file__).parent
+
+
+def list_inputsets() -> list[Path]:
+    """
+    List all available input sets in the package.
+    """
+    _load_paths = (get_library_path(), Path('~/.aiida-vasp').expanduser())
+    inputsets = []
+    for parent in _load_paths:
+        files = chain(parent.glob('*.yaml'), parent.glob('*.yml'))
+        for file in files:
+            with open(file) as fh:
+                data = yaml.safe_load(fh)
+            if 'global' in data:
+                inputsets.append(file.absolute())
+    return inputsets
 
 
 class InputSet:

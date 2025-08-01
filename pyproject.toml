@@ -40,6 +40,7 @@ dependencies = [
     "pydantic",
     "parsevasp>=3.2",
     "spglib",
+    "pyyaml"
 ]
 
 [project.urls]
@@ -66,6 +67,7 @@ graphs = ["matplotlib"]
 [project.entry-points."aiida.cmdline.data"]
 "vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
 "vasp.tools" = "aiida_vasp.commands.tools:tools"
+"vasp.launch" = "aiida_vasp.commands.aiida_vasp_cmd:launch"
 
 [project.entry-points."aiida.calculations"]
 "vasp.vasp" = "aiida_vasp.calcs.vasp:VaspCalculation"
@@ -108,6 +110,7 @@ graphs = ["matplotlib"]
 "mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
 "dryrun-vasp" = "aiida_vasp.commands.dryrun_vasp:cmd_dryrun_vasp"
 "mock-vasp-loose" = "aiida_vasp.commands.mock_vasp:mock_vasp_loose"
+"aiida-vasp" = "aiida_vasp.commands:cmd_aiida_vasp"
 
 [tool.flit.module]
 name = "aiida_vasp"
