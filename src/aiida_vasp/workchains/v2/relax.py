@@ -29,6 +29,8 @@ CHANGELOG
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 import numpy as np
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
@@ -309,7 +311,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             # Update the wallclock seconds
             wallclock = self.ctx.relax_settings.get('hybrid_calc_bootstrap_wallclock')
             if wallclock:
-                inputs.options = update_nested_dict_node(inputs.options, {'max_wallclock_seconds': wallclock})
+                inputs.calc.metadata.options = update_nested_dict(
+                    inputs.calc.metadata.options, {'max_wallclock_seconds': wallclock}
+                )
 
         # Update the MAGMOM
         if self.ctx.current_magmom is not None:
@@ -351,9 +355,6 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         # Apply overrides if supplied
         if 'static_calc_settings' in self.inputs:
             self.ctx.static_input_additions.settings = self.inputs.static_calc_settings
-
-        if 'static_calc_options' in self.inputs:
-            self.ctx.static_input_additions.options = self.inputs.static_calc_options
 
         # Override INCARs for the final relaxation
         if 'static_calc_parameters' in self.inputs:
@@ -401,6 +402,8 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         # Update the input with whatever stored in the relax_input_additions attribute dict
         inputs.update(self.ctx.static_input_additions)
+        if 'static_calc_options' in self.inputs:
+            inputs.calc.metadata.options = self.inputs.static_calc_options.get_dict()
 
         # Make sure NSW is not here for the static calculation
         incar = inputs.parameters['incar']
@@ -978,7 +981,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.ctx.current_structure = self.inputs.structure
         self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
         self.ctx.settings = relax_inputs.vasp.settings.get_dict()
-        self.ctx.options = relax_inputs.vasp.options.get_dict()
+        self.ctx.options = deepcopy(relax_inputs.vasp.calc.metadata.options)
         self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
         self.ctx.n_stages = len(self.inputs.parameters_stages)
 
@@ -995,7 +998,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Running stage {self.ctx.current_stage}')
         istage = self.ctx.current_stage
         # Update the parameters, options and settings - apply the changes to the self.ctx
-        for name in ['parameters', 'options', 'settings', 'relax_settings']:
+        for name in ['parameters', 'settings', 'relax_settings', 'options']:
             if str(istage) in self.inputs.get(name + '_stages', {}):
                 if self.inputs.use_nested_update.value:
                     self.ctx[name] = update_nested_dict(
@@ -1016,9 +1019,11 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 else:
                     relax_inputs.vasp[name] = value
         # Modify the inputs
-        for name in ['parameters', 'options', 'settings']:
+        for name in ['parameters', 'settings']:
             if relax_inputs.vasp[name].get_dict() != self.ctx[name]:
                 relax_inputs.vasp[name] = orm.Dict(dict=self.ctx[name])
+        # Modify the options port of the underlying VaspWorkChain
+        update_nested_dict(relax_inputs.vasp.calc.metadata.options, self.ctx.options)
 
         # Modify the relax_settings
         if relax_inputs.relax_settings.get_dict() != self.ctx.relax_settings:

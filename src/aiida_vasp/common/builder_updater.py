@@ -386,7 +386,6 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         structure, and metadata label to None.
         """
         self.namespace_vasp.parameters = None
-        self.namespace_vasp.options = None
         self.namespace_vasp.settings = None
         self.namespace_vasp.kpoints = None
         self.namespace_vasp.potential_family = None
@@ -565,16 +564,6 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         """
         return self.namespace_vasp.settings
 
-    @property
-    def options(self) -> Union[orm.Dict, None]:
-        """
-        Return the computational options node.
-
-        :returns: Options node or None if not set
-        :rtype: orm.Dict or None
-        """
-        return self.namespace_vasp.options
-
     def set_code(self, code: str | orm.Code | None = None) -> VaspBuilderUpdater:
         """
         Set the Code for the VASP calculation.
@@ -642,10 +631,11 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         else:
             odict = dict(*args, **kwargs)
 
-        if self.namespace_vasp.options is None:
-            self.namespace_vasp.options = orm.Dict(odict)
-        else:
-            self.namespace_vasp.options = update_dict_node(self.namespace_vasp.options, odict)
+        for key, value in odict.items():
+            if key != 'resources':
+                setattr(self.namespace_vasp.calc.metadata.options, key, value)
+            else:
+                self.set_resources(**value)
         return self
 
     def update_options(self, *args: Any, **kwargs: Any) -> VaspBuilderUpdater:
@@ -736,7 +726,7 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
         warn('update_label is deprecated, use set_label instead', DeprecationWarning)
         return self.set_label(label)
 
-    def set_resources(self, *args: Any, **kwargs: Any) -> VaspBuilderUpdater:
+    def set_resources(self, **kwargs: Any) -> VaspBuilderUpdater:
         """
         Update computational resources in the options.
         NOTE: The available options can be found in the documentation of the Calculation class. These are
@@ -750,11 +740,9 @@ class VaspBuilderUpdater(BaseBuilderUpdater):
 
         :raises RuntimeError: If options are not set before calling this method
         """
-        if self.namespace_vasp.options is None:
-            raise RuntimeError('Please set the options before setting resources')
-        resources = dict(self.namespace_vasp.options['resources'])
-        resources.update(*args, **kwargs)
-        self.namespace_vasp.options = update_dict_node(self.namespace_vasp.options, resources, 'resources')
+        if self.namespace_vasp.calc.metadata.options.resources is None:
+            self.namespace_vasp.calc.metadata.options.resources = AttributeDict()
+        self.namespace_vasp.calc.metadata.options.resources.update(kwargs)
         return self
 
     def update_resources(self, *args: Any, **kwargs: Any) -> VaspBuilderUpdater:

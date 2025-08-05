@@ -12,7 +12,7 @@ def test_vasp_builder_updater(aiida_profile_clean, vasp_code, upload_potcar, pot
     upd.apply_preset(structure, code='vasp@localhost')
     assert upd.builder.structure == structure
     assert upd.builder.parameters['incar']['algo'] == 'normal'
-    assert upd.builder.options['resources']['tot_num_mpiprocs'] == 1
+    assert upd.builder.calc.metadata.options.resources.tot_num_mpiprocs == 1
     assert upd.builder.code == vasp_code
     assert upd.builder.settings.get_dict() == {}
     assert upd.builder.kpoints_spacing.value == 0.05
@@ -31,7 +31,7 @@ def test_vasp_relax_updater(aiida_profile_clean, vasp_code):
     upd.apply_preset(structure, code='vasp@localhost')
     assert upd.builder.structure == structure
     assert upd.builder.vasp.parameters['incar']['algo'] == 'normal'
-    assert upd.builder.vasp.options['resources']['tot_num_mpiprocs'] == 1
+    assert upd.builder.vasp.calc.metadata.options.resources.tot_num_mpiprocs == 1
     assert upd.builder.vasp.code == vasp_code
     assert upd.builder.vasp.settings.get_dict() == {}
     assert upd.builder.vasp.kpoints_spacing.value == 0.05
@@ -51,7 +51,7 @@ def test_vasp_band_updater(aiida_profile_clean, vasp_code, hybrid):
     upd.apply_preset(structure, code='vasp@localhost')
     assert upd.builder.structure == structure
     assert upd.builder.scf.parameters['incar']['algo'] == 'normal'
-    assert upd.builder.scf.options['resources']['tot_num_mpiprocs'] == 1
+    assert upd.builder.scf.calc.metadata.options.resources.tot_num_mpiprocs == 1
     assert upd.builder.scf.code == vasp_code
     assert upd.builder.scf.settings.get_dict() == {}
     assert upd.builder.scf.kpoints_spacing.value == 0.05
@@ -66,7 +66,7 @@ def test_vasp_band_updater(aiida_profile_clean, vasp_code, hybrid):
 
     assert upd.builder.structure == structure
     assert upd.builder.relax.vasp.parameters['incar']['algo'] == 'normal'
-    assert upd.builder.relax.vasp.options['resources']['tot_num_mpiprocs'] == 1
+    assert upd.builder.relax.vasp.calc.metadata.options.resources.tot_num_mpiprocs == 1
     assert upd.builder.relax.vasp.code == vasp_code
     assert upd.builder.relax.vasp.settings.get_dict() == {}
     assert upd.builder.relax.vasp.kpoints_spacing.value == 0.05

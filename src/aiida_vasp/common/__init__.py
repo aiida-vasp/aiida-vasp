@@ -74,6 +74,15 @@ def parameters_validator(node: orm.Dict | None, port: Any = None) -> None:
         raise InputValidationError(f'Cannot validate the input parameters - error from massager: {error}')
 
 
+def warn_deprecated_options(node: orm.Dict | None, port: Any = None) -> None:
+    """
+    Validate the parameters input by passing it through the massager
+    """
+    _ = port
+    _ = node
+    raise InputValidationError('The use of `options` port is deprecated, please use `calc.metadata.options` instead.')
+
+
 @plain_python_args
 def site_magnetization_to_magmom(site_dict: dict[str, Any]) -> list[float]:
     """

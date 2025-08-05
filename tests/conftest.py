@@ -331,7 +331,8 @@ def run_vasp_process(
             inpts.potential_family = orm.Str(potcar_family_name)
             inpts.potential_mapping = orm.Dict(dict=potcar_mapping)
             inpts.parameters = orm.Dict(dict={'incar': parameters})
-            inpts.options = orm.Dict(dict=options)
+            inpts.calc = AttributeDict()
+            inpts.calc['metadata'] = {'options': options}
             inpts.max_iterations = orm.Int(1)
             inpts.clean_workdir = orm.Bool(False)
             inpts.verbose = orm.Bool(True)

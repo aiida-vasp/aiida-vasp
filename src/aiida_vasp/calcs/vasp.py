@@ -141,6 +141,8 @@ class VaspCalculation(VaspCalcBase):
             required=False,
             help='The vdw_kerenl.bindat file to be used for vdw calculations.',
         )
+        spec.input('metadata.options.input_filename', default='INCAR')
+        spec.input('metadata.options.output_filename', default='OUTCAR')
 
         # Define outputs.
         # remote_folder and retrieved are passed automatically

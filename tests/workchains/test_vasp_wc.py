@@ -108,15 +108,15 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
 
     inputs.potential_family = orm.Str(potcar_family_name)
     inputs.potential_mapping = orm.Dict(dict=potcar_mapping)
-    inputs.options = orm.Dict(
-        dict={
+    inputs.calc = AttributeDict()
+    inputs.calc['metadata'] = {
+        'options': {
             'withmpi': False,
             'queue_name': 'None',
             'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1},
             'max_wallclock_seconds': 3600,
-        },
-    )
-    inputs.settings = orm.Dict(dict={'parser_settings': {'add_structure': True}})
+        }
+    }
 
     # If code is not passed, use the mock code
     if code is None:
