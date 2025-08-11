@@ -131,8 +131,15 @@ def test_vasp_incar_case(aiida_profile):
     """Test catching inconsistent incar key cases"""
     workchain = WorkflowFactory('vasp.vasp')
     builder = workchain.get_builder()
-    with pytest.raises(InputValidationError):
-        builder.parameters = orm.Dict(dict={'incar': {'ALGO': 21}})
+
+    with pytest.warns(UserWarning, match="Key 'ALGO' converted to 'algo'"):
+        builder.parameters = orm.Dict({'incar': {'ALGO': 21}})
+
+    parameters = orm.Dict({'incar': {'ALGO': 21}})
+    parameters.store()
+
+    with pytest.raises(InputValidationError, match='Case inconsistency found in'):
+        builder.parameters = parameters
 
 
 def test_vasp_wc_nelm(aiida_profile, upload_potcar, potcar_family_name, potcar_mapping, mock_vasp_strict):
