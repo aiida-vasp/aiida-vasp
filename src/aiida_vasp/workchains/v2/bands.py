@@ -26,6 +26,7 @@ from aiida_vasp.common.dryrun import dryrun_relax_builder
 from aiida_vasp.common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.protocols import ProtocolMixin
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
@@ -38,7 +39,7 @@ SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 logger = getLogger(__name__)
 
 
-class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
+class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     Workchain for running bands calculations.
 

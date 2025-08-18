@@ -123,6 +123,7 @@ from aiida.orm import (
     Data,  # pylint: disable=no-name-in-module
     Group,
     QueryBuilder,
+    StructureData,
 )
 
 from aiida_vasp.data.archive import ArchiveData
@@ -861,8 +862,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     @classmethod
     def get_potcars_from_structure(
-        cls, structure: Any, family_name: str, mapping: dict[str, str] | None = None
-    ) -> dict[str, Any]:
+        cls, structure: StructureData, family_name: str, mapping: dict[str, str] | None = None
+    ) -> dict[str, PotcarData]:
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with
         its PotcarData object.

@@ -41,6 +41,7 @@ from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
 from aiida_vasp.common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
@@ -54,7 +55,7 @@ __version__ = '0.5.0'
 # 0.5.0 update the logic of convergence checking. Cell comparsion is always done using the input/output structures.
 
 
-class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
+class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """Structure relaxation workchain."""
 
     _verbose: bool = True
@@ -159,6 +160,55 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         spec.expose_outputs(cls._base_workchain)
         spec.output('relax.structure', valid_type=orm.StructureData, required=False)
+
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        base_workchain_protocol=None,
+        overrides=None,
+        options=None,
+        relax_settings=None,
+        **_,
+    ):
+        """
+        Return a builder prepopulated with inputs selected according to the chosen protocol.
+        :param code: the ``Code`` instance configured for the ``abacus.abacus`` plugin.
+        :param structure: the ``StructureData`` instance to use.
+        :param protocol: protocol to use, if not specified, the default will be used.
+        :param base_workchain_protocol: protocol to use for the base workchain, defaults to ``protocol``.
+        :param overrides: optional dictionary of inputs to override the defaults of the protocol.
+        :param options: A dictionary of options that will be recursively set for the ``metadata.options`` input of all
+            the ``CalcJobs`` that are nested in this work chain.
+        :return: a process builder instance with all inputs defined ready for launch.
+        """
+        if relax_settings:
+            overrides['relax_settings'] = recursive_merge(overrides.get_relax_settings(), relax_settings)
+
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        if base_workchain_protocol is None:
+            base_workchain_protocol = protocol
+
+        base_builder = cls._base_workchain.get_builder_from_protocol(
+            code=code,
+            protocol=base_workchain_protocol,
+            structure=structure,
+            overrides=inputs.get('vasp', {}),
+            options=options,
+        )
+        # Structure is defined at the top level
+        base_builder.pop('structure')
+        builder = cls.get_builder()
+        builder.vasp = base_builder
+        builder.structure = structure
+        builder.relax_settings = inputs.get('relax_settings')
+        builder.static_calc_settings = inputs.get('static_calc_settings')
+        builder.static_calc_options = inputs.get('static_calc_options')
+        builder.static_calc_parameters = inputs.get('static_calc_parameters')
+        builder.verbose = inputs.get('verbose', orm.Bool(False))
 
     def initialize(self) -> None:
         """Initialize."""

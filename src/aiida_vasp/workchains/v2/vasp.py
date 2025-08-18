@@ -73,6 +73,7 @@ from aiida_vasp.common import parameters_validator, warn_deprecated_options
 from aiida_vasp.common.dryrun import get_jobscheme
 from aiida_vasp.data.potcar import PotcarData
 from aiida_vasp.inputset.vaspsets import get_ldau_keys
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs, site_magnetization_to_magmom
 
 from .mixins import WithBuilderUpdater
@@ -80,7 +81,7 @@ from .mixins import WithBuilderUpdater
 # pylint: disable=no-member
 
 
-class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
+class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     The VASP workchain.
 
@@ -125,6 +126,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         'damped': ['normal', 'fast', 'veryfast'],
     }
     _default_unsupported_parameters = {}
+    _protocol_tag = 'vasp'  # Search for vasp.yml in protocol directories
 
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:  # pylint: disable=too-many-statements
@@ -204,12 +206,19 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
-            help="""Settings for assign LDA+U related settings according to the input structure.
-
+            help="""Settings for assign LDA+U related settings according to the input structure,
+A nested dictionary containing the following keys:
     mapping: a dictionary in the format of  {"Mn": [d, 4]...} for U
     utype: the type of LDA+U, default to 2, which is the one with only one parameter
     jmapping: a dictionary in the format of  {"Mn": [d, 4]...} but for J
     felec: Wether we are dealing with f electrons, will increase lmaxmix if we are.""",
+        )
+        spec.input(
+            'magmom_mapping',
+            valid_type=orm.Dict,
+            required=False,
+            serializer=to_aiida_type,
+            help='Mapping for the initial magnetic moments.',
         )
         spec.input(
             'kpoints_spacing',
@@ -344,6 +353,85 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         self.ctx.handler = AttributeDict()
         self.ctx.handler.nbands_increase_tries = 0
 
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        overrides=None,
+        options=None,
+        **_,
+    ):
+        """Return a builder prepopulated with inputs selected according to the chosen protocol.
+
+        :param code: the ``Code`` instance configured for the ``abacus.abacus`` plugin.
+        :param structure: the ``StructureData`` instance to use.
+        :param protocol: protocol to use, if not specified, the default will be used.
+        :param overrides: optional dictionary of inputs to override the defaults of the protocol.
+        :param options: A dictionary of options that will be recursively set for the ``metadata.options`` input of all
+            the ``CalcJobs`` that are nested in this work chain.
+        :return: a process builder instance with all inputs defined ready for launch.
+        """
+
+        if isinstance(code, str):
+            code = orm.load_code(code)
+
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        meta_parameters = inputs.pop('meta_parameters')
+        natoms = len(structure.sites)
+
+        # Update the parameters based on the protocol inputs
+        parameters = inputs['parameters']
+
+        # Update EDIFF if not overriden
+        if 'ediff' not in parameters['incar']:
+            parameters['incar']['ediff'] = natoms * meta_parameters['ediff_per_atom']
+
+        # Configure the options for the underlying VaspCalculation to be launched
+        metadata = inputs['calc']['metadata']
+        if options:
+            metadata['options'] = recursive_merge(inputs['abacus']['metadata']['options'], options)
+
+        # Forward to the builders
+        builder = cls.get_builder()
+        builder.code = code
+        builder.potential_family = inputs['potential_family']
+        builder.structure = structure
+        builder.parameters = parameters
+        builder.calc.metadata = metadata
+
+        if inputs.get('settings'):
+            builder.settings = inputs.get('settings', {})
+        builder.clean_workdir = orm.Bool(inputs['clean_workdir'])
+
+        # Configure the kpoints
+        if 'kpoints' in inputs:
+            builder.kpoints = inputs['kpoints']
+        else:
+            builder.kpoints_distance = orm.Float(inputs['kpoints_spacing'])
+        builder.max_iterations = orm.Int(inputs['max_iterations'])
+
+        # Process mappings
+        builder.potential_mapping = {key: inputs['potential_mapping'][key] for key in structure.get_kind_names()}
+
+        # Check if we have any valid ldau_u_mapping defined
+        ldau_u_mapping = {
+            key: inputs.get('ldau_mapping', {}).get('mapping', {}).get(key) for key in structure.get_kind_names()
+        }
+        if any(ldau_u_mapping.values()):
+            builder.ldau_mapping = inputs['ldau_mapping']
+
+        orig_magmom_mapping = inputs.get('magmom_mapping', {})
+        default_magmom = orig_magmom_mapping.get('default', 0.6)
+        magmom_mapping = {key: orig_magmom_mapping.get(key, default_magmom) for key in structure.get_kind_names()}
+
+        if magmom_mapping:
+            builder.magmom_mapping = magmom_mapping
+
+        return builder
+
     def verbose_report(self, *args, **kwargs) -> None:
         """Send report if self.ctx.verbose is True"""
         if self.ctx.verbose is True:
@@ -407,6 +495,8 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         #### START OF THE COPY FROM VASPWorkChain ####
         #  - the only change is that the section about kpoints is deleted
         self.ctx.inputs = self.exposed_inputs(self._process_class, namespace='calc', agglomerate=True)
+        # Interface store the parameters as a dict for easy update
+        self.ctx.inputs.parameters = self.ctx.inputs.parameters.get_dict()
 
         # Set settings
         unsupported_parameters = self._default_unsupported_parameters.copy()
@@ -498,6 +588,16 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             ldau_keys = get_ldau_keys(self.ctx.inputs.structure, **ldau_settings)
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
+
+        if 'magmom_mapping' in self.inputs:
+            mapping = self.inputs.magmom_mapping.get_dict()
+            default = mapping.get('default', 0.6)
+            magmom = []
+            for site in self.inputs.structure.sites:
+                magmom.append(mapping.get(site.kind_name, default))
+            # Make sure ispin == 2 is any magmom is set
+            if any(x != 0 for x in magmom) and 'ispin' not in self.ctx.inputs.parameters:
+                self.ctx.inputs.parameters['ispin'] = 2
 
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):
