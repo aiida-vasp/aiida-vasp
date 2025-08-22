@@ -47,17 +47,18 @@ from typing import Any
 import numpy as np
 from aiida import orm
 from aiida.engine import ProcessSpec, WorkChain, append_, calcfunction
-from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.protocols import ProtocolMixin
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
 from .mixins import WithBuilderUpdater
+from .vasp import VaspWorkChain
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
 
-class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
+class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     A workchain to perform convergence tests.
 
@@ -81,7 +82,8 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     """
 
     _sub_workchain_string = 'vasp.v2.vasp'
-    _sub_workchain = WorkflowFactory(_sub_workchain_string)
+    _sub_workchain = VaspWorkChain
+    _protocol_tag = 'conv'
     ENERGY_KEY = 'energy_extrapolated'
     option_class = ConvOptions
 
@@ -106,6 +108,34 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         )
         spec.output('kpoints_conv_data', required=False)
         spec.output('cutoff_conv_data', required=False)
+
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol: None | str = None,
+        base_workchain_protocol: None | str = None,
+        overrides: None | dict = None,
+        **kwargs,
+    ):
+        """
+        Return a builder based on a protocol
+        """
+
+        overrides = overrides or {}
+        base_workchain_protocol = base_workchain_protocol or protocol
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        vasp_builder = VaspWorkChain.get_builder_from_protocol(
+            code=code, structure=structure, protocol=base_workchain_protocol, overrides=overrides, **kwargs
+        )
+        vasp_builder
+
+        builder = cls.get_builder()
+        builder.update(vasp_builder)
+        builder.conv_settings = inputs['conv_settings']
+        return builder
 
     def setup(self) -> None:
         """Setup the convergence workflow"""

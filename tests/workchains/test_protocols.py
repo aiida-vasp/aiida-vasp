@@ -1,6 +1,12 @@
 import pytest
 
-from aiida_vasp.workchains.v2 import VaspBandsWorkChain, VaspRelaxWorkChain, VaspWorkChain
+from aiida_vasp.workchains.v2 import (
+    VaspBandsWorkChain,
+    VaspConvergenceWorkChain,
+    VaspHybridBandsWorkChain,
+    VaspRelaxWorkChain,
+    VaspWorkChain,
+)
 
 
 @pytest.fixture
@@ -44,7 +50,7 @@ def test_relax_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name
 
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
 def test_band_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name):
-    """Test VASP relax workchain protocol"""
+    """Test VASP band structure workchain protocol"""
 
     builder = VaspBandsWorkChain.get_builder_from_protocol(
         code=mock_vasp,
@@ -57,3 +63,31 @@ def test_band_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name)
     assert builder.scf.parameters is not None
     assert builder.band_settings is not None
     assert not builder.relax.relax_settings
+
+    builder = VaspHybridBandsWorkChain.get_builder_from_protocol(
+        code=mock_vasp,
+        structure=vasp_structure,
+        overrides={'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+    )
+
+    assert builder.structure == vasp_structure
+    assert builder.scf.code == mock_vasp
+    assert builder.scf.parameters is not None
+    assert builder.band_settings is not None
+    assert not builder.relax.relax_settings
+
+
+@pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)
+def test_conv_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name):
+    """Test VASP convergence test workchain protocol"""
+
+    builder = VaspConvergenceWorkChain.get_builder_from_protocol(
+        code=mock_vasp,
+        structure=vasp_structure,
+        overrides={'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}},
+    )
+
+    assert builder.structure == vasp_structure
+    assert builder.code == mock_vasp
+    assert builder.parameters is not None
+    assert builder.conv_settings is not None
