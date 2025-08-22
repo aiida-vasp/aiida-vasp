@@ -296,7 +296,7 @@ def run_vasp_process(
 ):
     """Setup a standard VaspCalculation or VaspWorkChain with the mock executable that accepts input overrides."""
 
-    def inner(inputs=None, settings=None, test_case=None, process_type='calcjob'):
+    def inner(inputs=None, settings=None, test_case=None, process_type='calcjob', standalone_options=False):
         """
         Run a VaspCalculation or VaspWorkChain with specified input and settings overrides.
 
@@ -332,7 +332,10 @@ def run_vasp_process(
             inpts.potential_mapping = orm.Dict(dict=potcar_mapping)
             inpts.parameters = orm.Dict(dict={'incar': parameters})
             inpts.calc = AttributeDict()
-            inpts.calc['metadata'] = {'options': options}
+            if standalone_options:
+                inpts.options = options
+            else:
+                inpts.calc['metadata'] = {'options': options}
             inpts.max_iterations = orm.Int(1)
             inpts.clean_workdir = orm.Bool(False)
             inpts.verbose = orm.Bool(True)

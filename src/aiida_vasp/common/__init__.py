@@ -80,7 +80,7 @@ def warn_deprecated_options(node: orm.Dict | None, port: Any = None) -> None:
     """
     _ = port
     _ = node
-    raise InputValidationError('The use of `options` port is deprecated, please use `calc.metadata.options` instead.')
+    warnings.warn('The use of `options` port is deprecated, please use `calc.metadata.options` instead.')
 
 
 @plain_python_args

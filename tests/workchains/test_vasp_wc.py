@@ -11,7 +11,6 @@ from __future__ import print_function
 import numpy as np
 import pytest
 from aiida import orm
-from aiida.cmdline.utils.common import get_calcjob_report, get_workchain_report
 from aiida.common.exceptions import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine import run
@@ -20,9 +19,10 @@ from aiida.plugins.factories import DataFactory
 
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
-def test_vasp_wc(run_vasp_process):
+@pytest.mark.parametrize('standalone_options', [True, False])
+def test_vasp_wc(run_vasp_process, standalone_options):
     """Test submitting only, not correctness, with mocked vasp code."""
-    results, node = run_vasp_process(process_type='workchain')
+    results, node = run_vasp_process(process_type='workchain', standalone_options=standalone_options)
     assert node.exit_status == 0
     assert 'retrieved' in results
     assert 'misc' in results
@@ -95,6 +95,8 @@ INCAR_IONIC_UNFINISHED = {
 def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_mapping, code=None):
     """
     Setup the inputs for a VaspWorkChain.
+
+    :param options_as_port: Define options in a standalone port `options`. This is for testing backward compatibility.
     """
 
     inputs = AttributeDict()
@@ -109,6 +111,7 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
     inputs.potential_family = orm.Str(potcar_family_name)
     inputs.potential_mapping = orm.Dict(dict=potcar_mapping)
     inputs.calc = AttributeDict()
+
     inputs.calc['metadata'] = {
         'options': {
             'withmpi': False,
@@ -117,7 +120,6 @@ def setup_vasp_workchain(structure, incar, nkpts, potcar_family_name, potcar_map
             'max_wallclock_seconds': 3600,
         }
     }
-
     # If code is not passed, use the mock code
     if code is None:
         mock = orm.load_code('mock-vasp@localhost')
@@ -151,27 +153,27 @@ def test_vasp_wc_nelm(aiida_profile, upload_potcar, potcar_family_name, potcar_m
     called_nodes = list(node.called)
     called_nodes.sort(key=lambda x: x.ctime)
 
-    print(get_workchain_report(node, 'DEBUG'))
-    for child in called_nodes:
-        print(get_calcjob_report(child))
+    # print(get_workchain_report(node, 'DEBUG'))
+    # for child in called_nodes:
+    #     print(get_calcjob_report(child))
 
-    child = called_nodes[0]
-    print(child.base.repository.get_object_content('INCAR'))
-    print(child.base.repository.get_object_content('POSCAR'))
-    print(child.base.repository.get_object_content('KPOINTS'))
-    print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
-    print(child.outputs.retrieved.base.repository.list_object_names())
-    print(child.outputs.misc.get_dict())
-    print(child.exit_status)
+    # child = called_nodes[0]
+    # print(child.base.repository.get_object_content('INCAR'))
+    # print(child.base.repository.get_object_content('POSCAR'))
+    # print(child.base.repository.get_object_content('KPOINTS'))
+    # print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
+    # print(child.outputs.retrieved.base.repository.list_object_names())
+    # print(child.outputs.misc.get_dict())
+    # print(child.exit_status)
 
-    child = called_nodes[1]
-    print(child.base.repository.get_object_content('INCAR'))
-    print(child.base.repository.get_object_content('POSCAR'))
-    print(child.base.repository.get_object_content('KPOINTS'))
-    print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
-    print(child.outputs.retrieved.base.repository.list_object_names())
-    print(child.outputs.misc.get_dict())
-    print(child.exit_status)
+    # child = called_nodes[1]
+    # print(child.base.repository.get_object_content('INCAR'))
+    # print(child.base.repository.get_object_content('POSCAR'))
+    # print(child.base.repository.get_object_content('KPOINTS'))
+    # print(child.outputs.retrieved.base.repository.get_object_content('vasp_output'))
+    # print(child.outputs.retrieved.base.repository.list_object_names())
+    # print(child.outputs.misc.get_dict())
+    # print(child.exit_status)
 
     assert node.exit_status == 0
     assert 'retrieved' in results

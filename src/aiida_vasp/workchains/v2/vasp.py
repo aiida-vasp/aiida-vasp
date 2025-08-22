@@ -44,6 +44,7 @@ This means that for a handler:
 from __future__ import annotations
 
 import math
+import warnings
 from types import TracebackType
 from typing import Any, List, Optional, Tuple
 
@@ -135,6 +136,12 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater, ProtocolMixin):
         spec.expose_inputs(
             cls._process_class, namespace='calc', include=('metadata',), namespace_options={'populate_defaults': True}
         )
+
+        # Use a custom validator for backward compatibility
+        # This needs to be removed in the next major release/formalized workchain interface
+        spec.inputs.validator = validate_calc_job_custom
+        spec.inputs['calc']['metadata']['options']['resources']._required = False
+
         spec.input('kpoints', valid_type=orm.KpointsData, required=False)
         spec.input(
             'potential_family',
@@ -537,17 +544,17 @@ A nested dictionary containing the following keys:
         # Options is very special, not storable and should be
         # wrapped in the metadata dictionary, which is also not storable
         # and should contain an entry for options
-        # if 'options' in self.inputs:
-        #     options = {}
-        #     options.update(self.inputs.options)
-        #     self.ctx.inputs.metadata = {'options': options}
-        #     # Override the parser name if it is supplied by the user.
-        #     parser_name = self.ctx.inputs.metadata['options'].get('parser_name')
-        #     if parser_name:
-        #         self.ctx.inputs.metadata['options']['parser_name'] = parser_name
-        #     # Set MPI to True, unless the user specifies otherwise
-        #     withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
-        #     self.ctx.inputs.metadata['options']['withmpi'] = withmpi
+        if 'options' in self.inputs:
+            options = {}
+            options.update(self.inputs.options)
+            self.ctx.inputs.metadata = {'options': options}
+            # Override the parser name if it is supplied by the user.
+            parser_name = self.ctx.inputs.metadata['options'].get('parser_name')
+            if parser_name:
+                self.ctx.inputs.metadata['options']['parser_name'] = parser_name
+            # Set MPI to True, unless the user specifies otherwise
+            withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
+            self.ctx.inputs.metadata['options']['withmpi'] = withmpi
 
         # Make sure we also bring along any label and description set on the WorkChain to the CalcJob, it if does
         # not exists, set to empty string.
@@ -1424,3 +1431,87 @@ def potential_family_validator(family: orm.Str, _) -> None:
             f'The potential family "{family.value}" is not found. '
             'Please use verdi data vasp.potcars tool to verify your settings.'
         )
+
+
+def validate_calc_job_custom(inputs: Any, ctx) -> Optional[str]:
+    """Validate the entire set of inputs passed to the `CalcJob` constructor.
+
+    Reasons that will cause this validation to raise an `InputValidationError`:
+
+     * No `Computer` has been specified, neither directly in `metadata.computer` nor indirectly through the `Code` input
+     * The specified computer is not stored
+     * The `Computer` specified in `metadata.computer` is not the same as that of the specified `Code`
+     * No `Code` has been specified and no `remote_folder` input has been specified, i.e. this is no import run
+
+    :return: string with error message in case the inputs are invalid
+    """
+    try:
+        ctx.get_port('code')
+        ctx.get_port('metadata.computer')
+    except ValueError:
+        # If the namespace no longer contains the `code` or `metadata.computer` ports we skip validation
+        return None
+
+    remote_folder = inputs.get('remote_folder', None)
+
+    if remote_folder is not None:
+        # The `remote_folder` input has been specified and so this concerns an import run, which means that neither
+        # a `Code` nor a `Computer` are required. However, they are allowed to be specified but will not be explicitly
+        # checked for consistency.
+        return None
+
+    code = inputs.get('code', None)
+    computer_from_code = code.computer
+    computer_from_metadata = inputs.get('metadata', {}).get('computer', None)
+
+    if not computer_from_code and not computer_from_metadata:
+        return 'no computer has been specified in `metadata.computer` nor via `code`.'
+
+    if computer_from_code and not computer_from_code.is_stored:
+        return f'the Computer<{computer_from_code}> is not stored'
+
+    if computer_from_metadata and not computer_from_metadata.is_stored:
+        return f'the Computer<{computer_from_metadata}> is not stored'
+
+    if computer_from_code and computer_from_metadata and computer_from_code.uuid != computer_from_metadata.uuid:
+        return (
+            'Computer<{}> explicitly defined in `metadata.computer` is different from Computer<{}> which is the '
+            'computer of Code<{}> defined as the `code` input.'.format(computer_from_metadata, computer_from_code, code)
+        )
+
+    try:
+        resources_port = ctx.get_port('metadata.options.resources')
+    except ValueError:
+        return None
+
+    # If the resources port exists but is not required, we don't need to validate it against the computer's scheduler
+    if not resources_port.required:
+        return None
+
+    computer = computer_from_code or computer_from_metadata
+    scheduler = computer.get_scheduler()
+    old_workchain_interface = False
+    try:
+        resources = inputs['metadata']['options']['resources']
+    except KeyError:
+        old_workchain_interface = True
+        warnings.warn(
+            'input `metadata.options.resources` is not specified - you are probably using the old options port.'
+            'Please define options directly in `calc.metadata.options` instead of `options`.'
+        )
+
+    if not old_workchain_interface:
+        scheduler.preprocess_resources(resources, computer.get_default_mpiprocs_per_machine())
+        try:
+            scheduler.validate_resources(**resources)
+        except ValueError as exception:
+            return f'input `metadata.options.resources` is not valid for the `{scheduler}` scheduler: {exception}'
+    else:
+        resources = inputs['options'].get('resources')
+        if resources is None:
+            return (
+                '`resources` is not specified under `options` nor in `calc.metadata.options.resources` '
+                'please define it in `calc.metadata.options`'
+            )
+
+    return None
