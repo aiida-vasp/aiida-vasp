@@ -26,12 +26,14 @@ from aiida_vasp.common.dryrun import dryrun_relax_builder
 from aiida_vasp.common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
-from aiida_vasp.protocols import ProtocolMixin
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
 
 from .mixins import WithBuilderUpdater
+from .relax import VaspRelaxWorkChain
+from .vasp import VaspWorkChain
 
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 
@@ -71,7 +73,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """
 
     _base_wk_string = 'vasp.v2.vasp'
+    _base_workchain = VaspWorkChain
     _relax_wk_string = 'vasp.v2.relax'
+    _relax_workchain = VaspRelaxWorkChain
+    _protocol_tag = 'band'
     option_class = BandOptions
 
     @classmethod
@@ -193,6 +198,62 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             'ERROR_INPUT_STRUCTURE_NOT_PRIMITIVE',
             message='The input structure is not the primitive one!',
         )
+
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        base_workchain_protocol=None,
+        relax_workchain_protocol=None,
+        relax_base_workchain_protocol=None,
+        overrides=None,
+        options=None,
+        band_settings=None,
+        **kwargs,
+    ):
+        overrides = overrides or {}
+        base_workchain_protocol = base_workchain_protocol or protocol
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+        if band_settings:
+            overrides['band_settings'] = recursive_merge(overrides.get('band_settings'), band_settings)
+
+        scf_builder = cls._base_workchain.get_builder_from_protocol(
+            code=code,
+            structure=structure,
+            protocol=base_workchain_protocol,
+            overrides=inputs.get('scf', {}),
+            options=options,
+            **kwargs,
+        )
+
+        # Configure the relaxation step of the workchain
+        if relax_workchain_protocol is not None:
+            relax_builder = cls._relax_workchain.get_builder_from_protocol(
+                code=code,
+                structure=structure,
+                protocol=relax_workchain_protocol,
+                base_workchain_protocol=relax_base_workchain_protocol,
+                overrides=inputs.get('relax', {}),
+                options=options,
+                **kwargs,
+            )
+            relax_builder.pop('structure')
+        else:
+            relax_builder = None
+
+        scf_builder.pop('structure')
+
+        builder = cls.get_builder()
+        builder.scf = scf_builder
+        builder.structure = structure
+        if relax_builder is not None:
+            builder.relax = relax_builder
+        builder.band_settings = inputs.get('band_settings')
+        builder.clean_children_workdir = inputs.get('clean_children_workdir')
+
+        return builder
 
     def select_chgcar_from_inputs(self) -> None:
         """Setup CHGCAR from inputs"""

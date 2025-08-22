@@ -39,7 +39,7 @@ class ProtocolMixin:
         if user_path.exists():
             return user_path
         # Load the default protocol
-        default_path = pathlib.Path(__file__).parent.parent.parent / f'protocols/{cls._protocol_tag}.yaml'
+        default_path = pathlib.Path(__file__).parent.parent / f'protocols/{cls._protocol_tag}.yaml'
         if not default_path.exists():
             raise FileNotFoundError(f'Protocol file not found at {default_path}. Please ensure it exists.')
         return default_path
@@ -80,9 +80,13 @@ class ProtocolMixin:
             maintain the exact same nesting structure as the input port namespace of the corresponding workflow class.
         :return: mapping of inputs to be used for the workflow class.
         """
-        protocol_name, file_alias = cls._split_protocol_file_name(protocol)
-        data = cls._load_protocol_file(file_alias)
-        protocol = protocol_name or data['default_protocol']
+        if protocol is None:
+            data = cls._load_protocol_file()
+            protocol = data['default_protocol']
+        else:
+            protocol_name, file_alias = cls._split_protocol_file_name(protocol)
+            data = cls._load_protocol_file(file_alias)
+            protocol = protocol_name or data['default_protocol']
 
         try:
             protocol_inputs = data['protocols'][protocol]

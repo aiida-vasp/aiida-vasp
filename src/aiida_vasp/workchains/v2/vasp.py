@@ -417,9 +417,13 @@ A nested dictionary containing the following keys:
         builder.potential_mapping = {key: inputs['potential_mapping'][key] for key in structure.get_kind_names()}
 
         # Check if we have any valid ldau_u_mapping defined
-        ldau_u_mapping = {
-            key: inputs.get('ldau_mapping', {}).get('mapping', {}).get(key) for key in structure.get_kind_names()
-        }
+        if inputs.get('ldau_mapping') is None:
+            ldau_u_mapping = {}
+        else:
+            ldau_u_mapping = {key: inputs['ldau_mapping'].get('mapping').get(key) for key in structure.get_kind_names()}
+        # Only forward the mapping if there are elements included in the mapping
+        # Note that only the u-mapping is checked. The assumption is that if one wants to use it
+        # it should be supplied
         if any(ldau_u_mapping.values()):
             builder.ldau_mapping = inputs['ldau_mapping']
 

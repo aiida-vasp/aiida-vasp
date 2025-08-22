@@ -62,6 +62,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     _base_workchain_string: str = 'vasp.v2.vasp'
     _base_workchain = WorkflowFactory(_base_workchain_string)
     option_class = RelaxOptions
+    _protocol_tag: str = 'relax'
 
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
@@ -171,7 +172,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         overrides=None,
         options=None,
         relax_settings=None,
-        **_,
+        **kwargs,
     ):
         """
         Return a builder prepopulated with inputs selected according to the chosen protocol.
@@ -184,8 +185,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             the ``CalcJobs`` that are nested in this work chain.
         :return: a process builder instance with all inputs defined ready for launch.
         """
+        overrides = overrides or {}
         if relax_settings:
-            overrides['relax_settings'] = recursive_merge(overrides.get_relax_settings(), relax_settings)
+            overrides['relax_settings'] = recursive_merge(overrides.get('relax_settings', {}), relax_settings)
 
         inputs = cls.get_protocol_inputs(protocol, overrides)
 
@@ -198,6 +200,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             structure=structure,
             overrides=inputs.get('vasp', {}),
             options=options,
+            **kwargs,
         )
         # Structure is defined at the top level
         base_builder.pop('structure')
@@ -209,6 +212,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         builder.static_calc_options = inputs.get('static_calc_options')
         builder.static_calc_parameters = inputs.get('static_calc_parameters')
         builder.verbose = inputs.get('verbose', orm.Bool(False))
+        return builder
 
     def initialize(self) -> None:
         """Initialize."""
