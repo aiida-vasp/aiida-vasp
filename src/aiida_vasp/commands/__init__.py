@@ -5,7 +5,8 @@ Root command for aiida-vasp
 # ruff: noqa: E402
 import click
 from aiida.cmdline.groups import VerdiCommandGroup
-from aiida.cmdline.params import options, types
+from aiida.cmdline.params.options import PROFILE
+from aiida.cmdline.params.types.profile import ProfileParamType
 
 
 @click.group(
@@ -14,7 +15,7 @@ from aiida.cmdline.params import options, types
     help='AiiDA VASP command line tools',
     context_settings={'help_option_names': ['-h', '--help']},
 )
-@options.PROFILE(type=types.ProfileParamType(load_profile=True), expose_value=False)
+@PROFILE(type=ProfileParamType(load_profile=True), expose_value=False)
 def cmd_aiida_vasp() -> None:
     """
     AiiDA VASP command line tools.
