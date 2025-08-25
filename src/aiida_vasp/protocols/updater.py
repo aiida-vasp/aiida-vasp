@@ -246,14 +246,6 @@ class BaseProtocolUpdater:
         self._update_ports_by_base_name(kpoints, 'kpoints', ports=ports, update_all=update_all)
         return self
 
-    def set_settings(self, settings=None, ports=None, update_all=True, merge=True, **kwargs):
-        """Set the settings port"""
-        settings = settings or {}
-        settings = deepcopy(settings)
-        settings.update(kwargs)
-        self._update_ports_by_base_name(settings, 'settings', ports=ports, update_all=update_all, merge=merge)
-        return self
-
     def set_label(self, label=None):
         """Alias to set the self.builder.metadata.label"""
         label = label or self.reference_structure.label
@@ -400,6 +392,14 @@ class BaseProtocolUpdater:
         :rtype: str or None
         """
         self._get_help(namespace, print_to_stdout=print_to_stdout, inout='inputs')
+
+
+class VaspUpdater(BaseProtocolUpdater):
+    """
+    Updater for VaspWorkChain's builder
+    """
+
+    pass
 
 
 def update_dict_node(
