@@ -1,0 +1,16 @@
+default_inputs:
+    conv_settings:
+      cutoff_start: 300
+      cutoff_stop: 700
+      cutoff_step: 50
+      kspacing_start: 0.07
+      kspacing_stop: 0.02
+      kspacing_step: 0.01
+      cutoff_kconv: 450
+      kspacing_cutconv: 0.07
+
+default_protocol: balanced
+
+protocols:
+  balanced:
+    description: 'Test convergence using the balanced protocol for VASP calculations.'
