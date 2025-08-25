@@ -13,8 +13,8 @@ from . import cmd_aiida_vasp
 
 def common_vasp_options(func):
     """Decorator to add common VASP calculation options."""
-    func = click.option('--preset', '-p', default='VaspPreset', help='Preset to use for the calculation.')(func)
-    func = click.option('--inputset', '-i', default='UCLRelaxSet', help='Input set to use for the calculation.')(func)
+    func = click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')(func)
+    func = click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')(func)
     func = click.option('--code', '-c', required=True, help='Code to use for the calculation.')(func)
     func = click.option(
         '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
@@ -30,7 +30,10 @@ def common_vasp_options(func):
         help='Total number of MPI processes to use for the calculation.',
     )(func)
     func = click.option(
-        '--resources', '-r', default=None, help='Resources for the calculation (JSON or key=value format).'
+        '--options', '-op', default=None, help='Options for the calculation (JSON or key=value format).'
+    )(func)
+    func = click.option(
+        '--resources', '-r', default=None, help='Options for the calculation (JSON or key=value format).'
     )(func)
     func = click.option('--overrides', '-io', default=None, help='Path to a file containing input overrides')(func)
     func = click.option('--relax-settings', '-rs', default=None, help='Path to a file containing relaxation settings')(
@@ -63,11 +66,12 @@ def common_vasp_options(func):
 @common_vasp_options
 def launch_workchain(
     preset,
-    inputset,
+    protocol,
     code,
     max_wallclock_seconds,
     num_machines,
     resources,
+    options,
     tot_num_mpiprocs,
     overrides,
     structure,
@@ -89,20 +93,20 @@ def launch_workchain(
         process_dict_option,
         setup_calculation_options,
     )
-    from aiida_vasp.common.builder_updater import (
+    from aiida_vasp.protocols.updater import (
         VaspBandUpdater,
-        VaspBuilderUpdater,
-        VaspConvUpdater,
-        VaspHybridBandUpdater,
+        VaspConvergenceUpdater,
+        VaspHybridBandsUpdater,
         VaspRelaxUpdater,
+        VaspUpdater,
     )
 
     upd_cls_map = {
         'relax': VaspRelaxUpdater,
-        'vasp': VaspBuilderUpdater,
+        'vasp': VaspUpdater,
         'band': VaspBandUpdater,
-        'hybrid_band': VaspHybridBandUpdater,
-        'conv': VaspConvUpdater,
+        'hybrid_band': VaspHybridBandsUpdater,
+        'conv': VaspConvergenceUpdater,
     }
     try:
         # Load structure from file
@@ -112,25 +116,28 @@ def launch_workchain(
 
         # Initialize the builder updater
         click.echo(f'Initializing BuilderUpdater with preset: {preset}')
-        upd_cls = upd_cls_map.get(workchain_type.lower(), VaspBuilderUpdater)
-        upd = upd_cls(preset_name=preset, inputset_name=inputset)
+        upd_cls = upd_cls_map.get(workchain_type.lower(), VaspUpdater)
+        upd = upd_cls(preset_name=preset, protocol=protocol)
 
         # Apply preset with structure
-        upd.apply_preset(structure_node, code=code, label=label, overrides=process_dict_option(overrides))
+        upd.get_builder(structure=structure_node, code=code, overrides=process_dict_option(overrides))
+        upd.set_label(label)
 
         # Handle resource options
-        options_dict = setup_calculation_options(resources, max_wallclock_seconds, num_machines, tot_num_mpiprocs)
+        options_dict = setup_calculation_options(
+            options, resources, max_wallclock_seconds, num_machines, tot_num_mpiprocs
+        )
         if options_dict:
             click.echo(f'Setting computational resources: {options_dict}')
-            upd.set_options(**options_dict)
+            upd.set_options(options_dict)
 
         # Apply any additional overrides
         apply_additional_updates(upd, process_dict_option(updates))
 
         if workchain_type.lower() == 'band':
-            upd.set_band_settings(**process_dict_option(band_settings) if band_settings else {})
+            upd.set_band_settings(process_dict_option(band_settings) if band_settings else {})
         if workchain_type.lower() == 'relax':
-            upd.set_relax_settings(**process_dict_option(relax_settings) if relax_settings else {})
+            upd.set_relax_settings(process_dict_option(relax_settings) if relax_settings else {})
 
         # Set metadata
         if description:
@@ -141,8 +148,8 @@ def launch_workchain(
             click.echo(f'Code: {code}')
             click.echo(f'Structure: {structure_node.get_formula()} ({structure_node.label})')
             click.echo(f'Preset: {preset}')
-            if inputset:
-                click.echo(f'Input set: {inputset}')
+            if protocol:
+                click.echo(f'Protocol: {protocol}')
             if label:
                 click.echo(f'Label: {label}')
             if description:

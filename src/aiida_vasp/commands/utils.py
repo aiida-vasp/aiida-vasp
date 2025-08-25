@@ -51,23 +51,21 @@ def load_structure_from_file(structure_path: str | Path) -> orm.StructureData:
     return structure
 
 
-def setup_calculation_options(options, max_wallclock_seconds, num_machines, tot_num_mpiprocs):
+def setup_calculation_options(options, resources, max_wallclock_seconds, num_machines, tot_num_mpiprocs):
     """Setup computational resources from various options."""
     options_dict = {}
     if options:
         options_dict.update(process_dict_option(options))
-
+    if resources:
+        options_dict['resources'] = process_dict_option(resources)
     if max_wallclock_seconds:
         options_dict['max_wallclock_seconds'] = max_wallclock_seconds
+    if 'resources' not in options_dict:
+        options_dict['resources'] = {}
     if num_machines:
-        if 'resources' not in options_dict:
-            options_dict['resources'] = {}
         options_dict['resources']['num_machines'] = num_machines
     if tot_num_mpiprocs:
-        if 'resources' not in options_dict:
-            options_dict['resources'] = {}
         options_dict['resources']['tot_num_mpiprocs'] = tot_num_mpiprocs
-
     return options_dict
 
 

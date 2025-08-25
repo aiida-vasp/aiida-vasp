@@ -172,10 +172,13 @@ class BaseProtocolUpdater:
     def reference_structure(self):
         return self.builder.structure
 
-    def set_incar(self, incar_updates=None, update_all=False, ports=None, namespace='incar', **kwargs):
+    def set_incar(self, incar_updates=None, update_all=True, ports=None, namespace='incar', **kwargs):
         """
         Set incar dictionary
         """
+        if incar_updates is None and not kwargs:
+            return self
+
         if update_all:
             ports_nodes = recursive_search_dict_with_key(self.builder, 'incar')
         else:
@@ -187,8 +190,10 @@ class BaseProtocolUpdater:
             self._update_dict_node(port, updates, dict_node=node, namespace=namespace)
         return self
 
-    def set_options(self, ports=None, update_all=True, **kwargs):
+    def set_options(self, option_updates=None, ports=None, update_all=True, **kwargs):
         """Set the options input port"""
+        if option_updates is None and not kwargs:
+            return self
         if update_all:
             calc_namespaces = []
             for port, namespace in recursive_search_port_basename(self.builder, 'calc'):
@@ -197,13 +202,17 @@ class BaseProtocolUpdater:
         else:
             ports = ports or ['calc']
             calc_namespaces = [[port, self._get_port_node(port)] for port in ports]
+        updates = deepcopy(option_updates or {})
+        updates.update(kwargs)
         # Update the options
         for port, namespace in calc_namespaces:
-            namespace['metadata']['options'].update(kwargs)
+            namespace['metadata']['options'].update(updates)
         return self
 
-    def set_resources(self, ports=None, update_all=True, **kwargs):
+    def set_resources(self, resources_updates, ports=None, update_all=True, **kwargs):
         """Set the options input port"""
+        if resources_updates is None and not kwargs:
+            return self
         if update_all:
             calc_namespaces = []
             for port, namespace in recursive_search_port_basename(self.builder, 'calc'):
@@ -212,9 +221,11 @@ class BaseProtocolUpdater:
         else:
             ports = ports or ['calc']
             calc_namespaces = [[port, self._get_port_node(port)] for port in ports]
-        # Update the options
+        # Update the resources
+        updates = deepcopy(resources_updates or {})
+        updates.update(kwargs)
         for port, namespace in calc_namespaces:
-            namespace['metadata']['options']['resources'].update(kwargs)
+            namespace['metadata']['options']['resources'].update(updates)
         return self
 
     def _update_ports_by_base_name(self, value, port_basename, ports=None, update_all=True, merge=False):
@@ -224,7 +235,6 @@ class BaseProtocolUpdater:
         else:
             ports = ports or [port_basename]
             port_and_nodes = [[port, self._get_port_node(port)] for port in ports]
-        breakpoint()
         # Update the options
         for port, node in port_and_nodes:
             if merge and isinstance(node, orm.Dict):
@@ -232,6 +242,55 @@ class BaseProtocolUpdater:
             else:
                 self._set_node_to_port(port, value)
         return self
+
+    def _update_dict_node(self, port, update: dict, dict_node=None, namespace=None, reuse_if_possible=True):
+        """ """
+        if not update:
+            return
+        dict_node = dict_node or self._get_port_node(port)
+        updated = update_dict_node(dict_node, update, namespace=namespace, reuse_if_possible=reuse_if_possible)
+        self._set_node_to_port(port, updated)
+
+    def _set_generic_port_by_dict(self, _port_name, value=None, ports=None, update_all=True, **kwargs):
+        """Set a generic port by a value or kwargs"""
+        if value is None and not kwargs:
+            return self
+        value = value or {}
+        value = deepcopy(value)
+        value.update(kwargs)
+        self._update_ports_by_base_name(value, _port_name, ports=ports, update_all=update_all, merge=True)
+
+    def _get_port_node(self, port):
+        """Return the node corresponds to specific port"""
+        parts = port.split('.')
+        item = self.builder
+        for part in parts:
+            item = item[part]
+        return item
+
+    def _set_node_to_port(self, port, node: orm.Data):
+        """Set a node to a specific port of hte builder"""
+        if node is None:
+            return
+        parts = port.split('.')
+        item = self.builder
+        for part in parts[:-1]:
+            item = item[part]
+        setattr(item, parts[-1], node)
+
+    def __repr__(self):
+        string = f'{self.__class__.__name__}(protocol={self.protocol}, preset_name={self.preset_name})'
+        if self.builder is not None:
+            string += f'\nBuilder: {self.builder}'
+
+    def _repr_pretty_(self, p, _=None) -> str:
+        """Pretty representation for in the IPython console and notebooks."""
+
+        string = f'{self.__class__.__name__}(protocol={self.protocol}, preset_name={self.preset_name})'
+        p.text(string)
+        if self.builder is not None:
+            p.text('\nWith Builder:\n')
+            self.builder._repr_pretty_(p, _)
 
     def set_kspacing(self, value, ports=None, update_all=True):
         """Update the kpoints spacing"""
@@ -259,17 +318,8 @@ class BaseProtocolUpdater:
 
     def set_potential_mapping(self, value=None, ports=None, update_all=True, **kwargs):
         """Set the potential mapping"""
-        value = value or {}
-        value = deepcopy(value)
-        value.update(kwargs)
-        self._update_ports_by_base_name(value, 'potential_mapping', ports=ports, update_all=update_all, merge=True)
+        self._set_generic_port_by_dict('potential_mapping', value=value, ports=ports, update_all=update_all, **kwargs)
         return self
-
-    def _update_dict_node(self, port, update: dict, dict_node=None, namespace=None, reuse_if_possible=True):
-        """ """
-        dict_node = dict_node or self._get_port_node(port)
-        updated = update_dict_node(dict_node, update, namespace=namespace, reuse_if_possible=reuse_if_possible)
-        self._set_node_to_port(port, updated)
 
     def set_code(self, value, ports=None, update_all=True):
         """Update the code node"""
@@ -277,35 +327,9 @@ class BaseProtocolUpdater:
             value = orm.load_code(value)
         self._update_ports_by_base_name(value, 'code', ports=ports, update_all=update_all)
 
-    def _get_port_node(self, port):
-        """Return the node corresponds to specific port"""
-        parts = port.split('.')
-        item = self.builder
-        for part in parts:
-            item = item[part]
-        return item
-
-    def _set_node_to_port(self, port, node: orm.Data):
-        """Set a node to a specific port of hte builder"""
-        parts = port.split('.')
-        item = self.builder
-        for part in parts[:-1]:
-            item = item[part]
-        item[parts[-1]] = node
-
-    def __repr__(self):
-        string = f'{self.__class__.__name__}(protocol={self.protocol}, preset_name={self.preset_name})'
-        if self.builder is not None:
-            string += f'\nBuilder: {self.builder}'
-
-    def _repr_pretty_(self, p, _=None) -> str:
-        """Pretty representation for in the IPython console and notebooks."""
-
-        string = f'{self.__class__.__name__}(protocol={self.protocol}, preset_name={self.preset_name})'
-        p.text(string)
-        if self.builder is not None:
-            p.text('\nWith Builder:\n')
-            self.builder._repr_pretty_(p, _)
+    def set_settings(self, value, ports=None, update_all=True, **kwargs):
+        """Update the `settings` port."""
+        self._set_generic_port_by_dict('settings', value=value, ports=ports, update_all=update_all, **kwargs)
 
     def submit(self) -> orm.WorkChainNode:
         """
@@ -402,6 +426,49 @@ class VaspUpdater(BaseProtocolUpdater):
     pass
 
 
+class VaspRelaxUpdater(BaseProtocolUpdater):
+    """
+    Updater for VaspRelaxWorkChain's builder
+    """
+
+    WF_ENTRYPOINT = 'vasp.relax'
+
+    def set_relax_settings(self, value=None, **kwargs):
+        """Set the `relax_settings` port"""
+        self._set_generic_port_by_dict('relax_settings', ports=['relax_settings'], value=value, **kwargs)
+        return self
+
+
+class VaspBandUpdater(BaseProtocolUpdater):
+    """
+    Updater for VaspBandsWorkChain's builder
+    """
+
+    WF_ENTRYPOINT = 'vasp.bands'
+
+    def set_band_settings(self, value=None, **kwargs):
+        """Set the `band_settings` port"""
+        self._set_generic_port_by_dict('band_settings', ports=['band_settings'], value=value, **kwargs)
+        return self
+
+
+class VaspConvergenceUpdater(BaseProtocolUpdater):
+    """Updater for VaspConvergenceWorkChain"""
+
+    WF_ENTRYPOINT = 'vasp.converge'
+
+    def set_converge_settings(self, value=None, **kwargs):
+        """Set the `converge_settings` port"""
+        self._set_generic_port_by_dict('converge_settings', ports=['converge_settings'], value=value, **kwargs)
+        return self
+
+
+class VaspHybridBandsUpdater(VaspBandUpdater):
+    """Update for VaspHybridBandsWorkChain"""
+
+    WF_ENTRYPOINT = 'vasp.hybrid_bands'
+
+
 def update_dict_node(
     node: orm.Dict,
     content: dict[str, Any],
@@ -486,7 +553,12 @@ def recursive_search_dict_with_key(namespace, search_key):
             if search_key in value.get_dict():
                 ports.append([port_key, value])
         if isinstance(value, ProcessBuilderNamespace):
-            ports.extend(recursive_search_dict_with_key(value, search_key))
+            ports.extend(
+                [
+                    [port_key + '.' + sub_key, sub_value]
+                    for sub_key, sub_value in recursive_search_dict_with_key(value, search_key)
+                ]
+            )
     return ports
 
 
@@ -498,5 +570,10 @@ def recursive_search_port_basename(namespace, basename):
         if port_key == basename:
             ports.append([port_key, value])
         if isinstance(value, ProcessBuilderNamespace):
-            ports.extend(recursive_search_port_basename(value, basename))
+            ports.extend(
+                [
+                    [port_key + '.' + sub_key, sub_value]
+                    for sub_key, sub_value in recursive_search_port_basename(value, basename)
+                ]
+            )
     return ports
