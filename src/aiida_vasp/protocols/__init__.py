@@ -23,7 +23,7 @@ class ProtocolMixin:
         This allow the protocol to be loaded from a user define file, e.g ~/.aiida_vasp/relax/my_protocol.yaml
         """
         parts = name.split('@', maxsplit=1)
-        if len(parts) == 0:
+        if len(parts) == 1:
             return name, None
         return parts
 

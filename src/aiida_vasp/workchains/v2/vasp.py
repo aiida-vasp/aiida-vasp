@@ -399,7 +399,7 @@ A nested dictionary containing the following keys:
         # Configure the options for the underlying VaspCalculation to be launched
         metadata = inputs['calc']['metadata']
         if options:
-            metadata['options'] = recursive_merge(inputs['abacus']['metadata']['options'], options)
+            metadata['options'] = recursive_merge(inputs['calc']['metadata']['options'], options)
 
         # Forward to the builders
         builder = cls.get_builder()

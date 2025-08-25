@@ -1,0 +1,8 @@
+name: default
+protocol: balanced
+default_code: vasp@localhost
+default_options:
+  resources:
+    num_machines: 1
+    tot_num_mpiprocs: 1
+  max_wallclock_seconds: 1800
