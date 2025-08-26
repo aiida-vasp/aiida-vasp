@@ -1,14 +1,11 @@
 """
-Immigrant calculation.
-
-
-Enables the immigration of  externally run VASP calculations into AiiDA.
-
-NOTE: This module is no longer maintained and not working.
+Module for importing existing VASP calculations by reading input files and running
+dummy calculations through aiida-core.
 """
 
-# pylint: disable=abstract-method, import-outside-toplevel, cyclic-import
-# explanation: pylint wrongly complains about (aiida) Node not implementing query
+from __future__ import annotations
+
+from logging import getLogger
 from pathlib import Path
 from typing import Any
 
@@ -17,10 +14,7 @@ from aiida import orm
 from aiida.common import InputValidationError
 from aiida.common.extendeddicts import AttributeDict
 from aiida.common.folders import SandboxFolder
-from aiida.common.lang import override
-from aiida.common.links import LinkType
-from aiida.engine import ProcessBuilder, ProcessSpec
-from aiida.engine.processes.calcjobs.tasks import RETRIEVE_COMMAND
+from aiida.engine import run_get_node, submit
 
 from aiida_vasp.calcs.vasp import VaspCalculation
 from aiida_vasp.data.chargedensity import ChargedensityData
@@ -30,7 +24,9 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
-from aiida_vasp.utils.aiida_utils import cmp_get_transport
+from aiida_vasp.parsers.vasp import get_kpoints_node, get_structure_node
+
+logger = getLogger(__name__)
 
 # _IMMIGRANT_EXTRA_KWARGS = """
 # vasp.vasp specific kwargs:
@@ -42,77 +38,31 @@ from aiida_vasp.utils.aiida_utils import cmp_get_transport
 # @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
 
 
-class VaspImmigrant(VaspCalculation):
+class VaspCalcImporter:
     """
-    Parse VASP output objects stored in a specified directory.
+    Importer for VASP calculations.
 
-    Simulate running the VaspCalculation up to the point where it can be
-    retrieved and parsed, then hand over control to the runner for the rest.
-
-    Immigrant calculation can be perfomed as follows::
-
-       code = Code.get_from_string('vasp@local')
-       folder = '/home/username/vasp-calc-dir'
-       settings = {'parser_settings': {'add_energies': True,
-                                       'add_forces': True,
-                                       'electronic_step_energies': True}}
-       VaspImmigrant = CalculationFactory('vasp.immigrant')
-       builder = VaspImmigrant.get_builder_from_folder(code,
-                                                       folder,
-                                                       settings=settings)
-       submit(builder)
-
-    Instead of ``builder``, inputs dict is obtained similarly as::
-
-       code = Code.get_from_string('vasp@local')
-       folder = '/home/username/vasp-calc-dir'
-       settings = {'parser_settings': {'add_energies': True,
-                                       'add_forces': True,
-                                       'electronic_step_energies': True}}
-       VaspImmigrant = CalculationFactory('vasp.immigrant')
-       inputs = VaspImmigrant.get_inputs_from_folder(code,
-                                                     folder,
-                                                     settings=settings)
-       submit(VaspImmigrant, **inputs)
-
-    The default metadata is set automatically as follows::
-
-       {'options': {'max_wallclock_seconds': 1,
-        'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}}
-
-    Specific scheduler may require setting ``resources`` differently
-    (e.g., sge ``'parallel_env'``).
-
-    ``get_inputs_from_folder`` and ``get_builder_from_folder`` accept several
-    kwargs, see the docstring of ``get_inputs_from_folder``.
-
+    The importer is responsible for parsing an existing folder to recreate the inputs nodes,
+    then the calculation can be submitted to the AiiDA engine with a `remote_folder` input node
+    so parsing is triggered immediately without actually running the calculation.
     """
 
     @classmethod
-    def define(cls, spec: ProcessSpec) -> None:
-        super().define(spec)
-        spec.input('remote_workdir', valid_type=str, required=False, non_db=True)
-
-    @override
-    def run(self) -> plumpy.Wait:
-        _ = super().run()
-
-        # Make sure the retrieve list is set (done in presubmit so we need to call that also)
-        with SandboxFolder() as folder:
-            self.presubmit(folder)
-
-        if 'remote_workdir' not in self.inputs:
-            raise InputValidationError('immigrant calculations need inputs.remote_workdir.')
-
-        self.node.set_remote_workdir(self.inputs.remote_workdir)  # pylint: disable=protected-access
-        remotedata = orm.RemoteData(computer=self.node.computer, remote_path=self.inputs.remote_workdir)
-        remotedata.base.links.add_incoming(self.node, link_type=LinkType.CREATE, link_label='remote_folder')
-        remotedata.store()
-
-        return plumpy.Wait(msg='Waiting to retrieve', data=RETRIEVE_COMMAND)
-
-    @classmethod
-    def get_inputs_from_folder(cls, code: orm.Code, remote_workdir: str, **kwargs: Any) -> AttributeDict:
+    def get_builder_from_folder(
+        cls,
+        code: orm.AbstractCode,
+        remote_path: str | None = None,
+        remote_folder: orm.RemoteData | None = None,
+        options: None | dict[str, Any] = None,
+        settings: None | dict[str, Any] = None,
+        potential_family: None | str = None,
+        potential_mapping: None | dict[str, str] = None,
+        include_wavecar: bool = False,
+        include_chgcar: bool = False,
+        stdout_file_name: str = 'vasp_output',
+        dummy_resources: dict[str, str] | None = None,
+        **kwargs,
+    ) -> AttributeDict:
         """
         Create inputs to launch immigrant from a code and a remote path on the associated computer.
 
@@ -126,98 +76,193 @@ class VaspImmigrant(VaspCalculation):
             potential_mapping = {element: element for element in structure.get_kind_names()}
 
         :param code: a Code instance for the code originally used.
-        :param remote_workdir: Directory or folder name where VASP inputs and outputs are stored.
+        :param remote_path: Directory where VASP inputs and outputs are stored on the remote machine.
         :param settings: dict. This is used as the input port of VaspCalculation.
-        :param potential_family: str. This will be obsolete at v3.0.
-        :param potential_mapping: dict. This will be obsolete at v3.0.
-        :param use_wavecar: bool. Try to read WAVECAR.
-        :param use_chgcar bool. Try to read CHGCAR.
+        :param potential_family: str potential family to load the POTCAR from, if the POTCAR is missing.
+        :param potential_mapping: dict mapping of elements to pseudopotentials, if the POTCAR is missing.
+        :param include_wavecar: bool. Try to read WAVECAR.
+        :param include_chgcar: bool. Try to read CHGCAR.
+        :param stdout_file_name: str. Name of the stdout file to look for.
+        :param dummy_resources: dict[str, str]. Dummy resources to use for the calculation.
 
         """
 
-        inputs = AttributeDict()
-        inputs.code = code
-        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
-        inputs.metadata = AttributeDict()
-        inputs.metadata.options = options
-        inputs.remote_workdir = remote_workdir
-        if 'settings' in kwargs:
-            inputs.settings = orm.Dict(dict=kwargs['settings'])
-        _remote_workdir = Path(remote_workdir)
-        with cmp_get_transport(code.computer) as transport:
+        computer = code.computer
+        # Create the remote folder
+        if remote_folder is None:
+            if computer is None or remote_path is None:
+                raise ValueError('If remote_folder is not provided, both computer and remote_path have to be set.')
+            remote_folder = orm.RemoteData(remote_path, computer=computer)
+
+        builder = VaspCalculation.get_builder()
+        if options:
+            builder.metadata.options = options
+        builder.remote_folder = remote_folder
+        if settings:
+            builder.settings = settings
+        _remote_workdir = Path(remote_folder.get_remote_path())
+        with remote_folder.computer.get_transport() as transport:
             with SandboxFolder() as sandbox:
                 sandbox_path = Path(sandbox.abspath)
+                # TODO: use get_async instead?
                 transport.get(str(_remote_workdir / 'INCAR'), str(sandbox_path))
                 transport.get(str(_remote_workdir / 'POSCAR'), str(sandbox_path))
                 transport.get(str(_remote_workdir / 'POTCAR'), str(sandbox_path), ignore_nonexisting=True)
                 transport.get(str(_remote_workdir / 'KPOINTS'), str(sandbox_path))
-                inputs.parameters = get_incar_input(sandbox_path)
-                inputs.structure = get_poscar_input(sandbox_path)
-                inputs.kpoints = get_kpoints_input(sandbox_path, structure=inputs.structure)
-                try:
-                    inputs.potential = get_potcar_input(
-                        sandbox_path,
-                        structure=inputs.structure,
-                        potential_family=kwargs.get('potential_family'),
-                        potential_mapping=kwargs.get('potential_mapping'),
+                if include_wavecar:
+                    transport.get(str(_remote_workdir / 'WAVECAR'), str(sandbox_path), ignore_nonexisting=True)
+                    builder.wavefunctions = get_wavecar_input(sandbox_path)
+                if include_chgcar:
+                    transport.get(str(_remote_workdir / 'CHGCAR'), str(sandbox_path), ignore_nonexisting=True)
+                    builder.charge_density = get_chgcar_input(sandbox_path)
+                # Check if there is a stdout file
+                if not transport.isfile(str(_remote_workdir / stdout_file_name)):
+                    logger.warning(
+                        f'No stdout file `{stdout_file_name}` found in remote folder.'
+                        f' Creating a empty stdout file {VaspCalculation._VASP_OUTPUT} '
+                        'to be parsed by aiida-vasp.'
                     )
-                except InputValidationError:
-                    pass
+                    transport.exec_command_wait(f'touch {_remote_workdir / VaspCalculation._VASP_OUTPUT}')
+                # The stdout file has a different name - we copy it over
+                elif stdout_file_name != VaspCalculation._VASP_OUTPUT:
+                    transport.exec_command_wait(
+                        f'cp {_remote_workdir / stdout_file_name} {_remote_workdir / VaspCalculation._VASP_OUTPUT}'
+                    )
+                    logger.info(
+                        f'Copied `{stdout_file_name}` found in remote folder to {VaspCalculation._VASP_OUTPUT}.'
+                    )
 
-                cls._add_inputs(transport, _remote_workdir, sandbox_path, inputs, **kwargs)
-
-        return inputs
-
-    @classmethod
-    def get_builder_from_folder(cls, code: orm.Code, remote_workdir: str, **kwargs: Any) -> ProcessBuilder:
-        """
-        Create an immigrant builder from a code and a remote path on the associated computer.
-        See more details in the docstring of ``get_inputs_from_folder``.
-        """
-
-        inputs = cls.get_inputs_from_folder(code, remote_workdir, **kwargs)
-        builder = cls.get_builder()
-        for key, val in inputs.items():
-            builder[key] = val
+                builder.parameters = get_incar_input(sandbox_path)
+                builder.structure = get_poscar_input(sandbox_path)
+                builder.kpoints = get_kpoints_input(sandbox_path, structure=builder.structure)
+                builder.potential = get_potcar_input(
+                    sandbox_path,
+                    structure=builder.structure,
+                    potential_family=potential_family,
+                    potential_mapping=potential_mapping,
+                )
+        dummy_resources = dummy_resources or {'num_machine': 1}
+        builder.metadata.options.resources = dummy_resources
+        builder.code = code
         return builder
 
     @classmethod
-    def _add_inputs(
-        cls, transport: Any, remote_path: Path, sandbox_path: Path, inputs: AttributeDict, **kwargs: Any
-    ) -> None:
-        """Add some more inputs"""
-        add_wavecar = kwargs.get('use_wavecar') or bool(inputs.parameters.get_dict().get('istart', 0))
-        add_chgcar = kwargs.get('use_chgcar') or inputs.parameters.get_dict().get('icharg', -1) in [1, 11]
-        if add_chgcar:
-            transport.get(str(remote_path / 'CHGCAR'), str(sandbox_path))
-            inputs.charge_density = get_chgcar_input(sandbox_path)
-        if add_wavecar:
-            transport.get(str(remote_path / 'WAVECAR'), str(sandbox_path))
-            inputs.wavefunctions = get_wavecar_input(sandbox_path)
+    def run_import(
+        cls,
+        code: orm.AbstractCode,
+        remote_path: str | None = None,
+        remote_folder: orm.RemoteData | None = None,
+        options: None | dict[str, Any] = None,
+        settings: None | dict[str, Any] = None,
+        potential_family: None | str = None,
+        potential_mapping: None | dict[str, str] = None,
+        include_wavecar: bool = False,
+        include_chgcar: bool = False,
+        stdout_file_name: str = 'vasp_output',
+        dummy_resources: dict[str, str] | None = None,
+        **kwargs,
+    ) -> VaspCalculation:
+        """
+        Run the import process for a VASP calculation.
+
+        This is blocking function - the import process is done within the current python session.
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: Directory where VASP inputs and outputs are stored on the remote machine.
+        :param remote_folder: The remote folder containing the VASP calculation files.
+        :param options: Additional options for the calculation.
+        :param settings: dict. This is used as the input port of VaspCalculation.
+        :param potential_family: str potential family to load the POTCAR from, if the POTCAR is missing.
+        :param potential_mapping: dict mapping of elements to pseudopotentials, if the POTCAR is missing.
+        :param include_wavecar: bool. Try to read WAVECAR.
+        :param include_chgcar: bool. Try to read CHGCAR.
+        :param stdout_file_name: str. Name of the stdout file to look for.
+        :param dummy_resources: dict[str, str]. Dummy resources to use for the calculation.
+        :return: The VASP calculation instance.
+        """
+        builder = cls.get_builder_from_folder(
+            code=code,
+            remote_path=remote_path,
+            remote_folder=remote_folder,
+            options=options,
+            settings=settings,
+            potential_family=potential_family,
+            potential_mapping=potential_mapping,
+            include_wavecar=include_wavecar,
+            include_chgcar=include_chgcar,
+            stdout_file_name=stdout_file_name,
+            dummy_resources=dummy_resources,
+            **kwargs,
+        )
+        return run_get_node(builder)[1]
+
+    @classmethod
+    def run_import_daemon(
+        cls,
+        code: orm.AbstractCode,
+        remote_path: str | None = None,
+        remote_folder: orm.RemoteData | None = None,
+        options: None | dict[str, Any] = None,
+        settings: None | dict[str, Any] = None,
+        potential_family: None | str = None,
+        potential_mapping: None | dict[str, str] = None,
+        include_wavecar: bool = False,
+        include_chgcar: bool = False,
+        stdout_file_name: str = 'vasp_output',
+        dummy_resources: dict[str, str] | None = None,
+        **kwargs,
+    ) -> plumpy.Process:
+        """
+        Submit the import process for a VASP calculation to the daemon.
+
+        This is a none-blocking function - the import process is carried out by the daemon.
+
+        :param code: a Code instance for the code originally used.
+        :param remote_path: Directory where VASP inputs and outputs are stored on the remote machine.
+        :param remote_folder: The remote folder containing the VASP calculation files.
+        :param options: Additional options for the calculation.
+        :param settings: dict. This is used as the input port of VaspCalculation.
+        :param potential_family: str potential family to load the POTCAR from, if the POTCAR is missing.
+        :param potential_mapping: dict mapping of elements to pseudopotentials, if the POTCAR is missing.
+        :param include_wavecar: bool. Try to read WAVECAR.
+        :param include_chgcar: bool. Try to read CHGCAR.
+        :param stdout_file_name: str. Name of the stdout file to look for.
+        :param dummy_resources: dict[str, str]. Dummy resources to use for the calculation.
+        :return: The process instance.
+        """
+        builder = cls.get_builder_from_folder(
+            code=code,
+            remote_path=remote_path,
+            remote_folder=remote_folder,
+            options=options,
+            settings=settings,
+            potential_family=potential_family,
+            potential_mapping=potential_mapping,
+            include_wavecar=include_wavecar,
+            include_chgcar=include_chgcar,
+            stdout_file_name=stdout_file_name,
+            dummy_resources=dummy_resources,
+            **kwargs,
+        )
+        return submit(builder)
 
 
 def get_incar_input(dir_path: Path) -> orm.Dict:
     """Create a node that contains the INCAR content."""
-    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
 
     with open(str(dir_path / 'INCAR'), 'r', encoding='utf8') as handler:
-        incar_parser = IncarParser(handler=handler)
-    incar = incar_parser.get_quantity('incar')
-    node = NodeComposer.compose_core_dict('core.dict', incar)
+        incar_parser = IncarParser(handler=handler, raise_errors=True)
+    node = orm.Dict(incar_parser.incar)
 
     return node
 
 
 def get_poscar_input(dir_path: Path) -> orm.StructureData:
     """Create a node that contains the POSCAR content."""
-    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
 
     with open(str(dir_path / 'POSCAR'), 'r', encoding='utf8') as handler:
-        poscar_parser = PoscarParser(handler=handler)
-    poscar = poscar_parser.get_quantity('poscar-structure')
-    node = NodeComposer.compose_core_structure('core.structure', {'structure': poscar})
-
-    return node
+        poscar_parser = PoscarParser(handler=handler, raise_errors=True)
+    return get_structure_node(poscar_parser.structure)
 
 
 def get_potcar_input(
@@ -243,25 +288,20 @@ def get_potcar_input(
 
 def get_kpoints_input(dir_path: Path, structure: orm.StructureData | None = None) -> orm.KpointsData:
     """Create a node that contains the KPOINTS content."""
-    from aiida_vasp.parsers.node_composer import NodeComposer  # noqa: PLC0415
-
     structure = structure or get_poscar_input(dir_path)
     with open(str(dir_path / 'KPOINTS'), 'r', encoding='utf8') as handler:
-        kpoints_parser = KpointsParser(handler=handler)
-    kpoints = kpoints_parser.get_quantity('kpoints-kpoints')
-    node = NodeComposer.compose_core_array_kpoints('core.array.kpoints', {'kpoints': kpoints})
-    node.set_cell_from_structure(structure)
-
-    return node
+        kpoints_parser = KpointsParser(handler=handler, raise_errors=True)
+    return get_kpoints_node(kpoints_parser.kpoints, structure.cell)
 
 
 def get_chgcar_input(dir_path: Path) -> ChargedensityData:
+    """Include CHGCAR as input"""
     node = ChargedensityData(str(dir_path / 'CHGCAR'))
-
     return node
 
 
 def get_wavecar_input(dir_path: Path) -> WavefunData:
+    """Include WAVECAR as input"""
     node = WavefunData(str(dir_path / 'WAVECAR'))
 
     return node

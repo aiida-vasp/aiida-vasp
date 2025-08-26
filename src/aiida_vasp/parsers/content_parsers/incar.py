@@ -44,6 +44,8 @@ class IncarParser(BaseFileParser):
         try:
             self._content_parser = Incar(file_handler=handler, logger=self._logger, validate_tags=self._validate_tags)
         except SystemExit:
+            if self._raise_errors:
+                raise RuntimeError('Parsevasp exited abnormally.') from None
             self._logger.warning('Parsevasp exited abnormally.')
 
     def _init_from_data(self, data: orm.Dict) -> None:
