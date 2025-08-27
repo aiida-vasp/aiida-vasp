@@ -121,23 +121,21 @@ si_node = orm.StructureData(pymatgen=si)
 :::
 
 
-using the `VaspBuilderUpdater` class:
+using the `VaspUpdater` class:
 
 ```{code-cell} python3
 from aiida import orm
-from aiida_vasp.common.builder_updater import VaspBuilderUpdater
+from aiida_vasp.protocols.updater import VaspUpdater
 
-# This instantiate a VaspBuilderUpdater object and apply the preset
-# The default name is VaspPreset stored in the code repository.
-# You can place your own preset at ~/.aiida-vasp/ and use them for production
+# This instantiate a VaspUpdater object and apply the preset
+# The default name is `default` stored in the code repository.
+# You can place your own preset at ~/.aiida-vasp/protocol_presets and use them for production
 # calculations.
-upd = VaspBuilderUpdater().apply_preset(si_node, code='mock-vasp@localhost')
-# This preset defaults to use the PBE.54 family, we switch to 'PBE.EXAMPLE' family
-# just uploaded.
-upd.builder.potential_family = 'PBE.EXAMPLE'
+upd = VaspUpdater(protocol="balanced")
+upd.get_builder(structure=si_node, code='mock-vasp@localhost', overrides={"potential_family": "PBE.EXAMPLE"})
 ```
 
-The code block above create a `VaspBuilderUpdater` object and apply the preset for the Si structure.
+The code block above create a `VaspUpdater` object and apply the preset for the Si structure.
 We can verify that this configures the `ProcessBuilder` object with the correct inputs:
 
 ```{code-cell} python3

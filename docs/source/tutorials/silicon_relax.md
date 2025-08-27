@@ -64,7 +64,7 @@ for the `VaspRelaxWorkChain`.
 
 ```{code-cell}
 from aiida import orm
-from aiida_vasp.workchains.v2 import VaspRelaxUpdater
+from aiida_vasp.common.builder_updater import VaspRelaxUpdater
 
 upd = VaspRelaxUpdater().apply_preset(si_node, code='mock-vasp@localhost')
 upd.builder.vasp.potential_family = 'PBE.EXAMPLE'
