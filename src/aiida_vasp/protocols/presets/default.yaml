@@ -1,8 +1,17 @@
+# The Preset contains mostly code-specific settings controlling the
+# execution of calculations
 name: default
-protocol: balanced
+default_protocol: balanced
 default_code: vasp@localhost
 default_options:
   resources:
     num_machines: 1
     tot_num_mpiprocs: 1
   max_wallclock_seconds: 1800
+
+# Code specific options
+code_specific:
+  "vasp@localhost":
+    num_machines: 1
+    tot_num_mpiprocs: 1
+    max_wallclock_seconds: 1800

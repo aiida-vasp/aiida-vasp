@@ -28,6 +28,28 @@ class ProtocolMixin:
         return parts
 
     @classmethod
+    def list_protocol_files(cls, protocol_tag=None) -> list[tuple[str | None, str, pathlib.Path]]:
+        """List avaliable protocols"""
+
+        protocol_tag = protocol_tag or '*'
+        user_path = pathlib.Path(f'~/.aiida-vasp/protocols/{protocol_tag}').expanduser()
+        system_path = pathlib.Path(__file__).parent.parent / 'protocols'
+
+        user_files = []
+        system_files = []
+        for user_file in user_path.glob('*.yaml'):
+            alias = user_file.stem
+            tag = user_file.parent.stem
+            user_files.append((alias, tag, user_file))
+
+        for system_file in system_path.glob(f'{protocol_tag}.yaml'):
+            alias = None
+            tag = system_file.stem
+            system_files.append((alias, tag, system_file))
+
+        return user_files + system_files
+
+    @classmethod
     def get_protocol_filepath(cls, file_alias: str | None = None) -> pathlib.Path:
         """Return the ``pathlib.Path`` to the ``.yaml`` file that defines the protocols."""
         # If user has custom defined protocols, use them as default

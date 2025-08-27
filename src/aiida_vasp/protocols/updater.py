@@ -19,6 +19,8 @@ from aiida.engine.processes.builder import ProcessBuilderNamespace
 from aiida.plugins import WorkflowFactory
 from yaml import safe_load
 
+from aiida_vasp.protocols import recursive_merge
+
 DEFAULT_PRESET = 'default_preset'
 DEFAULT_PROTOCOL = 'balanced'
 
@@ -51,7 +53,7 @@ class ProtocolPresetConfig:
     """Class to store the preset for ProtocolBuilderUpdater"""
 
     name: str
-    protocol: str
+    default_protocol: str
     default_code: str
     code_specific: dict = field(default_factory=dict)
     default_options: dict = field(default_factory=dict)
@@ -146,7 +148,7 @@ class BaseProtocolUpdater:
         # Initialise the preset
         self.preset_name = preset_name
         self.preset = ProtocolPresetConfig.from_file(preset_name)
-        self.protocol = protocol if protocol is not None else self.preset.protocol
+        self.protocol = protocol if protocol is not None else self.preset.default_protocol
         self.builder = None
 
     def get_builder(self, structure, code=None, protocol=None, overrides=None, **kwargs):
@@ -202,11 +204,12 @@ class BaseProtocolUpdater:
         else:
             ports = ports or ['calc']
             calc_namespaces = [[port, self._get_port_node(port)] for port in ports]
-        updates = deepcopy(option_updates or {})
-        updates.update(kwargs)
+        updates = option_updates or {}
+        # Use recursive merge so existing nested keys will not be replaced
+        updates = recursive_merge(updates, kwargs)
         # Update the options
         for port, namespace in calc_namespaces:
-            namespace['metadata']['options'].update(updates)
+            namespace['metadata']['options'] = recursive_merge(dict(namespace['metadata']['options']), updates)
         return self
 
     def set_resources(self, resources_updates, ports=None, update_all=True, **kwargs):
@@ -355,7 +358,7 @@ class BaseProtocolUpdater:
         if not output.node.is_finished_ok and verbose:
             for node in output.node.called_descendants:
                 if isinstance(node, orm.CalcJobNode):
-                    stdout = node.called[0].outputs.retrieved.get_object_content('vasp_output')
+                    stdout = node.outputs.retrieved.get_object_content('vasp_output')
                     print(node, 'STDOUT:', stdout)
                     print(node, 'Retrieved files:', node.retrieved.list_object_names())
                     script = node.base.repository.get_object_content('_aiidasubmit.sh')

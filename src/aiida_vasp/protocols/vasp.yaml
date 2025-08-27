@@ -122,7 +122,7 @@ default_inputs:
     potential_mapping: *potential_mapping
     magmom_mapping: *magmom_mapping
     meta_parameters:
-      ediff_per_atom: 1e-6
+      ediff_per_atom: 1.0e-6
     settings:
     ldau_mapping:   # Mapping for LDU+U
       # mappings:

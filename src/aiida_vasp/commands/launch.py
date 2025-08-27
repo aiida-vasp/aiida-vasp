@@ -15,7 +15,7 @@ def common_vasp_options(func):
     """Decorator to add common VASP calculation options."""
     func = click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')(func)
     func = click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')(func)
-    func = click.option('--code', '-c', required=True, help='Code to use for the calculation.')(func)
+    func = click.option('--code', '-c', required=False, help='Code to use for the calculation.')(func)
     func = click.option(
         '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
     )(func)
@@ -154,8 +154,6 @@ def launch_workchain(
                 click.echo(f'Label: {label}')
             if description:
                 click.echo(f'Description: {description}')
-            if options_dict:
-                click.echo(f'Resources: {options_dict}')
             click.echo('Builder to be launched:')
             click.echo(pretty_print_builder(upd.builder))
             click.echo('=== END DRY RUN ===')
@@ -172,88 +170,80 @@ def launch_workchain(
 
 @cmd_aiida_vasp.command('list-presets')
 @click.argument('preset', required=False, type=click.STRING)
-def list_presets(preset):
+@click.option('--show-content', default=False, is_flag=True, help='Include the content of the protocol files.')
+def list_presets(preset, show_content):
     """List available presets for VASP calculations."""
-    try:
-        from aiida_vasp.common.builder_updater import list_presets
+    from aiida_vasp.protocols.updater import list_protocol_presets
 
-        preset_files = list_presets()
-        if not preset_files:
-            click.echo('No preset files found.')
-            return
+    preset_files = list_protocol_presets()
+    if not preset_files:
+        click.echo('No preset files found.')
+        return
 
-        if not preset:
-            click.echo('\nAvailable presets:')
-            click.echo('=' * 50)
-        for preset_file in sorted(preset_files):
-            name = preset_file.stem
+    if not preset:
+        click.echo('\nAvailable presets:')
+        click.echo('=' * 50)
+    for preset_file in sorted(preset_files):
+        name = preset_file.stem
 
-            if preset:
-                # Show a specific preset if provided
-                if preset == name:
-                    click.echo(preset_file.read_text())
-                    return
-                continue
-            click.echo(f'• {name}: {preset_file}')
+        if preset:
+            # Show a specific preset if provided
+            if preset == name:
+                click.echo(preset_file.read_text())
+                return
+            continue
+        click.echo(f'• {name}: {preset_file}')
+        if show_content:
             click.echo('\nContent\n')
             click.echo('-' * 50)
             # Print the content of the file
             click.echo(preset_file.read_text())
             click.echo('-' * 50)
 
-        click.echo('\nUse these preset names with the --preset option.')
-
-    except Exception as e:
-        click.echo(f'Error listing presets: {e}', err=True)
-        raise click.Abort()
+    click.echo('\nHint: Use these preset names with the --preset option.')
 
 
-@cmd_aiida_vasp.command('list-inputsets')
-@click.argument('inputset', required=False, type=click.STRING)
-def list_inputset(inputset):
-    """List available inputsets for VASP calculations."""
-    try:
-        from aiida_vasp.inputset.base import list_inputsets
+@cmd_aiida_vasp.command('list-protocols')
+@click.argument('workflow-tag', required=False, type=click.STRING)
+@click.option('--show-content', default=False, is_flag=True, help='Include the content of the protocol files.')
+def list_protocols(workflow_tag, show_content):
+    """List available protocols for VASP calculations."""
+    from yaml import safe_load
 
-        inputset_files = list_inputsets()
-        if not inputset_files:
-            click.echo('No inputset files found.')
-            return
+    from aiida_vasp.protocols import ProtocolMixin
 
-        if not inputset:
-            click.echo('\nAvailable inputsets:')
-            click.echo('=' * 50)
-        for inputset_file in sorted(inputset_files):
-            name = inputset_file.stem
+    protocol_files = ProtocolMixin.list_protocol_files(protocol_tag=workflow_tag)
 
-            if inputset:
-                # Show a specific inputset if provided
-                if inputset == name:
-                    click.echo(inputset_file.read_text())
-                    return
-                continue
-            click.echo(f'• {name}: {inputset_file}')
-            click.echo('\nContent\n')
-            click.echo('-' * 50)
+    if protocol_files:
+        click.echo('\nAvailable files containing protocols:')
+        click.echo('=' * 80)
+    else:
+        click.echo(f'No protocol files found for {workflow_tag}')
+    for _alias, tag, path in protocol_files:
+        alias = _alias or 'default'
+        click.echo(f'• workflow {tag:5s} -> protocol alias {alias:10s}: {path}')
+        with open(path, 'r') as f:
+            click.echo(f'  - available protocols: {list(safe_load(f).get("protocols"))} ')
+        if show_content:
+            click.echo('=' * 80)
+            click.echo(f'\nContent of {path}\n')
+            click.echo('-' * 80)
             # Print the content of the file
-            click.echo(inputset_file.read_text())
-            click.echo('-' * 50)
+            click.echo(path.read_text())
+            click.echo('-' * 80)
 
-        click.echo('\nUse these inputsets names with the --inputset option.')
-
-    except Exception as e:
-        click.echo(f'Error listing inputset: {e}', err=True)
-        raise click.Abort()
+    click.echo('\nHint: Use these protocol names with the --protocol option for launching calculations.')
 
 
+# TODO - print a tree-like diagram for calculation
 @cmd_aiida_vasp.command('status')
-@click.argument('calculation_pk', type=int)
-def status(calculation_pk):
-    """Check the status of a VASP calculation."""
-    try:
-        from aiida.orm import load_node
+@click.argument('process_pk')
+def status(process_pk):
+    """Check the status of a VaspCalculation or VasoWorkChain."""
+    from aiida import orm
 
-        calc = load_node(calculation_pk)
+    def print_calculation_info(calculation_pk):
+        calc = orm.load_node(calculation_pk)
         click.echo(f'Calculation PK: {calc.pk}')
         click.echo(f'UUID: {calc.uuid}')
         click.echo(f'Label: {calc.label}')
@@ -283,9 +273,14 @@ def status(calculation_pk):
                 if 'energy_extrapolated' in energies:
                     click.echo(f'Final energy: {energies["energy_extrapolated"]:.6f} eV')
 
-    except Exception as e:
-        click.echo(f'Error checking status: {e}', err=True)
-        raise click.Abort()
+    node = orm.load_node(process_pk)
+    if isinstance(node, orm.CalcJobNode):
+        print_calculation_info(node.pk)
+    else:
+        for node in node.called_descendants:
+            if isinstance(node, orm.CalcJobNode):
+                print_calculation_info(node.pk)
+                click.echo('-' * 40)
 
 
 def pretty_print_builder(builder) -> None:

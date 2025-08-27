@@ -264,7 +264,7 @@ class BaseBuilderUpdater:
         if not output.node.is_finished_ok and verbose:
             for node in output.node.called_descendants:
                 if isinstance(node, orm.CalcJobNode):
-                    stdout = node.called[0].outputs.retrieved.get_object_content('vasp_output')
+                    stdout = node.outputs.retrieved.get_object_content('vasp_output')
                     print(node, 'STDOUT:', stdout)
                     print(node, 'Retrieved files:', node.retrieved.list_object_names())
                     script = node.base.repository.get_object_content('_aiidasubmit.sh')

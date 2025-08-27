@@ -394,7 +394,7 @@ A nested dictionary containing the following keys:
 
         # Update EDIFF if not overriden
         if 'ediff' not in parameters['incar']:
-            parameters['incar']['ediff'] = natoms * meta_parameters['ediff_per_atom']
+            parameters['incar']['ediff'] = natoms * float(meta_parameters['ediff_per_atom'])
 
         # Configure the options for the underlying VaspCalculation to be launched
         metadata = inputs['calc']['metadata']
@@ -417,7 +417,7 @@ A nested dictionary containing the following keys:
         if 'kpoints' in inputs:
             builder.kpoints = inputs['kpoints']
         else:
-            builder.kpoints_distance = orm.Float(inputs['kpoints_spacing'])
+            builder.kpoints_spacing = orm.Float(inputs['kpoints_spacing'])
         builder.max_iterations = orm.Int(inputs['max_iterations'])
 
         # Process mappings
