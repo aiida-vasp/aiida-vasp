@@ -31,3 +31,58 @@ The current logic of the parser system works like this:
     - If a node cannot be composed due to lack of quantity, we simply skip it, as it is the responsibility of the `CalcJob` and the higher-level workflows to check for required output.
     - Again the reason for having excluded nodes is that some nodes are only needed in specific cases, but the underlying quantities are always available. For example, the `'eigenvalues'` are avaliable in every single calculation, but they are mostly only needed for constructing the bands structure.
 - Finally, we collect the compose nodes and store them under the `outputs` attribute which is a dictionary.
+
+## Where to pass X input for Y calculation/workflow?
+
+The inputs to a workchain/calculation must be set to the correct input *ports*.
+The easiest way is to use obtain a `builder` and use tab completion to browse through the ports:
+
+```python
+VaspWorkChain = WorkflowFactory("vasp.vasp")
+builder = VaspWorkChain.get_builder()
+builder.<tab>
+```
+
+Each port also has its owns documentation. If using IPython, you can use `?builder.<port>` to see its documentation.
+If using Jupyter Notebook, `<ctrl> + <tab>` with the cursor at the end of the `<port>` should be able to trigger the documentation pop-out window.
+
+Alternative, one can use `verdi plugin list aiida.workflows <entrypoint>` to print documentation of a workflow.
+For example, to see the documentation of `VaspWorkChain`:
+
+```
+verdi plugin list aiida.workflows vasp.vasp
+```
+
+However, this does not alway display *expose inputs* correctly, so the `builder` method is preferred.
+
+## How to check the results of a calculation/workflow?
+
+* Using `verdi process status <process_pk>`: this will display a tree-like diagram containing the called processes.
+* For a `VaspCalculation`, one can use `verdi calcjob <sub_command> <calculation_pk>` commends to show its info, commonly used sub-commends are:
+   *  `inputls`: List the input files.
+   *  `inputcat`: Print an input file. The name of the file needs to be passed following the pk, if no default calculation input file is defined (default is `INCAR`). The submission script can be displayed by passing `_aiidasubmit.sh`.
+   *  `outputls`: List the output files.
+   *  `outputcat`: Same as `inputcat` but print an output file instead. The default output is `OUTCAR`.
+   *  `remotecat`: Same a `outputcat` but can be used for running calculations.
+   *  `gotocomputer`: This command will take the current shell to the running folder of submitted calculation, which is very useful for inspecting running calculation/check the correctness of the input files and the submission script.
+   *  `res`: Print the results of a calculation to the screen. This will display the `misc` output of a `VaspCalculation`.
+   * `cleanworkdir`: Clean the working directly of a calculation.
+
+:::{info}
+The `verdi calcjob` command is inspecting a `Calculation`. A workflow may launch many calculation. In this case, one can use `verdi process status` to find the *pk* of calculations that have been launched.
+:::
+
+* Finished workflows can be *dumped* to the disk using `verdi process dump` command. This will created a multi-level directly containing the launched processes.
+* This plugin provides a command `verdi data vasp.tools export` which can be used to export completed calculations and workchains. The output if similar to `verdi process dump` with some differences:
+  * The input and output files of `VaspCalculation`s are collected into a single folder, mimicking normal VASP calculations.
+  * A `--include-potcar` option can be passed so the `POTCAR` file of each calculation is re-created. This is not the case when using `verdi process dump`, since the exact `POTCAR` content is not included in the provenance graph in order for the data to be sharable (for licensing reasons).
+
+
+## I found the documentation to be out-dated and missing certain contents!
+
+
+The documentation may not be update-to-date as new features are added to the code.
+Sometimes it is because the developers feel the feature is not *completed* with time constraints.
+In other cases, it may just because they forgot....
+
+Feedbacks and suggestions on the documentation would be extremely helpful. Please create an issue if you have any in mind!
