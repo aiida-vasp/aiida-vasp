@@ -207,10 +207,10 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         builder = cls.get_builder()
         builder.vasp = base_builder
         builder.structure = structure
-        builder.relax_settings = inputs.get('relax_settings')
-        builder.static_calc_settings = inputs.get('static_calc_settings')
-        builder.static_calc_options = inputs.get('static_calc_options')
-        builder.static_calc_parameters = inputs.get('static_calc_parameters')
+        builder.relax_settings = inputs.get('relax_settings', {})
+        builder.static_calc_settings = inputs.get('static_calc_settings', {})
+        builder.static_calc_options = inputs.get('static_calc_options', {})
+        builder.static_calc_parameters = inputs.get('static_calc_parameters', {})
         builder.verbose = inputs.get('verbose', orm.Bool(False))
         return builder
 
@@ -394,7 +394,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         """Perform the relaxation"""
 
         # For the final static run we do not need to parse the output structure
-        if 'settings' in self.inputs.vasp:
+        if self.inputs.vasp.get('settings'):
             self.ctx.static_input_additions.settings = update_nested_dict_node(
                 self.inputs.vasp.settings,
                 {
@@ -407,11 +407,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             )
 
         # Apply overrides if supplied
-        if 'static_calc_settings' in self.inputs:
+        if self.inputs.get('static_calc_settings'):
             self.ctx.static_input_additions.settings = self.inputs.static_calc_settings
 
         # Override INCARs for the final relaxation
-        if 'static_calc_parameters' in self.inputs:
+        if self.inputs.get('static_calc_parameters'):
             self.ctx.static_input_additions.parameters = update_nested_dict_node(
                 self.inputs.vasp.parameters,
                 self.inputs.static_calc_parameters.get_dict(),
@@ -456,8 +456,10 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         # Update the input with whatever stored in the relax_input_additions attribute dict
         inputs.update(self.ctx.static_input_additions)
-        if 'static_calc_options' in self.inputs:
-            inputs.calc.metadata.options = self.inputs.static_calc_options.get_dict()
+        if self.inputs.get('static_calc_options'):
+            inputs.calc.metadata.options = update_nested_dict(
+                inputs.calc.metadata.options, self.inputs.static_calc_options.get_dict()
+            )
 
         # Make sure NSW is not here for the static calculation
         incar = inputs.parameters['incar']

@@ -59,15 +59,18 @@ si_node = orm.StructureData(ase=si)
 
 ## Running the relaxation
 
-Similar to the single point calculation tutorial, we will use a `BuilderUpdater` to setup the inputs
+Similar to the single point calculation tutorial, we will use a `VaspInputGenerator` to setup the inputs
 for the `VaspRelaxWorkChain`.
 
 ```{code-cell}
 from aiida import orm
-from aiida_vasp.common.builder_updater import VaspRelaxUpdater
+from aiida_vasp.protocols.generator import VaspRelaxInputGenerator
 
-upd = VaspRelaxUpdater().apply_preset(si_node, code='mock-vasp@localhost')
-upd.builder.vasp.potential_family = 'PBE.EXAMPLE'
+upd = VaspRelaxInputGenerator()
+# Override the vasp.potential_family input of the builder
+upd.get_builder(structure=si_node, code='mock-vasp@localhost', overrides={
+   'vasp': {'potential_family': 'PBE.EXAMPLE'}}
+   )
 upd.builder
 ```
 

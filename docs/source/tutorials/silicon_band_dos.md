@@ -63,15 +63,19 @@ si_node = orm.StructureData(ase=si)
 
 ## Setting up the band structure and DOS calculation
 
-Similar to the single point calculation tutorial, we will use a `BuilderUpdater` to setup the inputs
+Similar to the single point calculation tutorial, we will use a `VaspInputGenerator` to setup the inputs
 for the `VaspBandsWorkChain`:
 
 ```{code-cell}
 from aiida_vasp.workchains.v2.bands import BandOptions
-from aiida_vasp.common.builder_updater import VaspBandUpdater
+from aiida_vasp.protocols.generator import VaspBandsInputGenerator
 
-upd = VaspBandUpdater().apply_preset(si_node, code='mock-vasp@localhost')
-upd.builder.scf.potential_family = 'PBE.EXAMPLE'
+upd = VaspBandsInputGenerator()
+builder = upd.get_builder(si_node, code='mock-vasp@localhost',
+                          overrides={
+                            'scf':
+                            {'potential_family': 'PBE.EXAMPLE'}
+                            })
 ```
 
 The workchain can be modified with several options. These options are stored in the the `band_settings` input node which of the type `orm.Dict`.
@@ -80,6 +84,8 @@ The available options can be printed using the `aiida_description()` method.
 ```{code-cell}
 opt = BandOptions()
 print(opt.aiida_description())
+# Or by accessing the help with
+?builder.band_settings
 ```
 
 :::{hint}

@@ -1,5 +1,5 @@
 """
-Updater for protocols
+Input generators based on protocols
 
 This module aimed at interactive post-generation update for the builder created
 by `.get_builder_from_protocol` method of various workchain classes.
@@ -19,7 +19,16 @@ from aiida.engine.processes.builder import ProcessBuilderNamespace
 from aiida.plugins import WorkflowFactory
 from yaml import safe_load
 
-from aiida_vasp.protocols import recursive_merge
+from aiida_vasp.utils.dict_merge import recursive_merge
+
+__all__ = [
+    'VaspBandsInputGenerator',
+    'VaspConvergenceInputGenerator',
+    'VaspHybridBandsInputGenerator',
+    'VaspInputGenerator',
+    'VaspRelaxInputGenerator',
+]
+
 
 DEFAULT_PRESET = 'default_preset'
 DEFAULT_PROTOCOL = 'balanced'
@@ -49,8 +58,8 @@ def list_protocol_presets() -> list[Path]:
 
 
 @dataclass
-class ProtocolPresetConfig:
-    """Class to store the preset for ProtocolBuilderUpdater"""
+class PresetConfig:
+    """Class to store the preset for inputs"""
 
     name: str
     default_protocol: str
@@ -63,7 +72,7 @@ class ProtocolPresetConfig:
     default_band_settings: dict = field(default_factory=dict)
 
     @classmethod
-    def from_file(cls, fname: str) -> ProtocolPresetConfig:
+    def from_file(cls, fname: str) -> PresetConfig:
         """
         Load preset configuration from a YAML file.
 
@@ -123,7 +132,7 @@ class ProtocolPresetConfig:
         )
 
 
-class BaseProtocolUpdater:
+class BaseInputGenerator:
     """
     BaseClass for all protocol builder updaters
 
@@ -147,7 +156,7 @@ class BaseProtocolUpdater:
         self.verbose = verbose
         # Initialise the preset
         self.preset_name = preset_name
-        self.preset = ProtocolPresetConfig.from_file(preset_name)
+        self.preset = PresetConfig.from_file(preset_name)
         self.protocol = protocol if protocol is not None else self.preset.default_protocol
         self.builder = None
 
@@ -421,7 +430,7 @@ class BaseProtocolUpdater:
         self._get_help(namespace, print_to_stdout=print_to_stdout, inout='inputs')
 
 
-class VaspUpdater(BaseProtocolUpdater):
+class VaspInputGenerator(BaseInputGenerator):
     """
     Updater for VaspWorkChain's builder
     """
@@ -429,7 +438,7 @@ class VaspUpdater(BaseProtocolUpdater):
     pass
 
 
-class VaspRelaxUpdater(BaseProtocolUpdater):
+class VaspRelaxInputGenerator(BaseInputGenerator):
     """
     Updater for VaspRelaxWorkChain's builder
     """
@@ -442,7 +451,7 @@ class VaspRelaxUpdater(BaseProtocolUpdater):
         return self
 
 
-class VaspBandUpdater(BaseProtocolUpdater):
+class VaspBandsInputGenerator(BaseInputGenerator):
     """
     Updater for VaspBandsWorkChain's builder
     """
@@ -455,7 +464,7 @@ class VaspBandUpdater(BaseProtocolUpdater):
         return self
 
 
-class VaspConvergenceUpdater(BaseProtocolUpdater):
+class VaspConvergenceInputGenerator(BaseInputGenerator):
     """Updater for VaspConvergenceWorkChain"""
 
     WF_ENTRYPOINT = 'vasp.converge'
@@ -466,7 +475,7 @@ class VaspConvergenceUpdater(BaseProtocolUpdater):
         return self
 
 
-class VaspHybridBandsUpdater(VaspBandUpdater):
+class VaspHybridBandsInputGenerator(VaspBandsInputGenerator):
     """Update for VaspHybridBandsWorkChain"""
 
     WF_ENTRYPOINT = 'vasp.hybrid_bands'
