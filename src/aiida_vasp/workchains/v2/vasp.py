@@ -404,7 +404,11 @@ A nested dictionary containing the following keys:
         # Forward to the builders
         builder = cls.get_builder()
         builder.code = code
-        builder.potential_family = inputs['potential_family']
+        # Use explicit potential if given
+        if len(inputs.get('potentials', {})) > 0:
+            builder.potentials = inputs['potentials']
+        else:
+            builder.potential_family = inputs['potential_family']
         builder.structure = structure
         builder.parameters = parameters
         builder.calc.metadata = metadata
@@ -415,7 +419,16 @@ A nested dictionary containing the following keys:
 
         # Configure the kpoints
         if 'kpoints' in inputs:
-            builder.kpoints = inputs['kpoints']
+            if isinstance(inputs['kpoints'], orm.Data):
+                builder.kpoints = inputs['kpoints']
+            # Has mesh been explicitly supplied?
+            elif 'mesh' in inputs['kpoints']:
+                kpoints = KpointsData()
+                kpoints.set_cell_from_structure(structure)
+                kpoints.set_kpoints_mesh(inputs['kpoints']['mesh'], inputs['kpoints'].get('offset', [0, 0, 0]))
+                builder.kpoints = kpoints
+            elif 'spacing' in inputs['kpoints']:
+                builder.kpoints_spacing = orm.Float(inputs['kpoints']['spacing'])
         else:
             builder.kpoints_spacing = orm.Float(inputs['kpoints_spacing'])
         builder.max_iterations = orm.Int(inputs['max_iterations'])

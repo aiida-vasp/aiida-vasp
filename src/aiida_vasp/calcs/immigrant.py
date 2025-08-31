@@ -28,15 +28,6 @@ from aiida_vasp.parsers.vasp import get_kpoints_node, get_structure_node
 
 logger = getLogger(__name__)
 
-# _IMMIGRANT_EXTRA_KWARGS = """
-# vasp.vasp specific kwargs:
-
-# :param use_chgcar: bool, if True, use the CHGCAR (has to exist) and convert it to an input node.
-# :param use_wavecar: bool, if True, use the WAVECAR (has to exist) and convert it to an input node.
-# """
-
-# @update_docstring('immigrant', _IMMIGRANT_EXTRA_KWARGS, append=True)
-
 
 class VaspCalcImporter:
     """
@@ -64,7 +55,7 @@ class VaspCalcImporter:
         **kwargs,
     ) -> AttributeDict:
         """
-        Create inputs to launch immigrant from a code and a remote path on the associated computer.
+        Create inputs to launch a dummy calculation from a code and a remote path on the associated computer.
 
         If POTCAR does not exist, the provided ``potential_family`` and
         ``potential_mapping`` are used to link potential to inputs. In this

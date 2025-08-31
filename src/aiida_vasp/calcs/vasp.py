@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 from aiida import orm
 from aiida.common.exceptions import InputValidationError, ValidationError
-from aiida.engine import ProcessBuilder
 from aiida.orm.nodes.data.base import to_aiida_type
 
 from aiida_vasp.calcs.base import VaspCalcBase
@@ -505,38 +504,6 @@ class VaspCalculation(VaspCalcBase):
     def write_wavecar(self, dst: str, calcinfo: CalcInfo) -> None:
         wave_functions = self.inputs.wavefunctions
         calcinfo.local_copy_list.append((wave_functions.uuid, wave_functions.filename, dst))
-
-    @classmethod
-    def immigrant(cls, code: orm.Code, remote_path: str, **kwargs: Any) -> tuple[type, ProcessBuilder]:
-        """
-        Returns VaspImmigrant class and associated inputs. This method will be obsolete at v3.0
-
-        :param code: a Code instance for the code originally used.
-        :param remote_path: The directory on the code's computer in which the simulation was run.
-        :param metadata: dict.
-        :param settings: dict. Used for non-default parsing instructions, etc.
-        :param potential_family: str.
-        :param potential_mapping: dict.
-        :param use_wavecar: bool. Try to read WAVECAR.
-        :param use_chgcar bool. Try to read CHGCAR.
-
-        """
-        from aiida_vasp.calcs.immigrant import VaspImmigrant  # noqa: PLC0415
-
-        proc_cls = VaspImmigrant
-        builder = proc_cls.get_builder_from_folder(code, str(remote_path), **kwargs)
-        options = {'max_wallclock_seconds': 1, 'resources': {'num_machines': 1, 'num_mpiprocs_per_machine': 1}}
-        builder.metadata = kwargs.get('metadata', {'options': options})
-        options = builder.metadata.get('options', options)
-        max_wallclock_seconds = options.get('max_wallclock_seconds', 1)
-        resources = options.get('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-        builder.metadata['options']['max_wallclock_seconds'] = max_wallclock_seconds  # pylint: disable=no-member
-        builder.metadata['options']['resources'] = resources  # pylint: disable=no-member
-        settings = kwargs.get('settings', {})
-        settings.update({'import_from_path': str(remote_path)})
-        builder.settings = orm.Dict(dict=settings)
-
-        return proc_cls, builder
 
 
 def ordered_unique_list(in_list: list) -> list:

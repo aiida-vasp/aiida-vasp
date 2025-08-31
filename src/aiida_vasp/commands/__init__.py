@@ -26,4 +26,7 @@ def cmd_aiida_vasp() -> None:
 
 
 # These lines simply triggers python to include the sub-commands
-from .launch import launch_workchain as launch_workchain
+from .immigrant import import_calc
+from .launch import launch_workchain
+
+__all__ = ['cmd_aiida_vasp', 'import_calc', 'launch_workchain']
