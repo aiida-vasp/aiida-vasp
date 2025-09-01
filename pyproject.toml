@@ -55,6 +55,7 @@ docs = [
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",
+    "sphinx-click",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_togglebutton",
