@@ -132,8 +132,24 @@ Learn to contribute.
 ```
 :::
 
+:::{grid-item-card} {fa}`terminal;mr-1` Command Line Interface
+:text-align: center
+:shadow: md
 
-::::
+Documentation for the AiiDA-VASP CLI.
+
++++
+
+```{button-ref} cli
+:ref-type: doc
+:click-parent:
+:expand:
+:color: primary
+:outline:
+
+CLI Reference
+```
+:::
 
 % End of the card definitions
 

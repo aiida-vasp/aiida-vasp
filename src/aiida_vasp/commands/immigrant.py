@@ -44,7 +44,11 @@ def import_calc(
     quiet,
     yes,
 ):
-    """Import an existing calculation into the database."""
+    """
+    Import an existing calculation into the database.
+    The calculation will be imported as a `VaspCalculation` with inputs/outputs connected.
+    TODO: automatically link to existing StructureData node using hashing mechanism.
+    """
     import json
 
     from aiida import orm

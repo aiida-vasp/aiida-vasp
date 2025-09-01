@@ -33,6 +33,7 @@ extensions = [
     'sphinx_togglebutton',
     'sphinx_design',
     'myst_nb',
+    'sphinx_click',
 ]
 
 

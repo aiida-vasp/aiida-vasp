@@ -93,7 +93,9 @@ def launch_workchain(
     band_settings,
     updates,
 ):
-    """Launch a VASP calculation with the specified preset and input set."""
+    """
+    Launch a VASP workchain with the specified protocol and input set.
+    """
     from aiida_vasp.commands.utils import (
         apply_additional_updates,
         handle_calculation_submission,
@@ -249,7 +251,7 @@ def list_presets(preset, show_content):
 @click.argument('workflow-tag', required=False, type=click.STRING)
 @click.option('--show-content', default=False, is_flag=True, help='Include the content of the protocol files.')
 def list_protocols(workflow_tag, show_content):
-    """List available protocols for VASP calculations."""
+    """List all available protocols for VASP workchains."""
     from yaml import safe_load
 
     from aiida_vasp.protocols import ProtocolMixin
