@@ -192,7 +192,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         inputs = cls.get_protocol_inputs(protocol, overrides)
 
         if base_workchain_protocol is None:
-            base_workchain_protocol = protocol
+            base_workchain_protocol = inputs.get('base_workchain_protocol', protocol)
 
         base_builder = cls._base_workchain.get_builder_from_protocol(
             code=code,

@@ -7,7 +7,7 @@ Here we introduce the basic concepts of aiida-vasp.
 :maxdepth: 2
 
  calculations.md
- parameters.md
+ protocols.md
  parsing.md
  potentials.md
  workflows.md

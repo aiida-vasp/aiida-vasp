@@ -215,8 +215,8 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         **kwargs,
     ):
         overrides = overrides or {}
-        base_workchain_protocol = base_workchain_protocol or protocol
         inputs = cls.get_protocol_inputs(protocol, overrides)
+        base_workchain_protocol = base_workchain_protocol or inputs.get('base_workchain_protocol', protocol)
         if band_settings:
             overrides['band_settings'] = recursive_merge(overrides.get('band_settings'), band_settings)
 

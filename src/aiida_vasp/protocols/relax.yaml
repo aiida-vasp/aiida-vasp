@@ -19,5 +19,6 @@ protocols:
     description: |
       A balanced protocol for relaxation see vasp.yaml for exact settings used
   fast:
-    convergence_volume: 0.05
-    force_cutoff: 0.05
+    relax_settings:
+      convergence_volume: 0.05
+      force_cutoff: 0.05
