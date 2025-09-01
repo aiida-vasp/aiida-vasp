@@ -729,7 +729,7 @@ A nested dictionary containing the following keys:
         # Find the remote folder of the last calculation which should be kept from cleaning
         out_remote_pk = None
         if self.inputs.keep_last_workdir.value is True:
-            out_remote_pk = self.outputs.remote_folder.pk
+            out_remote_pk = self.outputs['remote_folder'].pk
 
         cleaned_calcs = []
         for called_descendant in self.node.called_descendants:

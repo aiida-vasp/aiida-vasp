@@ -55,7 +55,27 @@ def test_band_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name)
     builder = VaspBandsWorkChain.get_builder_from_protocol(
         code=mock_vasp,
         structure=vasp_structure,
-        overrides={'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+        overrides={
+            'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}},
+            'relax': {'vasp': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+        },
+    )
+
+    assert builder.structure == vasp_structure
+    assert builder.scf.code == mock_vasp
+    assert builder.scf.parameters is not None
+    assert builder.band_settings is not None
+    assert builder.relax.relax_settings is not None
+
+    # No relax
+    builder = VaspBandsWorkChain.get_builder_from_protocol(
+        code=mock_vasp,
+        structure=vasp_structure,
+        run_relax=False,
+        overrides={
+            'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}},
+            'relax': {'vasp': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+        },
     )
 
     assert builder.structure == vasp_structure
@@ -67,14 +87,17 @@ def test_band_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name)
     builder = VaspHybridBandsWorkChain.get_builder_from_protocol(
         code=mock_vasp,
         structure=vasp_structure,
-        overrides={'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+        overrides={
+            'scf': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}},
+            'relax': {'vasp': {'potential_family': potcar_family_name, 'potential_mapping': {'In_d': 'In_d'}}},
+        },
     )
 
     assert builder.structure == vasp_structure
     assert builder.scf.code == mock_vasp
     assert builder.scf.parameters is not None
     assert builder.band_settings is not None
-    assert not builder.relax.relax_settings
+    assert builder.relax.relax_settings is not None
 
 
 @pytest.mark.parametrize(['vasp_structure'], [('str',)], indirect=True)

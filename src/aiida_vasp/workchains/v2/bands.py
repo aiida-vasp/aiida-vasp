@@ -208,6 +208,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         base_workchain_protocol=None,
         relax_workchain_protocol=None,
         relax_base_workchain_protocol=None,
+        run_relax=True,
         overrides=None,
         options=None,
         band_settings=None,
@@ -229,12 +230,11 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         )
 
         # Configure the relaxation step of the workchain
-        if relax_workchain_protocol is not None:
+        if run_relax:
             relax_builder = cls._relax_workchain.get_builder_from_protocol(
                 code=code,
                 structure=structure,
-                protocol=relax_workchain_protocol,
-                base_workchain_protocol=relax_base_workchain_protocol,
+                protocol=relax_workchain_protocol or base_workchain_protocol,
                 overrides=inputs.get('relax', {}),
                 options=options,
                 **kwargs,
@@ -250,8 +250,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         builder.structure = structure
         if relax_builder is not None:
             builder.relax = relax_builder
-        builder.band_settings = inputs.get('band_settings')
-        builder.clean_children_workdir = inputs.get('clean_children_workdir')
+        if inputs.get('band_settings'):
+            builder.band_settings = inputs.get('band_settings')
+        if inputs.get('clean_children_workdir'):
+            builder.clean_children_workdir = inputs.get('clean_children_workdir')
 
         return builder
 
@@ -316,7 +318,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             return self.exit_codes.ERROR_SUB_PROC_RELAX_FAILED
 
         # Use the relaxed structure as the current structure
-        self.ctx.current_structure = relax_workchain.outputs.relax__structure
+        self.ctx.current_structure = relax_workchain.outputs.relax.structure
 
     def should_run_scf(self) -> bool:
         """Wether we should run SCF calculation"""
@@ -415,7 +417,8 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         base_work = WorkflowFactory(self._base_wk_string)
         inputs = AttributeDict(self.exposed_inputs(base_work, namespace='scf'))
         inputs.metadata.call_link_label = 'scf'
-        inputs.metadata.label = self.inputs.metadata.label + ' SCF'
+        base_label = self.inputs.metadata.get('label', '') or ''
+        inputs.metadata.label = base_label + ' SCF'
         inputs.structure = self.ctx.current_structure
 
         # Turn off cleaning of the working directory
@@ -512,7 +515,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             inputs.kpoints = self.ctx.bs_kpoints
 
             # Tag the calculation
-            inputs.metadata.label = self.inputs.metadata.label + ' BS'
+            inputs.metadata.label = self.inputs.metadata.get('label', '') + ' BS'
             inputs.metadata.call_link_label = 'bs'
 
             bands_calc = self.submit(base_work, **inputs)

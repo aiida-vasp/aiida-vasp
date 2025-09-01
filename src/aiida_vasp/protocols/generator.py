@@ -170,7 +170,12 @@ class BaseInputGenerator:
         options = self.preset.get_code_specific_options(code, 'options')
 
         builder = WorkflowFactory(self.WF_ENTRYPOINT).get_builder_from_protocol(
-            code=orm.load_code(code), structure=structure, protocol=protocol, overrides=overrides, options=options
+            code=orm.load_code(code),
+            structure=structure,
+            protocol=protocol,
+            overrides=overrides,
+            options=options,
+            **kwargs,
         )
         self.builder = builder
         # Apply other settings
@@ -240,7 +245,9 @@ class BaseInputGenerator:
             namespace['metadata']['options']['resources'].update(updates)
         return self
 
-    def _update_ports_by_base_name(self, value, port_basename, ports=None, update_all=True, merge=False):
+    def _update_ports_by_base_name(
+        self, value, port_basename, ports=None, update_all=True, merge=False, skip_empty=True
+    ):
         """Update a port by basename"""
         if update_all:
             port_and_nodes = recursive_search_port_basename(self.builder, port_basename)
@@ -263,21 +270,23 @@ class BaseInputGenerator:
         updated = update_dict_node(dict_node, update, namespace=namespace, reuse_if_possible=reuse_if_possible)
         self._set_node_to_port(port, updated)
 
-    def _set_generic_port_by_dict(self, _port_name, value=None, ports=None, update_all=True, **kwargs):
+    def _set_generic_port_by_dict(self, _port_name, value=None, ports=None, update_all=True, skip_empty=True, **kwargs):
         """Set a generic port by a value or kwargs"""
         if value is None and not kwargs:
             return self
         value = value or {}
         value = deepcopy(value)
         value.update(kwargs)
-        self._update_ports_by_base_name(value, _port_name, ports=ports, update_all=update_all, merge=True)
+        self._update_ports_by_base_name(
+            value, _port_name, ports=ports, update_all=update_all, skip_empty=skip_empty, merge=True
+        )
 
     def _get_port_node(self, port):
         """Return the node corresponds to specific port"""
         parts = port.split('.')
         item = self.builder
         for part in parts:
-            item = item[part]
+            item = item.get(part)
         return item
 
     def _set_node_to_port(self, port, node: orm.Data):
@@ -369,7 +378,7 @@ class BaseInputGenerator:
                 if isinstance(node, orm.CalcJobNode):
                     stdout = node.outputs.retrieved.get_object_content('vasp_output')
                     print(node, 'STDOUT:', stdout)
-                    print(node, 'Retrieved files:', node.retrieved.list_object_names())
+                    print(node, 'Retrieved files:', node.outputs.retrieved.list_object_names())
                     script = node.base.repository.get_object_content('_aiidasubmit.sh')
                     print(node, 'Submission script:', script)
                     print(node, 'Exit_message', node.exit_message)
@@ -462,6 +471,35 @@ class VaspBandsInputGenerator(BaseInputGenerator):
         """Set the `band_settings` port"""
         self._set_generic_port_by_dict('band_settings', ports=['band_settings'], value=value, **kwargs)
         return self
+
+    def set_settings(self, *args, **kwargs):
+        """Set the settings port"""
+        return super().set_settings(*args, ports=['scf.settings'], update_all=False, **kwargs)
+
+    def get_builder(self, structure, code=None, protocol=None, overrides=None, run_relax=True, **kwargs):
+        """
+        Generate builder base on a given structure and overrides (if supplied)
+        """
+        protocol = protocol or self.protocol
+        overrides = overrides or {}
+        code = code or self.preset.default_code
+        options = self.preset.get_code_specific_options(code, 'options')
+
+        builder = WorkflowFactory(self.WF_ENTRYPOINT).get_builder_from_protocol(
+            code=orm.load_code(code),
+            structure=structure,
+            protocol=protocol,
+            overrides=overrides,
+            options=options,
+            run_relax=run_relax,
+            **kwargs,
+        )
+        self.builder = builder
+        # Apply other settings
+        self.set_settings(self.preset.get_code_specific_options(code, 'settings'))
+        # Apply other settings
+        self.set_incar(self.preset.get_code_specific_options(code, 'incar'))
+        return builder
 
 
 class VaspConvergenceInputGenerator(BaseInputGenerator):
@@ -589,3 +627,14 @@ def recursive_search_port_basename(namespace, basename):
                 ]
             )
     return ports
+
+
+def check_all_empty(mapping):
+    """Check if a dictionary is all empty"""
+    for key, value in mapping.items():
+        if hasattr(value, 'items'):
+            if check_all_empty(value) is False:
+                return False
+        if value != {}:
+            return False
+    return True
