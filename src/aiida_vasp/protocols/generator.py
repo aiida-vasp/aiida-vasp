@@ -459,6 +459,17 @@ class VaspRelaxInputGenerator(BaseInputGenerator):
         self._set_generic_port_by_dict('relax_settings', ports=['relax_settings'], value=value, **kwargs)
         return self
 
+    def get_builder(self, structure, code=None, protocol=None, overrides=None, **kwargs):
+        builder = super().get_builder(structure=structure, code=code, protocol=protocol, overrides=overrides, **kwargs)
+        pdict = builder.vasp.parameters.get_dict()
+        pdict['incar'].pop('nsw', None)
+        pdict['incar'].pop('ibrion', None)
+        pdict['incar'].pop('isif', None)
+        # Case if the the parameters is stored
+        if builder.vasp.parameters.is_stored:
+            builder.vasp.parameters = pdict
+        return builder
+
 
 class VaspBandsInputGenerator(BaseInputGenerator):
     """

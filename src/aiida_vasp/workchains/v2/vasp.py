@@ -383,10 +383,24 @@ A nested dictionary containing the following keys:
 
         if isinstance(code, str):
             code = orm.load_code(code)
+        has_pmg = True
+        try:
+            from aiida_vasp.protocols.pmg import PymatgenInputAdaptor  # noqa: PLC0415
+        except ImportError:
+            has_pmg = False
 
-        inputs = cls.get_protocol_inputs(protocol, overrides)
+        if has_pmg:
+            if protocol in PymatgenInputAdaptor.KNOWN_SETS:
+                adaptor = PymatgenInputAdaptor(
+                    protocol,
+                    incar_overrides=overrides.get('incar_overrides', {}),
+                    pmg_kwargs=overrides.get('pmg_kwargs', {}),
+                )
+                inputs = adaptor.get_inputs(structure, is_workchain=True, overrides=overrides)
+        else:
+            inputs = cls.get_protocol_inputs(protocol, overrides)
 
-        meta_parameters = inputs.pop('meta_parameters')
+        meta_parameters = inputs.pop('meta_parameters', {})
         natoms = len(structure.sites)
 
         # Update the parameters based on the protocol inputs
@@ -397,25 +411,30 @@ A nested dictionary containing the following keys:
             parameters['incar']['ediff'] = natoms * float(meta_parameters['ediff_per_atom'])
 
         # Configure the options for the underlying VaspCalculation to be launched
-        metadata = inputs['calc']['metadata']
+        metadata = inputs.get('calc', {}).get('metadata', {})
         if options:
-            metadata['options'] = recursive_merge(inputs['calc']['metadata']['options'], options)
+            metadata['options'] = recursive_merge(metadata.get('options', {}), options)
 
         # Forward to the builders
         builder = cls.get_builder()
         builder.code = code
+
         # Use explicit potential if given
         if len(inputs.get('potentials', {})) > 0:
             builder.potentials = inputs['potentials']
         else:
             builder.potential_family = inputs['potential_family']
+            builder.potential_mapping = {key: inputs['potential_mapping'][key] for key in structure.get_kind_names()}
+
+        # Apply inputs
         builder.structure = structure
         builder.parameters = parameters
         builder.calc.metadata = metadata
 
-        if inputs.get('settings'):
+        if 'settings' in inputs:
             builder.settings = inputs.get('settings', {})
-        builder.clean_workdir = orm.Bool(inputs['clean_workdir'])
+        if 'clean_workdir' in inputs:
+            builder.clean_workdir = orm.Bool(inputs['clean_workdir'])
 
         # Configure the kpoints
         if 'kpoints' in inputs:
@@ -431,10 +450,10 @@ A nested dictionary containing the following keys:
                 builder.kpoints_spacing = orm.Float(inputs['kpoints']['spacing'])
         else:
             builder.kpoints_spacing = orm.Float(inputs['kpoints_spacing'])
-        builder.max_iterations = orm.Int(inputs['max_iterations'])
 
-        # Process mappings
-        builder.potential_mapping = {key: inputs['potential_mapping'][key] for key in structure.get_kind_names()}
+        # Apply maximum iteration
+        if 'max_iterations' in inputs:
+            builder.max_iterations = inputs['max_iterations']
 
         # Check if we have any valid ldau_u_mapping defined
         if inputs.get('ldau_mapping') is None:
