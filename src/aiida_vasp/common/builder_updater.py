@@ -1030,6 +1030,12 @@ class VaspConvUpdater(VaspBuilderUpdater):
 
     WF_ENTRYPOINT = 'vasp.v2.converge'
 
+    def __init__(
+        self, preset_name=None, builder=None, root_namespace=None, code=None, verbose=False, inputset_name=None
+    ):
+        super().__init__(preset_name, builder, root_namespace, code, verbose, inputset_name)
+        self.namespace_vasp = self._builder.vasp
+
     def apply_preset(
         self, initial_structure: orm.StructureData, code: str | None = None, label: str | None = None, **kwargs: Any
     ) -> VaspBuilderUpdater:
