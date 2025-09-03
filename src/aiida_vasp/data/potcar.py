@@ -110,10 +110,11 @@ import re
 import shutil
 import tarfile
 import tempfile
-from collections import namedtuple
+from collections import Counter, namedtuple
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import cmp_to_key
+from json import loads
 from pathlib import Path
 from typing import Any
 
@@ -139,6 +140,62 @@ class PotcarGroup(Group):
     """
     A group for holding PotcarData objects that maps to various collections of POTCARs.
     """
+
+    def get_matched_set(self):
+        """Verify the group against known sets"""
+        dataset = loads((Path(__file__).parent / 'potpaw_sha512.json').read_text())
+        this_group = {node.symbol: node.sha512 for node in self.nodes}
+        for dataset, sha512s in dataset.items():
+            if len(this_group) == len(sha512s):
+                matched = True
+                for key, value in sha512s.items():
+                    if value != this_group[key]:
+                        matched = False
+                        break
+                if matched:
+                    return dataset
+
+    def verify(self):
+        """Verify the current data set against known sets"""
+        # Check duplicated symbols
+        duplicated = self.get_duplicated_symbols()
+        if duplicated:
+            raise ValueError(
+                f'Duplicated symbol found in group {self.label}: {list(duplicated)}) which will result in'
+                'expected POTCAR mapping when using aiida-vasp.'
+                '\n If you are uploading 52 and 54 sets, it is likely the original release archive is used,'
+                'which contain wrongly labeled POTCARs. Please use the updated releases instead'
+            )
+
+        matched = self.get_matched_set()
+        if matched is None:
+            raise ValueError(
+                'Cannot match this group to a known dataset - you can use `get_potcar_identity` to'
+                ' find known datasets each node belongs to.'
+            )
+        return matched
+
+    def get_potcar_identity(self):
+        """Return which potpaw dataset the POTCARs in the group are from"""
+        dataset = loads((Path(__file__).parent / 'potpaw_sha512.json').read_text())
+        this_group = {node.symbol: node.sha512 for node in self.nodes}
+        results = {}
+        for symbol, sha512 in this_group.items():
+            results[symbol] = []
+            for setname, data in dataset.items():
+                if symbol in data and data[symbol] == sha512:
+                    results[symbol].append(setname)
+        return results
+
+    def get_duplicated_symbols(self):
+        """
+        Get duplicated symbols
+
+        This may happen when using original PBE.54 and PBE.52 datasets released where
+        several GW POTCARs are wrongly labeled. For example, B_GW is labeled as B
+        """
+        counts = Counter([node.symbol for node in self.nodes])
+        return {key: value for key, value in counts.items() if value > 1}
 
 
 def migrate_potcar_group() -> None:
@@ -461,7 +518,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
             potcar = PotcarParser(handler=handler)
         metadata = potcar.metadata
         self.base.attributes.set('title', metadata.titel)
-        self.base.attributes.set('functional', metadata.functional)
+        self.base.attributes.set('unctional', metadata.functional)
         self.base.attributes.set('element', metadata.element)
         self.base.attributes.set('symbol', metadata.symbol)
         src_path = src_abs.resolve()
@@ -472,6 +529,21 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         dir_name = dir_name.name
         self.base.attributes.set('full_name', str(dir_name))
         self.base.attributes.set('potential_set', str(src_path.parts[-3]))
+
+        # Verify for incorrect mappings
+        parent_folder = src_path.parts[-2]
+        if parent_folder != metadata.symbol:
+            AIIDA_LOGGER.warning(
+                f'The symbol parsed from the POTCAR file ({metadata.symbol} at {src_path}) does not match the '
+                f'parent folder ({parent_folder}). It is likely due to an erroneous outdated VASP PAW dataset release.'
+            )
+            if parent_folder.split('_')[0] == metadata.element:
+                new_symbol = parent_folder
+            else:
+                # Cannot result a symbol from the parent folder - use <element>_<parent_folder> as a symbol
+                new_symbol = metadata.element + '_' + parent_folder
+            self.base.attributes.set('symbol', new_symbol)
+            AIIDA_LOGGER.warning(f'Fix by replacing symbol {metadata.symbol} with {new_symbol}.')
 
     @classmethod
     def get_file_sha512(cls, path: Path | str) -> str:
@@ -961,7 +1033,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             Overwrites previous descriptions, if the group was existing.
         :param stop_if_existing: if True, check for the sha512 of the files and,
             if the file already exists in the DB, raises a MultipleObjectsError.
-            If False, simply adds the existing UPFData node to the group.
+            If False, simply adds the existing PotcarData node to the group.
         :param dry_run: If True, do not change the database.
         """
         group = cls._prepare_group_for_upload(group_name, group_description, dry_run=dry_run)
