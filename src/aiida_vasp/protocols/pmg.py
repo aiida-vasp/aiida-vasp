@@ -220,7 +220,7 @@ class PymatgenInputAdaptor:
         inputs['kpoints'] = self.get_kpoints(structure)
         # Setup the potentials
         if is_workchain:
-            inputs['potential_family'] = self.get_potential_family
+            inputs['potential_family'] = self.get_potential_family()
             inputs['potential_mapping'] = self.get_potential_mapping(structure)
         else:
             inputs['potentials'] = self.get_potentials(structure)

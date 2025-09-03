@@ -205,9 +205,6 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         code: orm.AbstractCode,
         structure: orm.StructureData,
         protocol=None,
-        base_workchain_protocol=None,
-        relax_workchain_protocol=None,
-        relax_base_workchain_protocol=None,
         run_relax=True,
         overrides=None,
         options=None,
@@ -216,14 +213,13 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     ):
         overrides = overrides or {}
         inputs = cls.get_protocol_inputs(protocol, overrides)
-        base_workchain_protocol = base_workchain_protocol or inputs.get('base_workchain_protocol', protocol)
         if band_settings:
             overrides['band_settings'] = recursive_merge(overrides.get('band_settings'), band_settings)
 
         scf_builder = cls._base_workchain.get_builder_from_protocol(
             code=code,
             structure=structure,
-            protocol=base_workchain_protocol,
+            protocol=inputs.get('scf', {}).get('protocol', protocol),
             overrides=inputs.get('scf', {}),
             options=options,
             **kwargs,
@@ -234,7 +230,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             relax_builder = cls._relax_workchain.get_builder_from_protocol(
                 code=code,
                 structure=structure,
-                protocol=relax_workchain_protocol or base_workchain_protocol,
+                protocol=inputs.get('relax', {}).get('protocol', protocol),
                 overrides=inputs.get('relax', {}),
                 options=options,
                 **kwargs,

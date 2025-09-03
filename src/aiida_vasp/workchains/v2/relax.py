@@ -168,7 +168,6 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         code: orm.AbstractCode,
         structure: orm.StructureData,
         protocol=None,
-        base_workchain_protocol=None,
         overrides=None,
         options=None,
         relax_settings=None,
@@ -179,7 +178,6 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         :param code: the ``Code`` instance configured for the ``abacus.abacus`` plugin.
         :param structure: the ``StructureData`` instance to use.
         :param protocol: protocol to use, if not specified, the default will be used.
-        :param base_workchain_protocol: protocol to use for the base workchain, defaults to ``protocol``.
         :param overrides: optional dictionary of inputs to override the defaults of the protocol.
         :param options: A dictionary of options that will be recursively set for the ``metadata.options`` input of all
             the ``CalcJobs`` that are nested in this work chain.
@@ -191,12 +189,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         inputs = cls.get_protocol_inputs(protocol, overrides)
 
-        if base_workchain_protocol is None:
-            base_workchain_protocol = inputs.get('base_workchain_protocol', protocol)
-
         base_builder = cls._base_workchain.get_builder_from_protocol(
             code=code,
-            protocol=base_workchain_protocol,
+            protocol=inputs.get('vasp', {}).get('protocol', protocol),
             structure=structure,
             overrides=inputs.get('vasp', {}),
             options=options,

@@ -12,6 +12,8 @@ default_options:
 # Code specific options
 code_specific:
   "vasp@localhost":
+    options:
+      max_wallclock_seconds: 1800
   "mock-vasp@localhost":
     options:
         max_wallclock_seconds: 3600
