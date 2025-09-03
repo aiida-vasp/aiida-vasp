@@ -111,6 +111,6 @@ def test_conv_protocol(basic_env, mock_vasp, vasp_structure, potcar_family_name)
     )
 
     assert builder.structure == vasp_structure
-    assert builder.code == mock_vasp
-    assert builder.parameters is not None
+    assert builder.vasp.code == mock_vasp
+    assert builder.vasp.parameters is not None
     assert builder.conv_settings is not None

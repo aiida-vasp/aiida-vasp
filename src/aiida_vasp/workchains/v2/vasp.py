@@ -389,14 +389,13 @@ A nested dictionary containing the following keys:
         except ImportError:
             has_pmg = False
 
-        if has_pmg:
-            if protocol in PymatgenInputAdaptor.KNOWN_SETS:
-                adaptor = PymatgenInputAdaptor(
-                    protocol,
-                    incar_overrides=overrides.get('incar_overrides', {}),
-                    pmg_kwargs=overrides.get('pmg_kwargs', {}),
-                )
-                inputs = adaptor.get_inputs(structure, is_workchain=True, overrides=overrides)
+        if has_pmg and protocol in PymatgenInputAdaptor.KNOWN_SETS:
+            adaptor = PymatgenInputAdaptor(
+                protocol,
+                incar_overrides=overrides.get('incar_overrides', {}),
+                pmg_kwargs=overrides.get('pmg_kwargs', {}),
+            )
+            inputs = adaptor.get_inputs(structure, is_workchain=True, overrides=overrides)
         else:
             inputs = cls.get_protocol_inputs(protocol, overrides)
 

@@ -91,7 +91,8 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
 
-        spec.expose_inputs(cls._sub_workchain, 'vasp')
+        spec.expose_inputs(cls._sub_workchain, 'vasp', exclude=['structure'])
+        spec.expose_inputs(cls._sub_workchain, include=['structure'])
         spec.input(
             'conv_settings',
             help=ConvOptions.aiida_description(),
@@ -132,10 +133,9 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             overrides=overrides,
             **kwargs,
         )
-        vasp_builder
-
         builder = cls.get_builder()
         builder.vasp = vasp_builder
+        builder.structure = vasp_builder.pop('structure')
         builder.conv_settings = inputs['conv_settings']
         return builder
 
@@ -199,7 +199,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         kspacing_for_cutoffconv = orm.Float(self.ctx.settings.get('kspacing_cutconv', k_cut))
 
         # Launch cut off energy tests
-        inputs = self.exposed_inputs(self._sub_workchain, 'vasp')
+        inputs = self.exposed_inputs(self._sub_workchain, 'vasp', agglomerate=True)
         inputs.kpoints_spacing = kspacing_for_cutoffconv
         original_label = inputs.metadata.get('label', '')
         for cut in self.ctx.cutoff_list:
