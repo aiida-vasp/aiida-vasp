@@ -223,6 +223,11 @@ class BaseInputGenerator:
         updates = recursive_merge(updates, kwargs)
         # Update the options
         for port, namespace in calc_namespaces:
+            # Here the port is only updated if the parent namespace is not empty or it is marked as 'required'
+            # This is because `options`` is a special none-db port which may exist even if 'populate_defaults' is
+            # set to False for namespaces that is optional. Otherwise, these optional namespace becomes 'defined'
+            # , triggering its validation and then fails (as other 'required' fields are not defined inside the
+            # namespace)
             if has_content(namespace) or namespace._port_namespace._required:
                 namespace['metadata']['options'] = recursive_merge(dict(namespace['metadata']['options']), updates)
         return self
@@ -243,6 +248,11 @@ class BaseInputGenerator:
         updates = deepcopy(resources_updates or {})
         updates.update(kwargs)
         for port, namespace in calc_namespaces:
+            # Here the port is only updated if the parent namespace is not empty or it is marked as 'required'
+            # This is because `options`` is a special none-db port which may exist even if 'populate_defaults' is
+            # set to False for namespaces that is optional. Otherwise, these optional namespace becomes 'defined'
+            # , triggering its validation and then fails (as other 'required' fields are not defined inside the
+            # namespace)
             if has_content(namespace) or namespace._port_namespace._required:
                 namespace['metadata']['options']['resources'].update(updates)
         return self
