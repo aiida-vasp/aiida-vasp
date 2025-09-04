@@ -58,6 +58,11 @@ def test_store_duplicate(aiida_profile_clean, potcar_node_pair, data_path):
 
     data_node = PotcarData(potcar_file_node=potcar_node_pair['file'])
     data_node.base.attributes.set('symbol', 'Ta')
+    # This should work
+    data_node.store()
+
+    data_node = PotcarData(potcar_file_node=potcar_node_pair['file'])
+    data_node.base.attributes.set('symbol', 'Ta')
     with pytest.raises(UniquenessError):
         data_node.store()
 

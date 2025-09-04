@@ -161,12 +161,125 @@ def integrity(family_name, show_each):
     matched = group.get_matched_set()
     if matched:
         echo.echo_success(f'This group matches an known set `{matched}`')
-    elif show_each:
+    else:
         echo.echo('This group does not match any known set')
+    if show_each:
         echo.echo('Match of individual POTCARs:')
         identities = group.get_potcar_identity()
         for key, value in identities.items():
             echo.echo(f'{key} ->  {value}')
+
+
+@potcar.command()
+@click.argument('family_name', required=False)
+@click.option('--dryrun', required=False, is_flag=True)
+def fix_inconsistent_symbols(family_name, dryrun):
+    """Fix inconsistent families"""
+    from uuid import uuid4
+
+    from aiida import orm
+    from aiida.cmdline.utils import echo
+
+    from aiida_vasp.data.potcar import PotcarData, PotcarGroup, UniquenessError
+
+    if family_name is not None:
+        groups = [orm.load_group(family_name)]
+    else:
+        groups = PotcarGroup.collection.all()
+        groups = [g for g in groups if ('.transient-' not in g.label) and (not g.label.endswith('.backup'))]
+    echo.echo(f'Groups to check: {[group.label for group in groups]}')
+    for group in groups:
+        duplicated, _ = group.get_duplicated_symbols()
+        symbols = [node.symbol for node in group.nodes]
+        problematic_nodes = {}
+        with cli_spinner():
+            for node in group.nodes:
+                info = node.check_and_fix_inconsistent_potcar_symbol()
+                if info is not None:
+                    problematic_nodes[node.pk] = info
+        # Now check if the result matches with the duplicated info
+        for dup_symbol, ndup in duplicated.items():
+            node_pks = [key for key, value in problematic_nodes.items() if value['stored_symbol'] == dup_symbol]
+            if len(node_pks) != ndup - 1:
+                echo.echo(
+                    f'Inconsistent POTCARs for symbol {dup_symbol} - expect {ndup - 1} inconsistent nodes but '
+                    f'{len(node_pks)} found'
+                )
+                for node_pk in node_pks:
+                    echo.echo(
+                        f' - {node_pk} symbol: {problematic_nodes[node_pk]["stored_symbol"]} '
+                        f'original_file_name: {problematic_nodes[node_pk]["original_filename"]}'
+                    )
+                # echo.echo_critical('Abort')
+        # Fix - first let's collect the updated nodes
+        updated_nodes = []
+        for pk in problematic_nodes.keys():
+            node: PotcarData = orm.load_node(pk)
+            info = node.check_and_fix_inconsistent_potcar_symbol(fix=True)
+            new_node = info['updated_node']
+            updated_nodes.append(new_node)
+
+            # Should not happen, but worth checking
+            if new_node.symbol in symbols:
+                echo.echo_critical(
+                    f'Symbol `{new_node.symbol}` of the new node {new_node} already exists in the group {group}!'
+                    ' Something is seriously wrong.'
+                )
+
+        if not updated_nodes:
+            echo.echo(f'No inconsistent nodes found in group {group.label}')
+            continue
+        echo.echo('Nodes to be removed:')
+        for pk in problematic_nodes.keys():
+            node = orm.load_node(pk)
+            echo.echo(f' - {node} INCONSISTENT symbol: {node.symbol} original_file_name: {node.original_file_name} ')
+        echo.echo('\n\n')
+        echo.echo('Nodes to be added:')
+        for node in updated_nodes:
+            echo.echo(f' - {node} UPDATED symbol: {node.symbol} original_file_name: {node.original_file_name} ')
+        if dryrun:
+            echo.echo('Dryrun - no changes made')
+
+        if click.confirm(f'Proceed to fix group {group.label}?', default=False) and not dryrun:
+            # Create a backup group
+            new_group = PotcarGroup(label=group.label + f'.transient-{str(uuid4())[:8]}')
+            new_group.store()
+            new_group.add_nodes(list(group.nodes))
+            echo.echo_info(f'Temporary new Group {new_group} created')
+
+            # Store the updated nodes
+            for node in updated_nodes:
+                if not node.is_stored:
+                    try:
+                        node.store()
+                    except UniquenessError as e:
+                        echo.echo_error(f'Failed to store node {node}: {e}')
+            echo.echo_info('New PotcarData nodes stored.')
+
+            # Remove the problematic nodes from the original group
+            new_group.remove_nodes([orm.load_node(pk) for pk in problematic_nodes.keys()])
+            echo.echo_info('Inconsistent PotcarData nodes removed.')
+
+            # Add the updated nodes to the original group
+            new_group.add_nodes(updated_nodes)
+            echo.echo_info('Updated PotcarData nodes added.')
+
+            # Check again
+            dup, _ = new_group.get_duplicated_symbols()
+            if len(dup) > 0:
+                echo.echo(f'Operation failed - there are still duplicated symbols in the group {new_group}')
+                echo.echo_critical(f'Abort. {group} remain unchanged')
+
+            # Swap the label
+            old_nodes = list(group.nodes)
+            backup_group = PotcarGroup(label=group.label + '.backup')
+            backup_group.store()
+            backup_group.add_nodes(old_nodes)
+            group.remove_nodes(old_nodes)
+            group.add_nodes(list(new_group.nodes))
+
+            echo.echo_success(f'Successfully fixed group {group.label}')
+            echo.echo(f'You can now delete transient group {new_group} with `verdi group delete {new_group.pk}`.')
 
 
 @potcar.command()

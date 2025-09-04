@@ -1216,3 +1216,56 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         results.sort(key=cmp_to_key(by_older))
         return results
+
+    def verify_unique(self) -> None:
+        """Raise a UniquenessError if an equivalent node exists."""
+
+        if self.exists(sha512=self.sha512, symbol=self.symbol):
+            raise UniquenessError(
+                f'A {self.__class__!s} node with identical symbol {self.symbol} already exists for this file.'
+            )
+
+        other_attrs = deepcopy(self.base.attributes.all)
+
+        other_attrs.pop('sha512')
+        if self.exists(**other_attrs):
+            raise UniquenessError(
+                f'A {self.__class__!s} node with these attributes but a different file exists:\n{other_attrs!s}'
+            )
+
+    def check_and_fix_inconsistent_potcar_symbol(self, fix=False):
+        """
+        Check inconsistence in the POTCAR symbols parsed compared with the
+        apparent folder name.
+
+        :param fix: Create a new PotcarData node with the corrected symbol name.
+        """
+
+        file_node = self.find_file_node()
+        path = Path(self.original_file_name)
+        if path.parts[-2] != self.symbol:
+            info = {
+                'file_node': file_node,
+                'original_filename': path,
+                'file_node_stored_symbol': file_node.symbol,
+                'stored_symbol': self.symbol,
+                'node': self,
+                'folder_symbol': path.parts[-2],
+            }
+            if fix:
+                # Check if there is an existing node with the correct symbol
+                if path.parts[-2] == self.element:
+                    new_symbol = path.parts[-2]
+                elif path.parts[-2].startswith(self.element + '_'):
+                    new_symbol = path.parts[-2]
+                else:
+                    new_symbol = f'{self.element}_{path.parts[-2]}'
+                try:
+                    corrected = self.find(symbol=new_symbol, sha512=self.sha512)[0]
+                except NotExistent:
+                    # Create a new node with the correct symbol
+                    corrected = PotcarData(potcar_file_node=file_node)
+                    corrected.base.attributes.set('symbol', new_symbol)
+                info['updated_node'] = corrected
+            return info
+        return None
