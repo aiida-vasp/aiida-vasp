@@ -199,6 +199,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             message='The input structure is not the primitive one!',
         )
 
+    def get_appended_label(self, suffix):
+        """Return a label with appended suffix"""
+        return (self.inputs.metadata.get('label', '') or '') + ' ' + suffix
+
     @classmethod
     def get_builder_from_protocol(
         cls,
@@ -413,8 +417,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         base_work = WorkflowFactory(self._base_wk_string)
         inputs = AttributeDict(self.exposed_inputs(base_work, namespace='scf'))
         inputs.metadata.call_link_label = 'scf'
-        base_label = self.inputs.metadata.get('label', '') or ''
-        inputs.metadata.label = base_label + ' SCF'
+        inputs.metadata.label = self.get_appended_label('SCF')
         inputs.structure = self.ctx.current_structure
 
         # Turn off cleaning of the working directory
@@ -511,7 +514,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             inputs.kpoints = self.ctx.bs_kpoints
 
             # Tag the calculation
-            inputs.metadata.label = self.inputs.metadata.get('label', '') + ' BS'
+            inputs.metadata.label = self.get_appended_label('BS')
             inputs.metadata.call_link_label = 'bs'
 
             bands_calc = self.submit(base_work, **inputs)
@@ -562,7 +565,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
                     inputs.settings = update_nested_dict_node(settings, essential, extend_list=True)
 
             # Set the label
-            inputs.metadata.label = self.inputs.metadata.label + ' DOS'
+            inputs.metadata.label = self.get_appended_label('DOS')
             inputs.metadata.call_link_label = 'dos'
 
             dos_calc = self.submit(base_work, **inputs)
@@ -931,7 +934,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 inputs.settings, {'parser_settings': {'include_node': ['kpoints']}}, extend_list=True
             )
 
-        inputs.metadata.label = self.inputs.metadata.label + ' SCF KPOINTS'
+        inputs.metadata.label = self.get_appended_label('SCF KPOINTS')
         inputs.metadata.call_link_label = 'scf_for_kpoints'
         inputs.structure = self.ctx.current_structure  # Use the current structure as reference
         running = self.submit(workflow_class, **inputs)
@@ -998,7 +1001,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
 
             # Swap the kpoints the the one with zero-weight parts
             inputs.kpoints = value
-            inputs.metadata.label = self.inputs.metadata.label + f' SPLIT {idx}'
+            inputs.metadata.label = self.get_appended_label(f' SPLIT {idx}')
             inputs.metadata.call_link_label = f'bandstructure_split_{idx:03d}'
             inputs.structure = self.ctx.current_structure
             running = self.submit(workflow_class, **inputs)

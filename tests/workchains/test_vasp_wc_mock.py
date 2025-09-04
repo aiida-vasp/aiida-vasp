@@ -21,52 +21,53 @@ The test data are stored in the `<root>/tests/test_data` folder.
 Make sure you unset the environmental variables and rerun the tests to check it works as before.
 """
 
+import pytest
 from aiida import orm
 from ase.build import bulk
 
+from aiida_vasp.protocols.generator import (
+    VaspBandsInputGenerator,
+    VaspConvergenceInputGenerator,
+    VaspHybridBandsInputGenerator,
+    VaspInputGenerator,
+    VaspRelaxInputGenerator,
+)
 from aiida_vasp.workchains import (
-    VaspBandsWorkChain,
-    VaspConvergenceWorkChain,
-    VaspHybridBandsWorkChain,
     VaspMultiStageRelaxWorkChain,
-    VaspRelaxWorkChain,
 )
 
 
-def test_silicon_sp(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
-    """Test running a VASP workchain on silicon using the mock code."""
+@pytest.fixture
+def si_node(aiida_profile):
     si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
+    return orm.StructureData(ase=si)
 
-    upd = builder_updater
 
-    upd.apply_preset(si_node, code='mock-vasp@localhost')
+def test_silicon_sp(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
+    """Test running a VASP workchain on silicon using the mock code."""
+    upd = VaspInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost')
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_sp')
     results = upd.run_get_node()
     # Add prefix to the registry folder
     assert results.node.is_finished_ok
 
 
-def test_silicon_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
+def test_silicon_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     """Test running a VASP workchain on silicon using the mock code."""
-    si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
-
-    upd = VaspRelaxWorkChain.get_builder_updater(code='mock-vasp@localhost')
-    upd.apply_preset(si_node)
+    upd = VaspRelaxInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost')
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_relax')
     results = upd.run_get_node()
     # Add prefix to the registry folder
     assert results.node.is_finished_ok
 
 
-def test_silicon_converge(fresh_aiida_env, mock_potcars, mock_vasp_strict):
+def test_silicon_converge(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     """Test running a VASP workchain on silicon using the mock code."""
-    si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
 
-    upd = VaspConvergenceWorkChain.get_builder_updater(code='mock-vasp@localhost')
-    upd.apply_preset(si_node)
+    upd = VaspConvergenceInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost')
     upd.set_conv_settings(cutoff_stop=400.0, kspacing_stop=0.06)
     # Add prefix to the registry folder
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_convergence')
@@ -74,26 +75,22 @@ def test_silicon_converge(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_band(fresh_aiida_env, mock_potcars, mock_vasp_strict):
+def test_silicon_band(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     """Test running a VASP workchain on silicon using the mock code."""
-    si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
 
-    upd = VaspBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
-    upd.apply_preset(si_node)
+    upd = VaspBandsInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost', run_relax=False)
     # Add prefix to the registry folder
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_bands')
+    # Do not run relaxation
     results = upd.run_get_node()
     assert results.node.is_finished_ok
 
 
-def test_silicon_band_hybrid(fresh_aiida_env, mock_potcars, mock_vasp_strict):
+def test_silicon_band_hybrid(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     """Test the hybrid (split-path) SCF  band structure workchain"""
-
-    si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
-    upd = VaspHybridBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
-    upd.apply_preset(si_node, run_relax=True)
+    upd = VaspHybridBandsInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost')
     upd.set_band_settings(kpoints_per_split=120)
     # Add prefix to the registry folder
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_hybrid')
@@ -101,13 +98,11 @@ def test_silicon_band_hybrid(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     assert results.node.is_finished_ok
 
 
-def test_silicon_band_hybrid_no_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict):
+def test_silicon_band_hybrid_no_relax(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     """Test the hybrid (split-path) SCF  band structure workchain"""
 
-    si = bulk('Si', 'diamond', 5.4)
-    si_node = orm.StructureData(ase=si)
-    upd = VaspHybridBandsWorkChain.get_builder_updater(code='mock-vasp@localhost')
-    upd.apply_preset(si_node, run_relax=False)
+    upd = VaspHybridBandsInputGenerator()
+    upd.get_builder(structure=si_node, code='mock-vasp@localhost', run_relax=False)
     upd.set_band_settings(kpoints_per_split=150)
     # Add prefix to the registry folder
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_hybrid_no_relax')

@@ -141,6 +141,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater, ProtocolMixin):
         # This needs to be removed in the next major release/formalized workchain interface
         spec.inputs.validator = validate_calc_job_custom
         spec.inputs['calc']['metadata']['options']['resources']._required = False
+        spec.inputs['calc']._required = False
 
         spec.input('kpoints', valid_type=orm.KpointsData, required=False)
         spec.input(

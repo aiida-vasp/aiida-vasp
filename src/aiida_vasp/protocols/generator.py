@@ -223,7 +223,8 @@ class BaseInputGenerator:
         updates = recursive_merge(updates, kwargs)
         # Update the options
         for port, namespace in calc_namespaces:
-            namespace['metadata']['options'] = recursive_merge(dict(namespace['metadata']['options']), updates)
+            if has_content(namespace) or namespace._port_namespace._required:
+                namespace['metadata']['options'] = recursive_merge(dict(namespace['metadata']['options']), updates)
         return self
 
     def set_resources(self, resources_updates, ports=None, update_all=True, **kwargs):
@@ -242,7 +243,8 @@ class BaseInputGenerator:
         updates = deepcopy(resources_updates or {})
         updates.update(kwargs)
         for port, namespace in calc_namespaces:
-            namespace['metadata']['options']['resources'].update(updates)
+            if has_content(namespace) or namespace._port_namespace._required:
+                namespace['metadata']['options']['resources'].update(updates)
         return self
 
     def _update_ports_by_base_name(
@@ -518,9 +520,9 @@ class VaspConvergenceInputGenerator(BaseInputGenerator):
 
     WF_ENTRYPOINT = 'vasp.converge'
 
-    def set_converge_settings(self, value=None, **kwargs):
-        """Set the `converge_settings` port"""
-        self._set_generic_port_by_dict('converge_settings', ports=['converge_settings'], value=value, **kwargs)
+    def set_conv_settings(self, value=None, **kwargs):
+        """Set the `conv_settings` port"""
+        self._set_generic_port_by_dict('conv_settings', ports=['conv_settings'], value=value, **kwargs)
         return self
 
 
@@ -640,12 +642,12 @@ def recursive_search_port_basename(namespace, basename):
     return ports
 
 
-def check_all_empty(mapping):
+def has_content(mapping):
     """Check if a dictionary is all empty"""
     for key, value in mapping.items():
         if hasattr(value, 'items'):
-            if check_all_empty(value) is False:
-                return False
-        if value != {}:
-            return False
-    return True
+            if has_content(value) is True:
+                return True
+        else:
+            return True
+    return False

@@ -243,21 +243,18 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         # Make sure we parse the output structure when we want to perform
         # relaxations (override if contrary entry exists).
-        if 'settings' in self.inputs.vasp:
-            settings = self.inputs.vasp.settings
-        else:
-            settings = orm.Dict(dict={})
-
+        settings = self.inputs.vasp.get('settings', {}) or {}
+        if isinstance(settings, orm.Data):
+            settings = settings.get_dict()
         if self.perform_relaxation():
-            settings = update_nested_dict_node(
+            settings = update_nested_dict(
                 settings,
                 {'parser_settings': {'include_node': ['structure', 'trajectory'], 'include_quantity': ['energies']}},
                 extend_list=True,
             )
 
         # Update the settings for the relaxation
-        if settings.get_dict():
-            self.ctx.relax_input_additions.settings = settings
+        self.ctx.relax_input_additions.settings = settings
 
         # Hybrid calculation boot-strapping
         if self.ctx.relax_settings.get('hybrid_calc_bootstrap'):
