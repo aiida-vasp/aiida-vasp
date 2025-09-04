@@ -110,7 +110,7 @@ import re
 import shutil
 import tarfile
 import tempfile
-from collections import Counter, namedtuple
+from collections import Counter, defaultdict, namedtuple
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import cmp_to_key
@@ -158,7 +158,7 @@ class PotcarGroup(Group):
     def verify(self):
         """Verify the current data set against known sets"""
         # Check duplicated symbols
-        duplicated = self.get_duplicated_symbols()
+        duplicated, _ = self.get_duplicated_symbols()
         if duplicated:
             raise ValueError(
                 f'Duplicated symbol found in group {self.label}: {list(duplicated)}) which will result in'
@@ -195,7 +195,12 @@ class PotcarGroup(Group):
         several GW POTCARs are wrongly labeled. For example, B_GW is labeled as B
         """
         counts = Counter([node.symbol for node in self.nodes])
-        return {key: value for key, value in counts.items() if value > 1}
+        duplicated = {key: value for key, value in counts.items() if value > 1}
+        resolved = defaultdict(list)
+        for node in self.nodes:
+            if node.symbol in duplicated:
+                resolved[node.symbol].append(node.original_file_name)
+        return duplicated, resolved
 
 
 def migrate_potcar_group() -> None:

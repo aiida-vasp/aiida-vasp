@@ -65,10 +65,9 @@ docs = [
 ]
 graphs = ["matplotlib"]
 
-[project.entry-points."aiida.cmdline.data"]
-"vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
-"vasp.tools" = "aiida_vasp.commands.tools:tools"
-"vasp.launch" = "aiida_vasp.commands.aiida_vasp_cmd:launch"
+#[project.entry-points."aiida.cmdline.data"]
+#"vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
+#"vasp.tools" = "aiida_vasp.commands.tools:tools"
 
 [project.entry-points."aiida.calculations"]
 "vasp.vasp" = "aiida_vasp.calcs.vasp:VaspCalculation"
@@ -211,4 +210,5 @@ select = [
 
 
 [tool.ruff.lint.per-file-ignores]
+"**/aiida_vasp/commands/*" = ["PLC0415"]
 "tests/*" = ["F403"]

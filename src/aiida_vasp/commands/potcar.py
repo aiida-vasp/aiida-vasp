@@ -10,14 +10,13 @@ from pathlib import Path
 import click
 import tabulate
 from aiida.cmdline.utils.decorators import with_dbenv
-from aiida.orm import Group, QueryBuilder
 from click_spinner import spinner as cli_spinner
 
-from aiida_vasp.commands import options
-from aiida_vasp.data.potcar import PotcarData, migrate_potcar_group
-from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
+from aiida_vasp.commands import cmd_aiida_vasp, options
 
-VERDI_DATA = cmp_load_verdi_data()
+# from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
+
+# VERDI_DATA = cmp_load_verdi_data()
 
 FUNCTIONAL_CHOICES = [
     'PBE',
@@ -39,7 +38,8 @@ FUNCTIONAL_CHOICES = [
 ]
 
 
-@VERDI_DATA.group('vasp.potcar')
+# @VERDI_DATA.group('vasp.potcar')
+@cmd_aiida_vasp.group('potcar')
 def potcar() -> None:
     """Top level command for handling VASP POTCAR files."""
 
@@ -50,6 +50,8 @@ def try_grab_description(ctx, param, value):
 
     This is a click parameter callback.
     """
+    from aiida_vasp.data.potcar import PotcarData
+
     potcar_data_cls = PotcarData
     group_name = ctx.params['name']
     existing_groups = potcar_data_cls.get_potcar_groups()
@@ -64,14 +66,16 @@ def try_grab_description(ctx, param, value):
 def detect_old_style_groups() -> None:
     """Check for the existence of old style groups and prompt the user"""
 
-    from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup  # noqa: PLC0415
+    from aiida import orm
 
-    qdb = QueryBuilder()
-    qdb.append(Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE}, project=['label'])
+    from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, PotcarGroup
+
+    qdb = orm.QueryBuilder()
+    qdb.append(orm.Group, filters={'type_string': OLD_POTCAR_FAMILY_TYPE}, project=['label'])
     all_old_groups = [qres[0] for qres in qdb.all()]
     not_migrated = []
     for group_label in all_old_groups:
-        qdb = QueryBuilder()
+        qdb = orm.QueryBuilder()
         qdb.append(PotcarGroup, filters={'label': {'==': group_label}})
         count = qdb.count()
         if count == 0:
@@ -102,6 +106,8 @@ def detect_old_style_groups() -> None:
 def uploadfamily(path, name, description, stop_if_existing, dry_run):
     """Upload a family of VASP potcar files."""
 
+    from aiida_vasp.data.potcar import PotcarData
+
     potcar_data_cls = PotcarData
     with cli_spinner():
         num_found, num_added, num_uploaded = potcar_data_cls.upload_potcar_family(
@@ -111,6 +117,56 @@ def uploadfamily(path, name, description, stop_if_existing, dry_run):
     click.echo(f'POTCAR files found: {num_found}. New files uploaded: {num_uploaded}, Added to Family: {num_added}')
     if dry_run:
         click.echo('No files were uploaded due to --dry-run.')
+
+
+@potcar.command()
+@click.argument('family_name')
+def listsymbols(family_name):
+    """List available symbols in a POTCAR family group."""
+    from aiida import orm
+    from aiida.cmdline.utils import echo
+
+    from aiida_vasp.data.potcar import PotcarGroup
+
+    group: PotcarGroup = orm.load_group(family_name)
+    symbols = [(node.symbol, node.original_file_name) for node in group.nodes]
+    click.echo(f"Symbols in family '{family_name}':")
+    for symbol, fpath in symbols:
+        click.echo(f'- {symbol:<20} -> {fpath}')
+
+    duplicated, resolved = group.get_duplicated_symbols()
+    if duplicated:
+        echo.echo_warning(f'Duplicated symbols found in group {family_name}: {duplicated}')
+
+
+@potcar.command()
+@click.argument('family_name')
+@click.option('--show-each', is_flag=True, help='Show the resolution of each symbol')
+def integrity(family_name, show_each):
+    """Check the integrity of a POTCAR family"""
+    from aiida import orm
+    from aiida.cmdline.utils import echo
+
+    from aiida_vasp.data.potcar import PotcarGroup
+
+    group: PotcarGroup = orm.load_group(family_name)
+    click.echo(f'Group: {family_name} with {group.count()} potcars')
+    duplicated, resolved = group.get_duplicated_symbols()
+    if duplicated:
+        echo.echo_warning(f'Duplicated symbols found in group {family_name}: {duplicated}')
+        for symbol, fname in resolved.items():
+            echo.echo(f'{symbol} -> {fname}')
+    else:
+        echo.echo_success('No duplicated symbols found')
+    matched = group.get_matched_set()
+    if matched:
+        echo.echo_success(f'This group matches an known set `{matched}`')
+    elif show_each:
+        echo.echo('This group does not match any known set')
+        echo.echo('Match of individual POTCARs:')
+        identities = group.get_potcar_identity()
+        for key, value in identities.items():
+            echo.echo(f'{key} ->  {value}')
 
 
 @potcar.command()
@@ -134,9 +190,10 @@ def upload_from_pymatgen(functional, name, description, stop_if_existing, dry_ru
     If you have pymatgen installed and configured to locate the correct VASP POTCAR files,
     you can use this command to upload a family of VASP potcar files into aiida-vasp.
     """
-    from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle  # noqa: PLC0415
+    from pymatgen.io.vasp.inputs import SETTINGS, PotcarSingle
 
-    from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder  # noqa: PLC0415
+    from aiida_vasp.data.potcar import PotcarData
+    from aiida_vasp.utils.pmg import convert_pymatgen_potcar_folder, temporary_folder
 
     funcdir = PotcarSingle.functional_dir[functional]
     pmg_vasp_psp_dir = SETTINGS.get('PMG_VASP_PSP_DIR')
@@ -173,6 +230,8 @@ def listfamilies(element, symbol, description):
     """List available families of VASP potcar files."""
     detect_old_style_groups()
 
+    from aiida_vasp.data.potcar import PotcarData
+
     potcar_data_cls = PotcarData
     groups = potcar_data_cls.get_potcar_groups(filter_elements=element, filter_symbols=symbol)
 
@@ -202,6 +261,8 @@ def listfamilies(element, symbol, description):
 @with_dbenv()
 def exportfamily(path, name, dry_run, as_archive, verbose):
     """Export a POTCAR family into a compressed tar archive or folder."""
+    from aiida_vasp.data.potcar import PotcarData
+
     potcar_data_cls = PotcarData
 
     if not as_archive:
@@ -228,5 +289,7 @@ def migratefamilies():
     Since AiiDA 1.2, groups used by plugins should be defined by subclass and entrypoint names.
     This commands recreates the old style group using the ``PotcarGroup`` class.
     """
+
+    from aiida_vasp.data.potcar import migrate_potcar_group
 
     migrate_potcar_group()

@@ -6,6 +6,20 @@ changelog data prior to this present, but it is not to be considered complete.
 The format is based on \[Keep a Changelog\](<http://keepachangelog.com/en/1.0.0/>)
 and this project adheres to \[Semantic Versioning\](<http://semver.org/spec/v2.0.0.html>).
 
+## \[v5.0.0\]
+
+**Changed**
+- `verdi data vasp.potcar` commands are moved to `aiida-vasp potcar`
+- `verdi data vasp.tools` commands are moved to `aiida-vasp tools`
+
+**Added**
+- `aiida-vasp` command line interface for launching calculations
+
+**Fixed**
+- Incorrect POTCAR mapping when importing VASP POTCAR dataset with wrong symbols inside POTCAR.
+  - This can be the case for 'PBE', 'LDA' release and original PBE/LDA.54/52 releases without hash. Only a few elements are affected.
+  - We recommend to use `aiida-vasp potcar integrity` to check existing families and reimport the POTCAR archive if needed.
+
 
 ## \[v4.1.0\]
 

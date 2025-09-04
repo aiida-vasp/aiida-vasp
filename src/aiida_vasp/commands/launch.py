@@ -8,68 +8,46 @@ import click
 
 from . import cmd_aiida_vasp
 
-# ruff: noqa: PLC0415
 
-
-def common_vasp_options(func):
-    """Decorator to add common VASP calculation options."""
-    func = click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')(func)
-    func = click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')(func)
-    func = click.option('--code', '-c', required=False, help='Code to use for the calculation.')(func)
-    func = click.option(
-        '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
-    )(func)
-    func = click.option(
-        '--num-machines', '-nm', type=int, default=None, help='Number of machines to use for the calculation.'
-    )(func)
-    func = click.option(
-        '--tot-num-mpiprocs',
-        '-np',
-        type=int,
-        default=None,
-        help='Total number of MPI processes to use for the calculation.',
-    )(func)
-    func = click.option(
-        '--options', '-op', default=None, help='Options for the calculation (JSON or key=value format).'
-    )(func)
-    func = click.option(
-        '--resources', '-r', default=None, help='Options for the calculation (JSON or key=value format).'
-    )(func)
-    func = click.option('--overrides', '-io', default=None, help='Path to a file containing input overrides')(func)
-    func = click.option('--relax-settings', '-rs', default=None, help='Path to a file containing relaxation settings')(
-        func
-    )
-    func = click.option(
-        '--incar-overrides', help='Additional incar overrides to be passed as set_incar method of the InputGenerator.'
-    )
-    func = click.option('--band-settings', '-bs', default=None, help='Path to a file containing band settings')(func)
-    func = click.option('--updates', '-u', default=None, help='Path to a file containing calls to set_xxx methods.')(
-        func
-    )
-    func = click.option(
-        '--structure', '-s', required=False, help='Path to a structure file to use for the calculation.'
-    )(func)
-    func = click.option(
-        '--from-vasp-folder', '-fvf', required=False, help='Path to existing VASP folder to use as input template.'
-    )(func)
-    func = click.option('--group', '-g', default=None, help='Group to store the calculation in.')(func)
-    func = click.option('--label', '-l', default=None, help='Label for the calculation.')(func)
-    func = click.option('--description', '-d', default=None, help='Description for the calculation.')(func)
-    func = click.option('--dryrun', is_flag=True, help='Show what would be done without actually submitting.')(func)
-    func = click.option(
-        '--run-directly', is_flag=True, help='Run the calculation directly in the current python process.'
-    )(func)
-    func = click.option(
-        '--workchain-type',
-        default='vasp',
-        help='Type of workchain to launch.',
-        type=click.Choice(['vasp', 'relax'], case_sensitive=False),
-    )(func)
-    return func
-
-
-@cmd_aiida_vasp.command('launch-workchain')
-@common_vasp_options
+@cmd_aiida_vasp.command('launch')
+@click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')
+@click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')
+@click.option('--code', '-c', required=False, help='Code to use for the calculation.')
+@click.option(
+    '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
+)
+@click.option('--num-machines', '-nm', type=int, default=None, help='Number of machines to use for the calculation.')
+@click.option(
+    '--tot-num-mpiprocs',
+    '-np',
+    type=int,
+    default=None,
+    help='Total number of MPI processes to use for the calculation.',
+)
+@click.option('--options', '-op', default=None, help='Options for the calculation (JSON or key=value format).')
+@click.option('--resources', '-r', default=None, help='Options for the calculation (JSON or key=value format).')
+@click.option('--overrides', '-io', default=None, help='Path to a file containing input overrides')
+@click.option('--relax-settings', '-rs', default=None, help='Path to a file containing relaxation settings')
+@click.option(
+    '--incar-overrides', help='Additional incar overrides to be passed as set_incar method of the InputGenerator.'
+)
+@click.option('--band-settings', '-bs', default=None, help='Path to a file containing band settings')
+@click.option('--updates', '-u', default=None, help='Path to a file containing calls to set_xxx methods.')
+@click.option('--structure', '-s', required=False, help='Path to a structure file to use for the calculation.')
+@click.option(
+    '--from-vasp-folder', '-fvf', required=False, help='Path to existing VASP folder to use as input template.'
+)
+@click.option('--group', '-g', default=None, help='Group to store the calculation in.')
+@click.option('--label', '-l', default=None, help='Label for the calculation.')
+@click.option('--description', '-d', default=None, help='Description for the calculation.')
+@click.option('--dryrun', is_flag=True, help='Show what would be done without actually submitting.')
+@click.option('--run-directly', is_flag=True, help='Run the calculation directly in the current python process.')
+@click.option(
+    '--workchain-type',
+    default='vasp',
+    help='Type of workchain to launch.',
+    type=click.Choice(['vasp', 'relax'], case_sensitive=False),
+)
 def launch_workchain(
     preset,
     protocol,
@@ -212,7 +190,7 @@ def launch_workchain(
         raise click.Abort()
 
 
-@cmd_aiida_vasp.command('list-presets')
+@cmd_aiida_vasp.command('presets')
 @click.argument('preset', required=False, type=click.STRING)
 @click.option('--show-content', default=False, is_flag=True, help='Include the content of the protocol files.')
 def list_presets(preset, show_content):
@@ -247,7 +225,7 @@ def list_presets(preset, show_content):
     click.echo('\nHint: Use these preset names with the --preset option.')
 
 
-@cmd_aiida_vasp.command('list-protocols')
+@cmd_aiida_vasp.command('protocols')
 @click.argument('workflow-tag', required=False, type=click.STRING)
 @click.option('--show-content', default=False, is_flag=True, help='Include the content of the protocol files.')
 def list_protocols(workflow_tag, show_content):

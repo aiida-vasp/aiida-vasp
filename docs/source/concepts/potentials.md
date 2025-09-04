@@ -19,22 +19,26 @@ AiiDA-VASP takes care of managing your POTCAR files, but you need to obtain them
 The command line tools for these tasks are written as plugins to [AiiDA], and can be called through the [AiiDA] command `verdi`:
 
 ```
-$ (aiida-vasp) verdi data vasp.potcar --help
-Usage: verdi data vasp.potcar [OPTIONS] COMMAND [ARGS]...
+$ (aiida-vasp) aiida-vasp potcar --help
+Usage: aiida-vasp potcar [OPTIONS] COMMAND [ARGS]...
 
-   Top level command for handling VASP POTCAR files.
+  Top level command for handling VASP POTCAR files.
 
 Options:
-  -h, --help  Show this message and exit.
+  -v, --verbosity [notset|debug|info|report|warning|error|critical]
+                                  Set the verbosity of the output.
+  -h, --help                      Show this message and exit.
 
 Commands:
-  exportfamily  Export a POTCAR family into a compressed tar...
-  listfamilies  List available families of VASP potcar files.
-  uploadfamily  Upload a family of VASP potcar files.
+  exportfamily          Export a POTCAR family into a compressed tar...
+  listfamilies          List available families of VASP potcar files.
+  migratefamilies       Migrate the type_string associated with the...
+  upload-from-pymatgen  Upload a family of VASP potcar files from pymatgen
+  uploadfamily          Upload a family of VASP potcar files.
 ```
 
 ```
-$ verdi data vasp.potcar uploadfamily --path=<path> --name=<potential_family> --description=<desc>
+$ aiida-vasp potcar uploadfamily --path=<path> --name=<potential_family> --description=<desc>
 ```
 
 Where `<path>` is the path to the folder or tar archive containing the POTCAR set. The command expects the folder or archive to look like:
@@ -63,8 +67,8 @@ Custom sets can simply be arranged in a matching folder structure and then impor
 For this purpose, we can use that the `uploadfamily` command by default adds any POTCAR files not yet uploaded to the family of the given `name`, for example:
 
 ```
-$ verdi data vasp.potcar uploadfamily --path=path/to/Ac --name="PBE_custom" --description="A custom set"
-$ verdi data vasp.potcar uploadfamily --path=other/path/to/Ag --name="PBE_custom"
+$ aiida-vasp potcar uploadfamily --path=path/to/Ac --name="PBE_custom" --description="A custom set"
+$ aiida-vasp potcar uploadfamily --path=other/path/to/Ag --name="PBE_custom"
 ```
 
 Note, that the description does not have to be given if the family already exists.
@@ -74,7 +78,7 @@ Due to the recursive nature of the search, this also works for combining several
 ## How to check what potential families are present in the database?
 
 ```
-$ verdi data vasp.potcar listfamilies
+$ aiida-vasp potcar listfamilies
 ```
 
 ## How to access uploaded potentials and search?

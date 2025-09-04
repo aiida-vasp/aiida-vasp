@@ -73,7 +73,7 @@ The `verdi calcjob` command is inspecting a `Calculation`. A workflow may launch
 :::
 
 * Finished workflows can be *dumped* to the disk using `verdi process dump` command. This will created a multi-level directly containing the launched processes.
-* This plugin provides a command `verdi data vasp.tools export` which can be used to export completed calculations and workchains. The output if similar to `verdi process dump` with some differences:
+* This plugin provides a command `aiida-vasp tools export` which can be used to export completed calculations and workchains. The output if similar to `verdi process dump` with some differences:
   * The input and output files of `VaspCalculation`s are collected into a single folder, mimicking normal VASP calculations.
   * A `--include-potcar` option can be passed so the `POTCAR` file of each calculation is re-created. This is not the case when using `verdi process dump`, since the exact `POTCAR` content is not included in the provenance graph in order for the data to be sharable (for licensing reasons).
 

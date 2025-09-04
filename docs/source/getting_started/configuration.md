@@ -112,7 +112,7 @@ specific version of the PAW dataset relaxed with VASP.
 Execute the following command to upload the whole potential family to the database:
 
 ```
-% verdi data vasp.potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials version 54"
+% aiida-vasp potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials version 54"
 POTCAR files found: 327. New files uploaded: 327, Added to Family: 327
 ```
 

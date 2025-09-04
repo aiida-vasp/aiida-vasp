@@ -10,12 +10,8 @@ import click
 
 from . import cmd_aiida_vasp
 
-# ruff: noqa: PLC0415
 
-# ruff: noqa: PLC0415
-
-
-@cmd_aiida_vasp.command('import-calc')
+@cmd_aiida_vasp.command('import')
 @click.option('--code', '-c', required=False, help='Code to use for the calculation.')
 @click.option('--path', '-p', required=True, help='Path to the calculation folder.')
 @click.option('--potential-family', '-f', required=False, help='Potential family to use if POTCAR is missing.')

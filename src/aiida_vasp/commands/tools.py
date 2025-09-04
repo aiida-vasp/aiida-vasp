@@ -2,39 +2,28 @@
 Module for easy access to aiida-vasp calculations.
 """
 
+from __future__ import annotations
+
 import os
 import subprocess
 import sys
-import tempfile
 from functools import wraps
 from shutil import copyfileobj
-from typing import Any, Callable
 
 import click
-from aiida import orm
-from aiida.cmdline.commands.cmd_calcjob import calcjob_outputcat
 from aiida.cmdline.params.arguments import (
     CALCULATION,
     PROCESS,
     WORKFLOW,
 )
-from aiida.cmdline.utils.echo import (
-    echo_critical,
-    echo_error,
-    echo_info,
-    echo_success,
-)
-from aiida.common.escaping import escape_for_bash
-from aiida.common.exceptions import NotExistent
-from aiida.orm import CalcJobNode, QueryBuilder, WorkChainNode
 
-from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
-from aiida_vasp.utils.export import export_vasp
+# from aiida_vasp.utils.aiida_utils import cmp_load_verdi_data
+from aiida_vasp.commands import cmd_aiida_vasp
 
-VERDI_DATA = cmp_load_verdi_data()
+# VERDI_DATA = cmp_load_verdi_data()
 
 
-@VERDI_DATA.group('vasp-tools')
+@cmd_aiida_vasp.group('tools')
 def tools() -> None:
     """Tool for aiida-vasp related data"""
 
@@ -54,23 +43,28 @@ def tools() -> None:
     is_flag=True,
     help='Wether to decompress the contents',
 )
-def export(process: orm.ProcessNode, folder: str, decompress: bool, include_potcar: bool) -> None:
+def export(process, folder: str, decompress: bool, include_potcar: bool) -> None:
     """Export a VASP calculation, works for both `VaspCalculation` or `VaspWorkChain`"""
+    from aiida_vasp.utils.export import export_vasp
+
     export_vasp(process, folder, decompress, include_potcar)
 
 
-def select_calcjob_from_work(func: Callable) -> Callable:
+def select_calcjob_from_work(func):
     """Select calcjob from work"""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        from aiida import orm
+        from aiida.cmdline.utils import echo
+
         calcjob = kwargs['calcjob']
         index = kwargs.pop('index', 0)
 
         if isinstance(calcjob, orm.WorkChainNode):
             valid = [process for process in calcjob.called_descendants if not process.is_finished]
             if len(valid) > 0:
-                echo_info(
+                echo.echo_info(
                     f'More than one calculations are still running: {", ".join(str(process.pk) for process in valid)}.'
                     f' Selected {valid[index].pk}'
                 )
@@ -96,13 +90,14 @@ def select_calcjob_from_work(func: Callable) -> Callable:
 @click.argument('fname')
 @click.option('--save-to', '-s', help='Name of the file to save to')
 @select_calcjob_from_work
-def remotecat(calcjob: orm.CalcJobNode, fname: str, save_to: str | None) -> None:
+def remotecat(calcjob, fname: str, save_to: str | None) -> None:
     """
     Print the conetent of a remote file to STDOUT
 
     This command for printing the content of a remote file to STDOUT.
     Useful for analysing running calculations.
     """
+    import tempfile
 
     rfolder = calcjob.outputs.remote_folder
     if save_to is None:
@@ -129,13 +124,14 @@ def remotecat(calcjob: orm.CalcJobNode, fname: str, save_to: str | None) -> None
     help='Maximum size of the files to be retrieved - this is passed to rsync',
 )
 @select_calcjob_from_work
-def remotepull(calcjob: orm.CalcJobNode, dest: str, max_size: str | None) -> None:
+def remotepull(calcjob, dest: str, max_size: str | None) -> None:
     """
     Pull a calculation folder from the remote
 
     This command for pull a calculation folder to a local folder.
     `rsync` is used for doing the heavy lifting.
     """
+    from aiida.cmdline.utils import echo
 
     rfolder = calcjob.outputs.remote_folder
     cmd_args = ['rsync', '-av']
@@ -148,35 +144,40 @@ def remotepull(calcjob: orm.CalcJobNode, dest: str, max_size: str | None) -> Non
         dest = dest + '/'
     cmd_args.append(dest)
 
-    echo_info('Running commands: {}'.format(' '.join(cmd_args)))
+    echo.echo_info('Running commands: {}'.format(' '.join(cmd_args)))
 
     completed = subprocess.run(cmd_args, check=False)
     if completed.returncode != 0:
-        echo_error('Failled to pull data using rsync')
+        echo.echo_error('Failled to pull data using rsync')
     else:
-        echo_success(f'Remote folder pulled to {dest}')
+        echo.echo_success(f'Remote folder pulled to {dest}')
 
 
 @tools.command('remotetail')
 @CALCULATION('calcjob')
 @click.argument('fname')
-def remotetail(calcjob: orm.CalcJobNode, fname: str) -> None:
+def remotetail(calcjob, fname: str) -> None:
     """
     Follow a file on the remote computer
 
     This command will launch a ssh session dedicated for following a file
     using the `tail -f` command
     """
+    from aiida import orm
+    from aiida.cmdline.utils import echo
+    from aiida.common.exceptions import NotExistent
+
+    calcjob: orm.CalcJobNode
 
     try:
         transport = calcjob.get_transport()
     except NotExistent as exception:
-        echo_critical(repr(exception))
+        echo.echo_critical(repr(exception))
 
     remote_workdir = calcjob.get_remote_workdir()
 
     if not remote_workdir:
-        echo_critical('no remote work directory for this calcjob, maybe the daemon did not submit it yet')
+        echo.echo_critical('no remote work directory for this calcjob, maybe the daemon did not submit it yet')
 
     command = tailf_command(transport, remote_workdir, fname)
     os.system(command)
@@ -185,24 +186,27 @@ def remotetail(calcjob: orm.CalcJobNode, fname: str) -> None:
 @tools.command('relaxcat')
 @WORKFLOW('workflow')
 @click.argument('fname')
-def relaxcat(workflow: orm.WorkChainNode, fname: str) -> None:
+def relaxcat(workflow, fname: str) -> None:
     """Cat the output of the last calculation of a finished workflow"""
+    from aiida import orm
+    from aiida.cmdline.commands.cmd_calcjob import calcjob_outputcat
 
-    q = QueryBuilder()
-    q.append(WorkChainNode, filters={'id': workflow.id})
-    q.append(WorkChainNode)
-    q.append(CalcJobNode, tag='calc', project=['*', 'ctime'])
+    q = orm.QueryBuilder()
+    q.append(orm.WorkChainNode, filters={'id': workflow.id})
+    q.append(orm.WorkChainNode)
+    q.append(orm.CalcJobNode, tag='calc', project=['*', 'ctime'])
     q.order_by({'calc': {'ctime': 'desc'}})
     calc, ctime = q.first()
-
     click.Context(calcjob_outputcat).invoke(calcjob_outputcat, calcjob=calc, path=fname)
 
 
-def tailf_command(transport: Any, remotedir: str, fname: str) -> str:
+def tailf_command(transport, remotedir: str, fname: str) -> str:
     """
     Specific gotocomputer string to connect to a given remote computer via
     ssh and directly go to the calculation folder and then do tail -f of the target file.
     """
+
+    from aiida.common.escaping import escape_for_bash
 
     further_params = []
     if 'username' in transport._connect_args:

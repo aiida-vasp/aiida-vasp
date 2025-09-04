@@ -118,7 +118,7 @@ vasprun PymatgenAdapter(vasp_calc).vasprun  # This WILL re-export the files to t
 (potcar-from-pymatgen)=
 ### Uploading pseduopotentials from a pymatgen installation
 
-If you have a pymatgen installation with VASP POTCARs configured (following this [guide](https://pymatgen.org/installation.html#potcar-setup)), you can use the `verdi data vasp.potcar upload-from-pymatgen` command to upload them to the AiiDA database.
+If you have a pymatgen installation with VASP POTCARs configured (following this [guide](https://pymatgen.org/installation.html#potcar-setup)), you can use the `aiida-vasp potcar upload-from-pymatgen` command to upload them to the AiiDA database.
 As in the normal upload, the family name must be specified.
 Pymatgen distinguishes different POTCAR sets as different *functionals*, so the functional must also be specified.
 The `PBE.54` family mentioned in the documentation refers to the `potpaw.54` POTCAR set, which is the `PBE_54` functional as in pymatgen.
@@ -205,6 +205,6 @@ We recommend using `VaspRelaxUpdater` rather than `VaspBuilderUpdater` for setti
 
 Sumo is a code for plotting electronic band structures and DOS. It can be used with calculations done by aiida-vasp. There are two ways to use sumo with this package:
 
-1. You can export the calculation with `verdi data vasp.tools export <node> <folder>` and then use sumo's command line interface to plot.
+1. You can export the calculation with `aiida-vasp tools export <node> <folder>` and then use sumo's command line interface to plot.
    This approach works best for DOS plots and for band structure calculations the exported KPOINTS files currently does not have band labels.
 2. Use the `vasp.utils.sumo` module to plot the band structure from a band structure workflow with the get_sumo_dos_plotter and get_sumo_bands_plotter functions.
