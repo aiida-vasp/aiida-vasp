@@ -141,7 +141,7 @@ def listsymbols(family_name):
 
 @potcar.command()
 @click.argument('family_name')
-@click.option('--show-each', is_flag=True, help='Show the resolution of each symbol')
+@click.option('--show-individual-match', is_flag=True, help='Show the resolution of each symbol')
 def integrity(family_name, show_each):
     """Check the integrity of a POTCAR family"""
     from aiida import orm
