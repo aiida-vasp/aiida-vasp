@@ -12,8 +12,8 @@ from . import cmd_aiida_vasp
 
 
 @cmd_aiida_vasp.command('import')
+@click.argument('path')
 @click.option('--code', '-c', required=False, help='Code to use for the calculation.')
-@click.option('--path', '-p', required=True, help='Path to the calculation folder.')
 @click.option('--potential-family', '-f', required=False, help='Potential family to use if POTCAR is missing.')
 @click.option('--potential-mapping', '-m', required=False, help='JSON string mapping elements to potentials.')
 @click.option('--include-wavecar', is_flag=True, help='Include WAVECAR file if present.')

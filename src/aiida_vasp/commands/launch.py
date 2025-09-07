@@ -11,8 +11,11 @@ from . import cmd_aiida_vasp
 
 @cmd_aiida_vasp.command('launch')
 @click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')
+@click.option(
+    '--structure', '-s', required=True, default='POSCAR', help='Path to a structure file to use for the calculation.'
+)
 @click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')
-@click.option('--code', '-c', required=False, help='Code to use for the calculation.')
+@click.option('--code', '-c', required=True, help='Code to use for the calculation.')
 @click.option(
     '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
 )
@@ -31,14 +34,21 @@ from . import cmd_aiida_vasp
 @click.option(
     '--incar-overrides', help='Additional incar overrides to be passed as set_incar method of the InputGenerator.'
 )
-@click.option('--band-settings', '-bs', default=None, help='Path to a file containing band settings')
+@click.option(
+    '--band-settings', '-bs', default=None, help='Explicit settings or a path to a file containing band settings'
+)
+@click.option(
+    '--converge-settings',
+    '-cs',
+    default=None,
+    help='Explicit settings or path to a file containing convergence settings',
+)
 @click.option('--updates', '-u', default=None, help='Path to a file containing calls to set_xxx methods.')
-@click.option('--structure', '-s', required=False, help='Path to a structure file to use for the calculation.')
 @click.option(
     '--from-vasp-folder', '-fvf', required=False, help='Path to existing VASP folder to use as input template.'
 )
 @click.option('--group', '-g', default=None, help='Group to store the calculation in.')
-@click.option('--label', '-l', default=None, help='Label for the calculation.')
+@click.option('--label', '-l', required=True, default=None, help='Label for the calculation.')
 @click.option('--description', '-d', default=None, help='Description for the calculation.')
 @click.option('--dryrun', is_flag=True, help='Show what would be done without actually submitting.')
 @click.option('--run-directly', is_flag=True, help='Run the calculation directly in the current python process.')
@@ -46,7 +56,7 @@ from . import cmd_aiida_vasp
     '--workchain-type',
     default='vasp',
     help='Type of workchain to launch.',
-    type=click.Choice(['vasp', 'relax'], case_sensitive=False),
+    type=click.Choice(['vasp', 'relax', 'band', 'converge', 'hybrid_band'], case_sensitive=False),
 )
 def launch_workchain(
     preset,
@@ -69,11 +79,14 @@ def launch_workchain(
     workchain_type,
     relax_settings,
     band_settings,
+    converge_settings,
     updates,
 ):
     """
     Launch a VASP workchain with the specified protocol and input set.
     """
+    from pprint import pformat
+
     from aiida_vasp.commands.utils import (
         apply_additional_updates,
         handle_calculation_submission,
@@ -82,20 +95,20 @@ def launch_workchain(
         setup_calculation_options,
     )
     from aiida_vasp.protocols.generator import (
-        VaspBandUpdater,
-        VaspConvergenceUpdater,
-        VaspHybridBandsUpdater,
-        VaspRelaxUpdater,
-        VaspUpdater,
+        VaspBandsInputGenerator,
+        VaspConvergenceInputGenerator,
+        VaspHybridBandsInputGenerator,
+        VaspInputGenerator,
+        VaspRelaxInputGenerator,
     )
     from aiida_vasp.utils.dict_merge import recursive_merge
 
     upd_cls_map = {
-        'relax': VaspRelaxUpdater,
-        'vasp': VaspUpdater,
-        'band': VaspBandUpdater,
-        'hybrid_band': VaspHybridBandsUpdater,
-        'conv': VaspConvergenceUpdater,
+        'relax': VaspRelaxInputGenerator,
+        'vasp': VaspInputGenerator,
+        'band': VaspBandsInputGenerator,
+        'hybrid_band': VaspHybridBandsInputGenerator,
+        'converge': VaspConvergenceInputGenerator,
     }
     try:
         # Validate input sources
@@ -108,31 +121,28 @@ def launch_workchain(
             raise click.Abort()
 
         # Load structure from file or VASP folder
+        overrides = process_dict_option(overrides)
         if from_vasp_folder:
             structure_node, overrides_map = load_inputs_from_vasp_folder(from_vasp_folder)
             click.echo(f'Loaded structure from VASP folder: {from_vasp_folder}')
             click.echo(f'Structure: {structure_node.get_formula()}')
             wc_type = workchain_type.lower()
             if wc_type in overrides_map:
-                vasp_overrides = overrides_map[wc_type]
+                local_folder_overrides = overrides_map[wc_type]
+                overrides = recursive_merge(local_folder_overrides, overrides)
             else:
-                vasp_overrides = {}
+                click.echo_critical(f'Workchain type "{workchain_type}" not found in override map.')
         else:
             structure_node = load_structure_from_file(structure)
             click.echo(f'Loading structure from: {structure}')
             click.echo(f'Loaded structure: {structure_node.get_formula()}')
-            vasp_overrides = {}
 
         # Initialize the builder updater
         click.echo(f'Initializing BuilderUpdater with preset: {preset}')
-        upd_cls = upd_cls_map.get(workchain_type.lower(), VaspUpdater)
+        upd_cls = upd_cls_map.get(workchain_type.lower(), VaspInputGenerator)
         upd = upd_cls(preset_name=preset, protocol=protocol)
-
-        # Merge overrides from VASP folder with user-specified overrides
-        final_overrides = recursive_merge(vasp_overrides, process_dict_option(overrides))
-
         # Apply preset with structure
-        upd.get_builder(structure=structure_node, code=code, overrides=final_overrides)
+        upd.get_builder(structure=structure_node, code=code, overrides=overrides)
         upd.set_label(label)
 
         # Handle resource options
@@ -150,6 +160,8 @@ def launch_workchain(
             upd.set_band_settings(process_dict_option(band_settings) if band_settings else {})
         if workchain_type.lower() == 'relax':
             upd.set_relax_settings(process_dict_option(relax_settings) if relax_settings else {})
+        if workchain_type.lower() == 'converge':
+            upd.set_conv_settings(process_dict_option(converge_settings) if converge_settings else {})
 
         # Set metadata
         if description:
@@ -165,7 +177,9 @@ def launch_workchain(
             click.echo(f'Structure: {structure_node.get_formula()} ({structure_node.label})')
             if from_vasp_folder:
                 click.echo(f'VASP folder: {from_vasp_folder}')
-                incar_params = vasp_overrides.get('base', {}).get('vasp', {}).get('parameters', {}).get('incar', {})
+                incar_params = (
+                    local_folder_overrides.get('base', {}).get('vasp', {}).get('parameters', {}).get('incar', {})
+                )
                 click.echo(f'INCAR parameters loaded: {len(incar_params)}')
             click.echo(f'Preset: {preset}')
             if protocol:
@@ -174,8 +188,8 @@ def launch_workchain(
                 click.echo(f'Label: {label}')
             if description:
                 click.echo(f'Description: {description}')
-            if final_overrides:
-                click.echo(f'Overrides applied: {len(final_overrides)} top-level keys')
+            if overrides:
+                click.echo(f'Overrides to be applied: {pformat(overrides)}')
             click.echo('Builder to be launched:')
             click.echo(pretty_print_builder(upd.builder))
             click.echo('=== END DRY RUN ===')
