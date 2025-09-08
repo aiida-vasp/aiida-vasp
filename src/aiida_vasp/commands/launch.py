@@ -11,9 +11,7 @@ from . import cmd_aiida_vasp
 
 @cmd_aiida_vasp.command('launch')
 @click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')
-@click.option(
-    '--structure', '-s', required=True, default='POSCAR', help='Path to a structure file to use for the calculation.'
-)
+@click.option('--structure', '-s', help='Path to a structure file to use for the calculation.')
 @click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')
 @click.option('--code', '-c', required=True, help='Code to use for the calculation.')
 @click.option(
