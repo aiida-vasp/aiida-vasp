@@ -1,6 +1,5 @@
 """Unit tests for mock-vasp command."""
 
-# pylint: disable=unused-import,unused-argument,redefined-outer-name
 import subprocess
 
 

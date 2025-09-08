@@ -12,7 +12,7 @@ from . import cmd_aiida_vasp
 @cmd_aiida_vasp.command('launch')
 @click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')
 @click.option('--structure', '-s', help='Path to a structure file to use for the calculation.')
-@click.option('--protocol', '-i', default='balanced', help='Input set to use for the calculation.')
+@click.option('--protocol', '-pt', default='balanced', help='The protocol to use for the calculation.')
 @click.option('--code', '-c', required=True, help='Code to use for the calculation.')
 @click.option(
     '--max-wallclock-seconds', '-m', type=int, default=None, help='Maximum wallclock time for the calculation.'
@@ -27,7 +27,7 @@ from . import cmd_aiida_vasp
 )
 @click.option('--options', '-op', default=None, help='Options for the calculation (JSON or key=value format).')
 @click.option('--resources', '-r', default=None, help='Options for the calculation (JSON or key=value format).')
-@click.option('--overrides', '-io', default=None, help='Path to a file containing input overrides')
+@click.option('--overrides', '-ov', default=None, help='Path to a file containing input overrides')
 @click.option('--relax-settings', '-rs', default=None, help='Path to a file containing relaxation settings')
 @click.option(
     '--incar-overrides', help='Additional incar overrides to be passed as set_incar method of the InputGenerator.'
@@ -48,8 +48,8 @@ from . import cmd_aiida_vasp
 @click.option('--group', '-g', default=None, help='Group to store the calculation in.')
 @click.option('--label', '-l', required=True, default=None, help='Label for the calculation.')
 @click.option('--description', '-d', default=None, help='Description for the calculation.')
-@click.option('--dryrun', is_flag=True, help='Show what would be done without actually submitting.')
-@click.option('--run-directly', is_flag=True, help='Run the calculation directly in the current python process.')
+@click.option('--dryrun', '-dry', is_flag=True, help='Show what would be done without actually submitting.')
+@click.option('--run-directly', '-rd', is_flag=True, help='Run the calculation directly in the current python process.')
 @click.option(
     '--workchain-type',
     default='vasp',
