@@ -377,7 +377,7 @@ def test_launch_with_resources(cmd_params, run_env):
 
 def test_launch_band_workchain_settings(cmd_params, run_env):
     """Test launch band workchain with settings."""
-    band_settings = '{"kpath_2d": false}'
+    band_settings = '{"symprec": 0.001}'
 
     result = run_cmd(
         command='launch',
@@ -396,6 +396,7 @@ def test_launch_band_workchain_settings(cmd_params, run_env):
         ],
     )
     assert result.exit_code == 0
+    assert 'symprec: 0.001' in result.output
     assert 'DRY RUN' in result.output
 
 
@@ -420,6 +421,7 @@ def test_launch_relax_workchain_settings(cmd_params, run_env):
         ],
     )
     assert result.exit_code == 0
+    assert 'force_cutoff: 0.01' in result.output
     assert 'DRY RUN' in result.output
 
 
