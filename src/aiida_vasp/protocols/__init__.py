@@ -17,6 +17,7 @@ class ProtocolMixin:
     """Utility class for processes to build input mappings for a given protocol based on a YAML configuration file."""
 
     _protocol_tag: str = 'NULL'
+    _load_root: str = '~/.aiida-vasp/protocols'
 
     @staticmethod
     def _split_protocol_file_name(name):
@@ -35,7 +36,7 @@ class ProtocolMixin:
         """List avaliable protocols"""
 
         protocol_tag = protocol_tag or '*'
-        user_path = pathlib.Path(f'~/.aiida-vasp/protocols/{protocol_tag}').expanduser()
+        user_path = pathlib.Path(f'{cls._load_root}/{protocol_tag}').expanduser()
         system_path = pathlib.Path(__file__).parent.parent / 'protocols'
 
         user_files = []
@@ -60,8 +61,12 @@ class ProtocolMixin:
         # Use the default name
         if file_alias is None:
             file_alias = cls._protocol_tag
-        user_path = pathlib.Path(f'~/.aiida-vasp/protocols/{cls._protocol_tag}/{file_alias}.yaml').expanduser()
-        if user_path.exists():
+        # Return the path if it points to a file
+        if (file_alias.endswith('.yaml') or file_alias.endswith('.yml')) and pathlib.Path(file_alias).is_file():
+            return pathlib.Path(file_alias).absolute()
+        # Check if the alias refers to a custom defined protocol file
+        user_path = pathlib.Path(f'{cls._load_root}/{cls._protocol_tag}/{file_alias}.yaml').expanduser()
+        if user_path.is_file():
             return user_path
         # Load the default protocol
         default_path = pathlib.Path(__file__).parent.parent / f'protocols/{cls._protocol_tag}.yaml'
