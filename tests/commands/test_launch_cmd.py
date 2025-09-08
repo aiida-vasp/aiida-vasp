@@ -369,6 +369,9 @@ def test_launch_with_resources(cmd_params, run_env):
         ],
     )
     assert result.exit_code == 0
+    assert 'num_machines: 2' in result.output
+    assert 'tot_num_mpiprocs: 16' in result.output
+    assert 'max_wallclock_seconds: 3600' in result.output
     assert 'DRY RUN' in result.output
 
 
