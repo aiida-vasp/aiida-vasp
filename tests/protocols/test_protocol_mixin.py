@@ -246,7 +246,7 @@ class TestProtocolInputs:
             }
             assert inputs == expected
 
-    def test_get_protocol_inputs_with_alias_protocol(self, temp_protocol_file, sample_protocol_data, protocol_mixin):
+    def test_get_protocol_inputs_with_alias_protocol(self, temp_protocol_file, protocol_mixin):
         """Test getting protocol inputs using protocol alias."""
         with patch.object(protocol_mixin, 'get_protocol_filepath', return_value=temp_protocol_file):
             inputs = protocol_mixin.get_protocol_inputs('moderate')  # Should map to 'balanced'
@@ -265,18 +265,17 @@ class TestProtocolInputs:
         """Test getting protocol inputs with file alias."""
         custom_file = temp_user_protocols_dir / '.aiida-vasp' / 'protocols' / 'test_protocol' / 'custom.yaml'
 
-        with patch.object(protocol_mixin, 'get_protocol_filepath', return_value=custom_file):
-            inputs = protocol_mixin.get_protocol_inputs('custom_advanced@custom')
+        inputs = protocol_mixin.get_protocol_inputs(f'custom_advanced@{custom_file}')
 
-            expected = {
-                'verbose': False,  # From custom_advanced protocol
-                'custom_setting': 'custom_value',  # From default_inputs
-                'advanced_options': {
-                    'option1': True,
-                    'option2': 42,
-                },
-            }
-            assert inputs == expected
+        expected = {
+            'verbose': False,  # From custom_advanced protocol
+            'custom_setting': 'custom_value',  # From default_inputs
+            'advanced_options': {
+                'option1': True,
+                'option2': 42,
+            },
+        }
+        assert inputs == expected
 
     def test_get_protocol_inputs_invalid_protocol(self, temp_protocol_file, protocol_mixin):
         """Test error when requesting invalid protocol."""
@@ -284,7 +283,7 @@ class TestProtocolInputs:
             with pytest.raises(ValueError, match='`invalid` is not a valid protocol'):
                 protocol_mixin.get_protocol_inputs('invalid')
 
-    def test_get_protocol_inputs_with_dict_overrides(self, temp_protocol_file, sample_protocol_data, protocol_mixin):
+    def test_get_protocol_inputs_with_dict_overrides(self, temp_protocol_file, protocol_mixin):
         """Test getting protocol inputs with dictionary overrides."""
         overrides = {
             'verbose': True,
@@ -372,29 +371,28 @@ class TestProtocolMixinIntegration:
         custom_file = temp_user_protocols_dir / '.aiida-vasp' / 'protocols' / 'test_protocol' / 'custom.yaml'
 
         # Test file alias syntax
-        with patch.object(protocol_mixin, 'get_protocol_filepath', return_value=custom_file):
-            # Get available protocols
-            protocols = protocol_mixin.get_available_protocols('custom')
-            assert 'custom_advanced' in protocols
+        # Get available protocols
+        protocols = protocol_mixin.get_available_protocols(custom_file)
+        assert 'custom_advanced' in protocols
 
-            # Get inputs with overrides
-            overrides = {
-                'verbose': False,  # Override the protocol setting
-                'extra_setting': 'test_value',
-            }
+        # Get inputs with overrides
+        overrides = {
+            'verbose': False,  # Override the protocol setting
+            'extra_setting': 'test_value',
+        }
 
-            inputs = protocol_mixin.get_protocol_inputs('custom_advanced@custom', overrides)
+        inputs = protocol_mixin.get_protocol_inputs(f'custom_advanced@{custom_file}', overrides)
 
-            expected = {
-                'verbose': False,  # From override
-                'custom_setting': 'custom_value',  # From default_inputs
-                'advanced_options': {
-                    'option1': True,
-                    'option2': 42,
-                },
-                'extra_setting': 'test_value',  # From override
-            }
-            assert inputs == expected
+        expected = {
+            'verbose': False,  # From override
+            'custom_setting': 'custom_value',  # From default_inputs
+            'advanced_options': {
+                'option1': True,
+                'option2': 42,
+            },
+            'extra_setting': 'test_value',  # From override
+        }
+        assert inputs == expected
 
     def test_protocol_with_nested_overrides(self, temp_protocol_file, protocol_mixin):
         """Test protocol loading with deeply nested overrides."""

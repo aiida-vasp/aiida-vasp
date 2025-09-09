@@ -61,6 +61,8 @@ class ProtocolMixin:
         # Use the default name
         if file_alias is None:
             file_alias = cls._protocol_tag
+        else:
+            file_alias = str(file_alias)
         # Return the path if it points to a file
         if (file_alias.endswith('.yaml') or file_alias.endswith('.yml')) and pathlib.Path(file_alias).is_file():
             return pathlib.Path(file_alias).absolute()
