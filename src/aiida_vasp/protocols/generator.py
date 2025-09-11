@@ -315,6 +315,7 @@ class BaseInputGenerator:
         string = f'{self.__class__.__name__}(protocol={self.protocol}, preset_name={self.preset_name})'
         if self.builder is not None:
             string += f'\nBuilder: {self.builder}'
+        return string
 
     def _repr_pretty_(self, p, _=None) -> str:
         """Pretty representation for in the IPython console and notebooks."""
@@ -572,16 +573,22 @@ def update_dict_node(
     if reuse_if_possible and node.is_stored:
         dtmp_backup = deepcopy(dtmp)
     if namespace:
-        dtmp.get(namespace, {}).update(content)
+        left = dtmp.get(namespace, {})
     else:
-        dtmp.update(content)
+        left = dtmp
+    left = recursive_merge(left, content)
+    # If namepsace is supplied, only update the target namespace inside the dict
+    if namespace:
+        dtmp[namespace] = left
+    else:
+        dtmp = left
     if node.is_stored:
         # There is no need to update the node if the content is the same as before
         if reuse_if_possible and dtmp == dtmp_backup:
             return node
         # The content is different, but the node is immutable, so we create a new node
         return orm.Dict(dict=dtmp)
-    node.update_dict(dtmp)
+    node.set_dict(dtmp)
     return node
 
 

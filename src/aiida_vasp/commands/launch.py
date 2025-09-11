@@ -11,7 +11,7 @@ from . import cmd_aiida_vasp
 
 @cmd_aiida_vasp.command('launch')
 @click.option('--preset', '-p', default='default', help='Preset to use for the calculation.')
-@click.option('--structure', '-s', help='Path to a structure file to use for the calculation.')
+@click.option('--structure', '-s', help='Path to a structure file to use for the calculation or a pk/uuid')
 @click.option('--protocol', '-pt', default='balanced', help='The protocol to use for the calculation.')
 @click.option('--code', '-c', required=True, help='Code to use for the calculation.')
 @click.option(
@@ -56,6 +56,13 @@ from . import cmd_aiida_vasp
     help='Type of workchain to launch.',
     type=click.Choice(['vasp', 'relax', 'band', 'converge', 'hybrid_band'], case_sensitive=False),
 )
+@click.option(
+    '--match-existing/--no-match-existing',
+    default=False,
+    help='Try to match and use an existing structure node if available.',
+)
+@click.option('--yes', '-y', is_flag=True, help='Automatic yes to prompts; assume "yes" as answer to all prompts.')
+@click.option('--alias', '-al', default=None, help='Alias to be set using aiida-grouppathx')
 def launch_workchain(
     preset,
     protocol,
@@ -79,16 +86,21 @@ def launch_workchain(
     band_settings,
     converge_settings,
     updates,
+    match_existing,
+    yes,
+    alias,
 ):
     """
     Launch a VASP workchain with the specified protocol and input set.
     """
     from pprint import pformat
 
+    from aiida import orm
+
     from aiida_vasp.commands.utils import (
         apply_additional_updates,
         handle_calculation_submission,
-        load_structure_from_file,
+        load_structure,
         process_dict_option,
         setup_calculation_options,
     )
@@ -114,10 +126,6 @@ def launch_workchain(
             click.echo('Error: Either --structure or --from-vasp-folder must be specified', err=True)
             raise click.Abort()
 
-        if structure and from_vasp_folder:
-            click.echo('Error: Cannot specify both --structure and --from-vasp-folder', err=True)
-            raise click.Abort()
-
         # Load structure from file or VASP folder
         overrides = process_dict_option(overrides)
         if from_vasp_folder:
@@ -130,10 +138,23 @@ def launch_workchain(
                 overrides = recursive_merge(local_folder_overrides, overrides)
             else:
                 click.echo_critical(f'Workchain type "{workchain_type}" not found in override map.')
-        else:
-            structure_node = load_structure_from_file(structure)
+        if structure:
+            structure_node = load_structure(structure)
             click.echo(f'Loading structure from: {structure}')
             click.echo(f'Loaded structure: {structure_node.get_formula()}')
+
+        # Try to link to existing structure node
+        if match_existing:
+            structure_node.store()
+            existing = orm.QueryBuilder().append(
+                orm.StructureData,
+                filters={'extras._aiida_hash': structure_node.base.caching.get_hash()},
+                tag='structure',
+            )
+            existing.order_by({'structure': [{'ctime': {'order': 'desc'}}]})
+            if existing:
+                if yes or click.confirm(f'Using existing structure node with PK: {structure_node.pk} as input node'):
+                    structure_node = existing[0]
 
         # Initialize the builder updater
         click.echo(f'Initializing BuilderUpdater with preset: {preset}')
@@ -169,8 +190,9 @@ def launch_workchain(
         if incar_overrides is not None:
             upd.set_incar(process_dict_option(incar_overrides))
 
-        if dryrun:
-            click.echo(f'\n=== DRY RUN - Setup for {upd.builder._process_class.__name__} ===')
+        if dryrun or not yes:
+            if dryrun:
+                click.echo(f'\n=== DRY RUN - Setup for {upd.builder._process_class.__name__} ===')
             click.echo(f'Code: {code}')
             click.echo(f'Structure: {structure_node.get_formula()} ({structure_node.label})')
             if from_vasp_folder:
@@ -190,11 +212,15 @@ def launch_workchain(
                 click.echo(f'Overrides to be applied: {pformat(overrides)}')
             click.echo('Builder to be launched:')
             click.echo(pretty_print_builder(upd.builder))
-            click.echo('=== END DRY RUN ===')
-            return
-
-        # Submit or run the calculation and handle groups
-        handle_calculation_submission(upd, run_directly, group)
+            if dryrun:
+                click.echo('=== END DRY RUN ===')
+                return
+            if click.confirm(
+                f'About to launch {upd.builder._process_class.__name__}. Continue?', default=True, abort=True
+            ):
+                pass
+        # Launch the calculation
+        handle_calculation_submission(upd, run_directly, group, alias=alias)
 
     except Exception as e:
         raise e

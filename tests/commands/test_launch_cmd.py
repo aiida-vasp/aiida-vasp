@@ -71,25 +71,6 @@ def test_launch_missing_structure_and_folder():
     assert 'Either --structure or --from-vasp-folder must be specified' in result.output
 
 
-def test_launch_both_structure_and_folder(cmd_params, run_env):
-    """Test launch command fails with both structure and vasp folder."""
-    result = run_cmd(
-        command='launch',
-        args=[
-            '--structure',
-            cmd_params.STRUCTURE_FILE,
-            '--from-vasp-folder',
-            cmd_params.VASP_FOLDER,
-            '--code',
-            f'{run_env.code.pk}',
-            '--label',
-            'test',
-        ],
-    )
-    assert result.exit_code != 0
-    assert 'Cannot specify both --structure and --from-vasp-folder' in result.output
-
-
 def test_launch_dryrun_with_structure(cmd_params, run_env):
     """Test dry run with structure file."""
     result = run_cmd(
@@ -256,6 +237,23 @@ Monkhorst-Pack
     assert result.exit_code == 0
     assert 'DRY RUN' in result.output
     assert 'Loaded structure from VASP folder' in result.output
+
+    result = run_cmd(
+        command='launch',
+        args=[
+            '--structure',
+            cmd_params.STRUCTURE_FILE,
+            '--from-vasp-folder',
+            cmd_params.VASP_FOLDER,
+            '--code',
+            f'{run_env.code.pk}',
+            '--label',
+            'test-from-folder',
+            '--dryrun',
+        ],
+    )
+    assert result.exit_code == 0
+    assert 'Loaded structure:' in result.output
 
 
 def test_presets_list():
