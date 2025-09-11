@@ -10,6 +10,7 @@ from aiida.common import AttributeDict
 from click.testing import CliRunner
 
 from aiida_vasp.commands.launch import launch_workchain, list_presets, list_protocols
+from aiida_vasp.commands.utils import load_structure
 
 
 @pytest.fixture
@@ -238,6 +239,7 @@ Monkhorst-Pack
     assert 'DRY RUN' in result.output
     assert 'Loaded structure from VASP folder' in result.output
 
+    load_structure(cmd_params.STRUCTURE_FILE).store()
     result = run_cmd(
         command='launch',
         args=[
@@ -250,10 +252,12 @@ Monkhorst-Pack
             '--label',
             'test-from-folder',
             '--dryrun',
+            '--match-existing',
         ],
     )
     assert result.exit_code == 0
     assert 'Loaded structure:' in result.output
+    assert 'Using existing structure node' in result.output
 
 
 def test_presets_list():

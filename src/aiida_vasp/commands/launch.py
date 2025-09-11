@@ -151,10 +151,10 @@ def launch_workchain(
                 filters={'extras._aiida_hash': structure_node.base.caching.get_hash()},
                 tag='structure',
             )
-            existing.order_by({'structure': [{'ctime': {'order': 'desc'}}]})
+            existing.order_by({'structure': [{'ctime': {'order': 'desc'}}]}).all()
             if existing:
                 if yes or click.confirm(f'Using existing structure node with PK: {structure_node.pk} as input node'):
-                    structure_node = existing[0]
+                    structure_node = existing[0][0]
 
         # Initialize the builder updater
         click.echo(f'Initializing BuilderUpdater with preset: {preset}')
