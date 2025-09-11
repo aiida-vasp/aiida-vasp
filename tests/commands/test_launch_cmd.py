@@ -238,7 +238,7 @@ Monkhorst-Pack
     assert result.exit_code == 0
     assert 'DRY RUN' in result.output
     assert 'Loaded structure from VASP folder' in result.output
-
+    # Test using --match-existing
     ext = load_structure(cmd_params.STRUCTURE_FILE).store()
     result = run_cmd(
         command='launch',
@@ -259,6 +259,27 @@ Monkhorst-Pack
     assert 'Loaded structure:' in result.output
     assert 'Using existing structure node' in result.output
 
+    # Test match-existing
+    result = run_cmd(
+        command='launch',
+        args=[
+            '--structure',
+            ext.uuid,
+            '--from-vasp-folder',
+            cmd_params.VASP_FOLDER,
+            '--code',
+            f'{run_env.code.pk}',
+            '--label',
+            'test-from-folder',
+            '--dryrun',
+            '--match-existing',
+        ],
+    )
+    assert result.exit_code == 0
+    assert 'Loaded structure:' in result.output
+    assert 'Using existing structure node' in result.output
+
+    # Test using UUID as structure input
     result = run_cmd(
         command='launch',
         args=[
