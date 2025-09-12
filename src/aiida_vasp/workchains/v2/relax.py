@@ -614,7 +614,20 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             # BONAN: Check force - this is because the underlying VASP calculation may not have finished with
             # fully converge geometry, and the vasp plugin does not check it.
             force_cut_off = relax_settings.get('force_cutoff')
-            max_force = get_maximum_force(workchain.outputs.misc.get('forces'))
+
+            # Set the forces to zero if using selective dynamics
+            forces = np.array(workchain.outptus.misc.get('forces'))
+            if workchain.inputs.get('dynamics'):
+                dynamics = workchain.inputs.dynamics.get_dict()
+                if 'positions_dof' in dynamics:
+                    for i, value in enumerate(dynamics['positions_dof']):
+                        # Set forces to zero if there is any False entry
+                        # This is because VASP fixes fractional coorindates while forces are in Cartesian
+                        # So to void deadlock, we simply ignore the forces on that atom
+                        if any([not v for v in value]):
+                            forces[i, :] = 0.0
+
+            max_force = get_maximum_force(forces)
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
                     f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g}'

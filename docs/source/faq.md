@@ -77,6 +77,50 @@ The `verdi calcjob` command is inspecting a `Calculation`. A workflow may launch
   * The input and output files of `VaspCalculation`s are collected into a single folder, mimicking normal VASP calculations.
   * A `--include-potcar` option can be passed so the `POTCAR` file of each calculation is re-created. This is not the case when using `verdi process dump`, since the exact `POTCAR` content is not included in the provenance graph in order for the data to be sharable (for licensing reasons).
 
+## Fixing the atoms during relaxation
+
+Atoms may be fined by setting the `dynamics` input port using a dictionary:
+
+```python
+dynamics = {
+  'positions_dof': [
+    [1, 1, 1],
+    [0, 0, 0],
+    [0, 0, 1],
+  ]
+}
+```
+
+This means to:
+
+```
+T T T
+F F F
+T T F
+```
+
+in the generated POSCAR file for the three atoms for selective dynamics.
+The `T` means that the atom is allow to move in this degree of freedom, and `F` means that the atom is fixed in this direction.
+
+For example, if one wants to completely fix all atoms between  $\mathrm{2 \AA}$ to  $\mathrm{4 \AA}$ in the z direction:
+
+```python
+z = builder.structure.get_ase().positions[:, 2]
+to_fix  = (z < 4) & (z > 2)
+dof = [[1, 1, 1] if not fix else [0, 0, 0] for fix in to_fix]
+
+builder.dynamics = {
+  'positions_dof': dof
+}
+```
+
+:::{warning}
+The `T` and `F` applies to the **direct** (fractional) coorindates.
+To fix the **cartesian** coorindates, the $$lattice vectors needs to align with the x, y, z direction respectively.
+:::
+
+
+
 
 ## I found the documentation to be out-dated and missing certain contents!
 
