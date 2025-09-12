@@ -616,18 +616,13 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             force_cut_off = relax_settings.get('force_cutoff')
 
             # Set the forces to zero if using selective dynamics
-            forces = np.array(workchain.outptus.misc.get('forces'))
-            if workchain.inputs.get('dynamics'):
-                dynamics = workchain.inputs.dynamics.get_dict()
-                if 'positions_dof' in dynamics:
-                    for i, value in enumerate(dynamics['positions_dof']):
-                        # Set forces to zero if there is any False entry
-                        # This is because VASP fixes fractional coorindates while forces are in Cartesian
-                        # So to void deadlock, we simply ignore the forces on that atom
-                        if any([not v for v in value]):
-                            forces[i, :] = 0.0
+            forces = np.array(workchain.outputs.misc.get('forces'))
+            if 'dynamics' in workchain.inputs:
+                dof = workchain.inputs.dynamics.get('positions_dof')
+            else:
+                dof = None
 
-            max_force = get_maximum_force(forces)
+            max_force = get_maximum_force(forces, dof=dof)
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
                     f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g}'
@@ -789,11 +784,15 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         """
         workchain = self.ctx.workchains[-1]
         self.out_many(self.exposed_outputs(workchain, self._base_workchain))
-
+        # Check the maximum force only if we are not using selective dynamics
+        if 'dynamics' in workchain.inputs:
+            dof = workchain.inputs.dynamics.get('positions_dof')
+        else:
+            dof = None
         # Try to get the smearing type, there is no point to perform check if the tetrahedral smearing is used.
         if not detect_tetrahedral_method(workchain.inputs.parameters.get_dict()):
             max_force_threshold = self.ctx.relax_settings.get('force_cutoff', 0.03)
-            actual_max_force = get_maximum_force(workchain.outputs.misc['forces'])
+            actual_max_force = get_maximum_force(workchain.outputs.misc['forces'], dof=dof)
             if (
                 actual_max_force > max(max_force_threshold * 1.5, max_force_threshold + 0.001)
                 and self.perform_relaxation()
@@ -1130,7 +1129,15 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.out_many(self.exposed_outputs(workchain, self._base_workchain))
 
 
-def get_maximum_force(forces: np.ndarray) -> float:
+def get_maximum_force(forces: np.ndarray, dof=None) -> float:
     """Return the maximum value of an array of forces with size (N, 3)"""
+    if dof is not None:
+        forces = np.asarray(forces).copy()
+        for i, value in enumerate(dof):
+            # Set forces to zero if there is any False entry
+            # This is because VASP fixes fractional coorindates while forces are in Cartesian
+            # So to void deadlock, we simply ignore the forces on that atom
+            if any([not v for v in value]):
+                forces[i, :] = 0.0
     norm = np.linalg.norm(forces, axis=1)
     return np.amax(norm)
