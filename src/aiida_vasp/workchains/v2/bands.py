@@ -292,6 +292,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         inputs = self.exposed_inputs(relax_work, 'relax', agglomerate=True)
         inputs = AttributeDict(inputs)
         inputs.metadata.call_link_label = 'relax'
+        inputs.metadata.label = self.get_appended_label('RELAX')
         inputs.structure = self.ctx.current_structure
 
         # Ensure the WAVECAR is written by the calculation
