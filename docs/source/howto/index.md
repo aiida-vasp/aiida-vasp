@@ -4,4 +4,6 @@ This section contains a set of how-to guides for various topics related to AiiDA
 
 ```{toctree}
 ./other_codes
+./analyse
+./input
 ```

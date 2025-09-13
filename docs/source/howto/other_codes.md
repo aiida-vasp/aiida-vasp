@@ -172,12 +172,13 @@ load_temp_profile_with_mock()
 from aiida import orm
 from pymatgen.util.testing import PymatgenTest
 from pymatgen.core import Structure
-from aiida_vasp.common.builder_updater import VaspBuilderUpdater
+from aiida_vasp.protocols.generator import VaspInputGenerator
 
 #structure = Structure.from_file("Al_empty.cif")
 structure = PymatgenTest.get_structure("CsCl")
-upd = VaspBuilderUpdater().apply_preset(orm.StructureData(pymatgen=structure), code='vasp@localhost',
-inputset_name="MPRelaxSet")
+
+upd = VaspInputGenerator(protocol="MPRelaxSet")
+upd.get_builder(structure=orm.StructureData(pymatgen=structure), code='mock-vasp@localhost', overrides={"potential_family": "PBE.EXAMPLE"})
 upd.set_resources(num_machines=1, tot_num_mpiprocs=16)
 upd.set_options(max_wallclock_seconds=3600)
 upd.builder
@@ -185,9 +186,9 @@ upd.builder
 
 There are a few differences to note:
 
-1. The `VaspBuilderUpdater` class is used to set up the input parameters with presets, here we used the `MPRelaxSet` as the set name. The code will automatically load use the `pymatgen.io.vasp.sets.MPRelaxSet` class to setup the input parameters subsequently. The supported pymatgen sets can be found in the `aiida_vasp.workchains.v2.pmgset` module.
-2. The `apply_preset` method takes an `orm.StructureData` as input, which is converted from a pymatgen `Structure`. This input structure is stored in the database as a `StructureData` node.
-3. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
+1. The `VaspInputGenerator` class is used to set up the input parameters with presets, here we used the `MPRelaxSet` as the set name. The code will automatically load use the `pymatgen.io.vasp.sets.MPRelaxSet` class to setup the input parameters subsequently.
+2. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
+3. Care should be taken to valid the **actual** calculation parameters as `MPRelaxSet` returns some parameters that are controllbed by higher-level workchain in the framework of `aiida-vasp`, such as `ibrion`, `nsw` and `isif`. These parameters may need to be removed (set to `None`) via overrides.
 
 The `VaspBuilderUpdater` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
 should be configured. The **preset** includes which input set should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.

@@ -232,7 +232,7 @@ class BaseInputGenerator:
                 namespace['metadata']['options'] = recursive_merge(dict(namespace['metadata']['options']), updates)
         return self
 
-    def set_resources(self, resources_updates, ports=None, update_all=True, **kwargs):
+    def set_resources(self, resources_updates=None, ports=None, update_all=True, **kwargs):
         """Set the options input port"""
         if resources_updates is None and not kwargs:
             return self

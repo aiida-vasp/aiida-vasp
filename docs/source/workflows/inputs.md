@@ -85,7 +85,7 @@ pseudopotential configurations.
 The default `UCLRelaxSet` is stored in the `<root>/src/workchains/v2/inputset` folder with the
 following content:
 
-:::{literalinclude} ../../../src/aiida_vasp/workchains/v2/inputset/UCLRelaxSet.yaml
+:::{literalinclude} ../../../src/aiida_vasp/inputset/UCLRelaxSet.yaml
 :::
 
 

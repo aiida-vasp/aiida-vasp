@@ -151,9 +151,11 @@ CLI Reference
 ```
 :::
 
+::::
+
 % End of the card definitions
 
-AiiDA-VASP is under active development, check out the [changelog].
+AiiDA-VASP is under active development, check out the [changelog](#changelog).
 
 
 :::{note}
@@ -181,7 +183,6 @@ howto/index
 developments/index
 apidocs/index
 ./changelog.md
-./faq.md
 ```
 
 
@@ -194,11 +195,18 @@ First consult the documentation of both [AiiDA-VASP documentation] and [AiiDA do
 not paid for this work. Please respect potential lead times in getting answers and be polite.
 
 
+## I found the documentation to be out-dated and missing certain contents!
+
+The documentation may not be update-to-date as new features are added to the code.
+Sometimes it is because the developers feel the feature is not *completed* with time constraints.
+In other cases, it may just because they forgot....
+
+Feedbacks and suggestions on the documentation would be extremely helpful. Please create an issue if you have any in mind!
+
 
 
 [aiida]: https://www.aiida.net
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
-[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 [conda]: https://docs.conda.io/en/latest/
 [open an issue]: https://github.com/aiida-vasp/aiida-vasp/issues
 [submit a pull request]: https://github.com/aiida-vasp/aiida-vasp/pull
