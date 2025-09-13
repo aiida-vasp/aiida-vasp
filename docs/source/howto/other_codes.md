@@ -165,6 +165,7 @@ To achieve a similar (but not equivalent) effect with aiida-vasp:
 # Configure the temp profile environment
 from aiida_vasp.utils.temp_profile import load_temp_profile_with_mock
 load_temp_profile_with_mock()
+PotcarData.upload_potcar_family(str(Path('../tutorials/potcars').absolute()), "PBE.EXAMPLE", "PBE.EXAMPLE")
 ```
 
 ```{code-cell}
