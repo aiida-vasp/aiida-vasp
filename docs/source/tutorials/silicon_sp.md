@@ -3,6 +3,10 @@ file_format: mystnb
 kernelspec:
   display_name: Python 3
   name: python3
+myst:
+  substitutions:
+      VaspInputGenerator: "{py:class}`VaspInputGenerator <aiida_vasp.protocols.generator.VaspInputGenerator>`"
+---
 ---
 (silicon_sp_tutorial)=
 
@@ -18,7 +22,7 @@ code cannot locate the pre-computed calculations to be used as dummy output.
 This notebook can be downloaded as **{nb-download}`silicon_sp.ipynb`** and {download}`silicon_sp.md`
 :::
 
-`VaspBuilderUpdater` provides a simplified interface for setting up calculations
+{{ VaspInputGenerator }} provides a simplified interface for setting up calculations
 using pre-define default inputs for calculation and for workflow execution.
 
 In jupyter notebook, we normally need to load the necessary AiiDA environment:

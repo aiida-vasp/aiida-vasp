@@ -72,9 +72,10 @@ from aiida_vasp.protocols.generator import VaspBandsInputGenerator
 
 upd = VaspBandsInputGenerator()
 builder = upd.get_builder(si_node, code='mock-vasp@localhost',
+                          run_relax=False,
                           overrides={
                             'scf':
-                            {'potential_family': 'PBE.EXAMPLE'}
+                            {'potential_family': 'PBE.EXAMPLE'},
                             })
 ```
 

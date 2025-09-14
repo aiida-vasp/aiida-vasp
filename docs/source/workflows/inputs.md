@@ -12,6 +12,8 @@ myst:
     VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
     calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
     workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
+    VaspInputGenerator: "{py:class}`VaspInputGenerator <aiida_vasp.protocols.generator.VaspInputGenerator>`"
+    PresetConfig: "{py:class}`PresetConfig <aiida_vasp.protocols.generator.PresetConfig>`"
 ---
 
 (workflow_inputs)=
@@ -69,85 +71,89 @@ builder.kpoints_spacing = 0.05
 The `builder` object has attributes corresponding to the input ports of the `VaspWorkChain`.
 The conversion and validation of the inputs is done automatically when it is assigned to the attribute.
 
-## The `BuilderUpdater` class
+## The `InputGenerator` class
 
 The `ProcessBuilder` class is a convenient way to construct inputs for a workflow, but one still
-has to write inputs explicitly. To make it easier to construct inputs, the plugin provides the `BuilderUpdater` class.
+has to write inputs explicitly. To make it easier to construct inputs, the plugin provides the {{ VaspInputGenerator }} class.
 As the name suggests, it is used to update the inputs of an underlying `ProcessBuilder` object.
 The main advantage is that it allows the user to start from a predefined set of input values which
 can be modified or added to.
 
-There two kinds of pre-defined defaults that a `BuilderUpdater` cna uses.
-The first is the `InputSet` class, which is a set of default input values for a specific calculation.
-In the context of VASP, it contains the default INCAR tags, the k-points spacing to be used and the
-pseudopotential configurations.
+There two kinds of pre-defined defaults that a {{ VaspInputGenerator }} can uses.
+The first one is based on [protocols](../concepts/protocols.md#using-protocol-and-inputgenerator),
+which defines base parameters for calculations and workflows.
+The protocols may contain the default INCAR tags, the k-points spacing to be used and the
+pseudopotential configurations as well as higher level control parameters for workchains.
 
-The default `UCLRelaxSet` is stored in the `<root>/src/workchains/v2/inputset` folder with the
+The default `balanced` protocol is stored in the `<root>/src/protocols/` folder with the
 following content:
 
-:::{literalinclude} ../../../src/aiida_vasp/inputset/UCLRelaxSet.yaml
+:::{literalinclude} ../../../src/aiida_vasp/protocols/vasp.yaml
 :::
 
 
-The  `VaspPresetConfig` offers control at a higher level - it records the default input set to be used as well as any overrides needed.
-It also contain information about which remote jobs should be launched which can be code-specific. For example, specific account / queue should be used for each remote cluster and
-default size of the jobs, wall time limits, etc., may vary.
+While protocols default how parameters of each calculation and workchain are defined.
+The  {{ PresetConfig }} offers control at a higher level - it records the default input set to be used as well as any code-specific overrides needed.
 
-The default configuration is stored in the `<root>/src/aiida_vasp/workchains/v2/common` with the following content:
+The default configuration is stored in the `<root>/src/aiida_vasp/protocols/presets/default.yaml` with the following content:
 
-:::{literalinclude} ../../../src/aiida_vasp/workchains/v2/common/VaspPreset.yaml
+:::{literalinclude} ../../../src/aiida_vasp/protocols/presets/default.yaml
 :::
 
-:::{hint}
-This default preset file is used for tests and documentation examples. It is rarely useful for acutal production runs.
-:::
+This default preset file is used for tests and documentation examples with `mock-vasp@localhost` code.
 
-Using the `BuilderUpdater` class can significantly simply the input construction process.
+Using the {{ VaspInputGenerator }} class is intended to simply the input construction process.
 For example, to construct a `VaspWorkChain` with the default INCAR tags, k-points spacing and pseudopotential for a silicon structure (`si_node`), can be a simple as:
 
 ```python
-from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+from aiida_vasp.protocols.generator import VaspInputGenerator
 
-upd = VaspBuilderUpdater().apply_preset(si_node)
+upd = VaspInputGenerator()
+upd.get_builder(structure=si_node, code='<my_code>@<computer>')
 upd.submit()
 ```
 
-Without `VaspBuilderUpdater`, the input will have to specified either through a multi-line mini script using the `ProcessBuilder` or a large nested dictionary for complex workflows.
+When not using {{ VaspInputGenerator }}, the `get_builder_from_protocol` method of the workchain can be used to obtain the `ProcessBuilder` directly.
+Alternatively,  the workchain will have to specified either through a multi-line mini script using the `ProcessBuilder` obtained with `get_builder` method or a large nested dictionary for complex workflows.
+
 Nevertheless, one should still inspect the actual input passed to the workchain, this can be done
-by simply returning the `builder` attribute of the `BuilderUpdater` object.
+by simply returning the `builder` attribute of the {{ VaspInputGenerator }} object.
 
 
 ```python
 upd.builder  # Should print the input to each port namespace of the workchain
 ```
 
-Since each workchain bundled in the plugin have different input ports, they each have a specific `BuilderUpdater` for setting up the inputs.
+There are `InputGenerator` class specific to each class:
 
-:::{hint}
-One can also create a `BuilderUpdater` object using methods attached to the workchain class.
-```python
-wc = WorkflowFactory('vasp.v2.vasp')
-upd = wc.get_builder_updater()
-upd.builder
-```
-:::
-
-For practice, one typically have their own default.
-This can be achieved by creating a new `MyPreset.yaml` file inside `~/.aiida-vasp` with the desired settings. The default configuration shown above can be used as a starting point.
+|   WorkChain class | InputGenerator class |
+| ------------------- | ---------------------- |
+| {py:class}`aiida_vasp.workchains.v2.relax:VaspRelaxWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspRelaxInputGenerator` |
+| {py:class}`aiida_vasp.workchains.v2.vasp:VaspWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspInputGenerator` |
+| {py:class}`aiida_vasp.workchains.v2.band:VaspBandsWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspBandsInputGenerator` |
+| {py:class}`aiida_vasp.workchains.v2.band:VaspHybridBandsWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspHybridBandsInputGenerator` |
+| {py:class}`aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspConvegenceInputGenerator` |
 
 
-```python
-from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+## Customization
 
-upd = VaspBuilderUpdater(preset='MyPreset').apply_preset(si_node, code='my_code@my_computer')
-upd.submit()
-```
+In practice, one may want to  have their own default inputs
+This can be achieved by creating a new `<preset_name>.yaml` file inside `~/.aiida-vasp/presets` with the desired settings. The default configuration shown above can be used as a starting point.
 
-It is also possible to have your own `InputSet` - simply place the YAML files in the same `~/.aiida-vasp/` folder.
+It is also possible to have your own **protocol** - simply place the YAML files in the same `~/.aiida-vasp/<workchain tag>/<alias>.yaml` folder.
+
+The `<workchain tag>` is an alias for the workchains.
+| WorkChain Tag | Workchain  Class |
+| -------------- | ----------- |
+| vasp | {py:class}`aiida_vasp.workchains.v2.vasp:VaspWorkChain` |
+| relax | {py:class}`aiida_vasp.workchains.v2.relax:VaspRelaxWorkChain` |
+| band | {py:class}`aiida_vasp.workchains.v2.relax:VaspBandsWorkChain` |
+| band | {py:class}`aiida_vasp.workchains.v2.relax:VaspHybridBandsWorkChain` |
+| conv | {py:class}`aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain` |
+
+The `<alias>` is an user defined alias for the protocol set.
 
 :::{note}
-We recommend creating new *preset* YAML files with the desired modifier of the input set rather than directly creating input sets themselves.
 :::
-
-One should be careful when modifying or extending existing *preset* or *input set* files as they may render calculations results incompatible for comparison.
-Although the full provenance of the calculation can be traced as the actual inputs are faithfully stored in the database.
+One should be careful when modifying or extending existing **preset** or **protocol** files as they may render calculations results incompatible for comparison.
+Thankfully, AiiDA still preservers the full provenance of the calculation can be traced as the actual inputs are faithfully stored in the database.

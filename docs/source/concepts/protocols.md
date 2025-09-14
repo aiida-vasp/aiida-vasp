@@ -202,7 +202,6 @@ submit(builder)
 This approach ensures that all inputs are consistent with the selected protocol, while still allowing for easy customization. Protocols and presets can be listed and inspected programmatically, and users can create their own YAML files to define custom protocols for specific projects or systems.
 
 
-
 # Using `Inputset` and `BuilderUpdater` (deprecated)
 
 These are old approaches originally designed for simple personal projects, but later merged into `aiida-vasp`.

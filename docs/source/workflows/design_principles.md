@@ -11,6 +11,8 @@ myst:
     VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
     calcfunction: "{py:class}`calcfunction <aiida.engine.calcfunction>`"
     workfunction: "{py:class}`calcfunction <aiida.engine.workfunction>`"
+    VaspInputGenerator: "{py:class}`VaspInputGenerator <aiida_vasp.protocols.generator.VaspInputGenerator>`"
+---
 ---
 
 ```{code-cell}
@@ -75,7 +77,7 @@ print(opt.aiida_description())
 ```
 
 By default, every input to the workchain has to be specified in full before submission, this can be quiet tedious for daily calculation.
-To simplify the input, we have implemented the [`BuilderUpdater`] class that can automatically update the builder with default values.
+To simplify the input, we have implemented the {{ VaspInputGenerator }} class that can automatically update the builder with default values.
 See [this page](#workflow_inputs) for more information.
 
 The user may write default values and store them in an YAML file to ensure consistent settings are used across multiple projects.

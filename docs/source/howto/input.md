@@ -1,5 +1,42 @@
 # Defining calculation inputs
 
+## Ways to define calculation inputs
+
+
+The calculation and workchains are *processes* in the terminology of AiiDA.
+Each are configured via a series of input **nodes** which are {py:class}`Data <aiida.orm:Data>` object.
+
+The two common ways to launch a *process* is by using the `submit` or `run_get_node` functions in `aiida.engine`.
+
+```python
+from aiida.engine import submit
+
+submit(Process, **inputs)
+```
+
+where `Process` is a class of the process to be launched. In aiida-vasp, it may be `VaspCalculation`, `VaspWorkChain` or other provided processes.
+The `inputs` is a dictionary containing a nested key-value pairs defining inputs for each port of the process.
+A typical `inputs` dictionary for `VaspWorkChain` looks like
+
+```python
+inputs = {
+  'structure': si_structure,  # An instance of aiida.orm.StructureData
+  'parameters': incar_tags,   # An instance of aiida.orm.Dict
+  'calc':
+    {'options':
+      {'resources':
+         {
+          'num_machines': 1
+         }
+      }
+    },
+  # ....
+}
+```
+
+
+
+
 ## Where to pass X input for Y calculation/workflow?
 
 The inputs to a workchain/calculation must be set to the correct input *ports*.

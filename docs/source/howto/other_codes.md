@@ -134,8 +134,8 @@ One should avoid using this set unless direct comparison of raw energies with th
 (pymatgen-vasp-io)=
 ### Coming from pymatgen based workflows
 
-If you are coming from using pymatgen for setting up VASP input files, the BuilderUpdater interface would feel
-very familiar, which uses the same approach of using a preset of input parameters.
+If you are coming from using pymatgen for setting up VASP input files, the [InputGenerator](../concepts/protocols.md#using-inputgenerator-classes-to-launch-workchains) interface would feel
+very familiar, which uses the same approach of using a pre-defined set of input parameters.
 
 Consider the following code using pymatgen to set up a VASP calculation:
 
@@ -164,6 +164,8 @@ To achieve a similar (but not equivalent) effect with aiida-vasp:
 :tags: [remove-cell]
 # Configure the temp profile environment
 from aiida_vasp.utils.temp_profile import load_temp_profile_with_mock
+from aiida_vasp.data.potcar import PotcarData
+from pathlib import Path
 load_temp_profile_with_mock()
 PotcarData.upload_potcar_family(str(Path('../tutorials/potcars').absolute()), "PBE.EXAMPLE", "PBE.EXAMPLE")
 ```
@@ -191,15 +193,15 @@ There are a few differences to note:
 2. In addition to the calculation input, one needs to define resources requested from the computing cluster's scheduler. This is because the `submit` method submits all calculation data to the daemon which takes care the rests, rather than having the user manually transfer the data to the remote machine, submit the job, and then retrieve the results. In fact, what gets submitted is a *workflow* which may apply automatic restarts and error corrections if needed.
 3. Care should be taken to valid the **actual** calculation parameters as `MPRelaxSet` returns some parameters that are controllbed by higher-level workchain in the framework of `aiida-vasp`, such as `ibrion`, `nsw` and `isif`. These parameters may need to be removed (set to `None`) via overrides.
 
-The `VaspBuilderUpdater` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
-should be configured. The **preset** includes which input set should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
-For example, different NCORE may be applied when running VASP on different machines.
-In practice, we recommend uses to define their own **preset** rather than creating/modifying the input sets directly.
+The `VaspInputGenerator` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
+should be configured. The **preset** includes which [protocol](../concepts/protocols.md#using-protocol-and-inputgenerator)  should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
+For example, different `NCORE` may be applied when running VASP on different machines.
+Users may want to define their own **preset** rather than creating/modifying the input sets directly.
 
 Since AiiDA can store the structure files as `StructureData` nodes, it is possible to first read files and then use a single structure as inputs to multiple subsequent calculations, rather than creating new but identical ` StructureData` nodes each time that a calculation is submitted.
 
 :::{note}
-We recommend using `VaspRelaxUpdater` rather than `VaspBuilderUpdater` for setting up VASP geometry optimisation calculations, as the former offers more checks and control for the optimisation process.
+We recommend using `VaspRelaxGenerator` rather than `VaspInputGenerator` for running geometry optimisations, as the former offers more checks and control for process.
 :::
 
 
