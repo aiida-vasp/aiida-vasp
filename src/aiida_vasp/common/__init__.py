@@ -56,12 +56,16 @@ def parameters_validator(node: orm.Dict | None, port: Any = None) -> None:
         return
 
     pdict = node.get_dict()
+
     try:
-        convert_dict_case(pdict, lower=True, raise_convert=True)
+        convert_dict_case(pdict, lower=True, raise_convert=node.is_stored)
     except ValueError as error:
         raise InputValidationError(
             f'Case inconsistency found in the parameters dictionary please use lower case keys: {error}'
         )
+
+    if not node.is_stored:
+        node.set_dict(convert_dict_case(pdict, lower=True, warn=True))
 
     if OVERRIDE_NAMESPACE not in pdict:
         raise InputValidationError(f'Would expect some incar tags supplied under {OVERRIDE_NAMESPACE} key!')
