@@ -117,9 +117,8 @@ POTCAR files found: 327. New files uploaded: 327, Added to Family: 327
 ```
 
 :::{tip}
-For historical reasons we used `PBE.54` as the name for the `PBE_54` PAW dataset.
-Any name can be used of course, but some of the presets of the workflows expect the naming convention with
-a `.` instead of `_`.
+We used `PBE.54` as the name for the  [potpaw.54](https://www.vasp.at/wiki/Available_pseudopotentials#potpaw.54)  PAW dataset.
+Any name can be used of course, but some of the presets of the workflows expect `PBE.54` not `PBE_54`.
 :::
 
 
