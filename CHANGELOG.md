@@ -106,7 +106,7 @@ There are a few notable changes to the calculation and workchain output
 
 - The forces of the calculations are now included in the `misc` output under the key `forces`. This quantities is parsed and stored by default.
 - The `arrays` output includes array-like quantities, such as `energy_extrapolated` of individual ionic steps (excluded by default).
-- The key under which the quantities are stored inside the `ArrayData` node of the `arrays`, `dielectrics` may change. Please refer to the [code](src/aiida_vasp/parsers/vasp.py) for details.
+- The key under which the quantities are stored inside the `ArrayData` node of the `arrays`, `dielectrics` may change. Please refer to the code file `src/aiida_vasp/parsers/vasp.py` for details.
 
 
 ## \[v3.0.1\]

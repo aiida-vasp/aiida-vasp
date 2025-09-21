@@ -13,13 +13,14 @@ myst:
     VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
     VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
     hybrid_bands: "{py:class}`VaspHybridBandsWorkChain <aiida_vasp.workchains.v2.bands.VaspHybridBandsWorkchain>`"
+    VaspInputGenerator: "{py:class}`VaspInputGenerator<aiida_vasp.protocols.BaseInputGenerator>`"
 
 ---
 (workflows)=
 # Workflows
 
 :::{note}
-This notebook can be downloaded as **{nb-download}`bundled.ipynb`** and {download}`bundled.md`
+This notebook can be downloaded as **{nb-download}`workflows.ipynb`** and {download}`workflows.md`
 :::
 
 The [Workchain] class is the central piece that enables workflows to be run with aiida-vasp.
@@ -120,8 +121,7 @@ from aiida.plugins import WorkflowFactory  # This can be omitted as it is import
 vasp_wc = WorkflowFactory('vasp.vasp')
 ```
 
-
-:::{info}
+:::{hint}
 You may see something like `vasp.v2.vasp` as entry point in the document:
 - The first `vasp` means the entrypoint is from `aiida-vasp` plugin
 - The second part `v2` is a version tag, refers to the `v2` version

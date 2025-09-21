@@ -10,8 +10,7 @@ myst:
 
 Protocols in `aiida-vasp` are YAML files (see `src/aiida_vasp/protocols/`) that specify recommended or standardized sets of input parameters for different types of calculations (e.g., relaxation, band structure, convergence). Each protocol can define default values for any input port or namespace, and can also provide multiple named protocols (such as `fast`, `balanced`, `stringent`) for different accuracy or speed requirements.
 
-:::{info}
-
+:::{hint}
 The default protocol `balanced` is equivalent to the `UCLRelaxSet` which uses a PBEsol functional. A slight difference is that LDA+U is not automatically applied while `UCLRelaxSet` applies U=4.0 eV for Ti and Fe by default.
 :::
 

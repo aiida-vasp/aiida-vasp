@@ -116,6 +116,6 @@ We also can access the same output through the `WorkChainNode` using the `output
 ```
 
 Further reading:
-- Learn how to run workflows with pre-define input parameters: [Tutorial](../tutorials)
-- Learn key concepts in aiida-vasp: [Concepts](../concepts)
-- Learn how to do X with aiida-vasp: [How-to-guides](../howto)
+- Learn how to run workflows with pre-define input parameters: [Tutorial](../tutorials/index)
+- Learn key concepts in aiida-vasp: [Concepts](../concepts/index)
+- Learn how to do X with aiida-vasp: [How-to-guides](../howto/index)

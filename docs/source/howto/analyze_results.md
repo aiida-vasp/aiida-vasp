@@ -13,7 +13,7 @@
    *  `res`: Print the results of a calculation to the screen. This will display the `misc` output of a `VaspCalculation`.
    * `cleanworkdir`: Clean the working directly of a calculation.
 
-:::{info}
+:::{note}
 The `verdi calcjob` command is inspecting a `Calculation`. A workflow may launch many calculation. In this case, one can use `verdi process status` to find the *pk* of calculations that have been launched.
 :::
 

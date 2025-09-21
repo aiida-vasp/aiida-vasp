@@ -13,7 +13,7 @@ myst:
 # How to work with other codes
 
 :::{note}
-This notebook can be downloaded as **{nb-download}`other_codes.ipynb`** and {download}`other_codes.md`
+This notebook can be downloaded as **{nb-download}`work_with_other_codes.ipynb`** and {download}`work_with_other_codes.md`
 :::
 
 In this guide, we will learn how to work with other code using aiida-vasp.
@@ -132,8 +132,10 @@ One should avoid using this set unless direct comparison of raw energies with th
 (pymatgen-vasp-io)=
 ### Coming from pymatgen based workflows
 
-If you are coming from using pymatgen for setting up VASP input files, the [InputGenerator](../concepts/protocols.md#using-inputgenerator-classes-to-launch-workchains) interface would feel
-very familiar, which uses the same approach of using a pre-defined set of input parameters.
+If you are coming from using pymatgen for setting up VASP input files,
+the {py:class}`VaspInputGenerator<aiida_vasp.protocols.BaseInputGenerator>` interface would feel
+very familiar,
+which uses the same approach of using a pre-defined set of input parameters.
 
 Consider the following code using pymatgen to set up a VASP calculation:
 
@@ -192,7 +194,7 @@ There are a few differences to note:
 3. Care should be taken to valid the **actual** calculation parameters as `MPRelaxSet` returns some parameters that are controllbed by higher-level workchain in the framework of `aiida-vasp`, such as `ibrion`, `nsw` and `isif`. These parameters may need to be removed (set to `None`) via overrides.
 
 The `VaspInputGenerator` also takes an argument of the **preset** name which gives a higher level of control over how the calculation
-should be configured. The **preset** includes which [protocol](../concepts/protocols.md#using-protocol-and-inputgenerator)  should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
+should be configured. The **preset** includes which [protocol](../concepts/protocols)  should be used, what overrides should be applied as well as how they should be adapted for different types of workflow as well as for different Code/Computers.
 For example, different `NCORE` may be applied when running VASP on different machines.
 Users may want to define their own **preset** rather than creating/modifying the input sets directly.
 

@@ -7,6 +7,7 @@ kernelspec:
 myst:
   substitutions:
     VaspWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.vasp.VaspWorkChain>`"
+    VaspCalculation: "{py:class}`VaspCalculation <aiida_vasp.calcs.vasp.VaspCalculation>`"
     VaspBandsWorkchain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.bands.VaspBandsWorkchain>`"
     VaspRelaxWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.relax.VaspRelaxWorkChain>`"
     VaspConvergenceWorkChain: "{py:class}`VaspWorkChain <aiida_vasp.workchains.v2.converge.VaspConvergenceWorkChain>`"
@@ -34,13 +35,15 @@ builder.<tab>
 
 Alternatively, one can use `verdi` commandline tool to inspect a workchain:
 
-```base
+```bash
 verdi plugin list aiida.workflows vasp.vasp
 ```
 
 The third way is to look into the source code, for example, the  `VaspWorkChain` has the following lines :
 
 ```python
+class VaspWorkChain:
+
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
         super(VaspWorkChain, cls).define(spec)
@@ -67,11 +70,62 @@ The third way is to look into the source code, for example, the  `VaspWorkChain`
 In the code above, the `spec.input` call define a series of ports that a calculation may take as inputs.
 An input port may contain certain default value, and it may or may not be *required* by a calculation.
 A more advanced usage is the `spec.expose_inputs` call, which **expose** existing input ports of another calculation/workchain to the current workchain.
-In above, the inputs of a `VaspCalculation` is exposed at the top level as well as nested in a `calc`.
-However, the latter only contains a `metadata` port, which is a special input port that allow defining *options* with request resource and wall-time limits or a `VaspCalculation`
+In above, the inputs of a {{ VaspCalculation }} is exposed at the top level as well as nested in a `calc`.
+However, the latter only contains a `metadata` port, which is a special input port that allow defining *options* with request resource and wall-time limits or a  {{ VaspCalculation }}.
 
-:::{info}
-This design pattern is due to historical reasons. For new projects, we recommend exposing inputs of a sub-workchain/calculation in full inside a nested namespace instead
+:::{admonition} Recommended workflow design pattern
+:class: dropdown
+
+This design pattern is due to historical reasons. For new projects, we recommend exposing inputs of a sub-workchain/calculation in full inside a nested namespace instead by default.
+
+For example, the following code exposes *all* ports of a {{ VaspCalculation }} except the `kpoints` port:
+
+```python
+class UserWorkChain:
+
+    @classmethod
+    def define(cls, spec: ProcessSpec) -> None:
+        super(VaspWorkChain, cls).define(spec)
+        spec.expose_inputs(
+            cls._process_class, namespace='calc',
+            exclude=('kpoints',)
+        )
+
+        spec.input('kpoints', valid_type=orm.KpointsData, required=False)
+        spec.input('kpoints_spacing', valid_type=orm.Float, required=False)
+        spec.input(
+            'potential_family',
+            valid_type=orm.Str,
+            required=True,
+            serializer=to_aiida_type,
+            validator=potential_family_validator,
+        )
+```
+
+The `kpoints` port is exposed at the top level, but when `self.exposed_inputs` is called with `agglomerate=True` (default), the parent namspace is searched with the defined ports.
+Hence the  `kpoints` port at the top-level
+will be gathered as the input for a {{ VaspCalculation }} automatically.
+
+As an example, if one defines the inputs to a `UserWorkChain` like:
+```
+UserWorkChain
+|- kpoints
+|- potential_family
+|- calc
+    |-parameters
+```
+
+Calling `UserWorkChain.exposed_inputs(VaspWorkChain, 'calc', agglomerate=True)` will have the following
+inputs gathered and ready to be passed to a {{ VaspCalculation }}
+
+```
+VaspCalculation
+|- kpoints
+|- potentials
+|- parameters
+|- ...
+```
+
 :::
 
 ## How to setup inputs of a calculation or a workflow
@@ -152,12 +206,12 @@ The conversion and validation of the inputs is done automatically when it is ass
 While `ProcessBuilder` class is a convenient, one still
 has to write inputs explicitly.
 To make it even easier to construct inputs, we provide the {{ VaspInputGenerator }} class,
-which can be used to generate a `ProcessBuilder` object using pre-defined [protocols](#pro)
+which can be used to generate a `ProcessBuilder` object using pre-defined [protocols](../concepts/protocols)
 The main advantage is that it allows the user to start from a predefined set of input values which
 can be modified or added to.
 
 There two kinds of pre-defined defaults that a {{ VaspInputGenerator }} can uses.
-The first one is based on [protocols](../concepts/protocols.md#using-protocol-and-inputgenerator),
+The first one is based on [protocols](../concepts/protocols),
 which defines base parameters for calculations and workflows.
 The protocols may contain the default INCAR tags, the k-points spacing to be used and the
 pseudopotential configurations as well as higher level control parameters for workchains.
@@ -258,10 +312,10 @@ protocols:
 The protocol above can be referenced using `VaspRelaxWorkChain.get_builder_from_protocol(...., protocol="posonly@custom"`
 
 
-:::{note}
-:::
+:::{caution}
 One should be careful when modifying or extending existing **preset** or **protocol** files as they may render calculations results incompatible for comparison.
 Thankfully, AiiDA still preservers the full provenance of the calculation can be traced as the actual inputs are faithfully stored in the database.
+:::
 
 ## How to fix the atoms during relaxation
 
@@ -300,7 +354,7 @@ builder.dynamics = {
 }
 ```
 
-:::{warning}
+:::{caution}
 The `T` and `F` applies to the **direct** (fractional) coorindates.
 To fix the **cartesian** coorindates, the $$lattice vectors needs to align with the x, y, z direction respectively.
 :::

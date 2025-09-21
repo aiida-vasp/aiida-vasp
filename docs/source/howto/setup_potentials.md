@@ -16,8 +16,8 @@ These are usually supplied by the [VASP] team and is part of the license.
 Each POTCAR dataset is an archive (`.tar.gz` or `tgz`) containing multiple subfolders,
 the name of the sub-folder is typically referred as the **symbol** of the POTCAR file it contains.
 
-:::{info}
-The POTCAR files are .... name as `POTCAR` so the only way to tell them apart is to look at the content.
+:::{hint}
+Since PAW data files are all named as  `POTCAR`, the only way to tell them apart is to look at the content.
 However, early releases of the VASP PAW dataset contains mistakes such that the **symbol** of the POTCAR
 is not what it say in the file! This will disrupt the routines in aiida-vasp to assign the correct POTCAR
 for each element.
