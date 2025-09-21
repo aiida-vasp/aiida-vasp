@@ -32,7 +32,7 @@ ParserSettingsConfig().dict()
 %:ends-before: class VaspParser
 %```
 
-These settings can be configured by settings the `parser_settings` inside the `settings` input node to the {{VaspCalculation}} or {{VaspWorkChain}} processes.
+These settings can be configured by setting the `parser_settings` inside the `settings` input node to the {{VaspCalculation}} or {{VaspWorkChain}} processes.
 
 The parser is responsible for extracting information for a VASP calculation and store them as {py:class}`Data <aiida.orm.Data>` nodes in the database.
 

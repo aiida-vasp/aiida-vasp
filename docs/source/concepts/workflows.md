@@ -29,7 +29,7 @@ As single [WorkChain] class may launch one or several calculations, or it may la
 
 For  any short-running python code, the workchain can run them directly as {{ calcfunction }} or {{ workfunction }} directly, and the provenance will be recorded accordingly.
 
-It is important to note that however, long-running computational *should not* but run directly in the code that it
+It is important to note that however, long-running computational tasks *should not* be run directly in the code as it
 will delay or block the operation of the [daemon].
 
 We would like to encourage users to build workchains and/or compose existing ones into more advanced workflows that we can all share and benefit from.
@@ -45,7 +45,7 @@ It is perfectly fine to conduct exploration studies using the basic workchains a
 
 The rest of the bundled workchain are designed to run `VaspWorkChain` as the basic unit of work.
 This means that they expect error-correction functionalities to be embedded in the `VaspWorkChain` so they
-doe not need to explicitly handle errors.
+do not need to explicitly handle errors.
 
 We use the `expose_input` and `expose_outputs` methods of the `WorkChain` class to expose the inputs and outputs of the `VaspWorkChain`.
 

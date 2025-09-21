@@ -16,7 +16,7 @@ This page describes the basic concepts of calculations in AiiDA.
 We call an AiiDA triggered execution of VASP a calculation job.
 The calculation job has to take some given input on AiiDA form and projects it to VASP in an understandable manner.
 Similarly, on termination, the calculation job has to parse the VASP output files such that the results are understandable for AiiDA and possibly also user friendly.
-In other words, a calculation job is represents a single transaction with VASP.
+In other words, a calculation job represents a single transaction with VASP.
 
 In the database, a calculation job is represented by a {py:class}`CalcJobNode<aiida.orm.CalcJobNode>`, which is derived from a {py:class}`ProcessNode<aiida.orm.ProcessNode>` class.
 

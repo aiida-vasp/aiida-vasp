@@ -15,7 +15,7 @@ myst:
 
 
 :::{note}
-This tutorial is can be executed as a jupyter notebook.
+This tutorial can be executed as a jupyter notebook.
 Please copy the `mock_registry` folder found to your directory of execution, otherwise the mock
 code cannot locate the pre-computed calculations to be used as dummy output.
 
@@ -23,7 +23,7 @@ This notebook can be downloaded as **{nb-download}`silicon_sp.ipynb`** and {down
 :::
 
 {{ VaspInputGenerator }} provides a simplified interface for setting up calculations
-using pre-define default inputs for calculation and for workflow execution.
+using pre-defined default inputs for calculation and for workflow execution.
 
 In jupyter notebook, we normally need to load the necessary AiiDA environment:
 
@@ -46,7 +46,7 @@ use cached results instead of running actual VASP calculations.
 Before we start any calculation, we need to do a few basic setups:
 1. Setup a `Computer` node, which is this computer (localhost)
 2. Tell AiiDA where to find the VASP executable, or using the `mock-vasp` executable.
-3. Upload the pseduopotentials (POTCAR) family
+3. Upload the pseudopotentials (POTCAR) family
 
 The following code creates  `Computer` node:
 

@@ -3,14 +3,14 @@
 # Documentation
 
 We honor the importance of an up to date and useful documentation and would like to
-motivate also the readers to contribute. Here we will describe how one
+motivate readers also to contribute. Here we will describe how one
 can
 
 ## Contributing to the documentation
 
 Please consult the [open issue list] labeled documentation and see if there is
 already an issue for what you find lacking or not good enough. If not, please open an issue and tag it
-with documentation. The community also greatly appreciate contributions to solve issues, by
+with documentation. The community also greatly appreciates contributions to solve issues, by
 submitting a pull request with suggested changes. Before doing so, please check the
 documentation by building it on your local computer and verifying that the Sphinx generated documentation
 in your browser displays what you expect.

@@ -11,7 +11,7 @@ myst:
 
 Here we provide a series of tutorials to help you get started with aiida-vasp.
 There are several ways to use aiida-vasp. Here we start with the easiest interface - using
-the {{ VaspInputGenerator }} class that allows you to create workflows using pre-define, customizable  templates for both calculations parameters and settings for code execution.
+the {{ VaspInputGenerator }} class that allows you to create workflows using pre-defined, customizable templates for both calculations parameters and settings for code execution.
 
 ```{toctree}
 :maxdepth: 1

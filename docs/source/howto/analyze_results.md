@@ -3,7 +3,7 @@
 ## How to check the status of a calculation/workflow?
 
 * Using `verdi process status <process_pk>`: this will display a tree-like diagram containing the called processes.
-* For a `VaspCalculation`, one can use `verdi calcjob <sub_command> <calculation_pk>` commends to show its info, commonly used sub-commends are:
+* For a `VaspCalculation`, one can use `verdi calcjob <sub_command> <calculation_pk>` commands to show its info, commonly used sub-commands are:
    *  `inputls`: List the input files.
    *  `inputcat`: Print an input file. The name of the file needs to be passed following the pk, if no default calculation input file is defined (default is `INCAR`). The submission script can be displayed by passing `_aiidasubmit.sh`.
    *  `outputls`: List the output files.
@@ -17,7 +17,7 @@
 The `verdi calcjob` command is inspecting a `Calculation`. A workflow may launch many calculation. In this case, one can use `verdi process status` to find the *pk* of calculations that have been launched.
 :::
 
-* Finished workflows can be *dumped* to the disk using `verdi process dump` command. This will created a multi-level directly containing the launched processes.
+* Finished workflows can be *dumped* to the disk using `verdi process dump` command. This will create a multi-level directory containing the launched processes.
 * This plugin provides a command `aiida-vasp tools export` which can be used to export completed calculations and workchains. The output if similar to `verdi process dump` with some differences:
   * The input and output files of `VaspCalculation`s are collected into a single folder, mimicking normal VASP calculations.
   * A `--include-potcar` option can be passed so the `POTCAR` file of each calculation is re-created. This is not the case when using `verdi process dump`, since the exact `POTCAR` content is not included in the provenance graph in order for the data to be sharable (for licensing reasons).

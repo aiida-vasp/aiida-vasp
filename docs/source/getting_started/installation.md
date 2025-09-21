@@ -21,7 +21,7 @@ In the documentation you will also find details on how to setup a `profile`, `Co
 
 ## Install the plugin
 
-In most cases, the AiiDA is installed into a virtual environment activate the virtual environment associated with it:
+In most cases, AiiDA is installed into a virtual environment. Activate the virtual environment associated with it:
 
 ::::{tab-set}
 

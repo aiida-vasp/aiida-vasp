@@ -11,7 +11,7 @@ Here we explain the post-installation configuration steps for [AiiDA-VASP].
 
 ## Setting up a {{ InstalledCode }} for your VASP executable
 
-A {{ InstalledCode  }} is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a {{ InstalledCode }} for this executable in [AiiDA].
+A {{ InstalledCode }} is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a {{ InstalledCode }} for this executable in [aiida].
 
 The `verdi code` commands allow one to setup/update/duplicate `InstalledCode` objects in [AiiDA].
 Please consult the [AiiDA documentation] for more details.
@@ -91,7 +91,7 @@ Append text
 --------------  ------------------------------------
 ```
 
-## Configure pseduopotentials (POTCARs)
+## Configure pseudopotentials (POTCARs)
 
 To run a VASP calculation, potentials (the POTCAR files) have to be uploaded to
 the database. For more details regarding the handling of the potentials, please see [potentials][#potentials].
@@ -143,3 +143,5 @@ Hence, a *potential mapping* is also need when running calculations/workflows, t
 [pymatgen]: https://pymatgen.org
 [aiida-quantumespresso]: https://aiida-pseudo.readthedocs.io/en/latest/design.html#families
 [aiida-castep]: https://github.com/zhubonan/aiida-castep
+[AiiDA]: https://www.aiida.net
+[documentation]: http://aiida-core.readthedocs.io/en/latest/

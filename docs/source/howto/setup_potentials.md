@@ -8,7 +8,7 @@ In this guide we will go through how to import and use the pseudopotentials (PAW
 As we know, any [VASP] calculation relies on potentials provided by the POTCAR files.
 
 The actual POTCAR in the calculation should be concatenated from multiple POTCARs provided by the dataset in the same order as the symbols appear in the POSCAR.
-In correctly ordering or misuse of the POTCAR files are common mistakes when deploying VASP calculation *by hand*.
+Incorrectly ordering or misuse of the POTCAR files are common mistakes when deploying VASP calculation *by hand*.
 
 When using aiida-vasp, the POTCAR files are managed automatically.
 First, we need to make them available to AiiDA-VASP.
