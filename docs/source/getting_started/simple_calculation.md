@@ -6,7 +6,7 @@ The `VaspWorkChain` will be used to run a calculation on a sample structure.
 
 It is assumed that the [installation][#installation] has been completed, the `InstalledCode` for the VASP executable and the `PBE.54` pseduopotentials has been [configured][#configuration].
 
-The following steps can be run with a ipython shell launched by the `verdi shell` command.
+The following steps can be run with an ipython shell launched by the `verdi shell` command.
 
 ## Setting up the inputs
 First, we create the sample structure using the `ase` package (assuming the `ase` package is installed):
@@ -23,7 +23,7 @@ Next, we create necessary input node and set the required parameters:
 
 ```python
 from aiida.plugins import WorkflowFactory
-builder = WorkflowFactory('vasp.v2.vasp').get_builder()
+builder = WorkflowFactory('vasp.vasp').get_builder()
 
 builder.parameters = orm.Dict(
     dict={'incar':
@@ -114,3 +114,8 @@ We also can access the same output through the `WorkChainNode` using the `output
  'last_iteration_index': [1, 10],
  'consistent_nelm_breach': False}
 ```
+
+Further reading:
+- Learn how to run workflows with pre-define input parameters: [Tutorial](../tutorials)
+- Learn key concepts in aiida-vasp: [Concepts](../concepts)
+- Learn how to do X with aiida-vasp: [How-to-guides](../howto)

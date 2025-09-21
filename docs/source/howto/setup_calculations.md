@@ -18,9 +18,65 @@ myst:
 
 (workflow_inputs)=
 
-# Setting inputs of a workflow
+# How to setup calculations
 
-This section will provide a brief overview of the internals of the VASP workflows.
+## How to know what inputs are allowed for a calculation/workchain
+
+AiiDA workchains define their inputs using *input ports* and *port namespaces*. Each workchain exposes a set of input ports (such as `structure`, `parameters`, `kpoints`, etc.), and these can be grouped into namespaces for logical organization (e.g., `parameters.incar`). This structure allows for flexible and hierarchical input definitions, making it easier to manage complex workflows.
+
+The easiest way to explore what inputs a workchain can take is to use the `ProcessBuilder` with tab completion
+
+```python
+from aiida.plugin import WorkFlowFactory
+builder = WorkflowFactory('vasp.vasp').get_builder()
+builder.<tab>
+```
+
+Alternatively, one can use `verdi` commandline tool to inspect a workchain:
+
+```base
+verdi plugin list aiida.workflows vasp.vasp
+```
+
+The third way is to look into the source code, for example, the  `VaspWorkChain` has the following lines :
+
+```python
+    @classmethod
+    def define(cls, spec: ProcessSpec) -> None:
+        super(VaspWorkChain, cls).define(spec)
+        spec.expose_inputs(cls._process_class, exclude=('metadata',))
+        spec.expose_inputs(
+            cls._process_class, namespace='calc', include=('metadata',), namespace_options={'populate_defaults': True}
+        )
+
+        # Use a custom validator for backward compatibility
+        # This needs to be removed in the next major release/formalized workchain interface
+        spec.inputs.validator = validate_calc_job_custom
+        spec.inputs['calc']['metadata']['options']['resources']._required = False
+
+        spec.input('kpoints', valid_type=orm.KpointsData, required=False)
+        spec.input(
+            'potential_family',
+            valid_type=orm.Str,
+            required=True,
+            serializer=to_aiida_type,
+            validator=potential_family_validator,
+        )
+```
+
+In the code above, the `spec.input` call define a series of ports that a calculation may take as inputs.
+An input port may contain certain default value, and it may or may not be *required* by a calculation.
+A more advanced usage is the `spec.expose_inputs` call, which **expose** existing input ports of another calculation/workchain to the current workchain.
+In above, the inputs of a `VaspCalculation` is exposed at the top level as well as nested in a `calc`.
+However, the latter only contains a `metadata` port, which is a special input port that allow defining *options* with request resource and wall-time limits or a `VaspCalculation`
+
+:::{info}
+This design pattern is due to historical reasons. For new projects, we recommend exposing inputs of a sub-workchain/calculation in full inside a nested namespace instead
+:::
+
+## How to setup inputs of a calculation or a workflow
+
+In this document we will learn how to pass necessary input to the calculation and workflows provided by aiida-vasp.
 
 The input and outputs of the workflows as implemented as `WorkChain` are AiiDA's `Data` types.
 The `Data` is a subclass of the `Node` class, which represents data that is stored in the database
@@ -31,15 +87,35 @@ specifies the types of data that can be passed to and from it.
 Some python native types (`float`, `dict`, `str`) have their `Data` counterparts, such as `Float`, `Dict`, `Str` - they can be used as inputs to the workflows directly, but the conversion still takes
 place internally.
 
-There are two ways to pass inputs to the workflows. The most general way is to pass a `dict` object
+There are tree ways to pass inputs to the workflows. The most general way is to pass a `dict` object
 contains key-values pairs of the data to be passed to each input port of the workchain.
 
+### Using a `dict` object as inputs to a `Process`
+
 ```python
-from aiida.engine import run_get_node
-from aiida.plugins import WorkflowFactory
-workflow = WorkflowFactory('core.arithmetic.multiply_add')
-node = run_get_node(workflow, x=Int(1), y=Int(2), z=Int(3)).node
-print(node.outputs.result)  # 9
+from aiida.engine import submit
+
+submit(Process, **inputs)
+```
+
+where `Process` is a class of the process to be launched. In aiida-vasp, it may be `VaspCalculation`, `VaspWorkChain` or other provided processes.
+The `inputs` is a dictionary containing a nested key-value pairs defining inputs for each port of the process.
+A typical `inputs` dictionary for `VaspWorkChain` looks like
+
+```python
+inputs = {
+  'structure': si_structure,  # An instance of aiida.orm.StructureData
+  'parameters': incar_tags,   # An instance of aiida.orm.Dict
+  'calc':
+    {'options':
+      {'resources':
+         {
+          'num_machines': 1
+         }
+      }
+    },
+  # ....
+}
 ```
 
 :::{note}
@@ -51,7 +127,7 @@ In this case the workchain is stored in the database and marked to be executed b
 
 For more complex workflows, we typically construct a dictionary and use the `**inputs` syntax to pass it to function that launches the workchain.
 
-## The `ProcessBuilder` class
+### The `ProcessBuilder` class
 
 The approach above is very general but can be cumbersome for complex workflows with many inputs.
 In addition, the user must somehow *remember* all the input port names and their types.
@@ -71,11 +147,12 @@ builder.kpoints_spacing = 0.05
 The `builder` object has attributes corresponding to the input ports of the `VaspWorkChain`.
 The conversion and validation of the inputs is done automatically when it is assigned to the attribute.
 
-## The `InputGenerator` class
+### The `InputGenerator` class
 
-The `ProcessBuilder` class is a convenient way to construct inputs for a workflow, but one still
-has to write inputs explicitly. To make it easier to construct inputs, the plugin provides the {{ VaspInputGenerator }} class.
-As the name suggests, it is used to update the inputs of an underlying `ProcessBuilder` object.
+While `ProcessBuilder` class is a convenient, one still
+has to write inputs explicitly.
+To make it even easier to construct inputs, we provide the {{ VaspInputGenerator }} class,
+which can be used to generate a `ProcessBuilder` object using pre-defined [protocols](#pro)
 The main advantage is that it allows the user to start from a predefined set of input values which
 can be modified or added to.
 
@@ -135,7 +212,7 @@ There are `InputGenerator` class specific to each class:
 | {py:class}`aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain` | {py:class}`aiida_vasp.protocols.generator:VaspConvegenceInputGenerator` |
 
 
-## Customization
+### Customize protocols and presets
 
 In practice, one may want to  have their own default inputs
 This can be achieved by creating a new `<preset_name>.yaml` file inside `~/.aiida-vasp/presets` with the desired settings. The default configuration shown above can be used as a starting point.
@@ -153,7 +230,77 @@ The `<workchain tag>` is an alias for the workchains.
 
 The `<alias>` is an user defined alias for the protocol set.
 
+For example, to have a custom relaxation protocol, create a file at `~/.aiida-vasp/protocols/relax/custom.yaml` with the follow content:
+
+```yaml
+# Default input values for the workflow
+default_inputs:
+  verbose: False               # Verbosity of the workflow output
+  base_workchain_protocol: balanced
+
+# Protocol definitions
+protocols:
+  posonly:
+    description: |
+      A protocol for relaxation that only relax positions
+    relax_settings:
+      shape: false
+      volume: false
+      positions: true
+  fixxy:
+    description: "Relax only the z axis"
+    vasp:
+      parameters:
+        ioptcell: 0 0 0 0 0 0 0 0 1
+    base_workchain_protocol: balanced
+```
+
+The protocol above can be referenced using `VaspRelaxWorkChain.get_builder_from_protocol(...., protocol="posonly@custom"`
+
+
 :::{note}
 :::
 One should be careful when modifying or extending existing **preset** or **protocol** files as they may render calculations results incompatible for comparison.
 Thankfully, AiiDA still preservers the full provenance of the calculation can be traced as the actual inputs are faithfully stored in the database.
+
+## How to fix the atoms during relaxation
+
+Atoms may be fined by setting the `dynamics` input port using a dictionary:
+
+```python
+dynamics = {
+  'positions_dof': [
+    [1, 1, 1],
+    [0, 0, 0],
+    [0, 0, 1],
+  ]
+}
+```
+
+This means to:
+
+```
+T T T
+F F F
+T T F
+```
+
+in the generated POSCAR file for the three atoms for selective dynamics.
+The `T` means that the atom is allow to move in this degree of freedom, and `F` means that the atom is fixed in this direction.
+
+For example, if one wants to completely fix all atoms between  $\mathrm{2 \AA}$ to  $\mathrm{4 \AA}$ in the z direction:
+
+```python
+z = builder.structure.get_ase().positions[:, 2]
+to_fix  = (z < 4) & (z > 2)
+dof = [[1, 1, 1] if not fix else [0, 0, 0] for fix in to_fix]
+
+builder.dynamics = {
+  'positions_dof': dof
+}
+```
+
+:::{warning}
+The `T` and `F` applies to the **direct** (fractional) coorindates.
+To fix the **cartesian** coorindates, the $$lattice vectors needs to align with the x, y, z direction respectively.
+:::

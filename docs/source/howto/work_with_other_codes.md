@@ -6,20 +6,19 @@ kernelspec:
 myst:
   substitutions:
     get_sumo_bands_plotter: "{py:func}`get_sumo_bands_plotter <aiida_vasp.utils.sumo.get_sumo_bands_plotter>`"
-    get_sumo_dos_plotter: "{py:class}`get_sumo_dos_plotter<aiida_vasp.utils.sumo.get_sumo_dos_plotter>`"
+    get_sumo_dos_plotter: "{py:func}`get_sumo_dos_plotter<aiida_vasp.utils.sumo.get_sumo_dos_plotter>`"
 ---
 
 (other_codes)=
-# Working with other codes
-
+# How to work with other codes
 
 :::{note}
 This notebook can be downloaded as **{nb-download}`other_codes.ipynb`** and {download}`other_codes.md`
 :::
 
-This section will show how to use aiida-vasp to work with other codes.
+In this guide, we will learn how to work with other code using aiida-vasp.
 
-## Atomic Simulation Environment (ASE)
+## How to work with Atomic Simulation Environment (ASE)
 
 ASE can be used to setup input structure or analyse the outputs. The AiiDA core package
 already contains routines for converting `ase.Atoms` between `aiida.orm.StructureData`
@@ -68,11 +67,10 @@ else:
 :::
 
 
-## Pymatgen
+## How to work with Pymatgen
 
-### Structure conversion
 
-Similarly, pymatgen can be used to convert `pymatgen.core.Structure` to `aiida.orm.StructureData` and vice versa.
+The `pymatgen.core.Structure` can be converted to `aiida.orm.StructureData` and vice versa.
 
 ```python
 from aiida import orm
@@ -204,11 +202,24 @@ Since AiiDA can store the structure files as `StructureData` nodes, it is possib
 We recommend using `VaspRelaxGenerator` rather than `VaspInputGenerator` for running geometry optimisations, as the former offers more checks and control for process.
 :::
 
+## How to work with `sumo`
 
-## Sumo
+[Sumo](https://smtg-bham.github.io/sumo/) is a code for plotting publication quality electronic band structures and density-of-states.
+It can be used with calculations done by aiida-vasp. There are two ways to use sumo with this package:
 
-Sumo is a code for plotting electronic band structures and DOS. It can be used with calculations done by aiida-vasp. There are two ways to use sumo with this package:
-
-1. You can export the calculation with `aiida-vasp tools export <node> <folder>` and then use sumo's command line interface to plot.
+1. We can export the calculation with `aiida-vasp tools export <node> <folder>` and then use sumo's command line interface to plot.
    This approach works best for DOS plots and for band structure calculations the exported KPOINTS files currently does not have band labels.
-2. Use the `vasp.utils.sumo` module to plot the band structure from a band structure workflow with the get_sumo_dos_plotter and get_sumo_bands_plotter functions.
+
+2. Use the `vasp.utils.sumo` module to plot the band structure from a band structure workflow with the get_sumo_dos_plotter and get_sumo_bands_plotter functions:
+   ```python
+   from aiida_vasp.utils.sumo import get_sumo_bands_plotter
+
+   band_node = load_node(<uuid_pk_of_a_bandstructure_calculation>)
+   band_data = band_node.outputs.band_structure
+   structure = band_node.outputs.primitive_structure
+   plotter = get_sumo_dos_plotter(band_data)
+   plotter.get_plot()
+   ```
+   This approach is more convenient when working in a Jupyter Lab environment.
+
+There are other functions such as {py:func}`get_pmg_bandstructure <aiida_vasp.utils.sumo:get_pmg_bandstructuree`, {py:func}`get_sumo_dos_plotter <aiida_vasp.utils.sumo:get_sumo_dos_plotter>` and {py:func}`bandstats <aiida_vasp.utils.sumo:bandstats>` which may be useful when analyzing electronic structures.

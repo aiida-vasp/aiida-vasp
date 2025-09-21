@@ -7,6 +7,7 @@ from importlib.util import find_spec
 from typing import Optional, Union
 
 import numpy as np
+from aiida.common.exceptions import NotExistent
 from aiida.orm import BandsData, CalcJobNode, StructureData
 from pymatgen.core import Lattice
 from pymatgen.electronic_structure.bandstructure import (
@@ -93,6 +94,12 @@ def get_pmg_bandstructure(
     if 'cell' in bands_node.base.attributes.keys():
         lattice = Lattice(bands_node.base.attributes.get('cell'))
     else:
+        if structure is None:
+            try:
+                calc_job = bands_node.base.links.get_incoming(node_class=CalcJobNode).one().node
+                structure = calc_job.inputs.structure
+            except (AttributeError, NotExistent):
+                raise ValueError('The input BandsData does not have cell information, please provide a StructureData')
         lattice = Lattice(structure.cell)
 
     # Constructure the label dictionary

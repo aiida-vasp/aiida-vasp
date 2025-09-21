@@ -25,6 +25,22 @@ In most cases, the AiiDA is installed into a virtual environment activate the vi
 
 ::::{tab-set}
 
+:::{tab-item} uv
+
+Assuming `uv` has been installed (if not, follow [this guide](https://docs.astral.sh/uv/getting-started/installation/)).
+
+First, create a virtual environment using:
+
+```bash
+   $ uv venv <path_to_venv>
+```
+
+then activate it with
+
+```bash
+   $ source <path_to_venv>/bin/activate
+```
+
 :::{tab-item} venv
 
 Assuming the virtual environment is installed in ``~/env/aiida-vasp``, activate it using:
@@ -47,17 +63,47 @@ Assuming the conda environment is named ``aiida-vasp``, activate it using:
 
 The [aiida-vasp] plugin can now be installed using `pip`:
 
+::::{tab-set}
+
+:::{tab-item} uv
+
+```bash
+   $ (aiida-vasp) uv pip install aiida-vasp
+```
+
+:::
+
+:::{tab-item} conda/venv
+
 ```bash
    $ (aiida-vasp) pip install aiida-vasp
 ```
 
-However, it is likely that the pypi version is not up to date with the latest development version. In this case, you can install the plugin from the source code using:
+::::
+
+
+However, it is likely that the PyPI version is not up to date with the latest development version. In this case, you can install the plugin from the source code using:
+
+::::{tab-set}
+
+:::{tab-item} uv
 
 ```bash
    $ (aiida-vasp) git clone https://github.com/aiida-vasp/aiida-vasp.git
    $ (aiida-vasp) cd aiida-vasp
-   $ (aiida-vasp) pip install -e .[pre-commit,testing]
+   $ (aiida-vasp) uv pip install -e ".[pre-commit,testing]"
 ```
+:::
+
+:::{tab-item} venv/conda
+```bash
+   $ (aiida-vasp) git clone https://github.com/aiida-vasp/aiida-vasp.git
+   $ (aiida-vasp) cd aiida-vasp
+   $ (aiida-vasp) pip install -e ".[pre-commit,testing]"
+```
+:::
+
+::::
 
 This is also the recommended way to install the plugin if you plan to contribute to its development.
 
@@ -69,7 +115,23 @@ To verify the installation, you can run the following command:
    $ verdi plugin list aiida.calculations
 ```
 
-and the printed list should include the  `vasp.vasp` entry.
+and the printed list should include the  `vasp.vasp` entry:
+
+
+```bash
+Registered entry points for aiida.calculations:
+* abacus.abacus
+* castep.castep
+* castep.ts
+* core.arithmetic.add
+* core.templatereplacer
+* core.transfer
+* phonopy.phonopy
+* vasp.immigrant
+* vasp.neb
+* vasp.vasp
+* vasp.vasp2w90
+```
 
 
 

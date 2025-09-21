@@ -1,22 +1,42 @@
 (potentials)=
 
-# Potentials
+# How to import and use pseudopotentials
 
-As you already know, [VASP] relies on potentials represented by the POTCAR files.
+In this guide we will go through how to import and use the pseudopotentials (PAW datasets) in aiida-vasp.
 
-AiiDA-VASP takes care of managing your POTCAR files, but you need to obtain them separately and make them available to AiiDA-VASP. These are usually supplied by the [VASP] team and is part of the license. You should have received a folder (`tar` archive) containing multiple subfolders (`tar` archives), each representing a set of POTCAR files intended to be used together. AiiDA-VASP allows you to import only the sets (or even individual potentials) you require, and keep them grouped in potential families. The import process uploads these potentials to you working AiiDA database.
 
-## Why do I need to import POTCAR files?
+As we know, any [VASP] calculation relies on potentials provided by the POTCAR files.
 
-[AiiDA] does more than prepare calculations and send them to a cluster. The main focus of [AiiDA] lies on tracking data provenance. The same goes for AiiDA-VASP. Importing the POTCAR files into your working [AiiDA] database yields some advantages:
+The actual POTCAR in the calculation should be concatenated from multiple POTCARs provided by the dataset in the same order as the symbols appear in the POSCAR.
+In correctly ordering or misuse of the POTCAR files are common mistakes when deploying VASP calculation *by hand*.
 
-> - AiiDA-VASP stores a unique hash for each file. This can help users navigate when different potentials have very similar looking headers, but do in fact contain a different potential.
-> - POTCAR files uploaded to the database cannot be modified accidentally, thus it is recorded unambiguously, which file was used for which execution of each run.
-> - Storing the file's contents rather than a link prevents accidentally breaking the link by moving the file away (or renaming it).
+When using aiida-vasp, the POTCAR files are managed automatically.
+First, we need to make them available to AiiDA-VASP.
+These are usually supplied by the [VASP] team and is part of the license.
+Each POTCAR dataset is an archive (`.tar.gz` or `tgz`) containing multiple subfolders,
+the name of the sub-folder is typically referred as the **symbol** of the POTCAR file it contains.
 
-## How to import a set of POTCAR files?
+:::{info}
+The POTCAR files are .... name as `POTCAR` so the only way to tell them apart is to look at the content.
+However, early releases of the VASP PAW dataset contains mistakes such that the **symbol** of the POTCAR
+is not what it say in the file! This will disrupt the routines in aiida-vasp to assign the correct POTCAR
+for each element.
+:::
 
-The command line tools for these tasks are written as plugins to [AiiDA], and can be called through the [AiiDA] command `verdi`:
+While aiida-vasp does allow importing only the sets (or even individual potentials) you require,
+it is more common to import the entire dataset and keep them grouped as a potential family.
+
+
+[AiiDA] does more than prepare calculations and send them to a cluster. The main focus of [AiiDA] lies on tracking data provenance.
+Importing the POTCAR files into your working [AiiDA] database yields some advantages:
+
+- aiida-vasp stores a unique hash for each file. This can help users navigate when different potentials have very similar looking headers, but do in fact contain a different potential.
+- POTCAR files uploaded to the database cannot be modified accidentally, thus it is recorded unambiguously, which file was used for which execution of each run.
+- Storing the file's contents rather than a link prevents accidentally breaking the link by moving the file away (or renaming it).
+
+## How to import a set of POTCAR files
+
+The command line tools for these tasks can be called through the `aiida-vasp` command:
 
 ```
 $ (aiida-vasp) aiida-vasp potcar --help
@@ -30,11 +50,14 @@ Options:
   -h, --help                      Show this message and exit.
 
 Commands:
-  exportfamily          Export a POTCAR family into a compressed tar...
-  listfamilies          List available families of VASP potcar files.
-  migratefamilies       Migrate the type_string associated with the...
-  upload-from-pymatgen  Upload a family of VASP potcar files from pymatgen
-  uploadfamily          Upload a family of VASP potcar files.
+  exportfamily              Export a POTCAR family into a compressed tar...
+  fix-inconsistent-symbols  Fix inconsistent families
+  integrity                 Check the integrity of a POTCAR family
+  listfamilies              List available families of VASP potcar files.
+  listsymbols               List available symbols in a POTCAR family group.
+  migratefamilies           Migrate the type_string associated with the...
+  upload-from-pymatgen      Upload a family of VASP potcar files from...
+  uploadfamily              Upload a family of VASP potcar files.
 ```
 
 ```
@@ -62,7 +85,7 @@ If it encounters anything different, it will recursively search the given path f
 
 Custom sets can simply be arranged in a matching folder structure and then imported using the same command.
 
-## Uploading a set of potentials
+## Uploading a set of potentials incrementally
 
 For this purpose, we can use that the `uploadfamily` command by default adds any POTCAR files not yet uploaded to the family of the given `name`, for example:
 
@@ -75,17 +98,15 @@ Note, that the description does not have to be given if the family already exist
 
 Due to the recursive nature of the search, this also works for combining several small sets of POTCARs in a few commands, without having to arrange them in a different way first.
 
-## How to check what potential families are present in the database?
+## How to check what potential families are present in the database
 
 ```
 $ aiida-vasp potcar listfamilies
 ```
 
-## How to access uploaded potentials and search?
+## How to access uploaded potentials and search
 
 The data structure used to find and retrieve potentials is called {py:class}`PotcarData<aiida_vasp.data.potcar.PotcarData>` and can be accessed through AiiDA's data factory as `DataFactory('vasp.potcar')`. This class provides shortcuts for simple or frequent cases, for complex queries, please refer to the [AiiDA documentation] on querying the provenance graph.
-
-### Find potentials by properties
 
 More advanced searches, like for ranges of properties etc can be done using the {py:class}`QueryBuilder<aiida.orm.querybuilder.QueryBuilder>` tool, which is part of [AiiDA] and documented there.
 
@@ -105,8 +126,6 @@ which returns a list of all stored {py:class}`PotcarData<aiida_vasp.data.potcar.
 
 and for each you supply the `<value>` which is relevant for you given search.
 
-### Find potentials by a list of elements
-
 To find one potential for each element in a list of element names, all from the same family:
 
 ```
@@ -120,7 +139,7 @@ potcars_for_elements = PotcarData.get_potcars_dict(
 
 The `mapping` dictionary is required to decide which of the variants should be chosen for each element. The mapping can also conveniently be stored in a {py:class}`Dict<aiida.orm.nodes.data.dict.Dict>` node for reuse. The potential family is specified with `<potential_family>`.
 
-## How to pass potentials to a VASP calculation?
+## How to pass potentials to a VASP calculation
 
 For a single [VASP] calculation run, you should at the very minimum use the VaspWorkChain, which takes the family as a database-storable string and a dictionary mapping elements to a particular variant for that element:
 

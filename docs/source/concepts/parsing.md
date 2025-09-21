@@ -10,7 +10,7 @@ myst:
 
 (parsing)=
 
-# Parsing
+# Parsing VASP calculations
 
 :::{note}
 This notebook can be downloaded as **{nb-download}`parsing.ipynb`** and {download}`parsing.md`

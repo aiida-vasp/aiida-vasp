@@ -90,28 +90,6 @@ How-to guides.
 :::
 
 
-:::{grid-item-card} {fa}`cogs;mr-1` Workflows
-:text-align: center
-:shadow: md
-
-Automate your VASP calculations with pre-defined workflows.
-
-+++
-
-
-
-```{button-ref} workflows/index
-:ref-type: doc
-:click-parent:
-:expand:
-:color: primary
-:outline:
-
-
-Learn to use workflows.
-```
-:::
-
 :::{grid-item-card} {fa}`cogs;mr-1` Development
 :text-align: center
 :shadow: md
@@ -177,11 +155,11 @@ Please accept that the development of this plugin is a community effort and any 
 
 getting_started/index
 tutorials/index
-workflows/index
 concepts/index
 howto/index
-developments/index
+cli
 apidocs/index
+developments/index
 ./changelog.md
 ```
 
