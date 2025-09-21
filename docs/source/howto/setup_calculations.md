@@ -355,6 +355,6 @@ builder.dynamics = {
 ```
 
 :::{caution}
-The `T` and `F` applies to the **direct** (fractional) coorindates.
-To fix the **cartesian** coorindates, the $$lattice vectors needs to align with the x, y, z direction respectively.
+The `T` and `F` applies to the **direct** (fractional) coordinates.
+To fix the **cartesian** coordinates, the $$lattice vectors needs to align with the x, y, z direction respectively.
 :::

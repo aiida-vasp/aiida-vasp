@@ -40,6 +40,7 @@ then activate it with
 ```bash
    $ source <path_to_venv>/bin/activate
 ```
+:::
 
 :::{tab-item} venv
 
@@ -120,13 +121,9 @@ and the printed list should include the  `vasp.vasp` entry:
 
 ```bash
 Registered entry points for aiida.calculations:
-* abacus.abacus
-* castep.castep
-* castep.ts
 * core.arithmetic.add
 * core.templatereplacer
 * core.transfer
-* phonopy.phonopy
 * vasp.immigrant
 * vasp.neb
 * vasp.vasp
