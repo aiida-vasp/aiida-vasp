@@ -167,7 +167,8 @@ class BaseInputGenerator:
         protocol = protocol or self.protocol
         overrides = overrides or {}
         code = code or self.preset.default_code
-        options = self.preset.get_code_specific_options(code, 'options')
+        options = kwargs.pop('options', {})
+        options = recursive_merge(self.preset.get_code_specific_options(code, 'options'), options)
 
         builder = WorkflowFactory(self.WF_ENTRYPOINT).get_builder_from_protocol(
             code=orm.load_code(code),
