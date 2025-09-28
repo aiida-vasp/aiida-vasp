@@ -63,7 +63,11 @@ def monitor_stdout(node: CalcJobNode, transport: Transport, size_threshold_mb: f
 
     # Check the current size of the VASP stdout file
     stdout_path = str(Path(node.get_remote_workdir()) / node.process_class._VASP_OUTPUT)
-    file_stat = transport.get_attribute(stdout_path)
+    try:
+        file_stat = transport.get_attribute(stdout_path)
+    except FileNotFoundError:
+        # No file yet - do nothing
+        return
     if file_stat.st_size > 1024 * 1024 * size_threshold_mb:
         # Stdout file is dangerously large - truncate it to prevent system crashes
         # This typically indicates convergence problems or infinite loops in VASP
@@ -158,13 +162,18 @@ def monitor_loop_time(
         )
 
     # Monitor for stalled calculations by checking stdout file modification time
-    file_stat = transport.get_attribute(stdout_path)
-    elapsed = time.time() - file_stat.st_mtime
-    # Consider calculation stalled if:
-    # 1. Minimum patience time has elapsed AND
-    # 2. Time since last update exceeds expected time for several loops
-    if elapsed > patience_minimum_time and elapsed > last_loop_time * patience_num_loops:
-        return (
-            f'Last update of the {stdout_path} file is more than {last_loop_time * patience_num_loops:.2f} '
-            'seconds ago. It is very likely that the calculation is stalled or crashed.'
-        )
+    try:
+        file_stat = transport.get_attribute(stdout_path)
+    except FileNotFoundError:
+        # Do nothing if the stdout is not there
+        pass
+    else:
+        elapsed = time.time() - file_stat.st_mtime
+        # Consider calculation stalled if:
+        # 1. Minimum patience time has elapsed AND
+        # 2. Time since last update exceeds expected time for several loops
+        if elapsed > patience_minimum_time and elapsed > last_loop_time * patience_num_loops:
+            return (
+                f'Last update of the {stdout_path} file is more than {last_loop_time * patience_num_loops:.2f} '
+                'seconds ago. It is very likely that the calculation is stalled or crashed.'
+            )
