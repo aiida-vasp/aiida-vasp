@@ -638,9 +638,11 @@ A nested dictionary containing the following keys:
             magmom = []
             for site in self.inputs.structure.sites:
                 magmom.append(mapping.get(site.kind_name, default))
-            # Make sure ispin == 2 is any magmom is set
-            if any(x != 0 for x in magmom) and 'ispin' not in self.ctx.inputs.parameters:
+            # If ispin is not set (possibly by mistake), we change it to 2
+            if 'ispin' not in self.ctx.inputs.parameters:
                 self.ctx.inputs.parameters['ispin'] = 2
+            # Apply the mapping of the magmoms
+            self.ctx.inputs.parameters['magmom'] = ' '.join(map(str, magmom))
 
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):

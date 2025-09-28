@@ -3,6 +3,7 @@ Functions to merge dictionaries
 """
 
 import collections
+from copy import deepcopy
 
 
 def recursive_merge_orig(left: dict, right: dict) -> dict:
@@ -75,9 +76,8 @@ def recursive_merge(left: dict, right: dict) -> dict:
         >>> recursive_merge({'a': {'x': 1}}, {'a': {'$!replace': {'y': 2}}})
         {'a': {'y': 2}}
     """
-
-    # Note that a deepcopy is not necessary, since this function is called recursively.
-    left = left.copy()
+    # Here a deepcopy is necessary as in-place modification is used
+    left = deepcopy(left)
     for key, value_right in right.items():
         if key in left:
             # Apply special operations
