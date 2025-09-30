@@ -1110,8 +1110,8 @@ A nested dictionary containing the following keys:
 
         # The logic below only works for algo=normal
         if algo.lower() == 'normal':
-            # First try - Increase NELM
-            if nelm < 150:
+            # First try - Increase NELM if we started from a low NELM
+            if nelm < 100:
                 incar['nelm'] = 150
                 self._setup_restart(node)
                 self.ctx.inputs.parameters.update(incar)
