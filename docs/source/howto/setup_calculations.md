@@ -358,3 +358,86 @@ builder.dynamics = {
 The `T` and `F` applies to the **direct** (fractional) coordinates.
 To fix the **cartesian** coordinates, the $$lattice vectors needs to align with the x, y, z direction respectively.
 :::
+
+
+## How set initial magnetization for magnetic calculations
+
+VASP uses the `MAGMOM` tag in the INCAR file for the initial magnetic momenets.
+This tag can be an explicit list of moments for each specie:
+
+```
+MAGMOM = 0.0 1.0 5.0 5.0
+```
+
+or a compact format with `*` indicating repeats:
+
+```
+MAGMOM = 0.1*1 1.0*1 5.0*2
+```
+
+Very often, we want the initial magnetic moments to be specie-dependent.
+
+We can of course explictly set the `MAGMOM` tags programatically::
+
+```
+config = {'O': 0.0, 'Fe': 5.0}
+builder = VaspWorkChain.get_builder()
+builder.structure = structure
+builder.parameters = {
+  'incar': {
+    ....,
+    'magmom': [config.get(site.kind_name, 0.6) for site in structure.sites]
+  }
+}
+```
+
+This will assign the initial magnetic moment of all `Fe` atoms to be 5.0 and `O` atoms to be 0.0, other species will have 0.6 as the initial magnetic moment.
+
+In fact, {{ VaspWorkChain }} provides an input port to do exactly this.
+The above code is equivalent to:
+
+```python
+config = {'O': 0.0, 'Fe': 5.0, 'default': 0.6}
+builder = VaspWorkChain.get_builder()
+builder.magmom_mapping = config
+```
+
+In addition, the `ISPIN` tag will be set to `2` if it is not explicitly defined in the input.
+
+:::{note}
+At the time of writing, `magmom_mapping` port cannot be used for setting the initial three-dimensional spin for none-collinear spin calculations.
+:::
+
+## How configure LDA+U calculations
+
+LDA+U calcualtion in VAPS requires the following tags to be set in INCAR:
+
+* `LDAU`: should be set to `.TRUE.` as an overall switch of +U
+* `LDAUTYPE`: determines the type of the LDA+U formulism. Usually `2` is used which uses only `LDAUU`.
+* `LDAUU`: sets the $$U$$ value of each specie
+* `LDAUJ`: sets the $$J$$ value of each specie. The value of $$U-J$$ is often referred as $$U_{eff}$$ for a sepcific specie. This parameter is only used when `LDAUTYPE` is `1`.
+* `LDAUL`: controls which angular momentum channel the +U should be applied for each specie. For *3d* transition metals, the angular momentum channel is `2`. The U is not applied if it is set to `-1`.
+
+For example, to add U on Ni atoms with $$U_eff=6 \mathrm{eV}$$ in NiO, we can set
+
+```
+LDAU = .TRUE.
+LDAUTYPE = 2
+LDAUU = 6.0 0.0
+LDAUL = 2 -1
+```
+
+This assumes that Ni comes first in the POSCAR and POTCAR, followed by O.
+
+We can explicitly define these tags in the inputs to various workchain.
+However, it is easier (and less prone to mistake) to use the `ldau_mapping` port for automatically generating these tags:
+
+```python
+config = {'mapping': {'Ni': [2, 6.0], 'Fe': [2, 4.0]}}
+builder = VaspWorkChain.get_builder()
+builder.structure = structure
+builder.ldau_mapping = config
+```
+
+which sets $$U_{eff} = 6.0 \mathrm{eV}$$ for Ni's $$l=2$$ angular momentum channel, e.g. its $$3d$$
+Internally, the {{ VaspWorkChain }} uses {py:func}`get_ldau_keys <aiida_vasp.utils.ldau:get_ldau_keys>` function to generate the INCAR tags and the available keys can be found in its docstring.
