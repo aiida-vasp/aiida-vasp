@@ -123,7 +123,7 @@ def monitor_loop_time(
 
     # Extract electronic loop timings from OUTCAR file
     # LOOP entries contain timing information for each self-consistency cycle
-    returncode, stdout, stderr = transport.exec_command_wait(f"grep 'LOOP:' {outcar_path}")
+    returncode, stdout, _ = transport.exec_command_wait(f"grep 'LOOP:' {outcar_path}")
 
     # Skip monitoring if no LOOP entries found (calculation hasn't started electronic steps)
     if returncode != 0:

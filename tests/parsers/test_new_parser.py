@@ -103,7 +103,7 @@ def parser_with_outcar(parser_with_retrieved):
 
 def test_parser_born(parser_with_retrieved):
     """Test parsing born effective charges"""
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'born_effective_charge',
         {
             'parser_settings': {
@@ -118,20 +118,20 @@ def test_parser_born(parser_with_retrieved):
 
 def test_parser_dielectrics(parser_incomplete_output):
     """Test parsing dielectrics"""
-    parser, exit_code = parser_incomplete_output('dielectric')
+    parser, _ = parser_incomplete_output('dielectric')
     assert 'dielectrics' in parser.outputs
 
 
 def test_parser_magnetization(parser_incomplete_output):
     """Test parsing dielectrics"""
-    parser, exit_code = parser_incomplete_output('magnetization')
+    parser, _ = parser_incomplete_output('magnetization')
     assert 'misc' in parser.outputs
     assert parser.outputs['misc']['magnetization'][0] == 6.4424922
 
 
 def test_parser_lepsilon(parser_incomplete_output):
     """Test parsing dielectrics"""
-    parser, exit_code = parser_incomplete_output('lepsilon')
+    parser, _ = parser_incomplete_output('lepsilon')
     assert 'misc' in parser.outputs
     assert 'epsilon' in parser.outputs['dielectrics'].get_arraynames()
     assert 'born_charges' in parser.outputs['born_charges'].get_arraynames()
@@ -139,7 +139,7 @@ def test_parser_lepsilon(parser_incomplete_output):
 
 def test_parser_localfield(parser_incomplete_output):
     """Test parsing dielectrics"""
-    parser, exit_code = parser_incomplete_output('localfield')
+    parser, _ = parser_incomplete_output('localfield')
     assert 'misc' in parser.outputs
     assert 'epsilon' in parser.outputs['dielectrics'].get_arraynames()
     assert 'born_charges' in parser.outputs['born_charges'].get_arraynames()
@@ -147,7 +147,7 @@ def test_parser_localfield(parser_incomplete_output):
 
 def test_parser_disp_details(parser_with_retrieved):
     """Test parsing elastic moduli and symmetries from OUTCAR"""
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'disp_details',
         {
             'parser_settings': {
@@ -191,7 +191,7 @@ def test_parser_disp_details(parser_with_retrieved):
 
 
 def test_vasprun_parsing(parser_with_vasprun):
-    parser, exit_code = parser_with_vasprun(
+    parser, _ = parser_with_vasprun(
         {'parser_settings': {'check_completeness': False, 'required_quantity': [], 'critical_objects': []}}
     )
     misc = parser.outputs['misc'].get_dict()
@@ -201,7 +201,7 @@ def test_vasprun_parsing(parser_with_vasprun):
 
 
 def test_outcar_parsing(parser_with_outcar):
-    parser, exit_code = parser_with_outcar(
+    parser, _ = parser_with_outcar(
         {'parser_settings': {'check_completeness': False, 'required_quantity': [], 'critical_objects': []}}
     )
     misc = parser.outputs['misc'].get_dict()
@@ -211,7 +211,7 @@ def test_outcar_parsing(parser_with_outcar):
 
 
 def test_basic_run(parser_with_retrieved):
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'basic_run', {'parser_settings': {'include_quantity': ['born_charges'], 'critical_objects': []}}
     )
 
@@ -249,7 +249,7 @@ def test_basic_run(parser_with_retrieved):
 
 
 def test_relax_run(parser_with_retrieved):
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'relax',
         {
             'parser_settings': {
@@ -383,7 +383,7 @@ def test_relax_run(parser_with_retrieved):
 
 
 def test_basic(parser_with_retrieved):
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'basic',
         {
             'parser_settings': {
@@ -406,7 +406,7 @@ def test_basic(parser_with_retrieved):
 
 def test_stream(parser_with_retrieved):
     """Test the functionality of the stream parser."""
-    parser, exit_code = parser_with_retrieved(
+    parser, _ = parser_with_retrieved(
         'stdout/out',
         {
             'parser_settings': {
@@ -437,7 +437,7 @@ def test_parser_exception(request, calc_with_retrieved):
     }
     file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
     node = calc_with_retrieved(file_path, settings_dict)
-    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    _, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     assert output.is_finished
     assert output.exit_status == 0
@@ -446,7 +446,7 @@ def test_parser_exception(request, calc_with_retrieved):
     settings_dict = {'parser_settings': {'check_completeness': True, 'include_node': ['bands']}}
     file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
     node = calc_with_retrieved(file_path, settings_dict)
-    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    _, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     assert output.is_finished
     assert output.exit_status == 1004
@@ -462,7 +462,7 @@ def test_parser_exception(request, calc_with_retrieved):
     }
     file_path = str(pathlib.Path(request.fspath).parent / '../test_data/basic_run_ill_format')
     node = calc_with_retrieved(file_path, settings_dict)
-    result, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
+    _, output = VaspParser.parse_from_node(node, store_provenance=False, retrieved_temporary_folder=file_path)
 
     assert output.is_finished
     assert output.exit_status == 1002
