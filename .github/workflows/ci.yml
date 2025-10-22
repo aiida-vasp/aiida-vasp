@@ -71,6 +71,6 @@ jobs:
           uv pip install -v -e .[docs]
       - name: Build the documentation
         run: |
-          cd docs
           source .venv/bin/activate
+          cd docs
           make html
