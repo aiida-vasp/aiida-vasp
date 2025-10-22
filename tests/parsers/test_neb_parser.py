@@ -24,7 +24,7 @@ def _get_neb_vasp_parser(neb_calc_with_retrieved):
 @pytest.fixture
 def neb_parser_with_test(neb_calc_with_retrieved):
     """Fixture providing a VaspParser instance coupled to a VaspCalculation."""
-    parser, file_path, node = _get_neb_vasp_parser(neb_calc_with_retrieved)
+    parser, _, node = _get_neb_vasp_parser(neb_calc_with_retrieved)
     try:
         yield parser
     finally:
