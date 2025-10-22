@@ -27,7 +27,7 @@ def test_uploadfamily_withpath(aiida_profile_clean, tmp_path, run_vasp_process):
     Test export vasp calculation
     """
 
-    results, node = run_vasp_process(test_case='exit_codes/converged')
+    _, node = run_vasp_process(test_case='exit_codes/converged')
     result = run_cmd(
         'export',
         args=[str(node.pk), str(Path(tmp_path) / str(node.pk))],

@@ -193,7 +193,7 @@ def relaxcat(workflow: orm.WorkChainNode, fname: str) -> None:
     q.append(WorkChainNode)
     q.append(CalcJobNode, tag='calc', project=['*', 'ctime'])
     q.order_by({'calc': {'ctime': 'desc'}})
-    calc, ctime = q.first()
+    calc, _ = q.first()
 
     click.Context(calcjob_outputcat).invoke(calcjob_outputcat, calcjob=calc, path=fname)
 
