@@ -466,14 +466,9 @@ A nested dictionary containing the following keys:
         if any(ldau_u_mapping.values()):
             builder.ldau_mapping = inputs['ldau_mapping']
 
-        orig_magmom_mapping = inputs.get('magmom_mapping', {})
-        # Set the magmom mapping if supplied in the inputs
-        if dict(orig_magmom_mapping):
-            default_magmom = orig_magmom_mapping.get('default', 0.6)
-            magmom_mapping = {key: orig_magmom_mapping.get(key, default_magmom) for key in structure.get_kind_names()}
-
-            if magmom_mapping:
-                builder.magmom_mapping = magmom_mapping
+        magmom_mapping = inputs.get('magmom_mapping', {})
+        if dict(magmom_mapping):
+            builder.magmom_mapping = magmom_mapping
 
         return builder
 
