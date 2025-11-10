@@ -38,7 +38,7 @@ dependencies = [
     "seekpath",
     "packaging",
     "pydantic",
-    "parsevasp>=3.2",
+    "parsevasp>=3.4",
     "spglib",
     "pyyaml"
 ]
