@@ -112,7 +112,7 @@ magmom_mapping: &magmom_mapping
   V: 5
   W: 5
   Yb: 1
-  default: 0.6
+  default: 1.0
 
 default_inputs:
     clean_workdir: True

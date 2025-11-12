@@ -48,6 +48,7 @@ def test_silicon_sp(fresh_aiida_env, mock_potcars, mock_vasp_strict, si_node):
     upd = VaspInputGenerator()
     upd.get_builder(structure=si_node, code='mock-vasp@localhost')
     upd.set_options(custom_scheduler_commands='export MOCK_VASP_UPLOAD_PREFIX=mock_silicon_sp')
+    print(upd.builder.magmom_mapping.get_dict())
     results = upd.run_get_node()
     # Add prefix to the registry folder
     assert results.node.is_finished_ok

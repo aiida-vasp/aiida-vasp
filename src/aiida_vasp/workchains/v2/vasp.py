@@ -629,17 +629,23 @@ A nested dictionary containing the following keys:
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
 
+        # Apply the magmom mapping if supplied
         if 'magmom_mapping' in self.inputs:
             mapping = self.inputs.magmom_mapping.get_dict()
-            default = mapping.get('default', 0.6)
-            magmom = []
-            for site in self.inputs.structure.sites:
-                magmom.append(mapping.get(site.kind_name, default))
-            # If ispin is not set (possibly by mistake), we change it to 2
-            if 'ispin' not in self.ctx.inputs.parameters:
-                self.ctx.inputs.parameters['ispin'] = 2
-            # Apply the mapping of the magmoms
-            self.ctx.inputs.parameters['magmom'] = ' '.join(map(str, magmom))
+            default = mapping.pop('default', 1.0)
+            kind_names = set(self.inputs.structure.get_kind_names())
+            # Take only the relevant keys
+            mapping = {key: mapping[key] for key in mapping if key in kind_names}
+            # Only proceed if mapping is not empty or default is not 1.0 (VASP internal default)
+            if mapping or (default != 1.0):
+                magmom = []
+                for site in self.inputs.structure.sites:
+                    magmom.append(mapping.get(site.kind_name, default))
+                # If ispin is not set (possibly by mistake), we change it to 2
+                if 'ispin' not in self.ctx.inputs.parameters:
+                    self.ctx.inputs.parameters['ispin'] = 2
+                # Apply the mapping of the magmoms
+                self.ctx.inputs.parameters['magmom'] = ' '.join(map(str, magmom))
 
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):
