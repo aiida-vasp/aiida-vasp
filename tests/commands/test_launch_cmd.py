@@ -382,6 +382,10 @@ def test_launch_with_different_protocols(cmd_params, run_env, protocol):
         except ImportError:
             _ = pymatgen
             return
+        from pymatgen.core import SETTINGS  # noqa: PLC0415
+
+        if SETTINGS.get('PMG_VASP_PSP_DIR') is None:
+            return
 
     result = run_cmd(command='launch', args=args)
     assert result.exit_code == 0
