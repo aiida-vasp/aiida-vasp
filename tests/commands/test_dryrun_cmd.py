@@ -160,7 +160,7 @@ def test_dryrun_vasp_existing_work_dir_no_force(tmp_path):
     input_dir.mkdir()
     work_dir.mkdir()  # Create existing work directory
 
-    with pytest.raises(FileExistsError, match='Working directory .* exists already'):
+    with pytest.raises(FileExistsError, match=r'Working directory .* exists already'):
         dryrun_vasp(input_dir=str(input_dir), work_dir=str(work_dir), force=False)
 
 

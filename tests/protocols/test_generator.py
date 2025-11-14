@@ -231,7 +231,7 @@ class TestIncarDictToRelaxSettings:
             }
         }
 
-        updated_incar, relax_settings = incar_dict_to_relax_settings(incar_dict)
+        _, relax_settings = incar_dict_to_relax_settings(incar_dict)
 
         # Check relax_settings
         assert relax_settings['algo'] == 'rd'
@@ -247,7 +247,7 @@ class TestIncarDictToRelaxSettings:
             }
         }
 
-        updated_incar, relax_settings = incar_dict_to_relax_settings(incar_dict)
+        _, relax_settings = incar_dict_to_relax_settings(incar_dict)
 
         # Check relax_settings
         assert relax_settings['steps'] == 50
@@ -281,7 +281,7 @@ class TestIncarDictToRelaxSettings:
             }
         }
 
-        updated_incar, relax_settings = incar_dict_to_relax_settings(incar_dict)
+        _, relax_settings = incar_dict_to_relax_settings(incar_dict)
 
         # Check relax_settings
         assert relax_settings['steps'] == 100

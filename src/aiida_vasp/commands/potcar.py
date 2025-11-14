@@ -134,7 +134,7 @@ def listsymbols(family_name):
     for symbol, fpath in symbols:
         click.echo(f'- {symbol:<20} -> {fpath}')
 
-    duplicated, resolved = group.get_duplicated_symbols()
+    duplicated, _ = group.get_duplicated_symbols()
     if duplicated:
         echo.echo_warning(f'Duplicated symbols found in group {family_name}: {duplicated}')
 
