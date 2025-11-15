@@ -53,6 +53,7 @@ class BaseFileParser:
         data: Data | None = None,
         settings: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
+        raise_errors: bool = False,
     ) -> None:
         super().__init__()
         # Make sure we only accept initialization with either ``handler`` or ``data``.
@@ -77,6 +78,7 @@ class BaseFileParser:
         self._options = options
 
         self.parser_notifications = {}
+        self._raise_errors = raise_errors
 
         # Set ``handler`` (parsing from some source) or ``data`` (eventually for example executing write)
         if handler is not None:

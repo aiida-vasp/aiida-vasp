@@ -44,6 +44,7 @@ This means that for a handler:
 from __future__ import annotations
 
 import math
+import warnings
 from types import TracebackType
 from typing import Any, List, Optional, Tuple
 
@@ -61,29 +62,27 @@ from aiida.engine.processes.workchains.restart import (
     WorkChain,
     process_handler,
 )
-from aiida.orm import CalcJobNode, Code, Dict, KpointsData
+from aiida.orm import CalcJobNode, Dict, KpointsData
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import CalculationFactory
 
 from aiida_vasp.assistant.parameters import (
     ParametersMassage,
-    inherit_and_merge_parameters,
 )
 from aiida_vasp.calcs.vasp import VaspCalculation
-from aiida_vasp.data.chargedensity import ChargedensityData
+from aiida_vasp.common import parameters_validator, warn_deprecated_options
+from aiida_vasp.common.dryrun import get_jobscheme
 from aiida_vasp.data.potcar import PotcarData
-from aiida_vasp.data.wavefun import WavefunData
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
+from aiida_vasp.utils.ldau import get_ldau_keys
 from aiida_vasp.utils.workchains import compose_exit_code, prepare_process_inputs, site_magnetization_to_magmom
 
-from .common import parameters_validator
-from .common.dryrun import get_jobscheme
-from .inputset.vaspsets import get_ldau_keys
 from .mixins import WithBuilderUpdater
 
 # pylint: disable=no-member
 
 
-class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
+class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     The VASP workchain.
 
@@ -127,16 +126,23 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         'veryfast': ['normal', 'fast', 'damped'],
         'damped': ['normal', 'fast', 'veryfast'],
     }
+    _default_unsupported_parameters = {}
+    _protocol_tag = 'vasp'  # Search for vasp.yml in protocol directories
 
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:  # pylint: disable=too-many-statements
         super(VaspWorkChain, cls).define(spec)
-        spec.input('code', valid_type=Code)
-        spec.input(
-            'structure',
-            valid_type=(orm.StructureData, orm.CifData),
-            required=True,
+        spec.expose_inputs(cls._process_class, exclude=('metadata',))
+        spec.expose_inputs(
+            cls._process_class, namespace='calc', include=('metadata',), namespace_options={'populate_defaults': True}
         )
+
+        # Use a custom validator for backward compatibility
+        # This needs to be removed in the next major release/formalized workchain interface
+        spec.inputs.validator = validate_calc_job_custom
+        spec.inputs['calc']['metadata']['options']['resources']._required = False
+        spec.inputs['calc']._required = False
+
         spec.input('kpoints', valid_type=orm.KpointsData, required=False)
         spec.input(
             'potential_family',
@@ -161,30 +167,10 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         spec.input(
             'options',
             valid_type=orm.Dict,
-            required=True,
-            serializer=to_aiida_type,
-        )
-        spec.input(
-            'settings',
-            valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
-        )
-        spec.input('wavecar', valid_type=WavefunData, required=False)
-        spec.input('chgcar', valid_type=ChargedensityData, required=False)
-        spec.input(
-            'site_magnetization',
-            valid_type=orm.Dict,
-            required=False,
-            help='Site magnetization to be used as MAGMOM',
-        )
-        spec.input(
-            'restart_folder',
-            valid_type=orm.RemoteData,
-            required=False,
-            help="""
-            The restart folder from a previous workchain run that is going to be used.
-            """,
+            validator=warn_deprecated_options,
+            help='Deprecated - use `calc.metadata.options` instead.',
         )
         spec.input(
             'max_iterations',
@@ -228,12 +214,19 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             valid_type=orm.Dict,
             required=False,
             serializer=to_aiida_type,
-            help="""Settings for assign LDA+U related settings according to the input structure.
-
+            help="""Settings for assign LDA+U related settings according to the input structure,
+A nested dictionary containing the following keys:
     mapping: a dictionary in the format of  {"Mn": [d, 4]...} for U
     utype: the type of LDA+U, default to 2, which is the one with only one parameter
     jmapping: a dictionary in the format of  {"Mn": [d, 4]...} but for J
     felec: Wether we are dealing with f electrons, will increase lmaxmix if we are.""",
+        )
+        spec.input(
+            'magmom_mapping',
+            valid_type=orm.Dict,
+            required=False,
+            serializer=to_aiida_type,
+            help='Mapping for the initial magnetic moments.',
         )
         spec.input(
             'kpoints_spacing',
@@ -248,21 +241,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             serializer=to_aiida_type,
             required=False,
             help='Automatic parallelisation settings, keywords passed to `get_jobscheme` function.',
-        )
-        spec.input(
-            'dynamics.positions_dof',
-            valid_type=orm.List,
-            serializer=to_aiida_type,
-            required=False,
-            help="""
-            Site dependent flag for selective dynamics when performing relaxation
-            """,
-        )
-        spec.input(
-            'vdw_kernel',
-            valid_type=orm.SinglefileData,
-            required=False,
-            help='The vdw_kerenl.bindat file to be used for vdw calculations.',
         )
         spec.outline(
             cls.setup,
@@ -383,15 +361,116 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         self.ctx.handler = AttributeDict()
         self.ctx.handler.nbands_increase_tries = 0
 
-    def _init_parameters(self) -> Dict:
-        """Collect input to the workchain in the converge namespace and put that into the parameters."""
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        overrides=None,
+        options=None,
+        **_,
+    ):
+        """Return a builder prepopulated with inputs selected according to the chosen protocol.
 
-        # At some point we will replace this with possibly input checking using the PortNamespace on
-        # a dict parameter type. As such we remove the workchain input parameters as node entities. Much of
-        # the following is just a workaround until that is in place in AiiDA core.
-        parameters = inherit_and_merge_parameters(self.inputs)
+        :param code: the ``Code`` instance configured for the ``abacus.abacus`` plugin.
+        :param structure: the ``StructureData`` instance to use.
+        :param protocol: protocol to use, if not specified, the default will be used.
+        :param overrides: optional dictionary of inputs to override the defaults of the protocol.
+        :param options: A dictionary of options that will be recursively set for the ``metadata.options`` input of all
+            the ``CalcJobs`` that are nested in this work chain.
+        :return: a process builder instance with all inputs defined ready for launch.
+        """
 
-        return parameters
+        if isinstance(code, str):
+            code = orm.load_code(code)
+        has_pmg = True
+        try:
+            from aiida_vasp.protocols.pmg import PymatgenInputAdaptor  # noqa: PLC0415
+        except ImportError:
+            has_pmg = False
+
+        if has_pmg and protocol in PymatgenInputAdaptor.KNOWN_SETS:
+            adaptor = PymatgenInputAdaptor(
+                protocol,
+                incar_overrides=overrides.get('incar_overrides', {}),
+                pmg_kwargs=overrides.get('pmg_kwargs', {}),
+            )
+            inputs = adaptor.get_inputs(structure, is_workchain=True, overrides=overrides)
+        else:
+            inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        meta_parameters = inputs.pop('meta_parameters', {})
+        natoms = len(structure.sites)
+
+        # Update the parameters based on the protocol inputs
+        parameters = inputs['parameters']
+
+        # Update EDIFF if not overriden
+        if 'ediff' not in parameters['incar']:
+            parameters['incar']['ediff'] = natoms * float(meta_parameters['ediff_per_atom'])
+
+        # Configure the options for the underlying VaspCalculation to be launched
+        metadata = inputs.get('calc', {}).get('metadata', {})
+        if options:
+            metadata['options'] = recursive_merge(metadata.get('options', {}), options)
+
+        # Forward to the builders
+        builder = cls.get_builder()
+        builder.code = code
+
+        # Use explicit potential if given
+        if len(inputs.get('potentials', {})) > 0:
+            builder.potentials = inputs['potentials']
+        else:
+            builder.potential_family = inputs['potential_family']
+            builder.potential_mapping = {key: inputs['potential_mapping'][key] for key in structure.get_kind_names()}
+
+        # Apply inputs
+        builder.structure = structure
+        builder.parameters = parameters
+        builder.calc.metadata = metadata
+
+        if 'settings' in inputs:
+            builder.settings = inputs.get('settings', {})
+        if 'clean_workdir' in inputs:
+            builder.clean_workdir = orm.Bool(inputs['clean_workdir'])
+
+        # Configure the kpoints
+        if 'kpoints' in inputs:
+            if isinstance(inputs['kpoints'], orm.Data):
+                builder.kpoints = inputs['kpoints']
+            # Has mesh been explicitly supplied?
+            elif 'mesh' in inputs['kpoints']:
+                kpoints = KpointsData()
+                kpoints.set_cell_from_structure(structure)
+                kpoints.set_kpoints_mesh(inputs['kpoints']['mesh'], inputs['kpoints'].get('offset', [0, 0, 0]))
+                builder.kpoints = kpoints
+            elif 'spacing' in inputs['kpoints']:
+                builder.kpoints_spacing = orm.Float(inputs['kpoints']['spacing'])
+        else:
+            builder.kpoints_spacing = orm.Float(inputs['kpoints_spacing'])
+
+        # Apply maximum iteration
+        if 'max_iterations' in inputs:
+            builder.max_iterations = inputs['max_iterations']
+
+        # Check if we have any valid ldau_u_mapping defined
+        if inputs.get('ldau_mapping') is None:
+            ldau_u_mapping = {}
+        else:
+            ldau_u_mapping = {key: inputs['ldau_mapping'].get('mapping').get(key) for key in structure.get_kind_names()}
+        # Only forward the mapping if there are elements included in the mapping
+        # Note that only the u-mapping is checked. The assumption is that if one wants to use it
+        # it should be supplied
+        if any(ldau_u_mapping.values()):
+            builder.ldau_mapping = inputs['ldau_mapping']
+
+        magmom_mapping = inputs.get('magmom_mapping', {})
+        if dict(magmom_mapping):
+            builder.magmom_mapping = magmom_mapping
+
+        return builder
 
     def verbose_report(self, *args, **kwargs) -> None:
         """Send report if self.ctx.verbose is True"""
@@ -406,10 +485,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         NOTE: This method should probably be refactored to give more control on what kind
         of restart is needed
         """
-        # Check first if the calling workchain wants a restart in the same folder
-        if 'restart_folder' in self.inputs:
-            self.ctx.inputs.restart_folder = self.inputs.restart_folder
-
         # Then check if the workchain wants a restart
         if self.ctx.restart_calc and isinstance(self.ctx.restart_calc.process_class, self._process_class):
             self.ctx.inputs.restart_folder = self.ctx.restart_calc.outputs.remote_folder
@@ -459,19 +534,12 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
 
         #### START OF THE COPY FROM VASPWorkChain ####
         #  - the only change is that the section about kpoints is deleted
-        self.ctx.inputs = AttributeDict()
-        self.ctx.inputs.parameters = self._init_parameters()
-        # Set the code
-        self.ctx.inputs.code = self.inputs.code
-
-        # Set the structure (poscar)
-        self.ctx.inputs.structure = self.inputs.structure
-
-        # Set the kpoints (kpoints) - No longer needed, using kpoints/kpoints spacing as from below
-        # self.ctx.inputs.kpoints = self.inputs.kpoints
+        self.ctx.inputs = self.exposed_inputs(self._process_class, namespace='calc', agglomerate=True)
+        # Interface store the parameters as a dict for easy update
+        self.ctx.inputs.parameters = self.ctx.inputs.parameters.get_dict()
 
         # Set settings
-        unsupported_parameters = None
+        unsupported_parameters = self._default_unsupported_parameters.copy()
         skip_parameters_validation = False
         settings_dict = {}
         if self.inputs.get('settings'):
@@ -501,7 +569,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         except AttributeError:
             pass
 
-        # Set options
+        # For back-compatibility only - now options IS stored!
         # Options is very special, not storable and should be
         # wrapped in the metadata dictionary, which is also not storable
         # and should contain an entry for options
@@ -516,10 +584,6 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             # Set MPI to True, unless the user specifies otherwise
             withmpi = self.ctx.inputs.metadata['options'].get('withmpi', True)
             self.ctx.inputs.metadata['options']['withmpi'] = withmpi
-
-        # Utilise default input/output selections
-        self.ctx.inputs.metadata['options']['input_filename'] = 'INCAR'
-        self.ctx.inputs.metadata['options']['output_filename'] = 'OUTCAR'
 
         # Make sure we also bring along any label and description set on the WorkChain to the CalcJob, it if does
         # not exists, set to empty string.
@@ -537,39 +601,15 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             assert len(magmom) == len(self.inputs.structure.sites)
             self.ctx.inputs.parameters['magmom'] = magmom
 
-        # Verify and set potentials (potcar)
-        if not self.inputs.potential_family.value:
-            self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
-            return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
-        try:
-            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
-                structure=self.inputs.structure,
-                family_name=self.inputs.potential_family.value,
-                mapping=self.inputs.potential_mapping.get_dict(),
-            )
-        except ValueError as err:
-            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))  # pylint: disable=no-member
-        except NotExistent as err:
-            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))  # pylint: disable=no-member
+        exit_code = self.setup_potcar()
+        if exit_code is not None:
+            return exit_code
 
         # Store verbose parameter in ctx - otherwise it will not work after deserialization
         try:
             self.ctx.verbose = self.inputs.verbose.value
         except AttributeError:
             self.ctx.verbose = self._verbose
-
-        # Set the charge density (chgcar)
-        if 'chgcar' in self.inputs:
-            self.ctx.inputs.charge_density = self.inputs.chgcar
-
-        # Set the wave functions (wavecar)
-        if 'wavecar' in self.inputs:
-            self.ctx.inputs.wavefunctions = self.inputs.wavecar
-
-        if 'vdw_kernel' in self.inputs:
-            self.ctx.inputs.vdw_kernel = self.inputs.vdw_kernel
-
-        ##### END OF THE COPY from VaspWorkChain   #####
 
         # Set the kpoints (kpoints)
         if 'kpoints' in self.inputs:
@@ -589,6 +629,24 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
 
+        # Apply the magmom mapping if supplied
+        if 'magmom_mapping' in self.inputs:
+            mapping = self.inputs.magmom_mapping.get_dict()
+            default = mapping.pop('default', 1.0)
+            kind_names = set(self.inputs.structure.get_kind_names())
+            # Take only the relevant keys
+            mapping = {key: mapping[key] for key in mapping if key in kind_names}
+            # Only proceed if mapping is not empty or default is not 1.0 (VASP internal default)
+            if mapping or (default != 1.0):
+                magmom = []
+                for site in self.inputs.structure.sites:
+                    magmom.append(mapping.get(site.kind_name, default))
+                # If ispin is not set (possibly by mistake), we change it to 2
+                if 'ispin' not in self.ctx.inputs.parameters:
+                    self.ctx.inputs.parameters['ispin'] = 2
+                # Apply the mapping of the magmoms
+                self.ctx.inputs.parameters['magmom'] = ' '.join(map(str, magmom))
+
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):
             self.ctx.inputs.monitors = {
@@ -596,6 +654,22 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
                 'loop_time': Dict(dict={'entry_point': 'vasp.loop_time', 'minimum_poll_interval': 600}),
             }
         return None
+
+    def setup_potcar(self) -> None:
+        # Verify and set potentials (potcar)
+        if not self.inputs.potential_family.value:
+            self.report('An empty string for the potential family name was detected.')  # pylint: disable=not-callable
+            return self.exit_codes.ERROR_NO_POTENTIAL_FAMILY_NAME  # pylint: disable=no-member
+        try:
+            self.ctx.inputs.potential = PotcarData.get_potcars_from_structure(
+                structure=self.inputs.structure,
+                family_name=self.inputs.potential_family.value,
+                mapping=self.inputs.potential_mapping.get_dict(),
+            )
+        except ValueError as err:
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_VALUE_ERROR.status, str(err))  # pylint: disable=no-member
+        except NotExistent as err:
+            return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))  # pylint: disable=no-member
 
     def run_auto_parallel(self) -> bool:
         """Wether we should run auto-parallelisation test"""
@@ -679,7 +753,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         # Find the remote folder of the last calculation which should be kept from cleaning
         out_remote_pk = None
         if self.inputs.keep_last_workdir.value is True:
-            out_remote_pk = self.outputs.remote_folder.pk
+            out_remote_pk = self.outputs['remote_folder'].pk
 
         cleaned_calcs = []
         for called_descendant in self.node.called_descendants:
@@ -694,6 +768,10 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
 
         if cleaned_calcs:
             self.report(f'cleaned remote folders of calculations: {" ".join(cleaned_calcs)}')
+
+    def _get_run_status(self, node: CalcJobNode) -> None:
+        """Return the run status of the calculation."""
+        return node.outputs.misc['run_status']
 
     @process_handler(priority=2000, enabled=False)
     def handler_always_attach_outputs(self, node: CalcJobNode) -> Optional[ProcessHandlerReport]:
@@ -890,7 +968,8 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
     def handler_electronic_conv_alt(self, node: CalcJobNode) -> Optional[ProcessHandlerReport]:  # pylint: disable=too-many-return-statements,too-many-branches
         """Handle electronic convergence problem"""
         incar = node.inputs.parameters.get_dict()
-        run_status = node.outputs.misc['run_status']
+        run_status = self._get_run_status(node)
+
         notifications = node.outputs.misc['notifications']
         nelm = run_status['nelm']
         algo = incar.get('algo', 'normal')
@@ -992,7 +1071,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
     def handler_electronic_conv(self, node: CalcJobNode) -> Optional[ProcessHandlerReport]:
         """Handle electronic convergence problem"""
         incar = node.inputs.parameters.get_dict()
-        run_status = node.outputs.misc['run_status']
+        run_status = self._get_run_status(node)
         nelm = run_status['nelm']
         algo = incar.get('algo', 'normal')
 
@@ -1034,8 +1113,8 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
 
         # The logic below only works for algo=normal
         if algo.lower() == 'normal':
-            # First try - Increase NELM
-            if nelm < 150:
+            # First try - Increase NELM if we started from a low NELM
+            if nelm < 100:
                 incar['nelm'] = 150
                 self._setup_restart(node)
                 self.ctx.inputs.parameters.update(incar)
@@ -1231,8 +1310,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         """
         Check if the calculation has reached the end of execution.
         """
-        misc = node.outputs.misc.get_dict()
-        run_status = misc['run_status']
+        run_status = self._get_run_status(node)
         if not run_status.get('finished'):
             self.report(f'The child calculation {node} did not reach the end of execution.')
             return ProcessHandlerReport(exit_code=self.exit_codes.ERROR_CALCULATION_NOT_FINISHED, do_break=True)
@@ -1243,8 +1321,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
         """
         Check if the calculation has converged electronic structure.
         """
-        misc = node.outputs.misc.get_dict()
-        run_status = misc['run_status']
+        run_status = self._get_run_status(node)
         # Check that the electronic structure is converged
         if not run_status.get('electronic_converged'):
             self.report(f'The child calculation {node} does not possess a converged electronic structure.')
@@ -1285,8 +1362,7 @@ class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater):
             if not settings.get('CHECK_IONIC_CONVERGENCE', True):
                 return None
 
-        misc = node.outputs.misc.get_dict()
-        run_status = misc['run_status']
+        run_status = self._get_run_status(node)
 
         # Check that the ionic structure is converged
         if run_status.get('ionic_converged') is False:
@@ -1392,3 +1468,87 @@ def potential_family_validator(family: orm.Str, _) -> None:
             f'The potential family "{family.value}" is not found. '
             'Please use verdi data vasp.potcars tool to verify your settings.'
         )
+
+
+def validate_calc_job_custom(inputs: Any, ctx) -> Optional[str]:
+    """Validate the entire set of inputs passed to the `CalcJob` constructor.
+
+    Reasons that will cause this validation to raise an `InputValidationError`:
+
+     * No `Computer` has been specified, neither directly in `metadata.computer` nor indirectly through the `Code` input
+     * The specified computer is not stored
+     * The `Computer` specified in `metadata.computer` is not the same as that of the specified `Code`
+     * No `Code` has been specified and no `remote_folder` input has been specified, i.e. this is no import run
+
+    :return: string with error message in case the inputs are invalid
+    """
+    try:
+        ctx.get_port('code')
+        ctx.get_port('metadata.computer')
+    except ValueError:
+        # If the namespace no longer contains the `code` or `metadata.computer` ports we skip validation
+        return None
+
+    remote_folder = inputs.get('remote_folder', None)
+
+    if remote_folder is not None:
+        # The `remote_folder` input has been specified and so this concerns an import run, which means that neither
+        # a `Code` nor a `Computer` are required. However, they are allowed to be specified but will not be explicitly
+        # checked for consistency.
+        return None
+
+    code = inputs.get('code', None)
+    computer_from_code = code.computer
+    computer_from_metadata = inputs.get('metadata', {}).get('computer', None)
+
+    if not computer_from_code and not computer_from_metadata:
+        return 'no computer has been specified in `metadata.computer` nor via `code`.'
+
+    if computer_from_code and not computer_from_code.is_stored:
+        return f'the Computer<{computer_from_code}> is not stored'
+
+    if computer_from_metadata and not computer_from_metadata.is_stored:
+        return f'the Computer<{computer_from_metadata}> is not stored'
+
+    if computer_from_code and computer_from_metadata and computer_from_code.uuid != computer_from_metadata.uuid:
+        return (
+            'Computer<{}> explicitly defined in `metadata.computer` is different from Computer<{}> which is the '
+            'computer of Code<{}> defined as the `code` input.'.format(computer_from_metadata, computer_from_code, code)
+        )
+
+    try:
+        resources_port = ctx.get_port('metadata.options.resources')
+    except ValueError:
+        return None
+
+    # If the resources port exists but is not required, we don't need to validate it against the computer's scheduler
+    if not resources_port.required:
+        return None
+
+    computer = computer_from_code or computer_from_metadata
+    scheduler = computer.get_scheduler()
+    old_workchain_interface = False
+    try:
+        resources = inputs['metadata']['options']['resources']
+    except KeyError:
+        old_workchain_interface = True
+        warnings.warn(
+            'input `metadata.options.resources` is not specified - you are probably using the old options port.'
+            'Please define options directly in `calc.metadata.options` instead of `options`.'
+        )
+
+    if not old_workchain_interface:
+        scheduler.preprocess_resources(resources, computer.get_default_mpiprocs_per_machine())
+        try:
+            scheduler.validate_resources(**resources)
+        except ValueError as exception:
+            return f'input `metadata.options.resources` is not valid for the `{scheduler}` scheduler: {exception}'
+    else:
+        resources = inputs['options'].get('resources')
+        if resources is None:
+            return (
+                '`resources` is not specified under `options` nor in `calc.metadata.options.resources` '
+                'please define it in `calc.metadata.options`'
+            )
+
+    return None

@@ -21,16 +21,19 @@ from aiida.plugins import WorkflowFactory
 from aiida.tools import get_explicit_kpoints_path
 from ase.geometry import cell_to_cellpar
 
+from aiida_vasp.common import OVERRIDE_NAMESPACE
+from aiida_vasp.common.dryrun import dryrun_relax_builder
+from aiida_vasp.common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from aiida_vasp.data.chargedensity import ChargedensityData
 from aiida_vasp.parsers.content_parsers.vasprun import VasprunParser
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.kmesh import get_ir_kpoints_data
 from aiida_vasp.utils.opthold import BandOptions
 
-from .common import OVERRIDE_NAMESPACE
-from .common.dryrun import dryrun_relax_builder
-from .common.transform import magnetic_structure_decorate, magnetic_structure_dedecorate
 from .mixins import WithBuilderUpdater
+from .relax import VaspRelaxWorkChain
+from .vasp import VaspWorkChain
 
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 
@@ -38,7 +41,7 @@ SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 logger = getLogger(__name__)
 
 
-class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
+class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     Workchain for running bands calculations.
 
@@ -70,7 +73,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
     """
 
     _base_wk_string = 'vasp.v2.vasp'
+    _base_workchain = VaspWorkChain
     _relax_wk_string = 'vasp.v2.relax'
+    _relax_workchain = VaspRelaxWorkChain
+    _protocol_tag = 'band'
     option_class = BandOptions
 
     @classmethod
@@ -193,6 +199,64 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
             message='The input structure is not the primitive one!',
         )
 
+    def get_appended_label(self, suffix):
+        """Return a label with appended suffix"""
+        return (self.inputs.metadata.get('label', '') or '') + ' ' + suffix
+
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        run_relax=True,
+        overrides=None,
+        options=None,
+        band_settings=None,
+        **kwargs,
+    ):
+        overrides = overrides or {}
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+        if band_settings:
+            overrides['band_settings'] = recursive_merge(overrides.get('band_settings'), band_settings)
+
+        scf_builder = cls._base_workchain.get_builder_from_protocol(
+            code=code,
+            structure=structure,
+            protocol=inputs.get('scf', {}).get('protocol', protocol),
+            overrides=inputs.get('scf', {}),
+            options=options,
+            **kwargs,
+        )
+
+        # Configure the relaxation step of the workchain
+        if run_relax:
+            relax_builder = cls._relax_workchain.get_builder_from_protocol(
+                code=code,
+                structure=structure,
+                protocol=inputs.get('relax', {}).get('protocol', protocol),
+                overrides=inputs.get('relax', {}),
+                options=options,
+                **kwargs,
+            )
+            relax_builder.pop('structure')
+        else:
+            relax_builder = None
+
+        scf_builder.pop('structure')
+
+        builder = cls.get_builder()
+        builder.scf = scf_builder
+        builder.structure = structure
+        if relax_builder is not None:
+            builder.relax = relax_builder
+        if inputs.get('band_settings'):
+            builder.band_settings = inputs.get('band_settings')
+        if inputs.get('clean_children_workdir'):
+            builder.clean_children_workdir = inputs.get('clean_children_workdir')
+
+        return builder
+
     def select_chgcar_from_inputs(self) -> None:
         """Setup CHGCAR from inputs"""
         if self.inputs.get('chgcar'):
@@ -228,6 +292,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         inputs = self.exposed_inputs(relax_work, 'relax', agglomerate=True)
         inputs = AttributeDict(inputs)
         inputs.metadata.call_link_label = 'relax'
+        inputs.metadata.label = self.get_appended_label('RELAX')
         inputs.structure = self.ctx.current_structure
 
         # Ensure the WAVECAR is written by the calculation
@@ -254,7 +319,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
             return self.exit_codes.ERROR_SUB_PROC_RELAX_FAILED
 
         # Use the relaxed structure as the current structure
-        self.ctx.current_structure = relax_workchain.outputs.relax__structure
+        self.ctx.current_structure = relax_workchain.outputs.relax.structure
 
     def should_run_scf(self) -> bool:
         """Wether we should run SCF calculation"""
@@ -294,7 +359,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         else:
             # Using sumo interface
             try:
-                from .common.sumo_kpath import kpath_from_sumo_v2  # noqa: PLC0415
+                from aiida_vasp.common.sumo_kpath import kpath_from_sumo_v2  # noqa: PLC0415
             except ImportError:
                 raise ImportError('Sumo is not installed, please install it to use this feature.')
 
@@ -353,7 +418,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
         base_work = WorkflowFactory(self._base_wk_string)
         inputs = AttributeDict(self.exposed_inputs(base_work, namespace='scf'))
         inputs.metadata.call_link_label = 'scf'
-        inputs.metadata.label = self.inputs.metadata.label + ' SCF'
+        inputs.metadata.label = self.get_appended_label('SCF')
         inputs.structure = self.ctx.current_structure
 
         # Turn off cleaning of the working directory
@@ -450,7 +515,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
             inputs.kpoints = self.ctx.bs_kpoints
 
             # Tag the calculation
-            inputs.metadata.label = self.inputs.metadata.label + ' BS'
+            inputs.metadata.label = self.get_appended_label('BS')
             inputs.metadata.call_link_label = 'bs'
 
             bands_calc = self.submit(base_work, **inputs)
@@ -501,7 +566,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater):
                     inputs.settings = update_nested_dict_node(settings, essential, extend_list=True)
 
             # Set the label
-            inputs.metadata.label = self.inputs.metadata.label + ' DOS'
+            inputs.metadata.label = self.get_appended_label('DOS')
             inputs.metadata.call_link_label = 'dos'
 
             dos_calc = self.submit(base_work, **inputs)
@@ -870,7 +935,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 inputs.settings, {'parser_settings': {'include_node': ['kpoints']}}, extend_list=True
             )
 
-        inputs.metadata.label = self.inputs.metadata.label + ' SCF KPOINTS'
+        inputs.metadata.label = self.get_appended_label('SCF KPOINTS')
         inputs.metadata.call_link_label = 'scf_for_kpoints'
         inputs.structure = self.ctx.current_structure  # Use the current structure as reference
         running = self.submit(workflow_class, **inputs)
@@ -937,7 +1002,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
 
             # Swap the kpoints the the one with zero-weight parts
             inputs.kpoints = value
-            inputs.metadata.label = self.inputs.metadata.label + f' SPLIT {idx}'
+            inputs.metadata.label = self.get_appended_label(f' SPLIT {idx}')
             inputs.metadata.call_link_label = f'bandstructure_split_{idx:03d}'
             inputs.structure = self.ctx.current_structure
             running = self.submit(workflow_class, **inputs)

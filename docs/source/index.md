@@ -1,6 +1,8 @@
 # Welcome to AiiDA-VASP's documentation!
 
-AiiDA-VASP is a plug-in for the workflow management and data provenance tracking framework [AiiDA]. It provides the classes [AiiDA] needs to run simulations using [VASP] (Vienna Ab initio Simulation Package). [VASP] is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles. For detailed documentation on using [VASP] take a look in their [VASP wiki].
+AiiDA-VASP is an interface to bridge [VASP] (Vienna Ab initio Simulation Package) with the workflow management and data provenance tracking framework [AiiDA].
+[VASP] is a program for atomic scale materials modelling, e.g. electronic structure calculations and quantum-mechanical molecular dynamics, from first principles.
+For detailed documentation on using [VASP] take a look in their [VASP_wiki].
 
 ______________________________________________________________________
 
@@ -90,17 +92,15 @@ How-to guides.
 :::
 
 
-:::{grid-item-card} {fa}`cogs;mr-1` Workflows
+:::{grid-item-card} {fa}`cogs;mr-1` API Reference
 :text-align: center
 :shadow: md
 
-Automate your VASP calculations with pre-defined workflows.
+Information on the python API of the plugin.
 
 +++
 
-
-
-```{button-ref} workflows/index
+```{button-ref} apidocs/index
 :ref-type: doc
 :click-parent:
 :expand:
@@ -108,36 +108,34 @@ Automate your VASP calculations with pre-defined workflows.
 :outline:
 
 
-Learn to use workflows.
+API Reference
 ```
 :::
 
-:::{grid-item-card} {fa}`cogs;mr-1` Development
+:::{grid-item-card} {fa}`terminal;mr-1` Command Line Interface
 :text-align: center
 :shadow: md
 
-Information on how to develop the plugin.
+Documentation for the AiiDA-VASP CLI.
 
 +++
 
-```{button-ref} developments/index
+```{button-ref} cli
 :ref-type: doc
 :click-parent:
 :expand:
 :color: primary
 :outline:
 
-
-Learn to contribute.
+CLI Reference
 ```
 :::
-
 
 ::::
 
 % End of the card definitions
 
-AiiDA-VASP is under active development, check out the [changelog].
+AiiDA-VASP is under active development, check out the [changelog](#changelog).
 
 
 :::{note}
@@ -159,30 +157,36 @@ Please accept that the development of this plugin is a community effort and any 
 
 getting_started/index
 tutorials/index
-workflows/index
-concepts/index
 howto/index
-developments/index
+concepts/index
+cli
 apidocs/index
+developments/index
 ./changelog.md
-./faq.md
 ```
 
 
 # Getting help
 
-The development, maintenance and use of this plugin is considered a community effort. In order to facilitate for the community to contribute,
-we have established a [space on Matrix] that users can use to communicate. We encourage users to help each other. In addition,
-the development team is present in the space and users are free to ask.
-First consult the documentation of both [AiiDA-VASP documentation] and [AiiDA documentation] and also consider that the developers are
-not paid for this work. Please respect potential lead times in getting answers and be polite.
+The development, maintenance and use of this plugin is considered a community effort. In order to facilitate the community to contribute,
+we have established a [space on Matrix] that users can use to communicate. We encourage users to help each other.
+In addition, the development team is present in the space and users are free to ask.
+First consult the documentation of both [aiida_vasp_documentation] and [aiida_documentation] and also consider that the developers are not paid for this work.
+Please respect potential lead times in getting answers and be polite.
 
+
+## I found the documentation to be out-dated and missing certain contents!
+
+The documentation may not be up-to-date as new features are added to the code.
+Sometimes it is because the developers feel the feature is not *completed* with time constraints.
+In other cases, it may just because they forgot....
+
+Feedbacks and suggestions on the documentation would be extremely helpful. Please create an issue if you have any in mind!
 
 
 
 [aiida]: https://www.aiida.net
 [aiida-vasp]: https://github.com/aiida-vasp/aiida-vasp
-[changelog]: https://github.com/aiida-vasp/aiida-vasp/blob/develop/CHANGELOG.md
 [conda]: https://docs.conda.io/en/latest/
 [open an issue]: https://github.com/aiida-vasp/aiida-vasp/issues
 [submit a pull request]: https://github.com/aiida-vasp/aiida-vasp/pull
@@ -192,7 +196,7 @@ not paid for this work. Please respect potential lead times in getting answers a
 [vasp tutorials]: https://www.vasp.at/wiki/index.php/Category:Tutorials
 [vasp tutorials using notebooks]: https://www.vasp.at/tutorials/latest/
 [vasp videos]: https://www.youtube.com/channel/UCBATkNZ7pkAXU9tx7GVhlaw
-[vasp wiki]: https://cms.mpi.univie.ac.at/wiki/index.php
-[aiida documentation]: http://aiida-core.readthedocs.io/en/latest/
-[aiida-vasp documentation]: https://aiida-vasp.readthedocs.io/en/latest/
+[vasp_wiki]: https://cms.mpi.univie.ac.at/wiki/index.php
+[aiida_documentation]: http://aiida-core.readthedocs.io/en/latest/
+[aiida_vasp_documentation]: https://aiida-vasp-plugin.readthedocs.io/en/latest/
 [space on matrix]: https://matrix.to/#/#aiida-vasp:matrix.org

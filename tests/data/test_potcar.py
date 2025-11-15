@@ -8,7 +8,7 @@ import pytest
 from aiida import orm
 from aiida.common.exceptions import NotExistent, UniquenessError
 
-from aiida_vasp.data.potcar import PotcarData, PotcarFileData, PotcarGroup, migrate_potcar_group
+from aiida_vasp.data.potcar import PotcarData, PotcarFileData, PotcarGroup, migrate_potcar_group, temp_potcar
 
 
 def test_creation(aiida_profile_clean, potcar_node_pair):
@@ -55,6 +55,11 @@ def test_store_duplicate(aiida_profile_clean, potcar_node_pair, data_path):
     data_node.base.attributes.set('sha512', 'foo')
     with pytest.raises(UniquenessError):
         data_node.store()
+
+    data_node = PotcarData(potcar_file_node=potcar_node_pair['file'])
+    data_node.base.attributes.set('symbol', 'Ta')
+    # This should work
+    data_node.store()
 
     data_node = PotcarData(potcar_file_node=potcar_node_pair['file'])
     data_node.base.attributes.set('symbol', 'Ta')
@@ -186,6 +191,34 @@ def test_upload(aiida_profile_clean, temp_pot_folder, data_path):
     assert num_added >= 3
     assert num_uploaded == 0
     assert not potcar_ga.exists()
+
+
+def test_upload_potcar_fixture(upload_potcar, data_path, potcar_family_name):
+    """Test for the upload_potcar fixture in conftest.py"""
+
+    def duplicate_potcar_data(potcar_node):
+        """Create and store (and return) a duplicate of a given PotcarData node."""
+        file_node = PotcarFileData()
+        with temp_potcar(potcar_node.get_content()) as potcar_file:
+            file_node.add_file(potcar_file)
+            file_node.base.attributes.set('sha512', 'abcd')
+            file_node.base.attributes.set('full_name', potcar_node.full_name)
+            file_node.store()
+        data_node, _ = PotcarData.get_or_create(file_node)
+        return data_node
+
+    potcar_ga = pathlib.Path(data_path('potcar')) / 'Ga'
+    assert not potcar_ga.exists()
+
+    if len(PotcarData.find(full_name='In_d')) == 1:
+        family_group = PotcarData.get_potcar_group(potcar_family_name)
+        in_d = PotcarData.find(full_name='In_d')[0]
+        in_d_double = duplicate_potcar_data(in_d)
+        family_group.add_nodes(in_d_double)
+        assert in_d.uuid == PotcarData.find(full_name='In_d')[0].uuid
+    assert 'As' in PotcarData.get_full_names(potcar_family_name, 'As')
+    assert 'Ga' in PotcarData.get_full_names(potcar_family_name, 'Ga')
+    assert 'In_d' in PotcarData.get_full_names(potcar_family_name, 'In')
 
 
 def test_export_family_folder(aiida_profile_clean, upload_potcar, potcar_family_name, tmp_path):

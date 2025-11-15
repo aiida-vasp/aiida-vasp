@@ -40,6 +40,7 @@ dependencies = [
     "pydantic",
     "parsevasp>=3.4",
     "spglib",
+    "pyyaml"
 ]
 
 [project.urls]
@@ -54,6 +55,7 @@ docs = [
     "sphinx-autobuild",
     "sphinx-lint",
     "sphinx-rtd-theme",
+    "sphinx-click",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_togglebutton",
@@ -63,9 +65,9 @@ docs = [
 ]
 graphs = ["matplotlib"]
 
-[project.entry-points."aiida.cmdline.data"]
-"vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
-"vasp.tools" = "aiida_vasp.commands.tools:tools"
+#[project.entry-points."aiida.cmdline.data"]
+#"vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
+#"vasp.tools" = "aiida_vasp.commands.tools:tools"
 
 [project.entry-points."aiida.calculations"]
 "vasp.vasp" = "aiida_vasp.calcs.vasp:VaspCalculation"
@@ -94,7 +96,7 @@ graphs = ["matplotlib"]
 "vasp.bands" = "aiida_vasp.workchains.v2.bands:VaspBandsWorkChain"
 "vasp.hybrid_bands" = "aiida_vasp.workchains.v2.bands:VaspHybridBandsWorkChain"
 "vasp.relax" = "aiida_vasp.workchains.v2.relax:VaspRelaxWorkChain"
-"vasp.neb" = "aiida_vasp.workchains.neb:VaspNEBWorkChain"
+"vasp.neb" = "aiida_vasp.workchains.v2.neb:VaspNEBWorkChain"
 "vasp.v2.vasp" = "aiida_vasp.workchains.v2.vasp:VaspWorkChain"
 "vasp.v2.converge" = "aiida_vasp.workchains.v2.converge:VaspConvergenceWorkChain"
 "vasp.v2.bands" = "aiida_vasp.workchains.v2.bands:VaspBandsWorkChain"
@@ -108,6 +110,7 @@ graphs = ["matplotlib"]
 "mock-vasp" = "aiida_vasp.commands.mock_vasp:mock_vasp"
 "dryrun-vasp" = "aiida_vasp.commands.dryrun_vasp:cmd_dryrun_vasp"
 "mock-vasp-loose" = "aiida_vasp.commands.mock_vasp:mock_vasp_loose"
+"aiida-vasp" = "aiida_vasp.commands:cmd_aiida_vasp"
 
 [tool.flit.module]
 name = "aiida_vasp"
@@ -207,4 +210,5 @@ select = [
 
 
 [tool.ruff.lint.per-file-ignores]
+"**/aiida_vasp/commands/*" = ["PLC0415"]
 "tests/*" = ["F403"]

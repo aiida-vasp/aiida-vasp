@@ -74,7 +74,7 @@ def neb_wc_input(fresh_aiida_env, upload_potcar, potcar_family_name, potcar_mapp
     kpoints.set_kpoints_mesh((1, 1, 1))
     builder = WorkflowFactory('vasp.neb').get_builder()
     builder.parameters = orm.Dict(dict={'incar': parameters})
-    builder.options = orm.Dict(dict={'resources': {'tot_num_mpiprocs': 1, 'num_machines': 1}, 'withmpi': False})
+    builder.calc.metadata.options = {'resources': {'tot_num_mpiprocs': 1, 'num_machines': 1}, 'withmpi': False}
 
     builder.potential_family = orm.Str(potcar_family_name)
     builder.potential_mapping = orm.Dict(dict=potcar_mapping)

@@ -11,7 +11,7 @@ Here we explain the post-installation configuration steps for [AiiDA-VASP].
 
 ## Setting up a {{ InstalledCode }} for your VASP executable
 
-A {{ InstalledCode  }} is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a {{ InstalledCode }} for this executable in [AiiDA].
+A {{ InstalledCode }} is a pointer to a VASP executable that is installed on a remote computer. In this example, we assume that the VASP executable is installed on a remote computer `mycluster`. We will now set up a {{ InstalledCode }} for this executable in [aiida].
 
 The `verdi code` commands allow one to setup/update/duplicate `InstalledCode` objects in [AiiDA].
 Please consult the [AiiDA documentation] for more details.
@@ -91,7 +91,7 @@ Append text
 --------------  ------------------------------------
 ```
 
-## Configure pseduopotentials (POTCARs)
+## Configure pseudopotentials (POTCARs)
 
 To run a VASP calculation, potentials (the POTCAR files) have to be uploaded to
 the database. For more details regarding the handling of the potentials, please see [potentials][#potentials].
@@ -112,14 +112,13 @@ specific version of the PAW dataset relaxed with VASP.
 Execute the following command to upload the whole potential family to the database:
 
 ```
-% verdi data vasp.potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials version 54"
+% aiida-vasp potcar uploadfamily --path=$HOME/myaiida/potpaw_PBE.54.tar --name=PBE.54 --description="PBE potentials version 54"
 POTCAR files found: 327. New files uploaded: 327, Added to Family: 327
 ```
 
 :::{tip}
-For historical reasons we used `PBE.54` as the name for the `PBE_54` PAW dataset.
-Any name can be used of course, but some of the presets of the workflows expect the naming convention with
-a `.` instead of `_`.
+We used `PBE.54` as the name for the  [potpaw.54](https://www.vasp.at/wiki/Available_pseudopotentials#potpaw.54)  PAW dataset.
+Any name can be used of course, but some of the presets of the workflows expect `PBE.54` not `PBE_54`.
 :::
 
 
@@ -143,3 +142,5 @@ Hence, a *potential mapping* is also need when running calculations/workflows, t
 [pymatgen]: https://pymatgen.org
 [aiida-quantumespresso]: https://aiida-pseudo.readthedocs.io/en/latest/design.html#families
 [aiida-castep]: https://github.com/zhubonan/aiida-castep
+[AiiDA]: https://www.aiida.net
+[documentation]: http://aiida-core.readthedocs.io/en/latest/

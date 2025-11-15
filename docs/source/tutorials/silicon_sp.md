@@ -3,6 +3,10 @@ file_format: mystnb
 kernelspec:
   display_name: Python 3
   name: python3
+myst:
+  substitutions:
+      VaspInputGenerator: "{py:class}`VaspInputGenerator <aiida_vasp.protocols.generator.VaspInputGenerator>`"
+---
 ---
 (silicon_sp_tutorial)=
 
@@ -11,15 +15,15 @@ kernelspec:
 
 
 :::{note}
-This tutorial is can be executed as a jupyter notebook.
+This tutorial can be executed as a jupyter notebook.
 Please copy the `mock_registry` folder found to your directory of execution, otherwise the mock
 code cannot locate the pre-computed calculations to be used as dummy output.
 
 This notebook can be downloaded as **{nb-download}`silicon_sp.ipynb`** and {download}`silicon_sp.md`
 :::
 
-`VaspBuilderUpdater` provides a simplified interface for setting up calculations
-using pre-define default inputs for calculation and for workflow execution.
+{{ VaspInputGenerator }} provides a simplified interface for setting up calculations
+using pre-defined default inputs for calculation and for workflow execution.
 
 In jupyter notebook, we normally need to load the necessary AiiDA environment:
 
@@ -42,7 +46,7 @@ use cached results instead of running actual VASP calculations.
 Before we start any calculation, we need to do a few basic setups:
 1. Setup a `Computer` node, which is this computer (localhost)
 2. Tell AiiDA where to find the VASP executable, or using the `mock-vasp` executable.
-3. Upload the pseduopotentials (POTCAR) family
+3. Upload the pseudopotentials (POTCAR) family
 
 The following code creates  `Computer` node:
 
@@ -121,23 +125,21 @@ si_node = orm.StructureData(pymatgen=si)
 :::
 
 
-using the `VaspBuilderUpdater` class:
+using the `VaspInputGenerator` class:
 
 ```{code-cell} python3
 from aiida import orm
-from aiida_vasp.workchains.v2 import VaspBuilderUpdater
+from aiida_vasp.protocols.generator import VaspInputGenerator
 
-# This instantiate a VaspBuilderUpdater object and apply the preset
-# The default name is VaspPreset stored in the code repository.
-# You can place your own preset at ~/.aiida-vasp/ and use them for production
+# This instantiate a VaspInputGenerator object and apply the preset
+# The default name is `default` stored in the code repository.
+# You can place your own preset at ~/.aiida-vasp/protocol_presets and use them for production
 # calculations.
-upd = VaspBuilderUpdater().apply_preset(si_node, code='mock-vasp@localhost')
-# This preset defaults to use the PBE.54 family, we switch to 'PBE.EXAMPLE' family
-# just uploaded.
-upd.builder.potential_family = 'PBE.EXAMPLE'
+upd = VaspInputGenerator(protocol="balanced")
+upd.get_builder(structure=si_node, code='mock-vasp@localhost', overrides={"potential_family": "PBE.EXAMPLE"})
 ```
 
-The code block above create a `VaspBuilderUpdater` object and apply the preset for the Si structure.
+The code block above create a `VaspInputGenerator` object and apply the preset for the Si structure.
 We can verify that this configures the `ProcessBuilder` object with the correct inputs:
 
 ```{code-cell} python3

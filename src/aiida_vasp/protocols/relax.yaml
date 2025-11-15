@@ -1,0 +1,24 @@
+default_inputs:
+  relax_settings: # See src/aiida_vasp/utils/opthold.py:RelaxOptions for full list of valid keys
+    shape: true
+    volume: true
+    positions: true
+    steps: 60
+    algo: cg
+    force_cutoff: 0.03
+    convergence_on: true
+    convergence_max_iterations: 5
+    convergence_volume: 0.01
+  verbose: False
+
+
+default_protocol: balanced
+
+protocols:
+  balanced:
+    description: |
+      A balanced protocol for relaxation see vasp.yaml for exact settings used
+  fast:
+    relax_settings:
+      convergence_volume: 0.05
+      force_cutoff: 0.05

@@ -4,7 +4,7 @@ Tests for the common module
 
 from aiida.orm import Dict, List
 
-from aiida_vasp.workchains.v2.common import aiida_to_python, plain_python_args, site_magnetization_to_magmom
+from aiida_vasp.common import aiida_to_python, plain_python_args, site_magnetization_to_magmom
 
 # pylint:disable=unused-argument
 

@@ -110,10 +110,11 @@ import re
 import shutil
 import tarfile
 import tempfile
-from collections import namedtuple
+from collections import Counter, defaultdict, namedtuple
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import cmp_to_key
+from json import loads
 from pathlib import Path
 from typing import Any
 
@@ -123,6 +124,7 @@ from aiida.orm import (
     Data,  # pylint: disable=no-name-in-module
     Group,
     QueryBuilder,
+    StructureData,
 )
 
 from aiida_vasp.data.archive import ArchiveData
@@ -138,6 +140,67 @@ class PotcarGroup(Group):
     """
     A group for holding PotcarData objects that maps to various collections of POTCARs.
     """
+
+    def get_matched_set(self):
+        """Verify the group against known sets"""
+        dataset = loads((Path(__file__).parent / 'potpaw_sha512.json').read_text())
+        this_group = {node.symbol: node.sha512 for node in self.nodes}
+        for dataset, sha512s in dataset.items():
+            if len(this_group) == len(sha512s):
+                matched = True
+                for key, value in sha512s.items():
+                    if value != this_group[key]:
+                        matched = False
+                        break
+                if matched:
+                    return dataset
+
+    def verify(self):
+        """Verify the current data set against known sets"""
+        # Check duplicated symbols
+        duplicated, _ = self.get_duplicated_symbols()
+        if duplicated:
+            raise ValueError(
+                f'Duplicated symbol found in group {self.label}: {list(duplicated)}) which will result in'
+                'expected POTCAR mapping when using aiida-vasp.'
+                '\n If you are uploading 52 and 54 sets, it is likely the original release archive is used,'
+                'which contain wrongly labeled POTCARs. Please use the updated releases instead'
+            )
+
+        matched = self.get_matched_set()
+        if matched is None:
+            raise ValueError(
+                'Cannot match this group to a known dataset - you can use `get_potcar_identity` to'
+                ' find known datasets each node belongs to.'
+            )
+        return matched
+
+    def get_potcar_identity(self):
+        """Return which potpaw dataset the POTCARs in the group are from"""
+        dataset = loads((Path(__file__).parent / 'potpaw_sha512.json').read_text())
+        this_group = {node.symbol: node.sha512 for node in self.nodes}
+        results = {}
+        for symbol, sha512 in this_group.items():
+            results[symbol] = []
+            for setname, data in dataset.items():
+                if symbol in data and data[symbol] == sha512:
+                    results[symbol].append(setname)
+        return results
+
+    def get_duplicated_symbols(self):
+        """
+        Get duplicated symbols
+
+        This may happen when using original PBE.54 and PBE.52 datasets released where
+        several GW POTCARs are wrongly labeled. For example, B_GW is labeled as B
+        """
+        counts = Counter([node.symbol for node in self.nodes])
+        duplicated = {key: value for key, value in counts.items() if value > 1}
+        resolved = defaultdict(list)
+        for node in self.nodes:
+            if node.symbol in duplicated:
+                resolved[node.symbol].append(node.original_file_name)
+        return duplicated, resolved
 
 
 def migrate_potcar_group() -> None:
@@ -287,7 +350,7 @@ class PotcarMetadataMixin:  # pylint: disable=useless-object-inheritance
     _query_label = 'label'
 
     @classmethod
-    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> Any:
+    def query_by_attrs(cls, query: Any = None, **kwargs: Any) -> QueryBuilder:
         """Find a Data node by attributes."""
         label = cls._query_label
         if not query:
@@ -304,11 +367,11 @@ class PotcarMetadataMixin:  # pylint: disable=useless-object-inheritance
     def find(cls, **kwargs: Any) -> list[Any]:
         """Find nodes by POTCAR metadata attributes given in kwargs."""
         query_builder = cls.query_by_attrs(**kwargs)
-        if not query_builder.count():
-            raise NotExistent()
-        results = [result[0] for result in query_builder.all()]
-
-        results.sort(key=cmp_to_key(by_older))
+        query_builder.order_by({cls._query_label: [{'ctime': 'asc'}]})
+        output = query_builder.all()
+        if len(output) == 0:
+            raise NotExistent(f'No {cls.__name__} nodes found with attributes {kwargs}')
+        results = [result[0] for result in output]
         return results
 
     @classmethod
@@ -460,7 +523,7 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
             potcar = PotcarParser(handler=handler)
         metadata = potcar.metadata
         self.base.attributes.set('title', metadata.titel)
-        self.base.attributes.set('functional', metadata.functional)
+        self.base.attributes.set('unctional', metadata.functional)
         self.base.attributes.set('element', metadata.element)
         self.base.attributes.set('symbol', metadata.symbol)
         src_path = src_abs.resolve()
@@ -471,6 +534,21 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         dir_name = dir_name.name
         self.base.attributes.set('full_name', str(dir_name))
         self.base.attributes.set('potential_set', str(src_path.parts[-3]))
+
+        # Verify for incorrect mappings
+        parent_folder = src_path.parts[-2]
+        if parent_folder != metadata.symbol:
+            AIIDA_LOGGER.warning(
+                f'The symbol parsed from the POTCAR file ({metadata.symbol} at {src_path}) does not match the '
+                f'parent folder ({parent_folder}). It is likely due to an erroneous outdated VASP PAW dataset release.'
+            )
+            if parent_folder.split('_')[0] == metadata.element:
+                new_symbol = parent_folder
+            else:
+                # Cannot result a symbol from the parent folder - use <element>_<parent_folder> as a symbol
+                new_symbol = metadata.element + '_' + parent_folder
+            self.base.attributes.set('symbol', new_symbol)
+            AIIDA_LOGGER.warning(f'Fix by replacing symbol {metadata.symbol} with {new_symbol}.')
 
     @classmethod
     def get_file_sha512(cls, path: Path | str) -> str:
@@ -486,11 +564,13 @@ class PotcarFileData(ArchiveData, PotcarMetadataMixin, VersioningMixin):
         return sha512_potcar(contents)
 
     # pylint: disable=arguments-differ
-    def store(self, *args: Any, **kwargs: Any) -> Any:
+    def store(self, *args: Any, create_data_node=True, verify=True, **kwargs: Any) -> Any:
         """Ensure uniqueness and existence of a matching PotcarData node before storing."""
         self.set_version()
-        _ = PotcarData.get_or_create(self)
-        self.verify_unique()
+        if create_data_node:
+            _ = PotcarData.get_or_create(self)
+        if verify:
+            self.verify_unique()
         return super().store(*args, **kwargs)
 
     @contextmanager
@@ -618,10 +698,11 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         return PotcarFileData.find_one(sha512=self.sha512)
 
     # pylint: disable=arguments-differ,signature-differs
-    def store(self, *args: Any, **kwargs: Any) -> Any:
+    def store(self, *args: Any, verify=True, **kwargs: Any) -> Any:
         """Ensure uniqueness before storing."""
         self.set_version()
-        self.verify_unique()
+        if verify:
+            self.verify_unique()
         return super().store(*args, **kwargs)
 
     @classmethod
@@ -649,6 +730,51 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
         if not file_node.is_stored:
             file_node.store()
         return node, created
+
+    @classmethod
+    def get_or_create_from_file_many(cls, file_paths: list[str | Path]) -> list[tuple[Data, bool]]:
+        """
+        Get or create (store) many PotcarData node from a POTCAR file.
+
+        :param file_paths: A list of file paths to POTCAR files.
+
+        :return: A list of tuples (PotcarData node, created flag) for each file.
+        """
+        sha512s = [PotcarFileData.get_file_sha512(file_path) for file_path in file_paths]
+        filters = {}
+        filters = {'attributes.sha512': {'in': sha512s}}
+        query_builder = QueryBuilder()
+        query_builder.append(
+            PotcarFileData, filters=filters, tag=PotcarFileData._query_label, project=['*', 'attributes.sha512']
+        )
+        existing_file_nodes = {value[1]: value[0] for value in query_builder.all()}
+        # Query for data
+        query_builder = QueryBuilder()
+        query_builder.append(cls, filters=filters, tag=cls._query_label, project=['*', 'attributes.sha512'])
+        existing_data_nodes = {value[1]: value[0] for value in query_builder.all()}
+        data_nodes = []
+        created_flags = []
+        for file_path, sha512 in zip(file_paths, sha512s):
+            # Construct the PotcarFileData node if needed
+            if sha512 in existing_file_nodes:
+                file_node = existing_file_nodes[sha512]
+            # Need to create a new PotcarFileData node
+            else:
+                # Create PotcarFileNode and PotcarDataNode pair
+                file_node = PotcarFileData(file=file_path)
+                file_node.store(create_data_node=False, verify=False)
+            # Construct the PotcarData if needed
+            if sha512 in existing_data_nodes:
+                data_node = existing_data_nodes[sha512]
+                created = False
+            else:
+                data_node = cls(potcar_file_node=file_node)
+                data_node.store(verify=False)
+                created = True
+
+            data_nodes.append(data_node)
+            created_flags.append(created)
+        return data_nodes, created_flags
 
     @classmethod
     def get_or_create_from_contents(cls, contents: str) -> tuple[Data, bool]:
@@ -813,8 +939,8 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
     @classmethod
     def get_potcars_from_structure(
-        cls, structure: Any, family_name: str, mapping: dict[str, str] | None = None
-    ) -> dict[str, Any]:
+        cls, structure: StructureData, family_name: str, mapping: dict[str, str] | None = None
+    ) -> dict[str, PotcarData]:
         """
         Given a POTCAR family name and a AiiDA structure, return a dictionary associating each kind name with
         its PotcarData object.
@@ -912,7 +1038,7 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
             Overwrites previous descriptions, if the group was existing.
         :param stop_if_existing: if True, check for the sha512 of the files and,
             if the file already exists in the DB, raises a MultipleObjectsError.
-            If False, simply adds the existing UPFData node to the group.
+            If False, simply adds the existing PotcarData node to the group.
         :param dry_run: If True, do not change the database.
         """
         group = cls._prepare_group_for_upload(group_name, group_description, dry_run=dry_run)
@@ -960,28 +1086,33 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
     ) -> list[tuple[Any, bool, str]]:
         """Given a list of absolute paths to potcar files, try to upload them (or pretend to if dry_run=True)."""
         list_created = []
-        for file_path_obj in file_paths:
-            file_path = str(file_path_obj)
-            try:
-                if not dry_run:
-                    potcar, created = cls.get_or_create_from_file(file_path)
-                else:
-                    potcar = cls.file_not_uploaded(file_path)
-                    created = bool(potcar.uuid == -1)
-                if stop_if_existing and not created:
-                    raise ValueError(
-                        (
-                            'A POTCAR with identical SHA512 to {} is already in the DB,'
-                            'therefore it cannot be added with the stop_if_existing kwarg.'
-                        ).format(file_path)
-                    )
-                list_created.append((potcar, created, file_path))
-            except KeyError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
-            except AttributeError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
-            except IndexError as err:
-                print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+        if stop_if_existing or dry_run:
+            for file_path_obj in file_paths:
+                file_path = str(file_path_obj)
+                try:
+                    if not dry_run:
+                        potcar, created = cls.get_or_create_from_file(file_path)
+                    else:
+                        potcar = cls.file_not_uploaded(file_path)
+                        created = bool(potcar.uuid == -1)
+                    if stop_if_existing and not created:
+                        raise ValueError(
+                            (
+                                'A POTCAR with identical SHA512 to {} is already in the DB,'
+                                'therefore it cannot be added with the stop_if_existing kwarg.'
+                            ).format(file_path)
+                        )
+                    list_created.append((potcar, created, file_path))
+                except KeyError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+                except AttributeError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+                except IndexError as err:
+                    print(f'skipping file {file_path} - uploading raised {err.__class__!s}{err!s}')
+        else:
+            # Not dry and not stop_if_existing - use faster method
+            potcar, created = cls.get_or_create_from_file_many(file_paths)
+            list_created = list(zip(potcar, created, file_paths))
 
         return list_created
 
@@ -1085,3 +1216,56 @@ class PotcarData(Data, PotcarMetadataMixin, VersioningMixin):
 
         results.sort(key=cmp_to_key(by_older))
         return results
+
+    def verify_unique(self) -> None:
+        """Raise a UniquenessError if an equivalent node exists."""
+
+        if self.exists(sha512=self.sha512, symbol=self.symbol):
+            raise UniquenessError(
+                f'A {self.__class__!s} node with identical symbol {self.symbol} already exists for this file.'
+            )
+
+        other_attrs = deepcopy(self.base.attributes.all)
+
+        other_attrs.pop('sha512')
+        if self.exists(**other_attrs):
+            raise UniquenessError(
+                f'A {self.__class__!s} node with these attributes but a different file exists:\n{other_attrs!s}'
+            )
+
+    def check_and_fix_inconsistent_potcar_symbol(self, fix=False):
+        """
+        Check inconsistence in the POTCAR symbols parsed compared with the
+        apparent folder name.
+
+        :param fix: Create a new PotcarData node with the corrected symbol name.
+        """
+
+        file_node = self.find_file_node()
+        path = Path(self.original_file_name)
+        if path.parts[-2] != self.symbol:
+            info = {
+                'file_node': file_node,
+                'original_filename': path,
+                'file_node_stored_symbol': file_node.symbol,
+                'stored_symbol': self.symbol,
+                'node': self,
+                'folder_symbol': path.parts[-2],
+            }
+            if fix:
+                # Check if there is an existing node with the correct symbol
+                if path.parts[-2] == self.element:
+                    new_symbol = path.parts[-2]
+                elif path.parts[-2].startswith(self.element + '_'):
+                    new_symbol = path.parts[-2]
+                else:
+                    new_symbol = f'{self.element}_{path.parts[-2]}'
+                try:
+                    corrected = self.find(symbol=new_symbol, sha512=self.sha512)[0]
+                except NotExistent:
+                    # Create a new node with the correct symbol
+                    corrected = PotcarData(potcar_file_node=file_node)
+                    corrected.base.attributes.set('symbol', new_symbol)
+                info['updated_node'] = corrected
+            return info
+        return None

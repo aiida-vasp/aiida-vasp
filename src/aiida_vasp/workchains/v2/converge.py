@@ -47,18 +47,18 @@ from typing import Any
 import numpy as np
 from aiida import orm
 from aiida.engine import ProcessSpec, WorkChain, append_, calcfunction
-from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.protocols import ProtocolMixin
 from aiida_vasp.utils.extended_dicts import update_nested_dict_node
 from aiida_vasp.utils.opthold import ConvOptions
 
-from .common.builder_updater import VaspBuilderUpdater
 from .mixins import WithBuilderUpdater
+from .vasp import VaspWorkChain
 
 # pylint:disable=no-member,unused-argument,no-self-argument,import-outside-toplevel
 
 
-class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
+class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     A workchain to perform convergence tests.
 
@@ -82,7 +82,8 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     """
 
     _sub_workchain_string = 'vasp.v2.vasp'
-    _sub_workchain = WorkflowFactory(_sub_workchain_string)
+    _sub_workchain = VaspWorkChain
+    _protocol_tag = 'conv'
     ENERGY_KEY = 'energy_extrapolated'
     option_class = ConvOptions
 
@@ -90,7 +91,8 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
     def define(cls, spec: ProcessSpec) -> None:
         super().define(spec)
 
-        spec.expose_inputs(cls._sub_workchain)
+        spec.expose_inputs(cls._sub_workchain, 'vasp', exclude=['structure'])
+        spec.expose_inputs(cls._sub_workchain, include=['structure'])
         spec.input(
             'conv_settings',
             help=ConvOptions.aiida_description(),
@@ -107,6 +109,35 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         )
         spec.output('kpoints_conv_data', required=False)
         spec.output('cutoff_conv_data', required=False)
+
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol: None | str = None,
+        overrides: None | dict = None,
+        **kwargs,
+    ):
+        """
+        Return a builder based on a protocol
+        """
+
+        overrides = overrides or {}
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        vasp_builder = VaspWorkChain.get_builder_from_protocol(
+            code=code,
+            structure=structure,
+            protocol=inputs.get('vasp', {}).get('protocol', protocol),
+            overrides=overrides,
+            **kwargs,
+        )
+        builder = cls.get_builder()
+        builder.vasp = vasp_builder
+        builder.structure = vasp_builder.pop('structure')
+        builder.conv_settings = inputs['conv_settings']
+        return builder
 
     def setup(self) -> None:
         """Setup the convergence workflow"""
@@ -168,7 +199,7 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater):
         kspacing_for_cutoffconv = orm.Float(self.ctx.settings.get('kspacing_cutconv', k_cut))
 
         # Launch cut off energy tests
-        inputs = self.exposed_inputs(self._sub_workchain)
+        inputs = self.exposed_inputs(self._sub_workchain, 'vasp', agglomerate=True)
         inputs.kpoints_spacing = kspacing_for_cutoffconv
         original_label = inputs.metadata.get('label', '')
         for cut in self.ctx.cutoff_list:
@@ -390,7 +421,7 @@ def plot_conv_data(cdf: Any, kdf: Any, **kwargs: Any) -> list[Any]:
     return figs
 
 
-def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]) -> VaspBuilderUpdater:
+def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]):
     """
     Short cut for getting an VaspBuilderUpdater ready to use
 
@@ -399,6 +430,7 @@ def get_convergence_builder(structure: orm.StructureData, config: dict[str, Any]
 
     The following files are used from the configuration: ``code``, ``inputset``, ``conv``, ``options``, ``resources``.
     """
+    from aiida_vasp.common.builder_updater import VaspBuilderUpdater  # noqa: PLC0415
 
     conv_builder = VaspConvergenceWorkChain.get_builder()
 

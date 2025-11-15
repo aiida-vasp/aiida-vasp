@@ -29,6 +29,8 @@ CHANGELOG
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 import numpy as np
 from aiida import orm
 from aiida.common.exceptions import InputValidationError
@@ -38,11 +40,12 @@ from aiida.engine import ExitCode, ProcessSpec, ToContext, WorkChain, append_, i
 from aiida.orm.nodes.data.base import to_aiida_type
 from aiida.plugins import WorkflowFactory
 
+from aiida_vasp.common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
+from aiida_vasp.protocols import ProtocolMixin, recursive_merge
 from aiida_vasp.utils.extended_dicts import update_nested_dict, update_nested_dict_node
 from aiida_vasp.utils.opthold import RelaxOptions
 from aiida_vasp.utils.workchains import compose_exit_code
 
-from .common import OVERRIDE_NAMESPACE, site_magnetization_to_magmom
 from .mixins import WithBuilderUpdater
 
 __version__ = '0.5.0'
@@ -52,13 +55,14 @@ __version__ = '0.5.0'
 # 0.5.0 update the logic of convergence checking. Cell comparsion is always done using the input/output structures.
 
 
-class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
+class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
     """Structure relaxation workchain."""
 
     _verbose: bool = True
     _base_workchain_string: str = 'vasp.v2.vasp'
     _base_workchain = WorkflowFactory(_base_workchain_string)
     option_class = RelaxOptions
+    _protocol_tag: str = 'relax'
 
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
@@ -158,6 +162,53 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         spec.expose_outputs(cls._base_workchain)
         spec.output('relax.structure', valid_type=orm.StructureData, required=False)
 
+    @classmethod
+    def get_builder_from_protocol(
+        cls,
+        code: orm.AbstractCode,
+        structure: orm.StructureData,
+        protocol=None,
+        overrides=None,
+        options=None,
+        relax_settings=None,
+        **kwargs,
+    ):
+        """
+        Return a builder prepopulated with inputs selected according to the chosen protocol.
+        :param code: the ``Code`` instance configured for the ``abacus.abacus`` plugin.
+        :param structure: the ``StructureData`` instance to use.
+        :param protocol: protocol to use, if not specified, the default will be used.
+        :param overrides: optional dictionary of inputs to override the defaults of the protocol.
+        :param options: A dictionary of options that will be recursively set for the ``metadata.options`` input of all
+            the ``CalcJobs`` that are nested in this work chain.
+        :return: a process builder instance with all inputs defined ready for launch.
+        """
+        overrides = overrides or {}
+        if relax_settings:
+            overrides['relax_settings'] = recursive_merge(overrides.get('relax_settings', {}), relax_settings)
+
+        inputs = cls.get_protocol_inputs(protocol, overrides)
+
+        base_builder = cls._base_workchain.get_builder_from_protocol(
+            code=code,
+            protocol=inputs.get('vasp', {}).get('protocol', protocol),
+            structure=structure,
+            overrides=inputs.get('vasp', {}),
+            options=options,
+            **kwargs,
+        )
+        # Structure is defined at the top level
+        base_builder.pop('structure')
+        builder = cls.get_builder()
+        builder.vasp = base_builder
+        builder.structure = structure
+        builder.relax_settings = inputs.get('relax_settings', {})
+        builder.static_calc_settings = inputs.get('static_calc_settings', {})
+        builder.static_calc_options = inputs.get('static_calc_options', {})
+        builder.static_calc_parameters = inputs.get('static_calc_parameters', {})
+        builder.verbose = inputs.get('verbose', orm.Bool(False))
+        return builder
+
     def initialize(self) -> None:
         """Initialize."""
 
@@ -192,21 +243,18 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         # Make sure we parse the output structure when we want to perform
         # relaxations (override if contrary entry exists).
-        if 'settings' in self.inputs.vasp:
-            settings = self.inputs.vasp.settings
-        else:
-            settings = orm.Dict(dict={})
-
+        settings = self.inputs.vasp.get('settings', {}) or {}
+        if isinstance(settings, orm.Data):
+            settings = settings.get_dict()
         if self.perform_relaxation():
-            settings = update_nested_dict_node(
+            settings = update_nested_dict(
                 settings,
                 {'parser_settings': {'include_node': ['structure', 'trajectory'], 'include_quantity': ['energies']}},
                 extend_list=True,
             )
 
         # Update the settings for the relaxation
-        if settings.get_dict():
-            self.ctx.relax_input_additions.settings = settings
+        self.ctx.relax_input_additions.settings = settings
 
         # Hybrid calculation boot-strapping
         if self.ctx.relax_settings.get('hybrid_calc_bootstrap'):
@@ -309,7 +357,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             # Update the wallclock seconds
             wallclock = self.ctx.relax_settings.get('hybrid_calc_bootstrap_wallclock')
             if wallclock:
-                inputs.options = update_nested_dict_node(inputs.options, {'max_wallclock_seconds': wallclock})
+                inputs.calc.metadata.options = update_nested_dict(
+                    inputs.calc.metadata.options, {'max_wallclock_seconds': wallclock}
+                )
 
         # Update the MAGMOM
         if self.ctx.current_magmom is not None:
@@ -336,7 +386,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         """Perform the relaxation"""
 
         # For the final static run we do not need to parse the output structure
-        if 'settings' in self.inputs.vasp:
+        if self.inputs.vasp.get('settings'):
             self.ctx.static_input_additions.settings = update_nested_dict_node(
                 self.inputs.vasp.settings,
                 {
@@ -349,14 +399,11 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             )
 
         # Apply overrides if supplied
-        if 'static_calc_settings' in self.inputs:
+        if self.inputs.get('static_calc_settings'):
             self.ctx.static_input_additions.settings = self.inputs.static_calc_settings
 
-        if 'static_calc_options' in self.inputs:
-            self.ctx.static_input_additions.options = self.inputs.static_calc_options
-
         # Override INCARs for the final relaxation
-        if 'static_calc_parameters' in self.inputs:
+        if self.inputs.get('static_calc_parameters'):
             self.ctx.static_input_additions.parameters = update_nested_dict_node(
                 self.inputs.vasp.parameters,
                 self.inputs.static_calc_parameters.get_dict(),
@@ -401,6 +448,10 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
 
         # Update the input with whatever stored in the relax_input_additions attribute dict
         inputs.update(self.ctx.static_input_additions)
+        if self.inputs.get('static_calc_options'):
+            inputs.calc.metadata.options = update_nested_dict(
+                inputs.calc.metadata.options, self.inputs.static_calc_options.get_dict()
+            )
 
         # Make sure NSW is not here for the static calculation
         incar = inputs.parameters['incar']
@@ -563,7 +614,15 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
             # BONAN: Check force - this is because the underlying VASP calculation may not have finished with
             # fully converge geometry, and the vasp plugin does not check it.
             force_cut_off = relax_settings.get('force_cutoff')
-            max_force = get_maximum_force(workchain.outputs.misc.get('forces'))
+
+            # Set the forces to zero if using selective dynamics
+            forces = np.array(workchain.outputs.misc.get('forces'))
+            if 'dynamics' in workchain.inputs:
+                dof = workchain.inputs.dynamics.get('positions_dof')
+            else:
+                dof = None
+
+            max_force = get_maximum_force(forces, dof=dof)
             if force_cut_off is not None and max_force > force_cut_off:
                 self.report(
                     f'Maximum force in the structure {max_force:.4g} excess the cut-off limit {force_cut_off:.4g}'
@@ -725,11 +784,15 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater):
         """
         workchain = self.ctx.workchains[-1]
         self.out_many(self.exposed_outputs(workchain, self._base_workchain))
-
+        # Check the maximum force only if we are not using selective dynamics
+        if 'dynamics' in workchain.inputs:
+            dof = workchain.inputs.dynamics.get('positions_dof')
+        else:
+            dof = None
         # Try to get the smearing type, there is no point to perform check if the tetrahedral smearing is used.
         if not detect_tetrahedral_method(workchain.inputs.parameters.get_dict()):
             max_force_threshold = self.ctx.relax_settings.get('force_cutoff', 0.03)
-            actual_max_force = get_maximum_force(workchain.outputs.misc['forces'])
+            actual_max_force = get_maximum_force(workchain.outputs.misc['forces'], dof=dof)
             if (
                 actual_max_force > max(max_force_threshold * 1.5, max_force_threshold + 0.001)
                 and self.perform_relaxation()
@@ -978,7 +1041,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.ctx.current_structure = self.inputs.structure
         self.ctx.parameters = relax_inputs.vasp.parameters.get_dict()
         self.ctx.settings = relax_inputs.vasp.settings.get_dict()
-        self.ctx.options = relax_inputs.vasp.options.get_dict()
+        self.ctx.options = deepcopy(relax_inputs.vasp.calc.metadata.options)
         self.ctx.relax_settings = relax_inputs.relax_settings.get_dict()
         self.ctx.n_stages = len(self.inputs.parameters_stages)
 
@@ -995,7 +1058,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Running stage {self.ctx.current_stage}')
         istage = self.ctx.current_stage
         # Update the parameters, options and settings - apply the changes to the self.ctx
-        for name in ['parameters', 'options', 'settings', 'relax_settings']:
+        for name in ['parameters', 'settings', 'relax_settings', 'options']:
             if str(istage) in self.inputs.get(name + '_stages', {}):
                 if self.inputs.use_nested_update.value:
                     self.ctx[name] = update_nested_dict(
@@ -1016,9 +1079,11 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
                 else:
                     relax_inputs.vasp[name] = value
         # Modify the inputs
-        for name in ['parameters', 'options', 'settings']:
+        for name in ['parameters', 'settings']:
             if relax_inputs.vasp[name].get_dict() != self.ctx[name]:
                 relax_inputs.vasp[name] = orm.Dict(dict=self.ctx[name])
+        # Modify the options port of the underlying VaspWorkChain
+        update_nested_dict(relax_inputs.vasp.calc.metadata.options, self.ctx.options)
 
         # Modify the relax_settings
         if relax_inputs.relax_settings.get_dict() != self.ctx.relax_settings:
@@ -1064,7 +1129,15 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.out_many(self.exposed_outputs(workchain, self._base_workchain))
 
 
-def get_maximum_force(forces: np.ndarray) -> float:
+def get_maximum_force(forces: np.ndarray, dof=None) -> float:
     """Return the maximum value of an array of forces with size (N, 3)"""
+    if dof is not None:
+        forces = np.asarray(forces).copy()
+        for i, value in enumerate(dof):
+            # Set forces to zero if there is any False entry
+            # This is because VASP fixes fractional coorindates while forces are in Cartesian
+            # So to void deadlock, we simply ignore the forces on that atom
+            if any([not v for v in value]):
+                forces[i, :] = 0.0
     norm = np.linalg.norm(forces, axis=1)
     return np.amax(norm)

@@ -432,18 +432,7 @@ class VaspParser(Parser):
             kpoints_data = quantities_each['vasprun.xml'].get('kpoints')
 
         if kpoints_data is not None:
-            node = orm.KpointsData()
-            if kpoints_data['mode'] == 'explicit':
-                node.set_kpoints(
-                    kpoints_data['points'], weights=kpoints_data['weights'], cartesian=kpoints_data['cartesian']
-                )
-            elif kpoints_data['mode'] == 'automatic':
-                node.set_kpoints_mesh(kpoints_data['divisions'], offset=kpoints_data['shifts'])
-            else:
-                raise ValueError(f'Unknown kpoints mode {kpoints_data["mode"]}')
-            # Record the cell for which the kpoints are defined for
-            node.set_cell(quantities_each['vasprun.xml']['structure']['unitcell'])
-            return node
+            return get_kpoints_node(kpoints_data, quantities_each['vasprun.xml']['structure']['unitcell'])
         raise QuantityMissingError('No valid kpoints data to use')
 
     def _compose_trajectory(self, quantities_each: dict[str, Any]) -> orm.TrajectoryData | None:
@@ -674,3 +663,18 @@ def is_all_empty(obj: dict | list) -> bool:
             return all(is_all_empty(value) for value in obj)
     else:
         return False
+
+
+def get_kpoints_node(kpoints_data: dict[str, Any], cell: list[list] | np.ndarray):
+    """Get a KpointData node from parsed kpoints data and cell matrix"""
+
+    node = orm.KpointsData()
+    if kpoints_data['mode'] == 'explicit':
+        node.set_kpoints(kpoints_data['points'], weights=kpoints_data['weights'], cartesian=kpoints_data['cartesian'])
+    elif kpoints_data['mode'] == 'automatic':
+        node.set_kpoints_mesh(kpoints_data['divisions'], offset=kpoints_data['shifts'])
+    else:
+        raise ValueError(f'Unknown kpoints mode {kpoints_data["mode"]}')
+    # Record the cell for which the kpoints are defined for
+    node.set_cell(cell)
+    return node

@@ -7,9 +7,9 @@ import pytest
 from aiida import orm
 from ase.build import bulk
 
-from aiida_vasp.workchains.v2.inputset.base import InputSet
-from aiida_vasp.workchains.v2.inputset.pmgset import PymatgenInputSet
-from aiida_vasp.workchains.v2.inputset.vaspsets import VASPInputSet
+from aiida_vasp.inputset.base import InputSet
+from aiida_vasp.inputset.pmgset import PymatgenInputSet
+from aiida_vasp.inputset.vaspsets import VASPInputSet
 
 try:
     # Import SETTINGS

@@ -21,7 +21,7 @@ For contributors, one principle rule is in place: always try to construct tests 
 
 The plugin is shipped with a *mock* VASP script to simulate running VASP without actually running it. This allows us to test the workchains without having to run VASP.
 
-The `mock-vasp` analyse the input and compute a hash, then searches a registry folder containing
+The `mock-vasp` analyzes the input and compute a hash, then searches a registry folder containing
 pre-computed calculations results for a match. If a match is found, it copies the output files to the folder of the calculation.
 Otherwise, if `MOCK_VASP_VASP_CMD` is set, it runs VASP with the given command and upload
 the output to the registry.
@@ -42,7 +42,7 @@ To test a new workchain and record the calculation data, set `MOCK_VASP_VASP_CMD
 Set `MOCK_VASP_POTCAR_PATH` to the path containing the POTCAR files, this will upload the POTCAR and create a corresponding `PBE.54` potcar family.
 The `MOCK_VASP_UPLOAD_PREFIX` should be set when constructing the calculation input, as the
 custom scheduler comments.
-This allows one to known which calculation data is for which test case.
+This allows one to know which calculation data is for which test case.
 Finally, run the tests as usual as `pytest`, and rerun without setting the environmental variables above to make sure they pass without using the actual VASP executable.
 
 
