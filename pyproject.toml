@@ -144,7 +144,6 @@ source = ["aiida_vasp"]
 
 [tool.ruff]
 exclude = [
-    "cookiecutters",
     "tutorials",
     ".bzr",
     ".direnv",
