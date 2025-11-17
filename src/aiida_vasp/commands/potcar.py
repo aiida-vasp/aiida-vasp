@@ -84,7 +84,7 @@ def detect_old_style_groups() -> None:
         click.echo(
             (
                 'Some of the old style POTCAR family groups are not migrated. '
-                "Please run command 'verdi data vasp.potcar migratefamilies.\n",
+                "Please run command 'aiida-vasp potcar migratefamilies.\n",
                 f'The missing groups are: {not_migrated}.',
             )
         )

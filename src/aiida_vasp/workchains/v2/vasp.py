@@ -1466,7 +1466,7 @@ def potential_family_validator(family: orm.Str, _) -> None:
     if group is None:
         raise InputValidationError(
             f'The potential family "{family.value}" is not found. '
-            'Please use verdi data vasp.potcars tool to verify your settings.'
+            'Please use aiida-vasp potcar listfamilies tool to verify your settings.'
         )
 
 
