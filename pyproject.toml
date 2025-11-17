@@ -65,10 +65,6 @@ docs = [
 ]
 graphs = ["matplotlib"]
 
-#[project.entry-points."aiida.cmdline.data"]
-#"vasp.potcar" = "aiida_vasp.commands.potcar:potcar"
-#"vasp.tools" = "aiida_vasp.commands.tools:tools"
-
 [project.entry-points."aiida.calculations"]
 "vasp.vasp" = "aiida_vasp.calcs.vasp:VaspCalculation"
 "vasp.neb" = "aiida_vasp.calcs.neb:VaspNEBCalculation"
@@ -148,7 +144,6 @@ source = ["aiida_vasp"]
 
 [tool.ruff]
 exclude = [
-    "cookiecutters",
     "tutorials",
     ".bzr",
     ".direnv",
