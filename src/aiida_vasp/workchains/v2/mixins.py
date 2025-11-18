@@ -5,6 +5,7 @@ Some convenience mixins
 # ruff: noqa: PLC0415
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 
@@ -16,6 +17,13 @@ class WithBuilderUpdater:
 
         The arguments are passed directly to the underling `BuilderUpdater` constructor.
         """
+        warnings.warn(
+            'The BuilderUpdater functionality is deprecated and will be removed in a future version. '
+            'Please use the InputGenerator classes from `aiida_vasp.protocols.generator` instead. '
+            'Example: from aiida_vasp.protocols.generator import VaspInputGenerator',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         from aiida_vasp.common.builder_updater import (
             VaspBandUpdater,
             VaspBuilderUpdater,
