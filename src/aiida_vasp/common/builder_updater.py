@@ -33,6 +33,7 @@ in AiiDA, supporting both interactive and automated use cases.
 from __future__ import annotations
 
 import logging
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass, field
 from itertools import chain
@@ -60,6 +61,15 @@ from .transform import neb_interpolate
 DEFAULT_PRESET = 'VaspPreset'
 DEFAULT_INPUTSET = 'UCLRelaxSet'
 
+
+# Issue deprecation warning when module is imported
+warnings.warn(
+    'The builder_updater module is deprecated and will be removed in a future version. '
+    'Please use the InputGenerator classes from `aiida_vasp.protocols.generator` instead. '
+    'Example: from aiida_vasp.protocols.generator import VaspInputGenerator',
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = (
     'VaspBandUpdater',
@@ -215,6 +225,25 @@ class BaseBuilderUpdater:
     ) -> None:
         """Instantiate a pipeline"""
         # Configure the builder
+        class_name = self.__class__.__name__
+        replacement_map = {
+            'VaspBuilderUpdater': 'VaspInputGenerator',
+            'VaspRelaxUpdater': 'VaspRelaxInputGenerator',
+            'VaspBandUpdater': 'VaspBandsInputGenerator',
+            'VaspConvUpdater': 'VaspConvergenceInputGenerator',
+            'VaspHybridBandUpdater': 'VaspHybridBandsInputGenerator',
+            'VaspNEBUpdater': 'VaspInputGenerator',  # Use base VaspInputGenerator for NEB
+            'VaspMultiStageRelaxUpdater': 'VaspRelaxInputGenerator',
+        }
+        replacement = replacement_map.get(class_name, 'InputGenerator')
+
+        warnings.warn(
+            f'The {class_name} class is deprecated and will be removed in a future version. '
+            f'Please use {replacement} from `aiida_vasp.protocols.generator` instead. '
+            f'Example: from aiida_vasp.protocols.generator import {replacement}',
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         assert hasattr(self, 'WF_ENTRYPOINT'), 'WF_ENTRYPOINT must be specified by the class'
         self.verbose = verbose
