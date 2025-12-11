@@ -224,7 +224,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         )  # relax_settings controls the logic of the workchain
         self.ctx.current_magmom = None
         self.ctx.is_double_relax = self.ctx.relax_settings.get('double_relax_mode', False)
-        self.ctx.do_residual_check = self.ctx.relax_settings.get('residual_check', True)
+        self.ctx.do_residual_forces_check = self.ctx.relax_settings.get('residual_forces_check', True)
 
         # Check potential issues in the the input parameters
         self._check_input_parameters()
@@ -798,7 +798,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
                 # TODO: Make this check part of the convergence cycle?
                 actual_max_force > max(max_force_threshold * 1.5, max_force_threshold + 0.001)
                 and self.perform_relaxation()
-                and self.ctx.do_residual_check
+                and self.ctx.do_residual_forces_check
             ):
                 if self.is_verbose():
                     self.report(

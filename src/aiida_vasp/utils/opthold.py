@@ -172,7 +172,7 @@ class RelaxOptions(OptionContainer):
         'due to change of basis set with variable cell and high-throughput studies.',
         default=False,
     )
-    residual_check: bool = Field(
+    residual_forces_check: bool = Field(
         description='Whether to perform residual force check after relaxation to ensure the forces are below threshold',
         default=True,
     )
