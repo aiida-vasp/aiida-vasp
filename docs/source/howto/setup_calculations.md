@@ -359,6 +359,38 @@ The `T` and `F` applies to the **direct** (fractional) coordinates.
 To fix the **cartesian** coordinates, the $$lattice vectors needs to align with the x, y, z direction respectively.
 :::
 
+### Using ASE constraints for selective dynamics
+
+ASE constraint objects are automatically converted when assigned to `builder.dynamics`:
+
+```python
+from ase.constraints import FixAtoms, FixScaled
+
+# Fix atoms completely
+atoms.set_constraint(FixAtoms(indices=[0, 1, 2]))
+builder.dynamics = atoms
+
+# Or fix specific directions (e.g., z for slabs)
+atoms.set_constraint(FixScaled([0, 1, 2], mask=(False, False, True)))
+builder.dynamics = atoms
+```
+
+Supported: `FixAtoms` (fixes all directions), `FixScaled` (fixes fractional directions), `FixCartesian` (requires orthogonal cells). Multiple constraints are accumulated. ASE's mask convention (True=fixed) is automatically converted to VASP's convention (True=movable).
+
+Alternatively, manually specify the `positions_dof` array:
+
+```python
+# Manually define: True=movable, False=fixed
+builder.dynamics = {
+    'positions_dof': [
+        [False, False, False],  # atom 0: fixed
+        [False, False, False],  # atom 1: fixed
+        [True, True, False],    # atom 2: z fixed, x,y movable
+        [True, True, True],     # atom 3: free
+    ]
+}
+```
+
 
 ## How set initial magnetization for magnetic calculations
 
