@@ -30,7 +30,7 @@ jobs:
           source .venv/bin/activate
           pytest --cov=aiida_vasp --cov-append --cov-report=xml --cov-report=term-missing -k 'not converge_wc' tests
       - name: Archive error mock calculations
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: ${{ failure() }}
         with:
           name: error-mock-calc-archive
