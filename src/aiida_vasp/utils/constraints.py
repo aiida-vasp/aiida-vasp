@@ -118,10 +118,10 @@ def atoms_to_positions_dof(atoms: Atoms) -> np.ndarray | None:
             cell = atoms.get_cell()
             if not _is_cell_orthogonal(cell):
                 raise InputValidationError(
-                    'FixCartesian constraint cannot be used with non-orthogonal cells. '
+                    'FixCartesian constraint requires a cell with vectors aligned with the Cartesian x, y, z axes '
+                    '(i.e. a diagonal cell matrix). '
                     'VASP selective dynamics operates in fractional coordinates. '
-                    'For non-orthogonal cells, use FixScaled instead or ensure your '
-                    'cell vectors are aligned with x, y, z axes.'
+                    'For rotated or non-orthogonal cells, use FixScaled instead.'
                 )
 
             # Issue warning about fractional vs Cartesian
