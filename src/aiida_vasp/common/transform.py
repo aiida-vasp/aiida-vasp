@@ -15,7 +15,12 @@ from ase import Atoms
 from ase.build import niggli_reduce as niggli_reduce_
 from ase.build import sort
 from ase.build.supercells import make_supercell as ase_supercell
-from ase.mep.neb import NEB
+
+try:
+    from ase.mep.neb import NEB
+except ModuleNotFoundError:
+    from ase.neb import NEB
+
 from spglib import niggli_reduce as niggli_reduce_spg
 from spglib import refine_cell
 
