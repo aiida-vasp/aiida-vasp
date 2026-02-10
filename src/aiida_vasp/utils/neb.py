@@ -8,7 +8,11 @@ import numpy as np
 from aiida import orm
 from aiida.engine import calcfunction
 from aiida.orm import StructureData
-from ase.neb import NEB
+
+try:
+    from ase.mep.neb import NEB
+except ModuleNotFoundError:
+    from ase.neb import NEB
 
 
 @calcfunction
