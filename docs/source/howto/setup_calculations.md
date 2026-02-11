@@ -375,7 +375,7 @@ atoms.set_constraint(FixScaled([0, 1, 2], mask=(False, False, True)))
 builder.dynamics = atoms
 ```
 
-Supported: `FixAtoms` (fixes all directions), `FixScaled` (fixes fractional directions), `FixCartesian` (requires orthogonal cells). Multiple constraints are accumulated. ASE's mask convention (True=fixed) is automatically converted to VASP's convention (True=movable).
+Supported: `FixAtoms` (fixes all directions), `FixScaled` (fixes fractional directions), `FixCartesian` (requires an axis-aligned/diagonal cell matrix). Multiple constraints are accumulated. ASE's mask convention (True=fixed) is automatically converted to VASP's convention (True=movable).
 
 Alternatively, manually specify the `positions_dof` array:
 
