@@ -105,8 +105,6 @@ def dryrun_vasp(
             if process.poll() is not None:
                 break
             time.sleep(0.2)
-    except Exception as error:
-        raise error
     finally:
         # Once we are out side the loop, kill VASP process
         process.kill()
