@@ -180,7 +180,7 @@ def remotetail(calcjob, fname: str) -> None:
         echo.echo_critical('no remote work directory for this calcjob, maybe the daemon did not submit it yet')
 
     command = tailf_command(transport, remote_workdir, fname)
-    os.system(command)
+    subprocess.run(command, shell=True, check=False)
 
 
 @tools.command('relaxcat')
@@ -223,12 +223,12 @@ def tailf_command(transport, remotedir: str, fname: str) -> str:
 
     connect_string = (
         """ "if [ -d {escaped_remotedir} ] ;"""
-        """ then cd {escaped_remotedir} ; {bash_command} -c 'tail -f {fname}' ; else echo '  ** The directory' ; """
+        """ then cd {escaped_remotedir} ; {bash_command} -c 'tail -f {escaped_fname}' ; else echo '  ** The directory' ; """
         """echo '  ** {remotedir}' ; echo '  ** seems to have been deleted, I logout...' ; fi" """.format(
             bash_command=transport._bash_command_str,
             escaped_remotedir=f"'{remotedir}'",
             remotedir=remotedir,
-            fname=fname,
+            escaped_fname=escape_for_bash(fname),
         )
     )
 

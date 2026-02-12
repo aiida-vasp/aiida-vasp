@@ -2,6 +2,7 @@
 Module for dry-running a VASP calculation
 """
 
+import shlex
 import shutil
 import subprocess as sb
 import tempfile
@@ -89,7 +90,9 @@ def dryrun_vasp(
     # Add the DRYRUNCAR for triggering the dryrun interface
     (Path(work_dir) / 'DRYRUNCAR').write_text('LDRYRUN = .TRUE.\n')
 
-    process = sb.Popen(vasp_exe, cwd=str(work_dir))
+    # Use shlex.split to safely handle the command
+    vasp_cmd = shlex.split(vasp_exe) if isinstance(vasp_exe, str) else vasp_exe
+    process = sb.Popen(vasp_cmd, cwd=str(work_dir))
     launch_start = time.time()
     outcar = work_dir / 'OUTCAR'
     time.sleep(3.0)  # Sleep for 3 seconds to wait for VASP creating the file
