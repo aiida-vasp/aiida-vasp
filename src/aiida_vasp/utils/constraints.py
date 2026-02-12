@@ -18,7 +18,7 @@ from ase import Atoms
 from ase.constraints import FixAtoms, FixCartesian, FixScaled
 
 
-def _is_cell_orthogonal(cell: np.ndarray, tol: float = 1e-6) -> bool:
+def _is_cell_axis_aligned(cell: np.ndarray, tol: float = 1e-6) -> bool:
     """
     Check if cell vectors are aligned with Cartesian x, y, z axes.
 
@@ -116,7 +116,7 @@ def atoms_to_positions_dof(atoms: Atoms) -> np.ndarray | None:
 
             # Check if cell is orthogonal
             cell = atoms.get_cell()
-            if not _is_cell_orthogonal(cell):
+            if not _is_cell_axis_aligned(cell):
                 raise InputValidationError(
                     'FixCartesian constraint requires a cell with vectors aligned with the Cartesian x, y, z axes '
                     '(i.e. a diagonal cell matrix). '

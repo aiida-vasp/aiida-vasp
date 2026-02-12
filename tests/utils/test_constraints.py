@@ -278,7 +278,7 @@ def test_fixcartesian_non_orthogonal():
 
     atoms.set_constraint(FixCartesian([0], mask=(True, False, False)))
 
-    with pytest.raises(InputValidationError, match='FixCartesian constraint cannot be used with non-orthogonal cells'):
+    with pytest.raises(InputValidationError, match='FixCartesian constraint requires a cell with vectors aligned'):
         atoms_to_positions_dof(atoms)
 
 
