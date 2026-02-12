@@ -90,8 +90,8 @@ def dryrun_vasp(
     # Add the DRYRUNCAR for triggering the dryrun interface
     (Path(work_dir) / 'DRYRUNCAR').write_text('LDRYRUN = .TRUE.\n')
 
-    # Use shlex.split to safely handle the command
-    vasp_cmd = shlex.split(vasp_exe) if isinstance(vasp_exe, str) else vasp_exe
+    # Use shlex.split to safely parse the command string into a list
+    vasp_cmd = shlex.split(vasp_exe)
     process = sb.Popen(vasp_cmd, cwd=str(work_dir))
     launch_start = time.time()
     outcar = work_dir / 'OUTCAR'
