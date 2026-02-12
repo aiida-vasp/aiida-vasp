@@ -111,7 +111,8 @@ def dryrun_vasp(
                     break
                 time.sleep(0.2)
         finally:
-            # Once we are outside the loop, kill VASP process
+            # Explicitly kill VASP process to stop it before entering the main loop
+            # (the context manager's __exit__ would only wait for process, not kill it)
             process.kill()
     result = parse_outcar(outcar)
     ibzkpt = parse_ibzkpt(work_dir / 'IBZKPT')
