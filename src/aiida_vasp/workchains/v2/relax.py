@@ -1016,6 +1016,12 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
             help='Use nested update for parameters, options, relax_settings, and settings. '
             'Otherwise full dictionary should be provided',
         )
+        spec.input(
+            'ignored_failed',
+            valid_type=orm.Bool,
+            default=lambda: orm.Bool(False),
+            help='Whether to ignore failed stages and continue with the next stage using the last available structure.',
+        )
         spec.expose_inputs(cls._base_workchain, 'relax', exclude=('structure',))
         spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
         spec.expose_outputs(cls._base_workchain)
@@ -1105,7 +1111,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Inspecting stage {self.ctx.current_stage} - {workchain}')
         if not workchain.is_finished_ok:
             self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status} - aborting.')
-            if not self.inputs.ignored_failed:
+            if not self.inputs.ignored_failed.value:
                 self.out_many(self.exposed_outputs(workchain, self._base_workchain))
                 return self.exit_codes.ERROR_SUB_PROCESS_FAILED
             else:

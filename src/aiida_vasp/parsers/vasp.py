@@ -446,7 +446,7 @@ class VaspParser(Parser):
                 return None
             for key, value in traj_data.items():
                 if key == 'symbols':
-                    node.base.attributes.set(key, value)
+                    node.base.attributes.set(key, list(value))
                 elif value.dtype.hasobject:
                     self.logger.warning(f'Cannot set array {key}: {value} in TrajectoryData as it is not numerical.')
                 else:
