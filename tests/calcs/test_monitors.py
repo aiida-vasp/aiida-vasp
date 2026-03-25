@@ -12,6 +12,7 @@ from aiida_vasp.calcs.vasp import VaspCalculation
 
 try:
     from asyncssh.sftp import SFTPNoSuchFile
+
     HAS_ASYNCSSH = True
 except ImportError:
     HAS_ASYNCSSH = False
