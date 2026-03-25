@@ -1111,7 +1111,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Inspecting stage {self.ctx.current_stage} - {workchain}')
         if not workchain.is_finished_ok:
             self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status} - aborting.')
-            if not self.inputs.ignored_failed:
+            if not self.inputs.ignored_failed.value:
                 self.out_many(self.exposed_outputs(workchain, self._base_workchain))
                 return self.exit_codes.ERROR_SUB_PROCESS_FAILED
             else:
