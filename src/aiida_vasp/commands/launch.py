@@ -2,8 +2,6 @@
 Provides aiida-vasp related tools as standalone commands.
 """
 
-import json
-
 import click
 
 from . import cmd_aiida_vasp
@@ -353,14 +351,40 @@ def status(process_pk):
                 click.echo('-' * 40)
 
 
-def pretty_print_builder(builder) -> None:
+def _builder_to_dict(obj):
+    """Recursively convert a ProcessBuilderNamespace or AiiDA node to a plain dict for pretty-printing."""
+    from aiida import orm
+    from aiida.engine.processes.builder import ProcessBuilderNamespace
+
+    if isinstance(obj, ProcessBuilderNamespace):
+        result = {}
+        for key, value in obj.items():
+            converted = _builder_to_dict(value)
+            if converted is not None:
+                result[key] = converted
+        return result or None
+    if isinstance(obj, orm.Dict):
+        return obj.get_dict()
+    if isinstance(obj, orm.BaseType):
+        return obj.value
+    if isinstance(obj, orm.Node):
+        return repr(obj)
+    if isinstance(obj, dict):
+        result = {}
+        for key, value in obj.items():
+            converted = _builder_to_dict(value)
+            if converted is not None:
+                result[key] = converted
+        return result or None
+    return obj
+
+
+def pretty_print_builder(builder) -> str:
     """
     Pretty print the builder object.
 
     Args:
         builder: The builder object to print.
-        indent: Indentation level for pretty printing.
-        stream: Output stream to write the pretty printed output.
     """
     import yaml
     from aiida import orm
@@ -391,13 +415,6 @@ def pretty_print_builder(builder) -> None:
         f'Process class: {builder._process_class.__name__}\n'
         f'Inputs:\n{yaml.safe_dump(sanitize(builder_to_dict(builder)), sort_keys=False)}'
     )
-
-
-class PrettyEncoder(json.JSONEncoder):
-    """JSON encoder for returning a pretty representation of an AiiDA ``ProcessBuilder``."""
-
-    def default(self, o):
-        return dict(o)
 
 
 def load_inputs_from_vasp_folder(folder_path):
@@ -458,19 +475,29 @@ def load_inputs_from_vasp_folder(folder_path):
 
     # Compose overrides for each workchain type
     # VaspWorkChain
-    vasp_override = {'parameters': {'incar': incar_dict}, 'kpoints': kpoints_node, 'potential': potcars}
+    vasp_override = {'parameters': {'incar': incar_dict}, 'potential': potcars}
+    if kpoints_node is not None:
+        vasp_override['kpoints'] = kpoints_node
     overrides_map['vasp'] = vasp_override
 
     # VaspRelaxWorkChain
-    relax_override = {'vasp': {'parameters': {'incar': incar_dict}, 'kpoints': kpoints_node, 'potential': potcars}}
+    vasp_sub = {'parameters': {'incar': incar_dict}, 'potential': potcars}
+    if kpoints_node is not None:
+        vasp_sub['kpoints'] = kpoints_node
+    relax_override = {'vasp': vasp_sub}
     overrides_map['relax'] = relax_override
 
     # VaspBandsWorkChain
-    band_override = {'scf': {'parameters': {'incar': incar_dict}, 'kpoints': kpoints_node, 'potential': potcars}}
+    scf_sub = {'parameters': {'incar': incar_dict}, 'potential': potcars}
+    if kpoints_node is not None:
+        scf_sub['kpoints'] = kpoints_node
+    band_override = {'scf': scf_sub}
     overrides_map['band'] = band_override
 
     # VaspConvergeWorkChain
-    conv_override = {'parameters': {'incar': incar_dict, 'kpoints': kpoints_node, 'potential': potcars}}
+    conv_override = {'parameters': {'incar': incar_dict, 'potential': potcars}}
+    if kpoints_node is not None:
+        conv_override['kpoints'] = kpoints_node
     overrides_map['conv'] = conv_override
 
     return structure_node, overrides_map
