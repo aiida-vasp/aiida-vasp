@@ -145,16 +145,26 @@ def launch_workchain(
 
         # Try to link to existing structure node
         if match_existing:
-            structure_node.store()
+            if not structure_node.is_stored:
+                structure_node.store()
             existing = orm.QueryBuilder().append(
                 orm.StructureData,
                 filters={'extras._aiida_hash': structure_node.base.caching.get_hash()},
                 tag='structure',
             )
-            existing.order_by({'structure': [{'ctime': {'order': 'desc'}}]}).all()
-            if existing:
-                if yes or click.confirm(f'Using existing structure node with PK: {structure_node.pk} as input node'):
-                    structure_node = existing[0][0]
+            existing.order_by({'structure': [{'ctime': {'order': 'desc'}}]})
+            matches = existing.all()
+            if matches:
+                existing_node = matches[0][0]
+                if (
+                    dryrun
+                    or yes
+                    or click.confirm(
+                        f'Using existing structure node with PK: {existing_node.pk} as input node', default=True
+                    )
+                ):
+                    structure_node = existing_node
+                    click.echo(f'Using existing structure node with PK: {existing_node.pk}')
 
         # Initialize the builder updater
         click.echo(f'Initializing BuilderUpdater with preset: {preset}')
@@ -353,11 +363,33 @@ def pretty_print_builder(builder) -> None:
         stream: Output stream to write the pretty printed output.
     """
     import yaml
-    from aiida.engine.processes.builder import PrettyEncoder
+    from aiida import orm
+    from aiida.engine.processes.builder import ProcessBuilderNamespace
+
+    from aiida_vasp.common.builder_updater import builder_to_dict
+
+    def sanitize(value):
+        if isinstance(value, ProcessBuilderNamespace):
+            return sanitize(builder_to_dict(value))
+        if isinstance(value, orm.Dict):
+            return sanitize(value.get_dict())
+        if isinstance(value, orm.List):
+            return [sanitize(item) for item in value.get_list()]
+        if isinstance(value, (orm.Bool, orm.Float, orm.Int, orm.Str)):
+            return value.value
+        if isinstance(value, dict):
+            return {key: sanitize(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [sanitize(item) for item in value]
+        if isinstance(value, orm.Data):
+            if value.pk is not None:
+                return f'{value.__class__.__name__}<{value.pk}>'
+            return f'{value.__class__.__name__}<unstored>'
+        return value
 
     return (
         f'Process class: {builder._process_class.__name__}\n'
-        f'Inputs:\n{yaml.safe_dump(json.JSONDecoder().decode(PrettyEncoder().encode(builder)))}'
+        f'Inputs:\n{yaml.safe_dump(sanitize(builder_to_dict(builder)), sort_keys=False)}'
     )
 
 

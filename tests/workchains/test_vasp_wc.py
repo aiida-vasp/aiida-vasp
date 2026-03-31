@@ -17,6 +17,8 @@ from aiida.engine import run
 from aiida.plugins import WorkflowFactory
 from aiida.plugins.factories import DataFactory
 
+from aiida_vasp.workchains.v2.vasp import VaspWorkChain
+
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.parametrize('standalone_options', [True, False])
@@ -230,6 +232,40 @@ def test_vasp_wc_ionic_continue(
     # Check the child status - here the first calculation is not finished but the second one is
     for idx, code in enumerate(exit_codes):
         assert called_nodes[idx].exit_status == code
+
+
+def test_handler_ionic_conv_enhanced_formats_exit_code_message():
+    """The enhanced ionic handler should return an exit code instead of raising TypeError."""
+
+    class FakeStructure:
+        sites = [object()]
+
+    def make_child(energy):
+        return AttributeDict(
+            {
+                'outputs': AttributeDict(
+                    {
+                        'structure': object(),
+                        'misc': {
+                            'run_status': {'last_iteration_index': [6, 1]},
+                            'total_energies': {'energy_extrapolated': energy},
+                        },
+                    }
+                )
+            }
+        )
+
+    workchain = object.__new__(VaspWorkChain)
+    object.__setattr__(workchain, '_context', AttributeDict())
+    workchain.ctx.inputs = AttributeDict({'structure': FakeStructure(), 'parameters': {'isif': 2}})
+    workchain.ctx.children = [make_child(-1.0), make_child(-1.0), make_child(-1.0)]
+    workchain.update_magmom = lambda node=None: None
+    workchain.report = lambda *args, **kwargs: None
+
+    report = VaspWorkChain.handler_ionic_conv_enhanced.__wrapped__(workchain, workchain.ctx.children[-1])
+
+    assert report.exit_code.status == VaspWorkChain.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.status
+    assert '1e-5 /atom' in report.exit_code.message
 
 
 @pytest.mark.skip(reason='This test is not working yet')

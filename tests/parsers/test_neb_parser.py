@@ -57,3 +57,32 @@ def test_neb_parser(neb_parser_with_test):
     assert np.all(forces[0] == np.array([0.008815, 0.005492, -0.000661]))
 
     assert np.array(forces).shape == (4, 3)
+
+
+def test_neb_parser_checks_notifications_for_all_images(neb_calc_with_retrieved):
+    """Critical notifications in later images should still fail the parse."""
+    settings_dict = {'parser_settings': {}}
+    file_path = cwd / '..' / 'test_data/neb'
+    node = neb_calc_with_retrieved(file_path, settings_dict, 3)
+    parser = ParserFactory('vasp.neb')(node)
+    parser._init_user_settings()
+    parser.neb_indices = ['01', '02']
+    parser.quantities_each = {
+        'vasp_output': {
+            'notifications': {
+                '01': [],
+                '02': [{'name': 'brmix', 'message': 'error in second image'}],
+            }
+        },
+        'OUTCAR': {
+            'run_status': {
+                '01': {'finished': True, 'electronic_converged': True, 'ionic_converged': True},
+                '02': {'finished': True, 'electronic_converged': True, 'ionic_converged': True},
+            }
+        },
+    }
+
+    exit_code = parser._check_vasp_errors({})
+
+    assert exit_code.status == parser.exit_codes.ERROR_VASP_CRITICAL_ERROR.status
+    assert 'second image' in exit_code.message

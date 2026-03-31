@@ -689,7 +689,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             self.report('Cell angles check bypassed.')
             angles_converged = True
         else:
-            angles_converged = bool(delta.cell_lengths.max() <= threshold_lengths)
+            angles_converged = bool(delta.cell_angles.max() <= threshold_angles)
 
         if not angles_converged:
             self.report(
@@ -1015,6 +1015,12 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
             default=lambda: orm.Bool(True),
             help='Use nested update for parameters, options, relax_settings, and settings. '
             'Otherwise full dictionary should be provided',
+        )
+        spec.input(
+            'ignored_failed',
+            valid_type=orm.Bool,
+            default=lambda: orm.Bool(False),
+            help='If True, continue to the next stage even when a stage fails, provided a relaxed structure exists.',
         )
         spec.expose_inputs(cls._base_workchain, 'relax', exclude=('structure',))
         spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
