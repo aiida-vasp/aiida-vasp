@@ -87,7 +87,12 @@ def compare_structures(structure_a: Any, structure_b: Any) -> AttributeDict:
     site_vectors = [delta.absolute.pos[i, :] for i in range(delta.absolute.pos.shape[0])]
     a_lengths = np.linalg.norm(pos_a, axis=1)
     delta.absolute.pos_lengths = np.array([np.linalg.norm(vector) for vector in site_vectors])
-    delta.relative.pos_lengths = np.array([np.linalg.norm(vector) for vector in site_vectors]) / a_lengths
+    delta.relative.pos_lengths = np.divide(
+        delta.absolute.pos_lengths,
+        a_lengths,
+        out=np.zeros_like(delta.absolute.pos_lengths),
+        where=a_lengths != 0,
+    )
 
     cell_lengths_a = np.array(structure_a.cell_lengths)
     delta.absolute.cell_lengths = np.absolute(cell_lengths_a - np.array(structure_b.cell_lengths))

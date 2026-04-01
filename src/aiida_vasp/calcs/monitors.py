@@ -26,6 +26,16 @@ from pathlib import Path
 from aiida.orm import CalcJobNode
 from aiida.transports import Transport
 
+try:
+    from asyncssh.sftp import SFTPNoSuchFile as _SFTPNoSuchFile
+except ImportError:
+    _SFTPNoSuchFile = None
+
+# Tuple of exceptions to catch when a remote file does not exist.
+# asyncssh raises SFTPNoSuchFile which does not inherit from FileNotFoundError,
+# so we need to catch it explicitly.
+_FILE_NOT_FOUND_ERRORS: tuple = tuple(filter(None, (FileNotFoundError, _SFTPNoSuchFile)))
+
 
 def monitor_stdout(node: CalcJobNode, transport: Transport, size_threshold_mb: float = 5) -> str | None:
     """
@@ -65,7 +75,7 @@ def monitor_stdout(node: CalcJobNode, transport: Transport, size_threshold_mb: f
     stdout_path = str(Path(node.get_remote_workdir()) / node.process_class._VASP_OUTPUT)
     try:
         file_stat = transport.get_attribute(stdout_path)
-    except FileNotFoundError:
+    except _FILE_NOT_FOUND_ERRORS:
         # No file yet - do nothing
         return
     if file_stat.st_size > 1024 * 1024 * size_threshold_mb:
@@ -164,7 +174,7 @@ def monitor_loop_time(
     # Monitor for stalled calculations by checking stdout file modification time
     try:
         file_stat = transport.get_attribute(stdout_path)
-    except FileNotFoundError:
+    except _FILE_NOT_FOUND_ERRORS:
         # Do nothing if the stdout is not there
         pass
     else:

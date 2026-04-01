@@ -205,7 +205,7 @@ class NebParser(VaspParser):
                     return None
                 for key, value in traj_data.items():
                     if key == 'symbols':
-                        node.base.attributes.set(key, value)
+                        node.base.attributes.set(key, list(value))
                     else:
                         node.set_array(key, value)
                 output['image_' + index] = node
@@ -260,19 +260,20 @@ class NebParser(VaspParser):
 
         # Check for the existence of critical warnings
         if 'notifications' in quantities:
-            notifications = quantities['notifications']['01']
             ignore_all = self.user_config.ignore_notification_errors
             if not ignore_all:
-                composer = NotificationComposer(
-                    notifications,
-                    quantities['run_status']['01'],
-                    self.node.inputs,
-                    self.exit_codes,
-                    critical_notifications=self.user_config.critical_notification_errors,
-                )
-                exit_code = composer.compose()
-                if exit_code is not None:
-                    return exit_code
+                for index in self.neb_indices:
+                    notifications = quantities['notifications'].get(index, [])
+                    composer = NotificationComposer(
+                        notifications,
+                        quantities['run_status'][index],
+                        self.node.inputs,
+                        self.exit_codes,
+                        critical_notifications=self.user_config.critical_notification_errors,
+                    )
+                    exit_code = composer.compose()
+                    if exit_code is not None:
+                        return exit_code
         else:
             self.logger.warning('WARNING: missing notification output for VASP warnings and errors.')
 

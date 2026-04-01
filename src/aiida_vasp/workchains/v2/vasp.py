@@ -1201,7 +1201,7 @@ A nested dictionary containing the following keys:
             self.report(msg)
             return ProcessHandlerReport(
                 do_break=True,
-                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg),
             )
 
         # Check if there are very few step performed per launch. Because VASP does not carry over
@@ -1214,7 +1214,7 @@ A nested dictionary containing the following keys:
             self.report(msg)
             return ProcessHandlerReport(
                 do_break=True,
-                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg),
             )
 
         # Warn about very unusually large number of steps and switch IBRION if needed.
@@ -1255,7 +1255,7 @@ A nested dictionary containing the following keys:
             self.report(msg)
             return ProcessHandlerReport(
                 do_break=True,
-                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(msg),
+                exit_code=self.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.format(message=msg),
             )
 
         self.report('No fixes can be applied for ionic convergence.')

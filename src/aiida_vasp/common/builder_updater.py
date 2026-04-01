@@ -836,7 +836,7 @@ class VaspNEBUpdater(VaspBuilderUpdater):
             self.set_interpolated_images(nimages)
         else:
             logging.info('Not interpolating images, please set with .set_neb_image(images)')
-        self.update_incar(images=nimages)
+        self.set_incar(images=nimages)
 
         return self
 

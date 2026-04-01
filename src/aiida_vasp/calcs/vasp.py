@@ -22,6 +22,7 @@ from aiida_vasp.parsers.content_parsers.incar import IncarParser
 from aiida_vasp.parsers.content_parsers.kpoints import KpointsParser
 from aiida_vasp.parsers.content_parsers.poscar import PoscarParser
 from aiida_vasp.parsers.content_parsers.potcar import MultiPotcarIo
+from aiida_vasp.utils.constraints import serialize_dynamics
 
 if TYPE_CHECKING:
     from aiida.common import CalcInfo
@@ -88,7 +89,7 @@ class VaspCalculation(VaspCalcBase):
         spec.input(
             'dynamics',
             valid_type=orm.Dict,
-            serializer=to_aiida_type,
+            serializer=serialize_dynamics,
             help='The VASP parameters related to ionic dynamics, e.g. flags to set the selective dynamics',
             required=False,
         )

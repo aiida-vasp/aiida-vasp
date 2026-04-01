@@ -17,9 +17,12 @@ from aiida.engine import run
 from aiida.plugins import WorkflowFactory
 from aiida.plugins.factories import DataFactory
 
+from aiida_vasp.workchains.v2.vasp import VaspWorkChain
+
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.parametrize('standalone_options', [True, False])
+@pytest.mark.filterwarnings('ignore:The use of `options` port is deprecated.*:UserWarning')
 def test_vasp_wc(run_vasp_process, standalone_options):
     """Test submitting only, not correctness, with mocked vasp code."""
     results, node = run_vasp_process(process_type='workchain', standalone_options=standalone_options)
@@ -213,7 +216,7 @@ def test_vasp_wc_ionic_continue(
     inputs = setup_vasp_workchain(si_structure(), incar, nkpts, potcar_family_name, potcar_mapping)
     inputs.verbose = orm.Bool(True)
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': {'enabled': True}})
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
@@ -230,6 +233,40 @@ def test_vasp_wc_ionic_continue(
     # Check the child status - here the first calculation is not finished but the second one is
     for idx, code in enumerate(exit_codes):
         assert called_nodes[idx].exit_status == code
+
+
+def test_handler_ionic_conv_enhanced_formats_exit_code_message():
+    """The enhanced ionic handler should return an exit code instead of raising TypeError."""
+
+    class FakeStructure:
+        sites = [object()]
+
+    def make_child(energy):
+        return AttributeDict(
+            {
+                'outputs': AttributeDict(
+                    {
+                        'structure': object(),
+                        'misc': {
+                            'run_status': {'last_iteration_index': [6, 1]},
+                            'total_energies': {'energy_extrapolated': energy},
+                        },
+                    }
+                )
+            }
+        )
+
+    workchain = object.__new__(VaspWorkChain)
+    object.__setattr__(workchain, '_context', AttributeDict())
+    workchain.ctx.inputs = AttributeDict({'structure': FakeStructure(), 'parameters': {'isif': 2}})
+    workchain.ctx.children = [make_child(-1.0), make_child(-1.0), make_child(-1.0)]
+    workchain.update_magmom = lambda node=None: None
+    workchain.report = lambda *args, **kwargs: None
+
+    report = VaspWorkChain.handler_ionic_conv_enhanced.__wrapped__(workchain, workchain.ctx.children[-1])
+
+    assert report.exit_code.status == VaspWorkChain.exit_codes.ERROR_OTHER_INTERVENTION_NEEDED.status
+    assert '1e-5 /atom' in report.exit_code.message
 
 
 @pytest.mark.skip(reason='This test is not working yet')
@@ -249,7 +286,7 @@ def test_vasp_wc_ionic_magmom_carry(aiida_profile, upload_potcar, potcar_family_
     inputs.verbose = orm.Bool(True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': {'enabled': True}})
     inputs.settings = orm.Dict(
         dict={
             'parser_settings': {

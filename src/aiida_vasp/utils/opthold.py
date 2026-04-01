@@ -53,10 +53,9 @@ class OptionContainer(BaseModel):
         Return a string for the options of a OptionContains in a human-readable format.
         """
 
-        obj = cls()
         template = '{:>{width_name}s}:  {:10s} \n{default:>{width_name2}}: {}'
         entries = []
-        for name, field in obj.model_fields.items():
+        for name, field in cls.model_fields.items():
             # Each entry is name, type, doc, default value
             entries.append([name, str(field.annotation.__name__), field.description, field.default])
         max_width_name = max(len(entry[0]) for entry in entries) + 2
