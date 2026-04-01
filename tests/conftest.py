@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import importlib
 import os
 import pathlib
 import subprocess as sp
+import warnings
 
 import numpy as np
 import pytest
@@ -16,7 +18,6 @@ from aiida.orm import CalculationNode, Code, Computer, Dict, InstalledCode, Quer
 from aiida.plugins import CalculationFactory, DataFactory, WorkflowFactory
 from aiida.tools.archive import create_archive
 
-from aiida_vasp.common.builder_updater import VaspBuilderUpdater
 from aiida_vasp.data.potcar import OLD_POTCAR_FAMILY_TYPE, Group, PotcarData, PotcarGroup
 from aiida_vasp.utils.general import copytree
 
@@ -383,7 +384,14 @@ def builder_updater(
     """
     Return a Builder Updater object for mock-vasp
     """
-    return VaspBuilderUpdater(code='mock-vasp@localhost')
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message='The builder_updater module is deprecated.*|The Vasp.*Updater class is deprecated.*',
+            category=DeprecationWarning,
+        )
+        vasp_builder_updater = importlib.import_module('aiida_vasp.common.builder_updater').VaspBuilderUpdater
+        return vasp_builder_updater(code='mock-vasp@localhost')
 
 
 def print_and_export_failed_mock():

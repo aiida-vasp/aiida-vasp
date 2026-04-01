@@ -1,8 +1,26 @@
+import importlib
+import warnings
+
 import pytest
 from aiida import orm
 from ase.build import bulk
 
-from aiida_vasp.common import builder_updater as bup
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        'ignore',
+        message='The builder_updater module is deprecated.*|The Vasp.*Updater class is deprecated.*',
+        category=DeprecationWarning,
+    )
+    bup = importlib.import_module('aiida_vasp.common.builder_updater')
+
+pytestmark = [
+    pytest.mark.filterwarnings('ignore:The builder_updater module is deprecated.*:DeprecationWarning'),
+    pytest.mark.filterwarnings('ignore:The Vasp.*Updater class is deprecated.*:DeprecationWarning'),
+    pytest.mark.filterwarnings('ignore:Error validating potential family .*:UserWarning'),
+    pytest.mark.filterwarnings(
+        "ignore:The default method has changed from 'aseneb' to 'improvedtangent'.*:UserWarning"
+    ),
+]
 
 
 def test_vasp_builder_updater(aiida_profile_clean, vasp_code, upload_potcar, potcar_family_name):

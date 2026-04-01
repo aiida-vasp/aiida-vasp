@@ -111,7 +111,10 @@ def test_silicon_band_hybrid_no_relax(fresh_aiida_env, mock_potcars, mock_vasp_s
     assert results.node.is_finished_ok
 
 
-def test_silicon_relax_staged(fresh_aiida_env, mock_potcars, mock_vasp_strict, builder_updater):
+@pytest.mark.filterwarnings('ignore:The BuilderUpdater functionality is deprecated.*:DeprecationWarning')
+@pytest.mark.filterwarnings('ignore:The builder_updater module is deprecated.*:DeprecationWarning')
+@pytest.mark.filterwarnings('ignore:The Vasp.*Updater class is deprecated.*:DeprecationWarning')
+def test_silicon_relax_staged(fresh_aiida_env, mock_potcars, mock_vasp_strict):
     """Test running a VASP workchain on silicon using the mock code."""
 
     si = bulk('Si', 'diamond', 5.4)

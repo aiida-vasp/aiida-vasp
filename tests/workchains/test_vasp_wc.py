@@ -22,6 +22,7 @@ from aiida_vasp.workchains.v2.vasp import VaspWorkChain
 
 @pytest.mark.parametrize(['vasp_structure', 'vasp_kpoints'], [('str', 'mesh')], indirect=True)
 @pytest.mark.parametrize('standalone_options', [True, False])
+@pytest.mark.filterwarnings('ignore:The use of `options` port is deprecated.*:UserWarning')
 def test_vasp_wc(run_vasp_process, standalone_options):
     """Test submitting only, not correctness, with mocked vasp code."""
     results, node = run_vasp_process(process_type='workchain', standalone_options=standalone_options)
@@ -215,7 +216,7 @@ def test_vasp_wc_ionic_continue(
     inputs = setup_vasp_workchain(si_structure(), incar, nkpts, potcar_family_name, potcar_mapping)
     inputs.verbose = orm.Bool(True)
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': {'enabled': True}})
     results, node = run.get_node(workchain, **inputs)
 
     assert node.exit_status == 0
@@ -285,7 +286,7 @@ def test_vasp_wc_ionic_magmom_carry(aiida_profile, upload_potcar, potcar_family_
     inputs.verbose = orm.Bool(True)
 
     # The test calculation contain NELM breaches during the relaxation - set to ignore it.
-    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': True})
+    inputs.handler_overrides = orm.Dict(dict={'ignore_nelm_breach_relax': {'enabled': True}})
     inputs.settings = orm.Dict(
         dict={
             'parser_settings': {

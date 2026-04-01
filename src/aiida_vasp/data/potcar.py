@@ -105,6 +105,7 @@ The mechanism for writing one or more PotcarData to file (from a calculation)::
 from __future__ import annotations, print_function
 
 import hashlib
+import inspect
 import os
 import re
 import shutil
@@ -275,7 +276,10 @@ def extract_tarfile(file_path: Path) -> Path:
         new_dir = file_path.name.split('.tar')[0]
         new_path = file_path.parent / new_dir
         if not new_path.exists():
-            archive.extractall(str(new_path))
+            extract_kwargs = {}
+            if 'filter' in inspect.signature(archive.extractall).parameters:
+                extract_kwargs['filter'] = 'data'
+            archive.extractall(str(new_path), **extract_kwargs)
 
     return new_path
 
