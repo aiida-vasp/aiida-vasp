@@ -222,16 +222,7 @@ def dryrun_vasp(
     :returns: A dictionary of the dry run results parsed from OUTCAR.
     """
     # Deal with passing an process builder
-    if isinstance(input_dict, ProcessBuilder):
-        try:
-            output_node = prepare_inputs(input_dict)
-        except Exception as error:
-            raise error
-    else:
-        try:
-            output_node = prepare_inputs(input_dict)
-        except Exception as error:
-            raise error
+    output_node = prepare_inputs(input_dict)
 
     folder = output_node.dry_run_info['folder']
     outcome = _vasp_dryrun(folder, vasp_exe=vasp_exe, timeout=timeout, work_dir=work_dir, keep=keep)

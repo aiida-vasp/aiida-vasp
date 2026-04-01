@@ -35,3 +35,4 @@ OSZICAR
 EIGENVAL
 vaspout.h5
 POT
+dryrun.yaml

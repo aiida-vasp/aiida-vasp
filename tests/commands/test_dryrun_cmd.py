@@ -175,6 +175,8 @@ def test_dryrun_vasp_existing_work_dir_with_force(cmd_params):
         # Mock process
         mock_process = Mock()
         mock_process.poll.return_value = None
+        mock_process.__enter__ = Mock(return_value=mock_process)
+        mock_process.__exit__ = Mock(return_value=False)
         mock_popen.return_value = mock_process
 
         mock_parse_outcar.return_value = {'num_kpoints': 10}

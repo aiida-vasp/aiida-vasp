@@ -2,6 +2,7 @@
 Module for dry-running a VASP calculation
 """
 
+import shlex
 import shutil
 import subprocess as sb
 import tempfile
@@ -13,7 +14,7 @@ import click
 import yaml
 from parsevasp.kpoints import Kpoints
 
-# pylint:disable=too-many-branches,consider-using-with
+# pylint:disable=too-many-branches
 
 
 @click.command('dryrun-vasp')
@@ -89,27 +90,30 @@ def dryrun_vasp(
     # Add the DRYRUNCAR for triggering the dryrun interface
     (Path(work_dir) / 'DRYRUNCAR').write_text('LDRYRUN = .TRUE.\n')
 
-    process = sb.Popen(vasp_exe, cwd=str(work_dir))
-    launch_start = time.time()
+    # Use shlex.split to safely parse the command string into a list
+    vasp_cmd = shlex.split(vasp_exe)
     outcar = work_dir / 'OUTCAR'
-    time.sleep(3.0)  # Sleep for 3 seconds to wait for VASP creating the file
-    dryrun_finish = False
-    try:
-        while (time.time() - launch_start < timeout) and not dryrun_finish:
-            with open(outcar, encoding='utf-8') as fhandle:
-                for line in fhandle:
-                    if 'INWAV' in line or 'Terminating' in line:
-                        dryrun_finish = True
-                        break
-            # Stop if VASP is terminated or crashed
-            if process.poll() is not None:
-                break
-            time.sleep(0.2)
-    except Exception as error:
-        raise error
-    finally:
-        # Once we are out side the loop, kill VASP process
-        process.kill()
+
+    # Use context manager to ensure process is properly cleaned up
+    with sb.Popen(vasp_cmd, cwd=str(work_dir)) as process:
+        launch_start = time.time()
+        time.sleep(3.0)  # Sleep for 3 seconds to wait for VASP creating the file
+        dryrun_finish = False
+        try:
+            while (time.time() - launch_start < timeout) and not dryrun_finish:
+                with open(outcar, encoding='utf-8') as fhandle:
+                    for line in fhandle:
+                        if 'INWAV' in line or 'Terminating' in line:
+                            dryrun_finish = True
+                            break
+                # Stop if VASP is terminated or crashed
+                if process.poll() is not None:
+                    break
+                time.sleep(0.2)
+        finally:
+            # Explicitly kill VASP process to stop it before entering the main loop
+            # (the context manager's __exit__ would only wait for process, not kill it)
+            process.kill()
     result = parse_outcar(outcar)
     ibzkpt = parse_ibzkpt(work_dir / 'IBZKPT')
     result['kpoints_and_weights_ibzkpt'] = ibzkpt
