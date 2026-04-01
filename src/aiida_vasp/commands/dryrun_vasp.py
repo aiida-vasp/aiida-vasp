@@ -93,7 +93,7 @@ def dryrun_vasp(
     # Use shlex.split to safely parse the command string into a list
     vasp_cmd = shlex.split(vasp_exe)
     outcar = work_dir / 'OUTCAR'
-    
+
     # Use context manager to ensure process is properly cleaned up
     with sb.Popen(vasp_cmd, cwd=str(work_dir)) as process:
         launch_start = time.time()
