@@ -689,7 +689,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             self.report('Cell angles check bypassed.')
             angles_converged = True
         else:
-            angles_converged = bool(delta.cell_lengths.max() <= threshold_lengths)
+            angles_converged = bool(delta.cell_angles.max() <= threshold_angles)
 
         if not angles_converged:
             self.report(
@@ -923,7 +923,12 @@ def compare_structures(structure_a: orm.StructureData, structure_b: orm.Structur
     site_vectors = [delta.absolute.pos[i, :] for i in range(delta.absolute.pos.shape[0])]
     a_lengths = np.linalg.norm(pos_a, axis=1)
     delta.absolute.pos_lengths = np.array([np.linalg.norm(vector) for vector in site_vectors])
-    delta.relative.pos_lengths = np.array([np.linalg.norm(vector) for vector in site_vectors]) / a_lengths
+    delta.relative.pos_lengths = np.divide(
+        delta.absolute.pos_lengths,
+        a_lengths,
+        out=np.zeros_like(delta.absolute.pos_lengths),
+        where=a_lengths != 0,
+    )
 
     cell_lengths_a = np.array(structure_a.cell_lengths)
     delta.absolute.cell_lengths = np.absolute(cell_lengths_a - np.array(structure_b.cell_lengths))
@@ -1016,6 +1021,12 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
             help='Use nested update for parameters, options, relax_settings, and settings. '
             'Otherwise full dictionary should be provided',
         )
+        spec.input(
+            'ignored_failed',
+            valid_type=orm.Bool,
+            default=lambda: orm.Bool(False),
+            help='If True, continue to the next stage even when a stage fails, provided a relaxed structure exists.',
+        )
         spec.expose_inputs(cls._base_workchain, 'relax', exclude=('structure',))
         spec.input('structure', valid_type=(orm.StructureData, orm.CifData))
         spec.expose_outputs(cls._base_workchain)
@@ -1105,7 +1116,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         self.report(f'Inspecting stage {self.ctx.current_stage} - {workchain}')
         if not workchain.is_finished_ok:
             self.report(f'Stage {self.ctx.current_stage} failed with exit status {workchain.exit_status} - aborting.')
-            if not self.inputs.ignored_failed:
+            if not self.inputs.ignored_failed.value:
                 self.out_many(self.exposed_outputs(workchain, self._base_workchain))
                 return self.exit_codes.ERROR_SUB_PROCESS_FAILED
             else:

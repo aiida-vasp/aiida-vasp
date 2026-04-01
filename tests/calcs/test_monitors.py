@@ -10,6 +10,13 @@ from aiida.common.extendeddicts import AttributeDict
 from aiida_vasp.calcs.monitors import monitor_loop_time, monitor_stdout
 from aiida_vasp.calcs.vasp import VaspCalculation
 
+try:
+    from asyncssh.sftp import SFTPNoSuchFile
+
+    HAS_ASYNCSSH = True
+except ImportError:
+    HAS_ASYNCSSH = False
+
 
 class MockFileStatResult:
     """Mock object for file stat results."""
@@ -30,6 +37,7 @@ class MockTransport:
     def __init__(self):
         """Initialize mock transport."""
         self.get_attribute_return = None
+        self.get_attribute_raise = None
         self.exec_command_wait_return = None
         self.get_attribute_calls = []
         self.exec_command_wait_calls = []
@@ -37,6 +45,7 @@ class MockTransport:
     def reset(self):
         """Reset the status"""
         self.get_attribute_return = None
+        self.get_attribute_raise = None
         self.exec_command_wait_return = None
         self.get_attribute_calls = []
         self.exec_command_wait_calls = []
@@ -44,6 +53,8 @@ class MockTransport:
     def get_attribute(self, filename):
         """Mock get_attribute method."""
         self.get_attribute_calls.append(filename)
+        if self.get_attribute_raise is not None:
+            raise self.get_attribute_raise
         return self.get_attribute_return
 
     def exec_command_wait(self, command):
@@ -143,6 +154,25 @@ class TestMonitorStdout:
         result = monitor_stdout(mock_node, mock_transport, size_threshold_mb=10)
         assert result is None
         assert not mock_transport.exec_command_wait_calls
+
+    def test_monitor_stdout_file_not_found(self, mock_node, mock_transport):
+        """Test monitor_stdout when FileNotFoundError is raised (file not yet created)."""
+        mock_transport.get_attribute_raise = FileNotFoundError('No such file')
+
+        result = monitor_stdout(mock_node, mock_transport)
+
+        assert result is None
+        assert mock_transport.exec_command_wait_calls == []
+
+    @pytest.mark.skipif(not HAS_ASYNCSSH, reason='asyncssh is not installed')
+    def test_monitor_stdout_sftp_no_such_file(self, mock_node, mock_transport):
+        """Test monitor_stdout when SFTPNoSuchFile is raised (asyncssh transport, pending job)."""
+        mock_transport.get_attribute_raise = SFTPNoSuchFile('No such file')
+
+        result = monitor_stdout(mock_node, mock_transport)
+
+        assert result is None
+        assert mock_transport.exec_command_wait_calls == []
 
 
 class TestMonitorLoopTime:
@@ -286,6 +316,31 @@ class TestMonitorLoopTime:
         mock_transport.get_attribute_return = MockFileStatResult(mtime=file_mtime)
 
         # Call function
+        result = monitor_loop_time(mock_node, mock_transport)
+
+        assert result is None
+
+    def test_monitor_loop_time_file_not_found(self, mock_transport):
+        """Test monitor_loop_time when FileNotFoundError is raised for stdout (file not yet created)."""
+        mock_node = MockNode(walltime_limit=3600)
+
+        grep_output = 'LOOP:  cpu time    50.5: real time    50.5\nLOOP:  cpu time    50.5: real time    50.5'
+        mock_transport.exec_command_wait_return = (0, grep_output, '')
+        mock_transport.get_attribute_raise = FileNotFoundError('No such file')
+
+        result = monitor_loop_time(mock_node, mock_transport)
+
+        assert result is None
+
+    @pytest.mark.skipif(not HAS_ASYNCSSH, reason='asyncssh is not installed')
+    def test_monitor_loop_time_sftp_no_such_file(self, mock_transport):
+        """Test monitor_loop_time when SFTPNoSuchFile is raised (asyncssh transport, pending job)."""
+        mock_node = MockNode(walltime_limit=3600)
+
+        grep_output = 'LOOP:  cpu time    50.5: real time    50.5\nLOOP:  cpu time    50.5: real time    50.5'
+        mock_transport.exec_command_wait_return = (0, grep_output, '')
+        mock_transport.get_attribute_raise = SFTPNoSuchFile('No such file')
+
         result = monitor_loop_time(mock_node, mock_transport)
 
         assert result is None

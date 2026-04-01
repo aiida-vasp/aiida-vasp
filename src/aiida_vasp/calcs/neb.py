@@ -191,12 +191,12 @@ class VaspNEBCalculation(VaspCalculation):
 
                 # Link with singlefile WAVECAR/CHGCAR is needed
                 if self._need_wavecar():
-                    wavecar = self.inputs.wave_functions[img_key]
+                    wavecar = self.inputs.wavefunctions[img_key]
                     dst = folder_id + '/' + 'WAVECAR'
                     calcinfo.local_copy_list.append((wavecar.uuid, wavecar.filename, dst))
 
                 if self._need_chgcar():
-                    chgcar = self.inputs.charge_densities[img_key]
+                    chgcar = self.inputs.charge_density[img_key]
                     dst = folder_id + '/' + 'CHGCAR'
                     calcinfo.local_copy_list.append((chgcar.uuid, chgcar.filename, dst))
         try:
@@ -233,6 +233,14 @@ class VaspNEBCalculation(VaspCalculation):
         # self.logger.warning('Calcinfo: {}'.format(calcinfo))
 
         return calcinfo
+
+    def write_additional(self, folder: Folder, calcinfo: CalcInfo) -> None:
+        """Handle extra inputs that are not written by the per-image submission loop."""
+        _ = folder
+        if 'vdw_kernel' in self.inputs:
+            calcinfo.local_copy_list.append(
+                (self.inputs.vdw_kernel.uuid, self.inputs.vdw_kernel.filename, 'vdw_kernel.bindat')
+            )
 
     def _structure(self) -> orm.StructureData:
         """
