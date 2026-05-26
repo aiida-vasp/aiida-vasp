@@ -133,7 +133,7 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         spec.expose_inputs(
             base_work,
             namespace='dos',
-            exclude=('structure','potential_family', 'potential_mapping', 'code', 'calc'),
+            exclude=('structure', 'potential_family', 'potential_mapping', 'code', 'calc'),
             namespace_options={
                 'required': False,
                 'populate_defaults': False,
