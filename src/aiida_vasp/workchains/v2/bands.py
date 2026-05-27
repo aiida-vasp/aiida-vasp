@@ -577,6 +577,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             inputs.update(dos_input)
             inputs.parameters = orm.Dict(dict=parameters)
 
+            # Ensure DOS uses 3D mesh kpoints, not the band's 1D path
+            if 'kpoints' in dos_input:
+                inputs.kpoints = dos_input.kpoints
+
             if 'dos' not in self.inputs:
                 # kindly add `add_dos` if the `dos` input namespace is not
                 # explicitly defined.
