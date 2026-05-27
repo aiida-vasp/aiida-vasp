@@ -543,23 +543,18 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         if (self.inputs.band_settings['run_dos']) or ('dos' in self.inputs):
             if 'dos' in self.inputs:
                 dos_input = AttributeDict(self.exposed_inputs(base_work, namespace='dos'))
-                if 'kpoints' not in dos_input:
-                    dos_kpoints_distance = self.inputs.band_settings['dos_kpoints_distance'] * 2 * np.pi
-                    dos_kpoints = orm.KpointsData()
-                    dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
-                    dos_kpoints.set_kpoints_mesh_from_density(dos_kpoints_distance)
-                    dos_input.kpoints = dos_kpoints
             else:
                 dos_input = AttributeDict(
                     {
                         'parameters': orm.Dict(dict={'charge': {'constant_charge': True}}),
+                        'settings': {'parser_settings': {'include_node': ['dos']}},
                     }
                 )
+            if 'kpoints' not in dos_input and 'kpoints_spacing' not in dos_input:
                 # Use the supplied kpoints density for DOS
-                dos_kpoints_distance = self.inputs.band_settings['dos_kpoints_distance'] * 2 * np.pi
                 dos_kpoints = orm.KpointsData()
                 dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
-                dos_kpoints.set_kpoints_mesh_from_density(dos_kpoints_distance)
+                dos_kpoints.set_kpoints_mesh_from_density(self.inputs.band_settings['dos_kpoints_distance'] * 2 * np.pi)
                 dos_input.kpoints = dos_kpoints
 
             # Special treatment - combine the parameters
