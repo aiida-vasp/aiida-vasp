@@ -128,9 +128,6 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
                 'kpoints',
                 'potential_family',
                 'potential_mapping',
-                'code',
-                'calc',
-                'kpoints_spacing',
             ),
             namespace_options={
                 'required': False,
@@ -145,10 +142,6 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
                 'structure',
                 'potential_family',
                 'potential_mapping',
-                'code',
-                'calc',
-                'kpoints',
-                'kpoints_spacing',
             ),
             namespace_options={
                 'required': False,
