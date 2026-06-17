@@ -86,6 +86,7 @@ def test_parse_kpoints_write(kpoints_parser, tmpdir):
     assert content == ref_content
 
 
+@pytest.mark.parametrize(['vasp_kpoints'], [('mesh',), ('list',)], indirect=True)
 def test_parse_kpoints_data(vasp_kpoints, tmpdir):
     """Load a reference AiiDA KpointsData and check that the parser can
     initialize using the data.
