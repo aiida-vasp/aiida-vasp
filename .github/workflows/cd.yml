@@ -38,7 +38,7 @@ jobs:
         run: |
           conda activate test
           conda install --yes -c conda-forge python=${{ matrix.python }}
-          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml pytest pytest-cov seekpath PyCifRW
+          conda install --yes -c conda-forge pip "aiida-core>=2.6" ase lxml "pytest>=9,<9.1" pytest-cov seekpath PyCifRW
       - name: Setup parsevasp
         run: |
           conda activate test

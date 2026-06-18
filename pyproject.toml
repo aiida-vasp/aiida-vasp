@@ -47,7 +47,7 @@ dependencies = [
 Source = "https://github.com/aiida-vasp/aiida-vasp"
 
 [project.optional-dependencies]
-tests = ["aiida-core>=2.6", "pytest", "PyCifRW", "pymatgen"]
+tests = ["aiida-core>=2.6", "pytest>=9,<9.1", "PyCifRW", "pymatgen"]
 pre-commit = ["pre-commit"]
 docs = [
     "aiida-core[docs]~=2.4",
