@@ -223,9 +223,11 @@ def tailf_command(transport, remotedir: str, fname: str) -> str:
 
     connect_string = (
         """ "if [ -d {escaped_remotedir} ] ;"""
-        """ then cd {escaped_remotedir} ; {bash_command} -c 'tail -f {escaped_fname}' ;"""
-        """ else echo '  ** The directory' ; """
-        """echo '  ** {remotedir}' ; echo '  ** seems to have been deleted, I logout...' ; fi" """.format(
+        """ then cd {escaped_remotedir} ; """
+        """{bash_command} -c 'tail -f {escaped_fname}' ; """
+        """else echo '  ** The directory' ; """
+        """echo '  ** {remotedir}' ; """
+        """echo '  ** seems to have been deleted, I logout...' ; fi" """.format(
             bash_command=transport._bash_command_str,
             escaped_remotedir=f"'{remotedir}'",
             remotedir=remotedir,

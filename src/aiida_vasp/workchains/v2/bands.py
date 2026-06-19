@@ -123,7 +123,12 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         spec.expose_inputs(
             base_work,
             namespace='bands',
-            exclude=('structure', 'kpoints'),
+            exclude=(
+                'structure',
+                'kpoints',
+                'potential_family',
+                'potential_mapping',
+            ),
             namespace_options={
                 'required': False,
                 'populate_defaults': False,
@@ -133,7 +138,11 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         spec.expose_inputs(
             base_work,
             namespace='dos',
-            exclude=('structure',),
+            exclude=(
+                'structure',
+                'potential_family',
+                'potential_mapping',
+            ),
             namespace_options={
                 'required': False,
                 'populate_defaults': False,
@@ -531,8 +540,10 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
                 dos_input = AttributeDict(
                     {
                         'parameters': orm.Dict(dict={'charge': {'constant_charge': True}}),
+                        'settings': {'parser_settings': {'include_node': ['dos']}},
                     }
                 )
+            if 'kpoints' not in dos_input and 'kpoints_spacing' not in dos_input:
                 # Use the supplied kpoints density for DOS
                 dos_kpoints = orm.KpointsData()
                 dos_kpoints.set_cell_from_structure(self.ctx.current_structure)
