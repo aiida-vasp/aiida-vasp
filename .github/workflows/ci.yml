@@ -25,6 +25,9 @@ jobs:
       - name: Install aiida-vasp
         run: |
           uv pip install -v -e .[tests]
+      - name: Pin pytest version (avoid 9.1+ duplicate parametrization regression)
+        run: |
+          uv pip install 'pytest>=9,<9.1'
       - name: Run tests with codecov
         run: |
           source .venv/bin/activate
@@ -40,7 +43,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload coverage to Codecov
         if: matrix.python == '3.12' && github.event.repository.fork == false
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: aiida-vasp

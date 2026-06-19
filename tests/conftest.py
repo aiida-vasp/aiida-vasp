@@ -136,7 +136,7 @@ def vasp_params(aiida_profile):
     return incar_data
 
 
-@pytest.fixture(params=['cif', 'str'])
+@pytest.fixture()
 def vasp_structure(request, aiida_profile, data_path):
     """Fixture: StructureData or CifData."""
     if request.param == 'cif':
@@ -168,7 +168,7 @@ def vasp_structure(request, aiida_profile, data_path):
     return structure
 
 
-@pytest.fixture(params=['mesh', 'list'])
+@pytest.fixture()
 def vasp_kpoints(request, aiida_profile, data_path):
     """Fixture: (kpoints object, resulting KPOINTS)."""
 
