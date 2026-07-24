@@ -229,6 +229,13 @@ A nested dictionary containing the following keys:
             help='Mapping for the initial magnetic moments.',
         )
         spec.input(
+            'site_magnetization',
+            valid_type=orm.Dict,
+            required=False,
+            serializer=to_aiida_type,
+            help='Site magnetization data from a previous calculation to initialize magnetic moments.',
+        )
+        spec.input(
             'kpoints_spacing',
             valid_type=orm.Float,
             required=False,
@@ -521,13 +528,13 @@ A nested dictionary containing the following keys:
         if node is None:
             node = self.ctx.children[-1]
 
-        if 'site_magnetization' in node.outputs:
-            try:
-                self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(
-                    node.outputs.site_magnetization.get_dict()
-                )
-            except ValueError:
-                pass
+        if 'misc' in node.outputs:
+            misc_dict = node.outputs.misc.get_dict()
+            if 'site_magnetization' in misc_dict:
+                try:
+                    self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(misc_dict['site_magnetization'])
+                except ValueError:
+                    pass
 
     def init_inputs(self) -> Optional[ExitCode]:
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
