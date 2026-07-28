@@ -115,8 +115,8 @@ class VaspConvergenceWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         cls,
         code: orm.AbstractCode,
         structure: orm.StructureData,
-        protocol: None | str = None,
-        overrides: None | dict = None,
+        protocol: str | None = None,
+        overrides: dict | None = None,
         **kwargs,
     ):
         """
