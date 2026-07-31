@@ -201,7 +201,7 @@ class TestMonitorLoopTime:
 
         # Assertions
         assert result is None
-        outcar_path = Path(os.getcwd()) / 'OURCAR'
+        outcar_path = Path(os.getcwd()) / 'OUTCAR'
         assert mock_transport.exec_command_wait_calls == [f"grep 'LOOP:' {outcar_path}"]
 
     def test_monitor_loop_time_fast_loops(self, mock_transport):
