@@ -1,6 +1,6 @@
 [build-system]
 # build the package with [flit](https://flit.readtheocs.io)
-requires = ["flit_core >=3.4,<4"]
+requires = ["flit_core >=3.4,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
