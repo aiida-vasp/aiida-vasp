@@ -339,49 +339,45 @@ class VasprunParser(BaseFileParser):
     @property
     def trajectory(self) -> dict[str, Any] | None:
         """
-        Fetch unitcells, positions, species, forces and stress.
+        Fetch unitcells, positions, species, forces and optionally stress.
 
-        For all calculation steps.
+        For all calculation steps. Stress is included only when present in the
+        ``vasprun.xml`` content so missing stress does not drop the whole trajectory.
 
         """
-
         unitcell = self._content_parser.get_unitcell('all')
         positions = self._content_parser.get_positions('all')
         species = self._content_parser.get_species()
         forces = self._content_parser.get_forces('all')
         stress = self._content_parser.get_stress('all')
+
+        if unitcell is None or positions is None or species is None or forces is None:
+            return None
+
         # make sure all are sorted, first to last calculation
         # (species is constant)
         unitcell = sorted(unitcell.items())
         positions = sorted(positions.items())
         forces = sorted(forces.items())
-        stress = sorted(stress.items())
         # convert to numpy
         unitcell = np.asarray([item[1] for item in unitcell])
         positions = np.asarray([item[1] for item in positions])
         forces = np.asarray([item[1] for item in forces])
-        stress = np.asarray([item[1] for item in stress])
         # Aiida wants the species as symbols, so invert
         elements = _invert_dict(parsevaspct.elements)
         symbols = np.asarray([elements[item].title() for item in species.tolist()])
 
-        if (
-            (unitcell is not None)
-            and (positions is not None)
-            and (species is not None)
-            and (forces is not None)
-            and (stress is not None)
-        ):
-            trajectory_data = {}
+        stepids = np.arange(unitcell.shape[0])
+        keys: tuple[str, ...] = ('cells', 'positions', 'symbols', 'forces', 'steps')
+        values: tuple[Any, ...] = (unitcell, positions, symbols, forces, stepids)
 
-            keys = ('cells', 'positions', 'symbols', 'forces', 'stress', 'steps')
-            stepids = np.arange(unitcell.shape[0])
+        if stress is not None:
+            stress = sorted(stress.items())
+            stress = np.asarray([item[1] for item in stress])
+            keys = keys + ('stress',)
+            values = values + (stress,)
 
-            for key, data in zip(keys, (unitcell, positions, symbols, forces, stress, stepids)):
-                trajectory_data[key] = data
-            return trajectory_data
-
-        return None
+        return dict(zip(keys, values))
 
     @property
     def total_energies(self) -> dict[str, float] | None:
