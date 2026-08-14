@@ -965,6 +965,14 @@ irestart:
   description: Undocumented
   type: null
   values: null
+isearch:
+  default: '0'
+  description: ISEARCH controls the line-search algorithm used during direct electronic
+    minimization.
+  type: null
+  values:
+  - '0'
+  - '1'
 isif:
   default: null
   description: ISIF determines whether the stress tensor is calculated and which principal
