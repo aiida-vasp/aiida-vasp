@@ -3,7 +3,7 @@ Collection of process functions for AiiDA, used for structure transformation
 """
 
 import re
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 from aiida import orm
@@ -24,20 +24,65 @@ except ModuleNotFoundError:
 from spglib import niggli_reduce as niggli_reduce_spg
 from spglib import refine_cell
 
+from aiida_vasp.common.magmapping import create_additional_species, convert_to_plain_list
+
+
+def _coerce_magmom_list(raw: list[Any]) -> list[Any]:
+    """Coerce an ``orm.List`` payload into the canonical magmom representation.
+
+    AiiDA flattens lists-of-lists into flat lists when stored in an
+    :class:`orm.List`. This helper accepts both forms (``[[1.0, 0.0, 0.0], 2.0]``
+    or ``[1.0, 0.0, 0.0, 2.0]``) and re-groups the values per site.
+    """
+    if not raw:
+        return list(raw)
+
+    # Detect if a nested structure was preserved (each entry is itself a list).
+    if all(isinstance(entry, (list, tuple)) for entry in raw):
+        coerced: list[Any] = []
+        for entry in raw:
+            coerced.append(_normalise_entry(entry))
+        return coerced
+
+    # Otherwise, try to detect flat 3-vectors. A flat list will have a length
+    # that is a multiple of the number of sites. We treat the case where the
+    # length is exactly ``3 * n_sites`` as a flat 3-vector representation.
+    # Without additional context (the structure), we cannot decide here, so we
+    # return the flat list as-is; downstream code should provide a nested
+    # representation for 3D magmoms.
+    return list(raw)
+
+
+def _normalise_entry(entry: Any) -> Union[float, Tuple[float, float, float]]:
+    """Normalise a single magmom entry."""
+    if isinstance(entry, (int, float)):
+        return float(entry)
+    seq = list(entry)
+    if len(seq) == 0:
+        raise ValueError('Magmom must have at least one component.')
+    if len(seq) == 1:
+        return float(seq[0])
+    seq = list(seq[:3]) + [0.0] * max(0, 3 - len(seq))
+    return (float(seq[0]), float(seq[1]), float(seq[2]))
+
 
 @calcfunction
 def magnetic_structure_decorate(structure: orm.StructureData, magmom: orm.List) -> dict[str, Any]:
     """
     Create Quantum Espresso style decorated structure with
     given magnetic moments.
+
+    Each entry of ``magmom`` may be a scalar (collinear) or a 3-component
+    sequence for ``LNONCOLLINEAR = .TRUE.``.
     """
 
-    magmom = magmom.get_list()
-    assert len(magmom) == len(structure.sites), (
-        f'Mismatch between the magmom ({len(magmom)}) and the nubmer of sites ({len(structure.sites)}).'
+    raw_magmom = magmom.get_list()
+    magmom_list = _coerce_magmom_list(raw_magmom)
+    assert len(magmom_list) == len(structure.sites), (
+        f'Mismatch between the magmom ({len(magmom_list)}) and the nubmer of sites ({len(structure.sites)}).'
     )
     old_species = [structure.get_kind(site.kind_name).symbol for site in structure.sites]
-    new_species, magmom_mapping = create_additional_species(old_species, magmom)
+    new_species, magmom_mapping = create_additional_species(old_species, magmom_list)
     new_structure = StructureData()
     new_structure.set_cell(structure.cell)
     new_structure.set_pbc(structure.pbc)
@@ -58,10 +103,14 @@ def magnetic_structure_dedecorate(structure: orm.StructureData, mapping: orm.Dic
     name for different initialisation of magnetic moments.
     """
 
-    mapping = mapping.get_dict()
+    raw_mapping = mapping.get_dict()
+    # The mapping values are stored as plain python objects (floats or lists
+    # of 3 floats). Re-normalise them so downstream code gets a consistent
+    # representation.
+    magmom_mapping = {key: _normalise_entry(value) for key, value in raw_mapping.items()}
     # Get a list of decroated names
     old_species = [structure.get_kind(site.kind_name).name for site in structure.sites]
-    new_species, magmom = convert_to_plain_list(old_species, mapping)
+    new_species, magmom = convert_to_plain_list(old_species, magmom_mapping)
 
     new_structure = StructureData()
     new_structure.set_cell(structure.cell)
@@ -71,7 +120,8 @@ def magnetic_structure_dedecorate(structure: orm.StructureData, mapping: orm.Dic
         this_symbol = structure.get_kind(site.kind_name).symbol
         new_structure.append_atom(position=site.position, symbols=this_symbol, name=name)
     new_structure.label = structure.label
-    return {'structure': new_structure, 'magmom': orm.List(list=magmom)}
+    # Store as nested list so 3D magmoms survive AiiDA's flattening in List nodes.
+    return {'structure': new_structure, 'magmom': orm.List(list=list(magmom))}
 
 
 @calcfunction
@@ -343,68 +393,3 @@ def match_atomic_order_(atoms: Atoms, atoms_ref: Atoms) -> Tuple[Atoms, List[int
         new_index.append(min_idx)
     assert len(set(new_index)) == len(atoms), 'The detected mapping is not unique!'
     return atoms[new_index], new_index
-
-
-def create_additional_species(species: list[str], magmoms: list[float]) -> tuple[list[str], dict[str, float]]:
-    """
-    Create additional species depending on magnetic moments.
-    For example, create Fe1 and Fe2 if there are Fe with different
-    magnetisations.
-
-    :return: a tuples of (newspecies, magmom_mapping)
-    """
-
-    unique_species: set[str] = set(species)
-    new_species: list[str] = []
-    current_species_mapping: dict[str, dict[str, float]] = {sym: {} for sym in unique_species}
-    for symbol, magmom in zip(species, magmoms):
-        current_symbol: str = symbol
-        # Mappings for this original symbol
-        mapping: dict[str, float] = current_species_mapping[symbol]
-        # First check if this magmom has been treated
-        not_seen = True
-        for sym_, mag_ in mapping.items():
-            if mag_ == magmom:
-                current_symbol = sym_
-                not_seen = False
-        # This symbol has not been seen yet
-        if not_seen:
-            if current_symbol in mapping:
-                # The other species having the same symbol has been assigned
-                counter = len(mapping) + 1
-                current_symbol = f'{symbol}{counter}'
-            mapping[current_symbol] = magmom
-        new_species.append(current_symbol)
-
-    # Rename symbols that has more than one species, so A becomes A1
-    for symbol, mapping in current_species_mapping.items():
-        if len(mapping) > 1:
-            mapping[f'{symbol}1'] = mapping[symbol]
-            mapping.pop(symbol)
-            # Refresh the new_species list
-            new_species = [f'{sym}1' if sym == symbol else sym for sym in new_species]
-
-    all_mapping: dict[str, float] = {}
-    for value in current_species_mapping.values():
-        all_mapping.update(value)
-
-    return new_species, all_mapping
-
-
-def convert_to_plain_list(species: list[str], magmom_mapping: dict[str, float]) -> tuple[list[str], list[float]]:
-    """
-    Covert from a decorated species list to a plain list of symbols
-    and magnetic moments.
-
-    :return: A tuple of (symbols, magmoms)
-    """
-    magmoms = []
-    symbols = []
-    for symbol in species:
-        magmoms.append(magmom_mapping[symbol])
-        match = re.match(r'(\w+)\d+', symbol)
-        if match:
-            symbols.append(match.group(1))
-        else:
-            symbols.append(symbol)
-    return symbols, magmoms
