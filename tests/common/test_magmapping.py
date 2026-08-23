@@ -4,7 +4,7 @@ Tests for :mod:`aiida_vasp.common.magmapping`.
 
 import pytest
 
-from aiida_vasp.common.magmapping import convert_to_plain_list, create_additional_species
+from aiida_vasp.common.magmapping import _normalise_magmom, convert_to_plain_list, create_additional_species
 
 
 def test_create_additional_species_scalar():
@@ -66,3 +66,20 @@ def test_convert_to_plain_list_roundtrip_vector():
     symbols, magmoms = convert_to_plain_list(new_species, mapping)
     assert symbols == ['Fe', 'O', 'Fe', 'O']
     assert magmoms == [(2.0, 0.0, 0.0), (0.0, 0.0, 0.0), (-2.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+
+
+def test_normalise_magmom_single_component():
+    """A single-component sequence is coerced to a scalar."""
+    assert _normalise_magmom([2.0]) == 2.0
+
+
+def test_normalise_magmom_empty_raises():
+    """An empty sequence is rejected."""
+    with pytest.raises(ValueError):
+        _normalise_magmom([])
+
+
+def test_convert_to_plain_list_missing_mapping_raises():
+    """A species without a mapping entry raises a clear error."""
+    with pytest.raises(ValueError, match='No magmom mapping entry'):
+        convert_to_plain_list(['FeX'], {'Fe': 2.0})

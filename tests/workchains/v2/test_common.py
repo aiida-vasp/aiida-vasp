@@ -2,6 +2,7 @@
 Tests for the common module
 """
 
+import pytest
 from aiida.orm import Dict, List, StructureData
 
 from aiida_vasp.common import aiida_to_python, plain_python_args, site_magnetization_to_magmom
@@ -95,6 +96,35 @@ def test_magmom_from_site_noncollinear(aiida_profile):
     result = site_magnetization_to_magmom(output)
     assert result == [(0.5, 0.0, -0.5), (1.5, 0.0, 1.5)]
     assert site_magnetization_to_magmom(Dict(dict=output)) == [(0.5, 0.0, -0.5), (1.5, 0.0, 1.5)]
+
+
+def test_magmom_from_site_two_axes(aiida_profile):
+    """Two populated axes produce 3-tuples with zeros for the missing axis."""
+    output = {
+        'site_magnetization': {
+            'sphere': {
+                'x': {'site_moment': {'1': {'tot': 0.5}, '2': {'tot': 1.5}}},
+                'y': {'site_moment': {}},
+                'z': {'site_moment': {'1': {'tot': -0.5}, '2': {'tot': 1.5}}},
+            }
+        }
+    }
+    assert site_magnetization_to_magmom(output) == [(0.5, 0.0, -0.5), (1.5, 0.0, 1.5)]
+
+
+def test_magmom_from_site_single_axis_not_x(aiida_profile):
+    """Only the z axis populated: scalar magmoms are returned."""
+    output = {'site_magnetization': {'sphere': {'z': {'site_moment': {'1': {'tot': -0.5}, '2': {'tot': 1.5}}}}}}
+    assert site_magnetization_to_magmom(output) == [-0.5, 1.5]
+
+
+def test_magmom_from_site_no_axes_raises(aiida_profile):
+    """No populated axis raises a clear error."""
+    output = {
+        'site_magnetization': {'sphere': {'x': {'site_moment': {}}, 'y': {'site_moment': {}}, 'z': {'site_moment': {}}}}
+    }
+    with pytest.raises(ValueError):
+        site_magnetization_to_magmom(output)
 
 
 def _make_feo_structure():
