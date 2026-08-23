@@ -65,7 +65,7 @@ class VaspNEBWorkChain(VaspWorkChain):
     _norm_disp_threshold = 4.0
     _default_unsupported_parameters = VTST_ADDITIONAL_TAGS
 
-    def init_inputs(self) -> None | ExitCode:
+    def init_inputs(self) -> ExitCode | None:
         exit_code = super().init_inputs()
         if exit_code is not None:
             return exit_code
@@ -88,7 +88,7 @@ class VaspNEBWorkChain(VaspWorkChain):
         except NotExistent as err:
             return compose_exit_code(self.exit_codes.ERROR_POTENTIAL_DO_NOT_EXIST.status, str(err))  # pylint: disable=no-member
 
-    def check_neb_inputs(self) -> None | ExitCode:
+    def check_neb_inputs(self) -> ExitCode | None:
         """
         Perform some simple checks for the NEB inputs
 

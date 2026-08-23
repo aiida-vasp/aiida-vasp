@@ -116,6 +116,33 @@ def test_parse_vasprun_final_stress(vasprun_parser):
     np.testing.assert_allclose(stress[2], stress_check[2], atol=0.0, rtol=1.0e-7)
 
 
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_parse_vasprun_trajectory(vasprun_parser):
+    """Trajectory includes stress when present in vasprun.xml."""
+    trajectory = vasprun_parser.get_quantity('trajectory')
+    assert trajectory is not None
+    assert set(trajectory) >= {'cells', 'positions', 'symbols', 'forces', 'steps', 'stress'}
+    assert trajectory['cells'].shape[0] == trajectory['positions'].shape[0]
+    assert trajectory['forces'].shape[0] == trajectory['steps'].shape[0]
+    assert trajectory['stress'].shape[0] == trajectory['steps'].shape[0]
+    assert trajectory['stress'].shape[-2:] == (3, 3)
+
+
+@pytest.mark.parametrize(['vasprun_parser'], [('basic',)], indirect=True)
+def test_parse_vasprun_trajectory_without_stress(vasprun_parser, monkeypatch):
+    """Missing stress must not abort trajectory parsing or drop other arrays."""
+    monkeypatch.setattr(vasprun_parser._content_parser, 'get_stress', lambda *args, **kwargs: None)
+    # Bypass cached full parse so the monkeypatched getter is used.
+    vasprun_parser._parsed_content = {}
+    trajectory = vasprun_parser.trajectory
+
+    assert trajectory is not None
+    assert 'stress' not in trajectory
+    assert set(trajectory) >= {'cells', 'positions', 'symbols', 'forces', 'steps'}
+    assert trajectory['cells'].shape[0] == trajectory['positions'].shape[0]
+    assert trajectory['forces'].shape[0] == trajectory['steps'].shape[0]
+
+
 @pytest.mark.parametrize(['vasprun_parser'], [('dielectric',)], indirect=True)
 def test_parse_vasprun_dielectrics(vasprun_parser):
     """Load a reference vasprun.xml and test that the dielectrics are returned correctly."""

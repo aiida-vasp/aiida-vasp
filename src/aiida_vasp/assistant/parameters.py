@@ -556,7 +556,7 @@ class ParameterSetFunctions:
             pass
 
 
-def check_inputs(supplied_inputs: None | AttributeDict | orm.Dict | dict) -> AttributeDict:
+def check_inputs(supplied_inputs: AttributeDict | orm.Dict | dict | None) -> AttributeDict:
     """Check that the inputs are of some correct type and returned as AttributeDict."""
     inputs = None
     if supplied_inputs is None:

@@ -64,9 +64,7 @@ def create_additional_species(
     """
 
     if len(species) != len(magmom):
-        raise ValueError(
-            f'species and magmom must have the same length, got {len(species)} and {len(magmom)}.'
-        )
+        raise ValueError(f'species and magmom must have the same length, got {len(species)} and {len(magmom)}.')
 
     unique_species = set(species)
     new_species: List[str] = []

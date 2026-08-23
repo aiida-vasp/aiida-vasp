@@ -297,6 +297,14 @@ def test_vasp_parameter_override(init_relax_parameters):
     assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].isif == 0
 
 
+def test_isearch_parameter_override(init_relax_parameters):
+    """Test that the official ISEARCH INCAR tag is accepted."""
+    init_relax_parameters[_DEFAULT_OVERRIDE_NAMESPACE] = AttributeDict()
+    init_relax_parameters[_DEFAULT_OVERRIDE_NAMESPACE].isearch = 1
+    massager = ParametersMassage(init_relax_parameters)
+    assert massager.parameters[_DEFAULT_OVERRIDE_NAMESPACE].isearch == 1
+
+
 def test_inherit_and_merge():
     """Test the inherit and merge functionality for the parameters and inputs."""
 

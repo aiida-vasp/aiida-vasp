@@ -33,6 +33,7 @@ from aiida_vasp.utils.opthold import BandOptions
 
 from .mixins import WithBuilderUpdater
 from .relax import VaspRelaxWorkChain
+from .vasp import VaspWorkChain
 
 
 def _parse_magmom_for_decoration(magmom: Any, is_vector: bool, structure: Any) -> List[Any]:
@@ -57,10 +58,8 @@ def _parse_magmom_for_decoration(magmom: Any, is_vector: bool, structure: Any) -
     if is_vector:
         n_sites = len(structure.sites)
         if len(flat) != 3 * n_sites:
-            raise ValueError(
-                f'For non-collinear magmom, expected {3 * n_sites} components but got {len(flat)}.'
-            )
-        return [list(flat[i * 3:(i + 1) * 3]) for i in range(n_sites)]
+            raise ValueError(f'For non-collinear magmom, expected {3 * n_sites} components but got {len(flat)}.')
+        return [list(flat[i * 3 : (i + 1) * 3]) for i in range(n_sites)]
 
     n_sites = len(structure.sites)
     if len(flat) == n_sites:
@@ -84,8 +83,6 @@ def _magmom_list_to_incar(magmom_list: Any) -> str:
             flat.append(float(entry))
     return ' '.join(repr(x) for x in flat)
 
-
-from .vasp import VaspWorkChain
 
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 
@@ -928,7 +925,7 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
                 magmom = magmom.split()
             # For non-collinear magmom is given as (mx my mz) per atom, group them
             if lnoncollinear and len(magmom) == 3 * len(species):
-                grouped = [tuple(magmom[i * 3:(i + 1) * 3]) for i in range(len(species))]
+                grouped = [tuple(magmom[i * 3 : (i + 1) * 3]) for i in range(len(species))]
             else:
                 grouped = magmom
             assert len(grouped) == len(species), (

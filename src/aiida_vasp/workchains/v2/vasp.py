@@ -114,7 +114,7 @@ def _normalise_per_atom_magmom(raw: List[Any], n_sites: Optional[int] = None) ->
     # Flat representation. If we know the number of sites and the list length
     # is exactly 3 * n_sites, treat it as a flat 3-vector representation.
     if n_sites is not None and len(raw) == 3 * n_sites:
-        return [_magmom_entry_to_components(raw[i * 3:(i + 1) * 3]) for i in range(n_sites)]
+        return [_magmom_entry_to_components(raw[i * 3 : (i + 1) * 3]) for i in range(n_sites)]
 
     # Otherwise assume scalar values, one per site.
     return list(raw)
@@ -296,6 +296,13 @@ A nested dictionary containing the following keys:
                 '(LNONCOLLINEAR = .TRUE.). When supplied, this takes precedence '
                 'over ``magmom_mapping``.'
             ),
+        )
+        spec.input(
+            'site_magnetization',
+            valid_type=orm.Dict,
+            required=False,
+            serializer=to_aiida_type,
+            help='Site magnetization data from a previous calculation to initialize magnetic moments.',
         )
         spec.input(
             'kpoints_spacing',
@@ -594,12 +601,14 @@ A nested dictionary containing the following keys:
         if node is None:
             node = self.ctx.children[-1]
 
-        if 'site_magnetization' in node.outputs:
-            try:
-                magmom = site_magnetization_to_magmom(node.outputs.site_magnetization.get_dict())
-                self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom)
-            except ValueError:
-                pass
+        if 'misc' in node.outputs:
+            misc_dict = node.outputs.misc.get_dict()
+            if 'site_magnetization' in misc_dict:
+                try:
+                    magmom = site_magnetization_to_magmom(misc_dict['site_magnetization'])
+                    self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom)
+                except ValueError:
+                    pass
 
     def init_inputs(self) -> Optional[ExitCode]:
         """Make sure all the required inputs are there and valid, create input dictionary for calculation."""
@@ -714,23 +723,22 @@ A nested dictionary containing the following keys:
             if any(_is_vector_magmom(entry) for entry in magmom_list):
                 if not self.ctx.inputs.parameters.get('lnoncollinear'):
                     self.ctx.inputs.parameters['lnoncollinear'] = True
-        else:
+        elif 'magmom_mapping' in self.inputs:
             # Apply the magmom mapping if supplied
-            if 'magmom_mapping' in self.inputs:
-                mapping = self.inputs.magmom_mapping.get_dict()
-                default = mapping.pop('default', 1.0)
-                kind_names = set(self.inputs.structure.get_kind_names())
-                # Take only the relevant keys
-                mapping = {key: mapping[key] for key in mapping if key in kind_names}
-                # Only proceed if mapping is not empty or default is not 1.0 (VASP internal default)
-                if mapping or (default != 1.0):
-                    magmom_list = []
-                    for site in self.inputs.structure.sites:
-                        magmom_list.append(mapping.get(site.kind_name, default))
-                    # If ispin is not set (possibly by mistake), we change it to 2
-                    if 'ispin' not in self.ctx.inputs.parameters:
-                        self.ctx.inputs.parameters['ispin'] = 2
-                    self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom_list)
+            mapping = self.inputs.magmom_mapping.get_dict()
+            default = mapping.pop('default', 1.0)
+            kind_names = set(self.inputs.structure.get_kind_names())
+            # Take only the relevant keys
+            mapping = {key: mapping[key] for key in mapping if key in kind_names}
+            # Only proceed if mapping is not empty or default is not 1.0 (VASP internal default)
+            if mapping or (default != 1.0):
+                magmom_list = []
+                for site in self.inputs.structure.sites:
+                    magmom_list.append(mapping.get(site.kind_name, default))
+                # If ispin is not set (possibly by mistake), we change it to 2
+                if 'ispin' not in self.ctx.inputs.parameters:
+                    self.ctx.inputs.parameters['ispin'] = 2
+                self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom_list)
 
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):

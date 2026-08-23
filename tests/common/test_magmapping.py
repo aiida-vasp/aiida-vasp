@@ -2,6 +2,8 @@
 Tests for :mod:`aiida_vasp.common.magmapping`.
 """
 
+import pytest
+
 from aiida_vasp.common.magmapping import convert_to_plain_list, create_additional_species
 
 
@@ -44,8 +46,6 @@ def test_create_additional_species_mixed_scalar_vector():
 
 def test_create_additional_species_mismatched_length():
     """Mismatch between species and magmom should raise."""
-    import pytest
-
     with pytest.raises(ValueError):
         create_additional_species(['Fe', 'O'], [1.0])
 

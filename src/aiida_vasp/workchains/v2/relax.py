@@ -63,6 +63,7 @@ def _magmom_list_to_incar(magmom_list: list) -> str:
             flat.append(float(entry))
     return ' '.join(repr(x) for x in flat)
 
+
 # Change log
 # 0.4.0 update such `vasp` namespace in `parameters` is renamed to `incar`
 # 0.5.0 update the logic of convergence checking. Cell comparsion is always done using the input/output structures.
@@ -480,7 +481,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         self.report(f'launching {self._base_workchain.__name__}<{running.pk}> iterations #{self.ctx.iteration}')
         return ToContext(workchains=append_(running))
 
-    def verify_next_workchain(self) -> None | ExitCode:
+    def verify_next_workchain(self) -> ExitCode | None:
         """Verify and inherit exit status from child workchains."""
 
         try:
@@ -505,7 +506,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         return self.ctx.exit_code
 
-    def verify_last_relax(self) -> None | ExitCode:
+    def verify_last_relax(self) -> ExitCode | None:
         """Verify and inherit exit status from the last relaxation"""
 
         try:
@@ -536,7 +537,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         return self.ctx.exit_code
 
-    def analyze_convergence(self) -> None | ExitCode:
+    def analyze_convergence(self) -> ExitCode | None:
         """
         Analyze the convergence of the relaxation.
 
@@ -768,7 +769,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
 
         return positions_converged
 
-    def store_relaxed(self) -> None | ExitCode:
+    def store_relaxed(self) -> ExitCode | None:
         """Store the relaxed structure."""
         workchain = self.ctx.workchains[-1]
 
@@ -790,7 +791,7 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             self.out_many(self.exposed_outputs(workchain, self._base_workchain))
             return self.exit_codes.ERROR_RELAX_NOT_CONVERGED  # pylint: disable=no-member
 
-    def results(self) -> None | ExitCode:
+    def results(self) -> ExitCode | None:
         """
         Attach the remaining output results.
         This can either be the final static calculation or the last relaxation if the
@@ -1123,7 +1124,7 @@ class VaspMultiStageRelaxWorkChain(WorkChain, WithBuilderUpdater):
         running = self.submit(self._base_workchain, **relax_inputs)
         return ToContext(workchains=append_(running))
 
-    def inspect_stage(self) -> None | ExitCode:
+    def inspect_stage(self) -> ExitCode | None:
         """
         Inspect a stage
         """

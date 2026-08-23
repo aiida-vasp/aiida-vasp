@@ -2,7 +2,6 @@
 Collection of process functions for AiiDA, used for structure transformation
 """
 
-import re
 from typing import Any, List, Tuple, Union
 
 import numpy as np
@@ -24,7 +23,7 @@ except ModuleNotFoundError:
 from spglib import niggli_reduce as niggli_reduce_spg
 from spglib import refine_cell
 
-from aiida_vasp.common.magmapping import create_additional_species, convert_to_plain_list
+from aiida_vasp.common.magmapping import convert_to_plain_list, create_additional_species
 
 
 def _coerce_magmom_list(raw: list[Any]) -> list[Any]:
