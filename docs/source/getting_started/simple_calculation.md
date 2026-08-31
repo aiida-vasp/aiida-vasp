@@ -13,6 +13,7 @@ First, we create the sample structure using the `ase` package (assuming the `ase
 ```python
 from ase.build import bulk
 from aiida import orm
+
 si = bulk('Si', 'diamond', 5.4)
 si_structure = orm.StructureData(ase=si)
 ```
@@ -23,24 +24,24 @@ Next, we create necessary input node and set the required parameters:
 
 ```python
 from aiida.plugins import WorkflowFactory
+
 builder = WorkflowFactory('vasp.vasp').get_builder()
 
 builder.parameters = orm.Dict(
-    dict={'incar':
-    {
-        'encut': 300,
-        'ismear': 0,
-        'ispin': 1,
-    }
+    dict={
+        'incar': {
+            'encut': 300,
+            'ismear': 0,
+            'ispin': 1,
+        }
     }
 )
-builder.options = orm.Dict(dict={
-    'resources': {'num_machines': 1,
-    'tot_num_mpiprocs': 1}}
-    )
+builder.options = orm.Dict(dict={'resources': {'num_machines': 1, 'tot_num_mpiprocs': 1}})
 builder.structure = si_structure
-builder.code = orm.load_code('vasp@localhost')   # Assuming VASP is installed locally and the code is configured
-builder.potential_family = 'PBE.54'     # Note that we can use python type - they are converted into AiiDA types automatically
+builder.code = orm.load_code('vasp@localhost')  # Assuming VASP is installed locally and the code is configured
+builder.potential_family = (
+    'PBE.54'  # Note that we can use python type - they are converted into AiiDA types automatically
+)
 builder.potential_mapping = {'Si': 'Si'}
 builder.kpoints_spacing = 0.05
 builder.metadata.label = 'test-calculation'
@@ -55,6 +56,7 @@ Finally, the calculation can be run with the `run_get_node` method:
 
 ```python
 from aiida.engine import run_get_node
+
 out_dict, process_node = run_get_node(builder)
 ```
 

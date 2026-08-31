@@ -29,8 +29,9 @@ If you want those for each ionic step, you can modify the parser to enable the o
 
 ```python
 from aiida.orm import WorkflowFactory
+
 VaspWorkChain = WorkflowFactory('vasp.vasp')
 builder = VaspWorkChain.get_builder()
-settings ={'parser_settings': {'include_node': ['trajectory']}}
+settings = {'parser_settings': {'include_node': ['trajectory']}}
 builder.settings = settings
 ```
